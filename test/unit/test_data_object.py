@@ -25,29 +25,6 @@ class TestDataObject(unittest.TestCase):
         library-specific shutdown
         """
         pass
-    
-    def test_write_FileDataObject(self):
-        """
-        Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
-        """
-        if ('FileDataObject' == do_type):
-            dobA = FileDataObject('oid:A', 'uid:A')
-            dobB = ComputeFileChecksum('oid:B', 'uid:B')
-        elif ('StreamDataObject' == do_type):
-            dobA = StreamDataObject('oid:A', 'uid:A')
-            dobB = ComputeStreamChecksum('oid:B', 'uid:B')
-        else:
-            raise Exception('Unsupported Data Object {0}'.format(do_type))
-        
-        dobA.open()
-        
-        test_crc = 0
-        for i in range(self._test_num_blocks):
-            dobA.write(None, chunk = self._test_block)
-            test_crc = crc32c.crc32(self._test_block, test_crc)
-        
-        dobA.close()
-        self.assertTrue(test_crc == dobA.getChecksum())
         
     def test_write_FileDataObject(self):
         """
@@ -66,7 +43,6 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32c.crc32(self._test_block, test_crc)
         
         dobA.close()
-        print 'File dobA crc = {0}'.format(dobA.getChecksum())
         self.assertTrue((test_crc == dobA.getChecksum() and 0 != test_crc), 
                         msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.getChecksum()))
         
@@ -87,7 +63,6 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32c.crc32(self._test_block, test_crc)
         
         dobA.close()
-        print 'Stream dobA crc = {0}'.format(dobA.getChecksum())
         self.assertTrue((test_crc == dobA.getChecksum() and 0 != test_crc), 
                         msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.getChecksum()))
 
