@@ -29,8 +29,12 @@ Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
 """
 import time, os
-import crc32c
 
+try:
+    from crc32c import crc32
+except:
+    from binascii import crc32
+    
 from ddap_protocol import DOStates
 
 
@@ -115,7 +119,7 @@ class AbstractDataObject(object):
         pass
     
     def computeChecksum(self, chunk):
-        self._checksum = crc32c.crc32(chunk, self._checksum)
+        self._checksum = crc32(chunk, self._checksum)
         return self._checksum
     
     def getChecksum(self):
@@ -270,7 +274,7 @@ class ComputeStreamChecksum(AppDataObject):
     
     def runCallBack(self, producer, **kwargs):
         chunk = kwargs['chunk']
-        self._checksum = crc32c.crc32(chunk, self._checksum)
+        self._checksum = crc32(chunk, self._checksum)
         producer.setChecksum(self._checksum)
         return kwargs
 
@@ -286,7 +290,7 @@ class ComputeFileChecksum(AppDataObject):
         buf = fo.read(self._bufsize)
         crc = 0
         while (buf != ""):
-            crc = crc32c.crc32(buf, crc)
+            crc = crc32(buf, crc)
             buf = fo.read(self._bufsize)
         fo.close()        
         producer.setChecksum(crc)

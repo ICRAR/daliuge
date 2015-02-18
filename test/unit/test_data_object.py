@@ -4,7 +4,11 @@
 from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum
 
 import os, unittest
-import crc32c
+
+try:
+    from crc32c import crc32
+except:
+    from binascii import crc32
 
 ONE_MB = 1024 ** 2
 
@@ -40,7 +44,7 @@ class TestDataObject(unittest.TestCase):
         test_crc = 0
         for i in range(self._test_num_blocks):
             dobA.write(None, chunk = self._test_block)
-            test_crc = crc32c.crc32(self._test_block, test_crc)
+            test_crc = crc32(self._test_block, test_crc)
         
         dobA.close()
         self.assertTrue((test_crc == dobA.getChecksum() and 0 != test_crc), 
@@ -60,7 +64,7 @@ class TestDataObject(unittest.TestCase):
         test_crc = 0
         for i in range(self._test_num_blocks):
             dobA.write(None, chunk = self._test_block)
-            test_crc = crc32c.crc32(self._test_block, test_crc)
+            test_crc = crc32(self._test_block, test_crc)
         
         dobA.close()
         self.assertTrue((test_crc == dobA.getChecksum() and 0 != test_crc), 
