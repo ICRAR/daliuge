@@ -5,11 +5,10 @@ pushd ./ >> /dev/null
 cd $DIR
 cd ../../
 export PYTHONPATH=$(pwd)/src/:$PYTHONPATH
+# compile
+python -m py_compile src/dfms/*.py
 popd >> /dev/null
 
-# compile
-python -m py_compile ../../src/dfms/*.py
-exit $?
 
 
 

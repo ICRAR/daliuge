@@ -5,8 +5,6 @@ pushd ./ >> /dev/null
 cd $DIR
 cd ../../
 export PYTHONPATH=$(pwd)/src/:$PYTHONPATH
-popd >> /dev/null
-
 # execute unit tests
-python ../../test/unit/test_data_object.py
-exit $?
+python test/unit/test_data_object.py
+popd >> /dev/null
