@@ -10,4 +10,5 @@ setup(
       author='',
       author_email='',
       url='',
-      packages=find_packages())
+      packages=find_packages(),
+      test_suite="test")
