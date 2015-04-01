@@ -106,6 +106,10 @@ class AbstractDataObject(object):
             self.open()
 
         nbytes = self.writeMeta(producer, **kwargs)
+        
+        if (self._status == DOStates.COMPLETED):
+            if (self._parent):
+                self._parent.onCompleted(self)            
                     
         if (self._status != DOStates.DIRTY):
             self.setStatus(DOStates.DIRTY)
@@ -186,7 +190,7 @@ class AbstractDataObject(object):
         
         # invoke consumers if any
         for cs_id, cs in enumerate(self._consumers):
-            cs.run(self, cs_index = cs_id) #TODO: this should be done in parallel
+            cs.runMeta(self, cs_index = cs_id) #TODO: this should be done in parallel
             
         # notify my parent if any
         if (self._parent):
@@ -247,19 +251,19 @@ class AppDataObject(AbstractDataObject):
         So that AppDataObject can be called by service handlers in the same way as 
         "pure" data object if necessary
         """
-        self.run(**kwargs)
+        self.runMeta(**kwargs)
     
-    def run(self, producer, **kwargs):
+    def runMeta(self, producer, **kwargs):
         """
         Execute the tasks
         """
-        kwdict = self.runCallBack(producer, **kwargs)
+        kwdict = self.run(producer, **kwargs)
         # TODO - this should be in another process/thread or as a continuation
         for cs_id, cs in enumerate(self._consumers):
             kwdict['cs_index'] = cs_id
             cs.write(self, **kwdict)
     
-    def runCallBack(self, producer, **kwargs):
+    def run(self, producer, **kwargs):
         """
         Hooks for sub class
         Must return a dictionary: key: parameter name, val: argument value
@@ -272,7 +276,7 @@ class ComputeStreamChecksum(AppDataObject):
     def appInitialize(self, **kwargs):
         pass
     
-    def runCallBack(self, producer, **kwargs):
+    def run(self, producer, **kwargs):
         chunk = kwargs['chunk']
         self._checksum = crc32(chunk, self._checksum)
         producer.setChecksum(self._checksum)
@@ -283,7 +287,7 @@ class ComputeFileChecksum(AppDataObject):
     def appInitialize(self, **kwargs):
         self._bufsize = 4 * 1024 ** 2
     
-    def runCallBack(self, producer, **kwargs):
+    def run(self, producer, **kwargs):
         #cs_index = cs_id, file_name = self._fnm, file_length = self._fleng
         filename = kwargs['file_name']
         fo = open(filename, "r")
@@ -339,8 +343,8 @@ class FileDataObject(AbstractDataObject):
         if (self._fwritten == self._fleng):
             self.setStatus(DOStates.COMPLETED)
             # tell my parent (if any) that I am completed 
-            if (self._parent):
-                self._parent.onCompleted(self)
+            #if (self._parent):
+            #    self._parent.onCompleted(self)
                 
         return len(chunk)
     
@@ -350,7 +354,7 @@ class FileDataObject(AbstractDataObject):
         """
         self._fo.close()
         for cs_id, cs in enumerate(self._consumers):
-            cs.run(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
+            cs.runMeta(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
         
     
     def seek(self, **kwargs):
@@ -383,8 +387,8 @@ class StreamDataObject(AbstractDataObject):
             cs.run(self, cs_index = cs_id, chunk = self._buf)
         self.setStatus(DOStates.COMPLETED)
         # notify my parent if any
-        if (self._parent):
-            self._parent.onCompleted(self)
+        #if (self._parent):
+        #    self._parent.onCompleted(self)
         return len(self._buf)
     
     def stream(self, **kwargs):
