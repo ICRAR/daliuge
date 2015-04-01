@@ -23,7 +23,6 @@
 # ------------------------------------------------ 
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
-from dfms.ddap_protocol import DOStates
 
 """
 Data object is the centre of the data-driven architecture
@@ -107,12 +106,7 @@ class AbstractDataObject(object):
             self.open()
 
         nbytes = self.writeMeta(producer, **kwargs)
-        
-        # notify parent object that its completed
-        if (self._status == DOStates.COMPLETED):
-            if (self._parent):
-                self._parent.onCompleted(self)
-        
+                    
         if (self._status != DOStates.DIRTY):
             self.setStatus(DOStates.DIRTY)
         
@@ -192,8 +186,7 @@ class AbstractDataObject(object):
         
         # invoke consumers if any
         for cs_id, cs in enumerate(self._consumers):
-            #cs.run(self, cs_index = cs_id) #TODO: this should be done in parallel
-            cs.postCompleteEvent(self, cs_index = cs_id)
+            cs.run(self, cs_index = cs_id) #TODO: this should be done in parallel
             
         # notify my parent if any
         if (self._parent):
@@ -254,10 +247,9 @@ class AppDataObject(AbstractDataObject):
         So that AppDataObject can be called by service handlers in the same way as 
         "pure" data object if necessary
         """
-        #self.run(**kwargs)
-        pass
+        self.run(**kwargs)
     
-    '''def run(self, producer, **kwargs):
+    def run(self, producer, **kwargs):
         """
         Execute the tasks
         """
@@ -265,68 +257,22 @@ class AppDataObject(AbstractDataObject):
         # TODO - this should be in another process/thread or as a continuation
         for cs_id, cs in enumerate(self._consumers):
             kwdict['cs_index'] = cs_id
-            cs.write(self, **kwdict)'''
+            cs.write(self, **kwdict)
     
-    def postBufferEvent(self, producer, **kwargs):
-        """
-        Execute the tasks
-        """
-        kwdict = self.onBuffer(producer, **kwargs)
-        if kwdict:
-            # TODO - this should be in another process/thread or as a continuation
-            for cs_id, cs in enumerate(self._consumers):
-                kwdict['cs_index'] = cs_id
-                cs.write(self, **kwdict)
-    
-    def postInitEvent(self, producer, **kwargs):
-        """
-        Execute the tasks
-        """
-        kwdict = self.onInit(producer, **kwargs)
-        if kwdict:
-            # TODO - this should be in another process/thread or as a continuation
-            for cs_id, cs in enumerate(self._consumers):
-                kwdict['cs_index'] = cs_id
-                cs.write(self, **kwdict)
-    
-    def postCompleteEvent(self, producer, **kwargs):
-        """
-        Execute the tasks
-        """
-        kwdict = self.onComplete(producer, **kwargs)
-        if kwdict:
-            # TODO - this should be in another process/thread or as a continuation
-            for cs_id, cs in enumerate(self._consumers):
-                kwdict['cs_index'] = cs_id
-                cs.write(self, **kwdict)
-    
-    def postEntryEvent(self, producer, **kwargs):
-        """
-        Execute the tasks
-        """
-        kwdict = self.onEntry(producer, **kwargs)
-        if kwdict:
-            # TODO - this should be in another process/thread or as a continuation
-            for cs_id, cs in enumerate(self._consumers):
-                kwdict['cs_index'] = cs_id
-                cs.write(self, **kwdict)
-    
-    '''def runCallBack(self, producer, **kwargs):
+    def runCallBack(self, producer, **kwargs):
         """
         Hooks for sub class
         Must return a dictionary: key: parameter name, val: argument value
         which will then be used as the **kwargs for calling consumers (i.e. "real" AbstractDataObjects)
         """
-        pass'''
+        pass
 
 class ComputeStreamChecksum(AppDataObject):
     
     def appInitialize(self, **kwargs):
         pass
     
-    
-    def onBuffer(self, producer, **kwargs):
-    #def runCallBack(self, producer, **kwargs):
+    def runCallBack(self, producer, **kwargs):
         chunk = kwargs['chunk']
         self._checksum = crc32(chunk, self._checksum)
         producer.setChecksum(self._checksum)
@@ -337,8 +283,7 @@ class ComputeFileChecksum(AppDataObject):
     def appInitialize(self, **kwargs):
         self._bufsize = 4 * 1024 ** 2
     
-    def onComplete(self, producer, **kwargs):
-    #def runCallBack(self, producer, **kwargs):
+    def runCallBack(self, producer, **kwargs):
         #cs_index = cs_id, file_name = self._fnm, file_length = self._fleng
         filename = kwargs['file_name']
         fo = open(filename, "r")
@@ -394,8 +339,8 @@ class FileDataObject(AbstractDataObject):
         if (self._fwritten == self._fleng):
             self.setStatus(DOStates.COMPLETED)
             # tell my parent (if any) that I am completed 
-            #if (self._parent):
-            #    self._parent.onCompleted(self)
+            if (self._parent):
+                self._parent.onCompleted(self)
                 
         return len(chunk)
     
@@ -405,8 +350,7 @@ class FileDataObject(AbstractDataObject):
         """
         self._fo.close()
         for cs_id, cs in enumerate(self._consumers):
-            cs.postCompleteEvent(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
-            #cs.run(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
+            cs.run(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
         
     
     def seek(self, **kwargs):
@@ -436,13 +380,11 @@ class StreamDataObject(AbstractDataObject):
         self._buf = kwargs['chunk']
         #doms_handler = kwargs['doms_handler']
         for cs_id, cs in enumerate(self._consumers):
-            #cs.run(self, cs_index = cs_id, chunk = self._buf)
-            cs.postBufferEvent(self, cs_index = cs_id, chunk = self._buf)
-            
+            cs.run(self, cs_index = cs_id, chunk = self._buf)
         self.setStatus(DOStates.COMPLETED)
         # notify my parent if any
-        #if (self._parent):
-        #    self._parent.onCompleted(self)
+        if (self._parent):
+            self._parent.onCompleted(self)
         return len(self._buf)
     
     def stream(self, **kwargs):
