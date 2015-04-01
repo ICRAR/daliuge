@@ -40,7 +40,7 @@ class DOType:
 
 #TODO - add more states
 class DOStates:
-    CLOSED, DIRTY, COMPLETED, INITIALIZED = range(1, 5)
+    FAILED, DIRTY, COMPLETED, INITIALIZED = range(1, 5)
 
 class REST_API_DOM: # RESTful API (url patterns)
     """
