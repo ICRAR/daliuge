@@ -64,11 +64,18 @@ class AbstractDataObject(object):
      
         self._location = None
         self._parent = None
-        self._status = DOStates.CLOSED
+        self._status = None
         self._checksum = 0
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
-        self.initialize(**kwargs)
+        self._initialize(**kwargs)
+    
+    def _initialize(self, **kwargs):
+        try:
+            self.initialize(**kwargs)
+            self.setStatus(DOStates.INITIALIZED)
+        except:
+            self.setStatus(DOStates.FAILED)
     
     def initialize(self, **kwargs):
         """
@@ -90,7 +97,7 @@ class AbstractDataObject(object):
     
     def close(self, **kwargs):
         self.closeMeta(**kwargs)
-        self.setStatus(DOStates.CLOSED)
+        #self.setStatus(DOStates.CLOSED)
         
     def closeMeta(self, **kwargs):
         """
@@ -102,16 +109,17 @@ class AbstractDataObject(object):
         pass
     
     def write(self, producer, **kwargs):
-        if (self._status == DOStates.CLOSED):
-            self.open()
 
         nbytes = self.writeMeta(producer, **kwargs)
         
         if (self._status == DOStates.COMPLETED):
             if (self._parent):
-                self._parent.onCompleted(self)            
-                    
-        if (self._status != DOStates.DIRTY):
+                self._parent.onCompleted(self) 
+                           
+        elif (self._status == DOStates.FAILED):
+            pass    
+         
+        else:
             self.setStatus(DOStates.DIRTY)
         
         return nbytes
@@ -190,7 +198,7 @@ class AbstractDataObject(object):
         
         # invoke consumers if any
         for cs_id, cs in enumerate(self._consumers):
-            cs.runMeta(self, cs_index = cs_id) #TODO: this should be done in parallel
+            cs._run(self, cs_index = cs_id) #TODO: this should be done in parallel
             
         # notify my parent if any
         if (self._parent):
@@ -251,9 +259,9 @@ class AppDataObject(AbstractDataObject):
         So that AppDataObject can be called by service handlers in the same way as 
         "pure" data object if necessary
         """
-        self.runMeta(**kwargs)
+        self._run(**kwargs)
     
-    def runMeta(self, producer, **kwargs):
+    def _run(self, producer, **kwargs):
         """
         Execute the tasks
         """
@@ -354,7 +362,7 @@ class FileDataObject(AbstractDataObject):
         """
         self._fo.close()
         for cs_id, cs in enumerate(self._consumers):
-            cs.runMeta(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
+            cs._run(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
         
     
     def seek(self, **kwargs):
