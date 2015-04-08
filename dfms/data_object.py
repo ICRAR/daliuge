@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 # Who                   When          What
-# ------------------------------------------------ 
+# ------------------------------------------------
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
 
@@ -34,7 +34,7 @@ try:
     from crc32c import crc32
 except:
     from binascii import crc32
-    
+
 from ddap_protocol import DOStates
 from observable import Observable
 
@@ -44,7 +44,7 @@ class AbstractDataObject(Observable):
     The AbstractDataObject
     It should be split into abstract, container
     but we mix them into a single one for the time being
-    
+
     TODO - to support stream and iterative processing
     """
     def __init__(self, oid, uid, sub=None,**kwargs):
@@ -61,150 +61,146 @@ class AbstractDataObject(Observable):
                             #       or (2) real data objects (if I am a real component that produce them)
         self._producers = []# could be (1) real component (if I am a real data object produced by them)
                             #       or (2) real data objects (if I am a real component that consume them)
-        self._children = [] # now, we only allow real data object to have children
-                            # but real component can have children too (in the future)
+
         #self._stateEHlist = [] # state event handler list
-     
+
         self._location = None
         self._parent = None
         self._status = None
         self._checksum = 0
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
-            
+
         if sub:
             self.subscribe(sub)
-    
+
         try:
             self.initialize(**kwargs)
             self.setStatus(DOStates.INITIALIZED)
         except:
             self.setStatus(DOStates.FAILED)
-            
+
         #self._initialize(**kwargs)
-    
+
     def _initialize(self, **kwargs):
         try:
             self.initialize(**kwargs)
             self.setStatus(DOStates.INITIALIZED)
         except:
             self.setStatus(DOStates.FAILED)
-    
+
     def initialize(self, **kwargs):
         """
         Hook for subclass initialization.
         """
         pass
-    
+
     def open(self, **kwargs):
         """
         Refer to Activity Diagram (Data Lifecycle / Open Data Object)
         """
         self.openMeta(**kwargs)
-    
+
     def openMeta(self, **kwargs):
         """
         Hook for subclass open
         """
         pass
-    
+
     def close(self, **kwargs):
         self.closeMeta(**kwargs)
         #self.setStatus(DOStates.CLOSED)
-        
+
     def closeMeta(self, **kwargs):
         """
         Hook for subclass close
         """
         pass
-    
+
     def read(self, **kwargs):
         pass
-    
+
     def write(self, producer, **kwargs):
 
         nbytes = self.writeMeta(producer, **kwargs)
-        
+
         if (self._status == DOStates.COMPLETED):
             pass
             #if (self._parent):
-            #    self._parent.onCompleted(self) 
-                           
+            #    self._parent.onCompleted(self)
+
         elif (self._status == DOStates.FAILED):
-            pass    
-         
+            pass
+
         else:
             self.setStatus(DOStates.DIRTY)
-        
+
         return nbytes
-    
+
     def writeMeta(self, producer, **kwargs):
         """
         Hook for subclass write
         """
         pass
-    
+
     def computeChecksum(self, chunk):
         self._checksum = crc32(chunk, self._checksum)
         return self._checksum
-    
+
     def getChecksum(self):
         return self._checksum
-    
+
     def setChecksum(self, checksum):
         self._checksum = checksum
-    
+
     def getOid(self):
         return self._oid
-    
+
     def setStatus(self, status):
         # if we are already in the state that is requested then do nothing
         if status == self._status:
-            return;
-        
+            return
+
         self._status = status
-        
+
         # fire off event
-        self.fire(type='setStatus', status=status)
-    
-       
+        self.fire(type='setStatus', status=status, oid=self._oid)
+
+
     def setParent(self, parent):
         if (parent): # only real data object has parent, and we currently only have up to 1 parent
             self._parent = parent # a parent is a container
-    
+
     def getParent(self):
         return self._parent
-    
+
     def setConsumers(self, consumers):
         """
         set a list of consumers (replace the existing ones)
         """
         self._consumers = consumers
-        
+
     def getConsumers(self):
-        return self._consumers 
-        
+        return self._consumers
+
     def addConsumer(self, consumer):
         self._consumers.append(consumer)
-        
+
     def addProducer(self, producer):
         self._producers.append(producer)
-        
-    def addChild(self, child):
-        self._children.append(child)
-    
+
     def isCompleted(self):
         return (self._status == DOStates.COMPLETED)
-    
+
     def isContainer(self):
         return (len(self._children) > 0)
-    
+
     '''def onCompleted(self, child):
         """
         Callback when data (ingestion) is completed
         This is called ONLY by one of the children data objects
         In this case, the current data object is a "container"
-        
+
         child:    The child of the container, i.e. myself
         """
         print "I am %s, I am notified of the completion by my child: %s" % (self.getOid(), child.getOid())
@@ -212,42 +208,42 @@ class AbstractDataObject(Observable):
         for mychild in self._children:
             if (not mychild.isCompleted()): #TODO - this is somehow wrong
                 return
-        
+
         # invoke consumers if any
         for cs_id, cs in enumerate(self._consumers):
             cs._run(self, cs_index = cs_id) #TODO: this should be done in parallel
-            
+
         # notify my parent if any
         if (self._parent):
             self._parent.onCompleted(self)
-        
+
         self.setStatus(DOStates.COMPLETED)'''
-    
+
     def setLocation(self, location):
         """
         This should be set when the physical graph was built
         """
         self._location = location
-    
+
     def getLocation(self):
         """
         return where the "actual" data is located
         the location could be a Compute node or a Island or just the buffer URL
         """
         return self._location
-    
+
     def setURI(self, uri):
         self._uri = uri
-    
+
     def getURI(self):
         return self._uri
-    
+
     def ping(self):
         """
         This is for testing purpose
         """
         return 'OK. My oid = %s, and my uid = %s' % (self.getOid(), self._uid)
-    
+
     '''def subscribeStateChange(self, eventHandler):
         """
         subscribe to state change event
@@ -255,29 +251,29 @@ class AbstractDataObject(Observable):
         """
         self._stateEHlist.append(eventHandler)
         return
-    
+
     def unsubscribeStateChange(self, eventHandler):
         self._stateEHlist.remove(eventHandler) # assuming no duplicates for now'''
 
 class AppDataObject(AbstractDataObject):
-    
+
     def initialize(self, **kwargs):
-        
+
         self.appInitialize(**kwargs)
-    
+
     def appInitialize(self, **kwargs):
         """
         Hooks for sub class
         """
         pass
-    
+
     def writeMeta(self, producer, **kwargs):
         """
-        So that AppDataObject can be called by service handlers in the same way as 
+        So that AppDataObject can be called by service handlers in the same way as
         "pure" data object if necessary
         """
         self._run(**kwargs)
-    
+
     def _run(self, producer, **kwargs):
         """
         Execute the tasks
@@ -287,7 +283,7 @@ class AppDataObject(AbstractDataObject):
         for cs_id, cs in enumerate(self._consumers):
             kwdict['cs_index'] = cs_id
             cs.write(self, **kwdict)
-    
+
     def run(self, producer, **kwargs):
         """
         Hooks for sub class
@@ -297,10 +293,10 @@ class AppDataObject(AbstractDataObject):
         pass
 
 class ComputeStreamChecksum(AppDataObject):
-    
+
     def appInitialize(self, **kwargs):
         pass
-    
+
     def run(self, producer, **kwargs):
         chunk = kwargs['chunk']
         self._checksum = crc32(chunk, self._checksum)
@@ -308,10 +304,10 @@ class ComputeStreamChecksum(AppDataObject):
         return kwargs
 
 class ComputeFileChecksum(AppDataObject):
-    
+
     def appInitialize(self, **kwargs):
         self._bufsize = 4 * 1024 ** 2
-    
+
     def run(self, producer, **kwargs):
         #cs_index = cs_id, file_name = self._fnm, file_length = self._fleng
         filename = kwargs['file_name']
@@ -321,12 +317,12 @@ class ComputeFileChecksum(AppDataObject):
         while (buf != ""):
             crc = crc32(buf, crc)
             buf = fo.read(self._bufsize)
-        fo.close()        
+        fo.close()
         producer.setChecksum(crc)
         return kwargs
 
 class FileDataObject(AbstractDataObject):
-    
+
     def initialize(self, **kwargs):
         """
         File data object-specific initialization.
@@ -334,14 +330,14 @@ class FileDataObject(AbstractDataObject):
         self._root = '/tmp/sdp_dfms'
         if (not os.path.exists(self._root)):
             os.mkdir(self._root)
-        
+
         self._fnm = ''.join([self._root, os.sep, self._oid])
         if (kwargs.has_key('file_length')):
             self._fleng = kwargs['file_length']
         else:
             raise Exception("Must specify the length of the file: file_length")
         self._fwritten = 0
-    
+
     def openMeta(self, **kwargs):
         """
         """
@@ -351,25 +347,26 @@ class FileDataObject(AbstractDataObject):
             mode = 'wb'
         self._fo = open(self._fnm, mode)
         return self._fo
-    
+
     def writeMeta(self, producer, **kwargs):
         """
         Each chunk written to a file object
         will be written to the file system
-        
+
         producer:    is the AppDataObject
-        
+
         this is NOT thread safe (assuming we will single threaded event loop)
-        
+
         """
         chunk = kwargs['chunk']
         self._fo.write(chunk)
         self._fwritten += len(chunk)
         if (self._fwritten == self._fleng):
+            self._fo.flush()
             self.setStatus(DOStates.COMPLETED)
-                
+
         return len(chunk)
-    
+
     def closeMeta(self, **kwargs):
         """
         Closing the file object will trigger its consumer (AppDataObject) to run
@@ -377,43 +374,77 @@ class FileDataObject(AbstractDataObject):
         self._fo.close()
         for cs_id, cs in enumerate(self._consumers):
             cs._run(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
-        
-    
+
+
     def seek(self, **kwargs):
         pass
 
 class StreamDataObject(AbstractDataObject):
-    
+
     def initialize(self, **kwargs):
         """
         Hook for subclass initialization.
         """
         self._buf = ''
-    
+
     def openMeta(self, **kwargs):
         """
         This is not thread safe, because we assume everything is inside a single thread!
         """
         return self._buf
-    
+
     def writeMeta(self, producer, **kwargs):
         """
         Each chunk written to a stream object
         will be immediately streamed to its consumer
-        
+
         TODO - use an internal buffer, only trigger when it is full
         """
         self._buf = kwargs['chunk']
         #doms_handler = kwargs['doms_handler']
         for cs_id, cs in enumerate(self._consumers):
             cs._run(self, cs_index = cs_id, chunk = self._buf)
-            
+
         self.setStatus(DOStates.COMPLETED)
 
         return len(self._buf)
-    
+
     def stream(self, **kwargs):
         pass
 
+class ContainerDataObject(AbstractDataObject):
+    """
+    Container data object has children data objects
+    """
+    def initialize(self, **kwargs):
+        """
+        Hook for subclass initialization.
+        """
+        self._children = []
+        self._complete_map = {} #key - child oid, value - completed yet (bool)?
 
-    
+    def check_join_condition(self, event):
+        if ("setStatus" != event.type):
+            return
+        print "Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
+        if (event.status != DOStates.COMPLETED):
+            return
+        self._complete_map[event.oid] = True
+        # check if each child is completed
+        for k, c_yet in self._complete_map.iteritems():
+            if (not c_yet):
+                return
+
+        # invoke consumers if any
+        for cs_id, cs in enumerate(self._consumers):
+            cs._run(self, cs_index = cs_id) #TODO: this should be done in parallel
+
+        # notify my parent (if any) via setStatus, which fires an event
+        self.setStatus(DOStates.COMPLETED)
+
+    def addChild(self, child):
+        child.subscribe(self.check_join_condition)
+        self._children.append(child)
+        self._complete_map[child.getOid()] = child.isCompleted()
+
+
