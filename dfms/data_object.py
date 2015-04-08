@@ -36,9 +36,10 @@ except:
     from binascii import crc32
     
 from ddap_protocol import DOStates
+from observable import Observable
 
 
-class AbstractDataObject(object):
+class AbstractDataObject(Observable):
     """
     The AbstractDataObject
     It should be split into abstract, container
@@ -46,12 +47,14 @@ class AbstractDataObject(object):
     
     TODO - to support stream and iterative processing
     """
-    def __init__(self, oid, uid, **kwargs):
+    def __init__(self, oid, uid, sub=None,**kwargs):
         """
         Constructor
         oid:    object id (string)
         uid:    uuid    (string)
         """
+        super(AbstractDataObject, self).__init__()
+
         self._oid = oid
         self._uid = uid
         self._consumers = []# could be (1) real component (if I am a real data object consumed by them)
@@ -60,7 +63,7 @@ class AbstractDataObject(object):
                             #       or (2) real data objects (if I am a real component that consume them)
         self._children = [] # now, we only allow real data object to have children
                             # but real component can have children too (in the future)
-        self._stateEHlist = [] # state event handler list
+        #self._stateEHlist = [] # state event handler list
      
         self._location = None
         self._parent = None
@@ -68,7 +71,17 @@ class AbstractDataObject(object):
         self._checksum = 0
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
-        self._initialize(**kwargs)
+            
+        if sub:
+            self.subscribe(sub)
+    
+        try:
+            self.initialize(**kwargs)
+            self.setStatus(DOStates.INITIALIZED)
+        except:
+            self.setStatus(DOStates.FAILED)
+            
+        #self._initialize(**kwargs)
     
     def _initialize(self, **kwargs):
         try:
@@ -113,8 +126,9 @@ class AbstractDataObject(object):
         nbytes = self.writeMeta(producer, **kwargs)
         
         if (self._status == DOStates.COMPLETED):
-            if (self._parent):
-                self._parent.onCompleted(self) 
+            pass
+            #if (self._parent):
+            #    self._parent.onCompleted(self) 
                            
         elif (self._status == DOStates.FAILED):
             pass    
@@ -144,12 +158,15 @@ class AbstractDataObject(object):
         return self._oid
     
     def setStatus(self, status):
-        olds = self._status
+        # if we are already in the state that is requested then do nothing
+        if status == self._status:
+            return;
+        
         self._status = status
-        # fire events TODO - start a new thread with proper exception handling:
-        for eh in self._stateEHlist:
-            if (eh.filterStateChange(olds, status)):
-                eh.onStateChange(self.getOid(), olds, status)
+        
+        # fire off event
+        self.fire(type='setStatus', status=status)
+    
        
     def setParent(self, parent):
         if (parent): # only real data object has parent, and we currently only have up to 1 parent
@@ -182,7 +199,7 @@ class AbstractDataObject(object):
     def isContainer(self):
         return (len(self._children) > 0)
     
-    def onCompleted(self, child):
+    '''def onCompleted(self, child):
         """
         Callback when data (ingestion) is completed
         This is called ONLY by one of the children data objects
@@ -204,7 +221,7 @@ class AbstractDataObject(object):
         if (self._parent):
             self._parent.onCompleted(self)
         
-        self.setStatus(DOStates.COMPLETED)
+        self.setStatus(DOStates.COMPLETED)'''
     
     def setLocation(self, location):
         """
@@ -231,7 +248,7 @@ class AbstractDataObject(object):
         """
         return 'OK. My oid = %s, and my uid = %s' % (self.getOid(), self._uid)
     
-    def subscribeStateChange(self, eventHandler):
+    '''def subscribeStateChange(self, eventHandler):
         """
         subscribe to state change event
         eventHandler:  an instance of DOStateEventHandler
@@ -240,7 +257,7 @@ class AbstractDataObject(object):
         return
     
     def unsubscribeStateChange(self, eventHandler):
-        self._stateEHlist.remove(eventHandler) # assuming no duplicates for now
+        self._stateEHlist.remove(eventHandler) # assuming no duplicates for now'''
 
 class AppDataObject(AbstractDataObject):
     
@@ -350,9 +367,6 @@ class FileDataObject(AbstractDataObject):
         self._fwritten += len(chunk)
         if (self._fwritten == self._fleng):
             self.setStatus(DOStates.COMPLETED)
-            # tell my parent (if any) that I am completed 
-            #if (self._parent):
-            #    self._parent.onCompleted(self)
                 
         return len(chunk)
     
@@ -392,11 +406,10 @@ class StreamDataObject(AbstractDataObject):
         self._buf = kwargs['chunk']
         #doms_handler = kwargs['doms_handler']
         for cs_id, cs in enumerate(self._consumers):
-            cs.run(self, cs_index = cs_id, chunk = self._buf)
+            cs._run(self, cs_index = cs_id, chunk = self._buf)
+            
         self.setStatus(DOStates.COMPLETED)
-        # notify my parent if any
-        #if (self._parent):
-        #    self._parent.onCompleted(self)
+
         return len(self._buf)
     
     def stream(self, **kwargs):
