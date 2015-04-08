@@ -31,13 +31,18 @@ class TestDataObject(unittest.TestCase):
         """
         pass
 
+    def myEventHandler(self, event):
+        print
+        print event.source, event.status
+        #print event.source
+
     def test_write_FileDataObject(self):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
 
-        dobA = FileDataObject('oid:A', 'uid:A', file_length = self._test_do_sz * ONE_MB)
-        dobB = ComputeFileChecksum('oid:B', 'uid:B')
+        dobA = FileDataObject('oid:A', 'uid:A', sub=self.myEventHandler, file_length = self._test_do_sz * ONE_MB)
+        dobB = ComputeFileChecksum('oid:B', 'uid:B', sub=self.myEventHandler)
         dobA.addConsumer(dobB)
 
         dobA.open()
