@@ -2,6 +2,7 @@
 """
 
 from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
+from dfms.event_broadcaster import LocalEventBroadcaster
 
 import os, unittest
 
@@ -67,8 +68,8 @@ class TestDataObject(unittest.TestCase):
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
 
-        dobA = FileDataObject('oid:A', 'uid:A', sub=self.TestEventHandler, file_length = self._test_do_sz * ONE_MB)
-        dobB = ComputeFileChecksum('oid:B', 'uid:B', sub=self.TestEventHandler)
+        dobA = FileDataObject('oid:A', 'uid:A', eventbc=LocalEventBroadcaster([self.TestEventHandler]), file_length = self._test_do_sz * ONE_MB)
+        dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=LocalEventBroadcaster([self.TestEventHandler]))
         dobA.addConsumer(dobB)
 
         dobA.open()
@@ -87,8 +88,8 @@ class TestDataObject(unittest.TestCase):
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
 
-        dobA = StreamDataObject('oid:A', 'uid:A')
-        dobB = ComputeStreamChecksum('oid:B', 'uid:B')
+        dobA = StreamDataObject('oid:A', 'uid:A', eventbc=LocalEventBroadcaster())
+        dobB = ComputeStreamChecksum('oid:B', 'uid:B', eventbc=LocalEventBroadcaster())
         dobA.addConsumer(dobB)
 
         dobA.open()
@@ -114,11 +115,11 @@ class TestDataObject(unittest.TestCase):
         filelen = self._test_do_sz * ONE_MB
         dobAList = []
         #create file data objects
-        dobA1 = FileDataObject('oid:A1', 'uid:A1', sub=self.TestEventHandler,
+        dobA1 = FileDataObject('oid:A1', 'uid:A1', eventbc=LocalEventBroadcaster([self.TestEventHandler]),
                                file_length=filelen)
-        dobA2 = FileDataObject('oid:A2', 'uid:A2', sub=self.TestEventHandler,
+        dobA2 = FileDataObject('oid:A2', 'uid:A2', eventbc=LocalEventBroadcaster([self.TestEventHandler]),
                                file_length=filelen)
-        dobA3 = FileDataObject('oid:A3', 'uid:A3', sub=self.TestEventHandler,
+        dobA3 = FileDataObject('oid:A3', 'uid:A3', eventbc=LocalEventBroadcaster([self.TestEventHandler]),
                                file_length=filelen)
         dobAList.append(dobA1)
         dobAList.append(dobA2)
@@ -126,22 +127,22 @@ class TestDataObject(unittest.TestCase):
 
         # create CRC component attached to the file data object
         dob_a1 = ComputeFileChecksum('oid:a1', 'uid:a1',
-                                     sub=self.TestEventHandler)
+                                     eventbc=LocalEventBroadcaster([self.TestEventHandler]))
         dobA1.addConsumer(dob_a1)
         dob_a2 = ComputeFileChecksum('oid:a2', 'uid:a2',
-                                     sub=self.TestEventHandler)
+                                     eventbc=LocalEventBroadcaster([self.TestEventHandler]))
         dobA2.addConsumer(dob_a2)
         dob_a3 = ComputeFileChecksum('oid:a3', 'uid:a3',
-                                     sub=self.TestEventHandler)
+                                     eventbc=LocalEventBroadcaster([self.TestEventHandler]))
         dobA3.addConsumer(dob_a3)
 
-        dobB = ContainerDataObject('oid:B', 'uid:B')
+        dobB = ContainerDataObject('oid:B', 'uid:B', eventbc=LocalEventBroadcaster())
         for dobA in dobAList:
             dobA.setParent(dobB)
             dobB.addChild(dobA)
 
         dob_b = SumupContainerChecksum('oid:b', 'uid:b',
-                                       sub=self.TestEventHandler)
+                                       eventbc=LocalEventBroadcaster([self.TestEventHandler]))
         dobB.addConsumer(dob_b)
 
         for dobA in dobAList: # this should be parallel for

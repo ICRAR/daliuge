@@ -21,26 +21,39 @@
 #
 # Who                   When          What
 # ------------------------------------------------
-# chen.wu@icrar.org   12/12/2014     Created
+# dave.pallot@icrar.org   9/Apr/2015     Created
 #
-"""
-event handling
-See its usage in data_object.py
-    def setStatus(self, status)
-"""
 
-class DOStateEventHandler(object):
-    """
-    An interface that handles data object events
-    """
-    def onStateChange(self, doUri, oldState, newState):
-        return
+class Event(object):
+    pass
 
-    def filterStateChange(self, oldState, newState):
-        """
-        By default, mask all events
-        """
-        return False
+class EventBroadcaster(object):
+    
+    def subscribe(self, callback):
+        pass
+    
+    def unsubscribe(self, callback):
+        pass
+    
+    def fire(self, **attrs):
+        pass
 
+class LocalEventBroadcaster(EventBroadcaster):
 
+    def __init__(self, callbacks = []):
+        self._callbacks = callbacks
 
+    def subscribe(self, callback):
+        self._callbacks.append(callback)
+    
+    def unsubscribe(self, callback):
+        self._callbacks.remove(callback)
+    
+    def fire(self, **attrs):
+        e = Event()
+        e.source = self
+        for k, v in attrs.iteritems():
+            setattr(e, k, v)
+        for fn in self._callbacks:
+            fn(e)
+            
