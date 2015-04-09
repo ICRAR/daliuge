@@ -29,31 +29,38 @@ class Event(object):
 
 class EventBroadcaster(object):
     
-    def subscribe(self, callback):
+    def subscribe(self, uid, callback):
         pass
     
-    def unsubscribe(self, callback):
+    def unsubscribe(self, uid, callback):
         pass
     
-    def fire(self, **attrs):
+    def fire(self, uid, **attrs):
         pass
 
 class LocalEventBroadcaster(EventBroadcaster):
 
-    def __init__(self, callbacks = []):
-        self._callbacks = callbacks
+    def __init__(self):
+        self._callbacks = {}
 
-    def subscribe(self, callback):
-        self._callbacks.append(callback)
+    def subscribe(self, uid, callback):
+        if self._callbacks.has_key(uid):
+            self._callbacks[uid].append(callback)
+        else:
+            self._callbacks[uid] = [callback]
     
-    def unsubscribe(self, callback):
-        self._callbacks.remove(callback)
+    def unsubscribe(self, uid, callback):
+        if self._callbacks.has_key(uid):
+            self._callbacks[uid].remove(callback)
     
     def fire(self, **attrs):
         e = Event()
         e.source = self
         for k, v in attrs.iteritems():
             setattr(e, k, v)
-        for fn in self._callbacks:
-            fn(e)
+        
+        uid = attrs['uid']
+        if self._callbacks.has_key(uid):
+            for fn in self._callbacks[uid]:
+                fn(e)
             
