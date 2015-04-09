@@ -146,11 +146,11 @@ class TestDataObject(unittest.TestCase):
 
         for dobA in dobAList: # this should be parallel for
             dobA.open()
-            test_crc = 0
+            #test_crc = 0
             for i in range(self._test_num_blocks):
                 dobA.write(None, chunk = self._test_block)
-                test_crc = crc32(self._test_block, test_crc)
-            dobA.close() # trigger internal
+                #test_crc = crc32(self._test_block, test_crc)
+            dobA.close()
 
         sum_crc = 0
         for dobA in dobAList:
