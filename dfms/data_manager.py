@@ -34,7 +34,6 @@ but only gets instructed by Data Object to execute a specific tasks on some loca
 as stipulated by the physical graph
 
 """
-from event_handling import DOStateEventHandler
 from ddap_protocol import DOStates
 from data_object import AbstractDataObject, AppDataObject
 
@@ -121,7 +120,7 @@ class DataManager():
         self.daemon_dob_dict[sessionId][uri] = mydo
         return uri
 
-class DMDOStateEventHandler(DOStateEventHandler):
+class DMDOStateEventHandler():
     """
     """
     def __init__(self):

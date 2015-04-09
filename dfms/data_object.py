@@ -38,7 +38,6 @@ except:
 from ddap_protocol import DOStates
 from observable import Observable
 
-
 class AbstractDataObject(Observable):
     """
     The AbstractDataObject
@@ -47,13 +46,13 @@ class AbstractDataObject(Observable):
 
     TODO - to support stream and iterative processing
     """
-    def __init__(self, oid, uid, sub=None,**kwargs):
+    def __init__(self, oid, uid, eventbc, **kwargs):
         """
         Constructor
         oid:    object id (string)
         uid:    uuid    (string)
         """
-        super(AbstractDataObject, self).__init__()
+        super(AbstractDataObject, self).__init__(eventbc)
 
         self._oid = oid
         self._uid = uid
@@ -71,23 +70,13 @@ class AbstractDataObject(Observable):
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
 
-        if sub:
-            self.subscribe(sub)
-
         try:
             self.initialize(**kwargs)
             self.setStatus(DOStates.INITIALIZED)
-        except:
+        except Exception as e:
             self.setStatus(DOStates.FAILED)
-
-        #self._initialize(**kwargs)
-
-    def _initialize(self, **kwargs):
-        try:
-            self.initialize(**kwargs)
-            self.setStatus(DOStates.INITIALIZED)
-        except:
-            self.setStatus(DOStates.FAILED)
+            raise e
+            
 
     def initialize(self, **kwargs):
         """
@@ -413,6 +402,7 @@ class StreamDataObject(AbstractDataObject):
         pass
 
 class ContainerDataObject(AbstractDataObject):
+    
     """
     Container data object has children data objects
     """
