@@ -2,7 +2,7 @@
 """
 
 from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
-from dfms.event_broadcaster import LocalEventBroadcaster
+from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 import os, unittest
 
@@ -67,9 +67,10 @@ class TestDataObject(unittest.TestCase):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
-
-        dobA = FileDataObject('oid:A', 'uid:A', eventbc=LocalEventBroadcaster([self.TestEventHandler]), file_length = self._test_do_sz * ONE_MB)
-        dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=LocalEventBroadcaster([self.TestEventHandler]))
+        eventbc = LocalEventBroadcaster()
+        
+        dobA = FileDataObject('oid:A', 'uid:A', eventbc=eventbc, subs=[self.TestEventHandler], file_length = self._test_do_sz * ONE_MB)
+        dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=eventbc, subs=[self.TestEventHandler])
         dobA.addConsumer(dobB)
 
         dobA.open()
@@ -87,9 +88,10 @@ class TestDataObject(unittest.TestCase):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
-
-        dobA = StreamDataObject('oid:A', 'uid:A', eventbc=LocalEventBroadcaster())
-        dobB = ComputeStreamChecksum('oid:B', 'uid:B', eventbc=LocalEventBroadcaster())
+        eventbc=LocalEventBroadcaster()
+        
+        dobA = StreamDataObject('oid:A', 'uid:A', eventbc=eventbc)
+        dobB = ComputeStreamChecksum('oid:B', 'uid:B', eventbc=eventbc)
         dobA.addConsumer(dobB)
 
         dobA.open()
@@ -112,14 +114,16 @@ class TestDataObject(unittest.TestCase):
         -->A3(a3)--->|
 
         """
+        eventbc = LocalEventBroadcaster()
+        
         filelen = self._test_do_sz * ONE_MB
         dobAList = []
         #create file data objects
-        dobA1 = FileDataObject('oid:A1', 'uid:A1', eventbc=LocalEventBroadcaster([self.TestEventHandler]),
+        dobA1 = FileDataObject('oid:A1', 'uid:A1', eventbc=eventbc, subs=[self.TestEventHandler],
                                file_length=filelen)
-        dobA2 = FileDataObject('oid:A2', 'uid:A2', eventbc=LocalEventBroadcaster([self.TestEventHandler]),
+        dobA2 = FileDataObject('oid:A2', 'uid:A2', eventbc=eventbc, subs=[self.TestEventHandler],
                                file_length=filelen)
-        dobA3 = FileDataObject('oid:A3', 'uid:A3', eventbc=LocalEventBroadcaster([self.TestEventHandler]),
+        dobA3 = FileDataObject('oid:A3', 'uid:A3', eventbc=eventbc, subs=[self.TestEventHandler],
                                file_length=filelen)
         dobAList.append(dobA1)
         dobAList.append(dobA2)
@@ -127,22 +131,22 @@ class TestDataObject(unittest.TestCase):
 
         # create CRC component attached to the file data object
         dob_a1 = ComputeFileChecksum('oid:a1', 'uid:a1',
-                                     eventbc=LocalEventBroadcaster([self.TestEventHandler]))
+                                     eventbc=eventbc, subs=[self.TestEventHandler])
         dobA1.addConsumer(dob_a1)
         dob_a2 = ComputeFileChecksum('oid:a2', 'uid:a2',
-                                     eventbc=LocalEventBroadcaster([self.TestEventHandler]))
+                                     eventbc=eventbc, subs=[self.TestEventHandler])
         dobA2.addConsumer(dob_a2)
         dob_a3 = ComputeFileChecksum('oid:a3', 'uid:a3',
-                                     eventbc=LocalEventBroadcaster([self.TestEventHandler]))
+                                     eventbc=eventbc, subs=[self.TestEventHandler])
         dobA3.addConsumer(dob_a3)
 
-        dobB = ContainerDataObject('oid:B', 'uid:B', eventbc=LocalEventBroadcaster())
+        dobB = ContainerDataObject('oid:B', 'uid:B', eventbc=eventbc)
         for dobA in dobAList:
             dobA.setParent(dobB)
             dobB.addChild(dobA)
 
         dob_b = SumupContainerChecksum('oid:b', 'uid:b',
-                                       eventbc=LocalEventBroadcaster([self.TestEventHandler]))
+                                       eventbc=eventbc, subs=[self.TestEventHandler])
         dobB.addConsumer(dob_b)
 
         for dobA in dobAList: # this should be parallel for

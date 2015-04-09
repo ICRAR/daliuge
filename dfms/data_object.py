@@ -36,9 +36,9 @@ except:
     from binascii import crc32
 
 from ddap_protocol import DOStates
-from observable import Observable
 
-class AbstractDataObject(Observable):
+
+class AbstractDataObject():
     """
     The AbstractDataObject
     It should be split into abstract, container
@@ -46,13 +46,14 @@ class AbstractDataObject(Observable):
 
     TODO - to support stream and iterative processing
     """
-    def __init__(self, oid, uid, eventbc, **kwargs):
+    def __init__(self, oid, uid, eventbc, subs=[], **kwargs):
         """
         Constructor
         oid:    object id (string)
         uid:    uuid    (string)
         """
-        super(AbstractDataObject, self).__init__(eventbc)
+
+        self._bcaster = eventbc
 
         self._oid = oid
         self._uid = uid
@@ -69,6 +70,10 @@ class AbstractDataObject(Observable):
         self._checksum = 0
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
+
+
+        for s in subs:
+            self.subscribe(s)
 
         try:
             self.initialize(**kwargs)
@@ -145,6 +150,15 @@ class AbstractDataObject(Observable):
     def getOid(self):
         return self._oid
 
+    def subscribe(self, callback):
+        self._bcaster.subscribe(self._uid, callback)
+    
+    def unsubscribe(self, callback):
+        self._bcaster.unsubscribe(self._uid, callback)
+    
+    def fire(self, **attrs):
+        self._bcaster.fire(**attrs)
+
     def setStatus(self, status):
         # if we are already in the state that is requested then do nothing
         if status == self._status:
@@ -153,7 +167,7 @@ class AbstractDataObject(Observable):
         self._status = status
 
         # fire off event
-        self.fire(type='setStatus', status=status, oid=self._oid)
+        self.fire(type='setStatus', status=status, uid=self._uid, oid=self._oid)
 
 
     def setParent(self, parent):
