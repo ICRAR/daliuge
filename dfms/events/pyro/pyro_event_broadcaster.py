@@ -57,7 +57,6 @@ class PyroPublisher(Publisher):
         super(PyroPublisher, self).__init__()
 
 
-
 class PyroEventBroadcaster(EventBroadcaster):
 
     def __init__(self):        
@@ -78,6 +77,7 @@ class PyroEventBroadcaster(EventBroadcaster):
             self._callbacks[uid].remove(callback)
             self._pyroSub.unsubscribe(uid)
     
+    #NOTE: THis is not thread safe!
     def _callSubscribers(self, event):
         if self._callbacks.has_key(event.uid):
             for fn in self._callbacks[event.uid]:
@@ -87,5 +87,5 @@ class PyroEventBroadcaster(EventBroadcaster):
         e = Event()
         for k, v in attrs.iteritems():
             setattr(e, k, v)
-        
+        # publish to uid channel
         self._pyroPub.publish(attrs['uid'], e)
