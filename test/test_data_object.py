@@ -3,8 +3,12 @@
 
 from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster
+from dfms.events.pyro.pyro_event_broadcaster import PyroEventBroadcaster
+from Pyro.EventService.Server import EventServiceStarter
+from Pyro.naming import NameServerStarter 
+import Pyro.core
 
-import os, unittest
+import os, unittest, threading, socket
 
 try:
     from crc32c import crc32
@@ -42,6 +46,13 @@ class SumupContainerChecksum(AppDataObject):
 
 class TestDataObject(unittest.TestCase):
 
+
+    def _eventThread(self, eventservice, host):
+        eventservice.start(host)    
+    
+    def _nameThread(self, nameservice):
+        nameservice.start()
+    
     def setUp(self):
         """
         library-specific setup
@@ -49,8 +60,7 @@ class TestDataObject(unittest.TestCase):
         self._test_do_sz = 16 # MB
         self._test_block_sz =  2 # MB
         self._test_num_blocks = self._test_do_sz / self._test_block_sz
-        self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))
-
+        self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))        
 
     def tearDown(self):
         """
@@ -66,8 +76,22 @@ class TestDataObject(unittest.TestCase):
     def test_write_FileDataObject(self):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
-        """
-        eventbc = LocalEventBroadcaster()
+        """        
+        Pyro.config.PYRO_HOST = 'localhost'
+        nameservice = NameServerStarter()
+        eventservice = EventServiceStarter()
+        
+        nameThread = threading.Thread(None, self._nameThread, 'namethread', (nameservice,))
+        nameThread.setDaemon(True)
+        nameThread.start()
+        nameservice.waitUntilStarted()
+        
+        eventThread = threading.Thread(None, self._eventThread, 'eventthread', (eventservice, Pyro.config.PYRO_HOST ))
+        eventThread.setDaemon(True)
+        eventThread.start()
+        eventservice.waitUntilStarted()
+        
+        eventbc = PyroEventBroadcaster()
         
         dobA = FileDataObject('oid:A', 'uid:A', eventbc=eventbc, subs=[self.TestEventHandler], file_length = self._test_do_sz * ONE_MB)
         dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=eventbc, subs=[self.TestEventHandler])
