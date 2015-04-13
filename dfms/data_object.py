@@ -78,11 +78,11 @@ class AbstractDataObject(object):
         try:
             self.initialize(**kwargs)
             self.status = DOStates.INITIALIZED
-            
+
         except Exception as e:
             self.status = DOStates.FAILED
             raise e
-            
+
 
     def initialize(self, **kwargs):
         """
@@ -141,7 +141,7 @@ class AbstractDataObject(object):
     def computeChecksum(self, chunk):
         self._checksum = crc32(chunk, self._checksum)
         return self._checksum
-    
+
     @property
     def checksum(self):
         return self._checksum
@@ -149,21 +149,21 @@ class AbstractDataObject(object):
     @checksum.setter
     def checksum(self, value):
         self._checksum = value
-    
+
     @property
     def oid(self):
         return self._oid
-    
+
     @property
     def uid(self):
         return self._uid
 
     def subscribe(self, callback):
         self._bcaster.subscribe(self._uid, callback)
-    
+
     def unsubscribe(self, callback):
         self._bcaster.unsubscribe(self._uid, callback)
-    
+
     def fire(self, **attrs):
         self._bcaster.fire(**attrs)
 
@@ -171,7 +171,7 @@ class AbstractDataObject(object):
     @property
     def status(self):
         return self._status
-    
+
     @status.setter
     def status(self, value):
         # if we are already in the state that is requested then do nothing
@@ -187,7 +187,7 @@ class AbstractDataObject(object):
     @property
     def parent(self):
         return self._parent
-    
+
     @parent.setter
     def parent(self, value):
         if (value): # only real data object has parent, and we currently only have up to 1 parent
@@ -196,7 +196,7 @@ class AbstractDataObject(object):
     @property
     def consumers(self):
         return self._consumers
-    
+
     @consumers.setter
     def consumers(self, consumers):
         """
@@ -223,7 +223,7 @@ class AbstractDataObject(object):
         the location could be a Compute node or a Island or just the buffer URL
         """
         return self._location
-    
+
     @location.setter
     def location(self, value):
         """
@@ -263,15 +263,17 @@ class AppDataObject(AbstractDataObject):
         So that AppDataObject can be called by service handlers in the same way as
         "pure" data object if necessary
         """
-        self._run(**kwargs)
+        self._run(producer, **kwargs)
 
     def _run(self, producer, **kwargs):
         """
         Execute the tasks
         """
         kwdict = self.run(producer, **kwargs)
+        if (kwdict is None):
+            kwdict = {}
         # TODO - this should be in another process/thread or as a continuation
-        for cs_id, cs in enumerate(self._consumers):
+        for cs_id, cs in enumerate(self.consumers):
             kwdict['cs_index'] = cs_id
             cs.write(self, **kwdict)
 
@@ -404,7 +406,7 @@ class StreamDataObject(AbstractDataObject):
         pass
 
 class ContainerDataObject(AbstractDataObject):
-    
+
     """
     Container data object has children data objects
     """

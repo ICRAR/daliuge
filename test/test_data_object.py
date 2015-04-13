@@ -199,12 +199,14 @@ class TestDataObject(unittest.TestCase):
         import Pyro4
         from dfms.data_manager import DataManager
         from dfms import data_object_mgr, dataflow_manager
+        from dfms.ddap_protocol import DOStates
 
         # 1. launch name service
         ns_host = 'localhost'
         my_host = 'localhost'
+        my_port = 7778
 
-        ns_uri, ns_daemon, bcsvr = Pyro4.naming.startNS(host=ns_host)
+        ns_uri, ns_daemon, bcsvr = Pyro4.naming.startNS(host=ns_host, port=my_port)
         args = (ns_daemon,)
         thref = threading.Thread(None, _start_ns_thread, 'NSThrd', args)
         thref.setDaemon(1)
@@ -216,13 +218,13 @@ class TestDataObject(unittest.TestCase):
             id1 = '001'
             id2 = '002'
             data_object_mgr.launchServer(id1, as_daemon=True,
-                                         nsHost=ns_host, myHost=my_host)
+                                         nsHost=ns_host, myHost=my_host, port=my_port)
             data_object_mgr.launchServer(id2, as_daemon=True,
-                                         nsHost=ns_host, myHost=my_host)
+                                         nsHost=ns_host, myHost=my_host, port=my_port)
 
             # 3. ask dataflow_manager to build the physical dataflow
             obsId = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') # a dummy observation id
-            (pdg, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host)
+            (pdg, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host, port=my_port)
 
             # 4. start a single data manager
             print "**** step 4"
@@ -237,7 +239,11 @@ class TestDataObject(unittest.TestCase):
 
             print "**** step 6"
             # 6. start the pipeline (simulate CSP)
-            pdg.run(None)
+            pdg.write(None)
+
+            do1 = pdg.consumers[0]
+            do2 = do1.consumers[0].consumers[0]
+            self.assertTrue(do1.status == DOStates.DIRTY and do1.status == DOStates.DIRTY)
 
             print "**** step 7"
             # 7. tear down data objects of this observation on each data object manager
@@ -247,10 +253,13 @@ class TestDataObject(unittest.TestCase):
 
             # 8. shutdown the data manager daemon
             dmgr.shutdown()
-            self.assertTrue(res_avail == True)
+
         finally:
             # 9. shutdown name service
-            ns_daemon.shutdown()
+            try:
+                ns_daemon.shutdown()
+            except:
+                pass
 
 
 if __name__ == '__main__':
