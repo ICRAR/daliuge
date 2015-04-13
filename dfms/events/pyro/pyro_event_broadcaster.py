@@ -74,8 +74,11 @@ class PyroEventBroadcaster(EventBroadcaster):
     
     def unsubscribe(self, uid, callback):
         if self._callbacks.has_key(uid):
-            self._callbacks[uid].remove(callback)
-            self._pyroSub.unsubscribe(uid)
+            cb = self._callbacks[uid]
+            cb.remove(callback)
+            if len(cb) == 0:
+                del self._callbacks[uid]
+                self._pyroSub.unsubscribe(uid)
     
     #NOTE: THis is not thread safe!
     def _callSubscribers(self, event):
