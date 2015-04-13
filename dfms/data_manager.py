@@ -26,10 +26,10 @@
 
 """
 Data manager knows the configuration of compute islands, data islands
-It also holds remote proxy data objects pointing to real data objects located 
+It also holds remote proxy data objects pointing to real data objects located
 on various compute islands
 
-Data manager does not "drive" the execution of the entire graph, 
+Data manager does not "drive" the execution of the entire graph,
 but only gets instructed by Data Object to execute a specific tasks on some locations
 as stipulated by the physical graph
 
@@ -45,43 +45,55 @@ def _startDmgrDaemonThread(daemon):
 class DataManager():
     """
     Some features:
-    start" the physical graph, 
+    start" the physical graph,
     "enforce" the tasks execution on remote locations
     maintain dataflow semantics (e.g. increment counters, etc.)
     """
     def __init__(self):
-        self._eh = DMDOStateEventHandler()
         self._dmr_daemon = Pyro4.Daemon()
-    
+
     def start(self):
         args = (self._dmr_daemon,)
         thref = threading.Thread(None, _startDmgrDaemonThread, 'DMgrThrd', args)
         thref.setDaemon(1)
         print 'Launching data manager daemon'
         thref.start() # TODO - change to multiprocessing
-    
+
     def shutdown(self):
         # spawn a thread
         self._dmr_daemon.shutdown()
-    
+
+    def DMEventHandler(self, event):
+        """
+        a dummy implementation, should keep them in database (as our PDR docs)
+        """
+        print "Island event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
+        if (event.status == DOStates.DIRTY):
+            print "Data object %s is being written" % event.oid
+        elif (event.status == DOStates.COMPLETED):
+            print "Data object %s is completed" % event.oid
+        else:
+            print "Data object %s's state changed to %d" % (event.oid, event.status)
+
     def submitPDG(self, pdg, cims):
         """
         traverse the graph, and records all the information, check resource availability
         most importantly, subscribe events to be fired by data objects
         """
         print "the PDG looks OK"
-        uri = self._dmr_daemon.register(self._eh)
-        proxy_eh = Pyro4.Proxy(uri)
+        #uri = self._dmr_daemon.register(self.DMEventHandler)
+        #proxy_eh = Pyro4.Proxy(uri)
+        """
         dolist = []
         self.traverseGraph(dolist, pdg)
         for dob in dolist:
             try:
-                dob.subscribeStateChange(proxy_eh)
+                dob.subscribe(self.DMEventHandler) # will this work?
             except Exception, err:
                 print str(err)
-        
+        """
         return True
-    
+
     def traverseGraph(self, relist, root, excludeAppDo = True):
         """
         a naive tree traverse method
@@ -90,77 +102,11 @@ class DataManager():
             print "ignore"
         else:
             relist.append(root)
-        cl = root.getConsumers()
+        cl = root.consumers
         if (len(cl) > 0):
             for ch in cl:
                 self.traverseGraph(relist, ch, excludeAppDo)
-        elif (root.getParent() is not None):
-            self.traverseGraph(relist, root.getParent(), excludeAppDo)
+        elif (root.parent is not None):
+            self.traverseGraph(relist, root.parent, excludeAppDo)
         else:
             return
-    
-    def createDataObject(self, oid, uid, sessionId, appDataObj = False):
-        """
-        return the URI of the data object (to DFM)
-        this method was moved from the compute_island_mgr
-        """
-        if (self.daemon_dict.has_key(sessionId)):
-            dob_daemon = self.daemon_dict[sessionId]
-        else:
-            dob_daemon = Pyro4.Daemon()
-            self.daemon_dict[sessionId] = dob_daemon
-        
-        if (appDataObj):
-            mydo = AppDataObject(oid, uid)
-        else:
-            mydo = AbstractDataObject(oid, uid)
-        
-        uri = dob_daemon.register(mydo)
-        mydo.setURI(uri)
-        self.daemon_dob_dict[sessionId][uri] = mydo
-        return uri
-
-class DMDOStateEventHandler():
-    """
-    """
-    def __init__(self):
-        #self._dmgr = dmgr
-        pass
-
-    def recordDOStateChanges(self, doUri, doState):
-        """
-        a dummy implementation, should keep them in database (as our PDR docs)
-        """
-        if (doState == DOStates.DIRTY):
-            print "Data object %s is being written" % doUri
-        elif (doState == DOStates.COMPLETED):
-            print "Data object %s is completed" % doUri
-        else:
-            print "Data object %s's state changed to %d" % (doUri, doState)
-    
-    def onStateChange(self, doUri, oldState, newState):
-        """
-        notify the data manager synchronously, which may have an embarrassingly high latency!
-        need to change it to asynchronous
-        """
-        self.recordDOStateChanges(doUri, newState)
-    
-    def filterStateChange(self, oldState, newState):
-        if (oldState == newState):
-            return False
-        elif (newState == DOStates.COMPLETED): # Data Manager is currently only interested in the "data object completed/dirty" event
-            return True
-        elif (newState == DOStates.DIRTY): 
-            return True
-        else:
-            return False
-
-
-class TaskReScheduler:
-    """
-    In principle, data manager does not need to schedule anything
-    since the physical graph has binded everything
-    
-    But this is just for failover consideration
-    """
-    pass

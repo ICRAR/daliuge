@@ -5,7 +5,7 @@ from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.events.pyro.pyro_event_broadcaster import PyroEventBroadcaster
 from Pyro.EventService.Server import EventServiceStarter
-from Pyro.naming import NameServerStarter 
+from Pyro.naming import NameServerStarter
 import Pyro.core
 
 import os, unittest, threading, socket
@@ -16,6 +16,9 @@ except:
     from binascii import crc32
 
 ONE_MB = 1024 ** 2
+
+def _start_ns_thread(ns_daemon):
+    ns_daemon.requestLoop()
 
 class SumupContainerChecksum(AppDataObject):
     """
@@ -48,11 +51,11 @@ class TestDataObject(unittest.TestCase):
 
 
     def _eventThread(self, eventservice, host):
-        eventservice.start(host)    
-    
+        eventservice.start(host)
+
     def _nameThread(self, nameservice):
         nameservice.start()
-    
+
     def setUp(self):
         """
         library-specific setup
@@ -60,7 +63,7 @@ class TestDataObject(unittest.TestCase):
         self._test_do_sz = 16 # MB
         self._test_block_sz =  2 # MB
         self._test_num_blocks = self._test_do_sz / self._test_block_sz
-        self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))        
+        self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))
 
     def tearDown(self):
         """
@@ -76,23 +79,23 @@ class TestDataObject(unittest.TestCase):
     def test_write_FileDataObject(self):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
-        """        
+        """
         Pyro.config.PYRO_HOST = 'localhost'
         nameservice = NameServerStarter()
         eventservice = EventServiceStarter()
-        
+
         nameThread = threading.Thread(None, self._nameThread, 'namethread', (nameservice,))
         nameThread.setDaemon(True)
         nameThread.start()
         nameservice.waitUntilStarted()
-        
+
         eventThread = threading.Thread(None, self._eventThread, 'eventthread', (eventservice, Pyro.config.PYRO_HOST ))
         eventThread.setDaemon(True)
         eventThread.start()
         eventservice.waitUntilStarted()
-        
+
         eventbc = PyroEventBroadcaster()
-        
+
         dobA = FileDataObject('oid:A', 'uid:A', eventbc=eventbc, subs=[self.TestEventHandler], file_length = self._test_do_sz * ONE_MB)
         dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=eventbc, subs=[self.TestEventHandler])
         dobA.addConsumer(dobB)
@@ -107,13 +110,14 @@ class TestDataObject(unittest.TestCase):
         dobA.close()
         self.assertTrue((test_crc == dobA.checksum and 0 != test_crc),
                         msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
+        nameservice.shutdown()
 
     def test_write_StreamDataObject(self):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
         eventbc=LocalEventBroadcaster()
-        
+
         dobA = StreamDataObject('oid:A', 'uid:A', eventbc=eventbc)
         dobB = ComputeStreamChecksum('oid:B', 'uid:B', eventbc=eventbc)
         dobA.addConsumer(dobB)
@@ -139,7 +143,7 @@ class TestDataObject(unittest.TestCase):
 
         """
         eventbc = LocalEventBroadcaster()
-        
+
         filelen = self._test_do_sz * ONE_MB
         dobAList = []
         #create file data objects
@@ -187,6 +191,67 @@ class TestDataObject(unittest.TestCase):
 
         self.assertTrue((sum_crc == dobB.checksum and 0 != sum_crc),
                         msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, dobB.checksum))
+
+    def test_lmc(self):
+        """
+        """
+        import datetime
+        import Pyro4
+        from dfms.data_manager import DataManager
+        from dfms import data_object_mgr, dataflow_manager
+
+        # 1. launch name service
+        ns_host = 'localhost'
+        my_host = 'localhost'
+
+        ns_uri, ns_daemon, bcsvr = Pyro4.naming.startNS(host=ns_host)
+        args = (ns_daemon,)
+        thref = threading.Thread(None, _start_ns_thread, 'NSThrd', args)
+        thref.setDaemon(1)
+        print 'Launching naming service daemon'
+        thref.start()
+
+        try:
+            # 2. launch data_object_manager
+            id1 = '001'
+            id2 = '002'
+            data_object_mgr.launchServer(id1, as_daemon=True,
+                                         nsHost=ns_host, myHost=my_host)
+            data_object_mgr.launchServer(id2, as_daemon=True,
+                                         nsHost=ns_host, myHost=my_host)
+
+            # 3. ask dataflow_manager to build the physical dataflow
+            obsId = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') # a dummy observation id
+            (pdg, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host)
+
+            # 4. start a single data manager
+            print "**** step 4"
+            dmgr = DataManager()
+            dmgr.start() # start the daemon
+
+            print "**** step 5"
+            # 5. submit the graph to data manager
+            res_avail = dmgr.submitPDG(pdg, doms)
+            if (not res_avail):
+                raise Exception("Resource is not available in the data manager!")
+
+            print "**** step 6"
+            # 6. start the pipeline (simulate CSP)
+            pdg.run(None)
+
+            print "**** step 7"
+            # 7. tear down data objects of this observation on each data object manager
+            for dom in doms:
+                ret = dom.shutdownDOBDaemon(obsId)
+                print '%s was shutdown, ret code = %d' % (dom.getURI(), ret)
+
+            # 8. shutdown the data manager daemon
+            dmgr.shutdown()
+            self.assertTrue(res_avail == True)
+        finally:
+            # 9. shutdown name service
+            ns_daemon.shutdown()
+
 
 if __name__ == '__main__':
     unittest.main()

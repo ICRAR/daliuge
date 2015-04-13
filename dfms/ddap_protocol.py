@@ -20,11 +20,11 @@
 #    MA 02111-1307  USA
 #
 # Who                   When          What
-# ------------------------------------------------ 
+# ------------------------------------------------
 # chen.wu@icrar.org   11/12/2014     Created
 #
 
-CST_NS_CIM = 'ddap.cim' # naming prefix for compute island manager
+CST_NS_DOM = 'ddap.dom' # naming prefix for data object manager
 
 class ArchElType:
     """
@@ -45,7 +45,7 @@ class DOStates:
 class REST_API_DOM: # RESTful API (url patterns)
     """
     Refer to http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api
-    
+
     GET /data_objects - Retrieves a list of data objects
     GET /data_objects/{oid} - Retrieves a specific data object (12 is the object id)
     POST /data_objects - Creates a new data object
@@ -53,14 +53,14 @@ class REST_API_DOM: # RESTful API (url patterns)
     POST /data_objects/{oid}/chunk - Streams data chunk into data object # 12
     PUT /data_objects/{oid}/{attr}
     GET /data_objects/{oid}/{attr[=]}
-    
+
     GET /data_objects/{oid}/run
     POST /data_objects/{oid}/run
-    
-    
+
+
     DELETE /data_objects/12 - Deletes data object #12
     """
-    DO_CREATE = r"^/data_objects$" # has to be exact match 
+    DO_CREATE = r"^/data_objects$" # has to be exact match
     DO_INGEST = r"/data_objects/[\S]*/data" # oid could be anything
-    
+
     LINK = r"/data_objects/12/link?oid={oid}"
