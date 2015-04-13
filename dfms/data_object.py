@@ -28,7 +28,7 @@
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
 """
-import time, os
+import os
 
 try:
     from crc32c import crc32
@@ -181,7 +181,7 @@ class AbstractDataObject(object):
         self._status = value
 
         # fire off event
-        self.fire(type='setStatus', status=value, uid=self._uid, oid=self._oid)
+        self.fire(type='status', status = value, uid = self._uid, oid = self._oid)
 
 
     @property
@@ -416,7 +416,7 @@ class ContainerDataObject(AbstractDataObject):
         self._complete_map = {} #key - child oid, value - completed yet (bool)?
 
     def check_join_condition(self, event):
-        if ("setStatus" != event.type):
+        if ("status" != event.type.lower()):
             return
         print "Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
         if (event.status != DOStates.COMPLETED):
