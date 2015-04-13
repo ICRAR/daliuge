@@ -38,7 +38,7 @@ except:
 from ddap_protocol import DOStates
 
 
-class AbstractDataObject():
+class AbstractDataObject(object):
     """
     The AbstractDataObject
     It should be split into abstract, container
@@ -77,9 +77,10 @@ class AbstractDataObject():
 
         try:
             self.initialize(**kwargs)
-            self.setStatus(DOStates.INITIALIZED)
+            self.status = DOStates.INITIALIZED
+            
         except Exception as e:
-            self.setStatus(DOStates.FAILED)
+            self.status = DOStates.FAILED
             raise e
             
 
@@ -127,7 +128,7 @@ class AbstractDataObject():
             pass
 
         else:
-            self.setStatus(DOStates.DIRTY)
+            self.status = DOStates.DIRTY
 
         return nbytes
 
@@ -140,15 +141,22 @@ class AbstractDataObject():
     def computeChecksum(self, chunk):
         self._checksum = crc32(chunk, self._checksum)
         return self._checksum
-
-    def getChecksum(self):
+    
+    @property
+    def checksum(self):
         return self._checksum
 
-    def setChecksum(self, checksum):
-        self._checksum = checksum
-
-    def getOid(self):
+    @checksum.setter
+    def checksum(self, value):
+        self._checksum = value
+    
+    @property
+    def oid(self):
         return self._oid
+    
+    @property
+    def uid(self):
+        return self._uid
 
     def subscribe(self, callback):
         self._bcaster.subscribe(self._uid, callback)
@@ -159,32 +167,42 @@ class AbstractDataObject():
     def fire(self, **attrs):
         self._bcaster.fire(**attrs)
 
-    def setStatus(self, status):
+
+    @property
+    def status(self):
+        return self._status
+    
+    @status.setter
+    def status(self, value):
         # if we are already in the state that is requested then do nothing
-        if status == self._status:
+        if value == self._status:
             return
 
-        self._status = status
+        self._status = value
 
         # fire off event
-        self.fire(type='setStatus', status=status, uid=self._uid, oid=self._oid)
+        self.fire(type='setStatus', status=value, uid=self._uid, oid=self._oid)
 
 
-    def setParent(self, parent):
-        if (parent): # only real data object has parent, and we currently only have up to 1 parent
-            self._parent = parent # a parent is a container
-
-    def getParent(self):
+    @property
+    def parent(self):
         return self._parent
+    
+    @parent.setter
+    def parent(self, value):
+        if (value): # only real data object has parent, and we currently only have up to 1 parent
+            self._parent = value # a parent is a container
 
-    def setConsumers(self, consumers):
+    @property
+    def consumers(self):
+        return self._consumers
+    
+    @consumers.setter
+    def consumers(self, consumers):
         """
         set a list of consumers (replace the existing ones)
         """
         self._consumers = consumers
-
-    def getConsumers(self):
-        return self._consumers
 
     def addConsumer(self, consumer):
         self._consumers.append(consumer)
@@ -198,65 +216,35 @@ class AbstractDataObject():
     def isContainer(self):
         return (len(self._children) > 0)
 
-    '''def onCompleted(self, child):
-        """
-        Callback when data (ingestion) is completed
-        This is called ONLY by one of the children data objects
-        In this case, the current data object is a "container"
-
-        child:    The child of the container, i.e. myself
-        """
-        print "I am %s, I am notified of the completion by my child: %s" % (self.getOid(), child.getOid())
-        # wait for all children if any
-        for mychild in self._children:
-            if (not mychild.isCompleted()): #TODO - this is somehow wrong
-                return
-
-        # invoke consumers if any
-        for cs_id, cs in enumerate(self._consumers):
-            cs._run(self, cs_index = cs_id) #TODO: this should be done in parallel
-
-        # notify my parent if any
-        if (self._parent):
-            self._parent.onCompleted(self)
-
-        self.setStatus(DOStates.COMPLETED)'''
-
-    def setLocation(self, location):
-        """
-        This should be set when the physical graph was built
-        """
-        self._location = location
-
-    def getLocation(self):
+    @property
+    def location(self):
         """
         return where the "actual" data is located
         the location could be a Compute node or a Island or just the buffer URL
         """
         return self._location
+    
+    @location.setter
+    def location(self, value):
+        """
+        This should be set when the physical graph was built
+        """
+        self._location = value
 
-    def setURI(self, uri):
-        self._uri = uri
-
-    def getURI(self):
+    @property
+    def uri(self):
         return self._uri
+
+    @uri.setter
+    def uri(self, uri):
+        self._uri = uri
 
     def ping(self):
         """
         This is for testing purpose
         """
-        return 'OK. My oid = %s, and my uid = %s' % (self.getOid(), self._uid)
+        return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
 
-    '''def subscribeStateChange(self, eventHandler):
-        """
-        subscribe to state change event
-        eventHandler:  an instance of DOStateEventHandler
-        """
-        self._stateEHlist.append(eventHandler)
-        return
-
-    def unsubscribeStateChange(self, eventHandler):
-        self._stateEHlist.remove(eventHandler) # assuming no duplicates for now'''
 
 class AppDataObject(AbstractDataObject):
 
@@ -303,7 +291,7 @@ class ComputeStreamChecksum(AppDataObject):
     def run(self, producer, **kwargs):
         chunk = kwargs['chunk']
         self._checksum = crc32(chunk, self._checksum)
-        producer.setChecksum(self._checksum)
+        producer.checksum = self._checksum
         return kwargs
 
 class ComputeFileChecksum(AppDataObject):
@@ -321,7 +309,7 @@ class ComputeFileChecksum(AppDataObject):
             crc = crc32(buf, crc)
             buf = fo.read(self._bufsize)
         fo.close()
-        producer.setChecksum(crc)
+        producer.checksum = crc
         return kwargs
 
 class FileDataObject(AbstractDataObject):
@@ -366,7 +354,7 @@ class FileDataObject(AbstractDataObject):
         self._fwritten += len(chunk)
         if (self._fwritten == self._fleng):
             self._fo.flush()
-            self.setStatus(DOStates.COMPLETED)
+            self.status = DOStates.COMPLETED
 
         return len(chunk)
 
@@ -408,7 +396,7 @@ class StreamDataObject(AbstractDataObject):
         for cs_id, cs in enumerate(self._consumers):
             cs._run(self, cs_index = cs_id, chunk = self._buf)
 
-        self.setStatus(DOStates.COMPLETED)
+        self.status = DOStates.COMPLETED
 
         return len(self._buf)
 
@@ -444,11 +432,11 @@ class ContainerDataObject(AbstractDataObject):
             cs._run(self, cs_index = cs_id) #TODO: this should be done in parallel
 
         # notify my parent (if any) via setStatus, which fires an event
-        self.setStatus(DOStates.COMPLETED)
+        self.status = DOStates.COMPLETED
 
     def addChild(self, child):
         child.subscribe(self.check_join_condition)
         self._children.append(child)
-        self._complete_map[child.getOid()] = child.isCompleted()
+        self._complete_map[child.oid] = child.isCompleted()
 
 

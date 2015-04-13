@@ -40,7 +40,7 @@ class SumupContainerChecksum(AppDataObject):
             c = 0
             for child in producer._children:
                 c += self.get_file_checksum(child._fnm)
-            producer.setChecksum(c)
+            producer.checksum = c
         else:
             raise Exception("Not a container data object!")
 
@@ -105,8 +105,8 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32(self._test_block, test_crc)
 
         dobA.close()
-        self.assertTrue((test_crc == dobA.getChecksum() and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.getChecksum()))
+        self.assertTrue((test_crc == dobA.checksum and 0 != test_crc),
+                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
 
     def test_write_StreamDataObject(self):
         """
@@ -126,8 +126,8 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32(self._test_block, test_crc)
 
         dobA.close()
-        self.assertTrue((test_crc == dobA.getChecksum() and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.getChecksum()))
+        self.assertTrue((test_crc == dobA.checksum and 0 != test_crc),
+                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
 
     def test_join(self):
         """
@@ -166,7 +166,7 @@ class TestDataObject(unittest.TestCase):
 
         dobB = ContainerDataObject('oid:B', 'uid:B', eventbc=eventbc)
         for dobA in dobAList:
-            dobA.setParent(dobB)
+            dobA.parent = dobB
             dobB.addChild(dobA)
 
         dob_b = SumupContainerChecksum('oid:b', 'uid:b',
@@ -183,10 +183,10 @@ class TestDataObject(unittest.TestCase):
 
         sum_crc = 0
         for dobA in dobAList:
-            sum_crc += dobA.getChecksum()
+            sum_crc += dobA.checksum
 
-        self.assertTrue((sum_crc == dobB.getChecksum() and 0 != sum_crc),
-                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, dobB.getChecksum()))
+        self.assertTrue((sum_crc == dobB.checksum and 0 != sum_crc),
+                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, dobB.checksum))
 
 if __name__ == '__main__':
     unittest.main()
