@@ -115,9 +115,9 @@ class AbstractDataObject(object):
     def read(self, **kwargs):
         pass
 
-    def write(self, producer, **kwargs):
+    def write(self, **kwargs):
 
-        nbytes = self.writeMeta(producer, **kwargs)
+        nbytes = self.writeMeta(**kwargs)
 
         if (self._status == DOStates.COMPLETED):
             pass
@@ -132,7 +132,7 @@ class AbstractDataObject(object):
 
         return nbytes
 
-    def writeMeta(self, producer, **kwargs):
+    def writeMeta(self, **kwargs):
         """
         Hook for subclass write
         """
@@ -258,26 +258,26 @@ class AppDataObject(AbstractDataObject):
         """
         pass
 
-    def writeMeta(self, producer, **kwargs):
+    def writeMeta(self, **kwargs):
         """
         So that AppDataObject can be called by service handlers in the same way as
         "pure" data object if necessary
         """
-        self._run(producer, **kwargs)
+        self._run(**kwargs)
 
-    def _run(self, producer, **kwargs):
+    def _run(self, **kwargs):
         """
         Execute the tasks
         """
-        kwdict = self.run(producer, **kwargs)
+        kwdict = self.run(**kwargs)
         if (kwdict is None):
             kwdict = {}
         # TODO - this should be in another process/thread or as a continuation
         for cs_id, cs in enumerate(self.consumers):
             kwdict['cs_index'] = cs_id
-            cs.write(self, **kwdict)
+            cs.write(**kwdict)
 
-    def run(self, producer, **kwargs):
+    def run(self, **kwargs):
         """
         Hooks for sub class
         Must return a dictionary: key: parameter name, val: argument value
@@ -290,10 +290,15 @@ class ComputeStreamChecksum(AppDataObject):
     def appInitialize(self, **kwargs):
         pass
 
-    def run(self, producer, **kwargs):
+    def run(self, **kwargs):
         chunk = kwargs['chunk']
         self._checksum = crc32(chunk, self._checksum)
-        producer.checksum = self._checksum
+
+        self.checksum = self._checksum
+
+        # put the checksum in the output
+        kwargs['checksum'] = self.checksum
+
         return kwargs
 
 class ComputeFileChecksum(AppDataObject):
@@ -301,17 +306,21 @@ class ComputeFileChecksum(AppDataObject):
     def appInitialize(self, **kwargs):
         self._bufsize = 4 * 1024 ** 2
 
-    def run(self, producer, **kwargs):
+    def run(self, **kwargs):
         #cs_index = cs_id, file_name = self._fnm, file_length = self._fleng
         filename = kwargs['file_name']
-        fo = open(filename, "r")
-        buf = fo.read(self._bufsize)
-        crc = 0
-        while (buf != ""):
-            crc = crc32(buf, crc)
+        with open(filename, "r") as fo:
             buf = fo.read(self._bufsize)
-        fo.close()
-        producer.checksum = crc
+            crc = 0
+            while (buf != ""):
+                crc = crc32(buf, crc)
+                buf = fo.read(self._bufsize)
+
+        self.checksum = crc
+
+        # put the checksum in the output
+        kwargs['checksum'] = self.checksum
+
         return kwargs
 
 class FileDataObject(AbstractDataObject):
@@ -338,15 +347,15 @@ class FileDataObject(AbstractDataObject):
             mode = kwargs['mode']
         else:
             mode = 'wb'
+            
         self._fo = open(self._fnm, mode)
+        
         return self._fo
 
-    def writeMeta(self, producer, **kwargs):
+    def writeMeta(self, **kwargs):
         """
         Each chunk written to a file object
         will be written to the file system
-
-        producer:    is the AppDataObject
 
         this is NOT thread safe (assuming we will single threaded event loop)
 
@@ -366,7 +375,7 @@ class FileDataObject(AbstractDataObject):
         """
         self._fo.close()
         for cs_id, cs in enumerate(self._consumers):
-            cs._run(self, cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
+            cs._run(cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
 
 
     def seek(self, **kwargs):
@@ -386,7 +395,7 @@ class StreamDataObject(AbstractDataObject):
         """
         return self._buf
 
-    def writeMeta(self, producer, **kwargs):
+    def writeMeta(self, **kwargs):
         """
         Each chunk written to a stream object
         will be immediately streamed to its consumer
@@ -396,7 +405,7 @@ class StreamDataObject(AbstractDataObject):
         self._buf = kwargs['chunk']
         #doms_handler = kwargs['doms_handler']
         for cs_id, cs in enumerate(self._consumers):
-            cs._run(self, cs_index = cs_id, chunk = self._buf)
+            cs._run(cs_index = cs_id, chunk = self._buf)
 
         self.status = DOStates.COMPLETED
 
@@ -418,11 +427,14 @@ class ContainerDataObject(AbstractDataObject):
         self._complete_map = {} #key - child oid, value - completed yet (bool)?
 
     def check_join_condition(self, event):
+        
         if ("status" != event.type.lower()):
             return
+        
         print "Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
         if (event.status != DOStates.COMPLETED):
             return
+        
         self._complete_map[event.oid] = True
         # check if each child is completed
         for k, c_yet in self._complete_map.iteritems():
@@ -431,7 +443,7 @@ class ContainerDataObject(AbstractDataObject):
 
         # invoke consumers if any
         for cs_id, cs in enumerate(self._consumers):
-            cs._run(self, cs_index = cs_id) #TODO: this should be done in parallel
+            cs._run(cs_index = cs_id) #TODO: this should be done in parallel
 
         # notify my parent (if any) via setStatus, which fires an event
         self.status = DOStates.COMPLETED
@@ -440,5 +452,3 @@ class ContainerDataObject(AbstractDataObject):
         child.subscribe(self.check_join_condition)
         self._children.append(child)
         self._complete_map[child.oid] = child.isCompleted()
-
-
