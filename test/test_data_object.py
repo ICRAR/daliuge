@@ -20,32 +20,16 @@ ONE_MB = 1024 ** 2
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
 
-class SumupContainerChecksum(AppDataObject):
+class AccumulateChecksum(AppDataObject):
     """
     A dummy component that sums up checksums of all children of the host
-    ContainerDataObject (CDO), and then set the CDO's checksum as the sum
     """
     def appInitialize(self, **kwargs):
-        self._bufsize = 4 * 1024 ** 2
+        pass
 
-    def get_file_checksum(self, filename):
-        fo = open(filename, "r")
-        buf = fo.read(self._bufsize)
-        crc = 0
-        while (buf != ""):
-            crc = crc32(buf, crc)
-            buf = fo.read(self._bufsize)
-        fo.close()
-        return crc
+    def run(self, **kwargs):
+        self.checksum += kwargs['checksum']
 
-    def run(self, producer, **kwargs):
-        if (isinstance(producer, ContainerDataObject)):
-            c = 0
-            for child in producer._children:
-                c += self.get_file_checksum(child._fnm)
-            producer.checksum = c
-        else:
-            raise Exception("Not a container data object!")
 
 class TestDataObject(unittest.TestCase):
 
@@ -104,12 +88,14 @@ class TestDataObject(unittest.TestCase):
 
         test_crc = 0
         for i in range(self._test_num_blocks):
-            dobA.write(None, chunk = self._test_block)
+            dobA.write(chunk = self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
         dobA.close()
-        self.assertTrue((test_crc == dobA.checksum and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
+        
+        self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
+                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobB.checksum))
+        
         nameservice.shutdown()
 
     def test_write_StreamDataObject(self):
@@ -126,12 +112,12 @@ class TestDataObject(unittest.TestCase):
 
         test_crc = 0
         for i in range(self._test_num_blocks):
-            dobA.write(None, chunk = self._test_block)
+            dobA.write(chunk = self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
         dobA.close()
-        self.assertTrue((test_crc == dobA.checksum and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
+        self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
+                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobB.checksum))
 
     def test_join(self):
         """
@@ -161,9 +147,11 @@ class TestDataObject(unittest.TestCase):
         dob_a1 = ComputeFileChecksum('oid:a1', 'uid:a1',
                                      eventbc=eventbc, subs=[self.TestEventHandler])
         dobA1.addConsumer(dob_a1)
+        
         dob_a2 = ComputeFileChecksum('oid:a2', 'uid:a2',
                                      eventbc=eventbc, subs=[self.TestEventHandler])
         dobA2.addConsumer(dob_a2)
+        
         dob_a3 = ComputeFileChecksum('oid:a3', 'uid:a3',
                                      eventbc=eventbc, subs=[self.TestEventHandler])
         dobA3.addConsumer(dob_a3)
@@ -173,24 +161,28 @@ class TestDataObject(unittest.TestCase):
             dobA.parent = dobB
             dobB.addChild(dobA)
 
-        dob_b = SumupContainerChecksum('oid:b', 'uid:b',
+        # bring all the checksums back
+        accum = AccumulateChecksum('oid:accum', 'uid:accum',
                                        eventbc=eventbc, subs=[self.TestEventHandler])
-        dobB.addConsumer(dob_b)
+        dob_a1.addConsumer(accum)
+        dob_a2.addConsumer(accum)
+        dob_a3.addConsumer(accum)
 
+        # run it
         for dobA in dobAList: # this should be parallel for
             dobA.open()
             #test_crc = 0
             for i in range(self._test_num_blocks):
-                dobA.write(None, chunk = self._test_block)
+                dobA.write(chunk = self._test_block)
                 #test_crc = crc32(self._test_block, test_crc)
             dobA.close()
 
-        sum_crc = 0
-        for dobA in dobAList:
-            sum_crc += dobA.checksum
+        # get individual checksums then sum
+        sum_crc = dob_a1.checksum + dob_a2.checksum + dob_a3.checksum
 
-        self.assertTrue((sum_crc == dobB.checksum and 0 != sum_crc),
-                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, dobB.checksum))
+        # check individual sum equals accumulated sum
+        self.assertTrue((sum_crc == accum.checksum and 0 != sum_crc),
+                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, accum.checksum))
 
     def test_lmc(self):
         """
@@ -239,7 +231,7 @@ class TestDataObject(unittest.TestCase):
 
             print "**** step 6"
             # 6. start the pipeline (simulate CSP)
-            pdg.write(None)
+            pdg.write()
 
             do1 = pdg.consumers[0]
             do2 = do1.consumers[0].consumers[0]
