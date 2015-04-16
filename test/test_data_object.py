@@ -20,19 +20,47 @@ ONE_MB = 1024 ** 2
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
 
-class AccumulateChecksum(AppDataObject):
+class SumupContainer(ContainerDataObject):
+    """
+    A barrier waiting for all children objects to complete
+    before calculate the sum of their check sum
+    """
+    def consumer_params(self):
+        """
+        Sub-class to add more parameters
+        """
+        file_names = []
+        for child in self._children:
+            file_names.append(child._fnm)
+        ret = dict()
+        ret['file_names'] = file_names
+        return ret
+
+class SumupContainerChecksum(AppDataObject):
     """
     A dummy component that sums up checksums of all children of the host
+    ContainerDataObject (CDO), and then set the CDO's checksum as the sum
     """
     def appInitialize(self, **kwargs):
-        pass
+        self._bufsize = 4 * 1024 ** 2
+
+    def get_file_checksum(self, filename):
+        fo = open(filename, "r")
+        buf = fo.read(self._bufsize)
+        crc = 0
+        while (buf != ""):
+            crc = crc32(buf, crc)
+            buf = fo.read(self._bufsize)
+        fo.close()
+        return crc
 
     def run(self, **kwargs):
-        self.checksum += kwargs['checksum']
-
+        c = 0
+        for file_name in kwargs['file_names']:
+            c += self.get_file_checksum(file_name)
+        self.checksum = c
 
 class TestDataObject(unittest.TestCase):
-
 
     def _eventThread(self, eventservice, host):
         eventservice.start(host)
@@ -92,10 +120,8 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32(self._test_block, test_crc)
 
         dobA.close()
-        
         self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobB.checksum))
-        
+                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
         nameservice.shutdown()
 
     def test_write_StreamDataObject(self):
@@ -117,7 +143,7 @@ class TestDataObject(unittest.TestCase):
 
         dobA.close()
         self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobB.checksum))
+                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
 
     def test_join(self):
         """
@@ -147,28 +173,22 @@ class TestDataObject(unittest.TestCase):
         dob_a1 = ComputeFileChecksum('oid:a1', 'uid:a1',
                                      eventbc=eventbc, subs=[self.TestEventHandler])
         dobA1.addConsumer(dob_a1)
-        
         dob_a2 = ComputeFileChecksum('oid:a2', 'uid:a2',
                                      eventbc=eventbc, subs=[self.TestEventHandler])
         dobA2.addConsumer(dob_a2)
-        
         dob_a3 = ComputeFileChecksum('oid:a3', 'uid:a3',
                                      eventbc=eventbc, subs=[self.TestEventHandler])
         dobA3.addConsumer(dob_a3)
 
-        dobB = ContainerDataObject('oid:B', 'uid:B', eventbc=eventbc)
+        dobB = SumupContainer('oid:B', 'uid:B', eventbc=eventbc)
         for dobA in dobAList:
             dobA.parent = dobB
             dobB.addChild(dobA)
 
-        # bring all the checksums back
-        accum = AccumulateChecksum('oid:accum', 'uid:accum',
+        dob_b = SumupContainerChecksum('oid:b', 'uid:b',
                                        eventbc=eventbc, subs=[self.TestEventHandler])
-        dob_a1.addConsumer(accum)
-        dob_a2.addConsumer(accum)
-        dob_a3.addConsumer(accum)
+        dobB.addConsumer(dob_b)
 
-        # run it
         for dobA in dobAList: # this should be parallel for
             dobA.open()
             #test_crc = 0
@@ -177,12 +197,15 @@ class TestDataObject(unittest.TestCase):
                 #test_crc = crc32(self._test_block, test_crc)
             dobA.close()
 
-        # get individual checksums then sum
+        sum_crc = 0
+        """
+        for dobA in dobAList:
+            sum_crc += dobA.checksum
+        """
         sum_crc = dob_a1.checksum + dob_a2.checksum + dob_a3.checksum
 
-        # check individual sum equals accumulated sum
-        self.assertTrue((sum_crc == accum.checksum and 0 != sum_crc),
-                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, accum.checksum))
+        self.assertTrue((sum_crc == dob_b.checksum and 0 != sum_crc),
+                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, dob_b.checksum))
 
     def test_lmc(self):
         """
@@ -256,5 +279,3 @@ class TestDataObject(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

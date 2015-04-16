@@ -245,6 +245,15 @@ class AbstractDataObject(object):
         """
         return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
 
+    def trigger_consumers(self, **kwargs):
+        """
+        A helper function to trigger consumers
+        Should be "parallel for"
+        """
+        for cs_id, cs in enumerate(self._consumers):
+            kwargs['cs_index'] = cs_id
+            cs._run(**kwargs)
+
 
 class AppDataObject(AbstractDataObject):
 
@@ -347,9 +356,9 @@ class FileDataObject(AbstractDataObject):
             mode = kwargs['mode']
         else:
             mode = 'wb'
-            
+
         self._fo = open(self._fnm, mode)
-        
+
         return self._fo
 
     def writeMeta(self, **kwargs):
@@ -374,9 +383,8 @@ class FileDataObject(AbstractDataObject):
         Closing the file object will trigger its consumer (AppDataObject) to run
         """
         self._fo.close()
-        for cs_id, cs in enumerate(self._consumers):
-            cs._run(cs_index = cs_id, file_name = self._fnm, file_length = self._fleng)
-
+        # use helper function to trigger consumers:
+        self.trigger_consumers(file_name=self._fnm, file_length=self._fleng)
 
     def seek(self, **kwargs):
         pass
@@ -403,10 +411,7 @@ class StreamDataObject(AbstractDataObject):
         TODO - use an internal buffer, only trigger when it is full
         """
         self._buf = kwargs['chunk']
-        #doms_handler = kwargs['doms_handler']
-        for cs_id, cs in enumerate(self._consumers):
-            cs._run(cs_index = cs_id, chunk = self._buf)
-
+        self.trigger_consumers(chunk=self._buf)
         self.status = DOStates.COMPLETED
 
         return len(self._buf)
@@ -426,15 +431,21 @@ class ContainerDataObject(AbstractDataObject):
         self._children = []
         self._complete_map = {} #key - child oid, value - completed yet (bool)?
 
+    def consumer_params(self):
+        """
+        Sub-class to add more parameters
+        """
+        pass
+
     def check_join_condition(self, event):
-        
+
         if ("status" != event.type.lower()):
             return
-        
+
         print "Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
         if (event.status != DOStates.COMPLETED):
             return
-        
+
         self._complete_map[event.oid] = True
         # check if each child is completed
         for k, c_yet in self._complete_map.iteritems():
@@ -442,8 +453,8 @@ class ContainerDataObject(AbstractDataObject):
                 return
 
         # invoke consumers if any
-        for cs_id, cs in enumerate(self._consumers):
-            cs._run(cs_index = cs_id) #TODO: this should be done in parallel
+        add_params = self.consumer_params()
+        self.trigger_consumers(**add_params)
 
         # notify my parent (if any) via setStatus, which fires an event
         self.status = DOStates.COMPLETED
