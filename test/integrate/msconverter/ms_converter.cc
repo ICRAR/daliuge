@@ -1,4 +1,4 @@
-//    mwa_converter.cc: convert MWA measurementsets from TiledStMan to AdiosStMan 
+//    mwa_converter.cc: convert MWA measurementsets from TiledStMan to AdiosStMan
 //
 //    (c) University of Western Australia
 //    International Centre of Radio Astronomy Research
@@ -10,12 +10,12 @@
 //    modify it under the terms of the GNU General Public License as published
 //    by the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
-//   
+//
 //    This library is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
-//   
+//
 //    You should have received a copy of the GNU General Public License along
 //    with this library. If not, see <http://www.gnu.org/licenses/>.
 //
@@ -28,7 +28,7 @@
 #include <tables/Tables/ScalarColumn.h>
 #include <casacore/tables/Tables/ArrColDesc.h>
 #include <casacore/tables/Tables/ArrayColumn.h>
-#include "../AdiosStMan.h"
+#include <AdiosStMan.h>
 #include <casa/namespace.h>
 #include "tictak.h"
 
@@ -66,7 +66,7 @@ void write_rows(){
 	uInt rows;
 	if(Rows == 0) rows = TotalRows;
 	else rows = Rows;
-	
+
 
 	for(int i=mpiRank; i<rows; i+=mpiSize){
 		// FLAG_ROW column
@@ -250,7 +250,7 @@ int main (int argc, char **argv){
 		file_input = argv[1];
 		file_output = argv[2];
 	}
-	
+
 	if (argc >= 4){
 		Rows = atoi(argv[3]);
 	}
@@ -267,7 +267,7 @@ int main (int argc, char **argv){
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
 	// ####### read init
-	Table read_table(file_input);    
+	Table read_table(file_input);
 	TotalRows = read_table.nrow();
 
 	// ####### write init
@@ -369,7 +369,7 @@ int main (int argc, char **argv){
 	CORRECTED_DATA_col= new ROArrayColumn<Complex> (read_table, "CORRECTED_DATA");
 	IPosition CORRECTED_DATA_pos = CORRECTED_DATA_col->shape(0);
 	td.addColumn (ArrayColumnDesc<Complex>("CORRECTED_DATA", CORRECTED_DATA_pos, ColumnDesc::Direct));
-	
+
 	// ####### column init for read & write
 	if(mpiRank>0){
 		stringstream filename;
@@ -437,7 +437,7 @@ int main (int argc, char **argv){
 		float Seconds = tictak_total(0);
 		cout << "MpiSize," << mpiSize;
 		cout << ",Seconds," << Seconds;
-	
+
 	}
 	return 0;
 }
