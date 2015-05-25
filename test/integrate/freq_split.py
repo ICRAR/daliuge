@@ -5,7 +5,7 @@ Used as a template to be wrapped by the DataObject framework
 chen.wu@icrar.org
 """
 
-import sys, os, datetime, time, subprocess
+import sys, os, datetime, time, subprocess, re
 from string import Template
 from optparse import OptionParser
 
@@ -20,7 +20,7 @@ mstransform(vis='${infile}',
             interpolation='linear',
             veltype='radio',
             start='${freq1}MHz',
-            width='${width_freq}KHz',
+            width='${width_freq}kHz',
             spw='${spw_range}',
             combinespws=True,
             nspw=1,
@@ -191,7 +191,7 @@ def launch_mstransform(infile, outfile, no_chan,
     with open(gen_script_fn, "w") as casa_file:
         casa_file.write(casa_script)
 
-    casapy_cmd = "{0}/casapy --nologger -c {1}".format(casa_bin_dir, casa_file)
+    casapy_cmd = "{0}/casapy --nologger -c {1}".format(casa_bin_dir, gen_script_fn)
     casa_process = subprocess.Popen(casapy_cmd.split())
     return casa_process
 
@@ -203,6 +203,10 @@ def do_split(infile, outdir, min_freq, max_freq,
     TODO - add timer to measure completion time
     """
 
+    dt = datetime.datetime.now()
+    timestr = dt.strftime('%Y-%m-%dT%H-%M-%S')
+
+    outdir += '/{0}'.format(timestr)
     if (os.path.exists(outdir)):
         os.system("rm -rf {0}".format(outdir))
     os.system('mkdir -p {0}'.format(outdir))
@@ -220,8 +224,7 @@ def do_split(infile, outdir, min_freq, max_freq,
 
     casa_proc_list = []
 
-    dt = datetime.datetime.now()
-    timestr = dt.strftime('%Y-%m-%dT%H-%M-%S')
+
     gen_script_dir = "{0}/{1}".format(work_dir, timestr)
 
     for i in range(steps): # potentially parallel
