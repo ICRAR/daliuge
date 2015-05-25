@@ -11,12 +11,12 @@
 //    modify it under the terms of the GNU General Public License as published
 //    by the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
-//   
+//
 //    This library is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
-//   
+//
 //    You should have received a copy of the GNU General Public License along
 //    with this library. If not, see <http://www.gnu.org/licenses/>.
 //
@@ -29,7 +29,7 @@
 #include <tables/Tables/ScalarColumn.h>
 #include <casacore/tables/Tables/ArrColDesc.h>
 #include <casacore/tables/Tables/ArrayColumn.h>
-#include "../AdiosStMan.h"
+#include <AdiosStMan.h>
 #include <casa/namespace.h>
 
 
@@ -52,8 +52,8 @@ int main (int argc, char **argv){
 	cout << "file_tsm = " << file_tsm << endl;
 	cout << "file_adios = " << file_adios << endl;
 
-	Table tsm_table(file_tsm);    
-	Table adios_table(file_adios);    
+	Table tsm_table(file_tsm);
+	Table adios_table(file_adios);
 
 	uInt tsm_rows = tsm_table.nrow();
 	uInt adios_rows = adios_table.nrow();
@@ -67,7 +67,7 @@ int main (int argc, char **argv){
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //  TiledShapeStMan
-	
+
 	ROScalarColumn<bool>    FLAG_ROW_col_tsm(tsm_table, "FLAG_ROW");
 	ROScalarColumn<int>     ANTENNA1_col_tsm(tsm_table, "ANTENNA1");
 	ROScalarColumn<int>     ANTENNA2_col_tsm(tsm_table, "ANTENNA2");
@@ -120,7 +120,7 @@ int main (int argc, char **argv){
 	ROArrayColumn<double>   UVW_col_adios(adios_table, "UVW");
 
 	///////////////////////////////////////////
-	
+
 
 	uInt rows = tsm_rows;
 	if(tsm_rows > adios_rows) rows = adios_rows;
