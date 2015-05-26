@@ -1,5 +1,5 @@
-ADIOSSTMAN_INC=-I/Users/jason/Desktop/storageManager/adiosStMan
-ADIOSSTMAN_LIB=-L/Users/jason/Desktop/storageManager/adiosStMan
+ADIOSSTMAN_INC=-I/home/jwang/AdiosStMan
+ADIOSSTMAN_LIB=-L/home/jwang/AdiosStMan
 
 
 ifeq ($(VENDOR),cray)
