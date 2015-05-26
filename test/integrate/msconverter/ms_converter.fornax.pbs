@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -W group_list=partner1012
+#PBS -l walltime=2:00:00
+#PBS -l select=5:ncpus=12:mem=68gb:mpiprocs=1
+
+
+
+file_tsm=/scratch/partner1012/jwang/stripe2/13B-266.sb28624226.eb28625769.56669.43262586805_calibrated_deepfield.ms
+file_adios=/scratch/partner1012/jwang/stripe2/13B-266.sb28624226.eb28625769.56669.43262586805_calibrated_deepfield_adios.ms
+
+rm -rf $file_adios
+
+mpirun /home/jwang/AdiosStMan/tools/ms_converter $file_tsm $file_adios
+
+
+
