@@ -28,7 +28,7 @@ mstransform(vis='${infile}',
             datacolumn="data")
 """
 
-def freq_map(low_req,hi_req,*args):
+def freq_map(low_req, hi_req, *args):
     """
     Ported from Chiles AWS code by R.Dodson (richard.dodson@icrar.org)
 
@@ -103,7 +103,7 @@ def freq_map(low_req,hi_req,*args):
     #     13     EVLA_L#A0C0#13   2048   TOPO    1357.000   1362.000   1367.000      15.625     32000.0      12  RR  LL
     #     14     EVLA_L#A0C0#14   2048   TOPO    1389.000   1394.000   1399.000      15.625     32000.0      12  RR  LL
 
-    f_tab=[[941.00,   946.00,   951.00],
+    f_tab = [[941.00,   946.00,   951.00],
     [973.00,   978.00,   983.00],
     [1005.00,  1010.00,  1015.00],
     [1037.00,  1042.00,  1047.00],
@@ -120,10 +120,10 @@ def freq_map(low_req,hi_req,*args):
     [1389.00,  1394.00,  1399.00],
     [1421.00,  1426.00,  1431.00]]
 
-    if_low=0
-    if_hi=14
-    ifn_low=0
-    ifn_hi=2
+    if_low = 0
+    if_hi = 14
+    ifn_low = 0
+    ifn_hi = 2
 
     if (args):
      if (args[0] == 941):
@@ -137,7 +137,7 @@ def freq_map(low_req,hi_req,*args):
        ifn_hi = 2
 
     for nif_low in range(0, 16):
-        f=f_tab[nif_low]
+        f = f_tab[nif_low]
         #print nif_low,f
         if ((f[ifn_low]) > ((low_req) - 2)):
             if_low = nif_low - 1
@@ -145,7 +145,7 @@ def freq_map(low_req,hi_req,*args):
             nif_low = 14
             break
 
-    for nif_hi in range(0,16):
+    for nif_hi in range(0, 16):
         f = f_tab[nif_hi]
         #print nif_hi,f
         if (f[ifn_hi] > (hi_req + 2)):
@@ -217,14 +217,15 @@ def do_split(infile, outdir, min_freq, max_freq,
         steps += 1
     freq1 = min_freq
     freq2 = min_freq + step_freq
-    bottom_edge = re.search('_[0-9]{3}_',infile)
+    bottom_edge = re.search('_[0-9]{3}_', infile)
     if (bottom_edge):
+        #e.g. 20131122_941_6_FINAL_PRODUCTS --> 941
         bedge = bottom_edge.group(0)
         bedge = int(bedge[1:4])
+    else:
+        bedge = None
 
     casa_proc_list = []
-
-
     gen_script_dir = "{0}/{1}".format(work_dir, timestr)
 
     for i in range(steps): # potentially parallel
