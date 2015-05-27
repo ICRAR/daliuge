@@ -87,8 +87,6 @@ int main (int argc, char **argv){
 	ROArrayColumn<bool>     FLAG_col_tsm(tsm_table, "FLAG");
 	ROArrayColumn<float>    SIGMA_col_tsm(tsm_table, "SIGMA");
 	ROArrayColumn<float>    WEIGHT_col_tsm(tsm_table, "WEIGHT");
-	ROArrayColumn<float>    WEIGHT_SPECTRUM_col_tsm(tsm_table, "WEIGHT_SPECTRUM");
-	ROArrayColumn<Complex>  CORRECTED_DATA_col_tsm(tsm_table, "CORRECTED_DATA");
 	ROArrayColumn<Complex>  DATA_col_tsm(tsm_table, "DATA");
 	ROArrayColumn<Double>   UVW_col_tsm(tsm_table, "UVW");
 
@@ -114,8 +112,6 @@ int main (int argc, char **argv){
 	ROArrayColumn<bool>     FLAG_col_adios(adios_table, "FLAG");
 	ROArrayColumn<float>    SIGMA_col_adios(adios_table, "SIGMA");
 	ROArrayColumn<float>    WEIGHT_col_adios(adios_table, "WEIGHT");
-	ROArrayColumn<float>    WEIGHT_SPECTRUM_col_adios(adios_table, "WEIGHT_SPECTRUM");
-	ROArrayColumn<Complex>  CORRECTED_DATA_col_adios(adios_table, "CORRECTED_DATA");
 	ROArrayColumn<Complex>  DATA_col_adios(adios_table, "DATA");
 	ROArrayColumn<double>   UVW_col_adios(adios_table, "UVW");
 
@@ -286,18 +282,6 @@ int main (int argc, char **argv){
 				exit(-1);
 			}
 		}
-	// WEIGHT_SPECTRUM column
-		Array<float> WEIGHT_SPECTRUM_tsm = WEIGHT_SPECTRUM_col_tsm.get(i);
-		Vector<float> WEIGHT_SPECTRUM_tsm_rf = WEIGHT_SPECTRUM_tsm.reform(IPosition(1, WEIGHT_SPECTRUM_tsm.nelements()));
-		Array<float> WEIGHT_SPECTRUM_adios = WEIGHT_SPECTRUM_col_adios.get(i);
-		Vector<float> WEIGHT_SPECTRUM_adios_rf = WEIGHT_SPECTRUM_adios.reform(IPosition(1, WEIGHT_SPECTRUM_adios.nelements()));
-		for(int j=0; j<WEIGHT_SPECTRUM_tsm.nelements(); j++){
-			if(WEIGHT_SPECTRUM_tsm_rf[j] != WEIGHT_SPECTRUM_adios_rf[j]){
-				cout << "row = " << i << ", column = WEIGHT_SPECTRUM, element = " << j << endl;
-				cout << "adios value = " << WEIGHT_SPECTRUM_adios_rf[j] << ", tsm value = " << WEIGHT_SPECTRUM_tsm_rf[j] << endl;
-				exit(-1);
-			}
-		}
 	// DATA column
 		Array<Complex> DATA_tsm = DATA_col_tsm.get(i);
 		Vector<Complex> DATA_tsm_rf = DATA_tsm.reform(IPosition(1, DATA_tsm.nelements()));
@@ -307,18 +291,6 @@ int main (int argc, char **argv){
 			if(DATA_tsm_rf[j] != DATA_adios_rf[j]){
 				cout << "row = " << i << ", column = DATA, element = " << j << endl;
 				cout << "adios value = " << DATA_adios_rf[j] << ", tsm value = " << DATA_tsm_rf[j] << endl;
-				exit(-1);
-			}
-		}
-    // CORRECTED_DATA column
-		Array<Complex> CORRECTED_DATA_tsm = CORRECTED_DATA_col_tsm.get(i);
-		Vector<Complex> CORRECTED_DATA_tsm_rf = CORRECTED_DATA_tsm.reform(IPosition(1, CORRECTED_DATA_tsm.nelements()));
-		Array<Complex> CORRECTED_DATA_adios = CORRECTED_DATA_col_adios.get(i);
-		Vector<Complex> CORRECTED_DATA_adios_rf = CORRECTED_DATA_adios.reform(IPosition(1, CORRECTED_DATA_adios.nelements()));
-		for(int j=0; j<CORRECTED_DATA_tsm.nelements(); j++){
-			if(CORRECTED_DATA_tsm_rf[j] != CORRECTED_DATA_adios_rf[j]){
-				cout << "row = " << i << ", column = CORRECTED_DATA, element = " << j << endl;
-				cout << "adios value = " << CORRECTED_DATA_adios_rf[j] << ", tsm value = " << CORRECTED_DATA_tsm_rf[j] << endl;
 				exit(-1);
 			}
 		}
@@ -335,7 +307,7 @@ int main (int argc, char **argv){
 			}
 		}
 
-		cout << i << " rows checked, " << (float)(i+1)/rows*100 << "\% finished" << endl;
+		cout << i << " rows checked, " << (float)(i+1)/rows*100 << "% finished" << endl;
 
 	}
 
