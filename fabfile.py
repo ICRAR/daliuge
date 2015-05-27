@@ -221,6 +221,14 @@ def run_tests():
     print "### RUNNING TESTS ###"
     invoke_tests()
 
+@task
+def run_chiles_transform():
+    reploc = os.path.dirname(os.path.abspath(__file__))
+    inp = '/mnt/chiles/20140108_951_2_FINAL_PRODUCTS/13B-266.sb25387671.eb28616143.56665.27054978009_calibrated_deepfield.ms'
+    out = '/mnt/chiles-output/split_vis'
+    work = '/mnt/chiles-output'
+    bindir = '/home/ec2-user/casapy-42.2.30986-1-64b/bin'
+    virtualenv('cd {0}; python {0}/test/integrate/freq_split.py -i {1} -o {2} -k {3} -c {4}'.format(reploc, inp, out, work, bindir))
 
 @task
 def virtualenv_clean():
