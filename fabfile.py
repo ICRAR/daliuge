@@ -223,6 +223,8 @@ def run_tests():
 
 @task
 def run_chiles_transform():
+    build_install()
+
     reploc = os.path.dirname(os.path.abspath(__file__))
     inp = '/mnt/chiles/20140108_951_2_FINAL_PRODUCTS/13B-266.sb25387671.eb28616143.56665.27054978009_calibrated_deepfield.ms'
     out = '/mnt/chiles-output/split_vis'
