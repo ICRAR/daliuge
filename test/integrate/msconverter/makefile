@@ -1,8 +1,9 @@
+ADIOSSTMAN_INC=-I/home/jason/AdiosStMan
+ADIOSSTMAN_LIB=-L/home/jason/AdiosStMan
 #ADIOSSTMAN_INC=-I/home/jwang/AdiosStMan
 #ADIOSSTMAN_LIB=-L/home/jwang/AdiosStMan
-
-ADIOSSTMAN_INC=-I/Users/jason/Desktop/AdiosStMan
-ADIOSSTMAN_LIB=-L/Users/jason/Desktop/AdiosStMan
+#ADIOSSTMAN_INC=-I/Users/jason/Desktop/AdiosStMan
+#ADIOSSTMAN_LIB=-L/Users/jason/Desktop/AdiosStMan
 
 ifeq ($(VENDOR),cray)
 	CC=cc -dynamic
