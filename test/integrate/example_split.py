@@ -12,8 +12,11 @@ dt = datetime.datetime.now()
 timestr = dt.strftime('%Y-%m-%dT%H-%M-%S')
 
 ms_dir = '/scratch/partner1024/chiles/final_products/20131122_941_6_FINAL_PRODUCTS/13B-266.sb27261805.eb28549602.56618.334173599535_calibrated_deepfield.ms'
+#ms_dir = '/scratch/jason/13B-266.sb28624226.eb28625769.56669.43262586805_calibrated_deepfield_adios.ms'
 log_dir = '/home/cwu/chiles/processing'
+#log_dir = '/scratch/jason/tmp'
 output_vis = '/scratch/partner1024/chiles/split_vis/{0}'.format(timestr)
+#output_vis = '/scratch/jason/tmp/split_vis/{0}'.format(timestr)
 log_file = '{0}/{1}_split_time.log'.format(log_dir, timestr)
 
 os.mkdir(output_vis)
