@@ -6,6 +6,7 @@ created on 14-June-2015 by chen.wu@icrar.org
 
 import luigi
 import urllib2, time, os
+import cPickle as pickle
 
 DEBUG = True
 
@@ -68,6 +69,45 @@ class DataObjectTarget(luigi.Target):
     def uri(self):
         return self._uri
 
+class NGASTaskClient():
+    """
+    """
+    def __init__(self):
+        pass
+
+    def submit_task(self, nhost, nltask, timeout=10):
+        """
+        nhost:  NGAS host which this task runs (string)
+        nltask: an instance of (NGASLocalTask)
+        """
+        strLT = pickle.dumps(nltask)
+        try:
+            strRes = urllib2.urlopen('http://%s/RUNTASK' % nhost, data=strLT, timeout=timeout).read()
+            #logger.debug('local task {0} submitted, ACK received: {1}'.format(nltask.id, strRes))
+            return (0, strRes)
+        except urllib2.URLError, urlerr:
+            raise NGASDownException(str(urlerr))
+        except urllib2.HTTPError, httperr:
+            return(1, str(httperr))
+        except Exception, ex:
+            raise NGASException(str(ex))
+
+    def cancel_task(self, nhost, task_id, timeout=10):
+        """
+        nhost:  NGAS host which this task runs (string)
+        task_id:    string
+        """
+        try:
+            strRes = urllib2.urlopen('http://{0}/RUNTASK?action=cancel&task_id={1}'.format(nhost, urllib2.quote(task_id)), timeout=timeout).read()
+            #logger.debug('local task {0} cancel request submitted, ACK received: {1}'.format(nltask.id, strRes))
+            return (0, strRes)
+        except urllib2.URLError, urlerr:
+            raise NGASDownException(str(urlerr))
+        except urllib2.HTTPError, httperr:
+            return(1, str(httperr))
+        except Exception, ex:
+            raise NGASException(str(ex))
+
 class NGASLocalTask():
     """
     This is a generic interface
@@ -83,6 +123,10 @@ class NGASLocalTask():
         """
         self._taskId = taskId
         self._subproc = None
+
+    @property
+    def id(self):
+        return self._taskId
 
     def execute(self):
         """
