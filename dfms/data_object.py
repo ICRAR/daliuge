@@ -83,6 +83,16 @@ class AbstractDataObject(object):
             self.status = DOStates.FAILED
             raise e
 
+    def __hash__(self):
+        return hash(self._uid)
+
+    def __str__(self):
+        re = "oid:{0}".format(self.oid)
+        if (self.location is not None):
+            loc = "@{0}".format(self.location)
+        else:
+            loc = ""
+        return "{0}{1}".format(re, loc)
 
     def initialize(self, **kwargs):
         """
@@ -206,6 +216,10 @@ class AbstractDataObject(object):
 
     def addConsumer(self, consumer):
         self._consumers.append(consumer)
+
+    @property
+    def producers(self):
+        return self._producers
 
     def addProducer(self, producer):
         self._producers.append(producer)

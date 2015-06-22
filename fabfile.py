@@ -1,8 +1,8 @@
 """
 Fabric file for building installing and testing Python projects
-    
+
 Authors: A Wicenec and D Pallot
-    
+
 ICRAR 2015
 """
 import os
@@ -33,7 +33,7 @@ def set_env():
 
 def to_boolean(choice, default=False):
     """Convert the yes/no to true/false
-        
+
         :param choice: the text string input
         :type choice: string
         """
@@ -48,10 +48,10 @@ def to_boolean(choice, default=False):
 def check_command(command):
     """
         Check existence of command remotely
-        
+
         INPUT:
         command:  string
-        
+
         OUTPUT:
         Boolean
         """
@@ -78,10 +78,10 @@ def check_path(path):
 def check_python():
     """
         Check for the existence of correct version of python
-        
+
         INPUT:
         None
-        
+
         OUTPUT:
         path to python binary    string, could be empty string
         """
@@ -101,7 +101,7 @@ def virtualenv(command):
     """
         Just a helper function to execute commands in the virtualenv
         """
-    
+
     env.activate = 'source {0}/bin/activate'.format(env.APP_DIR_ABS)
     with cd(env.APP_DIR_ABS):
         run(env.activate + ' && ' + command)
@@ -112,15 +112,15 @@ def python_setup():
     """
         Ensure that there is the right version of python available
         If not install it from scratch in user directory.
-        
+
         INPUT:
         None
-        
+
         OUTPUT:
         None
         """
     set_env()
-    
+
     with cd('/tmp'):
         run('wget --no-check-certificate -q {0}'.format(APP_PYTHON_URL))
         base = os.path.basename(APP_PYTHON_URL)
@@ -139,15 +139,15 @@ def virtualenv_setup():
     """
         setup virtualenv with the detected or newly installed python
         """
-    
+
     set_env()
-    
+
     ppath = check_python()
     if not ppath:
         python_setup()
     else:
         env.PYTHON = ppath
-    
+
     if not check_dir(env.APP_DIR_ABS):
         with cd('/tmp'):
             print "### CREATING VIRTUAL ENV ###"
@@ -217,9 +217,15 @@ def run_tests():
         build, install and run tests within virtual environment
         """
     build_install()
-    
+
     print "### RUNNING TESTS ###"
     invoke_tests()
+
+@task
+def run_luigi_dataflow():
+    build_install()
+    reploc = os.path.dirname(os.path.abspath(__file__))
+    virtualenv("cd {0}; pip install luigi; python {0}/test/dfmgr/ngas_dm.py PGDeployTask".format(reploc))
 
 @task
 def run_chiles_transform():
@@ -238,8 +244,8 @@ def virtualenv_clean():
         remove virtualenv
         """
     set_env()
-    
+
     print "### REMOVING VIRTUAL ENV ###"
-    
+
     run('rm -rf {0}'.format(env.APP_DIR_ABS))
 
