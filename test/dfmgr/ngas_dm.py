@@ -11,6 +11,7 @@ import urllib2, time, os
 import cPickle as pickle
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
+from collections import defaultdict
 
 DEBUG = True
 
@@ -56,7 +57,7 @@ class RunDataObjectTask(DataObjectTask):
         if real data object, then return itself
         if app data object, return my consumers (output)
         """
-        if (self.data_obj is AppDataObject):
+        if (isinstance(self.data_obj, AppDataObject)):
             return self.outputdot
         else:
             return self.dot
@@ -69,7 +70,7 @@ class RunDataObjectTask(DataObjectTask):
         TODO - remove dummy code
         """
         msg = "data object {0} on {1}".format(self.data_obj.oid, self.data_obj.location)
-        if (self.data_obj is AppDataObject):
+        if (isinstance(self.data_obj, AppDataObject)):
             print "Executing application {0}".format(msg)
         else:
             print "Ingesting {0}".format(msg)
@@ -79,7 +80,7 @@ class RunDataObjectTask(DataObjectTask):
         producers
         """
         re = [RunDataObjectTask(dob) for dob in self.data_obj.producers]
-        if (self.data_obj is ContainerDataObject):
+        if (isinstance(self.data_obj, ContainerDataObject)):
             re += [RunDataObjectTask(dob) for dob in self.data_obj._children]
         return re
 
@@ -103,7 +104,8 @@ class DeployDataObjectTask(DataObjectTask):
         the producer!
         """
         re = [DeployDataObjectTask(dob) for dob in self.data_obj.producers]
-        if (self.data_obj is ContainerDataObject):
+        if (isinstance(self.data_obj, ContainerDataObject)):
+            #print "Yes, container!!------------------"
             re += [DeployDataObjectTask(dob) for dob in self.data_obj._children]
         return re
 
@@ -158,6 +160,127 @@ class PGEngine():
 
         return dobA
 
+    def create_container_pg(self):
+        island_one = "192.168.1.1:7777"
+        island_two = "192.168.1.2:7777"
+        dob_one =  AbstractDataObject('Obj-one', 'Obj-one', self.eventbc)
+        dobA = AbstractDataObject('Obj-A', 'Obj-A', self.eventbc)
+        dobB = AbstractDataObject('Obj-B', 'Obj-B', self.eventbc)
+        dobC = ContainerDataObject('Obj-C', 'Obj-C', self.eventbc)
+        dobD = AppDataObject('Obj-D', 'Obj-D', self.eventbc)
+
+        dob_one.location = island_one
+        dobA.location = island_one
+        dobB.location = island_one
+        dobC.location = island_two
+        dobD.location = island_two
+
+        dobA.parent = dobC
+        dobB.parent = dobC
+        dobC.addChild(dobA)
+        dobC.addChild(dobB)
+
+        dobC.addConsumer(dobD)
+        dobD.addProducer(dobC)
+
+        dob_one.addConsumer(dobA)
+        dob_one.addConsumer(dobB)
+
+        dobA.addProducer(dob_one)
+        dobB.addProducer(dob_one)
+
+        return dob_one
+
+
+    def create_chiles_pg(self):
+
+        total_bandwidth = 480
+        num_obs = 8 # the same as num of data island
+        subband_width = 60 # MHz
+        num_subb = total_bandwidth / subband_width
+        subband_dict = defaultdict(list) # for corner turning
+        img_list = []
+        start_freq = 940
+
+        # this should be removed
+        dob_root = AbstractDataObject("start", "start", self.eventbc)
+        dob_root.location = "local"
+
+        for i in range(1, num_obs + 1):
+            stri = "%02d" % i
+            oid = "Obs_day_{0}".format(stri)
+            dob_obs = AbstractDataObject(oid, oid, self.eventbc)
+            dob_obs.location = "10.1.1.{0}:7777".format(i)
+            dob_obs.addProducer(dob_root)
+            dob_root.addConsumer(dob_obs)
+            for j in range(1, num_subb + 1):
+                app_oid = "mstransform_{0}_{1}".format(stri, "%02d" % j)
+                adob_split = AppDataObject(app_oid, app_oid, self.eventbc)
+                adob_split.location = dob_obs.location
+                dob_obs.addConsumer(adob_split)
+                adob_split.addProducer(dob_obs)
+
+                dob_sboid = "Split_{0}_{1}~{2}MHz".format(stri,
+                                                          start_freq + subband_width * j,
+                                                          start_freq + subband_width * (j + 1))
+                dob_sb = AbstractDataObject(dob_sboid, dob_sboid, self.eventbc)
+                dob_sb.location = dob_obs.location
+                adob_split.addConsumer(dob_sb)
+                dob_sb.addProducer(adob_split)
+
+                subband_dict[j].append(dob_sb)
+
+        for j, v in subband_dict.items():
+            oid = "Subband_{0}~{1}MHz".format(start_freq + subband_width * j,
+                                              start_freq + subband_width * (j + 1))
+            dob = ContainerDataObject(oid, oid, self.eventbc)
+            dob.location = "10.1.1.{0}:7777".format(j % num_obs)
+            for dob_sb in v:
+                dob.addChild(dob_sb)
+                dob_sb.parent = dob
+
+            app_oid = oid.replace("Subband_", "Clean_")
+            adob_clean = AppDataObject(app_oid, app_oid, self.eventbc)
+            adob_clean.location = dob.location
+            dob.addConsumer(adob_clean)
+            adob_clean.addProducer(dob)
+
+            img_oid = oid.replace("Subband_", "Image_")
+            dob_img = AbstractDataObject(img_oid, img_oid, self.eventbc)
+            dob_img.location = dob.location
+            adob_clean.addConsumer(dob_img)
+            dob_img.addProducer(adob_clean)
+            img_list.append(dob_img)
+
+        #container
+        dob_comb_img_oid = "Combined_image"
+        dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, self.eventbc)
+        dob_comb_img.location = "10.1.1.100:7777"
+        for dob_img in img_list:
+            dob_img.parent = dob_comb_img
+            dob_comb_img.addChild(dob_img)
+
+        #concatenate all images
+        adob_concat_oid = "Concat_image"
+        adob_concat = AppDataObject(adob_concat_oid, adob_concat_oid, self.eventbc)
+        adob_concat.location = dob_comb_img.location
+        dob_comb_img.addConsumer(adob_concat)
+        adob_concat.addProducer(dob_comb_img)
+
+        # produce cube
+        dob_cube_oid = "Cube_Day{0}~{1}_{2}~{3}MHz".format(1,
+                                                           num_obs,
+                                                           start_freq,
+                                                           start_freq + total_bandwidth)
+
+        dob_cube = AbstractDataObject(dob_cube_oid, dob_cube_oid, self.eventbc)
+        dob_cube.location = dob_comb_img.location
+        adob_concat.addConsumer(dob_cube)
+        dob_cube.addProducer(adob_concat)
+
+        return dob_root
+
+
     def pg_to_json(self, pg):
         pass
 
@@ -166,6 +289,7 @@ class PGDeployTask(luigi.Task):
     similar to flow start
     """
     session_id = luigi.Parameter(default=str(time.time()))
+    pg_name = luigi.Parameter(default="test")
 
     #leafs = luigi.Parameter()
 
@@ -176,7 +300,11 @@ class PGDeployTask(luigi.Task):
 
     def _deploy(self):
         pg_eng = PGEngine()
-        pg = pg_eng.create_test_pg()
+        call_nm = "create_{0}_pg".format(self.pg_name).lower()
+        if (not hasattr(pg_eng, call_nm)):
+            raise DataFlowException("Invalid physical graph '{0}'".format(self.pg_name))
+        pg = getattr(pg_eng, call_nm)()
+        #pg = pg_eng.create_test_pg()
         return pg_eng.process(pg)
 
     def requires(self):
@@ -394,6 +522,9 @@ class NGASLocalTaskResult():
         self._errCode = errCode
 
 if __name__ == "__main__":
+    """
+    e.g. python ngas_dm.py PGDeployTask --PGDeployTask-pg-name test
+    """
     luigi.run()
 
 
