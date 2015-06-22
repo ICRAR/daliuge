@@ -236,7 +236,10 @@ class AbstractDataObject(object):
         return where the "actual" data is located
         the location could be a Compute node or a Island or just the buffer URL
         """
-        return self._location
+        if (self._location is not None):
+            return self._location
+        else:
+            return ''
 
     @location.setter
     def location(self, value):
@@ -268,6 +271,28 @@ class AbstractDataObject(object):
             kwargs['cs_index'] = cs_id
             cs._run(**kwargs)
 
+    def _type_code(self):
+        return 4
+
+    def to_json_obj(self):
+        """
+        json serialisation of the data object
+        """
+        jsobj = {}
+        jsobj['oid'] = self.oid
+        jsobj['type'] = self._type_code()
+        jsobj['loc'] = self.location
+
+        next = self.consumers
+        if (self.parent is not None):
+            next.append(self.parent)
+        if (len(next) > 0):
+            children = []
+            for dob in next:
+                child = dob.to_json_obj()
+                children.append(child)
+            jsobj['children'] = children
+        return jsobj
 
 class AppDataObject(AbstractDataObject):
 
@@ -307,6 +332,9 @@ class AppDataObject(AbstractDataObject):
         which will then be used as the **kwargs for calling consumers (i.e. "real" AbstractDataObjects)
         """
         pass
+
+    def _type_code(self):
+        return 1
 
 class ComputeStreamChecksum(AppDataObject):
 
@@ -477,3 +505,7 @@ class ContainerDataObject(AbstractDataObject):
         child.subscribe(self.check_join_condition)
         self._children.append(child)
         self._complete_map[child.oid] = child.isCompleted()
+
+    def _type_code(self):
+        return 2
+
