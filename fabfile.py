@@ -225,7 +225,7 @@ def run_tests():
 def run_luigi_dataflow():
     build_install()
     reploc = os.path.dirname(os.path.abspath(__file__))
-    virtualenv("cd {0}; pip install luigi; python {0}/test/dfmgr/ngas_dm.py PGDeployTask".format(reploc))
+    virtualenv("cd {0}; pip install luigi; pip install bottle; pip install paste; python {0}/test/dfmgr/ngas_dm.py PGDeployTask".format(reploc))
 
 @task
 def run_chiles_transform():

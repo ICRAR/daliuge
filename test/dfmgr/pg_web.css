@@ -1,0 +1,35 @@
+body
+{font:12px arial,sans-serif;margin-left: 20px;margin-top: 0px;}
+
+/* Begin Navigation Bar Styling */
+	#nav {
+		width: 100%;
+		float: left;
+		margin: 0 0 3em 0;
+		padding: 0;
+		list-style: none;
+		background-color: #f2f2f2;
+		border-bottom: 1px solid #ccc; 
+		border-top: 1px solid #ccc; }
+	#nav li {
+		float: left; }
+	#nav li a {
+		display: block;
+		padding: 8px 15px;
+		text-decoration: none;
+		font-weight: bold;
+		color: #069;
+		border-right: 1px solid #ccc; }
+	#nav li a:hover {
+		color: #c00;
+		background-color: #fff; }
+	/* End navigation bar styling. */
+	h1 {
+		font-size: 1.5em;
+		padding: 1em 8px;
+		color: #fff;
+		background-color: #069;
+		margin: 0; }	
+		
+	/* For showing the error message */
+	pre {background-color: #eee; border: 1px solid #ddd; padding: 5px;}	
