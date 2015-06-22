@@ -8,10 +8,10 @@ created on 14-June-2015 by chen.wu@icrar.org
 import luigi
 import time, datetime
 
-from ngas_dm import DataObjectTarget
+from ngas_dm import DataObjectTarget, DataObjectTask
 
 
-class IngestScanSplit(luigi.Task):
+class IngestScanSplit(DataObjectTask):
     obs_id = luigi.Parameter() # observation id, gps time in seconds
     obs_date = luigi.Parameter() # date string
     cc_id = luigi.IntParameter() # coarse channel id
@@ -65,7 +65,7 @@ class IngestScanSplit(luigi.Task):
         print "Ingesting ScanSplit on scan {0} at {1}".format(self.cc_id, self.ngas_host)
         time.sleep(0.5)
 
-class FlowStart(luigi.Task):
+class FlowStart(DataObjectTask):
     """
     Used as the start of the flow for testing purpose
     """
