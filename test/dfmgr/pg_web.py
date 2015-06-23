@@ -29,6 +29,10 @@ def _response_msg(msg):
 def server_static(filepath):
     return static_file(filepath, root='./')
 
+def _get_json(call_nm):
+    pg = getattr(pg_engine, call_nm)()
+    return json.dumps(pg.to_json_obj(), default=encode_decimal)
+
 @get('/show')
 def show_pg():
     """
@@ -37,7 +41,9 @@ def show_pg():
     pg_name = request.query.get('pg_name')
     if (not valid_pg_name(pg_name)):
         return _response_msg('Invalid physical graph name {0}'.format(pg_name))
-    return template('pg_vis.html', pg_name=pg_name)
+    call_nm = "create_{0}_pg".format(pg_name).lower()
+    jsbody = _get_json(call_nm)
+    return template('pg_graph_tpl.html', json_workers=jsbody)
 
 @get('/jsonbody')
 def get_json():
@@ -48,10 +54,16 @@ def get_json():
     if (not valid_pg_name(pg_name)):
         return _response_msg('Invalid physical graph name {0}'.format(pg_name))
     call_nm = "create_{0}_pg".format(pg_name).lower()
+    return _get_json(call_nm)
+    """
     pg = getattr(pg_engine, call_nm)()
     return json.dumps(pg.to_json_obj(), default=encode_decimal)
+    """
 
 if __name__ == "__main__":
+    """
+    e.g. http://localhost:8081/show?pg_name=chiles
+    """
     run(host="localhost", server='paste', port=8081, debug=True)
     """
     run(host = config.get('Web Server', 'IpAddress'),

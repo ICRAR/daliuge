@@ -274,25 +274,43 @@ class AbstractDataObject(object):
     def _type_code(self):
         return 4
 
-    def to_json_obj(self):
+    def get_upstream_objects(self):
+        return self.producers
+
+    def to_json_obj(self, jsobj_out=None):
         """
         json serialisation of the data object
         """
-        jsobj = {}
-        jsobj['oid'] = self.oid
+        jsobj = dict()
         jsobj['type'] = self._type_code()
         jsobj['loc'] = self.location
+        inputQueue = []
+        for uobj in self.get_upstream_objects():
+            iqd = dict()
+            iqd['oid'] = uobj.oid
+            inputQueue.append(iqd)
+        if (len(inputQueue) > 0):
+            jsobj['inputQueue'] = inputQueue
+
+        create_dict = jsobj_out is None
+        if (create_dict):
+            m_jsobj_out = dict()
+            m_jsobj_out[self.oid] = jsobj
+        else:
+            jsobj_out[self.oid] = jsobj
 
         next = self.consumers
         if (self.parent is not None):
             next.append(self.parent)
-        if (len(next) > 0):
-            children = []
-            for dob in next:
-                child = dob.to_json_obj()
-                children.append(child)
-            jsobj['children'] = children
-        return jsobj
+        if (create_dict):
+            param_jsobj_out = m_jsobj_out
+        else:
+            param_jsobj_out = jsobj_out
+        for dob in next:
+            dob.to_json_obj(param_jsobj_out)
+
+        if (create_dict):
+            return m_jsobj_out
 
 class AppDataObject(AbstractDataObject):
 
@@ -508,4 +526,7 @@ class ContainerDataObject(AbstractDataObject):
 
     def _type_code(self):
         return 2
+
+    def get_upstream_objects(self):
+        return self.producers + self._children
 
