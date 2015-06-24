@@ -2,8 +2,17 @@ from bottle import route, run, request, get, post, static_file, template, redire
 
 from ngas_dm import PGEngine, DataFlowException
 import json, decimal
+import sys, commands, os, time
 
 pg_engine = PGEngine()
+
+my_ip = "localhost"
+luigi_port = "8082"
+
+"""
+from urllib2 import urlopen
+my_ip = urlopen('http://ip.42.pl/raw').read()
+"""
 
 def encode_decimal(obj):
     """
@@ -44,6 +53,23 @@ def show_pg():
     call_nm = "create_{0}_pg".format(pg_name).lower()
     jsbody = _get_json(call_nm)
     return template('pg_graph_tpl.html', json_workers=jsbody)
+
+@get('/deploy')
+def deploy_pg():
+    pg_name = request.query.get('pg_name')
+    if (not valid_pg_name(pg_name)):
+        return _response_msg('Invalid physical graph name {0}'.format(pg_name))
+    ppath = sys.executable
+    fpath = os.path.dirname(os.path.abspath(__file__))
+    ssid = "{0}-{1}".format(request.remote_addr.replace(".","-"), int(time.time()))
+    cmd = "{0} {1}/ngas_dm.py PGDeployTask --PGDeployTask-pg-name {2} --PGDeployTask-session-id {3}".format(ppath,
+                                                                                             fpath,
+                                                                                             pg_name,
+                                                                                             ssid)
+    re = commands.getstatusoutput(cmd)
+    if (re[0] != 0):
+        return _response_msg('Fail to deploy pg as Luigi tasks: {0}'.format(re[1]))
+    redirect("http://{0}:{1}/static/visualiser/index.html#PGDeployTask(session_id={2}, pg_name={3})".format(my_ip, luigi_port, ssid, pg_name))
 
 @get('/jsonbody')
 def get_json():

@@ -7,7 +7,7 @@ created on 14-June-2015 by chen.wu@icrar.org
 
 import luigi
 from luigi import interface, scheduler, worker
-import urllib2, time, os
+import urllib2, time, os, random
 import cPickle as pickle
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
@@ -98,6 +98,7 @@ class DeployDataObjectTask(DataObjectTask):
         TODO - remove dummy code
         """
         print "Deploying data object {0} on {1}".format(self.data_obj.oid, self.data_obj.location)
+        #time.sleep(random.randint(1, 3))
 
     def requires(self):
         """
@@ -191,6 +192,71 @@ class PGEngine():
 
         return dob_one
 
+    def create_mwa_fornax_pg(self):
+        num_coarse_ch = 24
+        num_split = 3 # number of time splits per channel
+        se = self.eventbc
+        dob_root = AbstractDataObject("MWA_LTA", "MWA_LTA", se)
+        dob_root.location = "Pawsey"
+
+         #container
+        dob_comb_img_oid = "Combined_image"
+        dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, se)
+        dob_comb_img.location = "f032.fornax"
+
+        for i in range(1, num_coarse_ch + 1):
+            stri = "%02d" % i
+            oid = "Subband_{0}".format(stri)
+            dob_obs = ContainerDataObject(oid, oid, se)
+            dob_obs.location = "f%03d.fornax" % i
+
+            oid_ingest = "NGAS_{0}".format(stri)
+            dob_ingest = AppDataObject(oid_ingest, oid_ingest, se)
+            dob_ingest.location = "f%03d.fornax:7777" % i
+
+            dob_ingest.addProducer(dob_root)
+            dob_root.addConsumer(dob_ingest)
+
+            for j in range(1, num_split + 1):
+                strj = "%02d" % j
+                split_oid = "Subband_{0}_Split_{1}".format(stri, strj)
+                dob_split = AbstractDataObject(split_oid, split_oid, se)
+                dob_split.location = dob_obs.location
+                dob_split.addProducer(dob_ingest)
+                dob_ingest.addConsumer(dob_split)
+                dob_split.parent = dob_obs
+                dob_obs.addChild(dob_split)
+
+            oid_rts = "RTS_{0}".format(stri)
+            dob_rts = AppDataObject(oid_rts, oid_rts, se)
+            dob_rts.location = dob_obs.location
+            dob_rts.addProducer(dob_obs)
+            dob_obs.addConsumer(dob_rts)
+
+            oid_subimg = "Subcube_{0}".format(stri)
+            dob_subimg = AbstractDataObject(oid_subimg, oid_subimg, se)
+            dob_subimg.location = dob_obs.location
+            dob_rts.addConsumer(dob_subimg)
+            dob_subimg.addProducer(dob_rts)
+            dob_subimg.parent = dob_comb_img
+            dob_comb_img.addChild(dob_subimg)
+
+        #concatenate all images
+        adob_concat_oid = "Concat_image"
+        adob_concat = AppDataObject(adob_concat_oid, adob_concat_oid, se)
+        adob_concat.location = dob_comb_img.location
+        dob_comb_img.addConsumer(adob_concat)
+        adob_concat.addProducer(dob_comb_img)
+
+        # produce cube
+        dob_cube_oid = "Cube_30.72MHz"
+        dob_cube = AbstractDataObject(dob_cube_oid, dob_cube_oid, se)
+        dob_cube.location = dob_comb_img.location
+        adob_concat.addConsumer(dob_cube)
+        dob_cube.addProducer(adob_concat)
+
+        return dob_root
+
 
     def create_chiles_pg(self):
 
@@ -203,14 +269,14 @@ class PGEngine():
         start_freq = 940
 
         # this should be removed
-        dob_root = AbstractDataObject("start", "start", self.eventbc)
-        dob_root.location = "local"
+        dob_root = AbstractDataObject("JVLA", "JVLA", self.eventbc)
+        dob_root.location = "NRAO"
 
         for i in range(1, num_obs + 1):
             stri = "%02d" % i
             oid = "Obs_day_{0}".format(stri)
             dob_obs = AbstractDataObject(oid, oid, self.eventbc)
-            dob_obs.location = "10.1.1.{0}:7777".format(i)
+            dob_obs.location = "{0}.aws-ec2.sydney".format(i)
             dob_obs.addProducer(dob_root)
             dob_root.addConsumer(dob_obs)
             for j in range(1, num_subb + 1):
@@ -234,7 +300,7 @@ class PGEngine():
             oid = "Subband_{0}~{1}MHz".format(start_freq + subband_width * j,
                                               start_freq + subband_width * (j + 1))
             dob = ContainerDataObject(oid, oid, self.eventbc)
-            dob.location = "10.1.1.{0}:7777".format(j % num_obs)
+            dob.location = "{0}.aws-ec2.sydney".format(j % num_obs)
             for dob_sb in v:
                 dob.addChild(dob_sb)
                 dob_sb.parent = dob
