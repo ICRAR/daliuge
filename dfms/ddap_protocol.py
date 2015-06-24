@@ -40,7 +40,10 @@ class DOType:
 
 #TODO - add more states
 class DOStates:
-    FAILED, DIRTY, COMPLETED, INITIALIZED = range(1, 5)
+    FAILED, DIRTY, COMPLETED, INITIALIZED, EXPIRED = range(1, 6)
+
+class DOPhases:
+    PLASMA, GAS, SOLID, LIQUID = xrange(4)
 
 class REST_API_DOM: # RESTful API (url patterns)
     """

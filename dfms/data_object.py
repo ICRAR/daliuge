@@ -67,7 +67,9 @@ class AbstractDataObject(object):
         self._location = None
         self._parent = None
         self._status = None
+        self._phase  = None
         self._checksum = 0
+        self._size     = -1
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
 
@@ -128,6 +130,8 @@ class AbstractDataObject(object):
     def write(self, **kwargs):
 
         nbytes = self.writeMeta(**kwargs)
+        if nbytes:
+            self._size += nbytes
 
         if (self._status == DOStates.COMPLETED):
             pass
@@ -177,6 +181,17 @@ class AbstractDataObject(object):
     def fire(self, **attrs):
         self._bcaster.fire(**attrs)
 
+    @property
+    def phase(self):
+        return self._phase
+
+    @phase.setter
+    def phase(self, phase):
+        self._phase = phase
+
+    @property
+    def size(self):
+        return self._size
 
     @property
     def status(self):
