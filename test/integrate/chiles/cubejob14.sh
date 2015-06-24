@@ -88,7 +88,7 @@ export CH_CASA_WORK_DIR=/mnt/chiles-output/casa_work_dir
 #CH_CASA_SOURCE=/home/apopping/Software/casapy-42.1.29047-001-1-64b
 #CH_CASA_SOURCE=/home/apopping/Software/casapy-41.0.24668-001-64b-2
 #CH_CASA_SOURCE=/home/rdodson/Software/Casa/casapy-42.1.29047-001-1-64b
-CH_CASA_SOURCE=/home/ec2-user/casapy-42.2.30986-1-64b
+CH_CASA_SOURCE=/home/jenkins/casa-release-4.4.0-el6
 #export PYTHONPATH=$TOP/chiles:$PYTHONPATH
 
 #module load libxslt
