@@ -1,1 +1,5 @@
+# Stuff left by python modules compilation/installation
 **/*.pyc
+**/build
+**/dist
+**/*.egg-info
