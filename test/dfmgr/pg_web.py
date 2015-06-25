@@ -1,8 +1,8 @@
 from bottle import route, run, request, get, post, static_file, template, redirect
 
 from ngas_dm import PGEngine, DataFlowException
-import json, decimal
-import sys, commands, os, time
+import json, decimal, urllib2
+import sys, commands, os, time, subprocess
 
 pg_engine = PGEngine()
 
@@ -34,6 +34,25 @@ def _response_msg(msg):
     """
     return template('pg_response.html', ret_msg = msg)
 
+def _call_luigi_api(verb, **kwargs):
+    # se = '{"task_str":"chenwu"}'
+    url = "http://{0}:{1}/api/{2}".format(my_public_ip, luigi_port, verb)
+    if (len(kwargs) > 0):
+        url += "?data={0}".format(urllib2.quote(json.dumps(kwargs)))
+    try:
+        re = urllib2.urlopen(url).read()
+        jre = json.loads(re)
+        if (jre.has_key('response')):
+            return jre['response']
+        else:
+            raise Exception("Invalid reply from Luigi: {0}".format(re))
+    except urllib2.URLError, urlerr:
+        raise Exception("Luigi server at {0} is down".format(my_public_ip))
+    except urllib2.HTTPError, httperr:
+        raise Exception("Luigi API error: {0}".format(str(httperr)))
+    except Exception, ex:
+        raise Exception("Fail to query Luigi: {0}".format(str(ex)))
+
 @route('/static/<filepath:path>')
 def server_static(filepath):
     return static_file(filepath, root='./')
@@ -62,13 +81,22 @@ def deploy_pg():
     ppath = sys.executable
     fpath = os.path.dirname(os.path.abspath(__file__))
     ssid = "{0}-{1}".format(request.remote_addr.replace(".","-"), int(time.time()))
-    cmd = "{0} {1}/ngas_dm.py PGDeployTask --PGDeployTask-pg-name {2} --PGDeployTask-session-id {3}".format(ppath,
-                                                                                             fpath,
-                                                                                             pg_name,
-                                                                                             ssid)
-    re = commands.getstatusoutput(cmd)
+    cmd = "{0} {1}/ngas_dm.py PGDeployTask --PGDeployTask-pg-name {2} --PGDeployTask-session-id {3} --workers 10".format(ppath,
+                                                                                                                         fpath,
+                                                                                                                         pg_name,
+                                                                                                                         ssid)
+    #re = commands.getstatusoutput(cmd)
+    worker = subprocess.Popen(cmd.split())
+    """
     if (re[0] != 0):
         return _response_msg('Fail to deploy pg as Luigi tasks: {0}'.format(re[1]))
+    """
+    timeout = 60
+    for i in range(timeout): # wait until tasks are accepted by the scheduler
+        time.sleep(1.0)
+        tasks = _call_luigi_api('task_search', task_str=ssid)
+        if (len(tasks) > 0):
+            break
     redirect("http://{0}:{1}/static/visualiser/index.html#PGDeployTask(session_id={2}, pg_name={3})".format(my_public_ip, luigi_port, ssid, pg_name))
 
 @get('/jsonbody')
