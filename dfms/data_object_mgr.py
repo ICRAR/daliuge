@@ -36,6 +36,7 @@ import Pyro4
 from data_object import AbstractDataObject, AppDataObject
 from ddap_protocol import CST_NS_DOM, DOLinkType
 from dfms.events.event_broadcaster import LocalEventBroadcaster
+from dfms.lifecycle.dlm import DataLifecycleManager
 
 def _startDobDaemonThread(daemon):
     daemon.requestLoop()
@@ -46,6 +47,7 @@ class DataObjectMgr(object):
         """
         Constructor:
         """
+        self.dlm_dict = {} # key - sessionId, value - DataLifecycleManager
         self.daemon_dict = {} # key - sessionId, value - daemon
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
         self.daemon_dob_dict = defaultdict(dict) # key - sessionId, value - a dictionary of Data Objects (key - obj uri, val - obj)
@@ -66,12 +68,24 @@ class DataObjectMgr(object):
         """
         return the URI of the data object (to DFM)
         """
+
+        # Get the DLM for the session
+        if self.dlm_dict.has_key(sessionId):
+            dlm = self.dlm_dict[sessionId]
+        else:
+            dlm = DataLifecycleManager()
+            dlm.startup()
+            self.dlm_dict[sessionId] = dlm
+
+        # Get the DO daemon for this session, and that
+        # will host the new DO
         if (self.daemon_dict.has_key(sessionId)):
             dob_daemon = self.daemon_dict[sessionId]
         else:
             dob_daemon = Pyro4.Daemon()
             self.daemon_dict[sessionId] = dob_daemon
 
+        # What kind of DO we need to create?
         if (appDataObj):
             mydo = AppDataObject(oid, uid, eventbc=self.eventbc,
                                  subs=[self.DOMEventHandler])
@@ -79,9 +93,11 @@ class DataObjectMgr(object):
             mydo = AbstractDataObject(oid, uid, eventbc=self.eventbc,
                                       subs=[self.DOMEventHandler])
 
+        # Create, register, and let the DLM manage its lifecycle
         uri = dob_daemon.register(mydo)
         mydo.uri = uri
         self.daemon_dob_dict[sessionId][uri] = mydo
+        dlm.addDataObject(mydo)
         return uri
 
     def linkDataObjects(self, ldoUri, rdoUri, lcmiUri, rcmiUri, linkType, sessionId):

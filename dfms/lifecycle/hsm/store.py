@@ -85,8 +85,5 @@ class FileSystemStore(AbstractStore):
         self._setTotalSpace(totalSpace)
         self._setAvailableSpace(availableSpace)
 
-    def generateDataObject(self, oid, uid, eventbc):
-        return FileDataObject(oid, uid, eventbc)
-
     def __str__(self):
         return self._mountPoint

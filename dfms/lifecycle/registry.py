@@ -44,8 +44,14 @@ class DataObjectInstance(object):
 
 class Registry(object):
     def addDataObject(self, dataObject): raise NotImplementedError()
+    def addDataObjectInstance(self, dataObject): raise NotImplementedError()
+    def getDataObjectUids(self, dataObject): raise NotImplementedError()
+    def setDataObjectPhase(self, dataObject, phase): raise NotImplementedError()
     def removeDataObject(self, dataObject): raise NotImplementedError()
-    def addInstance(self, dataObjectInstance): raise NotImplementedError()
+
+    def _checkDOIsInRegistry(self, dataObject):
+        if not self._dos.has_key(dataObject.oid):
+            raise Exception('DataObject %s is not present in the registry' % (dataObject.oid))
 
 class InMemoryRegistry(Registry):
 
@@ -57,8 +63,30 @@ class InMemoryRegistry(Registry):
         '''
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
+        # Check that the DO is not in the registry
         doRow = DataObject()
-        doRow.oid       = dataObject.oid()
-        doRow.phase     = dataObject.phase()
-        doRow.instances = {dataObject.uid(): dataObject}
+        doRow.oid       = dataObject.oid
+        doRow.phase     = dataObject.phase
+        doRow.instances = {dataObject.uid: dataObject}
         self._dos[doRow.oid] = doRow
+
+    def addDataObjectInstance(self, dataObject):
+        '''
+        :param dfms.data_object.AbstractDataObject dataObject:
+        '''
+        self._checkDOIsInRegistry(dataObject)
+        if self._dos[dataObject.oid].instances.has_key(dataObject.uid):
+            raise Exception('DataObject %s/%s already present in registry' % (dataObject.oid, dataObject.uid))
+        self._dos[dataObject.oid].instances[dataObject.uid] = dataObject
+
+    def getDataObjectUids(self, dataObject):
+        self._checkDOIsInRegistry(dataObject)
+        return self._dos[dataObject.oid].instances.keys()
+
+    def setDataObjectPhase(self, dataObject, phase):
+        self._checkDOIsInRegistry(dataObject)
+        self._dos[dataObject.oid].phase = phase
+
+    def removeDataObject(self, dataObject):
+        self._checkDOIsInRegistry(dataObject)
+        del self._dos[dataObject.oid]

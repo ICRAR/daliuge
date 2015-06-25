@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import random
+import string
 '''
 A simple implementation of the data lifecycle manager (DLM). The rest of this
 documentation is an extract from the PDR document where the DLM is defined and
@@ -53,6 +55,7 @@ configured DLM
 
 import logging
 import threading
+import time
 
 import hsm.manager
 import registry
@@ -67,31 +70,41 @@ class ExpiredDataObjectChecker(threading.Thread):
     on the given DLM every 10 seconds until it is signaled to stop
     """
 
-    def __init__(self, dlm, finishedEvent):
+    def __init__(self, dlm, checkPeriod, finishedEvent):
         threading.Thread.__init__(self)
         self._finishedEvent = finishedEvent
         self._dlm = dlm
+        self._checkPeriod = checkPeriod
 
     def run(self):
         ev = self._finishedEvent
         dlm = self._dlm
         while True:
+            ev.wait(self._checkPeriod)
             if ev.is_set():
                 break
-            dlm.deleteExpiredDataObjects()
-            ev.wait(10)
+
+            # It's not clear WHEN expired DOs must be deleted.
+            #dlm.deleteExpiredDataObjects()
+
+            # Expire DOs that are already too old
+            dlm.expireDataObjects()
 
 class DataLifecycleManager(object):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._hsm = hsm.manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
         self._dos = {}
 
+        self._checkPeriod = 10
+        if kwargs.has_key('checkPeriod'):
+            self._checkPeriod = float(kwargs['checkPeriod'])
+
     def startup(self):
         # Spawn the background thread that will check for expired DOs
         finishedEvent = threading.Event()
-        dataExpiredChecker = ExpiredDataObjectChecker(self, finishedEvent)
+        dataExpiredChecker = ExpiredDataObjectChecker(self, self._checkPeriod, finishedEvent)
         dataExpiredChecker.start()
 
         self._dataExpiredChecker = dataExpiredChecker
@@ -109,15 +122,43 @@ class DataLifecycleManager(object):
         self._dataExpiredChecker.join()
         pass
 
+    #
+    # Support for 'with' keyword
+    #
+    def __enter__(self):
+        self.startup()
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.cleanup()
+
     def deleteExpiredDataObjects(self):
-        _logger.info("Deleting expired DOs")
         for do in self._dos.itervalues():
             if do.status == DOStates.EXPIRED:
+                if _logger.isEnabledFor(logging.DEBUG):
+                    _logger.debug("Deleting DO %s/%s" % (do.oid, do.uid))
                 do.delete()
 
-    def addDO(self, dataObject):
+    def expireDataObjects(self):
+        now = time.time()
+        for do in self._dos.itervalues():
+            if do.status == DOStates.COMPLETED and now > do.expirationDate:
+                if (_logger.isEnabledFor(logging.DEBUG)):
+                    _logger.debug('Expiring DO %s/%s' % (do.oid, do.uid))
+                do.status = DOStates.EXPIRED
+
+    def addDataObject(self, dataObject):
+
+        # Keep track of the DO and subscribe to the events it generates
         self._dos[dataObject.uid] = dataObject
         dataObject.subscribe(self.doEventHandler)
+        self._reg.addDataObject(dataObject)
+
+        # Keep track of its expiration date
+        # TODO: We currently use a background thread that scans
+        #       all DOs for their status. Instead, we could use
+        #       event subscription and handle the particular case
+        #       of DOs going to EXPIRED
 
     def doEventHandler(self, event):
         if event.type == 'status' and event.status == DOStates.COMPLETED:
@@ -135,16 +176,15 @@ class DataLifecycleManager(object):
         oid = dataObject.oid
         uid = dataObject.uid
         _logger.debug('Detected switch to COMPLETED state on DataObject %s/%s' % (oid, uid))
-        if isinstance(dataObject, FileDataObject):
-            pass
+        self.replicateDataObject(dataObject)
 
     def replicateDataObject(self, dataObject):
         '''
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
 
-        oid = dataObject.oid()
-        uid = dataObject.uid()
+        oid = dataObject.oid
+        uid = dataObject.uid
 
         # TODO: Actually check if DOs are replicable actually. For instance,
         # AppDOs or container DOs are probably not replicable
@@ -153,7 +193,7 @@ class DataLifecycleManager(object):
             raise Exception("DataObject %s/%s cannot be replicated" % (oid, uid))
 
         # Check that the DO is complete already
-        if dataObject.status() != DOStates.COMPLETED:
+        if dataObject.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s not in COMPLETED state" % (oid, uid))
 
         # Get the size of the DO. This cannot currently be done in some of them,
@@ -167,6 +207,28 @@ class DataLifecycleManager(object):
         if size > availableSpace:
             raise Exception("Cannot replicate DO to store %s: not enough space left")
 
-        newDO = store.generateDataObject()
-        newDO.setPhase(DOPhases.SOLID)
-        self._reg.addInstance(newDO)
+        # Create new DO and write the contents of the original into it
+        newUid = 'uid:' + ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+
+        newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size)
+        newDO.open()
+        dataObject.open(mode='r')
+        buf = dataObject.read()
+        while buf:
+            newDO.write(chunk=buf)
+        dataObject.close()
+        newDO.close()
+
+        # The DOs (both) should now be tagged as SOLID
+        newDO.phase = DOPhases.SOLID
+        dataObject.phase = DOPhases.SOLID
+
+        # Update our own registry
+        self._reg.addDataObjectInstance(newDO)
+        self._reg.setDataObjectPhase(dataObject, DOPhases.SOLID)
+
+    def getDataObjectUids(self, dataObject):
+        return self._reg.getDataObjectUids(dataObject)
