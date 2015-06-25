@@ -99,6 +99,7 @@ class DeployDataObjectTask(DataObjectTask):
         """
         print "Deploying data object {0} on {1}".format(self.data_obj.oid, self.data_obj.location)
         #time.sleep(random.randint(1, 3))
+        time.sleep(round(random.uniform(1.0, 3.0), 3))
 
     def requires(self):
         """
@@ -106,7 +107,6 @@ class DeployDataObjectTask(DataObjectTask):
         """
         re = [DeployDataObjectTask(dob) for dob in self.data_obj.producers]
         if (isinstance(self.data_obj, ContainerDataObject)):
-            #print "Yes, container!!------------------"
             re += [DeployDataObjectTask(dob) for dob in self.data_obj._children]
         return re
 
