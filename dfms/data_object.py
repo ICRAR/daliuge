@@ -80,6 +80,10 @@ class AbstractDataObject(object):
             lifespan = float(kwargs['lifespan'])
         self._expirationDate = time.time() + lifespan
 
+        self._precious = True
+        if kwargs.has_key('precious'):
+            self._precious = bool(kwargs['precious'])
+
         for s in subs:
             self.subscribe(s)
 
@@ -205,6 +209,10 @@ class AbstractDataObject(object):
     @property
     def size(self):
         return self._size
+
+    @property
+    def precious(self):
+        return self._precious
 
     @property
     def status(self):

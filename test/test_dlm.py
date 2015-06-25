@@ -66,6 +66,13 @@ class TestDataLifecycleManager(TestCase):
             self.assertEquals(DOPhases.SOLID, dataObject.phase)
             self.assertEquals(2, len(manager.getDataObjectUids(dataObject)))
 
+            # Try the same with a non-precious data object, it shouldn't be replicated
+            dataObject = data_object.FileDataObject('oid:B', 'uid:B1', bcaster, file_length=1, precious=False)
+            manager.addDataObject(dataObject)
+            self._writeAndClose(dataObject)
+            self.assertEquals(DOPhases.GAS, dataObject.phase)
+            self.assertEquals(1, len(manager.getDataObjectUids(dataObject)))
+
     def test_expiringNormalDataObject(self):
 
         with dlm.DataLifecycleManager(checkPeriod=1) as manager:
