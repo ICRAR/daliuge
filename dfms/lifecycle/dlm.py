@@ -64,10 +64,10 @@ from dfms.ddap_protocol import DOStates, DOPhases
 
 _logger = logging.getLogger(__name__)
 
-class ExpiredDataObjectChecker(threading.Thread):
+class DataObjectChecker(threading.Thread):
     """
-    Small class that calls the deleteExpiredDataObjects() method
-    on the given DLM every 10 seconds until it is signaled to stop
+    Small class that performs several background checks while the DLM is running
+    until the DLM signals it to stop
     """
 
     def __init__(self, dlm, checkPeriod, finishedEvent):
@@ -88,7 +88,11 @@ class ExpiredDataObjectChecker(threading.Thread):
             #dlm.deleteExpiredDataObjects()
 
             # Expire DOs that are already too old
-            dlm.expireDataObjects()
+            dlm.expireCompletedDataObjects()
+
+            # Check that DOs still exist, and mark them as lost
+            # if they are not found
+            dlm.deleteLostDataObjects()
 
 class DataLifecycleManager(object):
 
@@ -104,7 +108,7 @@ class DataLifecycleManager(object):
     def startup(self):
         # Spawn the background thread that will check for expired DOs
         finishedEvent = threading.Event()
-        dataExpiredChecker = ExpiredDataObjectChecker(self, self._checkPeriod, finishedEvent)
+        dataExpiredChecker = DataObjectChecker(self, self._checkPeriod, finishedEvent)
         dataExpiredChecker.start()
 
         self._dataExpiredChecker = dataExpiredChecker
@@ -136,16 +140,67 @@ class DataLifecycleManager(object):
         for do in self._dos.itervalues():
             if do.status == DOStates.EXPIRED:
                 if _logger.isEnabledFor(logging.DEBUG):
-                    _logger.debug("Deleting DO %s/%s" % (do.oid, do.uid))
+                    _logger.debug("Deleting DataObject %s/%s" % (do.oid, do.uid))
                 do.delete()
+                do.status = DOStates.DELETED
 
-    def expireDataObjects(self):
+    def expireCompletedDataObjects(self):
         now = time.time()
         for do in self._dos.itervalues():
             if do.status == DOStates.COMPLETED and now > do.expirationDate:
                 if (_logger.isEnabledFor(logging.DEBUG)):
-                    _logger.debug('Expiring DO %s/%s' % (do.oid, do.uid))
+                    _logger.debug('Marking DataObject %s/%s as EXPIRED' % (do.oid, do.uid))
                 do.status = DOStates.EXPIRED
+
+    def _disappeared(self, dataObject):
+        return dataObject.status != DOStates.DELETED and not dataObject.exists()
+
+    def deleteLostDataObjects(self):
+
+        toRemove = []
+        for do in self._dos.itervalues():
+            if self._disappeared(do):
+
+                toRemove.append(do)
+                if _logger.isEnabledFor(logging.WARNING):
+                    _logger.warning('DataObject %s/%s has disappeared' % (do.oid, do.uid))
+
+                # Check if it's replicated
+                uids = self._reg.getDataObjectUids(do)
+                definitelyLost = False
+                if len(uids) <= 1:
+                    definitelyLost = True
+                else:
+
+                    # Replicas haven't disappeared as well, right?
+                    replicas = []
+                    for uid in uids:
+                        if uid == do.uid: pass
+                        siblingDO = self._dos[uid]
+                        if not self._disappeared(siblingDO):
+                            replicas.append(siblingDO)
+                        else:
+                            if _logger.isEnabledFor(logging.WARNING):
+                                _logger.warning('DataObject %s/%s (replicated from %s/%s) has disappeared' % (siblingDO.oid, siblingDO.uid, do.oid, do.uid))
+                            toRemove.append(siblingDO)
+
+                    if len(replicas) > 1:
+                        _logger.info("DataObject %s/%s has still more than one replica, no action needed")
+                    elif len(replicas) == 1:
+                        _logger.info("Only one replica left for DataObject %s/%s, will create a new one")
+                        self.replicateDataObject(replicas[0])
+                    else:
+                        definitelyLost = True
+
+                if definitelyLost:
+                    _logger.error("No available replica found for DataObject %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
+                    do.phase = DOPhases.LOST
+                    do.status = DOStates.DELETED
+                    self._reg.setDataObjectPhase(do, do.phase)
+
+        # All those objects identified as lost have to go now
+        for do in toRemove:
+            del self._dos[do.uid]
 
     def addDataObject(self, dataObject):
 
@@ -210,12 +265,15 @@ class DataLifecycleManager(object):
             raise Exception("Cannot replicate DO to store %s: not enough space left")
 
         # Create new DO and write the contents of the original into it
+        # TODO: In a real world application this will probably happen in a separate
+        #       worker thread with a working queue, or in separate threads, one
+        #       for each replication task (or a mix of the two)
         newUid = 'uid:' + ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
 
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
-        newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size)
+        newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
         newDO.open()
         dataObject.open(mode='r')
         buf = dataObject.read()
@@ -229,6 +287,7 @@ class DataLifecycleManager(object):
         dataObject.phase = DOPhases.SOLID
 
         # Update our own registry
+        self._dos[newUid] = newDO
         self._reg.addDataObjectInstance(newDO)
         self._reg.setDataObjectPhase(dataObject, DOPhases.SOLID)
 

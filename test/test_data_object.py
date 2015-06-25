@@ -1,14 +1,13 @@
 """
 """
 
-from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
+from dfms.data_object import AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.events.pyro.pyro_event_broadcaster import PyroEventBroadcaster
 from Pyro.EventService.Server import EventServiceStarter
 from Pyro.naming import NameServerStarter
-import Pyro.core
 
-import os, unittest, threading, socket
+import os, unittest, threading
 import logging
 
 try:
