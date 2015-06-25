@@ -57,9 +57,12 @@ def _call_luigi_api(verb, **kwargs):
 def server_static(filepath):
     return static_file(filepath, root='./')
 
-def _get_json(call_nm):
+def _get_json(call_nm, formatted=False):
     pg = getattr(pg_engine, call_nm)()
-    return json.dumps(pg.to_json_obj(), default=encode_decimal)
+    if (formatted):
+        return json.dumps(pg.to_json_obj(), default=encode_decimal, sort_keys=True)
+    else:
+        return json.dumps(pg.to_json_obj(), default=encode_decimal)
 
 @get('/show')
 def show_pg():
@@ -108,7 +111,7 @@ def get_json():
     if (not valid_pg_name(pg_name)):
         return _response_msg('Invalid physical graph name {0}'.format(pg_name))
     call_nm = "create_{0}_pg".format(pg_name).lower()
-    return _get_json(call_nm)
+    return template('pg_json_tpl.html', json_body=_get_json(call_nm, formatted=True), pg_name=pg_name)
     """
     pg = getattr(pg_engine, call_nm)()
     return json.dumps(pg.to_json_obj(), default=encode_decimal)
