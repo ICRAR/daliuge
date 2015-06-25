@@ -239,6 +239,11 @@ def run_chiles_transform():
     virtualenv('cd {0}; python {0}/test/integrate/freq_split.py -i {1} -o {2} -k {3} -c {4}'.format(reploc, inp, out, work, bindir))
 
 @task
+def run_chiles_imaging():
+    build_install()
+    virtualenv('cd {0}; {0}/test/integrate/chiles/cubejob14.sh')
+
+@task
 def virtualenv_clean():
     """
         remove virtualenv
