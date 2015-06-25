@@ -6,13 +6,13 @@ import sys, commands, os, time
 
 pg_engine = PGEngine()
 
-my_ip = "localhost"
+#my_public_ip = "localhost"
 luigi_port = "8082"
 
-"""
+
 from urllib2 import urlopen
-my_ip = urlopen('http://ip.42.pl/raw').read()
-"""
+my_public_ip = urlopen('http://ip.42.pl/raw').read()
+
 
 def encode_decimal(obj):
     """
@@ -52,7 +52,7 @@ def show_pg():
         return _response_msg('Invalid physical graph name {0}'.format(pg_name))
     call_nm = "create_{0}_pg".format(pg_name).lower()
     jsbody = _get_json(call_nm)
-    return template('pg_graph_tpl.html', json_workers=jsbody)
+    return template('pg_graph_tpl.html', json_workers=jsbody, pg_name=pg_name)
 
 @get('/deploy')
 def deploy_pg():
@@ -69,7 +69,7 @@ def deploy_pg():
     re = commands.getstatusoutput(cmd)
     if (re[0] != 0):
         return _response_msg('Fail to deploy pg as Luigi tasks: {0}'.format(re[1]))
-    redirect("http://{0}:{1}/static/visualiser/index.html#PGDeployTask(session_id={2}, pg_name={3})".format(my_ip, luigi_port, ssid, pg_name))
+    redirect("http://{0}:{1}/static/visualiser/index.html#PGDeployTask(session_id={2}, pg_name={3})".format(my_public_ip, luigi_port, ssid, pg_name))
 
 @get('/jsonbody')
 def get_json():
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     """
     e.g. http://localhost:8081/show?pg_name=chiles
     """
-    run(host="localhost", server='paste', port=8081, debug=True)
+    run(host="0.0.0.0", server='paste', port=8081, debug=True)
     """
     run(host = config.get('Web Server', 'IpAddress'),
         server = 'paste',
