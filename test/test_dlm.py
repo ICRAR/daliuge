@@ -27,6 +27,7 @@ from dfms.events.event_broadcaster import LocalEventBroadcaster
 from unittest.case import TestCase
 import time
 from dfms.ddap_protocol import DOStates, DOPhases
+import os
 
 '''
 Created on 22 Jun 2015
@@ -124,3 +125,20 @@ class TestDataLifecycleManager(TestCase):
             time.sleep(4)
             for do in [dataObject1, dataObject2, dataObject3, containerDO]:
                 self.assertEquals(DOStates.EXPIRED, do.status)
+
+    def test_lostDataObject(self):
+        with dlm.DataLifecycleManager(checkPeriod=1) as manager:
+            bcaster = LocalEventBroadcaster()
+            do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=10, precious=False)
+            manager.addDataObject(do)
+            self._writeAndClose(do)
+
+            # "externally" remove the file, its contents now don't exist
+            os.unlink(do._fnm)
+
+            # Let the DLM do its work
+            time.sleep(2)
+
+            # Check that the DO is marked as LOST
+            self.assertEquals(DOStates.DELETED, do.status)
+            self.assertEquals(DOPhases.LOST, do.phase)

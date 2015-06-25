@@ -24,6 +24,7 @@
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
 import heapq
+from operator import __or__
 
 """
 Data object is the centre of the data-driven architecture
@@ -193,6 +194,9 @@ class AbstractDataObject(object):
 
     def fire(self, **attrs):
         self._bcaster.fire(**attrs)
+
+    def exists(self):
+        return True
 
     @property
     def phase(self):
@@ -491,6 +495,9 @@ class FileDataObject(AbstractDataObject):
     def delete(self):
         os.unlink(self._fnm)
 
+    def exists(self):
+        return os.path.isfile(self._fnm)
+
 class StreamDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
@@ -581,3 +588,6 @@ class ContainerDataObject(AbstractDataObject):
     @property
     def expirationDate(self):
         return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
+
+    def exists(self):
+        return reduce(__or__, [c.exists() for c in self._children])
