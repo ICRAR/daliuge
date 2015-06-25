@@ -151,6 +151,7 @@ class DataLifecycleManager(object):
 
         # Keep track of the DO and subscribe to the events it generates
         self._dos[dataObject.uid] = dataObject
+        dataObject.phase = DOPhases.GAS
         dataObject.subscribe(self.doEventHandler)
         self._reg.addDataObject(dataObject)
 
@@ -175,8 +176,9 @@ class DataLifecycleManager(object):
         # in a persistent storage media we don't need to save it again
         oid = dataObject.oid
         uid = dataObject.uid
-        _logger.debug('Detected switch to COMPLETED state on DataObject %s/%s' % (oid, uid))
-        self.replicateDataObject(dataObject)
+        if dataObject.precious:
+            _logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
+            self.replicateDataObject(dataObject)
 
     def replicateDataObject(self, dataObject):
         '''
