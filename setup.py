@@ -11,5 +11,6 @@ setup(
       author_email='',
       url='',
       packages=find_packages(),
-      install_requires=["Pyro", "Pyro4"],
-      test_suite="test")
+      install_requires=["Pyro", "Pyro4", "luigi"],
+      test_suite="test"
+)
