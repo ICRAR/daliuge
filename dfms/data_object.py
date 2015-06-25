@@ -23,12 +23,13 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
+import heapq
 
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
 """
-import os
+import os, time
 
 try:
     from crc32c import crc32
@@ -70,9 +71,14 @@ class AbstractDataObject(object):
         self._phase  = None
         self._checksum = 0
         self._size     = -1
+
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
 
+        lifespan = 10
+        if kwargs.has_key('lifespan'):
+            lifespan = float(kwargs['lifespan'])
+        self._expirationDate = time.time() + lifespan
 
         for s in subs:
             self.subscribe(s)
@@ -152,6 +158,9 @@ class AbstractDataObject(object):
         """
         pass
 
+    def delete(self):
+        pass
+
     def computeChecksum(self, chunk):
         self._checksum = crc32(chunk, self._checksum)
         return self._checksum
@@ -188,6 +197,10 @@ class AbstractDataObject(object):
     @phase.setter
     def phase(self, phase):
         self._phase = phase
+
+    @property
+    def expirationDate(self):
+        return self._expirationDate
 
     @property
     def size(self):
@@ -436,6 +449,9 @@ class FileDataObject(AbstractDataObject):
 
         return self._fo
 
+    def read(self, bufsize=4096):
+        return self._fo.read(bufsize)
+
     def writeMeta(self, **kwargs):
         """
         Each chunk written to a file object
@@ -463,6 +479,9 @@ class FileDataObject(AbstractDataObject):
 
     def seek(self, **kwargs):
         pass
+
+    def delete(self):
+        os.unlink(self._fnm)
 
 class StreamDataObject(AbstractDataObject):
 
@@ -529,6 +548,8 @@ class ContainerDataObject(AbstractDataObject):
 
         # invoke consumers if any
         add_params = self.consumer_params()
+        if not add_params:
+            add_params = {}
         self.trigger_consumers(**add_params)
 
         # notify my parent (if any) via setStatus, which fires an event
@@ -545,3 +566,10 @@ class ContainerDataObject(AbstractDataObject):
     def get_upstream_objects(self):
         return self.producers + self._children
 
+    def delete(self):
+        for c in self._children:
+            c.delete()
+
+    @property
+    def expirationDate(self):
+        return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]

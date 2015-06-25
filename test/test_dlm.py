@@ -25,6 +25,8 @@ from dfms.lifecycle import dlm
 from dfms import data_object
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from unittest.case import TestCase
+import time
+from dfms.ddap_protocol import DOStates, DOPhases
 
 '''
 Created on 22 Jun 2015
@@ -36,37 +38,82 @@ logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s
 
 class TestDataLifecycleManager(TestCase):
 
+    def _writeAndClose(self, dataObject):
+        dataObject.open()
+        dataObject.write(chunk=' ')
+        dataObject.close()
+
     def test_basicCreation(self):
         manager = dlm.DataLifecycleManager()
         manager.startup()
         manager.cleanup()
 
-    def test_DOAddition(self):
-        manager = dlm.DataLifecycleManager()
-        manager.startup()
-
-        try:
+    def test_dataObjectAddition(self):
+        with dlm.DataLifecycleManager() as manager:
             bcaster = LocalEventBroadcaster()
             dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=10)
-            manager.addDO(dataObject)
+            manager.addDataObject(dataObject)
 
-            dataObject.open()
-            dataObject.write(chunk=' ')
-
-        finally:
-            manager.cleanup()
-
-    def test_DOToCompleteTriggersEventHandling(self):
-        manager = dlm.DataLifecycleManager()
-        manager.startup()
-
-        try:
+    def test_dataObjectCompleteTriggersReplication(self):
+        with dlm.DataLifecycleManager() as manager:
             bcaster = LocalEventBroadcaster()
             dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1)
-            manager.addDO(dataObject)
+            manager.addDataObject(dataObject)
+            self._writeAndClose(dataObject)
 
-            dataObject.open()
-            dataObject.write(chunk=' ')
+            # The call to close() should have turned it into a SOLID object
+            # because the DLM replicated it
+            self.assertEquals(DOPhases.SOLID, dataObject.phase)
+            self.assertEquals(2, len(manager.getDataObjectUids(dataObject)))
 
-        finally:
-            manager.cleanup()
+    def test_expiringNormalDataObject(self):
+
+        with dlm.DataLifecycleManager(checkPeriod=1) as manager:
+            bcaster = LocalEventBroadcaster()
+            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=1)
+            manager.addDataObject(dataObject)
+
+            # Writing moves the DO to COMPLETE
+            self._writeAndClose(dataObject)
+
+            # Wait now, the DO should be moved by the DLM to EXPIRED
+            time.sleep(2)
+
+            self.assertEquals(DOStates.EXPIRED, dataObject.status)
+
+
+    def test_expiringContainerDataObject(self):
+
+        with dlm.DataLifecycleManager(checkPeriod=1) as manager:
+
+            bcaster = LocalEventBroadcaster()
+            dataObject1 = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=1)
+            dataObject2 = data_object.FileDataObject('oid:B', 'uid:B1', bcaster, file_length=1, lifespan=1)
+            dataObject3 = data_object.FileDataObject('oid:C', 'uid:C1', bcaster, file_length=1, lifespan=5)
+            containerDO = data_object.ContainerDataObject('oid:D', 'uid:D1', bcaster)
+            containerDO.addChild(dataObject1)
+            containerDO.addChild(dataObject2)
+            containerDO.addChild(dataObject3)
+
+            manager.addDataObject(dataObject1)
+            manager.addDataObject(dataObject2)
+            manager.addDataObject(dataObject3)
+            manager.addDataObject(containerDO)
+
+            # Writing moves DOs to COMPLETE
+            for do in [dataObject1, dataObject2, dataObject3]:
+                self._writeAndClose(do)
+
+            # Wait a bit, DO #1 and #2 should be have been moved by the DLM to EXPIRED,
+            time.sleep(2)
+            expired    = [dataObject1, dataObject2]
+            notExpired = [dataObject3, containerDO]
+            for do in expired:
+                self.assertEquals(DOStates.EXPIRED, do.status)
+            for do in notExpired:
+                self.assertNotEquals(DOStates.EXPIRED, do.status)
+
+            # Wait a bit more, now all DOs should be expired
+            time.sleep(4)
+            for do in [dataObject1, dataObject2, dataObject3, containerDO]:
+                self.assertEquals(DOStates.EXPIRED, do.status)

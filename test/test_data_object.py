@@ -9,6 +9,7 @@ from Pyro.naming import NameServerStarter
 import Pyro.core
 
 import os, unittest, threading, socket
+import logging
 
 try:
     from crc32c import crc32
@@ -16,6 +17,7 @@ except:
     from binascii import crc32
 
 ONE_MB = 1024 ** 2
+logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG)
 
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
@@ -258,7 +260,7 @@ class TestDataObject(unittest.TestCase):
 
             do1 = pdg.consumers[0]
             do2 = do1.consumers[0].consumers[0]
-            self.assertTrue(do1.status == DOStates.DIRTY and do1.status == DOStates.DIRTY)
+            self.assertTrue(do1.status == DOStates.DIRTY and do2.status == DOStates.DIRTY)
 
             print "**** step 7"
             # 7. tear down data objects of this observation on each data object manager
