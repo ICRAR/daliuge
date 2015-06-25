@@ -240,9 +240,13 @@ def combineAllCubes(cube_dir,outname,min_freq,max_freq,step_freq,casa_workdir,ru
     if (debug):
         print '\nJob %d: Concatenating all cubes...\n\tia.imageconcat(infiles=%s,outfile=%s,relax=T)' % (job_id, str(cube_names), outname)
     else:
-        print 'Start concatenating %s' % str(cube_names)
-        final=ia.imageconcat(infiles=cube_names,outfile=outname,relax=T)
-        final.done()
+        if len(cube_names)>1:
+            print 'Start concatenating %s' % str(cube_names)
+            final=ia.imageconcat(infiles=cube_names,outfile=outname,relax=T)
+            final.done()
+        else:
+            print 'Single Sub-Cube image %s: copy to %s' % (str(cube_names), outname)
+            os.system('cp -r '+cube_names[0]+' '+outname)
 
     return
 
@@ -514,4 +518,9 @@ if (job_id == 0): # only the first job will do the final concatenation
         print 'Combining All Cubes'
         combineAllCubes(cube_dir,outname,freq_min,freq_max,freq_step,casa_workdir,
                     run_id, debug, timeout = clean_tmout)
+    print 'I now need to find the flux of the known source'
+    ia.open(outname)
+    f=ia.pixelvalue([128,128,0,179])['value']['value']
+    if f>9E-4:
+	print 'Successfully detected correct flux: %f' %f
 
