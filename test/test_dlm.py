@@ -77,28 +77,28 @@ class TestDataLifecycleManager(TestCase):
 
     def test_expiringNormalDataObject(self):
 
-        with dlm.DataLifecycleManager(checkPeriod=1) as manager:
+        with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
             bcaster = LocalEventBroadcaster()
-            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=1)
+            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=0.5)
             manager.addDataObject(dataObject)
 
             # Writing moves the DO to COMPLETE
             self._writeAndClose(dataObject)
 
             # Wait now, the DO should be moved by the DLM to EXPIRED
-            time.sleep(2)
+            time.sleep(1)
 
             self.assertEquals(DOStates.EXPIRED, dataObject.status)
 
 
     def test_expiringContainerDataObject(self):
 
-        with dlm.DataLifecycleManager(checkPeriod=1) as manager:
+        with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
 
             bcaster = LocalEventBroadcaster()
-            dataObject1 = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=1)
-            dataObject2 = data_object.FileDataObject('oid:B', 'uid:B1', bcaster, file_length=1, lifespan=1)
-            dataObject3 = data_object.FileDataObject('oid:C', 'uid:C1', bcaster, file_length=1, lifespan=5)
+            dataObject1 = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=0.5)
+            dataObject2 = data_object.FileDataObject('oid:B', 'uid:B1', bcaster, file_length=1, lifespan=0.5)
+            dataObject3 = data_object.FileDataObject('oid:C', 'uid:C1', bcaster, file_length=1, lifespan=1.5)
             containerDO = data_object.ContainerDataObject('oid:D', 'uid:D1', bcaster)
             containerDO.addChild(dataObject1)
             containerDO.addChild(dataObject2)
@@ -114,7 +114,7 @@ class TestDataLifecycleManager(TestCase):
                 self._writeAndClose(do)
 
             # Wait a bit, DO #1 and #2 should be have been moved by the DLM to EXPIRED,
-            time.sleep(2)
+            time.sleep(1)
             expired    = [dataObject1, dataObject2]
             notExpired = [dataObject3, containerDO]
             for do in expired:
@@ -123,12 +123,12 @@ class TestDataLifecycleManager(TestCase):
                 self.assertNotEquals(DOStates.EXPIRED, do.status)
 
             # Wait a bit more, now all DOs should be expired
-            time.sleep(4)
+            time.sleep(1)
             for do in [dataObject1, dataObject2, dataObject3, containerDO]:
                 self.assertEquals(DOStates.EXPIRED, do.status)
 
     def test_lostDataObject(self):
-        with dlm.DataLifecycleManager(checkPeriod=1) as manager:
+        with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
             bcaster = LocalEventBroadcaster()
             do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=10, precious=False)
             manager.addDataObject(do)
@@ -138,30 +138,29 @@ class TestDataLifecycleManager(TestCase):
             os.unlink(do._fnm)
 
             # Let the DLM do its work
-            time.sleep(2)
+            time.sleep(1)
 
             # Check that the DO is marked as LOST
-            self.assertEquals(DOStates.DELETED, do.status)
             self.assertEquals(DOPhases.LOST, do.phase)
 
     def test_cleanupExpiredDataObjects(self):
-        with dlm.DataLifecycleManager(checkPeriod=1, cleanupPeriod=5) as manager:
+        with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
             bcaster = LocalEventBroadcaster()
-            do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=2, precious=False)
+            do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=1, precious=False)
             manager.addDataObject(do)
             self._writeAndClose(do)
 
             # Wait 2 seconds, the DO is still COMPLETED
-            time.sleep(1)
+            time.sleep(0.5)
             self.assertEquals(DOStates.COMPLETED, do.status)
             self.assertTrue(do.exists())
 
             # Wait 5 more second, now it should be expired but still there
-            time.sleep(3)
+            time.sleep(1)
             self.assertEquals(DOStates.EXPIRED, do.status)
             self.assertTrue(do.exists())
 
             # Wait 2 more seconds, now it should have been deleted
-            time.sleep(2)
+            time.sleep(1)
             self.assertEquals(DOStates.DELETED, do.status)
             self.assertFalse(do.exists())
