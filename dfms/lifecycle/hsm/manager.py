@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 '''
-Created on 22 Jun 2015
+A very simple implementation of an HSM, without knowing much actually about how
+HSMs work and what they actually offer in terms of APIs.
 
 @author: rtobar
 '''

@@ -28,30 +28,59 @@ phase they currently are
 '''
 
 import logging
+import time
+from abc import abstractmethod, ABCMeta
 from dfms.ddap_protocol import DOPhases
 
 _logger = logging.getLogger(__name__)
 
 class DataObject(object):
-    oid       = None
-    phase     = DOPhases.GAS
-    instances = []
+    oid         = None
+    phase       = DOPhases.GAS
+    instances   = []
+    accessTimes = []
 
 class DataObjectInstance(object):
     oid     = None
     uid     = None
     storage = None
 
-class Registry(object):
-    def addDataObject(self, dataObject): raise NotImplementedError()
-    def addDataObjectInstance(self, dataObject): raise NotImplementedError()
-    def getDataObjectUids(self, dataObject): raise NotImplementedError()
-    def setDataObjectPhase(self, dataObject, phase): raise NotImplementedError()
-    def removeDataObject(self, dataObject): raise NotImplementedError()
 
-    def _checkDOIsInRegistry(self, dataObject):
-        if not self._dos.has_key(dataObject.oid):
-            raise Exception('DataObject %s is not present in the registry' % (dataObject.oid))
+class Registry():
+    '''
+    Base class that imposes a given structure, subclasses should implement all
+    NotImplementedError methods. Is this the
+    '''
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def addDataObject(self, dataObject):
+        pass
+
+    @abstractmethod
+    def addDataObjectInstance(self, dataObject):
+        pass
+
+    @abstractmethod
+    def getDataObjectUids(self, dataObject):
+        pass
+
+    @abstractmethod
+    def setDataObjectPhase(self, dataObject, phase):
+        pass
+
+    @abstractmethod
+    def removeDataObject(self, dataObject):
+        pass
+
+    @abstractmethod
+    def recordNewAccess(self, doi):
+        pass
+
+    def _checkDOIsInRegistry(self, oid):
+        if not self._dos.has_key(oid):
+            raise Exception('DataObject %s is not present in the registry' % (oid))
 
 class InMemoryRegistry(Registry):
 
@@ -74,19 +103,23 @@ class InMemoryRegistry(Registry):
         '''
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
-        self._checkDOIsInRegistry(dataObject)
+        self._checkDOIsInRegistry(dataObject.oid)
         if self._dos[dataObject.oid].instances.has_key(dataObject.uid):
             raise Exception('DataObject %s/%s already present in registry' % (dataObject.oid, dataObject.uid))
         self._dos[dataObject.oid].instances[dataObject.uid] = dataObject
 
     def getDataObjectUids(self, dataObject):
-        self._checkDOIsInRegistry(dataObject)
+        self._checkDOIsInRegistry(dataObject.oid)
         return self._dos[dataObject.oid].instances.keys()
 
     def setDataObjectPhase(self, dataObject, phase):
-        self._checkDOIsInRegistry(dataObject)
+        self._checkDOIsInRegistry(dataObject.oid)
         self._dos[dataObject.oid].phase = phase
 
     def removeDataObject(self, dataObject):
-        self._checkDOIsInRegistry(dataObject)
+        self._checkDOIsInRegistry(dataObject.oid)
         del self._dos[dataObject.oid]
+
+    def recordNewAccess(self, oid):
+        self._checkDOIsInRegistry(oid)
+        self._dos[oid].accessTimes.append(time.time())
