@@ -423,19 +423,7 @@ class DataLifecycleManager(object):
         # TODO: In a real world application this will probably happen in a separate
         #       worker thread with a working queue, or in separate threads, one
         #       for each replication task (or a mix of the two)
-        newUid = 'uid:' + ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
-
-        newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
-        newDO.open()
-        dataObject.open(mode='r')
-        buf = dataObject.read()
-        while buf:
-            newDO.write(chunk=buf)
-        dataObject.close()
-        newDO.close()
+        newDO, newUid = self._replicate(dataObject)
 
         # The DOs (both) should now be tagged as SOLID
         newDO.phase = DOPhases.SOLID
@@ -448,3 +436,30 @@ class DataLifecycleManager(object):
 
     def getDataObjectUids(self, dataObject):
         return self._reg.getDataObjectUids(dataObject)
+
+    def _replicate(self, dataObject):
+
+        # Dummy, but safe, new UID
+        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+
+        # TODO: Depending on the storage for the new DO we might use different
+        # strategies to copy the contents of the current DO into the new one.
+        # This is something that still has to be coded into this prototype, and
+        # has to do with binding different DO types to different store types,
+        # or something like that.
+        # For the time being we manually create a hardcoded FileDataObject, and
+        # manually copy the contents of the current DO into it
+        newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
+        newDO.open()
+        dataObject.open(mode='r')
+        buf = dataObject.read()
+        while buf:
+            newDO.write(chunk=buf)
+            buf = dataObject.read()
+        dataObject.close()
+        newDO.close()
+
+        return newDO, newUid

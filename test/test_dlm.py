@@ -36,7 +36,7 @@ Created on 22 Jun 2015
 @author: rtobar
 '''
 
-logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
+logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 class TestDataLifecycleManager(TestCase):
 
