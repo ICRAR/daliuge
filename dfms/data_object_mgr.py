@@ -26,7 +26,7 @@
 #
 
 """
-A data object managers all local Data Object instances
+A data object managers manages all local Data Object instances
 on a single address space
 """
 from optparse import OptionParser

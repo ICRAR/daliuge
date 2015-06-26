@@ -19,8 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import random
-import string
 '''
 A simple implementation of the data lifecycle manager (DLM).
 
@@ -119,6 +117,8 @@ configured (and/or hardcoded) DLM
 '''
 
 import logging
+import random
+import string
 import threading
 import time
 
@@ -173,6 +173,17 @@ class DataObjectGarbageCollector(DataLifecycleManagerBackgroundTask):
         # The names says it all
         dlm.deleteExpiredDataObjects()
 
+class DataObjectMover(DataLifecycleManagerBackgroundTask):
+    '''
+    A thread that automatically moves DOs between layers of the HSM.
+    This is supposed to be based on rules and configuration parameters which we
+    still don't consider here. The driving rule we currently use is how
+    frequently is the DO accessed.
+    '''
+
+    def doTask(self, dlm):
+        dlm.moveDataObjectsAround()
+
 class DataLifecycleManager(object):
 
     def __init__(self, **kwargs):
@@ -222,13 +233,17 @@ class DataLifecycleManager(object):
     def __exit__(self, typ, value, traceback):
         self.cleanup()
 
+
+    def _deleteDataObject(self, do):
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Deleting DataObject %s/%s" % (do.oid, do.uid))
+        do.delete()
+        do.status = DOStates.DELETED
+
     def deleteExpiredDataObjects(self):
         for do in self._dos.itervalues():
             if do.status == DOStates.EXPIRED:
-                if _logger.isEnabledFor(logging.DEBUG):
-                    _logger.debug("Deleting DataObject %s/%s" % (do.oid, do.uid))
-                do.delete()
-                do.status = DOStates.DELETED
+                self._deleteDataObject(do)
 
     def expireCompletedDataObjects(self):
         now = time.time()
@@ -281,12 +296,58 @@ class DataLifecycleManager(object):
                 if definitelyLost:
                     _logger.error("No available replica found for DataObject %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
                     do.phase = DOPhases.LOST
-                    do.status = DOStates.DELETED
                     self._reg.setDataObjectPhase(do, do.phase)
 
         # All those objects identified as lost have to go now
         for do in toRemove:
             del self._dos[do.uid]
+
+    def moveDataObjectsAround(self):
+        '''
+        Moves DOs to different layers of the HSM if necessary, currently based
+        only on the access times
+        '''
+        # Big questions here that need some answers/experimentation
+        #  1 "Migrating" implies that the data is no longer in its original
+        #    location, but has been moved rather than copied to a new place.
+        #  2 That means that the DO doesn't represent actually the same data, or
+        #    at least not in the same physical location. The question is thus
+        #    whether a new DO would be required for this migrated DO, or if
+        #    the currently existing one should be modified?
+        #  3 If a new one is required, then the original, and users of the
+        #    original have to be notified that a change has occurred.
+        #  4 Or not? Who is actually accessing DOs and how do they get their
+        #    references? Maybe it's the DLM who deliver the references
+        #    (there is an "Open DataObject" Activity Diagram drawn, but doesn't
+        #    clarify who is performing the actions and where are they taking
+        #    place), and references can be considered as invalid, in which case
+        #    a new reference must be retrieved via the DLM. This would probably
+        #    make sense since the DLM is managing the lifecycle of the different
+        #    DO instances, and knows where they actually are.
+        #  5 If somebody is currently reading from a DO that is meant to be
+        #    moved we have to not move it. This would probably not happen anyway
+        #    since we're using the access times to decide which DOs must be
+        #    moved to what storage layer
+        #  6 The other alternative (to the question posed in 2) is to modify the
+        #    current DO. This doesn't sound like a good idea, since we are
+        #    effectively creating a new instance of the data but in a different
+        #    media (plus the relative complexity of actually implementing such
+        #    flexibility).
+        #
+        # Answering #4 is probably the key to clarify the entire situation. For
+        # the time being, we simply "pass"...
+        #
+        # PS: The Open DataObject Activity is actually used as part of the
+        # "Data Object Lifecycle (nominal)" State Diagram, used as the activity
+        # that should be executed when entering the "Read" state of DOs. This is
+        # confusing because the "Open DataObject" activity includes actions like
+        # "Locate DataObject" and "Resolve Location", although it's the DO
+        # that is opening itself, and thus opening it should mean simply to open
+        # the underlying media. Moreover, in the same activity diagram one can
+        # see the "DataLifecycleDb", which would correspond to the DLM. If this
+        # activity is really run from DOs it would mean that DOs depend on the
+        # DLM, while the DLM manages DOs.
+        pass
 
     def addDataObject(self, dataObject):
 
@@ -304,11 +365,18 @@ class DataLifecycleManager(object):
         #       any other that doesn't mean looping over all DOs
 
     def doEventHandler(self, event):
-        if event.type == 'status' and event.status == DOStates.COMPLETED:
+        if event.type == 'open':
+            self.handleOpenedDO(event.oid, event.uid)
+        elif event.type == 'status' and event.status == DOStates.COMPLETED:
             self.handleCompletedDO(self._dos[event.uid])
         else:
             if _logger.isEnabledFor(logging.DEBUG):
                 _logger.debug('Received event: ' + str(event.__dict__))
+
+    def handleOpenedDO(self, oid, uid):
+        dos = self._dos[uid]
+        if dos.status == DOStates.COMPLETED:
+            self._reg.recordNewAccess(oid)
 
     def handleCompletedDO(self, dataObject):
         '''

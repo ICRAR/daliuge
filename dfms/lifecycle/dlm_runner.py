@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 '''
-Created on 22 Jun 2015
+A small module that runs the the DLM as a standalone application and registers
+it with Pyro so others can access it
 
 @author: rtobar
 '''

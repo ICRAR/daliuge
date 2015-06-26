@@ -117,6 +117,7 @@ class AbstractDataObject(object):
         """
         Refer to Activity Diagram (Data Lifecycle / Open Data Object)
         """
+        self.fire(type='open', uid = self._uid, oid = self._oid)
         self.openMeta(**kwargs)
 
     def openMeta(self, **kwargs):
