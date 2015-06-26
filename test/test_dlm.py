@@ -28,6 +28,7 @@ from unittest.case import TestCase
 import time
 from dfms.ddap_protocol import DOStates, DOPhases
 import os
+import sys
 
 '''
 Created on 22 Jun 2015
@@ -35,7 +36,7 @@ Created on 22 Jun 2015
 @author: rtobar
 '''
 
-logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG)
+logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 class TestDataLifecycleManager(TestCase):
 
@@ -142,3 +143,25 @@ class TestDataLifecycleManager(TestCase):
             # Check that the DO is marked as LOST
             self.assertEquals(DOStates.DELETED, do.status)
             self.assertEquals(DOPhases.LOST, do.phase)
+
+    def test_cleanupExpiredDataObjects(self):
+        with dlm.DataLifecycleManager(checkPeriod=1, cleanupPeriod=5) as manager:
+            bcaster = LocalEventBroadcaster()
+            do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, file_length=1, lifespan=2, precious=False)
+            manager.addDataObject(do)
+            self._writeAndClose(do)
+
+            # Wait 2 seconds, the DO is still COMPLETED
+            time.sleep(1)
+            self.assertEquals(DOStates.COMPLETED, do.status)
+            self.assertTrue(do.exists())
+
+            # Wait 5 more second, now it should be expired but still there
+            time.sleep(3)
+            self.assertEquals(DOStates.EXPIRED, do.status)
+            self.assertTrue(do.exists())
+
+            # Wait 2 more seconds, now it should have been deleted
+            time.sleep(2)
+            self.assertEquals(DOStates.DELETED, do.status)
+            self.assertFalse(do.exists())

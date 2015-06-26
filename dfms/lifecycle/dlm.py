@@ -22,33 +22,44 @@
 import random
 import string
 '''
-A simple implementation of the data lifecycle manager (DLM). The rest of this
-documentation is an extract from the PDR document where the DLM is defined and
-its requirements laid out.
+A simple implementation of the data lifecycle manager (DLM).
 
-The data layer needs a subsystem that automates and manages the migration of
-DataObjects through the various life cycle states. This is a consequence of the
-sheer number of parallel tasks when dealing with the very high data rate and
-volume. The goal of data life-cycle management is the optimal placement of data
-in terms of cost and performance and employs a multi-tiered storage system to do
-so. It is important to note that the life-cycle of a DataObject can span from
-minutes to many years and therefore seamlessly covers the processing as well as
-the long term storage (science archive) domain.
+The following is an extract of PDR.02.02 "DATA Sub-element design report",
+section 8 "Data Life Cycle Management", where the DLM is defined:
 
-Data life-cycle management has to support a number of requirements:
- 1. Migration of data from one medium to another: SKA1-SYS_REQ-2728
- 2. Aggregation of DataObjects into DataProducts and DataPackages: this is
-    non-trivial because of concurrent workflows, SKA1-SYS_REQ-2128, SDP_REQ-252,
-    and the need for data tracing, provenance and access control,
-    SKA1-SYS_REQ-2821, SDP_REQ-255
- 3. Migration between storage layers, includes SDP_REQ-263
- 4. Replication/distribution including resilience (preciousness) support, incl.
-    SKA1-SYS_REQ-2350, SDP_REQ-260 - 262
- 5. Retirement of expired (temporary) data, incl. SDP_REQ-256.
+  "The data layer needs a subsystem that automates and manages the migration of
+  DataObjects through the various life cycle states. This is a consequence of
+  the sheer number of parallel tasks when dealing with the very high data rate
+  and volume. The goal of data life-cycle management is the optimal placement of
+  data in terms of cost and performance and employs a multi-tiered storage
+  system to doTask so. It is important to note that the life-cycle of a DataObject
+  can span from minutes to many years and therefore seamlessly covers the
+  processing as well as the long term storage (science archive) domain.
 
-Other parts of the documentation state that the DLM is configured by a Data
-Lifecycle Configurator Manager, but for the prototyping we can use a self-
-configured DLM
+  Data life-cycle management has to support a number of requirements:
+   1. Migration of data from one medium to another: SKA1-SYS_REQ-2728
+   2. Aggregation of DataObjects into DataProducts and DataPackages: this is
+      non-trivial because of concurrent workflows, SKA1-SYS_REQ-2128,
+      SDP_REQ-252, and the need for data tracing, provenance and access control,
+      SKA1-SYS_REQ-2821, SDP_REQ-255
+   3. Migration between storage layers, includes SDP_REQ-263
+   4. Replication/distribution including resilience (preciousness) support,
+      incl. SKA1-SYS_REQ-2350, SDP_REQ-260 - 262
+   5. Retirement of expired (temporary) data, incl. SDP_REQ-256."
+
+Regarding point #5, although it's not totally clear WHEN expired DOs must be
+deleted, PDR02-02-01 "Data Layer Data Challenges" states in section 7.2,
+"DataObject State Model":
+
+  "[...] the actual physical deletion could be driven by an explicit cleanup
+  mechanism [...]"
+
+We are implementing this mechanism in the DLM as well, as part of the background
+periodical checks it performs
+
+Finally, other parts of the documentation state that the DLM is configured by a
+Data Lifecycle Configurator Manager, but for the prototyping we can use a self-
+configured (and/or hardcoded) DLM
 
 @author: rtobar
 '''
@@ -64,35 +75,49 @@ from dfms.ddap_protocol import DOStates, DOPhases
 
 _logger = logging.getLogger(__name__)
 
-class DataObjectChecker(threading.Thread):
-    """
-    Small class that performs several background checks while the DLM is running
-    until the DLM signals it to stop
-    """
-
-    def __init__(self, dlm, checkPeriod, finishedEvent):
+class DataLifecycleManagerBackgroundTask(threading.Thread):
+    '''
+    A thread that periodically runs some of the methods on the given DLM until
+    signaled to stop
+    '''
+    def __init__(self, dlm, period, finishedEvent):
         threading.Thread.__init__(self)
-        self._finishedEvent = finishedEvent
         self._dlm = dlm
-        self._checkPeriod = checkPeriod
+        self._period = period
+        self._finishedEvent = finishedEvent
 
     def run(self):
         ev = self._finishedEvent
         dlm = self._dlm
+        p = self._period
         while True:
-            ev.wait(self._checkPeriod)
+            ev.wait(p)
             if ev.is_set():
                 break
+            self.doTask(dlm)
 
-            # It's not clear WHEN expired DOs must be deleted.
-            #dlm.deleteExpiredDataObjects()
+class DataObjectChecker(DataLifecycleManagerBackgroundTask):
+    '''
+    A thread that performs several checks on existing DOs
+    '''
 
-            # Expire DOs that are already too old
-            dlm.expireCompletedDataObjects()
+    def doTask(self, dlm):
+        # Expire DOs that are already too old
+        dlm.expireCompletedDataObjects()
 
-            # Check that DOs still exist, and mark them as lost
-            # if they are not found
-            dlm.deleteLostDataObjects()
+        # Check that DOs still exist, and mark them as lost
+        # if they are not found
+        dlm.deleteLostDataObjects()
+
+class DataObjectGarbageCollector(DataLifecycleManagerBackgroundTask):
+    '''
+    A thread that performs "garbage collection" of DOs; that is, it physically
+    deleted DOs that are marked as EXPIRED
+    '''
+
+    def doTask(self, dlm):
+        # The names says it all
+        dlm.deleteExpiredDataObjects()
 
 class DataLifecycleManager(object):
 
@@ -105,13 +130,20 @@ class DataLifecycleManager(object):
         if kwargs.has_key('checkPeriod'):
             self._checkPeriod = float(kwargs['checkPeriod'])
 
-    def startup(self):
-        # Spawn the background thread that will check for expired DOs
-        finishedEvent = threading.Event()
-        dataExpiredChecker = DataObjectChecker(self, self._checkPeriod, finishedEvent)
-        dataExpiredChecker.start()
+        self._cleanupPeriod = 10*self._checkPeriod
+        if kwargs.has_key('cleanupPeriod'):
+            self._cleanupPeriod = float(kwargs['cleanupPeriod'])
 
-        self._dataExpiredChecker = dataExpiredChecker
+    def startup(self):
+        # Spawn the background threads
+        finishedEvent = threading.Event()
+        doChecker = DataObjectChecker(self, self._checkPeriod, finishedEvent)
+        doChecker.start()
+        doGarbageCollector = DataObjectGarbageCollector(self, self._cleanupPeriod, finishedEvent)
+        doGarbageCollector.start()
+
+        self._doChecker = doChecker
+        self._doGarbageCollector = doGarbageCollector
         self._finishedEvent = finishedEvent
 
     def cleanup(self):
@@ -121,10 +153,10 @@ class DataLifecycleManager(object):
         for do in self._dos.itervalues():
             do.unsubscribe(self.doEventHandler)
 
-        # Join the background thread
+        # Join the background threads
         self._finishedEvent.set()
-        self._dataExpiredChecker.join()
-        pass
+        self._doChecker.join()
+        self._doGarbageCollector.join()
 
     #
     # Support for 'with' keyword
@@ -210,11 +242,12 @@ class DataLifecycleManager(object):
         dataObject.subscribe(self.doEventHandler)
         self._reg.addDataObject(dataObject)
 
-        # Keep track of its expiration date
         # TODO: We currently use a background thread that scans
-        #       all DOs for their status. Instead, we could use
-        #       event subscription and handle the particular case
-        #       of DOs going to EXPIRED
+        #       all DOs for their status and compares its expiration date
+        #       with the current time in order to determine which DOs must be
+        #       moved to EXPIRED. We might want to explore other alternatives to
+        #       perform this task, like using threading.Timers (probably not) or
+        #       any other that doesn't mean looping over all DOs
 
     def doEventHandler(self, event):
         if event.type == 'status' and event.status == DOStates.COMPLETED:
