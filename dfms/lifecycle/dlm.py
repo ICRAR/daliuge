@@ -47,6 +47,54 @@ section 8 "Data Life Cycle Management", where the DLM is defined:
       incl. SKA1-SYS_REQ-2350, SDP_REQ-260 - 262
    5. Retirement of expired (temporary) data, incl. SDP_REQ-256."
 
+The requirements referenced by the above documentation read (taken from PDR03
+"Requirement analysis"):
+
+ * SKA1-SYS_REQ-2728 "Data migration design"
+   The archive design shall support and facilitate migration from one medium to
+   another
+ * SKA1-SYS_REQ-2128 "Continuum and spectral line imaging mode"
+   All three SKA1 telescopes shall be capable of operating in a Continuum and
+   Spectral-line imaging mode concurrently.
+ * SDP_REQ-252 "Concurrent Workflows"
+   The data layer manager shall concurrently generate data products for multiple
+   observing programs. It shall also support a single observing program
+   concurrently generating multiple data products as well as a mix of both
+   scenarios.
+ * SKA1-SYS_REQ-2821 "Archive"
+   There shall be an archive for each telescope, located in the Science
+   Processing Centre, for storing selected science data products for subsequent
+   access by users according to science data access policy.
+ * SDP_REQ-255 "Tracing Data"
+   It shall be possible to trace each data product in the archive back to a
+   scheduling block and an observing program. Reversely, it shall be possible to
+   either search by observing program or scheduling block and to subsequently
+   retrieve all or part of the associated archived data. This includes relevant
+   logging and monitoring information as well as quality assessment data
+   collected during the observations and the standard processing.
+ * SDP_REQ-263: "The data layer manager shall contain a data life cycle
+   management subsystem which shall incorporate mechanisms for copying, moving
+   and retiring whole physical volumes or storage units."
+ * SKA1-SYS_REQ-2350 "Mirror sites"
+   All data within Science Archives shall have a secondary copy located offsite
+   in a secure location
+ * SDP_REQ-260 "Archive Backup"
+   In case of data loss from the Science Archive it shall be possible to restore
+   the lost data items. Individual data products shall be retrievable from a
+   backup copy within 24 hours. The backup mechanism shall support scheduled, as
+   well as incremental and full backup options.
+ * SDP_REQ-261 "Restoring Archive Operations of a failed site"
+   There shall be a mechanism to operate the archive from a backup copy to meet
+   a recovery time limit of 1 week, independent of the total size of the archive.
+ * SDP_REQ-262 "Data Layer Product Distribution"
+   The SDP shall provide an internal interface to allow access to bulk data and
+   data contained in databases (from the science archive) in order to deliver
+   data products.
+ * SDP_REQ-256 "Discard Scheduling Block"
+   The system shall provide a mechanism for discarding the results and
+   associated data artefacts from a given active scheduling while it is still
+   processed and before the next scheduling block starts.
+
 Regarding point #5, although it's not totally clear WHEN expired DOs must be
 deleted, PDR02-02-01 "Data Layer Data Challenges" states in section 7.2,
 "DataObject State Model":
@@ -57,7 +105,13 @@ deleted, PDR02-02-01 "Data Layer Data Challenges" states in section 7.2,
 We are implementing this mechanism in the DLM as well, as part of the background
 periodical checks it performs
 
-Finally, other parts of the documentation state that the DLM is configured by a
+A simpler definition of the DLM is also given in PDR03 "Requirement analysis",
+section 2.C.3.2, "Data Life Cycle Manager":
+
+  "Software component that implements a rule driven system for data movement,
+  persistence and release based on hardware parameters and policies"
+
+Other parts of the documentation also mention that the DLM is configured by a
 Data Lifecycle Configurator Manager, but for the prototyping we can use a self-
 configured (and/or hardcoded) DLM
 
