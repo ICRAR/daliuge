@@ -113,14 +113,14 @@ class TestDataObject(unittest.TestCase):
         dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=eventbc, subs=[self.TestEventHandler])
         dobA.addConsumer(dobB)
 
-        dobA.open()
+        dod = dobA.open()
 
         test_crc = 0
         for i in range(self._test_num_blocks):
-            dobA.write(chunk = self._test_block)
+            dobA.write(dod, self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
-        dobA.close()
+        dobA.close(dod)
         self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
                         msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
         nameservice.shutdown()
@@ -135,14 +135,14 @@ class TestDataObject(unittest.TestCase):
         dobB = ComputeStreamChecksum('oid:B', 'uid:B', eventbc=eventbc)
         dobA.addConsumer(dobB)
 
-        dobA.open()
+        dod = dobA.open()
 
         test_crc = 0
         for i in range(self._test_num_blocks):
-            dobA.write(chunk = self._test_block)
+            dobA.write(dod, self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
-        dobA.close()
+        dobA.close(dod)
         self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
                         msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
 
@@ -191,12 +191,12 @@ class TestDataObject(unittest.TestCase):
         dobB.addConsumer(dob_b)
 
         for dobA in dobAList: # this should be parallel for
-            dobA.open()
+            dod = dobA.open()
             #test_crc = 0
             for i in range(self._test_num_blocks):
-                dobA.write(chunk = self._test_block)
+                dobA.write(dod, self._test_block)
                 #test_crc = crc32(self._test_block, test_crc)
-            dobA.close()
+            dobA.close(dod)
 
         sum_crc = 0
         """
