@@ -386,7 +386,7 @@ class DataLifecycleManager(object):
         # in a persistent storage media we don't need to save it again
         oid = dataObject.oid
         uid = dataObject.uid
-        if dataObject.precious:
+        if dataObject.precious and dataObject.isReplicable():
             _logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
             self.replicateDataObject(dataObject)
 
@@ -397,12 +397,6 @@ class DataLifecycleManager(object):
 
         oid = dataObject.oid
         uid = dataObject.uid
-
-        # TODO: Actually check if DOs are replicable actually. For instance,
-        # AppDOs or container DOs are probably not replicable
-        canBeReplicated = True
-        if not canBeReplicated:
-            raise Exception("DataObject %s/%s cannot be replicated" % (oid, uid))
 
         # Check that the DO is complete already
         if dataObject.status != DOStates.COMPLETED:
@@ -453,13 +447,11 @@ class DataLifecycleManager(object):
         # For the time being we manually create a hardcoded FileDataObject, and
         # manually copy the contents of the current DO into it
         newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
-        newDO.open()
-        dataObject.open(mode='r')
-        buf = dataObject.read()
+        curDOd = dataObject.open(mode='r')
+        buf = dataObject.read(curDOd)
         while buf:
-            newDO.write(chunk=buf)
+            newDO.write(buf)
             buf = dataObject.read()
-        dataObject.close()
-        newDO.close()
+        dataObject.close(curDOd)
 
         return newDO, newUid

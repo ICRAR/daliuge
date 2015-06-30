@@ -41,9 +41,10 @@ logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] %(name)s#%(funcName
 class TestDataLifecycleManager(TestCase):
 
     def _writeAndClose(self, dataObject):
-        dataObject.open()
-        dataObject.write(chunk=' ')
-        dataObject.close()
+        '''
+        :param dfms.data_object.AbstractDataObject dataObject:
+        '''
+        dataObject.write(' ')
 
     def test_basicCreation(self):
         manager = dlm.DataLifecycleManager()

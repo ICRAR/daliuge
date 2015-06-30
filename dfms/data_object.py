@@ -24,7 +24,9 @@
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
 import heapq
+import logging
 from operator import __or__
+from abc import ABCMeta, abstractmethod
 
 """
 Data object is the centre of the data-driven architecture
@@ -39,8 +41,12 @@ except:
 
 from ddap_protocol import DOStates
 
+_logger = logging.getLogger(__name__)
 
 class AbstractDataObject(object):
+
+    __metaclass__ = ABCMeta
+
     """
     The AbstractDataObject
     It should be split into abstract, container
@@ -117,31 +123,38 @@ class AbstractDataObject(object):
         """
         Refer to Activity Diagram (Data Lifecycle / Open Data Object)
         """
+        descriptor = self.openMeta(**kwargs)
         self.fire(type='open', uid = self._uid, oid = self._oid)
-        self.openMeta(**kwargs)
+        return descriptor
 
+    @abstractmethod
     def openMeta(self, **kwargs):
         """
         Hook for subclass open
         """
         pass
 
-    def close(self, **kwargs):
-        self.closeMeta(**kwargs)
+    def close(self, descriptor, **kwargs):
+        self.closeMeta(descriptor, **kwargs)
         #self.setStatus(DOStates.CLOSED)
 
-    def closeMeta(self, **kwargs):
+    @abstractmethod
+    def closeMeta(self, descriptor, **kwargs):
         """
         Hook for subclass close
         """
         pass
 
-    def read(self, **kwargs):
+    @abstractmethod
+    def read(self, descriptor, **kwargs):
         pass
 
-    def write(self, **kwargs):
+    def write(self, data, **kwargs):
 
-        nbytes = self.writeMeta(**kwargs)
+        if self.status != DOStates.INITIALIZED:
+            raise Exception("No more writing expected")
+
+        nbytes = self.writeMeta(data, **kwargs)
         if nbytes:
             self._size += nbytes
 
@@ -158,7 +171,8 @@ class AbstractDataObject(object):
 
         return nbytes
 
-    def writeMeta(self, **kwargs):
+    @abstractmethod
+    def writeMeta(self, data, **kwargs):
         """
         Hook for subclass write
         """
@@ -197,6 +211,9 @@ class AbstractDataObject(object):
         self._bcaster.fire(**attrs)
 
     def exists(self):
+        return True
+
+    def isReplicable(self):
         return True
 
     @property
@@ -365,7 +382,7 @@ class AppDataObject(AbstractDataObject):
         """
         pass
 
-    def writeMeta(self, **kwargs):
+    def writeMeta(self, data, **kwargs):
         """
         So that AppDataObject can be called by service handlers in the same way as
         "pure" data object if necessary
@@ -394,6 +411,9 @@ class AppDataObject(AbstractDataObject):
 
     def _type_code(self):
         return 1
+
+    def isReplicable(self):
+        return False
 
 class ComputeStreamChecksum(AppDataObject):
 
@@ -448,6 +468,8 @@ class FileDataObject(AbstractDataObject):
             self._fleng = kwargs['file_length']
         else:
             raise Exception("Must specify the length of the file: file_length")
+
+        self._fo = open(self._fnm, "w")
         self._fwritten = 0
 
     def openMeta(self, **kwargs):
@@ -458,14 +480,12 @@ class FileDataObject(AbstractDataObject):
         else:
             mode = 'wb'
 
-        self._fo = open(self._fnm, mode)
+        return open(self._fnm, mode)
 
-        return self._fo
+    def read(self, fd, bufsize=4096):
+        return fd.read(bufsize)
 
-    def read(self, bufsize=4096):
-        return self._fo.read(bufsize)
-
-    def writeMeta(self, **kwargs):
+    def writeMeta(self, data, **kwargs):
         """
         Each chunk written to a file object
         will be written to the file system
@@ -473,20 +493,19 @@ class FileDataObject(AbstractDataObject):
         this is NOT thread safe (assuming we will single threaded event loop)
 
         """
-        chunk = kwargs['chunk']
-        self._fo.write(chunk)
-        self._fwritten += len(chunk)
+        self._fo.write(data)
+        self._fwritten += len(data)
         if (self._fwritten == self._fleng):
             self._fo.flush()
             self.status = DOStates.COMPLETED
 
-        return len(chunk)
+        return len(data)
 
-    def closeMeta(self, **kwargs):
+    def closeMeta(self, descriptor, **kwargs):
         """
         Closing the file object will trigger its consumer (AppDataObject) to run
         """
-        self._fo.close()
+        descriptor.close()
         # use helper function to trigger consumers:
         self.trigger_consumers(file_name=self._fnm, file_length=self._fleng)
 
@@ -498,6 +517,56 @@ class FileDataObject(AbstractDataObject):
 
     def exists(self):
         return os.path.isfile(self._fnm)
+
+class NgasDataObject(AbstractDataObject):
+    '''
+    A DataObject whose data is finally stored into NGAS. Since NGAS doesn't
+    support appending data to existing files, we store all the data temporarily
+    in a file on the local filesystem and then move it to the NGAS destination
+    '''
+
+    def initialize(self, **kwargs):
+
+        # Check we actually can write NGAMS clients
+        try:
+            from ngamsPClient import ngamsPClient
+        except:
+            _logger.exception("No NGAMS client libs found, cannot use NgasDataObjects")
+
+        if not kwargs.has_key('ngasSrv'):
+            raise Exception('ngasSrv option must be supplied at DO construction time')
+        self._ngasSrv = kwargs['ngasSrv']
+
+        self._ngasPort = 7777
+        if kwargs.has_key('ngasPort'):
+            self._ngasPort = int(kwargs['ngasPort'])
+
+        self._buf = ''
+
+    def openMeta(self, **kwargs):
+        return self._getClient()
+
+    def _getClient(self):
+        from ngamsPClient import ngamsPClient
+        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort)
+
+    def writeMeta(self, data):
+        self._buf += data
+        # TODO: When all the expected data has arrived we move it from the
+        # buffer into NGAS
+
+    def closeMeta(self, descriptor):
+        del descriptor
+
+    def read(self, descriptor):
+        '''
+        :param ngamsPClient.ngamsPClient descriptor:
+        '''
+        # Read data from NGAS and give it back to our reader
+        descriptor.retrieve2File(self.uid, cmd="QRETRIEVE")
+
+    def exists(self):
+        self._getClient().status(fileId=self.uid)
 
 class StreamDataObject(AbstractDataObject):
 
@@ -513,20 +582,41 @@ class StreamDataObject(AbstractDataObject):
         """
         return self._buf
 
-    def writeMeta(self, **kwargs):
+    def writeMeta(self, data, **kwargs):
         """
         Each chunk written to a stream object
         will be immediately streamed to its consumer
 
         TODO - use an internal buffer, only trigger when it is full
         """
-        self._buf = kwargs['chunk']
+        self._buf = data
         self.trigger_consumers(chunk=self._buf)
         self.status = DOStates.COMPLETED
 
-        return len(self._buf)
+        return len(data)
 
     def stream(self, **kwargs):
+        pass
+
+class InMemoryDataObject(AbstractDataObject):
+
+    def initialize(self, **kwargs):
+        self._buf = ''
+
+    def openMeta(self, **kwargs):
+        return self._buf
+
+    @abstractmethod
+    def writeMeta(self, data, **kwargs):
+        self._buf += data
+        return len(data)
+
+    @abstractmethod
+    def read(self, descriptor, **kwargs):
+        return descriptor
+
+    @abstractmethod
+    def closeMeta(self, descriptor, **kwargs):
         pass
 
 class ContainerDataObject(AbstractDataObject):
@@ -546,6 +636,18 @@ class ContainerDataObject(AbstractDataObject):
         Sub-class to add more parameters
         """
         pass
+
+    #===========================================================================
+    # No data-related operations should actually be called in Container DOs
+    #===========================================================================
+    def closeMeta(self, **kwargs):
+        raise NotImplementedError()
+    def openMeta(self, **kwargs):
+        raise NotImplementedError()
+    def read(self, **kwargs):
+        raise NotImplementedError()
+    def writeMeta(self, **kwargs):
+        raise NotImplementedError()
 
     def check_join_condition(self, event):
 
@@ -583,7 +685,7 @@ class ContainerDataObject(AbstractDataObject):
         return self.producers + self._children
 
     def delete(self):
-        for c in self._children:
+        for c in [c for c in self._children if c.exists()]:
             c.delete()
 
     @property
@@ -591,4 +693,9 @@ class ContainerDataObject(AbstractDataObject):
         return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
 
     def exists(self):
+        # TODO: Or should it be __and__? Depends on what the exact contract of
+        #       "exists" is
         return reduce(__or__, [c.exists() for c in self._children])
+
+    def isReplicable(self):
+        return False
