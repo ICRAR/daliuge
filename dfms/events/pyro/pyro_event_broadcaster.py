@@ -30,8 +30,6 @@ from Pyro.EventService.Clients import Subscriber
 from Pyro.EventService.Clients import Publisher
 
 import threading
-import Pyro.core
-import Pyro.constants
 
 
 class PyroSubscriber(Subscriber):
@@ -59,7 +57,7 @@ class PyroPublisher(Publisher):
 
 class PyroEventBroadcaster(EventBroadcaster):
 
-    def __init__(self):        
+    def __init__(self):
         self._callbacks = {}
 
         self._pyroPub = PyroPublisher()
@@ -86,8 +84,9 @@ class PyroEventBroadcaster(EventBroadcaster):
             for fn in self._callbacks[event.uid]:
                 fn(event)
     
-    def fire(self, **attrs):
+    def fire(self, eventType, **attrs):
         e = Event()
+        e.type = eventType
         for k, v in attrs.iteritems():
             setattr(e, k, v)
         # publish to uid channel

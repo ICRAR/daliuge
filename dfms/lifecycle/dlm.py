@@ -248,7 +248,11 @@ class DataLifecycleManager(object):
     def expireCompletedDataObjects(self):
         now = time.time()
         for do in self._dos.itervalues():
-            if do.status == DOStates.COMPLETED and now > do.expirationDate:
+            # TODO: Don't access refCount explicitly but rather expose the
+            #       information in a more explicit way (e.g., do.isUsed() or similar)
+            if do.status == DOStates.COMPLETED and \
+               do._refCount == 0 and \
+               now > do.expirationDate:
                 if (_logger.isEnabledFor(logging.DEBUG)):
                     _logger.debug('Marking DataObject %s/%s as EXPIRED' % (do.oid, do.uid))
                 do.status = DOStates.EXPIRED
@@ -447,11 +451,14 @@ class DataLifecycleManager(object):
         # For the time being we manually create a hardcoded FileDataObject, and
         # manually copy the contents of the current DO into it
         newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
-        curDOd = dataObject.open(mode='r')
+        curDOd = dataObject.open()
         buf = dataObject.read(curDOd)
         while buf:
             newDO.write(buf)
             buf = dataObject.read()
         dataObject.close(curDOd)
+
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('DataObject %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
         return newDO, newUid

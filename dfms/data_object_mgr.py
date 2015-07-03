@@ -24,6 +24,8 @@
 # chen.wu@icrar.org   10/12/2014     Created as compute island mgr
 #                     13/04/2015     change name to DOMgr
 #
+from dfms.data_object import InMemoryCRCResultDataObject
+from dfms.events.pyro.pyro_event_broadcaster import PyroEventBroadcaster
 
 """
 A data object managers manages all local Data Object instances
@@ -33,10 +35,14 @@ from optparse import OptionParser
 import sys, os, threading
 from collections import defaultdict
 import Pyro4
-from data_object import AbstractDataObject, AppDataObject
+import types
+import logging
+from data_object import FileDataObject
 from ddap_protocol import CST_NS_DOM, DOLinkType
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.lifecycle.dlm import DataLifecycleManager
+
+_logger = logging.getLogger(__name__)
 
 def _startDobDaemonThread(daemon):
     daemon.requestLoop()
@@ -51,6 +57,7 @@ class DataObjectMgr(object):
         self.daemon_dict = {} # key - sessionId, value - daemon
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
         self.daemon_dob_dict = defaultdict(dict) # key - sessionId, value - a dictionary of Data Objects (key - obj uri, val - obj)
+        #self.eventbc = PyroEventBroadcaster()
         self.eventbc = LocalEventBroadcaster()
 
     def getURI(self):
@@ -60,13 +67,16 @@ class DataObjectMgr(object):
         self._uri = uri
 
     def DOMEventHandler(self, event):
-        #print
-        print "DOM event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
-        #print event.source
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("DOM event from {0}: {1}".format(event.oid, str(event.__dict__)))
 
     def createDataObject(self, oid, uid, sessionId, appDataObj = False):
         """
-        return the URI of the data object (to DFM)
+        This dummy implementation of 'createDataObject' creates either a data-only
+        DataObject in the form of a FileDataObject, or an application DataObject,
+        in the form of an InMemoryCRCResultDataObject.
+
+        This method returns the URI of the data object created
         """
 
         # Get the DLM for the session
@@ -87,10 +97,10 @@ class DataObjectMgr(object):
 
         # What kind of DO we need to create?
         if (appDataObj):
-            mydo = AppDataObject(oid, uid, eventbc=self.eventbc,
+            mydo = InMemoryCRCResultDataObject(oid, uid, eventbc=self.eventbc,
                                  subs=[self.DOMEventHandler])
         else:
-            mydo = AbstractDataObject(oid, uid, eventbc=self.eventbc,
+            mydo = FileDataObject(oid, uid, eventbc=self.eventbc,
                                       subs=[self.DOMEventHandler])
 
         # Create, register, and let the DLM manage its lifecycle

@@ -19,8 +19,21 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+'''
+Utility methods to be used when interacting with DataObjects
 
-__all__ = [
-    'manager',
-    'store'
-]
+@author: rtobar, July 3, 2015
+'''
+
+def allDataObjectContents(dataObject):
+    '''
+    Returns all the data contained in a given dataObject
+    '''
+    desc = dataObject.open()
+    buf = dataObject.read(desc)
+    allContents = buf
+    while buf:
+        buf = dataObject.read(desc)
+        allContents += buf
+    dataObject.close(desc)
+    return allContents

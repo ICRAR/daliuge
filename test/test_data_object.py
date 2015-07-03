@@ -1,14 +1,34 @@
-"""
-"""
+#
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2015
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
 
-from dfms.data_object import AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
+from dfms.data_object import FileDataObject, FileCRCResultDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
+    ContainerDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster
-from dfms.events.pyro.pyro_event_broadcaster import PyroEventBroadcaster
-from Pyro.EventService.Server import EventServiceStarter
-from Pyro.naming import NameServerStarter
 
-import os, unittest, threading
+import os, unittest, threading, sys
 import logging
+from Pyro.errors import PyroError, PyroExceptionCapsule
+from cStringIO import StringIO
+from dfms import doutils
 
 try:
     from crc32c import crc32
@@ -16,50 +36,31 @@ except:
     from binascii import crc32
 
 ONE_MB = 1024 ** 2
-logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG)
+logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
 
-class SumupContainer(ContainerDataObject):
+class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
     """
-    A barrier waiting for all children objects to complete
-    before calculate the sum of their check sum
+    A dummy AppConsumer/DataObject that recursivelly sums up the checksums of
+    all children of the ContainerDataObject it consumes, and then stores the
+    final result in memory
     """
-    def consumer_params(self):
-        """
-        Sub-class to add more parameters
-        """
-        file_names = []
-        for child in self._children:
-            file_names.append(child._fnm)
-        ret = dict()
-        ret['file_names'] = file_names
-        return ret
+    def run(self, dataObject):
+        if not dataObject.isContainer():
+            raise Exception("This consumer consumes only Container DataObjects")
+        crcSum = self.sumUpCRC(dataObject, 0)
+        self.write(str(crcSum))
+        self.setCompleted()
 
-class SumupContainerChecksum(AppDataObject):
-    """
-    A dummy component that sums up checksums of all children of the host
-    ContainerDataObject (CDO), and then set the CDO's checksum as the sum
-    """
-    def appInitialize(self, **kwargs):
-        self._bufsize = 4 * 1024 ** 2
-
-    def get_file_checksum(self, filename):
-        fo = open(filename, "r")
-        buf = fo.read(self._bufsize)
-        crc = 0
-        while (buf != ""):
-            crc = crc32(buf, crc)
-            buf = fo.read(self._bufsize)
-        fo.close()
-        return crc
-
-    def run(self, **kwargs):
-        c = 0
-        for file_name in kwargs['file_names']:
-            c += self.get_file_checksum(file_name)
-        self.checksum = c
+    def sumUpCRC(self, container, crcSum):
+        for c in container.children:
+            if c.isContainer():
+                crcSum += self.sumUpCRC(container, crcSum)
+            else:
+                crcSum += c.checksum
+        return crcSum
 
 class TestDataObject(unittest.TestCase):
 
@@ -84,151 +85,250 @@ class TestDataObject(unittest.TestCase):
         """
         pass
 
-    def TestEventHandler(self, event):
-        #print
-        print "Test event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
-        #print event.source
-
     def test_write_FileDataObject(self):
         """
-        Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
+        Test a FileDataObject and a simple AppDataObject (for checksum calculation)
         """
-        Pyro.config.PYRO_HOST = 'localhost'
-        nameservice = NameServerStarter()
-        eventservice = EventServiceStarter()
+        eventbc = LocalEventBroadcaster()
 
-        nameThread = threading.Thread(None, self._nameThread, 'namethread', (nameservice,))
-        nameThread.setDaemon(True)
-        nameThread.start()
-        nameservice.waitUntilStarted()
-
-        eventThread = threading.Thread(None, self._eventThread, 'eventthread', (eventservice, Pyro.config.PYRO_HOST ))
-        eventThread.setDaemon(True)
-        eventThread.start()
-        eventservice.waitUntilStarted()
-
-        eventbc = PyroEventBroadcaster()
-
-        dobA = FileDataObject('oid:A', 'uid:A', eventbc=eventbc, subs=[self.TestEventHandler], file_length = self._test_do_sz * ONE_MB)
-        dobB = ComputeFileChecksum('oid:B', 'uid:B', eventbc=eventbc, subs=[self.TestEventHandler])
+        dobA = FileDataObject('oid:A', 'uid:A', eventbc, expectedSize = self._test_do_sz * ONE_MB)
+        dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B', eventbc)
         dobA.addConsumer(dobB)
 
-        dod = dobA.open()
-
+        # Write to A. After the last write it will switch to COMPLETE
+        # and it will trigger B to consume A's content and build its own
+        # data, which is the CRC of the incoming data
         test_crc = 0
-        for i in range(self._test_num_blocks):
-            dobA.write(dod, self._test_block)
+        for _ in range(self._test_num_blocks):
+            dobA.write(self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
-        dobA.close(dod)
-        self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
-        nameservice.shutdown()
+        # Read the checksum from dobB
+        desc = dobB.open()
+        dobBChecksum = int(dobB.read(desc))
+        dobB.close(desc)
 
-    def test_write_StreamDataObject(self):
+        self.assertNotEquals(dobA.checksum, 0)
+        self.assertEquals(dobA.checksum, test_crc)
+        self.assertEquals(dobA.checksum, dobBChecksum)
+
+    def test_write_InMemoryDataObject(self):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
         eventbc=LocalEventBroadcaster()
 
-        dobA = StreamDataObject('oid:A', 'uid:A', eventbc=eventbc)
-        dobB = ComputeStreamChecksum('oid:B', 'uid:B', eventbc=eventbc)
+        dobA = InMemoryDataObject('oid:A', 'uid:A', eventbc, expectedSize = self._test_do_sz * ONE_MB)
+        dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B', eventbc)
         dobA.addConsumer(dobB)
 
-        dod = dobA.open()
-
         test_crc = 0
-        for i in range(self._test_num_blocks):
-            dobA.write(dod, self._test_block)
+        for _ in range(self._test_num_blocks):
+            dobA.write(self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
-        dobA.close(dod)
-        self.assertTrue((test_crc == dobB.checksum and 0 != test_crc),
-                        msg = "test_crc = {0}, dob_crc = {1}".format(test_crc, dobA.checksum))
+        # Read the checksum from dobB
+        desc = dobB.open()
+        dobBChecksum = int(dobB.read(desc))
+        dobB.close(desc)
+
+        self.assertNotEquals(dobA.checksum, 0)
+        self.assertEquals(dobA.checksum, test_crc)
+        self.assertEquals(dobBChecksum, test_crc)
+
+    def test_simple_chain(self):
+        '''
+        Simple test that creates a pipeline-like chain of commands.
+        In this case we simulate a pipeline that does this, holding
+        each intermediate result in memory:
+
+        cat someFile | grep 'a' | sort | rev
+        '''
+
+        class GrepResult(AppConsumer):
+            def appInitialize(self, **kwargs):
+                self._substring = kwargs['substring']
+
+            def run(self, do):
+                allLines = StringIO(doutils.allDataObjectContents(do)).readlines()
+                for line in allLines:
+                    if self._substring in line:
+                        self.write(line)
+                self.setCompleted()
+
+        class SortResult(AppConsumer):
+            def run(self, do):
+                sortedLines = StringIO(doutils.allDataObjectContents(do)).readlines()
+                sortedLines.sort()
+                for line in sortedLines:
+                    self.write(line)
+                self.setCompleted()
+
+        class RevResult(AppConsumer):
+            def run(self, do):
+                allLines = StringIO(doutils.allDataObjectContents(do)).readlines()
+                for line in allLines:
+                    buf = ''
+                    for c in line:
+                        if c == ' ' or c == '\n':
+                            self.write(buf[::-1])
+                            self.write(c)
+                            buf = ''
+                        else:
+                            buf += c
+                self.setCompleted()
+
+        class InMemoryGrepResult(GrepResult, InMemoryDataObject): pass
+        class InMemorySortResult(SortResult, InMemoryDataObject): pass
+        class InMemoryRevResult(RevResult, InMemoryDataObject): pass
+
+        leb = LocalEventBroadcaster()
+        a = InMemoryDataObject('oid:A', 'uid:A', leb)
+        b = InMemoryGrepResult('oid:B', 'uid:B', leb, substring="a")
+        c = InMemorySortResult('oid:C', 'uid:C', leb)
+        d = InMemoryRevResult('oid:D', 'uid:D', leb)
+
+        a.addConsumer(b)
+        b.addConsumer(c)
+        c.addConsumer(d)
+
+        # Initial write
+        contents = "first line\nwe have an a here\nand another one\nnoone knows me"
+        bResExpected = "we have an a here\nand another one\n"
+        cResExpected = "and another one\nwe have an a here\n"
+        dResExpected = "dna rehtona eno\new evah na a ereh\n"
+        a.write(contents)
+        a.setCompleted()
+
+        # Get intermediate and final results and compare
+        actualRes   = []
+        for i in [b, c, d]:
+            desc = i.open()
+            actualRes.append(i.read(desc))
+            i.close(desc)
+        map(lambda x, y: self.assertEquals(x, y), [bResExpected, cResExpected, dResExpected], actualRes)
 
     def test_join(self):
         """
-        Using the container data object to implement a join/barrier dataflow
+        Using the container data object to implement a join/barrier dataflow.
 
-        -->A1(a1)--->|
-        -->A2(a2)--->|-->B(b)
-        -->A3(a3)--->|
+        A1, A2 and A3 are FileDataObjects
+        B1, B2 and B3 are CRCResultDataObjects
+        C is a ContainerDataObject
+        D is a SumupContainerChecksum
 
+        --> A1 --> B1 --|
+        --> A2 --> B2 --|--> C --> D
+        --> A3 --> B3 --|
+
+        Upon writing all A* DOs, the execution of B* DOs should be triggered,
+        after which "C" will transition to COMPLETE. Finally, "D" will also be
+        triggered, and will hold the sum of B1, B2 and B3's contents
         """
+
         eventbc = LocalEventBroadcaster()
 
         filelen = self._test_do_sz * ONE_MB
-        dobAList = []
         #create file data objects
-        dobA1 = FileDataObject('oid:A1', 'uid:A1', eventbc=eventbc, subs=[self.TestEventHandler],
-                               file_length=filelen)
-        dobA2 = FileDataObject('oid:A2', 'uid:A2', eventbc=eventbc, subs=[self.TestEventHandler],
-                               file_length=filelen)
-        dobA3 = FileDataObject('oid:A3', 'uid:A3', eventbc=eventbc, subs=[self.TestEventHandler],
-                               file_length=filelen)
-        dobAList.append(dobA1)
-        dobAList.append(dobA2)
-        dobAList.append(dobA3)
+        doA1 = FileDataObject('oid:A1', 'uid:A1', eventbc, expectedSize=filelen)
+        doA2 = FileDataObject('oid:A2', 'uid:A2', eventbc, expectedSize=filelen)
+        doA3 = FileDataObject('oid:A3', 'uid:A3', eventbc, expectedSize=filelen)
 
-        # create CRC component attached to the file data object
-        dob_a1 = ComputeFileChecksum('oid:a1', 'uid:a1',
-                                     eventbc=eventbc, subs=[self.TestEventHandler])
-        dobA1.addConsumer(dob_a1)
-        dob_a2 = ComputeFileChecksum('oid:a2', 'uid:a2',
-                                     eventbc=eventbc, subs=[self.TestEventHandler])
-        dobA2.addConsumer(dob_a2)
-        dob_a3 = ComputeFileChecksum('oid:a3', 'uid:a3',
-                                     eventbc=eventbc, subs=[self.TestEventHandler])
-        dobA3.addConsumer(dob_a3)
+        # CRC Result DOs, storing the result in memory
+        doB1 = InMemoryCRCResultDataObject('oid:B1', 'uid:B1', eventbc)
+        doB2 = InMemoryCRCResultDataObject('oid:B2', 'uid:B2', eventbc)
+        doB3 = InMemoryCRCResultDataObject('oid:B3', 'uid:B3', eventbc)
 
-        dobB = SumupContainer('oid:B', 'uid:B', eventbc=eventbc)
-        for dobA in dobAList:
-            dobA.parent = dobB
-            dobB.addChild(dobA)
+        # The Container DO that groups together the CRC Result DOs
+        dobC = ContainerDataObject('oid:C', 'uid:C', eventbc)
 
-        dob_b = SumupContainerChecksum('oid:b', 'uid:b',
-                                       eventbc=eventbc, subs=[self.TestEventHandler])
-        dobB.addConsumer(dob_b)
+        # The final DO that sums up the CRCs from the container DO
+        dobD = SumupContainerChecksum('oid:D', 'uid:D', eventbc)
 
-        for dobA in dobAList: # this should be parallel for
-            dod = dobA.open()
-            #test_crc = 0
-            for i in range(self._test_num_blocks):
-                dobA.write(dod, self._test_block)
-                #test_crc = crc32(self._test_block, test_crc)
-            dobA.close(dod)
+        # Wire together
+        doAList = [doA1,doA2,doA3]
+        doBList = [doB1,doB2,doB3]
+        for doA,doB in map(lambda a,b: (a,b), doAList, doBList):
+            doA.addConsumer(doB)
+        for doB in doBList:
+            dobC.addChild(doB)
+        dobC.addConsumer(dobD)
 
-        sum_crc = 0
+        # Write data into the initial "A" DOs, which should trigger
+        # the whole chain explained above
+        for dobA in doAList: # this should be parallel for
+            for _ in range(self._test_num_blocks):
+                dobA.write(self._test_block)
+
+        # The results we want to compare
+        sum_crc = doB1.checksum + doB2.checksum + doB3.checksum
+        desc = dobD.open()
+        dobDData = int(dobD.read(desc))
+        dobD.close(desc)
+
+        self.assertNotEquals(sum_crc, 0)
+        self.assertEquals(sum_crc, dobDData)
+
+    def test_z_lmc(self):
         """
-        for dobA in dobAList:
-            sum_crc += dobA.checksum
-        """
-        sum_crc = dob_a1.checksum + dob_a2.checksum + dob_a3.checksum
+        A more complex test that simulates the LMC (or DataFlowManager)
+        submitting a physical graph via the DataManager, and in turn via two
+        different DOMs. The graph that gets submitted looks like this:
 
-        self.assertTrue((sum_crc == dob_b.checksum and 0 != sum_crc),
-                        msg = "sum_crc = {0}, dob_crc = {1}".format(sum_crc, dob_b.checksum))
+           -----------------Data-Island------------------
+          |                     |                       |
+          |[A]-------->(B)------|------>[C]-------->(D) |
+          |   Data Object Mgr   |    Data Object Mgr    |
+          |       001           |        002            |
+          -----------------------------------------------
 
-    def test_lmc(self):
+        Here only A is a FileDataObject; B, C and D are
+        InMemoryCRCResultDataObject, meaning that D holds
+        A's checksum's checksum's checksum.
+
+        The most interesting part of this exercise though is that it
+        crosses boundaries of DOMs, and show that DOs are correctly
+        talking to each other remotely in the current prototype with
+        Pyro and Pyro4
         """
-        """
+
         import datetime
         import Pyro4
+        import Pyro
         from dfms.data_manager import DataManager
         from dfms import data_object_mgr, dataflow_manager
         from dfms.ddap_protocol import DOStates
 
-        # 1. launch name service
         ns_host = 'localhost'
         my_host = 'localhost'
         my_port = 7778
+        Pyro.config.PYRO_NS_HOSTNAME = ns_host
+        Pyro.config.PYRO_HOST = my_host
+        Pyro.config.PYRO_NS_PORT = 9090
 
-        ns_uri, ns_daemon, bcsvr = Pyro4.naming.startNS(host=ns_host, port=my_port)
-        args = (ns_daemon,)
-        thref = threading.Thread(None, _start_ns_thread, 'NSThrd', args)
-        thref.setDaemon(1)
-        print 'Launching naming service daemon'
-        thref.start()
+        # 1.1. launch Pyro4 name service, DOMs register on it
+        _, ns4Daemon, _ = Pyro4.naming.startNS(host=ns_host, port=my_port)
+        ns4Thread = threading.Thread(None, lambda x: x.requestLoop(), 'NS4Thrd', [ns4Daemon])
+        ns4Thread.setDaemon(1)
+        ns4Thread.start()
 
+        # 1.2 Start Pyro NameServer and EventServer, used by the
+        #     PyroEventBroadcaster used in this exercise
+        from Pyro.naming import NameServerStarter
+        nsStarter = NameServerStarter()
+        nsThread = threading.Thread(None, lambda x: x.start(), 'NSThrd', [nsStarter])
+        nsThread.setDaemon(1)
+        nsThread.start()
+        self.assertTrue(nsStarter.waitUntilStarted(2))
+
+        from Pyro.EventService.Server import EventServiceStarter
+        esStarter = EventServiceStarter()
+        esThread = threading.Thread(None, lambda x: x.start(), 'ESThrd', [esStarter])
+        esThread.setDaemon(1)
+        esThread.start()
+        self.assertTrue(esStarter.waitUntilStarted(2))
+
+        # Now comes the real work
         try:
             # 2. launch data_object_manager
             id1 = '001'
@@ -255,11 +355,12 @@ class TestDataObject(unittest.TestCase):
 
             print "**** step 6"
             # 6. start the pipeline (simulate CSP)
-            pdg.write()
+            pdg.write(' ')
+            pdg.setCompleted()
 
             do1 = pdg.consumers[0]
             do2 = do1.consumers[0].consumers[0]
-            self.assertTrue(do1.status == DOStates.DIRTY and do2.status == DOStates.DIRTY)
+            self.assertTrue(do1.status == DOStates.WRITING and do2.status == DOStates.WRITING)
 
             print "**** step 7"
             # 7. tear down data objects of this observation on each data object manager
@@ -270,10 +371,17 @@ class TestDataObject(unittest.TestCase):
             # 8. shutdown the data manager daemon
             dmgr.shutdown()
 
+        except (PyroError, PyroExceptionCapsule):
+            print("Pyro traceback:")
+            print("".join(Pyro4.util.getPyroTraceback()))
+            raise
         finally:
             # 9. shutdown name service
             try:
-                ns_daemon.shutdown()
+                esStarter.shutdown()
+                nsStarter.shutdown()
+                ns4Daemon.shutdown()
+                ns4Thread.join()
             except:
                 pass
 
