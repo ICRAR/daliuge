@@ -6,11 +6,10 @@ created on 14-June-2015 by chen.wu@icrar.org
 """
 
 import luigi
-from luigi import interface, scheduler, worker
 import urllib2, time, os, random
 import cPickle as pickle
 from dfms.events.event_broadcaster import LocalEventBroadcaster
-from dfms.data_object import AbstractDataObject, AppDataObject, StreamDataObject, FileDataObject, ComputeStreamChecksum, ComputeFileChecksum, ContainerDataObject
+from dfms.data_object import AbstractDataObject, AppDataObject, ContainerDataObject
 from collections import defaultdict
 
 DEBUG = True
@@ -176,8 +175,6 @@ class PGEngine():
         dobC.location = island_two
         dobD.location = island_two
 
-        dobA.parent = dobC
-        dobB.parent = dobC
         dobC.addChild(dobA)
         dobC.addChild(dobB)
 
@@ -224,7 +221,6 @@ class PGEngine():
                 dob_split.location = dob_obs.location
                 dob_split.addProducer(dob_ingest)
                 dob_ingest.addConsumer(dob_split)
-                dob_split.parent = dob_obs
                 dob_obs.addChild(dob_split)
 
             oid_rts = "RTS_{0}".format(stri)
@@ -238,7 +234,6 @@ class PGEngine():
             dob_subimg.location = dob_obs.location
             dob_rts.addConsumer(dob_subimg)
             dob_subimg.addProducer(dob_rts)
-            dob_subimg.parent = dob_comb_img
             dob_comb_img.addChild(dob_subimg)
 
         #concatenate all images
@@ -303,7 +298,6 @@ class PGEngine():
             dob.location = "{0}.aws-ec2.sydney".format(j % num_obs)
             for dob_sb in v:
                 dob.addChild(dob_sb)
-                dob_sb.parent = dob
 
             app_oid = oid.replace("Subband_", "Clean_")
             adob_clean = AppDataObject(app_oid, app_oid, self.eventbc)
@@ -323,7 +317,6 @@ class PGEngine():
         dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, self.eventbc)
         dob_comb_img.location = "10.1.1.100:7777"
         for dob_img in img_list:
-            dob_img.parent = dob_comb_img
             dob_comb_img.addChild(dob_img)
 
         #concatenate all images
@@ -411,7 +404,7 @@ class DataObjectTarget(luigi.Target):
         Returns ``True`` if the :py:class:`Target` exists and ``False`` otherwise.
         """
         for dob in self._data_obj_list:
-            if (not self.dob_exists(dob)):
+            if not dob.exists():
                 return False
         return True
 

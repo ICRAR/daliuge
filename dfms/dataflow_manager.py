@@ -29,11 +29,10 @@ Dataflow manager is responsible for producing the physical graph at "design" tim
 
 dataflow manager has all the environment-specific implementations, e.g.
 """
-from data_object import AbstractDataObject, AppDataObject
 
-import datetime, Pyro4
+import Pyro4
 
-from ddap_protocol import CST_NS_DOM, DOLinkType
+from ddap_protocol import CST_NS_DOM
 
 def buildSimpleIngestPDG(ssid, nsHost=None, port=9090):
     """
@@ -77,10 +76,10 @@ def buildSimpleIngestPDG(ssid, nsHost=None, port=9090):
 
     print 'Creating data objects'
     #ssid = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') #sessionId
-    uriA = domServ001.createDataObject('A', 'A', ssid, appDataObj = True)
-    uriB = domServ001.createDataObject('B', 'B', ssid)
+    uriA = domServ001.createDataObject('A', 'A', ssid)
+    uriB = domServ001.createDataObject('B', 'B', ssid, appDataObj = True)
     uriC = domServ002.createDataObject('C', 'C', ssid, appDataObj = True)
-    uriD = domServ002.createDataObject('D', 'D', ssid)
+    uriD = domServ002.createDataObject('D', 'D', ssid, appDataObj = True)
 
     print 'Starting data objects daemons on both data object managers'
     ret = domServ001.startDOBDaemon(ssid)
@@ -95,11 +94,8 @@ def buildSimpleIngestPDG(ssid, nsHost=None, port=9090):
         dobD = Pyro4.Proxy(uriD)
         #"""
         dobA.addConsumer(dobB)
-        dobB.addProducer(dobA)
         dobB.addConsumer(dobC)
-        dobC.addProducer(dobB)
         dobC.addConsumer(dobD)
-        dobD.addProducer(dobC)
 
         #print 'Executing the graph...'
         #dobA.run(None, None)

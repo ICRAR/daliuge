@@ -23,28 +23,50 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
-import heapq
-import logging
-from operator import __or__
-from abc import ABCMeta, abstractmethod
-
+from dfms.lifecycle.registry import DataObject
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
 """
+
+from abc import ABCMeta, abstractmethod
+from cStringIO import StringIO
+import heapq
+import logging
+from operator import __or__
 import os, time
+
+from ddap_protocol import DOStates
+
 
 try:
     from crc32c import crc32
 except:
     from binascii import crc32
 
-from ddap_protocol import DOStates
 
 _logger = logging.getLogger(__name__)
 
-class AbstractDataObject(object):
 
+
+#===============================================================================
+# DataObject classes follow
+#===============================================================================
+
+
+class AbstractDataObject(object):
+    '''
+    Base class for all DataObject implementations.
+
+    A DataObject is a representation of a piece of data. DataObjects are created,
+    written once, potentially read many times, and they finally potentially
+    expire and get deleted. Subclasses implement different storage mechanisms
+    to hold the data represented by the DataObject.
+    '''
+
+    # This ensures that:
+    #  - This class cannot be instantiated
+    #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
     """
@@ -70,23 +92,32 @@ class AbstractDataObject(object):
         self._producers = []# could be (1) real component (if I am a real data object produced by them)
                             #       or (2) real data objects (if I am a real component that consume them)
 
-        #self._stateEHlist = [] # state event handler list
-
+        self._refCount = 0
         self._location = None
-        self._parent = None
-        self._status = None
-        self._phase  = None
+        self._parent   = None
+        self._status   = None
+        self._phase    = None
         self._checksum = 0
-        self._size     = -1
+        self._size     = 0
 
+        # TODO: Do we really want to introduce this dependency here?
+        self._dom = None
         if kwargs.has_key('dom'):
             self._dom = kwargs['dom'] # hold a reference to data object manager
 
+        # Expected lifespan for this object, used by to expire them
         lifespan = 10
         if kwargs.has_key('lifespan'):
             lifespan = float(kwargs['lifespan'])
         self._expirationDate = time.time() + lifespan
 
+        # Expected data size, used to automatically move the DO to COMPLETED
+        # after successive calls to write()
+        self._expectedSize = -1
+        if kwargs.has_key('expectedSize'):
+            self._expectedSize = int(kwargs['expectedSize'])
+
+        # All DOs are precious unless stated otherwise; used for replication
         self._precious = True
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs['precious'])
@@ -96,6 +127,8 @@ class AbstractDataObject(object):
 
         try:
             self.initialize(**kwargs)
+            if hasattr(self, 'appInitialize'):
+                self.appInitialize(**kwargs)
             self.status = DOStates.INITIALIZED
 
         except Exception as e:
@@ -124,8 +157,41 @@ class AbstractDataObject(object):
         Refer to Activity Diagram (Data Lifecycle / Open Data Object)
         """
         descriptor = self.openMeta(**kwargs)
-        self.fire(type='open', uid = self._uid, oid = self._oid)
+        self._refCount += 1
+        self.fire('open')
         return descriptor
+
+    def close(self, descriptor, **kwargs):
+        self.closeMeta(descriptor, **kwargs)
+        self._refCount -= 1
+
+    def write(self, data, **kwargs):
+
+        if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
+            raise Exception("No more writing expected")
+
+        nbytes = self.writeMeta(data, **kwargs)
+        if nbytes:
+            self._size += nbytes
+
+        # Update our internal checksum
+        self._computeChecksum(data)
+
+        # If we know how much data we'll receive, keep track of it and
+        # automatically switch to COMPLETED
+        if self._expectedSize > 0:
+            remaining = self._expectedSize - self._size
+            if remaining > 0:
+                self.status = DOStates.WRITING
+            else:
+                if remaining < 0:
+                    _logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
+                _logger.debug("Automatically DataObject %s/%s moving to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                self.setCompleted()
+        else:
+            self.status = DOStates.WRITING
+
+        return nbytes
 
     @abstractmethod
     def openMeta(self, **kwargs):
@@ -133,10 +199,6 @@ class AbstractDataObject(object):
         Hook for subclass open
         """
         pass
-
-    def close(self, descriptor, **kwargs):
-        self.closeMeta(descriptor, **kwargs)
-        #self.setStatus(DOStates.CLOSED)
 
     @abstractmethod
     def closeMeta(self, descriptor, **kwargs):
@@ -146,30 +208,8 @@ class AbstractDataObject(object):
         pass
 
     @abstractmethod
-    def read(self, descriptor, **kwargs):
+    def read(self, descriptor, count, **kwargs):
         pass
-
-    def write(self, data, **kwargs):
-
-        if self.status != DOStates.INITIALIZED:
-            raise Exception("No more writing expected")
-
-        nbytes = self.writeMeta(data, **kwargs)
-        if nbytes:
-            self._size += nbytes
-
-        if (self._status == DOStates.COMPLETED):
-            pass
-            #if (self._parent):
-            #    self._parent.onCompleted(self)
-
-        elif (self._status == DOStates.FAILED):
-            pass
-
-        else:
-            self.status = DOStates.DIRTY
-
-        return nbytes
 
     @abstractmethod
     def writeMeta(self, data, **kwargs):
@@ -179,9 +219,12 @@ class AbstractDataObject(object):
         pass
 
     def delete(self):
+        '''
+        Deletes the data represented by this DO
+        '''
         pass
 
-    def computeChecksum(self, chunk):
+    def _computeChecksum(self, chunk):
         self._checksum = crc32(chunk, self._checksum)
         return self._checksum
 
@@ -207,8 +250,10 @@ class AbstractDataObject(object):
     def unsubscribe(self, callback):
         self._bcaster.unsubscribe(self._uid, callback)
 
-    def fire(self, **attrs):
-        self._bcaster.fire(**attrs)
+    def fire(self, eventType, **attrs):
+        attrs['oid'] = self.oid
+        attrs['uid'] = self.uid
+        self._bcaster.fire(eventType, **attrs)
 
     def exists(self):
         return True
@@ -249,8 +294,7 @@ class AbstractDataObject(object):
         self._status = value
 
         # fire off event
-        self.fire(type='status', status = value, uid = self._uid, oid = self._oid)
-
+        self.fire('status', status = value)
 
     @property
     def parent(self):
@@ -270,23 +314,62 @@ class AbstractDataObject(object):
         """
         set a list of consumers (replace the existing ones)
         """
-        self._consumers = consumers
+        for c in consumers:
+            self.addConsumer(c)
 
     def addConsumer(self, consumer):
+
+        # Consumers have a "consume" method that gets invoked when
+        # this DO moves to COMPLETED
+        if not consumer.consume:
+            raise Exception("The consumer doesn't have a 'consume' method")
+
+        # Add if not already present
+        # Add the reverse reference too automatically
+        if consumer in self._consumers:
+            return
+        _logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer.uid))
         self._consumers.append(consumer)
+        if hasattr(consumer, 'addProducer'):
+            consumer.addProducer(self)
+
+        def consumeCompleted(e):
+            if not hasattr(e, 'status') or e.status != DOStates.COMPLETED:
+                _logger.debug('Skipping event for consumer %s: %s' %(consumer.uid, str(e.__dict__)) )
+                return
+            _logger.debug('Triggering consumer %s: %s' %(consumer.uid, str(e.__dict__)))
+            consumer.consume(self)
+        self.subscribe(consumeCompleted)
 
     @property
     def producers(self):
         return self._producers
 
     def addProducer(self, producer):
-        self._producers.append(producer)
+        if producer not in self._producers:
+            self._producers.append(producer)
+            if hasattr(producer, 'addConsumer'):
+                producer.addConsumer(self)
+
+    def setCompleted(self):
+        '''
+        Manually moves this DO to the COMPLETED state. This can be used when
+        not all the expected data has arrived for a given DO, but it should
+        still be moved to COMPLETED
+        '''
+        if self._status not in [DOStates.INITIALIZED, DOStates.WRITING]:
+            raise Exception("This method can only be called while the DO is still in INITIALIZED or DIRTY state")
+
+        self.status = DOStates.COMPLETED
 
     def isCompleted(self):
+        '''
+        Checks whether this DO is currently in the COMPLETED state or not
+        '''
         return (self._status == DOStates.COMPLETED)
 
     def isContainer(self):
-        return (len(self._children) > 0)
+        return (hasattr(self, '_children') and len(self._children) > 0)
 
     @property
     def location(self):
@@ -319,15 +402,6 @@ class AbstractDataObject(object):
         This is for testing purpose
         """
         return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
-
-    def trigger_consumers(self, **kwargs):
-        """
-        A helper function to trigger consumers
-        Should be "parallel for"
-        """
-        for cs_id, cs in enumerate(self._consumers):
-            kwargs['cs_index'] = cs_id
-            cs._run(**kwargs)
 
     def _type_code(self):
         return 4
@@ -370,88 +444,8 @@ class AbstractDataObject(object):
         if (create_dict):
             return m_jsobj_out
 
-class AppDataObject(AbstractDataObject):
-
-    def initialize(self, **kwargs):
-
-        self.appInitialize(**kwargs)
-
-    def appInitialize(self, **kwargs):
-        """
-        Hooks for sub class
-        """
-        pass
-
-    def writeMeta(self, data, **kwargs):
-        """
-        So that AppDataObject can be called by service handlers in the same way as
-        "pure" data object if necessary
-        """
-        self._run(**kwargs)
-
-    def _run(self, **kwargs):
-        """
-        Execute the tasks
-        """
-        kwdict = self.run(**kwargs)
-        if (kwdict is None):
-            kwdict = {}
-        # TODO - this should be in another process/thread or as a continuation
-        for cs_id, cs in enumerate(self.consumers):
-            kwdict['cs_index'] = cs_id
-            cs.write(**kwdict)
-
-    def run(self, **kwargs):
-        """
-        Hooks for sub class
-        Must return a dictionary: key: parameter name, val: argument value
-        which will then be used as the **kwargs for calling consumers (i.e. "real" AbstractDataObjects)
-        """
-        pass
-
-    def _type_code(self):
-        return 1
-
-    def isReplicable(self):
-        return False
-
-class ComputeStreamChecksum(AppDataObject):
-
-    def appInitialize(self, **kwargs):
-        pass
-
-    def run(self, **kwargs):
-        chunk = kwargs['chunk']
-        self._checksum = crc32(chunk, self._checksum)
-
-        self.checksum = self._checksum
-
-        # put the checksum in the output
-        kwargs['checksum'] = self.checksum
-
-        return kwargs
-
-class ComputeFileChecksum(AppDataObject):
-
-    def appInitialize(self, **kwargs):
-        self._bufsize = 4 * 1024 ** 2
-
-    def run(self, **kwargs):
-        #cs_index = cs_id, file_name = self._fnm, file_length = self._fleng
-        filename = kwargs['file_name']
-        with open(filename, "r") as fo:
-            buf = fo.read(self._bufsize)
-            crc = 0
-            while (buf != ""):
-                crc = crc32(buf, crc)
-                buf = fo.read(self._bufsize)
-
-        self.checksum = crc
-
-        # put the checksum in the output
-        kwargs['checksum'] = self.checksum
-
-        return kwargs
+    def getDataObject(self, dataObject):
+        return dataObject
 
 class FileDataObject(AbstractDataObject):
 
@@ -464,26 +458,13 @@ class FileDataObject(AbstractDataObject):
             os.mkdir(self._root)
 
         self._fnm = ''.join([self._root, os.sep, self._oid])
-        if (kwargs.has_key('file_length')):
-            self._fleng = kwargs['file_length']
-        else:
-            raise Exception("Must specify the length of the file: file_length")
-
         self._fo = open(self._fnm, "w")
-        self._fwritten = 0
 
     def openMeta(self, **kwargs):
-        """
-        """
-        if (kwargs.has_key('mode')):
-            mode = kwargs['mode']
-        else:
-            mode = 'wb'
+        return open(self._fnm, 'r')
 
-        return open(self._fnm, mode)
-
-    def read(self, fd, bufsize=4096):
-        return fd.read(bufsize)
+    def read(self, descriptor, count=4096, **kwargs):
+        return descriptor.read(count)
 
     def writeMeta(self, data, **kwargs):
         """
@@ -494,20 +475,14 @@ class FileDataObject(AbstractDataObject):
 
         """
         self._fo.write(data)
-        self._fwritten += len(data)
-        if (self._fwritten == self._fleng):
-            self._fo.flush()
-            self.status = DOStates.COMPLETED
-
         return len(data)
 
+    def setCompleted(self):
+        self._fo.close()
+        AbstractDataObject.setCompleted(self)
+
     def closeMeta(self, descriptor, **kwargs):
-        """
-        Closing the file object will trigger its consumer (AppDataObject) to run
-        """
         descriptor.close()
-        # use helper function to trigger consumers:
-        self.trigger_consumers(file_name=self._fnm, file_length=self._fleng)
 
     def seek(self, **kwargs):
         pass
@@ -530,8 +505,9 @@ class NgasDataObject(AbstractDataObject):
         # Check we actually can write NGAMS clients
         try:
             from ngamsPClient import ngamsPClient
-        except:
+        except Exception, e:
             _logger.exception("No NGAMS client libs found, cannot use NgasDataObjects")
+            raise e
 
         if not kwargs.has_key('ngasSrv'):
             raise Exception('ngasSrv option must be supplied at DO construction time')
@@ -550,7 +526,7 @@ class NgasDataObject(AbstractDataObject):
         from ngamsPClient import ngamsPClient
         return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort)
 
-    def writeMeta(self, data):
+    def writeMeta(self, data, **kwargs):
         self._buf += data
         # TODO: When all the expected data has arrived we move it from the
         # buffer into NGAS
@@ -558,7 +534,7 @@ class NgasDataObject(AbstractDataObject):
     def closeMeta(self, descriptor):
         del descriptor
 
-    def read(self, descriptor):
+    def read(self, descriptor, count, **kwargs):
         '''
         :param ngamsPClient.ngamsPClient descriptor:
         '''
@@ -568,62 +544,42 @@ class NgasDataObject(AbstractDataObject):
     def exists(self):
         self._getClient().status(fileId=self.uid)
 
-class StreamDataObject(AbstractDataObject):
-
-    def initialize(self, **kwargs):
-        """
-        Hook for subclass initialization.
-        """
-        self._buf = ''
-
-    def openMeta(self, **kwargs):
-        """
-        This is not thread safe, because we assume everything is inside a single thread!
-        """
-        return self._buf
-
-    def writeMeta(self, data, **kwargs):
-        """
-        Each chunk written to a stream object
-        will be immediately streamed to its consumer
-
-        TODO - use an internal buffer, only trigger when it is full
-        """
-        self._buf = data
-        self.trigger_consumers(chunk=self._buf)
-        self.status = DOStates.COMPLETED
-
-        return len(data)
-
-    def stream(self, **kwargs):
-        pass
-
 class InMemoryDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
         self._buf = ''
 
     def openMeta(self, **kwargs):
-        return self._buf
+        return StringIO(self._buf)
 
-    @abstractmethod
     def writeMeta(self, data, **kwargs):
         self._buf += data
         return len(data)
 
-    @abstractmethod
-    def read(self, descriptor, **kwargs):
-        return descriptor
+    def read(self, descriptor, count=4096, **kwargs):
+        return descriptor.read(count)
 
-    @abstractmethod
     def closeMeta(self, descriptor, **kwargs):
-        pass
+        descriptor.close()
+
+    def delete(self):
+        del self._buf
+        self._buf = None
+
+    def exists(self):
+        return bool(self._buf)
 
 class ContainerDataObject(AbstractDataObject):
+    """
+    A DataObject that doesn't directly point to some piece of data, but instead
+    holds references to other DataObjects, and from them its own internal state
+    is deduced.
 
+    Because of its nature, ContainerDataObjects cannot be written to directly,
+    and likewise they cannot be read from directly. One instead has to pay
+    attention to its "children" DataObjects if I/O must be performed.
     """
-    Container data object has children data objects
-    """
+
     def initialize(self, **kwargs):
         """
         Hook for subclass initialization.
@@ -631,51 +587,42 @@ class ContainerDataObject(AbstractDataObject):
         self._children = []
         self._complete_map = {} #key - child oid, value - completed yet (bool)?
 
-    def consumer_params(self):
-        """
-        Sub-class to add more parameters
-        """
-        pass
-
     #===========================================================================
     # No data-related operations should actually be called in Container DOs
     #===========================================================================
-    def closeMeta(self, **kwargs):
+    def closeMeta(self, descriptor, **kwargs):
         raise NotImplementedError()
     def openMeta(self, **kwargs):
         raise NotImplementedError()
-    def read(self, **kwargs):
+    def read(self, descriptor, count, **kwargs):
         raise NotImplementedError()
-    def writeMeta(self, **kwargs):
+    def writeMeta(self, descriptor, data, **kwargs):
         raise NotImplementedError()
 
     def check_join_condition(self, event):
 
-        if ("status" != event.type.lower()):
+        if ("status" != event.type):
             return
 
-        print "Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status))
+
         if (event.status != DOStates.COMPLETED):
             return
 
         self._complete_map[event.oid] = True
         # check if each child is completed
-        for k, c_yet in self._complete_map.iteritems():
+        for c_yet in self._complete_map.itervalues():
             if (not c_yet):
                 return
 
-        # invoke consumers if any
-        add_params = self.consumer_params()
-        if not add_params:
-            add_params = {}
-        self.trigger_consumers(**add_params)
-
-        # notify my parent (if any) via setStatus, which fires an event
-        self.status = DOStates.COMPLETED
+        # move the container as a whole to COMPLETED
+        self.setCompleted()
 
     def addChild(self, child):
         child.subscribe(self.check_join_condition)
         self._children.append(child)
+        child.parent = self
         self._complete_map[child.oid] = child.isCompleted()
 
     def _type_code(self):
@@ -692,6 +639,10 @@ class ContainerDataObject(AbstractDataObject):
     def expirationDate(self):
         return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
 
+    @property
+    def children(self):
+        return self._children[:]
+
     def exists(self):
         # TODO: Or should it be __and__? Depends on what the exact contract of
         #       "exists" is
@@ -699,3 +650,73 @@ class ContainerDataObject(AbstractDataObject):
 
     def isReplicable(self):
         return False
+
+
+#===============================================================================
+# AppConsumer classes follow
+#===============================================================================
+
+
+class AppConsumer(object):
+
+    def appInitialize(self, **kwargs):
+        """
+        Hooks for sub class
+        """
+        pass
+
+    def consume(self, dataObject):
+        """
+        Execute the tasks
+        """
+        return self.run(dataObject)
+
+    def run(self, dataObject):
+        """
+        Hooks for sub class
+        Must return a dictionary: key: parameter name, val: argument value
+        which will then be used as the **kwargs for calling consumers (i.e. "real" AbstractDataObjects)
+        """
+        pass
+
+    def _type_code(self):
+        return 1
+
+class CRCResultConsumer(AppConsumer):
+    '''
+    An AppConsumer that calculates the CRC of the DataObject it consumes.
+    It assumes the DataObject being consumed is not a container
+    '''
+
+    def run(self, dataObject):
+        if dataObject.isContainer():
+            raise Exception("This consumer doesn't consume Container DataObjects")
+
+        dataObject = self.getDataObject(dataObject)
+        bufsize = 4 * 1024 ** 2
+        desc = dataObject.open()
+        buf = dataObject.read(desc, bufsize)
+        crc = 0
+        while (buf != ""):
+                crc = crc32(buf, crc)
+                buf = dataObject.read(desc, bufsize)
+        dataObject.close(desc)
+
+        # Rely on whatever implementation we decide to use
+        # for storing our data
+        self.write(str(crc))
+        self.setCompleted()
+
+
+
+class FileCRCResultDataObject(CRCResultConsumer,
+                              FileDataObject):
+    pass
+
+class NgasCRCResultDataObject(CRCResultConsumer,
+                              NgasDataObject):
+    pass
+
+class InMemoryCRCResultDataObject(CRCResultConsumer,
+                                  InMemoryDataObject):
+    pass

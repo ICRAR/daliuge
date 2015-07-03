@@ -38,9 +38,8 @@ class DOLinkType:
 class DOType:
     ABSTRACT, APP, FILE, STREAM, PROXY = range(1, 6)
 
-#TODO - add more states
 class DOStates:
-    FAILED, DIRTY, COMPLETED, INITIALIZED, EXPIRED, DELETED = range(1, 7)
+    INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED, FAILED = range(1, 7)
 
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)

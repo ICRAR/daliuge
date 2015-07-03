@@ -23,6 +23,7 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   10/12/2014     Created
 #
+from dfms.data_object import AppConsumer
 
 """
 Data manager knows the configuration of compute islands, data islands
@@ -35,7 +36,6 @@ as stipulated by the physical graph
 
 """
 from ddap_protocol import DOStates
-from data_object import AbstractDataObject, AppDataObject
 
 import Pyro4, threading
 
@@ -68,7 +68,7 @@ class DataManager():
         a dummy implementation, should keep them in database (as our PDR docs)
         """
         print "Island event from {0}: {1} = {2}".format(event.oid, event.type, event.status)
-        if (event.status == DOStates.DIRTY):
+        if (event.status == DOStates.WRITING):
             print "Data object %s is being written" % event.oid
         elif (event.status == DOStates.COMPLETED):
             print "Data object %s is completed" % event.oid
@@ -98,7 +98,7 @@ class DataManager():
         """
         a naive tree traverse method
         """
-        if (excludeAppDo and isinstance(root, AppDataObject)):
+        if (excludeAppDo and isinstance(root, AppConsumer)):
             print "ignore"
         else:
             relist.append(root)

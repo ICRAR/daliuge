@@ -35,7 +35,7 @@ class EventBroadcaster(object):
     def unsubscribe(self, uid, callback):
         pass
     
-    def fire(self, uid, **attrs):
+    def fire(self, eventType, **attrs):
         pass
 
 class LocalEventBroadcaster(EventBroadcaster):
@@ -48,19 +48,18 @@ class LocalEventBroadcaster(EventBroadcaster):
             self._callbacks[uid].append(callback)
         else:
             self._callbacks[uid] = [callback]
-    
+
     def unsubscribe(self, uid, callback):
         if self._callbacks.has_key(uid):
             self._callbacks[uid].remove(callback)
-    
-    def fire(self, **attrs):
+
+    def fire(self, eventType, **attrs):
         e = Event()
-        e.source = self
+        e.type = eventType
         for k, v in attrs.iteritems():
             setattr(e, k, v)
-        
+
         uid = attrs['uid']
         if self._callbacks.has_key(uid):
             for fn in self._callbacks[uid]:
                 fn(e)
-            
