@@ -34,7 +34,7 @@ import Pyro4
 
 from ddap_protocol import CST_NS_DOM
 
-def buildSimpleIngestPDG(ssid, nsHost=None, port=9090):
+def buildSimpleIngestPDG(ssid, nsHost=None, port=9090, lifespan=3600):
     """
     This is an example of building a physical dataflow graph (PDG) manually
     Here "building" also includes deploying
@@ -76,10 +76,10 @@ def buildSimpleIngestPDG(ssid, nsHost=None, port=9090):
 
     print 'Creating data objects'
     #ssid = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') #sessionId
-    uriA = domServ001.createDataObject('A', 'A', ssid)
-    uriB = domServ001.createDataObject('B', 'B', ssid, appDataObj = True)
-    uriC = domServ002.createDataObject('C', 'C', ssid, appDataObj = True)
-    uriD = domServ002.createDataObject('D', 'D', ssid, appDataObj = True)
+    uriA = domServ001.createDataObject('A', 'A', ssid, lifespan=lifespan)
+    uriB = domServ001.createDataObject('B', 'B', ssid, lifespan=lifespan, appDataObj = True)
+    uriC = domServ002.createDataObject('C', 'C', ssid, lifespan=lifespan, appDataObj = True)
+    uriD = domServ002.createDataObject('D', 'D', ssid, lifespan=lifespan, appDataObj = True)
 
     print 'Starting data objects daemons on both data object managers'
     ret = domServ001.startDOBDaemon(ssid)

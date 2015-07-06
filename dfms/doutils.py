@@ -37,3 +37,14 @@ def allDataObjectContents(dataObject):
         allContents += buf
     dataObject.close(desc)
     return allContents
+
+def copyDataObjectContents(source, target, bufsize=4096):
+    '''
+    Manually copies data from one DataObject into another, in bufsize steps
+    '''
+    desc = source.open()
+    buf = source.read(desc, bufsize)
+    while buf:
+        target.write(buf)
+        buf = source.read(desc, bufsize)
+    source.close(desc)

@@ -124,6 +124,7 @@ import time
 
 import hsm.manager
 import registry
+from dfms import doutils
 from dfms.data_object import FileDataObject
 from dfms.ddap_protocol import DOStates, DOPhases
 
@@ -248,11 +249,12 @@ class DataLifecycleManager(object):
     def expireCompletedDataObjects(self):
         now = time.time()
         for do in self._dos.itervalues():
-            # TODO: Don't access refCount explicitly but rather expose the
-            #       information in a more explicit way (e.g., do.isUsed() or similar)
             if do.status == DOStates.COMPLETED and \
-               do._refCount == 0 and \
                now > do.expirationDate:
+                if do.isBeingRead():
+                    _logger.info("DataObject %s/%s has expired but is currently being read, " \
+                                 "will skip expiration for the time being" % (do.oid, do.uid))
+                    continue
                 if (_logger.isEnabledFor(logging.DEBUG)):
                     _logger.debug('Marking DataObject %s/%s as EXPIRED' % (do.oid, do.uid))
                 do.status = DOStates.EXPIRED
@@ -392,7 +394,10 @@ class DataLifecycleManager(object):
         uid = dataObject.uid
         if dataObject.precious and dataObject.isReplicable():
             _logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
-            self.replicateDataObject(dataObject)
+            try:
+                self.replicateDataObject(dataObject)
+            except:
+                _logger.exception("Problem while replicating DataObject %s/%s" % (oid, uid))
 
     def replicateDataObject(self, dataObject):
         '''
@@ -451,12 +456,7 @@ class DataLifecycleManager(object):
         # For the time being we manually create a hardcoded FileDataObject, and
         # manually copy the contents of the current DO into it
         newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
-        curDOd = dataObject.open()
-        buf = dataObject.read(curDOd)
-        while buf:
-            newDO.write(buf)
-            buf = dataObject.read()
-        dataObject.close(curDOd)
+        doutils.copyDataObjectContents(dataObject, newDO)
 
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug('DataObject %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
