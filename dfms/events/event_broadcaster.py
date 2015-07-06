@@ -38,6 +38,13 @@ class EventBroadcaster(object):
     def fire(self, eventType, **attrs):
         pass
 
+    def _createEvent(self, eventType, **attrs):
+        e = Event()
+        e.type = eventType
+        for k, v in attrs.iteritems():
+            setattr(e, k, v)
+        return e
+
 class LocalEventBroadcaster(EventBroadcaster):
 
     def __init__(self):
@@ -54,11 +61,7 @@ class LocalEventBroadcaster(EventBroadcaster):
             self._callbacks[uid].remove(callback)
 
     def fire(self, eventType, **attrs):
-        e = Event()
-        e.type = eventType
-        for k, v in attrs.iteritems():
-            setattr(e, k, v)
-
+        e = self._createEvent(eventType, **attrs)
         uid = attrs['uid']
         if self._callbacks.has_key(uid):
             for fn in self._callbacks[uid]:

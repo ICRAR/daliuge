@@ -24,7 +24,6 @@
 # dave.pallot@icrar.org   9/Apr/2015     Created
 #
 
-from dfms.events.event_broadcaster import Event
 from dfms.events.event_broadcaster import EventBroadcaster
 from Pyro.EventService.Clients import Subscriber
 from Pyro.EventService.Clients import Publisher
@@ -37,17 +36,17 @@ class PyroSubscriber(Subscriber):
     def __init__(self, bcaster):
         super(PyroSubscriber, self).__init__()
         self._bcaster = bcaster
-        
-        self.pyroSubThread = threading.Thread(None, self._startPyroSub, 'PyroSubThread', ())
+
+        self.pyroSubThread = threading.Thread(None, lambda x: x.listen(), 'PyroSubThread', [self])
         self.pyroSubThread.setDaemon(True)
         self.pyroSubThread.start() 
-    
-    def _startPyroSub(self):
-        self.listen()
-        
+
     def event(self, event):
         self._bcaster._callSubscribers(event.msg)
 
+    def __del__(self):
+        self.abort()
+        self.pyroSubThread.join()
 
 class PyroPublisher(Publisher):
     
@@ -77,7 +76,7 @@ class PyroEventBroadcaster(EventBroadcaster):
             if len(cb) == 0:
                 del self._callbacks[uid]
                 self._pyroSub.unsubscribe(uid)
-    
+
     #NOTE: THis is not thread safe!
     def _callSubscribers(self, event):
         if self._callbacks.has_key(event.uid):
@@ -85,9 +84,6 @@ class PyroEventBroadcaster(EventBroadcaster):
                 fn(event)
     
     def fire(self, eventType, **attrs):
-        e = Event()
-        e.type = eventType
-        for k, v in attrs.iteritems():
-            setattr(e, k, v)
+        e = self._createEvent(eventType, **attrs)
         # publish to uid channel
         self._pyroPub.publish(attrs['uid'], e)
