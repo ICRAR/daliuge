@@ -57,8 +57,8 @@ class DataObjectMgr(object):
         self.daemon_dict = {} # key - sessionId, value - daemon
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
         self.daemon_dob_dict = defaultdict(dict) # key - sessionId, value - a dictionary of Data Objects (key - obj uri, val - obj)
-        #self.eventbc = PyroEventBroadcaster()
-        self.eventbc = LocalEventBroadcaster()
+        self.eventbc = PyroEventBroadcaster()
+        #self.eventbc = LocalEventBroadcaster()
 
     def getURI(self):
         return self._uri
@@ -70,7 +70,7 @@ class DataObjectMgr(object):
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("DOM event from {0}: {1}".format(event.oid, str(event.__dict__)))
 
-    def createDataObject(self, oid, uid, sessionId, appDataObj = False):
+    def createDataObject(self, oid, uid, sessionId, appDataObj = False, lifespan=3600):
         """
         This dummy implementation of 'createDataObject' creates either a data-only
         DataObject in the form of a FileDataObject, or an application DataObject,

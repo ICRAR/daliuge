@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 
-from dfms.data_object import FileDataObject, FileCRCResultDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
+from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
     ContainerDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 
@@ -29,6 +29,7 @@ import logging
 from Pyro.errors import PyroError, PyroExceptionCapsule
 from cStringIO import StringIO
 from dfms import doutils
+from dfms.ddap_protocol import DOStates
 
 try:
     from crc32c import crc32
@@ -52,7 +53,6 @@ class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
             raise Exception("This consumer consumes only Container DataObjects")
         crcSum = self.sumUpCRC(dataObject, 0)
         self.write(str(crcSum))
-        self.setCompleted()
 
     def sumUpCRC(self, container, crcSum):
         for c in container.children:
@@ -128,9 +128,7 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32(self._test_block, test_crc)
 
         # Read the checksum from dobB
-        desc = dobB.open()
-        dobBChecksum = int(dobB.read(desc))
-        dobB.close(desc)
+        dobBChecksum = int(doutils.allDataObjectContents(dobB))
 
         self.assertNotEquals(dobA.checksum, 0)
         self.assertEquals(dobA.checksum, test_crc)
@@ -154,7 +152,6 @@ class TestDataObject(unittest.TestCase):
                 for line in allLines:
                     if self._substring in line:
                         self.write(line)
-                self.setCompleted()
 
         class SortResult(AppConsumer):
             def run(self, do):
@@ -162,7 +159,6 @@ class TestDataObject(unittest.TestCase):
                 sortedLines.sort()
                 for line in sortedLines:
                     self.write(line)
-                self.setCompleted()
 
         class RevResult(AppConsumer):
             def run(self, do):
@@ -176,7 +172,6 @@ class TestDataObject(unittest.TestCase):
                             buf = ''
                         else:
                             buf += c
-                self.setCompleted()
 
         class InMemoryGrepResult(GrepResult, InMemoryDataObject): pass
         class InMemorySortResult(SortResult, InMemoryDataObject): pass
@@ -240,10 +235,10 @@ class TestDataObject(unittest.TestCase):
         doB3 = InMemoryCRCResultDataObject('oid:B3', 'uid:B3', eventbc)
 
         # The Container DO that groups together the CRC Result DOs
-        dobC = ContainerDataObject('oid:C', 'uid:C', eventbc)
+        doC = ContainerDataObject('oid:C', 'uid:C', eventbc)
 
         # The final DO that sums up the CRCs from the container DO
-        dobD = SumupContainerChecksum('oid:D', 'uid:D', eventbc)
+        doD = SumupContainerChecksum('oid:D', 'uid:D', eventbc)
 
         # Wire together
         doAList = [doA1,doA2,doA3]
@@ -251,8 +246,8 @@ class TestDataObject(unittest.TestCase):
         for doA,doB in map(lambda a,b: (a,b), doAList, doBList):
             doA.addConsumer(doB)
         for doB in doBList:
-            dobC.addChild(doB)
-        dobC.addConsumer(dobD)
+            doC.addChild(doB)
+        doC.addConsumer(doD)
 
         # Write data into the initial "A" DOs, which should trigger
         # the whole chain explained above
@@ -260,11 +255,15 @@ class TestDataObject(unittest.TestCase):
             for _ in range(self._test_num_blocks):
                 dobA.write(self._test_block)
 
+        # All DOs are completed now that the chain executed correctly
+        for do in [doA1, doA2, doA3, doB1, doB2, doB3, doC, doD]:
+            self.assertTrue(do.status, DOStates.COMPLETED)
+
         # The results we want to compare
         sum_crc = doB1.checksum + doB2.checksum + doB3.checksum
-        desc = dobD.open()
-        dobDData = int(dobD.read(desc))
-        dobD.close(desc)
+        desc = doD.open()
+        dobDData = int(doD.read(desc))
+        doD.close(desc)
 
         self.assertNotEquals(sum_crc, 0)
         self.assertEquals(sum_crc, dobDData)
@@ -277,7 +276,7 @@ class TestDataObject(unittest.TestCase):
 
            -----------------Data-Island------------------
           |                     |                       |
-          |[A]-------->(B)------|------>[C]-------->(D) |
+          | A --------> B ------|------> C --------> D  |
           |   Data Object Mgr   |    Data Object Mgr    |
           |       001           |        002            |
           -----------------------------------------------
@@ -289,7 +288,7 @@ class TestDataObject(unittest.TestCase):
         The most interesting part of this exercise though is that it
         crosses boundaries of DOMs, and show that DOs are correctly
         talking to each other remotely in the current prototype with
-        Pyro and Pyro4
+        Pyro and Pyro4 (or not)
         """
 
         import datetime
@@ -297,7 +296,6 @@ class TestDataObject(unittest.TestCase):
         import Pyro
         from dfms.data_manager import DataManager
         from dfms import data_object_mgr, dataflow_manager
-        from dfms.ddap_protocol import DOStates
 
         ns_host = 'localhost'
         my_host = 'localhost'
@@ -342,6 +340,13 @@ class TestDataObject(unittest.TestCase):
             obsId = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') # a dummy observation id
             (pdg, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host, port=my_port)
 
+            a = pdg
+            b = a.consumers[0]
+            c = b.consumers[0]
+            d = c.consumers[0]
+            for do in [a,b,c,d]:
+                self.assertTrue(do.status, DOStates.INITIALIZED)
+
             # 4. start a single data manager
             print "**** step 4"
             dmgr = DataManager()
@@ -358,9 +363,12 @@ class TestDataObject(unittest.TestCase):
             pdg.write(' ')
             pdg.setCompleted()
 
-            do1 = pdg.consumers[0]
-            do2 = do1.consumers[0].consumers[0]
-            self.assertTrue(do1.status == DOStates.WRITING and do2.status == DOStates.WRITING)
+            for do in [a,b,c,d]:
+                self.assertEquals(do.status, DOStates.COMPLETED)
+
+            # Check that D holds A's checksum's checksum's checksum.
+            dVal = int(doutils.allDataObjectContents(d))
+            self.assertEquals(crc32(crc32(a.checksum,0),0), dVal)
 
             print "**** step 7"
             # 7. tear down data objects of this observation on each data object manager

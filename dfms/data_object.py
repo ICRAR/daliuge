@@ -23,14 +23,13 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
-from dfms.lifecycle.registry import DataObject
+import threading
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
 """
 
 from abc import ABCMeta, abstractmethod
-from cStringIO import StringIO
 import heapq
 import logging
 from operator import __or__
@@ -93,6 +92,7 @@ class AbstractDataObject(object):
                             #       or (2) real data objects (if I am a real component that consume them)
 
         self._refCount = 0
+        self._refLock  = threading.RLock()
         self._location = None
         self._parent   = None
         self._status   = None
@@ -156,14 +156,28 @@ class AbstractDataObject(object):
         """
         Refer to Activity Diagram (Data Lifecycle / Open Data Object)
         """
+        # TODO: We could also allow opening EXPIRED DOs, in which case
+        # it could trigger its "undeletion", but this would require an automatic
+        # recalculation of its new expiration date, which is maybe something we
+        # don't have to have
+        if self._status != DOStates.COMPLETED:
+            raise Exception("DataObject %s/%s is state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self._status))
         descriptor = self.openMeta(**kwargs)
-        self._refCount += 1
+        with self._refLock:
+            self._refCount += 1
         self.fire('open')
         return descriptor
 
     def close(self, descriptor, **kwargs):
+        with self._refLock:
+            if self._refCount <= 0:
+                raise Exception("Invalid call to close(), no respective open() detected")
+            self._refCount -= 1
         self.closeMeta(descriptor, **kwargs)
-        self._refCount -= 1
+
+    def isBeingRead(self):
+        with self._refLock:
+            return self._refCount
 
     def write(self, data, **kwargs):
 
@@ -186,7 +200,7 @@ class AbstractDataObject(object):
             else:
                 if remaining < 0:
                     _logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                _logger.debug("Automatically DataObject %s/%s moving to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                _logger.debug("Automatically moving DataObject %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
                 self.setCompleted()
         else:
             self.status = DOStates.WRITING
@@ -358,8 +372,10 @@ class AbstractDataObject(object):
         still be moved to COMPLETED
         '''
         if self._status not in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("This method can only be called while the DO is still in INITIALIZED or DIRTY state")
+            raise Exception("DataObject %s/%s not in INITIALIZED or DIRTY state (%s), cannot setComplete()" % (self._oid, self._uid, self._status))
 
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
 
     def isCompleted(self):
@@ -550,6 +566,7 @@ class InMemoryDataObject(AbstractDataObject):
         self._buf = ''
 
     def openMeta(self, **kwargs):
+        from cStringIO import StringIO
         return StringIO(self._buf)
 
     def writeMeta(self, data, **kwargs):
@@ -567,7 +584,7 @@ class InMemoryDataObject(AbstractDataObject):
         self._buf = None
 
     def exists(self):
-        return bool(self._buf)
+        return self._buf is not None
 
 class ContainerDataObject(AbstractDataObject):
     """
@@ -604,11 +621,11 @@ class ContainerDataObject(AbstractDataObject):
         if ("status" != event.type):
             return
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Join condition event from {0}: {1} = {2}".format(event.oid, event.type, event.status))
-
         if (event.status != DOStates.COMPLETED):
             return
+
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("ContainerDataObject %s/%s joined COMPLETED child DataObject %s/%s" % (self._oid, self._uid, event.oid, event.uid))
 
         self._complete_map[event.oid] = True
         # check if each child is completed
@@ -669,7 +686,8 @@ class AppConsumer(object):
         """
         Execute the tasks
         """
-        return self.run(dataObject)
+        self.run(dataObject)
+        self.setCompleted()
 
     def run(self, dataObject):
         """
@@ -698,15 +716,13 @@ class CRCResultConsumer(AppConsumer):
         buf = dataObject.read(desc, bufsize)
         crc = 0
         while (buf != ""):
-                crc = crc32(buf, crc)
-                buf = dataObject.read(desc, bufsize)
+            crc = crc32(buf, crc)
+            buf = dataObject.read(desc, bufsize)
         dataObject.close(desc)
 
         # Rely on whatever implementation we decide to use
         # for storing our data
         self.write(str(crc))
-        self.setCompleted()
-
 
 
 class FileCRCResultDataObject(CRCResultConsumer,
