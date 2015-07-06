@@ -37,7 +37,7 @@ except:
     from binascii import crc32
 
 ONE_MB = 1024 ** 2
-logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
+logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
@@ -338,9 +338,9 @@ class TestDataObject(unittest.TestCase):
 
             # 3. ask dataflow_manager to build the physical dataflow
             obsId = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') # a dummy observation id
-            (pdg, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host, port=my_port)
+            (pdgRoot, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host, port=my_port)
 
-            a = pdg
+            a = pdgRoot
             b = a.consumers[0]
             c = b.consumers[0]
             d = c.consumers[0]
@@ -354,21 +354,26 @@ class TestDataObject(unittest.TestCase):
 
             print "**** step 5"
             # 5. submit the graph to data manager
-            res_avail = dmgr.submitPDG(pdg, doms)
+            res_avail = dmgr.submitPDG(pdgRoot, doms)
             if (not res_avail):
                 raise Exception("Resource is not available in the data manager!")
 
             print "**** step 6"
             # 6. start the pipeline (simulate CSP)
-            pdg.write(' ')
-            pdg.setCompleted()
+            pdgRoot.write(' ')
+            pdgRoot.setCompleted()
+            import time
+            time.sleep(2)
 
             for do in [a,b,c,d]:
                 self.assertEquals(do.status, DOStates.COMPLETED)
 
-            # Check that D holds A's checksum's checksum's checksum.
-            dVal = int(doutils.allDataObjectContents(d))
-            self.assertEquals(crc32(crc32(a.checksum,0),0), dVal)
+            # Check that B holds A's checksum and so forth
+            for prod, cons in [(a,b), (b,c), (c,d)]:
+                consContents = int(doutils.allDataObjectContents(cons))
+                self.assertEquals(prod.checksum, consContents,
+                                  "%s/%s's checksum did not match %s/%s's content: %d/%d" %
+                                  (a.oid, a.uid, b.oid, b.uid, prod.checksum, consContents))
 
             print "**** step 7"
             # 7. tear down data objects of this observation on each data object manager
@@ -379,7 +384,7 @@ class TestDataObject(unittest.TestCase):
             # 8. shutdown the data manager daemon
             dmgr.shutdown()
 
-        except (PyroError, PyroExceptionCapsule):
+        except Exception:
             print("Pyro traceback:")
             print("".join(Pyro4.util.getPyroTraceback()))
             raise
@@ -389,6 +394,8 @@ class TestDataObject(unittest.TestCase):
                 esStarter.shutdown()
                 nsStarter.shutdown()
                 ns4Daemon.shutdown()
+                esThread.join()
+                nsThread.join()
                 ns4Thread.join()
             except:
                 pass

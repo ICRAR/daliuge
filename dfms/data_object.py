@@ -24,6 +24,8 @@
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
 import threading
+import random
+from IN import INT16_MAX, INT16_MIN
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -96,6 +98,7 @@ class AbstractDataObject(object):
         self._location = None
         self._parent   = None
         self._status   = None
+        self._statusLock = threading.RLock()
         self._phase    = None
         self._checksum = 0
         self._size     = 0
@@ -160,15 +163,19 @@ class AbstractDataObject(object):
         # it could trigger its "undeletion", but this would require an automatic
         # recalculation of its new expiration date, which is maybe something we
         # don't have to have
-        if self._status != DOStates.COMPLETED:
-            raise Exception("DataObject %s/%s is state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self._status))
+        if self.status != DOStates.COMPLETED:
+            raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
         descriptor = self.openMeta(**kwargs)
+
+        # This occurs only after a successful opening
         with self._refLock:
             self._refCount += 1
         self.fire('open')
+
         return descriptor
 
     def close(self, descriptor, **kwargs):
+        # Decrement before any error happens
         with self._refLock:
             if self._refCount <= 0:
                 raise Exception("Invalid call to close(), no respective open() detected")
@@ -189,7 +196,7 @@ class AbstractDataObject(object):
             self._size += nbytes
 
         # Update our internal checksum
-        self._computeChecksum(data)
+        self._updateChecksum(data)
 
         # If we know how much data we'll receive, keep track of it and
         # automatically switch to COMPLETED
@@ -238,9 +245,8 @@ class AbstractDataObject(object):
         '''
         pass
 
-    def _computeChecksum(self, chunk):
+    def _updateChecksum(self, chunk):
         self._checksum = crc32(chunk, self._checksum)
-        return self._checksum
 
     @property
     def checksum(self):
@@ -297,15 +303,16 @@ class AbstractDataObject(object):
 
     @property
     def status(self):
-        return self._status
+        with self._statusLock:
+            return self._status
 
     @status.setter
     def status(self, value):
-        # if we are already in the state that is requested then do nothing
-        if value == self._status:
-            return
-
-        self._status = value
+        with self._statusLock:
+            # if we are already in the state that is requested then do nothing
+            if value == self._status:
+                return
+            self._status = value
 
         # fire off event
         self.fire('status', status = value)
@@ -352,7 +359,7 @@ class AbstractDataObject(object):
                 _logger.debug('Skipping event for consumer %s: %s' %(consumer.uid, str(e.__dict__)) )
                 return
             _logger.debug('Triggering consumer %s: %s' %(consumer.uid, str(e.__dict__)))
-            consumer.consume(self)
+            consumer.consume(self.uid)
         self.subscribe(consumeCompleted)
 
     @property
@@ -371,8 +378,8 @@ class AbstractDataObject(object):
         not all the expected data has arrived for a given DO, but it should
         still be moved to COMPLETED
         '''
-        if self._status not in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("DataObject %s/%s not in INITIALIZED or DIRTY state (%s), cannot setComplete()" % (self._oid, self._uid, self._status))
+        if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
+            raise Exception("DataObject %s/%s not in INITIALIZED or DIRTY state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
 
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
@@ -382,7 +389,7 @@ class AbstractDataObject(object):
         '''
         Checks whether this DO is currently in the COMPLETED state or not
         '''
-        return (self._status == DOStates.COMPLETED)
+        return (self.status == DOStates.COMPLETED)
 
     def isContainer(self):
         return (hasattr(self, '_children') and len(self._children) > 0)
@@ -460,7 +467,7 @@ class AbstractDataObject(object):
         if (create_dict):
             return m_jsobj_out
 
-    def getDataObject(self, dataObject):
+    def _getDataObject(self, dataObject):
         return dataObject
 
 class FileDataObject(AbstractDataObject):
@@ -476,11 +483,24 @@ class FileDataObject(AbstractDataObject):
         self._fnm = ''.join([self._root, os.sep, self._oid])
         self._fo = open(self._fnm, "w")
 
+        # For reading. We use simple integers
+        # instead of file objects in our openMeta/read/closeMeta
+        # methods purely because Pyro doesn't handle file types well;
+        # otherwise handling file types around works fine
+        # TODO: This could be actually moved to the AbstractDataObject class,
+        # in which case a readMeta method should be created, or some other form
+        # of reading abstraction
+        self._readFds = {}
+
     def openMeta(self, **kwargs):
-        return open(self._fnm, 'r')
+        fd = open(self._fnm, 'r')
+        idx = random.SystemRandom().randint(INT16_MIN, INT16_MAX)
+        self._readFds[idx] = fd
+        return idx
 
     def read(self, descriptor, count=4096, **kwargs):
-        return descriptor.read(count)
+        fd = self._readFds[descriptor]
+        return fd.read(count)
 
     def writeMeta(self, data, **kwargs):
         """
@@ -498,7 +518,8 @@ class FileDataObject(AbstractDataObject):
         AbstractDataObject.setCompleted(self)
 
     def closeMeta(self, descriptor, **kwargs):
-        descriptor.close()
+        fd = self._readFds.pop(descriptor)
+        fd.close()
 
     def seek(self, **kwargs):
         pass
@@ -564,19 +585,25 @@ class InMemoryDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
         self._buf = ''
+        self._readFds = {} # see FileDataObject
 
     def openMeta(self, **kwargs):
         from cStringIO import StringIO
-        return StringIO(self._buf)
+        stringIO = StringIO(self._buf)
+        idx = random.SystemRandom().randint(INT16_MIN, INT16_MAX)
+        self._readFds[idx] = stringIO
+        return idx
 
     def writeMeta(self, data, **kwargs):
         self._buf += data
         return len(data)
 
     def read(self, descriptor, count=4096, **kwargs):
+        descriptor = self._readFds[descriptor]
         return descriptor.read(count)
 
     def closeMeta(self, descriptor, **kwargs):
+        descriptor = self._readFds.pop(descriptor)
         descriptor.close()
 
     def delete(self):
@@ -682,11 +709,11 @@ class AppConsumer(object):
         """
         pass
 
-    def consume(self, dataObject):
+    def consume(self, uid):
         """
         Execute the tasks
         """
-        self.run(dataObject)
+        self.run(self._getDataObject(uid))
         self.setCompleted()
 
     def run(self, dataObject):
@@ -710,12 +737,11 @@ class CRCResultConsumer(AppConsumer):
         if dataObject.isContainer():
             raise Exception("This consumer doesn't consume Container DataObjects")
 
-        dataObject = self.getDataObject(dataObject)
         bufsize = 4 * 1024 ** 2
         desc = dataObject.open()
         buf = dataObject.read(desc, bufsize)
         crc = 0
-        while (buf != ""):
+        while buf:
             crc = crc32(buf, crc)
             buf = dataObject.read(desc, bufsize)
         dataObject.close(desc)

@@ -136,7 +136,7 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
     signaled to stop
     '''
     def __init__(self, dlm, period, finishedEvent):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="DLMBackgroundTask")
         self._dlm = dlm
         self._period = period
         self._finishedEvent = finishedEvent
