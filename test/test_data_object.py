@@ -21,7 +21,7 @@
 #
 
 from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
-    ContainerDataObject
+    ContainerDataObject, ContainerAppConsumer
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 import os, unittest, threading, sys
@@ -53,6 +53,7 @@ class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
             raise Exception("This consumer consumes only Container DataObjects")
         crcSum = self.sumUpCRC(dataObject, 0)
         self.write(str(crcSum))
+        self.setCompleted()
 
     def sumUpCRC(self, container, crcSum):
         for c in container.children:
@@ -152,6 +153,7 @@ class TestDataObject(unittest.TestCase):
                 for line in allLines:
                     if self._substring in line:
                         self.write(line)
+                self.setCompleted()
 
         class SortResult(AppConsumer):
             def run(self, do):
@@ -159,6 +161,7 @@ class TestDataObject(unittest.TestCase):
                 sortedLines.sort()
                 for line in sortedLines:
                     self.write(line)
+                self.setCompleted()
 
         class RevResult(AppConsumer):
             def run(self, do):
@@ -172,6 +175,7 @@ class TestDataObject(unittest.TestCase):
                             buf = ''
                         else:
                             buf += c
+                self.setCompleted()
 
         class InMemoryGrepResult(GrepResult, InMemoryDataObject): pass
         class InMemorySortResult(SortResult, InMemoryDataObject): pass
@@ -399,6 +403,60 @@ class TestDataObject(unittest.TestCase):
                 ns4Thread.join()
             except:
                 pass
+
+    def test_container_app_do(self):
+        """
+        A small method that tests that the ContainerAppConsumer concept works
+
+        The graph constructed by this example looks as follow:
+
+                        |--> D
+        A --> B --> C --|
+                        |--> E
+
+        Here C is a ContainerAppConsumer, meaning that it consumes the data
+        from B and fills the D and E DataObjects, which are its children.
+        """
+
+        class NumberWriterApp(InMemoryDataObject, AppConsumer):
+            def run(self, dataObject):
+                howMany = int(doutils.allDataObjectContents(dataObject))
+                for i in xrange(howMany):
+                    self.write(str(i) + " ")
+                self.setCompleted()
+
+        class OddAndEvenContainerApp(ContainerAppConsumer):
+            def run(self, dataObject):
+                numbers = doutils.allDataObjectContents(dataObject).strip().split()
+                for n in numbers:
+                    self._children[int(n) % 2].write(n + " ")
+                self._children[0].setCompleted()
+                self._children[1].setCompleted()
+
+        # Create DOs
+        eb = LocalEventBroadcaster()
+        a =     InMemoryDataObject('oid:A', 'uid:A', eb)
+        b =        NumberWriterApp('oid:B', 'uid:B', eb)
+        c = OddAndEvenContainerApp('oid:C', 'uid:C', eb)
+        d =     InMemoryDataObject('oid:D', 'uid:D', eb)
+        e =     InMemoryDataObject('oid:E', 'uid:E', eb)
+
+        # Wire them together
+        a.addConsumer(b)
+        b.addConsumer(c)
+        c.addChild(d)
+        c.addChild(e)
+
+        # Start the execution
+        a.write('20')
+        a.setCompleted()
+
+
+        # Check the final results are correct
+        for do in [a,b,c,d,e]:
+            self.assertEquals(do.status, DOStates.COMPLETED)
+        self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(d).strip())
+        self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(e).strip())
 
 
 if __name__ == '__main__':
