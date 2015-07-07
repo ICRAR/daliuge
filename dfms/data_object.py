@@ -359,7 +359,7 @@ class AbstractDataObject(object):
                 _logger.debug('Skipping event for consumer %s: %s' %(consumer.uid, str(e.__dict__)) )
                 return
             _logger.debug('Triggering consumer %s: %s' %(consumer.uid, str(e.__dict__)))
-            consumer.consume(self.uid)
+            consumer.consume(self)
         self.subscribe(consumeCompleted)
 
     @property
@@ -709,7 +709,7 @@ class AppConsumer(object):
     Although consumers in general can be any kind of object, this AppConsumer
     assumes that itself implements the setCompleted() method, and subclasses
     also assume that there is a write() method. In other words, the AppConsumer
-    classes are meant to be mixed in with DataObject classes to create
+    classes are meant to be mixed in with the basic DataObject classes to create
     DataObjects that react on other DOs who transit to COMPLETED, and that
     represent the output of a computation done over the COMPLETED DO. This is
     then the mechanism through which a DataObject graph will be able to progress
@@ -727,12 +727,11 @@ class AppConsumer(object):
         """
         pass
 
-    def consume(self, uid):
+    def consume(self, dataObject):
         """
         Execute the tasks
         """
-        self.run(self._getDataObject(uid))
-        self.setCompleted()
+        self.run(self._getDataObject(dataObject))
 
     def run(self, dataObject):
         """
@@ -770,6 +769,8 @@ class CRCResultConsumer(AppConsumer):
         # for storing our data
         self.write(str(crc))
 
+        # That's the only data we write; after that we are complete
+        self.setCompleted()
 
 class FileCRCResultDataObject(CRCResultConsumer,
                               FileDataObject):
@@ -789,5 +790,16 @@ class InMemoryCRCResultDataObject(CRCResultConsumer,
                                   InMemoryDataObject):
     '''
     A CRCResultConsumer that exposes its result as an InMemoryDataObject
+    '''
+    pass
+
+class ContainerAppConsumer(AppConsumer,
+                           ContainerDataObject):
+    '''
+    An AppConsumer that is in turn a ContainerDataObject. This implies that
+    the consumption of the data of the producer object yields more than one
+    DataObject. Objects inheriting from this class will be able to attach
+    children to them, and to invoke their individual write() methods when
+    consuming the data coming from the producer DataObject.
     '''
     pass
