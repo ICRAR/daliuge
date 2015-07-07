@@ -328,7 +328,7 @@ class AbstractDataObject(object):
 
     @property
     def consumers(self):
-        return self._consumers
+        return self._consumers[:]
 
     @consumers.setter
     def consumers(self, consumers):
@@ -342,7 +342,7 @@ class AbstractDataObject(object):
 
         # Consumers have a "consume" method that gets invoked when
         # this DO moves to COMPLETED
-        if not consumer.consume:
+        if not hasattr(consumer, 'consume'):
             raise Exception("The consumer doesn't have a 'consume' method")
 
         # Add if not already present
@@ -364,7 +364,7 @@ class AbstractDataObject(object):
 
     @property
     def producers(self):
-        return self._producers
+        return self._producers[:]
 
     def addProducer(self, producer):
         if producer not in self._producers:
@@ -702,6 +702,24 @@ class ContainerDataObject(AbstractDataObject):
 
 
 class AppConsumer(object):
+    '''
+    An AppConsumer is an object implementing the "consume" method, invoked by
+    DataObjects when they change to the COMPLETED state.
+
+    Although consumers in general can be any kind of object, this AppConsumer
+    assumes that itself implements the setCompleted() method, and subclasses
+    also assume that there is a write() method. In other words, the AppConsumer
+    classes are meant to be mixed in with DataObject classes to create
+    DataObjects that react on other DOs who transit to COMPLETED, and that
+    represent the output of a computation done over the COMPLETED DO. This is
+    then the mechanism through which a DataObject graph will be able to progress
+    through its execution.
+
+    Different AppConsumer implementations might decide whether they accept or
+    not to consume ContainerDataObjects, which are a special case of DOs where
+    I/O is not performed directly via the DO, and requires special navigation
+    through its children.
+    '''
 
     def appInitialize(self, **kwargs):
         """
@@ -730,7 +748,9 @@ class AppConsumer(object):
 class CRCResultConsumer(AppConsumer):
     '''
     An AppConsumer that calculates the CRC of the DataObject it consumes.
-    It assumes the DataObject being consumed is not a container
+    It assumes the DataObject being consumed is not a container.
+    This is a simple example of an AppConsumer being implemented, and not
+    something really intended to be used in a production system
     '''
 
     def run(self, dataObject):
@@ -753,12 +773,21 @@ class CRCResultConsumer(AppConsumer):
 
 class FileCRCResultDataObject(CRCResultConsumer,
                               FileDataObject):
+    '''
+    A CRCResultConsumer that exposes its result as a FileDataObject
+    '''
     pass
 
 class NgasCRCResultDataObject(CRCResultConsumer,
                               NgasDataObject):
+    '''
+    A CRCResultConsumer that exposes its result as an NgasDataObject
+    '''
     pass
 
 class InMemoryCRCResultDataObject(CRCResultConsumer,
                                   InMemoryDataObject):
+    '''
+    A CRCResultConsumer that exposes its result as an InMemoryDataObject
+    '''
     pass
