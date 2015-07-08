@@ -104,6 +104,14 @@ class AbstractDataObject(object):
         self._checksum = 0
         self._size     = 0
 
+        # "DataObject descriptors" used for reading.
+        # Instead of passing file objects or more complex data types in our
+        # open/read/close calls we use integers, mainly because Pyro doesn't
+        # handle file types and other classes (like StringIO) well, but also
+        # because it requires less transport.
+        # TODO: Make these threadsafe, no lock around them yet
+        self._readDescriptors = {}
+
         # TODO: Do we really want to introduce this dependency here?
         self._dom = None
         if kwargs.has_key('dom'):
@@ -143,12 +151,10 @@ class AbstractDataObject(object):
         return hash(self._uid)
 
     def __str__(self):
-        re = "oid:{0}".format(self.oid)
+        re = "{0}/{1}".format(self.oid, self.uid)
         if (self.location is not None):
-            loc = "@{0}".format(self.location)
-        else:
-            loc = ""
-        return "{0}{1}".format(re, loc)
+            re += "@{0}".format(self.location)
+        return re
 
     def initialize(self, **kwargs):
         """
@@ -158,22 +164,35 @@ class AbstractDataObject(object):
 
     def open(self, **kwargs):
         """
-        Refer to Activity Diagram (Data Lifecycle / Open Data Object)
+        Opens the DataObject for reading, and returns a "DataObject descriptor"
+        that must be used when invoking the read() and close() method.
+        DataObjects maintain a internal reference count based on the number
+        of times they are opened for reading; because of that after a successful
+        call to this method the corresponding close() method must eventually be
+        invoked. Failing to do so will result in DataObjects not expiring and
+        getting deleted.
         """
         # TODO: We could also allow opening EXPIRED DOs, in which case
         # it could trigger its "undeletion", but this would require an automatic
         # recalculation of its new expiration date, which is maybe something we
         # don't have to have
         if self.status != DOStates.COMPLETED:
-            raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
+            raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
         descriptor = self.openMeta(**kwargs)
+
+        # Save the real descriptor in the dictionary and return its key instead
+        while True:
+            key = random.SystemRandom().randint(INT16_MIN, INT16_MAX)
+            if key not in self._readDescriptors:
+                break
+        self._readDescriptors[key] = descriptor
 
         # This occurs only after a successful opening
         with self._refLock:
             self._refCount += 1
         self.fire('open')
 
-        return descriptor
+        return key
 
     def close(self, descriptor, **kwargs):
         # Decrement before any error happens
@@ -181,13 +200,35 @@ class AbstractDataObject(object):
             if self._refCount <= 0:
                 raise Exception("Invalid call to close(), no respective open() detected")
             self._refCount -= 1
-        self.closeMeta(descriptor, **kwargs)
+
+        self._checkStateAndDescriptor(descriptor)
+        self.closeMeta(self._readDescriptors.pop(descriptor), **kwargs)
+
+    def read(self, descriptor, count=4096, **kwargs):
+        """
+        Reads count bytes from the given DataObject descriptor.
+        """
+        self._checkStateAndDescriptor(descriptor)
+        return self.readMeta(self._readDescriptors[descriptor], count, **kwargs)
+
+    def _checkStateAndDescriptor(self, descriptor):
+        if self.status != DOStates.COMPLETED:
+            raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
+        if descriptor not in self._readDescriptors:
+            raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
     def isBeingRead(self):
         with self._refLock:
             return self._refCount
 
     def write(self, data, **kwargs):
+        '''
+        Writes the given data into this DataObject. This method is only meant to
+        be called while the DataObject is in INITIALIZED or WRITING state; once
+        the DataObject is COMPLETE or beyond only reading is allowed.
+        The underlying storage mechanism is responsible for implementing the
+        final writing logic via the writeMeta() method.
+        '''
 
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
             raise Exception("No more writing expected")
@@ -218,19 +259,23 @@ class AbstractDataObject(object):
     @abstractmethod
     def openMeta(self, **kwargs):
         """
-        Hook for subclass open
+        Hook for subclass open. It returns a "DataObject descriptor", used by
+        the read() and close() method. This way parallel readings can be
+        performed over the same DataObject.
         """
         pass
 
     @abstractmethod
     def closeMeta(self, descriptor, **kwargs):
         """
-        Hook for subclass close
+        Hook for subclass close. It closes the given descriptor, thus freeing
+        underlying resources. The descriptor is that returned by the open()
+        method.
         """
         pass
 
     @abstractmethod
-    def read(self, descriptor, count, **kwargs):
+    def readMeta(self, descriptor, count, **kwargs):
         pass
 
     @abstractmethod
@@ -486,24 +531,11 @@ class FileDataObject(AbstractDataObject):
         self._fnm = ''.join([self._root, os.sep, self._oid])
         self._fo = open(self._fnm, "w")
 
-        # For reading. We use simple integers
-        # instead of file objects in our openMeta/read/closeMeta
-        # methods purely because Pyro doesn't handle file types well;
-        # otherwise handling file types around works fine
-        # TODO: This could be actually moved to the AbstractDataObject class,
-        # in which case a readMeta method should be created, or some other form
-        # of reading abstraction
-        self._readFds = {}
-
     def openMeta(self, **kwargs):
-        fd = open(self._fnm, 'r')
-        idx = random.SystemRandom().randint(INT16_MIN, INT16_MAX)
-        self._readFds[idx] = fd
-        return idx
+        return open(self._fnm, 'r')
 
-    def read(self, descriptor, count=4096, **kwargs):
-        fd = self._readFds[descriptor]
-        return fd.read(count)
+    def readMeta(self, descriptor, count=4096, **kwargs):
+        return descriptor.read(count)
 
     def writeMeta(self, data, **kwargs):
         """
@@ -521,8 +553,7 @@ class FileDataObject(AbstractDataObject):
         AbstractDataObject.setCompleted(self)
 
     def closeMeta(self, descriptor, **kwargs):
-        fd = self._readFds.pop(descriptor)
-        fd.close()
+        descriptor.close()
 
     def seek(self, **kwargs):
         pass
@@ -574,7 +605,7 @@ class NgasDataObject(AbstractDataObject):
     def closeMeta(self, descriptor):
         del descriptor
 
-    def read(self, descriptor, count, **kwargs):
+    def readMeta(self, descriptor, count, **kwargs):
         '''
         :param ngamsPClient.ngamsPClient descriptor:
         '''
@@ -588,25 +619,19 @@ class InMemoryDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
         self._buf = ''
-        self._readFds = {} # see FileDataObject
 
     def openMeta(self, **kwargs):
         from cStringIO import StringIO
-        stringIO = StringIO(self._buf)
-        idx = random.SystemRandom().randint(INT16_MIN, INT16_MAX)
-        self._readFds[idx] = stringIO
-        return idx
+        return StringIO(self._buf)
 
     def writeMeta(self, data, **kwargs):
         self._buf += data
         return len(data)
 
-    def read(self, descriptor, count=4096, **kwargs):
-        descriptor = self._readFds[descriptor]
+    def readMeta(self, descriptor, count=4096, **kwargs):
         return descriptor.read(count)
 
     def closeMeta(self, descriptor, **kwargs):
-        descriptor = self._readFds.pop(descriptor)
         descriptor.close()
 
     def delete(self):
@@ -641,7 +666,7 @@ class ContainerDataObject(AbstractDataObject):
         raise NotImplementedError()
     def openMeta(self, **kwargs):
         raise NotImplementedError()
-    def read(self, descriptor, count, **kwargs):
+    def readMeta(self, descriptor, count, **kwargs):
         raise NotImplementedError()
     def writeMeta(self, descriptor, data, **kwargs):
         raise NotImplementedError()
