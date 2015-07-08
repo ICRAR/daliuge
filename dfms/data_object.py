@@ -26,6 +26,7 @@
 import threading
 import random
 from IN import INT16_MAX, INT16_MIN
+import warnings
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -323,7 +324,9 @@ class AbstractDataObject(object):
 
     @parent.setter
     def parent(self, value):
-        if (value): # only real data object has parent, and we currently only have up to 1 parent
+        if self._parent and value:
+            warnings.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
+        if value:
             self._parent = value # a parent is a container
 
     @property
@@ -664,6 +667,14 @@ class ContainerDataObject(AbstractDataObject):
         self.setCompleted()
 
     def addChild(self, child):
+
+        # Avoid circular dependencies between Containers
+        if child == self.parent:
+            raise Exception("Circular dependency between DataObjects %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
+
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
+
         child.subscribe(self.check_join_condition)
         self._children.append(child)
         child.parent = self
