@@ -9,20 +9,31 @@ import luigi
 import urllib2, time, os, random
 import cPickle as pickle
 from dfms.events.event_broadcaster import LocalEventBroadcaster
-from dfms.data_object import AbstractDataObject, AppDataObject, ContainerDataObject
+from dfms.data_object import ContainerDataObject, AppConsumer, InMemoryDataObject,\
+    ContainerAppConsumer
 from collections import defaultdict
+import signal
+import logging
+import sys
+
+_logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 DEBUG = True
 
 class DataFlowException(Exception):
     pass
 
+class DummyAppDO(InMemoryDataObject, AppConsumer):
+    pass
+
 class DataObjectTask(luigi.Task):
     """
     A Luigi Task that wraps a DataObject
-    Constructor parameters: a data object it wants to wrap (AbstractDataObject)
+    Constructor parameters: a data object it wants to wrap
     """
     data_obj = luigi.Parameter()
+    session_id = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
         """
@@ -56,20 +67,21 @@ class RunDataObjectTask(DataObjectTask):
         if real data object, then return itself
         if app data object, return my consumers (output)
         """
-        if (isinstance(self.data_obj, AppDataObject)):
-            return self.outputdot
-        else:
-            return self.dot
+        return self.dot
+        #if (isinstance(self.data_obj, AppConsumer)):
+        #    return self.outputdot
+        #else:
+        #    return self.dot
 
     def run(self):
         """
-        either ingesting a real data object or running an AppDataObject
+        either ingesting a real data object or running an AppConsumer
         that produces data objects
 
         TODO - remove dummy code
         """
         msg = "data object {0} on {1}".format(self.data_obj.oid, self.data_obj.location)
-        if (isinstance(self.data_obj, AppDataObject)):
+        if (isinstance(self.data_obj, AppConsumer)):
             print "Executing application {0}".format(msg)
         else:
             print "Ingesting {0}".format(msg)
@@ -88,8 +100,13 @@ class DeployDataObjectTask(DataObjectTask):
     Deploy the data object to a "remote" data manager
     The run method should return a DataObjectTarget
     """
-    def output(self):
-        return self.dot
+
+    def __init__(self, *args, **kwargs):
+        """
+        Constructor: to include additional parameters (if any)
+        """
+        super(DeployDataObjectTask, self).__init__(*args, **kwargs)
+        self._completed = False
 
     def run(self):
         """
@@ -99,14 +116,31 @@ class DeployDataObjectTask(DataObjectTask):
         print "Deploying data object {0} on {1}".format(self.data_obj.oid, self.data_obj.location)
         #time.sleep(random.randint(1, 3))
         time.sleep(round(random.uniform(1.0, 3.0), 3))
+        self._completed = True
+
+    def complete(self):
+        return self._completed
 
     def requires(self):
         """
         the producer!
         """
-        re = [DeployDataObjectTask(dob) for dob in self.data_obj.producers]
-        if (isinstance(self.data_obj, ContainerDataObject)):
-            re += [DeployDataObjectTask(dob) for dob in self.data_obj._children]
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Checking requirements for DeployDataObjectTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
+        re = [DeployDataObjectTask(dob, self.session_id) for dob in self.data_obj.producers]
+        if _logger.isEnabledFor(logging.DEBUG):
+            parent = self.data_obj.parent
+            _logger.debug("Has parent? " + str(bool(parent)))
+            if parent:
+                _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
+                _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
+        if self.data_obj.parent and isinstance(self.data_obj.parent, ContainerAppConsumer):
+            re.append(DeployDataObjectTask(self.data_obj.parent, self.session_id))
+        elif isinstance(self.data_obj, ContainerDataObject) and not isinstance(self.data_obj, ContainerAppConsumer):
+            re += [DeployDataObjectTask(dob, self.session_id) for dob in self.data_obj._children]
+        if _logger.isEnabledFor(logging.DEBUG):
+            for req in re:
+                _logger.debug("Added requirement %s/%s" %(req.data_obj.oid, req.data_obj.uid))
         return re
 
 class PGEngine():
@@ -115,59 +149,64 @@ class PGEngine():
     def __init__(self):
         self.eventbc = LocalEventBroadcaster()
 
-    def traverse_funct(self, data_obj):
-        pass
+    def traverse_pg(self, node, leafs, visited):
+        """
+        Depth-first traversal of the graph
+        """
+        dependencies = node.consumers
+        if isinstance(node, ContainerAppConsumer) and node.children:
+            dependencies.extend(node.children)
+        elif node.parent:
+            dependencies.append(node.parent)
 
-    def traverse_pg(self, node, leafs):
-        """
-        a naive way
-        """
-        self.traverse_funct(node)
-        cl = node.consumers
-        if (len(cl) > 0):
-            for ch in cl:
-                self.traverse_pg(ch, leafs)
-        elif (node.parent is not None):
-            self.traverse_pg(node.parent, leafs)
-        else:
+        visited.append(node)
+        if not dependencies:
             leafs.append(node)
-            return
+        else:
+            for do in [d for d in dependencies if d not in visited]:
+                self.traverse_pg(do, leafs, visited)
 
     def process(self, pg):
         leafs = []
-        self.traverse_pg(pg, leafs)
+        if not isinstance(pg, list):
+            pg = [pg]
+        visited = []
+        for root in pg:
+            self.traverse_pg(root, leafs, visited)
         return leafs
 
     def create_test_pg(self):
         island_one = "192.168.1.1:7777"
         island_two = "192.168.1.2:7777"
-        dobA = AbstractDataObject('Obj-A', 'Obj-A', self.eventbc)
-        dobB = AppDataObject('Obj-B', 'Obj-B', self.eventbc)
-        dobC = AbstractDataObject('Obj-C', 'Obj-C', self.eventbc)
-        dobD = AppDataObject('Obj-D', 'Obj-D', self.eventbc)
+        dobA = InMemoryDataObject('Obj-A', 'Obj-A', self.eventbc)
+        dobB = DummyAppDO('Obj-B', 'Obj-B', self.eventbc)
+        dobC = DummyAppDO('Obj-C', 'Obj-C', self.eventbc)
 
         dobA.location = island_one
         dobB.location = island_one
         dobC.location = island_two
-        dobD.location = island_two
 
         dobA.addConsumer(dobB)
         dobB.addProducer(dobA)
         dobB.addConsumer(dobC)
-        dobC.addProducer(dobB)
-        dobC.addConsumer(dobD)
-        dobD.addProducer(dobC)
 
         return dobA
 
     def create_container_pg(self):
+        '''
+        Creates the following graph:
+
+               |--> A --|
+         one --|        | --> C --> D
+               |--> B --|
+        '''
         island_one = "192.168.1.1:7777"
         island_two = "192.168.1.2:7777"
-        dob_one =  AbstractDataObject('Obj-one', 'Obj-one', self.eventbc)
-        dobA = AbstractDataObject('Obj-A', 'Obj-A', self.eventbc)
-        dobB = AbstractDataObject('Obj-B', 'Obj-B', self.eventbc)
+        dob_one =  InMemoryDataObject('Obj-one', 'Obj-one', self.eventbc)
+        dobA = DummyAppDO('Obj-A', 'Obj-A', self.eventbc)
+        dobB = DummyAppDO('Obj-B', 'Obj-B', self.eventbc)
         dobC = ContainerDataObject('Obj-C', 'Obj-C', self.eventbc)
-        dobD = AppDataObject('Obj-D', 'Obj-D', self.eventbc)
+        dobD = DummyAppDO('Obj-D', 'Obj-D', self.eventbc)
 
         dob_one.location = island_one
         dobA.location = island_one
@@ -175,28 +214,100 @@ class PGEngine():
         dobC.location = island_two
         dobD.location = island_two
 
-        dobC.addChild(dobA)
-        dobC.addChild(dobB)
-
-        dobC.addConsumer(dobD)
-        dobD.addProducer(dobC)
-
+        # Wire together
         dob_one.addConsumer(dobA)
         dob_one.addConsumer(dobB)
-
-        dobA.addProducer(dob_one)
-        dobB.addProducer(dob_one)
+        dobC.addChild(dobA)
+        dobC.addChild(dobB)
+        dobC.addConsumer(dobD)
 
         return dob_one
+
+    def create_complex_pg(self):
+        return self._create_complex_pg(False)
+
+    def create_complex2_pg(self):
+        return self._create_complex_pg(True)
+
+    def _create_complex_pg(self, useContainerApps):
+        """
+        This method creates the following graph
+
+        A --> E -----|                         |--> M --> O
+                     |              |---> J ---|
+        B -----------|--> G --> H --|          |--> N --> P -->|
+                     |              |                          |--> Q
+        C --|        |              |-------> K -----> L ----->|
+            |--> F --|                  |
+        D --|                    I -----|
+
+        In this example the "leaves" of the graph are O and Q, while the
+        "roots" are A, B, C, D and I.
+
+        Depending on useContainerApps, node J, M and N will be implemented using
+        a DummyAppDO for J and having M and N as its consumers
+        (useContainerApps==False) or using a ContainerAppConsumer for J and
+        having M and N as its children. The same cannot be applied to the
+        H/J/K group because K is already a ContainerDataObject, and having
+        H as a ContainerAppConsumer would create a circular dependency between
+        the two.
+        """
+
+        se = self.eventbc
+
+        if useContainerApps:
+            parentType = ContainerAppConsumer
+            op = lambda lhs, rhs: lhs.addChild(rhs)
+        else:
+            parentType = DummyAppDO
+            op = lambda lhs, rhs: lhs.addConsumer(rhs)
+
+        a =  InMemoryDataObject('oid:A', 'uid:A', se)
+        b =  InMemoryDataObject('oid:B', 'uid:B', se)
+        c =  InMemoryDataObject('oid:C', 'uid:C', se)
+        d =  InMemoryDataObject('oid:D', 'uid:D', se)
+        e =          DummyAppDO('oid:E', 'uid:E', se)
+        f = ContainerDataObject('oid:F', 'uid:F', se)
+        g = ContainerDataObject('oid:G', 'uid:G', se)
+        h =          DummyAppDO('oid:H', 'uid:H', se)
+        i =  InMemoryDataObject('oid:I', 'uid:I', se)
+        j =          parentType('oid:J', 'uid:J', se)
+        k = ContainerDataObject('oid:K', 'uid:K', se)
+        l =          DummyAppDO('oid:L', 'uid:L', se)
+        m =          DummyAppDO('oid:M', 'uid:M', se)
+        n =          DummyAppDO('oid:N', 'uid:N', se)
+        o =          DummyAppDO('oid:O', 'uid:O', se)
+        p =          DummyAppDO('oid:P', 'uid:P', se)
+        q = ContainerDataObject('oid:Q', 'uid:Q', se)
+
+        a.addConsumer(e)
+        f.addChild(c)
+        f.addChild(d)
+        g.addChild(e)
+        g.addChild(b)
+        g.addChild(f)
+        g.addConsumer(h)
+        h.addConsumer(j)
+        k.addChild(h)
+        k.addChild(i)
+        k.addConsumer(l)
+        op(j, m)
+        op(j, n)
+        m.addConsumer(o)
+        n.addConsumer(p)
+        q.addChild(p)
+        q.addChild(l)
+
+        return [a, b, c, d, i]
 
     def create_mwa_fornax_pg(self):
         num_coarse_ch = 24
         num_split = 3 # number of time splits per channel
         se = self.eventbc
-        dob_root = AbstractDataObject("MWA_LTA", "MWA_LTA", se)
+        dob_root = InMemoryDataObject("MWA_LTA", "MWA_LTA", se)
         dob_root.location = "Pawsey"
 
-         #container
+        #container
         dob_comb_img_oid = "Combined_image"
         dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, se)
         dob_comb_img.location = "f032.fornax"
@@ -208,29 +319,27 @@ class PGEngine():
             dob_obs.location = "f%03d.fornax" % i
 
             oid_ingest = "NGAS_{0}".format(stri)
-            dob_ingest = AppDataObject(oid_ingest, oid_ingest, se)
+            dob_ingest = DummyAppDO(oid_ingest, oid_ingest, se)
             dob_ingest.location = "f%03d.fornax:7777" % i
 
-            dob_ingest.addProducer(dob_root)
             dob_root.addConsumer(dob_ingest)
 
             for j in range(1, num_split + 1):
                 strj = "%02d" % j
                 split_oid = "Subband_{0}_Split_{1}".format(stri, strj)
-                dob_split = AbstractDataObject(split_oid, split_oid, se)
+                dob_split = InMemoryDataObject(split_oid, split_oid, se)
                 dob_split.location = dob_obs.location
-                dob_split.addProducer(dob_ingest)
-                dob_ingest.addConsumer(dob_split)
+                dob_ingest.addChild(dob_split)
                 dob_obs.addChild(dob_split)
 
             oid_rts = "RTS_{0}".format(stri)
-            dob_rts = AppDataObject(oid_rts, oid_rts, se)
+            dob_rts = DummyAppDO(oid_rts, oid_rts, se)
             dob_rts.location = dob_obs.location
             dob_rts.addProducer(dob_obs)
             dob_obs.addConsumer(dob_rts)
 
             oid_subimg = "Subcube_{0}".format(stri)
-            dob_subimg = AbstractDataObject(oid_subimg, oid_subimg, se)
+            dob_subimg = InMemoryDataObject(oid_subimg, oid_subimg, se)
             dob_subimg.location = dob_obs.location
             dob_rts.addConsumer(dob_subimg)
             dob_subimg.addProducer(dob_rts)
@@ -238,14 +347,14 @@ class PGEngine():
 
         #concatenate all images
         adob_concat_oid = "Concat_image"
-        adob_concat = AppDataObject(adob_concat_oid, adob_concat_oid, se)
+        adob_concat = DummyAppDO(adob_concat_oid, adob_concat_oid, se)
         adob_concat.location = dob_comb_img.location
         dob_comb_img.addConsumer(adob_concat)
         adob_concat.addProducer(dob_comb_img)
 
         # produce cube
         dob_cube_oid = "Cube_30.72MHz"
-        dob_cube = AbstractDataObject(dob_cube_oid, dob_cube_oid, se)
+        dob_cube = InMemoryDataObject(dob_cube_oid, dob_cube_oid, se)
         dob_cube.location = dob_comb_img.location
         adob_concat.addConsumer(dob_cube)
         dob_cube.addProducer(adob_concat)
@@ -264,19 +373,18 @@ class PGEngine():
         start_freq = 940
 
         # this should be removed
-        dob_root = AbstractDataObject("JVLA", "JVLA", self.eventbc)
+        dob_root = InMemoryDataObject("JVLA", "JVLA", self.eventbc)
         dob_root.location = "NRAO"
 
         for i in range(1, num_obs + 1):
             stri = "%02d" % i
             oid = "Obs_day_{0}".format(stri)
-            dob_obs = AbstractDataObject(oid, oid, self.eventbc)
+            dob_obs = InMemoryDataObject(oid, oid, self.eventbc)
             dob_obs.location = "{0}.aws-ec2.sydney".format(i)
-            dob_obs.addProducer(dob_root)
             dob_root.addConsumer(dob_obs)
             for j in range(1, num_subb + 1):
                 app_oid = "mstransform_{0}_{1}".format(stri, "%02d" % j)
-                adob_split = AppDataObject(app_oid, app_oid, self.eventbc)
+                adob_split = DummyAppDO(app_oid, app_oid, self.eventbc)
                 adob_split.location = dob_obs.location
                 dob_obs.addConsumer(adob_split)
                 adob_split.addProducer(dob_obs)
@@ -284,7 +392,7 @@ class PGEngine():
                 dob_sboid = "Split_{0}_{1}~{2}MHz".format(stri,
                                                           start_freq + subband_width * j,
                                                           start_freq + subband_width * (j + 1))
-                dob_sb = AbstractDataObject(dob_sboid, dob_sboid, self.eventbc)
+                dob_sb = InMemoryDataObject(dob_sboid, dob_sboid, self.eventbc)
                 dob_sb.location = dob_obs.location
                 adob_split.addConsumer(dob_sb)
                 dob_sb.addProducer(adob_split)
@@ -300,13 +408,13 @@ class PGEngine():
                 dob.addChild(dob_sb)
 
             app_oid = oid.replace("Subband_", "Clean_")
-            adob_clean = AppDataObject(app_oid, app_oid, self.eventbc)
+            adob_clean = DummyAppDO(app_oid, app_oid, self.eventbc)
             adob_clean.location = dob.location
             dob.addConsumer(adob_clean)
             adob_clean.addProducer(dob)
 
             img_oid = oid.replace("Subband_", "Image_")
-            dob_img = AbstractDataObject(img_oid, img_oid, self.eventbc)
+            dob_img = InMemoryDataObject(img_oid, img_oid, self.eventbc)
             dob_img.location = dob.location
             adob_clean.addConsumer(dob_img)
             dob_img.addProducer(adob_clean)
@@ -321,7 +429,7 @@ class PGEngine():
 
         #concatenate all images
         adob_concat_oid = "Concat_image"
-        adob_concat = AppDataObject(adob_concat_oid, adob_concat_oid, self.eventbc)
+        adob_concat = DummyAppDO(adob_concat_oid, adob_concat_oid, self.eventbc)
         adob_concat.location = dob_comb_img.location
         dob_comb_img.addConsumer(adob_concat)
         adob_concat.addProducer(dob_comb_img)
@@ -332,7 +440,7 @@ class PGEngine():
                                                            start_freq,
                                                            start_freq + total_bandwidth)
 
-        dob_cube = AbstractDataObject(dob_cube_oid, dob_cube_oid, self.eventbc)
+        dob_cube = InMemoryDataObject(dob_cube_oid, dob_cube_oid, self.eventbc)
         dob_cube.location = dob_comb_img.location
         adob_concat.addConsumer(dob_cube)
         dob_cube.addProducer(adob_concat)
@@ -356,6 +464,7 @@ class PGDeployTask(luigi.Task):
         super(PGDeployTask, self).__init__(*args, **kwargs)
         self._leafs = self._deploy()
         self._req = []
+        self._completed = False
 
     def _deploy(self):
         pg_eng = PGEngine()
@@ -363,14 +472,21 @@ class PGDeployTask(luigi.Task):
         if (not hasattr(pg_eng, call_nm)):
             raise DataFlowException("Invalid physical graph '{0}'".format(self.pg_name))
         pg = getattr(pg_eng, call_nm)()
-        #pg = pg_eng.create_test_pg()
         return pg_eng.process(pg)
 
     def requires(self):
         if (len(self._req) == 0):
             for dob in self._leafs:
-                self._req.append(DeployDataObjectTask(dob))
+                if _logger.isEnabledFor(logging.DEBUG):
+                    _logger.debug("Adding leaf DO as requirement to PGDeployTask: %s/%s" % (dob.oid, dob.uid))
+                self._req.append(DeployDataObjectTask(dob, self.session_id))
         return self._req
+
+    def run(self):
+        self._completed = True
+
+    def complete(self):
+        return self._completed
 
 class NGASException(Exception):
     """
@@ -585,7 +701,3 @@ if __name__ == "__main__":
     e.g. python ngas_dm.py PGDeployTask --PGDeployTask-pg-name test
     """
     luigi.run()
-
-
-
-
