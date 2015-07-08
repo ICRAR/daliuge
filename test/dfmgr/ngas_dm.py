@@ -15,6 +15,7 @@ from collections import defaultdict
 import signal
 import logging
 import sys
+from dfms import doutils
 
 _logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
@@ -327,22 +328,20 @@ class PGEngine():
             for j in range(1, num_split + 1):
                 strj = "%02d" % j
                 split_oid = "Subband_{0}_Split_{1}".format(stri, strj)
-                dob_split = InMemoryDataObject(split_oid, split_oid, se)
+                dob_split = DummyAppDO(split_oid, split_oid, se)
                 dob_split.location = dob_obs.location
-                dob_ingest.addChild(dob_split)
+                dob_ingest.addConsumer(dob_split)
                 dob_obs.addChild(dob_split)
 
             oid_rts = "RTS_{0}".format(stri)
             dob_rts = DummyAppDO(oid_rts, oid_rts, se)
             dob_rts.location = dob_obs.location
-            dob_rts.addProducer(dob_obs)
             dob_obs.addConsumer(dob_rts)
 
             oid_subimg = "Subcube_{0}".format(stri)
-            dob_subimg = InMemoryDataObject(oid_subimg, oid_subimg, se)
+            dob_subimg = DummyAppDO(oid_subimg, oid_subimg, se)
             dob_subimg.location = dob_obs.location
             dob_rts.addConsumer(dob_subimg)
-            dob_subimg.addProducer(dob_rts)
             dob_comb_img.addChild(dob_subimg)
 
         #concatenate all images
@@ -350,14 +349,12 @@ class PGEngine():
         adob_concat = DummyAppDO(adob_concat_oid, adob_concat_oid, se)
         adob_concat.location = dob_comb_img.location
         dob_comb_img.addConsumer(adob_concat)
-        adob_concat.addProducer(dob_comb_img)
 
         # produce cube
         dob_cube_oid = "Cube_30.72MHz"
-        dob_cube = InMemoryDataObject(dob_cube_oid, dob_cube_oid, se)
+        dob_cube = DummyAppDO(dob_cube_oid, dob_cube_oid, se)
         dob_cube.location = dob_comb_img.location
         adob_concat.addConsumer(dob_cube)
-        dob_cube.addProducer(adob_concat)
 
         return dob_root
 
@@ -376,10 +373,17 @@ class PGEngine():
         dob_root = InMemoryDataObject("JVLA", "JVLA", self.eventbc)
         dob_root.location = "NRAO"
 
+        class CopyAppConsumer(AppConsumer):
+            '''An application that fully copies the data from another DO'''
+            def run(self, dataObject):
+                doutils.copyDataObjectContents(dataObject, self)
+                self.setCompleted()
+        class InMemoryCopyDataObject(InMemoryDataObject, CopyAppConsumer): pass
+
         for i in range(1, num_obs + 1):
             stri = "%02d" % i
             oid = "Obs_day_{0}".format(stri)
-            dob_obs = InMemoryDataObject(oid, oid, self.eventbc)
+            dob_obs = InMemoryCopyDataObject(oid, oid, self.eventbc)
             dob_obs.location = "{0}.aws-ec2.sydney".format(i)
             dob_root.addConsumer(dob_obs)
             for j in range(1, num_subb + 1):
@@ -387,15 +391,13 @@ class PGEngine():
                 adob_split = DummyAppDO(app_oid, app_oid, self.eventbc)
                 adob_split.location = dob_obs.location
                 dob_obs.addConsumer(adob_split)
-                adob_split.addProducer(dob_obs)
 
                 dob_sboid = "Split_{0}_{1}~{2}MHz".format(stri,
                                                           start_freq + subband_width * j,
                                                           start_freq + subband_width * (j + 1))
-                dob_sb = InMemoryDataObject(dob_sboid, dob_sboid, self.eventbc)
+                dob_sb = DummyAppDO(dob_sboid, dob_sboid, self.eventbc)
                 dob_sb.location = dob_obs.location
                 adob_split.addConsumer(dob_sb)
-                dob_sb.addProducer(adob_split)
 
                 subband_dict[j].append(dob_sb)
 
@@ -411,13 +413,11 @@ class PGEngine():
             adob_clean = DummyAppDO(app_oid, app_oid, self.eventbc)
             adob_clean.location = dob.location
             dob.addConsumer(adob_clean)
-            adob_clean.addProducer(dob)
 
             img_oid = oid.replace("Subband_", "Image_")
-            dob_img = InMemoryDataObject(img_oid, img_oid, self.eventbc)
+            dob_img = DummyAppDO(img_oid, img_oid, self.eventbc)
             dob_img.location = dob.location
             adob_clean.addConsumer(dob_img)
-            dob_img.addProducer(adob_clean)
             img_list.append(dob_img)
 
         #container
@@ -432,7 +432,6 @@ class PGEngine():
         adob_concat = DummyAppDO(adob_concat_oid, adob_concat_oid, self.eventbc)
         adob_concat.location = dob_comb_img.location
         dob_comb_img.addConsumer(adob_concat)
-        adob_concat.addProducer(dob_comb_img)
 
         # produce cube
         dob_cube_oid = "Cube_Day{0}~{1}_{2}~{3}MHz".format(1,
@@ -440,10 +439,9 @@ class PGEngine():
                                                            start_freq,
                                                            start_freq + total_bandwidth)
 
-        dob_cube = InMemoryDataObject(dob_cube_oid, dob_cube_oid, self.eventbc)
+        dob_cube = DummyAppDO(dob_cube_oid, dob_cube_oid, self.eventbc)
         dob_cube.location = dob_comb_img.location
         adob_concat.addConsumer(dob_cube)
-        dob_cube.addProducer(adob_concat)
 
         return dob_root
 
