@@ -26,7 +26,6 @@ from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 import os, unittest, threading, sys
 import logging
-from Pyro.errors import PyroError, PyroExceptionCapsule
 from cStringIO import StringIO
 from dfms import doutils
 from dfms.ddap_protocol import DOStates
@@ -42,6 +41,9 @@ logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s]
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
 
+def isContainer(do):
+    return isinstance(do, ContainerDataObject)
+
 class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
     """
     A dummy AppConsumer/DataObject that recursivelly sums up the checksums of
@@ -49,7 +51,7 @@ class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
     final result in memory
     """
     def run(self, dataObject):
-        if not dataObject.isContainer():
+        if not isContainer(dataObject):
             raise Exception("This consumer consumes only Container DataObjects")
         crcSum = self.sumUpCRC(dataObject, 0)
         self.write(str(crcSum))
@@ -57,7 +59,7 @@ class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
 
     def sumUpCRC(self, container, crcSum):
         for c in container.children:
-            if c.isContainer():
+            if isContainer(c):
                 crcSum += self.sumUpCRC(container, crcSum)
             else:
                 crcSum += c.checksum

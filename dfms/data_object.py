@@ -71,13 +71,6 @@ class AbstractDataObject(object):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
-    """
-    The AbstractDataObject
-    It should be split into abstract, container
-    but we mix them into a single one for the time being
-
-    TODO - to support stream and iterative processing
-    """
     def __init__(self, oid, uid, eventbc, subs=[], **kwargs):
         """
         Constructor
@@ -195,13 +188,14 @@ class AbstractDataObject(object):
         return key
 
     def close(self, descriptor, **kwargs):
-        # Decrement before any error happens
+
+        self._checkStateAndDescriptor(descriptor)
+
+        # Decrement counter and then actually close
         with self._refLock:
             if self._refCount <= 0:
                 raise Exception("Invalid call to close(), no respective open() detected")
             self._refCount -= 1
-
-        self._checkStateAndDescriptor(descriptor)
         self.closeMeta(self._readDescriptors.pop(descriptor), **kwargs)
 
     def read(self, descriptor, count=4096, **kwargs):
@@ -218,8 +212,11 @@ class AbstractDataObject(object):
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
     def isBeingRead(self):
+        '''
+        Returns True if the DataObject is currently being read; False otherwise
+        '''
         with self._refLock:
-            return self._refCount
+            return self._refCount > 0
 
     def write(self, data, **kwargs):
         '''
@@ -260,8 +257,8 @@ class AbstractDataObject(object):
     def openMeta(self, **kwargs):
         """
         Hook for subclass open. It returns a "DataObject descriptor", used by
-        the read() and close() method. This way parallel readings can be
-        performed over the same DataObject.
+        the readMeta() and closeMeta() methods. This way parallel readings can
+        be performed over the same DataObject.
         """
         pass
 
@@ -269,25 +266,30 @@ class AbstractDataObject(object):
     def closeMeta(self, descriptor, **kwargs):
         """
         Hook for subclass close. It closes the given descriptor, thus freeing
-        underlying resources. The descriptor is that returned by the open()
+        underlying resources. The descriptor is that returned by the openMeta()
         method.
         """
         pass
 
     @abstractmethod
     def readMeta(self, descriptor, count, **kwargs):
+        """
+        Hook for subclass read. It reads at most count bytes from the given
+        descriptor. The descriptor is that returned by the openMeta() method.
+        """
         pass
 
     @abstractmethod
     def writeMeta(self, data, **kwargs):
         """
-        Hook for subclass write
+        Hook for subclass write. It writes the data represented by this
+        DataObject into the underlying media.
         """
         pass
 
     def delete(self):
         '''
-        Deletes the data represented by this DO
+        Deletes the data represented by this DO.
         '''
         pass
 
@@ -387,11 +389,24 @@ class AbstractDataObject(object):
             self.addConsumer(c)
 
     def addConsumer(self, consumer):
+        """
+        Adds a consumer to this DataObject.
+
+        Consumers are a particular kind of subscriber that are only interested
+        on the status change of DataObjects to COMPLETED. When the expected
+        status change occurs, the consumers' consume() method is invoked with
+        a reference to the DataObject that changed state.
+
+        This is one of the key mechanisms by which the DataObject graph is
+        executed automatically. If DataObject C consumes DataObject B, and B
+        consumes C, then as soon as A transitions to COMPLETED B will consume A,
+        and when B is finally COMPLETED C is triggered.
+        """
 
         # Consumers have a "consume" method that gets invoked when
         # this DO moves to COMPLETED
         if not hasattr(consumer, 'consume'):
-            raise Exception("The consumer doesn't have a 'consume' method")
+            raise Exception("The consumer %s doesn't have a 'consume' method" % (consumer))
 
         # Add if not already present
         # Add the reverse reference too automatically
@@ -399,6 +414,8 @@ class AbstractDataObject(object):
             return
         _logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer.uid))
         self._consumers.append(consumer)
+
+        # Automatic back-reference
         if hasattr(consumer, 'addProducer'):
             consumer.addProducer(self)
 
@@ -417,6 +434,7 @@ class AbstractDataObject(object):
     def addProducer(self, producer):
         if producer not in self._producers:
             self._producers.append(producer)
+            # Automatic back-reference
             if hasattr(producer, 'addConsumer'):
                 producer.addConsumer(self)
 
@@ -424,10 +442,11 @@ class AbstractDataObject(object):
         '''
         Manually moves this DO to the COMPLETED state. This can be used when
         not all the expected data has arrived for a given DO, but it should
-        still be moved to COMPLETED
+        still be moved to COMPLETED, or when the expected amount of data
+        held by a DataObject is not known in advanced.
         '''
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("DataObject %s/%s not in INITIALIZED or DIRTY state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
+            raise Exception("DataObject %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
 
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
@@ -437,10 +456,9 @@ class AbstractDataObject(object):
         '''
         Checks whether this DO is currently in the COMPLETED state or not
         '''
+        # Mind you we're not accessing _status, but status. This way we use the
+        # lock in status() to access _status
         return (self.status == DOStates.COMPLETED)
-
-    def isContainer(self):
-        return (hasattr(self, '_children') and len(self._children) > 0)
 
     @property
     def location(self):
@@ -599,6 +617,7 @@ class NgasDataObject(AbstractDataObject):
 
     def writeMeta(self, data, **kwargs):
         self._buf += data
+        return len(data)
         # TODO: When all the expected data has arrived we move it from the
         # buffer into NGAS
 
@@ -683,10 +702,12 @@ class ContainerDataObject(AbstractDataObject):
             _logger.debug("ContainerDataObject %s/%s joined COMPLETED child DataObject %s/%s" % (self._oid, self._uid, event.oid, event.uid))
 
         self._complete_map[event.oid] = True
+
         # check if each child is completed
-        for c_yet in self._complete_map.itervalues():
-            if (not c_yet):
-                return
+        # TODO: We should also consider the case in which one child takes so
+        #       long that the quicker children expire in the meanwhile.
+        if not all(self._complete_map.itervalues()):
+            return
 
         # move the container as a whole to COMPLETED
         self.setCompleted()
@@ -789,7 +810,7 @@ class CRCResultConsumer(AppConsumer):
     '''
 
     def run(self, dataObject):
-        if dataObject.isContainer():
+        if isinstance(dataObject, ContainerDataObject):
             raise Exception("This consumer doesn't consume Container DataObjects")
 
         bufsize = 4 * 1024 ** 2
