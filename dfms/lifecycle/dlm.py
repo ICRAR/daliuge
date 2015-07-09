@@ -101,7 +101,9 @@ deleted, PDR02-02-01 "Data Layer Data Challenges" states in section 7.2,
   mechanism [...]"
 
 We are implementing this mechanism in the DLM as well, as part of the background
-periodical checks it performs
+periodical checks it performs. After discussing this with Chen, it also became
+apparent that external users such as the dataflow manager could probably also
+request an explicit cleanup, maybe even bypassing the expiration date of DOs.
 
 A simpler definition of the DLM is also given in PDR03 "Requirement analysis",
 section 2.C.3.2, "Data Life Cycle Manager":
@@ -125,7 +127,6 @@ import time
 import hsm.manager
 import registry
 from dfms import doutils
-from dfms.data_object import FileDataObject
 from dfms.ddap_protocol import DOStates, DOPhases
 
 _logger = logging.getLogger(__name__)
@@ -323,7 +324,7 @@ class DataLifecycleManager(object):
         #  3 If a new one is required, then the original, and users of the
         #    original have to be notified that a change has occurred.
         #  4 Or not? Who is actually accessing DOs and how do they get their
-        #    references? Maybe it's the DLM who deliver the references
+        #    references? Maybe it's the DLM who delivers the references
         #    (there is an "Open DataObject" Activity Diagram drawn, but doesn't
         #    clarify who is performing the actions and where are they taking
         #    place), and references can be considered as invalid, in which case
@@ -426,7 +427,7 @@ class DataLifecycleManager(object):
         # TODO: In a real world application this will probably happen in a separate
         #       worker thread with a working queue, or in separate threads, one
         #       for each replication task (or a mix of the two)
-        newDO, newUid = self._replicate(dataObject)
+        newDO, newUid = self._replicate(dataObject, store)
 
         # The DOs (both) should now be tagged as SOLID
         newDO.phase = DOPhases.SOLID
@@ -440,7 +441,7 @@ class DataLifecycleManager(object):
     def getDataObjectUids(self, dataObject):
         return self._reg.getDataObjectUids(dataObject)
 
-    def _replicate(self, dataObject):
+    def _replicate(self, dataObject, store):
 
         # Dummy, but safe, new UID
         newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
@@ -448,14 +449,8 @@ class DataLifecycleManager(object):
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
-        # TODO: Depending on the storage for the new DO we might use different
-        # strategies to copy the contents of the current DO into the new one.
-        # This is something that still has to be coded into this prototype, and
-        # has to do with binding different DO types to different store types,
-        # or something like that.
-        # For the time being we manually create a hardcoded FileDataObject, and
-        # manually copy the contents of the current DO into it
-        newDO = FileDataObject(dataObject.oid, newUid, dataObject._bcaster, file_length=dataObject.size, precious=dataObject.precious)
+        # For the time being we manually copy the contents of the current DO into it
+        newDO = store.createDataObject(dataObject.oid, newUid, dataObject._bcaster, expectedSize=dataObject.size, precious=dataObject.precious)
         doutils.copyDataObjectContents(dataObject, newDO)
 
         if _logger.isEnabledFor(logging.DEBUG):

@@ -24,6 +24,10 @@ Module containing the base class and a simple implementation of the registry
 used by the DLM to keep track of which DOs are where, and therefore in which
 phase they currently are
 
+The registry simply (for the time being) keeps a record of:
+ * Which DataObjects (i.e., which oids) are out there
+ * For each DataObject, which instances(i.e., which uids) are out there
+
 @author: rtobar
 '''
 
