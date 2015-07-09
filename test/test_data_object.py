@@ -107,9 +107,7 @@ class TestDataObject(unittest.TestCase):
             test_crc = crc32(self._test_block, test_crc)
 
         # Read the checksum from dobB
-        desc = dobB.open()
-        dobBChecksum = int(dobB.read(desc))
-        dobB.close(desc)
+        dobBChecksum = int(doutils.allDataObjectContents(dobB))
 
         self.assertNotEquals(dobA.checksum, 0)
         self.assertEquals(dobA.checksum, test_crc)
@@ -262,14 +260,12 @@ class TestDataObject(unittest.TestCase):
                 dobA.write(self._test_block)
 
         # All DOs are completed now that the chain executed correctly
-        for do in [doA1, doA2, doA3, doB1, doB2, doB3, doC, doD]:
+        for do in doAList + doBList:
             self.assertTrue(do.status, DOStates.COMPLETED)
 
         # The results we want to compare
         sum_crc = doB1.checksum + doB2.checksum + doB3.checksum
-        desc = doD.open()
-        dobDData = int(doD.read(desc))
-        doD.close(desc)
+        dobDData = int(doutils.allDataObjectContents(doD))
 
         self.assertNotEquals(sum_crc, 0)
         self.assertEquals(sum_crc, dobDData)
