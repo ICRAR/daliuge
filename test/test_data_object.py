@@ -362,10 +362,24 @@ class TestDataObject(unittest.TestCase):
 
             print "**** step 6"
             # 6. start the pipeline (simulate CSP)
+            # Since the events are asynchronously we wait
+            # on an event set when D is COMPLETED
+            evt = threading.Event()
+            class EvtConsumer():
+                def consume(self, do):
+                    evt.set()
+            consumer = EvtConsumer()
+            daemon = Pyro4.Daemon()
+            consumerUri = daemon.register(consumer)
+            t = threading.Thread(None, lambda: daemon.requestLoop(), "tmp", [])
+            t.start()
+            d.addConsumer(Pyro4.Proxy(consumerUri))
+
             pdgRoot.write(' ')
             pdgRoot.setCompleted()
-            import time
-            time.sleep(2)
+            self.assertTrue(evt.wait(5)) # Should take only a fraction of a second anyway
+            daemon.shutdown()
+            t.join()
 
             for do in [a,b,c,d]:
                 self.assertEquals(do.status, DOStates.COMPLETED)

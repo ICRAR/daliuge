@@ -412,7 +412,7 @@ class AbstractDataObject(object):
         # Add the reverse reference too automatically
         if consumer in self._consumers:
             return
-        _logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer.uid))
+        _logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer))
         self._consumers.append(consumer)
 
         # Automatic back-reference
@@ -421,9 +421,9 @@ class AbstractDataObject(object):
 
         def consumeCompleted(e):
             if not hasattr(e, 'status') or e.status != DOStates.COMPLETED:
-                _logger.debug('Skipping event for consumer %s: %s' %(consumer.uid, str(e.__dict__)) )
+                _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return
-            _logger.debug('Triggering consumer %s: %s' %(consumer.uid, str(e.__dict__)))
+            _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
             consumer.consume(self)
         self.subscribe(consumeCompleted)
 
@@ -546,7 +546,11 @@ class FileDataObject(AbstractDataObject):
         if (not os.path.exists(self._root)):
             os.mkdir(self._root)
 
-        self._fnm = ''.join([self._root, os.sep, self._oid])
+        # TODO: Make sure the parts that make up the filename are composed
+        #       of valid filename characters; otherwise encode them
+        self._fnm = self._root + os.sep + self._oid + '___' + self.uid
+        if os.path.isfile(self._fnm):
+            warnings.warn('File %s already exists, overwriting' % (self._fnm))
         self._fo = open(self._fnm, "w")
 
     def openMeta(self, **kwargs):
