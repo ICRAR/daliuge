@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from abc import ABCMeta, abstractmethod
 '''
 Created on 22 Jun 2015
 
@@ -32,6 +33,8 @@ from dfms.data_object import FileDataObject
 _logger = logging.getLogger(__name__)
 
 class AbstractStore(object):
+
+    __metaclass__ = ABCMeta
 
     def __init__(self):
         super(AbstractStore, self).__init__()
@@ -55,7 +58,9 @@ class AbstractStore(object):
     def getAvailableSpace(self):
         return self._availableSpace
 
-    def generateDataObject(self): raise NotImplementedError()
+    @abstractmethod
+    def createDataObject(self, oid, uid, broadcaster, **kwargs):
+        pass
 
 class FileSystemStore(AbstractStore):
 
@@ -84,6 +89,9 @@ class FileSystemStore(AbstractStore):
             _logger.debug("Available/Total space on %s: %d/%d" % (self._mountPoint, availableSpace, totalSpace))
         self._setTotalSpace(totalSpace)
         self._setAvailableSpace(availableSpace)
+
+    def createDataObject(self, oid, uid, broadcaster, **kwargs):
+        return FileDataObject(oid, uid, broadcaster, **kwargs)
 
     def __str__(self):
         return self._mountPoint
