@@ -305,6 +305,7 @@ class TestDataObject(unittest.TestCase):
         Pyro.config.PYRO_NS_HOSTNAME = ns_host
         Pyro.config.PYRO_HOST = my_host
         Pyro.config.PYRO_NS_PORT = 9090
+        Pyro.config.PYRO_NS_URIFILE = '/dev/null'
 
         # 1.1. launch Pyro4 name service, DOMs register on it
         _, ns4Daemon, _ = Pyro4.naming.startNS(host=ns_host, port=my_port)
