@@ -27,6 +27,7 @@ import threading
 import random
 from IN import INT16_MAX, INT16_MIN
 import warnings
+import socket
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -833,6 +834,14 @@ class CRCResultConsumer(AppConsumer):
         # That's the only data we write; after that we are complete
         self.setCompleted()
 
+class SockerListener(AppConsumer):
+    '''
+    An AppConsumer that sets up a socket to listen for incoming connections,
+    and once a connection is made writes all the received data into itself until
+    the socket is closed by the client.
+    '''
+
+
 class FileCRCResultDataObject(CRCResultConsumer,
                               FileDataObject):
     '''
@@ -864,3 +873,65 @@ class ContainerAppConsumer(AppConsumer,
     consuming the data coming from the producer DataObject.
     '''
     pass
+
+
+#===============================================================================
+# SocketListener class and mix-ins follow
+#===============================================================================
+
+class SocketListener(object):
+    '''
+    A class that listens on a socket for data. The server-side socket expects
+    only one client, and assumes that the client will close the connection after
+    all its data has been sent.
+    '''
+
+    def createSocket(self, **args):
+        host = None
+        port = None
+        if 'host' in args:
+            host = args['host']
+        if 'port' in args:
+            port = int(args['port'])
+
+        if not host:
+            host = '127.0.0.1'
+        if not port:
+            port = 1111
+
+        # Accept one connection at most
+        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serverSocket.bind((host, port))
+        serverSocket.listen(1)
+        self._socket = serverSocket;
+        self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener")
+        self._listenerThread.setDaemon(1)
+        self._listenerThread.start()
+        # TODO: we still need to join this thread
+
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('Successfully listening for requests on %s:%d' % (host, port))
+
+    def processData(self):
+        clientSocket, address = self._socket.accept()
+        self._socket.close()
+        if _logger.isEnabledFor(logging.INFO):
+            _logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
+
+        while True:
+            data = clientSocket.recv(1)
+            if not data:
+                break
+            self.write(data)
+        clientSocket.close()
+        self.setCompleted()
+
+class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject):
+    def initialize(self, **kwargs):
+        self.createSocket(**kwargs)
+        InMemoryDataObject.initialize(self, **kwargs)
+
+class FileSocketListenerDataObject(SocketListener, FileDataObject):
+    def initialize(self, **kwargs):
+        self.createSocket(**kwargs)
+        FileDataObject.initialize(self, **kwargs)

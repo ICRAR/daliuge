@@ -21,7 +21,7 @@
 #
 
 from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
-    ContainerDataObject, ContainerAppConsumer
+    ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 import os, unittest, threading, sys
@@ -471,6 +471,51 @@ class TestDataObject(unittest.TestCase):
         self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(d).strip())
         self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(e).strip())
 
+    def test_socket_listener(self):
+        '''
+        A simple test to check that SocketListeners are indeed working as expected;
+        that is, they write the data they receive into themselves, and set themselves
+        as completed when the connection is closed from the client side
+
+        The data flow diagram looks like this:
+
+        clientSocket --> A --> B
+        '''
+
+        host = 'localhost'
+        port = 9933
+        ebc = LocalEventBroadcaster()
+        data = 'shine on you crazy diamond'
+
+        a = InMemorySocketListenerDataObject('oid:A', 'uid:A', ebc, host=host, port=port)
+        b = InMemoryCRCResultDataObject('oid:B', 'uid:B', ebc)
+        a.addConsumer(b)
+
+        # Wait until b becomes COMPLETED (which happens on a different thread,
+        # where A's socket is listening for data) adding a consumer that sets an
+        # Event and then waiting on the event
+        evt = threading.Event()
+        class EvtConsumer():
+            def consume(self, do):
+                evt.set()
+        b.addConsumer(EvtConsumer())
+
+        import socket
+        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket.connect((host, port))
+        socket.send(data)
+        socket.close()
+
+        evt.wait(3) # That's plenty of time
+
+        for do in [a,b]:
+            self.assertEquals(DOStates.COMPLETED, do.status)
+
+        # Our expectations are fulfilled!
+        aContents = doutils.allDataObjectContents(a)
+        bContents = int(doutils.allDataObjectContents(b))
+        self.assertEquals(data, aContents)
+        self.assertEquals(crc32(data, 0), bContents)
 
 if __name__ == '__main__':
     unittest.main()
