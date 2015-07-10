@@ -20,7 +20,4 @@
 #    MA 02111-1307  USA
 #
 
-__all__ = [
-    'manager',
-    'store'
-]
+__all__ = ['manager', 'store']

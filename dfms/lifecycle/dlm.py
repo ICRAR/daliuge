@@ -191,6 +191,10 @@ class DataLifecycleManager(object):
     def __init__(self, **kwargs):
         self._hsm = hsm.manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
+        # TODO: When iteration over the values of _dos we always do _dos.values()
+        # instead of _dos.itervalues() to get a full, thread-safe copy of the
+        # dictionary values. Maybe there's a better approach for thread-safety
+        # here
         self._dos = {}
 
         self._checkPeriod = 10
@@ -217,7 +221,7 @@ class DataLifecycleManager(object):
         _logger.info("Cleaning up DLM")
 
         # Unsubscribe to all events coming from the DOs
-        for do in self._dos.itervalues():
+        for do in self._dos.values():
             do.unsubscribe(self.doEventHandler)
 
         # Join the background threads
@@ -243,13 +247,13 @@ class DataLifecycleManager(object):
         do.status = DOStates.DELETED
 
     def deleteExpiredDataObjects(self):
-        for do in self._dos.itervalues():
+        for do in self._dos.values():
             if do.status == DOStates.EXPIRED:
                 self._deleteDataObject(do)
 
     def expireCompletedDataObjects(self):
         now = time.time()
-        for do in self._dos.itervalues():
+        for do in self._dos.values():
             if do.status == DOStates.COMPLETED and \
                now > do.expirationDate:
                 if do.isBeingRead():
@@ -266,7 +270,7 @@ class DataLifecycleManager(object):
     def deleteLostDataObjects(self):
 
         toRemove = []
-        for do in self._dos.itervalues():
+        for do in self._dos.values():
             if self._disappeared(do):
 
                 toRemove.append(do)
