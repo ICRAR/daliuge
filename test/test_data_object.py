@@ -44,6 +44,17 @@ def _start_ns_thread(ns_daemon):
 def isContainer(do):
     return isinstance(do, ContainerDataObject)
 
+class EvtConsumer(object):
+    '''
+    Small utility class that sets the internal flag of the given threading.Event
+    object when consuming a DO. Used throughout the tests as a barrier to wait
+    until all DOs of a given graph have executed
+    '''
+    def __init__(self, evt):
+        self._evt = evt
+    def consume(self, do):
+        self._evt.set()
+
 class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
     """
     A dummy AppConsumer/DataObject that recursivelly sums up the checksums of
@@ -270,7 +281,7 @@ class TestDataObject(unittest.TestCase):
         self.assertNotEquals(sum_crc, 0)
         self.assertEquals(sum_crc, dobDData)
 
-    def test_z_lmc(self):
+    def test_lmc(self):
         """
         A more complex test that simulates the LMC (or DataFlowManager)
         submitting a physical graph via the DataManager, and in turn via two
@@ -366,10 +377,7 @@ class TestDataObject(unittest.TestCase):
             # Since the events are asynchronously we wait
             # on an event set when D is COMPLETED
             evt = threading.Event()
-            class EvtConsumer():
-                def consume(self, do):
-                    evt.set()
-            consumer = EvtConsumer()
+            consumer = EvtConsumer(evt)
             daemon = Pyro4.Daemon()
             consumerUri = daemon.register(consumer)
             t = threading.Thread(None, lambda: daemon.requestLoop(), "tmp", [])
@@ -491,15 +499,13 @@ class TestDataObject(unittest.TestCase):
         b = InMemoryCRCResultDataObject('oid:B', 'uid:B', ebc)
         a.addConsumer(b)
 
-        # Wait until b becomes COMPLETED (which happens on a different thread,
-        # where A's socket is listening for data) adding a consumer that sets an
-        # Event and then waiting on the event
+        # Since b becomes COMPLETED on a different thread (where A's socket is
+        # listening for data) we need to wait on an Event
         evt = threading.Event()
-        class EvtConsumer():
-            def consume(self, do):
-                evt.set()
-        b.addConsumer(EvtConsumer())
+        b.addConsumer(EvtConsumer(evt))
 
+        # Create the socket, write, and close the connection, allowing
+        # A to move to COMPLETED
         import socket
         socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket.connect((host, port))
