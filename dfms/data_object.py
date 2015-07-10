@@ -79,10 +79,11 @@ class AbstractDataObject(object):
         uid:    uuid    (string)
         """
 
-        self._bcaster = eventbc
-
+        # So far only these three are mandatory
         self._oid = oid
         self._uid = uid
+        self._bcaster = eventbc
+
         self._consumers = []# could be (1) real component (if I am a real data object consumed by them)
                             #       or (2) real data objects (if I am a real component that produce them)
         self._producers = []# could be (1) real component (if I am a real data object produced by them)
@@ -521,14 +522,14 @@ class AbstractDataObject(object):
         else:
             jsobj_out[self.oid] = jsobj
 
-        next = self.consumers
+        nextDOs = self.consumers
         if (self.parent is not None):
-            next.append(self.parent)
+            nextDOs.append(self.parent)
         if (create_dict):
             param_jsobj_out = m_jsobj_out
         else:
             param_jsobj_out = jsobj_out
-        for dob in next:
+        for dob in nextDOs:
             dob.to_json_obj(param_jsobj_out)
 
         if (create_dict):
@@ -594,23 +595,28 @@ class NgasDataObject(AbstractDataObject):
     in a file on the local filesystem and then move it to the NGAS destination
     '''
 
+    def getArg(self, kwargs, key, default):
+        val = default
+        if kwargs.has_key(key) and kwargs[key]:
+            val = kwargs[key]
+        elif _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Defaulting %s to %d" % (key, val))
+        return val
+
     def initialize(self, **kwargs):
 
         # Check we actually can write NGAMS clients
         try:
-            from ngamsPClient import ngamsPClient
-        except Exception, e:
-            _logger.exception("No NGAMS client libs found, cannot use NgasDataObjects")
-            raise e
+            from ngamsPClient import ngamsPClient  # @UnusedImport
+        except:
+            warnings.warn("No NGAMS client libs found, cannot use NgasDataObjects")
+            raise
 
-        if not kwargs.has_key('ngasSrv'):
-            raise Exception('ngasSrv option must be supplied at DO construction time')
-        self._ngasSrv = kwargs['ngasSrv']
-
-        self._ngasPort = 7777
-        if kwargs.has_key('ngasPort'):
-            self._ngasPort = int(kwargs['ngasPort'])
-
+        self._ngasSrv            = self.getArg(kwargs, 'ngasSrv', 'localhost')
+        self._ngasPort           = int(self.getArg(kwargs, 'ngasPort', 7777))
+        # TODO: The NGAS client doesn't differentiate between these, it should
+        self._ngasTimeout        = int(self.getArg(kwargs, 'ngasConnectTimeout', 2))
+        self._ngasConnectTimeout = int(self.getArg(kwargs, 'ngasTimeout', 2))
         self._buf = ''
 
     def openMeta(self, **kwargs):
@@ -618,13 +624,26 @@ class NgasDataObject(AbstractDataObject):
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient
-        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort)
+        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
 
     def writeMeta(self, data, **kwargs):
         self._buf += data
         return len(data)
-        # TODO: When all the expected data has arrived we move it from the
-        # buffer into NGAS
+
+    def setCompleted(self):
+        # TODO: the client API doesn't allow giving a buffer directly through
+        # its "public" methods so we have to use the _httpPost method and
+        # manually feed it with the correct parameters; we anyway would like to
+        # do a continuous write via the writeMeta() method
+        client = self._getClient()
+        reply, msg, _, _ = client._httpPost(
+                         client.getHost(), client.getPort(), 'QARCHIVE',
+                         'application/octet-stream', dataRef=self._buf,
+                         pars=[['filename',self.uid]], dataSource='BUFFER',
+                         dataSize=self.size)
+        if reply != 200:
+            raise Exception(msg)
+        AbstractDataObject.setCompleted(self)
 
     def closeMeta(self, descriptor):
         del descriptor
@@ -637,7 +656,9 @@ class NgasDataObject(AbstractDataObject):
         descriptor.retrieve2File(self.uid, cmd="QRETRIEVE")
 
     def exists(self):
-        self._getClient().status(fileId=self.uid)
+        import ngamsLib
+        status = self._getClient().sendCmd('STATUS', pars=[['fileId', self.uid]])
+        return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
 class InMemoryDataObject(AbstractDataObject):
 

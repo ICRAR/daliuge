@@ -35,9 +35,12 @@ class HierarchicalStorageManager(object):
 
     def __init__(self):
         self._stores = []
+        self.addStore(store.MemoryStore())
         self.addStore(store.FileSystemStore("/"))
-        self.addStore(store.FileSystemStore("/dev"))
-        self.addStore(store.FileSystemStore("/dev/shm"))
+        try:
+            self.addStore(store.NgasStore('localhost', 7777))
+        except:
+            _logger.info('Local NGAS store not added, the HSM will work without it')
 
     def addStore(self, newStore):
         '''
