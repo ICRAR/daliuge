@@ -29,6 +29,7 @@ import logging
 from cStringIO import StringIO
 from dfms import doutils
 from dfms.ddap_protocol import DOStates
+from dfms.doutils import EvtConsumer
 
 try:
     from crc32c import crc32
@@ -43,17 +44,6 @@ def _start_ns_thread(ns_daemon):
 
 def isContainer(do):
     return isinstance(do, ContainerDataObject)
-
-class EvtConsumer(object):
-    '''
-    Small utility class that sets the internal flag of the given threading.Event
-    object when consuming a DO. Used throughout the tests as a barrier to wait
-    until all DOs of a given graph have executed
-    '''
-    def __init__(self, evt):
-        self._evt = evt
-    def consume(self, do):
-        self._evt.set()
 
 class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
     """

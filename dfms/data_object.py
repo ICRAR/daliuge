@@ -147,7 +147,7 @@ class AbstractDataObject(object):
 
     def __str__(self):
         re = "{0}/{1}".format(self.oid, self.uid)
-        if (self.location is not None):
+        if self.location:
             re += "@{0}".format(self.location)
         return re
 

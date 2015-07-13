@@ -126,9 +126,10 @@ class DeployDataObjectTask(DataObjectTask):
         """
         the producer!
         """
+        taskType = self.__class__
         if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Checking requirements for DeployDataObjectTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
-        re = [DeployDataObjectTask(dob, self.session_id) for dob in self.data_obj.producers]
+            _logger.debug("Checking requirements for %s %s/%s" %(taskType, self.data_obj.oid, self.data_obj.uid))
+        re = [taskType(dob, self.session_id) for dob in self.data_obj.producers]
         if _logger.isEnabledFor(logging.DEBUG):
             parent = self.data_obj.parent
             _logger.debug("Has parent? " + str(bool(parent)))
@@ -136,9 +137,9 @@ class DeployDataObjectTask(DataObjectTask):
                 _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
                 _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
         if self.data_obj.parent and isinstance(self.data_obj.parent, ContainerAppConsumer):
-            re.append(DeployDataObjectTask(self.data_obj.parent, self.session_id))
+            re.append((self.data_obj.parent, self.session_id))
         elif isinstance(self.data_obj, ContainerDataObject) and not isinstance(self.data_obj, ContainerAppConsumer):
-            re += [DeployDataObjectTask(dob, self.session_id) for dob in self.data_obj._children]
+            re += [taskType(dob, self.session_id) for dob in self.data_obj._children]
         if _logger.isEnabledFor(logging.DEBUG):
             for req in re:
                 _logger.debug("Added requirement %s/%s" %(req.data_obj.oid, req.data_obj.uid))
@@ -459,6 +460,7 @@ class PGDeployTask(luigi.Task):
     #leafs = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
+        self._doTaskType = DeployDataObjectTask
         super(PGDeployTask, self).__init__(*args, **kwargs)
         self._leafs = self._deploy()
         self._req = []
@@ -477,7 +479,7 @@ class PGDeployTask(luigi.Task):
             for dob in self._leafs:
                 if _logger.isEnabledFor(logging.DEBUG):
                     _logger.debug("Adding leaf DO as requirement to PGDeployTask: %s/%s" % (dob.oid, dob.uid))
-                self._req.append(DeployDataObjectTask(dob, self.session_id))
+                self._req.append(self._doTaskType(dob, self.session_id))
         return self._req
 
     def run(self):
