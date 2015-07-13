@@ -20,10 +20,21 @@
 #    MA 02111-1307  USA
 #
 '''
-Utility methods to be used when interacting with DataObjects
+Utility methods and classes to be used when interacting with DataObjects
 
 @author: rtobar, July 3, 2015
 '''
+
+class EvtConsumer(object):
+    '''
+    Small utility class that sets the internal flag of the given threading.Event
+    object when consuming a DO. Used throughout the tests as a barrier to wait
+    until all DOs of a given graph have executed
+    '''
+    def __init__(self, evt):
+        self._evt = evt
+    def consume(self, do):
+        self._evt.set()
 
 def allDataObjectContents(dataObject):
     '''

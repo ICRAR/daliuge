@@ -30,7 +30,7 @@ section 8 "Data Life Cycle Management", where the DLM is defined:
   the sheer number of parallel tasks when dealing with the very high data rate
   and volume. The goal of data life-cycle management is the optimal placement of
   data in terms of cost and performance and employs a multi-tiered storage
-  system to doTask so. It is important to note that the life-cycle of a DataObject
+  system to do so. It is important to note that the life-cycle of a DataObject
   can span from minutes to many years and therefore seamlessly covers the
   processing as well as the long term storage (science archive) domain.
 
