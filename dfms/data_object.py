@@ -665,14 +665,15 @@ class NgasDataObject(AbstractDataObject):
 class InMemoryDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
-        self._buf = ''
+        from cStringIO import StringIO
+        self._buf = StringIO()
 
     def openMeta(self, **kwargs):
         from cStringIO import StringIO
-        return StringIO(self._buf)
+        return StringIO(self._buf.getvalue())
 
     def writeMeta(self, data, **kwargs):
-        self._buf += data
+        self._buf.write(data)
         return len(data)
 
     def readMeta(self, descriptor, count=4096, **kwargs):
@@ -682,7 +683,7 @@ class InMemoryDataObject(AbstractDataObject):
         descriptor.close()
 
     def delete(self):
-        del self._buf
+        self._buf.close()
         self._buf = None
 
     def exists(self):
@@ -857,14 +858,6 @@ class CRCResultConsumer(AppConsumer):
         # That's the only data we write; after that we are complete
         self.setCompleted()
 
-class SockerListener(AppConsumer):
-    '''
-    An AppConsumer that sets up a socket to listen for incoming connections,
-    and once a connection is made writes all the received data into itself until
-    the socket is closed by the client.
-    '''
-
-
 class FileCRCResultDataObject(CRCResultConsumer,
                               FileDataObject):
     '''
@@ -933,8 +926,7 @@ class SocketListener(object):
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serverSocket.bind((host, port))
         serverSocket.listen(1)
-        self._socket = serverSocket;
-        self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener_%s" % (counter))
+        self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener_%s" % (counter), [serverSocket])
         self._listenerThread.setDaemon(1)
         self._listenerThread.start()
         # TODO: we still need to join this thread
@@ -942,9 +934,9 @@ class SocketListener(object):
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug('Successfully listening for requests on %s:%d' % (host, port))
 
-    def processData(self):
-        clientSocket, address = self._socket.accept()
-        self._socket.close()
+    def processData(self, serverSocket):
+        clientSocket, address = serverSocket.accept()
+        serverSocket.close()
         if _logger.isEnabledFor(logging.INFO):
             _logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
 
