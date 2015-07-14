@@ -24,17 +24,20 @@
 # dave.pallot@icrar.org   9/Apr/2015     Created
 #
 import threading
-import collections
+import logging
+from collections import defaultdict
+
+_logger = logging.getLogger(__name__)
 
 class Event(object):
     pass
 
 class EventBroadcaster(object):
 
-    def subscribe(self, uid, callback):
+    def subscribe(self, uid, callback, eventType=None):
         pass
 
-    def unsubscribe(self, uid, callback):
+    def unsubscribe(self, uid, callback, eventType=None):
         pass
 
     def fire(self, eventType, **attrs):
@@ -47,26 +50,65 @@ class EventBroadcaster(object):
             setattr(e, k, v)
         return e
 
-class LocalEventBroadcaster(EventBroadcaster):
+class AbstractEventBroadcaster(EventBroadcaster):
+
+    __ALL_EVENTS = 'SPECIAL_EVENT_TYPE_THAT_WILL_NEVER_EXIST_EXCEPT_HERE'
 
     def __init__(self):
-        self._callbacks = collections.defaultdict(list)
+        self._callbacks = defaultdict(lambda: defaultdict(list))
 
-    def subscribe(self, uid, callback):
-        self._callbacks[uid].append(callback)
+    def subscribe(self, uid, callback, eventType=None):
 
-    def unsubscribe(self, uid, callback):
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('Adding subscription to uid=%s, eventType=%s: %s' %(uid, eventType, callback))
+
+        if eventType is None:
+            eventType = self.__ALL_EVENTS
+        self._callbacks[uid][eventType].append(callback)
+
+    def unsubscribe(self, uid, callback, eventType=None):
+        if eventType is None:
+            eventType = self.__ALL_EVENTS
         if self._callbacks.has_key(uid):
-            self._callbacks[uid].remove(callback)
+            self._callbacks[uid][eventType].remove(callback)
 
     def fire(self, eventType, **attrs):
-        e = self._createEvent(eventType, **attrs)
-        uid = attrs['uid']
-        if self._callbacks.has_key(uid):
-            for fn in self._callbacks[uid]:
-                fn(e)
 
-class ThreadedEventBroadcaster(EventBroadcaster):
+        uid = attrs['uid']
+
+        # Nobody subscribed to us
+        if uid not in self._callbacks:
+            if _logger.isEnabledFor(logging.DEBUG):
+                _logger.debug('No callbacks found for uid=%s' %(uid))
+            return
+
+        # Which callbacks should we call?
+        callbacks = []
+        if eventType in self._callbacks[uid]:
+            callbacks.extend(self._callbacks[uid][eventType])
+        if self.__ALL_EVENTS in self._callbacks[uid]:
+            callbacks.extend(self._callbacks[uid][self.__ALL_EVENTS])
+        if not callbacks:
+            if _logger.isEnabledFor(logging.DEBUG):
+                _logger.debug('No callbacks found for uid=%s, eventType=%s' %(uid, eventType))
+
+            return
+
+        e = self._createEvent(eventType, **attrs)
+        self.callBack(callbacks, e)
+
+    def callBack(self, callbacks, event):
+        pass
+
+class LocalEventBroadcaster(AbstractEventBroadcaster):
+    """
+    A simple event broadcaster that calls all necessary callbacks in sequence
+    """
+    def callBack(self, callbacks, event):
+        for fn in callbacks:
+            fn(event)
+
+class ThreadedEventBroadcaster(AbstractEventBroadcaster):
     """
     An simple event broadcaster that creates a new daemon thread for each
     subscriber when an event is fired and starts them. This way even firing is
@@ -75,16 +117,9 @@ class ThreadedEventBroadcaster(EventBroadcaster):
     """
 
     def __init__(self):
-        self._callbacks = collections.defaultdict(list)
+        super(ThreadedEventBroadcaster, self).__init__()
         self._countLock = threading.RLock()
         self._counter = 1
-
-    def subscribe(self, uid, callback):
-        self._callbacks[uid].append(callback)
-
-    def unsubscribe(self, uid, callback):
-        if self._callbacks.has_key(uid):
-            self._callbacks[uid].remove(callback)
 
     def getAndIncreaseCounter(self):
         with self._countLock:
@@ -92,11 +127,8 @@ class ThreadedEventBroadcaster(EventBroadcaster):
             self._counter +=1
             return c
 
-    def fire(self, eventType, **attrs):
-        e = self._createEvent(eventType, **attrs)
-        uid = attrs['uid']
-        if self._callbacks.has_key(uid):
-            for fn in self._callbacks[uid]:
-                t = threading.Thread(None, lambda fn, e: fn(e), 'eb-%d' % (self.getAndIncreaseCounter()), [fn, e])
-                t.daemon = 1
-                t.start()
+    def callBack(self, callbacks, event):
+        for fn in callbacks:
+            t = threading.Thread(None, lambda fn, e: fn(e), 'eb-%d' % (self.getAndIncreaseCounter()), [fn, event])
+            t.daemon = 1
+            t.start()

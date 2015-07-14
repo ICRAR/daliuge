@@ -62,14 +62,14 @@ class PyroEventBroadcaster(EventBroadcaster):
         self._pyroPub = PyroPublisher()
         self._pyroSub = PyroSubscriber(self)
         
-    def subscribe(self, uid, callback):
+    def subscribe(self, uid, callback, eventType=None):
         if self._callbacks.has_key(uid):
             self._callbacks[uid].append(callback)
         else:
             self._callbacks[uid] = [callback]
             self._pyroSub.subscribe(uid)
-    
-    def unsubscribe(self, uid, callback):
+
+    def unsubscribe(self, uid, callback, eventType=None):
         if self._callbacks.has_key(uid):
             cb = self._callbacks[uid]
             cb.remove(callback)
@@ -82,7 +82,7 @@ class PyroEventBroadcaster(EventBroadcaster):
         if self._callbacks.has_key(event.uid):
             for fn in self._callbacks[event.uid]:
                 fn(event)
-    
+
     def fire(self, eventType, **attrs):
         e = self._createEvent(eventType, **attrs)
         # publish to uid channel
