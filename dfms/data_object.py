@@ -314,8 +314,8 @@ class AbstractDataObject(object):
     def uid(self):
         return self._uid
 
-    def subscribe(self, callback):
-        self._bcaster.subscribe(self._uid, callback)
+    def subscribe(self, callback, eventType=None):
+        self._bcaster.subscribe(self._uid, callback, eventType=eventType)
 
     def unsubscribe(self, callback):
         self._bcaster.unsubscribe(self._uid, callback)
@@ -429,7 +429,7 @@ class AbstractDataObject(object):
             if _logger.isEnabledFor(logging.DEBUG):
                 _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
             consumer.consume(self)
-        self.subscribe(consumeCompleted)
+        self.subscribe(consumeCompleted, eventType='status')
 
     @property
     def producers(self):
@@ -735,7 +735,10 @@ class ContainerDataObject(AbstractDataObject):
         # check if each child is completed
         # TODO: We should also consider the case in which one child takes so
         #       long that the quicker children expire in the meanwhile.
-        if not all(self._complete_map.itervalues()):
+        #       Also here we should take into consideration failures in the
+        #       children DOs, whether they are allowed, and how to handle them
+        #       if that's the case
+        if not all(self._complete_map.values()):
             return
 
         # move the container as a whole to COMPLETED
@@ -750,7 +753,7 @@ class ContainerDataObject(AbstractDataObject):
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
 
-        child.subscribe(self.check_join_condition)
+        child.subscribe(self.check_join_condition, eventType='status')
         self._children.append(child)
         child.parent = self
         self._complete_map[child.oid] = child.isCompleted()
