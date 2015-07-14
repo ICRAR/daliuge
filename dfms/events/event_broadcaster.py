@@ -24,18 +24,19 @@
 # dave.pallot@icrar.org   9/Apr/2015     Created
 #
 import threading
+import collections
 
 class Event(object):
     pass
 
 class EventBroadcaster(object):
-    
+
     def subscribe(self, uid, callback):
         pass
-    
+
     def unsubscribe(self, uid, callback):
         pass
-    
+
     def fire(self, eventType, **attrs):
         pass
 
@@ -49,13 +50,10 @@ class EventBroadcaster(object):
 class LocalEventBroadcaster(EventBroadcaster):
 
     def __init__(self):
-        self._callbacks = {}
+        self._callbacks = collections.defaultdict(list)
 
     def subscribe(self, uid, callback):
-        if self._callbacks.has_key(uid):
-            self._callbacks[uid].append(callback)
-        else:
-            self._callbacks[uid] = [callback]
+        self._callbacks[uid].append(callback)
 
     def unsubscribe(self, uid, callback):
         if self._callbacks.has_key(uid):
@@ -77,15 +75,12 @@ class ThreadedEventBroadcaster(EventBroadcaster):
     """
 
     def __init__(self):
-        self._callbacks = {}
+        self._callbacks = collections.defaultdict(list)
         self._countLock = threading.RLock()
         self._counter = 1
 
     def subscribe(self, uid, callback):
-        if self._callbacks.has_key(uid):
-            self._callbacks[uid].append(callback)
-        else:
-            self._callbacks[uid] = [callback]
+        self._callbacks[uid].append(callback)
 
     def unsubscribe(self, uid, callback):
         if self._callbacks.has_key(uid):
