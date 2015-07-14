@@ -22,7 +22,8 @@
 
 from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
     ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject
-from dfms.events.event_broadcaster import LocalEventBroadcaster
+from dfms.events.event_broadcaster import LocalEventBroadcaster,\
+    ThreadedEventBroadcaster
 
 import os, unittest, threading, sys
 import logging
@@ -208,7 +209,13 @@ class TestDataObject(unittest.TestCase):
             i.close(desc)
         map(lambda x, y: self.assertEquals(x, y), [bResExpected, cResExpected, dResExpected], actualRes)
 
-    def test_join(self):
+    def test_join_simple(self):
+        self._test_join(False)
+
+    def test_join_threaded(self):
+        self._test_join(True)
+
+    def _test_join(self, threaded):
         """
         Using the container data object to implement a join/barrier dataflow.
 
@@ -226,7 +233,7 @@ class TestDataObject(unittest.TestCase):
         triggered, and will hold the sum of B1, B2 and B3's contents
         """
 
-        eventbc = LocalEventBroadcaster()
+        eventbc = ThreadedEventBroadcaster() if threaded else LocalEventBroadcaster()
 
         filelen = self._test_do_sz * ONE_MB
         #create file data objects
@@ -254,11 +261,16 @@ class TestDataObject(unittest.TestCase):
             doC.addChild(doB)
         doC.addConsumer(doD)
 
+        # Wait until D is completed
+        evt = threading.Event()
+        doD.addConsumer(EvtConsumer(evt))
+
         # Write data into the initial "A" DOs, which should trigger
         # the whole chain explained above
         for dobA in doAList: # this should be parallel for
             for _ in range(self._test_num_blocks):
                 dobA.write(self._test_block)
+        evt.wait()
 
         # All DOs are completed now that the chain executed correctly
         for do in doAList + doBList:
