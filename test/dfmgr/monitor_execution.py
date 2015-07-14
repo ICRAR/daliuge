@@ -20,19 +20,22 @@
 #    MA 02111-1307  USA
 #
 
-from dfms.data_object import InMemorySocketListenerDataObject
-from dfms.events.event_broadcaster import LocalEventBroadcaster
+from dfms.data_object import InMemorySocketListenerDataObject, AppConsumer,\
+    InMemoryDataObject, ContainerDataObject
 from dfms.doutils import EvtConsumer
 from ngas_dm import DeployDataObjectTask, PGDeployTask, PGEngine
 import luigi
 import threading
 import time
+from dfms import doutils
+import random
+from dfms.events.event_broadcaster import ThreadedEventBroadcaster
 
 class MonitorDataObjectTask(DeployDataObjectTask):
     """
-    A Luigi task that, for a given DataObject, simply monitors that its
-    status has changed to COMPLETED. This way we can use Luigi to simply monitor
-    the execution of the DO graph, but not to drive it
+    A Luigi task that, for a given DataObject, monitors that its status has
+    changed to COMPLETED. This way we can use Luigi to simply monitor the
+    execution of the DO graph, but not to drive it
     """
 
     def __init__(self, *args, **kwargs):
@@ -48,18 +51,54 @@ class MonitorDataObjectTask(DeployDataObjectTask):
         expirationDate = self.data_obj.expirationDate
         self._evt.wait(expirationDate - now)
 
-def realGraph():
-    bc = LocalEventBroadcaster()
-    return InMemorySocketListenerDataObject('uid:A', 'uid:A', bc)
-    pass
+class SleepAndCopyApp(AppConsumer):
+    """
+    A simple application consumer that sleeps between 0 and 10 seconds and
+    then fully copies the contents of the DataObject it consumes into itself
+    """
+    def run(self, dataObject):
+        time.sleep(random.SystemRandom().randint(0, 1000)/100.)
+        doutils.copyDataObjectContents(dataObject, self)
+        self.setCompleted()
 
-class MyFlowStart(PGDeployTask):
+class InMemorySleepAndCopyApp(SleepAndCopyApp, InMemoryDataObject): pass
+
+def testGraph():
+    """
+    A test graph that looks like this:
+
+        |--> B1 --> C1 --|
+        |--> B2 --> C2 --|
+    A --|--> B3 --> C3 --| --> D
+        |--> .. --> .. --|
+        |--> BN --> CN --|
+
+    B and C DOs are InMemorySleepAndCopyApp DOs (see above). D is simply a
+    container. A is a socket listener, so we can actually write to it externally
+    and watch the progress of the luigi tasks. We give DOs a long lifespan;
+    otherwise they will expire and luigi will see it as a failed task (which is
+    actually right!)
+    """
+
+    lifespan = 1800
+    bc = ThreadedEventBroadcaster()
+    a = InMemorySocketListenerDataObject('oid:A', 'uid:A', bc, lifespan=lifespan)
+    d = ContainerDataObject('oid:D', 'uid:D', bc, lifespan=lifespan)
+    for i in xrange(random.SystemRandom().randint(10, 20)):
+        b = InMemorySleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), bc, lifespan=lifespan)
+        c = InMemorySleepAndCopyApp('oid:C%d' % (i), 'uid:C%d' % (i), bc, lifespan=lifespan)
+        a.addConsumer(b)
+        b.addConsumer(c)
+        d.addChild(c)
+    return a
+
+class FinishGraphExecution(PGDeployTask):
     def __init__(self, **kwargs):
         PGDeployTask.__init__(self, **kwargs)
         self._doTaskType = MonitorDataObjectTask
     def _deploy(self, pg_creator_function=None):
         eng = PGEngine()
-        return eng.process(realGraph())
+        return eng.process(testGraph())
 
 if __name__ == '__main__':
     luigi.run()

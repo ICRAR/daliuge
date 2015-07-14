@@ -18,7 +18,7 @@ import sys
 from dfms import doutils
 
 _logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
+logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 DEBUG = True
 
