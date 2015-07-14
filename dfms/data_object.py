@@ -423,9 +423,11 @@ class AbstractDataObject(object):
 
         def consumeCompleted(e):
             if not hasattr(e, 'status') or e.status != DOStates.COMPLETED:
-                _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
+                if _logger.isEnabledFor(logging.DEBUG):
+                    _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return
-            _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
+            if _logger.isEnabledFor(logging.DEBUG):
+                _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
             consumer.consume(self)
         self.subscribe(consumeCompleted)
 
@@ -450,8 +452,8 @@ class AbstractDataObject(object):
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
             raise Exception("DataObject %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
+        if _logger.isEnabledFor(logging.INFO):
+            _logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
 
     def isCompleted(self):
@@ -900,6 +902,8 @@ class ContainerAppConsumer(AppConsumer,
 # SocketListener class and mix-ins follow
 #===============================================================================
 
+_socketListenerCounter = 0
+_socketListenerLock = threading.RLock()
 class SocketListener(object):
     '''
     A class that listens on a socket for data. The server-side socket expects
@@ -920,12 +924,17 @@ class SocketListener(object):
         if not port:
             port = 1111
 
+        with _socketListenerLock:
+            global _socketListenerCounter
+            counter = _socketListenerCounter
+            _socketListenerCounter += 1
+
         # Accept one connection at most
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serverSocket.bind((host, port))
         serverSocket.listen(1)
         self._socket = serverSocket;
-        self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener")
+        self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener_%s" % (counter))
         self._listenerThread.setDaemon(1)
         self._listenerThread.start()
         # TODO: we still need to join this thread
@@ -940,7 +949,7 @@ class SocketListener(object):
             _logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
 
         while True:
-            data = clientSocket.recv(1)
+            data = clientSocket.recv(4096)
             if not data:
                 break
             self.write(data)
