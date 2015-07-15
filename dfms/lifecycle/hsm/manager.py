@@ -37,6 +37,7 @@ class HierarchicalStorageManager(object):
         self._stores = []
         self.addStore(store.MemoryStore())
         self.addStore(store.FileSystemStore("/"))
+        self.addStore(store.DirectoryStore("/tmp/sdp-hsm", True))
         try:
             self.addStore(store.NgasStore('localhost', 7777))
         except:

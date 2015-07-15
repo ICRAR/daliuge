@@ -23,19 +23,25 @@ from abc import ABCMeta, abstractmethod
 import psutil
 import warnings
 import json
-'''
-Created on 22 Jun 2015
-
-@author: rtobar
-'''
-
 import logging
 import os
 from dfms.data_object import FileDataObject, InMemoryDataObject, NgasDataObject
 
+'''
+Implementation of the different storage layers that are then used by the HSM to
+store data. Each layer keeps track of its used space, and knows how to create
+DataObjects that use that layer as its storage mechanism.
+
+@author: rtobar
+'''
+
+
 _logger = logging.getLogger(__name__)
 
 class AbstractStore(object):
+    """
+    The abstract store implementation, see the subclasses for details
+    """
 
     __metaclass__ = ABCMeta
 
@@ -82,7 +88,12 @@ class AbstractStore(object):
         pass
 
 class FileSystemStore(AbstractStore):
-
+    """
+    A filesystem store implementation. It requires a mount point at construction
+    time which is used as the root of the store; thus this store uses a mounted
+    device fully. It creates FileDataObjects that live directly in the root of
+    the filesystem, and monitors the usage of the filesystem.
+    """
     def __init__(self, mountPoint):
         super(FileSystemStore, self).__init__()
 
@@ -111,12 +122,17 @@ class FileSystemStore(AbstractStore):
         self._setAvailableSpace(availableSpace)
 
     def createDataObject(self, oid, uid, broadcaster, **kwargs):
+        kwargs['dirname'] = self._mountPoint
         return FileDataObject(oid, uid, broadcaster, **kwargs)
 
     def __str__(self):
         return self._mountPoint
 
 class MemoryStore(AbstractStore):
+    """
+    A store that uses RAM memory as its storage mechanism. It creates
+    InMemoryDataObjects and monitors the RAM usage of the system.
+    """
 
     def __init__(self):
         super(MemoryStore, self).__init__()
@@ -134,7 +150,10 @@ class MemoryStore(AbstractStore):
         return 'Memory'
 
 class NgasStore(AbstractStore):
-
+    """
+    A store that a given NGAS server as its storage mechanism. It creates
+    NgasDataObjects and monitors the disks usage of the NGAS system.
+    """
     def __init__(self, host=None, port=None, initialCheck=True):
 
         try:
@@ -187,3 +206,75 @@ class NgasStore(AbstractStore):
 
     def __str__(self):
         return "NGAS@%s:%d" % (self._host, self._port)
+
+class DirectoryStore(AbstractStore):
+    """
+    A store similar to the FileSystemStore that doesn't actually act on
+    a mount point (and thus, most probably on a whole disk) but instead treats
+    a directory sitting on the filesystem as the root of the (recurisve) store.
+    The "available" size of the directory is determined by the content of the
+    SIZES file that must be present at the root level, while the currently used
+    space is determined by summing up the individual sizes of all files within
+    the directory, recursively.
+    This store creates FileDataObjects that live inside the store's directory.
+    """
+
+    __SIZE_FILE = 'SIZE'
+
+    def __init__(self, dirName, initialize=False):
+
+        if not dirName:
+            raise Exception("No directory given to DirectoryStore")
+
+        if not initialize and not os.path.isdir(dirName):
+            raise Exception("%s doesn't exist or is not a directory" % (dirName))
+
+        sizeFile = os.path.join(dirName, self.__SIZE_FILE)
+        if not initialize and not os.path.isfile(sizeFile):
+            raise Exception("No %s file under %s, cannot determine available space for DirectoryStore" % (self.__SIZE_FILE, dirName))
+        else:
+            # Should be used only for testing
+            size = 1024**3
+            _logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING' % (sizeFile, size))
+            self.prepareDirectory(dirName, size)
+
+        with open(sizeFile) as f:
+            self._setTotalSpace(int(f.read()))
+
+        self._dirName = dirName
+        self.updateSpaces()
+
+    def createDataObject(self, oid, uid, broadcaster, **kwargs):
+        kwargs['dirname'] = self._dirName
+        return FileDataObject(oid, uid, broadcaster, **kwargs)
+
+    def _updateSpaces(self):
+        used = self._dirUsage(self._dirName)
+        self._setAvailableSpace(self.getTotalSpace() - used)
+
+    def _dirUsage(self, dirName):
+        total = 0
+        for f in os.listdir(dirName):
+            if os.path.isdir(f):
+                total += self._dirUsage(os.path.join(dirName, f))
+            elif os.path.isfile(f):
+                # Don't count our special file
+                if f != self.__SIZE_FILE or dirName != self._dirName:
+                    total += os.stat(os.path.join(dirName, f))
+        return total
+
+    @staticmethod
+    def prepareDirectory(dirName, size):
+        if not dirName:
+            raise Exception("No directory given to prepareDirectory")
+
+        if not os.path.isdir(dirName):
+            os.makedirs(dirName)
+
+        sizeFile = os.path.join(dirName, DirectoryStore.__SIZE_FILE)
+        if not os.path.exists(sizeFile):
+            with open(sizeFile, "w") as f:
+                f.write(str(size))
+
+    def __str__(self):
+        return "dir:%s" % (self._dirName)

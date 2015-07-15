@@ -137,6 +137,14 @@ class AbstractDataObject(object):
             self.status = DOStates.FAILED
             raise e
 
+    def getArg(self, kwargs, key, default):
+        val = default
+        if kwargs.has_key(key) and kwargs[key]:
+            val = kwargs[key]
+        elif _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Defaulting %s to %s" % (key, str(val)))
+        return val
+
     def __hash__(self):
         return hash(self._uid)
 
@@ -547,7 +555,7 @@ class FileDataObject(AbstractDataObject):
         """
         File data object-specific initialization.
         """
-        self._root = '/tmp/sdp_dfms'
+        self._root = self.getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
         if (not os.path.exists(self._root)):
             os.mkdir(self._root)
 
@@ -597,14 +605,6 @@ class NgasDataObject(AbstractDataObject):
     support appending data to existing files, we store all the data temporarily
     in a file on the local filesystem and then move it to the NGAS destination
     '''
-
-    def getArg(self, kwargs, key, default):
-        val = default
-        if kwargs.has_key(key) and kwargs[key]:
-            val = kwargs[key]
-        elif _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Defaulting %s to %d" % (key, val))
-        return val
 
     def initialize(self, **kwargs):
 
