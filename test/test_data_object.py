@@ -21,7 +21,8 @@
 #
 
 from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
-    ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject
+    ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject,\
+    NullDataObject
 from dfms.events.event_broadcaster import LocalEventBroadcaster,\
     ThreadedEventBroadcaster
 
@@ -69,12 +70,6 @@ class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
 
 class TestDataObject(unittest.TestCase):
 
-    def _eventThread(self, eventservice, host):
-        eventservice.start(host)
-
-    def _nameThread(self, nameservice):
-        nameservice.start()
-
     def setUp(self):
         """
         library-specific setup
@@ -84,44 +79,35 @@ class TestDataObject(unittest.TestCase):
         self._test_num_blocks = self._test_do_sz / self._test_block_sz
         self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))
 
-    def tearDown(self):
+    def test_NullDataObject(self):
         """
-        library-specific shutdown
+        Check that the NullDataObject is usable for testing
         """
-        pass
+        a = NullDataObject('A', 'A', LocalEventBroadcaster(), expectedSize=5)
+        a.write("1234")
+        a.write("5")
+        allContents = doutils.allDataObjectContents(a)
+        self.assertEquals(None, allContents)
 
     def test_write_FileDataObject(self):
         """
         Test a FileDataObject and a simple AppDataObject (for checksum calculation)
         """
-        eventbc = LocalEventBroadcaster()
-
-        dobA = FileDataObject('oid:A', 'uid:A', eventbc, expectedSize = self._test_do_sz * ONE_MB)
-        dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B', eventbc)
-        dobA.addConsumer(dobB)
-
-        # Write to A. After the last write it will switch to COMPLETE
-        # and it will trigger B to consume A's content and build its own
-        # data, which is the CRC of the incoming data
-        test_crc = 0
-        for _ in range(self._test_num_blocks):
-            dobA.write(self._test_block)
-            test_crc = crc32(self._test_block, test_crc)
-
-        # Read the checksum from dobB
-        dobBChecksum = int(doutils.allDataObjectContents(dobB))
-
-        self.assertNotEquals(dobA.checksum, 0)
-        self.assertEquals(dobA.checksum, test_crc)
-        self.assertEquals(dobA.checksum, dobBChecksum)
+        self._test_write_withDataObjectType(FileDataObject)
 
     def test_write_InMemoryDataObject(self):
+        """
+        Test an InMemoryDataObject and a simple AppDataObject (for checksum calculation)
+        """
+        self._test_write_withDataObjectType(InMemoryDataObject)
+
+    def _test_write_withDataObjectType(self, doType):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
         eventbc=LocalEventBroadcaster()
 
-        dobA = InMemoryDataObject('oid:A', 'uid:A', eventbc, expectedSize = self._test_do_sz * ONE_MB)
+        dobA = doType('oid:A', 'uid:A', eventbc, expectedSize = self._test_do_sz * ONE_MB)
         dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B', eventbc)
         dobA.addConsumer(dobB)
 
