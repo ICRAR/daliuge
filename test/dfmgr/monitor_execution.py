@@ -26,7 +26,9 @@ from dfms.doutils import EvtConsumer
 from ngas_dm import DeployDataObjectTask, PGDeployTask, PGEngine
 import luigi
 import threading
+import logging
 import time
+import sys
 from dfms import doutils
 import random
 from dfms.events.event_broadcaster import ThreadedEventBroadcaster
@@ -44,7 +46,7 @@ class MonitorDataObjectTask(DeployDataObjectTask):
         self.data_obj.addConsumer(EvtConsumer(self._evt))
 
     def complete(self):
-        return self.data_obj.isCompleted()
+        return self.data_obj.isCompleted() and self.data_obj.exists()
 
     def run(self):
         now = time.time()
@@ -101,4 +103,5 @@ class FinishGraphExecution(PGDeployTask):
         return eng.process(testGraph())
 
 if __name__ == '__main__':
+    logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.INFO, stream=sys.stdout)
     luigi.run()

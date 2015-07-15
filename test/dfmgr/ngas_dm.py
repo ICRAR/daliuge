@@ -18,7 +18,6 @@ import sys
 from dfms import doutils
 
 _logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 DEBUG = True
 
@@ -700,4 +699,5 @@ if __name__ == "__main__":
     """
     e.g. python ngas_dm.py PGDeployTask --PGDeployTask-pg-name test
     """
+    logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
     luigi.run()
