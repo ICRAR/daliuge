@@ -90,7 +90,7 @@ class AbstractDataObject(object):
                             #       or (2) real data objects (if I am a real component that consume them)
 
         self._refCount = 0
-        self._refLock  = threading.RLock()
+        self._refLock  = threading.Lock()
         self._location = None
         self._parent   = None
         self._status   = None
@@ -106,11 +106,6 @@ class AbstractDataObject(object):
         # because it requires less transport.
         # TODO: Make these threadsafe, no lock around them yet
         self._readDescriptors = {}
-
-        # TODO: Do we really want to introduce this dependency here?
-        self._dom = None
-        if kwargs.has_key('dom'):
-            self._dom = kwargs['dom'] # hold a reference to data object manager
 
         # Expected lifespan for this object, used by to expire them
         lifespan = 10
@@ -289,10 +284,19 @@ class AbstractDataObject(object):
         """
         pass
 
+    @abstractmethod
     def delete(self):
         '''
         Deletes the data represented by this DO.
         '''
+        pass
+
+    @abstractmethod
+    def exists(self):
+        """
+        Returns True if the data represented by this DataObject exists indeed
+        in the underlying storage mechanism
+        """
         pass
 
     def _updateChecksum(self, chunk):
@@ -324,9 +328,6 @@ class AbstractDataObject(object):
         attrs['oid'] = self.oid
         attrs['uid'] = self.uid
         self._bcaster.fire(eventType, **attrs)
-
-    def exists(self):
-        return True
 
     def isReplicable(self):
         return True
@@ -688,6 +689,28 @@ class InMemoryDataObject(AbstractDataObject):
 
     def exists(self):
         return self._buf is not None
+
+class NullDataObject(AbstractDataObject):
+    """
+    A DataObject that stores no data
+    """
+    def openMeta(self, **kwargs):
+        return None
+
+    def writeMeta(self, data, **kwargs):
+        return len(data)
+
+    def readMeta(self, descriptor, count=4096, **kwargs):
+        return None
+
+    def closeMeta(self, descriptor, **kwargs):
+        pass
+
+    def delete(self):
+        pass
+
+    def exists(self):
+        return True
 
 class ContainerDataObject(AbstractDataObject):
     """
