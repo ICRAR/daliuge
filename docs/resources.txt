@@ -1,0 +1,11 @@
+Potential programming abstractions
+====================================================
+dispy	http://dispy.sourceforge.net/
+sequoia	http://web.stanford.edu/group/sequoia/
+X10	http://x10-lang.org/home/introduction1.html
+
+section 2.1 and 2.2 of this paper has a good overview of sequoia and X10
+http://www.researchgate.net/profile/Jisheng_Zhao/publication/221496743_Hierarchical_Place_Trees_A_Portable_Abstraction_for_Task_Parallelism_and_Data_Movement/links/00b7d52a0e39b4a452000000.pdf
+ 
+While X10 has some concepts such as “places” similar to data island, Sequoia compiler maps a program (i.e. the logical graph) onto a (parallel or distributed) memory hierarchy tree based on a “predefined distributions of both data and tasks at compile time”.
+
