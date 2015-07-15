@@ -39,7 +39,6 @@ import Pyro4
 import logging
 from data_object import FileDataObject
 from ddap_protocol import CST_NS_DOM, DOLinkType
-from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.lifecycle.dlm import DataLifecycleManager
 
 _logger = logging.getLogger(__name__)
@@ -58,17 +57,12 @@ class DataObjectMgr(object):
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
         self.daemon_dob_dict = defaultdict(dict) # key - sessionId, value - a dictionary of Data Objects (key - obj uri, val - obj)
         self.eventbc = PyroEventBroadcaster()
-        #self.eventbc = LocalEventBroadcaster()
 
     def getURI(self):
         return self._uri
 
     def setURI(self, uri):
         self._uri = uri
-
-    def DOMEventHandler(self, event):
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("DOM event from {0}: {1}".format(event.oid, str(event.__dict__)))
 
     def createDataObject(self, oid, uid, sessionId, appDataObj = False, lifespan=3600):
         """
@@ -96,12 +90,20 @@ class DataObjectMgr(object):
             self.daemon_dict[sessionId] = dob_daemon
 
         # What kind of DO we need to create?
+        # TODO: In the future I guess that by the time this method will be
+        #       called with more specific parameters, mainly to know which kind
+        #       of DO should be created depending on the node of the PG that
+        #       is being created (i.e., which kind of storage do we need, which
+        #       application should be run, which are its parameters, etc).
+        #       Also, when creating the DO it should be known the storage layer
+        #       (in the HSM) it belongs to, because the information is needed
+        #       later to make decisions regarding data movement (we need to know
+        #       in which later each DO is currently sitting, and where does it
+        #       need to be moved)
         if (appDataObj):
-            mydo = InMemoryCRCResultDataObject(oid, uid, eventbc=self.eventbc,
-                                 subs=[self.DOMEventHandler])
+            mydo = InMemoryCRCResultDataObject(oid, uid, self.eventbc)
         else:
-            mydo = FileDataObject(oid, uid, eventbc=self.eventbc,
-                                      subs=[self.DOMEventHandler])
+            mydo = FileDataObject(oid, uid, self.eventbc)
 
         # Create, register, and let the DLM manage its lifecycle
         uri = dob_daemon.register(mydo)

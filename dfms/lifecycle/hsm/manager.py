@@ -40,7 +40,7 @@ class HierarchicalStorageManager(object):
         try:
             self.addStore(store.NgasStore('localhost', 7777))
         except:
-            _logger.info('Local NGAS store not added, the HSM will work without it')
+            _logger.warn('Local NGAS store not added, the HSM will work without it')
 
     def addStore(self, newStore):
         '''
