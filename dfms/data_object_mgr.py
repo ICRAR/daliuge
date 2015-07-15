@@ -100,6 +100,10 @@ class DataObjectMgr(object):
         #       later to make decisions regarding data movement (we need to know
         #       in which later each DO is currently sitting, and where does it
         #       need to be moved)
+        #
+        # After reading a bit more and thinking more about it, we might want to
+        # leave the particulars of choosing a storage later to the DLM/HSM
+        # fully, without the DOM really caring where the data will be stored.
         if (appDataObj):
             mydo = InMemoryCRCResultDataObject(oid, uid, self.eventbc)
         else:
