@@ -23,7 +23,7 @@
 from dfms.data_object import InMemorySocketListenerDataObject, AppConsumer,\
     InMemoryDataObject, ContainerDataObject
 from dfms.doutils import EvtConsumer
-from ngas_dm import DeployDataObjectTask, PGDeployTask, PGEngine
+from ngas_dm import PGDeployTask, PGEngine
 import luigi
 import threading
 import logging
@@ -32,16 +32,19 @@ import sys
 from dfms import doutils
 import random
 from dfms.events.event_broadcaster import ThreadedEventBroadcaster
+from test.dfmgr.ngas_dm import DataObjectTask
+from dfms.ddap_protocol import GraphExecutionMode, DOStates
 
-class MonitorDataObjectTask(DeployDataObjectTask):
+_logger = logging.getLogger(__name__)
+
+class MonitorDataObjectTask(DataObjectTask):
     """
     A Luigi task that, for a given DataObject, monitors that its status has
     changed to COMPLETED. This way we can use Luigi to simply monitor the
     execution of the DO graph, but not to drive it
     """
-
     def __init__(self, *args, **kwargs):
-        DeployDataObjectTask.__init__(self, *args, **kwargs)
+        super(MonitorDataObjectTask, self).__init__(*args, **kwargs)
         self._evt = threading.Event()
         self.data_obj.addConsumer(EvtConsumer(self._evt))
 
@@ -52,6 +55,32 @@ class MonitorDataObjectTask(DeployDataObjectTask):
         now = time.time()
         expirationDate = self.data_obj.expirationDate
         self._evt.wait(expirationDate - now)
+
+class RunDataObjectTask(DataObjectTask):
+    """
+    A Luigi task that, for a given DataObject, 'executes' it.
+    For applications it means to trigger them; for pure DataObjects it means
+    to subscribe to their COMPLETED status change
+    """
+    def __init__(self, *args, **kwargs):
+        super(RunDataObjectTask, self).__init__(*args, **kwargs)
+        if not isinstance(self.data_obj, AppConsumer):
+            self._evt = threading.Event()
+            def setEvtOnCompleted(e):
+                if hasattr(e, 'status') and e.status == DOStates.COMPLETED:
+                    self._evt.set()
+            self.data_obj.subscribe(setEvtOnCompleted, 'status')
+
+    def complete(self):
+        return self.data_obj.isCompleted() and self.data_obj.exists()
+
+    def run(self):
+        if not isinstance(self.data_obj, AppConsumer):
+            now = time.time()
+            expirationDate = self.data_obj.expirationDate
+            self._evt.wait(expirationDate - now)
+        else:
+            self.data_obj.consume(self.data_obj.producers[0])
 
 class SleepAndCopyApp(AppConsumer):
     """
@@ -65,7 +94,7 @@ class SleepAndCopyApp(AppConsumer):
 
 class InMemorySleepAndCopyApp(SleepAndCopyApp, InMemoryDataObject): pass
 
-def testGraph():
+def testGraph(execMode):
     """
     A test graph that looks like this:
 
@@ -84,23 +113,37 @@ def testGraph():
 
     lifespan = 1800
     bc = ThreadedEventBroadcaster()
-    a = InMemorySocketListenerDataObject('oid:A', 'uid:A', bc, lifespan=lifespan)
-    d = ContainerDataObject('oid:D', 'uid:D', bc, lifespan=lifespan)
+    a = InMemorySocketListenerDataObject('oid:A', 'uid:A', bc, graphExecutionMode=execMode, lifespan=lifespan)
+    d = ContainerDataObject('oid:D', 'uid:D', bc, graphExecutionMode=execMode, lifespan=lifespan)
     for i in xrange(random.SystemRandom().randint(10, 20)):
-        b = InMemorySleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), bc, lifespan=lifespan)
-        c = InMemorySleepAndCopyApp('oid:C%d' % (i), 'uid:C%d' % (i), bc, lifespan=lifespan)
+        b = InMemorySleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), bc, graphExecutionMode=execMode, lifespan=lifespan)
+        c = InMemorySleepAndCopyApp('oid:C%d' % (i), 'uid:C%d' % (i), bc, graphExecutionMode=execMode, lifespan=lifespan)
         a.addConsumer(b)
         b.addConsumer(c)
         d.addChild(c)
     return a
 
 class FinishGraphExecution(PGDeployTask):
-    def __init__(self, **kwargs):
-        PGDeployTask.__init__(self, **kwargs)
-        self._doTaskType = MonitorDataObjectTask
+
+    driver = luigi.Parameter(default='luigi')
+
     def _deploy(self, pg_creator_function=None):
+        if self.driver == 'do':
+            self._doTaskType = MonitorDataObjectTask
+            execMode = GraphExecutionMode.DO
+        else:
+            self._doTaskType = RunDataObjectTask
+            execMode = GraphExecutionMode.EXTERNAL
         eng = PGEngine()
-        return eng.process(testGraph())
+        return eng.process(testGraph(execMode))
+
+    def requires(self):
+        if (len(self._req) == 0):
+            for dob in self._leafs:
+                if _logger.isEnabledFor(logging.DEBUG):
+                    _logger.debug("Adding leaf DO as requirement to PGDeployTask: %s/%s" % (dob.oid, dob.uid))
+                self._req.append(self._doTaskType(dob, self.session_id))
+        return self._req
 
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.INFO, stream=sys.stdout)
