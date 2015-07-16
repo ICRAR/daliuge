@@ -44,6 +44,16 @@ class DOStates:
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
 
+class GraphExecutionMode:
+    """
+    Execution modes for a DataObject graph. DO means that DataObjects drive the
+    execution of the graph themselves by triggering the consumers automatically
+    when DataObjects become COMPLETED. EXTERNAL means that an external actor
+    drives the execution of the nodes in the graph, probably by watching over
+    the state of DataObjects.
+    """
+    DO, EXTERNAL = xrange(2)
+
 class REST_API_DOM: # RESTful API (url patterns)
     """
     Refer to http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api
