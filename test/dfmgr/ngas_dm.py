@@ -30,7 +30,8 @@ class DummyAppDO(InMemoryDataObject, AppConsumer):
 class DataObjectTask(luigi.Task):
     """
     A Luigi Task that wraps a DataObject
-    Constructor parameters: a data object it wants to wrap
+    Constructor parameters: a data object it wants to wrap, and the
+    session ID
     """
     data_obj = luigi.Parameter()
     session_id = luigi.Parameter()
@@ -58,41 +59,29 @@ class DataObjectTask(luigi.Task):
             self._output_dot = DataObjectTarget(self.data_obj.consumers)
         return self._output_dot
 
-class RunDataObjectTask(DataObjectTask):
-    """
-    The run method should invoke data object on a "remote" data manager
-    """
-    def output(self):
-        """
-        if real data object, then return itself
-        if app data object, return my consumers (output)
-        """
-        return self.dot
-        #if (isinstance(self.data_obj, AppConsumer)):
-        #    return self.outputdot
-        #else:
-        #    return self.dot
-
-    def run(self):
-        """
-        either ingesting a real data object or running an AppConsumer
-        that produces data objects
-
-        TODO - remove dummy code
-        """
-        msg = "data object {0} on {1}".format(self.data_obj.oid, self.data_obj.location)
-        if (isinstance(self.data_obj, AppConsumer)):
-            print "Executing application {0}".format(msg)
-        else:
-            print "Ingesting {0}".format(msg)
-
     def requires(self):
         """
-        producers
+        The list of DataObjectTasks that are required by this one.
+        We use self.__class__ to create the new dependencies so this method
+        doesn't need to be rewritten by all subclasses
         """
-        re = [RunDataObjectTask(dob) for dob in self.data_obj.producers]
-        if (isinstance(self.data_obj, ContainerDataObject)):
-            re += [RunDataObjectTask(dob) for dob in self.data_obj._children]
+        taskType = self.__class__
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Checking requirements for %s %s/%s" %(taskType, self.data_obj.oid, self.data_obj.uid))
+        re = [taskType(dob, self.session_id) for dob in self.data_obj.producers]
+        if _logger.isEnabledFor(logging.DEBUG):
+            parent = self.data_obj.parent
+            _logger.debug("Has parent? " + str(bool(parent)))
+            if parent:
+                _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
+                _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
+        if self.data_obj.parent and isinstance(self.data_obj.parent, ContainerAppConsumer):
+            re.append((self.data_obj.parent, self.session_id))
+        elif isinstance(self.data_obj, ContainerDataObject) and not isinstance(self.data_obj, ContainerAppConsumer):
+            re += [taskType(dob, self.session_id) for dob in self.data_obj._children]
+        if _logger.isEnabledFor(logging.DEBUG):
+            for req in re:
+                _logger.debug("Added requirement %s/%s" %(req.data_obj.oid, req.data_obj.uid))
         return re
 
 class DeployDataObjectTask(DataObjectTask):
@@ -120,29 +109,6 @@ class DeployDataObjectTask(DataObjectTask):
 
     def complete(self):
         return self._completed
-
-    def requires(self):
-        """
-        the producer!
-        """
-        taskType = self.__class__
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Checking requirements for %s %s/%s" %(taskType, self.data_obj.oid, self.data_obj.uid))
-        re = [taskType(dob, self.session_id) for dob in self.data_obj.producers]
-        if _logger.isEnabledFor(logging.DEBUG):
-            parent = self.data_obj.parent
-            _logger.debug("Has parent? " + str(bool(parent)))
-            if parent:
-                _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
-                _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
-        if self.data_obj.parent and isinstance(self.data_obj.parent, ContainerAppConsumer):
-            re.append((self.data_obj.parent, self.session_id))
-        elif isinstance(self.data_obj, ContainerDataObject) and not isinstance(self.data_obj, ContainerAppConsumer):
-            re += [taskType(dob, self.session_id) for dob in self.data_obj._children]
-        if _logger.isEnabledFor(logging.DEBUG):
-            for req in re:
-                _logger.debug("Added requirement %s/%s" %(req.data_obj.oid, req.data_obj.uid))
-        return re
 
 class PGEngine():
     """
