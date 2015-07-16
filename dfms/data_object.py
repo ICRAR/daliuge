@@ -28,6 +28,7 @@ import random
 from IN import INT16_MAX, INT16_MIN
 import warnings
 import socket
+from dfms.ddap_protocol import GraphExecutionMode
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -72,7 +73,7 @@ class AbstractDataObject(object):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
-    def __init__(self, oid, uid, eventbc, subs=[], **kwargs):
+    def __init__(self, oid, uid, eventbc, graphExecutionMode=GraphExecutionMode.DO, **kwargs):
         """
         Constructor
         oid:    object id (string)
@@ -83,6 +84,9 @@ class AbstractDataObject(object):
         self._oid = oid
         self._uid = uid
         self._bcaster = eventbc
+
+        # Maybe we want to have a different default value for this one?
+        self._graphExecutionMode = graphExecutionMode
 
         self._consumers = []# could be (1) real component (if I am a real data object consumed by them)
                             #       or (2) real data objects (if I am a real component that produce them)
@@ -123,9 +127,6 @@ class AbstractDataObject(object):
         self._precious = True
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs['precious'])
-
-        for s in subs:
-            self.subscribe(s)
 
         try:
             self.initialize(**kwargs)
@@ -429,6 +430,11 @@ class AbstractDataObject(object):
         # Automatic back-reference
         if hasattr(consumer, 'addProducer'):
             consumer.addProducer(self)
+
+        # Only trigger consumers automatically if the DataObject graph's
+        # execution is driven by the DataObjects themselves
+        if self._graphExecutionMode == GraphExecutionMode.EXTERNAL:
+            return
 
         def consumeCompleted(e):
             if not hasattr(e, 'status') or e.status != DOStates.COMPLETED:
