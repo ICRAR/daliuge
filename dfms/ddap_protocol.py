@@ -39,7 +39,7 @@ class DOType:
     ABSTRACT, APP, FILE, STREAM, PROXY = range(1, 6)
 
 class DOStates:
-    INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED, FAILED = range(1, 7)
+    INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = range(1, 6)
 
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)

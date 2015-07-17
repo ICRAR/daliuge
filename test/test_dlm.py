@@ -29,6 +29,7 @@ import time
 from dfms.ddap_protocol import DOStates, DOPhases
 import os
 import sys
+import unittest
 
 '''
 Created on 22 Jun 2015
@@ -167,3 +168,6 @@ class TestDataLifecycleManager(TestCase):
             time.sleep(1)
             self.assertEquals(DOStates.DELETED, do.status)
             self.assertFalse(do.exists())
+
+if __name__ == '__main__':
+    unittest.main()
