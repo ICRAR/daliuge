@@ -1,8 +1,10 @@
-from bottle import route, run, request, get, post, static_file, template, redirect
+from bottle import route, run, request, get, static_file, template, redirect
 
-from ngas_dm import PGEngine, DataFlowException
+from ngas_dm import PGEngine
 import json, decimal, urllib2
-import sys, commands, os, time, subprocess
+import sys, os, time, subprocess
+from dfms.data_object import AppConsumer, ContainerDataObject
+from dfms import doutils
 
 pg_engine = PGEngine()
 
@@ -59,10 +61,18 @@ def server_static(filepath):
 
 def _get_json(call_nm, formatted=False):
     pg = getattr(pg_engine, call_nm)()
+    if not isinstance(pg, list):
+        pg = [pg]
+
+    # Reduce all dictionaries to a single one:
+    allDOsDict = {}
+    for doLeaf in pg:
+        to_json_obj(doLeaf, allDOsDict)
+
     if (formatted):
-        return json.dumps(pg.to_json_obj(), default=encode_decimal, sort_keys=True)
+        return json.dumps(allDOsDict, default=encode_decimal, sort_keys=True)
     else:
-        return json.dumps(pg.to_json_obj(), default=encode_decimal)
+        return json.dumps(allDOsDict, default=encode_decimal)
 
 @get('/show')
 def show_pg():
@@ -112,10 +122,43 @@ def get_json():
         return _response_msg('Invalid physical graph name {0}'.format(pg_name))
     call_nm = "create_{0}_pg".format(pg_name).lower()
     return template('pg_json_tpl.html', json_body=_get_json(call_nm, formatted=True), pg_name=pg_name)
+
+
+#===============================================================================
+# DataObject JSON serialization methods, originally found in AbstractDataObject
+# class and slightly modified afterwards
+#===============================================================================
+def get_type_code(dataObject):
+    if isinstance(dataObject, AppConsumer):
+        return 1
+    elif isinstance(dataObject, ContainerDataObject):
+        return 2
+    else:
+        return 4
+
+def to_json_obj(dataObject, allDOsDict):
     """
-    pg = getattr(pg_engine, call_nm)()
-    return json.dumps(pg.to_json_obj(), default=encode_decimal)
+    JSON serialisation of a DataObject for displaying with dagreD3. Its
+    implementation should be similar to the DataObjectTask for Luigi, since both
+    should represent the same dependencies
     """
+    # Already visited
+    if dataObject.oid in allDOsDict:
+        return
+
+    doDict = {
+        'type': get_type_code(dataObject),
+        'loc': dataObject.location
+    }
+    inputQueue = [{'oid': uobj.oid} for uobj in doutils.getUpstreamObjects(dataObject)]
+    if inputQueue:
+        doDict['inputQueue'] = inputQueue
+
+    allDOsDict[dataObject.oid] = doDict
+
+    for dob in doutils.getDownstreamObjects(dataObject):
+        to_json_obj(dob, allDOsDict)
+
 
 if __name__ == "__main__":
     """

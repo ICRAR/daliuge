@@ -65,23 +65,14 @@ class DataObjectTask(luigi.Task):
         We use self.__class__ to create the new dependencies so this method
         doesn't need to be rewritten by all subclasses
         """
+        re = []
         taskType = self.__class__
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("Checking requirements for %s %s/%s" %(taskType, self.data_obj.oid, self.data_obj.uid))
-        re = [taskType(dob, self.session_id) for dob in self.data_obj.producers]
-        if _logger.isEnabledFor(logging.DEBUG):
-            parent = self.data_obj.parent
-            _logger.debug("Has parent? " + str(bool(parent)))
-            if parent:
-                _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
-                _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
-        if self.data_obj.parent and isinstance(self.data_obj.parent, ContainerAppConsumer):
-            re.append((self.data_obj.parent, self.session_id))
-        elif isinstance(self.data_obj, ContainerDataObject) and not isinstance(self.data_obj, ContainerAppConsumer):
-            re += [taskType(dob, self.session_id) for dob in self.data_obj._children]
-        if _logger.isEnabledFor(logging.DEBUG):
-            for req in re:
-                _logger.debug("Added requirement %s/%s" %(req.data_obj.oid, req.data_obj.uid))
+        for req in doutils.getUpstreamObjects(self.data_obj):
+            if _logger.isEnabledFor(logging.DEBUG):
+                _logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
+            re.append(taskType(req, self.session_id))
         return re
 
 class DeployDataObjectTask(DataObjectTask):

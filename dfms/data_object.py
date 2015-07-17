@@ -524,47 +524,6 @@ class AbstractDataObject(object):
         """
         return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
 
-    def _type_code(self):
-        return 4
-
-    def get_upstream_objects(self):
-        return self.producers
-
-    def to_json_obj(self, jsobj_out=None):
-        """
-        json serialisation of the data object
-        """
-        jsobj = dict()
-        jsobj['type'] = self._type_code()
-        jsobj['loc'] = self.location
-        inputQueue = []
-        for uobj in self.get_upstream_objects():
-            iqd = dict()
-            iqd['oid'] = uobj.oid
-            inputQueue.append(iqd)
-        if (len(inputQueue) > 0):
-            jsobj['inputQueue'] = inputQueue
-
-        create_dict = jsobj_out is None
-        if (create_dict):
-            m_jsobj_out = dict()
-            m_jsobj_out[self.oid] = jsobj
-        else:
-            jsobj_out[self.oid] = jsobj
-
-        nextDOs = self.consumers
-        if (self.parent is not None):
-            nextDOs.append(self.parent)
-        if (create_dict):
-            param_jsobj_out = m_jsobj_out
-        else:
-            param_jsobj_out = jsobj_out
-        for dob in nextDOs:
-            dob.to_json_obj(param_jsobj_out)
-
-        if (create_dict):
-            return m_jsobj_out
-
     def _getDataObject(self, dataObject):
         return dataObject
 
@@ -815,9 +774,6 @@ class ContainerDataObject(AbstractDataObject):
         child.parent = self
         self._complete_map[child.oid] = child.isCompleted()
 
-    def _type_code(self):
-        return 2
-
     def get_upstream_objects(self):
         return self.producers + self._children
 
@@ -886,9 +842,6 @@ class AppConsumer(object):
         which will then be used as the **kwargs for calling consumers (i.e. "real" AbstractDataObjects)
         """
         pass
-
-    def _type_code(self):
-        return 1
 
 class CRCResultConsumer(AppConsumer):
     '''
