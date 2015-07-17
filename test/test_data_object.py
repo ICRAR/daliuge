@@ -30,8 +30,9 @@ import os, unittest, threading, sys
 import logging
 from cStringIO import StringIO
 from dfms import doutils
-from dfms.ddap_protocol import DOStates
+from dfms.ddap_protocol import DOStates, GraphExecutionMode
 from dfms.doutils import EvtConsumer
+import random
 
 try:
     from crc32c import crc32
@@ -510,6 +511,104 @@ class TestDataObject(unittest.TestCase):
         bContents = int(doutils.allDataObjectContents(b))
         self.assertEquals(data, aContents)
         self.assertEquals(crc32(data, 0), bContents)
+
+    def test_dataObjectWroteFromOutside(self):
+        """
+        A different scenario to those tested above, in which the data
+        represented by the DataObject isn't actually written *through* the
+        DataObject. Still, the DataObject needs to be moved to COMPLETED once
+        the data is written, and reading from it should still yield a correct
+        result
+        """
+
+        # Write, but not through the DO
+        a = FileDataObject('A', 'A', LocalEventBroadcaster())
+        filename = a.getFileName()
+        msg = 'a message'
+        with open(filename, 'w') as f:
+            f.write(msg)
+        a.setCompleted()
+
+        # Read from the DO
+        self.assertEquals(msg, doutils.allDataObjectContents(a))
+        self.assertIsNone(a.checksum)
+        self.assertIsNone(a.size)
+
+        # We can manually set the size because the DO wasn't able to calculate
+        # it itself; if we couldn't an exception would be thrown
+        a.size = len(msg)
+
+    def test_stateMachine(self):
+        """
+        A simple test to check that some transitions are invalid
+        """
+
+        # Nice and easy
+        do = InMemoryDataObject('a', 'a', LocalEventBroadcaster())
+        self.assertEquals(do.status, DOStates.INITIALIZED)
+        do.write('a')
+        self.assertEquals(do.status, DOStates.WRITING)
+        do.setCompleted()
+        self.assertEquals(do.status, DOStates.COMPLETED)
+
+        # Try to overwrite the DO's checksum and size
+        self.assertRaises(Exception, do.checksum, 0)
+        self.assertRaises(Exception, do.size, 0)
+
+        # Try to write on a DO that is already COMPLETED
+        self.assertRaises(Exception, do.write, '')
+
+        # Failure to initialize (ports < 1024 cannot be opened by normal users)
+        self.assertRaises(Exception, InMemorySocketListenerDataObject, 'a', 'a', LocalEventBroadcaster(), host='localhost', port=1)
+
+        # Invalid reading on a DO that isn't COMPLETED yet
+        do = InMemoryDataObject('a', 'a', LocalEventBroadcaster())
+        self.assertRaises(Exception, do.open)
+        self.assertRaises(Exception, do.read, 1)
+        self.assertRaises(Exception, do.close, 1)
+
+        # Invalid file descriptors used to read/close
+        do.setCompleted()
+        fd = do.open()
+        otherFd = random.SystemRandom().randint(0, 1000)
+        self.assertNotEquals(fd, otherFd)
+        self.assertRaises(Exception, do.read, otherFd)
+        self.assertRaises(Exception, do.close, otherFd)
+        # but using the correct one should be OK
+        do.read(fd)
+        self.assertTrue(do.isBeingRead())
+        do.close(fd)
+
+        # Expire it, then try to set it as COMPLETED again
+        do.status = DOStates.EXPIRED
+        self.assertRaises(Exception, do.setCompleted)
+
+    def test_externalGraphExecutionDriver(self):
+        self._test_graphExecutionDriver(GraphExecutionMode.EXTERNAL)
+
+    def test_DOGraphExecutionDriver(self):
+        self._test_graphExecutionDriver(GraphExecutionMode.DO)
+
+    def _test_graphExecutionDriver(self, mode):
+        """
+        A small test to check that DOs executions can be driven externally if
+        required, and not always internally by themselves
+        """
+        eb = LocalEventBroadcaster()
+        a = InMemoryDataObject('a', 'a', eb, graphExecutionMode=mode, expectedSize=1)
+        b = InMemoryCRCResultDataObject('b', 'b', eb)
+        a.addConsumer(b)
+        a.write('1')
+
+        if mode == GraphExecutionMode.EXTERNAL:
+            # b hasn't been triggered
+            self.assertEquals(b.status, DOStates.INITIALIZED)
+            # Now let b consume a
+            b.consume(a)
+            self.assertEquals(b.status, DOStates.COMPLETED)
+        elif mode == GraphExecutionMode.DO:
+            # b is already done
+            self.assertEquals(b.status, DOStates.COMPLETED)
 
 if __name__ == '__main__':
     unittest.main()

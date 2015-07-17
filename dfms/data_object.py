@@ -73,7 +73,9 @@ class AbstractDataObject(object):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
-    def __init__(self, oid, uid, eventbc, graphExecutionMode=GraphExecutionMode.DO, **kwargs):
+    def __init__(self, oid, uid, eventbc,
+                 graphExecutionMode=GraphExecutionMode.DO,
+                 **kwargs):
         """
         Constructor
         oid:    object id (string)
@@ -100,8 +102,18 @@ class AbstractDataObject(object):
         self._status   = None
         self._statusLock = threading.RLock()
         self._phase    = None
-        self._checksum = 0
-        self._size     = 0
+
+        # Calculating the checksum and maintaining the data size internally
+        # implies that the data represented by this DataObject is written
+        # *through* this DataObject. This might not always be the case though,
+        # since data could be written externally and the DataObject simply be
+        # moved to COMPLETED at the end of the process. In this case we return a
+        # None checksum and size (when requested), signaling that we don't have
+        # this information.
+        # Note also that the setters of these two properties also allow to set
+        # a value on them, but only if they are None
+        self._checksum = None
+        self._size     = None
 
         # "DataObject descriptors" used for reading.
         # Instead of passing file objects or more complex data types in our
@@ -133,10 +145,13 @@ class AbstractDataObject(object):
             if hasattr(self, 'appInitialize'):
                 self.appInitialize(**kwargs)
             self.status = DOStates.INITIALIZED
-
-        except Exception as e:
-            self.status = DOStates.FAILED
-            raise e
+        except:
+            # It doesn't make sense to set an internal status here because
+            # the creation of the object is actually raising an exception,
+            # and the object doesn't get created and assigned to any variable
+            # Still, the FAILED state could be used for other purposes, like
+            # failure during writing for example.
+            raise
 
     def getArg(self, kwargs, key, default):
         val = default
@@ -199,8 +214,6 @@ class AbstractDataObject(object):
 
         # Decrement counter and then actually close
         with self._refLock:
-            if self._refCount <= 0:
-                raise Exception("Invalid call to close(), no respective open() detected")
             self._refCount -= 1
         self.closeMeta(self._readDescriptors.pop(descriptor), **kwargs)
 
@@ -238,6 +251,9 @@ class AbstractDataObject(object):
 
         nbytes = self.writeMeta(data, **kwargs)
         if nbytes:
+            # see __init__ for the initialization to None
+            if self._size is None:
+                self._size = 0
             self._size += nbytes
 
         # Update our internal checksum
@@ -309,6 +325,9 @@ class AbstractDataObject(object):
         pass
 
     def _updateChecksum(self, chunk):
+        # see __init__ for the initialization to None
+        if self._checksum is None:
+            self._checksum = 0
         self._checksum = crc32(chunk, self._checksum)
 
     @property
@@ -317,6 +336,8 @@ class AbstractDataObject(object):
 
     @checksum.setter
     def checksum(self, value):
+        if self._checksum is not None:
+            raise Exception("The checksum for DataObject %s is already calculated, cannot overwrite with new value" % (self))
         self._checksum = value
 
     @property
@@ -357,6 +378,12 @@ class AbstractDataObject(object):
     def size(self):
         return self._size
 
+    @size.setter
+    def size(self, size):
+        if self._size is not None:
+            raise Exception("The size of DataObject %s is already calculated, cannot overwrite with new value" % (self))
+        self._size = size
+
     @property
     def precious(self):
         return self._precious
@@ -391,14 +418,6 @@ class AbstractDataObject(object):
     @property
     def consumers(self):
         return self._consumers[:]
-
-    @consumers.setter
-    def consumers(self, consumers):
-        """
-        set a list of consumers (replace the existing ones)
-        """
-        for c in consumers:
-            self.addConsumer(c)
 
     def addConsumer(self, consumer):
         """
@@ -570,7 +589,10 @@ class FileDataObject(AbstractDataObject):
         self._fnm = self._root + os.sep + self._oid + '___' + self.uid
         if os.path.isfile(self._fnm):
             warnings.warn('File %s already exists, overwriting' % (self._fnm))
-        self._fo = open(self._fnm, "w")
+
+        # The file descriptor used during writing, lazily opened for writing
+        # upon the first call to writeMeta
+        self._fo = None
 
     def openMeta(self, **kwargs):
         return open(self._fnm, 'r')
@@ -579,25 +601,22 @@ class FileDataObject(AbstractDataObject):
         return descriptor.read(count)
 
     def writeMeta(self, data, **kwargs):
-        """
-        Each chunk written to a file object
-        will be written to the file system
-
-        this is NOT thread safe (assuming we will single threaded event loop)
-
-        """
+        if not self._fo:
+            self._fo = open(self._fnm, "w")
         self._fo.write(data)
         return len(data)
 
     def setCompleted(self):
-        self._fo.close()
+        # If written externally, self._fo will remain None
+        if self._fo:
+            self._fo.close()
         AbstractDataObject.setCompleted(self)
 
     def closeMeta(self, descriptor, **kwargs):
         descriptor.close()
 
-    def seek(self, **kwargs):
-        pass
+    def getFileName(self):
+        return self._fnm
 
     def delete(self):
         os.unlink(self._fnm)
@@ -626,6 +645,11 @@ class NgasDataObject(AbstractDataObject):
         # TODO: The NGAS client doesn't differentiate between these, it should
         self._ngasTimeout        = int(self.getArg(kwargs, 'ngasConnectTimeout', 2))
         self._ngasConnectTimeout = int(self.getArg(kwargs, 'ngasTimeout', 2))
+
+        # The NGAS client API doesn't have a way to continually feed an ARCHIVE
+        # request with data. Thus the only way we can currently archive data
+        # into NGAS is by accumulating it all on our side and finally
+        # sending it over.
         self._buf = ''
 
     def openMeta(self, **kwargs):
@@ -640,6 +664,12 @@ class NgasDataObject(AbstractDataObject):
         return len(data)
 
     def setCompleted(self):
+        # We didn't accumulate anything in our internal buffer, it was all
+        # externally written
+        if self._size is not None:
+            super(NgasDataObject, self).setCompleted()
+            return
+
         # TODO: the client API doesn't allow giving a buffer directly through
         # its "public" methods so we have to use the _httpPost method and
         # manually feed it with the correct parameters; we anyway would like to
@@ -651,7 +681,11 @@ class NgasDataObject(AbstractDataObject):
                          pars=[['filename',self.uid]], dataSource='BUFFER',
                          dataSize=self.size)
         if reply != 200:
+            # Probably msg is not enough, we need to unpack the status XML doc
+            # from the returning data and extract the real error message from
+            # there
             raise Exception(msg)
+
         AbstractDataObject.setCompleted(self)
 
     def closeMeta(self, descriptor):
