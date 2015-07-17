@@ -282,7 +282,6 @@ class AbstractDataObject(object):
         the readMeta() and closeMeta() methods. This way parallel readings can
         be performed over the same DataObject.
         """
-        pass
 
     @abstractmethod
     def closeMeta(self, descriptor, **kwargs):
@@ -291,7 +290,6 @@ class AbstractDataObject(object):
         underlying resources. The descriptor is that returned by the openMeta()
         method.
         """
-        pass
 
     @abstractmethod
     def readMeta(self, descriptor, count, **kwargs):
@@ -299,7 +297,6 @@ class AbstractDataObject(object):
         Hook for subclass read. It reads at most count bytes from the given
         descriptor. The descriptor is that returned by the openMeta() method.
         """
-        pass
 
     @abstractmethod
     def writeMeta(self, data, **kwargs):
@@ -307,14 +304,12 @@ class AbstractDataObject(object):
         Hook for subclass write. It writes the data represented by this
         DataObject into the underlying media.
         """
-        pass
 
     @abstractmethod
     def delete(self):
         '''
         Deletes the data represented by this DO.
         '''
-        pass
 
     @abstractmethod
     def exists(self):
@@ -322,7 +317,6 @@ class AbstractDataObject(object):
         Returns True if the data represented by this DataObject exists indeed
         in the underlying storage mechanism
         """
-        pass
 
     def _updateChecksum(self, chunk):
         # see __init__ for the initialization to None
