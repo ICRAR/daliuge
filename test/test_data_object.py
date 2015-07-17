@@ -552,8 +552,8 @@ class TestDataObject(unittest.TestCase):
         self.assertEquals(do.status, DOStates.COMPLETED)
 
         # Try to overwrite the DO's checksum and size
-        self.assertRaises(Exception, do.checksum, 0)
-        self.assertRaises(Exception, do.size, 0)
+        self.assertRaises(Exception, lambda: setattr(do, 'checksum', 0))
+        self.assertRaises(Exception, lambda: setattr(do, 'size', 0))
 
         # Try to write on a DO that is already COMPLETED
         self.assertRaises(Exception, do.write, '')

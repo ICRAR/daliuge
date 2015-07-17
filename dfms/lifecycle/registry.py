@@ -60,27 +60,43 @@ class Registry():
 
     @abstractmethod
     def addDataObject(self, dataObject):
-        pass
+        """
+        Adds a new DataObject to the registry
+        """
 
     @abstractmethod
     def addDataObjectInstance(self, dataObject):
-        pass
+        """
+        Adds a new DataObject instance to the registry. The registry should have
+        a record already for the DataObject that the new instance belongs to
+        """
 
     @abstractmethod
     def getDataObjectUids(self, dataObject):
-        pass
+        """
+        Returns a list with the UIDs of all known instances of the given
+        DataObject
+        """
 
     @abstractmethod
     def setDataObjectPhase(self, dataObject, phase):
-        pass
+        """
+        Records the phase of the given DataObject
+        """
 
     @abstractmethod
-    def removeDataObject(self, dataObject):
-        pass
+    def recordNewAccess(self, oid):
+        """
+        Appends a new record to the list of access times of the given DataObject
+        (i.e., when it has been accessed for reading)
+        """
 
     @abstractmethod
-    def recordNewAccess(self, doi):
-        pass
+    def getLastAccess(self, oid):
+        """
+        Returns the last access time for the given DataObject, or -1 if it has
+        never been accessed
+        """
 
     def _checkDOIsInRegistry(self, oid):
         if not self._dos.has_key(oid):
@@ -120,10 +136,12 @@ class InMemoryRegistry(Registry):
         self._checkDOIsInRegistry(dataObject.oid)
         self._dos[dataObject.oid].phase = phase
 
-    def removeDataObject(self, dataObject):
-        self._checkDOIsInRegistry(dataObject.oid)
-        del self._dos[dataObject.oid]
-
     def recordNewAccess(self, oid):
         self._checkDOIsInRegistry(oid)
         self._dos[oid].accessTimes.append(time.time())
+
+    def getLastAccess(self, oid):
+        if oid in self._dos and self._dos[oid].accessTimes:
+            return self._dos[oid].accesTimes[-1]
+        else:
+            return -1
