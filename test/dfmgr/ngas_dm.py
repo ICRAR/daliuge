@@ -402,10 +402,6 @@ class PGEngine():
 
         return dob_root
 
-
-    def pg_to_json(self, pg):
-        pass
-
 class PGDeployTask(luigi.Task):
     """
     similar to flow start

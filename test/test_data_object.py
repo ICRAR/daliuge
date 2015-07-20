@@ -30,7 +30,7 @@ import os, unittest, threading, sys
 import logging
 from cStringIO import StringIO
 from dfms import doutils
-from dfms.ddap_protocol import DOStates, GraphExecutionMode
+from dfms.ddap_protocol import DOStates, ExecutionMode
 from dfms.doutils import EvtConsumer
 import random
 
@@ -584,10 +584,10 @@ class TestDataObject(unittest.TestCase):
         self.assertRaises(Exception, do.setCompleted)
 
     def test_externalGraphExecutionDriver(self):
-        self._test_graphExecutionDriver(GraphExecutionMode.EXTERNAL)
+        self._test_graphExecutionDriver(ExecutionMode.EXTERNAL)
 
     def test_DOGraphExecutionDriver(self):
-        self._test_graphExecutionDriver(GraphExecutionMode.DO)
+        self._test_graphExecutionDriver(ExecutionMode.DO)
 
     def _test_graphExecutionDriver(self, mode):
         """
@@ -595,18 +595,18 @@ class TestDataObject(unittest.TestCase):
         required, and not always internally by themselves
         """
         eb = LocalEventBroadcaster()
-        a = InMemoryDataObject('a', 'a', eb, graphExecutionMode=mode, expectedSize=1)
+        a = InMemoryDataObject('a', 'a', eb, executionMode=mode, expectedSize=1)
         b = InMemoryCRCResultDataObject('b', 'b', eb)
         a.addConsumer(b)
         a.write('1')
 
-        if mode == GraphExecutionMode.EXTERNAL:
+        if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
             self.assertEquals(b.status, DOStates.INITIALIZED)
             # Now let b consume a
             b.consume(a)
             self.assertEquals(b.status, DOStates.COMPLETED)
-        elif mode == GraphExecutionMode.DO:
+        elif mode == ExecutionMode.DO:
             # b is already done
             self.assertEquals(b.status, DOStates.COMPLETED)
 
