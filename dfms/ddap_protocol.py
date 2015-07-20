@@ -44,13 +44,20 @@ class DOStates:
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
 
-class GraphExecutionMode:
+class ExecutionMode:
     """
-    Execution modes for a DataObject graph. DO means that DataObjects drive the
-    execution of the graph themselves by triggering the consumers automatically
-    when DataObjects become COMPLETED. EXTERNAL means that an external actor
-    drives the execution of the nodes in the graph, probably by watching over
-    the state of DataObjects.
+    Execution modes for a DataObject. DO means that a DataObject will trigger
+    its consumers automatically when it becomes COMPLETED. EXTERNAL means that
+    a DataObject will *not* trigger its consumers automatically, and instead
+    this should be done by an external entity, probably by subscribing to
+    changes on the DataObject's status.
+
+    This value exists per DataObject, and therefore we can achieve a mixed
+    execution mode for the entire graph, where some DOs trigger automatically
+    their consumers, while others must be manually executed from the outside.
+
+    Note that if all DOs in a given graph have ExecutionMode == DO it means that
+    the graph effectively drives its own execution without external intervention.
     """
     DO, EXTERNAL = xrange(2)
 

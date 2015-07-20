@@ -75,7 +75,9 @@ def getUpstreamObjects(dataObject):
      * B is a ContainerDataObject (but not a ContainerAppConsumer) and A is a
        child of B
     """
-    upObjs = [dob for dob in dataObject.producers]
+    upObjs = []
+    if dataObject.producer:
+        upObjs.append(dataObject.producer)
     if _logger.isEnabledFor(logging.DEBUG):
         parent = dataObject.parent
         _logger.debug("Has parent? " + str(bool(parent)))

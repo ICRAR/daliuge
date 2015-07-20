@@ -28,7 +28,7 @@ import random
 from IN import INT16_MAX, INT16_MIN
 import warnings
 import socket
-from dfms.ddap_protocol import GraphExecutionMode
+from dfms.ddap_protocol import ExecutionMode
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -74,7 +74,7 @@ class AbstractDataObject(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, oid, uid, eventbc,
-                 graphExecutionMode=GraphExecutionMode.DO,
+                 executionMode=ExecutionMode.DO,
                  **kwargs):
         """
         Constructor
@@ -88,12 +88,14 @@ class AbstractDataObject(object):
         self._bcaster = eventbc
 
         # Maybe we want to have a different default value for this one?
-        self._graphExecutionMode = graphExecutionMode
+        self._executionMode = executionMode
 
-        self._consumers = []# could be (1) real component (if I am a real data object consumed by them)
-                            #       or (2) real data objects (if I am a real component that produce them)
-        self._producers = []# could be (1) real component (if I am a real data object produced by them)
-                            #       or (2) real data objects (if I am a real component that consume them)
+        # 1-to-N relationship: one DataObject may have many consumers, but
+        # has only 1 producer. For the opposite N-to-1 relationship a
+        # ContainerDataObject should be used (where many DataObjects "produce"
+        # one new DataObject)
+        self._consumers = []
+        self._producer  = None
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -342,6 +344,10 @@ class AbstractDataObject(object):
     def uid(self):
         return self._uid
 
+    @property
+    def executionMode(self):
+        return self._executionMode
+
     def subscribe(self, callback, eventType=None):
         self._bcaster.subscribe(self._uid, callback, eventType=eventType)
 
@@ -441,12 +447,12 @@ class AbstractDataObject(object):
         self._consumers.append(consumer)
 
         # Automatic back-reference
-        if hasattr(consumer, 'addProducer'):
-            consumer.addProducer(self)
+        if hasattr(consumer, 'producer'):
+            consumer.producer = self
 
         # Only trigger consumers automatically if the DataObject graph's
         # execution is driven by the DataObjects themselves
-        if self._graphExecutionMode == GraphExecutionMode.EXTERNAL:
+        if self._executionMode == ExecutionMode.EXTERNAL:
             return
 
         def consumeCompleted(e):
@@ -460,15 +466,15 @@ class AbstractDataObject(object):
         self.subscribe(consumeCompleted, eventType='status')
 
     @property
-    def producers(self):
-        return self._producers[:]
+    def producer(self):
+        return self._producer
 
-    def addProducer(self, producer):
-        if producer not in self._producers:
-            self._producers.append(producer)
-            # Automatic back-reference
-            if hasattr(producer, 'addConsumer'):
-                producer.addConsumer(self)
+    @producer.setter
+    def producer(self, producer):
+        if self._producer and producer:
+            warnings.warn("A producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
+        if producer:
+            self._producer = producer
 
     def setCompleted(self):
         '''
@@ -773,9 +779,6 @@ class ContainerDataObject(AbstractDataObject):
         self._children.append(child)
         child.parent = self
         self._complete_map[child.oid] = child.isCompleted()
-
-    def get_upstream_objects(self):
-        return self.producers + self._children
 
     def delete(self):
         for c in [c for c in self._children if c.exists()]:
