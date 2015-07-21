@@ -60,12 +60,10 @@ class RunDataObjectTask(luigi.Task):
         super(RunDataObjectTask, self).__init__(*args, **kwargs)
 
         do = self.data_obj
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Analizing executability of DataObject %s" % (do))
-
         self.execDO  = isinstance(do, AppConsumer) and do.producer.executionMode == ExecutionMode.EXTERNAL
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("%s will execute or monitor DataObject %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
+
         if not self.execDO:
             self._evt = threading.Event()
             def setEvtOnCompleted(e):
