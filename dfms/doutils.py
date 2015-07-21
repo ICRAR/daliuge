@@ -74,6 +74,9 @@ def getUpstreamObjects(dataObject):
      * B is a child of A, and A is a ContainerAppConsumer
      * B is a ContainerDataObject (but not a ContainerAppConsumer) and A is a
        child of B
+
+    In practice if A is an upstream DataObject of B means that it must be moved
+    to the COMPLETED state before B can do so.
     """
     upObjs = []
     if dataObject.producer:
@@ -99,8 +102,11 @@ def getDownstreamObjects(dataObject):
      * A is a child of B, and B is a ContainerAppConsumer
      * A is a ContainerDataObject (but not a ContainerAppConsumer) and B is a
        child of A
+
+    In practice if A is a downstream DataObject of B means that it cannot
+    advance to the COMPLETED state until B does so.
     """
-    downObjs = [dob for dob in dataObject.consumers]
+    downObjs = dataObject.consumers
     if _logger.isEnabledFor(logging.DEBUG):
         parent = dataObject.parent
         _logger.debug("Has parent? " + str(bool(parent)))
@@ -113,3 +119,63 @@ def getDownstreamObjects(dataObject):
          not isinstance(dataObject.parent, ContainerAppConsumer):
         downObjs.append(dataObject.parent)
     return downObjs
+
+def getEndNodes(nodes):
+    """
+    Returns a list of all the "end nodes" of the graph pointed by nodes.
+    nodes is either a single DataObject, or a list of DataObjects.
+    """
+
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+
+    # To be executed when visiting each node
+    endNodes = []
+    def addLeafNode(n):
+        if not getDownstreamObjects(n):
+            endNodes.append(n)
+
+    breadFirstTraverse(nodes, addLeafNode)
+    return endNodes
+
+def depthFirstTraverse(node, func = None, visited = []):
+    """
+    Depth-first traversal of a DataObject graph. For each node in the graph the
+    function func, if given, is executed with the current DataObject as the only
+    argument. The visited argument maintains the list of nodes already visited.
+    This implementation is recursive.
+    """
+
+    if func:
+        func(node)
+    visited.append(node)
+
+    dependencies = getDownstreamObjects(node)
+    if dependencies:
+        for do in [d for d in dependencies if d not in visited]:
+            depthFirstTraverse(do, func, visited)
+
+def breadFirstTraverse(toVisit, func = None):
+    """
+    Breadth-first traversal of a DataObject graph. For each node in the graph
+    the function func, if given, is executed with the current DataObject as the
+    only argument.
+    This implementation is non-recursive.
+    """
+
+    if not isinstance(toVisit, list):
+        toVisit = [toVisit]
+
+    found = toVisit[:]
+    while toVisit:
+
+        # Pay the node a visit
+        node = toVisit.pop(0)
+        if func:
+            func(node)
+
+        # Enqueue its dependencies, making sure they are enqueued only one
+        dependencies = getDownstreamObjects(node)
+        nextVisits = [do for do in dependencies if do not in found]
+        toVisit += nextVisits
+        found += nextVisits

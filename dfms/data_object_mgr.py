@@ -143,8 +143,6 @@ class DataObjectMgr(object):
 
         if (linkType == DOLinkType.CONSUMER):
             rdo.addConsumer(ldo)
-        elif (linkType == DOLinkType.PRODUCER):
-            rdo.addProducer(ldo)
         elif (linkType == DOLinkType.PARENT):
             rdo.setParent(ldo)
         elif (linkType == DOLinkType.CHILD):
