@@ -22,7 +22,7 @@
 
 from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
     ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject,\
-    NullDataObject
+    NullDataObject, ImmediateAppConsumer
 from dfms.events.event_broadcaster import LocalEventBroadcaster,\
     ThreadedEventBroadcaster
 
@@ -609,6 +609,57 @@ class TestDataObject(unittest.TestCase):
         elif mode == ExecutionMode.DO:
             # b is already done
             self.assertEquals(b.status, DOStates.COMPLETED)
+
+    def test_immediateConsumer(self):
+        """
+        A test for immediate consumers, which consume a DO's data as it gets
+        written into the DO. We use the following graph:
+
+        A --|--> B
+            |--> C
+
+        Here B is an immediate consumer of A, while C is a normal one.
+        """
+
+        class LastCharWriterApp(ImmediateAppConsumer):
+            def appInitialize(self, **kwargs):
+                self._lastChar = None
+            def consume(self, data):
+                self._lastChar = data[-1]
+                self.write(self._lastChar)
+            def consumptionCompleted(self):
+                self.setCompleted()
+        class InMemoryLastCharWriterApp(LastCharWriterApp, InMemoryDataObject):
+            pass
+
+        eb = LocalEventBroadcaster()
+        a = InMemoryDataObject('a', 'a', eb)
+        b = InMemoryLastCharWriterApp('b', 'b', eb)
+        c = InMemoryCRCResultDataObject('c', 'c', eb) # this is a normal AppConsumer
+        a.addImmediateConsumer(b)
+        a.addConsumer(c)
+
+        # Consumer cannot be normal and immediate at the same time
+        self.assertRaises(Exception, lambda: a.addConsumer(b))
+        self.assertRaises(Exception, lambda: a.addImmediateConsumer(c))
+
+        # Write a little, then check the consumers
+        def checkDOStates(aStatus, bStatus, cStatus, lastChar):
+            self.assertEquals(aStatus, a.status)
+            self.assertEquals(bStatus, b.status)
+            self.assertEquals(cStatus, c.status)
+            self.assertEquals(lastChar, b._lastChar)
+
+        checkDOStates(DOStates.INITIALIZED , DOStates.INITIALIZED, DOStates.INITIALIZED, None)
+        a.write('abcde')
+        checkDOStates(DOStates.WRITING, DOStates.WRITING, DOStates.INITIALIZED, 'e')
+        a.write('fghij')
+        checkDOStates(DOStates.WRITING, DOStates.WRITING, DOStates.INITIALIZED, 'j')
+        a.write('k')
+        a.setCompleted()
+        checkDOStates(DOStates.COMPLETED, DOStates.COMPLETED, DOStates.COMPLETED, 'k')
+
+        self.assertEquals('ejk', doutils.allDataObjectContents(b))
 
 if __name__ == '__main__':
     unittest.main()

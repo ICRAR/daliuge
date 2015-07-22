@@ -59,14 +59,33 @@ _logger = logging.getLogger(__name__)
 
 
 class AbstractDataObject(object):
-    '''
+    """
     Base class for all DataObject implementations.
 
     A DataObject is a representation of a piece of data. DataObjects are created,
     written once, potentially read many times, and they finally potentially
     expire and get deleted. Subclasses implement different storage mechanisms
     to hold the data represented by the DataObject.
-    '''
+
+    If the data represented by this DataObject is written *through* this object
+    (i.e., calling the ``write`` method), this DataObject will keep track of the
+    data's size and checksum. If the data is written externally, the size and
+    checksum can be fed into this object for future reference.
+
+    DataObjects can have consumers attached to them. 'Normal' consumers will
+    wait until the DataObject they 'consume' (their 'producer') moves to the
+    COMPLETED state and then will 'consume' it, most typically by opening it
+    and reading its contents, but any other operation could also be performed.
+    How the consumption is triggered depends on the producer's ``executionMode``
+    flag, which dictates whether it should trigger the consumption itself or
+    if it should be manually triggered by an external entity. On the other hand,
+    'immediate' consumers receive the data that is written into its publisher
+    *as it gets written*. This mechanism is driven always by the DataObject that
+    acts as 'immediate producer'. Apart from receiving the data as it gets
+    written into the DataObject, immediate consumers are also notified when the
+    DataObjects moves to the COMPLETED state, at which point no more data should
+    be expected to arrive at the consumer side.
+    """
 
     # This ensures that:
     #  - This class cannot be instantiated
@@ -96,6 +115,19 @@ class AbstractDataObject(object):
         # one new DataObject)
         self._consumers = []
         self._producer  = None
+
+        # 'Immediate' consumers are objects that consume the data written in
+        # this DataObject *as it gets written*, and therefore don't have to
+        # wait until this DataObject has moved to COMPLETED.
+        # An object cannot be an immediate consumers and a 'normal' consumer
+        # at the same time, although this rule is imposed simply to enforce
+        # efficiency (why would a consumer want to consume the data twice?) and
+        # not because it's technically impossible.
+        # TODO: A better name would be highly beneficial to avoid confusion in
+        #       the future between 'normal' and 'immediate'/'quick'/'eager'
+        #       consumers.
+        self._immediateConsumers = []
+        self._immediateProducer  = None
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -251,12 +283,21 @@ class AbstractDataObject(object):
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
             raise Exception("No more writing expected")
 
-        nbytes = self.writeMeta(data, **kwargs)
-        if nbytes:
-            # see __init__ for the initialization to None
-            if self._size is None:
-                self._size = 0
-            self._size += nbytes
+        nbytes  = self.writeMeta(data, **kwargs)
+        dataLen = len(data)
+        if nbytes != dataLen:
+            # TODO: Maybe this should be an actual error?
+            warnings.warn('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
+
+        # see __init__ for the initialization to None
+        if self._size is None:
+            self._size = 0
+        self._size += nbytes
+
+        # Trigger our immediate consumers
+        writtenData = buffer(data, 0, nbytes)
+        for immediateConsumer in self._immediateConsumers:
+            immediateConsumer.consume(writtenData)
 
         # Update our internal checksum
         self._updateChecksum(data)
@@ -439,6 +480,11 @@ class AbstractDataObject(object):
         if not hasattr(consumer, 'consume'):
             raise Exception("The consumer %s doesn't have a 'consume' method" % (consumer))
 
+        # An object cannot be a normal and immediate consumer at the same time,
+        # see the comment in the __init__ method
+        if consumer in self._immediateConsumers:
+            raise Exception("Consumer %s is already registered as an immediate consumer" % (consumer))
+
         # Add if not already present
         # Add the reverse reference too automatically
         if consumer in self._consumers:
@@ -476,6 +522,47 @@ class AbstractDataObject(object):
         if producer:
             self._producer = producer
 
+    def addImmediateConsumer(self, immediateConsumer):
+        """
+        Adds an immediate immediateConsumer to this DataObject.
+
+        Immediate consumers are objects that receive the data written into this
+        DataObject *as it gets written*, and therefore do not need to wait until
+        this DataObject has been moved to the COMPLETED state.
+        """
+
+        # Consumers have a "consume" method that gets invoked when
+        # this DO moves to COMPLETED
+        if not hasattr(immediateConsumer, 'consume'):
+            raise Exception("The immediate consumer %s doesn't have a 'consume' method" % (immediateConsumer))
+
+        # An object cannot be a normal and immediate immediateConsumer at the same time,
+        # see the comment in the __init__ method
+        if immediateConsumer in self._consumers:
+            raise Exception("Consumer %s is already registered as a normal consumer" % (immediateConsumer))
+
+        # Add if not already present
+        # Add the reverse reference too automatically
+        if immediateConsumer in self._immediateConsumers:
+            return
+        _logger.debug('Adding new immediate immediate consumer for DataObject %s/%s: %s' %(self.oid, self.uid, immediateConsumer))
+        self._immediateConsumers.append(immediateConsumer)
+
+        # Automatic back-reference
+        if hasattr(immediateConsumer, 'immediateProducer'):
+            immediateConsumer.immediateProducer = self
+
+    @property
+    def immediateProducer(self):
+        return self._immediateProducer
+
+    @immediateProducer.setter
+    def immediateProducer(self, immediateProducer):
+        if self._immediateProducer and immediateProducer:
+            warnings.warn("A immediate producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
+        if immediateProducer:
+            self._producer = immediateProducer
+
     def setCompleted(self):
         '''
         Manually moves this DO to the COMPLETED state. This can be used when
@@ -489,6 +576,10 @@ class AbstractDataObject(object):
         if _logger.isEnabledFor(logging.INFO):
             _logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
+
+        # Signal our immediate consumers that the show is over
+        for ic in self._immediateConsumers:
+            ic.consumptionCompleted()
 
     def isCompleted(self):
         '''
@@ -807,14 +898,15 @@ class ContainerDataObject(AbstractDataObject):
 
 
 class AppConsumer(object):
+
+    __metaclass__ = ABCMeta
+
     '''
     An AppConsumer is an object implementing the "consume" method, invoked by
-    DataObjects when they change to the COMPLETED state.
+    DataObjects on their consumers when they change to the COMPLETED state.
 
-    Although consumers in general can be any kind of object, this AppConsumer
-    assumes that itself implements the setCompleted() method, and subclasses
-    also assume that there is a write() method. In other words, the AppConsumer
-    classes are meant to be mixed in with the basic DataObject classes to create
+    Although consumers in general can be any kind of object, mixing the
+    AppConsumer with the basic DataObject classes can be used to create
     DataObjects that react on other DOs who transit to COMPLETED, and that
     represent the output of a computation done over the COMPLETED DO. This is
     then the mechanism through which a DataObject graph will be able to progress
@@ -828,7 +920,7 @@ class AppConsumer(object):
 
     def appInitialize(self, **kwargs):
         """
-        Hooks for sub class
+        Initialization hooks for subclasses
         """
         pass
 
@@ -838,13 +930,11 @@ class AppConsumer(object):
         """
         self.run(self._getDataObject(dataObject))
 
+    @abstractmethod
     def run(self, dataObject):
         """
-        Hooks for sub class
-        Must return a dictionary: key: parameter name, val: argument value
-        which will then be used as the **kwargs for calling consumers (i.e. "real" AbstractDataObjects)
+        Runs the application logic over the data pointed by ``dataObject``
         """
-        pass
 
 class CRCResultConsumer(AppConsumer):
     '''
@@ -905,6 +995,45 @@ class ContainerAppConsumer(AppConsumer,
     consuming the data coming from the producer DataObject.
     '''
     pass
+
+
+#===============================================================================
+# ImmediateAppConsumer classes follow
+#===============================================================================
+
+
+class ImmediateAppConsumer(object):
+    """
+    An ImmediateAppConsumer is an object implementing the ``consume`` and
+    ``consumptionCompleted`` methods invoked by DataObjects on their immediate
+    consumers as they write data and as they move to COMPLETED state,
+    respectively.
+
+    Although immediate consumers in general can be any kind of object, mixing
+    this class with the basic DataObject implementations would lead to
+    DataObjects that react on other DOs as they get written, that perform some
+    computation on the data as it arrives, and that finally represent the output
+    of such computation.
+    """
+
+    def appInitialize(self, **kwargs):
+        """
+        Hook for subclasses to get initialized
+        """
+        pass
+
+    def consume(self, data):
+        """
+        Method that gets executed when data arrives to the 'producer' DataObject
+        """
+        pass
+
+    def consumptionCompleted(self):
+        """
+        Method executed when the 'producer' DataObject moves to COMPLETED, thus
+        signaling that no more data is to be expected by this consumer
+        """
+        pass
 
 
 #===============================================================================
