@@ -920,6 +920,12 @@ class SocketListener(object):
     all its data has been sent.
     '''
 
+    # By modifying this value before creating an instance of this object
+    # we can actually allow to create dummy SocketListeners that don't actually
+    # open the server-side socket (and therefore don't receive data). This can
+    # be useful during testing, which is why it defaults to False.
+    _dryRun = False
+
     def createSocket(self, **args):
         host = None
         port = None
@@ -937,6 +943,10 @@ class SocketListener(object):
             global _socketListenerCounter
             counter = _socketListenerCounter
             _socketListenerCounter += 1
+
+        # Don't really listen for data if running dry
+        if self._dryRun:
+            return
 
         # Accept one connection at most
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

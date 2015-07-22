@@ -1,19 +1,35 @@
+#
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2015
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
+import json, decimal
+import subprocess
+from test import graphsRepository
+import threading
+import time
+
 from bottle import route, run, request, get, static_file, template, redirect
 
-from ngas_dm import PGEngine
-import json, decimal, urllib2
-import sys, os, time, subprocess
-from dfms.data_object import AppConsumer, ContainerDataObject
 from dfms import doutils
-
-pg_engine = PGEngine()
-
-#my_public_ip = "localhost"
-luigi_port = "8082"
-
-
-from urllib2 import urlopen
-my_public_ip = urlopen('http://ip.42.pl/raw').read()
+from dfms.data_object import AppConsumer, ContainerDataObject, SocketListener
+from dfms.luigi_int import FinishGraphExecution
 
 
 def encode_decimal(obj):
@@ -25,8 +41,7 @@ def encode_decimal(obj):
     raise TypeError(repr(obj) + " is not JSON serializable")
 
 def valid_pg_name(pg_name):
-    call_nm = "create_{0}_pg".format(pg_name).lower()
-    if (not hasattr(pg_engine, call_nm)):
+    if (not hasattr(graphsRepository, pg_name)):
         return False
     return True
 
@@ -36,31 +51,12 @@ def _response_msg(msg):
     """
     return template('pg_response.html', ret_msg = msg)
 
-def _call_luigi_api(verb, **kwargs):
-    # se = '{"task_str":"chenwu"}'
-    url = "http://{0}:{1}/api/{2}".format(my_public_ip, luigi_port, verb)
-    if (len(kwargs) > 0):
-        url += "?data={0}".format(urllib2.quote(json.dumps(kwargs)))
-    try:
-        re = urllib2.urlopen(url).read()
-        jre = json.loads(re)
-        if (jre.has_key('response')):
-            return jre['response']
-        else:
-            raise Exception("Invalid reply from Luigi: {0}".format(re))
-    except urllib2.URLError, urlerr:
-        raise Exception("Luigi server at {0} is down".format(my_public_ip))
-    except urllib2.HTTPError, httperr:
-        raise Exception("Luigi API error: {0}".format(str(httperr)))
-    except Exception, ex:
-        raise Exception("Fail to query Luigi: {0}".format(str(ex)))
-
 @route('/static/<filepath:path>')
 def server_static(filepath):
     return static_file(filepath, root='./')
 
 def _get_json(call_nm, formatted=False):
-    pg = getattr(pg_engine, call_nm)()
+    pg = getattr(graphsRepository, call_nm)()
     if not isinstance(pg, list):
         pg = [pg]
 
@@ -75,54 +71,79 @@ def _get_json(call_nm, formatted=False):
         return json.dumps(allDOsDict, default=encode_decimal)
 
 @get('/show')
-def show_pg():
+def show():
     """
     Setup web page for displaying the physical graph
     """
     pg_name = request.query.get('pg_name')
     if (not valid_pg_name(pg_name)):
-        return _response_msg('Invalid physical graph name {0}'.format(pg_name))
-    call_nm = "create_{0}_pg".format(pg_name).lower()
-    jsbody = _get_json(call_nm)
+        allNames = list(graphsRepository.listGraphFunctions())
+        return _response_msg('Invalid physical graph name %s. Valid names are: %s' % (pg_name, allNames))
+    jsbody = _get_json(pg_name)
     return template('pg_graph_tpl.html', json_workers=jsbody, pg_name=pg_name)
 
-@get('/deploy')
-def deploy_pg():
+@get('/execute')
+def execute():
     pg_name = request.query.get('pg_name')
     if (not valid_pg_name(pg_name)):
-        return _response_msg('Invalid physical graph name {0}'.format(pg_name))
-    ppath = sys.executable
-    fpath = os.path.dirname(os.path.abspath(__file__))
-    ssid = "{0}-{1}".format(request.remote_addr.replace(".","-"), int(time.time()))
-    cmd = "{0} {1}/ngas_dm.py PGDeployTask --PGDeployTask-pg-name {2} --PGDeployTask-session-id {3} --workers 10".format(ppath,
-                                                                                                                         fpath,
-                                                                                                                         pg_name,
-                                                                                                                         ssid)
-    #re = commands.getstatusoutput(cmd)
-    worker = subprocess.Popen(cmd.split())
-    """
-    if (re[0] != 0):
-        return _response_msg('Fail to deploy pg as Luigi tasks: {0}'.format(re[1]))
-    """
-    timeout = 60
-    for i in range(timeout): # wait until tasks are accepted by the scheduler
-        time.sleep(1.0)
-        tasks = _call_luigi_api('task_search', task_str=ssid)
-        if (len(tasks) > 0):
-            break
-    redirect("http://{0}:{1}/static/visualiser/index.html#PGDeployTask(session_id={2}, pg_name={3})".format(my_public_ip, luigi_port, ssid, pg_name))
+        allNames = list(graphsRepository.listGraphFunctions())
+        return _response_msg('Invalid physical graph name %s. Valid names are: %s' % (pg_name, allNames))
+
+    luigi_port = 8082
+    from luigi import worker
+
+    # See if the central scheduler is already running; if it's not start it
+    from luigi import rpc
+    from urllib2 import urlopen
+    try:
+        urlopen("http://{0}:{1}", timeout=0.5)
+    except Exception:
+        # The only way to start a luigi server is to do it in a separate process,
+        # because the luigi.server.run method sets up signal traps, which can
+        # only be done in the main thread. There is a second option for starting
+        # the server programatically through the luigi.cmdline.luigid function
+        # with --background, but that kills the current process because of the
+        # "daemonization" process
+        argv = ['luigid', '--background', '--logdir', '.', '--address', '0.0.0.0', '--port', str(luigi_port)]
+        subprocess.Popen(argv)
+        time.sleep(1)
+
+    # Submit the new task and run it asynchronously so we can redirect
+    # the user to luigi's graph visualization
+    ssid = time.time()
+    pgCreator="test.graphsRepository.%s" % (pg_name)
+
+    # TODO: Not exactly thread-safe here...
+    SocketListener._dryRun = False
+    task = FinishGraphExecution(pgCreator=pgCreator, sessionId=ssid)
+    SocketListener._dryRun = True
+
+    w = worker.Worker(scheduler=rpc.RemoteScheduler(port=luigi_port))
+    w.add(task)
+
+    t = threading.Thread(None, lambda: w.run(), 'work-runner')
+    t.daemon = True
+    t.start()
+
+    my_public_ip = urlopen('http://ip.42.pl/raw').read()
+    redirect("http://{0}:{1}/static/visualiser/index.html#FinishGraphExecution(sessionId={2}, pgCreator={3})".format(my_public_ip, luigi_port, ssid, pgCreator))
 
 @get('/jsonbody')
-def get_json():
+def jsonbody():
     """
     Return JSON representation of the physical graph
     """
     pg_name = request.query.get('pg_name')
     if (not valid_pg_name(pg_name)):
         return _response_msg('Invalid physical graph name {0}'.format(pg_name))
-    call_nm = "create_{0}_pg".format(pg_name).lower()
-    return template('pg_json_tpl.html', json_body=_get_json(call_nm, formatted=True), pg_name=pg_name)
+    return template('pg_json_tpl.html', json_body=_get_json(pg_name, formatted=True), pg_name=pg_name)
 
+@get('/')
+def root():
+    """
+    Lists all the graphs contained in the graphsRepository module
+    """
+    return template('graphs_list.html', graphNames=graphsRepository.listGraphFunctions())
 
 #===============================================================================
 # DataObject JSON serialization methods, originally found in AbstractDataObject
@@ -164,10 +185,6 @@ if __name__ == "__main__":
     """
     e.g. http://localhost:8081/show?pg_name=chiles
     """
-    run(host="0.0.0.0", server='paste', port=8081, debug=True)
-    """
-    run(host = config.get('Web Server', 'IpAddress'),
-        server = 'paste',
-        port = config.getint('Web Server', 'Port'),
-        debug = config.getboolean('Web Server', 'Debug'))
-    """
+    SocketListener._dryRun = True
+    # Let's use tornado, since luigi already depends on it
+    run(host="0.0.0.0", server='tornado', port=8081, debug=True)

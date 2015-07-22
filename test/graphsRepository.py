@@ -19,18 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import random
-import time
-
-from dfms import doutils
-from dfms.data_object import AppConsumer, InMemoryDataObject, \
-    InMemorySocketListenerDataObject, ContainerDataObject, ContainerAppConsumer
-from dfms.ddap_protocol import ExecutionMode
-from dfms.events.event_broadcaster import ThreadedEventBroadcaster,\
-    LocalEventBroadcaster
-from _collections import defaultdict
-import inspect
-
 """
 A modules that contains several functions returning different "physical graphs",
 at this moment represented simply by a number of DataObjects interconnected.
@@ -43,7 +31,18 @@ test method in the test_luigi module, where it is automatically verified that
 the graph can actually be executed with luigi.
 """
 
-__all__ = ['testGraphDODriven', 'testGraphLuigiDriven', 'testGraphMixed']
+import collections
+import inspect
+import random
+import time
+
+from dfms import doutils
+from dfms.data_object import AppConsumer, InMemoryDataObject, \
+    InMemorySocketListenerDataObject, ContainerDataObject, ContainerAppConsumer
+from dfms.ddap_protocol import ExecutionMode
+from dfms.events.event_broadcaster import ThreadedEventBroadcaster, \
+    LocalEventBroadcaster
+
 
 # All DOs created in the methods of this module have a lifespan of half an hour.
 # This is to allow sufficient time for users to feed data into the initial
@@ -108,7 +107,8 @@ class SleepAndCopyContainerApp(SleepAndCopyApp, ContainerAppConsumer):
     pass
 
 #===============================================================================
-# Methods that create graphs follow, exposed via __all__
+# Methods that create graphs follow. They must have no arguments to be
+# recognized as such
 #===============================================================================
 def testGraphDODriven():
     return _testGraph(ExecutionMode.DO)
@@ -352,7 +352,7 @@ def chiles_pg():
     num_obs = 8 # the same as num of data island
     subband_width = 60 # MHz
     num_subb = total_bandwidth / subband_width
-    subband_dict = defaultdict(list) # for corner turning
+    subband_dict = collections.defaultdict(list) # for corner turning
     img_list = []
     start_freq = 940
     eb = ThreadedEventBroadcaster()
@@ -427,6 +427,11 @@ def chiles_pg():
     return dob_root
 
 def listGraphFunctions():
+    """
+    Returns a generator that iterates over the names of the functions of this
+    module that return a DataObject graph. Such functions are recognized because
+    they accept no arguments at all.
+    """
     allNames = dict(globals())
     for name in allNames:
         if name == 'listGraphFunctions': # ourselves

@@ -53,8 +53,8 @@ class RunDataObjectTask(luigi.Task):
     driving the execution: the DO must be COMPLETED and must exist.
     """
 
-    data_obj = luigi.Parameter()
-    session_id = luigi.Parameter()
+    data_obj  = luigi.Parameter()
+    sessionId = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
         super(RunDataObjectTask, self).__init__(*args, **kwargs)
@@ -94,7 +94,7 @@ class RunDataObjectTask(luigi.Task):
         for req in doutils.getUpstreamObjects(self.data_obj):
             if _logger.isEnabledFor(logging.DEBUG):
                 _logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
-            re.append(RunDataObjectTask(req, self.session_id))
+            re.append(RunDataObjectTask(req, self.sessionId))
         return re
 
 class FinishGraphExecution(luigi.Task):
@@ -106,8 +106,8 @@ class FinishGraphExecution(luigi.Task):
 
     For a number of testing graphs please see the graphsRepository module.
     """
-    session_id = luigi.Parameter(default=time.time())
-    pgCreator  = luigi.Parameter(default='testGraphDODriven')
+    sessionId = luigi.Parameter(default=time.time())
+    pgCreator = luigi.Parameter(default='testGraphDODriven')
 
     def __init__(self, *args, **kwargs):
         super(FinishGraphExecution, self).__init__(*args, **kwargs)
@@ -131,7 +131,7 @@ class FinishGraphExecution(luigi.Task):
             for dob in self._leaves:
                 if _logger.isEnabledFor(logging.DEBUG):
                     _logger.debug("Adding leaf DO as requirement to FinishGraphExecution: %s/%s" % (dob.oid, dob.uid))
-                self._req.append(RunDataObjectTask(dob, self.session_id))
+                self._req.append(RunDataObjectTask(dob, self.sessionId))
         return self._req
 
     def run(self):
