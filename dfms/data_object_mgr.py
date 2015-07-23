@@ -26,6 +26,7 @@
 #
 from dfms.data_object import InMemoryCRCResultDataObject
 from dfms.events.pyro.pyro_event_broadcaster import PyroEventBroadcaster
+from dfms.events.event_broadcaster import LocalEventBroadcaster
 import types
 
 """
@@ -56,7 +57,7 @@ class DataObjectMgr(object):
         self.daemon_dict = {} # key - sessionId, value - daemon
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
         self.daemon_dob_dict = defaultdict(dict) # key - sessionId, value - a dictionary of Data Objects (key - obj uri, val - obj)
-        self.eventbc = PyroEventBroadcaster()
+        self.eventbc = LocalEventBroadcaster()#PyroEventBroadcaster()
 
     def getURI(self):
         return self._uri
