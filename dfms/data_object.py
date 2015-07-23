@@ -25,10 +25,10 @@
 #
 import threading
 import random
-from IN import INT16_MAX, INT16_MIN
 import warnings
 import socket
 from dfms.ddap_protocol import ExecutionMode
+import sys
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -230,7 +230,7 @@ class AbstractDataObject(object):
 
         # Save the real descriptor in the dictionary and return its key instead
         while True:
-            key = random.SystemRandom().randint(INT16_MIN, INT16_MAX)
+            key = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
             if key not in self._readDescriptors:
                 break
         self._readDescriptors[key] = descriptor
