@@ -23,12 +23,6 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
-import threading
-import random
-import warnings
-import socket
-from dfms.ddap_protocol import ExecutionMode
-import sys
 """
 Data object is the centre of the data-driven architecture
 It should be based on the UML class diagram
@@ -39,14 +33,22 @@ import heapq
 import logging
 from operator import __or__
 import os, time
+import random
+import socket
+import sys
+import threading
+import warnings
 
 from ddap_protocol import DOStates
+from dfms.ddap_protocol import ExecutionMode, ChecksumTypes
 
 
 try:
     from crc32c import crc32
+    _checksumType = ChecksumTypes.CRC_32C
 except:
     from binascii import crc32
+    _checksumType = ChecksumTypes.CRC_32
 
 
 _logger = logging.getLogger(__name__)
@@ -146,8 +148,9 @@ class AbstractDataObject(object):
         # this information.
         # Note also that the setters of these two properties also allow to set
         # a value on them, but only if they are None
-        self._checksum = None
-        self._size     = None
+        self._checksum     = None
+        self._checksumType = None
+        self._size         = None
 
         # "DataObject descriptors" used for reading.
         # Instead of passing file objects or more complex data types in our
@@ -187,7 +190,7 @@ class AbstractDataObject(object):
             # failure during writing for example.
             raise
 
-    def getArg(self, kwargs, key, default):
+    def _getArg(self, kwargs, key, default):
         val = default
         if kwargs.has_key(key) and kwargs[key]:
             val = kwargs[key]
@@ -238,12 +241,16 @@ class AbstractDataObject(object):
         # This occurs only after a successful opening
         with self._refLock:
             self._refCount += 1
-        self.fire('open')
+        self._fire('open')
 
         return key
 
     def close(self, descriptor, **kwargs):
-
+        """
+        Closes the given DataObject descriptor, decreasing the DataObject's
+        internal reference count and releasing the underlying resources
+        associated to the descriptor.
+        """
         self._checkStateAndDescriptor(descriptor)
 
         # Decrement counter and then actually close
@@ -253,7 +260,7 @@ class AbstractDataObject(object):
 
     def read(self, descriptor, count=4096, **kwargs):
         """
-        Reads count bytes from the given DataObject descriptor.
+        Reads `count` bytes from the given DataObject `descriptor`.
         """
         self._checkStateAndDescriptor(descriptor)
         return self.readMeta(self._readDescriptors[descriptor], count, **kwargs)
@@ -265,19 +272,20 @@ class AbstractDataObject(object):
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
     def isBeingRead(self):
-        '''
-        Returns True if the DataObject is currently being read; False otherwise
-        '''
+        """
+        Returns `True` if the DataObject is currently being read; `False`
+        otherwise
+        """
         with self._refLock:
             return self._refCount > 0
 
     def write(self, data, **kwargs):
         '''
-        Writes the given data into this DataObject. This method is only meant to
-        be called while the DataObject is in INITIALIZED or WRITING state; once
-        the DataObject is COMPLETE or beyond only reading is allowed.
+        Writes the given `data` into this DataObject. This method is only meant
+        to be called while the DataObject is in INITIALIZED or WRITING state;
+        once the DataObject is COMPLETE or beyond only reading is allowed.
         The underlying storage mechanism is responsible for implementing the
-        final writing logic via the writeMeta() method.
+        final writing logic via the `self.writeMeta()` method.
         '''
 
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
@@ -322,42 +330,43 @@ class AbstractDataObject(object):
     def openMeta(self, **kwargs):
         """
         Hook for subclass open. It returns a "DataObject descriptor", used by
-        the readMeta() and closeMeta() methods. This way parallel readings can
-        be performed over the same DataObject.
+        the `self.readMeta()` and `self.closeMeta()` methods. This way parallel
+        readings can be performed over the same DataObject.
         """
 
     @abstractmethod
     def closeMeta(self, descriptor, **kwargs):
         """
         Hook for subclass close. It closes the given descriptor, thus freeing
-        underlying resources. The descriptor is that returned by the openMeta()
-        method.
+        underlying resources. The descriptor is that returned by the
+        `self.openMeta()` method.
         """
 
     @abstractmethod
     def readMeta(self, descriptor, count, **kwargs):
         """
-        Hook for subclass read. It reads at most count bytes from the given
-        descriptor. The descriptor is that returned by the openMeta() method.
+        Hook for subclass read. It reads at most `count` bytes from the given
+        `descriptor`. The descriptor is that returned by the `self.openMeta()`
+        method.
         """
 
     @abstractmethod
     def writeMeta(self, data, **kwargs):
         """
-        Hook for subclass write. It writes the data represented by this
-        DataObject into the underlying media.
+        Hook for subclass write. It writes `data` into the underlying media
+        used by this DataObject.
         """
 
     @abstractmethod
     def delete(self):
-        '''
-        Deletes the data represented by this DO.
-        '''
+        """
+        Deletes the data represented by this DataObject.
+        """
 
     @abstractmethod
     def exists(self):
         """
-        Returns True if the data represented by this DataObject exists indeed
+        Returns `True` if the data represented by this DataObject exists indeed
         in the underlying storage mechanism
         """
 
@@ -365,40 +374,100 @@ class AbstractDataObject(object):
         # see __init__ for the initialization to None
         if self._checksum is None:
             self._checksum = 0
+            self._checksumType = _checksumType
         self._checksum = crc32(chunk, self._checksum)
 
     @property
     def checksum(self):
+        """
+        The checksum value for the data represented by this DataObject. Its
+        value is automatically calculated if the data was actually written
+        through this DataObject (using the `self.write()` method directly or
+        indirectly). In the case that the data has been externally written, the
+        checksum can be set externally after the DataObject has been moved to
+        COMPLETED or beyond.
+
+        :see: `self.checksumType`
+        """
         return self._checksum
 
     @checksum.setter
     def checksum(self, value):
         if self._checksum is not None:
             raise Exception("The checksum for DataObject %s is already calculated, cannot overwrite with new value" % (self))
+        if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
+            raise Exception("DataObject %s is still not fully written, cannot manually set a checksum yet" % (self))
         self._checksum = value
 
     @property
+    def checksumType(self):
+        """
+        The algorithm used to compute this DataObject's data checksum. Its value
+        if automatically set if the data was actually written through this
+        DataObject (using the `self.write()` method directly or indirectly). In
+        the case that the data has been externally written, the checksum type
+        can be set externally after the DataObject has been moved to COMPLETED
+        or beyond.
+
+        :see: `self.checksum`
+        """
+        return self._checksumType
+
+    @checksumType.setter
+    def checksumType(self, value):
+        if self._checksumType is not None:
+            raise Exception("The checksum type for DataObject %s is already set, cannot overwrite with new value" % (self))
+        if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
+            raise Exception("DataObject %s is still not fully written, cannot manually set a checksum type yet" % (self))
+        self._checksumType = value
+
+    @property
     def oid(self):
+        """
+        The DataObject's Object ID (OID). OIDs are unique identifiers given to
+        semantically different DataObjects (and by consequence the data they
+        represent). This means that different DataObjects that point to the same
+        data semantically speaking, either in the same or in a different
+        storage, will share the same OID.
+        """
         return self._oid
 
     @property
     def uid(self):
+        """
+        The DataObject's Unique ID (UID). Unlike the OID, the UID is globally
+        different for all DataObject instances, regardless of the data they
+        point to.
+        """
         return self._uid
 
     @property
     def executionMode(self):
+        """
+        The execution mode of this DataObject. If `ExecutionMode.DO` it means
+        that this DataObject will automatically trigger the execution of all its
+        consumers. If `ExecutionMode.EXTERNAL` it means that this DataObject
+        will *not* trigger its consumers, and therefore an external entity will
+        have to do it.
+        """
         return self._executionMode
 
     def subscribe(self, callback, eventType=None):
+        """
+        Adds a new subscription to events fired from this DataObject.
+        """
         self._bcaster.subscribe(self._uid, callback, eventType=eventType)
 
-    def unsubscribe(self, callback):
-        self._bcaster.unsubscribe(self._uid, callback)
+    def unsubscribe(self, callback, eventType=None):
+        """
+        Removes a subscription from events fired from this DataObject.
+        """
+        self._bcaster.unsubscribe(self._uid, callback, eventType=eventType)
 
-    def fire(self, eventType, **attrs):
-        attrs['oid'] = self.oid
-        attrs['uid'] = self.uid
-        self._bcaster.fire(eventType, **attrs)
+    def _fire(self, eventType, **kwargs):
+        kwargs['oid'] = self.oid
+        kwargs['uid'] = self.uid
+        self._bcaster.fire(eventType, **kwargs)
 
     def isReplicable(self):
         return True
@@ -417,20 +486,35 @@ class AbstractDataObject(object):
 
     @property
     def size(self):
+        """
+        The size of the data pointed by this DataObject. Its value is
+        automatically calculated if the data was actually written through this
+        DataObject (using the `self.write()` method directly or indirectly). In
+        the case that the data has been externally written, the size can be set
+        externally after the DataObject has been moved to COMPLETED or beyond.
+        """
         return self._size
 
     @size.setter
     def size(self, size):
         if self._size is not None:
             raise Exception("The size of DataObject %s is already calculated, cannot overwrite with new value" % (self))
+        if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
+            raise Exception("DataObject %s is still not fully written, cannot manually set a size yet" % (self))
         self._size = size
 
     @property
     def precious(self):
+        """
+        Whether this DataObject should be considered as 'precious' or not
+        """
         return self._precious
 
     @property
     def status(self):
+        """
+        The current status of this DataObject.
+        """
         with self._statusLock:
             return self._status
 
@@ -442,8 +526,7 @@ class AbstractDataObject(object):
                 return
             self._status = value
 
-        # fire off event
-        self.fire('status', status = value)
+        self._fire('status', status = value)
 
     @property
     def parent(self):
@@ -458,6 +541,11 @@ class AbstractDataObject(object):
 
     @property
     def consumers(self):
+        """
+        The list of 'normal' consumers held by this DataObject.
+
+        :see: `self.addConsumer()`
+        """
         return self._consumers[:]
 
     def addConsumer(self, consumer):
@@ -466,7 +554,7 @@ class AbstractDataObject(object):
 
         Consumers are a particular kind of subscriber that are only interested
         on the status change of DataObjects to COMPLETED. When the expected
-        status change occurs, the consumers' consume() method is invoked with
+        status change occurs, the consumers' `consume()` method is invoked with
         a reference to the DataObject that changed state.
 
         This is one of the key mechanisms by which the DataObject graph is
@@ -513,6 +601,12 @@ class AbstractDataObject(object):
 
     @property
     def producer(self):
+        """
+        The producer for which this DataObject acts as a 'normal' consumer, if
+        any.
+
+        :see: `self.addConsumer()`
+        """
         return self._producer
 
     @producer.setter
@@ -521,6 +615,15 @@ class AbstractDataObject(object):
             warnings.warn("A producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
         if producer:
             self._producer = producer
+
+    @property
+    def immediateConsumers(self):
+        """
+        The list of 'immediate' consumers held by this DataObject.
+
+        :see: `self.addImmediateConsumer()`
+        """
+        return self._immediateConsumers[:]
 
     def addImmediateConsumer(self, immediateConsumer):
         """
@@ -554,6 +657,12 @@ class AbstractDataObject(object):
 
     @property
     def immediateProducer(self):
+        """
+        The producer for which this DataObject acts as an 'immediate' consumer,
+        if any.
+
+        :see: `self.addImmediateConsumer()`
+        """
         return self._immediateProducer
 
     @immediateProducer.setter
@@ -630,7 +739,7 @@ class FileDataObject(AbstractDataObject):
         """
         File data object-specific initialization.
         """
-        self._root = self.getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
+        self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
         if (not os.path.exists(self._root)):
             os.mkdir(self._root)
 
@@ -690,11 +799,11 @@ class NgasDataObject(AbstractDataObject):
             warnings.warn("No NGAMS client libs found, cannot use NgasDataObjects")
             raise
 
-        self._ngasSrv            = self.getArg(kwargs, 'ngasSrv', 'localhost')
-        self._ngasPort           = int(self.getArg(kwargs, 'ngasPort', 7777))
+        self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
+        self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
         # TODO: The NGAS client doesn't differentiate between these, it should
-        self._ngasTimeout        = int(self.getArg(kwargs, 'ngasConnectTimeout', 2))
-        self._ngasConnectTimeout = int(self.getArg(kwargs, 'ngasTimeout', 2))
+        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
+        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
 
         # The NGAS client API doesn't have a way to continually feed an ARCHIVE
         # request with data. Thus the only way we can currently archive data
