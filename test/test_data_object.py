@@ -304,6 +304,7 @@ class TestDataObject(unittest.TestCase):
         my_port = 7778
         Pyro.config.PYRO_NS_HOSTNAME = ns_host
         Pyro.config.PYRO_HOST = my_host
+        Pyro.config.PYRO_PUBLISHHOST = my_host
         Pyro.config.PYRO_NS_PORT = 9090
         Pyro.config.PYRO_NS_URIFILE = '/dev/null'
 
