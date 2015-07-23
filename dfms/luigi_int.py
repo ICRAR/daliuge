@@ -24,7 +24,7 @@ import threading
 import time
 
 from dfms import doutils
-from dfms.data_object import AppConsumer
+from dfms.data_object import AppConsumer, AbstractDataObject
 from dfms.ddap_protocol import ExecutionMode, DOStates
 import luigi
 import importlib
@@ -113,14 +113,17 @@ class FinishGraphExecution(luigi.Task):
         super(FinishGraphExecution, self).__init__(*args, **kwargs)
         self._req    = None
 
-        parts = self.pgCreator.split('.')
-        if len(parts) > 1:
-            module = importlib.import_module('.'.join(parts[:-1]))
-            pgCreator = getattr(module, parts[-1])
+        if isinstance(self.pgCreator, str):
+            parts = self.pgCreator.split('.')
+            if len(parts) > 1:
+                module = importlib.import_module('.'.join(parts[:-1]))
+                pgCreator = getattr(module, parts[-1])
+            else:
+                pgCreator = globals()[self.pgCreator]
+            roots = pgCreator()
         else:
-            pgCreator = globals()[self.pgCreator]
+            roots = self.pgCreator
 
-        roots = pgCreator()
         self._roots = roots if isinstance(roots, list) else [roots]
         self._leaves = doutils.getEndNodes(self._roots)
         self._completed = False
