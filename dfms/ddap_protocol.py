@@ -44,6 +44,10 @@ class DOStates:
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
 
+# https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Standards_and_common_use
+class ChecksumTypes:
+    CRC_32, CRC_32C = xrange(2)
+
 class ExecutionMode:
     """
     Execution modes for a DataObject. DO means that a DataObject will trigger
