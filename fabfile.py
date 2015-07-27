@@ -25,6 +25,10 @@ VIRTUALENV_URL = 'https://pypi.python.org/packages/source/v/virtualenv/virtualen
 VENV_DIR = 'projects' # virtual env directory relative to current user home
 PROJECT = 'dfms' # project name
 
+class FabricException(Exception): pass
+env.abort_exception = FabricException
+
+
 
 def set_env():
     env.HOME = run("echo ~")
@@ -67,14 +71,6 @@ def check_dir(directory):
     return res
 
 
-def check_path(path):
-    """
-        Check existence of remote path
-        """
-    res = run('if [ -e {0} ]; then echo 1; else echo ; fi'.format(path))
-    return res
-
-
 def check_python():
     """
         Check for the existence of correct version of python
@@ -105,6 +101,13 @@ def virtualenv(command):
     env.activate = 'source {0}/bin/activate'.format(env.APP_DIR_ABS)
     with cd(env.APP_DIR_ABS):
         run(env.activate + ' && ' + command)
+
+def virtualenv_nocd(command):
+    """
+    A helper function to execute commands in the virtualenv without
+    changing the current working directory
+    """
+    run('source "{0}/bin/activate" && {1}'.format(env.APP_DIR_ABS, command))
 
 
 @task
@@ -158,25 +161,55 @@ def virtualenv_setup():
                                                        env.PYTHON, env.APP_DIR_ABS))
             run('rm -rf virtualenv*')
 
+def install_sources_if_necessary():
+
+    # If this file is not present in the host,
+    # or if it is cannot be written by the current user
+    # means we need to get the sources so we can build them
+    # without problems
+    fabfile = os.path.abspath(__file__)
+    localDir = os.path.dirname(fabfile)
+    sourcesWritable = False
+    if exists(fabfile):
+        try:
+            append(fabfile, '')
+            sourcesWritable = True
+        except FabricException:
+            pass
+
+    if not sourcesWritable:
+        with cd('/tmp'):
+            local('cd {0} && \
+                   tar cjf /tmp/dfms-packedFromSource.tar.bz2 \
+                   --exclude BIG_FILES --exclude .git \
+                   --exclude build --exclude dist \
+                   --exclude *.pyc --exclude dfms.egg-info \
+                   {1}'.format(os.path.dirname(localDir), os.path.basename(localDir)))
+            put('/tmp/dfms-packedFromSource.tar.bz2', '/tmp/dfms.tar.bz2')
+            run('tar xf dfms.tar.bz2 && rm dfms.tar.bz2')
+            local('rm /tmp/dfms-packedFromSource.tar.bz2')
+            env.srcdir = '/tmp/dfms'
+    else:
+        env.srcdir = localDir
 
 def install_egg():
-    reploc = os.path.dirname(os.path.abspath(__file__))
-    virtualenv('easy_install {0}/dist/*.egg'.format(reploc))
-
-
+    setuptools_cmd('install')
 
 def uninstall_egg():
     virtualenv('/usr/bin/yes | pip uninstall {0}'.format(PROJECT))
 
-
 def build_egg():
-    reploc = os.path.dirname(os.path.abspath(__file__))
-    virtualenv('cd {0}; python {0}/setup.py bdist_egg'.format(reploc))
-
+    setuptools_cmd('bdist_egg')
 
 def invoke_tests():
-    reploc = os.path.dirname(os.path.abspath(__file__))
-    virtualenv('cd {0}; python {0}/setup.py test'.format(reploc))
+    setuptools_cmd('test')
+
+def setuptools_cmd(cmd):
+    install_sources_if_necessary()
+    with cd(env.srcdir):
+        virtualenv_nocd('python setup.py {0}'.format(cmd))
+
+
 
 
 @task
@@ -254,4 +287,7 @@ def virtualenv_clean():
     print "### REMOVING VIRTUAL ENV ###"
 
     run('rm -rf {0}'.format(env.APP_DIR_ABS))
+
+
+
 
