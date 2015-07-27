@@ -78,19 +78,14 @@ def getUpstreamObjects(dataObject):
     In practice if A is an upstream DataObject of B means that it must be moved
     to the COMPLETED state before B can do so.
     """
+    parent = dataObject.parent
     upObjs = []
     if dataObject.producer:
         upObjs.append(dataObject.producer)
-    if _logger.isEnabledFor(logging.DEBUG):
-        parent = dataObject.parent
-        _logger.debug("Has parent? " + str(bool(parent)))
-        if parent:
-            _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
-            _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
-    if dataObject.parent and isinstance(dataObject.parent, ContainerAppConsumer):
-        upObjs.append(dataObject.parent)
+    if parent and isinstance(parent, ContainerAppConsumer):
+        upObjs.append(parent)
     elif isinstance(dataObject, ContainerDataObject) and not isinstance(dataObject, ContainerAppConsumer):
-        upObjs += [dob for dob in dataObject._children]
+        upObjs += dataObject.children
     return upObjs
 
 def getDownstreamObjects(dataObject):
@@ -106,18 +101,13 @@ def getDownstreamObjects(dataObject):
     In practice if A is a downstream DataObject of B means that it cannot
     advance to the COMPLETED state until B does so.
     """
+    parent   = dataObject.parent
     downObjs = dataObject.consumers
-    if _logger.isEnabledFor(logging.DEBUG):
-        parent = dataObject.parent
-        _logger.debug("Has parent? " + str(bool(parent)))
-        if parent:
-            _logger.debug("Parent details: %s/%s, type=%s" % (parent.oid, parent.uid, parent.__class__))
-            _logger.debug("Is parent a ContainerAppConsumer? " + str(bool(isinstance(parent, ContainerAppConsumer))))
     if isinstance(dataObject, ContainerAppConsumer):
-        downObjs += [dob for dob in dataObject._children]
-    elif dataObject.parent and isinstance(dataObject.parent, ContainerDataObject) and \
-         not isinstance(dataObject.parent, ContainerAppConsumer):
-        downObjs.append(dataObject.parent)
+        downObjs += dataObject.children
+    elif parent and isinstance(parent, ContainerDataObject) and \
+         not isinstance(parent, ContainerAppConsumer):
+        downObjs.append(parent)
     return downObjs
 
 def getEndNodes(nodes):
