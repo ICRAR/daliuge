@@ -33,6 +33,7 @@ from dfms import doutils
 from dfms.ddap_protocol import DOStates, ExecutionMode
 from dfms.doutils import EvtConsumer
 import random
+import shutil
 
 try:
     from crc32c import crc32
@@ -79,6 +80,9 @@ class TestDataObject(unittest.TestCase):
         self._test_block_sz =  2 # MB
         self._test_num_blocks = self._test_do_sz / self._test_block_sz
         self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))
+
+    def tearDown(self):
+        shutil.rmtree("/tmp/sdp_dfms", True)
 
     def test_NullDataObject(self):
         """
@@ -295,54 +299,28 @@ class TestDataObject(unittest.TestCase):
 
         import datetime
         import Pyro4
-        import Pyro
         from dfms.data_manager import DataManager
         from dfms import data_object_mgr, dataflow_manager
 
         ns_host = 'localhost'
         my_host = 'localhost'
         my_port = 7778
-        Pyro.config.PYRO_NS_HOSTNAME = ns_host
-        Pyro.config.PYRO_HOST = my_host
-        Pyro.config.PYRO_PUBLISHHOST = my_host
-        Pyro.config.PYRO_NS_PORT = 9090
-        Pyro.config.PYRO_NS_URIFILE = '/dev/null'
 
         # 1.1. launch Pyro4 name service, DOMs register on it
-        _, ns4Daemon, _ = Pyro4.naming.startNS(host=ns_host, port=my_port)
+        _, ns4Daemon, _ = Pyro4.naming.startNS(host=ns_host)
         ns4Thread = threading.Thread(None, lambda x: x.requestLoop(), 'NS4Thrd', [ns4Daemon])
         ns4Thread.setDaemon(1)
         ns4Thread.start()
 
-        # 1.2 Start Pyro NameServer and EventServer, used by the
-        #     PyroEventBroadcaster used in this exercise
-        from Pyro.naming import NameServerStarter
-        nsStarter = NameServerStarter()
-        nsThread = threading.Thread(None, lambda x: x.start(), 'NSThrd', [nsStarter])
-        nsThread.setDaemon(1)
-        nsThread.start()
-        self.assertTrue(nsStarter.waitUntilStarted(2))
-
-        from Pyro.EventService.Server import EventServiceStarter
-        esStarter = EventServiceStarter()
-        esThread = threading.Thread(None, lambda x: x.start(), 'ESThrd', [esStarter])
-        esThread.setDaemon(1)
-        esThread.start()
-        self.assertTrue(esStarter.waitUntilStarted(2))
-
         # Now comes the real work
         try:
             # 2. launch data_object_manager
-            id1 = '001'
-            id2 = '002'
-            data_object_mgr.launchServer(id1, as_daemon=True,
-                                         nsHost=ns_host, myHost=my_host, port=my_port)
-            data_object_mgr.launchServer(id2, as_daemon=True,
-                                         nsHost=ns_host, myHost=my_host, port=my_port)
+            data_object_mgr.launchServer('001', as_daemon=True, nsHost=ns_host, host=my_host, port=my_port)
+            data_object_mgr.launchServer('002', as_daemon=True, nsHost=ns_host, host=my_host, port=my_port+1)
 
             # 3. ask dataflow_manager to build the physical dataflow
             obsId = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') # a dummy observation id
-            (pdgRoot, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, ns_host, port=my_port)
+            (pdgRoot, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, nsHost=ns_host)
 
             a = pdgRoot
             b = a.consumers[0]
@@ -406,11 +384,7 @@ class TestDataObject(unittest.TestCase):
         finally:
             # 9. shutdown name service
             try:
-                esStarter.shutdown()
-                nsStarter.shutdown()
                 ns4Daemon.shutdown()
-                esThread.join()
-                nsThread.join()
                 ns4Thread.join()
             except:
                 pass
