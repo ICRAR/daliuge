@@ -24,7 +24,7 @@ import threading
 import time
 
 from dfms import doutils
-from dfms.data_object import AppConsumer, AbstractDataObject
+from dfms.data_object import AppConsumer
 from dfms.ddap_protocol import ExecutionMode, DOStates
 import luigi
 import importlib
