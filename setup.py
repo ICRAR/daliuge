@@ -11,6 +11,11 @@ setup(
       author_email='',
       url='',
       packages=find_packages(),
-      install_requires=["Pyro", "Pyro4", "luigi", "psutil"],
-      test_suite="test"
+      install_requires=["Pyro", "Pyro4", "luigi", "psutil", "paramiko"],
+      test_suite="test",
+      entry_points= {
+          'console_scripts':[
+              'dfmsDOM=dfms.data_object_mgr:main'
+          ],
+      }
 )

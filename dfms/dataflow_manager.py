@@ -34,7 +34,7 @@ import Pyro4
 
 from ddap_protocol import CST_NS_DOM
 
-def buildSimpleIngestPDG(ssid, nsHost=None, port=9090, lifespan=3600):
+def buildSimpleIngestPDG(ssid, nsHost=None, nsPort=9090, lifespan=3600):
     """
     This is an example of building a physical dataflow graph (PDG) manually
     Here "building" also includes deploying
@@ -62,7 +62,7 @@ def buildSimpleIngestPDG(ssid, nsHost=None, port=9090, lifespan=3600):
     returns a tuple with fields: (physical_graph, a_list_of_data_objects_refs)
     """
     print 'Locating Naming Service'
-    ns = Pyro4.locateNS(host=nsHost, port=port)
+    ns = Pyro4.locateNS(host=nsHost, port=nsPort)
 
     print 'Contact data object manager 001'
     uriDOM001 = ns.lookup("%s_%s" % (CST_NS_DOM, '001')).asString()
