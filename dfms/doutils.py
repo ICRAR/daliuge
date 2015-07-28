@@ -116,8 +116,7 @@ def getEndNodes(nodes):
     nodes is either a single DataObject, or a list of DataObjects.
     """
 
-    if not isinstance(nodes, list):
-        nodes = [nodes]
+    nodes = listify(nodes)
 
     # To be executed when visiting each node
     endNodes = []
@@ -153,9 +152,7 @@ def breadFirstTraverse(toVisit, func = None):
     This implementation is non-recursive.
     """
 
-    if not isinstance(toVisit, list):
-        toVisit = [toVisit]
-
+    toVisit = listify(toVisit)
     found = toVisit[:]
     while toVisit:
 
@@ -169,3 +166,12 @@ def breadFirstTraverse(toVisit, func = None):
         nextVisits = [do for do in dependencies if do not in found]
         toVisit += nextVisits
         found += nextVisits
+
+def listify(o):
+    """
+    If `o` is already a list return it as is; otherwise returns a list with
+    `o` being its only element
+    """
+    if not isinstance(o, list):
+        return [o]
+    return o
