@@ -46,6 +46,12 @@ class DOPhases:
 
 # https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Standards_and_common_use
 class ChecksumTypes:
+    """
+    An enumeration of different methods to calculate the checksum of a piece of
+    data. DataObjects (in certain conditions) calculate and keep the checksum of
+    the data they represent, and therefore also know the method used to
+    calculate it.
+    """
     CRC_32, CRC_32C = xrange(2)
 
 class ExecutionMode:
