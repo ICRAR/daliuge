@@ -20,7 +20,6 @@
 #    MA 02111-1307  USA
 #
 
-import logging
 from dfms.lifecycle import dlm
 from dfms import data_object
 from dfms.events.event_broadcaster import LocalEventBroadcaster
@@ -28,7 +27,6 @@ from unittest.case import TestCase
 import time
 from dfms.ddap_protocol import DOStates, DOPhases
 import os
-import sys
 import unittest
 
 '''
@@ -36,8 +34,6 @@ Created on 22 Jun 2015
 
 @author: rtobar
 '''
-
-logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 class TestDataLifecycleManager(TestCase):
 

@@ -26,8 +26,7 @@ from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, In
 from dfms.events.event_broadcaster import LocalEventBroadcaster,\
     ThreadedEventBroadcaster
 
-import os, unittest, threading, sys
-import logging
+import os, unittest, threading
 from cStringIO import StringIO
 from dfms import doutils
 from dfms.ddap_protocol import DOStates, ExecutionMode
@@ -41,7 +40,6 @@ except:
     from binascii import crc32
 
 ONE_MB = 1024 ** 2
-logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.DEBUG, stream=sys.stdout)
 
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
