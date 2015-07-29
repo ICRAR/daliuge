@@ -78,9 +78,12 @@ class RunDataObjectTask(luigi.Task):
         if self.execDO:
             self.data_obj.consume(self.data_obj.producer)
         else:
-            now = time.time()
+            timeout = None
             expirationDate = self.data_obj.expirationDate
-            self._evt.wait(expirationDate - now)
+            if expirationDate == -1:
+                now = time.time()
+                timeout = expirationDate - now
+            self._evt.wait(timeout)
 
     def requires(self):
         """

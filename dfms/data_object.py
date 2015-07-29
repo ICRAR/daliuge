@@ -163,10 +163,12 @@ class AbstractDataObject(object):
         self._readDescriptors = {}
 
         # Expected lifespan for this object, used by to expire them
-        lifespan = 10
+        lifespan = -1
         if kwargs.has_key('lifespan'):
             lifespan = float(kwargs['lifespan'])
-        self._expirationDate = time.time() + lifespan
+        self._expirationDate = -1
+        if lifespan != -1:
+            self._expirationDate = time.time() + lifespan
 
         # Expected data size, used to automatically move the DO to COMPLETED
         # after successive calls to write()
