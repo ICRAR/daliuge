@@ -284,9 +284,9 @@ def main(args=sys.argv):
     parser.add_option("-p", "--nsPort", action="store", type="int",
                       dest="nsPort", help = "Name service port", default=9090)
     parser.add_option("-H", "--host", action="store", type="string",
-                      dest="host", help = "The interface where this DOM will receive requests", default='localhost')
+                      dest="host", help = "The host to bind this DOM on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
-                      dest="port", help = "The port where this DOM will receive requests", default=0)
+                      dest="port", help = "The port to bind this DOM on", default=0)
     parser.add_option("-i", "--domId", action="store", type="string",
                       dest="domId", help = "The Data Object Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
@@ -300,7 +300,7 @@ def main(args=sys.argv):
         sys.exit(1)
 
     # -d and -s are exclusive
-    if not options.daemon ^ options.stop:
+    if options.daemon and options.stop:
         sys.stderr.write('%s: -d and -s cannot be specified together\n' % (args[0]))
         sys.exit(1)
 
