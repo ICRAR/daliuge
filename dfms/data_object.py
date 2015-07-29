@@ -103,6 +103,8 @@ class AbstractDataObject(object):
         uid:    uuid    (string)
         """
 
+        super(AbstractDataObject, self).__init__()
+
         # So far only these three are mandatory
         self._oid = oid
         self._uid = uid
@@ -1164,13 +1166,17 @@ class SocketListener(object):
     # be useful during testing, which is why it defaults to False.
     _dryRun = False
 
-    def createSocket(self, **args):
+    def __init__(self, *args, **kwargs):
+        super(SocketListener, self).__init__(*args, **kwargs)
+        self.createSocket(**kwargs)
+
+    def createSocket(self, **kwargs):
         host = None
         port = None
-        if 'host' in args:
-            host = args['host']
-        if 'port' in args:
-            port = int(args['port'])
+        if 'host' in kwargs:
+            host = kwargs['host']
+        if 'port' in kwargs:
+            port = int(kwargs['port'])
 
         if not host:
             host = '127.0.0.1'
@@ -1212,12 +1218,5 @@ class SocketListener(object):
         clientSocket.close()
         self.setCompleted()
 
-class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject):
-    def initialize(self, **kwargs):
-        self.createSocket(**kwargs)
-        InMemoryDataObject.initialize(self, **kwargs)
-
-class FileSocketListenerDataObject(SocketListener, FileDataObject):
-    def initialize(self, **kwargs):
-        self.createSocket(**kwargs)
-        FileDataObject.initialize(self, **kwargs)
+class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject): pass
+class FileSocketListenerDataObject(SocketListener, FileDataObject): pass
