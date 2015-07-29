@@ -127,8 +127,8 @@ class FinishGraphExecution(luigi.Task):
         else:
             roots = self.pgCreator
 
-        self._roots = roots if isinstance(roots, list) else [roots]
-        self._leaves = doutils.getEndNodes(self._roots)
+        self._roots = doutils.listify(roots)
+        self._leaves = doutils.getLeafNodes(self._roots)
         self._completed = False
 
     def requires(self):
