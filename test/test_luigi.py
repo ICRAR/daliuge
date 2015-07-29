@@ -25,22 +25,19 @@ Created on 20 Jul 2015
 @author: rtobar
 '''
 
-import logging
 import os
-import sys
 import threading
 import unittest
 
 from luigi import scheduler, worker
+import pkg_resources
 
-from dfms import doutils
+from dfms import doutils, graph_loader
 from dfms.luigi_int import FinishGraphExecution
 import graphsRepository
 
 
 test_data = str(bytearray(os.urandom(16*1024)))
-
-logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.INFO, stream=sys.stdout)
 
 class LuigiTests(unittest.TestCase):
     """
@@ -87,15 +84,20 @@ class LuigiTests(unittest.TestCase):
     def test_test_pg(self):
         self._test_graph('test_pg')
 
-    def writeToLocalhostSocket(self, port):
-        import socket
-        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.connect(("localhost", port))
-        socket.send(test_data)
-        socket.close()
+    def test_complexFromFile(self):
+        self._test_graphFromFile("complex.js", 5)
+
+    def test_complex2FromFile(self):
+        self._test_graphFromFile("complex2.js", 5)
+
+    def _test_graphFromFile(self, f, socketListeners=1):
+        f = pkg_resources.resource_stream("test", "graphs/%s" % (f))  # @UndefinedVariable
+        self._test_graph(graph_loader.readObjectGraph(f), socketListeners)
 
     def _test_graph(self, pgCreator, socketListeners=1):
-        task = FinishGraphExecution(pgCreator="test.graphsRepository.%s" % (pgCreator))
+        if isinstance(pgCreator, str):
+            pgCreator = "test.graphsRepository.%s" % (pgCreator)
+        task = FinishGraphExecution(pgCreator=pgCreator)
         sch = scheduler.CentralPlannerScheduler()
         w = worker.Worker(scheduler=sch)
         w.add(task)
@@ -114,6 +116,13 @@ class LuigiTests(unittest.TestCase):
         # and should exist
         doutils.breadFirstTraverse(task.roots,\
                                    lambda do: self.assertTrue(do.isCompleted() and do.exists()))
+
+    def writeToLocalhostSocket(self, port):
+        import socket
+        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket.connect(("localhost", port))
+        socket.send(test_data)
+        socket.close()
 
 if __name__ == '__main__':
     unittest.main()

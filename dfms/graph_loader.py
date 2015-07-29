@@ -31,7 +31,7 @@ import logging
 
 from dfms import doutils
 from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
-    FileDataObject, NgasDataObject, SocketListener
+    FileDataObject, NgasDataObject, SocketListener, ContainerAppConsumer
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 
@@ -67,6 +67,8 @@ def readObjectGraph(fileObj):
             do = _createPlain(doSpec)
         elif doType == 'container':
             do = _createContainer(doSpec)
+        elif doType == 'containerapp':
+            do = _createContainerApp(doSpec)
         elif doType == 'socket':
             do = _createSocket(doSpec)
         elif doType == 'app':
@@ -118,6 +120,20 @@ def _createContainer(doSpec):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
     return ContainerDataObject(oid, uid, LocalEventBroadcaster(), **kwargs)
+
+def _createContainerApp(doSpec):
+    oid, uid = _getIds(doSpec)
+    kwargs   = _getKwargs(doSpec)
+    del kwargs['app']
+
+    appName = doSpec['app']
+    parts   = appName.split('.')
+    module  = importlib.import_module('.'.join(parts[:-1]))
+    appType = getattr(module, parts[-1])
+
+    class doType(appType, ContainerAppConsumer): pass
+
+    return doType(oid, uid, LocalEventBroadcaster(), **kwargs)
 
 def _createSocket(doSpec):
     oid, uid = _getIds(doSpec)
