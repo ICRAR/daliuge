@@ -101,7 +101,7 @@ def execute():
         # The only way to start a luigi server is to do it in a separate process,
         # because the luigi.server.run method sets up signal traps, which can
         # only be done in the main thread. There is a second option for starting
-        # the server programatically through the luigi.cmdline.luigid function
+        # the server programmatically through the luigi.cmdline.luigid function
         # with --background, but that kills the current process because of the
         # "daemonization" process
         argv = ['luigid', '--background', '--logdir', '.', '--address', '0.0.0.0', '--port', str(luigi_port)]
