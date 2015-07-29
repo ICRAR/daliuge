@@ -125,10 +125,10 @@ class DOUtilsTest(unittest.TestCase):
 
     def testGetEndNodes(self):
         """
-        Checks that the getEndNodes works correctly
+        Checks that the getLeafNodes works correctly
         """
         a, _, _, _, _, f, g = self._createGraph()
-        endNodes = doutils.getEndNodes(a)
+        endNodes = doutils.getLeafNodes(a)
         self.assertSetEqual(set([f, g]), set(endNodes))
         pass
 

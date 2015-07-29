@@ -110,10 +110,10 @@ def getDownstreamObjects(dataObject):
         downObjs.append(parent)
     return downObjs
 
-def getEndNodes(nodes):
+def getLeafNodes(nodes):
     """
-    Returns a list of all the "end nodes" of the graph pointed by nodes.
-    nodes is either a single DataObject, or a list of DataObjects.
+    Returns a list of all the "leaf nodes" of the graph pointed by `nodes`.
+    `nodes` is either a single DataObject, or a list of DataObjects.
     """
 
     nodes = listify(nodes)
@@ -169,9 +169,12 @@ def breadFirstTraverse(toVisit, func = None):
 
 def listify(o):
     """
-    If `o` is already a list return it as is; otherwise returns a list with
-    `o` being its only element
+    If `o` is already a list return it as is; if `o` is a tuple returns a list
+    containing the elements contained in the tuple; otherwise returns a list
+    with `o` being its only element
     """
-    if not isinstance(o, list):
-        return [o]
-    return o
+    if isinstance(o, list):
+        return o
+    if isinstance(o, tuple):
+        return list(o)
+    return [o]
