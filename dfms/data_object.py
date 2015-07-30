@@ -537,11 +537,18 @@ class AbstractDataObject(object):
         return self._parent
 
     @parent.setter
-    def parent(self, value):
-        if self._parent and value:
+    def parent(self, parent):
+        if self._parent and parent:
             warnings.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
-        if value:
-            self._parent = value # a parent is a container
+        if parent:
+            self._parent = parent # a parent is a container
+            def checkCompletedChild(event):
+                if ("status" != event.type):
+                    return
+                if (event.status != DOStates.COMPLETED):
+                    return
+                parent.addCompletedChild(event.oid, event.uid)
+            self.subscribe(checkCompletedChild, eventType='status')
 
     @property
     def consumers(self):
@@ -733,9 +740,6 @@ class AbstractDataObject(object):
         This is for testing purpose
         """
         return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
-
-    def _getDataObject(self, dataObject):
-        return dataObject
 
 class FileDataObject(AbstractDataObject):
 
@@ -945,18 +949,12 @@ class ContainerDataObject(AbstractDataObject):
     def writeMeta(self, descriptor, data, **kwargs):
         raise NotImplementedError()
 
-    def check_join_condition(self, event):
-
-        if ("status" != event.type):
-            return
-
-        if (event.status != DOStates.COMPLETED):
-            return
+    def addCompletedChild(self, oid, uid):
 
         if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("ContainerDataObject %s/%s joined COMPLETED child DataObject %s/%s" % (self._oid, self._uid, event.oid, event.uid))
+            _logger.debug("ContainerDataObject %s/%s joined COMPLETED child DataObject %s/%s" % (self._oid, self._uid, oid, uid))
 
-        self._complete_map[event.oid] = True
+        self._complete_map[oid] = True
 
         # check if each child is completed
         # TODO: We should also consider the case in which one child takes so
@@ -979,7 +977,6 @@ class ContainerDataObject(AbstractDataObject):
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
 
-        child.subscribe(self.check_join_condition, eventType='status')
         self._children.append(child)
         child.parent = self
         self._complete_map[child.oid] = child.isCompleted()
@@ -1041,7 +1038,7 @@ class AppConsumer(object):
         """
         Execute the tasks
         """
-        self.run(self._getDataObject(dataObject))
+        self.run(dataObject)
 
     @abstractmethod
     def run(self, dataObject):

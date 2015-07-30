@@ -24,6 +24,7 @@
 # chen.wu@icrar.org   10/12/2014     Created as compute island mgr
 #                     13/04/2015     change name to DOMgr
 #
+from dfms import graph_loader, doutils
 """
 A data object managers manages all local Data Object instances
 on a single address space
@@ -34,7 +35,6 @@ import logging
 from optparse import OptionParser
 import os
 import sys, threading
-import types
 
 import Pyro4
 
@@ -51,10 +51,11 @@ def _startDobDaemonThread(daemon):
 
 class DataObjectMgr(object):
 
-    def __init__(self):
+    def __init__(self, useDLM=True):
         """
         Constructor:
         """
+        self.useDLM = useDLM
         self.dlm_dict = {} # key - sessionId, value - DataLifecycleManager
         self.daemon_dict = {} # key - sessionId, value - daemon
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
@@ -67,22 +68,17 @@ class DataObjectMgr(object):
     def setURI(self, uri):
         self._uri = uri
 
-    def createDataObject(self, oid, uid, sessionId, appDataObj = False, lifespan=3600):
-        """
-        This dummy implementation of 'createDataObject' creates either a data-only
-        DataObject in the form of a FileDataObject, or an application DataObject,
-        in the form of an InMemoryCRCResultDataObject.
-
-        This method returns the URI of the data object created
-        """
+    def _getSessionObjects(self, sessionId):
 
         # Get the DLM for the session
-        if self.dlm_dict.has_key(sessionId):
-            dlm = self.dlm_dict[sessionId]
-        else:
-            dlm = DataLifecycleManager()
-            dlm.startup()
-            self.dlm_dict[sessionId] = dlm
+        dlm = None
+        if self.useDLM:
+            if self.dlm_dict.has_key(sessionId):
+                dlm = self.dlm_dict[sessionId]
+            else:
+                dlm = DataLifecycleManager()
+                dlm.startup()
+                self.dlm_dict[sessionId] = dlm
 
         # Get the DO daemon for this session, and that
         # will host the new DO
@@ -92,33 +88,54 @@ class DataObjectMgr(object):
             dob_daemon = Pyro4.Daemon()
             self.daemon_dict[sessionId] = dob_daemon
 
-        # What kind of DO we need to create?
-        # TODO: In the future I guess that by the time this method will be
-        #       called with more specific parameters, mainly to know which kind
-        #       of DO should be created depending on the node of the PG that
-        #       is being created (i.e., which kind of storage do we need, which
-        #       application should be run, which are its parameters, etc).
-        #       Also, when creating the DO it should be known the storage layer
-        #       (in the HSM) it belongs to, because the information is needed
-        #       later to make decisions regarding data movement (we need to know
-        #       in which later each DO is currently sitting, and where does it
-        #       need to be moved)
-        #
-        # After reading a bit more and thinking more about it, we might want to
-        # leave the particulars of choosing a storage later to the DLM/HSM
-        # fully, without the DOM really caring where the data will be stored.
+        return dob_daemon, dlm
+
+    def _registerNewDataObject(self, dob_daemon, dlm, dataObject, sessionId):
+        # Create, register, and let the DLM manage its lifecycle
+        uri = dob_daemon.register(dataObject)
+        dataObject.uri = uri
+        self.daemon_dob_dict[sessionId][uri] = dataObject
+        if dlm:
+            dlm.addDataObject(dataObject)
+        return uri
+
+    def createDataObject(self, oid, uid, sessionId, appDataObj = False, lifespan=3600):
+        """
+        This dummy implementation of 'createDataObject' creates either a data-only
+        DataObject in the form of a FileDataObject, or an application DataObject,
+        in the form of an InMemoryCRCResultDataObject.
+
+        This method returns the URI of the data object created
+        """
         if (appDataObj):
             mydo = InMemoryCRCResultDataObject(oid, uid, self.eventbc)
         else:
             mydo = InMemoryDataObject(oid, uid, self.eventbc)
 
-        # Create, register, and let the DLM manage its lifecycle
-        uri = dob_daemon.register(mydo)
-        mydo.uri = uri
-        mydo._getDataObject = types.MethodType(lambda self, do: Pyro4.Proxy(do.uri), mydo)
-        self.daemon_dob_dict[sessionId][uri] = mydo
-        dlm.addDataObject(mydo)
-        return uri
+        dob_daemon, dlm = self._getSessionObjects(sessionId)
+        return self._registerNewDataObject(dob_daemon, dlm, mydo, sessionId)
+
+    def createDataObjectGraph(self, sessionId, graphSpec):
+        """
+        Creates a full DataObject graph hosted by this DataObjectManager.
+        The graph to be created is specified by `graphSpec`, and all its objects
+        will be managed in the context of session `sessionId`.
+
+        This method returns a list with all the URIs of the newly created
+        DataObjects in bread-first order starting from the roots of the graph,
+        which are in turn found in the same order as they are present in
+        `graphSpec`
+        """
+
+        # Create and register
+        roots = graph_loader.readObjectGraphS(graphSpec)
+        dob_daemon, dlm = self._getSessionObjects(sessionId)
+        doutils.breadFirstTraverse(roots, lambda do: self._registerNewDataObject(dob_daemon, dlm, do, sessionId))
+
+        # Collect all URIs and return
+        uris = []
+        doutils.breadFirstTraverse(roots, lambda do: uris.append(do.uri))
+        return uris
 
     def linkDataObjects(self, ldoUri, rdoUri, lcmiUri, rcmiUri, linkType, sessionId):
         """
@@ -154,12 +171,18 @@ class DataObjectMgr(object):
             raise Exception('Unknown link type %s' % (str(linkType)))
 
     def startDOBDaemon(self, sessionId):
+        """
+        Starts the Pyro Daemon that serves requests for the given sessionId.
+        TODO: We could start this automatically when the daemon is created in
+        `self._getSessionObjects`
+        """
         if (self.daemon_dict.has_key(sessionId)):
             dae = self.daemon_dict[sessionId]
             args = (dae,)
             thref = threading.Thread(None, _startDobDaemonThread, 'DOBThrd' + str(sessionId), args)
             thref.setDaemon(1)
-            print 'Launching daemon %s' % sessionId
+            if _logger.isEnabledFor(logging.INFO):
+                _logger.info('Launching daemon %s' % sessionId)
             thref.start()
             self.daemon_thd_dict[sessionId] = thref
             return 0

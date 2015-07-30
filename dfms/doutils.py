@@ -152,7 +152,7 @@ def breadFirstTraverse(toVisit, func = None):
     This implementation is non-recursive.
     """
 
-    toVisit = listify(toVisit)
+    toVisit = listify(toVisit)[:]
     found = toVisit[:]
     while toVisit:
 
