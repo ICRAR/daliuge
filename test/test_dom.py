@@ -29,7 +29,7 @@ from dfms.ddap_protocol import DOStates
 
 class TestDOM(unittest.TestCase):
 
-    def test_runGraphSingleDOPerDOM(self):
+    def test_runGraphOneDOPerDOM(self):
         """
         A test that creates two DataObjects in two different DOMs, wire them
         together externally (i.e., using their proxies), and runs the graph.
@@ -127,3 +127,91 @@ class TestDOM(unittest.TestCase):
 
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(c)))
         self.assertEquals(b.checksum + c.checksum, int(doutils.allDataObjectContents(e)))
+
+    def test_runWithFourDOMs(self):
+        """
+        A test that creates several DataObjects in two different DOMs and  runs
+        the graph. The graph looks like this
+
+                     DOM #2
+                     +--------------------------+
+                     |        |--> C --|        |
+                 +---|--> B --|--> D --|--> F --|--|
+                 |   |        |--> E --|        |  |
+        DOM #1   |   +--------------------------+  |  DOM #4
+        +-----+  |                                 |  +---------------+
+        |     |  |                                 |--|--> L --|      |
+        | A --|--+                                    |        |--> N |
+        |     |  |                                 |--|--> M --|      |
+        +-----+  |   DOM #3                        |  +---------------+
+                 |   +--------------------------+  |
+                 |   |        |--> H --|        |  |
+                 +---|--> G --|--> I --|--> K --|--|
+                     |        |--> J --|        |
+                     +--------------------------+
+        """
+
+        dom1 = DataObjectMgr(useDLM=False)
+        dom2 = DataObjectMgr(useDLM=False)
+        dom3 = DataObjectMgr(useDLM=False)
+        dom4 = DataObjectMgr(useDLM=False)
+        allDOMs = [dom1, dom2, dom3, dom4]
+
+        memoryCRCAppSpec = '"type":"app", "app":"dfms.data_object.CRCResultConsumer", "storage":"memory"'
+        memoryCRCSumAppSpec = '"type":"app", "app":"test.test_data_object.SumupContainerChecksum", "storage":"memory"'
+
+        sessionId = 's1'
+        g1 = '[{"oid":"A", "type":"plain", "storage": "memory", "expectedSize":1}]'
+        g2 = '[{{"oid":"B", {0}, "consumers":["C","D","E"]}},\
+               {{"oid":"C", {0}}},\
+               {{"oid":"D", {0}}},\
+               {{"oid":"E", {0}}},\
+               {{"oid":"F", "type":"container", "children":["C","D","E"]}}]'.format(memoryCRCAppSpec)
+        g3 = '[{{"oid":"G", {0}, "consumers":["H","I","J"]}},\
+               {{"oid":"H", {0}}},\
+               {{"oid":"I", {0}}},\
+               {{"oid":"J", {0}}},\
+               {{"oid":"K", "type":"container", "children":["H","I","J"]}}]'.format(memoryCRCAppSpec)
+        g4 = '[{{"oid":"L", {0}}},\
+               {{"oid":"M", {0}}},\
+               {{"oid":"N", "type":"container", "children":["L","M"]}}]'.format(memoryCRCSumAppSpec)
+
+        uids1 = dom1.createDataObjectGraph(sessionId, g1)
+        uids2 = dom2.createDataObjectGraph(sessionId, g2)
+        uids3 = dom3.createDataObjectGraph(sessionId, g3)
+        uids4 = dom4.createDataObjectGraph(sessionId, g4)
+        self.assertEquals(1, len(uids1))
+        self.assertEquals(5, len(uids2))
+        self.assertEquals(5, len(uids3))
+        self.assertEquals(3, len(uids4))
+
+        # Start the Pyro.daemons
+        for dom in allDOMs:
+            dom.startDOBDaemon(sessionId)
+
+        # We externally wire the Proxy objects to establish the inter-DOM
+        # relationships. Intra-DOM relationships are already established
+        uids = []
+        [uids.extend(i) for i in [uids1, uids2, uids3, uids4]]
+        proxies = []
+        for uid in uids:
+            proxies.append(Pyro4.Proxy(uid))
+
+        a = proxies[0]
+        b = proxies[1]
+        f = proxies[5]
+        g = proxies[6]
+        k = proxies[10]
+        l = proxies[11]
+        m = proxies[12]
+
+        a.addConsumer(b)
+        a.addConsumer(g)
+        f.addConsumer(l)
+        k.addConsumer(m)
+
+        # Run! This should trigger the full execution of the graph
+        a.write('a')
+
+        for do in proxies:
+            self.assertEquals(DOStates.COMPLETED, do.status)
