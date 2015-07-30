@@ -27,9 +27,6 @@ from dfms import doutils
 from dfms.data_object_mgr import DataObjectMgr
 from dfms.ddap_protocol import DOStates
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
 class TestDOM(unittest.TestCase):
 
     def test_runGraphSingleDOPerDOM(self):
