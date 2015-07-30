@@ -45,7 +45,14 @@ def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
 
 def isContainer(do):
-    return isinstance(do, ContainerDataObject)
+    # return isinstance(do, ContainerDataObject)
+    # A Pyro-friendly way to check for a ContainerDataObject is to see if
+    # invoking its 'children' attribute fails or not
+    try:
+        do.children
+        return True
+    except AttributeError:
+        return False
 
 class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
     """

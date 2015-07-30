@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import collections
 
 """
 Module containing functions to load a fully-functional DataObject graph from its
@@ -64,7 +65,7 @@ def _createDataObjectGraph(doSpecList):
         logger.debug("Loaded %d DO definitions" % (len(doSpecList)))
 
     # Step #1: create the actual DataObjects
-    dataObjects = {}
+    dataObjects = collections.OrderedDict()
     for doSpec in doSpecList:
 
         # 'type' is mandatory
