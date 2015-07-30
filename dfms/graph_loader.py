@@ -45,15 +45,23 @@ logger = logging.getLogger(__name__)
 
 def readObjectGraph(fileObj):
     """
-    Loads the DataObject definitions from `fileObj`, creating all DataObjects,
-    establishing their relationships, and returns the root nodes of the graph
-    represented by the DataObjects.
+    Loads the DataObject definitions from file-like object `fileObj`, creating
+    all DataObjects, establishing their relationships, and returns the root
+    nodes of the graph represented by the DataObjects.
     """
+    return _createDataObjectGraph(json.load(fileObj))
 
-    doSpecList = json.load(fileObj)
+def readObjectGraphS(s):
+    """
+    Loads the DataObject definitions from the string `s`, creating all
+    DataObjects, establishing their relationships, and returns the root nodes of
+    the graph represented by the DataObjects.
+    """
+    return _createDataObjectGraph(json.loads(s))
 
+def _createDataObjectGraph(doSpecList):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Loaded %d DO definitions from %s" % (len(doSpecList), fileObj))
+        logger.debug("Loaded %d DO definitions" % (len(doSpecList)))
 
     # Step #1: create the actual DataObjects
     dataObjects = {}
