@@ -23,8 +23,6 @@
 from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
     ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject,\
     NullDataObject, ImmediateAppConsumer
-from dfms.events.event_broadcaster import LocalEventBroadcaster,\
-    ThreadedEventBroadcaster
 
 import os, unittest, threading
 from cStringIO import StringIO
@@ -93,7 +91,7 @@ class TestDataObject(unittest.TestCase):
         """
         Check that the NullDataObject is usable for testing
         """
-        a = NullDataObject('A', 'A', LocalEventBroadcaster(), expectedSize=5)
+        a = NullDataObject('A', 'A', expectedSize=5)
         a.write("1234")
         a.write("5")
         allContents = doutils.allDataObjectContents(a)
@@ -115,10 +113,8 @@ class TestDataObject(unittest.TestCase):
         """
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
-        eventbc=LocalEventBroadcaster()
-
-        dobA = doType('oid:A', 'uid:A', eventbc, expectedSize = self._test_do_sz * ONE_MB)
-        dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B', eventbc)
+        dobA = doType('oid:A', 'uid:A', expectedSize = self._test_do_sz * ONE_MB)
+        dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B')
         dobA.addConsumer(dobB)
 
         test_crc = 0
@@ -179,11 +175,10 @@ class TestDataObject(unittest.TestCase):
         class InMemorySortResult(SortResult, InMemoryDataObject): pass
         class InMemoryRevResult(RevResult, InMemoryDataObject): pass
 
-        leb = LocalEventBroadcaster()
-        a = InMemoryDataObject('oid:A', 'uid:A', leb)
-        b = InMemoryGrepResult('oid:B', 'uid:B', leb, substring="a")
-        c = InMemorySortResult('oid:C', 'uid:C', leb)
-        d = InMemoryRevResult('oid:D', 'uid:D', leb)
+        a = InMemoryDataObject('oid:A', 'uid:A')
+        b = InMemoryGrepResult('oid:B', 'uid:B', substring="a")
+        c = InMemorySortResult('oid:C', 'uid:C')
+        d = InMemoryRevResult('oid:D', 'uid:D')
 
         a.addConsumer(b)
         b.addConsumer(c)
@@ -205,13 +200,7 @@ class TestDataObject(unittest.TestCase):
             i.close(desc)
         map(lambda x, y: self.assertEquals(x, y), [bResExpected, cResExpected, dResExpected], actualRes)
 
-    def test_join_simple(self):
-        self._test_join(False)
-
-    def test_join_threaded(self):
-        self._test_join(True)
-
-    def _test_join(self, threaded):
+    def test_join(self):
         """
         Using the container data object to implement a join/barrier dataflow.
 
@@ -229,24 +218,22 @@ class TestDataObject(unittest.TestCase):
         triggered, and will hold the sum of B1, B2 and B3's contents
         """
 
-        eventbc = ThreadedEventBroadcaster() if threaded else LocalEventBroadcaster()
-
         filelen = self._test_do_sz * ONE_MB
         #create file data objects
-        doA1 = FileDataObject('oid:A1', 'uid:A1', eventbc, expectedSize=filelen)
-        doA2 = FileDataObject('oid:A2', 'uid:A2', eventbc, expectedSize=filelen)
-        doA3 = FileDataObject('oid:A3', 'uid:A3', eventbc, expectedSize=filelen)
+        doA1 = FileDataObject('oid:A1', 'uid:A1', expectedSize=filelen)
+        doA2 = FileDataObject('oid:A2', 'uid:A2', expectedSize=filelen)
+        doA3 = FileDataObject('oid:A3', 'uid:A3', expectedSize=filelen)
 
         # CRC Result DOs, storing the result in memory
-        doB1 = InMemoryCRCResultDataObject('oid:B1', 'uid:B1', eventbc)
-        doB2 = InMemoryCRCResultDataObject('oid:B2', 'uid:B2', eventbc)
-        doB3 = InMemoryCRCResultDataObject('oid:B3', 'uid:B3', eventbc)
+        doB1 = InMemoryCRCResultDataObject('oid:B1', 'uid:B1')
+        doB2 = InMemoryCRCResultDataObject('oid:B2', 'uid:B2')
+        doB3 = InMemoryCRCResultDataObject('oid:B3', 'uid:B3')
 
         # The Container DO that groups together the CRC Result DOs
-        doC = ContainerDataObject('oid:C', 'uid:C', eventbc)
+        doC = ContainerDataObject('oid:C', 'uid:C')
 
         # The final DO that sums up the CRCs from the container DO
-        doD = SumupContainerChecksum('oid:D', 'uid:D', eventbc)
+        doD = SumupContainerChecksum('oid:D', 'uid:D')
 
         # Wire together
         doAList = [doA1,doA2,doA3]
@@ -424,12 +411,11 @@ class TestDataObject(unittest.TestCase):
                 self._children[1].setCompleted()
 
         # Create DOs
-        eb = LocalEventBroadcaster()
-        a =     InMemoryDataObject('oid:A', 'uid:A', eb)
-        b =        NumberWriterApp('oid:B', 'uid:B', eb)
-        c = OddAndEvenContainerApp('oid:C', 'uid:C', eb)
-        d =     InMemoryDataObject('oid:D', 'uid:D', eb)
-        e =     InMemoryDataObject('oid:E', 'uid:E', eb)
+        a =     InMemoryDataObject('oid:A', 'uid:A')
+        b =        NumberWriterApp('oid:B', 'uid:B')
+        c = OddAndEvenContainerApp('oid:C', 'uid:C')
+        d =     InMemoryDataObject('oid:D', 'uid:D')
+        e =     InMemoryDataObject('oid:E', 'uid:E')
 
         # Wire them together
         a.addConsumer(b)
@@ -461,11 +447,10 @@ class TestDataObject(unittest.TestCase):
 
         host = 'localhost'
         port = 9933
-        ebc = LocalEventBroadcaster()
         data = 'shine on you crazy diamond'
 
-        a = InMemorySocketListenerDataObject('oid:A', 'uid:A', ebc, host=host, port=port)
-        b = InMemoryCRCResultDataObject('oid:B', 'uid:B', ebc)
+        a = InMemorySocketListenerDataObject('oid:A', 'uid:A', host=host, port=port)
+        b = InMemoryCRCResultDataObject('oid:B', 'uid:B')
         a.addConsumer(b)
 
         # Since b becomes COMPLETED on a different thread (where A's socket is
@@ -502,7 +487,7 @@ class TestDataObject(unittest.TestCase):
         """
 
         # Write, but not through the DO
-        a = FileDataObject('A', 'A', LocalEventBroadcaster())
+        a = FileDataObject('A', 'A')
         filename = a.getFileName()
         msg = 'a message'
         with open(filename, 'w') as f:
@@ -524,7 +509,7 @@ class TestDataObject(unittest.TestCase):
         """
 
         # Nice and easy
-        do = InMemoryDataObject('a', 'a', LocalEventBroadcaster())
+        do = InMemoryDataObject('a', 'a')
         self.assertEquals(do.status, DOStates.INITIALIZED)
         do.write('a')
         self.assertEquals(do.status, DOStates.WRITING)
@@ -539,10 +524,10 @@ class TestDataObject(unittest.TestCase):
         self.assertRaises(Exception, do.write, '')
 
         # Failure to initialize (ports < 1024 cannot be opened by normal users)
-        self.assertRaises(Exception, InMemorySocketListenerDataObject, 'a', 'a', LocalEventBroadcaster(), host='localhost', port=1)
+        self.assertRaises(Exception, InMemorySocketListenerDataObject, 'a', 'a', host='localhost', port=1)
 
         # Invalid reading on a DO that isn't COMPLETED yet
-        do = InMemoryDataObject('a', 'a', LocalEventBroadcaster())
+        do = InMemoryDataObject('a', 'a')
         self.assertRaises(Exception, do.open)
         self.assertRaises(Exception, do.read, 1)
         self.assertRaises(Exception, do.close, 1)
@@ -574,9 +559,8 @@ class TestDataObject(unittest.TestCase):
         A small test to check that DOs executions can be driven externally if
         required, and not always internally by themselves
         """
-        eb = LocalEventBroadcaster()
-        a = InMemoryDataObject('a', 'a', eb, executionMode=mode, expectedSize=1)
-        b = InMemoryCRCResultDataObject('b', 'b', eb)
+        a = InMemoryDataObject('a', 'a', executionMode=mode, expectedSize=1)
+        b = InMemoryCRCResultDataObject('b', 'b')
         a.addConsumer(b)
         a.write('1')
 
@@ -612,10 +596,9 @@ class TestDataObject(unittest.TestCase):
         class InMemoryLastCharWriterApp(LastCharWriterApp, InMemoryDataObject):
             pass
 
-        eb = LocalEventBroadcaster()
-        a = InMemoryDataObject('a', 'a', eb)
-        b = InMemoryLastCharWriterApp('b', 'b', eb)
-        c = InMemoryCRCResultDataObject('c', 'c', eb) # this is a normal AppConsumer
+        a = InMemoryDataObject('a', 'a')
+        b = InMemoryLastCharWriterApp('b', 'b')
+        c = InMemoryCRCResultDataObject('c', 'c') # this is a normal AppConsumer
         a.addImmediateConsumer(b)
         a.addConsumer(c)
 

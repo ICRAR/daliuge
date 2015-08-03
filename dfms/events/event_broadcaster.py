@@ -23,6 +23,12 @@
 # ------------------------------------------------
 # dave.pallot@icrar.org   9/Apr/2015     Created
 #
+
+# TODO: Maybe these classes should be moved down to the dfms.data_object module
+#       now that they are only used there. The only ones actually used are
+#       Event and LocalEventBroadcaster. We could also collapse the hierarchy of
+#       the latter since there is no point in maintaining it anymore
+
 import threading
 import logging
 from collections import defaultdict
@@ -34,10 +40,10 @@ class Event(object):
 
 class EventBroadcaster(object):
 
-    def subscribe(self, uid, callback, eventType=None):
+    def subscribe(self, callback, eventType=None):
         pass
 
-    def unsubscribe(self, uid, callback, eventType=None):
+    def unsubscribe(self, callback, eventType=None):
         pass
 
     def fire(self, eventType, **attrs):
@@ -55,43 +61,36 @@ class AbstractEventBroadcaster(EventBroadcaster):
     __ALL_EVENTS = 'SPECIAL_EVENT_TYPE_THAT_WILL_NEVER_EXIST_EXCEPT_HERE'
 
     def __init__(self):
-        self._callbacks = defaultdict(lambda: defaultdict(list))
+        self._callbacks = defaultdict(list)
 
-    def subscribe(self, uid, callback, eventType=None):
+    def subscribe(self, callback, eventType=None):
 
         if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Adding subscription to uid=%s, eventType=%s: %s' %(uid, eventType, callback))
+            _logger.debug('Adding subscription to %r eventType=%s: %s' %(self, eventType, callback))
 
         if eventType is None:
             eventType = self.__ALL_EVENTS
-        self._callbacks[uid][eventType].append(callback)
+        self._callbacks[eventType].append(callback)
 
-    def unsubscribe(self, uid, callback, eventType=None):
+    def unsubscribe(self, callback, eventType=None):
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('Removing subscription to %r eventType=%s: %s' %(self, eventType, callback))
         if eventType is None:
             eventType = self.__ALL_EVENTS
-        if self._callbacks.has_key(uid):
-            self._callbacks[uid][eventType].remove(callback)
+        if callback in self._callbacks[eventType]:
+            self._callbacks[eventType].remove(callback)
 
     def fire(self, eventType, **attrs):
 
-        uid = attrs['uid']
-
-        # Nobody subscribed to us
-        if uid not in self._callbacks:
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('No callbacks found for uid=%s' %(uid))
-            return
-
         # Which callbacks should we call?
         callbacks = []
-        if eventType in self._callbacks[uid]:
-            callbacks.extend(self._callbacks[uid][eventType])
-        if self.__ALL_EVENTS in self._callbacks[uid]:
-            callbacks.extend(self._callbacks[uid][self.__ALL_EVENTS])
+        if eventType in self._callbacks:
+            callbacks += self._callbacks[eventType]
+        if self.__ALL_EVENTS in self._callbacks:
+            callbacks += self._callbacks[self.__ALL_EVENTS]
         if not callbacks:
             if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('No callbacks found for uid=%s, eventType=%s' %(uid, eventType))
-
+                _logger.debug('No callbacks found for eventType=%s' %(eventType))
             return
 
         e = self._createEvent(eventType, **attrs)

@@ -40,8 +40,6 @@ from dfms import doutils
 from dfms.data_object import AppConsumer, InMemoryDataObject, \
     InMemorySocketListenerDataObject, ContainerDataObject, ContainerAppConsumer
 from dfms.ddap_protocol import ExecutionMode
-from dfms.events.event_broadcaster import ThreadedEventBroadcaster, \
-    LocalEventBroadcaster
 
 
 # All DOs created in the methods of this module have a lifespan of half an hour.
@@ -144,12 +142,11 @@ def _testGraph(execMode):
     cMode = execMode if execMode is not None else ExecutionMode.DO
     dMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
 
-    bc = ThreadedEventBroadcaster()
-    a = InMemorySocketListenerDataObject('oid:A', 'uid:A', bc, executionMode=aMode, lifespan=lifespan)
-    d = ContainerDataObject('oid:D', 'uid:D', bc, executionMode=dMode, lifespan=lifespan)
+    a = InMemorySocketListenerDataObject('oid:A', 'uid:A', executionMode=aMode, lifespan=lifespan)
+    d = ContainerDataObject('oid:D', 'uid:D', executionMode=dMode, lifespan=lifespan)
     for i in xrange(random.SystemRandom().randint(10, 20)):
-        b = InMemorySleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), bc, executionMode=bMode, lifespan=lifespan)
-        c = InMemorySleepAndCopyApp('oid:C%d' % (i), 'uid:C%d' % (i), bc, executionMode=cMode, lifespan=lifespan)
+        b = InMemorySleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), executionMode=bMode, lifespan=lifespan)
+        c = InMemorySleepAndCopyApp('oid:C%d' % (i), 'uid:C%d' % (i), executionMode=cMode, lifespan=lifespan)
         a.addConsumer(b)
         b.addConsumer(c)
         d.addChild(c)
@@ -161,12 +158,11 @@ def test_pg():
 
     A --> B --> C
     """
-    eb = LocalEventBroadcaster()
     island_one = "192.168.1.1:7777"
     island_two = "192.168.1.2:7777"
-    dobA = InMemorySocketListenerDataObject('Obj-A', 'Obj-A', eb, lifespan=lifespan)
-    dobB = InMemorySleepAndCopyApp('Obj-B', 'Obj-B', eb, lifespan=lifespan)
-    dobC = InMemorySleepAndCopyApp('Obj-C', 'Obj-C', eb, lifespan=lifespan)
+    dobA = InMemorySocketListenerDataObject('Obj-A', 'Obj-A', lifespan=lifespan)
+    dobB = InMemorySleepAndCopyApp('Obj-B', 'Obj-B', lifespan=lifespan)
+    dobC = InMemorySleepAndCopyApp('Obj-C', 'Obj-C', lifespan=lifespan)
 
     dobA.location = island_one
     dobB.location = island_one
@@ -185,14 +181,13 @@ def container_pg():
      one --|        | --> C --> D
            |--> B --|
     '''
-    eb = LocalEventBroadcaster()
     island_one = "192.168.1.1:7777"
     island_two = "192.168.1.2:7777"
-    dob_one =  InMemorySocketListenerDataObject('Obj-one', 'Obj-one', eb, lifespan=lifespan)
-    dobA = InMemorySleepAndCopyApp('Obj-A', 'Obj-A', eb, lifespan=lifespan)
-    dobB = InMemorySleepAndCopyApp('Obj-B', 'Obj-B', eb, lifespan=lifespan)
-    dobC = ContainerDataObject('Obj-C', 'Obj-C', eb, lifespan=lifespan)
-    dobD = InMemorySleepAndCopyApp('Obj-D', 'Obj-D', eb, lifespan=lifespan)
+    dob_one =  InMemorySocketListenerDataObject('Obj-one', 'Obj-one', lifespan=lifespan)
+    dobA = InMemorySleepAndCopyApp('Obj-A', 'Obj-A', lifespan=lifespan)
+    dobB = InMemorySleepAndCopyApp('Obj-B', 'Obj-B', lifespan=lifespan)
+    dobC = ContainerDataObject('Obj-C', 'Obj-C', lifespan=lifespan)
+    dobD = InMemorySleepAndCopyApp('Obj-D', 'Obj-D', lifespan=lifespan)
 
     dob_one.location = island_one
     dobA.location = island_one
@@ -239,8 +234,6 @@ def _complex_pg(useContainerApps):
     the two.
     """
 
-    se = LocalEventBroadcaster()
-
     if useContainerApps:
         parentType   = SleepAndCopyContainerApp
         childrenType = InMemoryDataObject
@@ -250,23 +243,23 @@ def _complex_pg(useContainerApps):
         childrenType = InMemorySleepAndCopyApp
         op = lambda lhs, rhs: lhs.addConsumer(rhs)
 
-    a =  InMemorySocketListenerDataObject('oid:A', 'uid:A', se, lifespan=lifespan, port=1111)
-    b =  InMemorySocketListenerDataObject('oid:B', 'uid:B', se, lifespan=lifespan, port=1112)
-    c =  InMemorySocketListenerDataObject('oid:C', 'uid:C', se, lifespan=lifespan, port=1113)
-    d =  InMemorySocketListenerDataObject('oid:D', 'uid:D', se, lifespan=lifespan, port=1114)
-    e =           InMemorySleepAndCopyApp('oid:E', 'uid:E', se, lifespan=lifespan)
-    f =               ContainerDataObject('oid:F', 'uid:F', se, lifespan=lifespan)
-    g =               ContainerDataObject('oid:G', 'uid:G', se, lifespan=lifespan)
-    h =           InMemorySleepAndCopyApp('oid:H', 'uid:H', se, lifespan=lifespan)
-    i =  InMemorySocketListenerDataObject('oid:I', 'uid:I', se, lifespan=lifespan, port=1115)
-    j =                        parentType('oid:J', 'uid:J', se, lifespan=lifespan)
-    k =               ContainerDataObject('oid:K', 'uid:K', se, lifespan=lifespan)
-    l =           InMemorySleepAndCopyApp('oid:L', 'uid:L', se, lifespan=lifespan)
-    m =                      childrenType('oid:M', 'uid:M', se, lifespan=lifespan)
-    n =                      childrenType('oid:N', 'uid:N', se, lifespan=lifespan)
-    o =           InMemorySleepAndCopyApp('oid:O', 'uid:O', se, lifespan=lifespan)
-    p =           InMemorySleepAndCopyApp('oid:P', 'uid:P', se, lifespan=lifespan)
-    q =               ContainerDataObject('oid:Q', 'uid:Q', se, lifespan=lifespan)
+    a =  InMemorySocketListenerDataObject('oid:A', 'uid:A', lifespan=lifespan, port=1111)
+    b =  InMemorySocketListenerDataObject('oid:B', 'uid:B', lifespan=lifespan, port=1112)
+    c =  InMemorySocketListenerDataObject('oid:C', 'uid:C', lifespan=lifespan, port=1113)
+    d =  InMemorySocketListenerDataObject('oid:D', 'uid:D', lifespan=lifespan, port=1114)
+    e =           InMemorySleepAndCopyApp('oid:E', 'uid:E', lifespan=lifespan)
+    f =               ContainerDataObject('oid:F', 'uid:F', lifespan=lifespan)
+    g =               ContainerDataObject('oid:G', 'uid:G', lifespan=lifespan)
+    h =           InMemorySleepAndCopyApp('oid:H', 'uid:H', lifespan=lifespan)
+    i =  InMemorySocketListenerDataObject('oid:I', 'uid:I', lifespan=lifespan, port=1115)
+    j =                        parentType('oid:J', 'uid:J', lifespan=lifespan)
+    k =               ContainerDataObject('oid:K', 'uid:K', lifespan=lifespan)
+    l =           InMemorySleepAndCopyApp('oid:L', 'uid:L', lifespan=lifespan)
+    m =                      childrenType('oid:M', 'uid:M', lifespan=lifespan)
+    n =                      childrenType('oid:N', 'uid:N', lifespan=lifespan)
+    o =           InMemorySleepAndCopyApp('oid:O', 'uid:O', lifespan=lifespan)
+    p =           InMemorySleepAndCopyApp('oid:P', 'uid:P', lifespan=lifespan)
+    q =               ContainerDataObject('oid:Q', 'uid:Q', lifespan=lifespan)
 
     a.addConsumer(e)
     f.addChild(c)
@@ -291,23 +284,22 @@ def _complex_pg(useContainerApps):
 def mwa_fornax_pg():
     num_coarse_ch = 24
     num_split = 3 # number of time splits per channel
-    se = ThreadedEventBroadcaster()
-    dob_root = InMemorySocketListenerDataObject("MWA_LTA", "MWA_LTA", se, lifespan=lifespan)
+    dob_root = InMemorySocketListenerDataObject("MWA_LTA", "MWA_LTA", lifespan=lifespan)
     dob_root.location = "Pawsey"
 
     #container
     dob_comb_img_oid = "Combined_image"
-    dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, se, lifespan=lifespan)
+    dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, lifespan=lifespan)
     dob_comb_img.location = "f032.fornax"
 
     for i in range(1, num_coarse_ch + 1):
         stri = "%02d" % i
         oid = "Subband_{0}".format(stri)
-        dob_obs = ContainerDataObject(oid, oid, se, lifespan=lifespan)
+        dob_obs = ContainerDataObject(oid, oid, lifespan=lifespan)
         dob_obs.location = "f%03d.fornax" % i
 
         oid_ingest = "NGAS_{0}".format(stri)
-        dob_ingest = InMemorySleepAndCopyApp(oid_ingest, oid_ingest, se, lifespan=lifespan)
+        dob_ingest = InMemorySleepAndCopyApp(oid_ingest, oid_ingest, lifespan=lifespan)
         dob_ingest.location = "f%03d.fornax:7777" % i
 
         dob_root.addConsumer(dob_ingest)
@@ -315,31 +307,31 @@ def mwa_fornax_pg():
         for j in range(1, num_split + 1):
             strj = "%02d" % j
             split_oid = "Subband_{0}_Split_{1}".format(stri, strj)
-            dob_split = InMemorySleepAndCopyApp(split_oid, split_oid, se, lifespan=lifespan)
+            dob_split = InMemorySleepAndCopyApp(split_oid, split_oid, lifespan=lifespan)
             dob_split.location = dob_obs.location
             dob_ingest.addConsumer(dob_split)
             dob_obs.addChild(dob_split)
 
         oid_rts = "RTS_{0}".format(stri)
-        dob_rts = InMemorySleepAndCopyApp(oid_rts, oid_rts, se, lifespan=lifespan)
+        dob_rts = InMemorySleepAndCopyApp(oid_rts, oid_rts, lifespan=lifespan)
         dob_rts.location = dob_obs.location
         dob_obs.addConsumer(dob_rts)
 
         oid_subimg = "Subcube_{0}".format(stri)
-        dob_subimg = InMemorySleepAndCopyApp(oid_subimg, oid_subimg, se, lifespan=lifespan)
+        dob_subimg = InMemorySleepAndCopyApp(oid_subimg, oid_subimg, lifespan=lifespan)
         dob_subimg.location = dob_obs.location
         dob_rts.addConsumer(dob_subimg)
         dob_comb_img.addChild(dob_subimg)
 
     #concatenate all images
     adob_concat_oid = "Concat_image"
-    adob_concat = InMemorySleepAndCopyApp(adob_concat_oid, adob_concat_oid, se, lifespan=lifespan)
+    adob_concat = InMemorySleepAndCopyApp(adob_concat_oid, adob_concat_oid, lifespan=lifespan)
     adob_concat.location = dob_comb_img.location
     dob_comb_img.addConsumer(adob_concat)
 
     # produce cube
     dob_cube_oid = "Cube_30.72MHz"
-    dob_cube = InMemorySleepAndCopyApp(dob_cube_oid, dob_cube_oid, se, lifespan=lifespan)
+    dob_cube = InMemorySleepAndCopyApp(dob_cube_oid, dob_cube_oid, lifespan=lifespan)
     dob_cube.location = dob_comb_img.location
     adob_concat.addConsumer(dob_cube)
 
@@ -355,28 +347,27 @@ def chiles_pg():
     subband_dict = collections.defaultdict(list) # for corner turning
     img_list = []
     start_freq = 940
-    eb = ThreadedEventBroadcaster()
 
     # this should be removed
-    dob_root = InMemorySocketListenerDataObject("JVLA", "JVLA", eb, lifespan=lifespan)
+    dob_root = InMemorySocketListenerDataObject("JVLA", "JVLA", lifespan=lifespan)
     dob_root.location = "NRAO"
 
     for i in range(1, num_obs + 1):
         stri = "%02d" % i
         oid = "Obs_day_{0}".format(stri)
-        dob_obs = InMemorySleepAndCopyApp(oid, oid, eb, lifespan=lifespan)
+        dob_obs = InMemorySleepAndCopyApp(oid, oid, lifespan=lifespan)
         dob_obs.location = "{0}.aws-ec2.sydney".format(i)
         dob_root.addConsumer(dob_obs)
         for j in range(1, num_subb + 1):
             app_oid = "mstransform_{0}_{1}".format(stri, "%02d" % j)
-            adob_split = InMemorySleepAndCopyApp(app_oid, app_oid, eb, lifespan=lifespan)
+            adob_split = InMemorySleepAndCopyApp(app_oid, app_oid, lifespan=lifespan)
             adob_split.location = dob_obs.location
             dob_obs.addConsumer(adob_split)
 
             dob_sboid = "Split_{0}_{1}~{2}MHz".format(stri,
                                                       start_freq + subband_width * j,
                                                       start_freq + subband_width * (j + 1))
-            dob_sb = InMemorySleepAndCopyApp(dob_sboid, dob_sboid, eb, lifespan=lifespan)
+            dob_sb = InMemorySleepAndCopyApp(dob_sboid, dob_sboid, lifespan=lifespan)
             dob_sb.location = dob_obs.location
             adob_split.addConsumer(dob_sb)
 
@@ -385,32 +376,32 @@ def chiles_pg():
     for j, v in subband_dict.items():
         oid = "Subband_{0}~{1}MHz".format(start_freq + subband_width * j,
                                           start_freq + subband_width * (j + 1))
-        dob = ContainerDataObject(oid, oid, eb)
+        dob = ContainerDataObject(oid, oid)
         dob.location = "{0}.aws-ec2.sydney".format(j % num_obs)
         for dob_sb in v:
             dob.addChild(dob_sb)
 
         app_oid = oid.replace("Subband_", "Clean_")
-        adob_clean = InMemorySleepAndCopyApp(app_oid, app_oid, eb, lifespan=lifespan)
+        adob_clean = InMemorySleepAndCopyApp(app_oid, app_oid, lifespan=lifespan)
         adob_clean.location = dob.location
         dob.addConsumer(adob_clean)
 
         img_oid = oid.replace("Subband_", "Image_")
-        dob_img = InMemorySleepAndCopyApp(img_oid, img_oid, eb, lifespan=lifespan)
+        dob_img = InMemorySleepAndCopyApp(img_oid, img_oid, lifespan=lifespan)
         dob_img.location = dob.location
         adob_clean.addConsumer(dob_img)
         img_list.append(dob_img)
 
     #container
     dob_comb_img_oid = "Combined_image"
-    dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, eb, lifespan=lifespan)
+    dob_comb_img = ContainerDataObject(dob_comb_img_oid, dob_comb_img_oid, lifespan=lifespan)
     dob_comb_img.location = "10.1.1.100:7777"
     for dob_img in img_list:
         dob_comb_img.addChild(dob_img)
 
     #concatenate all images
     adob_concat_oid = "Concat_image"
-    adob_concat = InMemorySleepAndCopyApp(adob_concat_oid, adob_concat_oid, eb, lifespan=lifespan)
+    adob_concat = InMemorySleepAndCopyApp(adob_concat_oid, adob_concat_oid, lifespan=lifespan)
     adob_concat.location = dob_comb_img.location
     dob_comb_img.addConsumer(adob_concat)
 
@@ -420,7 +411,7 @@ def chiles_pg():
                                                        start_freq,
                                                        start_freq + total_bandwidth)
 
-    dob_cube = InMemorySleepAndCopyApp(dob_cube_oid, dob_cube_oid, eb, lifespan=lifespan)
+    dob_cube = InMemorySleepAndCopyApp(dob_cube_oid, dob_cube_oid, lifespan=lifespan)
     dob_cube.location = dob_comb_img.location
     adob_concat.addConsumer(dob_cube)
 

@@ -218,16 +218,16 @@ class DataLifecycleManager(object):
         self._finishedEvent = finishedEvent
 
     def cleanup(self):
-        _logger.info("Cleaning up DLM")
-
-        # Unsubscribe to all events coming from the DOs
-        for do in self._dos.values():
-            do.unsubscribe(self.doEventHandler)
+        _logger.info("Cleaning up the DLM")
 
         # Join the background threads
         self._finishedEvent.set()
         self._doChecker.join()
         self._doGarbageCollector.join()
+
+        # Unsubscribe to all events coming from the DOs
+        for do in self._dos.values():
+            do.unsubscribe(self.doEventHandler)
 
     #
     # Support for 'with' keyword
@@ -454,7 +454,7 @@ class DataLifecycleManager(object):
             _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
         # For the time being we manually copy the contents of the current DO into it
-        newDO = store.createDataObject(dataObject.oid, newUid, dataObject._bcaster, expectedSize=dataObject.size, precious=dataObject.precious)
+        newDO = store.createDataObject(dataObject.oid, newUid, expectedSize=dataObject.size, precious=dataObject.precious)
         doutils.copyDataObjectContents(dataObject, newDO)
 
         if _logger.isEnabledFor(logging.DEBUG):

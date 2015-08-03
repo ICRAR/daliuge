@@ -41,6 +41,7 @@ import warnings
 
 from ddap_protocol import DOStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes
+from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 
 try:
@@ -94,7 +95,8 @@ class AbstractDataObject(object):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
-    def __init__(self, oid, uid, eventbc,
+    def __init__(self, oid, uid,
+                 eventbc=None,
                  executionMode=ExecutionMode.DO,
                  **kwargs):
         """
@@ -108,7 +110,8 @@ class AbstractDataObject(object):
         # So far only these three are mandatory
         self._oid = oid
         self._uid = uid
-        self._bcaster = eventbc
+
+        self._bcaster = LocalEventBroadcaster()
 
         # Maybe we want to have a different default value for this one?
         self._executionMode = executionMode
@@ -205,8 +208,8 @@ class AbstractDataObject(object):
     def __hash__(self):
         return hash(self._uid)
 
-    def __str__(self):
-        re = "{0}/{1}".format(self.oid, self.uid)
+    def __repr__(self):
+        re = "%s %s/%s" % (self.__class__, self.oid, self.uid)
         if self.location:
             re += "@{0}".format(self.location)
         return re
@@ -460,13 +463,13 @@ class AbstractDataObject(object):
         """
         Adds a new subscription to events fired from this DataObject.
         """
-        self._bcaster.subscribe(self._uid, callback, eventType=eventType)
+        self._bcaster.subscribe(callback, eventType=eventType)
 
     def unsubscribe(self, callback, eventType=None):
         """
         Removes a subscription from events fired from this DataObject.
         """
-        self._bcaster.unsubscribe(self._uid, callback, eventType=eventType)
+        self._bcaster.unsubscribe(callback, eventType=eventType)
 
     def _fire(self, eventType, **kwargs):
         kwargs['oid'] = self.oid
@@ -543,8 +546,6 @@ class AbstractDataObject(object):
         if parent:
             self._parent = parent # a parent is a container
             def checkCompletedChild(event):
-                if ("status" != event.type):
-                    return
                 if (event.status != DOStates.COMPLETED):
                     return
                 parent.addCompletedChild(event.oid, event.uid)
@@ -601,7 +602,7 @@ class AbstractDataObject(object):
             return
 
         def consumeCompleted(e):
-            if not hasattr(e, 'status') or e.status != DOStates.COMPLETED:
+            if e.status != DOStates.COMPLETED:
                 if _logger.isEnabledFor(logging.DEBUG):
                     _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return

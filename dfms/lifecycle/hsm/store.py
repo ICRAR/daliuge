@@ -80,7 +80,7 @@ class AbstractStore(object):
         return self._totalSpace
 
     @abstractmethod
-    def createDataObject(self, oid, uid, broadcaster, **kwargs):
+    def createDataObject(self, oid, uid, **kwargs):
         pass
 
     @abstractmethod
@@ -121,9 +121,9 @@ class FileSystemStore(AbstractStore):
         self._setTotalSpace(totalSpace)
         self._setAvailableSpace(availableSpace)
 
-    def createDataObject(self, oid, uid, broadcaster, **kwargs):
+    def createDataObject(self, oid, uid, **kwargs):
         kwargs['dirname'] = self._mountPoint
-        return FileDataObject(oid, uid, broadcaster, **kwargs)
+        return FileDataObject(oid, uid, **kwargs)
 
     def __str__(self):
         return self._mountPoint
@@ -143,8 +143,8 @@ class MemoryStore(AbstractStore):
         self._setTotalSpace(vmem.total)
         self._setAvailableSpace(vmem.free)
 
-    def createDataObject(self, oid, uid, broadcaster, **kwargs):
-        return InMemoryDataObject(oid, uid, broadcaster, **kwargs)
+    def createDataObject(self, oid, uid, **kwargs):
+        return InMemoryDataObject(oid, uid, **kwargs)
 
     def __str__(self):
         return 'Memory'
@@ -195,10 +195,10 @@ class NgasStore(AbstractStore):
         self._setTotalSpace(totalAvailable + totalStored)
         self._setAvailableSpace(totalAvailable)
 
-    def createDataObject(self, oid, uid, broadcaster, *args, **kwargs):
+    def createDataObject(self, oid, uid, **kwargs):
         kwargs['ngasSrv']  = self._host
         kwargs['ngasPort'] = self._port
-        return NgasDataObject(oid, uid, broadcaster, **kwargs)
+        return NgasDataObject(oid, uid, **kwargs)
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient
@@ -244,9 +244,9 @@ class DirectoryStore(AbstractStore):
         self._dirName = dirName
         self.updateSpaces()
 
-    def createDataObject(self, oid, uid, broadcaster, **kwargs):
+    def createDataObject(self, oid, uid, **kwargs):
         kwargs['dirname'] = self._dirName
-        return FileDataObject(oid, uid, broadcaster, **kwargs)
+        return FileDataObject(oid, uid, **kwargs)
 
     def _updateSpaces(self):
         used = self._dirUsage(self._dirName)

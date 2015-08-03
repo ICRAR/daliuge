@@ -25,7 +25,6 @@ import unittest
 from dfms import doutils
 from dfms.data_object import InMemoryDataObject, ContainerDataObject,\
     InMemoryCRCResultDataObject
-from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 '''
 Created on 20 Jul 2015
@@ -43,14 +42,13 @@ class DOUtilsTest(unittest.TestCase):
           |--> C -|--> E --|-> G
                   |--> F
         """
-        eb = LocalEventBroadcaster()
-        a =          InMemoryDataObject('a', 'a', eb)
-        b = InMemoryCRCResultDataObject('b', 'b', eb)
-        c = InMemoryCRCResultDataObject('c', 'c', eb)
-        d = InMemoryCRCResultDataObject('d', 'd', eb)
-        e = InMemoryCRCResultDataObject('e', 'e', eb)
-        f = InMemoryCRCResultDataObject('f', 'f', eb)
-        g =         ContainerDataObject('g', 'g', eb)
+        a =          InMemoryDataObject('a', 'a')
+        b = InMemoryCRCResultDataObject('b', 'b')
+        c = InMemoryCRCResultDataObject('c', 'c')
+        d = InMemoryCRCResultDataObject('d', 'd')
+        e = InMemoryCRCResultDataObject('e', 'e')
+        f = InMemoryCRCResultDataObject('f', 'f')
+        g =         ContainerDataObject('g', 'g')
 
         a.addConsumer(b)
         a.addConsumer(c)
