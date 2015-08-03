@@ -41,7 +41,6 @@ import Pyro4
 from dfms.daemon import Daemon
 from dfms.data_object import InMemoryCRCResultDataObject, InMemoryDataObject
 from dfms.ddap_protocol import CST_NS_DOM, DOLinkType
-from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.lifecycle.dlm import DataLifecycleManager
 
 _logger = logging.getLogger(__name__)
@@ -60,7 +59,6 @@ class DataObjectMgr(object):
         self.daemon_dict = {} # key - sessionId, value - daemon
         self.daemon_thd_dict = {} # key - sessionId, value - daemon thread
         self.daemon_dob_dict = defaultdict(dict) # key - sessionId, value - a dictionary of Data Objects (key - obj uri, val - obj)
-        self.eventbc = LocalEventBroadcaster()
 
     def getURI(self):
         return self._uri
@@ -108,9 +106,9 @@ class DataObjectMgr(object):
         This method returns the URI of the data object created
         """
         if (appDataObj):
-            mydo = InMemoryCRCResultDataObject(oid, uid, self.eventbc)
+            mydo = InMemoryCRCResultDataObject(oid, uid)
         else:
-            mydo = InMemoryDataObject(oid, uid, self.eventbc)
+            mydo = InMemoryDataObject(oid, uid)
 
         dob_daemon, dlm = self._getSessionObjects(sessionId)
         return self._registerNewDataObject(dob_daemon, dlm, mydo, sessionId)

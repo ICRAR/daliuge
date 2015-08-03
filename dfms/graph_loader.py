@@ -33,7 +33,6 @@ import logging
 from dfms import doutils
 from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
     FileDataObject, NgasDataObject, SocketListener, ContainerAppConsumer
-from dfms.events.event_broadcaster import LocalEventBroadcaster
 
 
 STORAGE_TYPES = {
@@ -123,12 +122,12 @@ def _createPlain(doSpec):
 
     # 'storage' is mandatory
     storageType = STORAGE_TYPES[doSpec['storage']]
-    return storageType(oid, uid, LocalEventBroadcaster(), **kwargs)
+    return storageType(oid, uid, **kwargs)
 
 def _createContainer(doSpec):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
-    return ContainerDataObject(oid, uid, LocalEventBroadcaster(), **kwargs)
+    return ContainerDataObject(oid, uid, **kwargs)
 
 def _createContainerApp(doSpec):
     oid, uid = _getIds(doSpec)
@@ -142,7 +141,7 @@ def _createContainerApp(doSpec):
 
     class doType(appType, ContainerAppConsumer): pass
 
-    return doType(oid, uid, LocalEventBroadcaster(), **kwargs)
+    return doType(oid, uid, **kwargs)
 
 def _createSocket(doSpec):
     oid, uid = _getIds(doSpec)
@@ -152,7 +151,7 @@ def _createSocket(doSpec):
     storageType = STORAGE_TYPES[doSpec['storage']]
     class socketType(SocketListener, storageType): pass
 
-    return socketType(oid, uid, LocalEventBroadcaster(), **kwargs)
+    return socketType(oid, uid, **kwargs)
 
 def _createApp(doSpec):
     oid, uid = _getIds(doSpec)
@@ -168,7 +167,7 @@ def _createApp(doSpec):
     storageType = STORAGE_TYPES[doSpec['storage']]
     class doType(appType, storageType): pass
 
-    return doType(oid, uid, LocalEventBroadcaster(), **kwargs)
+    return doType(oid, uid, **kwargs)
 
 def _getIds(doSpec):
     # uid is copied from oid if not explicitly given

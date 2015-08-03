@@ -19,21 +19,21 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
-from dfms.lifecycle import dlm
-from dfms import data_object
-from dfms.events.event_broadcaster import LocalEventBroadcaster
-from unittest.case import TestCase
-import time
-from dfms.ddap_protocol import DOStates, DOPhases
-import os
-import unittest
-
 '''
 Created on 22 Jun 2015
 
 @author: rtobar
 '''
+
+import os
+import time
+import unittest
+from unittest.case import TestCase
+
+from dfms import data_object
+from dfms.ddap_protocol import DOStates, DOPhases
+from dfms.lifecycle import dlm
+
 
 class TestDataLifecycleManager(TestCase):
 
@@ -52,14 +52,12 @@ class TestDataLifecycleManager(TestCase):
 
     def test_dataObjectAddition(self):
         with dlm.DataLifecycleManager() as manager:
-            bcaster = LocalEventBroadcaster()
-            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, expectedSize=10)
+            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=10)
             manager.addDataObject(dataObject)
 
     def test_dataObjectCompleteTriggersReplication(self):
         with dlm.DataLifecycleManager() as manager:
-            bcaster = LocalEventBroadcaster()
-            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, expectedSize=1)
+            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1)
             manager.addDataObject(dataObject)
             self._writeAndClose(dataObject)
 
@@ -69,7 +67,7 @@ class TestDataLifecycleManager(TestCase):
             self.assertEquals(2, len(manager.getDataObjectUids(dataObject)))
 
             # Try the same with a non-precious data object, it shouldn't be replicated
-            dataObject = data_object.FileDataObject('oid:B', 'uid:B1', bcaster, expectedSize=1, precious=False)
+            dataObject = data_object.FileDataObject('oid:B', 'uid:B1', expectedSize=1, precious=False)
             manager.addDataObject(dataObject)
             self._writeAndClose(dataObject)
             self.assertEquals(DOPhases.GAS, dataObject.phase)
@@ -78,8 +76,7 @@ class TestDataLifecycleManager(TestCase):
     def test_expiringNormalDataObject(self):
 
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-            bcaster = LocalEventBroadcaster()
-            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, expectedSize=1, lifespan=0.5)
+            dataObject = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
             manager.addDataObject(dataObject)
 
             # Writing moves the DO to COMPLETE
@@ -95,11 +92,10 @@ class TestDataLifecycleManager(TestCase):
 
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
 
-            bcaster = LocalEventBroadcaster()
-            dataObject1 = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, expectedSize=1, lifespan=0.5)
-            dataObject2 = data_object.FileDataObject('oid:B', 'uid:B1', bcaster, expectedSize=1, lifespan=0.5)
-            dataObject3 = data_object.FileDataObject('oid:C', 'uid:C1', bcaster, expectedSize=1, lifespan=1.5)
-            containerDO = data_object.ContainerDataObject('oid:D', 'uid:D1', bcaster)
+            dataObject1 = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
+            dataObject2 = data_object.FileDataObject('oid:B', 'uid:B1', expectedSize=1, lifespan=0.5)
+            dataObject3 = data_object.FileDataObject('oid:C', 'uid:C1', expectedSize=1, lifespan=1.5)
+            containerDO = data_object.ContainerDataObject('oid:D', 'uid:D1')
             containerDO.addChild(dataObject1)
             containerDO.addChild(dataObject2)
             containerDO.addChild(dataObject3)
@@ -129,8 +125,7 @@ class TestDataLifecycleManager(TestCase):
 
     def test_lostDataObject(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-            bcaster = LocalEventBroadcaster()
-            do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, expectedSize=1, lifespan=10, precious=False)
+            do = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=10, precious=False)
             manager.addDataObject(do)
             self._writeAndClose(do)
 
@@ -145,8 +140,7 @@ class TestDataLifecycleManager(TestCase):
 
     def test_cleanupExpiredDataObjects(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
-            bcaster = LocalEventBroadcaster()
-            do = data_object.FileDataObject('oid:A', 'uid:A1', bcaster, expectedSize=1, lifespan=1, precious=False)
+            do = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=1, precious=False)
             manager.addDataObject(do)
             self._writeAndClose(do)
 
