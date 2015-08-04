@@ -64,13 +64,10 @@ class LuigiTests(unittest.TestCase):
         self._test_graph('testGraphLuigiDriven')
 
     def test_chiles_pg(self):
-        self._test_graph('chiles_pg')
+        self._test_graph('chiles_pg', 8)
 
-    def test_complex_pg(self):
-        self._test_graph('complex_pg', 5)
-
-    def test_complex2_pg(self):
-        self._test_graph('complex2_pg', 5)
+    def test_complex_graph(self):
+        self._test_graph('complex_graph', 5)
 
     def test_container_pg(self):
         self._test_graph('container_pg')
@@ -86,9 +83,6 @@ class LuigiTests(unittest.TestCase):
 
     def test_complexFromFile(self):
         self._test_graphFromFile("complex.js", 5)
-
-    def test_complex2FromFile(self):
-        self._test_graphFromFile("complex2.js", 5)
 
     def _test_graphFromFile(self, f, socketListeners=1):
         f = pkg_resources.resource_stream("test", "graphs/%s" % (f))  # @UndefinedVariable
@@ -115,7 +109,7 @@ class LuigiTests(unittest.TestCase):
         # ... but at the end all the nodes of the graph should be completed
         # and should exist
         doutils.breadFirstTraverse(task.roots,\
-                                   lambda do: self.assertTrue(do.isCompleted() and do.exists()))
+                                   lambda do: self.assertTrue(do.isCompleted() and do.exists(), "%s is not COMPLETED or doesn't exist" % (do.uid)))
 
     def writeToLocalhostSocket(self, port):
         import socket

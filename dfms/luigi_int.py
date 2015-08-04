@@ -24,7 +24,7 @@ import threading
 import time
 
 from dfms import doutils
-from dfms.data_object import AppConsumer
+from dfms.data_object import AppDataObject
 from dfms.ddap_protocol import ExecutionMode, DOStates
 import luigi
 import importlib
@@ -42,11 +42,11 @@ class RunDataObjectTask(luigi.Task):
 
     Which of the two actions is performed depends on the nature of the
     DataObject and on the execution mode set in the DataObject's upstream
-    objects: only AppConsumer DataObjects can be triggered automatically by
-    their upstream objects. Since AppConsumer DataObjects only reference one
+    objects: only AppDataObject DataObjects can be triggered automatically by
+    their upstream objects. Since AppDataObject DataObjects only reference one
     upstream object (their producer) we need only to check the producer's
     execution mode, and if it's set to ExecutionMode.EXTERNAL then this task
-    needs to manually execute the AppConsumer DataObject. In any other case this
+    needs to manually execute the AppDataObject DataObject. In any other case this
     task simply waits until the DataObject's status has moved to COMPLETED.
 
     The complete() test for both cases is still the same, regardless of who is
@@ -60,7 +60,12 @@ class RunDataObjectTask(luigi.Task):
         super(RunDataObjectTask, self).__init__(*args, **kwargs)
 
         do = self.data_obj
-        self.execDO  = isinstance(do, AppConsumer) and do.producer.executionMode == ExecutionMode.EXTERNAL
+        self.execDO  = False
+        if isinstance(do, AppDataObject):
+            for inputDO in do.inputs:
+                if inputDO.executionMode == ExecutionMode.EXTERNAL:
+                    self.execDO = True
+
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug("%s will execute or monitor DataObject %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
 
@@ -76,7 +81,8 @@ class RunDataObjectTask(luigi.Task):
 
     def run(self):
         if self.execDO:
-            self.data_obj.consume(self.data_obj.producer)
+            for inputDO in self.data_obj.inputs:
+                self.data_obj.dataObjectCompleted(inputDO.uid)
         else:
             timeout = None
             expirationDate = self.data_obj.expirationDate

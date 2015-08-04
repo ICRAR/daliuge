@@ -32,7 +32,7 @@ import logging
 
 from dfms import doutils
 from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
-    FileDataObject, NgasDataObject, SocketListener, ContainerAppConsumer
+    FileDataObject, NgasDataObject, SocketListener
 
 
 STORAGE_TYPES = {
@@ -75,8 +75,6 @@ def _createDataObjectGraph(doSpecList):
             do = _createPlain(doSpec)
         elif doType == 'container':
             do = _createContainer(doSpec)
-        elif doType == 'containerapp':
-            do = _createContainerApp(doSpec)
         elif doType == 'socket':
             do = _createSocket(doSpec)
         elif doType == 'app':
@@ -102,6 +100,25 @@ def _createDataObjectGraph(doSpecList):
             for consumerOid in doSpec['immediateConsumers']:
                 immediateConsumer = dataObjects[consumerOid]
                 dataObject.addImmediateConsumer(immediateConsumer)
+
+        if doSpec.has_key('producer'):
+            producerDO = dataObjects[doSpec['producer']]
+            dataObject.producer = producerDO
+
+        if doSpec.has_key('inputs'):
+            for inputOid in doSpec['inputs']:
+                inputDO = dataObjects[inputOid]
+                dataObject.addInput(inputDO)
+
+        if doSpec.has_key('immediateInputs'):
+            for inputOid in doSpec['immediateInputs']:
+                inputDO = dataObjects[inputOid]
+                dataObject.addImmediateInput(inputDO)
+
+        if doSpec.has_key('outputs'):
+            for outputOid in doSpec['outputs']:
+                outputDO = dataObjects[outputOid]
+                dataObject.addOutput(outputDO)
 
         if doSpec.has_key('children'):
             for childOid in doSpec['children']:
@@ -129,20 +146,6 @@ def _createContainer(doSpec):
     kwargs   = _getKwargs(doSpec)
     return ContainerDataObject(oid, uid, **kwargs)
 
-def _createContainerApp(doSpec):
-    oid, uid = _getIds(doSpec)
-    kwargs   = _getKwargs(doSpec)
-    del kwargs['app']
-
-    appName = doSpec['app']
-    parts   = appName.split('.')
-    module  = importlib.import_module('.'.join(parts[:-1]))
-    appType = getattr(module, parts[-1])
-
-    class doType(appType, ContainerAppConsumer): pass
-
-    return doType(oid, uid, **kwargs)
-
 def _createSocket(doSpec):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
@@ -163,11 +166,7 @@ def _createApp(doSpec):
     module  = importlib.import_module('.'.join(parts[:-1]))
     appType = getattr(module, parts[-1])
 
-    # 'storage' is mandatory
-    storageType = STORAGE_TYPES[doSpec['storage']]
-    class doType(appType, storageType): pass
-
-    return doType(oid, uid, **kwargs)
+    return appType(oid, uid, **kwargs)
 
 def _getIds(doSpec):
     # uid is copied from oid if not explicitly given

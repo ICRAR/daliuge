@@ -10,98 +10,116 @@
 		"oid":       "B",
 		"type":      "socket",
 		"storage":   "memory",
-		"port":      1112
+		"port":      1112,
+		"consumers": ["I"]
 	},
 	{
 		"oid":       "C",
 		"type":      "socket",
 		"storage":   "memory",
-		"port":      1113
+		"port":      1113,
+		"consumers": ["F"]
 	},
 	{
 		"oid":       "D",
 		"type":      "socket",
 		"storage":   "memory",
-		"port":      1114
+		"port":      1114,
+		"consumers": ["F"]
 	},
 	{
 		"oid":       "E",
 		"type":      "app",
 		"app":       "test.graphsRepository.SleepAndCopyApp",
-		"storage":   "memory"
+		"outputs":   ["G"]
 	},
 	{
 		"oid":       "F",
-		"type":      "container",
-		"children":  ["C", "D"]
+		"type":      "app",
+		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"outputs":   ["H"]
 	},
 	{
 		"oid":       "G",
-		"type":      "container",
-		"children":  ["E", "F"],
-		"consumers": ["H"]
+		"type":      "plain",
+		"storage":   "memory",
+		"consumers": ["I"]
 	},
 	{
 		"oid":       "H",
-		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"type":      "plain",
 		"storage":   "memory",
-		"consumers": ["J"]
+		"consumers": ["I"]
 	},
 	{
 		"oid":       "I",
-		"type":      "socket",
-		"storage":   "memory",
-		"port":      1115
+		"type":      "app",
+		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"outputs":   ["J"]
 	},
 	{
 		"oid":       "J",
-		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"type":      "plain",
 		"storage":   "memory",
-		"consumers": ["M", "N"]
+		"consumers": ["L", "M"]
 	},
 	{
 		"oid":       "K",
-		"type":      "container",
-		"children":  ["H", "I"],
-		"consumers": ["L"]
+		"type":      "socket",
+		"storage":   "memory",
+		"port":      1115,
+		"consumers": ["M"]
 	},
 	{
 		"oid":       "L",
 		"type":      "app",
 		"app":       "test.graphsRepository.SleepAndCopyApp",
-		"storage":   "memory"
+		"outputs":   ["N", "O"]
 	},
 	{
 		"oid":       "M",
 		"type":      "app",
 		"app":       "test.graphsRepository.SleepAndCopyApp",
-		"storage":   "memory",
-		"consumers": ["O"]
+		"outputs":   ["P"]
 	},
 	{
 		"oid":       "N",
-		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"type":      "plain",
 		"storage":   "memory",
-		"consumers": ["P"]
+		"consumers": ["Q"]
 	},
 	{
 		"oid":       "O",
-		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
-		"storage":   "memory"
+		"type":      "plain",
+		"storage":   "memory",
+		"consumers": ["R"]
 	},
 	{
 		"oid":       "P",
-		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
-		"storage":   "memory"
+		"type":      "plain",
+		"storage":   "memory",
+		"consumers": ["R"]
 	},
 	{
 		"oid":       "Q",
-		"type":      "container",
-		"children":  ["L", "P"]
+		"type":      "app",
+		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"outputs":   ["S"]
+	},
+	{
+		"oid":       "R",
+		"type":      "app",
+		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"outputs":   ["T"]
+	},
+	{
+		"oid":       "S",
+		"type":      "plain",
+		"storage":   "memory"
+	},
+	{
+		"oid":       "T",
+		"type":      "plain",
+		"storage":   "memory"
 	}
 ]

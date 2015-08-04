@@ -20,9 +20,9 @@
 #    MA 02111-1307  USA
 #
 
-from dfms.data_object import FileDataObject, AppConsumer, InMemoryDataObject, InMemoryCRCResultDataObject,\
-    ContainerDataObject, ContainerAppConsumer, InMemorySocketListenerDataObject,\
-    NullDataObject, ImmediateAppConsumer
+from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, \
+    ContainerDataObject, InMemorySocketListenerDataObject,\
+    NullDataObject, CRCAppDataObject, BarrierAppDataObject
 
 import os, unittest, threading
 from cStringIO import StringIO
@@ -52,26 +52,19 @@ def isContainer(do):
     except AttributeError:
         return False
 
-class SumupContainerChecksum(AppConsumer, InMemoryDataObject):
+class SumupContainerChecksum(BarrierAppDataObject):
     """
-    A dummy AppConsumer/DataObject that recursivelly sums up the checksums of
-    all children of the ContainerDataObject it consumes, and then stores the
-    final result in memory
+    A dummy BarrierAppDataObject that recursively sums up the checksums of
+    all the individual DataObjects it consumes, and then stores the final
+    result in its output DataObject
     """
-    def run(self, dataObject):
-        if not isContainer(dataObject):
-            raise Exception("This consumer consumes only Container DataObjects")
-        crcSum = self.sumUpCRC(dataObject, 0)
-        self.write(str(crcSum))
-        self.setCompleted()
-
-    def sumUpCRC(self, container, crcSum):
-        for c in container.children:
-            if isContainer(c):
-                crcSum += self.sumUpCRC(container, crcSum)
-            else:
-                crcSum += c.checksum
-        return crcSum
+    def run(self):
+        crcSum = 0
+        for inputDO in self._inputs.values():
+            crcSum += inputDO.checksum
+        outputDO = self._outputs.values()[0]
+        outputDO.write(str(crcSum))
+        outputDO.setCompleted()
 
 class TestDataObject(unittest.TestCase):
 
@@ -114,20 +107,22 @@ class TestDataObject(unittest.TestCase):
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
         dobA = doType('oid:A', 'uid:A', expectedSize = self._test_do_sz * ONE_MB)
-        dobB = InMemoryCRCResultDataObject('oid:B', 'uid:B')
-        dobA.addConsumer(dobB)
+        dobB = CRCAppDataObject('oid:B', 'uid:B')
+        dobC = InMemoryDataObject('oid:C', 'uid:C')
+        dobB.addInput(dobA)
+        dobB.addOutput(dobC)
 
         test_crc = 0
         for _ in range(self._test_num_blocks):
             dobA.write(self._test_block)
             test_crc = crc32(self._test_block, test_crc)
 
-        # Read the checksum from dobB
-        dobBChecksum = int(doutils.allDataObjectContents(dobB))
+        # Read the checksum from dobC
+        dobCChecksum = int(doutils.allDataObjectContents(dobC))
 
         self.assertNotEquals(dobA.checksum, 0)
         self.assertEquals(dobA.checksum, test_crc)
-        self.assertEquals(dobBChecksum, test_crc)
+        self.assertEquals(dobCChecksum, test_crc)
 
     def test_simple_chain(self):
         '''
@@ -138,67 +133,74 @@ class TestDataObject(unittest.TestCase):
         cat someFile | grep 'a' | sort | rev
         '''
 
-        class GrepResult(AppConsumer):
-            def appInitialize(self, **kwargs):
+        class GrepResult(BarrierAppDataObject):
+            def initialize(self, **kwargs):
+                super(GrepResult, self).initialize(**kwargs)
                 self._substring = kwargs['substring']
 
-            def run(self, do):
+            def run(self):
+                do = self._inputs.values()[0]
+                output = self._outputs.values()[0]
                 allLines = StringIO(doutils.allDataObjectContents(do)).readlines()
                 for line in allLines:
                     if self._substring in line:
-                        self.write(line)
-                self.setCompleted()
+                        output.write(line)
+                output.setCompleted()
 
-        class SortResult(AppConsumer):
-            def run(self, do):
+        class SortResult(BarrierAppDataObject):
+            def run(self):
+                do = self._inputs.values()[0]
+                output = self._outputs.values()[0]
                 sortedLines = StringIO(doutils.allDataObjectContents(do)).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
-                    self.write(line)
-                self.setCompleted()
+                    output.write(line)
+                output.setCompleted()
 
-        class RevResult(AppConsumer):
-            def run(self, do):
+        class RevResult(BarrierAppDataObject):
+            def run(self):
+                do = self._inputs.values()[0]
+                output = self._outputs.values()[0]
                 allLines = StringIO(doutils.allDataObjectContents(do)).readlines()
                 for line in allLines:
                     buf = ''
                     for c in line:
                         if c == ' ' or c == '\n':
-                            self.write(buf[::-1])
-                            self.write(c)
+                            output.write(buf[::-1])
+                            output.write(c)
                             buf = ''
                         else:
                             buf += c
-                self.setCompleted()
-
-        class InMemoryGrepResult(GrepResult, InMemoryDataObject): pass
-        class InMemorySortResult(SortResult, InMemoryDataObject): pass
-        class InMemoryRevResult(RevResult, InMemoryDataObject): pass
+                output.setCompleted()
 
         a = InMemoryDataObject('oid:A', 'uid:A')
-        b = InMemoryGrepResult('oid:B', 'uid:B', substring="a")
-        c = InMemorySortResult('oid:C', 'uid:C')
-        d = InMemoryRevResult('oid:D', 'uid:D')
+        b = GrepResult('oid:B', 'uid:B', substring="a")
+        c = InMemoryDataObject('oid:C', 'uid:C')
+        d = SortResult('oid:D', 'uid:D')
+        e = InMemoryDataObject('oid:E', 'uid:E')
+        f = RevResult('oid:F', 'oid:F')
+        g = InMemoryDataObject('oid:G', 'uid:G')
 
         a.addConsumer(b)
-        b.addConsumer(c)
+        b.addOutput(c)
         c.addConsumer(d)
+        d.addOutput(e)
+        e.addConsumer(f)
+        f.addOutput(g)
 
         # Initial write
         contents = "first line\nwe have an a here\nand another one\nnoone knows me"
-        bResExpected = "we have an a here\nand another one\n"
-        cResExpected = "and another one\nwe have an a here\n"
-        dResExpected = "dna rehtona eno\new evah na a ereh\n"
+        cResExpected = "we have an a here\nand another one\n"
+        eResExpected = "and another one\nwe have an a here\n"
+        gResExpected = "dna rehtona eno\new evah na a ereh\n"
         a.write(contents)
         a.setCompleted()
 
         # Get intermediate and final results and compare
         actualRes   = []
-        for i in [b, c, d]:
-            desc = i.open()
-            actualRes.append(i.read(desc))
-            i.close(desc)
-        map(lambda x, y: self.assertEquals(x, y), [bResExpected, cResExpected, dResExpected], actualRes)
+        for i in [c, e, g]:
+            actualRes.append(doutils.allDataObjectContents(i))
+        map(lambda x, y: self.assertEquals(x, y), [cResExpected, eResExpected, gResExpected], actualRes)
 
     def test_join(self):
         """
@@ -206,16 +208,18 @@ class TestDataObject(unittest.TestCase):
 
         A1, A2 and A3 are FileDataObjects
         B1, B2 and B3 are CRCResultDataObjects
-        C is a ContainerDataObject
+        C1, C2 and C3 are InMemoryDataObjects
         D is a SumupContainerChecksum
+        E is a InMemoryDataObject
 
-        --> A1 --> B1 --|
-        --> A2 --> B2 --|--> C --> D
-        --> A3 --> B3 --|
+        --> A1 --> B1 --> C1 --|
+        --> A2 --> B2 --> C2 --|--> D --> E
+        --> A3 --> B3 --> C3 --|
 
         Upon writing all A* DOs, the execution of B* DOs should be triggered,
-        after which "C" will transition to COMPLETE. Finally, "D" will also be
-        triggered, and will hold the sum of B1, B2 and B3's contents
+        after which "C" will transition to COMPLETE. Once all "C"s have moved to
+        COMPLETED "D"'s execution will also be triggered, and finally E will
+        hold the sum of B1, B2 and B3's checksums
         """
 
         filelen = self._test_do_sz * ONE_MB
@@ -225,28 +229,32 @@ class TestDataObject(unittest.TestCase):
         doA3 = FileDataObject('oid:A3', 'uid:A3', expectedSize=filelen)
 
         # CRC Result DOs, storing the result in memory
-        doB1 = InMemoryCRCResultDataObject('oid:B1', 'uid:B1')
-        doB2 = InMemoryCRCResultDataObject('oid:B2', 'uid:B2')
-        doB3 = InMemoryCRCResultDataObject('oid:B3', 'uid:B3')
-
-        # The Container DO that groups together the CRC Result DOs
-        doC = ContainerDataObject('oid:C', 'uid:C')
+        doB1 = CRCAppDataObject('oid:B1', 'uid:B1')
+        doB2 = CRCAppDataObject('oid:B2', 'uid:B2')
+        doB3 = CRCAppDataObject('oid:B3', 'uid:B3')
+        doC1 = InMemoryDataObject('oid:C1', 'uid:C1')
+        doC2 = InMemoryDataObject('oid:C2', 'uid:C2')
+        doC3 = InMemoryDataObject('oid:C3', 'uid:C3')
 
         # The final DO that sums up the CRCs from the container DO
         doD = SumupContainerChecksum('oid:D', 'uid:D')
+        doE = InMemoryDataObject('oid:E', 'uid:E')
 
         # Wire together
         doAList = [doA1,doA2,doA3]
         doBList = [doB1,doB2,doB3]
+        doCList = [doC1,doC2,doC3]
         for doA,doB in map(lambda a,b: (a,b), doAList, doBList):
             doA.addConsumer(doB)
-        for doB in doBList:
-            doC.addChild(doB)
-        doC.addConsumer(doD)
+        for doB,doC in map(lambda b,c: (b,c), doBList, doCList):
+            doB.addOutput(doC)
+        for doC in doCList:
+            doC.addConsumer(doD)
+        doD.addOutput(doE)
 
-        # Wait until D is completed
+        # Wait until E is completed
         evt = threading.Event()
-        doD.addConsumer(EvtConsumer(evt))
+        doE.addConsumer(EvtConsumer(evt))
 
         # Write data into the initial "A" DOs, which should trigger
         # the whole chain explained above
@@ -256,172 +264,68 @@ class TestDataObject(unittest.TestCase):
         evt.wait()
 
         # All DOs are completed now that the chain executed correctly
-        for do in doAList + doBList:
+        for do in doAList + doBList + doCList:
             self.assertTrue(do.status, DOStates.COMPLETED)
 
         # The results we want to compare
-        sum_crc = doB1.checksum + doB2.checksum + doB3.checksum
-        dobDData = int(doutils.allDataObjectContents(doD))
+        sum_crc = doC1.checksum + doC2.checksum + doC3.checksum
+        dobEData = int(doutils.allDataObjectContents(doE))
 
         self.assertNotEquals(sum_crc, 0)
-        self.assertEquals(sum_crc, dobDData)
+        self.assertEquals(sum_crc, dobEData)
 
-    def test_lmc(self):
+    def test_app_multiple_outputs(self):
         """
-        A more complex test that simulates the LMC (or DataFlowManager)
-        submitting a physical graph via the DataManager, and in turn via two
-        different DOMs. The graph that gets submitted looks like this:
-
-           -----------------Data-Island------------------
-          |                     |                       |
-          | A --------> B ------|------> C --------> D  |
-          |   Data Object Mgr   |    Data Object Mgr    |
-          |       001           |        002            |
-          -----------------------------------------------
-
-        Here only A is a FileDataObject; B, C and D are
-        InMemoryCRCResultDataObject, meaning that D holds
-        A's checksum's checksum's checksum.
-
-        The most interesting part of this exercise though is that it
-        crosses boundaries of DOMs, and show that DOs are correctly
-        talking to each other remotely in the current prototype with
-        Pyro and Pyro4 (or not)
-        """
-
-        import datetime
-        import Pyro4
-        from dfms.data_manager import DataManager
-        from dfms import data_object_mgr, dataflow_manager
-
-        ns_host = 'localhost'
-        my_host = 'localhost'
-        my_port = 7778
-
-        # 1.1. launch Pyro4 name service, DOMs register on it
-        _, ns4Daemon, _ = Pyro4.naming.startNS(host=ns_host)
-        ns4Thread = threading.Thread(None, lambda x: x.requestLoop(), 'NS4Thrd', [ns4Daemon])
-        ns4Thread.setDaemon(1)
-        ns4Thread.start()
-
-        # Now comes the real work
-        try:
-            # 2. launch data_object_manager
-            data_object_mgr.launchServer('001', as_daemon=True, nsHost=ns_host, host=my_host, port=my_port)
-            data_object_mgr.launchServer('002', as_daemon=True, nsHost=ns_host, host=my_host, port=my_port+1)
-
-            # 3. ask dataflow_manager to build the physical dataflow
-            obsId = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') # a dummy observation id
-            (pdgRoot, doms) = dataflow_manager.buildSimpleIngestPDG(obsId, nsHost=ns_host)
-
-            a = pdgRoot
-            b = a.consumers[0]
-            c = b.consumers[0]
-            d = c.consumers[0]
-            for do in [a,b,c,d]:
-                self.assertTrue(do.status, DOStates.INITIALIZED)
-
-            # 4. start a single data manager
-            print "**** step 4"
-            dmgr = DataManager()
-            dmgr.start() # start the daemon
-
-            print "**** step 5"
-            # 5. submit the graph to data manager
-            res_avail = dmgr.submitPDG(pdgRoot, doms)
-            if (not res_avail):
-                raise Exception("Resource is not available in the data manager!")
-
-            print "**** step 6"
-            # 6. start the pipeline (simulate CSP)
-            # Since the events are asynchronously we wait
-            # on an event set when D is COMPLETED
-            evt = threading.Event()
-            consumer = EvtConsumer(evt)
-            daemon = Pyro4.Daemon()
-            consumerUri = daemon.register(consumer)
-            t = threading.Thread(None, lambda: daemon.requestLoop(), "tmp", [])
-            t.start()
-            d.addConsumer(Pyro4.Proxy(consumerUri))
-
-            pdgRoot.write(' ')
-            pdgRoot.setCompleted()
-            self.assertTrue(evt.wait(5)) # Should take only a fraction of a second anyway
-            daemon.shutdown()
-            t.join()
-
-            for do in [a,b,c,d]:
-                self.assertEquals(do.status, DOStates.COMPLETED)
-
-            # Check that B holds A's checksum and so forth
-            for prod, cons in [(a,b), (b,c), (c,d)]:
-                consContents = int(doutils.allDataObjectContents(cons))
-                self.assertEquals(prod.checksum, consContents,
-                                  "%s/%s's checksum did not match %s/%s's content: %d/%d" %
-                                  (a.oid, a.uid, b.oid, b.uid, prod.checksum, consContents))
-
-            print "**** step 7"
-            # 7. tear down data objects of this observation on each data object manager
-            for dom in doms:
-                ret = dom.shutdownDOBDaemon(obsId)
-                print '%s was shutdown, ret code = %d' % (dom.getURI(), ret)
-
-            # 8. shutdown the data manager daemon
-            dmgr.shutdown()
-
-        except Exception:
-            print("Pyro traceback:")
-            print("".join(Pyro4.util.getPyroTraceback()))
-            raise
-        finally:
-            # 9. shutdown name service
-            try:
-                ns4Daemon.shutdown()
-                ns4Thread.join()
-            except:
-                pass
-
-    def test_container_app_do(self):
-        """
-        A small method that tests that the ContainerAppConsumer concept works
+        A small method that tests that the AppDataObjects writing to two
+        different DataObjects outputs works
 
         The graph constructed by this example looks as follow:
 
-                        |--> D
-        A --> B --> C --|
-                        |--> E
+                              |--> E
+        A --> B --> C --> D --|
+                              |--> F
 
-        Here C is a ContainerAppConsumer, meaning that it consumes the data
-        from B and fills the D and E DataObjects, which are its children.
+        Here B and D are an AppDataObjects, with D writing to two DataObjects
+        outputs (E and F) and reading from C. C, in turn, is written by B, which
+        in turns reads the data from A
         """
 
-        class NumberWriterApp(InMemoryDataObject, AppConsumer):
-            def run(self, dataObject):
-                howMany = int(doutils.allDataObjectContents(dataObject))
+        # This is used as "B"
+        class NumberWriterApp(BarrierAppDataObject):
+            def run(self):
+                inputDO = self._inputs.values()[0]
+                output = self._outputs.values()[0]
+                howMany = int(doutils.allDataObjectContents(inputDO))
                 for i in xrange(howMany):
-                    self.write(str(i) + " ")
-                self.setCompleted()
+                    output.write(str(i) + " ")
+                output.setCompleted()
 
-        class OddAndEvenContainerApp(ContainerAppConsumer):
-            def run(self, dataObject):
-                numbers = doutils.allDataObjectContents(dataObject).strip().split()
+        # This is used as "D"
+        class OddAndEvenContainerApp(BarrierAppDataObject):
+            def run(self):
+                inputDO = self._inputs.values()[0]
+                outputs = self._outputs.values()
+
+                numbers = doutils.allDataObjectContents(inputDO).strip().split()
                 for n in numbers:
-                    self._children[int(n) % 2].write(n + " ")
-                self._children[0].setCompleted()
-                self._children[1].setCompleted()
+                    outputs[int(n) % 2].write(n + " ")
+                outputs[0].setCompleted()
+                outputs[1].setCompleted()
 
         # Create DOs
         a =     InMemoryDataObject('oid:A', 'uid:A')
         b =        NumberWriterApp('oid:B', 'uid:B')
-        c = OddAndEvenContainerApp('oid:C', 'uid:C')
-        d =     InMemoryDataObject('oid:D', 'uid:D')
+        c =     InMemoryDataObject('oid:A', 'uid:A')
+        d = OddAndEvenContainerApp('oid:D', 'uid:D')
         e =     InMemoryDataObject('oid:E', 'uid:E')
+        f =     InMemoryDataObject('oid:F', 'uid:F')
 
         # Wire them together
         a.addConsumer(b)
-        b.addConsumer(c)
-        c.addChild(d)
-        c.addChild(e)
+        b.addOutput(c)
+        c.addConsumer(d)
+        d.addOutput(e)
+        d.addOutput(f)
 
         # Start the execution
         a.write('20')
@@ -430,9 +334,9 @@ class TestDataObject(unittest.TestCase):
 
         # Check the final results are correct
         for do in [a,b,c,d,e]:
-            self.assertEquals(do.status, DOStates.COMPLETED)
-        self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(d).strip())
-        self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(e).strip())
+            self.assertEquals(do.status, DOStates.COMPLETED, "%r is not yet COMPLETED" % (do))
+        self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(e).strip())
+        self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(f).strip())
 
     def test_socket_listener(self):
         '''
@@ -450,13 +354,15 @@ class TestDataObject(unittest.TestCase):
         data = 'shine on you crazy diamond'
 
         a = InMemorySocketListenerDataObject('oid:A', 'uid:A', host=host, port=port)
-        b = InMemoryCRCResultDataObject('oid:B', 'uid:B')
+        b = CRCAppDataObject('oid:B', 'uid:B')
+        c = InMemoryDataObject('oid:C', 'uid:C')
         a.addConsumer(b)
+        b.addOutput(c)
 
-        # Since b becomes COMPLETED on a different thread (where A's socket is
+        # Since c becomes COMPLETED on a different thread (where A's socket is
         # listening for data) we need to wait on an Event
         evt = threading.Event()
-        b.addConsumer(EvtConsumer(evt))
+        c.addConsumer(EvtConsumer(evt))
 
         # Create the socket, write, and close the connection, allowing
         # A to move to COMPLETED
@@ -468,14 +374,14 @@ class TestDataObject(unittest.TestCase):
 
         evt.wait(3) # That's plenty of time
 
-        for do in [a,b]:
+        for do in [a,b,c]:
             self.assertEquals(DOStates.COMPLETED, do.status)
 
         # Our expectations are fulfilled!
         aContents = doutils.allDataObjectContents(a)
-        bContents = int(doutils.allDataObjectContents(b))
+        cContents = int(doutils.allDataObjectContents(c))
         self.assertEquals(data, aContents)
-        self.assertEquals(crc32(data, 0), bContents)
+        self.assertEquals(crc32(data, 0), cContents)
 
     def test_dataObjectWroteFromOutside(self):
         """
@@ -560,57 +466,66 @@ class TestDataObject(unittest.TestCase):
         required, and not always internally by themselves
         """
         a = InMemoryDataObject('a', 'a', executionMode=mode, expectedSize=1)
-        b = InMemoryCRCResultDataObject('b', 'b')
+        b = CRCAppDataObject('b', 'b')
+        c = InMemoryDataObject('c', 'c')
         a.addConsumer(b)
-        a.write('1')
+        c.producer = b
 
+        # Write and check
+        a.write('1')
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
-            self.assertEquals(b.status, DOStates.INITIALIZED)
+            self.assertEquals(c.status, DOStates.INITIALIZED)
             # Now let b consume a
-            b.consume(a)
-            self.assertEquals(b.status, DOStates.COMPLETED)
+            b.dataObjectCompleted('a')
+            self.assertEquals(c.status, DOStates.COMPLETED)
         elif mode == ExecutionMode.DO:
             # b is already done
-            self.assertEquals(b.status, DOStates.COMPLETED)
+            self.assertEquals(c.status, DOStates.COMPLETED)
 
-    def test_immediateConsumer(self):
+    def test_objectAsNormalAndImmediateInput(self):
         """
-        A test for immediate consumers, which consume a DO's data as it gets
-        written into the DO. We use the following graph:
+        A test that checks that a DO can act as normal and immediate input of
+        different AppDataObjects at the same time. We use the following graph:
 
-        A --|--> B
-            |--> C
+        A --|--> B --> D
+            |--> C --> E
 
-        Here B is an immediate consumer of A, while C is a normal one.
+        Here B is uses A as an immediate input, while C uses it as a normal
+        input
         """
 
-        class LastCharWriterApp(ImmediateAppConsumer):
-            def appInitialize(self, **kwargs):
+        class LastCharWriterApp(AppDataObject):
+            def initialize(self, **kwargs):
+                super(LastCharWriterApp, self).initialize(**kwargs)
                 self._lastChar = None
-            def consume(self, data):
+            def dataWritten(self, uid, data):
+                outputDO = self._outputs.values()[0]
                 self._lastChar = data[-1]
-                self.write(self._lastChar)
-            def consumptionCompleted(self):
-                self.setCompleted()
-        class InMemoryLastCharWriterApp(LastCharWriterApp, InMemoryDataObject):
-            pass
+                outputDO.write(self._lastChar)
+            def dataObjectCompleted(self, uid):
+                outputDO = self._outputs.values()[0]
+                outputDO.setCompleted()
 
         a = InMemoryDataObject('a', 'a')
-        b = InMemoryLastCharWriterApp('b', 'b')
-        c = InMemoryCRCResultDataObject('c', 'c') # this is a normal AppConsumer
+        b = LastCharWriterApp('b', 'b')
+        c = CRCAppDataObject('c', 'c')
+        d = InMemoryDataObject('d', 'd')
+        e = InMemoryDataObject('e', 'e')
         a.addImmediateConsumer(b)
         a.addConsumer(c)
+        b.addOutput(d)
+        c.addOutput(e)
 
         # Consumer cannot be normal and immediate at the same time
         self.assertRaises(Exception, lambda: a.addConsumer(b))
         self.assertRaises(Exception, lambda: a.addImmediateConsumer(c))
 
         # Write a little, then check the consumers
-        def checkDOStates(aStatus, bStatus, cStatus, lastChar):
+        def checkDOStates(aStatus, dStatus, eStatus, lastChar):
             self.assertEquals(aStatus, a.status)
-            self.assertEquals(bStatus, b.status)
-            self.assertEquals(cStatus, c.status)
+            self.assertEquals(dStatus, d.status)
+            self.assertEquals(eStatus, e.status)
             self.assertEquals(lastChar, b._lastChar)
 
         checkDOStates(DOStates.INITIALIZED , DOStates.INITIALIZED, DOStates.INITIALIZED, None)
@@ -622,7 +537,7 @@ class TestDataObject(unittest.TestCase):
         a.setCompleted()
         checkDOStates(DOStates.COMPLETED, DOStates.COMPLETED, DOStates.COMPLETED, 'k')
 
-        self.assertEquals('ejk', doutils.allDataObjectContents(b))
+        self.assertEquals('ejk', doutils.allDataObjectContents(d))
 
 if __name__ == '__main__':
     unittest.main()

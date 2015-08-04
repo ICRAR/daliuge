@@ -358,7 +358,24 @@ class DataLifecycleManager(object):
         # see the "DataLifecycleDb", which would correspond to the DLM. If this
         # activity is really run from DOs it would mean that DOs depend on the
         # DLM, while the DLM manages DOs.
-        pass
+
+        for do in self._dos.values:
+
+            # Don't touch these
+            if do.isBeingRead():
+                continue
+
+            # EXPIRED DOs will soon be deleted
+            # DELETED DOs do not exist anymore
+            if do.status in (DOStates.DELETED, DOStates.EXPIRED):
+                continue
+
+            # 1. Data that is not being used anymore should be moved down in the
+            #    hierarchy
+            lastAccess = self._reg.getLastAccess(do.oid)
+            timeUnread = time.time() - lastAccess
+            if lastAccess != -1 and timeUnread > 10:
+                self.moveDataObjectDown(do)
 
     def addDataObject(self, dataObject):
 

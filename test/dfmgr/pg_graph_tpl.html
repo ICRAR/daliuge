@@ -243,6 +243,9 @@
       var worker = workers[id];
       var className;
       switch(worker.type) {
+        case 3:
+          className = 'warn'
+          break
         case 2:
           className = "container";
           break;

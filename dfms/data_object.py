@@ -29,6 +29,7 @@ It should be based on the UML class diagram
 """
 
 from abc import ABCMeta, abstractmethod
+import collections
 import heapq
 import logging
 from operator import __or__
@@ -117,9 +118,8 @@ class AbstractDataObject(object):
         self._executionMode = executionMode
 
         # 1-to-N relationship: one DataObject may have many consumers, but
-        # has only 1 producer. For the opposite N-to-1 relationship a
-        # ContainerDataObject should be used (where many DataObjects "produce"
-        # one new DataObject)
+        # has only 1 producer. The potential consumers and producer are always
+        # AppDataObjects instances
         self._consumers = []
         self._producer  = None
 
@@ -186,8 +186,6 @@ class AbstractDataObject(object):
 
         try:
             self.initialize(**kwargs)
-            if hasattr(self, 'appInitialize'):
-                self.appInitialize(**kwargs)
             self.status = DOStates.INITIALIZED
         except:
             # It doesn't make sense to set an internal status here because
@@ -209,7 +207,7 @@ class AbstractDataObject(object):
         return hash(self._uid)
 
     def __repr__(self):
-        re = "%s %s/%s" % (self.__class__, self.oid, self.uid)
+        re = "%s %s/%s" % (self.__class__.__name__, self.oid, self.uid)
         if self.location:
             re += "@{0}".format(self.location)
         return re
@@ -218,7 +216,6 @@ class AbstractDataObject(object):
         """
         Hook for subclass initialization.
         """
-        pass
 
     def open(self, **kwargs):
         """
@@ -310,9 +307,10 @@ class AbstractDataObject(object):
         self._size += nbytes
 
         # Trigger our immediate consumers
-        writtenData = buffer(data, 0, nbytes)
-        for immediateConsumer in self._immediateConsumers:
-            immediateConsumer.consume(writtenData)
+        if self._immediateConsumers:
+            writtenData = buffer(data, 0, nbytes)
+            for immediateConsumer in self._immediateConsumers:
+                immediateConsumer.dataWritten(self.uid, writtenData)
 
         # Update our internal checksum
         self._updateChecksum(data)
@@ -545,11 +543,6 @@ class AbstractDataObject(object):
             warnings.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
         if parent:
             self._parent = parent # a parent is a container
-            def checkCompletedChild(event):
-                if (event.status != DOStates.COMPLETED):
-                    return
-                parent.addCompletedChild(event.oid, event.uid)
-            self.subscribe(checkCompletedChild, eventType='status')
 
     @property
     def consumers(self):
@@ -577,8 +570,8 @@ class AbstractDataObject(object):
 
         # Consumers have a "consume" method that gets invoked when
         # this DO moves to COMPLETED
-        if not hasattr(consumer, 'consume'):
-            raise Exception("The consumer %s doesn't have a 'consume' method" % (consumer))
+        if not hasattr(consumer, 'dataObjectCompleted'):
+            raise Exception("The consumer %s doesn't have a 'dataObjectCompleted' method, cannot add to %s" % (consumer, self))
 
         # An object cannot be a normal and immediate consumer at the same time,
         # see the comment in the __init__ method
@@ -593,23 +586,23 @@ class AbstractDataObject(object):
         self._consumers.append(consumer)
 
         # Automatic back-reference
-        if hasattr(consumer, 'producer'):
-            consumer.producer = self
+        if hasattr(consumer, 'addInput'):
+            consumer.addInput(self)
 
         # Only trigger consumers automatically if the DataObject graph's
         # execution is driven by the DataObjects themselves
         if self._executionMode == ExecutionMode.EXTERNAL:
             return
 
-        def consumeCompleted(e):
+        def dataObjectCompleted(e):
             if e.status != DOStates.COMPLETED:
                 if _logger.isEnabledFor(logging.DEBUG):
                     _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return
             if _logger.isEnabledFor(logging.DEBUG):
                 _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
-            consumer.consume(self)
-        self.subscribe(consumeCompleted, eventType='status')
+            consumer.dataObjectCompleted(self.uid)
+        self.subscribe(dataObjectCompleted, eventType='status')
 
     @property
     def producer(self):
@@ -623,10 +616,14 @@ class AbstractDataObject(object):
 
     @producer.setter
     def producer(self, producer):
+        if self._producer == producer:
+            return
         if self._producer and producer:
             warnings.warn("A producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
         if producer:
             self._producer = producer
+            if hasattr(producer, 'addOutput'):
+                producer.addOutput(self)
 
     @property
     def immediateConsumers(self):
@@ -648,8 +645,8 @@ class AbstractDataObject(object):
 
         # Consumers have a "consume" method that gets invoked when
         # this DO moves to COMPLETED
-        if not hasattr(immediateConsumer, 'consume'):
-            raise Exception("The immediate consumer %s doesn't have a 'consume' method" % (immediateConsumer))
+        if not hasattr(immediateConsumer, 'dataObjectCompleted') or not hasattr(immediateConsumer, 'dataWritten'):
+            raise Exception("The immediate consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (immediateConsumer))
 
         # An object cannot be a normal and immediate immediateConsumer at the same time,
         # see the comment in the __init__ method
@@ -664,8 +661,8 @@ class AbstractDataObject(object):
         self._immediateConsumers.append(immediateConsumer)
 
         # Automatic back-reference
-        if hasattr(immediateConsumer, 'immediateProducer'):
-            immediateConsumer.immediateProducer = self
+        if hasattr(immediateConsumer, 'addImmediateInput'):
+            immediateConsumer.addImmediateInput(self)
 
     @property
     def immediateProducer(self):
@@ -700,7 +697,7 @@ class AbstractDataObject(object):
 
         # Signal our immediate consumers that the show is over
         for ic in self._immediateConsumers:
-            ic.consumptionCompleted()
+            ic.dataObjectCompleted(self.uid)
 
     def isCompleted(self):
         '''
@@ -803,7 +800,7 @@ class NgasDataObject(AbstractDataObject):
 
         # Check we actually can write NGAMS clients
         try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport
+            from ngamsPClient import ngamsPClient  # @UnusedImport @UnresolvedImport
         except:
             warnings.warn("No NGAMS client libs found, cannot use NgasDataObjects")
             raise
@@ -824,7 +821,7 @@ class NgasDataObject(AbstractDataObject):
         return self._getClient()
 
     def _getClient(self):
-        from ngamsPClient import ngamsPClient
+        from ngamsPClient import ngamsPClient  # @UnresolvedImport
         return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
 
     def writeMeta(self, data, **kwargs):
@@ -867,7 +864,7 @@ class NgasDataObject(AbstractDataObject):
         descriptor.retrieve2File(self.uid, cmd="QRETRIEVE")
 
     def exists(self):
-        import ngamsLib
+        import ngamsLib  # @UnresolvedImport
         status = self._getClient().sendCmd('STATUS', pars=[['fileId', self.uid]])
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
@@ -932,11 +929,8 @@ class ContainerDataObject(AbstractDataObject):
     """
 
     def initialize(self, **kwargs):
-        """
-        Hook for subclass initialization.
-        """
+        super(ContainerDataObject, self).initialize(**kwargs)
         self._children = []
-        self._complete_map = {} #key - child oid, value - completed yet (bool)?
 
     #===========================================================================
     # No data-related operations should actually be called in Container DOs
@@ -947,27 +941,8 @@ class ContainerDataObject(AbstractDataObject):
         raise NotImplementedError()
     def readMeta(self, descriptor, count, **kwargs):
         raise NotImplementedError()
-    def writeMeta(self, descriptor, data, **kwargs):
+    def writeMeta(self, data, **kwargs):
         raise NotImplementedError()
-
-    def addCompletedChild(self, oid, uid):
-
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("ContainerDataObject %s/%s joined COMPLETED child DataObject %s/%s" % (self._oid, self._uid, oid, uid))
-
-        self._complete_map[oid] = True
-
-        # check if each child is completed
-        # TODO: We should also consider the case in which one child takes so
-        #       long that the quicker children expire in the meanwhile.
-        #       Also here we should take into consideration failures in the
-        #       children DOs, whether they are allowed, and how to handle them
-        #       if that's the case
-        if not all(self._complete_map.values()):
-            return
-
-        # move the container as a whole to COMPLETED
-        self.setCompleted()
 
     def addChild(self, child):
 
@@ -980,15 +955,20 @@ class ContainerDataObject(AbstractDataObject):
 
         self._children.append(child)
         child.parent = self
-        self._complete_map[child.oid] = child.isCompleted()
 
     def delete(self):
+        # TODO: this needs more thinking. Probably a separate method to perform
+        #       this recursive deletion will be needed, while this delete method
+        #       will go hand-to-hand with the rest of the I/O methods above,
+        #       which are currently raise a NotImplementedError
         for c in [c for c in self._children if c.exists()]:
             c.delete()
 
     @property
     def expirationDate(self):
-        return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
+        if self._children:
+            return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
+        return None
 
     @property
     def children(self):
@@ -1004,147 +984,145 @@ class ContainerDataObject(AbstractDataObject):
 
 
 #===============================================================================
-# AppConsumer classes follow
+# AppDataObject classes follow
 #===============================================================================
 
 
-class AppConsumer(object):
+class AppDataObject(ContainerDataObject):
 
     __metaclass__ = ABCMeta
 
     '''
-    An AppConsumer is an object implementing the "consume" method, invoked by
-    DataObjects on their consumers when they change to the COMPLETED state.
-
-    Although consumers in general can be any kind of object, mixing the
-    AppConsumer with the basic DataObject classes can be used to create
-    DataObjects that react on other DOs who transit to COMPLETED, and that
-    represent the output of a computation done over the COMPLETED DO. This is
-    then the mechanism through which a DataObject graph will be able to progress
-    through its execution.
-
-    Different AppConsumer implementations might decide whether they accept or
-    not to consume ContainerDataObjects, which are a special case of DOs where
-    I/O is not performed directly via the DO, and requires special navigation
-    through its children.
+    An AppDataObject is a DataObject that reads data from one or more
+    DataObjects (its inputs), processes it, and writes data onto one or more
+    DataObjects (its outputs). Once it has finished writing each output, it
+    moves the output's state to COMPLETED.
     '''
 
-    def appInitialize(self, **kwargs):
-        """
-        Initialization hooks for subclasses
-        """
-        pass
+    def initialize(self, **kwargs):
 
-    def consume(self, dataObject):
-        """
-        Execute the tasks
-        """
-        self.run(dataObject)
+        super(AppDataObject, self).initialize(**kwargs)
 
-    @abstractmethod
-    def run(self, dataObject):
+        # Inputs and Outputs are the DataObjects that get read from and written
+        # to by this AppDataObject, respectively. An input DataObject will see
+        # this AppDataObject as one of its consumers, while an output DataObject
+        # will see this AppDataObject as its single producer.
+        #
+        # Input objects will 
+        self._inputs  = collections.OrderedDict()
+        self._outputs = collections.OrderedDict()
+
+        # Same as above, only that these correspond to the 'immediate' version
+        # of the consumers and producers.
+        self._immediateInputs  = {}
+
+    def addInput(self, inputDataObject):
+        if inputDataObject not in self._inputs.values():
+            uid = inputDataObject.uid
+            self._inputs[uid] = inputDataObject
+            inputDataObject.addConsumer(self)
+
+    @property
+    def inputs(self):
+        return self._inputs.values()
+
+    def addOutput(self, outputDataObject):
+        if outputDataObject is self:
+            raise Exception('Cannot add an AppConsumer as its own output')
+        if outputDataObject not in self._outputs.values():
+            uid = outputDataObject.uid
+            self._outputs[uid] = outputDataObject
+            outputDataObject.producer = self
+
+    @property
+    def outputs(self):
+        return self._outputs.values()
+
+    def addImmediateInput(self, immediateInputDO):
+        if immediateInputDO not in self._immediateInputs.values():
+            uid = immediateInputDO.uid
+            self._immediateInputs[uid] = immediateInputDO
+            immediateInputDO.addImmediateConsumer(self)
+
+    @property
+    def immediateInputs(self):
+        return self._immediateInputs.values()
+
+    def dataObjectCompleted(self, uid):
         """
-        Runs the application logic over the data pointed by ``dataObject``
+        Callback invoked when `dataObject` (which is one of the inputs of this
+        AppDataObject) has moved to the COMPLETED state. By default no action is
+        performed
         """
 
-class CRCResultConsumer(AppConsumer):
+    def dataWritten(self, uid, data):
+        """
+        Callback invoked when `data` has been written into the DataObject with
+        UID `uid` (which is one of the immediate inputs of this AppDataObject).
+        By default no action is performed
+        """
+
+class BarrierAppDataObject(AppDataObject):
+    """
+    An AppDataObject that implements a barrier. It accepts no 'immediate' inputs
+    and it waits until all its inputs have been moved to COMPLETED to execute
+    to 'run' method.
+    """
+
+    def initialize(self, **kwargs):
+        super(BarrierAppDataObject, self).initialize(**kwargs)
+        self._completedInputs = []
+
+    def dataObjectCompleted(self, uid):
+        super(BarrierAppDataObject, self).dataObjectCompleted(uid)
+        self._completedInputs.append(uid)
+        if len(self._completedInputs) == len(self._inputs):
+            # TODO: This is temporary and needs to be defined more clearly
+            self.setCompleted()
+            self.run()
+
+    # TODO: another thing we need to check
+    def exists(self):
+        return True
+
+    def run(self):
+        """
+        Run this application. It can be safely assumed that at this point all
+        the required inputs are COMPLETED.
+        """
+
+class CRCAppDataObject(BarrierAppDataObject):
     '''
-    An AppConsumer that calculates the CRC of the DataObject it consumes.
-    It assumes the DataObject being consumed is not a container.
-    This is a simple example of an AppConsumer being implemented, and not
-    something really intended to be used in a production system
+    An BarrierAppDataObject that calculates the CRC of the single DataObject it
+    consumes. It assumes the DataObject being consumed is not a container.
+    This is a simple example of an BarrierAppDataObject being implemented, and
+    not something really intended to be used in a production system
     '''
 
-    def run(self, dataObject):
-        if isinstance(dataObject, ContainerDataObject):
-            raise Exception("This consumer doesn't consume Container DataObjects")
+    def run(self):
+        if len(self._inputs) != 1:
+            raise Exception("This application read only from one DataObject")
+        if len(self._outputs) != 1:
+            raise Exception("This application writes only one DataObject")
+
+        inputDO = self._inputs.values()[0]
+        outputDO = self._outputs.values()[0]
 
         bufsize = 4 * 1024 ** 2
-        desc = dataObject.open()
-        buf = dataObject.read(desc, bufsize)
+        desc = inputDO.open()
+        buf = inputDO.read(desc, bufsize)
         crc = 0
         while buf:
             crc = crc32(buf, crc)
-            buf = dataObject.read(desc, bufsize)
-        dataObject.close(desc)
+            buf = inputDO.read(desc, bufsize)
+        inputDO.close(desc)
 
         # Rely on whatever implementation we decide to use
         # for storing our data
-        self.write(str(crc))
+        outputDO.write(str(crc))
 
         # That's the only data we write; after that we are complete
-        self.setCompleted()
-
-class FileCRCResultDataObject(CRCResultConsumer,
-                              FileDataObject):
-    '''
-    A CRCResultConsumer that exposes its result as a FileDataObject
-    '''
-    pass
-
-class NgasCRCResultDataObject(CRCResultConsumer,
-                              NgasDataObject):
-    '''
-    A CRCResultConsumer that exposes its result as an NgasDataObject
-    '''
-    pass
-
-class InMemoryCRCResultDataObject(CRCResultConsumer,
-                                  InMemoryDataObject):
-    '''
-    A CRCResultConsumer that exposes its result as an InMemoryDataObject
-    '''
-    pass
-
-class ContainerAppConsumer(AppConsumer,
-                           ContainerDataObject):
-    '''
-    An AppConsumer that is in turn a ContainerDataObject. This implies that
-    the consumption of the data of the producer object yields more than one
-    DataObject. Objects inheriting from this class will be able to attach
-    children to them, and to invoke their individual write() methods when
-    consuming the data coming from the producer DataObject.
-    '''
-    pass
-
-
-#===============================================================================
-# ImmediateAppConsumer classes follow
-#===============================================================================
-
-
-class ImmediateAppConsumer(object):
-    """
-    An ImmediateAppConsumer is an object implementing the ``consume`` and
-    ``consumptionCompleted`` methods invoked by DataObjects on their immediate
-    consumers as they write data and as they move to COMPLETED state,
-    respectively.
-
-    Although immediate consumers in general can be any kind of object, mixing
-    this class with the basic DataObject implementations would lead to
-    DataObjects that react on other DOs as they get written, that perform some
-    computation on the data as it arrives, and that finally represent the output
-    of such computation.
-    """
-
-    def appInitialize(self, **kwargs):
-        """
-        Hook for subclasses to get initialized
-        """
-        pass
-
-    def consume(self, data):
-        """
-        Method that gets executed when data arrives to the 'producer' DataObject
-        """
-        pass
-
-    def consumptionCompleted(self):
-        """
-        Method executed when the 'producer' DataObject moves to COMPLETED, thus
-        signaling that no more data is to be expected by this consumer
-        """
-        pass
+        outputDO.setCompleted()
 
 
 #===============================================================================
