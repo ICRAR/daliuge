@@ -23,8 +23,7 @@
 
 import unittest
 from dfms import doutils
-from dfms.data_object import InMemoryDataObject, ContainerDataObject,\
-    InMemoryCRCResultDataObject
+from dfms.data_object import InMemoryDataObject, CRCAppDataObject
 
 '''
 Created on 20 Jul 2015
@@ -38,46 +37,62 @@ class DOUtilsTest(unittest.TestCase):
         """
         Creates the following graph of DataObjects:
 
-        A |--> B ----> D --|
-          |--> C -|--> E --|-> G
+        A |--> B ----> D --> G --> I --|
+          |--> C -|--> E --------------|-> H --> J
                   |--> F
+
+        B, C, G and H are AppDOs. The names have been given in breadth-first
+        order (although H has a dependency on I)
         """
         a =          InMemoryDataObject('a', 'a')
-        b = InMemoryCRCResultDataObject('b', 'b')
-        c = InMemoryCRCResultDataObject('c', 'c')
-        d = InMemoryCRCResultDataObject('d', 'd')
-        e = InMemoryCRCResultDataObject('e', 'e')
-        f = InMemoryCRCResultDataObject('f', 'f')
-        g =         ContainerDataObject('g', 'g')
+        b =            CRCAppDataObject('b', 'b')
+        c =            CRCAppDataObject('c', 'c')
+        d =          InMemoryDataObject('d', 'd')
+        e =          InMemoryDataObject('e', 'e')
+        f =          InMemoryDataObject('f', 'f')
+        g =            CRCAppDataObject('g', 'g')
+        h =            CRCAppDataObject('h', 'h')
+        i =          InMemoryDataObject('i', 'i')
+        j =          InMemoryDataObject('j', 'j')
 
         a.addConsumer(b)
         a.addConsumer(c)
-        b.addConsumer(d)
-        c.addConsumer(e)
-        c.addConsumer(f)
-        g.addChild(d)
-        g.addChild(e)
-        return a, b, c, d, e, f, g
+        b.addOutput(d)
+        c.addOutput(e)
+        c.addOutput(f)
+        d.addConsumer(g)
+        e.addConsumer(h)
+        g.addOutput(i)
+        i.addConsumer(h)
+        h.addOutput(j)
+
+        return a, b, c, d, e, f, g, h, i, j
 
     def testDownstreamObjects(self):
-        a, b, c, d, e, f, g = self._createGraph()
+        a, b, c, d, e, f, g, h, i, j = self._createGraph()
         self.assertDownstream(a, [b, c])
         self.assertDownstream(b, d)
         self.assertDownstream(c, [e, f])
         self.assertDownstream(d, g)
-        self.assertDownstream(e, g)
+        self.assertDownstream(e, h)
         self.assertDownstream(f, [])
-        self.assertDownstream(g, [])
+        self.assertDownstream(g, i)
+        self.assertDownstream(h, j)
+        self.assertDownstream(i, h)
+        self.assertDownstream(j, [])
 
     def testUpstreamObjects(self):
-        a, b, c, d, e, f, g = self._createGraph()
+        a, b, c, d, e, f, g, h, i, j = self._createGraph()
         self.assertUpstream(a, [])
         self.assertUpstream(b, a)
         self.assertUpstream(c, a)
         self.assertUpstream(e, c)
         self.assertUpstream(d, b)
         self.assertUpstream(f, c)
-        self.assertUpstream(g, [e, d])
+        self.assertUpstream(g, d)
+        self.assertUpstream(h, [e, i])
+        self.assertUpstream(i, g)
+        self.assertUpstream(j, h)
 
     def assertDownstream(self, node, downstreamNodes):
         if not isinstance(downstreamNodes, list):
@@ -103,31 +118,31 @@ class DOUtilsTest(unittest.TestCase):
         """
         Checks that our DFS method is correct
         """
-        a, b, c, d, e, f, g = self._createGraph()
+        a, b, c, d, e, f, g, h, i, j = self._createGraph()
         nodesList = []
         doutils.depthFirstTraverse(a, lambda n: nodesList.append(n))
 
-        self.assertListEqual(nodesList, [a, b, d, g, c, e, f])
+        self.assertListEqual(nodesList, [a, b, d, g, i, h, j, c, e, f])
         pass
 
     def testBreadthFirstSearch(self):
         """
         Checks that our BFS method is correct
         """
-        a, b, c, d, e, f, g = self._createGraph()
+        a, b, c, d, e, f, g, h, i, j = self._createGraph()
         nodesList = []
         doutils.breadFirstTraverse(a, lambda n: nodesList.append(n))
 
-        self.assertListEqual(nodesList, [a, b, c, d, e, f, g])
+        self.assertListEqual(nodesList, [a, b, c, d, e, f, g, h, i, j])
         pass
 
     def testGetEndNodes(self):
         """
         Checks that the getLeafNodes works correctly
         """
-        a, _, _, _, _, f, g = self._createGraph()
+        a, _, _, _, _, f, _, _, _, j = self._createGraph()
         endNodes = doutils.getLeafNodes(a)
-        self.assertSetEqual(set([f, g]), set(endNodes))
+        self.assertSetEqual(set([j, f]), set(endNodes))
         pass
 
 if __name__ == "__main__":

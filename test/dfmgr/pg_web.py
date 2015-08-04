@@ -28,7 +28,7 @@ import time
 from bottle import route, run, request, get, static_file, template, redirect
 
 from dfms import doutils
-from dfms.data_object import AppConsumer, ContainerDataObject, SocketListener
+from dfms.data_object import ContainerDataObject, SocketListener, AppDataObject
 from dfms.luigi_int import FinishGraphExecution
 
 
@@ -150,10 +150,12 @@ def root():
 # class and slightly modified afterwards
 #===============================================================================
 def get_type_code(dataObject):
-    if isinstance(dataObject, AppConsumer):
+    if isinstance(dataObject, AppDataObject):
         return 1
     elif isinstance(dataObject, ContainerDataObject):
         return 2
+    elif isinstance(dataObject, SocketListener):
+        return 3
     else:
         return 4
 

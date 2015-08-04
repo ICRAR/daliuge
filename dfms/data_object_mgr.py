@@ -39,7 +39,7 @@ import sys, threading
 import Pyro4
 
 from dfms.daemon import Daemon
-from dfms.data_object import InMemoryCRCResultDataObject, InMemoryDataObject
+from dfms.data_object import InMemoryDataObject, CRCAppDataObject
 from dfms.ddap_protocol import CST_NS_DOM, DOLinkType
 from dfms.lifecycle.dlm import DataLifecycleManager
 
@@ -106,7 +106,7 @@ class DataObjectMgr(object):
         This method returns the URI of the data object created
         """
         if (appDataObj):
-            mydo = InMemoryCRCResultDataObject(oid, uid)
+            mydo = CRCAppDataObject(oid, uid)
         else:
             mydo = InMemoryDataObject(oid, uid)
 

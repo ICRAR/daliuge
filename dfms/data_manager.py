@@ -23,7 +23,7 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   10/12/2014     Created
 #
-from dfms.data_object import AppConsumer
+from dfms.data_object import AppDataObject
 
 """
 Data manager knows the configuration of compute islands, data islands
@@ -98,7 +98,7 @@ class DataManager():
         """
         a naive tree traverse method
         """
-        if (excludeAppDo and isinstance(root, AppConsumer)):
+        if (excludeAppDo and isinstance(root, AppDataObject)):
             print "ignore"
         else:
             relist.append(root)

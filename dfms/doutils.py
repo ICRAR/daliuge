@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 import logging
-from dfms.data_object import ContainerAppConsumer, ContainerDataObject
+from dfms.data_object import AppDataObject
 
 '''
 Utility methods and classes to be used when interacting with DataObjects
@@ -38,7 +38,7 @@ class EvtConsumer(object):
     '''
     def __init__(self, evt):
         self._evt = evt
-    def consume(self, do):
+    def dataObjectCompleted(self, do):
         self._evt.set()
 
 def allDataObjectContents(dataObject):
@@ -78,14 +78,15 @@ def getUpstreamObjects(dataObject):
     In practice if A is an upstream DataObject of B means that it must be moved
     to the COMPLETED state before B can do so.
     """
-    parent = dataObject.parent
     upObjs = []
-    if dataObject.producer:
-        upObjs.append(dataObject.producer)
-    if parent and isinstance(parent, ContainerAppConsumer):
-        upObjs.append(parent)
-    elif isinstance(dataObject, ContainerDataObject) and not isinstance(dataObject, ContainerAppConsumer):
-        upObjs += dataObject.children
+    if isinstance(dataObject, AppDataObject):
+        upObjs += dataObject.inputs
+        upObjs += dataObject.immediateInputs
+    else:
+        if dataObject.producer:
+            upObjs.append(dataObject.producer)
+            if dataObject.immediateProducer:
+                upObjs.append(dataObject.immediateProducer)
     return upObjs
 
 def getDownstreamObjects(dataObject):
@@ -101,13 +102,12 @@ def getDownstreamObjects(dataObject):
     In practice if A is a downstream DataObject of B means that it cannot
     advance to the COMPLETED state until B does so.
     """
-    parent   = dataObject.parent
-    downObjs = dataObject.consumers
-    if isinstance(dataObject, ContainerAppConsumer):
-        downObjs += dataObject.children
-    elif parent and isinstance(parent, ContainerDataObject) and \
-         not isinstance(parent, ContainerAppConsumer):
-        downObjs.append(parent)
+    downObjs = []
+    if isinstance(dataObject, AppDataObject):
+        downObjs += dataObject.outputs
+    else:
+        downObjs += dataObject.consumers
+        downObjs += dataObject.immediateConsumers
     return downObjs
 
 def getLeafNodes(nodes):

@@ -88,41 +88,6 @@ class TestDataLifecycleManager(TestCase):
             self.assertEquals(DOStates.EXPIRED, dataObject.status)
 
 
-    def test_expiringContainerDataObject(self):
-
-        with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-
-            dataObject1 = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
-            dataObject2 = data_object.FileDataObject('oid:B', 'uid:B1', expectedSize=1, lifespan=0.5)
-            dataObject3 = data_object.FileDataObject('oid:C', 'uid:C1', expectedSize=1, lifespan=1.5)
-            containerDO = data_object.ContainerDataObject('oid:D', 'uid:D1')
-            containerDO.addChild(dataObject1)
-            containerDO.addChild(dataObject2)
-            containerDO.addChild(dataObject3)
-
-            manager.addDataObject(dataObject1)
-            manager.addDataObject(dataObject2)
-            manager.addDataObject(dataObject3)
-            manager.addDataObject(containerDO)
-
-            # Writing moves DOs to COMPLETE
-            for do in [dataObject1, dataObject2, dataObject3]:
-                self._writeAndClose(do)
-
-            # Wait a bit, DO #1 and #2 should be have been moved by the DLM to EXPIRED,
-            time.sleep(1)
-            expired    = [dataObject1, dataObject2]
-            notExpired = [dataObject3, containerDO]
-            for do in expired:
-                self.assertEquals(DOStates.EXPIRED, do.status)
-            for do in notExpired:
-                self.assertNotEquals(DOStates.EXPIRED, do.status)
-
-            # Wait a bit more, now all DOs should be expired
-            time.sleep(1)
-            for do in [dataObject1, dataObject2, dataObject3, containerDO]:
-                self.assertEquals(DOStates.EXPIRED, do.status)
-
     def test_lostDataObject(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
             do = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=10, precious=False)

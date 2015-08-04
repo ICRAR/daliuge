@@ -24,11 +24,10 @@ import unittest
 
 from dfms import graph_loader
 from dfms.data_object import InMemoryDataObject, ContainerDataObject,\
-    FileDataObject, AppConsumer
+    AppDataObject
 
 # Used in the textual representation of the graphs in these tests
-class DummyApp(AppConsumer):
-    def run(self, dataObject): pass
+class DummyApp(AppDataObject): pass
 
 class TestGraphLoader(unittest.TestCase):
 
@@ -54,15 +53,14 @@ class TestGraphLoader(unittest.TestCase):
 
     def test_consumer(self):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]}, \
-                       {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp", "storage":"file"}]')
+                       {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]')
         a = graph_loader.readObjectGraph(f)[0]
         self.assertIsInstance(a, InMemoryDataObject)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
         self.assertEquals(1, len(a.consumers))
         b = a.consumers[0]
-        self.assertIsInstance(b, FileDataObject)
         self.assertIsInstance(b, DummyApp)
         self.assertEquals("B", b.oid)
         self.assertEquals("B", b.uid)
-        self.assertEquals(a, b.producer)
+        self.assertEquals(a, b.inputs[0])
