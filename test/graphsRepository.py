@@ -41,7 +41,7 @@ import time
 
 from dfms import doutils
 from dfms.data_object import InMemoryDataObject, \
-    InMemorySocketListenerDataObject, BarrierAppDataObject
+    InMemorySocketListenerDataObject, BarrierAppDataObject, ContainerDataObject
 from dfms.ddap_protocol import ExecutionMode
 from test.test_data_object import SumupContainerChecksum
 
@@ -58,6 +58,11 @@ defaultSleepTime = None
 #===============================================================================
 # Support AppDataObject classes
 #===============================================================================
+class SimpleBarrierApp(BarrierAppDataObject):
+    def run(self):
+        for outputDO in self._outputs.values():
+            outputDO.setCompleted()
+
 class SleepAndCopyApp(BarrierAppDataObject):
     """
     A simple application consumer that sleeps between 0 and 4 seconds (or the
@@ -85,10 +90,17 @@ class SleepAndCopyApp(BarrierAppDataObject):
         inputs  = self._inputs.values()
         outputs = self._outputs.values()
         for inputDO in inputs:
-            for outputDO in outputs:
-                    doutils.copyDataObjectContents(inputDO, outputDO)
+            self.copyRecursive(inputDO, outputs)
         for outputDO in outputs:
             outputDO.setCompleted()
+
+    def copyRecursive(self, inputDO, outputs):
+        if isinstance(inputDO, ContainerDataObject):
+            for child in inputDO.children:
+                self.copyRecursive(child, outputs)
+        else:
+            for outputDO in outputs:
+                doutils.copyDataObjectContents(inputDO, outputDO)
 
 #===============================================================================
 # Methods that create graphs follow. They must have no arguments to be
@@ -175,8 +187,10 @@ def container_pg():
     c = SleepAndCopyApp('C', 'C', lifespan=lifespan)
     d = InMemoryDataObject('D', 'D', lifespan=lifespan)
     e = InMemoryDataObject('E', 'E', lifespan=lifespan)
-    f = SleepAndCopyApp('F', 'F', lifespan=lifespan)
-    g = InMemoryDataObject('G', 'G', lifespan=lifespan)
+    f = SimpleBarrierApp('F', 'F', lifespan=lifespan)
+    g = ContainerDataObject('G', 'G', lifespan=lifespan)
+    h = SleepAndCopyApp('H', 'H', lifespan=lifespan)
+    i = InMemoryDataObject('I', 'I', lifespan=lifespan)
 
     # Wire together
     a.addConsumer(b)
@@ -186,6 +200,10 @@ def container_pg():
     d.addConsumer(f)
     e.addConsumer(f)
     f.addOutput(g)
+    g.addChild(d)
+    g.addChild(e)
+    g.addConsumer(h)
+    h.addOutput(i)
 
     return a
 
