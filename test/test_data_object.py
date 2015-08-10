@@ -20,17 +20,19 @@
 #    MA 02111-1307  USA
 #
 
-from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, \
-    ContainerDataObject, InMemorySocketListenerDataObject,\
-    NullDataObject, CRCAppDataObject, BarrierAppDataObject
-
-import os, unittest, threading
 from cStringIO import StringIO
-from dfms import doutils
-from dfms.ddap_protocol import DOStates, ExecutionMode
-from dfms.doutils import EvtConsumer
+import os, unittest, threading
 import random
 import shutil
+
+from dfms import doutils
+from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, \
+    InMemorySocketListenerDataObject, \
+    NullDataObject, CRCAppDataObject, BarrierAppDataObject, \
+    DirectoryContainer, ContainerDataObject
+from dfms.ddap_protocol import DOStates, ExecutionMode
+from dfms.doutils import EvtConsumer
+
 
 try:
     from crc32c import crc32
@@ -394,7 +396,7 @@ class TestDataObject(unittest.TestCase):
 
         # Write, but not through the DO
         a = FileDataObject('A', 'A')
-        filename = a.getFileName()
+        filename = a.path
         msg = 'a message'
         with open(filename, 'w') as f:
             f.write(msg)
@@ -538,6 +540,51 @@ class TestDataObject(unittest.TestCase):
         checkDOStates(DOStates.COMPLETED, DOStates.COMPLETED, DOStates.COMPLETED, 'k')
 
         self.assertEquals('ejk', doutils.allDataObjectContents(d))
+
+    def test_directoryContainer(self):
+        """
+        A small, simple test for the DirectoryContainer DO that checks it allows
+        only valid children to be added
+        """
+
+        # Prepare our playground
+        cwd = os.getcwd()
+        os.chdir('/tmp')
+        dirname  = ".hidden"
+        dirname2 = ".hidden/inside"
+        if not os.path.exists(dirname2):
+            os.makedirs(dirname2)
+
+        # DOs involved
+        a = FileDataObject('a', 'a', dirname=dirname)
+        b = FileDataObject('b', 'b', dirname=dirname)
+        c = FileDataObject('c', 'c', dirname=dirname2)
+        d = FileDataObject('d', 'd', dirname=dirname2)
+        cont1 = DirectoryContainer('e', 'e', dirname=dirname)
+        cont2 = DirectoryContainer('f', 'f', dirname=dirname2)
+
+        # Paths are absolutely reported
+        self.assertEquals('/tmp/.hidden', cont1.path)
+        self.assertEquals('/tmp/.hidden/inside', cont2.path)
+
+        # Certain children-to-be are rejected
+        self.assertRaises(TypeError, cont1.addChild, NullDataObject('g', 'g'))
+        self.assertRaises(TypeError, cont1.addChild, InMemoryDataObject('h', 'h'))
+        self.assertRaises(TypeError, cont1.addChild, ContainerDataObject('i', 'i'))
+        self.assertRaises(Exception, cont1.addChild, c)
+        self.assertRaises(Exception, cont1.addChild, d)
+        self.assertRaises(Exception, cont2.addChild, a)
+        self.assertRaises(Exception, cont2.addChild, b)
+
+        # These children are correct
+        cont1.addChild(a)
+        cont1.addChild(b)
+        cont2.addChild(c)
+        cont2.addChild(d)
+
+        # Revert to previous state
+        shutil.rmtree(dirname, True)
+        os.chdir(cwd)
 
 if __name__ == '__main__':
     unittest.main()
