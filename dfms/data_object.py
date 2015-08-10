@@ -217,6 +217,20 @@ class AbstractDataObject(object):
         Hook for subclass initialization.
         """
 
+    def incrRefCount(self):
+        """
+        Increments the reference count of this DataObject by one atomically.
+        """
+        with self._refLock:
+            self._refCount += 1
+
+    def decrRefCount(self):
+        """
+        Decrements the reference count of this DataObject by one atomically.
+        """
+        with self._refLock:
+            self._refCount -= 1
+
     def open(self, **kwargs):
         """
         Opens the DataObject for reading, and returns a "DataObject descriptor"
@@ -243,8 +257,7 @@ class AbstractDataObject(object):
         self._readDescriptors[key] = descriptor
 
         # This occurs only after a successful opening
-        with self._refLock:
-            self._refCount += 1
+        self.incrRefCount()
         self._fire('open')
 
         return key
@@ -258,8 +271,7 @@ class AbstractDataObject(object):
         self._checkStateAndDescriptor(descriptor)
 
         # Decrement counter and then actually close
-        with self._refLock:
-            self._refCount -= 1
+        self.decrRefCount()
         self.closeMeta(self._readDescriptors.pop(descriptor), **kwargs)
 
     def read(self, descriptor, count=4096, **kwargs):
@@ -373,6 +385,13 @@ class AbstractDataObject(object):
         """
         Returns `True` if the data represented by this DataObject exists indeed
         in the underlying storage mechanism
+        """
+
+    @abstractmethod
+    def dataURL(self):
+        """
+        A URL that points to the data referenced by this DataObject. Different
+        DataObject implementations will use different URI schemes.
         """
 
     def _updateChecksum(self, chunk):
@@ -542,7 +561,13 @@ class AbstractDataObject(object):
         if self._parent and parent:
             warnings.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
         if parent:
+            prevParent = self._parent
             self._parent = parent # a parent is a container
+            if hasattr(parent, 'addChild'):
+                try:
+                    parent.addChild(self)
+                except:
+                    self._parent = prevParent
 
     @property
     def consumers(self):
@@ -748,6 +773,7 @@ class FileDataObject(AbstractDataObject):
         self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
         if (not os.path.exists(self._root)):
             os.mkdir(self._root)
+        self._root = os.path.abspath(self._root)
 
         # TODO: Make sure the parts that make up the filename are composed
         #       of valid filename characters; otherwise encode them
@@ -780,7 +806,8 @@ class FileDataObject(AbstractDataObject):
     def closeMeta(self, descriptor, **kwargs):
         descriptor.close()
 
-    def getFileName(self):
+    @property
+    def path(self):
         return self._fnm
 
     def delete(self):
@@ -788,6 +815,11 @@ class FileDataObject(AbstractDataObject):
 
     def exists(self):
         return os.path.isfile(self._fnm)
+
+    @property
+    def dataURL(self):
+        hostname = os.uname()[1] # TODO: change when necessary
+        return "file://" + hostname + self._fnm
 
 class NgasDataObject(AbstractDataObject):
     '''
@@ -868,6 +900,10 @@ class NgasDataObject(AbstractDataObject):
         status = self._getClient().sendCmd('STATUS', pars=[['fileId', self.uid]])
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
+    @property
+    def dataURL(self):
+        return "ngas://%s:%d/%s" % (self._ngasSrv, self._ngasPort, self.uid)
+
 class InMemoryDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
@@ -895,6 +931,11 @@ class InMemoryDataObject(AbstractDataObject):
     def exists(self):
         return self._buf is not None
 
+    @property
+    def dataURL(self):
+        hostname = os.uname()[1]
+        return "mem://%s/%d" % (hostname, id(self._buf))
+
 class NullDataObject(AbstractDataObject):
     """
     A DataObject that stores no data
@@ -916,6 +957,10 @@ class NullDataObject(AbstractDataObject):
 
     def exists(self):
         return True
+
+    @property
+    def dataURL(self):
+        return "null://"
 
 class ContainerDataObject(AbstractDataObject):
     """
@@ -942,6 +987,8 @@ class ContainerDataObject(AbstractDataObject):
     def readMeta(self, descriptor, count, **kwargs):
         raise NotImplementedError()
     def writeMeta(self, data, **kwargs):
+        raise NotImplementedError()
+    def dataURL(self):
         raise NotImplementedError()
 
     def addChild(self, child):
@@ -981,6 +1028,40 @@ class ContainerDataObject(AbstractDataObject):
 
     def isReplicable(self):
         return False
+
+
+class DirectoryContainer(ContainerDataObject):
+    """
+    A ContainerDataObject that represents a filesystem directory. It only allows
+    FileDataObjects and DirectoryContainers to be added as children. Children
+    can only be added if they are placed directly within the directory
+    represented by this DirectoryContainer.
+    """
+
+    def initialize(self, **kwargs):
+        ContainerDataObject.initialize(self, **kwargs)
+
+        if 'dirname' not in kwargs:
+            raise Exception('DirectoryContainer needs a "directory" optional ')
+
+        directory = kwargs['dirname']
+        if not os.path.isdir(directory):
+            raise Exception('%s is not a directory' % (directory))
+
+        self._path = os.path.abspath(directory)
+
+    def addChild(self, child):
+        if isinstance(child, (FileDataObject, DirectoryContainer)):
+            path = child.path
+            if os.path.dirname(path) != self.path:
+                raise Exception('Child DataObject is not under %s' % (self.path))
+            ContainerDataObject.addChild(self, child)
+        else:
+            raise TypeError('Child data object is not of type FileDataObject or DirectoryContainer')
+
+    @property
+    def path(self):
+        return self._path
 
 
 #===============================================================================
