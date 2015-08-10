@@ -49,10 +49,10 @@ class TestDOM(unittest.TestCase):
         g2 = '[{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
                {"oid":"C", "type":"plain", "storage": "memory"}]'
 
-        uids1 = dom1.createDataObjectGraph(sessionId, g1)
-        uids2 = dom2.createDataObjectGraph(sessionId, g2)
-        self.assertEquals(1, len(uids1))
-        self.assertEquals(2, len(uids2))
+        uris1 = dom1.createDataObjectGraph(sessionId, g1)
+        uris2 = dom2.createDataObjectGraph(sessionId, g2)
+        self.assertEquals(1, len(uris1))
+        self.assertEquals(2, len(uris2))
 
         # Start the Pyro.daemon for our session on each DOM so we can
         # interact with our DOs
@@ -60,9 +60,9 @@ class TestDOM(unittest.TestCase):
         dom2.startDOBDaemon(sessionId)
 
         # We externally wire the Proxy objects now
-        a = Pyro4.Proxy(uids1[0])
-        b = Pyro4.Proxy(uids2[0])
-        c = Pyro4.Proxy(uids2[1])
+        a = Pyro4.Proxy(uris1[0])
+        b = Pyro4.Proxy(uris2[0])
+        c = Pyro4.Proxy(uris2[1])
         a.addConsumer(b)
         b.addOutput(c)
 
@@ -99,10 +99,10 @@ class TestDOM(unittest.TestCase):
         g2 = '[{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},\
                {"oid":"F", "type":"plain", "storage": "memory", "producer":"E"}]'
 
-        uids1 = dom1.createDataObjectGraph(sessionId, g1)
-        uids2 = dom2.createDataObjectGraph(sessionId, g2)
-        self.assertEquals(4, len(uids1))
-        self.assertEquals(2, len(uids2))
+        uris1 = dom1.createDataObjectGraph(sessionId, g1)
+        uris2 = dom2.createDataObjectGraph(sessionId, g2)
+        self.assertEquals(4, len(uris1))
+        self.assertEquals(2, len(uris2))
 
         # Start the Pyro.daemon for our session on each DOM so we can
         # interact with our DOs
@@ -111,12 +111,12 @@ class TestDOM(unittest.TestCase):
 
         # We externally wire the Proxy objects to establish the inter-DOM
         # relationships
-        a = Pyro4.Proxy(uids1[0])
-        b = Pyro4.Proxy(uids1[1])
-        c = Pyro4.Proxy(uids1[2])
-        d = Pyro4.Proxy(uids1[3])
-        e = Pyro4.Proxy(uids2[0])
-        f = Pyro4.Proxy(uids2[1])
+        a = Pyro4.Proxy(uris1[0])
+        b = Pyro4.Proxy(uris1[1])
+        c = Pyro4.Proxy(uris1[2])
+        d = Pyro4.Proxy(uris1[3])
+        e = Pyro4.Proxy(uris2[0])
+        f = Pyro4.Proxy(uris2[1])
         e.addInput(d)
         e.addInput(b)
 
@@ -185,14 +185,14 @@ class TestDOM(unittest.TestCase):
                {{"oid":"N", {0}, "inputs":["L","M"], "outputs":["O"]}},\
                {{"oid":"O", {1}}}]'.format(sumCRCCAppSpec, memoryDOSpec)
 
-        uids1 = dom1.createDataObjectGraph(sessionId, g1)
-        uids2 = dom2.createDataObjectGraph(sessionId, g2)
-        uids3 = dom3.createDataObjectGraph(sessionId, g3)
-        uids4 = dom4.createDataObjectGraph(sessionId, g4)
-        self.assertEquals(1, len(uids1))
-        self.assertEquals(5, len(uids2))
-        self.assertEquals(5, len(uids3))
-        self.assertEquals(4, len(uids4))
+        uris1 = dom1.createDataObjectGraph(sessionId, g1)
+        uris2 = dom2.createDataObjectGraph(sessionId, g2)
+        uris3 = dom3.createDataObjectGraph(sessionId, g3)
+        uris4 = dom4.createDataObjectGraph(sessionId, g4)
+        self.assertEquals(1, len(uris1))
+        self.assertEquals(5, len(uris2))
+        self.assertEquals(5, len(uris3))
+        self.assertEquals(4, len(uris4))
 
         # Start the Pyro.daemons
         for dom in allDOMs:
@@ -201,8 +201,8 @@ class TestDOM(unittest.TestCase):
         # We externally wire the Proxy objects to establish the inter-DOM
         # relationships. Intra-DOM relationships are already established
         proxies = []
-        for uid in uids1 + uids2 + uids3 + uids4:
-            proxies.append(Pyro4.Proxy(uid))
+        for uri in uris1 + uris2 + uris3 + uris4:
+            proxies.append(Pyro4.Proxy(uri))
 
         a = proxies[0]
         b = proxies[1]
