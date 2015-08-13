@@ -23,39 +23,59 @@
 A small module that measures the average memory consumption of different
 DataObject types. It was initially developed to address PRO-234.
 """
+
+from optparse import OptionParser
 import sys
+
 import psutil
+
 from dfms import data_object
+
 
 def measure(n, DOtype):
     """
     Create `n` DataObjects of type `DOtype` and measure how much memory does the
-    program use at the beginning and the end of the process. It returns the
-    total amount of memory used by all instances, and the average size of each
-    of them, both amounts in bytes
+    program use at the beginning and the end of the process. It returns a list
+    with the total amount of memory, user time and system time used during the
+    creation of all the DataObject instances
     """
     p = psutil.Process()
     mem1 = p.memory_info()[0]
+    uTime1, sTime1 = p.cpu_times()
     dos = []
     for i in xrange(n):
         uid = str(i)
         dos.append(DOtype(uid, uid))
     mem2 = p.memory_info()[0]
+    uTime2, sTime2 = p.cpu_times()
 
-    diff   = mem2 - mem1
-    doSize = diff / float(n)
-    return diff, doSize
+    return mem2 - mem1, uTime2 - uTime1, sTime2 - sTime1
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 3:
-        sys.stderr.write("Usage: %s #iter doType\n" % (sys.argv[0]))
-        sys.stderr.write("\n")
-        sys.stderr.write("Example: %s 50 FileDataObject\n" % (sys.argv[0]))
-        sys.exit()
+    parser = OptionParser()
+    parser.add_option("--csv", action="store_true", dest="csv", help = "Output results in CSV format", default=False)
+    parser.add_option("-i", "--instances", action="store", type="int",
+                      dest="instances", help = "Number of DataObject instances to create and measure")
+    parser.add_option("-t", "--type", action="store", type="string",
+                      dest="type", help = "DataObject type to instantiate")
+    (options, args) = parser.parse_args(sys.argv)
 
-    n = int(sys.argv[1])
-    dotype = sys.argv[2]
-    dotype = getattr(data_object, dotype)
-    total, avg = measure(n, dotype)
-    print "%d bytes used by %d %ss (%.2f bytes per DO)" % (total, n, dotype.__name__, avg)
+    if options.type is None:
+        parser.error("DataObject type to instantiate not specified")
+    if options.instances is None:
+        parser.error("Number of instances to create not specified")
+
+    n = options.instances
+    dotype = getattr(data_object, options.type)
+    mem, uTime, sTime = measure(n, dotype)
+    tTime = uTime + sTime
+    memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in mem, uTime, sTime, tTime]
+
+    if options.csv:
+        print "%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f" % (options.type, n, mem, uTime*10e3, sTime*10e3, tTime*10e3, memAvg, uTimeAvg*10e3, sTimeAvg*10e3, tTimeAvg*10e3)
+    else:
+        print "%d bytes used by %d %ss (%.2f bytes per DO)" % (mem, n, dotype.__name__, memAvg)
+        print "Total time:  %.2f msec (%.2f msec per DO)" % (tTime, tTimeAvg)
+        print "User time:   %.2f msec (%.2f msec per DO)" % (uTime, uTimeAvg)
+        print "System time: %.2f msec (%.2f msec per DO)" % (sTime, sTimeAvg)
