@@ -24,8 +24,9 @@ import unittest
 import Pyro4
 
 from dfms import doutils
-from dfms.data_object_mgr import DataObjectMgr
 from dfms.ddap_protocol import DOStates
+from dfms.dom.data_object_mgr import DataObjectMgr
+
 
 class TestDOM(unittest.TestCase):
 
