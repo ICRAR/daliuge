@@ -24,7 +24,6 @@
 # chen.wu@icrar.org   10/12/2014     Created as compute island mgr
 #                     13/04/2015     change name to DOMgr
 #
-from dfms import graph_loader, doutils
 """
 A data object managers manages all local Data Object instances
 on a single address space
@@ -32,21 +31,16 @@ on a single address space
 
 from collections import defaultdict
 import logging
-from optparse import OptionParser
-import os
-import sys, threading
+import threading
 
 import Pyro4
 
-from dfms.daemon import Daemon
+from dfms import graph_loader, doutils
 from dfms.data_object import InMemoryDataObject, CRCAppDataObject
-from dfms.ddap_protocol import CST_NS_DOM, DOLinkType
+from dfms.ddap_protocol import DOLinkType
 from dfms.lifecycle.dlm import DataLifecycleManager
 
 _logger = logging.getLogger(__name__)
-
-def _startDobDaemonThread(daemon):
-    daemon.requestLoop()
 
 class DataObjectMgr(object):
 
@@ -176,8 +170,7 @@ class DataObjectMgr(object):
         """
         if (self.daemon_dict.has_key(sessionId)):
             dae = self.daemon_dict[sessionId]
-            args = (dae,)
-            thref = threading.Thread(None, _startDobDaemonThread, 'DOBThrd' + str(sessionId), args)
+            thref = threading.Thread(None, lambda daemon: daemon.requestLoop(), 'DOBThrd' + str(sessionId), [dae])
             thref.setDaemon(1)
             if _logger.isEnabledFor(logging.INFO):
                 _logger.info('Launching daemon %s' % sessionId)
@@ -203,144 +196,3 @@ class DataObjectMgr(object):
 
     def ping(self):
         return "Hello, this is DOM %s" % self.getURI()
-
-def _startDaemonThread(daemon):
-    daemon.requestLoop()
-
-def launchServer(dom_id, as_daemon=False, host=None, port=0, nsHost=None, nsPort=9090):
-    if (host is None):
-        Pyro4.config.HOST = 'localhost'
-    else:
-        Pyro4.config.HOST = host
-
-    _logger.info('Creating data object manager daemon')
-    dom = DataObjectMgr()
-    dom_daemon = Pyro4.Daemon(port=port)
-    uri = dom_daemon.register(dom)
-    dom.setURI(str(uri))
-
-    _logger.info('Locating Naming Service...')
-    ns = Pyro4.locateNS(host=nsHost, port=nsPort)
-
-    _logger.info('Registering %s to NS...' % uri)
-    ns.register("%s_%s" % (CST_NS_DOM, dom_id), uri)
-
-    if (as_daemon):
-        _logger.info('Launching DOM service as a daemon')
-        args = (dom_daemon,)
-        thref = threading.Thread(None, _startDaemonThread, 'DOMDaemonThrd', args)
-        thref.setDaemon(1)
-        thref.start() # TODO - change to multiprocessing
-    else:
-        _logger.info('Launching DOM service as a process')
-        dom_daemon.requestLoop()
-
-def testClient(dom_id, nsHost = None):
-    # 1. found the dom service by the naming service
-    print 'Locating Naming Service...'
-    ns = Pyro4.locateNS(host = nsHost)
-    uriObj = ns.lookup("%s_%s" % (CST_NS_DOM, dom_id))
-
-    print 'Getting DOM service handle...'
-    domServ = Pyro4.Proxy(uriObj.asString())
-    print domServ.ping()
-
-    # 2. create two data objects remotely
-    ssid = 'session0001'
-    uri01 = domServ.createDataObject('oid001', 'uid001', ssid)
-    print 'uri of the first object: %s' % uri01
-
-    uri02 = domServ.createDataObject('oid002', 'uid002', ssid)
-    print 'uri of the second object: %s' % uri02
-
-    # 3. start the DOB daemon
-    ret = domServ.startDOBDaemon(ssid)
-    print "start DOB Daemon result %d" % ret
-
-    # 4. use the DOB daemon to "ping" the newly created remote data objects
-    dob1 = Pyro4.Proxy(uri01)
-    print dob1.ping()
-    print dob1.getURI()
-
-    dob2 = Pyro4.Proxy(uri02)
-    print dob2.ping()
-    print dob2.getURI()
-
-    # 5. shutdown the DOB daemon
-    ret = domServ.shutdownDOBDaemon(ssid)
-    print "shutdown DOB Daemon result %d" % ret
-
-def usage():
-    print "**************************************************************"
-    print "Example of launching a DOM service:"
-    print "python data_object_mgr.py -n storage01.icrar.org -i 001"
-    print
-    print "Example of launching a DOM service on a specified host"
-    print "python data_object_mgr.py -n storage01.icrar.org -i 001 -m storage01.icrar.org"
-    print
-    print "Example of start a test client:"
-    print "python data_object_mgr.py -n storage01.icrar.org -i 001 -c"
-    print
-    print "Example of starting a name service on a host:"
-    print "pyro4-ns -n storage01.icrar.org"
-    print "**************************************************************"
-
-class DOMDaemon(Daemon):
-    def __init__(self, options, *args, **kwargs):
-        pidfile = os.path.expanduser("~/.dfmsDOM_%s.pid" % (options.domId))
-        super(DOMDaemon, self).__init__(pidfile, *args, **kwargs)
-        self._options = options
-    def run(self):
-        opt = self._options
-        launchServer(opt.domId, host=opt.host, port=opt.port, nsHost=opt.nsHost, nsPort=opt.nsPort)
-
-# Function used as entry point by setuptools
-def main(args=sys.argv):
-
-    parser = OptionParser()
-    parser.add_option("-c", "--client", action="store_true",
-                      dest="test_client", help="Run test DOM client", default = False)
-    parser.add_option("-n", "--nsHost", action="store", type="string",
-                      dest="nsHost", help = "Name service host", default='localhost')
-    parser.add_option("-p", "--nsPort", action="store", type="int",
-                      dest="nsPort", help = "Name service port", default=9090)
-    parser.add_option("-H", "--host", action="store", type="string",
-                      dest="host", help = "The host to bind this DOM on", default='localhost')
-    parser.add_option("-P", "--port", action="store", type="int",
-                      dest="port", help = "The port to bind this DOM on", default=0)
-    parser.add_option("-i", "--domId", action="store", type="string",
-                      dest="domId", help = "The Data Object Manager ID")
-    parser.add_option("-d", "--daemon", action="store_true",
-                      dest="daemon", help="Run as daemon", default=False)
-    parser.add_option("-s", "--stop", action="store_true",
-                      dest="stop", help="Stop a DOM instance running as daemon", default=False)
-    (options, args) = parser.parse_args(args)
-
-    if not options.domId:
-        sys.stderr.write('Must provide a DOM ID via the -i command-line flag\n')
-        sys.exit(1)
-
-    # -d and -s are exclusive
-    if options.daemon and options.stop:
-        sys.stderr.write('%s: -d and -s cannot be specified together\n' % (args[0]))
-        sys.exit(1)
-
-    # Test client
-    if (options.test_client):
-        testClient(options.domId, nsHost = options.nsHost)
-    # Server
-    else:
-        # Start daemon
-        if options.daemon:
-            daemon = DOMDaemon(options)
-            daemon.start()
-        # Stop daemon
-        elif options.stop:
-            daemon = DOMDaemon(options)
-            daemon.stop()
-        # Start directly
-        else:
-            launchServer(options.domId, host=options.host, port=options.port, nsHost=options.nsHost, nsPort=options.nsPort)
-
-if __name__ == '__main__':
-    main()
