@@ -20,10 +20,12 @@
 #    MA 02111-1307  USA
 #
 from abc import abstractmethod, ABCMeta
-import os
-import warnings
-import urlparse
+from cStringIO import StringIO
 import logging
+import os
+import urlparse
+import warnings
+
 
 _logger = logging.getLogger(__name__)
 
@@ -71,7 +73,7 @@ class DataIO(object):
             raise Exception('Writing operation attempted on closed DataIO object')
         if self._mode == OpenMode.OPEN_READ:
             raise Exception('Writing operation attempted on write-only DataIO object')
-        return self._write(self._desc, data, **kwargs)
+        return self._write(data, **kwargs)
 
     def read(self, count, **kwargs):
         """
@@ -81,7 +83,7 @@ class DataIO(object):
             raise Exception('Writing operation attempted on closed DataIO object')
         if self._mode == OpenMode.OPEN_WRITE:
             raise Exception('Writing operation attempted on read-only DataIO object')
-        return self._read(self._desc, count, **kwargs)
+        return self._read(count, **kwargs)
 
     def close(self, **kwargs):
         """
@@ -90,7 +92,7 @@ class DataIO(object):
         """
         if self._mode is None:
             return
-        self._close(self._desc)
+        self._close()
         self._mode = None
 
     def isOpened(self):
@@ -104,16 +106,22 @@ class DataIO(object):
         """
 
     @abstractmethod
+    def delete(self):
+        """
+        Deletes the data represented by this DataIO
+        """
+
+    @abstractmethod
     def _open(self, **kwargs): pass
 
     @abstractmethod
-    def _read(self, desc, count, **kwargs): pass
+    def _read(self, count, **kwargs): pass
 
     @abstractmethod
-    def _write(self, desc, data, **kwargs): pass
+    def _write(self, data, **kwargs): pass
 
     @abstractmethod
-    def _close(self, desc): pass
+    def _close(self, **kwargs): pass
 
 class NullIO(DataIO):
     """
@@ -123,17 +131,20 @@ class NullIO(DataIO):
     def _open(self, **kwargs):
         return None
 
-    def _read(self, desc, count=4096, **kwargs):
+    def _read(self, count=4096, **kwargs):
         return None
 
-    def _write(self, desc, data, **kwargs):
-        return 0
+    def _write(self, data, **kwargs):
+        return len(data)
 
-    def close(self, desc, **kwargs):
+    def _close(self, **kwargs):
         pass
 
     def exists(self):
         return True
+
+    def delete(self):
+        pass
 
 class ErrorIO(DataIO):
     """
@@ -143,44 +154,57 @@ class ErrorIO(DataIO):
     def _open(self, **kwargs):
         raise NotImplementedError()
 
-    def _read(self, desc, count=4096, **kwargs):
+    def _read(self, count=4096, **kwargs):
         raise NotImplementedError()
 
-    def _write(self, desc, data, **kwargs):
+    def _write(self, data, **kwargs):
         raise NotImplementedError()
 
-    def _close(self, desc, **kwargs):
+    def _close(self, **kwargs):
         raise NotImplementedError()
 
     def exists(self):
+        raise NotImplementedError()
+
+    def delete(self):
         raise NotImplementedError()
 
 class MemoryIO(DataIO):
+    """
+    A DataIO class that reads/write from/into the StringIO object given at
+    construction time
+    """
 
-    def initialize(self, **kwargs):
-        from cStringIO import StringIO
-        self._buf = StringIO()
+    def __init__(self, buf, **kwargs):
+        self._buf = buf
 
     def _open(self, **kwargs):
-        from cStringIO import StringIO
         if self._mode == OpenMode.OPEN_WRITE:
-            self._buf = ''
             return self._buf
         else:
-            return StringIO(self._buf.getvalue())
+            val = ''
+            if self._buf:
+                val = self._buf.getvalue()
+            return StringIO(val)
 
-    def _write(self, desc, data, **kwargs):
-        desc.write(data)
+    def _write(self, data, **kwargs):
+        self._desc.write(data)
         return len(data)
 
-    def _read(self, desc, count=4096, **kwargs):
-        return desc.read(count)
+    def _read(self, count=4096, **kwargs):
+        return self._desc.read(count)
 
-    def _close(self, desc, **kwargs):
-        desc.close()
+    def _close(self, **kwargs):
+        if self._mode == OpenMode.OPEN_READ:
+            self._desc.close()
+        # If we're writing we don't close the descriptor because it's our
+        # self._buf, which won't be readable afterwards
 
     def exists(self):
-        return self._buf is not None
+        return not self._buf.closed
+
+    def delete(self):
+        self._buf.close()
 
 class FileIO(DataIO):
 
@@ -192,21 +216,24 @@ class FileIO(DataIO):
         flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
         return open(self._fnm, flag)
 
-    def _read(self, desc, count=4096, **kwargs):
-        return desc.read(count)
+    def _read(self, count=4096, **kwargs):
+        return self._desc.read(count)
 
-    def _write(self, desc, data, **kwargs):
-        desc.write(data)
+    def _write(self, data, **kwargs):
+        self._desc.write(data)
         return len(data)
 
-    def _close(self, desc, **kwargs):
-        desc.close()
+    def _close(self, **kwargs):
+        self._desc.close()
 
     def getFileName(self):
         return self._fnm
 
     def exists(self):
         return os.path.isfile(self._fnm)
+
+    def delete(self):
+        os.unlink(self._fnm)
 
 class NgasIO(DataIO):
     '''
@@ -244,8 +271,8 @@ class NgasIO(DataIO):
             self._buf = ''
         return self._getClient()
 
-    def _close(self, desc):
-        client = desc
+    def _close(self, **kwargs):
+        client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
             reply, msg, _, _ = client._httpPost(
                      client.getHost(), client.getPort(), 'QARCHIVE',
@@ -260,11 +287,11 @@ class NgasIO(DataIO):
                 raise Exception(msg)
         del self._client
 
-    def _read(self, desc, count, **kwargs):
+    def _read(self, count, **kwargs):
         # Read data from NGAS and give it back to our reader
-        desc.retrieve2File(self._fileId, cmd="QRETRIEVE")
+        self._desc.retrieve2File(self._fileId, cmd="QRETRIEVE")
 
-    def _write(self, desc, data, **kwargs):
+    def _write(self, data, **kwargs):
         self._buf += data
         return len(data)
 
@@ -272,6 +299,9 @@ class NgasIO(DataIO):
         import ngamsLib  # @UnresolvedImport
         status = self._getClient().sendCmd('STATUS', pars=[['fileId', self._fileId]])
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
+
+    def delete(self):
+        pass # We never delete stuff from NGAS
 
 def IOForURL(url):
     """

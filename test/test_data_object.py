@@ -90,7 +90,7 @@ class TestDataObject(unittest.TestCase):
         a.write("1234")
         a.write("5")
         allContents = doutils.allDataObjectContents(a)
-        self.assertEquals(None, allContents)
+        self.assertFalse(allContents)
 
     def test_write_FileDataObject(self):
         """

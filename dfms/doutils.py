@@ -21,6 +21,7 @@
 #
 import logging
 from dfms.data_object import AppDataObject
+from dfms.io import IOForURL, OpenMode
 
 '''
 Utility methods and classes to be used when interacting with DataObjects
@@ -178,3 +179,74 @@ def listify(o):
     if isinstance(o, tuple):
         return list(o)
     return [o]
+
+class DOFile(object):
+    """
+    A file-like object (currently only supporting the read() operation, more to
+    be added in the future) that wraps the DataObject given at construction
+    time.
+
+    Depending on the underlying storage of the data the file-like object
+    returned by this method will directly access the data pointed by the
+    DataObject if possible, or will access it through the DataObject methods
+    instead.
+
+    Objects of this class will automatically close themselves when no referenced
+    anymore (i.e., when __del__ is called), but users should still try to invoke
+    `close()` eagerly to free underlying resources.
+
+    Objects of this class can also be used in a `with` context.
+    """
+    def __init__(self, do):
+        self._do = do
+        self._io = IOForURL(do.dataURL)
+
+    def open(self):
+        if self._io:
+            self._io.open(OpenMode.OPEN_READ)
+
+            # TODO: This is still very insufficient, since when we `open` a DO
+            #       for reading we don't only increment its reference count,
+            #       but also check that it's in a proper state, and we also
+            #       fire an 'open' event. We then should have two explicitly
+            #       different mechanisms to open a DO, one actually opening the
+            #       underlying storage and the other not doing it (because we
+            #       do it here).
+            #       The same concerns are valid for the close() operation
+            self._do.incrRefCount()
+        else:
+            self._fd = self._do.open()
+        self._isClosed = False
+
+    @property
+    def closed(self):
+        return self._isClosed
+
+    def close(self):
+        if self._isClosed:
+            return
+
+        if self._io:
+            self._io.close()
+
+            # See the comment above regarding the call to do.incrRefCount()
+            self._do.decrRefCount()
+        else:
+            self._do.close(self._fd)
+        self._isClosed = True
+
+    def read(self, size=4096):
+        if self._io:
+            return self._io.read(size)
+        return self._do.read(self._fd, size)
+
+    # Support for the `with` keyword
+    def __enter__(self):
+        self.open()
+        return self
+    def __exit__(self, typ, value, traceback):
+        self.close()
+
+    def __del__(self):
+        if not self._isClosed:
+            self.close()
