@@ -29,6 +29,7 @@ It should be based on the UML class diagram
 """
 
 from abc import ABCMeta, abstractmethod
+from cStringIO import StringIO
 import collections
 import heapq
 import logging
@@ -43,6 +44,7 @@ import warnings
 from ddap_protocol import DOStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes
 from dfms.events.event_broadcaster import LocalEventBroadcaster
+from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
 
 try:
@@ -97,7 +99,6 @@ class AbstractDataObject(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, oid, uid,
-                 eventbc=None,
                  executionMode=ExecutionMode.DO,
                  **kwargs):
         """
@@ -184,6 +185,11 @@ class AbstractDataObject(object):
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs['precious'])
 
+        # The writing IO instance we use in our write method. It's initialized
+        # to None because it's lazily initialized in the write method, since
+        # data might be written externally and not through this DO
+        self._wio = None
+
         try:
             self.initialize(**kwargs)
             self.status = DOStates.INITIALIZED
@@ -247,7 +253,9 @@ class AbstractDataObject(object):
         # don't have to have
         if self.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
-        descriptor = self.openMeta(**kwargs)
+
+        descriptor = io = self.getIO()
+        io.open(OpenMode.OPEN_READ, **kwargs)
 
         # Save the real descriptor in the dictionary and return its key instead
         while True:
@@ -272,14 +280,16 @@ class AbstractDataObject(object):
 
         # Decrement counter and then actually close
         self.decrRefCount()
-        self.closeMeta(self._readDescriptors.pop(descriptor), **kwargs)
+        io = self._readDescriptors.pop(descriptor)
+        io.close(**kwargs)
 
     def read(self, descriptor, count=4096, **kwargs):
         """
         Reads `count` bytes from the given DataObject `descriptor`.
         """
         self._checkStateAndDescriptor(descriptor)
-        return self.readMeta(self._readDescriptors[descriptor], count, **kwargs)
+        io = self._readDescriptors[descriptor]
+        return io.read(count, **kwargs)
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DOStates.COMPLETED:
@@ -307,7 +317,13 @@ class AbstractDataObject(object):
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
             raise Exception("No more writing expected")
 
-        nbytes  = self.writeMeta(data, **kwargs)
+        # We lazily initialize our writing IO instance because the data of this
+        # DO might not be written through this DO
+        if not self._wio:
+            self._wio = self.getIO()
+            self._wio.open(OpenMode.OPEN_WRITE)
+        nbytes = self._wio.write(data)
+
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
@@ -344,48 +360,24 @@ class AbstractDataObject(object):
         return nbytes
 
     @abstractmethod
-    def openMeta(self, **kwargs):
+    def getIO(self):
         """
-        Hook for subclass open. It returns a "DataObject descriptor", used by
-        the `self.readMeta()` and `self.closeMeta()` methods. This way parallel
-        readings can be performed over the same DataObject.
-        """
-
-    @abstractmethod
-    def closeMeta(self, descriptor, **kwargs):
-        """
-        Hook for subclass close. It closes the given descriptor, thus freeing
-        underlying resources. The descriptor is that returned by the
-        `self.openMeta()` method.
+        Returns an instance of one of the `dfms.io.DataIO` instances that
+        handles the data contents of this DataObject.
         """
 
-    @abstractmethod
-    def readMeta(self, descriptor, count, **kwargs):
-        """
-        Hook for subclass read. It reads at most `count` bytes from the given
-        `descriptor`. The descriptor is that returned by the `self.openMeta()`
-        method.
-        """
-
-    @abstractmethod
-    def writeMeta(self, data, **kwargs):
-        """
-        Hook for subclass write. It writes `data` into the underlying media
-        used by this DataObject.
-        """
-
-    @abstractmethod
     def delete(self):
         """
         Deletes the data represented by this DataObject.
         """
+        self.getIO().delete()
 
-    @abstractmethod
     def exists(self):
         """
         Returns `True` if the data represented by this DataObject exists indeed
         in the underlying storage mechanism
         """
+        return self.getIO().exists()
 
     @abstractmethod
     def dataURL(self):
@@ -716,6 +708,11 @@ class AbstractDataObject(object):
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
             raise Exception("DataObject %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
 
+        # Close our writing IO instance.
+        # If written externally, self._wio will have remained None
+        if self._wio:
+            self._wio.close()
+
         if _logger.isEnabledFor(logging.INFO):
             _logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
@@ -781,40 +778,14 @@ class FileDataObject(AbstractDataObject):
         if os.path.isfile(self._fnm):
             warnings.warn('File %s already exists, overwriting' % (self._fnm))
 
-        # The file descriptor used during writing, lazily opened for writing
-        # upon the first call to writeMeta
-        self._fo = None
+        self._wio = None
 
-    def openMeta(self, **kwargs):
-        return open(self._fnm, 'r')
-
-    def readMeta(self, descriptor, count=4096, **kwargs):
-        return descriptor.read(count)
-
-    def writeMeta(self, data, **kwargs):
-        if not self._fo:
-            self._fo = open(self._fnm, "w")
-        self._fo.write(data)
-        return len(data)
-
-    def setCompleted(self):
-        # If written externally, self._fo will remain None
-        if self._fo:
-            self._fo.close()
-        AbstractDataObject.setCompleted(self)
-
-    def closeMeta(self, descriptor, **kwargs):
-        descriptor.close()
+    def getIO(self):
+        return FileIO(self._fnm)
 
     @property
     def path(self):
         return self._fnm
-
-    def delete(self):
-        os.unlink(self._fnm)
-
-    def exists(self):
-        return os.path.isfile(self._fnm)
 
     @property
     def dataURL(self):
@@ -849,56 +820,14 @@ class NgasDataObject(AbstractDataObject):
         # sending it over.
         self._buf = ''
 
-    def openMeta(self, **kwargs):
-        return self._getClient()
-
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
         return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
 
-    def writeMeta(self, data, **kwargs):
-        self._buf += data
-        return len(data)
-
-    def setCompleted(self):
-        # We didn't accumulate anything in our internal buffer, it was all
-        # externally written
-        if self._size is not None:
-            super(NgasDataObject, self).setCompleted()
-            return
-
-        # TODO: the client API doesn't allow giving a buffer directly through
-        # its "public" methods so we have to use the _httpPost method and
-        # manually feed it with the correct parameters; we anyway would like to
-        # do a continuous write via the writeMeta() method
-        client = self._getClient()
-        reply, msg, _, _ = client._httpPost(
-                         client.getHost(), client.getPort(), 'QARCHIVE',
-                         'application/octet-stream', dataRef=self._buf,
-                         pars=[['filename',self.uid]], dataSource='BUFFER',
-                         dataSize=self.size)
-        if reply != 200:
-            # Probably msg is not enough, we need to unpack the status XML doc
-            # from the returning data and extract the real error message from
-            # there
-            raise Exception(msg)
-
-        AbstractDataObject.setCompleted(self)
-
-    def closeMeta(self, descriptor):
-        del descriptor
-
-    def readMeta(self, descriptor, count, **kwargs):
-        '''
-        :param ngamsPClient.ngamsPClient descriptor:
-        '''
-        # Read data from NGAS and give it back to our reader
-        descriptor.retrieve2File(self.uid, cmd="QRETRIEVE")
-
-    def exists(self):
-        import ngamsLib  # @UnresolvedImport
-        status = self._getClient().sendCmd('STATUS', pars=[['fileId', self.uid]])
-        return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
+    def getIO(self):
+        return NgasIO(self._ngasSrv, self.uid, port=self._ngasPort,
+                      ngasConnectTimeout=self._ngasConnectTimeout,
+                      ngasTimeout=self._ngasTimeout)
 
     @property
     def dataURL(self):
@@ -907,56 +836,26 @@ class NgasDataObject(AbstractDataObject):
 class InMemoryDataObject(AbstractDataObject):
 
     def initialize(self, **kwargs):
-        from cStringIO import StringIO
-        self._buf = StringIO()
-
-    def openMeta(self, **kwargs):
-        from cStringIO import StringIO
-        return StringIO(self._buf.getvalue())
-
-    def writeMeta(self, data, **kwargs):
-        self._buf.write(data)
-        return len(data)
-
-    def readMeta(self, descriptor, count=4096, **kwargs):
-        return descriptor.read(count)
-
-    def closeMeta(self, descriptor, **kwargs):
-        descriptor.close()
-
-    def delete(self):
-        self._buf.close()
+        self._wio = None
         self._buf = None
 
-    def exists(self):
-        return self._buf is not None
+    def getIO(self):
+        if self._buf is None:
+            self._buf = StringIO()
+        return MemoryIO(self._buf)
 
     @property
     def dataURL(self):
         hostname = os.uname()[1]
-        return "mem://%s/%d" % (hostname, id(self._buf))
+        return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
 class NullDataObject(AbstractDataObject):
     """
     A DataObject that stores no data
     """
-    def openMeta(self, **kwargs):
-        return None
 
-    def writeMeta(self, data, **kwargs):
-        return len(data)
-
-    def readMeta(self, descriptor, count=4096, **kwargs):
-        return None
-
-    def closeMeta(self, descriptor, **kwargs):
-        pass
-
-    def delete(self):
-        pass
-
-    def exists(self):
-        return True
+    def getIO(self):
+        return NullIO()
 
     @property
     def dataURL(self):
@@ -980,14 +879,8 @@ class ContainerDataObject(AbstractDataObject):
     #===========================================================================
     # No data-related operations should actually be called in Container DOs
     #===========================================================================
-    def closeMeta(self, descriptor, **kwargs):
-        raise NotImplementedError()
-    def openMeta(self, **kwargs):
-        raise NotImplementedError()
-    def readMeta(self, descriptor, count, **kwargs):
-        raise NotImplementedError()
-    def writeMeta(self, data, **kwargs):
-        raise NotImplementedError()
+    def getIO(self):
+        return ErrorIO()
     def dataURL(self):
         raise NotImplementedError()
 
@@ -1147,12 +1040,15 @@ class BarrierAppDataObject(AppDataObject):
     """
     An AppDataObject that implements a barrier. It accepts no 'immediate' inputs
     and it waits until all its inputs have been moved to COMPLETED to execute
-    to 'run' method.
+    its 'run' method.
     """
 
     def initialize(self, **kwargs):
         super(BarrierAppDataObject, self).initialize(**kwargs)
         self._completedInputs = []
+
+    def addImmediateInput(self, immediateInputDO):
+        raise Exception("BarrierAppDataObjects don't accept streaming inputs")
 
     def dataObjectCompleted(self, uid):
         super(BarrierAppDataObject, self).dataObjectCompleted(uid)
@@ -1258,7 +1154,7 @@ class SocketListener(object):
         self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener_%s" % (counter), [serverSocket])
         self._listenerThread.setDaemon(1)
         self._listenerThread.start()
-        # TODO: we still need to join this thread
+        # TODO: we still need to join this thread, or at least try
 
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug('Successfully listening for requests on %s:%d' % (host, port))

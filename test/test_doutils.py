@@ -21,15 +21,19 @@
 #
 
 
-import unittest
-from dfms import doutils
-from dfms.data_object import InMemoryDataObject, CRCAppDataObject
-
 '''
 Created on 20 Jul 2015
 
 @author: rtobar
 '''
+
+import unittest
+
+from dfms import doutils
+from dfms.data_object import InMemoryDataObject, CRCAppDataObject, \
+    FileDataObject
+from dfms.doutils import DOFile
+
 
 class DOUtilsTest(unittest.TestCase):
 
@@ -144,6 +148,20 @@ class DOUtilsTest(unittest.TestCase):
         endNodes = doutils.getLeafNodes(a)
         self.assertSetEqual(set([j, f]), set(endNodes))
         pass
+
+    def test_DOFile(self):
+        """
+        This test exercises the DOFile mechanism to read the data represented by
+        a given DO. The DOFile class will decide whether the data should be read
+        directly or through the DO
+        """
+        do = FileDataObject('a', 'a', expectedSize=5)
+        do.write('abcde')
+        with DOFile(do) as f:
+            self.assertEquals('abcde', f.read())
+            self.assertTrue(do.isBeingRead())
+            self.assertIsNotNone(f._io)
+        self.assertFalse(do.isBeingRead())
 
 if __name__ == "__main__":
     unittest.main()
