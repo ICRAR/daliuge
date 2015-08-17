@@ -33,7 +33,7 @@ import sys
 import Pyro4
 
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class DataLifecycleManagerRunner(object):
@@ -43,10 +43,10 @@ class DataLifecycleManagerRunner(object):
 
     def start(self):
 
-        _logger.debug("Starting DLM")
+        logger.debug("Starting DLM")
         self._dlm.startup()
 
-        _logger.debug("Serving DLM through pyro")
+        logger.debug("Serving DLM through pyro")
         daemon = Pyro4.Daemon()
         daemon.register(self._dlm)
 
@@ -58,7 +58,7 @@ class DataLifecycleManagerRunner(object):
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
-    _logger.info("Starting DLM application")
+    logger.info("Starting DLM application")
     runner = DataLifecycleManagerRunner(sys.argv)
     runner.start()
 

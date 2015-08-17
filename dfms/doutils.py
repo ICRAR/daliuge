@@ -29,7 +29,7 @@ Utility methods and classes to be used when interacting with DataObjects
 @author: rtobar, July 3, 2015
 '''
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class EvtConsumer(object):
     '''

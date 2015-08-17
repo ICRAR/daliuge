@@ -36,7 +36,7 @@ DataObjects that use that layer as its storage mechanism.
 '''
 
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class AbstractStore(object):
     """
@@ -54,11 +54,11 @@ class AbstractStore(object):
 
     def updateSpaces(self):
         self._updateSpaces()
-        if _logger.isEnabledFor(logging.DEBUG):
+        if logger.isEnabledFor(logging.DEBUG):
             avail = self.getAvailableSpace()
             total = self.getTotalSpace()
             perc  = avail*100./total
-            _logger.debug("Available/Total space on %s: %d/%d (%.2f %%)" % (self, avail, total, perc))
+            logger.debug("Available/Total space on %s: %d/%d (%.2f %%)" % (self, avail, total, perc))
         pass
 
     def _setTotalSpace(self, totalSpace):
@@ -168,8 +168,8 @@ class NgasStore(AbstractStore):
             warnings.warn('Defaulting NGAS host to %s' % (host))
         if not port:
             port = 7777
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('Defaulting NGAS port to %d' % (port))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Defaulting NGAS port to %d' % (port))
 
         self._host = host
         self._port = port
@@ -235,7 +235,7 @@ class DirectoryStore(AbstractStore):
         else:
             # Should be used only for testing
             size = 1024**3
-            _logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING' % (sizeFile, size))
+            logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING' % (sizeFile, size))
             self.prepareDirectory(dirName, size)
 
         with open(sizeFile) as f:

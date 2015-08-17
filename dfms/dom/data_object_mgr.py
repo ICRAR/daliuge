@@ -40,7 +40,7 @@ from dfms.data_object import InMemoryDataObject, CRCAppDataObject
 from dfms.ddap_protocol import DOLinkType
 from dfms.lifecycle.dlm import DataLifecycleManager
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class DataObjectMgr(object):
 
@@ -172,8 +172,8 @@ class DataObjectMgr(object):
             dae = self.daemon_dict[sessionId]
             thref = threading.Thread(None, lambda daemon: daemon.requestLoop(), 'DOBThrd' + str(sessionId), [dae])
             thref.setDaemon(1)
-            if _logger.isEnabledFor(logging.INFO):
-                _logger.info('Launching daemon %s' % sessionId)
+            if logger.isEnabledFor(logging.INFO):
+                logger.info('Launching daemon %s' % sessionId)
             thref.start()
             self.daemon_thd_dict[sessionId] = thref
             return 0

@@ -33,7 +33,7 @@ import threading
 import logging
 from collections import defaultdict
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class Event(object):
     pass
@@ -65,16 +65,16 @@ class AbstractEventBroadcaster(EventBroadcaster):
 
     def subscribe(self, callback, eventType=None):
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Adding subscription to %r eventType=%s: %s' %(self, eventType, callback))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Adding subscription to %r eventType=%s: %s' %(self, eventType, callback))
 
         if eventType is None:
             eventType = self.__ALL_EVENTS
         self._callbacks[eventType].append(callback)
 
     def unsubscribe(self, callback, eventType=None):
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Removing subscription to %r eventType=%s: %s' %(self, eventType, callback))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Removing subscription to %r eventType=%s: %s' %(self, eventType, callback))
         if eventType is None:
             eventType = self.__ALL_EVENTS
         if callback in self._callbacks[eventType]:
@@ -89,8 +89,8 @@ class AbstractEventBroadcaster(EventBroadcaster):
         if self.__ALL_EVENTS in self._callbacks:
             callbacks += self._callbacks[self.__ALL_EVENTS]
         if not callbacks:
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('No callbacks found for eventType=%s' %(eventType))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('No callbacks found for eventType=%s' %(eventType))
             return
 
         e = self._createEvent(eventType, **attrs)

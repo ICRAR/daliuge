@@ -55,9 +55,7 @@ except:
     _checksumType = ChecksumTypes.CRC_32
 
 
-_logger = logging.getLogger(__name__)
-
-
+logger = logging.getLogger(__name__)
 
 #===============================================================================
 # DataObject classes follow
@@ -158,13 +156,18 @@ class AbstractDataObject(object):
         self._checksumType = None
         self._size         = None
 
-        # "DataObject descriptors" used for reading.
+        # The DataIO instance we use in our write method. It's initialized to
+        # None because it's lazily initialized in the write method, since data
+        # might be written externally and not through this DO
+        self._wio = None
+
+        # DataIO objects used for reading.
         # Instead of passing file objects or more complex data types in our
         # open/read/close calls we use integers, mainly because Pyro doesn't
         # handle file types and other classes (like StringIO) well, but also
         # because it requires less transport.
         # TODO: Make these threadsafe, no lock around them yet
-        self._readDescriptors = {}
+        self._rios = {}
 
         # Expected lifespan for this object, used by to expire them
         lifespan = -1
@@ -185,11 +188,6 @@ class AbstractDataObject(object):
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs['precious'])
 
-        # The writing IO instance we use in our write method. It's initialized
-        # to None because it's lazily initialized in the write method, since
-        # data might be written externally and not through this DO
-        self._wio = None
-
         try:
             self.initialize(**kwargs)
             self.status = DOStates.INITIALIZED
@@ -205,8 +203,8 @@ class AbstractDataObject(object):
         val = default
         if kwargs.has_key(key) and kwargs[key]:
             val = kwargs[key]
-        elif _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Defaulting %s to %s" % (key, str(val)))
+        elif logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Defaulting %s to %s" % (key, str(val)))
         return val
 
     def __hash__(self):
@@ -254,21 +252,21 @@ class AbstractDataObject(object):
         if self.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
 
-        descriptor = io = self.getIO()
+        io = self.getIO()
         io.open(OpenMode.OPEN_READ, **kwargs)
 
-        # Save the real descriptor in the dictionary and return its key instead
+        # Save the IO object in the dictionary and return its descriptor instead
         while True:
-            key = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
-            if key not in self._readDescriptors:
+            descriptor = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
+            if descriptor not in self._rios:
                 break
-        self._readDescriptors[key] = descriptor
+        self._rios[descriptor] = io
 
         # This occurs only after a successful opening
         self.incrRefCount()
         self._fire('open')
 
-        return key
+        return descriptor
 
     def close(self, descriptor, **kwargs):
         """
@@ -280,7 +278,7 @@ class AbstractDataObject(object):
 
         # Decrement counter and then actually close
         self.decrRefCount()
-        io = self._readDescriptors.pop(descriptor)
+        io = self._rios.pop(descriptor)
         io.close(**kwargs)
 
     def read(self, descriptor, count=4096, **kwargs):
@@ -288,13 +286,13 @@ class AbstractDataObject(object):
         Reads `count` bytes from the given DataObject `descriptor`.
         """
         self._checkStateAndDescriptor(descriptor)
-        io = self._readDescriptors[descriptor]
+        io = self._rios[descriptor]
         return io.read(count, **kwargs)
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
-        if descriptor not in self._readDescriptors:
+        if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
     def isBeingRead(self):
@@ -351,8 +349,8 @@ class AbstractDataObject(object):
                 self.status = DOStates.WRITING
             else:
                 if remaining < 0:
-                    _logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                _logger.debug("Automatically moving DataObject %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                    logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
+                logger.debug("Automatically moving DataObject %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
                 self.setCompleted()
         else:
             self.status = DOStates.WRITING
@@ -599,7 +597,7 @@ class AbstractDataObject(object):
         # Add the reverse reference too automatically
         if consumer in self._consumers:
             return
-        _logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer))
+        logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer))
         self._consumers.append(consumer)
 
         # Automatic back-reference
@@ -613,11 +611,11 @@ class AbstractDataObject(object):
 
         def dataObjectCompleted(e):
             if e.status != DOStates.COMPLETED:
-                if _logger.isEnabledFor(logging.DEBUG):
-                    _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
             consumer.dataObjectCompleted(self.uid)
         self.subscribe(dataObjectCompleted, eventType='status')
 
@@ -674,7 +672,7 @@ class AbstractDataObject(object):
         # Add the reverse reference too automatically
         if immediateConsumer in self._immediateConsumers:
             return
-        _logger.debug('Adding new immediate immediate consumer for DataObject %s/%s: %s' %(self.oid, self.uid, immediateConsumer))
+        logger.debug('Adding new immediate immediate consumer for DataObject %s/%s: %s' %(self.oid, self.uid, immediateConsumer))
         self._immediateConsumers.append(immediateConsumer)
 
         # Automatic back-reference
@@ -713,8 +711,8 @@ class AbstractDataObject(object):
         if self._wio:
             self._wio.close()
 
-        if _logger.isEnabledFor(logging.INFO):
-            _logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
 
         # Signal our immediate consumers that the show is over
@@ -890,8 +888,8 @@ class ContainerDataObject(AbstractDataObject):
         if child == self.parent:
             raise Exception("Circular dependency between DataObjects %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
 
         self._children.append(child)
         child.parent = self
@@ -1156,14 +1154,14 @@ class SocketListener(object):
         self._listenerThread.start()
         # TODO: we still need to join this thread, or at least try
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Successfully listening for requests on %s:%d' % (host, port))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Successfully listening for requests on %s:%d' % (host, port))
 
     def processData(self, serverSocket):
         clientSocket, address = serverSocket.accept()
         serverSocket.close()
-        if _logger.isEnabledFor(logging.INFO):
-            _logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
 
         while True:
             data = clientSocket.recv(4096)
