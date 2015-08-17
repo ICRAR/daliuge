@@ -29,7 +29,7 @@ HSMs work and what they actually offer in terms of APIs.
 import logging
 import store
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class HierarchicalStorageManager(object):
 
@@ -41,13 +41,13 @@ class HierarchicalStorageManager(object):
         try:
             self.addStore(store.NgasStore('localhost', 7777))
         except:
-            _logger.warn('Local NGAS store not added, the HSM will work without it')
+            logger.warn('Local NGAS store not added, the HSM will work without it')
 
     def addStore(self, newStore):
         '''
         @param newStore store.AbstractStore
         '''
-        _logger.debug("Adding store to HSM: " + str(newStore))
+        logger.debug("Adding store to HSM: " + str(newStore))
         self._stores.append(newStore)
 
     def getSlowestStore(self):

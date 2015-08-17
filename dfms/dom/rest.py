@@ -32,17 +32,20 @@ import threading
 from dfms.data_object import AppDataObject, ContainerDataObject, SocketListener
 
 
-class RestServer(Bottle):
+class RestServer(object):
     """
-    A REST server that wraps a DataObjectManager, and additionally 
+    An object that wraps a DataObjectManager and exposes its methods via a REST
+    interface. The server is started via the `start` method in a separate thread
+    and runs until the process is shut down.
     """
 
     def __init__(self, dom):
         super(RestServer, self).__init__()
-        self.dom = dom
-        self.route('/static/<filepath:path>', callback=self.server_static)
-        self.post( '/<sessionId>/create_graph', callback=self.createDataObjectGraph)
-        self.route('/<sessionId>/graph', callback=self.showGraph)
+        app = Bottle()
+        app.route('/static/<filepath:path>', callback=self.server_static)
+        app.post( '/<sessionId>/deploy_graph', callback=self.deployGraph)
+        app.route('/<sessionId>/show_graph', callback=self.showGraph)
+        self.app = app
 
     def start(self, host, port):
         if host is None:
@@ -53,7 +56,7 @@ class RestServer(Bottle):
         # It seems it's not trivial to stop a running bottle server, so we simply
         # start it but never end it. It will successfully end anyway when we finish
         # our process
-        t = threading.Thread(None, lambda: run(self, server='tornado', host=host, port=port))
+        t = threading.Thread(None, lambda: run(self, server='tornado', host=host, port=port, quiet=True))
         t.daemon = 1
         t.start()
 
@@ -61,10 +64,10 @@ class RestServer(Bottle):
         staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
         return static_file(filepath, root=staticRoot)
 
-    def createDataObjectGraph(self, sessionId):
+    def deployGraph(self, sessionId):
         graphJson = request._get_body_string()
         uris = self.dom.createDataObjectGraph(sessionId, graphJson)
-        return json.dumps([str(uri) for uri in uris])
+        return [str(uri) for uri in uris]
 
     def showGraph(self, sessionId):
         tpl = pkg_resources.resource_string(__name__, 'web/graph_display.html')  # @UndefinedVariable

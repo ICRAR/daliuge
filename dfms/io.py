@@ -27,7 +27,7 @@ import urlparse
 import warnings
 
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class OpenMode:
     OPEN_WRITE, OPEN_READ = xrange(2)
@@ -327,7 +327,7 @@ def IOForURL(url):
         fileId = url.path
         io = NgasIO(hostname, fileId, port)
 
-    if _logger.isEnabledFor(logging.DEBUG):
-        _logger.debug('I/O chosen for dataURL %s: %r' % (url, io))
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('I/O chosen for dataURL %s: %r' % (url, io))
 
     return io

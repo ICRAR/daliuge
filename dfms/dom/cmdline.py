@@ -36,7 +36,7 @@ from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.rest import RestServer
 
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 def launchServer(opts):
     if (opts.host is None):
@@ -44,23 +44,23 @@ def launchServer(opts):
     else:
         Pyro4.config.HOST = opts.host
 
-    _logger.info('Creating data object manager daemon')
+    logger.info('Creating data object manager daemon')
     dom = DataObjectMgr()
     dom_daemon = Pyro4.Daemon(port=opts.port)
     uri = dom_daemon.register(dom)
     dom.setURI(str(uri))
 
-    _logger.info('Locating Naming Service...')
+    logger.info('Locating Naming Service...')
     ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
 
-    _logger.info('Registering %s to NS...' % uri)
+    logger.info('Registering %s to NS...' % uri)
     ns.register("%s_%s" % (CST_NS_DOM, opts.domId), uri)
 
     if opts.rest:
         server = RestServer(dom)
         server.start(opts.restHost, opts.restPort)
 
-    _logger.info('Launching DOM service as a process')
+    logger.info('Launching DOM service as a process')
     dom_daemon.requestLoop()
 
 class DOMDaemon(Daemon):
