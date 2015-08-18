@@ -906,7 +906,7 @@ class ContainerDataObject(AbstractDataObject):
     def expirationDate(self):
         if self._children:
             return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
-        return None
+        return -1
 
     @property
     def children(self):
