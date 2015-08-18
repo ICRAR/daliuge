@@ -72,7 +72,7 @@ class RunDataObjectTask(luigi.Task):
         if not self.execDO:
             self._evt = threading.Event()
             def setEvtOnCompleted(e):
-                if hasattr(e, 'status') and e.status == DOStates.COMPLETED:
+                if e.status == DOStates.COMPLETED:
                     self._evt.set()
             do.subscribe(setEvtOnCompleted, 'status')
 
@@ -86,7 +86,7 @@ class RunDataObjectTask(luigi.Task):
         else:
             timeout = None
             expirationDate = self.data_obj.expirationDate
-            if expirationDate == -1:
+            if expirationDate != -1:
                 now = time.time()
                 timeout = expirationDate - now
             self._evt.wait(timeout)
@@ -122,14 +122,11 @@ class FinishGraphExecution(luigi.Task):
         super(FinishGraphExecution, self).__init__(*args, **kwargs)
         self._req    = None
 
-        if isinstance(self.pgCreator, str):
+        if isinstance(self.pgCreator, basestring):
             parts = self.pgCreator.split('.')
-            if len(parts) > 1:
-                module = importlib.import_module('.'.join(parts[:-1]))
-                pgCreator = getattr(module, parts[-1])
-            else:
-                pgCreator = globals()[self.pgCreator]
-            roots = pgCreator()
+            module = importlib.import_module('.'.join(parts[:-1]))
+            pgCreatorFn = getattr(module, parts[-1])
+            roots = pgCreatorFn()
         else:
             roots = self.pgCreator
 
