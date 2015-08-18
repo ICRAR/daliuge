@@ -616,7 +616,10 @@ class AbstractDataObject(object):
                 return
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
-            consumer.dataObjectCompleted(self.uid)
+
+            t = threading.Thread(None, lambda consumer, uid: consumer.dataObjectCompleted(uid), args=[consumer, self.uid])
+            t.daemon = 1
+            t.start()
         self.subscribe(dataObjectCompleted, eventType='status')
 
     @property
@@ -752,12 +755,6 @@ class AbstractDataObject(object):
     @uri.setter
     def uri(self, uri):
         self._uri = uri
-
-    def ping(self):
-        """
-        This is for testing purpose
-        """
-        return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
 
 class FileDataObject(AbstractDataObject):
 

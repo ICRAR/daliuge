@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import threading
 import unittest
 
 import Pyro4
@@ -26,7 +27,37 @@ import Pyro4
 from dfms import doutils
 from dfms.ddap_protocol import DOStates
 from dfms.dom.data_object_mgr import DataObjectMgr
+from dfms.doutils import EvtConsumer
 
+
+class EvtConsumerProxyCtx(object):
+    def __init__(self, test, dos, timeout=1):
+        self._dos = doutils.listify(dos)
+        self._test = test
+        self._timeout = timeout
+        self._evts = []
+    def __enter__(self):
+        daemon = Pyro4.Daemon()
+        t = threading.Thread(None, lambda: daemon.requestLoop())
+        t.start()
+
+        for do in self._dos:
+            evt = threading.Event()
+            consumer = EvtConsumer(evt)
+            uri = daemon.register(consumer)
+            consumerProxy = Pyro4.Proxy(uri)
+            do.addConsumer(consumerProxy)
+            self._evts.append(evt)
+
+        self.daemon = daemon
+        self.t = t
+        return self
+    def __exit__(self, typ, value, traceback):
+        to = self._timeout
+        for evt in self._evts:
+            self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
+        self.daemon.shutdown()
+        self.t.join(to)
 
 class TestDOM(unittest.TestCase):
 
@@ -48,7 +79,7 @@ class TestDOM(unittest.TestCase):
         sessionId = 's1'
         g1 = '[{"oid":"A", "type":"plain", "storage": "memory"}]'
         g2 = '[{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"C", "type":"plain", "storage": "memory"}]'
+               {"oid":"C", "type":"plain", "storage": "memory", "producer":"B"}]'
 
         uris1 = dom1.createDataObjectGraph(sessionId, g1)
         uris2 = dom2.createDataObjectGraph(sessionId, g2)
@@ -65,11 +96,11 @@ class TestDOM(unittest.TestCase):
         b = Pyro4.Proxy(uris2[0])
         c = Pyro4.Proxy(uris2[1])
         a.addConsumer(b)
-        b.addOutput(c)
 
-        # Run!
-        a.write('a')
-        a.setCompleted()
+        # Run! We wait until c is completed
+        with EvtConsumerProxyCtx(self, c, 1):
+            a.write('a')
+            a.setCompleted()
 
         for do in a, b, c:
             self.assertEquals(DOStates.COMPLETED, do.status)
@@ -123,10 +154,11 @@ class TestDOM(unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        a.write('a')
-        a.setCompleted()
-        b.write('a')
-        b.setCompleted()
+        with EvtConsumerProxyCtx(self, f, 1):
+            a.write('a')
+            a.setCompleted()
+            b.write('a')
+            b.setCompleted()
 
         for do in a,b,c,d,e,f:
             self.assertEquals(DOStates.COMPLETED, do.status)
@@ -212,6 +244,7 @@ class TestDOM(unittest.TestCase):
         k = proxies[10]
         l = proxies[11]
         m = proxies[12]
+        o = proxies[14]
 
         a.addConsumer(b)
         a.addConsumer(g)
@@ -219,7 +252,8 @@ class TestDOM(unittest.TestCase):
         k.addOutput(m)
 
         # Run! This should trigger the full execution of the graph
-        a.write('a')
+        with EvtConsumerProxyCtx(self, o, 1):
+            a.write('a')
 
         for do in proxies:
             self.assertEquals(DOStates.COMPLETED, do.status, "Status of '%s' is not COMPLETED" % do.uid)

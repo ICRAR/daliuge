@@ -21,7 +21,7 @@
 #
 
 from cStringIO import StringIO
-import os, unittest, threading
+import os, unittest
 import random
 import shutil
 
@@ -31,7 +31,7 @@ from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, 
     NullDataObject, CRCAppDataObject, BarrierAppDataObject, \
     DirectoryContainer, ContainerDataObject
 from dfms.ddap_protocol import DOStates, ExecutionMode
-from dfms.doutils import EvtConsumer
+from dfms.doutils import DOWaiterCtx
 
 
 try:
@@ -115,9 +115,10 @@ class TestDataObject(unittest.TestCase):
         dobB.addOutput(dobC)
 
         test_crc = 0
-        for _ in range(self._test_num_blocks):
-            dobA.write(self._test_block)
-            test_crc = crc32(self._test_block, test_crc)
+        with DOWaiterCtx(self, dobC):
+            for _ in range(self._test_num_blocks):
+                dobA.write(self._test_block)
+                test_crc = crc32(self._test_block, test_crc)
 
         # Read the checksum from dobC
         dobCChecksum = int(doutils.allDataObjectContents(dobC))
@@ -195,8 +196,10 @@ class TestDataObject(unittest.TestCase):
         cResExpected = "we have an a here\nand another one\n"
         eResExpected = "and another one\nwe have an a here\n"
         gResExpected = "dna rehtona eno\new evah na a ereh\n"
-        a.write(contents)
-        a.setCompleted()
+
+        with DOWaiterCtx(self, g):
+            a.write(contents)
+            a.setCompleted()
 
         # Get intermediate and final results and compare
         actualRes   = []
@@ -254,16 +257,12 @@ class TestDataObject(unittest.TestCase):
             doC.addConsumer(doD)
         doD.addOutput(doE)
 
-        # Wait until E is completed
-        evt = threading.Event()
-        doE.addConsumer(EvtConsumer(evt))
-
         # Write data into the initial "A" DOs, which should trigger
         # the whole chain explained above
-        for dobA in doAList: # this should be parallel for
-            for _ in range(self._test_num_blocks):
-                dobA.write(self._test_block)
-        evt.wait()
+        with DOWaiterCtx(self, doE):
+            for dobA in doAList: # this should be parallel for
+                for _ in range(self._test_num_blocks):
+                    dobA.write(self._test_block)
 
         # All DOs are completed now that the chain executed correctly
         for do in doAList + doBList + doCList:
@@ -330,9 +329,9 @@ class TestDataObject(unittest.TestCase):
         d.addOutput(f)
 
         # Start the execution
-        a.write('20')
-        a.setCompleted()
-
+        with DOWaiterCtx(self, [e,f]):
+            a.write('20')
+            a.setCompleted()
 
         # Check the final results are correct
         for do in [a,b,c,d,e]:
@@ -361,20 +360,14 @@ class TestDataObject(unittest.TestCase):
         a.addConsumer(b)
         b.addOutput(c)
 
-        # Since c becomes COMPLETED on a different thread (where A's socket is
-        # listening for data) we need to wait on an Event
-        evt = threading.Event()
-        c.addConsumer(EvtConsumer(evt))
-
         # Create the socket, write, and close the connection, allowing
         # A to move to COMPLETED
-        import socket
-        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.connect((host, port))
-        socket.send(data)
-        socket.close()
-
-        evt.wait(3) # That's plenty of time
+        with DOWaiterCtx(self, c, 3): # That's plenty of time
+            import socket
+            socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.connect((host, port))
+            socket.send(data)
+            socket.close()
 
         for do in [a,b,c]:
             self.assertEquals(DOStates.COMPLETED, do.status)
@@ -474,7 +467,10 @@ class TestDataObject(unittest.TestCase):
         c.producer = b
 
         # Write and check
-        a.write('1')
+        dosToWaitFor = [] if mode == ExecutionMode.EXTERNAL else [c]
+        with DOWaiterCtx(self, dosToWaitFor):
+            a.write('1')
+
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
             self.assertEquals(c.status, DOStates.INITIALIZED)
@@ -536,7 +532,8 @@ class TestDataObject(unittest.TestCase):
         a.write('fghij')
         checkDOStates(DOStates.WRITING, DOStates.WRITING, DOStates.INITIALIZED, 'j')
         a.write('k')
-        a.setCompleted()
+        with DOWaiterCtx(self, [d,e]):
+            a.setCompleted()
         checkDOStates(DOStates.COMPLETED, DOStates.COMPLETED, DOStates.COMPLETED, 'k')
 
         self.assertEquals('ejk', doutils.allDataObjectContents(d))
