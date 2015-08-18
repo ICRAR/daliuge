@@ -46,6 +46,7 @@ class RestServer(object):
         app.post( '/<sessionId>/deploy_graph', callback=self.deployGraph)
         app.route('/<sessionId>/show_graph', callback=self.showGraph)
         self.app = app
+        self.dom = dom
 
     def start(self, host, port):
         if host is None:
@@ -56,7 +57,7 @@ class RestServer(object):
         # It seems it's not trivial to stop a running bottle server, so we simply
         # start it but never end it. It will successfully end anyway when we finish
         # our process
-        t = threading.Thread(None, lambda: run(self, server='tornado', host=host, port=port, quiet=True))
+        t = threading.Thread(None, lambda: run(self.app, server='tornado', host=host, port=port, quiet=True))
         t.daemon = 1
         t.start()
 
@@ -83,13 +84,13 @@ class RestServer(object):
 
     def get_type_code(self, dataObject):
         if isinstance(dataObject, AppDataObject):
-            return 1
+            return 0
         elif isinstance(dataObject, ContainerDataObject):
-            return 2
+            return 1
         elif isinstance(dataObject, SocketListener):
-            return 3
+            return 2
         else:
-            return 4
+            return 3
 
     def to_json_obj(self, dataObject, visited):
         """
@@ -102,8 +103,9 @@ class RestServer(object):
             return
 
         doDict = {
-            'type': self.get_type_code(dataObject),
-            'loc': dataObject.location
+            'type':     self.get_type_code(dataObject),
+            'location': dataObject.location,
+            'status' :  dataObject.status
         }
         dependencies = [{'oid': uobj.oid} for uobj in doutils.getUpstreamObjects(dataObject)]
         if dependencies:

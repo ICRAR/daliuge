@@ -42,8 +42,8 @@ class TestDOM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dom1 = DataObjectMgr(useDLM=False)
-        dom2 = DataObjectMgr(useDLM=False)
+        dom1 = DataObjectMgr(1, useDLM=False)
+        dom2 = DataObjectMgr(2, useDLM=False)
 
         sessionId = 's1'
         g1 = '[{"oid":"A", "type":"plain", "storage": "memory"}]'
@@ -89,8 +89,8 @@ class TestDOM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dom1 = DataObjectMgr(useDLM=False)
-        dom2 = DataObjectMgr(useDLM=False)
+        dom1 = DataObjectMgr(1, useDLM=False)
+        dom2 = DataObjectMgr(2, useDLM=False)
 
         sessionId = 's1'
         g1 = '[{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},\
@@ -159,10 +159,10 @@ class TestDOM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DOs
         """
 
-        dom1 = DataObjectMgr(useDLM=False)
-        dom2 = DataObjectMgr(useDLM=False)
-        dom3 = DataObjectMgr(useDLM=False)
-        dom4 = DataObjectMgr(useDLM=False)
+        dom1 = DataObjectMgr(1, useDLM=False)
+        dom2 = DataObjectMgr(2, useDLM=False)
+        dom3 = DataObjectMgr(3, useDLM=False)
+        dom4 = DataObjectMgr(4, useDLM=False)
         allDOMs = [dom1, dom2, dom3, dom4]
 
         # The SumUpContainerChecksum is a BarrierAppDO

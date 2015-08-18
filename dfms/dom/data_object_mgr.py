@@ -40,14 +40,16 @@ from dfms.data_object import InMemoryDataObject, CRCAppDataObject
 from dfms.ddap_protocol import DOLinkType
 from dfms.lifecycle.dlm import DataLifecycleManager
 
+
 logger = logging.getLogger(__name__)
 
 class DataObjectMgr(object):
 
-    def __init__(self, useDLM=True):
+    def __init__(self, domId, useDLM=True):
         """
         Constructor:
         """
+        self.domId = domId
         self.useDLM = useDLM
         self.dlm_dict = {} # key - sessionId, value - DataLifecycleManager
         self.daemon_dict = {} # key - sessionId, value - daemon
@@ -193,6 +195,3 @@ class DataObjectMgr(object):
             return 0
         else:
             return -1
-
-    def ping(self):
-        return "Hello, this is DOM %s" % self.getURI()

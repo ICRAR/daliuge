@@ -71,7 +71,23 @@
     fill: #fff;
   }
 
-  .live.map .status {
+  .live.map .node.app rect {
+    stroke: black
+  }
+
+  .live.map .node.container rect {
+    stroke: orange
+  }
+
+  .live.map .node.socket rect {
+    stroke: blue
+  }
+
+  .live.map .node.plain rect {
+    stroke: green
+  }
+
+  .live.map div span.status {
     height: 100%;
     width: 30px;
     display: block;
@@ -81,27 +97,27 @@
     margin-right: 4px;
   }
 
-  .live.map .allocated .status {
+  .live.map div span.initialized {
+    background-color: #eee;
+  }
+
+  .live.map div span.writing {
+    background-color: #ffed68;
+  }
+
+  .live.map div span.completed {
     background-color: #7f7;
   }
 
-  .live.map .container .status {
-    background-color: #ffed68;
-  }
-
-  .live.map .allocated.warn .status {
-    background-color: #ffed68;
-  }
-
-  .live.map .stopped .status {
+  .live.map div span.expired {
     background-color: #700000;
   }
 
-  .live.map .warn .queue {
-    color: #f77;
+  .live.map div span.deleted {
+    color: #700000;
   }
 
-  .warn {
+  .warn---currently-unused {
     -webkit-animation-name: flash;
     animation-name: flash;
   }
@@ -178,30 +194,23 @@
     marginy: 20
   });
 
+  var statusClasses = ['initialized', 'writing', 'completed', 'expired', 'deleted']
+  var typeClasses   = ['app', 'container', 'socket', 'plain']
   var dataObjects = {{!dataObjects}}
+
   function draw(isUpdate) {
     for (var id in dataObjects) {
       var dataObject = dataObjects[id];
-      var className;
-      switch(dataObject.type) {
-        case 3:
-          className = 'warn'
-          break
-        case 2:
-          className = "container";
-          break;
-        case 1:
-          className = "stopped";
-          break;
-        default:
-          className = "allocated"
-      }
+      var statusClass = statusClasses[dataObject.status]
+      var typeClass   = typeClasses[dataObject.type]
 
       var html = "<div>";
-      html += "<span class=status></span>";
-      html += "<span class=name>" + id + "</span>";
-      html += "<br/>"
-      html += "<span class=name>" + "@" + dataObject.loc + "</span>";
+      html += '<span class="status ' + statusClass + '"></span>';
+      html += '<span class="name">' + id + '</span>';
+      if( dataObject.loc ) {
+        html += '<br/>'
+        html += '<span class="name">@' + dataObject.loc + '</span>';
+      }
       html += "</div>";
       g.setNode(id, {
         labelType: "html",
@@ -209,7 +218,7 @@
         rx: 5,
         ry: 5,
         padding: 0,
-        class: className
+        class: typeClass
       });
 
       if (dataObject.dependencies) {
