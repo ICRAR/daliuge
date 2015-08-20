@@ -81,15 +81,10 @@ class TestDOM(unittest.TestCase):
         g2 = '[{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
                {"oid":"C", "type":"plain", "storage": "memory", "producer":"B"}]'
 
-        uris1 = dom1.createDataObjectGraph(sessionId, g1)
-        uris2 = dom2.createDataObjectGraph(sessionId, g2)
+        uris1 = dom1.quickDeploy(sessionId, g1)
+        uris2 = dom2.quickDeploy(sessionId, g2)
         self.assertEquals(1, len(uris1))
         self.assertEquals(2, len(uris2))
-
-        # Start the Pyro.daemon for our session on each DOM so we can
-        # interact with our DOs
-        dom1.startDOBDaemon(sessionId)
-        dom2.startDOBDaemon(sessionId)
 
         # We externally wire the Proxy objects now
         a = Pyro4.Proxy(uris1[0])
@@ -106,12 +101,15 @@ class TestDOM(unittest.TestCase):
             self.assertEquals(DOStates.COMPLETED, do.status)
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(c)))
 
+        dom1.destroySession(sessionId)
+        dom2.destroySession(sessionId)
+
     def test_runGraphSeveralDOsPerDOM(self):
         """
         A test that creates several DataObjects in two different DOMs and  runs
         the graph. The graph looks like this
 
-        DOM #1           DOM #2
+        DOM #1                 DOM #2
         ===================    ================
         | A --> C --> D --|----|-|            |
         |                 |    | |--> E --> F |
@@ -131,15 +129,10 @@ class TestDOM(unittest.TestCase):
         g2 = '[{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},\
                {"oid":"F", "type":"plain", "storage": "memory", "producer":"E"}]'
 
-        uris1 = dom1.createDataObjectGraph(sessionId, g1)
-        uris2 = dom2.createDataObjectGraph(sessionId, g2)
+        uris1 = dom1.quickDeploy(sessionId, g1)
+        uris2 = dom2.quickDeploy(sessionId, g2)
         self.assertEquals(4, len(uris1))
         self.assertEquals(2, len(uris2))
-
-        # Start the Pyro.daemon for our session on each DOM so we can
-        # interact with our DOs
-        dom1.startDOBDaemon(sessionId)
-        dom2.startDOBDaemon(sessionId)
 
         # We externally wire the Proxy objects to establish the inter-DOM
         # relationships
@@ -165,6 +158,9 @@ class TestDOM(unittest.TestCase):
 
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(d)))
         self.assertEquals(b.checksum + d.checksum, int(doutils.allDataObjectContents(f)))
+
+        dom1.destroySession(sessionId)
+        dom2.destroySession(sessionId)
 
     def test_runWithFourDOMs(self):
         """
@@ -195,7 +191,6 @@ class TestDOM(unittest.TestCase):
         dom2 = DataObjectMgr(2, useDLM=False)
         dom3 = DataObjectMgr(3, useDLM=False)
         dom4 = DataObjectMgr(4, useDLM=False)
-        allDOMs = [dom1, dom2, dom3, dom4]
 
         # The SumUpContainerChecksum is a BarrierAppDO
         sumCRCCAppSpec = '"type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "sleepTime": 0'
@@ -218,18 +213,14 @@ class TestDOM(unittest.TestCase):
                {{"oid":"N", {0}, "inputs":["L","M"], "outputs":["O"]}},\
                {{"oid":"O", {1}}}]'.format(sumCRCCAppSpec, memoryDOSpec)
 
-        uris1 = dom1.createDataObjectGraph(sessionId, g1)
-        uris2 = dom2.createDataObjectGraph(sessionId, g2)
-        uris3 = dom3.createDataObjectGraph(sessionId, g3)
-        uris4 = dom4.createDataObjectGraph(sessionId, g4)
+        uris1 = dom1.quickDeploy(sessionId, g1)
+        uris2 = dom2.quickDeploy(sessionId, g2)
+        uris3 = dom3.quickDeploy(sessionId, g3)
+        uris4 = dom4.quickDeploy(sessionId, g4)
         self.assertEquals(1, len(uris1))
         self.assertEquals(5, len(uris2))
         self.assertEquals(5, len(uris3))
         self.assertEquals(4, len(uris4))
-
-        # Start the Pyro.daemons
-        for dom in allDOMs:
-            dom.startDOBDaemon(sessionId)
 
         # We externally wire the Proxy objects to establish the inter-DOM
         # relationships. Intra-DOM relationships are already established
@@ -257,3 +248,6 @@ class TestDOM(unittest.TestCase):
 
         for do in proxies:
             self.assertEquals(DOStates.COMPLETED, do.status, "Status of '%s' is not COMPLETED" % do.uid)
+
+        for dom in [dom1, dom2, dom3, dom4]:
+            dom.destroySession(sessionId)

@@ -108,8 +108,8 @@ class AbstractDataObject(object):
         super(AbstractDataObject, self).__init__()
 
         # So far only these three are mandatory
-        self._oid = oid
-        self._uid = uid
+        self._oid = str(oid)
+        self._uid = str(uid)
 
         self._bcaster = LocalEventBroadcaster()
 
@@ -190,7 +190,7 @@ class AbstractDataObject(object):
 
         try:
             self.initialize(**kwargs)
-            self.status = DOStates.INITIALIZED
+            self._status = DOStates.INITIALIZED # no need to use synchronised self.status here
         except:
             # It doesn't make sense to set an internal status here because
             # the creation of the object is actually raising an exception,

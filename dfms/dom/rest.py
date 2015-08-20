@@ -24,13 +24,23 @@ Module containing the REST layer that exposes the DataObjectManager methods to
 the outside world
 """
 
+import json
+import threading
+
 from bottle import Bottle, template, static_file, request, run
 import pkg_resources
-import json
-from dfms import doutils
-import threading
-from dfms.data_object import AppDataObject, ContainerDataObject, SocketListener
 
+from dfms import doutils
+from dfms.data_object import AppDataObject, ContainerDataObject, SocketListener
+from dfms.dom.session import SessionStates
+
+
+sessionStatusStrings = {
+    SessionStates.PRISTINE: 'Pristine',
+    SessionStates.DEPLOYING: 'Deploying',
+    SessionStates.RUNNING: 'Running',
+    SessionStates.FINISHED: 'Finished'
+}
 
 class RestServer(object):
     """
@@ -43,8 +53,12 @@ class RestServer(object):
         super(RestServer, self).__init__()
         app = Bottle()
         app.route('/static/<filepath:path>', callback=self.server_static)
-        app.post( '/<sessionId>/deploy_graph', callback=self.deployGraph)
-        app.route('/<sessionId>/show_graph', callback=self.showGraph)
+        app.put(   '/<sessionId>', callback=self.createSession)
+        app.post(  '/<sessionId>/deploy', callback=self.deploy)
+        app.post(  '/<sessionId>/quick_deploy', callback=self.quickDeploy)
+        app.post(  '/<sessionId>/add_graph_spec', callback=self.addGraphSpec)
+        app.route( '/<sessionId>/show_graph', callback=self.showGraph)
+        app.delete('/<sessionId>', callback=self.destroySession)
         self.app = app
         self.dom = dom
 
@@ -65,20 +79,33 @@ class RestServer(object):
         staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
         return static_file(filepath, root=staticRoot)
 
-    def deployGraph(self, sessionId):
+    def deploy(self, sessionId):
+        self.dom.deploySession(sessionId)
+
+    def quickDeploy(self, sessionId):
         graphJson = request._get_body_string()
-        uris = self.dom.createDataObjectGraph(sessionId, graphJson)
+        uris = self.dom.quickDeploy(sessionId, graphJson)
         return [str(uri) for uri in uris]
+
+    def addGraphSpec(self, sessionId):
+        graphJson = request._get_body_string()
+        self.dom.addGraphSpec(sessionId, graphJson)
 
     def showGraph(self, sessionId):
         tpl = pkg_resources.resource_string(__name__, 'web/graph_display.html')  # @UndefinedVariable
-        return template(tpl, dataObjects=self.toJson(sessionId), sessionId=sessionId)
+        sessionStatus = sessionStatusStrings[self.dom.getSessionStatus(sessionId)]
+        dataObjects = self.toJson(sessionId)
+        return template(tpl, dataObjects=dataObjects, sessionId=sessionId, sessionStatus=sessionStatus)
+
+    def createSession(self, sessionId):
+        self.dom.createSession(sessionId)
+
+    def destroySession(self, sessionId):
+        self.dom.destroySession(sessionId)
 
     def toJson(self, sessionId, formatted=False):
-        allDOs = self.dom.daemon_dob_dict[sessionId].values()
-        rootDOs = [do for do in allDOs if not doutils.getUpstreamObjects(do)]
         allDOsDict = {}
-        for rootDO in rootDOs:
+        for rootDO in self.dom.getRoots(sessionId):
             self.to_json_obj(rootDO, allDOsDict)
         return json.dumps(allDOsDict, sort_keys=formatted)
 
