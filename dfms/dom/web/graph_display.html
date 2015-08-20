@@ -168,6 +168,7 @@
 </style>
 
 <body>
+<span>Session status: {{sessionStatus}}</span>
 <div class="live map">
   <svg><g/></svg>
 </div>
@@ -175,16 +176,15 @@
 <script>
 
   // Set up zoom support
-  var svg = d3.select("svg"),
-      inner = svg.select("g"),
-      zoom = d3.behavior.zoom().on("zoom", function() {
+  var svg = d3.select("svg")
+  var inner = svg.select("g")
+  var zoom = d3.behavior.zoom().on("zoom", function() {
         inner.attr("transform", "translate(" + d3.event.translate + ")" +
                                     "scale(" + d3.event.scale + ")");
       });
   svg.call(zoom);
 
   var render = new dagreD3.render();
-
   var g = new dagreD3.graphlib.Graph();
   g.setGraph({
     nodesep: 70,
@@ -224,7 +224,7 @@
       if (dataObject.dependencies) {
         var i;
         for (i = 0; i < dataObject.dependencies.length; i++) {
-          g.setEdge(dataObject.dependencies[i].oid, id, { label: "", width: 40 });
+          g.setEdge(dataObject.dependencies[i].oid, id, { label: "dependency", width: 40 });
         }
       }
     }

@@ -70,9 +70,9 @@ class DataIO(object):
         Writes `data` into the storage
         """
         if self._mode is None:
-            raise Exception('Writing operation attempted on closed DataIO object')
+            raise ValueError('Writing operation attempted on closed DataIO object')
         if self._mode == OpenMode.OPEN_READ:
-            raise Exception('Writing operation attempted on write-only DataIO object')
+            raise ValueError('Writing operation attempted on write-only DataIO object')
         return self._write(data, **kwargs)
 
     def read(self, count, **kwargs):
@@ -80,9 +80,9 @@ class DataIO(object):
         Reads `count` bytes from the underlying storage.
         """
         if self._mode is None:
-            raise Exception('Writing operation attempted on closed DataIO object')
+            raise ValueError('Reading operation attempted on closed DataIO object')
         if self._mode == OpenMode.OPEN_WRITE:
-            raise Exception('Writing operation attempted on read-only DataIO object')
+            raise ValueError('Reading operation attempted on write-only DataIO object')
         return self._read(count, **kwargs)
 
     def close(self, **kwargs):
