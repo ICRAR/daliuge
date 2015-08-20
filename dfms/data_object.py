@@ -933,8 +933,14 @@ class DirectoryContainer(ContainerDataObject):
             raise Exception('DirectoryContainer needs a "directory" optional ')
 
         directory = kwargs['dirname']
-        if not os.path.isdir(directory):
-            raise Exception('%s is not a directory' % (directory))
+
+        check_exists = True
+        if 'exists' in kwargs:
+            check_exists = kwargs['exists']
+
+        if check_exists is True:
+            if not os.path.isdir(directory):
+                raise Exception('%s is not a directory' % (directory))
 
         self._path = os.path.abspath(directory)
 
