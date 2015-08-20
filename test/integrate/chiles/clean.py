@@ -33,12 +33,6 @@ def do_clean(infiles, outfile):
 if __name__ == '__main__':
 
     try:
-        print indir
-        inputs = []
-        path, files, _ = next(os.walk(indir))
-        for f in files:
-            inputs.append(path + '/' + f)
-
         print inputs
         print outcube
         do_clean(inputs, outcube)

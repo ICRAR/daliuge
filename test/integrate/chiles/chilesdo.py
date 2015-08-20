@@ -24,6 +24,9 @@ import Queue
 import os
 import sys
 import drivecasa
+import uuid
+from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
+
 
 CASAPY = '/mnt/data/chiles/casa4.4/'
 SPLIT = '/mnt/data/chiles/split.py'
@@ -60,6 +63,8 @@ def invoke_split(q,
                 'spec_window="'"%s"'"' % spec_window, 
                 'sel_freq=%s' % str(1)]
         
+        print 'Splitting ', infile
+
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 1800)
         casaout, errors = casa.run_script(inputs)
         casaout, errors = casa.run_script_from_file(SPLIT)
@@ -76,6 +81,8 @@ def invoke_clean(q, vis, outcube):
         inputs = ['inputs=%s' % str(vis).strip('"'), 
                 'outcube="'"%s"'"' % outcube]
 
+        print 'Cleaning ', str(vis)
+
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 1800)
         casaout, errors = casa.run_script(inputs)
         casaout, errors = casa.run_script_from_file(CLEAN)
@@ -86,71 +93,121 @@ def invoke_clean(q, vis, outcube):
         q.put(-1)
       
 
-def do_split():
+class SourceFlux(BarrierAppDataObject):
 
-    q = Queue.Queue()
-    workers = []
-    for v in VIS:
-        t = threading.Thread(target = invoke_split, args = (q, v[0], v[1]))
-        workers.append(t)
+    def run(self):
+        inp = self._inputs.values()[0]
+        out = self._outputs.values()[0]
+
+        print 'Calculating source flux on ', inp._path + '.image'
+
+        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 30)
+        casa.run_script(['ia.open("'"%s"'")' % (inp._path + '.image')])
+        casa.run_script(['flux = ia.pixelvalue([128,128,0,179])["'"value"'"]["'"value"'"]'])
+        casaout, _ = casa.run_script(['print flux'])
+        flux = float(casaout[0])
+        if flux > 9E-4:
+            print 'Valid flux: %s' % flux
+            out.write(str(flux))
+        
+        out.setCompleted()
+
+class Clean(BarrierAppDataObject):
+
+    def run(self):
+
+        vis = []
+        inp = self._inputs.values()
+        out = self._outputs.values()[0]
+
+        for i in inp:
+            vis.append(i._path)
+
+        q = Queue.Queue()    
+        t = threading.Thread(target = invoke_clean, args = (q, vis, out._path))
         t.start()
+        t.join()
 
-    for w in workers:
-        w.join()
-
-    for w in workers:
         result = q.get()
         if result != 0:
-            raise Exception('error splitting')
+            raise Exception('Error cleaning')
+
+        out.setCompleted()
 
 
-def do_clean():
-
-    vis = []
-    for i in VIS:
-        vis.append(str(i[1]))
-
-    q = Queue.Queue()    
-    t = threading.Thread(target = invoke_clean, args = (q, vis, CUBE_OUT + CUBE_NAME))
-    t.start()
-    t.join()
-
-    result = q.get()
-    if result != 0:
-        raise Exception('error cleaning')
+class Split(BarrierAppDataObject):
 
 
-def do_source_flux(imagecube):
+    def run(self):
+        inp = self._inputs.values()[0]
+        out = self._outputs.values()[0]
 
-    casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 30)
-    casa.run_script(['ia.open("'"%s"'")' % imagecube])
-    casa.run_script(['flux = ia.pixelvalue([128,128,0,179])["'"value"'"]["'"value"'"]'])
-    casaout, _ = casa.run_script(['print flux'])
-    flux = float(casaout[0])
-    if flux > 9E-4:
-        print 'Valid flux: %s' % flux
-    else:
-        raise Exception('invalid source flux: %s' % flux)
+        q = Queue.Queue()
+        t = threading.Thread(target = invoke_split, args = (q, inp._path, out._path))
+        t.start()
+        t.join()
+        
+        result = q.get()
+        if result != 0:
+            raise Exception('Error cleaning')
+
+        out.setCompleted()
+
+
+class Barrier(object):
+    def __init__(self, do):
+        self._evt = threading.Event()
+        do.addConsumer(self)
+
+    def dataObjectCompleted(self, do):
+        self._evt.set()
+
+    def wait(self, timeout = None):
+        return self._evt.wait(timeout)
 
 
 if __name__ == '__main__':
     try:
+
         os.system('rm -rf %s' % VIS_OUT)
         os.system('rm -rf %s' % CUBE_OUT)
         os.system('mkdir -p %s' % VIS_OUT)
         os.system('mkdir -p %s' % CUBE_OUT)
 
-        print 'Splitting...'
-        do_split()
-        print 'Splitting Complete!'
+        split = []
+        vis_in_a = []
+        split_out_a = []
 
-        print 'Cleaning...'
-        do_clean()
-        print 'Cleaning Complete!'
+        flux_out = InMemoryDataObject(uuid.uuid1(), uuid.uuid1())
+        flux = SourceFlux(uuid.uuid1(), uuid.uuid1())
+        cl = Clean(uuid.uuid1(), uuid.uuid1())
+        image_out = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False)
+        cl.addOutput(image_out)
+        flux.addInput(image_out)
+        flux.addOutput(flux_out)
+
+        for v in VIS:
+            vis_in = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = v[0])
+            split_out = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = v[1], exists = False)
+            
+            vis_in_a.append(vis_in)
+            split_out_a.append(split_out)
+
+            sp = Split(uuid.uuid1(), uuid.uuid1())
+            sp.addInput(vis_in)
+            sp.addOutput(split_out)
+
+            split.append(sp)
+
+            cl.addInput(split_out)
         
-        print 'Extracting flux...'
-        do_source_flux(CUBE_OUT + CUBE_NAME + '.image')
-        print 'Extracting flux Complete!'
+        # start
+        for i in vis_in_a:
+            i.setCompleted()
+
+        # wait for flux value to be calculated
+        b = Barrier(flux_out)
+        b.wait()
 
     except Exception as e:
         print str(e)
