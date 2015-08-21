@@ -30,35 +30,36 @@ import threading
 from bottle import Bottle, template, static_file, request, run
 import pkg_resources
 
-from dfms import doutils
-from dfms.data_object import AppDataObject, ContainerDataObject, SocketListener
-from dfms.dom.session import SessionStates
-
-
-sessionStatusStrings = {
-    SessionStates.PRISTINE: 'Pristine',
-    SessionStates.DEPLOYING: 'Deploying',
-    SessionStates.RUNNING: 'Running',
-    SessionStates.FINISHED: 'Finished'
-}
 
 class RestServer(object):
     """
     An object that wraps a DataObjectManager and exposes its methods via a REST
     interface. The server is started via the `start` method in a separate thread
     and runs until the process is shut down.
+
+    This REST server currently also serves HTML pages in one of its methods
+    (i.e., /<sessionId>/show). That probably could live somehere
     """
 
     def __init__(self, dom):
         super(RestServer, self).__init__()
         app = Bottle()
-        app.route('/static/<filepath:path>', callback=self.server_static)
-        app.put(   '/<sessionId>', callback=self.createSession)
-        app.post(  '/<sessionId>/deploy', callback=self.deploy)
+
+        # Everything is currently centered on the session
+        app.put(   '/<sessionId>',              callback=self.createSession)
+        app.delete('/<sessionId>',              callback=self.destroySession)
+        app.get(   '/<sessionId>',              callback=self.getSessionInformation)
+        app.get(   '/<sessionId>/status',       callback=self.getSessionStatus)
+        app.post(  '/<sessionId>/deploy',       callback=self.deploySession)
         app.post(  '/<sessionId>/quick_deploy', callback=self.quickDeploy)
-        app.post(  '/<sessionId>/add_graph_spec', callback=self.addGraphSpec)
-        app.route( '/<sessionId>/show_graph', callback=self.showGraph)
-        app.delete('/<sessionId>', callback=self.destroySession)
+        app.get(   '/<sessionId>/graph',        callback=self.getGraph)
+        app.get(   '/<sessionId>/graph/status', callback=self.getGraphStatus)
+        app.put(   '/<sessionId>/graph/parts',  callback=self.addGraphParts)
+
+        # The bad boys that serve HTML-related content
+        app.route('/static/<filepath:path>', callback=self.server_static)
+        app.get(   '/<sessionId>/show', callback=self.showSession)
+
         self.app = app
         self.dom = dom
 
@@ -75,11 +76,21 @@ class RestServer(object):
         t.daemon = 1
         t.start()
 
-    def server_static(self, filepath):
-        staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
-        return static_file(filepath, root=staticRoot)
+    def createSession(self, sessionId):
+        self.dom.createSession(sessionId)
 
-    def deploy(self, sessionId):
+    def destroySession(self, sessionId):
+        self.dom.destroySession(sessionId)
+
+    def getSessionStatus(self, sessionId):
+        return json.dumps(self.dom.getSessionStatus(sessionId))
+
+    def getSessionInformation(self, sessionId):
+        graphDict = self.dom.getGraph(sessionId)
+        status = self.dom.getSessionStatus(sessionId)
+        return json.dumps({'sessionStatus': status, 'graph': graphDict})
+
+    def deploySession(self, sessionId):
         self.dom.deploySession(sessionId)
 
     def quickDeploy(self, sessionId):
@@ -87,58 +98,25 @@ class RestServer(object):
         uris = self.dom.quickDeploy(sessionId, graphJson)
         return [str(uri) for uri in uris]
 
-    def addGraphSpec(self, sessionId):
+    def getGraph(self, sessionId):
+        graphDict = self.dom.getGraph(sessionId)
+        return json.dumps(graphDict)
+
+    def getGraphStatus(self, sessionId):
+        graphStatusDict = self.dom.getGraphStatus(sessionId)
+        return json.dumps(graphStatusDict)
+
+    # TODO: addGraphParts v/s addGraphSpec
+    def addGraphParts(self, sessionId):
         graphJson = request._get_body_string()
         self.dom.addGraphSpec(sessionId, graphJson)
 
-    def showGraph(self, sessionId):
+    def server_static(self, filepath):
+        staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
+        return static_file(filepath, root=staticRoot)
+
+    def showSession(self, sessionId):
         tpl = pkg_resources.resource_string(__name__, 'web/graph_display.html')  # @UndefinedVariable
-        sessionStatus = sessionStatusStrings[self.dom.getSessionStatus(sessionId)]
-        dataObjects = self.toJson(sessionId)
-        return template(tpl, dataObjects=dataObjects, sessionId=sessionId, sessionStatus=sessionStatus)
-
-    def createSession(self, sessionId):
-        self.dom.createSession(sessionId)
-
-    def destroySession(self, sessionId):
-        self.dom.destroySession(sessionId)
-
-    def toJson(self, sessionId, formatted=False):
-        allDOsDict = {}
-        for rootDO in self.dom.getRoots(sessionId):
-            self.to_json_obj(rootDO, allDOsDict)
-        return json.dumps(allDOsDict, sort_keys=formatted)
-
-    def get_type_code(self, dataObject):
-        if isinstance(dataObject, AppDataObject):
-            return 0
-        elif isinstance(dataObject, ContainerDataObject):
-            return 1
-        elif isinstance(dataObject, SocketListener):
-            return 2
-        else:
-            return 3
-
-    def to_json_obj(self, dataObject, visited):
-        """
-        JSON serialisation of a DataObject for displaying with dagreD3. Its
-        implementation should be similar to the DataObjectTask for Luigi, since both
-        should represent the same dependencies
-        """
-        # Already visited
-        if dataObject.oid in visited:
-            return
-
-        doDict = {
-            'type':     self.get_type_code(dataObject),
-            'location': dataObject.location,
-            'status' :  dataObject.status
-        }
-        dependencies = [{'oid': uobj.oid} for uobj in doutils.getUpstreamObjects(dataObject)]
-        if dependencies:
-            doDict['dependencies'] = dependencies
-
-        visited[dataObject.oid] = doDict
-
-        for dob in doutils.getDownstreamObjects(dataObject):
-            self.to_json_obj(dob, visited)
+        urlparts = request.urlparts
+        serverUrl = urlparts.scheme + '://' + urlparts.netloc
+        return template(tpl, sessionId=sessionId, serverUrl=serverUrl)

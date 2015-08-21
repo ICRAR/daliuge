@@ -82,6 +82,12 @@ class DataObjectMgr(object):
     def addGraphSpec(self, sessionId, graphSpec):
         self._sessions[sessionId].addGraphSpec(graphSpec)
 
+    def getGraphStatus(self, sessionId):
+        return self._sessions[sessionId].getGraphStatus()
+
+    def getGraph(self, sessionId):
+        return self._sessions[sessionId].getGraph()
+
     def deploySession(self, sessionId):
         session = self._sessions[sessionId]
         session.deploy()
