@@ -12,7 +12,7 @@ setup(
       url='',
       packages=find_packages(),
       package_data = {
-        'dfms.dom' : ['web/*.html', 'web/static/d3/*']
+        'dfms.dom' : ['web/*.html', 'web/static/css/*.css', 'web/static/js/*.js', 'web/static/js/d3/*']
       },
       install_requires=["Pyro4", "luigi", "psutil", "paramiko", "bottle", "tornado"],
       test_suite="test",

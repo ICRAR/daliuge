@@ -65,14 +65,14 @@ class Session(object):
     In order to be flexible enough, a session starts in a PRISTINE status. While
     in PRISTINE status "graph parts" can be added to it in separate calls, which
     can be connected later. Once all the parts have been submitted, users can
-    finally deploy the graph, which will move the session to the DEPLOYING
+    finally deploySession the graph, which will move the session to the DEPLOYING
     status first, and to the RUNNING status later. Once the execution of the
     graph has finished the session is moved to FINISHED.
     """
 
     def __init__(self, sessionId):
         self._sessionId = sessionId
-        self._graphSpecs = []
+        self._graph = {} # key: oid, value: doSpec dictionary
         self._statusLock = threading.Lock()
         self._roots = []
         self._daemon = None
@@ -115,12 +115,11 @@ class Session(object):
             raise Exception("Can't add more graphs to this session since itn't PRISTINE anymore")
 
         graphSpecDict = graph_loader.loadDataObjectSpecsS(graphSpec)
-        for existingGraphSpec in self._graphSpecs:
-            for oid in graphSpecDict:
-                if oid in existingGraphSpec:
-                    raise Exception('DataObject with OID %s already exists, cannot add twice' % (oid))
+        for oid in graphSpecDict:
+            if oid in self._graph:
+                raise Exception('DataObject with OID %s already exists, cannot add twice' % (oid))
 
-        self._graphSpecs.append(graphSpecDict)
+        self._graph.update(graphSpecDict)
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Added a graph definition with %d DataObjects" % (len(graphSpecDict)))
@@ -171,9 +170,8 @@ class Session(object):
             logger.debug("Successfully linked %s and %s via '%s'" % (lhOID, rhOID, rel))
 
     def findByOidInParts(self, oid):
-        for graphSpec in self._graphSpecs:
-            if oid in graphSpec:
-                return graphSpec[oid]
+        if oid in self._graph:
+            return self._graph[oid]
         return None
 
     def deploy(self):
@@ -200,9 +198,8 @@ class Session(object):
         # Create the real DataObjects from the graph specs
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Creating DataObjects for session %s" % (self._sessionId))
-        doSpecs = []
-        [doSpecs.extend(graphSpec.values()) for graphSpec in self._graphSpecs]
-        self._roots = graph_loader.createGraphFromDOSpecList(doSpecs)
+
+        self._roots = graph_loader.createGraphFromDOSpecList(self._graph.values())
 
         # Register them
         doutils.breadFirstTraverse(self._roots, self._registerDataObject)
@@ -229,6 +226,14 @@ class Session(object):
     def _run(self, worker):
         worker.run()
         self.status = SessionStates.FINISHED
+
+    def getGraphStatus(self):
+        statusDict = {}
+        doutils.breadFirstTraverse(self._roots, lambda do: statusDict.__setitem__(do.oid, do.status))
+        return statusDict
+
+    def getGraph(self):
+        return dict(self._graph)
 
     def destroy(self):
         """
