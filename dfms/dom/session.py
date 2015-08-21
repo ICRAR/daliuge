@@ -34,10 +34,10 @@ from dfms.ddap_protocol import DOLinkType
 
 _LINKTYPE_TO_NREL = {
     DOLinkType.CONSUMER: 'consumers',
-    DOLinkType.IMMEDIATE_CONSUMER: 'immediateConsumers',
+    DOLinkType.STREAMING_CONSUMER: 'streamingConsumers',
     DOLinkType.CHILD: 'children',
     DOLinkType.INPUT: 'inputs',
-    DOLinkType.IMMEDIATE_INPUT: 'immediateInputs',
+    DOLinkType.STREAMING_INPUT: 'streamingInputs',
     DOLinkType.OUTPUT: 'outputs'
 }
 _LINKTYPE_TO_REL = {

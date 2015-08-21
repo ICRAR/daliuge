@@ -100,12 +100,10 @@ def getUpstreamObjects(dataObject):
     upObjs = []
     if isinstance(dataObject, AppDataObject):
         upObjs += dataObject.inputs
-        upObjs += dataObject.immediateInputs
+        upObjs += dataObject.streamingInputs
     else:
         if dataObject.producer:
             upObjs.append(dataObject.producer)
-            if dataObject.immediateProducer:
-                upObjs.append(dataObject.immediateProducer)
     return upObjs
 
 def getDownstreamObjects(dataObject):
@@ -126,7 +124,7 @@ def getDownstreamObjects(dataObject):
         downObjs += dataObject.outputs
     else:
         downObjs += dataObject.consumers
-        downObjs += dataObject.immediateConsumers
+        downObjs += dataObject.streamingConsumers
     return downObjs
 
 def getLeafNodes(nodes):

@@ -83,10 +83,10 @@ class AbstractDataObject(object):
     How the consumption is triggered depends on the producer's ``executionMode``
     flag, which dictates whether it should trigger the consumption itself or
     if it should be manually triggered by an external entity. On the other hand,
-    'immediate' consumers receive the data that is written into its publisher
+    streaming consumers receive the data that is written into its publisher
     *as it gets written*. This mechanism is driven always by the DataObject that
-    acts as 'immediate producer'. Apart from receiving the data as it gets
-    written into the DataObject, immediate consumers are also notified when the
+    acts as a streaming input. Apart from receiving the data as it gets
+    written into the DataObject, streaming consumers are also notified when the
     DataObjects moves to the COMPLETED state, at which point no more data should
     be expected to arrive at the consumer side.
     """
@@ -122,18 +122,14 @@ class AbstractDataObject(object):
         self._consumers = []
         self._producer  = None
 
-        # 'Immediate' consumers are objects that consume the data written in
+        # Streaming consumers are objects that consume the data written in
         # this DataObject *as it gets written*, and therefore don't have to
         # wait until this DataObject has moved to COMPLETED.
-        # An object cannot be an immediate consumers and a 'normal' consumer
+        # An object cannot be a streaming consumers and a 'normal' consumer
         # at the same time, although this rule is imposed simply to enforce
         # efficiency (why would a consumer want to consume the data twice?) and
         # not because it's technically impossible.
-        # TODO: A better name would be highly beneficial to avoid confusion in
-        #       the future between 'normal' and 'immediate'/'quick'/'eager'
-        #       consumers.
-        self._immediateConsumers = []
-        self._immediateProducer  = None
+        self._streamingConsumers = []
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -332,11 +328,11 @@ class AbstractDataObject(object):
             self._size = 0
         self._size += nbytes
 
-        # Trigger our immediate consumers
-        if self._immediateConsumers:
+        # Trigger our streaming consumers
+        if self._streamingConsumers:
             writtenData = buffer(data, 0, nbytes)
-            for immediateConsumer in self._immediateConsumers:
-                immediateConsumer.dataWritten(self.uid, writtenData)
+            for streamingConsumer in self._streamingConsumers:
+                streamingConsumer.dataWritten(self.uid, writtenData)
 
         # Update our internal checksum
         self._updateChecksum(data)
@@ -588,10 +584,10 @@ class AbstractDataObject(object):
         if not hasattr(consumer, 'dataObjectCompleted'):
             raise Exception("The consumer %s doesn't have a 'dataObjectCompleted' method, cannot add to %s" % (consumer, self))
 
-        # An object cannot be a normal and immediate consumer at the same time,
+        # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
-        if consumer in self._immediateConsumers:
-            raise Exception("Consumer %s is already registered as an immediate consumer" % (consumer))
+        if consumer in self._streamingConsumers:
+            raise Exception("Consumer %s is already registered as a streaming consumer" % (consumer))
 
         # Add if not already present
         # Add the reverse reference too automatically
@@ -644,60 +640,42 @@ class AbstractDataObject(object):
                 producer.addOutput(self)
 
     @property
-    def immediateConsumers(self):
+    def streamingConsumers(self):
         """
-        The list of 'immediate' consumers held by this DataObject.
+        The list of 'streaming' consumers held by this DataObject.
 
-        :see: `self.addImmediateConsumer()`
+        :see: `self.addStreamingConsumer()`
         """
-        return self._immediateConsumers[:]
+        return self._streamingConsumers[:]
 
-    def addImmediateConsumer(self, immediateConsumer):
+    def addStreamingConsumer(self, streamingConsumer):
         """
-        Adds an immediate immediateConsumer to this DataObject.
+        Adds a streaming consumer to this DataObject.
 
-        Immediate consumers are objects that receive the data written into this
+        Streaming consumers are objects that receive the data written into this
         DataObject *as it gets written*, and therefore do not need to wait until
         this DataObject has been moved to the COMPLETED state.
         """
 
         # Consumers have a "consume" method that gets invoked when
         # this DO moves to COMPLETED
-        if not hasattr(immediateConsumer, 'dataObjectCompleted') or not hasattr(immediateConsumer, 'dataWritten'):
-            raise Exception("The immediate consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (immediateConsumer))
+        if not hasattr(streamingConsumer, 'dataObjectCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
+            raise Exception("The streaming consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (streamingConsumer))
 
-        # An object cannot be a normal and immediate immediateConsumer at the same time,
+        # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
-        if immediateConsumer in self._consumers:
-            raise Exception("Consumer %s is already registered as a normal consumer" % (immediateConsumer))
+        if streamingConsumer in self._consumers:
+            raise Exception("Consumer %s is already registered as a normal consumer" % (streamingConsumer))
 
         # Add if not already present
-        # Add the reverse reference too automatically
-        if immediateConsumer in self._immediateConsumers:
+        if streamingConsumer in self._streamingConsumers:
             return
-        logger.debug('Adding new immediate immediate consumer for DataObject %s/%s: %s' %(self.oid, self.uid, immediateConsumer))
-        self._immediateConsumers.append(immediateConsumer)
+        logger.debug('Adding new streaming streaming consumer for DataObject %s/%s: %s' %(self.oid, self.uid, streamingConsumer))
+        self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
-        if hasattr(immediateConsumer, 'addImmediateInput'):
-            immediateConsumer.addImmediateInput(self)
-
-    @property
-    def immediateProducer(self):
-        """
-        The producer for which this DataObject acts as an 'immediate' consumer,
-        if any.
-
-        :see: `self.addImmediateConsumer()`
-        """
-        return self._immediateProducer
-
-    @immediateProducer.setter
-    def immediateProducer(self, immediateProducer):
-        if self._immediateProducer and immediateProducer:
-            warnings.warn("A immediate producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
-        if immediateProducer:
-            self._producer = immediateProducer
+        if hasattr(streamingConsumer, 'addStreamingInput'):
+            streamingConsumer.addStreamingInput(self)
 
     def setCompleted(self):
         '''
@@ -718,8 +696,8 @@ class AbstractDataObject(object):
             logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
 
-        # Signal our immediate consumers that the show is over
-        for ic in self._immediateConsumers:
+        # Signal our streaming consumers that the show is over
+        for ic in self._streamingConsumers:
             ic.dataObjectCompleted(self.uid)
 
     def isCompleted(self):
@@ -987,9 +965,9 @@ class AppDataObject(ContainerDataObject):
         self._inputs  = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
-        # Same as above, only that these correspond to the 'immediate' version
-        # of the consumers and producers.
-        self._immediateInputs  = {}
+        # Same as above, only that these correspond to the 'streaming' version
+        # of the consumers
+        self._streamingInputs  = collections.OrderedDict()
 
     def addInput(self, inputDataObject):
         if inputDataObject not in self._inputs.values():
@@ -1013,15 +991,15 @@ class AppDataObject(ContainerDataObject):
     def outputs(self):
         return self._outputs.values()
 
-    def addImmediateInput(self, immediateInputDO):
-        if immediateInputDO not in self._immediateInputs.values():
-            uid = immediateInputDO.uid
-            self._immediateInputs[uid] = immediateInputDO
-            immediateInputDO.addImmediateConsumer(self)
+    def addStreamingInput(self, streamingInputDO):
+        if streamingInputDO not in self._streamingInputs.values():
+            uid = streamingInputDO.uid
+            self._streamingInputs[uid] = streamingInputDO
+            streamingInputDO.addStreamingConsumer(self)
 
     @property
-    def immediateInputs(self):
-        return self._immediateInputs.values()
+    def streamingInputs(self):
+        return self._streamingInputs.values()
 
     def dataObjectCompleted(self, uid):
         """
@@ -1033,13 +1011,13 @@ class AppDataObject(ContainerDataObject):
     def dataWritten(self, uid, data):
         """
         Callback invoked when `data` has been written into the DataObject with
-        UID `uid` (which is one of the immediate inputs of this AppDataObject).
+        UID `uid` (which is one of the streaming inputs of this AppDataObject).
         By default no action is performed
         """
 
 class BarrierAppDataObject(AppDataObject):
     """
-    An AppDataObject that implements a barrier. It accepts no 'immediate' inputs
+    An AppDataObject that implements a barrier. It accepts no streaming inputs
     and it waits until all its inputs have been moved to COMPLETED to execute
     its 'run' method.
     """
@@ -1048,7 +1026,7 @@ class BarrierAppDataObject(AppDataObject):
         super(BarrierAppDataObject, self).initialize(**kwargs)
         self._completedInputs = []
 
-    def addImmediateInput(self, immediateInputDO):
+    def addStreamingInput(self, streamingInputDO):
         raise Exception("BarrierAppDataObjects don't accept streaming inputs")
 
     def dataObjectCompleted(self, uid):

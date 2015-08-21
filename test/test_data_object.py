@@ -481,15 +481,15 @@ class TestDataObject(unittest.TestCase):
             # b is already done
             self.assertEquals(c.status, DOStates.COMPLETED)
 
-    def test_objectAsNormalAndImmediateInput(self):
+    def test_objectAsNormalAndStreamingInput(self):
         """
-        A test that checks that a DO can act as normal and immediate input of
+        A test that checks that a DO can act as normal and streaming input of
         different AppDataObjects at the same time. We use the following graph:
 
         A --|--> B --> D
             |--> C --> E
 
-        Here B is uses A as an immediate input, while C uses it as a normal
+        Here B is uses A as a streaming input, while C uses it as a normal
         input
         """
 
@@ -510,14 +510,14 @@ class TestDataObject(unittest.TestCase):
         c = CRCAppDataObject('c', 'c')
         d = InMemoryDataObject('d', 'd')
         e = InMemoryDataObject('e', 'e')
-        a.addImmediateConsumer(b)
+        a.addStreamingConsumer(b)
         a.addConsumer(c)
         b.addOutput(d)
         c.addOutput(e)
 
-        # Consumer cannot be normal and immediate at the same time
+        # Consumer cannot be normal and streaming at the same time
         self.assertRaises(Exception, lambda: a.addConsumer(b))
-        self.assertRaises(Exception, lambda: a.addImmediateConsumer(c))
+        self.assertRaises(Exception, lambda: a.addStreamingConsumer(c))
 
         # Write a little, then check the consumers
         def checkDOStates(aStatus, dStatus, eStatus, lastChar):
