@@ -41,8 +41,8 @@ STORAGE_TYPES = {
 }
 
 # 1-to-N relationships between DataObjects in (jsonName, DOBindingMethodName) form
-__ONE_TO_N_RELS = [('consumers', 'addConsumer'), ('immediateConsumers', 'addImmediateConsumer'),
-                   ('inputs', 'addInput'), ('immediateInputs', 'addImmediateInput'),
+__ONE_TO_N_RELS = [('consumers', 'addConsumer'), ('streamingConsumers', 'addStreamingConsumer'),
+                   ('inputs', 'addInput'), ('streamingInputs', 'addStreamingInput'),
                    ('outputs', 'addOutput'), ('children', 'addChild')]
 
 # N-to-1 relationships between DataObjects. Their json name matches the attribute
