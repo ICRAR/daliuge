@@ -72,14 +72,27 @@
     fill: #fff;
   }
 
+   .live.map .node parallelogram {
+    stroke-width: 2.0px;
+    stroke: #bbb;
+    fill: #fff;
+  }
+
+  .live.map .node circle {
+    stroke-width: 2.0px;
+    stroke: #bbb;
+    fill: #fff;
+  }
+
+
   .live.map .status {
     height: 100%;
-    width: 30px;
+    width: 0px;
     display: block;
     float: left;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    margin-right: 4px;
+    border-top-left-radius: 1px;
+    border-bottom-left-radius: 1px;
+    margin-right: 1px;
   }
 
   .live.map .allocated .status {
@@ -95,7 +108,9 @@
   }
 
   .live.map .stopped .status {
-    background-color: #700000;
+    /* background-color: #700000; */
+    background-color: #b2b2b2; /* grey */
+
   }
 
   .live.map .warn .queue {
@@ -113,7 +128,7 @@
 
   .live.map .loc,
   .live.map .name {
-    margin-top: 4px;
+    margin-top: 1px;
   }
 
   .live.map .loc:after {
@@ -157,6 +172,7 @@
 	<a href="/">All graphs</a>
 	<a href="jsonbody?pg_name={{pg_name}}">See JSON body</a>
 	<a href="execute?pg_name={{pg_name}}">Execute with Luigi</a>
+  <a href="show?pg_name={{pg_name}}&pg_layout={{pg_rotate}}">Rotate the graph</a>
 </div>
 <div class="live map">
   <svg><g/></svg>
@@ -233,7 +249,7 @@
   g.setGraph({
     nodesep: 70,
     ranksep: 50,
-    rankdir: "LR",
+    rankdir: "{{!pg_layout}}",
     marginx: 20,
     marginy: 20
   });
@@ -242,18 +258,33 @@
     for (var id in workers) {
       var worker = workers[id];
       var className;
+      var fill_color;
+      var pad_gap;
       switch(worker.type) {
         case 3:
-          className = 'warn'
+          className = "warn"; /* socket listener data obj */
+          node_shape = "parallelogram";
+          fill_color = "#b2b2b2"
+          pad_gap = 1;
           break
         case 2:
           className = "container";
+          node_shape = "parallelogram";
+          fill_color = "#ffed68"
+          pad_gap = 1;
           break;
         case 1:
-          className = "stopped";
+          className = "stopped"; /* normal data obj*/
+          node_shape = "parallelogram";
+          fill_color = "#FFFFFF"
+          pad_gap = 0;
           break;
         default:
-          className = "allocated"
+          className = "allocated" /* app data obj */
+          node_shape = "rect"
+          fill_color = "#afa"
+          pad_gap = 0;
+
       }
       /*
       var className = worker.loc ? "allocated" : "stopped";
@@ -261,7 +292,7 @@
         className += " warn";
       }
       */
-      var html = "<div>";
+      var html = "<div style=\"text-align: center;\">";
       html += "<span class=status></span>";
       html += "<span class=name>" + id + "</span>";
       html += "<br/>"
@@ -269,14 +300,17 @@
       //html += "<span class=name>" + id + "</span>";
       //html += "<span class=queue><span class=counter>"+worker.type+"</span></span>";
       html += "</div>";
+
       g.setNode(id, {
         labelType: "html",
         label: html,
-        rx: 5,
-        ry: 5,
-        padding: 0,
-        class: className
+        rx: 3,
+        ry: 3,
+        shape: node_shape,
+        style: "fill: " + fill_color + "; stroke: #bbb; stroke-width: 2.0px;"
+        /* class: className */
       });
+
 
       if (worker.inputQueue) {
         var i;
@@ -289,6 +323,27 @@
 
       }
     }
+
+    // Add our custom shape (a house)
+    render.shapes().parallelogram = function(parent, bbox, node) {
+    var w = bbox.width,
+        h = bbox.height,
+        points = [
+          { x:   0, y:        -h * 0.2  },
+          { x:   w * 0.9, y:        -h * 0.2  },
+          { x:   w * 0.9 + w/9, y:       -h * 1.1 },
+          { x: w/9, y: -h * 1.1},
+        ];
+        shapeSvg = parent.insert("polygon", ":first-child")
+          .attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
+          .attr("transform", "translate(" + (-w/2) + "," + (h * 3/4) + ")");
+
+    node.intersect = function(point) {
+      return dagreD3.intersect.polygon(node, points, point);
+    };
+
+    return shapeSvg;
+    };
 
     inner.call(render, g);
 
