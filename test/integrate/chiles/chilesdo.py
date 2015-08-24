@@ -66,7 +66,7 @@ def invoke_split(q,
         print 'Splitting ', infile
 
         import drivecasa  # @UnresolvedImport
-        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 1800)
+        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 3600)
         casaout, errors = casa.run_script(inputs)
         casaout, errors = casa.run_script_from_file(SPLIT)
         q.put(0)
@@ -85,7 +85,7 @@ def invoke_clean(q, vis, outcube):
         print 'Cleaning ', str(vis)
 
         import drivecasa  # @UnresolvedImport
-        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 1800)
+        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 3600)
         casaout, errors = casa.run_script(inputs)
         casaout, errors = casa.run_script_from_file(CLEAN)
         q.put(0)
@@ -104,7 +104,7 @@ class SourceFlux(BarrierAppDataObject):
         print 'Calculating source flux on ', inp._path + '.image'
 
         import drivecasa  # @UnresolvedImport
-        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 30)
+        casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 180)
         casa.run_script(['ia.open("'"%s"'")' % (inp._path + '.image')])
         casa.run_script(['flux = ia.pixelvalue([128,128,0,179])["'"value"'"]["'"value"'"]'])
         casaout, _ = casa.run_script(['print flux'])
@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
         # wait for flux value to be calculated
         b = Barrier(flux_out)
-        res = b.wait(3800)
+        res = b.wait(6000)
         if res == False:
             raise Exception('imaging timeout!')
 
