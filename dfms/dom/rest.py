@@ -27,7 +27,7 @@ the outside world
 import json
 import threading
 
-from bottle import Bottle, template, static_file, request, run
+from bottle import Bottle, template, static_file, request, run, response
 import pkg_resources
 
 
@@ -83,11 +83,13 @@ class RestServer(object):
         self.dom.destroySession(sessionId)
 
     def getSessionStatus(self, sessionId):
+        response.content_type = 'application/json'
         return json.dumps(self.dom.getSessionStatus(sessionId))
 
     def getSessionInformation(self, sessionId):
         graphDict = self.dom.getGraph(sessionId)
         status = self.dom.getSessionStatus(sessionId)
+        response.content_type = 'application/json'
         return json.dumps({'sessionStatus': status, 'graph': graphDict})
 
     def deploySession(self, sessionId):
@@ -96,14 +98,17 @@ class RestServer(object):
     def quickDeploy(self, sessionId):
         graphJson = request._get_body_string()
         uris = self.dom.quickDeploy(sessionId, graphJson)
+        response.content_type = 'application/json'
         return [str(uri) for uri in uris]
 
     def getGraph(self, sessionId):
         graphDict = self.dom.getGraph(sessionId)
+        response.content_type = 'application/json'
         return json.dumps(graphDict)
 
     def getGraphStatus(self, sessionId):
         graphStatusDict = self.dom.getGraphStatus(sessionId)
+        response.content_type = 'application/json'
         return json.dumps(graphStatusDict)
 
     # TODO: addGraphParts v/s addGraphSpec

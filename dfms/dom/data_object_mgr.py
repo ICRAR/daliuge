@@ -107,6 +107,3 @@ class DataObjectMgr(object):
     def destroySession(self, sessionId):
         session = self._sessions.pop(sessionId)
         session.destroy()
-
-    def getRoots(self, sessionId):
-        return self._sessions[sessionId].roots
