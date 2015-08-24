@@ -63,7 +63,7 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 			for(idx in doSpecs) {
 				doSpec = doSpecs[idx]
 				oid = doSpec.oid
-				modified = _addNode(g, doSpec)
+				modified |= _addNode(g, doSpec)
 			}
 
 			// #2: establish missing relationships
@@ -76,7 +76,7 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 					rel = TO_MANY_LTR_RELS[relIdx]
 					if( rel in doSpec ) {
 						for(rhOid in doSpec[rel]) {
-							modified = _addEdge(g, lhOid, doSpec[rel][rhOid])
+							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid])
 						}
 					}
 				}
@@ -85,7 +85,7 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 					rel = TO_MANY_RTL_RELS[relIdx]
 					if( rel in doSpec ) {
 						for(rhOid in doSpec[rel]) {
-							modified = _addEdge(g, rhOid, doSpec[rel][lhOid])
+							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid)
 						}
 					}
 				}
@@ -93,7 +93,7 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 				for(relIdx in TO_ONE_RTL_RELS) {
 					rel = TO_ONE_RTL_RELS[relIdx]
 					if( rel in doSpec ) {
-						modified = _addEdge(g, doSpec[rel], lhOid)
+						modified |= _addEdge(g, doSpec[rel], lhOid)
 					}
 				}
 				// there currently are no x-to-one relationshipts producing lh->rh edges
@@ -127,10 +127,10 @@ function _addNode(g, doSpec) {
 	}
 
 	var statusClass = STATUS_CLASSES[doSpec.status]
-	var typeClass   = TYPE_CLASSES[doSpec.type]
+	var typeClass   = doSpec.type
 
 	oid = doSpec.oid
-	var html = '<div id="' + oid + '">';
+	var html = '<div id="id_' + oid + '">';
 	html += '<span class="status ' + statusClass + '"></span>';
 	html += '<span class="name">' + oid + '</span>';
 	html += "</div>";
@@ -147,6 +147,14 @@ function _addNode(g, doSpec) {
 
 function _addEdge(g, fromOid, toOid) {
 	if( g.hasEdge(fromOid, toOid) ) {
+		return false
+	}
+	if( !g.hasNode(fromOid) ) {
+		console.error('No DataObject found with oid ' + fromOid)
+		return false
+	}
+	if( !g.hasNode(toOid) ) {
+		console.error('No DataObject found with oid ' + toOid)
 		return false
 	}
 	g.setEdge(fromOid, toOid, { label: "dependency", width: 40 });
@@ -173,7 +181,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 				if ( status != 2 ) { // 2 == completed
 					allCompleted = false
 				}
-				inner.select('#' + id + ' span.status')
+				inner.select('#id_' + id + ' span.status')
 				.attr('class', 'status ' + statusClass)
 			}
 			if (!allCompleted) {

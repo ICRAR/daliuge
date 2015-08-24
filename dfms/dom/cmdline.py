@@ -43,6 +43,14 @@ def launchServer(opts):
         Pyro4.config.HOST = opts.host
 
     logger = logging.getLogger(__name__)
+
+    # dfmsPath might contain code the user is adding
+    dfmsPath = os.path.expanduser(opts.dfmsPath)
+    if os.path.isdir(dfmsPath):
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Adding %s to the system path" % (dfmsPath))
+        sys.path.append(dfmsPath)
+
     logger.info('Creating DataObjectManager %s' % (opts.domId))
     dom = DataObjectMgr(opts.domId, not opts.noDLM)
     dom_daemon = Pyro4.Daemon(port=opts.port)
@@ -93,6 +101,8 @@ def main(args=sys.argv):
                       dest="restPort", help="The port to bind the REST server on")
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this DOM", default=False)
+    parser.add_option("--dfms-path", action="store", type="string",
+                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
 
     if not options.domId:
@@ -115,4 +125,5 @@ def main(args=sys.argv):
         launchServer(options)
 
 if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     main()

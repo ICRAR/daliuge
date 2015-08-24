@@ -180,7 +180,7 @@ class Session(object):
         this session, effectively deploying them.
 
         When this method has finished executing a Pyro Daemon will also be
-        up and running, servince requests to access to all the DataObjects
+        up and running, servicing requests to access to all the DataObjects
         belonging to this session
         """
         if self.status != SessionStates.PRISTINE:
@@ -228,6 +228,8 @@ class Session(object):
         self.status = SessionStates.FINISHED
 
     def getGraphStatus(self):
+        if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
+            raise Exception("The session is currently not running, cannot get graph status")
         statusDict = {}
         doutils.breadFirstTraverse(self._roots, lambda do: statusDict.__setitem__(do.oid, do.status))
         return statusDict
