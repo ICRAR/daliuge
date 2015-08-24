@@ -27,19 +27,20 @@ import uuid
 from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
 
 
-CASAPY = '/mnt/data/chiles/casa4.4/'
-SPLIT = '/mnt/data/chiles/split.py'
-CLEAN = '/mnt/data/chiles/clean.py'
-VIS_ROOT = '/mnt/data/chiles/DataFiles/'
-VIS_OUT = '/mnt/data/chiles-output/vis/'
-CUBE_OUT = '/mnt/data/chiles-output/cube/'
+LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
+CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
+SPLIT = LOCAL_FILES + '/split.py'
+CLEAN = LOCAL_FILES + '/clean.py'
+VIS_ROOT = '/mnt/chiles-imaging/DataFiles/'
+VIS_OUT = '/mnt/chiles-output/vis/'
+CUBE_OUT = '/mnt/chiles-output/cube/'
 CUBE_NAME = 'cube1408~1412'
 
 VIS = [
-        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_FINAL_PRODUCTS.14__calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/'), 
-        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_FINAL_PRODUCTS.14__calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/'),
-        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_FINAL_PRODUCTS.14__calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/'),
-        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_FINAL_PRODUCTS.14__calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/')
+        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/'),
+        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/'),
+        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/'),
+        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/')
         ]
 
 
@@ -209,7 +210,9 @@ if __name__ == '__main__':
 
         # wait for flux value to be calculated
         b = Barrier(flux_out)
-        b.wait()
+        res = b.wait(3800)
+        if res == False:
+            raise Exception('imaging timeout!')
 
     except Exception as e:
         print str(e)

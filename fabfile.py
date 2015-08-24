@@ -275,7 +275,7 @@ def run_chiles_transform():
 def run_chiles_imaging():
     build_install()
     reploc = os.path.dirname(os.path.abspath(__file__))
-    virtualenv('cd {0}/test/integrate/chiles/; ./cubejob14.sh'.format(reploc))
+    virtualenv('cd {0}/test/integrate/chiles/; python chilesdo.py'.format(reploc))
 
 @task
 def virtualenv_clean():
