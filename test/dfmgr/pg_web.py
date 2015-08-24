@@ -76,11 +76,19 @@ def show():
     Setup web page for displaying the physical graph
     """
     pg_name = request.query.get('pg_name')
+    pg_layout = request.query.get('pg_layout')
+
+    if (pg_layout == 'TD'):
+        pg_rotate = 'LR'
+    else:
+        pg_layout = 'LR'
+        pg_rotate = 'TD'
+
     if (not valid_pg_name(pg_name)):
         allNames = list(graphsRepository.listGraphFunctions())
         return _response_msg('Invalid physical graph name %s. Valid names are: %s' % (pg_name, allNames))
     jsbody = _get_json(pg_name)
-    return template('pg_graph_tpl.html', json_workers=jsbody, pg_name=pg_name)
+    return template('pg_graph_tpl.html', json_workers=jsbody, pg_name=pg_name, pg_layout=pg_layout, pg_rotate=pg_rotate)
 
 @get('/execute')
 def execute():
@@ -151,13 +159,13 @@ def root():
 #===============================================================================
 def get_type_code(dataObject):
     if isinstance(dataObject, AppDataObject):
-        return 1
+        return 4
     elif isinstance(dataObject, ContainerDataObject):
         return 2
     elif isinstance(dataObject, SocketListener):
         return 3
     else:
-        return 4
+        return 1
 
 def to_json_obj(dataObject, allDOsDict):
     """
