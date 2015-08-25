@@ -243,6 +243,7 @@ class Session(object):
         """
         if self._daemon:
             self._daemon.shutdown()
+            self._daemon = None
             self._daemonT.join()
 
     __del__ = destroy
