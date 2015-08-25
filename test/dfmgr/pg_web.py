@@ -93,10 +93,12 @@ def show():
 @get('/execute')
 def execute():
     pg_name = request.query.get('pg_name')
+
     if (not valid_pg_name(pg_name)):
         allNames = list(graphsRepository.listGraphFunctions())
         return _response_msg('Invalid physical graph name %s. Valid names are: %s' % (pg_name, allNames))
 
+    luigi_host = request.environ['HTTP_HOST'].split(":")[0] # e.g. 192.168.1.1:8081
     luigi_port = 8082
     from luigi import worker
 
@@ -104,14 +106,15 @@ def execute():
     from luigi import rpc
     from urllib2 import urlopen
     try:
-        urlopen("http://{0}:{1}", timeout=0.5)
-    except Exception:
+        urlopen("http://{0}:{1}".format(luigi_host, luigi_port), timeout=2)
+    except Exception, exp:
         # The only way to start a luigi server is to do it in a separate process,
         # because the luigi.server.run method sets up signal traps, which can
         # only be done in the main thread. There is a second option for starting
         # the server programmatically through the luigi.cmdline.luigid function
         # with --background, but that kills the current process because of the
         # "daemonization" process
+        print str(exp)
         argv = ['luigid', '--background', '--logdir', '.', '--address', '0.0.0.0', '--port', str(luigi_port)]
         subprocess.Popen(argv)
         time.sleep(1)
@@ -126,15 +129,18 @@ def execute():
     task = FinishGraphExecution(pgCreator=pgCreator, sessionId=ssid)
     SocketListener._dryRun = True
 
-    w = worker.Worker(scheduler=rpc.RemoteScheduler(port=luigi_port))
-    w.add(task)
+    no_workers = 5 # parallel workers
+    for i in range(no_workers):
+        # default worker id could be duplicated, so create unqiue ones
+        worker_id = "worker_{0}_{1}_{2}".format(luigi_host, ssid, i)
+        w = worker.Worker(scheduler=rpc.RemoteScheduler(port=luigi_port), worker_id=worker_id)
+        w.add(task) # share the same task and its dependent tasks, thus parallel
+        t = threading.Thread(None, lambda: w.run(), 'work-runner')
+        t.daemon = True
+        t.start()
 
-    t = threading.Thread(None, lambda: w.run(), 'work-runner')
-    t.daemon = True
-    t.start()
-
-    my_public_ip = urlopen('http://ip.42.pl/raw').read()
-    redirect("http://{0}:{1}/static/visualiser/index.html#FinishGraphExecution(sessionId={2}, pgCreator={3})".format(my_public_ip, luigi_port, ssid, pgCreator))
+    #my_public_ip = urlopen('http://ip.42.pl/raw').read()
+    redirect("http://{0}:{1}/static/visualiser/index.html#FinishGraphExecution(sessionId={2}, pgCreator={3})".format(luigi_host, luigi_port, ssid, pgCreator))
 
 @get('/jsonbody')
 def jsonbody():
@@ -189,6 +195,29 @@ def to_json_obj(dataObject, allDOsDict):
 
     for dob in doutils.getDownstreamObjects(dataObject):
         to_json_obj(dob, allDOsDict)
+
+def _call_luigi_api(verb, luigi_ip, luigi_port, **kwargs):
+    """
+    e.g   tasks = _call_luigi_api('task_search', task_str=ssid)
+          print len(tasks)
+    """
+    # se = '{"task_str":"chenwu"}'
+    url = "http://{0}:{1}/api/{2}".format(luigi_ip, luigi_port, verb)
+    if (len(kwargs) > 0):
+        url += "?data={0}".format(urllib2.quote(json.dumps(kwargs)))
+    try:
+        re = urllib2.urlopen(url).read()
+        jre = json.loads(re)
+        if (jre.has_key('response')):
+            return jre['response']
+        else:
+            raise Exception("Invalid reply from Luigi: {0}".format(re))
+    except urllib2.URLError, urlerr:
+        raise Exception("Luigi server at {0} is down".format(luigi_ip))
+    except urllib2.HTTPError, httperr:
+        raise Exception("Luigi API error: {0}".format(str(httperr)))
+    except Exception, ex:
+        raise Exception("Fail to query Luigi: {0}".format(str(ex)))
 
 
 if __name__ == "__main__":
