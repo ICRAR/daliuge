@@ -19,48 +19,27 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
-A small module that runs the the DLM as a standalone application and registers
-it with Pyro so others can access it
+import unittest
+from dfms.io import NullIO, OpenMode
 
-@author: rtobar
-'''
+class TestIO(unittest.TestCase):
 
-import dlm
-import logging
-import sys
+    def test_invalidUseCases(self):
+        io = NullIO()
 
-import Pyro4
+        # Not opened yet
+        self.assertRaises(ValueError, io.write, '')
+        self.assertRaises(ValueError, io.read, '')
 
+        # Opening in read-only mode
+        io.open(OpenMode.OPEN_READ)
+        self.assertRaises(ValueError, io.write, '')
+        io.close()
 
-logger = logging.getLogger(__name__)
+        # Opening in write-only mode
+        io.open(OpenMode.OPEN_WRITE)
+        self.assertRaises(ValueError, io.read, 1)
+        io.close()
 
-
-class DataLifecycleManagerRunner(object):
-
-    def __init__(self, *args):
-        self._dlm = dlm.DataLifecycleManager()
-
-    def start(self):
-
-        logger.debug("Starting DLM")
-        self._dlm.startup()
-
-        logger.debug("Serving DLM through pyro")
-        daemon = Pyro4.Daemon()
-        daemon.register(self._dlm)
-
-        # Main loop
-        daemon.requestLoop()
-
-        daemon.close()
-        self._dlm.cleanup()
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-    logger.info("Starting DLM application")
-    runner = DataLifecycleManagerRunner(sys.argv)
-    runner.start()
-
-if __name__ == '__main__':
-    main()
+        # It's OK to close it again
+        io.close()

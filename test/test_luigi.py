@@ -89,7 +89,7 @@ class LuigiTests(unittest.TestCase):
         self._test_graph(graph_loader.readObjectGraph(f), socketListeners)
 
     def _test_graph(self, pgCreator, socketListeners=1):
-        if isinstance(pgCreator, str):
+        if isinstance(pgCreator, basestring):
             pgCreator = "test.graphsRepository.%s" % (pgCreator)
         task = FinishGraphExecution(pgCreator=pgCreator)
         sch = scheduler.CentralPlannerScheduler()

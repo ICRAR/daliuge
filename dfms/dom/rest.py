@@ -24,25 +24,44 @@ Module containing the REST layer that exposes the DataObjectManager methods to
 the outside world
 """
 
-from bottle import Bottle, template, static_file, request, run
-import pkg_resources
 import json
-from dfms import doutils
 import threading
-from dfms.data_object import AppDataObject, ContainerDataObject, SocketListener
+
+from bottle import Bottle, template, static_file, request, run, response
+import pkg_resources
 
 
-class RestServer(Bottle):
+class RestServer(object):
     """
-    A REST server that wraps a DataObjectManager, and additionally 
+    An object that wraps a DataObjectManager and exposes its methods via a REST
+    interface. The server is started via the `start` method in a separate thread
+    and runs until the process is shut down.
+
+    This REST server currently also serves HTML pages in one of its methods
+    (i.e., /<sessionId>/show). That probably could live somehere
     """
 
     def __init__(self, dom):
         super(RestServer, self).__init__()
+        app = Bottle()
+
+        # Everything is currently centered on the session
+        app.put(   '/<sessionId>',              callback=self.createSession)
+        app.delete('/<sessionId>',              callback=self.destroySession)
+        app.get(   '/<sessionId>',              callback=self.getSessionInformation)
+        app.get(   '/<sessionId>/status',       callback=self.getSessionStatus)
+        app.post(  '/<sessionId>/deploy',       callback=self.deploySession)
+        app.post(  '/<sessionId>/quick_deploy', callback=self.quickDeploy)
+        app.get(   '/<sessionId>/graph',        callback=self.getGraph)
+        app.get(   '/<sessionId>/graph/status', callback=self.getGraphStatus)
+        app.put(   '/<sessionId>/graph/parts',  callback=self.addGraphParts)
+
+        # The bad boys that serve HTML-related content
+        app.route('/static/<filepath:path>', callback=self.server_static)
+        app.get(   '/<sessionId>/show', callback=self.showSession)
+
+        self.app = app
         self.dom = dom
-        self.route('/static/<filepath:path>', callback=self.server_static)
-        self.post( '/<sessionId>/create_graph', callback=self.createDataObjectGraph)
-        self.route('/<sessionId>/graph', callback=self.showGraph)
 
     def start(self, host, port):
         if host is None:
@@ -53,60 +72,56 @@ class RestServer(Bottle):
         # It seems it's not trivial to stop a running bottle server, so we simply
         # start it but never end it. It will successfully end anyway when we finish
         # our process
-        t = threading.Thread(None, lambda: run(self, server='tornado', host=host, port=port))
+        t = threading.Thread(None, lambda: run(self.app, server='tornado', host=host, port=port, quiet=True))
         t.daemon = 1
         t.start()
+
+    def createSession(self, sessionId):
+        self.dom.createSession(sessionId)
+
+    def destroySession(self, sessionId):
+        self.dom.destroySession(sessionId)
+
+    def getSessionStatus(self, sessionId):
+        response.content_type = 'application/json'
+        return json.dumps(self.dom.getSessionStatus(sessionId))
+
+    def getSessionInformation(self, sessionId):
+        graphDict = self.dom.getGraph(sessionId)
+        status = self.dom.getSessionStatus(sessionId)
+        response.content_type = 'application/json'
+        return json.dumps({'sessionStatus': status, 'graph': graphDict})
+
+    def deploySession(self, sessionId):
+        self.dom.deploySession(sessionId)
+
+    def quickDeploy(self, sessionId):
+        graphJson = request._get_body_string()
+        uris = self.dom.quickDeploy(sessionId, graphJson)
+        response.content_type = 'application/json'
+        return [str(uri) for uri in uris]
+
+    def getGraph(self, sessionId):
+        graphDict = self.dom.getGraph(sessionId)
+        response.content_type = 'application/json'
+        return json.dumps(graphDict)
+
+    def getGraphStatus(self, sessionId):
+        graphStatusDict = self.dom.getGraphStatus(sessionId)
+        response.content_type = 'application/json'
+        return json.dumps(graphStatusDict)
+
+    # TODO: addGraphParts v/s addGraphSpec
+    def addGraphParts(self, sessionId):
+        graphJson = request._get_body_string()
+        self.dom.addGraphSpec(sessionId, graphJson)
 
     def server_static(self, filepath):
         staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
         return static_file(filepath, root=staticRoot)
 
-    def createDataObjectGraph(self, sessionId):
-        graphJson = request._get_body_string()
-        uris = self.dom.createDataObjectGraph(sessionId, graphJson)
-        return json.dumps([str(uri) for uri in uris])
-
-    def showGraph(self, sessionId):
+    def showSession(self, sessionId):
         tpl = pkg_resources.resource_string(__name__, 'web/graph_display.html')  # @UndefinedVariable
-        return template(tpl, dataObjects=self.toJson(sessionId), sessionId=sessionId)
-
-    def toJson(self, sessionId, formatted=False):
-        allDOs = self.dom.daemon_dob_dict[sessionId].values()
-        rootDOs = [do for do in allDOs if not doutils.getUpstreamObjects(do)]
-        allDOsDict = {}
-        for rootDO in rootDOs:
-            self.to_json_obj(rootDO, allDOsDict)
-        return json.dumps(allDOsDict, sort_keys=formatted)
-
-    def get_type_code(self, dataObject):
-        if isinstance(dataObject, AppDataObject):
-            return 1
-        elif isinstance(dataObject, ContainerDataObject):
-            return 2
-        elif isinstance(dataObject, SocketListener):
-            return 3
-        else:
-            return 4
-
-    def to_json_obj(self, dataObject, visited):
-        """
-        JSON serialisation of a DataObject for displaying with dagreD3. Its
-        implementation should be similar to the DataObjectTask for Luigi, since both
-        should represent the same dependencies
-        """
-        # Already visited
-        if dataObject.oid in visited:
-            return
-
-        doDict = {
-            'type': self.get_type_code(dataObject),
-            'loc': dataObject.location
-        }
-        dependencies = [{'oid': uobj.oid} for uobj in doutils.getUpstreamObjects(dataObject)]
-        if dependencies:
-            doDict['dependencies'] = dependencies
-
-        visited[dataObject.oid] = doDict
-
-        for dob in doutils.getDownstreamObjects(dataObject):
-            self.to_json_obj(dob, visited)
+        urlparts = request.urlparts
+        serverUrl = urlparts.scheme + '://' + urlparts.netloc
+        return template(tpl, sessionId=sessionId, serverUrl=serverUrl)

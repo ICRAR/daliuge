@@ -129,7 +129,7 @@ import registry
 from dfms import doutils
 from dfms.ddap_protocol import DOStates, DOPhases
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class DataLifecycleManagerBackgroundTask(threading.Thread):
     '''
@@ -218,7 +218,7 @@ class DataLifecycleManager(object):
         self._finishedEvent = finishedEvent
 
     def cleanup(self):
-        _logger.info("Cleaning up the DLM")
+        logger.info("Cleaning up the DLM")
 
         # Join the background threads
         self._finishedEvent.set()
@@ -241,8 +241,8 @@ class DataLifecycleManager(object):
 
 
     def _deleteDataObject(self, do):
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Deleting DataObject %s/%s" % (do.oid, do.uid))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Deleting DataObject %s/%s" % (do.oid, do.uid))
         do.delete()
         do.status = DOStates.DELETED
 
@@ -257,11 +257,11 @@ class DataLifecycleManager(object):
             if do.status == DOStates.COMPLETED and \
                now > do.expirationDate:
                 if do.isBeingRead():
-                    _logger.info("DataObject %s/%s has expired but is currently being read, " \
+                    logger.info("DataObject %s/%s has expired but is currently being read, " \
                                  "will skip expiration for the time being" % (do.oid, do.uid))
                     continue
-                if (_logger.isEnabledFor(logging.DEBUG)):
-                    _logger.debug('Marking DataObject %s/%s as EXPIRED' % (do.oid, do.uid))
+                if (logger.isEnabledFor(logging.DEBUG)):
+                    logger.debug('Marking DataObject %s/%s as EXPIRED' % (do.oid, do.uid))
                 do.status = DOStates.EXPIRED
 
     def _disappeared(self, dataObject):
@@ -274,8 +274,8 @@ class DataLifecycleManager(object):
             if self._disappeared(do):
 
                 toRemove.append(do)
-                if _logger.isEnabledFor(logging.WARNING):
-                    _logger.warning('DataObject %s/%s has disappeared' % (do.oid, do.uid))
+                if logger.isEnabledFor(logging.WARNING):
+                    logger.warning('DataObject %s/%s has disappeared' % (do.oid, do.uid))
 
                 # Check if it's replicated
                 uids = self._reg.getDataObjectUids(do)
@@ -292,20 +292,20 @@ class DataLifecycleManager(object):
                         if not self._disappeared(siblingDO):
                             replicas.append(siblingDO)
                         else:
-                            if _logger.isEnabledFor(logging.WARNING):
-                                _logger.warning('DataObject %s/%s (replicated from %s/%s) has disappeared' % (siblingDO.oid, siblingDO.uid, do.oid, do.uid))
+                            if logger.isEnabledFor(logging.WARNING):
+                                logger.warning('DataObject %s/%s (replicated from %s/%s) has disappeared' % (siblingDO.oid, siblingDO.uid, do.oid, do.uid))
                             toRemove.append(siblingDO)
 
                     if len(replicas) > 1:
-                        _logger.info("DataObject %s/%s has still more than one replica, no action needed")
+                        logger.info("DataObject %s/%s has still more than one replica, no action needed")
                     elif len(replicas) == 1:
-                        _logger.info("Only one replica left for DataObject %s/%s, will create a new one")
+                        logger.info("Only one replica left for DataObject %s/%s, will create a new one")
                         self.replicateDataObject(replicas[0])
                     else:
                         definitelyLost = True
 
                 if definitelyLost:
-                    _logger.error("No available replica found for DataObject %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
+                    logger.error("No available replica found for DataObject %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
                     do.phase = DOPhases.LOST
                     self._reg.setDataObjectPhase(do, do.phase)
 
@@ -398,8 +398,8 @@ class DataLifecycleManager(object):
         elif event.type == 'status' and event.status == DOStates.COMPLETED:
             self.handleCompletedDO(self._dos[event.uid])
         else:
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('Received event: ' + str(event.__dict__))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Received event: ' + str(event.__dict__))
 
     def handleOpenedDO(self, oid, uid):
         dos = self._dos[uid]
@@ -415,11 +415,11 @@ class DataLifecycleManager(object):
         oid = dataObject.oid
         uid = dataObject.uid
         if dataObject.precious and dataObject.isReplicable():
-            _logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
+            logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
             try:
                 self.replicateDataObject(dataObject)
             except:
-                _logger.exception("Problem while replicating DataObject %s/%s" % (oid, uid))
+                logger.exception("Problem while replicating DataObject %s/%s" % (oid, uid))
 
     def replicateDataObject(self, dataObject):
         '''
@@ -467,14 +467,14 @@ class DataLifecycleManager(object):
         # Dummy, but safe, new UID
         newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
         # For the time being we manually copy the contents of the current DO into it
         newDO = store.createDataObject(dataObject.oid, newUid, expectedSize=dataObject.size, precious=dataObject.precious)
         doutils.copyDataObjectContents(dataObject, newDO)
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('DataObject %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('DataObject %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
         return newDO, newUid

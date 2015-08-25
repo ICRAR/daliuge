@@ -22,6 +22,7 @@
 import logging
 from dfms.data_object import AppDataObject
 from dfms.io import IOForURL, OpenMode
+import threading
 
 '''
 Utility methods and classes to be used when interacting with DataObjects
@@ -29,7 +30,7 @@ Utility methods and classes to be used when interacting with DataObjects
 @author: rtobar, July 3, 2015
 '''
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class EvtConsumer(object):
     '''
@@ -41,6 +42,23 @@ class EvtConsumer(object):
         self._evt = evt
     def dataObjectCompleted(self, do):
         self._evt.set()
+
+class DOWaiterCtx(object):
+    def __init__(self, test, dos, timeout=1):
+        self._dos = listify(dos)
+        self._test = test
+        self._timeout = timeout
+        self._evts = []
+    def __enter__(self):
+        for do in self._dos:
+            evt = threading.Event()
+            do.addConsumer(EvtConsumer(evt))
+            self._evts.append(evt)
+        return self
+    def __exit__(self, typ, value, traceback):
+        to = self._timeout
+        for evt in self._evts:
+            self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
 
 def allDataObjectContents(dataObject):
     '''
@@ -82,12 +100,10 @@ def getUpstreamObjects(dataObject):
     upObjs = []
     if isinstance(dataObject, AppDataObject):
         upObjs += dataObject.inputs
-        upObjs += dataObject.immediateInputs
+        upObjs += dataObject.streamingInputs
     else:
         if dataObject.producer:
             upObjs.append(dataObject.producer)
-            if dataObject.immediateProducer:
-                upObjs.append(dataObject.immediateProducer)
     return upObjs
 
 def getDownstreamObjects(dataObject):
@@ -108,7 +124,7 @@ def getDownstreamObjects(dataObject):
         downObjs += dataObject.outputs
     else:
         downObjs += dataObject.consumers
-        downObjs += dataObject.immediateConsumers
+        downObjs += dataObject.streamingConsumers
     return downObjs
 
 def getLeafNodes(nodes):

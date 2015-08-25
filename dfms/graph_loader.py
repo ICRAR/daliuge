@@ -19,13 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import collections
-
 """
 Module containing functions to load a fully-functional DataObject graph from its
 full JSON representation.
 """
 
+import collections
 import importlib
 import json
 import logging
@@ -41,6 +40,15 @@ STORAGE_TYPES = {
     'ngas'  : NgasDataObject
 }
 
+# 1-to-N relationships between DataObjects in (jsonName, DOBindingMethodName) form
+__ONE_TO_N_RELS = [('consumers', 'addConsumer'), ('streamingConsumers', 'addStreamingConsumer'),
+                   ('inputs', 'addInput'), ('streamingInputs', 'addStreamingInput'),
+                   ('outputs', 'addOutput'), ('children', 'addChild')]
+
+# N-to-1 relationships between DataObjects. Their json name matches the attribute
+# name at the DataObject level
+__N_TO_ONE_RELS = ['producer', 'parent']
+
 logger = logging.getLogger(__name__)
 
 def readObjectGraph(fileObj):
@@ -49,7 +57,7 @@ def readObjectGraph(fileObj):
     all DataObjects, establishing their relationships, and returns the root
     nodes of the graph represented by the DataObjects.
     """
-    return _createDataObjectGraph(json.load(fileObj))
+    return createGraphFromDOSpecList(json.load(fileObj))
 
 def readObjectGraphS(s):
     """
@@ -57,11 +65,68 @@ def readObjectGraphS(s):
     DataObjects, establishing their relationships, and returns the root nodes of
     the graph represented by the DataObjects.
     """
-    return _createDataObjectGraph(json.loads(s))
+    return createGraphFromDOSpecList(json.loads(s))
 
-def _createDataObjectGraph(doSpecList):
+def loadDataObjectSpecs(fileObj):
+    """
+    Loads the DataObject definitions from the file-like object `fileObj`, checks
+    that the DataObjects are correctly specified, and return a dictionary
+    containing all DataObject specifications (i.e., a dictionary of
+    dictionaries) keyed on the OID of each DataObject. Unlike `readObjectGraph`
+    and `readObjectGraphS`, this method doesn't actually create the DataObjects
+    themselves.
+    """
+    return _loadDataObjectSpecs(json.loads(fileObj))
+
+def loadDataObjectSpecsS(s):
+    """
+    Loads the DataObject definitions from the string `s`, checks that
+    the DataObjects are correctly specified, and return a dictionary containing
+    all DataObject specifications (i.e., a dictionary of dictionaries) keyed on
+    the OID of each DataObject. Unlike `readObjectGraph` and `readObjectGraphS`,
+    this method doesn't actually create the DataObjects themselves.
+    """
+    return _loadDataObjectSpecs(json.loads(s))
+
+def _loadDataObjectSpecs(doSpecList):
+
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Loaded %d DO definitions" % (len(doSpecList)))
+        logger.debug("Found %d DO definitions" % (len(doSpecList)))
+
+    # Step #1: Check the DO specs and collect them
+    doSpecs = {}
+    for doSpec in doSpecList:
+
+        # 'type' is mandatory
+        doType = doSpec['type']
+
+        cf = __CREATION_FUNCTIONS[doType]
+        cf(doSpec, dryRun=True)
+        doSpecs[doSpec['oid']] = doSpec
+
+    # Step #2: check relationships
+    for doSpec in doSpecList:
+
+        # 1-N relationships
+        for rel,_ in __ONE_TO_N_RELS:
+            if rel in doSpec:
+                # A KeyError will be raised if a oid has been specified in the
+                # relationship list but doesn't exist in the list of DOs
+                for oid in doSpec[rel]: doSpecs[oid]
+
+        # N-1 relationships
+        for rel in __N_TO_ONE_RELS:
+            if rel in doSpec:
+                # See comment above
+                doSpecs[doSpec[rel]]
+
+    # Done!
+    return doSpecs
+
+def createGraphFromDOSpecList(doSpecList):
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Found %d DO definitions" % (len(doSpecList)))
 
     # Step #1: create the actual DataObjects
     dataObjects = collections.OrderedDict()
@@ -70,18 +135,8 @@ def _createDataObjectGraph(doSpecList):
         # 'type' is mandatory
         doType = doSpec['type']
 
-        # container DOs
-        if doType == "plain":
-            do = _createPlain(doSpec)
-        elif doType == 'container':
-            do = _createContainer(doSpec)
-        elif doType == 'socket':
-            do = _createSocket(doSpec)
-        elif doType == 'app':
-            do = _createApp(doSpec)
-        else:
-            raise Exception("Unknown DataObject type: %s" % (doType))
-
+        cf = __CREATION_FUNCTIONS[doType]
+        do = cf(doSpec)
         dataObjects[do.oid] = do
 
     # Step #2: establish relationships
@@ -91,39 +146,19 @@ def _createDataObjectGraph(doSpecList):
         oid = doSpec['oid']
         dataObject = dataObjects[oid]
 
-        if doSpec.has_key('consumers'):
-            for consumerOid in doSpec['consumers']:
-                immediateConsumer = dataObjects[consumerOid]
-                dataObject.addConsumer(immediateConsumer)
+        # 1-N relationships
+        for rel, relFuncName in __ONE_TO_N_RELS:
+            if rel in doSpec:
+                for oid in doSpec[rel]:
+                    lhDO = dataObjects[oid]
+                    relFunc = getattr(dataObject, relFuncName)
+                    relFunc(lhDO)
 
-        if doSpec.has_key('immediateConsumers'):
-            for consumerOid in doSpec['immediateConsumers']:
-                immediateConsumer = dataObjects[consumerOid]
-                dataObject.addImmediateConsumer(immediateConsumer)
-
-        if doSpec.has_key('producer'):
-            producerDO = dataObjects[doSpec['producer']]
-            dataObject.producer = producerDO
-
-        if doSpec.has_key('inputs'):
-            for inputOid in doSpec['inputs']:
-                inputDO = dataObjects[inputOid]
-                dataObject.addInput(inputDO)
-
-        if doSpec.has_key('immediateInputs'):
-            for inputOid in doSpec['immediateInputs']:
-                inputDO = dataObjects[inputOid]
-                dataObject.addImmediateInput(inputDO)
-
-        if doSpec.has_key('outputs'):
-            for outputOid in doSpec['outputs']:
-                outputDO = dataObjects[outputOid]
-                dataObject.addOutput(outputDO)
-
-        if doSpec.has_key('children'):
-            for childOid in doSpec['children']:
-                child = dataObjects[childOid]
-                dataObject.addChild(child)
+        # N-1 relationships
+        for rel in __N_TO_ONE_RELS:
+            if rel in doSpec:
+                lhDO = dataObjects[doSpec[rel]]
+                setattr(dataObject, rel, lhDO)
 
     # We're done! Return the roots of the graph to the caller
     roots = []
@@ -133,20 +168,24 @@ def _createDataObjectGraph(doSpecList):
 
     return roots
 
-def _createPlain(doSpec):
+def _createPlain(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
 
     # 'storage' is mandatory
     storageType = STORAGE_TYPES[doSpec['storage']]
+    if dryRun:
+        return
     return storageType(oid, uid, **kwargs)
 
-def _createContainer(doSpec):
+def _createContainer(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
+    if dryRun:
+        return
     return ContainerDataObject(oid, uid, **kwargs)
 
-def _createSocket(doSpec):
+def _createSocket(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
 
@@ -154,9 +193,11 @@ def _createSocket(doSpec):
     storageType = STORAGE_TYPES[doSpec['storage']]
     class socketType(SocketListener, storageType): pass
 
+    if dryRun:
+        return
     return socketType(oid, uid, **kwargs)
 
-def _createApp(doSpec):
+def _createApp(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
     del kwargs['app']
@@ -166,6 +207,8 @@ def _createApp(doSpec):
     module  = importlib.import_module('.'.join(parts[:-1]))
     appType = getattr(module, parts[-1])
 
+    if dryRun:
+        return
     return appType(oid, uid, **kwargs)
 
 def _getIds(doSpec):
@@ -182,3 +225,10 @@ def _getKwargs(doSpec):
     if kwargs.has_key('uid'):
         del kwargs['uid']
     return kwargs
+
+__CREATION_FUNCTIONS = {
+    'plain': _createPlain,
+    'container': _createContainer,
+    'app': _createApp,
+    'socket': _createSocket
+}

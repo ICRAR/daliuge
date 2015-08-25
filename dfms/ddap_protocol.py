@@ -33,13 +33,12 @@ class ArchElType:
     DOM = 'DOM' # data object manager
 
 class DOLinkType:
-    CONSUMER, PRODUCER, PARENT, CHILD = range(1, 5)
-
-class DOType:
-    ABSTRACT, APP, FILE, STREAM, PROXY = range(1, 6)
+    CONSUMER, STREAMING_CONSUMER, PRODUCER, \
+    PARENT, CHILD, \
+    INPUT, STREAMING_INPUT, OUTPUT = xrange(8)
 
 class DOStates:
-    INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = range(1, 6)
+    INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = xrange(5)
 
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)

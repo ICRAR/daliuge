@@ -27,7 +27,7 @@ import urlparse
 import warnings
 
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class OpenMode:
     OPEN_WRITE, OPEN_READ = xrange(2)
@@ -70,9 +70,9 @@ class DataIO(object):
         Writes `data` into the storage
         """
         if self._mode is None:
-            raise Exception('Writing operation attempted on closed DataIO object')
+            raise ValueError('Writing operation attempted on closed DataIO object')
         if self._mode == OpenMode.OPEN_READ:
-            raise Exception('Writing operation attempted on write-only DataIO object')
+            raise ValueError('Writing operation attempted on write-only DataIO object')
         return self._write(data, **kwargs)
 
     def read(self, count, **kwargs):
@@ -80,9 +80,9 @@ class DataIO(object):
         Reads `count` bytes from the underlying storage.
         """
         if self._mode is None:
-            raise Exception('Writing operation attempted on closed DataIO object')
+            raise ValueError('Reading operation attempted on closed DataIO object')
         if self._mode == OpenMode.OPEN_WRITE:
-            raise Exception('Writing operation attempted on read-only DataIO object')
+            raise ValueError('Reading operation attempted on write-only DataIO object')
         return self._read(count, **kwargs)
 
     def close(self, **kwargs):
@@ -327,7 +327,7 @@ def IOForURL(url):
         fileId = url.path
         io = NgasIO(hostname, fileId, port)
 
-    if _logger.isEnabledFor(logging.DEBUG):
-        _logger.debug('I/O chosen for dataURL %s: %r' % (url, io))
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('I/O chosen for dataURL %s: %r' % (url, io))
 
     return io

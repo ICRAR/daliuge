@@ -36,31 +36,35 @@ from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.rest import RestServer
 
 
-_logger = logging.getLogger(__name__)
-
 def launchServer(opts):
     if (opts.host is None):
         Pyro4.config.HOST = 'localhost'
     else:
         Pyro4.config.HOST = opts.host
 
-    _logger.info('Creating data object manager daemon')
-    dom = DataObjectMgr()
+    logger = logging.getLogger(__name__)
+
+    # dfmsPath might contain code the user is adding
+    dfmsPath = os.path.expanduser(opts.dfmsPath)
+    if os.path.isdir(dfmsPath):
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Adding %s to the system path" % (dfmsPath))
+        sys.path.append(dfmsPath)
+
+    logger.info('Creating DataObjectManager %s' % (opts.domId))
+    dom = DataObjectMgr(opts.domId, not opts.noDLM)
     dom_daemon = Pyro4.Daemon(port=opts.port)
     uri = dom_daemon.register(dom)
-    dom.setURI(str(uri))
 
-    _logger.info('Locating Naming Service...')
+    logger.info('Registering DataObjectManager %s to NameServer' % (opts.domId))
+    hostname = os.uname()[1]
     ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-
-    _logger.info('Registering %s to NS...' % uri)
-    ns.register("%s_%s" % (CST_NS_DOM, opts.domId), uri)
+    ns.register("%s_%s_%s" % (CST_NS_DOM, hostname, opts.domId), uri)
 
     if opts.rest:
         server = RestServer(dom)
         server.start(opts.restHost, opts.restPort)
 
-    _logger.info('Launching DOM service as a process')
     dom_daemon.requestLoop()
 
 class DOMDaemon(Daemon):
@@ -95,6 +99,10 @@ def main(args=sys.argv):
                       dest="restHost", help="The host to bind the REST server on")
     parser.add_option("--restPort", action="store",
                       dest="restPort", help="The port to bind the REST server on")
+    parser.add_option("--no-dlm", action="store_true",
+                      dest="noDLM", help="Don't start the Data Lifecycle Manager on this DOM", default=False)
+    parser.add_option("--dfms-path", action="store", type="string",
+                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
 
     if not options.domId:
@@ -117,4 +125,5 @@ def main(args=sys.argv):
         launchServer(options)
 
 if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     main()

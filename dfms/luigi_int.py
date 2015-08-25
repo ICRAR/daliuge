@@ -33,7 +33,7 @@ import importlib
 Module containing the code that integrates our DataObjects with Luigi.
 """
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class RunDataObjectTask(luigi.Task):
     """
@@ -66,13 +66,13 @@ class RunDataObjectTask(luigi.Task):
                 if inputDO.executionMode == ExecutionMode.EXTERNAL:
                     self.execDO = True
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("%s will execute or monitor DataObject %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("%s will execute or monitor DataObject %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
 
         if not self.execDO:
             self._evt = threading.Event()
             def setEvtOnCompleted(e):
-                if hasattr(e, 'status') and e.status == DOStates.COMPLETED:
+                if e.status == DOStates.COMPLETED:
                     self._evt.set()
             do.subscribe(setEvtOnCompleted, 'status')
 
@@ -86,7 +86,7 @@ class RunDataObjectTask(luigi.Task):
         else:
             timeout = None
             expirationDate = self.data_obj.expirationDate
-            if expirationDate == -1:
+            if expirationDate != -1:
                 now = time.time()
                 timeout = expirationDate - now
             self._evt.wait(timeout)
@@ -98,11 +98,11 @@ class RunDataObjectTask(luigi.Task):
         doesn't need to be rewritten by all subclasses
         """
         re = []
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Checking requirements for RunDataObjectTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Checking requirements for RunDataObjectTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
         for req in doutils.getUpstreamObjects(self.data_obj):
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
             re.append(RunDataObjectTask(req, self.sessionId))
         return re
 
@@ -122,14 +122,11 @@ class FinishGraphExecution(luigi.Task):
         super(FinishGraphExecution, self).__init__(*args, **kwargs)
         self._req    = None
 
-        if isinstance(self.pgCreator, str):
+        if isinstance(self.pgCreator, basestring):
             parts = self.pgCreator.split('.')
-            if len(parts) > 1:
-                module = importlib.import_module('.'.join(parts[:-1]))
-                pgCreator = getattr(module, parts[-1])
-            else:
-                pgCreator = globals()[self.pgCreator]
-            roots = pgCreator()
+            module = importlib.import_module('.'.join(parts[:-1]))
+            pgCreatorFn = getattr(module, parts[-1])
+            roots = pgCreatorFn()
         else:
             roots = self.pgCreator
 
@@ -141,8 +138,8 @@ class FinishGraphExecution(luigi.Task):
         if self._req is None:
             self._req = []
             for dob in self._leaves:
-                if _logger.isEnabledFor(logging.DEBUG):
-                    _logger.debug("Adding leaf DO as requirement to FinishGraphExecution: %s/%s" % (dob.oid, dob.uid))
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug("Adding leaf DO as requirement to FinishGraphExecution: %s/%s" % (dob.oid, dob.uid))
                 self._req.append(RunDataObjectTask(dob, self.sessionId))
         return self._req
 
