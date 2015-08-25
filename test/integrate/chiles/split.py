@@ -1,3 +1,6 @@
+import re
+import os
+import sys
 
 def freq_map(low_req,hi_req,*args):
     """
@@ -120,7 +123,87 @@ def freq_map(low_req,hi_req,*args):
     return spw
 
 
+def split_vis(infile, outdir, min_freq, max_freq, step_freq, width_freq, spec_window, sel_freq):
 
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    if not infile:
+        raise Exception('infile is empty')
+
+    if not outdir:
+        raise Exception('output dir is empty')
+ 
+    steps = (max_freq - min_freq) / step_freq
+    rem = (max_freq - min_freq) % step_freq
+    if rem:
+        steps += 1
+
+    freq1 = min_freq
+    freq2 = min_freq + step_freq
+    bottom_edge = re.search('_[0-9]{3}_', infile)
+    if (bottom_edge):
+        bedge = bottom_edge.group(0)
+        bedge = int(bedge[1:4])
+    
+    if (not sel_freq):
+        steps = 1
+    
+    for i in range(steps):
+        if (sel_freq):
+            if (rem and (i == steps - 1)):
+                freq_range = '%d~%d' % (min_freq + i * step_freq, max_freq)
+                cvel_freq_range = '%f~%f' % (min_freq - 0.2 + i * step_freq, max_freq + 0.2)
+            else:
+                freq_range = str(freq1) + '~' + str(freq2)
+                cvel_freq_range =  str(int(freq1-1)) + '~' + str(int(freq2+1))
+
+            spw_range = spec_window + ':' + freq_range + 'MHz'
+            cvel_spw_range = spec_window + ':' + cvel_freq_range + 'MHz'
+            # spanning spectral windows and selecting freq fails
+            # so use freq_map
+            # THEREFORE ~10 lines above are IGNORED!!
+            cvel_spw_range = freq_map(freq1, freq2, bedge)
+        else:
+            freq_range = 'min~max'
+            spw_range = spec_window
+    
+        cvel_spw_range = ''
+        no_chan = int(step_freq * 1000.0 / width_freq)  # MHz/kHz!!
+
+        mstransform(vis=infile,
+                    outputvis=outdir,
+                    regridms=True,
+                    restfreq='1420.405752MHz',
+                    mode='frequency',
+                    nchan=no_chan,
+                    outframe='lsrk',
+                    interpolation='linear',
+                    veltype='radio',
+                    start=str(freq1)+'MHz',
+                    width=str(width_freq)+'kHz',
+                    spw=cvel_spw_range,
+                    combinespws =  True,
+                    nspw        =  1,
+                    createmms   =  False,
+                    datacolumn  =  "data")
+          
+        freq1 = freq1 + step_freq
+        freq2 = freq2 + step_freq
+
+
+if __name__ == '__main__':
+
+    try:
+        print input_vis, output_dir, min_freq, max_freq, step_freq, width_freq,spec_window,sel_freq
+    
+        split_vis(
+            input_vis, 
+            output_dir, 
+            min_freq, 
+            max_freq, 
+            step_freq, 
+            width_freq,
+            spec_window,
+            sel_freq)
+
+    except Exception as ex:
+        print >> sys.stderr, 'SEVERE ' + str(ex)
+

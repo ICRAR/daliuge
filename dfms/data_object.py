@@ -55,9 +55,7 @@ except:
     _checksumType = ChecksumTypes.CRC_32
 
 
-_logger = logging.getLogger(__name__)
-
-
+logger = logging.getLogger(__name__)
 
 #===============================================================================
 # DataObject classes follow
@@ -85,10 +83,10 @@ class AbstractDataObject(object):
     How the consumption is triggered depends on the producer's ``executionMode``
     flag, which dictates whether it should trigger the consumption itself or
     if it should be manually triggered by an external entity. On the other hand,
-    'immediate' consumers receive the data that is written into its publisher
+    streaming consumers receive the data that is written into its publisher
     *as it gets written*. This mechanism is driven always by the DataObject that
-    acts as 'immediate producer'. Apart from receiving the data as it gets
-    written into the DataObject, immediate consumers are also notified when the
+    acts as a streaming input. Apart from receiving the data as it gets
+    written into the DataObject, streaming consumers are also notified when the
     DataObjects moves to the COMPLETED state, at which point no more data should
     be expected to arrive at the consumer side.
     """
@@ -110,8 +108,8 @@ class AbstractDataObject(object):
         super(AbstractDataObject, self).__init__()
 
         # So far only these three are mandatory
-        self._oid = oid
-        self._uid = uid
+        self._oid = str(oid)
+        self._uid = str(uid)
 
         self._bcaster = LocalEventBroadcaster()
 
@@ -124,18 +122,14 @@ class AbstractDataObject(object):
         self._consumers = []
         self._producer  = None
 
-        # 'Immediate' consumers are objects that consume the data written in
+        # Streaming consumers are objects that consume the data written in
         # this DataObject *as it gets written*, and therefore don't have to
         # wait until this DataObject has moved to COMPLETED.
-        # An object cannot be an immediate consumers and a 'normal' consumer
+        # An object cannot be a streaming consumers and a 'normal' consumer
         # at the same time, although this rule is imposed simply to enforce
         # efficiency (why would a consumer want to consume the data twice?) and
         # not because it's technically impossible.
-        # TODO: A better name would be highly beneficial to avoid confusion in
-        #       the future between 'normal' and 'immediate'/'quick'/'eager'
-        #       consumers.
-        self._immediateConsumers = []
-        self._immediateProducer  = None
+        self._streamingConsumers = []
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -158,13 +152,18 @@ class AbstractDataObject(object):
         self._checksumType = None
         self._size         = None
 
-        # "DataObject descriptors" used for reading.
+        # The DataIO instance we use in our write method. It's initialized to
+        # None because it's lazily initialized in the write method, since data
+        # might be written externally and not through this DO
+        self._wio = None
+
+        # DataIO objects used for reading.
         # Instead of passing file objects or more complex data types in our
         # open/read/close calls we use integers, mainly because Pyro doesn't
         # handle file types and other classes (like StringIO) well, but also
         # because it requires less transport.
         # TODO: Make these threadsafe, no lock around them yet
-        self._readDescriptors = {}
+        self._rios = {}
 
         # Expected lifespan for this object, used by to expire them
         lifespan = -1
@@ -185,14 +184,9 @@ class AbstractDataObject(object):
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs['precious'])
 
-        # The writing IO instance we use in our write method. It's initialized
-        # to None because it's lazily initialized in the write method, since
-        # data might be written externally and not through this DO
-        self._wio = None
-
         try:
             self.initialize(**kwargs)
-            self.status = DOStates.INITIALIZED
+            self._status = DOStates.INITIALIZED # no need to use synchronised self.status here
         except:
             # It doesn't make sense to set an internal status here because
             # the creation of the object is actually raising an exception,
@@ -205,8 +199,8 @@ class AbstractDataObject(object):
         val = default
         if kwargs.has_key(key) and kwargs[key]:
             val = kwargs[key]
-        elif _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Defaulting %s to %s" % (key, str(val)))
+        elif logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Defaulting %s to %s" % (key, str(val)))
         return val
 
     def __hash__(self):
@@ -254,21 +248,21 @@ class AbstractDataObject(object):
         if self.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
 
-        descriptor = io = self.getIO()
+        io = self.getIO()
         io.open(OpenMode.OPEN_READ, **kwargs)
 
-        # Save the real descriptor in the dictionary and return its key instead
+        # Save the IO object in the dictionary and return its descriptor instead
         while True:
-            key = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
-            if key not in self._readDescriptors:
+            descriptor = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
+            if descriptor not in self._rios:
                 break
-        self._readDescriptors[key] = descriptor
+        self._rios[descriptor] = io
 
         # This occurs only after a successful opening
         self.incrRefCount()
         self._fire('open')
 
-        return key
+        return descriptor
 
     def close(self, descriptor, **kwargs):
         """
@@ -280,7 +274,7 @@ class AbstractDataObject(object):
 
         # Decrement counter and then actually close
         self.decrRefCount()
-        io = self._readDescriptors.pop(descriptor)
+        io = self._rios.pop(descriptor)
         io.close(**kwargs)
 
     def read(self, descriptor, count=4096, **kwargs):
@@ -288,13 +282,13 @@ class AbstractDataObject(object):
         Reads `count` bytes from the given DataObject `descriptor`.
         """
         self._checkStateAndDescriptor(descriptor)
-        io = self._readDescriptors[descriptor]
+        io = self._rios[descriptor]
         return io.read(count, **kwargs)
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
-        if descriptor not in self._readDescriptors:
+        if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
     def isBeingRead(self):
@@ -334,11 +328,11 @@ class AbstractDataObject(object):
             self._size = 0
         self._size += nbytes
 
-        # Trigger our immediate consumers
-        if self._immediateConsumers:
+        # Trigger our streaming consumers
+        if self._streamingConsumers:
             writtenData = buffer(data, 0, nbytes)
-            for immediateConsumer in self._immediateConsumers:
-                immediateConsumer.dataWritten(self.uid, writtenData)
+            for streamingConsumer in self._streamingConsumers:
+                streamingConsumer.dataWritten(self.uid, writtenData)
 
         # Update our internal checksum
         self._updateChecksum(data)
@@ -351,8 +345,8 @@ class AbstractDataObject(object):
                 self.status = DOStates.WRITING
             else:
                 if remaining < 0:
-                    _logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                _logger.debug("Automatically moving DataObject %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                    logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
+                logger.debug("Automatically moving DataObject %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
                 self.setCompleted()
         else:
             self.status = DOStates.WRITING
@@ -590,16 +584,16 @@ class AbstractDataObject(object):
         if not hasattr(consumer, 'dataObjectCompleted'):
             raise Exception("The consumer %s doesn't have a 'dataObjectCompleted' method, cannot add to %s" % (consumer, self))
 
-        # An object cannot be a normal and immediate consumer at the same time,
+        # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
-        if consumer in self._immediateConsumers:
-            raise Exception("Consumer %s is already registered as an immediate consumer" % (consumer))
+        if consumer in self._streamingConsumers:
+            raise Exception("Consumer %s is already registered as a streaming consumer" % (consumer))
 
         # Add if not already present
         # Add the reverse reference too automatically
         if consumer in self._consumers:
             return
-        _logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer))
+        logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer))
         self._consumers.append(consumer)
 
         # Automatic back-reference
@@ -613,12 +607,15 @@ class AbstractDataObject(object):
 
         def dataObjectCompleted(e):
             if e.status != DOStates.COMPLETED:
-                if _logger.isEnabledFor(logging.DEBUG):
-                    _logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return
-            if _logger.isEnabledFor(logging.DEBUG):
-                _logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
-            consumer.dataObjectCompleted(self.uid)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
+
+            t = threading.Thread(None, lambda consumer, uid: consumer.dataObjectCompleted(uid), args=[consumer, self.uid])
+            t.daemon = 1
+            t.start()
         self.subscribe(dataObjectCompleted, eventType='status')
 
     @property
@@ -643,60 +640,42 @@ class AbstractDataObject(object):
                 producer.addOutput(self)
 
     @property
-    def immediateConsumers(self):
+    def streamingConsumers(self):
         """
-        The list of 'immediate' consumers held by this DataObject.
+        The list of 'streaming' consumers held by this DataObject.
 
-        :see: `self.addImmediateConsumer()`
+        :see: `self.addStreamingConsumer()`
         """
-        return self._immediateConsumers[:]
+        return self._streamingConsumers[:]
 
-    def addImmediateConsumer(self, immediateConsumer):
+    def addStreamingConsumer(self, streamingConsumer):
         """
-        Adds an immediate immediateConsumer to this DataObject.
+        Adds a streaming consumer to this DataObject.
 
-        Immediate consumers are objects that receive the data written into this
+        Streaming consumers are objects that receive the data written into this
         DataObject *as it gets written*, and therefore do not need to wait until
         this DataObject has been moved to the COMPLETED state.
         """
 
         # Consumers have a "consume" method that gets invoked when
         # this DO moves to COMPLETED
-        if not hasattr(immediateConsumer, 'dataObjectCompleted') or not hasattr(immediateConsumer, 'dataWritten'):
-            raise Exception("The immediate consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (immediateConsumer))
+        if not hasattr(streamingConsumer, 'dataObjectCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
+            raise Exception("The streaming consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (streamingConsumer))
 
-        # An object cannot be a normal and immediate immediateConsumer at the same time,
+        # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
-        if immediateConsumer in self._consumers:
-            raise Exception("Consumer %s is already registered as a normal consumer" % (immediateConsumer))
+        if streamingConsumer in self._consumers:
+            raise Exception("Consumer %s is already registered as a normal consumer" % (streamingConsumer))
 
         # Add if not already present
-        # Add the reverse reference too automatically
-        if immediateConsumer in self._immediateConsumers:
+        if streamingConsumer in self._streamingConsumers:
             return
-        _logger.debug('Adding new immediate immediate consumer for DataObject %s/%s: %s' %(self.oid, self.uid, immediateConsumer))
-        self._immediateConsumers.append(immediateConsumer)
+        logger.debug('Adding new streaming streaming consumer for DataObject %s/%s: %s' %(self.oid, self.uid, streamingConsumer))
+        self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
-        if hasattr(immediateConsumer, 'addImmediateInput'):
-            immediateConsumer.addImmediateInput(self)
-
-    @property
-    def immediateProducer(self):
-        """
-        The producer for which this DataObject acts as an 'immediate' consumer,
-        if any.
-
-        :see: `self.addImmediateConsumer()`
-        """
-        return self._immediateProducer
-
-    @immediateProducer.setter
-    def immediateProducer(self, immediateProducer):
-        if self._immediateProducer and immediateProducer:
-            warnings.warn("A immediate producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
-        if immediateProducer:
-            self._producer = immediateProducer
+        if hasattr(streamingConsumer, 'addStreamingInput'):
+            streamingConsumer.addStreamingInput(self)
 
     def setCompleted(self):
         '''
@@ -713,12 +692,12 @@ class AbstractDataObject(object):
         if self._wio:
             self._wio.close()
 
-        if _logger.isEnabledFor(logging.INFO):
-            _logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
 
-        # Signal our immediate consumers that the show is over
-        for ic in self._immediateConsumers:
+        # Signal our streaming consumers that the show is over
+        for ic in self._streamingConsumers:
             ic.dataObjectCompleted(self.uid)
 
     def isCompleted(self):
@@ -754,12 +733,6 @@ class AbstractDataObject(object):
     @uri.setter
     def uri(self, uri):
         self._uri = uri
-
-    def ping(self):
-        """
-        This is for testing purpose
-        """
-        return 'OK. My oid = %s, and my uid = %s' % (self.oid, self.uid)
 
 class FileDataObject(AbstractDataObject):
 
@@ -890,8 +863,8 @@ class ContainerDataObject(AbstractDataObject):
         if child == self.parent:
             raise Exception("Circular dependency between DataObjects %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
 
         self._children.append(child)
         child.parent = self
@@ -908,7 +881,7 @@ class ContainerDataObject(AbstractDataObject):
     def expirationDate(self):
         if self._children:
             return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
-        return None
+        return -1
 
     @property
     def children(self):
@@ -938,8 +911,14 @@ class DirectoryContainer(ContainerDataObject):
             raise Exception('DirectoryContainer needs a "directory" optional ')
 
         directory = kwargs['dirname']
-        if not os.path.isdir(directory):
-            raise Exception('%s is not a directory' % (directory))
+
+        check_exists = True
+        if 'exists' in kwargs:
+            check_exists = kwargs['exists']
+
+        if check_exists is True:
+            if not os.path.isdir(directory):
+                raise Exception('%s is not a directory' % (directory))
 
         self._path = os.path.abspath(directory)
 
@@ -986,9 +965,9 @@ class AppDataObject(ContainerDataObject):
         self._inputs  = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
-        # Same as above, only that these correspond to the 'immediate' version
-        # of the consumers and producers.
-        self._immediateInputs  = {}
+        # Same as above, only that these correspond to the 'streaming' version
+        # of the consumers
+        self._streamingInputs  = collections.OrderedDict()
 
     def addInput(self, inputDataObject):
         if inputDataObject not in self._inputs.values():
@@ -1012,15 +991,15 @@ class AppDataObject(ContainerDataObject):
     def outputs(self):
         return self._outputs.values()
 
-    def addImmediateInput(self, immediateInputDO):
-        if immediateInputDO not in self._immediateInputs.values():
-            uid = immediateInputDO.uid
-            self._immediateInputs[uid] = immediateInputDO
-            immediateInputDO.addImmediateConsumer(self)
+    def addStreamingInput(self, streamingInputDO):
+        if streamingInputDO not in self._streamingInputs.values():
+            uid = streamingInputDO.uid
+            self._streamingInputs[uid] = streamingInputDO
+            streamingInputDO.addStreamingConsumer(self)
 
     @property
-    def immediateInputs(self):
-        return self._immediateInputs.values()
+    def streamingInputs(self):
+        return self._streamingInputs.values()
 
     def dataObjectCompleted(self, uid):
         """
@@ -1032,13 +1011,13 @@ class AppDataObject(ContainerDataObject):
     def dataWritten(self, uid, data):
         """
         Callback invoked when `data` has been written into the DataObject with
-        UID `uid` (which is one of the immediate inputs of this AppDataObject).
+        UID `uid` (which is one of the streaming inputs of this AppDataObject).
         By default no action is performed
         """
 
 class BarrierAppDataObject(AppDataObject):
     """
-    An AppDataObject that implements a barrier. It accepts no 'immediate' inputs
+    An AppDataObject that implements a barrier. It accepts no streaming inputs
     and it waits until all its inputs have been moved to COMPLETED to execute
     its 'run' method.
     """
@@ -1047,7 +1026,7 @@ class BarrierAppDataObject(AppDataObject):
         super(BarrierAppDataObject, self).initialize(**kwargs)
         self._completedInputs = []
 
-    def addImmediateInput(self, immediateInputDO):
+    def addStreamingInput(self, streamingInputDO):
         raise Exception("BarrierAppDataObjects don't accept streaming inputs")
 
     def dataObjectCompleted(self, uid):
@@ -1138,6 +1117,8 @@ class SocketListener(object):
         if not port:
             port = 1111
 
+        self._host = host
+        self._port = port
         with _socketListenerLock:
             global _socketListenerCounter
             counter = _socketListenerCounter
@@ -1156,14 +1137,14 @@ class SocketListener(object):
         self._listenerThread.start()
         # TODO: we still need to join this thread, or at least try
 
-        if _logger.isEnabledFor(logging.DEBUG):
-            _logger.debug('Successfully listening for requests on %s:%d' % (host, port))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Successfully listening for requests on %s:%d' % (host, port))
 
     def processData(self, serverSocket):
         clientSocket, address = serverSocket.accept()
         serverSocket.close()
-        if _logger.isEnabledFor(logging.INFO):
-            _logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
 
         while True:
             data = clientSocket.recv(4096)
@@ -1172,6 +1153,14 @@ class SocketListener(object):
             self.write(data)
         clientSocket.close()
         self.setCompleted()
+
+    @property
+    def host(self):
+        return self._host
+
+    @property
+    def port(self):
+        return self._port
 
 class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject): pass
 class FileSocketListenerDataObject(SocketListener, FileDataObject): pass

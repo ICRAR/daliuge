@@ -36,7 +36,7 @@ import time
 from abc import abstractmethod, ABCMeta
 from dfms.ddap_protocol import DOPhases
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class DataObject(object):
     oid         = None
