@@ -117,7 +117,7 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 		// This makes d3.timer invoke us only once
 		return true
 	}
-	d3.timer(updateGraph, delay)
+	d3.timer(updateGraph)
 }
 
 function _addNode(g, doSpec) {
@@ -199,5 +199,5 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 		})
 		return true
 	}
-	d3.timer(updateStates, delay)
+	d3.timer(updateStates)
 }
