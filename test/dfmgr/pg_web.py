@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 import json, decimal
-import subprocess
+import subprocess, commands
 from test import graphsRepository
 import threading
 import time
@@ -145,7 +145,14 @@ def execute():
 @get('/trigger_sl')
 def trigger_socklstn():
     port_num = request.query.get('port_number')
-    return "Port {0} is triggered.".format(port_num)
+    listen_host = request.query.get('listen_host')
+    # we should really send socket!, here just a dummy for demo
+    cmd = "echo dddd > /dev/tcp/{0}/{1}".format(listen_host.strip(), port_num)
+    re = commands.getstatusoutput(cmd)
+    if (re[0] == 0):
+        return "Port {0} on {1} is triggered.".format(port_num, listen_host)
+    else:
+        return "Fail to trigger {0} on {1}: {2}".format(port_num, listen_host, re[1])
 
 @get('/jsonbody')
 def jsonbody():
@@ -188,10 +195,15 @@ def to_json_obj(dataObject, allDOsDict):
     if dataObject.oid in allDOsDict:
         return
 
+    type_code = get_type_code(dataObject)
     doDict = {
-        'type': get_type_code(dataObject),
+        'type': type_code,
         'loc': dataObject.location
     }
+    if (3 == type_code):
+        doDict['port'] = dataObject.port
+        doDict['host'] = dataObject.host
+
     inputQueue = [{'oid': uobj.oid} for uobj in doutils.getUpstreamObjects(dataObject)]
     if inputQueue:
         doDict['inputQueue'] = inputQueue
