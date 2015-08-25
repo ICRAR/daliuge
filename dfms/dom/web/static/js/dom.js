@@ -29,6 +29,44 @@ var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs']
 var  TO_ONE_RTL_RELS = ['producer']
 
 /**
+ * Starts a regular background task that loads the list of all sessions held in
+ * the DataObjectManager
+ *
+ * @param serverUrl The serverl URL
+ * @param delay The amount of time between calls
+ */
+function startLoadingSessions(ul, serverUrl, delay) {
+	function loadSessions() {
+		d3.json(serverUrl + '/api', function (error, response){
+			if( error ) {
+				console.error(error)
+				return
+			}
+
+			sessions = response['sessions']
+			var lis = ulEl.selectAll('li').data(sessions)
+
+			// Updates
+			lis.select('a')
+				.attr('href', function(s) {return 'session?sessionId=' + s.sessionId})
+				.text(function(s) {return s.sessionId + " (" + SESSION_STATUS[s.status] + ")"})
+
+			// New items
+			lis.enter().append('li').append('a')
+				.attr('href', function(s) {return 'session?sessionId=' + s.sessionId})
+				.text(function(s) {return s.sessionId + " (" + SESSION_STATUS[s.status] + ")"})
+
+			// Old items
+			lis.exit().remove()
+
+			d3.timer(loadSessions, delay)
+		})
+		return true
+	}
+	d3.timer(loadSessions)
+}
+
+/**
  * Starts a regular background task that retrieves the current graph
  * specification from the REST server until the session's status is either
  * DEPLOYING or RUNNING, in which case no more graph structure changes are
@@ -45,7 +83,7 @@ var  TO_ONE_RTL_RELS = ['producer']
  */
 function startStatusQuery(g, serverUrl, sessionId, delay) {
 	function updateGraph() {
-		d3.json(serverUrl + '/' + sessionId, function(error, sessionInfo) {
+		d3.json(serverUrl + '/api/' + sessionId, function(error, sessionInfo) {
 
 			if (error) {
 				console.error(error)
@@ -103,9 +141,9 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 				draw()
 			}
 
-			// DEPLOYING or RUNNING, we don't need to update the graph structure
-			// anymore, but we need to start updating the status of the graph
-			if( status == 1 || status == 2 ) {
+			// Only during PRISITINE we need to update the graph structure
+			// Otherwise we need to start updating the status of the graph
+			if( status != 0 ) {
 				startGraphStatusUpdates(serverUrl, sessionId, delay)
 			}
 			else {
@@ -169,7 +207,7 @@ function _addEdge(g, fromOid, toOid) {
  */
 function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 	function updateStates() {
-		d3.json(serverUrl + '/' + sessionId + '/graph/status', function(error, response) {
+		d3.json(serverUrl + '/api/' + sessionId + '/graph/status', function(error, response) {
 			if (error) {
 				console.error(error)
 				return
@@ -188,7 +226,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 				d3.timer(updateStates, delay)
 			}
 			else {
-				d3.json(serverUrl + '/' + sessionId + '/status', function(error, status) {
+				d3.json(serverUrl + '/api/' + sessionId + '/status', function(error, status) {
 					if (error) {
 						console.error(error)
 						return

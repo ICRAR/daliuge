@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import threading
 """
 Command-line entry point to launch a DOM instance
 """
@@ -53,19 +54,25 @@ def launchServer(opts):
 
     logger.info('Creating DataObjectManager %s' % (opts.domId))
     dom = DataObjectMgr(opts.domId, not opts.noDLM)
-    dom_daemon = Pyro4.Daemon(port=opts.port)
-    uri = dom_daemon.register(dom)
-
-    logger.info('Registering DataObjectManager %s to NameServer' % (opts.domId))
-    hostname = os.uname()[1]
-    ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-    ns.register("%s_%s_%s" % (CST_NS_DOM, hostname, opts.domId), uri)
 
     if opts.rest:
         server = RestServer(dom)
         server.start(opts.restHost, opts.restPort)
 
-    dom_daemon.requestLoop()
+    if not opts.noPyro:
+        dom_daemon = Pyro4.Daemon(port=opts.port)
+        uri = dom_daemon.register(dom)
+
+        logger.info('Registering DataObjectManager %s to NameServer' % (opts.domId))
+        hostname = os.uname()[1]
+        ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
+        ns.register("%s_%s_%s" % (CST_NS_DOM, hostname, opts.domId), uri)
+
+    if not opts.noPyro:
+        dom_daemon.requestLoop()
+    else:
+        threading.Event().wait()
+
 
 class DOMDaemon(Daemon):
     def __init__(self, options, *args, **kwargs):
@@ -79,14 +86,16 @@ class DOMDaemon(Daemon):
 def main(args=sys.argv):
 
     parser = OptionParser()
-    parser.add_option("-n", "--nsHost", action="store", type="string",
-                      dest="nsHost", help = "Name service host", default='localhost')
-    parser.add_option("-p", "--nsPort", action="store", type="int",
-                      dest="nsPort", help = "Name service port", default=9090)
+    parser.add_option("--no-pyro", action="store_true",
+                      dest="noPyro", help="Don't start a Pyro daemon to expose this DOM instance", default=True)
     parser.add_option("-H", "--host", action="store", type="string",
                       dest="host", help = "The host to bind this DOM on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
                       dest="port", help = "The port to bind this DOM on", default=0)
+    parser.add_option("-n", "--nsHost", action="store", type="string",
+                      dest="nsHost", help = "Name service host", default='localhost')
+    parser.add_option("-p", "--nsPort", action="store", type="int",
+                      dest="nsPort", help = "Name service port", default=9090)
     parser.add_option("-i", "--domId", action="store", type="string",
                       dest="domId", help = "The Data Object Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
@@ -126,4 +135,5 @@ def main(args=sys.argv):
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logging.getLogger('tornado').setLevel(logging.WARN)
     main()

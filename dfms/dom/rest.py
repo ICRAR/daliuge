@@ -45,20 +45,20 @@ class RestServer(object):
         super(RestServer, self).__init__()
         app = Bottle()
 
-        # Everything is currently centered on the session
-        app.put(   '/<sessionId>',              callback=self.createSession)
-        app.delete('/<sessionId>',              callback=self.destroySession)
-        app.get(   '/<sessionId>',              callback=self.getSessionInformation)
-        app.get(   '/<sessionId>/status',       callback=self.getSessionStatus)
-        app.post(  '/<sessionId>/deploy',       callback=self.deploySession)
-        app.post(  '/<sessionId>/quick_deploy', callback=self.quickDeploy)
-        app.get(   '/<sessionId>/graph',        callback=self.getGraph)
-        app.get(   '/<sessionId>/graph/status', callback=self.getGraphStatus)
-        app.put(   '/<sessionId>/graph/parts',  callback=self.addGraphParts)
+        app.get(   '/api',                          callback=self.getDOMStatus)
+        app.put(   '/api/<sessionId>',              callback=self.createSession)
+        app.delete('/api/<sessionId>',              callback=self.destroySession)
+        app.get(   '/api/<sessionId>',              callback=self.getSessionInformation)
+        app.get(   '/api/<sessionId>/status',       callback=self.getSessionStatus)
+        app.post(  '/api/<sessionId>/deploy',       callback=self.deploySession)
+        app.get(   '/api/<sessionId>/graph',        callback=self.getGraph)
+        app.get(   '/api/<sessionId>/graph/status', callback=self.getGraphStatus)
+        app.put(   '/api/<sessionId>/graph/parts',  callback=self.addGraphParts)
 
         # The bad boys that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
-        app.get(   '/<sessionId>/show', callback=self.showSession)
+        app.get(  '/session', callback=self.visualizeSession)
+        app.get(  '/', callback=self.visualizeDOM)
 
         self.app = app
         self.dom = dom
@@ -75,6 +75,14 @@ class RestServer(object):
         t = threading.Thread(None, lambda: run(self.app, server='tornado', host=host, port=port, quiet=True))
         t.daemon = 1
         t.start()
+
+    def getDOMStatus(self):
+        # we currently return the sessionIds, more things might be added in the
+        # future
+        sessions = []
+        for sessionId in self.dom.getSessionIds():
+            sessions.append({'sessionId': sessionId, 'status': self.dom.getSessionStatus(sessionId)})
+        return json.dumps({'sessions': sessions})
 
     def createSession(self, sessionId):
         self.dom.createSession(sessionId)
@@ -95,12 +103,6 @@ class RestServer(object):
     def deploySession(self, sessionId):
         self.dom.deploySession(sessionId)
 
-    def quickDeploy(self, sessionId):
-        graphJson = request._get_body_string()
-        uris = self.dom.quickDeploy(sessionId, graphJson)
-        response.content_type = 'application/json'
-        return [str(uri) for uri in uris]
-
     def getGraph(self, sessionId):
         graphDict = self.dom.getGraph(sessionId)
         response.content_type = 'application/json'
@@ -116,12 +118,22 @@ class RestServer(object):
         graphJson = request._get_body_string()
         self.dom.addGraphSpec(sessionId, graphJson)
 
+    #===========================================================================
+    # HTML-related methods
+    #===========================================================================
     def server_static(self, filepath):
         staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
         return static_file(filepath, root=staticRoot)
 
-    def showSession(self, sessionId):
-        tpl = pkg_resources.resource_string(__name__, 'web/graph_display.html')  # @UndefinedVariable
+    def visualizeSession(self):
+        sessionId = request.params['sessionId']
+        tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return template(tpl, sessionId=sessionId, serverUrl=serverUrl)
+
+    def visualizeDOM(self):
+        tpl = pkg_resources.resource_string(__name__, 'web/index.html')  # @UndefinedVariable
+        urlparts = request.urlparts
+        serverUrl = urlparts.scheme + '://' + urlparts.netloc
+        return template(tpl, domId=self.dom.domId, serverUrl=serverUrl)
