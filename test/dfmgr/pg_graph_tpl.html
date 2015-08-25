@@ -316,7 +316,7 @@ function trigger_sl(host, port_number) {
       html += "<span class=status></span><span class=name>";
       var id_str = id
       if (3 == worker.type) {
-        id_str =  "<a href=\"#\" onclick=\"trigger_sl(" + "'" + worker.host + "', " + worker.port.toString() + ")\">" + id + "</a>"
+        id_str +=  " <a href=\"#\" onclick=\"trigger_sl(" + "'" + worker.host + "', " + worker.port.toString() + ")\">ingest</a>"
       }
       html += id_str + "</span>";
       html += "<br/>"
