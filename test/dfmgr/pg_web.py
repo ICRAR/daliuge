@@ -142,6 +142,11 @@ def execute():
     #my_public_ip = urlopen('http://ip.42.pl/raw').read()
     redirect("http://{0}:{1}/static/visualiser/index.html#FinishGraphExecution(sessionId={2}, pgCreator={3})".format(luigi_host, luigi_port, ssid, pgCreator))
 
+@get('/trigger_sl')
+def trigger_socklstn():
+    port_num = request.query.get('port_number')
+    return "Port {0} is triggered.".format(port_num)
+
 @get('/jsonbody')
 def jsonbody():
     """
