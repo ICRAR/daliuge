@@ -51,9 +51,13 @@ class DataObjectMgr(object):
     """
 
     def __init__(self, domId, useDLM=True):
-        self.domId = domId
-        self.dlm = DataLifecycleManager() if useDLM else None
+        self._domId = domId
+        self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
+
+    @property
+    def domId(self):
+        return self._domId
 
     def getURI(self):
         return self._uri
@@ -94,10 +98,10 @@ class DataObjectMgr(object):
         roots = session.roots
 
         # We register the new DOs with the DLM if there is one
-        if self.dlm:
+        if self._dlm:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Registering new DOs with the DataLifecycleManager')
-            doutils.breadFirstTraverse(roots, lambda do: self.dlm.addDataObject(do))
+            doutils.breadFirstTraverse(roots, lambda do: self._dlm.addDataObject(do))
 
         # Finally, we also collect the Pyro URIs of our DOs and return them
         uris = []
@@ -107,3 +111,6 @@ class DataObjectMgr(object):
     def destroySession(self, sessionId):
         session = self._sessions.pop(sessionId)
         session.destroy()
+
+    def getSessionIds(self):
+        return self._sessions.keys()
