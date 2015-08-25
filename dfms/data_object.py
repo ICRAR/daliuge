@@ -1117,6 +1117,8 @@ class SocketListener(object):
         if not port:
             port = 1111
 
+        self._host = host
+        self._port = port
         with _socketListenerLock:
             global _socketListenerCounter
             counter = _socketListenerCounter
@@ -1151,6 +1153,14 @@ class SocketListener(object):
             self.write(data)
         clientSocket.close()
         self.setCompleted()
+
+    @property
+    def host(self):
+        return self._host
+
+    @property
+    def port(self):
+        return self._port
 
 class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject): pass
 class FileSocketListenerDataObject(SocketListener, FileDataObject): pass
