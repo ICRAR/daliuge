@@ -19,9 +19,10 @@ $(document).load(function(){
 /*
 trigger the socket listener
 */
-function trigger_sl(port_number) {
-    $.get("/trigger_sl?port_number=" + port_number.toString(), function(data, status){
-      alert("Data: " + data + "\nStatus: " + status);
+function trigger_sl(host, port_number) {
+    $.get("/trigger_sl?port_number=" + port_number.toString() + "&listen_host=" + host, function(data, status){
+      //alert("Data: " + data + "\nStatus: " + status);
+      alert(data)
     });
 }
 </script>
@@ -190,8 +191,8 @@ function trigger_sl(port_number) {
 <body>
 <div>
 	<a href="/">All graphs</a>
-	<a href="jsonbody?pg_name={{pg_name}}">See JSON body</a>
-	<a href="execute?pg_name={{pg_name}}">Execute with Luigi</a>
+	<a href="jsonbody?pg_name={{pg_name}}" target="_blank">See JSON body</a>
+	<a href="execute?pg_name={{pg_name}}" target="_blank">Execute with Luigi</a>
   <a href="show?pg_name={{pg_name}}&pg_layout={{pg_rotate}}">Rotate the graph</a>
 </div>
 <div class="live map">
@@ -304,7 +305,6 @@ function trigger_sl(port_number) {
           node_shape = "rect"
           fill_color = "#afa"
           pad_gap = 0;
-
       }
       /*
       var className = worker.loc ? "allocated" : "stopped";
@@ -316,7 +316,7 @@ function trigger_sl(port_number) {
       html += "<span class=status></span><span class=name>";
       var id_str = id
       if (3 == worker.type) {
-        id_str =  "<a href=\"#\" onclick=\"trigger_sl(1111)\">" + id + "</a>"
+        id_str =  "<a href=\"#\" onclick=\"trigger_sl(" + "'" + worker.host + "', " + worker.port.toString() + ")\">" + id + "</a>"
       }
       html += id_str + "</span>";
       html += "<br/>"
