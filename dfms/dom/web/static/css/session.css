@@ -114,37 +114,11 @@ svg {
   animation-name: flash;
 }
 
-.live.map .loc {
-  margin-right: 2px;
-}
-
-.live.map .loc,
-.live.map .name {
-  margin-top: 4px;
-}
-
-.live.map .loc:after {
-  content: "";
-}
-
-.live.map .queue {
-  display: block;
-  float: left;
-  width: 130px;
-  height: 20px;
-  font-size: 10px;
-  margin-top: 2px;
-}
-
 .live.map .node g div {
   width: 180px;
   height: 40px;
   color: #000;
-}
-
-.live.map .node g div span.loc {
-  display: inline-block;
-  width: 20px;
+  overflow: hidden;
 }
 
 .live.map .edgeLabel text {
