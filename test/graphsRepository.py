@@ -41,7 +41,8 @@ import time
 
 from dfms import doutils
 from dfms.data_object import InMemoryDataObject, \
-    InMemorySocketListenerDataObject, BarrierAppDataObject, ContainerDataObject
+    InMemorySocketListenerDataObject, BarrierAppDataObject, ContainerDataObject, \
+    AppDataObject
 from dfms.ddap_protocol import ExecutionMode
 from test.test_data_object import SumupContainerChecksum
 
@@ -304,6 +305,134 @@ def mwa_fornax_pg():
 
     return dob_root
 
+def pip_cont_img_pg():
+    """
+    PIP continuum imaging pipeline
+    """
+    num_beam = 1
+    num_time = 2
+    num_freq = 2
+    num_facet = 2
+    num_grid = 4
+    stokes = ['I', 'Q', 'U', 'V']
+    dob_root = InMemorySocketListenerDataObject("FullDataset", "FullDataset", lifespan=lifespan)
+    dob_root.location = "Buf01"
+
+    adob_sp_beam = SleepAndCopyApp("SPLT_BEAM", "SPLT_BEAM", lifespan=lifespan)
+    adob_sp_beam.location = "Buf01"
+    dob_root.addConsumer(adob_sp_beam)
+
+    for i in range(1, num_beam + 1):
+        id = i
+        dob_beam = InMemoryDataObject("BEAM_{0}".format(id), "BEAM_{0}".format(id), lifespan=lifespan)
+        adob_sp_beam.addOutput(dob_beam)
+        adob_sp_time = SleepAndCopyApp("SPLT_TIME_{0}".format(id), "SPLT_TIME_{0}".format(id), lifespan=lifespan)
+        dob_beam.addConsumer(adob_sp_time)
+        for j in range(1, num_time + 1):
+            id = "%d-%d" % (i, j)
+            dob_time = InMemoryDataObject("TIME_{0}".format(id), "TIME_{0}".format(id), lifespan=lifespan)
+            adob_sp_time.addOutput(dob_time)
+            adob_sp_freq = SleepAndCopyApp("SPLT_FREQ_{0}".format(id), "SPLT_FREQ_{0}".format(id), lifespan=lifespan)
+            dob_time.addConsumer(adob_sp_freq)
+            for k in range(1, num_freq + 1):
+                id = "%d-%d-%d" % (i, j, k)
+                dob_freq = InMemoryDataObject("FREQ_{0}".format(id), "FREQ_{0}".format(id), lifespan=lifespan)
+                adob_sp_freq.addOutput(dob_freq)
+                adob_sp_facet = SleepAndCopyApp("SPLT_FACET_{0}".format(id), "SPLT_FACET_{0}".format(id), lifespan=lifespan)
+                dob_freq.addConsumer(adob_sp_facet)
+                for l in range(1, num_facet + 1):
+                    id = "%d-%d-%d-%d" % (i, j, k, l)
+                    dob_facet = InMemoryDataObject("FACET_{0}".format(id), "FACET_{0}".format(id), lifespan=lifespan)
+                    adob_sp_facet.addOutput(dob_facet)
+
+                    adob_ph_rot = SleepAndCopyApp("PH_ROTATN_{0}".format(id), "PH_ROTATN_{0}".format(id), lifespan=lifespan)
+                    dob_facet.addConsumer(adob_ph_rot)
+                    dob_ph_rot = InMemoryDataObject("PH_ROTD_{0}".format(id), "PH_ROTD_{0}".format(id), lifespan=lifespan)
+                    adob_ph_rot.addOutput(dob_ph_rot)
+                    adob_sp_stokes = SleepAndCopyApp("SPLT_STOKES_{0}".format(id), "SPLT_STOKES_{0}".format(id), lifespan=lifespan)
+                    dob_ph_rot.addConsumer(adob_sp_stokes)
+
+                    adob_w_kernel = SleepAndCopyApp("CACL_W_Knl_{0}".format(id), "CACL_W_Knl_{0}".format(id), lifespan=lifespan)
+                    dob_facet.addConsumer(adob_w_kernel)
+                    dob_w_knl = InMemoryDataObject("W_Knl_{0}".format(id), "W_Knl_{0}".format(id), lifespan=lifespan)
+                    adob_w_kernel.addOutput(dob_w_knl)
+
+                    adob_a_kernel = SleepAndCopyApp("CACL_A_Knl_{0}".format(id), "CACL_A_Knl_{0}".format(id), lifespan=lifespan)
+                    dob_facet.addConsumer(adob_a_kernel)
+                    dob_a_knl = InMemoryDataObject("A_Knl_{0}".format(id), "A_Knl_{0}".format(id), lifespan=lifespan)
+                    adob_a_kernel.addOutput(dob_a_knl)
+
+                    adob_create_kernel = SleepAndCopyApp("CREATE_Knl_{0}".format(id), "CREATE_Knl_{0}".format(id), lifespan=lifespan)
+                    dob_w_knl.addConsumer(adob_create_kernel)
+                    dob_a_knl.addConsumer(adob_create_kernel)
+
+
+                    for stoke in stokes:
+                        id = "%s-%d-%d-%d-%d" % (stoke, i, j, k, l)
+                        #print "id = {0}".format(id)
+
+                        dob_stoke = InMemoryDataObject("STOKE_{0}".format(id), "STOKE_{0}".format(id), lifespan=lifespan)
+                        adob_sp_stokes.addOutput(dob_stoke)
+
+                        dob_stoke.addConsumer(adob_create_kernel)
+
+
+                        dob_aw = InMemoryDataObject("A_{0}".format(id), "A_{0}".format(id), lifespan=lifespan)
+                        adob_create_kernel.addOutput(dob_aw)
+
+                        # we do not do loop yet
+                        griders = []
+                        for m in range(1, num_grid + 1):
+                            gid = "%s-%d-%d-%d-%d-%d" % (stoke, i, j, k, l, m)
+                            adob_gridding = SleepAndCopyApp("Gridding_{0}".format(gid), "Gridding_{0}".format(gid), lifespan=lifespan)
+                            dob_stoke.addConsumer(adob_gridding)
+                            dob_gridded_cell = InMemoryDataObject("Grided_Cell_{0}".format(gid), "Grided_Cell_{0}".format(gid), lifespan=lifespan)
+                            adob_gridding.addOutput(dob_gridded_cell)
+                            griders.append(dob_gridded_cell)
+                        adob_gridded_bar = SleepAndCopyApp("GRIDDED_BARRIER_{0}".format(id), "GRIDDED_BARRIER_{0}".format(id), lifespan=lifespan)
+                        for grider in griders:
+                            grider.addConsumer(adob_gridded_bar)
+                        dob_gridded_stoke = InMemoryDataObject("GRIDDED_STOKE_{0}".format(id), "GRIDDED_STOKE_{0}".format(id), lifespan=lifespan)
+                        adob_gridded_bar.addOutput(dob_gridded_stoke)
+
+                        FFTers = []
+                        for m in range(1, num_grid + 1):
+                            gid = "%s-%d-%d-%d-%d-%d" % (stoke, i, j, k, l, m)
+                            adob_fft = SleepAndCopyApp("FFT_{0}".format(gid), "FFT_{0}".format(gid), lifespan=lifespan)
+                            dob_gridded_stoke.addConsumer(adob_fft)
+
+                            dob_ffted_cell = InMemoryDataObject("FFTed_Cell_{0}".format(gid), "FFTed_Cell_{0}".format(gid), lifespan=lifespan)
+                            adob_fft.addOutput(dob_ffted_cell)
+                            FFTers.append(dob_ffted_cell)
+                        adob_ffted_bar = SleepAndCopyApp("FFTed_BARRIER_{0}".format(id), "FFTed_BARRIER_{0}".format(id), lifespan=lifespan)
+                        for ffter in FFTers:
+                            ffter.addConsumer(adob_ffted_bar)
+                        dob_ffted_stoke = InMemoryDataObject("FFTed_STOKE_{0}".format(id), "FFTed_STOKE_{0}".format(id), lifespan=lifespan)
+                        adob_ffted_bar.addOutput(dob_ffted_stoke)
+
+                        cleaners = []
+                        for m in range(1, num_grid + 1):
+                            gid = "%s-%d-%d-%d-%d-%d" % (stoke, i, j, k, l, m)
+                            adob_cleaner = SleepAndCopyApp("DECONV_{0}".format(gid), "DECONV_{0}".format(gid), lifespan=lifespan)
+                            dob_ffted_stoke.addConsumer(adob_cleaner)
+
+                            dob_cleaned_cell = InMemoryDataObject("CLEANed_Cell_{0}".format(gid), "CLEANed_Cell_{0}".format(gid), lifespan=lifespan)
+                            adob_cleaner.addOutput(dob_cleaned_cell)
+                            cleaners.append(dob_cleaned_cell)
+                        adob_cleaned_bar = SleepAndCopyApp("CLEANed_BARRIER_{0}".format(id), "CLEANed_BARRIER_{0}".format(id), lifespan=lifespan)
+                        for cleaner in cleaners:
+                            cleaner.addConsumer(adob_cleaned_bar)
+                        dob_decon_stoke = InMemoryDataObject("CLEANed_STOKE_{0}".format(id), "CLEANed_STOKE_{0}".format(id), lifespan=lifespan)
+                        adob_cleaned_bar.addOutput(dob_decon_stoke)
+
+                        adob_create_prod = SleepAndCopyApp("CRT-PROD_{0}".format(id), "CRT-PROD_{0}".format(id), lifespan=lifespan)
+                        dob_decon_stoke.addConsumer(adob_create_prod)
+
+                        dob_prod = InMemoryDataObject("PRODUCT_{0}".format(id), "PRODUCT_{0}".format(id), lifespan=lifespan)
+                        adob_create_prod.addOutput(dob_prod)
+
+
+    return dob_root
 
 def chiles_pg():
 
