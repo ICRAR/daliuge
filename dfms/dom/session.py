@@ -193,6 +193,7 @@ class Session(object):
             logger.debug("Starting Pyro4 Daemon for session %s" % (self._sessionId))
         self._daemon = Pyro4.Daemon()
         self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
+        self._daemonT.daemon = True
         self._daemonT.start()
 
         # Create the real DataObjects from the graph specs
