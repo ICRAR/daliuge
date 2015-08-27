@@ -23,10 +23,39 @@
 var SESSION_STATUS = ['Pristine', 'Deploying', 'Running', 'Finished']
 var STATUS_CLASSES = ['initialized', 'writing', 'completed', 'expired', 'deleted']
 var TYPE_CLASSES   = ['app', 'container', 'socket', 'plain']
+var TYPE_SHAPES    = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs']
 var  TO_ONE_RTL_RELS = ['producer']
+
+function getRender() {
+
+	var render = new dagreD3.render();
+
+	// Add our custom shape (parallelogram, similar to the PIP PDR document)
+	render.shapes().parallelogram = function(parent, bbox, node) {
+		var w = bbox.width,
+		h = bbox.height,
+		points = [
+		    { x: 0,     y: 0},
+		    { x: w*0.8, y: 0},
+		    { x: w,     y: -h},
+		    { x: w*0.2, y: -h},
+		];
+		shapeSvg = parent.insert("polygon", ":first-child")
+		.attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
+		.attr("transform", "translate(" + (-w/2) + "," + (h/2) + ")");
+
+		node.intersect = function(point) {
+			return dagreD3.intersect.polygon(node, points, point);
+		};
+
+		return shapeSvg;
+	};
+
+	return render;
+}
 
 /**
  * Starts a regular background task that loads the list of all sessions held in
@@ -134,11 +163,11 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 						modified |= _addEdge(g, doSpec[rel], lhOid)
 					}
 				}
-				// there currently are no x-to-one relationshipts producing lh->rh edges
+				// there currently are no x-to-one relationships producing lh->rh edges
 			}
 
 			if( modified ) {
-				draw()
+				drawGraph()
 			}
 
 			// Only during PRISITINE we need to update the graph structure
@@ -164,13 +193,24 @@ function _addNode(g, doSpec) {
 		return false
 	}
 
-	var statusClass = STATUS_CLASSES[doSpec.status]
-	var typeClass   = doSpec.type
+	var typeClass = doSpec.type
+	var typeShape = TYPE_SHAPES[doSpec.type]
+	var notes = ''
+	if( doSpec.type == 'app' ) {
+		nameParts = doSpec.app.split('.')
+		notes = nameParts[nameParts.length - 1]
+	}
+	else if( doSpec.type == 'plain' ) {
+		notes = 'storage: ' + doSpec.storage
+	}
+	else if( doSpec.type == 'socket' ) {
+		notes = 'port: ' + doSpec.port
+	}
 
-	oid = doSpec.oid
-	var html = '<div id="id_' + oid + '">';
-	html += '<span class="status ' + statusClass + '"></span>';
-	html += '<span class="name">' + oid + '</span>';
+	var oid = doSpec.oid
+	var html = '<div class="do-label" id="id_' + oid + '">';
+	html += '<span>' + oid + '</span>';
+	html += '<span class="notes">' + notes + '</span>'
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",
@@ -178,7 +218,8 @@ function _addNode(g, doSpec) {
 		rx: 5,
 		ry: 5,
 		padding: 0,
-		class: typeClass
+		class: typeClass,
+		shape: typeShape
 	});
 	return true
 }
@@ -195,7 +236,7 @@ function _addEdge(g, fromOid, toOid) {
 		console.error('No DataObject found with oid ' + toOid)
 		return false
 	}
-	g.setEdge(fromOid, toOid, { label: "dependency", width: 40 });
+	g.setEdge(fromOid, toOid, {width: 40});
 	return true
 }
 
@@ -209,33 +250,33 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 	function updateStates() {
 		d3.json(serverUrl + '/api/' + sessionId + '/graph/status', function(error, response) {
 			if (error) {
-				console.error(error)
-				return
+				console.error(error);
+				return;
 			}
-			allCompleted = true
-			for (var id in response) {
-				var status = response[id]
-				var statusClass = STATUS_CLASSES[status]
-				if ( status != 2 ) { // 2 == completed
-					allCompleted = false
-				}
-				inner.select('#id_' + id + ' span.status')
-				.attr('class', 'status ' + statusClass)
-			}
+
+			// Change from {A:1, B:2...} to [1,2...]
+			var statuses = Object.keys(response).map(function(k) {return response[k]});
+
+			// TODO: Apply the status at the .node level
+
+			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
+				return prevVal && (curVal == 2);
+			}, true);
 			if (!allCompleted) {
-				d3.timer(updateStates, delay)
+				d3.timer(updateStates, delay);
 			}
 			else {
+				// A final update on the session's status
 				d3.json(serverUrl + '/api/' + sessionId + '/status', function(error, status) {
 					if (error) {
-						console.error(error)
-						return
+						console.error(error);
+						return;
 					}
-					d3.select('#session-status').text(SESSION_STATUS[status])
+					d3.select('#session-status').text(SESSION_STATUS[status]);
 				})
 			}
 		})
-		return true
+		return true;
 	}
-	d3.timer(updateStates)
+	d3.timer(updateStates);
 }
