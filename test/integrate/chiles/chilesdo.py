@@ -65,7 +65,7 @@ def invoke_split(q,
         
         print 'Splitting ', infile
 
-        import drivecasa  # @UnresolvedImport
+        import drivecasa
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 3600)
         casaout, errors = casa.run_script(inputs)
         casaout, errors = casa.run_script_from_file(SPLIT)
@@ -84,7 +84,7 @@ def invoke_clean(q, vis, outcube):
 
         print 'Cleaning ', str(vis)
 
-        import drivecasa  # @UnresolvedImport
+        import drivecasa
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 3600)
         casaout, errors = casa.run_script(inputs)
         casaout, errors = casa.run_script_from_file(CLEAN)
@@ -103,7 +103,7 @@ class SourceFlux(BarrierAppDataObject):
 
         print 'Calculating source flux on ', inp._path + '.image'
 
-        import drivecasa  # @UnresolvedImport
+        import drivecasa
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 180)
         casa.run_script(['ia.open("'"%s"'")' % (inp._path + '.image')])
         casa.run_script(['flux = ia.pixelvalue([128,128,0,179])["'"value"'"]["'"value"'"]'])
