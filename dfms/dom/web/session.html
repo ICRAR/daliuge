@@ -13,49 +13,48 @@
 
 <body>
 <div>
-	<span>Session status: <span id="session-status"></span></span>
+	<p>Session status: <span id="session-status"></span></p>
+	<p>Orientation: <span><input class="direction" type="radio" name="direction" value="LR" id="lr"/><label for="lr">Left to Right</label></span>
+	<span><input class="direction" type="radio" name="direction" value="TB" id="tb"/><label for="tb">Top to Bottom</label></span></p>
 </div>
-<div class="live map">
-	<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g/></svg>
+<div class="graph">
+	<svg><g/></svg>
 </div>
 
 <script>
 
-  // Set up zoom support
-  var svg = d3.select("svg")
-  var inner = svg.select("g")
-  var zoom = d3.behavior.zoom().on("zoom", function() {
-        inner.attr("transform", "translate(" + d3.event.translate + ")" +
-                                    "scale(" + d3.event.scale + ")");
-      });
-  svg.call(zoom);
+	// Set up zoom support
+	var svg = d3.select("svg")
+	var inner = svg.select("g")
+	var zoom = d3.behavior.zoom().on(
+			"zoom",
+			function() {
+				inner.attr("transform", "translate(" + d3.event.translate + ")"
+						+ "scale(" + d3.event.scale + ")");
+			});
+	svg.call(zoom);
 
-  var render = new dagreD3.render();
-  var g = new dagreD3.graphlib.Graph();
-  g.setGraph({
-    nodesep: 70,
-    ranksep: 50,
-    rankdir: "LR", // Left-to-right layout
-    marginx: 20,
-    marginy: 20
-  });
+	var render = getRender()
+	var g = new dagreD3.graphlib.Graph();
+	g.setGraph({
+		nodesep : 70,
+		ranksep : 50,
+		rankdir : "LR", // Left-to-right layout
+		marginx : 20,
+		marginy : 20
+	});
 
-  function draw() {
-    inner.call(render, g);
+	function drawGraph() {
+		inner.call(render, g);
+	}
 
-    // Zoom and scale to fit
-    var graphWidth = g.graph().width + 80;
-    var graphHeight = g.graph().height + 40;
-    var width = parseInt(svg.style("width").replace(/px/, ""));
-    var height = parseInt(svg.style("height").replace(/px/, ""));
-    var zoomScale = Math.min(width / graphWidth, height / graphHeight);
-    var translate = [(width/2) - ((graphWidth*zoomScale)/2), (height/2) - ((graphHeight*zoomScale)/2)];
-    zoom.translate(translate);
-    zoom.scale(zoomScale);
-  }
+	d3.selectAll('input.direction').on('change', function() {
+		direction = d3.event.srcElement.value;
+		g.graph().rankdir = direction;
+		drawGraph();
+	});
 
-  startStatusQuery(g, '{{!serverUrl}}', '{{sessionId}}', 1000)
-
+	startStatusQuery(g, '{{!serverUrl}}', '{{sessionId}}', 1000)
 </script>
 </body>
 </html>
