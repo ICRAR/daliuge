@@ -257,7 +257,11 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 			// Change from {A:1, B:2...} to [1,2...]
 			var statuses = Object.keys(response).map(function(k) {return response[k]});
 
-			// TODO: Apply the status at the .node level
+			// This works assuming that the status list comes in the same order
+			// that the graph was created, which is true
+			// Anyway, we could double-check in the future
+			d3.selectAll('g.nodes').selectAll('g.node')
+			.data(statuses).attr("class", function(s) { return "node " + STATUS_CLASSES[s]})
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				return prevVal && (curVal == 2);

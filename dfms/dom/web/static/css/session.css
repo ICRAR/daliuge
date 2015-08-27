@@ -59,19 +59,19 @@ svg {
   fill: #ffe;
 }
 
-.node.writing:first-child {
+.node.writing :first-child {
   fill: #ffed68;
 }
 
-.node.completed:first-child {
+.node.completed :first-child {
   fill: #7f7;
 }
 
-.node.expired:first-child {
+.node.expired :first-child {
   fill: #700000;
 }
 
-.node.deleted:first-child {
+.node.deleted :first-child {
   color: #700000;
 }
 
