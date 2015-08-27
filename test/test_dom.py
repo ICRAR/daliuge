@@ -39,6 +39,7 @@ class EvtConsumerProxyCtx(object):
     def __enter__(self):
         daemon = Pyro4.Daemon()
         t = threading.Thread(None, lambda: daemon.requestLoop())
+        t.daemon = 1
         t.start()
 
         for do in self._dos:
@@ -54,11 +55,13 @@ class EvtConsumerProxyCtx(object):
         return self
     def __exit__(self, typ, value, traceback):
         to = self._timeout
-        for evt in self._evts:
-            self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
-        self.daemon.shutdown()
-        self.t.join(to)
-        self._test.assertFalse(self.t.isAlive())
+        try:
+            for evt in self._evts:
+                self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
+            self._test.assertFalse(self.t.isAlive())
+        finally:
+            self.daemon.shutdown()
+            self.t.join(to)
 
 class TestDOM(unittest.TestCase):
 
@@ -151,7 +154,7 @@ class TestDOM(unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        with EvtConsumerProxyCtx(self, f, 1):
+        with EvtConsumerProxyCtx(self, f, 5):
             a.write('a')
             a.setCompleted()
             b.write('a')
