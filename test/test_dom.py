@@ -58,6 +58,7 @@ class EvtConsumerProxyCtx(object):
             self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
         self.daemon.shutdown()
         self.t.join(to)
+        self._test.assertFalse(self.t.isAlive())
 
 class TestDOM(unittest.TestCase):
 
@@ -100,6 +101,9 @@ class TestDOM(unittest.TestCase):
         for do in a, b, c:
             self.assertEquals(DOStates.COMPLETED, do.status)
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(c)))
+
+        for doProxy in a,b,c:
+            doProxy._pyroRelease()
 
         dom1.destroySession(sessionId)
         dom2.destroySession(sessionId)
@@ -158,6 +162,9 @@ class TestDOM(unittest.TestCase):
 
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(d)))
         self.assertEquals(b.checksum + d.checksum, int(doutils.allDataObjectContents(f)))
+
+        for doProxy in a,b,c,d,e,f:
+            doProxy._pyroRelease()
 
         dom1.destroySession(sessionId)
         dom2.destroySession(sessionId)
@@ -246,8 +253,9 @@ class TestDOM(unittest.TestCase):
         with EvtConsumerProxyCtx(self, o, 1):
             a.write('a')
 
-        for do in proxies:
-            self.assertEquals(DOStates.COMPLETED, do.status, "Status of '%s' is not COMPLETED" % do.uid)
+        for doProxy in proxies:
+            self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED" % doProxy.uid)
+            doProxy._pyroRelease()
 
         for dom in [dom1, dom2, dom3, dom4]:
             dom.destroySession(sessionId)
