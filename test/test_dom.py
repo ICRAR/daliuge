@@ -55,13 +55,17 @@ class EvtConsumerProxyCtx(object):
         return self
     def __exit__(self, typ, value, traceback):
         to = self._timeout
+        allFine = True
         try:
             for evt in self._evts:
                 self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
-            self._test.assertFalse(self.t.isAlive())
+        except:
+            allFine = False
         finally:
             self.daemon.shutdown()
             self.t.join(to)
+            if allFine:
+                self._test.assertFalse(self.t.isAlive())
 
 class TestDOM(unittest.TestCase):
 
