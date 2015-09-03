@@ -24,12 +24,11 @@ import Queue
 import os
 import sys
 import uuid
+import drivecasa
 from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
-SPLIT = LOCAL_FILES + '/split.py'
-CLEAN = LOCAL_FILES + '/clean.py'
 VIS_ROOT = '/mnt/chiles-imaging/DataFiles/'
 VIS_OUT = '/mnt/chiles-output/vis/'
 CUBE_OUT = '/mnt/chiles-output/cube/'
