@@ -26,7 +26,6 @@ import sys
 import uuid
 from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
 
-
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
 SPLIT = LOCAL_FILES + '/split.py'
@@ -45,30 +44,35 @@ VIS = [
 
 
 def invoke_split(q,
-                infile, 
-                outdir, 
-                min_freq = 1408, 
-                max_freq = 1412, 
-                step_freq = 4, 
-                width_freq = 15.625, 
+                infile,
+                outdir,
+                min_freq = 1408,
+                max_freq = 1412,
+                step_freq = 4,
+                width_freq = 15.625,
                 spec_window = '*'):
 
     try:
-        inputs = ['input_vis="'"%s"'"' % infile, 
-                'output_dir="'"%s"'"' % outdir, 
-                'min_freq=%s' % min_freq, 
-                'max_freq=%s' % max_freq, 
-                'step_freq=%s' % step_freq, 
-                'width_freq=%s' % width_freq, 
-                'spec_window="'"%s"'"' % spec_window, 
-                'sel_freq=%s' % str(1)]
-        
-        print 'Splitting ', infile
+        transform_args = {
+                    'regridms': True,
+                    'restfreq': '1420.405752MHz',
+                    'mode': 'frequency',
+                    'nchan': 256,
+                    'outframe': 'lsrk',
+                    'interpolation': 'linear',
+                    'veltype': 'radio',
+                    'start': str(min_freq) + 'MHz',
+                    'width': str(width_freq) + 'kHz',
+                    'spw': '',
+                    'combinespws': True,
+                    'nspw': 1,
+                    'createmms': False,
+                    'datacolumn': 'data' }
 
-        import drivecasa
+        script = []
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 3600)
-        casaout, errors = casa.run_script(inputs)
-        casaout, errors = casa.run_script_from_file(SPLIT)
+        drivecasa.commands.mstransform(script, infile, outdir, transform_args, overwrite = True)
+        casa.run_script(script)
         q.put(0)
 
     except Exception as e:
@@ -79,21 +83,38 @@ def invoke_split(q,
 def invoke_clean(q, vis, outcube):
 
     try:
-        inputs = ['inputs=%s' % str(vis).strip('"'), 
-                'outcube="'"%s"'"' % outcube]
+        clean_args  = {
+                'field': 'deepfield',
+                'spw': '',
+                'mode': 'frequency',
+                'restfreq': '1420.405752MHz',
+                'nchan': -1,
+                'start': '',
+                'width': '',
+                'interpolation': 'nearest',
+                'gain': 0.1,
+                'imsize': [256],
+                'cell': ['1.0arcsec'],
+                'phasecenter': '10h01m53.9,+02d24m52s',
+                'weighting': 'natural',
+                'usescratch': False }
 
-        print 'Cleaning ', str(vis)
-
-        import drivecasa
+        script = []
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 3600)
-        casaout, errors = casa.run_script(inputs)
-        casaout, errors = casa.run_script_from_file(CLEAN)
+        dirty_maps = drivecasa.commands.clean(script,
+                                        vis_path = vis,
+                                        out_path = outcube,
+                                        niter = 0,
+                                        threshold_in_jy = 0,
+                                        other_clean_args = clean_args,
+                                        overwrite = True)
+        casa.run_script(script)
         q.put(0)
 
     except Exception as e:
         print str(e)
         q.put(-1)
-      
+
 
 class SourceFlux(BarrierAppDataObject):
 
@@ -126,6 +147,8 @@ class Clean(BarrierAppDataObject):
         for i in inp:
             vis.append(i._path)
 
+        print 'Cleaning ', vis
+
         q = Queue.Queue()    
         t = threading.Thread(target = invoke_clean, args = (q, vis, out._path))
         t.start()
@@ -140,10 +163,11 @@ class Clean(BarrierAppDataObject):
 
 class Split(BarrierAppDataObject):
 
-
     def run(self):
         inp = self._inputs.values()[0]
         out = self._outputs.values()[0]
+
+        print 'Splitting ', inp._path
 
         q = Queue.Queue()
         t = threading.Thread(target = invoke_split, args = (q, inp._path, out._path))
@@ -171,11 +195,6 @@ class Barrier(object):
 
 if __name__ == '__main__':
     try:
-
-        os.system('rm -rf %s' % VIS_OUT)
-        os.system('rm -rf %s' % CUBE_OUT)
-        os.system('mkdir -p %s' % VIS_OUT)
-        os.system('mkdir -p %s' % CUBE_OUT)
 
         split = []
         vis_in_a = []
@@ -219,4 +238,3 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     sys.exit(0)
-

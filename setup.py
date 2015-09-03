@@ -15,6 +15,7 @@ setup(
         'dfms.dom' : ['web/*.html', 'web/static/css/*.css', 'web/static/js/*.js', 'web/static/js/d3/*']
       },
       install_requires=["Pyro4", "luigi", "psutil", "paramiko", "bottle", "tornado", "drive-casa"],
+      dependency_links=["https://github.com/davepallot/drive-casa/archive/0.6.7.zip#egg=drive-casa-0.6.7"],
       test_suite="test",
       entry_points= {
           'console_scripts':[
