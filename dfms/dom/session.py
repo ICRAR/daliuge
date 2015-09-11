@@ -114,7 +114,18 @@ class Session(object):
         if self.status != SessionStates.PRISTINE:
             raise Exception("Can't add more graphs to this session since itn't PRISTINE anymore")
 
-        graphSpecDict = graph_loader.loadDataObjectSpecsS(graphSpec)
+        if isinstance(graphSpec, basestring):
+            graphSpecDict = graph_loader.loadDataObjectSpecsS(graphSpec)
+        elif isinstance(graphSpec, dict):
+            graphSpecDict = graphSpec
+        elif isinstance(graphSpec, list):
+            graphSpecDict = {}
+            [graphSpecDict.__setitem__(spec['oid'],spec) for spec in graphSpec]
+        elif hasattr(graphSpec, 'read'):
+            graphSpecDict = graph_loader.loadDataObjectSpecs(graphSpec)
+        else:
+            raise TypeError('graphSpec should be either a string or a file-like object')
+
         for oid in graphSpecDict:
             if oid in self._graph:
                 raise Exception('DataObject with OID %s already exists, cannot add twice' % (oid))

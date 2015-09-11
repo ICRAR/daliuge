@@ -1164,3 +1164,46 @@ class SocketListener(object):
 
 class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject): pass
 class FileSocketListenerDataObject(SocketListener, FileDataObject): pass
+
+class dodict(dict):
+    """
+    An intermediate representation of a DataObject that can be easily serialized
+    into a transport format such as JSON or XML.
+
+    This dictionary holds all the important information needed to call any given
+    DataObject constructor. The most essential pieces of information are the
+    DataObject's OID, and its type (which determines the class to instantiate).
+    Depending on the type more fields will be required. This class doesn't
+    enforce these requirements though, as it only acts as an information
+    container.
+
+    This class also offers a few utility methods to make it more like an actual
+    DataObject. This way, users can user the same set of methods both to create
+    DataObjects representations (i.e., instances of this class) and actual
+    DataObject instances.
+
+    Users of this class are, for example, the graph_loader module which deals
+    with JSON -> DO representation transformations, and the different
+    repositories where graph templates are expected to be found by the
+    DataObjectManager.
+    """
+    def _addSomething(self, otherDoDict, key):
+        if key not in self:
+            self[key] = []
+        self[key].append(otherDoDict['oid'])
+
+    def addConsumer(self, otherDoDict):
+        self._addSomething(otherDoDict, 'consumers')
+    def addStreamingConsumer(self, otherDoDict):
+        self._addSomething(otherDoDict, 'streamingConsumers')
+    def addInput(self, otherDoDict):
+        self._addSomething(otherDoDict, 'inputs')
+    def addStreamingInput(self, otherDoDict):
+        self._addSomething(otherDoDict, 'streamingInputs')
+    def addOutput(self, otherDoDict):
+        self._addSomething(otherDoDict, 'outputs')
+    @property
+    def producer(self, otherDoDict):
+        self['producer'] = otherDoDict['oid']
+    def __setattr__(self, name, value):
+        self[name] = value

@@ -45,15 +45,16 @@ class RestServer(object):
         super(RestServer, self).__init__()
         app = Bottle()
 
-        app.get(   '/api',                          callback=self.getDOMStatus)
-        app.put(   '/api/<sessionId>',              callback=self.createSession)
-        app.delete('/api/<sessionId>',              callback=self.destroySession)
-        app.get(   '/api/<sessionId>',              callback=self.getSessionInformation)
-        app.get(   '/api/<sessionId>/status',       callback=self.getSessionStatus)
-        app.post(  '/api/<sessionId>/deploy',       callback=self.deploySession)
-        app.get(   '/api/<sessionId>/graph',        callback=self.getGraph)
-        app.get(   '/api/<sessionId>/graph/status', callback=self.getGraphStatus)
-        app.put(   '/api/<sessionId>/graph/parts',  callback=self.addGraphParts)
+        app.get(   '/api',                                   callback=self.getDOMStatus)
+        app.put(   '/api/sessions/<sessionId>',              callback=self.createSession)
+        app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
+        app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
+        app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
+        app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
+        app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
+        app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
+        app.put(   '/api/sessions/<sessionId>/graph/parts',  callback=self.addGraphParts)
+        app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
 
         # The bad boys that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
@@ -82,7 +83,7 @@ class RestServer(object):
         sessions = []
         for sessionId in self.dom.getSessionIds():
             sessions.append({'sessionId': sessionId, 'status': self.dom.getSessionStatus(sessionId)})
-        return json.dumps({'sessions': sessions})
+        return json.dumps({'sessions': sessions, 'templates': self.dom.getTemplates()})
 
     def createSession(self, sessionId):
         self.dom.createSession(sessionId)
@@ -115,8 +116,12 @@ class RestServer(object):
 
     # TODO: addGraphParts v/s addGraphSpec
     def addGraphParts(self, sessionId):
-        graphJson = request._get_body_string()
-        self.dom.addGraphSpec(sessionId, graphJson)
+        self.dom.addGraphSpec(sessionId, request.body)
+
+    def materializeTemplate(self, tpl):
+        tplParams = dict(request.params)
+        sessionId = tplParams.pop('sessionId')
+        self.dom.materializeTemplate(tpl, sessionId, **tplParams)
 
     #===========================================================================
     # HTML-related methods
