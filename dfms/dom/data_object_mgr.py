@@ -29,14 +29,38 @@ A data object managers manages all local Data Object instances
 on a single address space
 """
 
+import importlib
+import inspect
 import logging
 
 from dfms import doutils
+from dfms.dom import repository
 from dfms.dom.session import Session
 from dfms.lifecycle.dlm import DataLifecycleManager
 
 
 logger = logging.getLogger(__name__)
+
+def _functionAsTemplate(f):
+    args, _, _, defaults = inspect.getargspec(f)
+
+    # 'defaults' might be shorter than 'args' if some of the arguments
+    # are not optional. In the general case anyway the optional
+    # arguments go at the end of the method declaration, and therefore
+    # a reverse iteration should yield the correct match between
+    # arguments and their defaults
+    defaults = list(defaults) if defaults else []
+    defaults.reverse()
+    argsList = []
+    for i, arg in enumerate(reversed(args)):
+        if i >= len(defaults):
+            # mandatory argument
+            argsList.append({'name':arg})
+        else:
+            # optional with default value
+            argsList.append({'name':arg, 'default':defaults[i]})
+
+    return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
 class DataObjectMgr(object):
     """
@@ -114,3 +138,43 @@ class DataObjectMgr(object):
 
     def getSessionIds(self):
         return self._sessions.keys()
+
+    def getTemplates(self):
+
+        # TODO: we currently have a hardcoded list of functions, but we should
+        #       load these repositories in a different way, like in this
+        #       commented code
+        #tplDir = os.path.expanduser("~/.dfms/templates")
+        #if not os.path.isdir(tplDir):
+        #    logger.warning('%s directory not found, no templates available' % (tplDir))
+        #    return []
+        #
+        #templates = []
+        #for fname in os.listdir(tplDir):
+        #    if not  os.path.isfile(fname): continue
+        #    if fname[-3:] != '.py': continue
+        #
+        #    with open(fname) as f:
+        #        m = imp.load_module(fname[-3:], f, fname)
+        #        functions = m.list_templates()
+        #        for f in functions:
+        #            templates.append(_functionAsTemplate(f))
+
+        templates = []
+        for f in repository.complex_graph, repository.pip_cont_img_pg:
+            templates.append(_functionAsTemplate(f))
+        return templates
+
+    def materializeTemplate(self, tpl, sessionId, **tplParams):
+        # tpl currently has the form <full.mod.path.functionName>
+        parts = tpl.split('.')
+        module = importlib.import_module('.'.join(parts[:-1]))
+        tplFunction = getattr(module, parts[-1])
+
+        # invoke the template function with the given parameters
+        # and add the new graph spec to the session
+        graphSpec = tplFunction(**tplParams)
+        self.addGraphSpec(sessionId, graphSpec)
+
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Added graph from template %s to session %s with params: %s' % (tpl, sessionId, tplParams))

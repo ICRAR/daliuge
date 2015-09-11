@@ -76,7 +76,7 @@ def loadDataObjectSpecs(fileObj):
     and `readObjectGraphS`, this method doesn't actually create the DataObjects
     themselves.
     """
-    return _loadDataObjectSpecs(json.loads(fileObj))
+    return _loadDataObjectSpecs(json.load(fileObj))
 
 def loadDataObjectSpecsS(s):
     """

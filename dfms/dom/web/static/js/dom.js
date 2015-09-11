@@ -112,7 +112,7 @@ function startLoadingSessions(ul, serverUrl, delay) {
  */
 function startStatusQuery(g, serverUrl, sessionId, delay) {
 	function updateGraph() {
-		d3.json(serverUrl + '/api/' + sessionId, function(error, sessionInfo) {
+		d3.json(serverUrl + '/api/sessions/' + sessionId, function(error, sessionInfo) {
 
 			if (error) {
 				console.error(error)
@@ -248,7 +248,7 @@ function _addEdge(g, fromOid, toOid) {
  */
 function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 	function updateStates() {
-		d3.json(serverUrl + '/api/' + sessionId + '/graph/status', function(error, response) {
+		d3.json(serverUrl + '/api/sessions/' + sessionId + '/graph/status', function(error, response) {
 			if (error) {
 				console.error(error);
 				return;
@@ -271,7 +271,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 			}
 			else {
 				// A final update on the session's status
-				d3.json(serverUrl + '/api/' + sessionId + '/status', function(error, status) {
+				d3.json(serverUrl + '/api/sessions/' + sessionId + '/status', function(error, status) {
 					if (error) {
 						console.error(error);
 						return;
