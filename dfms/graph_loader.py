@@ -43,11 +43,12 @@ STORAGE_TYPES = {
 # 1-to-N relationships between DataObjects in (jsonName, DOBindingMethodName) form
 __ONE_TO_N_RELS = [('consumers', 'addConsumer'), ('streamingConsumers', 'addStreamingConsumer'),
                    ('inputs', 'addInput'), ('streamingInputs', 'addStreamingInput'),
-                   ('outputs', 'addOutput'), ('children', 'addChild')]
+                   ('outputs', 'addOutput'), ('children', 'addChild'),
+                   ('producers', 'addProducer')]
 
 # N-to-1 relationships between DataObjects. Their json name matches the attribute
 # name at the DataObject level
-__N_TO_ONE_RELS = ['producer', 'parent']
+__N_TO_ONE_RELS = ['parent']
 
 logger = logging.getLogger(__name__)
 

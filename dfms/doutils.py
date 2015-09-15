@@ -89,10 +89,8 @@ def getUpstreamObjects(dataObject):
     Returns a list of all direct "upstream" DataObjects for the given
     DataObject. An DataObject A is "upstream" with respect to DataObject B if
     any of the following conditions are true:
-     * B is a consumer of A (and therefore, A is a producer respect to B)
-     * B is a child of A, and A is a ContainerAppConsumer
-     * B is a ContainerDataObject (but not a ContainerAppConsumer) and A is a
-       child of B
+     * A is a producer of B (therefore A is an AppDataObject)
+     * A is a normal or streaming input of B (and B is therefore an AppDataObject)
 
     In practice if A is an upstream DataObject of B means that it must be moved
     to the COMPLETED state before B can do so.
@@ -102,8 +100,7 @@ def getUpstreamObjects(dataObject):
         upObjs += dataObject.inputs
         upObjs += dataObject.streamingInputs
     else:
-        if dataObject.producer:
-            upObjs.append(dataObject.producer)
+        upObjs += dataObject.producers
     return upObjs
 
 def getDownstreamObjects(dataObject):
@@ -111,10 +108,8 @@ def getDownstreamObjects(dataObject):
     Returns a list of all direct "downstream" DataObjects for the given
     DataObject. An DataObject A is "downstream" with respect to DataObject B if
     any of the following conditions are true:
-     * A is a consumer of B (and therefore, B is a producer respect to A)
-     * A is a child of B, and B is a ContainerAppConsumer
-     * A is a ContainerDataObject (but not a ContainerAppConsumer) and B is a
-       child of A
+     * A is an output of B (therefore B is an AppDataObject)
+     * A is a normal or streaming consumer of B (and A is therefore an AppDataObject)
 
     In practice if A is a downstream DataObject of B means that it cannot
     advance to the COMPLETED state until B does so.

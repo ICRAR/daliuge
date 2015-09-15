@@ -87,7 +87,7 @@ class TestDOM(unittest.TestCase):
         sessionId = 's1'
         g1 = '[{"oid":"A", "type":"plain", "storage": "memory"}]'
         g2 = '[{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"C", "type":"plain", "storage": "memory", "producer":"B"}]'
+               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]'
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -136,9 +136,9 @@ class TestDOM(unittest.TestCase):
         g1 = '[{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},\
                {"oid":"B", "type":"plain", "storage": "memory"},\
                {"oid":"C", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"D", "type":"plain", "storage": "memory", "producer": "C"}]'
+               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]'
         g2 = '[{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},\
-               {"oid":"F", "type":"plain", "storage": "memory", "producer":"E"}]'
+               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]'
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
