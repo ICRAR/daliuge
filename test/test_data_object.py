@@ -30,7 +30,7 @@ from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, 
     InMemorySocketListenerDataObject, \
     NullDataObject, CRCAppDataObject, BarrierAppDataObject, \
     DirectoryContainer, ContainerDataObject
-from dfms.ddap_protocol import DOStates, ExecutionMode
+from dfms.ddap_protocol import DOStates, ExecutionMode, AppDOStates
 from dfms.doutils import DOWaiterCtx
 
 
@@ -66,7 +66,6 @@ class SumupContainerChecksum(BarrierAppDataObject):
             crcSum += inputDO.checksum
         outputDO = self._outputs.values()[0]
         outputDO.write(str(crcSum))
-        outputDO.setCompleted()
 
 class TestDataObject(unittest.TestCase):
 
@@ -148,7 +147,6 @@ class TestDataObject(unittest.TestCase):
                 for line in allLines:
                     if self._substring in line:
                         output.write(line)
-                output.setCompleted()
 
         class SortResult(BarrierAppDataObject):
             def run(self):
@@ -158,7 +156,6 @@ class TestDataObject(unittest.TestCase):
                 sortedLines.sort()
                 for line in sortedLines:
                     output.write(line)
-                output.setCompleted()
 
         class RevResult(BarrierAppDataObject):
             def run(self):
@@ -174,7 +171,6 @@ class TestDataObject(unittest.TestCase):
                             buf = ''
                         else:
                             buf += c
-                output.setCompleted()
 
         a = InMemoryDataObject('oid:A', 'uid:A')
         b = GrepResult('oid:B', 'uid:B', substring="a")
@@ -299,7 +295,6 @@ class TestDataObject(unittest.TestCase):
                 howMany = int(doutils.allDataObjectContents(inputDO))
                 for i in xrange(howMany):
                     output.write(str(i) + " ")
-                output.setCompleted()
 
         # This is used as "D"
         class OddAndEvenContainerApp(BarrierAppDataObject):
@@ -310,8 +305,6 @@ class TestDataObject(unittest.TestCase):
                 numbers = doutils.allDataObjectContents(inputDO).strip().split()
                 for n in numbers:
                     outputs[int(n) % 2].write(n + " ")
-                outputs[0].setCompleted()
-                outputs[1].setCompleted()
 
         # Create DOs
         a =     InMemoryDataObject('oid:A', 'uid:A')
@@ -498,12 +491,12 @@ class TestDataObject(unittest.TestCase):
                 super(LastCharWriterApp, self).initialize(**kwargs)
                 self._lastChar = None
             def dataWritten(self, uid, data):
+                self.execStatus = AppDOStates.RUNNING
                 outputDO = self._outputs.values()[0]
                 self._lastChar = data[-1]
                 outputDO.write(self._lastChar)
             def dataObjectCompleted(self, uid):
-                outputDO = self._outputs.values()[0]
-                outputDO.setCompleted()
+                self.execStatus = AppDOStates.FINISHED
 
         a = InMemoryDataObject('a', 'a')
         b = LastCharWriterApp('b', 'b')

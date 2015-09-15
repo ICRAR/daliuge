@@ -42,7 +42,7 @@ import threading
 import warnings
 
 from ddap_protocol import DOStates
-from dfms.ddap_protocol import ExecutionMode, ChecksumTypes
+from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDOStates
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
@@ -969,6 +969,10 @@ class AppDataObject(ContainerDataObject):
         # of the consumers
         self._streamingInputs  = collections.OrderedDict()
 
+        # An AppDataObject has a second, separate state machine indicating its
+        # execution status.
+        self._execStatus = AppDOStates.NOT_RUN
+
     def addInput(self, inputDataObject):
         if inputDataObject not in self._inputs.values():
             uid = inputDataObject.uid
@@ -986,6 +990,16 @@ class AppDataObject(ContainerDataObject):
             uid = outputDataObject.uid
             self._outputs[uid] = outputDataObject
             outputDataObject.producer = self
+
+            def appFinished(e):
+                if e.execStatus not in (AppDOStates.FINISHED, AppDOStates.ERROR):
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug('Skipping event for output %s: %s' %(outputDataObject, str(e.__dict__)) )
+                    return
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug('Setting %s as completed after its producer finished: %s' %(outputDataObject, str(e.__dict__)))
+                outputDataObject.setCompleted()
+            self.subscribe(appFinished, eventType='execStatus')
 
     @property
     def outputs(self):
@@ -1015,6 +1029,17 @@ class AppDataObject(ContainerDataObject):
         By default no action is performed
         """
 
+    @property
+    def execStatus(self):
+        return self._execStatus
+
+    @execStatus.setter
+    def execStatus(self, execStatus):
+        if self._execStatus == execStatus:
+            return
+        self._execStatus = execStatus
+        self._fire('execStatus', execStatus=execStatus)
+
 class BarrierAppDataObject(AppDataObject):
     """
     An AppDataObject that implements a barrier. It accepts no streaming inputs
@@ -1034,8 +1059,17 @@ class BarrierAppDataObject(AppDataObject):
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
             # TODO: This is temporary and needs to be defined more clearly
-            self.setCompleted()
-            self.run()
+            self.status = DOStates.COMPLETED
+
+            # Keep track of the state of this application. Setting the state
+            # will fire an event to the subscribers of the execStatus events
+            self.execStatus = AppDOStates.RUNNING
+            try:
+                self.run()
+                self.execStatus = AppDOStates.FINISHED
+            except:
+                self.execStatus = AppDOStates.ERROR
+                raise
 
     # TODO: another thing we need to check
     def exists(self):
@@ -1076,9 +1110,6 @@ class CRCAppDataObject(BarrierAppDataObject):
         # Rely on whatever implementation we decide to use
         # for storing our data
         outputDO.write(str(crc))
-
-        # That's the only data we write; after that we are complete
-        outputDO.setCompleted()
 
 
 #===============================================================================
