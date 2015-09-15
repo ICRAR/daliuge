@@ -141,7 +141,7 @@ def _testGraph(execMode):
     a = InMemorySocketListenerDataObject('oid:A', 'uid:A', executionMode=aMode, lifespan=lifespan)
     d =           SumupContainerChecksum('oid:D', 'uid:D', executionMode=dMode, lifespan=lifespan)
     e =               InMemoryDataObject('oid:E', 'uid:E', executionMode=eMode, lifespan=lifespan)
-    e.producer = d
+    e.addProducer(d)
     for i in xrange(random.SystemRandom().randint(10, 20)):
         b =    SleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), executionMode=bMode, lifespan=lifespan)
         c = InMemoryDataObject('oid:C%d' % (i), 'uid:C%d' % (i), executionMode=cMode, lifespan=lifespan)

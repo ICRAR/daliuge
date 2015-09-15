@@ -116,11 +116,16 @@ class AbstractDataObject(object):
         # Maybe we want to have a different default value for this one?
         self._executionMode = executionMode
 
-        # 1-to-N relationship: one DataObject may have many consumers, but
-        # has only 1 producer. The potential consumers and producer are always
-        # AppDataObjects instances
+        # 1-to-N relationship: one DataObject may have many consumers and producers.
+        # The potential consumers and producers are always AppDataObjects instances
         self._consumers = []
-        self._producer  = None
+        self._producers = []
+
+        # Set holding the UID of the producers that have finished their
+        # execution. Once all producers have finished, this DataObject moves
+        # itself to the COMPLETED state
+        self._finishedProducers = set()
+        self._finishedProducersLock = threading.Lock()
 
         # Streaming consumers are objects that consume the data written in
         # this DataObject *as it gets written*, and therefore don't have to
@@ -619,25 +624,57 @@ class AbstractDataObject(object):
         self.subscribe(dataObjectCompleted, eventType='status')
 
     @property
-    def producer(self):
+    def producers(self):
         """
-        The producer for which this DataObject acts as a 'normal' consumer, if
-        any.
+        The list of producers that write to this DataObject
 
-        :see: `self.addConsumer()`
+        :see: `self.addProducer()`
         """
-        return self._producer
+        return self._producers[:]
 
-    @producer.setter
-    def producer(self, producer):
-        if self._producer == producer:
+    def addProducer(self, producer):
+        """
+        Adds a producer to this DataObject.
+
+        Producers are AppDataObjects that write into this DataObject; from the
+        producers' point of view, this DataObject is one of its many outputs.
+
+        When a producer has finished its execution, this DataObject will be
+        notified via the self.producerFinished() method.
+        """
+
+        # Don't add twice
+        if producer in self._producers:
             return
-        if self._producer and producer:
-            warnings.warn("A producer is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
-        if producer:
-            self._producer = producer
-            if hasattr(producer, 'addOutput'):
-                producer.addOutput(self)
+
+        self._producers.append(producer)
+
+        # Automatic back-reference
+        if hasattr(producer, 'addOutput'):
+            producer.addOutput(self)
+
+    def producerFinished(self, uid):
+        """
+        Callback called by each of the producers of this DataObject when their
+        execution finishes. Once all producers have finished this DataObject
+        moves to the COMPLETED state. This is one of the key mechanisms through
+        which the execution of a DataObject graph is accomplished.
+        """
+
+        # Is the UID actually referencing a producer
+        if uid not in [p.uid for p in self._producers]:
+            raise Exception("%s is not a producer of %r" % (uid, self))
+
+        with self._finishedProducersLock:
+            nFinished = len(self._finishedProducers)
+            if nFinished >= len(self._producers):
+                raise Exception("More producers finished that registered in DO %r" % (self))
+            self._finishedProducers.add(uid)
+
+        if (nFinished+1) == len(self._producers):
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("All producers finished for DO %r, proceeding to COMPLETE" % (self))
+            self.setCompleted()
 
     @property
     def streamingConsumers(self):
@@ -959,7 +996,7 @@ class AppDataObject(ContainerDataObject):
         # Inputs and Outputs are the DataObjects that get read from and written
         # to by this AppDataObject, respectively. An input DataObject will see
         # this AppDataObject as one of its consumers, while an output DataObject
-        # will see this AppDataObject as its single producer.
+        # will see this AppDataObject as one of its producers.
         #
         # Input objects will 
         self._inputs  = collections.OrderedDict()
@@ -989,7 +1026,7 @@ class AppDataObject(ContainerDataObject):
         if outputDataObject not in self._outputs.values():
             uid = outputDataObject.uid
             self._outputs[uid] = outputDataObject
-            outputDataObject.producer = self
+            outputDataObject.addProducer(self)
 
             def appFinished(e):
                 if e.execStatus not in (AppDOStates.FINISHED, AppDOStates.ERROR):
@@ -997,8 +1034,8 @@ class AppDataObject(ContainerDataObject):
                         logger.debug('Skipping event for output %s: %s' %(outputDataObject, str(e.__dict__)) )
                     return
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('Setting %s as completed after its producer finished: %s' %(outputDataObject, str(e.__dict__)))
-                outputDataObject.setCompleted()
+                    logger.debug('Notifying %r that its producer %r has finished: %s' %(outputDataObject, self, str(e.__dict__)))
+                outputDataObject.producerFinished(self.uid)
             self.subscribe(appFinished, eventType='execStatus')
 
     @property
@@ -1058,28 +1095,30 @@ class BarrierAppDataObject(AppDataObject):
         super(BarrierAppDataObject, self).dataObjectCompleted(uid)
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
-            # TODO: This is temporary and needs to be defined more clearly
+            # TODO: This needs to be defined more clearly
             self.status = DOStates.COMPLETED
+            self.execute()
 
-            # Keep track of the state of this application. Setting the state
-            # will fire an event to the subscribers of the execStatus events
-            self.execStatus = AppDOStates.RUNNING
-            try:
-                self.run()
-                self.execStatus = AppDOStates.FINISHED
-            except:
-                self.execStatus = AppDOStates.ERROR
-                raise
-
-    # TODO: another thing we need to check
-    def exists(self):
-        return True
+    def execute(self):
+        # Keep track of the state of this application. Setting the state
+        # will fire an event to the subscribers of the execStatus events
+        self.execStatus = AppDOStates.RUNNING
+        try:
+            self.run()
+            self.execStatus = AppDOStates.FINISHED
+        except:
+            self.execStatus = AppDOStates.ERROR
+            raise
 
     def run(self):
         """
         Run this application. It can be safely assumed that at this point all
         the required inputs are COMPLETED.
         """
+
+    # TODO: another thing we need to check
+    def exists(self):
+        return True
 
 class CRCAppDataObject(BarrierAppDataObject):
     '''
@@ -1233,8 +1272,7 @@ class dodict(dict):
         self._addSomething(otherDoDict, 'streamingInputs')
     def addOutput(self, otherDoDict):
         self._addSomething(otherDoDict, 'outputs')
-    @property
-    def producer(self, otherDoDict):
-        self['producer'] = otherDoDict['oid']
+    def addProducer(self, otherDoDict):
+        self._addSomething(otherDoDict, 'producers')
     def __setattr__(self, name, value):
         self[name] = value

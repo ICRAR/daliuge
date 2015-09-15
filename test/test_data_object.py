@@ -457,7 +457,7 @@ class TestDataObject(unittest.TestCase):
         b = CRCAppDataObject('b', 'b')
         c = InMemoryDataObject('c', 'c')
         a.addConsumer(b)
-        c.producer = b
+        c.addProducer(b)
 
         # Write and check
         dosToWaitFor = [] if mode == ExecutionMode.EXTERNAL else [c]
@@ -575,6 +575,36 @@ class TestDataObject(unittest.TestCase):
         # Revert to previous state
         shutil.rmtree(dirname, True)
         os.chdir(cwd)
+
+    def test_multipleProducers(self):
+        """
+        A test that checks that multiple-producers correctly drive the state of
+        their shared output
+        """
+        class App(BarrierAppDataObject): pass
+
+        a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in xrange(5)]
+        f = InMemoryDataObject('F', 'F')
+        for do in a,b,c,d,e:
+            do.addOutput(f)
+
+        self.assertEquals(DOStates.INITIALIZED, f.status)
+        for do in a,b,c,d,e:
+            self.assertEquals(AppDOStates.NOT_RUN, do.execStatus)
+
+        # Run the first 4 ones, F should still be in INITIALIZED
+        for do in a,b,c,d:
+            do.execute()
+        self.assertEquals(DOStates.INITIALIZED, f.status)
+        self.assertEquals(AppDOStates.NOT_RUN, e.execStatus)
+        for do in a,b,c,d:
+            self.assertEquals(AppDOStates.FINISHED, do.execStatus)
+
+        # Run the final one, now F should be COMPLETED
+        e.execute()
+        self.assertEquals(DOStates.COMPLETED, f.status)
+        for do in a,b,c,d,e:
+            self.assertEquals(AppDOStates.FINISHED, do.execStatus)
 
 if __name__ == '__main__':
     unittest.main()
