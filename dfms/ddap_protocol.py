@@ -40,6 +40,9 @@ class DOLinkType:
 class DOStates:
     INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = xrange(5)
 
+class AppDOStates:
+    NOT_RUN, RUNNING, FINISHED, ERROR = xrange(4)
+
 class DOPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
 

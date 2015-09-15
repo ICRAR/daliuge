@@ -41,8 +41,7 @@ import time
 
 from dfms import doutils
 from dfms.data_object import InMemoryDataObject, \
-    InMemorySocketListenerDataObject, BarrierAppDataObject, ContainerDataObject, \
-    AppDataObject
+    InMemorySocketListenerDataObject, BarrierAppDataObject, ContainerDataObject
 from dfms.ddap_protocol import ExecutionMode
 from test.test_data_object import SumupContainerChecksum
 
@@ -61,8 +60,7 @@ defaultSleepTime = None
 #===============================================================================
 class SimpleBarrierApp(BarrierAppDataObject):
     def run(self):
-        for outputDO in self._outputs.values():
-            outputDO.setCompleted()
+        pass
 
 class SleepAndCopyApp(BarrierAppDataObject):
     """
@@ -92,8 +90,6 @@ class SleepAndCopyApp(BarrierAppDataObject):
         outputs = self._outputs.values()
         for inputDO in inputs:
             self.copyRecursive(inputDO, outputs)
-        for outputDO in outputs:
-            outputDO.setCompleted()
 
     def copyRecursive(self, inputDO, outputs):
         if isinstance(inputDO, ContainerDataObject):
