@@ -153,6 +153,8 @@ class TestDOM(unittest.TestCase):
         d = Pyro4.Proxy(uris1[3])
         e = Pyro4.Proxy(uris2[0])
         f = Pyro4.Proxy(uris2[1])
+        for do,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
+            self.assertEquals(uid, do.uid, "Proxy is not the DO we think should be (assumed: %s/ actual: %s)" % (uid, do.uid))
         e.addInput(d)
         e.addInput(b)
 
@@ -165,7 +167,7 @@ class TestDOM(unittest.TestCase):
             b.setCompleted()
 
         for do in a,b,c,d,e,f:
-            self.assertEquals(DOStates.COMPLETED, do.status)
+            self.assertEquals(DOStates.COMPLETED, do.status, "DO %s is not COMPLETED" % (do.uid))
 
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(d)))
         self.assertEquals(b.checksum + d.checksum, int(doutils.allDataObjectContents(f)))
