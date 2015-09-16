@@ -26,8 +26,7 @@ var TYPE_CLASSES   = ['app', 'container', 'socket', 'plain']
 var TYPE_SHAPES    = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
-var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs']
-var  TO_ONE_RTL_RELS = ['producer']
+var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
 
 function getRender() {
 
@@ -43,7 +42,7 @@ function getRender() {
 		    { x: w,     y: -h},
 		    { x: w*0.2, y: -h},
 		];
-		shapeSvg = parent.insert("polygon", ":first-child")
+		var shapeSvg = parent.insert("polygon", ":first-child")
 		.attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
 		.attr("transform", "translate(" + (-w/2) + "," + (h/2) + ")");
 
@@ -57,42 +56,66 @@ function getRender() {
 	return render;
 }
 
-/**
- * Starts a regular background task that loads the list of all sessions held in
- * the DataObjectManager
- *
- * @param serverUrl The serverl URL
- * @param delay The amount of time between calls
- */
-function startLoadingSessions(ul, serverUrl, delay) {
-	function loadSessions() {
-		d3.json(serverUrl + '/api', function (error, response){
-			if( error ) {
+function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
+
+	refreshBtn.attr('disabled');
+	d3.json(serverUrl + '/api', function (error, response){
+		if( error ) {
+			console.error(error)
+			refreshBtn.attr('disabled', null);
+			return
+		}
+
+		var sessions = response['sessions'];
+		sessions.sort(function comp(a,b) {
+			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
+		});
+		var rows = tbodyEl.selectAll('tr').data(sessions);
+		rows.exit().transition().delay(200).duration(500).style('opacity',0.0).remove();
+		rows.enter().append('tr').style('opacity', 0.0).transition().delay(200).duration(500).style('opacity',1.0);
+
+		var idCells = rows.selectAll('td.id').data(function values(s) { return [s.sessionId]; });
+		idCells.enter().append('td').classed('id', true).text(String)
+		idCells.text(String)
+		idCells.exit().remove()
+
+		var statusCells = rows.selectAll('td.status').data(function values(s) { return [s.status]; });
+		statusCells.enter().append('td').classed('status', true).text(function(s) { return SESSION_STATUS[s]; })
+		statusCells.text(function(s) {return SESSION_STATUS[s]})
+		statusCells.exit().remove()
+
+		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
+		statusCells.enter().append('td').classed('details', true)
+		    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		    .append('span').classed('glyphicon glyphicon-share-alt', true)
+		statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		statusCells.exit().remove()
+
+		refreshBtn.attr('disabled', null);
+
+		if( scheduleNew ) {
+			d3.timer(function(){
+				loadSessions(serverUrl, tbodyEl, refreshBtn, true, delay);
+				return true;
+			}, delay);
+		}
+	});
+}
+
+function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
+	bootbox.prompt("Session ID", function(sessionId) {
+		if( sessionId == null ) {
+			return;
+		}
+		var xhr = d3.xhr(serverUrl + '/api/sessions/');
+		xhr.header("Content-Type", "application/json");
+		xhr.post(JSON.stringify({sessionId: sessionId}), function(error, data) {
+			if( error != null ) {
 				console.error(error)
-				return
 			}
-
-			sessions = response['sessions']
-			var lis = ulEl.selectAll('li').data(sessions)
-
-			// Updates
-			lis.select('a')
-				.attr('href', function(s) {return 'session?sessionId=' + s.sessionId})
-				.text(function(s) {return s.sessionId + " (" + SESSION_STATUS[s.status] + ")"})
-
-			// New items
-			lis.enter().append('li').append('a')
-				.attr('href', function(s) {return 'session?sessionId=' + s.sessionId})
-				.text(function(s) {return s.sessionId + " (" + SESSION_STATUS[s.status] + ")"})
-
-			// Old items
-			lis.exit().remove()
-
-			d3.timer(loadSessions, delay)
-		})
-		return true
-	}
-	d3.timer(loadSessions)
+			loadSessions(serverUrl, tbodyEl, refreshBtn, false)
+		});
+	});
 }
 
 /**
@@ -119,28 +142,27 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 				return
 			}
 
-			doSpecs = sessionInfo['graph']
-			status  = sessionInfo['sessionStatus']
+			var doSpecs = sessionInfo['graph']
+			var status  = sessionInfo['sessionStatus']
 			d3.select('#session-status').text(SESSION_STATUS[status])
 
 			// Keep track of modifications to see if we need to re-draw
-			modified = false
+			var modified = false
 
 			// #1: create missing nodes in the graph
 			for(idx in doSpecs) {
-				doSpec = doSpecs[idx]
-				oid = doSpec.oid
+				var doSpec = doSpecs[idx]
 				modified |= _addNode(g, doSpec)
 			}
 
 			// #2: establish missing relationships
 			for(idx in doSpecs) {
-				doSpec = doSpecs[idx]
-				lhOid = doSpec.oid
+				var doSpec = doSpecs[idx]
+				var lhOid = doSpec.oid
 
 				// x-to-many relationships producing lh->rh edges
 				for(relIdx in TO_MANY_LTR_RELS) {
-					rel = TO_MANY_LTR_RELS[relIdx]
+					var rel = TO_MANY_LTR_RELS[relIdx]
 					if( rel in doSpec ) {
 						for(rhOid in doSpec[rel]) {
 							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid])
@@ -149,20 +171,14 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 				}
 				// x-to-many relationships producing rh->lh edges
 				for(relIdx in TO_MANY_RTL_RELS) {
-					rel = TO_MANY_RTL_RELS[relIdx]
+					var rel = TO_MANY_RTL_RELS[relIdx]
 					if( rel in doSpec ) {
 						for(rhOid in doSpec[rel]) {
 							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid)
 						}
 					}
 				}
-				// x-to-one relationships producing rh->lh edges
-				for(relIdx in TO_ONE_RTL_RELS) {
-					rel = TO_ONE_RTL_RELS[relIdx]
-					if( rel in doSpec ) {
-						modified |= _addEdge(g, doSpec[rel], lhOid)
-					}
-				}
+				// there currently are no x-to-one relationships producing rh->lh edges
 				// there currently are no x-to-one relationships producing lh->rh edges
 			}
 
@@ -197,7 +213,7 @@ function _addNode(g, doSpec) {
 	var typeShape = TYPE_SHAPES[doSpec.type]
 	var notes = ''
 	if( doSpec.type == 'app' ) {
-		nameParts = doSpec.app.split('.')
+		var nameParts = doSpec.app.split('.')
 		notes = nameParts[nameParts.length - 1]
 	}
 	else if( doSpec.type == 'plain' ) {
