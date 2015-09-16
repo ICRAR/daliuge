@@ -46,14 +46,14 @@ class RestServer(object):
         app = Bottle()
 
         app.get(   '/api',                                   callback=self.getDOMStatus)
-        app.put(   '/api/sessions/<sessionId>',              callback=self.createSession)
+        app.post(  '/api/sessions/',                         callback=self.createSession)
         app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
         app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
         app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
         app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
         app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
         app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
-        app.put(   '/api/sessions/<sessionId>/graph/parts',  callback=self.addGraphParts)
+        app.post(  '/api/sessions/<sessionId>/graph/parts',  callback=self.addGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
 
         # The bad boys that serve HTML-related content
@@ -85,7 +85,9 @@ class RestServer(object):
             sessions.append({'sessionId': sessionId, 'status': self.dom.getSessionStatus(sessionId)})
         return json.dumps({'sessions': sessions, 'templates': self.dom.getTemplates()})
 
-    def createSession(self, sessionId):
+    def createSession(self):
+        newSession = request.json
+        sessionId = newSession['sessionId']
         self.dom.createSession(sessionId)
 
     def destroySession(self, sessionId):
