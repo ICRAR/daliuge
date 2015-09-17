@@ -19,16 +19,18 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import logging
-from dfms.data_object import AppDataObject
-from dfms.io import IOForURL, OpenMode
-import threading
-
 '''
 Utility methods and classes to be used when interacting with DataObjects
 
 @author: rtobar, July 3, 2015
 '''
+
+import logging
+import threading
+
+from dfms.data_object import AppDataObject, AbstractDataObject
+from dfms.io import IOForURL, OpenMode
+
 
 logger = logging.getLogger(__name__)
 
