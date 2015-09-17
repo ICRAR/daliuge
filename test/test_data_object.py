@@ -554,8 +554,8 @@ class TestDataObject(unittest.TestCase):
         cont2 = DirectoryContainer('f', 'f', dirname=dirname2)
 
         # Paths are absolutely reported
-        self.assertEquals('/tmp/.hidden', cont1.path)
-        self.assertEquals('/tmp/.hidden/inside', cont2.path)
+        self.assertEquals(os.path.realpath('/tmp/.hidden'), os.path.realpath(cont1.path))
+        self.assertEquals(os.path.realpath('/tmp/.hidden/inside'), os.path.realpath(cont2.path))
 
         # Certain children-to-be are rejected
         self.assertRaises(TypeError, cont1.addChild, NullDataObject('g', 'g'))
