@@ -24,7 +24,7 @@ import threading
 import time
 
 from dfms import doutils
-from dfms.data_object import AppDataObject
+from dfms.data_object import AppDataObject, AbstractDataObject
 from dfms.ddap_protocol import ExecutionMode, DOStates
 import luigi
 import importlib
@@ -100,7 +100,20 @@ class RunDataObjectTask(luigi.Task):
         re = []
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Checking requirements for RunDataObjectTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
-        for req in doutils.getUpstreamObjects(self.data_obj):
+
+        # The requires() method will be called not only when creating the
+        # initial tree of tasks, but also at runtime. For a given graph in a
+        # DOM that has been connected with to other graph running in a different
+        # DOM, it will mean that at runtime more upstream objects will be found
+        # for those nodes connected to an external graph. We shouldn't schedule
+        # those objects though, since they are scheduled by their own DOM.
+        # We simply filter then the upObjs here to return only those that are
+        # actually an instance of AbstractDataObject, thus removing any Pyro
+        # Proxy instances from the list
+        upObjs = doutils.getUpstreamObjects(self.data_obj)
+        upObjs = filter(lambda do: isinstance(do, AbstractDataObject), upObjs)
+
+        for req in upObjs:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
             re.append(RunDataObjectTask(req, self.sessionId))
