@@ -38,10 +38,10 @@ _LINKTYPE_TO_NREL = {
     DOLinkType.CHILD: 'children',
     DOLinkType.INPUT: 'inputs',
     DOLinkType.STREAMING_INPUT: 'streamingInputs',
-    DOLinkType.OUTPUT: 'outputs'
+    DOLinkType.OUTPUT: 'outputs',
+    DOLinkType.PRODUCER: 'producers'
 }
 _LINKTYPE_TO_REL = {
-    DOLinkType.PRODUCER: 'producer',
     DOLinkType.PARENT: 'parent',
 }
 
