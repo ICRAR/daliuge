@@ -34,7 +34,7 @@ class TestSession(unittest.TestCase):
             # Now we can't do any of these
             self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.addGraphSpec, '')
-            self.assertRaises(Exception, s.linkDataObjects, '', '', 0)
+            self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
 
     def test_addGraphSpec(self):
         with Session('1') as s:
@@ -58,8 +58,8 @@ class TestSession(unittest.TestCase):
             s.addGraphSpec('[{"oid":"C", "type":"container"}]')
 
             # Link them now
-            s.linkDataObjects('A', 'B', DOLinkType.CONSUMER)
-            s.linkDataObjects('B', 'C', DOLinkType.OUTPUT)
+            s.linkGraphParts('A', 'B', DOLinkType.CONSUMER)
+            s.linkGraphParts('B', 'C', DOLinkType.OUTPUT)
 
             # Deploy and check that the actual DOs are linked together
             s.deploy()

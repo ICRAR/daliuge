@@ -104,8 +104,8 @@ class DataObjectMgr(object):
         self.addGraphSpec(sessionId, graphSpec)
         return self.deploySession(sessionId)
 
-    def linkDataObjects(self, sessionId, lhOID, rhOID, linkType):
-        self._sessions[sessionId].linkDataObjects(lhOID, rhOID, linkType)
+    def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
+        self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
 
     def addGraphSpec(self, sessionId, graphSpec):
         self._sessions[sessionId].addGraphSpec(graphSpec)
