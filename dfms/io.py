@@ -269,6 +269,7 @@ class NgasIO(DataIO):
             # into NGAS is by accumulating it all on our side and finally
             # sending it over.
             self._buf = ''
+            self._writtenDataSize = 0
         return self._getClient()
 
     def _close(self, **kwargs):
@@ -277,15 +278,17 @@ class NgasIO(DataIO):
             reply, msg, _, _ = client._httpPost(
                      client.getHost(), client.getPort(), 'QARCHIVE',
                      'application/octet-stream', dataRef=self._buf,
-                     pars=[['filename',self.uid]], dataSource='BUFFER',
-                     dataSize=self.size)
+                     pars=[['filename',self._fileId]], dataSource='BUFFER',
+                     dataSize=self._writtenDataSize)
             self._buf = None
             if reply != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
                 # from the returning data and extract the real error message from
                 # there
                 raise Exception(msg)
-        del self._client
+
+        # Release the reference to _desc so the client object gets destroyed
+        del self._desc
 
     def _read(self, count, **kwargs):
         # Read data from NGAS and give it back to our reader
@@ -293,6 +296,7 @@ class NgasIO(DataIO):
 
     def _write(self, data, **kwargs):
         self._buf += data
+        self._writtenDataSize += len(data)
         return len(data)
 
     def exists(self):

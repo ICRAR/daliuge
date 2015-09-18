@@ -71,6 +71,9 @@ def complex_graph():
 
     return [a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t]
 
+def archiving_app(uid, host, port):
+    return [{'oid':uid, 'type':'app', 'app':'dfms.apps.archiving.NgasArchivingApp','ngasSrv':host,'ngasPort':port}]
+
 def pip_cont_img_pg(num_beam=1, num_time=2, num_freq=2, num_facet=2, num_grid=4, stokes=['I', 'Q', 'U', 'V']):
     """
     PIP continuum imaging pipeline

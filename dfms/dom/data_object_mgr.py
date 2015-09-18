@@ -161,7 +161,7 @@ class DataObjectMgr(object):
         #            templates.append(_functionAsTemplate(f))
 
         templates = []
-        for f in repository.complex_graph, repository.pip_cont_img_pg:
+        for f in repository.complex_graph, repository.pip_cont_img_pg, repository.archiving_app:
             templates.append(_functionAsTemplate(f))
         return templates
 
