@@ -106,7 +106,7 @@ def main(args=sys.argv):
                       dest="rest", help="Start the REST interface to receive external commands", default=False)
     parser.add_option("--restHost", action="store",
                       dest="restHost", help="The host to bind the REST server on")
-    parser.add_option("--restPort", action="store",
+    parser.add_option("--restPort", action="store", type="int",
                       dest="restPort", help="The port to bind the REST server on")
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this DOM", default=False)
