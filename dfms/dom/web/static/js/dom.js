@@ -71,8 +71,8 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
 			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
 		});
 		var rows = tbodyEl.selectAll('tr').data(sessions);
-		rows.exit().transition().delay(200).duration(500).style('opacity',0.0).remove();
-		rows.enter().append('tr').style('opacity', 0.0).transition().delay(200).duration(500).style('opacity',1.0);
+		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
+		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 
 		var idCells = rows.selectAll('td.id').data(function values(s) { return [s.sessionId]; });
 		idCells.enter().append('td').classed('id', true).text(String)
@@ -107,7 +107,7 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 		if( sessionId == null ) {
 			return;
 		}
-		var xhr = d3.xhr(serverUrl + '/api/sessions/');
+		var xhr = d3.xhr(serverUrl + '/api/sessions');
 		xhr.header("Content-Type", "application/json");
 		xhr.post(JSON.stringify({sessionId: sessionId}), function(error, data) {
 			if( error != null ) {

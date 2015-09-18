@@ -46,7 +46,7 @@ class RestServer(object):
         app = Bottle()
 
         app.get(   '/api',                                   callback=self.getDOMStatus)
-        app.post(  '/api/sessions/',                         callback=self.createSession)
+        app.post(  '/api/sessions',                          callback=self.createSession)
         app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
         app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
         app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
