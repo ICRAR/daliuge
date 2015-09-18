@@ -132,8 +132,6 @@ class SourceFlux(BarrierAppDataObject):
         if flux > 9E-4:
             print 'Valid flux: %s' % flux
             out.write(str(flux))
-        
-        out.setCompleted()
 
 class Clean(BarrierAppDataObject):
 
@@ -157,8 +155,6 @@ class Clean(BarrierAppDataObject):
         if result != 0:
             raise Exception('Error cleaning')
 
-        out.setCompleted()
-
 
 class Split(BarrierAppDataObject):
 
@@ -176,8 +172,6 @@ class Split(BarrierAppDataObject):
         result = q.get()
         if result != 0:
             raise Exception('Error cleaning')
-
-        out.setCompleted()
 
 
 class Barrier(object):
