@@ -54,6 +54,7 @@ class RestServer(object):
         app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
         app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
         app.post(  '/api/sessions/<sessionId>/graph/parts',  callback=self.addGraphParts)
+        app.post(  '/api/sessions/<sessionId>/graph/link',   callback=self.linkGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
 
         # The bad boys that serve HTML-related content
@@ -119,6 +120,13 @@ class RestServer(object):
     # TODO: addGraphParts v/s addGraphSpec
     def addGraphParts(self, sessionId):
         self.dom.addGraphSpec(sessionId, request.body)
+
+    def linkGraphParts(self, sessionId):
+        params = request.params
+        lhOID = params['lhOID']
+        rhOID = params['rhOID']
+        linkType = int(params['linkType'])
+        self.dom.linkGraphParts(sessionId, lhOID, rhOID, linkType)
 
     def materializeTemplate(self, tpl):
         tplParams = dict(request.params)

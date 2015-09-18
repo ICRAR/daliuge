@@ -135,12 +135,12 @@ class Session(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Added a graph definition with %d DataObjects" % (len(graphSpecDict)))
 
-    def linkDataObjects(self, lhOID, rhOID, linkType, force=False):
+    def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
         """
-        Links together two DataObjects (i.e., those pointed by `lhOID` and
-        `rhOID`) using `linkType`. The DataObjects must both already be part of
-        one of the graph specs contained in this session; otherwise an exception
-        will be raised.
+        Links together two DataObject specifications (i.e., those pointed by
+        `lhOID` and `rhOID`) using `linkType`. The DataObject specifications
+        must both already be part of one of the graph specs contained in this
+        session; otherwise an exception will be raised.
         """
         if self.status != SessionStates.PRISTINE:
             raise Exception("Can't link DOs anymore since this session isn't PRISTINE anymore")
