@@ -31,12 +31,14 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from dfms import doutils
+from dfms import doutils, ngaslite
 from dfms.ddap_protocol import DOStates
 from dfms.dom import cmdline
 from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.session import SessionStates
 from dfms.doutils import EvtConsumer
+import string
+import random
 
 
 class EvtConsumerProxyCtx(object):
@@ -342,10 +344,11 @@ class TestREST(unittest.TestCase):
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
+            msg = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
             for i in xrange(5):
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 1111+i))
-                s.send('a trivial message')
+                s.send(msg)
                 s.close()
 
             # Wait until the graph has finished its execution. We'll know
@@ -355,6 +358,16 @@ class TestREST(unittest.TestCase):
 
             self.assertEquals(SessionStates.FINISHED, self.get('/sessions/%s/status' % (sessionId), restPort))
             self.delete('/sessions/%s' % (sessionId), restPort)
+
+            # We put an NGAS archiving at the end of the chain, let's check that the DOs were copied over there
+            # Since the graph consists on several SleepAndCopy apps, T should contain the message repeated
+            # 9 times, and S should have it 4 times
+            def checkReplica(doId, copies):
+                response = ngaslite.retrieve('ngas.ddns.net', doId)
+                buff = response.read()
+                self.assertEquals(msg*copies, buff, "%s's replica doesn't look correct" % (doId))
+            checkReplica('T', 9)
+            checkReplica('S', 4)
 
         finally:
             domProcess.terminate()
