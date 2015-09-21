@@ -20,8 +20,7 @@
 #    MA 02111-1307  USA
 #
 from dfms.data_object import BarrierAppDataObject, ContainerDataObject
-from dfms.io import NgasIO, OpenMode
-import warnings
+from dfms.io import NgasIO, OpenMode, NgasLiteIO
 from dfms.doutils import DOFile
 
 class NgasArchivingApp(BarrierAppDataObject):
@@ -37,17 +36,8 @@ class NgasArchivingApp(BarrierAppDataObject):
 
     def initialize(self, **kwargs):
         BarrierAppDataObject.initialize(self, **kwargs)
-
-        # Check we actually can write NGAMS clients
-        try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport @UnresolvedImport
-        except:
-            warnings.warn("No NGAMS client libs found, cannot use NgasDataObjects")
-            raise
-
         self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
         self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        # TODO: The NGAS client doesn't differentiate between these, it should
         self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
         self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
 
@@ -62,7 +52,12 @@ class NgasArchivingApp(BarrierAppDataObject):
         if isinstance(inDO, ContainerDataObject):
             raise Exception("ContainerDataObjects are not supported as inputs for this application")
 
-        ngasIO = NgasIO(self._ngasSrv, inDO.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout)
+        size = -1 if inDO.size is None else inDO.size
+        try:
+            ngasIO = NgasIO(self._ngasSrv, inDO.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
+        except:
+            ngasIO = NgasLiteIO(self._ngasSrv, inDO.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
+
         ngasIO.open(OpenMode.OPEN_WRITE)
 
         # Copy in blocks of 4096 bytes
