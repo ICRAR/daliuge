@@ -25,6 +25,7 @@ import logging
 import os
 import urlparse
 import warnings
+from dfms import ngaslite
 
 
 logger = logging.getLogger(__name__)
@@ -242,7 +243,7 @@ class NgasIO(DataIO):
     in a file on the local filesystem and then move it to the NGAS destination
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2):
+    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
 
         # Check that we actually have the NGAMS client libraries
         try:
@@ -257,6 +258,7 @@ class NgasIO(DataIO):
         self._ngasConnectTimeout = ngasConnectTimeout
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
+        self._length             = length
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -307,9 +309,60 @@ class NgasIO(DataIO):
     def delete(self):
         pass # We never delete stuff from NGAS
 
+class NgasLiteIO(DataIO):
+    '''
+    An IO class whose data is finally stored into NGAS. It uses the ngaslite
+    module of dfms instead of the full client-side libraries provided by NGAS
+    itself, since they might not be installed everywhere.
+
+    The `ngaslite` module doesn't support the STATUS command yet, and because of
+    that this class will throw an error if its `exists` method is invoked.
+    '''
+
+    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+        super(NgasLiteIO, self).__init__()
+        self._ngasSrv            = hostname
+        self._ngasPort           = port
+        self._ngasConnectTimeout = ngasConnectTimeout
+        self._ngasTimeout        = ngasTimeout
+        self._fileId             = fileId
+        self._length             = length
+
+    def _getClient(self):
+        from ngamsPClient import ngamsPClient  # @UnresolvedImport
+        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
+
+    def _open(self, **kwargs):
+        if self._mode == OpenMode.OPEN_WRITE:
+            return ngaslite.beingArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, length=self._length)
+        return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
+
+    def _close(self, **kwargs):
+        if self._mode == OpenMode.OPEN_WRITE:
+            conn = self._desc
+            ngaslite.finishArchive(conn, self._fileId)
+            conn.close()
+        else:
+            response = self._desc
+            response.close()
+
+    def _read(self, count, **kwargs):
+        self._desc.read(count)
+
+    def _write(self, data, **kwargs):
+        self._desc.send(data)
+        return len(data)
+
+    def exists(self):
+        raise NotImplementedError("This method is not supported by this class")
+
+    def delete(self):
+        pass # We never delete stuff from NGAS
+
 def IOForURL(url):
     """
-    Returns a DataIO instance that handles the given URL for reading.
+    Returns a DataIO instance that handles the given URL for reading. If no
+    suitable DataIO class can be found to handle the URL, `None` is returned.
     """
     url = urlparse.urlparse(url)
     io = None
@@ -329,7 +382,11 @@ def IOForURL(url):
             hostname = networkLocation
             port = 7777
         fileId = url.path
-        io = NgasIO(hostname, fileId, port)
+        try:
+            io = NgasIO(hostname, fileId, port)
+        except:
+            logger.warning('NgasIO not available, using NgasLiteIO instead')
+            io = NgasLiteIO(hostname, fileId, port)
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug('I/O chosen for dataURL %s: %r' % (url, io))
