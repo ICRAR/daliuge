@@ -23,11 +23,39 @@ from dfms.data_object import BarrierAppDataObject, ContainerDataObject
 from dfms.io import NgasIO, OpenMode, NgasLiteIO
 from dfms.doutils import DOFile
 
-class NgasArchivingApp(BarrierAppDataObject):
+class ExternalStoreApp(BarrierAppDataObject):
+    """
+    An application that takes its input DataObject (which must be one, and only
+    one) and creates a copy of it in a completely external store, from the point
+    of view of the DFMS framework.
+
+    Because this application copies the data to an external location, it also
+    shouldn't contain any output, making it a leaf node of the physical graph
+    where it resides.
+    """
+
+    def run(self):
+
+        # Check that the constrains are correct
+        if self.outputs:
+            raise Exception("No outputs should be declared for this application")
+        if len(self.inputs) != 1:
+            raise Exception("Only one input is expected by this application")
+
+        # ... and go!
+        inDO = self.inputs[0]
+        self.store(inDO)
+
+    def store(self, inputDO):
+        """
+        Method implemented by subclasses. It should stores the contents of
+        `inputDO` into an external store.
+        """
+
+class NgasArchivingApp(ExternalStoreApp):
     '''
-    Module containing an archiving application class that takes a given DataObject
-    and archives it in an NGAS server. It currently deals with non-container
-    DataObjects only.
+    An ExternalStoreApp class that takes its input DataObject and archives it in
+    an NGAS server. It currently deals with non-container DataObjects only.
 
     The archiving to NGAS occurs through the framework and not by spawning a
     new NGAS client process. This way we can read the different storage types
@@ -35,20 +63,13 @@ class NgasArchivingApp(BarrierAppDataObject):
     '''
 
     def initialize(self, **kwargs):
-        BarrierAppDataObject.initialize(self, **kwargs)
+        super(NgasArchivingApp, self).initialize(**kwargs)
         self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
         self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
         self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
         self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
 
-    def run(self):
-
-        if self.outputs:
-            raise Exception("No outputs should be declared for this application")
-        if len(self.inputs) != 1:
-            raise Exception("Only one input is expected by this application")
-
-        inDO = self.inputs[0]
+    def store(self, inDO):
         if isinstance(inDO, ContainerDataObject):
             raise Exception("ContainerDataObjects are not supported as inputs for this application")
 

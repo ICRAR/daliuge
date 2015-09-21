@@ -30,7 +30,7 @@ still need to access NGAS from time to time.
 @author: rtobar
 '''
 
-def retrieve(host, fileId, port=7777, timeout=0):
+def retrieve(host, fileId, port=7777, timeout=None):
     """
     Retrieve the given fileId from the NGAS server located at `host`:`port`
 
