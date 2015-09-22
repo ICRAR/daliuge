@@ -301,6 +301,132 @@ def mwa_fornax_pg():
 
     return dob_root
 
+def chunks(l, n):
+    """
+    Yield successive n-sized chunks from l.
+    http://stackoverflow.com/questions/312443/
+    how-do-you-split-a-list-into-evenly-sized-chunks-in-python
+    """
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+def lofar_standard_pip_pg():
+    """
+    Lofar simple imaging pipeline
+    based on
+    Ger's email and
+    https://github.com/lofar-astron/lofar-profiling
+    """
+    roots = []
+
+    Cal_model_oid = "A-team/Calibrator"
+    dob_cal_model = InMemoryDataObject(Cal_model_oid, Cal_model_oid, lifespan=lifespan)
+    dob_cal_model.location = "catalogue.Groningen"
+    roots.append(dob_cal_model)
+
+    make_source_app_oid = "makesourcedb"
+    make_source_app = SleepAndCopyApp(make_source_app_oid, make_source_app_oid)
+    make_source_app.location = dob_cal_model.location
+    dob_cal_model.addConsumer(make_source_app)
+
+    source_db_oid = "cal source.db"
+    dob_source_db = InMemoryDataObject(source_db_oid, source_db_oid, lifespan=lifespan)
+    dob_source_db.location = dob_cal_model.location
+    make_source_app.addOutput(dob_source_db)
+
+    num_time_slice = 3
+    total_num_subband = 8
+    num_subb_per_image = 2
+
+    dob_img_dict = dict()
+    sb_chunks = chunks(range(1, total_num_subband + 1), num_subb_per_image)
+    for k, img_list in enumerate(sb_chunks):
+        imger_oid = "AWIMG_SB_{0}~{1}".format(img_list[0], img_list[-1])
+        dob_img = SleepAndCopyApp(imger_oid, imger_oid, lifespan=lifespan)
+        kk = k + 1
+        print k, img_list, kk
+        dob_img_dict[kk] = dob_img
+
+    for j in range(1, num_time_slice + 1):
+        sli = "T%02d" % j
+        for i in range(1, total_num_subband + 1):
+            # for LBA, assume each subband should have two beams
+            # one for calibration pipeline, the other for target / imaging pipeline
+            stri = "%s_SB%02d" % (sli, i)
+            time_slice_oid = "Socket_{0}".format(stri)
+            dob_time_slice = InMemorySocketListenerDataObject(time_slice_oid, time_slice_oid, lifespan=lifespan)
+            # all the same sub-bands (i) will be on the same node regardless of its time slice j
+            dob_time_slice.location = "Node%03d.Groningen" % i
+            roots.append(dob_time_slice)
+
+            oid_data_writer = "DataWriter_{0}".format(stri)
+            dob_ingest = SleepAndCopyApp(oid_data_writer, oid_data_writer, lifespan=lifespan)
+            dob_ingest.location = dob_time_slice.location
+            dob_time_slice.addConsumer(dob_ingest)
+
+            # assume a single measuremenset has multiple beams
+            oid = "CalNTgt.MS_{0}".format(stri)
+            dob_input = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            dob_ingest.addOutput(dob_input)
+            dob_input.location = dob_ingest.location
+
+            # For calibration, each time slice is calibrated independently, and
+            # the result is an output MS per subband
+            oid = "FlgAvg.MS_{0}".format(stri)
+            appOid = "NDPPP_" + stri
+            dob_flagged = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            flagApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            dob_input.addConsumer(flagApp)
+            dob_source_db.addConsumer(flagApp)
+            flagApp.addOutput(dob_flagged)
+            dob_flagged.location = dob_ingest.location #"C%03d.Groningen" % i
+
+            # solve the gain
+            oid = "Gain.TBL_{0}".format(stri)
+            appOid = "BBS_" + oid
+            dob_param_tbl = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            applyCalApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            dob_flagged.addConsumer(applyCalApp)
+            applyCalApp.addOutput(dob_param_tbl)
+            dob_param_tbl.location = dob_ingest.location
+
+            # or apply the gain to the dataset
+            oid = "CAL.MS_{0}".format(stri)
+            appOid = "BBS_" + oid
+            dob_calibrated = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            applyCalApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            dob_flagged.addConsumer(applyCalApp)
+            dob_param_tbl.addConsumer(applyCalApp)
+            applyCalApp.addOutput(dob_calibrated)
+            dob_calibrated.location = dob_ingest.location
+
+            img_k = (i - 1) / num_subb_per_image + 1
+            dob_img = dob_img_dict[img_k]
+            dob_calibrated.addConsumer(dob_img)
+            dob_img.location = dob_calibrated.location #overwrite to the last i
+
+        """
+        oid = "DIRTY.IMG_{0}".format(stri)
+        appOid = "AWIMAGER_" + oid
+        dob_dirty_img = InMemoryDataObject(oid, oid, lifespan=lifespan)
+        dirtyImagerApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+        dob_calibrated.addConsumer(dirtyImagerApp)
+        dirtyImagerApp.addOutput(dob_dirty_img)
+        dob_dirty_img.location = dob_ingest.location
+
+        oid = "CLEAN.IMG_{0}".format(stri)
+        appOid = "QA_n_AWIMAGER_" + oid
+        dob_clean_img = InMemoryDataObject(oid, oid, lifespan=lifespan)
+        cleanImagerApp =  SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+        dob_dirty_img.addConsumer(cleanImagerApp)
+        dob_calibrated.addConsumer(cleanImagerApp)
+        cleanImagerApp.addOutput(dob_clean_img)
+        dob_clean_img.location = dob_ingest.location
+
+            combineImgApp.addInput(dob_clean_img)
+        """
+    return roots
+
 def pip_cont_img_pg():
     """
     PIP continuum imaging pipeline
