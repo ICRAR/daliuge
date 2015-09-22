@@ -124,10 +124,12 @@ import string
 import threading
 import time
 
+from dfms import doutils
+from dfms.data_object import ContainerDataObject
+from dfms.ddap_protocol import DOStates, DOPhases
 import hsm.manager
 import registry
-from dfms import doutils
-from dfms.ddap_protocol import DOStates, DOPhases
+
 
 logger = logging.getLogger(__name__)
 
@@ -414,12 +416,15 @@ class DataLifecycleManager(object):
         # in a persistent storage media we don't need to save it again
         oid = dataObject.oid
         uid = dataObject.uid
-        if dataObject.precious and dataObject.isReplicable():
+        if dataObject.precious and self.isReplicable(dataObject):
             logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
             try:
                 self.replicateDataObject(dataObject)
             except:
                 logger.exception("Problem while replicating DataObject %s/%s" % (oid, uid))
+
+    def isReplicable(self, do):
+        return not isinstance(do, ContainerDataObject)
 
     def replicateDataObject(self, dataObject):
         '''

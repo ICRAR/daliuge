@@ -28,7 +28,7 @@ Utility methods and classes to be used when interacting with DataObjects
 import logging
 import threading
 
-from dfms.data_object import AppDataObject, AbstractDataObject
+from dfms.data_object import AppDataObject
 from dfms.io import IOForURL, OpenMode
 
 

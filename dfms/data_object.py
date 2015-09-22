@@ -77,13 +77,13 @@ class AbstractDataObject(object):
     checksum can be fed into this object for future reference.
 
     DataObjects can have consumers attached to them. 'Normal' consumers will
-    wait until the DataObject they 'consume' (their 'producer') moves to the
-    COMPLETED state and then will 'consume' it, most typically by opening it
+    wait until the DataObject they 'consume' (their 'input') moves to the
+    COMPLETED state and then will consume it, most typically by opening it
     and reading its contents, but any other operation could also be performed.
-    How the consumption is triggered depends on the producer's ``executionMode``
+    How the consumption is triggered depends on the producer's `executionMode`
     flag, which dictates whether it should trigger the consumption itself or
     if it should be manually triggered by an external entity. On the other hand,
-    streaming consumers receive the data that is written into its publisher
+    streaming consumers receive the data that is written into its input
     *as it gets written*. This mechanism is driven always by the DataObject that
     acts as a streaming input. Apart from receiving the data as it gets
     written into the DataObject, streaming consumers are also notified when the
@@ -96,25 +96,30 @@ class AbstractDataObject(object):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
-    def __init__(self, oid, uid,
-                 executionMode=ExecutionMode.DO,
-                 **kwargs):
+    def __init__(self, oid, uid, **kwargs):
         """
-        Constructor
-        oid:    object id (string)
-        uid:    uuid    (string)
+        Creates a DataObject. The only mandatory argument are the Object ID
+        (`oid`) and the Unique ID (`uid`) of the new object (see the `self.oid`
+        and `self.uid` methods for more information). Any extra arguments must
+        be keyed, and will be processed either by this method, or by the
+        `initialize` method.
+
+        This method should not be overwritten by subclasses. For any specific
+        initialization logic, the `initialize` method should be overwritten
+        instead. This allows us to move to the INITIALIZED state only after any
+        specific initialization has occurred in the subclasses.
         """
 
         super(AbstractDataObject, self).__init__()
+
+        # Copy it since we're going to modify it
+        kwargs = dict(kwargs)
 
         # So far only these three are mandatory
         self._oid = str(oid)
         self._uid = str(uid)
 
         self._bcaster = LocalEventBroadcaster()
-
-        # Maybe we want to have a different default value for this one?
-        self._executionMode = executionMode
 
         # 1-to-N relationship: one DataObject may have many consumers and producers.
         # The potential consumers and producers are always AppDataObjects instances
@@ -170,10 +175,13 @@ class AbstractDataObject(object):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
+        # Maybe we want to have a different default value for this one?
+        self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DO)
+
         # Expected lifespan for this object, used by to expire them
         lifespan = -1
         if kwargs.has_key('lifespan'):
-            lifespan = float(kwargs['lifespan'])
+            lifespan = float(kwargs.pop('lifespan'))
         self._expirationDate = -1
         if lifespan != -1:
             self._expirationDate = time.time() + lifespan
@@ -182,12 +190,12 @@ class AbstractDataObject(object):
         # after successive calls to write()
         self._expectedSize = -1
         if kwargs.has_key('expectedSize'):
-            self._expectedSize = int(kwargs['expectedSize'])
+            self._expectedSize = int(kwargs.pop('expectedSize'))
 
         # All DOs are precious unless stated otherwise; used for replication
         self._precious = True
         if kwargs.has_key('precious'):
-            self._precious = bool(kwargs['precious'])
+            self._precious = bool(kwargs.pop('precious'))
 
         try:
             self.initialize(**kwargs)
@@ -202,8 +210,8 @@ class AbstractDataObject(object):
 
     def _getArg(self, kwargs, key, default):
         val = default
-        if kwargs.has_key(key) and kwargs[key]:
-            val = kwargs[key]
+        if kwargs.has_key(key):
+            val = kwargs.pop(key)
         elif logger.isEnabledFor(logging.DEBUG):
             logger.debug("Defaulting %s to %s" % (key, str(val)))
         return val
@@ -219,7 +227,15 @@ class AbstractDataObject(object):
 
     def initialize(self, **kwargs):
         """
-        Hook for subclass initialization.
+        Performs any specific subclass initialization.
+
+        `kwargs` contains all the keyword arguments given at construction time,
+        except those used by the constructor itself. Implementations of this
+        method should make sure that arguments in the `kwargs` dictionary are
+        removed once they are interpreted so they are not interpreted by
+        accident by another method implementations that might reside in the call
+        hierarchy (in the case that a subclass implementation calls the parent
+        method implementation, which is usually the case).
         """
 
     def incrRefCount(self):
@@ -239,7 +255,7 @@ class AbstractDataObject(object):
     def open(self, **kwargs):
         """
         Opens the DataObject for reading, and returns a "DataObject descriptor"
-        that must be used when invoking the read() and close() method.
+        that must be used when invoking the read() and close() methods.
         DataObjects maintain a internal reference count based on the number
         of times they are opened for reading; because of that after a successful
         call to this method the corresponding close() method must eventually be
@@ -484,11 +500,12 @@ class AbstractDataObject(object):
         kwargs['uid'] = self.uid
         self._bcaster.fire(eventType, **kwargs)
 
-    def isReplicable(self):
-        return True
-
     @property
     def phase(self):
+        """
+        This DataObject's phase. The phase indicates the availability of a
+        DataObject.
+        """
         return self._phase
 
     @phase.setter
@@ -545,6 +562,11 @@ class AbstractDataObject(object):
 
     @property
     def parent(self):
+        """
+        The DataObject that acts as the parent of the current one. This
+        parent/child relationship is created by ContainerDataObjects, which are
+        a specific kind of DataObject.
+        """
         return self._parent
 
     @parent.setter
@@ -573,15 +595,15 @@ class AbstractDataObject(object):
         """
         Adds a consumer to this DataObject.
 
-        Consumers are a particular kind of subscriber that are only interested
-        on the status change of DataObjects to COMPLETED. When the expected
-        status change occurs, the consumers' `consume()` method is invoked with
-        a reference to the DataObject that changed state.
+        Consumers are normally (but not necessarily) AppDataObjects that get
+        notified when this DataObject moves into the COMPLETED state. This is
+        notified by calling the consumer's `dataObjectCompleted` method with the
+        UID of this DataObject.
 
         This is one of the key mechanisms by which the DataObject graph is
-        executed automatically. If DataObject C consumes DataObject B, and B
-        consumes C, then as soon as A transitions to COMPLETED B will consume A,
-        and when B is finally COMPLETED C is triggered.
+        executed automatically. If AppDataObject B consumes DataObject A, then
+        as soon as A transitions to COMPLETED B will be notified and will
+        probably start its execution.
         """
 
         # Consumers have a "consume" method that gets invoked when
@@ -657,8 +679,12 @@ class AbstractDataObject(object):
         """
         Callback called by each of the producers of this DataObject when their
         execution finishes. Once all producers have finished this DataObject
-        moves to the COMPLETED state. This is one of the key mechanisms through
-        which the execution of a DataObject graph is accomplished.
+        moves to the COMPLETED state.
+
+        This is one of the key mechanisms through which the execution of a
+        DataObject graph is accomplished. If AppDataObject A produces DataObject
+        B, as soon as A finishes its execution B will be notified and will move
+        itself to COMPLETED.
         """
 
         # Is the UID actually referencing a producer
@@ -689,9 +715,9 @@ class AbstractDataObject(object):
         """
         Adds a streaming consumer to this DataObject.
 
-        Streaming consumers are objects that receive the data written into this
-        DataObject *as it gets written*, and therefore do not need to wait until
-        this DataObject has been moved to the COMPLETED state.
+        Streaming consumers are AppDataObjects that receive the data written
+        into this DataObject *as it gets written*, and therefore do not need to
+        wait until this DataObject has been moved to the COMPLETED state.
         """
 
         # Consumers have a "consume" method that gets invoked when
@@ -716,10 +742,10 @@ class AbstractDataObject(object):
 
     def setCompleted(self):
         '''
-        Manually moves this DO to the COMPLETED state. This can be used when
-        not all the expected data has arrived for a given DO, but it should
-        still be moved to COMPLETED, or when the expected amount of data
-        held by a DataObject is not known in advanced.
+        Moves this DO to the COMPLETED state. This can be used when not all the
+        expected data has arrived for a given DO, but it should still be moved
+        to COMPLETED, or when the expected amount of data held by a DataObject
+        is not known in advanced.
         '''
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
             raise Exception("DataObject %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
@@ -748,23 +774,24 @@ class AbstractDataObject(object):
     @property
     def location(self):
         """
-        return where the "actual" data is located
-        the location could be a Compute node or a Island or just the buffer URL
+        An attribute indicating the physical location of this DataObject. Its
+        value doesn't necessarily represent the real physical location of the
+        object or its data, and should simply be used as an informal piece of
+        information
         """
-        if (self._location is not None):
-            return self._location
-        else:
-            return ''
+        return self._location
 
     @location.setter
     def location(self, value):
-        """
-        This should be set when the physical graph was built
-        """
         self._location = value
 
     @property
     def uri(self):
+        """
+        An attribute indicating the URI of this DataObject. The meaning of this
+        URI is not formal, and it's currently used to hold the Pyro URI of
+        DataObjects that are activated via a Pyro Daemon.
+        """
         return self._uri
 
     @uri.setter
@@ -772,6 +799,9 @@ class AbstractDataObject(object):
         self._uri = uri
 
 class FileDataObject(AbstractDataObject):
+    """
+    A DataObject that points to data stored in a mounted filesystem.
+    """
 
     def initialize(self, **kwargs):
         """
@@ -795,6 +825,9 @@ class FileDataObject(AbstractDataObject):
 
     @property
     def path(self):
+        """
+        Returns the absolute path of the file pointed by this DataObject.
+        """
         return self._fnm
 
     @property
@@ -804,35 +837,14 @@ class FileDataObject(AbstractDataObject):
 
 class NgasDataObject(AbstractDataObject):
     '''
-    A DataObject whose data is finally stored into NGAS. Since NGAS doesn't
-    support appending data to existing files, we store all the data temporarily
-    in a file on the local filesystem and then move it to the NGAS destination
+    A DataObject that points to data stored in an NGAS server
     '''
 
     def initialize(self, **kwargs):
-
-        # Check we actually can write NGAMS clients
-        try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport @UnresolvedImport
-        except:
-            warnings.warn("No NGAMS client libs found, cannot use NgasDataObjects")
-            raise
-
         self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
         self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        # TODO: The NGAS client doesn't differentiate between these, it should
         self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
         self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
-
-        # The NGAS client API doesn't have a way to continually feed an ARCHIVE
-        # request with data. Thus the only way we can currently archive data
-        # into NGAS is by accumulating it all on our side and finally
-        # sending it over.
-        self._buf = ''
-
-    def _getClient(self):
-        from ngamsPClient import ngamsPClient  # @UnresolvedImport
-        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
 
     def getIO(self):
         return NgasIO(self._ngasSrv, self.uid, port=self._ngasPort,
@@ -844,14 +856,14 @@ class NgasDataObject(AbstractDataObject):
         return "ngas://%s:%d/%s" % (self._ngasSrv, self._ngasPort, self.uid)
 
 class InMemoryDataObject(AbstractDataObject):
+    """
+    A DataObject that points data stored in memory.
+    """
 
     def initialize(self, **kwargs):
-        self._wio = None
-        self._buf = None
+        self._buf = StringIO()
 
     def getIO(self):
-        if self._buf is None:
-            self._buf = StringIO()
         return MemoryIO(self._buf)
 
     @property
@@ -861,7 +873,7 @@ class InMemoryDataObject(AbstractDataObject):
 
 class NullDataObject(AbstractDataObject):
     """
-    A DataObject that stores no data
+    A DataObject that doesn't store any data.
     """
 
     def getIO(self):
@@ -874,8 +886,8 @@ class NullDataObject(AbstractDataObject):
 class ContainerDataObject(AbstractDataObject):
     """
     A DataObject that doesn't directly point to some piece of data, but instead
-    holds references to other DataObjects, and from them its own internal state
-    is deduced.
+    holds references to other DataObjects (its children), and from them its own
+    internal state is deduced.
 
     Because of its nature, ContainerDataObjects cannot be written to directly,
     and likewise they cannot be read from directly. One instead has to pay
@@ -929,10 +941,6 @@ class ContainerDataObject(AbstractDataObject):
         #       "exists" is
         return reduce(__or__, [c.exists() for c in self._children])
 
-    def isReplicable(self):
-        return False
-
-
 class DirectoryContainer(ContainerDataObject):
     """
     A ContainerDataObject that represents a filesystem directory. It only allows
@@ -980,13 +988,28 @@ class DirectoryContainer(ContainerDataObject):
 
 class AppDataObject(ContainerDataObject):
 
-    __metaclass__ = ABCMeta
-
     '''
-    An AppDataObject is a DataObject that reads data from one or more
-    DataObjects (its inputs), processes it, and writes data onto one or more
-    DataObjects (its outputs). Once it has finished writing each output, it
-    moves the output's state to COMPLETED.
+    An AppDataObject is a DataObject representing an application that reads data
+    from one or more DataObjects (its inputs), and writes data onto one or more
+    DataObjects (its outputs).
+
+    AppDataObjects accept two different kind of inputs: "normal" and "streaming"
+    inputs. Normal inputs are DataObjects that must be on the COMPLETED state
+    (and therefore their data must be fully written) before this application is
+    run, while streaming inputs are DataObjects that feed chunks of data into
+    this application as the data gets written into the them.
+
+    This class contains two methods that should be overwritten as needed by
+    subclasses: `dataObjectCompleted`, invoked when input DataObjects move to
+    COMPLETED, and `dataWritten`, invoked with the data coming from streaming
+    inputs.
+
+    How and when applications are executed is completely up to the user, and is
+    not enforced by this base class. Some applications might need to be run at
+    `initialize` time, while other might start during the first invocation of
+    `dataWritten`. A common scenario anyway is to start an application only
+    after all its inputs have moved to COMPLETED (implying that none of them is
+    an streaming input); for these cases see the `BarrierAppDataObject`.
     '''
 
     def initialize(self, **kwargs):
@@ -1018,6 +1041,9 @@ class AppDataObject(ContainerDataObject):
 
     @property
     def inputs(self):
+        """
+        The list of inputs set into this AppDataObject
+        """
         return self._inputs.values()
 
     def addOutput(self, outputDataObject):
@@ -1040,6 +1066,9 @@ class AppDataObject(ContainerDataObject):
 
     @property
     def outputs(self):
+        """
+        The list of outputs set into this AppDataObject
+        """
         return self._outputs.values()
 
     def addStreamingInput(self, streamingInputDO):
@@ -1050,13 +1079,16 @@ class AppDataObject(ContainerDataObject):
 
     @property
     def streamingInputs(self):
+        """
+        The list of streaming inputs set into this AppDataObject
+        """
         return self._streamingInputs.values()
 
     def dataObjectCompleted(self, uid):
         """
-        Callback invoked when `dataObject` (which is one of the inputs of this
-        AppDataObject) has moved to the COMPLETED state. By default no action is
-        performed
+        Callback invoked when the DataObject with UID `uid` (which is either a
+        normal or a streaming input of this AppDataObject) has moved to the
+        COMPLETED state. By default no action is performed.
         """
 
     def dataWritten(self, uid, data):
@@ -1068,6 +1100,9 @@ class AppDataObject(ContainerDataObject):
 
     @property
     def execStatus(self):
+        """
+        The execution status of this AppDataObject
+        """
         return self._execStatus
 
     @execStatus.setter
@@ -1079,9 +1114,13 @@ class AppDataObject(ContainerDataObject):
 
 class BarrierAppDataObject(AppDataObject):
     """
-    An AppDataObject that implements a barrier. It accepts no streaming inputs
-    and it waits until all its inputs have been moved to COMPLETED to execute
-    its 'run' method.
+    An AppDataObject accepts no streaming inputs and waits until all its inputs
+    have been moved to COMPLETED to execute its 'run' method, which must be
+    overwritten by subclasses.
+
+    In the case that this object has more than one input it effectively acts as
+    a logical barrier that joins two threads of executions. In the case that
+    this object has only one input this will act simply like a batch execution.
     """
 
     def initialize(self, **kwargs):
@@ -1247,10 +1286,10 @@ class dodict(dict):
     enforce these requirements though, as it only acts as an information
     container.
 
-    This class also offers a few utility methods to make it more like an actual
-    DataObject. This way, users can user the same set of methods both to create
-    DataObjects representations (i.e., instances of this class) and actual
-    DataObject instances.
+    This class also offers a few utility methods to make it look more like an
+    actual DataObject class. This way, users can use the same set of methods
+    both to create DataObjects representations (i.e., instances of this class)
+    and actual DataObject instances.
 
     Users of this class are, for example, the graph_loader module which deals
     with JSON -> DO representation transformations, and the different
