@@ -319,6 +319,10 @@ def lofar_standard_pip_pg():
     """
     roots = []
 
+    num_time_slice = 3
+    total_num_subband = 8
+    num_subb_per_image = 2
+
     Cal_model_oid = "A-team/Calibrator"
     dob_cal_model = InMemoryDataObject(Cal_model_oid, Cal_model_oid, lifespan=lifespan)
     dob_cal_model.location = "catalogue.Groningen"
@@ -329,23 +333,27 @@ def lofar_standard_pip_pg():
     make_source_app.location = dob_cal_model.location
     dob_cal_model.addConsumer(make_source_app)
 
-    source_db_oid = "cal source.db"
+    source_db_oid = "CalSource.db"
     dob_source_db = InMemoryDataObject(source_db_oid, source_db_oid, lifespan=lifespan)
     dob_source_db.location = dob_cal_model.location
     make_source_app.addOutput(dob_source_db)
 
-    num_time_slice = 3
-    total_num_subband = 8
-    num_subb_per_image = 2
+    GSM_oid = "GlobalSkyModel"
+    dob_gsm = InMemoryDataObject(GSM_oid, GSM_oid, lifespan=lifespan)
+    dob_gsm.location = "catalogue.Groningen"
+    roots.append(dob_gsm)
 
     dob_img_dict = dict()
     sb_chunks = chunks(range(1, total_num_subband + 1), num_subb_per_image)
     for k, img_list in enumerate(sb_chunks):
-        imger_oid = "AWIMG_SB_{0}~{1}".format(img_list[0], img_list[-1])
+        imger_oid = "AWImager_SB_{0}~{1}".format(img_list[0], img_list[-1])
         dob_img = SleepAndCopyApp(imger_oid, imger_oid, lifespan=lifespan)
         kk = k + 1
-        print k, img_list, kk
-        dob_img_dict[kk] = dob_img
+        #print k, img_list, kk
+        img_prod_oid = "Image_SB_{0}~{1}".format(img_list[0], img_list[-1])
+        dob_img_prod = InMemoryDataObject(img_prod_oid, img_prod_oid, lifespan=lifespan)
+        dob_img.addOutput(dob_img_prod)
+        dob_img_dict[kk] = (dob_img, dob_img_prod)
 
     for j in range(1, num_time_slice + 1):
         sli = "T%02d" % j
@@ -370,61 +378,96 @@ def lofar_standard_pip_pg():
             dob_ingest.addOutput(dob_input)
             dob_input.location = dob_ingest.location
 
+            #split by beam - calibrator beam and target beam
+            appOid = "Split_{0}".format(stri)
+            splitApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            splitApp.location = dob_ingest.location
+            dob_input.addConsumer(splitApp)
+
+            oid = "Cal_BEAM_{0}".format(stri)
+            dob_cal_beam = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            dob_cal_beam.location = dob_ingest.location
+            splitApp.addOutput(dob_cal_beam)
+
+            oid = "Tgt_BEAM_{0}".format(stri)
+            dob_tgt_beam = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            dob_tgt_beam.location = dob_ingest.location
+            splitApp.addOutput(dob_tgt_beam)
+
+            # flag the cal beam
+            oid = "FlgCal.MS_{0}".format(stri)
+            appOid = "NDPPP_Cal" + stri
+            dob_cal_flagged = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            flagCalApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            dob_cal_beam.addConsumer(flagCalApp)
+            dob_source_db.addConsumer(flagCalApp)
+            flagCalApp.addOutput(dob_cal_flagged)
+            flagCalApp.location = dob_ingest.location
+            dob_cal_flagged.location = dob_ingest.location #"C%03d.Groningen" % i
+
+            # flag the target beam
+            oid = "FlgTgt.MS_{0}".format(stri)
+            appOid = "NDPPP_Tgt" + stri
+            dob_tgt_flagged = InMemoryDataObject(oid, oid, lifespan=lifespan)
+            flagTgtApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            dob_tgt_beam.addConsumer(flagTgtApp)
+            dob_source_db.addConsumer(flagTgtApp)
+            flagTgtApp.addOutput(dob_tgt_flagged)
+            flagTgtApp.location = dob_ingest.location
+            dob_tgt_flagged.location = dob_ingest.location
+
             # For calibration, each time slice is calibrated independently, and
             # the result is an output MS per subband
-            oid = "FlgAvg.MS_{0}".format(stri)
-            appOid = "NDPPP_" + stri
-            dob_flagged = InMemoryDataObject(oid, oid, lifespan=lifespan)
-            flagApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
-            dob_input.addConsumer(flagApp)
-            dob_source_db.addConsumer(flagApp)
-            flagApp.addOutput(dob_flagged)
-            dob_flagged.location = dob_ingest.location #"C%03d.Groningen" % i
-
             # solve the gain
             oid = "Gain.TBL_{0}".format(stri)
-            appOid = "BBS_" + oid
+            appOid = "BBS_GainCal_{0}".format(stri)
             dob_param_tbl = InMemoryDataObject(oid, oid, lifespan=lifespan)
-            applyCalApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
-            dob_flagged.addConsumer(applyCalApp)
-            applyCalApp.addOutput(dob_param_tbl)
+            gainCalApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            dob_cal_flagged.addConsumer(gainCalApp)
+            gainCalApp.addOutput(dob_param_tbl)
+            gainCalApp.location = dob_ingest.location
             dob_param_tbl.location = dob_ingest.location
 
             # or apply the gain to the dataset
             oid = "CAL.MS_{0}".format(stri)
-            appOid = "BBS_" + oid
+            appOid = "BBS_ApplyCal_{0}".format(stri)
             dob_calibrated = InMemoryDataObject(oid, oid, lifespan=lifespan)
             applyCalApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
-            dob_flagged.addConsumer(applyCalApp)
+            dob_tgt_flagged.addConsumer(applyCalApp)
             dob_param_tbl.addConsumer(applyCalApp)
             applyCalApp.addOutput(dob_calibrated)
+            applyCalApp.location = dob_ingest.location
             dob_calibrated.location = dob_ingest.location
 
+            # extract local sky model (LSM) from GSM
+            appOid = "Extract_LSM_{0}".format(stri)
+            extractLSMApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+            extractLSMApp.location = dob_ingest.location
+            dob_gsm.addConsumer(extractLSMApp)
+            LSM_oid = "LSM_{0}".format(stri)
+            dob_lsm = InMemoryDataObject(LSM_oid, LSM_oid, lifespan=lifespan)
+            dob_lsm.location = dob_ingest.location
+            extractLSMApp.addOutput(dob_lsm)
+
+            # convert LSM to source.db
+            makesource_app_oid = "makesourcedb_{0}".format(stri)
+            makesource_app = SleepAndCopyApp(makesource_app_oid, makesource_app_oid)
+            makesource_app.location = dob_ingest.location
+            dob_lsm.addConsumer(makesource_app)
+
+            sourcedb_oid = "LSM_db_{0}".format(stri)
+            dob_lsmdb = InMemoryDataObject(sourcedb_oid, sourcedb_oid, lifespan=lifespan)
+            dob_lsmdb.location = dob_ingest.location
+            makesource_app.addOutput(dob_lsmdb)
+
+            # add awimager
             img_k = (i - 1) / num_subb_per_image + 1
-            dob_img = dob_img_dict[img_k]
+            dob_img, dob_img_prod = dob_img_dict[img_k]
             dob_calibrated.addConsumer(dob_img)
+            dob_lsmdb.addConsumer(dob_img)
             dob_img.location = dob_calibrated.location #overwrite to the last i
+            dob_img_prod.location = dob_img.location
 
-        """
-        oid = "DIRTY.IMG_{0}".format(stri)
-        appOid = "AWIMAGER_" + oid
-        dob_dirty_img = InMemoryDataObject(oid, oid, lifespan=lifespan)
-        dirtyImagerApp = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
-        dob_calibrated.addConsumer(dirtyImagerApp)
-        dirtyImagerApp.addOutput(dob_dirty_img)
-        dob_dirty_img.location = dob_ingest.location
-
-        oid = "CLEAN.IMG_{0}".format(stri)
-        appOid = "QA_n_AWIMAGER_" + oid
-        dob_clean_img = InMemoryDataObject(oid, oid, lifespan=lifespan)
-        cleanImagerApp =  SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
-        dob_dirty_img.addConsumer(cleanImagerApp)
-        dob_calibrated.addConsumer(cleanImagerApp)
-        cleanImagerApp.addOutput(dob_clean_img)
-        dob_clean_img.location = dob_ingest.location
-
-            combineImgApp.addInput(dob_clean_img)
-        """
     return roots
 
 def pip_cont_img_pg():
