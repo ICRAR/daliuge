@@ -26,10 +26,14 @@ import shutil
 import string
 import unittest
 
+from docker.client import AutoVersionClient
+from docker.errors import DockerException
+
 from dfms import doutils
 from dfms.apps.dockerapp import DockerApp
 from dfms.data_object import FileDataObject
 from dfms.doutils import DOWaiterCtx
+import warnings
 
 
 class DockerTests(unittest.TestCase):
@@ -43,7 +47,17 @@ class DockerTests(unittest.TestCase):
         file into another via the command-line cp utility. It then checks that
         the contents of the target DO are correct, and that the target file is
         actually owned by our process.
+
+        The test will not run if a docker daemon cannot be contacted though;
+        this is to avoid failures in machines that don't have a docker service
+        running.
         """
+
+        try:
+            AutoVersionClient()
+        except DockerException:
+            warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
+            return
 
         a = FileDataObject('a', 'a')
         b = DockerApp('b', 'b', image='ubuntu:14.04', command='cp %i0 %o0')
