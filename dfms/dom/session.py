@@ -237,6 +237,7 @@ class Session(object):
 
     def _run(self, worker):
         worker.run()
+        worker.stop()
         self.status = SessionStates.FINISHED
 
     def getGraphStatus(self):

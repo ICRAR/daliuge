@@ -118,14 +118,13 @@ def invoke_clean(q, vis, outcube):
 class SourceFlux(BarrierAppDataObject):
 
     def run(self):
-        inp = self._inputs.values()[0]
-        out = self._outputs.values()[0]
+        inp = self.inputs[0]
+        out = self.outputs[0]
 
-        print 'Calculating source flux on ', inp._path + '.image'
+        print 'Calculating source flux on ', inp.path + '.image'
 
-        import drivecasa
         casa = drivecasa.Casapy(casa_dir = CASAPY, timeout = 180)
-        casa.run_script(['ia.open("'"%s"'")' % (inp._path + '.image')])
+        casa.run_script(['ia.open("'"%s"'")' % (inp.path + '.image')])
         casa.run_script(['flux = ia.pixelvalue([128,128,0,179])["'"value"'"]["'"value"'"]'])
         casaout, _ = casa.run_script(['print flux'])
         flux = float(casaout[0])
@@ -138,16 +137,16 @@ class Clean(BarrierAppDataObject):
     def run(self):
 
         vis = []
-        inp = self._inputs.values()
-        out = self._outputs.values()[0]
+        inp = self.inputs
+        out = self.outputs[0]
 
         for i in inp:
-            vis.append(i._path)
+            vis.append(i.path)
 
         print 'Cleaning ', vis
 
         q = Queue.Queue()    
-        t = threading.Thread(target = invoke_clean, args = (q, vis, out._path))
+        t = threading.Thread(target = invoke_clean, args = (q, vis, out.path))
         t.start()
         t.join()
 
@@ -159,13 +158,13 @@ class Clean(BarrierAppDataObject):
 class Split(BarrierAppDataObject):
 
     def run(self):
-        inp = self._inputs.values()[0]
-        out = self._outputs.values()[0]
+        inp = self.inputs[0]
+        out = self.outputs[0]
 
-        print 'Splitting ', inp._path
+        print 'Splitting ', inp.path
 
         q = Queue.Queue()
-        t = threading.Thread(target = invoke_split, args = (q, inp._path, out._path))
+        t = threading.Thread(target = invoke_split, args = (q, inp.path, out.path))
         t.start()
         t.join()
         
