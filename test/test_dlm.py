@@ -26,6 +26,7 @@ Created on 22 Jun 2015
 '''
 
 import os
+import shutil
 import time
 import unittest
 from unittest.case import TestCase
@@ -36,6 +37,10 @@ from dfms.lifecycle import dlm
 
 
 class TestDataLifecycleManager(TestCase):
+
+    def tearDown(self):
+        shutil.rmtree("/tmp/sdp_dfms", True)
+        shutil.rmtree("/tmp/sdp-hsm", True)
 
     def _writeAndClose(self, dataObject):
         '''
