@@ -33,7 +33,6 @@ from cStringIO import StringIO
 import collections
 import heapq
 import logging
-from operator import __or__
 import os, time
 import random
 import socket
@@ -939,7 +938,7 @@ class ContainerDataObject(AbstractDataObject):
     def exists(self):
         # TODO: Or should it be __and__? Depends on what the exact contract of
         #       "exists" is
-        return reduce(__or__, [c.exists() for c in self._children])
+        return reduce(lambda a,b: a or b, [c.exists() for c in self._children])
 
 class DirectoryContainer(ContainerDataObject):
     """
