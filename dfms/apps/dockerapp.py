@@ -56,6 +56,9 @@ class DockerApp(BarrierAppDataObject):
     Docker containers also need a command to be run in them, which should be
     an available program inside the image.
 
+    Input and output
+    ----------------
+
     The inputs and outputs used by the dockerized application are made available
     by mapping host directories and files as "data volumes". Since non-existing
     files will appear as directories in the container filesystem, this class
@@ -79,6 +82,61 @@ class DockerApp(BarrierAppDataObject):
     command-line specification. Placeholders for input locations take the form
     of "%iX", where X starts from 0 and refers to the X-th input. Likewise,
     output locations are specified as "%oX".
+
+    Linking containers
+    ------------------
+
+    Although some containerized applications might run on their own, there are
+    cases where applications need to talk to each other in order to advance
+    (like in the case of client-server applications, or in the case of MPI
+    applications). All containers started in the same host (and therefore, all
+    applications running in them) belong by default to the same network, and
+    therefore are already visible. The problem lies on getting them to know the
+    hosts they should contact. See the TODO below.
+
+    TODO:
+    -----
+    I manually tried to run an MPI program across more than one docker
+    container and succeeded on it. In one container A I started simply an ssh
+    server (the slave node), while on a second one I started the main mpiexec
+    process (the master node). Thanks to this exercise a few things that need to
+    be taken into account became clear:
+
+    a) We need to have a placeholder mechanism to be able to refer to the IP of
+    some other docker container, probably using the uid of the DockerApp we're
+    referring to, something like:
+
+    a = DockerApp('A', image='slave_image', cmd='sshd')
+    b = DockerApp('B', image='master_image', cmd='mpiexec -H localhost,%ip{A} something')
+
+    My current understanding is that there is no way to set a given IP on a
+    newly created container, so manually assigning IPs to containers is not an
+    option currently.
+
+    b) This leads to a dependency problem on the startup process of the
+    containers. In the example above, B needs to know A's IP address, and
+    therefore A needs to be created first (although not necessarily run!), and
+    in more complex examples there could be more complex dependencies involved.
+    The framework would thus need to handle this scenario gracefully, starting
+    the applications in the correct order, and letting them know information
+    about each other (in this case the IPs of the containers they are starting).
+    For this, we need to expose this start-up dependency explicitly at the
+    AppDataObject level. In a dospec form, it could look something like:
+
+    [
+    {uid:'A', type='app', app='DockerApp', image='slave_image', cmd='sshd -D'},
+    {uid:'B', type='app', app='DockerApp', image='master_image', cmd='mpiexec -H localhost,%ip{A} something', run_depends_on=['A']}
+    ]
+
+    c) Processes in containers might not always exit by themselves, and the
+    containers will need to be manually stopped. This is the case for example of
+    the slave containers, where the sshd daemon needs to be running before the
+    master starts, but will not quit automatically once the master process has
+    ended. Maybe the same "run_depends_on" attribute shown above can be reused
+    for the purpose of automatically stopping containers, but on the other hand
+    the 'starting A depends on B' and the 'B needs to be stopped after A'
+    situations do not always correspond one to one, and thus one could think on
+    a separate attribute to denote this relationship.
     """
 
     def initialize(self, **kwargs):
@@ -148,7 +206,7 @@ class DockerApp(BarrierAppDataObject):
         # We achieve this by creating a user with the same UID if one doesn't
         # exist, and running the command that user via "su"
         uid = os.getuid()
-        cmd = "id -u {0} &> /dev/null || adduser --uid {0} r; cd; su - r -c /bin/bash -c '{1}'".format(uid, cmd)
+        cmd = "id -u {0} &> /dev/null || adduser --uid {0} r; cd; su - r -c /bin/bash -c '{1}'".format(uid, cmd.replace("'","\\'"))
 
         # Embed the command in bash
         cmd = '/bin/bash -c "%s"' % (cmd.replace('"','\\"'))
