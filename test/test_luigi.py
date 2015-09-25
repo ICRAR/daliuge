@@ -105,6 +105,7 @@ class LuigiTests(unittest.TestCase):
 
         # Run the graph! Luigi will either monitor or execute the DOs
         w.run()
+        w.stop()
 
         # ... but at the end all the nodes of the graph should be completed
         # and should exist
