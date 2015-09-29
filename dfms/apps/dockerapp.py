@@ -204,9 +204,9 @@ class DockerApp(BarrierAppDataObject):
         # by the container user will be also owned by the host user, who won't
         # have any problem managing it.
         # We achieve this by creating a user with the same UID if one doesn't
-        # exist, and running the command that user via "su"
+        # exist, and running the command as the correct user via "su".
         uid = os.getuid()
-        cmd = "id -u {0} &> /dev/null || adduser --uid {0} r; cd; su - r -c /bin/bash -c '{1}'".format(uid, cmd.replace("'","\\'"))
+        cmd = "id -u {0} &> /dev/null || adduser --uid {0} r; cd; su - $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, cmd.replace("'","\\'"))
 
         # Embed the command in bash
         cmd = '/bin/bash -c "%s"' % (cmd.replace('"','\\"'))
