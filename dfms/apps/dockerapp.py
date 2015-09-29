@@ -147,14 +147,14 @@ class DockerApp(BarrierAppDataObject):
             raise Exception('No docker image specified, cannot create DockerApp')
 
         if ":" not in self._image:
-            logger.warn("Image %s is too generic since it doesn't specify a tag" % (self._image))
+            logger.warn("%r: Image %s is too generic since it doesn't specify a tag" % (self, self._image))
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
             raise Exception("No command specified, cannot create DockerApp")
 
         if logger.isEnabledFor(logging.INFO):
-            logger.info("DockerApp with image '%s' and command '%s' created" % (self._image, self._command))
+            logger.info("%r: DockerApp with image '%s' and command '%s' created" % (self, self._image, self._command))
 
         # Check if we have the image; otherwise pull it.
         c = AutoVersionClient()
@@ -177,7 +177,7 @@ class DockerApp(BarrierAppDataObject):
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:
             if not isinstance(i, (FileDataObject, DirectoryContainer)):
-                raise Exception("DataObject %r is not supported by the DockerApp" % (i))
+                raise Exception("%r is not supported by the DockerApp" % (i))
 
         # We mount the inputs and outputs inside the docker under the
         # DFMS_ROOT directory, maintaining the rest of their original paths
@@ -188,8 +188,8 @@ class DockerApp(BarrierAppDataObject):
         binds  = [i.path + ":" + dockerInputs[x] + ":ro" for x,i in enumerate(self.inputs)]
         binds += [o.path + ":" + dockerOutputs[x]        for x,o in enumerate(self.outputs)]
 
-        # Replace any placeholders that might be found in the command line
-        # by the real path of the inputs and outputs
+        # Replace any input/output placeholders that might be found in the
+        # command line by the real path of the inputs and outputs
         cmd = self._command
         for x,i in enumerate(dockerInputs):
             cmd = cmd.replace("%%i%d" % (x), i)
@@ -221,13 +221,22 @@ class DockerApp(BarrierAppDataObject):
             f.ensureExists()
 
         c = AutoVersionClient()
-        container_id = c.create_container(self._image, cmd, volumes=vols, host_config=c.create_host_config(binds=binds))
 
+        # Create container
+        container = c.create_container(self._image, cmd, volumes=vols, host_config=c.create_host_config(binds=binds))
+        cId = container['Id']
         if logger.isEnabledFor(logging.INFO):
-            logger.info("Starting DockerApp with image '%s' and command '%s'" % (self._image, self._command))
+            logger.info("Created container %s for %r" % (cId, self))
 
-        c.start(container_id)
-        self._exitCode = c.wait(container_id)
-
+        # Start it
+        start = time.time()
+        c.start(container)
         if logger.isEnabledFor(logging.INFO):
-            logger.info("DockerApp with image '%s' and command '%s' finished with exit code %d" % (self._image, cmd, self._exitCode))
+            logger.info("Started container %s" % (cId))
+
+
+        # Wait until it finishes
+        self._exitCode = c.wait(container)
+        end = time.time()
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Container %s finished in %.2f [s] with exit code %d" % (cId, (end-start), self._exitCode))
