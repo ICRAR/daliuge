@@ -22,7 +22,9 @@
 import httplib
 import json
 import multiprocessing
+import random
 import socket
+import string
 from test import graphsRepository
 import threading
 import time
@@ -37,8 +39,6 @@ from dfms.dom import cmdline
 from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.session import SessionStates
 from dfms.doutils import EvtConsumer
-import string
-import random
 
 
 class EvtConsumerProxyCtx(object):
