@@ -41,7 +41,7 @@ class DockerTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree("/tmp/sdp_dfms", True)
 
-    def test_docker(self):
+    def test_simpleCopy(self):
         """
         Simple test for a dockerized application. It copies the contents of one
         file into another via the command-line cp utility. It then checks that
@@ -67,7 +67,7 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
 
         # Random data so we always check different contents
-        data = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
         with DOWaiterCtx(self, c, 100):
             a.write(data)
             a.setCompleted()

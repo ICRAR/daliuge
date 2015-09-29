@@ -1142,6 +1142,13 @@ class BarrierAppDataObject(AppDataObject):
             self.execute()
 
     def execute(self):
+        """
+        Manually trigger the execution of this application.
+
+        This method is normally invoked internally when the application detects
+        all its inputs are COMPLETED.
+        """
+
         # Keep track of the state of this application. Setting the state
         # will fire an event to the subscribers of the execStatus events
         self.execStatus = AppDOStates.RUNNING
