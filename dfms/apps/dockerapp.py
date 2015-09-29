@@ -19,12 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import os
 '''
 Module containing docker-related applications and functions
 '''
 
 import logging
+import os
+import threading
 import time
 
 from docker.client import AutoVersionClient
@@ -36,6 +37,26 @@ from dfms.data_object import BarrierAppDataObject, FileDataObject, \
 logger = logging.getLogger(__name__)
 
 DFMS_ROOT = '/dfms_root'
+
+class ContainerIpWaiter(object):
+    """
+    A class that remembers the target DO's uid and containerIp properties
+    when its internal event has been set, and returns them when waitForIp is
+    called, which previously waits for the event to be set.
+    """
+
+    def __init__(self, do):
+        self._evt = threading.Event()
+        self._uid = do.uid
+        do.subscribe(self.containerIpChanged, 'containerIp')
+
+    def containerIpChanged(self, do):
+        self._containerIp = do.containerIp
+        self._evt.set()
+
+    def waitForIp(self, timeout=None):
+        self._evt.wait(timeout)
+        return self._uid, self._containerIp
 
 class DockerApp(BarrierAppDataObject):
     """
@@ -83,60 +104,41 @@ class DockerApp(BarrierAppDataObject):
     of "%iX", where X starts from 0 and refers to the X-th input. Likewise,
     output locations are specified as "%oX".
 
-    Linking containers
-    ------------------
+    Communication between containers
+    --------------------------------
 
     Although some containerized applications might run on their own, there are
     cases where applications need to talk to each other in order to advance
     (like in the case of client-server applications, or in the case of MPI
     applications). All containers started in the same host (and therefore, all
     applications running in them) belong by default to the same network, and
-    therefore are already visible. The problem lies on getting them to know the
-    hosts they should contact. See the TODO below.
+    therefore are already visible.
+
+    Applications needing to communicate with other applications should be able
+    to specify the target's IP in their command-line. Since the IP is not known
+    until containers are created, this specification is done using the
+    %containerIp[oid]% placeholder, with 'oid' being the OID of the target
+    DockerApp.
+
+    This need to know other DockerApp's IP imposes a sequential order on the
+    startup of the containers, since one needs to be started in order to learn
+    its IP, which is used to start the second. This is handled gracefully by
+    the DockerApp code, with the condition that `self.handleInterest` is invoked
+    where necessary. See `self.handleInterest` for more information about this
+    mechanism.
 
     TODO:
     -----
-    I manually tried to run an MPI program across more than one docker
-    container and succeeded on it. In one container A I started simply an ssh
-    server (the slave node), while on a second one I started the main mpiexec
-    process (the master node). Thanks to this exercise a few things that need to
-    be taken into account became clear:
+    Processes in containers might not always exit by themselves, and the
+    containers might need to be manually stopped. This the case for example of
+    an set of MPI processes, where the master container will run the MPI
+    program and the slave containers will run an SSH daemon, where the SSH
+    daemon will not quit automatically once the master process has ended.
 
-    a) We need to have a placeholder mechanism to be able to refer to the IP of
-    some other docker container, probably using the uid of the DockerApp we're
-    referring to, something like:
-
-    a = DockerApp('A', image='slave_image', cmd='sshd')
-    b = DockerApp('B', image='master_image', cmd='mpiexec -H localhost,%ip{A} something')
-
-    My current understanding is that there is no way to set a given IP on a
-    newly created container, so manually assigning IPs to containers is not an
-    option currently.
-
-    b) This leads to a dependency problem on the startup process of the
-    containers. In the example above, B needs to know A's IP address, and
-    therefore A needs to be created first (although not necessarily run!), and
-    in more complex examples there could be more complex dependencies involved.
-    The framework would thus need to handle this scenario gracefully, starting
-    the applications in the correct order, and letting them know information
-    about each other (in this case the IPs of the containers they are starting).
-    For this, we need to expose this start-up dependency explicitly at the
-    AppDataObject level. In a dospec form, it could look something like:
-
-    [
-    {uid:'A', type='app', app='DockerApp', image='slave_image', cmd='sshd -D'},
-    {uid:'B', type='app', app='DockerApp', image='master_image', cmd='mpiexec -H localhost,%ip{A} something', run_depends_on=['A']}
-    ]
-
-    c) Processes in containers might not always exit by themselves, and the
-    containers will need to be manually stopped. This is the case for example of
-    the slave containers, where the sshd daemon needs to be running before the
-    master starts, but will not quit automatically once the master process has
-    ended. Maybe the same "run_depends_on" attribute shown above can be reused
-    for the purpose of automatically stopping containers, but on the other hand
-    the 'starting A depends on B' and the 'B needs to be stopped after A'
-    situations do not always correspond one to one, and thus one could think on
-    a separate attribute to denote this relationship.
+    Still, we probably will need to differentiate between a forced quit because
+    of a timeout, and a good quit, and therefore we might impose that processes
+    running in a container must quit themselves after successfully performing
+    their task.
     """
 
     def initialize(self, **kwargs):
@@ -172,6 +174,28 @@ class DockerApp(BarrierAppDataObject):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Image '%s' found, no need to pull it" % (self._image))
 
+        self._containerIp = None
+        self._waiters = []
+
+    @property
+    def containerIp(self):
+        return self._containerIp
+
+    @containerIp.setter
+    def containerIp(self, containerIp):
+        self._containerIp = containerIp
+        self._fire('containerIp', containerIp=containerIp)
+
+    def handleInterest(self, do):
+
+        # The only interest we currently have is the containerIp of other
+        # DockerApps, and only if our command actually uses this IP
+        if isinstance(do, DockerApp):
+            if '%containerIp[{0}]%'.format(do.uid) in self._command:
+                self._waiters.append(ContainerIpWaiter(do))
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug('%r: Added ContainerIpWaiter for %r' % (self, do))
+
     def run(self):
 
         # Check inputs/outputs are of a valid type
@@ -198,6 +222,12 @@ class DockerApp(BarrierAppDataObject):
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Command after placeholder replacement is: '%s'" % (cmd))
+
+        # Wait until the DockerApps this application runtime depends on have
+        # started, and replace their IP placeholders by the real IPs
+        for waiter in self._waiters:
+            uid, ip = waiter.waitForIp();
+            cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
 
         # We want to run the container-ized program not as root, but as a user
         # with the same UID of the current user. This way the output produced
@@ -234,6 +264,8 @@ class DockerApp(BarrierAppDataObject):
         if logger.isEnabledFor(logging.INFO):
             logger.info("Started container %s" % (cId))
 
+        inspection = c.inspect_container(container)
+        self.containerIp = inspection['NetworkSettings']['IPAddress']
 
         # Wait until it finishes
         self._exitCode = c.wait(container)

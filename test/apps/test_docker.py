@@ -77,3 +77,44 @@ class DockerTests(unittest.TestCase):
         # We own the file, not root
         uid = os.getuid()
         self.assertEquals(uid, os.stat(c.path).st_uid)
+
+    def test_clientServer(self):
+        """
+        A client-server duo. The server outputs the data it receives to its
+        output DO, which in turn is the data held in its input DO. The graph
+        looks like this:
+
+        A --|--> B(client) --|--> D
+            |--> C(server) --|
+
+        C is a server application which B connects to. Therefore C must be
+        started before B, so B knows C's IP address and connects successfully.
+        Although the real writing is done by C, B in this example is also
+        treated as a publisher of D. This way D waits for both applications to
+        finish before proceeding.
+        """
+        try:
+            AutoVersionClient()
+        except DockerException:
+            warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
+            return
+
+        a = FileDataObject('a', 'a')
+        b = DockerApp('b', 'b', image='ubuntu:14.04', command='cat %i0 > /dev/tcp/%containerIp[c]%/8000')
+        c = DockerApp('c', 'c', image='ubuntu:14.04', command='nc -l 8000 > %o0')
+        d = FileDataObject('d', 'd')
+
+        b.addInput(a)
+        b.addOutput(d)
+        c.addInput(a)
+        c.addOutput(d)
+
+        # Let 'b' handle its interest in c
+        b.handleInterest(c)
+
+        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        with DOWaiterCtx(self, d, 100):
+            a.write(data)
+            a.setCompleted()
+
+        self.assertEquals(data, doutils.allDataObjectContents(d))
