@@ -494,6 +494,24 @@ class AbstractDataObject(object):
         """
         self._bcaster.unsubscribe(callback, eventType=eventType)
 
+    def handleInterest(self, do):
+        """
+        Main mechanism through which a DataObject handles its interest in a
+        second DataObject it isn't directly related to.
+
+        A call to this method should be expected for each DataObject this
+        DataObject is interested in. The default implementation does nothing,
+        but implementations are free to perform any action, such as subscribing
+        to events or storing information.
+
+        At this layer only the handling of such an interest exists. The
+        expression of such interest, and the invocation of this method wherever
+        necessary, is currently left as a responsibility of the entity creating
+        the DataObjects. In the case of a Session in a DataObjectManager for
+        example this step would be performed using deployment-time information
+        contained in the dospec dictionaries held in the session.
+        """
+
     def _fire(self, eventType, **kwargs):
         kwargs['oid'] = self.oid
         kwargs['uid'] = self.uid
