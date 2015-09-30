@@ -28,6 +28,12 @@ class TestSession(unittest.TestCase):
     def test_sessionStates(self):
         with Session('1') as s:
             self.assertEquals(SessionStates.PRISTINE, s.status)
+            self.assertRaises(Exception, s.deploy)
+            self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
+
+            s.addGraphSpec('[{"oid":"A", "type":"container"}]')
+            self.assertEquals(SessionStates.BUILDING, s.status)
+
             s.deploy()
             self.assertEquals(SessionStates.RUNNING, s.status)
 
