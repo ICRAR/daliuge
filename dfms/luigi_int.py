@@ -19,19 +19,21 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""
+Module containing the code that integrates our DataObjects with Luigi.
+"""
+
+import importlib
 import logging
 import threading
 import time
 
-from dfms import doutils
-from dfms.data_object import AppDataObject, AbstractDataObject
-from dfms.ddap_protocol import ExecutionMode, DOStates
 import luigi
-import importlib
 
-"""
-Module containing the code that integrates our DataObjects with Luigi.
-"""
+from dfms import doutils
+from dfms.data_object import AbstractDataObject, BarrierAppDataObject
+from dfms.ddap_protocol import ExecutionMode, DOStates
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ class RunDataObjectTask(luigi.Task):
 
         do = self.data_obj
         self.execDO  = False
-        if isinstance(do, AppDataObject):
+        if isinstance(do, BarrierAppDataObject):
             for inputDO in do.inputs:
                 if inputDO.executionMode == ExecutionMode.EXTERNAL:
                     self.execDO = True
@@ -81,8 +83,7 @@ class RunDataObjectTask(luigi.Task):
 
     def run(self):
         if self.execDO:
-            for inputDO in self.data_obj.inputs:
-                self.data_obj.dataObjectCompleted(inputDO.uid)
+            self.data_obj.execute()
         else:
             timeout = None
             expirationDate = self.data_obj.expirationDate
