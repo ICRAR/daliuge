@@ -1155,8 +1155,6 @@ class BarrierAppDataObject(AppDataObject):
         super(BarrierAppDataObject, self).dataObjectCompleted(uid)
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
-            # TODO: This needs to be defined more clearly
-            self.status = DOStates.COMPLETED
             self.execute()
 
     def execute(self):
@@ -1176,6 +1174,9 @@ class BarrierAppDataObject(AppDataObject):
         except:
             self.execStatus = AppDOStates.ERROR
             raise
+        finally:
+            # TODO: This needs to be defined more clearly
+            self.status = DOStates.COMPLETED
 
     def run(self):
         """
