@@ -52,7 +52,7 @@ class SessionStates:
     An enumeration of the different states in which a Session can be found at
     any given point of time.
     """
-    PRISTINE, DEPLOYING, RUNNING, FINISHED = xrange(4)
+    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = xrange(5)
 
 class Session(object):
     """
@@ -60,13 +60,15 @@ class Session(object):
 
     A session is the runtime incarnation of a given DataObject graph that gets
     executed in our framework. Thus, different executions of the same graph
-    template lead to different sessions.
+    parts or specifications lead to different sessions.
 
     In order to be flexible enough, a session starts in a PRISTINE status. While
     in PRISTINE status "graph parts" can be added to it in separate calls, which
-    can be connected later. Once all the parts have been submitted, users can
-    finally deploySession the graph, which will move the session to the DEPLOYING
-    status first, and to the RUNNING status later. Once the execution of the
+    can be connected later. The first time a "graph part" is added to the
+    session its status is changed to BUILDING. Once all the parts have been
+    submitted, users can finally deploy the session, which will move the session
+    to the DEPLOYING status first, create the actual DataObjects, and then move
+    the session to the RUNNING status later. Once the execution of the
     graph has finished the session is moved to FINISHED.
     """
 
@@ -111,8 +113,11 @@ class Session(object):
         uniquely identified by their OID at this point.
         """
 
-        if self.status != SessionStates.PRISTINE:
-            raise Exception("Can't add more graphs to this session since itn't PRISTINE anymore")
+        status = self.status
+        if status not in (SessionStates.PRISTINE, SessionStates.BUILDING):
+            raise Exception("Can't add graphs to this session since it isn't in the PRISTINE or BUILDING status: %d" % (status))
+
+        self.status = SessionStates.BUILDING
 
         if isinstance(graphSpec, basestring):
             graphSpecDict = graph_loader.loadDataObjectSpecsS(graphSpec)
@@ -142,8 +147,8 @@ class Session(object):
         must both already be part of one of the graph specs contained in this
         session; otherwise an exception will be raised.
         """
-        if self.status != SessionStates.PRISTINE:
-            raise Exception("Can't link DOs anymore since this session isn't PRISTINE anymore")
+        if self.status != SessionStates.BUILDING:
+            raise Exception("Can't link DOs anymore since this session isn't in the BUILDING state")
 
         # Look for the two DataObjects in all our graph parts and reporting
         # missing DOs
@@ -194,8 +199,10 @@ class Session(object):
         up and running, servicing requests to access to all the DataObjects
         belonging to this session
         """
-        if self.status != SessionStates.PRISTINE:
-            raise Exception("Can't deploy this session since its status is not PRISTINE")
+
+        status = self.status
+        if status != SessionStates.BUILDING:
+            raise Exception("Can't deploy this session in its current status: %d" % (status))
 
         self.status = SessionStates.DEPLOYING
 

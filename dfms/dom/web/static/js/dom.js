@@ -20,7 +20,7 @@
 //    MA 02111-1307  USA
 //
 
-var SESSION_STATUS = ['Pristine', 'Deploying', 'Running', 'Finished']
+var SESSION_STATUS = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished']
 var STATUS_CLASSES = ['initialized', 'writing', 'completed', 'expired', 'deleted']
 var TYPE_CLASSES   = ['app', 'container', 'socket', 'plain']
 var TYPE_SHAPES    = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
