@@ -31,10 +31,13 @@ The registry simply (for the time being) keeps a record of:
 @author: rtobar
 '''
 
+from abc import abstractmethod, ABCMeta
+import importlib
 import logging
 import time
-from abc import abstractmethod, ABCMeta
+
 from dfms.ddap_protocol import DOPhases
+
 
 logger = logging.getLogger(__name__)
 
@@ -145,3 +148,136 @@ class InMemoryRegistry(Registry):
             return self._dos[oid].accesTimes[-1]
         else:
             return -1
+
+class RDBMSRegistry(Registry):
+
+    def __init__(self, dbModuleName, *connArgs):
+        try:
+            self._dbmod = importlib.import_module(dbModuleName)
+            self._paramstyle = self._dbmod.paramstyle
+            self._connArgs = connArgs
+        except:
+            logger.error("Cannot import module %s, RDBMSRegistry cannot start" % (dbModuleName))
+            raise
+
+    def _connect(self):
+        return self._dbmod.connect(*self._connArgs)
+
+    # The following tables should be defined in the database we're pointing at
+    #
+    # DataObject:
+    #   oid   (PK)
+    #   phase (int)
+    #
+    # DataObjectInstance:
+    #   uid     (PK)
+    #   oid     (FK)
+    #   dataRef ()
+    #
+    # DataObjectAccessTime:
+    #   oid (FK, PK)
+    #   accessTime (PK)
+
+    # A small helper class to make all methods transactional, and to create
+    # connections when needed
+    class transactional(object):
+
+        def __init__(self, registry, conn):
+            self._connect = registry._connect
+            self._conn = conn
+            self._connCreated = False
+
+        def __enter__(self):
+            if self._conn is None:
+                self._conn = self._connect()
+                self._connCreated = True
+            return self._conn
+
+        def __exit__(self, typ, value, traceback):
+            if not self._connCreated:
+                return
+            if typ is None:
+                self._conn.commit()
+            else:
+                self._conn.rollback()
+                return False
+
+            self._conn.close()
+
+    def _paramNames(self, howMany):
+        # Depending on the different vendor, we need to write the parameters in
+        # the SQL calls using different notations. This method will produce an
+        # array containing all the parameter references in the SQL statement
+        # (and not its values!)
+        #
+        # qmark     Question mark style, e.g. ...WHERE name=?
+        # numeric   Numeric, positional style, e.g. ...WHERE name=:1
+        # named     Named style, e.g. ...WHERE name=:name
+        # format    ANSI C printf format codes, e.g. ...WHERE name=%s
+        # pyformat  Python extended format codes, e.g. ...WHERE name=%(name)s
+        #
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Generating %d parameters with paramstyle = %s' % (howMany, self._paramstyle))
+        if self._paramstyle == 'qmark':    return ['?'             for i in xrange(howMany)]
+        if self._paramstyle == 'numeric':  return [':%d'%(i)       for i in xrange(howMany)]
+        if self._paramstyle == 'named':    return [':n%d'%(i)      for i in xrange(howMany)]
+        if self._paramstyle == 'format':   return [':%s'           for i in xrange(howMany)]
+        if self._paramstyle == 'pyformat': return [':%%(n%d)s'%(i) for i in xrange(howMany)]
+        raise Exception('Unknown paramstyle: %s' % (self._paramstyle))
+
+    def _bindD(self, *data):
+        if self._paramstyle in ['format', 'pyformat']:
+            dataDict = {}
+            [dataDict.__setitem__('n%d'%(i), d) for i,d in enumerate(data)]
+            return dataDict
+        else:
+            return data
+
+    def addDataObject(self, dataObject, conn=None):
+        with self.transactional(self, conn) as conn:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO DataObject (oid, phase) VALUES ({0},{1})".format(*self._paramNames(2)),
+                        self._bindD(dataObject.oid, dataObject.phase))
+            self.addDataObjectInstance(dataObject, conn)
+            cur.close()
+
+    def addDataObjectInstance(self, dataObject, conn=None):
+        with self.transactional(self, conn) as conn:
+            cur = conn.cursor()
+            cur.execute('INSERT INTO DataObjectInstance (oid, uid, dataRef) VALUES ({0},{1},{2})'.format(*self._paramNames(3)),
+                        self._bindD(dataObject.oid, dataObject.uid, dataObject.dataURL))
+            cur.close()
+
+    def getDataObjectUids(self, dataObject, conn=None):
+        with self.transactional(self, conn) as conn:
+            cur = conn.cursor()
+            cur.execute('SELECT uid FROM DataObjectInstance WHERE oid = {0}'.format(*self._paramNames(1)),
+                        self._bindD(dataObject.oid))
+            rows = cur.fetchall()
+            cur.close()
+            return [r[0] for r in rows]
+
+    def setDataObjectPhase(self, dataObject, phase, conn=None):
+        with self.transactional(self, conn) as conn:
+            cur = conn.cursor()
+            cur.execute('UPDATE DataObject SET phase = {0} WHERE oid = {1}'.format(*self._paramNames(2)),
+                        self._bindD(dataObject.oid, dataObject.phase))
+            cur.close()
+
+    def recordNewAccess(self, oid, conn=None):
+        with self.transactional(self, conn) as conn:
+            cur = conn.cursor()
+            cur.execute('INSERT INTO DataObjectAccessTime (oid, accessTime) VALUES ({0},{1})'.format(*self._paramNames(2)),
+                        self._bindD(oid, self._dbmod.TimestampFromTicks(time.time())))
+            cur.close()
+
+    def getLastAccess(self, oid, conn=None):
+        with self.transactional(self, conn) as conn:
+            cur = conn.cursor()
+            cur.execute('SELECT accessTime FROM DataObjectAccessTime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1'.format(*self._paramNames(1)),
+                        self._bindD(oid))
+            row = cur.fetchone()
+            cur.close()
+            if row is None:
+                return -1
+            return row[0]
