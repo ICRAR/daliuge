@@ -117,6 +117,7 @@
               stroke: lightText,
               margin: 8,
               maxSize: new go.Size(160, NaN),
+              textAlign: "center",
               wrap: go.TextBlock.WrapFit,
               editable: true
             },
@@ -234,7 +235,7 @@
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
           $(go.Shape, "Hexagon",
-            { fill: "#00A9C9", stroke: "#ffffff" },
+            { fill: "#004080", stroke: "#ffffff" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
             {
@@ -259,7 +260,7 @@
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
           $(go.Shape, "Card",
-            { fill: "#00A9C9", stroke: "#ffffff" },
+            { fill: "#004080", stroke: "#ffffff" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
             {
@@ -284,15 +285,16 @@
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
           $(go.Shape, "Diamond",
-            { fill: "#00A9C9", stroke: "#ffffff" },
+            { fill: "#17a963", stroke: "#ffffff" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
             {
-              font: "bold 11pt Helvetica, Arial, sans-serif",
+              font: "11pt Helvetica, Arial, sans-serif",
               stroke: lightText,
               margin: 2,
               maxSize: new go.Size(160, NaN),
               wrap: go.TextBlock.WrapFit,
+              textAlign: "center",
               editable: true
             },
             new go.Binding("text").makeTwoWay())
@@ -304,11 +306,39 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
+    myDiagram.nodeTemplateMap.add("LoopCondition",  // the default category
+      $(go.Node, "Spot", nodeStyle(),
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "LoopLimit",
+            { fill: "#17a963", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 2,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              textAlign: "center",
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+
+
     myDiagram.nodeTemplateMap.add("Start",
       $(go.Node, "Spot", nodeStyle(),
         $(go.Panel, "Auto",
           $(go.Shape, "Start",
-            { minSize: new go.Size(40, 40), fill: "#79C900", stroke: null }),
+            { minSize: new go.Size(40, 40), fill: "#17a963", stroke: null }),
           $(go.TextBlock, "Start",
             { font: "bold 11pt Helvetica, Arial, sans-serif", stroke: lightText },
             new go.Binding("text"))
@@ -341,11 +371,11 @@
         $(go.TextBlock,
           {
             margin: 5,
-            maxSize: new go.Size(200, NaN),
+            maxSize: new go.Size(250, NaN),
             wrap: go.TextBlock.WrapFit,
             textAlign: "center",
             editable: true,
-            font: "bold 12pt Helvetica, Arial, sans-serif",
+            font: "12pt Helvetica, Arial, sans-serif",
             stroke: '#454545'
           },
           new go.Binding("text").makeTwoWay())
@@ -376,7 +406,7 @@
         $(go.Shape,  // the arrowhead
           { toArrow: "standard", stroke: null, fill: "gray"}),
         $(go.Panel, "Auto",  // the link label, normally not visible
-          { visible: false, name: "LABEL", segmentIndex: 2, segmentFraction: 0.5},
+          { visible: false, name: "LABEL", segmentIndex: 1, segmentFraction: 0.9},
           new go.Binding("visible", "visible").makeTwoWay(),
           $(go.Shape, "RoundedRectangle",  // the label shape
             { fill: "#F8F8F8", stroke: null }),
@@ -394,8 +424,16 @@
     // Make link labels visible if coming out of a "conditional" node.
     // This listener is called by the "LinkDrawn" and "LinkRelinked" DiagramEvents.
     function showLinkLabel(e) {
+      //alert(e.subject.fromNode.category)
+      //label.visible = true;
+      //alert(e.subject);
       var label = e.subject.findObject("LABEL");
-      if (label !== null) label.visible = (e.subject.fromNode.data.figure === "Diamond");
+      //alert(label)
+      //label.visible = true;
+      if (label !== null && (e.subject.fromNode.category === "Branch" ||
+          e.subject.fromNode.category === "LoopCondition")) {
+        label.visible = true
+      }
     }
 
     // temporary links used by LinkingTool and RelinkingTool are also orthogonal:
@@ -416,7 +454,8 @@
             { category: "Data", text: "Data" },
             { category: "TM", text: "TM" },
             { category: "GSM", text: "GSM" },
-            { category: "Branch", text: "?" },
+            { category: "Branch", text: "Branch\nCondition" },
+            { category: "LoopCondition", text: "Loop\nCondition" },
             { category: "Metadata", text: "Metadata" },
             { category: "End", text: "End" },
             { category: "LSM", text: "LSM" },
@@ -495,16 +534,16 @@
   "linkFromPortIdProperty": "fromPort",
   "linkToPortIdProperty": "toPort",
   "nodeDataArray": [
-{"category":"Comment", "loc":"85.00000000000017 61", "text":"Continuum Pipeline", "key":-13},
+{"category":"Comment", "loc":"85.00000000000017 61", "text":"Continuum Imaging Pipeline", "key":-13},
 {"category":"Start", "text":"Start", "key":-14, "loc":"-457 219"},
 {"category":"Branch", "text":"Self-Cal\nConverge?", "key":-6, "loc":"-290 218.99999999999991"},
-{"category":"Component", "text":"Update GSM", "key":-15, "loc":"-289.99999999999994 137.00000000000009"},
+{"category":"Component", "text":"Update GSM", "key":-15, "loc":"-290.00000000000017 117.00000000000014"},
 {"category":"GSM", "text":"GSM", "key":-5, "loc":"-289.99999999999983 48.00000000000003"},
 {"category":"Component", "text":"Update LSM", "key":-17, "loc":"-289.99999999999994 394.00000000000006"},
 {"category":"Component", "text":"Cal. Source\nFinding", "key":-18, "loc":"-289.9999999999999 497.00000000000006"},
 {"category":"Component", "text":"Image Plane\nSpectral Averaging", "key":-19, "loc":"-290 600"},
-{"category":"LSM", "text":"LSM", "key":-9, "loc":"-84 136"},
-{"category":"Component", "text":"Predict", "key":-11, "loc":"292 136"},
+{"category":"LSM", "text":"LSM", "key":-9, "loc":"-89.99999999999993 117.00000000000011"},
+{"category":"Component", "text":"Predict", "key":-11, "loc":"292 117.00000000000006"},
 {"category":"Component", "text":"Predict", "key":-12, "loc":"-89.99999999999997 219.0000000000001"},
 {"category":"Component", "text":"Solve", "key":-16, "loc":"32.99999999999999 218.9999999999999"},
 {"category":"Component", "text":"Correct", "key":-20, "loc":"167 219.0000000000001"},
@@ -517,25 +556,23 @@
 {"category":"Component", "text":"Flag", "key":-26, "loc":"327.00000000000034 394.00000000000006"},
 {"category":"Component", "text":"Grid", "key":-27, "loc":"422 394.00000000000006"},
 {"category":"Component", "text":"FFT", "key":-28, "loc":"423.0000000000001 463.9999999999999"},
-{"category":"Branch", "text":"Minor Cycle Done?", "key":-29, "loc":"422.9999999999998 550.0000000000001"},
-{"category":"Branch", "text":"Major Cycle Done?", "key":-30, "loc":"422.9999999999999 640"},
-{"category":"Component", "text":"Identify\nComponent", "key":-31, "loc":"156.99999999999997 550.0000000000001"},
-{"category":"Component", "text":"Subtract \ncompnt frm\nimg plane", "key":-32, "loc":"-5.983875274658203 549.4822916666667"}
+{"category":"Component", "text":"Identify\nComponent", "key":-31, "loc":"162 549.9999999999998"},
+{"category":"Component", "text":"Subtract \ncompnt frm\nimg plane", "key":-32, "loc":"-12.983875274658217 549.4822916666668"},
+{"category":"LoopCondition", "text":"Minor Cycle \nDone?", "key":-7, "loc":"423 550"},
+{"category":"LoopCondition", "text":"Minor Cycle \nDone?", "key":-29, "loc":"423 550"},
+{"category":"LoopCondition", "text":"Major Cycle\nDone?", "key":-30, "loc":"423 645"}
  ],
   "linkDataArray": [
 {"from":-14, "to":-6, "fromPort":"R", "toPort":"L", "points":[-423.0998840332031,219,-413.0998840332031,219,-397.08556365966797,219,-397.08556365966797,219,-381.0712432861328,219,-371.0712432861328,219]},
-{"from":-6, "to":-15, "fromPort":"T", "toPort":"B", "points":[-290,182.7491027832031,-290,172.7491027832031,-290,168.09341354370116,-290,168.09341354370116,-290,163.4377243041992,-290,153.4377243041992]},
-{"from":-15, "to":-5, "fromPort":"T", "toPort":"B", "points":[-290,120.56227569580078,-290,110.56227569580078,-290,92.5,-290,92.5,-290,74.43772430419921,-290,64.43772430419921]},
+{"from":-15, "to":-5, "fromPort":"T", "toPort":"B", "points":[-289.99999999999994,100.56227569580086,-289.99999999999994,90.56227569580086,-289.99999999999994,82.50000000000006,-289.99999999999983,82.50000000000006,-289.99999999999983,74.43772430419925,-289.99999999999983,64.43772430419925]},
 {"from":-17, "to":-6, "fromPort":"T", "toPort":"B", "points":[-290,377.5622756958008,-290,367.5622756958008,-290,316.4065864562988,-290,316.4065864562988,-290,265.25089721679683,-290,255.25089721679686]},
 {"from":-18, "to":-17, "fromPort":"T", "toPort":"B", "points":[-290,472.6245513916016,-290,462.6245513916016,-290,441.53113784790037,-290,441.53113784790037,-290,420.4377243041992,-290,410.4377243041992]},
 {"from":-19, "to":-18, "fromPort":"T", "toPort":"B", "points":[-290,575.6245513916016,-290,565.6245513916016,-290,548.5,-290,548.5,-290,531.3754486083984,-290,521.3754486083984]},
-{"from":-9, "to":-15, "fromPort":"L", "toPort":"R", "points":[-118.03206089564732,136,-128.0320608956473,136,-177.97826875959123,136,-177.97826875959123,137,-227.92447662353516,137,-237.92447662353516,137]},
-{"from":-9, "to":-11, "fromPort":"R", "toPort":"L", "points":[-49.967939104352666,136,-39.967939104352666,136,104.34119524274554,136,104.34119524274554,136,248.65032958984375,136,258.65032958984375,136]},
-{"from":-6, "to":-12, "fromPort":"R", "toPort":"L", "points":[-208.9287567138672,219,-198.9287567138672,219,-166.13921356201172,219,-166.13921356201172,219,-133.34967041015625,219,-123.34967041015625,219]},
-{"from":-17, "to":-9, "fromPort":"R", "toPort":"T", "points":[-239.14852905273438,394,-229.14852905273438,394,-177.59029497419084,394,-177.59029497419084,109.56227569580078,-84,109.56227569580078,-84,119.56227569580078]},
+{"from":-9, "to":-15, "fromPort":"L", "toPort":"R", "points":[-124.0320608956473,117.00000000000006,-134.0320608956473,117.00000000000006,-180.97826875959132,117.00000000000006,-180.97826875959132,117.00000000000014,-227.92447662353533,117.00000000000014,-237.92447662353533,117.00000000000014]},
+{"from":-9, "to":-11, "fromPort":"R", "toPort":"L", "points":[-55.967939104352666,117.00000000000006,-45.967939104352666,117.00000000000006,101.34119524274554,117.00000000000006,101.34119524274554,117.00000000000006,248.65032958984375,117.00000000000006,258.65032958984375,117.00000000000006]},
 {"from":-12, "to":-16, "fromPort":"R", "toPort":"L", "points":[-56.65032958984375,219,-46.65032958984375,219,-25.853260040283203,219,-25.853260040283203,219,-5.056190490722656,219,4.943809509277344,219]},
 {"from":-16, "to":-20, "fromPort":"R", "toPort":"L", "points":[61.056190490722656,219,71.05619049072266,219,96.74302291870117,219,96.74302291870117,219,122.42985534667969,219,132.4298553466797,219]},
-{"from":-11, "to":-21, "fromPort":"B", "toPort":"T", "points":[292,152.4377243041992,292,162.4377243041992,292,177.5,292,177.5,292,192.5622756958008,292,202.5622756958008]},
+{"from":-11, "to":-21, "fromPort":"B", "toPort":"T", "points":[292,133.4377243041992,292,143.4377243041992,292,168.00000000000006,291.9999999999999,168.00000000000006,291.9999999999999,192.5622756958009,291.9999999999999,202.5622756958009]},
 {"from":-20, "to":-21, "fromPort":"R", "toPort":"L", "points":[201.5701446533203,219,211.5701446533203,219,227.66929244995117,219,227.66929244995117,219,243.76844024658203,219,253.76844024658203,219]},
 {"from":-16, "to":-10, "fromPort":"B", "toPort":"T", "points":[33,235.43772430419924,33,245.43772430419924,33,248.07265497843434,32.999999999999986,248.07265497843434,32.999999999999986,250.70758565266942,32.999999999999986,260.7075856526694]},
 {"from":-23, "to":-24, "fromPort":"R", "toPort":"L", "points":[-70.03112792968754,393.99999999999983,-60.03112792968754,393.99999999999983,-34.57659149169924,393.99999999999983,-34.57659149169924,394.00000000000017,-9.122055053710938,394.00000000000017,0.8779449462890625,394.00000000000017]},
@@ -547,12 +584,17 @@
 {"from":-22, "to":-27, "fromPort":"R", "toPort":"R", "points":[445.56800842285156,219,455.56800842285156,219,455.5680084228517,219,455.5680084228517,306.5000000000001,455.5680084228517,394.0000000000002,445.5680084228517,394.0000000000002]},
 {"from":-10, "to":-27, "fromPort":"R", "toPort":"T", "points":[79.7820358276367,301.0000000000001,89.7820358276367,301.0000000000001,422.0000000000001,301.0000000000001,422.0000000000001,334.2811378479006,422.0000000000001,367.562275695801,422.0000000000001,377.562275695801]},
 {"from":-27, "to":-28, "fromPort":"B", "toPort":"T", "points":[422.0000000000001,410.43772430419943,422.0000000000001,420.43772430419943,422.0000000000001,429.00000000000006,423.0000000000001,429.00000000000006,423.0000000000001,437.5622756958007,423.0000000000001,447.5622756958007]},
-{"from":-28, "to":-29, "fromPort":"B", "toPort":"T", "points":[423.0000000000001,480.4377243041991,423.0000000000001,490.4377243041991,423.0000000000001,505.03113784790037,423,505.03113784790037,423,519.6245513916016,423,529.6245513916016]},
-{"from":-32, "to":-29, "fromPort":"T", "toPort":"T", "points":[-5.983875274658203,517.169118754069,-5.983875274658203,507.169118754069,423,507.169118754069,423,513.3968350728353,423,519.6245513916016,423,529.6245513916016]},
-{"from":-29, "to":-31, "fromPort":"L", "toPort":"R", "points":[285.72975158691406,550,275.72975158691406,550,245.97279357910156,550,245.97279357910156,550,216.21583557128906,550,206.21583557128906,550]},
-{"from":-31, "to":-32, "fromPort":"L", "toPort":"R", "points":[107.78416442871094,550,97.78416442871094,550,75.30762672424316,550,75.30762672424316,549.4822916666667,52.83108901977539,549.4822916666667,42.83108901977539,549.4822916666667]},
-{"from":-29, "to":-30, "fromPort":"B", "toPort":"T", "points":[423,570.3754486083984,423,580.3754486083984,423,595,423,595,423,609.6245513916016,423,619.6245513916016]},
-{"from":-30, "to":-23, "fromPort":"L", "toPort":"B", "points":[286.53147888183594,640,276.53147888183594,640,-94.00000000000004,640,-94.00000000000004,530.2188621520995,-94.00000000000004,420.43772430419904,-94.00000000000004,410.43772430419904]}
+{"from":-31, "to":-32, "fromPort":"L", "toPort":"R", "points":[112.78416442871091,550.0000000000001,102.78416442871091,550.0000000000001,74.30762672424315,550.0000000000001,74.30762672424315,549.4822916666667,45.83108901977539,549.4822916666667,35.83108901977539,549.4822916666667]},
+{"from":-6, "to":-15, "fromPort":"T", "toPort":"B", "visible":true, "points":[-290,182.74910278320306,-290,172.74910278320306,-290,158.09341354370116,-289.99999999999994,158.09341354370116,-289.99999999999994,143.4377243041993,-289.99999999999994,133.4377243041993]},
+{"from":-6, "to":-12, "fromPort":"R", "toPort":"L", "visible":true, "points":[-213.7820587158203,218.99999999999994,-203.7820587158203,218.99999999999994,-168.56586456298828,218.99999999999994,-168.56586456298828,219.0000000000001,-133.34967041015622,219.0000000000001,-123.34967041015622,219.0000000000001], "text":"No"},
+{"from":-17, "to":-9, "fromPort":"R", "toPort":"T", "points":[-239.14852905273432,394.00000000000006,-229.14852905273432,394.00000000000006,-197,394.00000000000006,-197,90.56227569580084,-89.99999999999999,90.56227569580084,-89.99999999999999,100.56227569580084]},
+{"from":-28, "to":-7, "fromPort":"B", "toPort":"T", "points":[423.0000000000001,480.4377243041991,423.0000000000001,490.4377243041991,423.0000000000001,503.05189641316724,423,503.05189641316724,423,515.6660685221354,423,525.6660685221354]},
+{"from":-7, "to":-31, "fromPort":"L", "toPort":"R", "visible":true, "points":[381.80638885498047,550,371.80638885498047,550,296.51111221313477,550,296.51111221313477,550.0000000000001,221.21583557128903,550.0000000000001,211.21583557128903,550.0000000000001], "text":"No; do Mmin times   "},
+{"from":-32, "to":-7, "fromPort":"T", "toPort":"T", "points":[-12.983875274658203,517.169118754069,-12.983875274658203,507.169118754069,423,507.169118754069,423,511.41759363810223,423,515.6660685221354,423,525.6660685221354]},
+{"from":-30, "to":-23, "fromPort":"L", "toPort":"B", "visible":true, "points":[381.80638885498047,645,371.80638885498047,645,-94.00000000000014,645,-94.00000000000014,532.7188621520995,-94.00000000000014,420.43772430419915,-94.00000000000014,410.43772430419915], "text":"No; do Mmaj times"},
+{"from":-29, "to":-30, "fromPort":"B", "toPort":"T", "visible":true, "points":[423,574.3339314778646,423,584.3339314778646,423,597.5,423,597.5,423,610.6660685221354,423,620.6660685221354]},
+{"from":-30, "to":-19, "fromPort":"B", "toPort":"B", "visible":true, "points":[423,669.3339314778646,423,679.3339314778646,-290,679.3339314778646,-290,656.8546900431315,-290,634.3754486083984,-290,624.3754486083984]},
+{"from":-9, "to":-12, "fromPort":"B", "toPort":"T", "points":[-89.99999999999999,133.43772430419926,-89.99999999999999,143.43772430419926,-89.99999999999999,168.00000000000009,-89.99999999999997,168.00000000000009,-89.99999999999997,192.5622756958009,-89.99999999999997,202.5622756958009]}
  ]}
   </textarea>
   <p>Click the button below to render the current GoJS Diagram into SVG at one-half scale.
