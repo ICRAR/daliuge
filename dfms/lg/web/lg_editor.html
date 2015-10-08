@@ -1,0 +1,565 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>Logical Graph Editor</title>
+<meta name="description" content="Interactive flowchart diagram implemented by GoJS in JavaScript for HTML." />
+<!-- Original example: Copyright 1998-2015 by Northwoods Software Corporation. -->
+<!-- Ported for SDP logical graph: Copyright 2009-2015 by ICRAR -->
+<meta charset="UTF-8">
+<script src="go.js"></script>
+<script id="code">
+  function init() {
+    //if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
+    var $ = go.GraphObject.make;  // for conciseness in defining templates
+
+    myDiagram =
+      $(go.Diagram, "myDiagram",  // must name or refer to the DIV HTML element
+        {
+          initialContentAlignment: go.Spot.Center,
+          allowDrop: true,  // must be true to accept drops from the Palette
+          "LinkDrawn": showLinkLabel,  // this DiagramEvent listener is defined below
+          "LinkRelinked": showLinkLabel,
+          "animationManager.duration": 800, // slightly longer than default (600ms) animation
+          "undoManager.isEnabled": true  // enable undo & redo
+        });
+
+    // when the document is modified, add a "*" to the title and enable the "Save" button
+    myDiagram.addDiagramListener("Modified", function(e) {
+      var button = document.getElementById("SaveButton");
+      if (button) button.disabled = !myDiagram.isModified;
+      var idx = document.title.indexOf("*");
+      if (myDiagram.isModified) {
+        if (idx < 0) document.title += "*";
+      } else {
+        if (idx >= 0) document.title = document.title.substr(0, idx);
+      }
+    });
+
+    // helper definitions for node templates
+
+    function nodeStyle() {
+      return [
+        // The Node.location comes from the "loc" property of the node data,
+        // converted by the Point.parse static method.
+        // If the Node.location is changed, it updates the "loc" property of the node data,
+        // converting back using the Point.stringify static method.
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        {
+          // the Node.location is at the center of each node
+          locationSpot: go.Spot.Center,
+          //isShadowed: true,
+          //shadowColor: "#888",
+          // handle mouse enter/leave events to show/hide the ports
+          mouseEnter: function (e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function (e, obj) { showPorts(obj.part, false); }
+        }
+      ];
+    }
+
+    // Define a function for creating a "port" that is normally transparent.
+    // The "name" is used as the GraphObject.portId, the "spot" is used to control how links connect
+    // and where the port is positioned on the node, and the boolean "output" and "input" arguments
+    // control whether the user can draw links from or to the port.
+    function makePort(name, spot, output, input) {
+      // the port is basically just a small circle that has a white stroke when it is made visible
+      return $(go.Shape, "Circle",
+               {
+                  fill: "transparent",
+                  stroke: null,  // this is changed to "white" in the showPorts function
+                  desiredSize: new go.Size(8, 8),
+                  alignment: spot, alignmentFocus: spot,  // align the port on the main Shape
+                  portId: name,  // declare this object to be a "port"
+                  fromSpot: spot, toSpot: spot,  // declare where links may connect at this port
+                  fromLinkable: output, toLinkable: input,  // declare whether the user may draw links to/from here
+                  cursor: "pointer"  // show a different cursor to indicate potential link point
+               });
+    }
+
+    // define the Node templates for regular nodes
+
+    var lightText = 'whitesmoke';
+
+    myDiagram.nodeTemplateMap.add("",  // the default category
+      $(go.Node, "Spot", nodeStyle(),
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Rectangle",
+            { fill: "#00A9C9", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, false, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, false)
+      ));
+
+      myDiagram.nodeTemplateMap.add("Component",  // the Component category
+      $(go.Node, "Spot", nodeStyle(),
+        // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Rectangle",
+            { fill: "#00A9C9", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+      myDiagram.nodeTemplateMap.add("Data",  // the Component category
+      $(go.Node, "Spot", nodeStyle(),
+        // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Parallelogram2",
+            { fill: "#004080", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("GSM",  // the Component category
+      $(go.Node, "Spot", nodeStyle(),
+        // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Cylinder4",
+            { fill: "#004080", stroke: "#ffffff", width: "8" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(200, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("LSM",  // the Component category
+      $(go.Node, "Spot", nodeStyle(),
+        // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Cylinder4",
+            { fill: "#004080", stroke: "#ece437" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Parameter",  // the Component category
+      $(go.Node, "Spot", nodeStyle(),
+        // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "DividedEvent",
+            { fill: "#004080", stroke: null },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("TM",  // the default category
+      $(go.Node, "Spot", nodeStyle(),
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Hexagon",
+            { fill: "#00A9C9", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Metadata",  // the default category
+      $(go.Node, "Spot", nodeStyle(),
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Card",
+            { fill: "#00A9C9", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Branch",  // the default category
+      $(go.Node, "Spot", nodeStyle(),
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Diamond",
+            { fill: "#00A9C9", stroke: "#ffffff" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 2,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Start",
+      $(go.Node, "Spot", nodeStyle(),
+        $(go.Panel, "Auto",
+          $(go.Shape, "Start",
+            { minSize: new go.Size(40, 40), fill: "#79C900", stroke: null }),
+          $(go.TextBlock, "Start",
+            { font: "bold 11pt Helvetica, Arial, sans-serif", stroke: lightText },
+            new go.Binding("text"))
+        ),
+        // three named ports, one on each side except the top, all output only:
+        makePort("L", go.Spot.Left, true, false),
+        makePort("R", go.Spot.Right, true, false),
+        makePort("B", go.Spot.Bottom, true, false)
+      ));
+
+    myDiagram.nodeTemplateMap.add("End",
+      $(go.Node, "Spot", nodeStyle(),
+        $(go.Panel, "Auto",
+          $(go.Shape, "Terminator",
+            { minSize: new go.Size(40, 40), fill: "#DC3C00", stroke: null }),
+          $(go.TextBlock, "End",
+            { font: "bold 11pt Helvetica, Arial, sans-serif", stroke: lightText },
+            new go.Binding("text"))
+        ),
+        // three named ports, one on each side except the bottom, all input only:
+        makePort("T", go.Spot.Top, false, true),
+        makePort("L", go.Spot.Left, false, true),
+        makePort("R", go.Spot.Right, false, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Comment",
+      $(go.Node, "Auto", nodeStyle(),
+        $(go.Shape, "File",
+          { fill: "#EFFAB4", stroke: null }),
+        $(go.TextBlock,
+          {
+            margin: 5,
+            maxSize: new go.Size(200, NaN),
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            editable: true,
+            font: "bold 12pt Helvetica, Arial, sans-serif",
+            stroke: '#454545'
+          },
+          new go.Binding("text").makeTwoWay())
+        // no ports, because no links are allowed to connect with a comment
+      ));
+
+
+    // replace the default Link template in the linkTemplateMap
+    myDiagram.linkTemplate =
+      $(go.Link,  // the whole link panel
+        {
+          routing: go.Link.AvoidsNodes,
+          curve: go.Link.JumpOver,
+          corner: 5, toShortLength: 4,
+          relinkableFrom: true,
+          relinkableTo: true,
+          reshapable: true,
+          resegmentable: true,
+          // mouse-overs subtly highlight links:
+          mouseEnter: function(e, link) { link.findObject("HIGHLIGHT").stroke = "rgba(30,144,255,0.2)"; },
+          mouseLeave: function(e, link) { link.findObject("HIGHLIGHT").stroke = "transparent"; }
+        },
+        new go.Binding("points").makeTwoWay(),
+        $(go.Shape,  // the highlight shape, normally transparent
+          { isPanelMain: true, strokeWidth: 8, stroke: "transparent", name: "HIGHLIGHT" }),
+        $(go.Shape,  // the link path shape
+          { isPanelMain: true, stroke: "gray", strokeWidth: 2 }),
+        $(go.Shape,  // the arrowhead
+          { toArrow: "standard", stroke: null, fill: "gray"}),
+        $(go.Panel, "Auto",  // the link label, normally not visible
+          { visible: false, name: "LABEL", segmentIndex: 2, segmentFraction: 0.5},
+          new go.Binding("visible", "visible").makeTwoWay(),
+          $(go.Shape, "RoundedRectangle",  // the label shape
+            { fill: "#F8F8F8", stroke: null }),
+          $(go.TextBlock, "Yes",  // the label
+            {
+              textAlign: "center",
+              font: "10pt helvetica, arial, sans-serif",
+              stroke: "#333333",
+              editable: true
+            },
+            new go.Binding("text", "text").makeTwoWay())
+        )
+      );
+
+    // Make link labels visible if coming out of a "conditional" node.
+    // This listener is called by the "LinkDrawn" and "LinkRelinked" DiagramEvents.
+    function showLinkLabel(e) {
+      var label = e.subject.findObject("LABEL");
+      if (label !== null) label.visible = (e.subject.fromNode.data.figure === "Diamond");
+    }
+
+    // temporary links used by LinkingTool and RelinkingTool are also orthogonal:
+    myDiagram.toolManager.linkingTool.temporaryLink.routing = go.Link.Orthogonal;
+    myDiagram.toolManager.relinkingTool.temporaryLink.routing = go.Link.Orthogonal;
+
+    load();  // load an initial diagram from some JSON text
+
+    // initialize the Palette that is on the left side of the page
+    myPalette =
+      $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
+        {
+          "animationManager.duration": 800, // slightly longer than default (600ms) animation
+          nodeTemplateMap: myDiagram.nodeTemplateMap,  // share the templates used by myDiagram
+          model: new go.GraphLinksModel([  // specify the contents of the Palette
+            { category: "Start", text: "Start" },
+            { category: "Component", text: "Component"},
+            { category: "Data", text: "Data" },
+            { category: "TM", text: "TM" },
+            { category: "GSM", text: "GSM" },
+            { category: "Branch", text: "?" },
+            { category: "Metadata", text: "Metadata" },
+            { category: "End", text: "End" },
+            { category: "LSM", text: "LSM" },
+            { category: "Parameter", text: "Parameter" },
+            { category: "Comment", text: "Comment" }
+          ])
+        });
+
+  }
+
+  // Make all ports on a node visible when the mouse is over the node
+  function showPorts(node, show) {
+    var diagram = node.diagram;
+    if (!diagram || diagram.isReadOnly || !diagram.allowLink) return;
+    node.ports.each(function(port) {
+        port.stroke = (show ? "white" : null);
+      });
+  }
+
+
+  // Show the diagram's model in JSON format that the user may edit
+  function save() {
+    document.getElementById("mySavedModel").value = myDiagram.model.toJson();
+    myDiagram.isModified = false;
+  }
+  function load() {
+    myDiagram.model = go.Model.fromJson(document.getElementById("mySavedModel").value);
+  }
+
+  // add an SVG rendering of the diagram at the end of this page
+  function makeSVG() {
+    var svg = myDiagram.makeSvg({
+        scale: 0.5
+      });
+    svg.style.border = "1px solid black";
+    obj = document.getElementById("SVGArea");
+    obj.appendChild(svg);
+    if (obj.children.length > 0) {
+      obj.replaceChild(svg, obj.children[0]);
+    }
+  }
+</script>
+</head>
+<body onload="init()">
+<div id="sample">
+  <div style="width:100%; white-space:nowrap;">
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:140px">
+      <div id="myPalette" style="border: solid 1px gray; height: 720px"></div>
+    </span>
+
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:80%">
+      <div id="myDiagram" style="border: solid 1px gray; height: 720px"></div>
+    </span>
+  </div>
+  <p>
+  The FlowChart sample demonstrates several key features of GoJS,
+  namely <a href="../intro/palette.html">Palette</a>s,
+  <a href="../intro/links.html">Linkable nodes</a>, Drag/Drop behavior,
+  <a href="../intro/textBlocks.html">Text Editing</a>, and the use of
+  <a href="../intro/templateMaps.html">Node Template Maps</a> in Diagrams.
+  </p>
+  <p>
+  Mouse-over a Node to view its ports.
+  Drag from these ports to create new Links.
+  Selecting Links allows you to re-shape and re-link them.
+  Selecting a Node and then clicking its TextBlock will allow
+  you to edit text (except on the Start and End Nodes).
+  </p>
+  <p>
+  The Diagram Model data is loaded from the JSON below.
+  </p>
+  <button id="SaveButton" onclick="save()">Save</button>
+  <button onclick="load()">Load</button>
+  <textarea id="mySavedModel" style="width:100%;height:300px">
+{ "class": "go.GraphLinksModel",
+  "linkFromPortIdProperty": "fromPort",
+  "linkToPortIdProperty": "toPort",
+  "nodeDataArray": [
+{"category":"Comment", "loc":"85.00000000000017 61", "text":"Continuum Pipeline", "key":-13},
+{"category":"Start", "text":"Start", "key":-14, "loc":"-457 219"},
+{"category":"Branch", "text":"Self-Cal\nConverge?", "key":-6, "loc":"-290 218.99999999999991"},
+{"category":"Component", "text":"Update GSM", "key":-15, "loc":"-289.99999999999994 137.00000000000009"},
+{"category":"GSM", "text":"GSM", "key":-5, "loc":"-289.99999999999983 48.00000000000003"},
+{"category":"Component", "text":"Update LSM", "key":-17, "loc":"-289.99999999999994 394.00000000000006"},
+{"category":"Component", "text":"Cal. Source\nFinding", "key":-18, "loc":"-289.9999999999999 497.00000000000006"},
+{"category":"Component", "text":"Image Plane\nSpectral Averaging", "key":-19, "loc":"-290 600"},
+{"category":"LSM", "text":"LSM", "key":-9, "loc":"-84 136"},
+{"category":"Component", "text":"Predict", "key":-11, "loc":"292 136"},
+{"category":"Component", "text":"Predict", "key":-12, "loc":"-89.99999999999997 219.0000000000001"},
+{"category":"Component", "text":"Solve", "key":-16, "loc":"32.99999999999999 218.9999999999999"},
+{"category":"Component", "text":"Correct", "key":-20, "loc":"167 219.0000000000001"},
+{"category":"Component", "text":"Subtract", "key":-21, "loc":"291.9999999999999 219.0000000000001"},
+{"category":"Component", "text":"Flag", "key":-22, "loc":"421.9999999999999 218.9999999999999"},
+{"category":"Parameter", "text":"Calibration\nParameter", "key":-10, "loc":"32.999999999999986 301.00000000000006"},
+{"category":"Component", "text":"iFFT", "key":-23, "loc":"-94.00000000000014 393.99999999999994"},
+{"category":"Component", "text":"deGrid", "key":-24, "loc":"33 394.0000000000003"},
+{"category":"Component", "text":"Subtract", "key":-25, "loc":"174.00000000000014 394.0000000000001"},
+{"category":"Component", "text":"Flag", "key":-26, "loc":"327.00000000000034 394.00000000000006"},
+{"category":"Component", "text":"Grid", "key":-27, "loc":"422 394.00000000000006"},
+{"category":"Component", "text":"FFT", "key":-28, "loc":"423.0000000000001 463.9999999999999"},
+{"category":"Branch", "text":"Minor Cycle Done?", "key":-29, "loc":"422.9999999999998 550.0000000000001"},
+{"category":"Branch", "text":"Major Cycle Done?", "key":-30, "loc":"422.9999999999999 640"},
+{"category":"Component", "text":"Identify\nComponent", "key":-31, "loc":"156.99999999999997 550.0000000000001"},
+{"category":"Component", "text":"Subtract \ncompnt frm\nimg plane", "key":-32, "loc":"-5.983875274658203 549.4822916666667"}
+ ],
+  "linkDataArray": [
+{"from":-14, "to":-6, "fromPort":"R", "toPort":"L", "points":[-423.0998840332031,219,-413.0998840332031,219,-397.08556365966797,219,-397.08556365966797,219,-381.0712432861328,219,-371.0712432861328,219]},
+{"from":-6, "to":-15, "fromPort":"T", "toPort":"B", "points":[-290,182.7491027832031,-290,172.7491027832031,-290,168.09341354370116,-290,168.09341354370116,-290,163.4377243041992,-290,153.4377243041992]},
+{"from":-15, "to":-5, "fromPort":"T", "toPort":"B", "points":[-290,120.56227569580078,-290,110.56227569580078,-290,92.5,-290,92.5,-290,74.43772430419921,-290,64.43772430419921]},
+{"from":-17, "to":-6, "fromPort":"T", "toPort":"B", "points":[-290,377.5622756958008,-290,367.5622756958008,-290,316.4065864562988,-290,316.4065864562988,-290,265.25089721679683,-290,255.25089721679686]},
+{"from":-18, "to":-17, "fromPort":"T", "toPort":"B", "points":[-290,472.6245513916016,-290,462.6245513916016,-290,441.53113784790037,-290,441.53113784790037,-290,420.4377243041992,-290,410.4377243041992]},
+{"from":-19, "to":-18, "fromPort":"T", "toPort":"B", "points":[-290,575.6245513916016,-290,565.6245513916016,-290,548.5,-290,548.5,-290,531.3754486083984,-290,521.3754486083984]},
+{"from":-9, "to":-15, "fromPort":"L", "toPort":"R", "points":[-118.03206089564732,136,-128.0320608956473,136,-177.97826875959123,136,-177.97826875959123,137,-227.92447662353516,137,-237.92447662353516,137]},
+{"from":-9, "to":-11, "fromPort":"R", "toPort":"L", "points":[-49.967939104352666,136,-39.967939104352666,136,104.34119524274554,136,104.34119524274554,136,248.65032958984375,136,258.65032958984375,136]},
+{"from":-6, "to":-12, "fromPort":"R", "toPort":"L", "points":[-208.9287567138672,219,-198.9287567138672,219,-166.13921356201172,219,-166.13921356201172,219,-133.34967041015625,219,-123.34967041015625,219]},
+{"from":-17, "to":-9, "fromPort":"R", "toPort":"T", "points":[-239.14852905273438,394,-229.14852905273438,394,-177.59029497419084,394,-177.59029497419084,109.56227569580078,-84,109.56227569580078,-84,119.56227569580078]},
+{"from":-12, "to":-16, "fromPort":"R", "toPort":"L", "points":[-56.65032958984375,219,-46.65032958984375,219,-25.853260040283203,219,-25.853260040283203,219,-5.056190490722656,219,4.943809509277344,219]},
+{"from":-16, "to":-20, "fromPort":"R", "toPort":"L", "points":[61.056190490722656,219,71.05619049072266,219,96.74302291870117,219,96.74302291870117,219,122.42985534667969,219,132.4298553466797,219]},
+{"from":-11, "to":-21, "fromPort":"B", "toPort":"T", "points":[292,152.4377243041992,292,162.4377243041992,292,177.5,292,177.5,292,192.5622756958008,292,202.5622756958008]},
+{"from":-20, "to":-21, "fromPort":"R", "toPort":"L", "points":[201.5701446533203,219,211.5701446533203,219,227.66929244995117,219,227.66929244995117,219,243.76844024658203,219,253.76844024658203,219]},
+{"from":-16, "to":-10, "fromPort":"B", "toPort":"T", "points":[33,235.43772430419924,33,245.43772430419924,33,248.07265497843434,32.999999999999986,248.07265497843434,32.999999999999986,250.70758565266942,32.999999999999986,260.7075856526694]},
+{"from":-23, "to":-24, "fromPort":"R", "toPort":"L", "points":[-70.03112792968754,393.99999999999983,-60.03112792968754,393.99999999999983,-34.57659149169924,393.99999999999983,-34.57659149169924,394.00000000000017,-9.122055053710938,394.00000000000017,0.8779449462890625,394.00000000000017]},
+{"from":-10, "to":-24, "fromPort":"B", "toPort":"T", "points":[32.999999999999986,341.29241434733086,32.999999999999986,351.29241434733086,32.999999999999986,359.4273450215659,33,359.4273450215659,33,367.56227569580096,33,377.56227569580096]},
+{"from":-24, "to":-25, "fromPort":"R", "toPort":"L", "points":[65.12205505371094,394.00000000000017,75.12205505371094,394.00000000000017,100.44524765014657,394.00000000000017,100.44524765014657,393.99999999999994,125.7684402465822,393.99999999999994,135.7684402465822,393.99999999999994]},
+{"from":-25, "to":-26, "fromPort":"R", "toPort":"L", "points":[212.23155975341814,393.99999999999994,222.23155975341814,393.99999999999994,257.83177566528343,393.99999999999994,257.83177566528343,394.0000000000002,293.43199157714866,394.0000000000002,303.43199157714866,394.0000000000002]},
+{"from":-26, "to":-27, "fromPort":"R", "toPort":"L", "points":[350.5680084228518,394.0000000000002,360.5680084228518,394.0000000000002,374.50000000000017,394.0000000000002,374.50000000000017,394.0000000000002,388.43199157714855,394.0000000000002,398.43199157714855,394.0000000000002]},
+{"from":-21, "to":-22, "fromPort":"R", "toPort":"L", "points":[330.23155975341797,219,340.23155975341797,219,364.3317756652832,219,364.3317756652832,219,388.43199157714844,219,398.43199157714844,219]},
+{"from":-22, "to":-27, "fromPort":"R", "toPort":"R", "points":[445.56800842285156,219,455.56800842285156,219,455.5680084228517,219,455.5680084228517,306.5000000000001,455.5680084228517,394.0000000000002,445.5680084228517,394.0000000000002]},
+{"from":-10, "to":-27, "fromPort":"R", "toPort":"T", "points":[79.7820358276367,301.0000000000001,89.7820358276367,301.0000000000001,422.0000000000001,301.0000000000001,422.0000000000001,334.2811378479006,422.0000000000001,367.562275695801,422.0000000000001,377.562275695801]},
+{"from":-27, "to":-28, "fromPort":"B", "toPort":"T", "points":[422.0000000000001,410.43772430419943,422.0000000000001,420.43772430419943,422.0000000000001,429.00000000000006,423.0000000000001,429.00000000000006,423.0000000000001,437.5622756958007,423.0000000000001,447.5622756958007]},
+{"from":-28, "to":-29, "fromPort":"B", "toPort":"T", "points":[423.0000000000001,480.4377243041991,423.0000000000001,490.4377243041991,423.0000000000001,505.03113784790037,423,505.03113784790037,423,519.6245513916016,423,529.6245513916016]},
+{"from":-32, "to":-29, "fromPort":"T", "toPort":"T", "points":[-5.983875274658203,517.169118754069,-5.983875274658203,507.169118754069,423,507.169118754069,423,513.3968350728353,423,519.6245513916016,423,529.6245513916016]},
+{"from":-29, "to":-31, "fromPort":"L", "toPort":"R", "points":[285.72975158691406,550,275.72975158691406,550,245.97279357910156,550,245.97279357910156,550,216.21583557128906,550,206.21583557128906,550]},
+{"from":-31, "to":-32, "fromPort":"L", "toPort":"R", "points":[107.78416442871094,550,97.78416442871094,550,75.30762672424316,550,75.30762672424316,549.4822916666667,52.83108901977539,549.4822916666667,42.83108901977539,549.4822916666667]},
+{"from":-29, "to":-30, "fromPort":"B", "toPort":"T", "points":[423,570.3754486083984,423,580.3754486083984,423,595,423,595,423,609.6245513916016,423,619.6245513916016]},
+{"from":-30, "to":-23, "fromPort":"L", "toPort":"B", "points":[286.53147888183594,640,276.53147888183594,640,-94.00000000000004,640,-94.00000000000004,530.2188621520995,-94.00000000000004,420.43772430419904,-94.00000000000004,410.43772430419904]}
+ ]}
+  </textarea>
+  <p>Click the button below to render the current GoJS Diagram into SVG at one-half scale.
+     The SVG is not interactive like the GoJS diagram, but can be used for printing or display.
+     For more information, see the page on <a href="../intro/makingSVG.html">making SVG</a>.</p>
+  <button onclick="makeSVG()">Render as SVG</button>
+  <div id="SVGArea"></div>
+</div>
+</body>
+</html>
