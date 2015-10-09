@@ -48,15 +48,15 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, domId, nodes=['localhost']):
-        self._dimId = domId
+    def __init__(self, dimId, nodes=['localhost'], nsHost=None):
+        self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     @property
-    def domId(self):
+    def dimId(self):
         return self._dimId
 
     def startDOM(self, host, port):

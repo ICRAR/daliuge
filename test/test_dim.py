@@ -35,7 +35,7 @@ from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.utils import portIsOpen
 
 
-domId = 'lala'
+dimId = 'lala'
 hostname = socket.gethostname()
 
 class TestDIM(unittest.TestCase):
@@ -62,7 +62,7 @@ class TestDIM(unittest.TestCase):
         threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
 
         # The DIM we're testing
-        self._dim = DataIslandManager(domId, [hostname])
+        self._dim = DataIslandManager(dimId, [hostname])
 
     def tearDown(self):
         self._domDaemon.shutdown()
