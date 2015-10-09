@@ -60,7 +60,7 @@ def complex_graph():
     that listen in a socket. The rest are plain in-memory DOs
     """
 
-    a,b,c,d,k       = [socket(uid,port) for uid,port in ('a',1111),('b',1112),('c',1113),('d',1114),('e',1115)]
+    a,b,c,d,k       = [socket(uid,port) for uid,port in ('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]
     e,f,i,l,m,q,r   = [sleepAndCopy(uid) for uid in ['e', 'f', 'i', 'l', 'm', 'q', 'r']]
     g,h,j,n,o,p,s,t = [memory(uid) for uid in ['g', 'h', 'j', 'n', 'o', 'p', 's', 't']]
 
