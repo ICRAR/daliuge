@@ -1,0 +1,190 @@
+#
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2015
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
+import collections
+import logging
+
+from Pyro4.core import Proxy
+
+from dfms import remote, graph_loader, data_object
+from dfms.utils import CountDownLatch, portIsOpen
+import threading
+
+
+logger = logging.getLogger(__name__)
+DOM_PORT = 4000
+
+class DataIslandManager(object):
+    """
+    The DataIslandManager
+
+    A DataIslandManager manages a number of DataObjectManagers, one per node
+    in the Data Island. It offers roughly the same methods as those offered
+    by the DOM since it offers the same capabilities.
+
+    One of the key aspects of the DIM is that it receives a physical graph for
+    the whole island, which it must distribute among the different DOMs. For
+    this it requires that all the nodes in the graph declare a location (a host
+    name), which should be part of the Data Island. This way the DIM breaks down
+    the physical graph in parts that belong to the different DOMs, creates them
+    individually, and links them later at deployment time.
+    """
+
+    def __init__(self, domId, nodes=['localhost']):
+        self._dimId = domId
+        self._nodes = nodes
+        self._connectTimeout = 100
+        self._interDOMRelations = collections.defaultdict(list)
+        logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
+
+    @property
+    def domId(self):
+        return self._dimId
+
+    def startDOM(self, host, port):
+        client = remote.createClient(host)
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("DOM not present at %s:%d, starting it" % (host, port))
+        _, _, status = remote.execRemoteWithClient(client, "dfmsDOM --rest -i dom_{0} -P {1} -d".format(host, port))
+        if status != 0:
+            raise Exception("Failed to start the DOM on %s:%d" % (host, port))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("DOM successfully started at %s:%d" % (host, port))
+
+    def ensureDOM(self, host, port=DOM_PORT):
+        # We rely on having ssh keys for this, since we're using
+        # the dfms.remote module, which authenticates using public keys
+        if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Checking DOM presence at %s:%d" % (host, port))
+
+        if portIsOpen(host, port):
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("DOM already present at %s:%d" % (host, port))
+        else:
+            self.startDOM(host, port)
+
+    def domAt(self, node):
+        return Proxy("PYRONAME:dom_%s" % (node))
+
+    def _createSession(self, sessionId, node, latch):
+        try:
+            self.ensureDOM(node)
+            with self.domAt(node) as dom:
+                dom.createSession(sessionId)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Successfully created session %s in %s' % (sessionId, node))
+        except:
+            logger.error("Failed to create a session on node %s" % (node))
+            raise
+        finally:
+            latch.countDown()
+
+    def createSession(self, sessionId):
+        """
+        Creates a session in all underlying DOMs.
+        """
+
+        logger.info('Creating Session %s all nodes' % (sessionId))
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._createSession, args=(sessionId, node, latch))
+            t.start()
+        latch.await()
+
+    def addGraphSpec(self, sessionId, graphSpec):
+
+        # The first step is to break down the graph into smaller graphs that
+        # belong to the same node, so we can submit that graph into the individual
+        # DOMs. For this we need to make sure that our graph has a 'location'
+        # attribute set
+        perLocation = collections.defaultdict(list)
+        for doSpec in graphSpec:
+            if 'location' not in doSpec:
+                raise Exception("DataObject %s doesn't specify a location attribute" % (doSpec['oid']))
+
+            loc = doSpec['location']
+            if loc not in self._nodes:
+                raise Exception("DataObject %s's location %s does not belong to this DIM" % (doSpec['oid'], loc))
+
+            perLocation[loc].append(doSpec)
+
+        # At each location the relationships between DOs should be local at the
+        # moment of submitting the graph; thus we record the inter-DOM
+        # relationships separately and remove them from the original graph spec
+        interDOMRelations = []
+        for loc,doSpecs in perLocation.viewitems():
+            interDOMRelations.extend(graph_loader.removeUnmetRelationships(doSpecs))
+
+        # Create the individual graphs on each DOM now that they are correctly
+        # separated
+        doms = {}
+        for node in self._nodes:
+            domAtNode = self.domAt(node)
+            doms[node] = domAtNode
+            domAtNode.addGraphSpec(sessionId, perLocation[node])
+
+        self._interDOMRelations[sessionId].extend(interDOMRelations)
+
+    def _deploySession(self, sessionId, node, allUris, latch):
+        try:
+            with self.domAt(node) as dom:
+                uris = dom.deploySession(sessionId)
+                allUris.update(uris)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Successfully deployed session %s in %s' % (sessionId, node))
+        finally:
+            latch.countDown()
+
+    def deploySession(self, sessionId):
+
+        # Deploy all graphs in parallel
+        allUris = {}
+        logger.info('Deploying Session %s in all nodes' % (sessionId))
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch))
+            t.start()
+        latch.await()
+
+        # Retrieve all necessary proxies to establish the inter-DOM relationships
+        # Creating proxies beforhand and reusing them means that we won't need
+        # to establish that many TCP connections once and over again
+        proxies = {}
+        for rel in self._interDOMRelations[sessionId]:
+            if rel.rhs not in proxies:
+                proxies[rel.rhs] = Proxy(allUris[rel.rhs])
+            if rel.lhs not in proxies:
+                proxies[rel.lhs] = Proxy(allUris[rel.lhs])
+
+        for rel in self._interDOMRelations[sessionId]:
+            rhsDO = proxies[rel.rhs]
+            lhsDO = proxies[rel.lhs]
+
+            if rel in data_object.LINKTYPE_1TON_APPEND_METHOD:
+                methodName = data_object.LINKTYPE_1TON_APPEND_METHOD[rel]
+                # TODO: This is very low-level Pyro, we might want to change it
+                # Same applies below
+                lhsDO._pyroInvoke(methodName, (rhsDO))
+            else:
+                relPropName = data_object.LINKTYPE_NTO1_PROPERTY[rel]
+                setattr(lhsDO, relPropName, rhsDO)
+
+        return allUris
