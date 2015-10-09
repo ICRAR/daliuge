@@ -41,7 +41,8 @@ import threading
 import warnings
 
 from ddap_protocol import DOStates
-from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDOStates
+from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDOStates,\
+    DOLinkType
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
@@ -1344,3 +1345,24 @@ class dodict(dict):
         self._addSomething(otherDoDict, 'producers')
     def __setattr__(self, name, value):
         self[name] = value
+
+
+# Dictionary mapping 1-to-many DOLinkType constants to the corresponding methods
+# used to append a a DataObject into a relationship collection of another
+# (e.g., one uses `addConsumer` to add a DOLinkeType.CONSUMER DataObject into
+# another)
+LINKTYPE_1TON_APPEND_METHOD = {
+    DOLinkType.CONSUMER:           'addConsumer',
+    DOLinkType.STREAMING_CONSUMER: 'addStreamingConsumer',
+    DOLinkType.INPUT:              'addInput',
+    DOLinkType.STREAMING_INPUT:    'addStreamingInput',
+    DOLinkType.OUTPUT:             'addOutput',
+    DOLinkType.CHILD:              'addChild',
+    DOLinkType.PRODUCER:           'addProducer'
+}
+
+# Same as above, but for N-to-1 relationships, in which case we indicate not a
+# method but a property
+LINKTYPE_NTO1_PROPERTY = {
+    DOLinkType.PARENT: 'parent'
+}

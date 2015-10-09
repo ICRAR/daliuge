@@ -23,6 +23,7 @@
 # ------------------------------------------------
 # chen.wu@icrar.org   11/12/2014     Created
 #
+import collections
 
 CST_NS_DOM = 'ddap.dom' # naming prefix for data object manager
 
@@ -72,6 +73,11 @@ class ExecutionMode:
     the graph effectively drives its own execution without external intervention.
     """
     DO, EXTERNAL = xrange(2)
+
+# This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
+# lhs and rhs are DataObject OIDs
+# rel is one of DOLinkType
+DORel = collections.namedtuple('DORel', ['lhs', 'rel', 'rhs'])
 
 class REST_API_DOM: # RESTful API (url patterns)
     """

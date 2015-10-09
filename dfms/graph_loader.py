@@ -31,7 +31,9 @@ import logging
 
 from dfms import doutils
 from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
-    FileDataObject, NgasDataObject, SocketListener
+    FileDataObject, NgasDataObject, SocketListener, LINKTYPE_NTO1_PROPERTY, \
+    LINKTYPE_1TON_APPEND_METHOD
+from dfms.ddap_protocol import DORel, DOLinkType
 
 
 STORAGE_TYPES = {
@@ -40,15 +42,22 @@ STORAGE_TYPES = {
     'ngas'  : NgasDataObject
 }
 
-# 1-to-N relationships between DataObjects in (jsonName, DOBindingMethodName) form
-__ONE_TO_N_RELS = [('consumers', 'addConsumer'), ('streamingConsumers', 'addStreamingConsumer'),
-                   ('inputs', 'addInput'), ('streamingInputs', 'addStreamingInput'),
-                   ('outputs', 'addOutput'), ('children', 'addChild'),
-                   ('producers', 'addProducer')]
+# Dictionary for the key used to store 1-to-N relationships between DataObjects
+# in the the DO specification format
+__ONE_TO_N_RELS = {
+    DOLinkType.CONSUMER:           'consumers',
+    DOLinkType.STREAMING_CONSUMER: 'streamingConsumers',
+    DOLinkType.INPUT:              'inputs',
+    DOLinkType.STREAMING_INPUT:    'streamingInputs',
+    DOLinkType.OUTPUT:             'outputs',
+    DOLinkType.CHILD:              'children',
+    DOLinkType.PRODUCER:           'producers'
+}
 
-# N-to-1 relationships between DataObjects. Their json name matches the attribute
-# name at the DataObject level
-__N_TO_ONE_RELS = ['parent']
+# Same for above, but for n-to-1 relationships
+__N_TO_ONE_RELS = {
+    DOLinkType.PARENT: 'parent'
+}
 
 logger = logging.getLogger(__name__)
 
@@ -109,14 +118,14 @@ def _loadDataObjectSpecs(doSpecList):
     for doSpec in doSpecList:
 
         # 1-N relationships
-        for rel,_ in __ONE_TO_N_RELS:
+        for rel in __ONE_TO_N_RELS.viewvalues():
             if rel in doSpec:
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DOs
                 for oid in doSpec[rel]: doSpecs[oid]
 
         # N-1 relationships
-        for rel in __N_TO_ONE_RELS:
+        for rel in __N_TO_ONE_RELS.viewvalues():
             if rel in doSpec:
                 # See comment above
                 doSpecs[doSpec[rel]]
@@ -148,18 +157,20 @@ def createGraphFromDOSpecList(doSpecList):
         dataObject = dataObjects[oid]
 
         # 1-N relationships
-        for rel, relFuncName in __ONE_TO_N_RELS:
+        for link,rel in __ONE_TO_N_RELS.viewitems():
             if rel in doSpec:
                 for oid in doSpec[rel]:
                     lhDO = dataObjects[oid]
+                    relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
                     relFunc = getattr(dataObject, relFuncName)
                     relFunc(lhDO)
 
         # N-1 relationships
-        for rel in __N_TO_ONE_RELS:
+        for link,rel in __N_TO_ONE_RELS.viewitems():
             if rel in doSpec:
                 lhDO = dataObjects[doSpec[rel]]
-                setattr(dataObject, rel, lhDO)
+                propName = LINKTYPE_NTO1_PROPERTY[link]
+                setattr(dataObject, propName, lhDO)
 
     # We're done! Return the roots of the graph to the caller
     roots = []
