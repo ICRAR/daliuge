@@ -1345,6 +1345,8 @@ class dodict(dict):
         self._addSomething(otherDoDict, 'producers')
     def __setattr__(self, name, value):
         self[name] = value
+    def __getattr__(self, name):
+        return self[name]
 
 
 # Dictionary mapping 1-to-many DOLinkType constants to the corresponding methods
