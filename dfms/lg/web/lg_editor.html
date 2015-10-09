@@ -75,6 +75,15 @@
                });
     }
 
+
+    function makeMyPort(name, spot, output, input) {
+      // chen.wu@icrar.org, move the point up to -24 unit for group construct
+      var spot_1 = spot.copy();
+      spot_1.offsetY = -24;
+      return makePort(name, spot_1, output, input);
+    }
+
+
     // define the Node templates for regular nodes
 
     var lightText = 'whitesmoke';
@@ -332,8 +341,6 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-
-
     myDiagram.nodeTemplateMap.add("Start",
       $(go.Node, "Spot", nodeStyle(),
         $(go.Panel, "Auto",
@@ -382,19 +389,143 @@
         // no ports, because no links are allowed to connect with a comment
       ));
 
-    myDiagram.groupTemplateMap.add("ParallelData",
-      $(go.Group, "Vertical",
+    // this function is used to highlight a Group that the selection may be dropped into
+    function highlightGroup(e, grp, show) {
+      if (!grp) return;
+      e.handled = true;
+      if (show) {
+        // cannot depend on the grp.diagram.selection in the case of external drag-and-drops;
+        // instead depend on the DraggingTool.draggedParts or .copiedParts
+        var tool = grp.diagram.toolManager.draggingTool;
+        var map = tool.draggedParts || tool.copiedParts;  // this is a Map
+        // now we can check to see if the Group will accept membership of the dragged Parts
+        if (grp.canAddMembers(map.toKeySet())) {
+          grp.isHighlighted = true;
+          return;
+        }
+      }
+      grp.isHighlighted = false;
+    }
+
+    // Upon a drop onto a Group, we try to add the selection as members of the Group.
+    // Upon a drop onto the background, or onto a top-level Node, make selection top-level.
+    // If this is OK, we're done; otherwise we cancel the operation to rollback everything.
+    function finishDrop(e, grp) {
+      var ok = (grp !== null
+                ? grp.addMembers(grp.diagram.selection, true)
+                : e.diagram.commandHandler.addTopLevelParts(e.diagram.selection, true));
+      if (!ok) e.diagram.currentTool.doCancel();
+    }
+    myDiagram.groupTemplate =
+    $(go.Group, go.Panel.Auto,
+        {
+          background: "transparent",
+          // highlight when dragging into the Group
+          mouseDragEnter: function(e, grp, prev) { highlightGroup(e, grp, true); },
+          mouseDragLeave: function(e, grp, next) { highlightGroup(e, grp, false); },
+          computesBoundsAfterDrag: true,
+          // when the selection is dropped into a Group, add the selected Parts into that Group;
+          // if it fails, cancel the tool, rolling back any changes
+          mouseDrop: finishDrop,
+          handlesDragDropForMembers: true,  // don't need to define handlers on member Nodes and Links
+          // Groups containing Groups lay out their members horizontally
+          layout:
+            $(go.GridLayout,
+              { wrappingWidth: Infinity, alignment: go.GridLayout.Position,
+                  cellSize: new go.Size(1, 1), spacing: new go.Size(4, 4) })
+        },
+        new go.Binding("background", "isHighlighted", function(h) { return h ? "rgba(255,0,0,0.2)" : "transparent"; }).ofObject(),
+        $(go.Shape, "Rectangle",
+          { fill: null, stroke: "#E69900", strokeWidth: 2 }),
+        $(go.Panel, go.Panel.Vertical,  // title above Placeholder
+          $(go.Panel, go.Panel.Horizontal,  // button next to TextBlock
+            { stretch: go.GraphObject.Horizontal, background: "#FFDD33", margin: 1 },
+            $("SubGraphExpanderButton",
+              { alignment: go.Spot.Right, margin: 5 }),
+            $(go.TextBlock,
+              {
+                alignment: go.Spot.Left,
+                editable: true,
+                margin: 5,
+                font: "bold 15px sans-serif",
+                stroke: "#9A6600"
+              },
+              new go.Binding("text", "text").makeTwoWay())
+          ),  // end Horizontal Panel
+          $(go.Placeholder,
+            { padding: 5, alignment: go.Spot.TopLeft })
+        ),  // end Vertical Panel
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      );
+    /*
+    $(go.Group, "Auto",
+      { layout: $(go.LayeredDigraphLayout,
+                  { direction: 0, columnSpacing: 10 }) },
+      $(go.Shape, "RoundedRectangle", // surrounds everything
+        {parameter1: 10, fill: "#17a963", stroke: "#ffffff" }),
+      $(go.Panel, "Vertical",  // position header above the subgraph
+        { defaultAlignment: go.Spot.Left },
+        $(go.Panel, "Horizontal",  // the header
+          { defaultAlignment: go.Spot.Top },
+          $("SubGraphExpanderButton"),  // this Panel acts as a Button
+          $(go.TextBlock,     // group title near top, next to button
+            { font: "Bold 12pt Sans-Serif", stroke: "#ffffff"  },
+            new go.Binding("text", "text"))
+        ),
+        $(go.Placeholder,     // represents area for all member parts
+          { padding: new go.Margin(0, 10), background: "white" })
+      ),
+      makePort("T", go.Spot.Top, true, true),
+      makePort("L", go.Spot.Left, true, true),
+      makePort("R", go.Spot.Right, true, true),
+      makePort("B", go.Spot.Bottom, true, true)
+    );
+*/
+    /*
+    $(go.Group, "Vertical", {"isSubGraphExpanded": true},
       $(go.Panel, "Auto",
+
         $(go.Shape, "RoundedRectangle",  // surrounds the Placeholder
           { parameter1: 14,
             fill: "rgba(128,128,128,0.33)" }),
         $(go.Placeholder,    // represents the area of all member parts,
-          { padding: 5})  // with some extra padding around them
+          { padding: 0})  // with some extra padding around them
       ),
+      $("SubGraphExpanderButton"),
       $(go.TextBlock,         // group title
         { alignment: go.Spot.Right, font: "Bold 12pt Sans-Serif" },
-        new go.Binding("text", "key"))
-    ));
+        new go.Binding("text", "text")),
+        makeMyPort("T", go.Spot.Top, true, true),
+        makeMyPort("L", go.Spot.Left, true, true),
+        makeMyPort("R", go.Spot.Right, true, true),
+        makeMyPort("B", go.Spot.Bottom, true, true)
+    );
+    */
+    /*
+    $(go.Group, "Vertical",
+      { selectionObjectName: "PH",
+        locationObjectName: "PH",
+        resizable: true,
+        resizeObjectName: "PH" },
+      new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+      $(go.TextBlock,  // group title
+        { font: "Bold 12pt Sans-Serif" },
+        new go.Binding("text", "text")),
+      $(go.Shape,  // using a Shape instead of a Placeholder
+        { name: "PH",
+          fill: "lightyellow" },
+        new go.Binding("desiredSize", "size", go.Size.parse).makeTwoWay(go.Size.stringify)),
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+    );
+  */
+    myDiagram.groupTemplateMap.add("SplitData", myDiagram.groupTemplate);
+
 
     // replace the default Link template in the linkTemplateMap
     myDiagram.linkTemplate =
@@ -461,7 +592,7 @@
         {
           "animationManager.duration": 800, // slightly longer than default (600ms) animation
           nodeTemplateMap: myDiagram.nodeTemplateMap,  // share the templates used by myDiagram
-          //groupTemplateMap: myDiagram.groupTemplateMap,
+          groupTemplateMap: myDiagram.groupTemplateMap,
           model: new go.GraphLinksModel([  // specify the contents of the Palette
             { category: "Start", text: "Start" },
             { category: "Component", text: "Component"},
@@ -474,6 +605,7 @@
             { category: "End", text: "End" },
             { category: "LSM", text: "LSM" },
             { category: "Parameter", text: "Parameter" },
+            { category: "SplitData", text: "Split Data", isGroup: true},
             { category: "Comment", text: "Comment" }
           ])
         });
@@ -516,7 +648,7 @@
 <body onload="init()">
 <div id="sample">
   <div style="width:100%; white-space:nowrap;">
-    <span style="display: inline-block; vertical-align: top; padding: 5px; width:140px">
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:190px">
       <div id="myPalette" style="border: solid 1px gray; height: 720px"></div>
     </span>
 
