@@ -29,6 +29,7 @@ import Pyro4
 
 from dfms.daemon import Daemon
 from dfms.dim.data_island_manager import DataIslandManager
+from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
 def launchServer(opts):
@@ -61,19 +62,14 @@ def launchServer(opts):
         except KeyboardInterrupt:
             pass
 
-
-
-def getPidFilename(domId):
-    if 'XDG_RUNTIME_DIR' in os.environ:
-        pidfile = os.path.join(os.environ['XDG_RUNTIME_DIR'], "dfmsDIM_%s.pid" % (domId))
-    else:
-        pidfile = os.path.join(os.path.expanduser("~"), ".dfmsDIM_%s.pid" % (domId))
-    return pidfile
-
 class DIMDaemon(Daemon):
     def __init__(self, options, *args, **kwargs):
-        pidfile = getPidFilename(options.dimId)
-        super(DIMDaemon, self).__init__(pidfile, *args, **kwargs)
+        logsDir = getDfmsLogsDir(createIfMissing=True)
+        pidDir  = getDfmsPidDir(createIfMissing=True)
+        pidfile = os.path.join(pidDir,  "dfmsDIM_%s.pid" % (options.dimId))
+        stdout  = os.path.join(logsDir, "dfmsDIM_%s_stdout" % (options.dimId))
+        stderr  = os.path.join(logsDir, "dfmsDIM_%s_stderr" % (options.dimId))
+        super(DIMDaemon, self).__init__(pidfile, stdout=stdout, stderr=stderr)
         self._options = options
     def run(self):
         launchServer(self._options)
@@ -95,8 +91,8 @@ def main(args=sys.argv):
                       dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
     parser.add_option("-p", "--nsPort", action="store", type="int",
                       dest="nsPort", help = "Name service port", default=9090)
-    parser.add_option("-i", "--domId", action="store", type="string",
-                      dest="domId", help = "The Data Island Manager ID")
+    parser.add_option("-i", "--dimId", action="store", type="string",
+                      dest="dimId", help = "The Data Island Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
