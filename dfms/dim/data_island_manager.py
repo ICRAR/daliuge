@@ -21,12 +21,12 @@
 #
 import collections
 import logging
+import threading
 
-from Pyro4.core import Proxy
+import Pyro4
 
 from dfms import remote, graph_loader, data_object
 from dfms.utils import CountDownLatch, portIsOpen
-import threading
 
 
 logger = logging.getLogger(__name__)
@@ -48,26 +48,28 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, domId, nodes=['localhost']):
-        self._dimId = domId
+    def __init__(self, dimId, nodes=['localhost'], nsHost=None):
+        self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
+        self._nsHost = nsHost or 'localhost'
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     @property
-    def domId(self):
+    def dimId(self):
         return self._dimId
 
     def startDOM(self, host, port):
         client = remote.createClient(host)
         if logger.isEnabledFor(logging.INFO):
             logger.info("DOM not present at %s:%d, starting it" % (host, port))
-        _, _, status = remote.execRemoteWithClient(client, "dfmsDOM --rest -i dom_{0} -P {1} -d".format(host, port))
+        out, err, status = remote.execRemoteWithClient(client, "dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}".format(host, port, self._nsHost))
         if status != 0:
+            logger.error("Failed to start the DOM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, port, out, err))
             raise Exception("Failed to start the DOM on %s:%d" % (host, port))
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("DOM successfully started at %s:%d" % (host, port))
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("DOM successfully started at %s:%d" % (host, port))
 
     def ensureDOM(self, host, port=DOM_PORT):
         # We rely on having ssh keys for this, since we're using
@@ -78,11 +80,16 @@ class DataIslandManager(object):
         if portIsOpen(host, port):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("DOM already present at %s:%d" % (host, port))
-        else:
-            self.startDOM(host, port)
+            return
+
+        self.startDOM(host, port)
+        # Wait a bit until the DOM starts; if it doesn't we fail
+        if not portIsOpen(host, port, 10):
+            raise Exception("DOM started at %s:%d, but couldn't connect to it" % (host, port))
 
     def domAt(self, node):
-        return Proxy("PYRONAME:dom_%s" % (node))
+        ns = Pyro4.locateNS(host=self._nsHost)
+        return Pyro4.Proxy(ns.lookup("dom_%s" % (node)))
 
     def _createSession(self, sessionId, node, latch):
         try:
@@ -102,7 +109,7 @@ class DataIslandManager(object):
         Creates a session in all underlying DOMs.
         """
 
-        logger.info('Creating Session %s all nodes' % (sessionId))
+        logger.info('Creating Session %s in all nodes' % (sessionId))
         latch = CountDownLatch(len(self._nodes))
         for node in self._nodes:
             t = threading.Thread(target=self._createSession, args=(sessionId, node, latch))
@@ -170,21 +177,23 @@ class DataIslandManager(object):
         proxies = {}
         for rel in self._interDOMRelations[sessionId]:
             if rel.rhs not in proxies:
-                proxies[rel.rhs] = Proxy(allUris[rel.rhs])
+                proxies[rel.rhs] = Pyro4.Proxy(allUris[rel.rhs])
             if rel.lhs not in proxies:
-                proxies[rel.lhs] = Proxy(allUris[rel.lhs])
+                proxies[rel.lhs] = Pyro4.Proxy(allUris[rel.lhs])
 
         for rel in self._interDOMRelations[sessionId]:
             rhsDO = proxies[rel.rhs]
             lhsDO = proxies[rel.lhs]
 
-            if rel in data_object.LINKTYPE_1TON_APPEND_METHOD:
-                methodName = data_object.LINKTYPE_1TON_APPEND_METHOD[rel]
+            relType = rel.rel
+            if relType in data_object.LINKTYPE_1TON_APPEND_METHOD:
+                methodName = data_object.LINKTYPE_1TON_APPEND_METHOD[relType]
                 # TODO: This is very low-level Pyro, we might want to change it
                 # Same applies below
-                lhsDO._pyroInvoke(methodName, (rhsDO))
+                # TODO: fix order of operands
+                rhsDO._pyroInvoke(methodName, (lhsDO,), {})
             else:
-                relPropName = data_object.LINKTYPE_NTO1_PROPERTY[rel]
+                relPropName = data_object.LINKTYPE_NTO1_PROPERTY[relType]
                 setattr(lhsDO, relPropName, rhsDO)
 
         return allUris

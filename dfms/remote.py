@@ -68,5 +68,5 @@ def execRemote(host, command, username=None, timeout=None, bufsize=-1):
 def createClient(host, username=None):
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
-    client.connect(host, username)
+    client.connect(host, username=username)
     return client
