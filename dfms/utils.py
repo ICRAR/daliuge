@@ -23,6 +23,7 @@
 Module containing miscellaneous utility classes and functions.
 """
 
+import os
 import socket
 import threading
 
@@ -66,3 +67,42 @@ def portIsOpen(host, port, timeout=10):
         return True
     except socket.error:
         return False
+
+def getDfmsDir():
+    """
+    Returns the root of the directory structure used by the DFMS framework at
+    runtime.
+    """
+    if 'XDG_RUNTIME_DIR' in os.environ:
+        return os.path.join(os.environ['XDG_RUNTIME_DIR'], "dfms")
+    return os.path.join(os.path.expanduser("~"), ".dfms")
+
+def getDfmsPidDir(createIfMissing=False):
+    """
+    Returns the location of the directory used by the DFMS framework to store
+    its PIDs. If `createIfMissing` is True, the directory will be created if it
+    currently doesn't exist
+    """
+    path = os.path.join(getDfmsDir(), 'pid')
+    if createIfMissing:
+        createDirIfMissing(path)
+    return path
+
+def getDfmsLogsDir(createIfMissing=False):
+    """
+    Returns the location of the directory used by the DFMS framework to store
+    its logs. If `createIfMissing` is True, the directory will be created if it
+    currently doesn't exist
+    """
+    path = os.path.join(getDfmsDir(), 'logs')
+    if createIfMissing:
+        createDirIfMissing(path)
+    return path
+
+def createDirIfMissing(path):
+    """
+    Creates the given directory if it doesn't exist
+    """
+    if os.path.exists(path):
+        return
+    os.makedirs(path)
