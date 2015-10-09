@@ -95,8 +95,8 @@ def main(args=sys.argv):
                       dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
     parser.add_option("-p", "--nsPort", action="store", type="int",
                       dest="nsPort", help = "Name service port", default=9090)
-    parser.add_option("-i", "--domId", action="store", type="string",
-                      dest="domId", help = "The Data Island Manager ID")
+    parser.add_option("-i", "--dimId", action="store", type="string",
+                      dest="dimId", help = "The Data Island Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
