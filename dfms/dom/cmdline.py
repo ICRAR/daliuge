@@ -63,19 +63,30 @@ def launchServer(opts):
         uri = dom_daemon.register(dom)
 
         logger.info('Registering DataObjectManager %s to NameServer' % (opts.domId))
-        hostname = os.uname()[1]
-        ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-        ns.register("%s_%s_%s" % (CST_NS_DOM, hostname, opts.domId), uri)
+        try:
+            ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
+            ns.register(opts.domId, uri)
+        except:
+            logger.warning("Failed to register the DOM with Pyro's NameServer, life continues anyway")
 
     if not opts.noPyro:
         dom_daemon.requestLoop()
     else:
-        threading.Event().wait()
+        try:
+            threading.Event().wait()
+        except KeyboardInterrupt:
+            pass
 
+def getPidFilename(domId):
+    if 'XDG_RUNTIME_DIR' in os.environ:
+        pidfile = os.path.join(os.environ['XDG_RUNTIME_DIR'], "dfmsDOM_%s.pid" % (domId))
+    else:
+        pidfile = os.path.join(os.path.expanduser("~"), ".dfmsDOM_%s.pid" % (domId))
+    return pidfile
 
 class DOMDaemon(Daemon):
     def __init__(self, options, *args, **kwargs):
-        pidfile = os.path.expanduser("~/.dfmsDOM_%s.pid" % (options.domId))
+        pidfile = getPidFilename(options.domId)
         super(DOMDaemon, self).__init__(pidfile, *args, **kwargs)
         self._options = options
     def run(self):
@@ -84,9 +95,9 @@ class DOMDaemon(Daemon):
 # Function used as entry point by setuptools
 def main(args=sys.argv):
 
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.add_option("--no-pyro", action="store_true",
-                      dest="noPyro", help="Don't start a Pyro daemon to expose this DOM instance", default=True)
+                      dest="noPyro", help="Don't start a Pyro daemon to expose this DOM instance", default=False)
     parser.add_option("-H", "--host", action="store", type="string",
                       dest="host", help = "The host to bind this DOM on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
