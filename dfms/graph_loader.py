@@ -61,6 +61,43 @@ __N_TO_ONE_RELS = {
 
 logger = logging.getLogger(__name__)
 
+def removeUnmetRelationships(doSpecList):
+    unmetRelationships = []
+
+    # Step #1: Index DO specs
+    doSpecsDict = {}
+    [doSpecsDict.__setitem__(doSpec['oid'], doSpec) for doSpec in doSpecList]
+
+    # Step #2: find unmet relationships and remove them from the original
+    # DO spec, keeping track of them
+    for doSpec in doSpecList:
+
+        # 1-N relationships
+        for link,rel in __ONE_TO_N_RELS.viewitems():
+            if rel in doSpec:
+                # Find missing OIDs in relationship and keep track of them
+                missingOids = [oid for oid in doSpec[rel] if oid not in doSpecsDict]
+                for oid in missingOids:
+                    unmetRelationships.append(DORel(oid, link, doSpec['oid']))
+                # Remove them from the current DO spec
+                [doSpec[rel].remove(oid) for oid in missingOids]
+                # Remove the relationship list entirely if it has no elements
+                if not doSpec[rel]: del doSpec[rel]
+
+        # N-1 relationships
+        for link,rel in __N_TO_ONE_RELS.viewitems():
+            if rel in doSpec:
+                # Check if OID is missing
+                oid = doSpec[rel]
+                if oid in doSpecsDict:
+                    continue
+                # Keep track of missing relationship
+                unmetRelationships.append(DORel(oid, link, doSpec['oid']))
+                # Remove relationship from current DO spec
+                del doSpec[rel]
+
+    return unmetRelationships
+
 def readObjectGraph(fileObj):
     """
     Loads the DataObject definitions from file-like object `fileObj`, creating
