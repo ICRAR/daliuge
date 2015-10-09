@@ -34,6 +34,7 @@ import Pyro4
 from dfms.daemon import Daemon
 from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.rest import RestServer
+from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
 def launchServer(opts):
@@ -77,17 +78,14 @@ def launchServer(opts):
         except KeyboardInterrupt:
             pass
 
-def getPidFilename(domId):
-    if 'XDG_RUNTIME_DIR' in os.environ:
-        pidfile = os.path.join(os.environ['XDG_RUNTIME_DIR'], "dfmsDOM_%s.pid" % (domId))
-    else:
-        pidfile = os.path.join(os.path.expanduser("~"), ".dfmsDOM_%s.pid" % (domId))
-    return pidfile
-
 class DOMDaemon(Daemon):
-    def __init__(self, options, *args, **kwargs):
-        pidfile = getPidFilename(options.domId)
-        super(DOMDaemon, self).__init__(pidfile, *args, **kwargs)
+    def __init__(self, options):
+        logsDir = getDfmsLogsDir(createIfMissing=True)
+        pidDir  = getDfmsPidDir(createIfMissing=True)
+        pidfile = os.path.join(pidDir,  "dfmsDOM_%s.pid" % (options.domId))
+        stdout  = os.path.join(logsDir, "dfmsDOM_%s_stdout" % (options.domId))
+        stderr  = os.path.join(logsDir, "dfmsDOM_%s_stderr" % (options.domId))
+        super(DOMDaemon, self).__init__(pidfile, stdout=stdout, stderr=stderr)
         self._options = options
     def run(self):
         launchServer(self._options)
