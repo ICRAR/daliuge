@@ -28,6 +28,8 @@ Utility methods and classes to be used when interacting with DataObjects
 import logging
 import threading
 
+import Pyro4
+
 from dfms.data_object import AppDataObject
 from dfms.io import IOForURL, OpenMode
 
@@ -45,7 +47,22 @@ class EvtConsumer(object):
     def dataObjectCompleted(self, do):
         self._evt.set()
 
+
 class DOWaiterCtx(object):
+    """
+    Class used by unit tests to trigger the execution of a physical graph and
+    wait until the given set of DataObjects have reached its COMPLETED status.
+
+    It does so by appending an EvtConsumer consumer to each DO before they are
+    used in the execution, and finally checking that the events have been set.
+    It should be used like this inside a test class:
+
+    # There is a physical graph that looks like: a -> b -> c
+    with DOWaiterCtx(self, c):
+        a.write('a')
+        a.setCompleted()
+    """
+
     def __init__(self, test, dos, timeout=1):
         self._dos = listify(dos)
         self._test = test
@@ -61,6 +78,70 @@ class DOWaiterCtx(object):
         to = self._timeout
         for evt in self._evts:
             self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
+
+
+class EvtConsumerProxyCtx(object):
+    """
+    Class used by unit tests to trigger the execution of a remote physical graph
+    and wait until the given set of nodes have reached its COMPLETED status. In
+    summary, this class is similar to DOWaiterCtx, but works for remote objects
+    (i.e., Pyro proxies).
+
+    Since the graph is remote (i.e., it is hosted by a DOM), the DataObjects
+    given to this class are actually Pyro proxies to the real DataObjects, and
+    therefore the consumer that is appended into them is hosted by a Pyro Daemon
+    local to this class. This class creates the daemon, starts a separate thread
+    to listen for incoming requests, waits until the DataObjects have reached
+    the COMPLETED state, stops the daemon, its listening thread, and uses the
+    test class to assert basic facts.
+    """
+
+    def __init__(self, test, dos, timeout=1):
+        self._dos = listify(dos)
+        self._test = test
+        self._timeout = timeout
+        self._evts = []
+
+    def __enter__(self):
+
+        # Create the daemon and listen for requests
+        daemon = Pyro4.Daemon()
+        t = threading.Thread(None, lambda: daemon.requestLoop())
+        t.daemon = 1
+        t.start()
+
+        # Attach a (proxy) EvtConsumer to each (proxy) do
+        for do in self._dos:
+            evt = threading.Event()
+            consumer = EvtConsumer(evt)
+            uri = daemon.register(consumer)
+            consumerProxy = Pyro4.Proxy(uri)
+            do.addConsumer(consumerProxy)
+            self._evts.append(evt)
+
+        self.daemon = daemon
+        self.t = t
+        return self
+
+    def __exit__(self, typ, value, traceback):
+
+        to = self._timeout
+        allFine = True
+
+        # Check now that all events have been set. If everything went fine, we
+        # also check that the thread hosting the daemon is dead.
+        try:
+            for evt in self._evts:
+                self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
+        except:
+            allFine = False
+        finally:
+            self.daemon.shutdown()
+            self.t.join(to)
+            if allFine:
+                self._test.assertFalse(self.t.isAlive())
+
+
 
 def allDataObjectContents(dataObject):
     '''
