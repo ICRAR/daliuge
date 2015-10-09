@@ -26,7 +26,6 @@ import random
 import socket
 import string
 from test import graphsRepository
-import threading
 import time
 import unittest
 
@@ -38,45 +37,7 @@ from dfms.ddap_protocol import DOStates
 from dfms.dom import cmdline
 from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.session import SessionStates
-from dfms.doutils import EvtConsumer
 
-
-class EvtConsumerProxyCtx(object):
-    def __init__(self, test, dos, timeout=1):
-        self._dos = doutils.listify(dos)
-        self._test = test
-        self._timeout = timeout
-        self._evts = []
-    def __enter__(self):
-        daemon = Pyro4.Daemon()
-        t = threading.Thread(None, lambda: daemon.requestLoop())
-        t.daemon = 1
-        t.start()
-
-        for do in self._dos:
-            evt = threading.Event()
-            consumer = EvtConsumer(evt)
-            uri = daemon.register(consumer)
-            consumerProxy = Pyro4.Proxy(uri)
-            do.addConsumer(consumerProxy)
-            self._evts.append(evt)
-
-        self.daemon = daemon
-        self.t = t
-        return self
-    def __exit__(self, typ, value, traceback):
-        to = self._timeout
-        allFine = True
-        try:
-            for evt in self._evts:
-                self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
-        except:
-            allFine = False
-        finally:
-            self.daemon.shutdown()
-            self.t.join(to)
-            if allFine:
-                self._test.assertFalse(self.t.isAlive())
 
 class TestDOM(unittest.TestCase):
 
@@ -112,7 +73,7 @@ class TestDOM(unittest.TestCase):
         a.addConsumer(b)
 
         # Run! We wait until c is completed
-        with EvtConsumerProxyCtx(self, c, 1):
+        with doutils.EvtConsumerProxyCtx(self, c, 1):
             a.write('a')
             a.setCompleted()
 
@@ -171,7 +132,7 @@ class TestDOM(unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        with EvtConsumerProxyCtx(self, f, 5):
+        with doutils.EvtConsumerProxyCtx(self, f, 5):
             a.write('a')
             a.setCompleted()
             b.write('a')
@@ -270,7 +231,7 @@ class TestDOM(unittest.TestCase):
         k.addOutput(m)
 
         # Run! This should trigger the full execution of the graph
-        with EvtConsumerProxyCtx(self, o, 1):
+        with doutils.EvtConsumerProxyCtx(self, o, 1):
             a.write('a')
 
         for doProxy in proxies:
