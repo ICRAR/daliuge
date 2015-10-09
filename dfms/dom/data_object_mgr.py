@@ -83,12 +83,6 @@ class DataObjectMgr(object):
     def domId(self):
         return self._domId
 
-    def getURI(self):
-        return self._uri
-
-    def setURI(self, uri):
-        self._uri = uri
-
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
@@ -128,8 +122,8 @@ class DataObjectMgr(object):
             doutils.breadFirstTraverse(roots, lambda do: self._dlm.addDataObject(do))
 
         # Finally, we also collect the Pyro URIs of our DOs and return them
-        uris = []
-        doutils.breadFirstTraverse(roots, lambda do: uris.append(do.uri))
+        uris = {}
+        doutils.breadFirstTraverse(roots, lambda do: uris.__setitem__(do.uid, do.uri))
         return uris
 
     def destroySession(self, sessionId):

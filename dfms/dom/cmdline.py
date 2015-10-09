@@ -19,20 +19,19 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import threading
 """
 Command-line entry point to launch a DOM instance
 """
 
 import logging
-from optparse import OptionParser
+import optparse
 import os
 import sys
+import threading
 
 import Pyro4
 
 from dfms.daemon import Daemon
-from dfms.ddap_protocol import CST_NS_DOM
 from dfms.dom.data_object_mgr import DataObjectMgr
 from dfms.dom.rest import RestServer
 

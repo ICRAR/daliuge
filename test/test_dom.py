@@ -67,9 +67,9 @@ class TestDOM(unittest.TestCase):
         self.assertEquals(2, len(uris2))
 
         # We externally wire the Proxy objects now
-        a = Pyro4.Proxy(uris1[0])
-        b = Pyro4.Proxy(uris2[0])
-        c = Pyro4.Proxy(uris2[1])
+        a = Pyro4.Proxy(uris1['A'])
+        b = Pyro4.Proxy(uris2['B'])
+        c = Pyro4.Proxy(uris2['C'])
         a.addConsumer(b)
 
         # Run! We wait until c is completed
@@ -119,12 +119,12 @@ class TestDOM(unittest.TestCase):
 
         # We externally wire the Proxy objects to establish the inter-DOM
         # relationships
-        a = Pyro4.Proxy(uris1[0])
-        b = Pyro4.Proxy(uris1[1])
-        c = Pyro4.Proxy(uris1[2])
-        d = Pyro4.Proxy(uris1[3])
-        e = Pyro4.Proxy(uris2[0])
-        f = Pyro4.Proxy(uris2[1])
+        a = Pyro4.Proxy(uris1['A'])
+        b = Pyro4.Proxy(uris1['B'])
+        c = Pyro4.Proxy(uris1['C'])
+        d = Pyro4.Proxy(uris1['D'])
+        e = Pyro4.Proxy(uris2['E'])
+        f = Pyro4.Proxy(uris2['F'])
         for do,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
             self.assertEquals(uid, do.uid, "Proxy is not the DO we think should be (assumed: %s/ actual: %s)" % (uid, do.uid))
         e.addInput(d)
@@ -209,21 +209,26 @@ class TestDOM(unittest.TestCase):
         self.assertEquals(5, len(uris2))
         self.assertEquals(5, len(uris3))
         self.assertEquals(4, len(uris4))
+        allUris = {}
+        allUris.update(uris1)
+        allUris.update(uris2)
+        allUris.update(uris3)
+        allUris.update(uris4)
 
         # We externally wire the Proxy objects to establish the inter-DOM
         # relationships. Intra-DOM relationships are already established
-        proxies = []
-        for uri in uris1 + uris2 + uris3 + uris4:
-            proxies.append(Pyro4.Proxy(uri))
+        proxies = {}
+        for uid,uri in allUris.viewitems():
+            proxies[uid] = Pyro4.Proxy(uri)
 
-        a = proxies[0]
-        b = proxies[1]
-        f = proxies[5]
-        g = proxies[6]
-        k = proxies[10]
-        l = proxies[11]
-        m = proxies[12]
-        o = proxies[14]
+        a = proxies['A']
+        b = proxies['B']
+        f = proxies['F']
+        g = proxies['G']
+        k = proxies['K']
+        l = proxies['L']
+        m = proxies['M']
+        o = proxies['O']
 
         a.addConsumer(b)
         a.addConsumer(g)
@@ -234,7 +239,7 @@ class TestDOM(unittest.TestCase):
         with doutils.EvtConsumerProxyCtx(self, o, 1):
             a.write('a')
 
-        for doProxy in proxies:
+        for doProxy in proxies.viewvalues():
             self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED" % doProxy.uid)
             doProxy._pyroRelease()
 
