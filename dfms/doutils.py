@@ -25,8 +25,10 @@ Utility methods and classes to be used when interacting with DataObjects
 @author: rtobar, July 3, 2015
 '''
 
+import inspect
 import logging
 import threading
+import types
 
 import Pyro4
 
@@ -241,23 +243,40 @@ def depthFirstTraverse(node, func = None, visited = []):
 
 def breadFirstTraverse(toVisit, func = None):
     """
-    Breadth-first traversal of a DataObject graph. For each node in the graph
-    the function func, if given, is executed with the current DataObject as the
-    only argument.
+    Breadth-first traversal of a DataObject graph.
+
+    For each node in the graph the function `func` is executed, if given. `func`
+    must accept at least one argument, the DataObject being currently visited.
+    If two arguments are specified, the second argument will be a list of
+    nodes that will be visited subsequently; `func` can alter this list in order
+    to remove certain nodes from the traversal process.
+
     This implementation is non-recursive.
     """
 
     toVisit = listify(toVisit)[:]
     found = toVisit[:]
+
+    # See how many arguments we should used when calling func
+    if func:
+        nArgs = len(inspect.getargspec(func).args)
+        if type(func) == types.MethodType:
+            nArgs -= 1
+
     while toVisit:
 
         # Pay the node a visit
         node = toVisit.pop(0)
-        if func:
-            func(node)
-
-        # Enqueue its dependencies, making sure they are enqueued only one
         dependencies = getDownstreamObjects(node)
+        if func:
+            if nArgs == 1:
+                func(node)
+            elif nArgs == 2:
+                func(node, dependencies)
+            else:
+                raise Exception("Unsupported number of arguments for function %r: %d. Expected 1 or 2" % (func, nArgs))
+
+        # Enqueue its dependencies, making sure they are enqueued only once
         nextVisits = [do for do in dependencies if do not in found]
         toVisit += nextVisits
         found += nextVisits
