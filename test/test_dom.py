@@ -291,7 +291,7 @@ class TestREST(unittest.TestCase):
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
-            self.post('/sessions/%s/graph/parts' % (sessionId), restPort, pkg_resources.resource_string(__name__, 'graphs/complex.js'))  # @UndefinedVariable
+            self.post('/sessions/%s/graph/append' % (sessionId), restPort, pkg_resources.resource_string(__name__, 'graphs/complex.js'))  # @UndefinedVariable
 
             # We create two final archiving nodes, but this time from a template
             # available on the server-side

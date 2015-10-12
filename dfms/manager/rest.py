@@ -33,37 +33,43 @@ import pkg_resources
 
 class RestServer(object):
     """
-    An object that wraps a DataObjectManager and exposes its methods via a REST
+    An object that wraps a DataManager and exposes its methods via a REST
     interface. The server is started via the `start` method in a separate thread
     and runs until the process is shut down.
 
-    This REST server currently also serves HTML pages in one of its methods
-    (i.e., /<sessionId>/show). That probably could live somehere
+    This REST server currently also serves HTML pages in some of its methods
+    (i.e. those not under /api).
     """
 
-    def __init__(self, dom):
+    def __init__(self, dm):
         super(RestServer, self).__init__()
         app = Bottle()
+        self.app = app
+        self.dm = dm
 
-        app.get(   '/api',                                   callback=self.getDOMStatus)
+        # Mappings
         app.post(  '/api/sessions',                          callback=self.createSession)
-        app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
+        app.get(   '/api/sessions',                          callback=self.getSessions)
         app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
+        app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
         app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
         app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
         app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
         app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
-        app.post(  '/api/sessions/<sessionId>/graph/parts',  callback=self.addGraphParts)
-        app.post(  '/api/sessions/<sessionId>/graph/link',   callback=self.linkGraphParts)
-        app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
+        app.post(  '/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
 
-        # The bad boys that serve HTML-related content
+        # The non-REST mappings that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
-        app.get(  '/session', callback=self.visualizeSession)
-        app.get(  '/', callback=self.visualizeDOM)
 
-        self.app = app
-        self.dom = dom
+        # sub-class specifics
+        self.initializeSpecifics(app)
+
+    def initializeSpecifics(self, app):
+        """
+        Methods through which subclasses can initialize other mappings on top of
+        the default ones and perform other DataManager-specific actions.
+        The default implementation does nothing.
+        """
 
     def start(self, host, port):
         if host is None:
@@ -78,48 +84,80 @@ class RestServer(object):
         t.daemon = 1
         t.start()
 
-    def getDOMStatus(self):
-        # we currently return the sessionIds, more things might be added in the
-        # future
-        sessions = []
-        for sessionId in self.dom.getSessionIds():
-            sessions.append({'sessionId': sessionId, 'status': self.dom.getSessionStatus(sessionId)})
-        return json.dumps({'sessions': sessions, 'templates': self.dom.getTemplates()})
-
     def createSession(self):
         newSession = request.json
         sessionId = newSession['sessionId']
-        self.dom.createSession(sessionId)
+        self.dm.createSession(sessionId)
 
-    def destroySession(self, sessionId):
-        self.dom.destroySession(sessionId)
+    def sessions(self):
+        sessions = []
+        for sessionId in self.dm.getSessionIds():
+            sessions.append({'sessionId':sessionId, 'status':self.dm.getSessionStatus(sessionId)})
+        return sessions
 
-    def getSessionStatus(self, sessionId):
+    def getSessions(self):
         response.content_type = 'application/json'
-        return json.dumps(self.dom.getSessionStatus(sessionId))
+        return json.dumps(self.sessions())
 
     def getSessionInformation(self, sessionId):
-        graphDict = self.dom.getGraph(sessionId)
-        status = self.dom.getSessionStatus(sessionId)
+        graphDict = self.dm.getGraph(sessionId)
+        status = self.dm.getSessionStatus(sessionId)
         response.content_type = 'application/json'
         return json.dumps({'sessionStatus': status, 'graph': graphDict})
 
+    def destroySession(self, sessionId):
+        self.dm.destroySession(sessionId)
+
+    def getSessionStatus(self, sessionId):
+        response.content_type = 'application/json'
+        return json.dumps(self.dm.getSessionStatus(sessionId))
+
     def deploySession(self, sessionId):
-        self.dom.deploySession(sessionId)
+        self.dm.deploySession(sessionId)
 
     def getGraph(self, sessionId):
-        graphDict = self.dom.getGraph(sessionId)
+        graphDict = self.dm.getGraph(sessionId)
         response.content_type = 'application/json'
         return json.dumps(graphDict)
 
     def getGraphStatus(self, sessionId):
-        graphStatusDict = self.dom.getGraphStatus(sessionId)
+        graphStatusDict = self.dm.getGraphStatus(sessionId)
         response.content_type = 'application/json'
         return json.dumps(graphStatusDict)
 
     # TODO: addGraphParts v/s addGraphSpec
     def addGraphParts(self, sessionId):
-        self.dom.addGraphSpec(sessionId, request.body)
+        self.dm.addGraphSpec(sessionId, request.json)
+
+    #===========================================================================
+    # non-REST methods
+    #===========================================================================
+    def server_static(self, filepath):
+        staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
+        return static_file(filepath, root=staticRoot)
+
+class DOMRestServer(RestServer):
+    """
+    A REST server for DataObjectManagers. It includes mappings for DOM-specific
+    methods and the mapping for the main visualization HTML pages.
+    """
+
+    def initializeSpecifics(self, app):
+
+        self.dom = self.dm
+        app.get(   '/api',                                   callback=self.getDOMStatus)
+        app.post(  '/api/sessions/<sessionId>/graph/link',   callback=self.linkGraphParts)
+        app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
+
+        # The non-REST mappings that serve HTML-related content
+        app.get(  '/session', callback=self.visualizeSession)
+        app.get(  '/', callback=self.visualizeDOM)
+
+    def getDOMStatus(self):
+        # we currently return the sessionIds, more things might be added in the
+        # future
+        response.content_type = 'application/json'
+        return json.dumps({'sessions': self.sessions(), 'templates': self.dom.getTemplates()})
 
     def linkGraphParts(self, sessionId):
         params = request.params
@@ -134,12 +172,8 @@ class RestServer(object):
         self.dom.materializeTemplate(tpl, sessionId, **tplParams)
 
     #===========================================================================
-    # HTML-related methods
+    # non-REST methods
     #===========================================================================
-    def server_static(self, filepath):
-        staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
-        return static_file(filepath, root=staticRoot)
-
     def visualizeSession(self):
         sessionId = request.params['sessionId']
         tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
@@ -152,3 +186,17 @@ class RestServer(object):
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return template(tpl, domId=self.dom.domId, serverUrl=serverUrl)
+
+class DIMRestServer(RestServer):
+    """
+    A REST server for DataIslandManagers. It includes mappings for DIM-specific
+    methods.
+    """
+
+    def initializeSpecifics(self, app):
+        self.dim = self.dm
+        app.get(   '/api',                                   callback=self.getDIMStatus)
+
+    def getDIMStatus(self):
+        response.content_type = 'application/json'
+        return json.dumps({'nodes': self.dim.nodes, 'sessionIds': self.dim.getSessionIds()})
