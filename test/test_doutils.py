@@ -163,5 +163,18 @@ class DOUtilsTest(unittest.TestCase):
             self.assertIsNotNone(f._io)
         self.assertFalse(do.isBeingRead())
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_BFSWithFiltering(self):
+        """
+        Checks that the BFS works if the given function does filtering on the
+        downstream DOs.
+        """
+        a, _, c, _, e, _, _, h, _, j = self._createGraph()
+
+        visitedNodes = []
+        def filtering(do, downStreamDOs):
+            downStreamDOs[:] = [x for x in downStreamDOs if x.uid not in ('b','f')]
+            visitedNodes.append(do)
+        doutils.breadFirstTraverse(a, filtering)
+
+        self.assertEquals(5, len(visitedNodes))
+        self.assertListEqual(visitedNodes, [a,c,e,h,j])
