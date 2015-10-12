@@ -78,6 +78,9 @@ class DockerTests(unittest.TestCase):
         uid = os.getuid()
         self.assertEquals(uid, os.stat(c.path).st_uid)
 
+        # Now remove the container
+        AutoVersionClient().remove_container(b.containerId)
+
     def test_clientServer(self):
         """
         A client-server duo. The server outputs the data it receives to its
@@ -118,3 +121,8 @@ class DockerTests(unittest.TestCase):
             a.setCompleted()
 
         self.assertEquals(data, doutils.allDataObjectContents(d))
+
+        # Now remove the containers
+        client = AutoVersionClient()
+        for dockerApp in b, c:
+            client.remove_container(dockerApp.containerId)
