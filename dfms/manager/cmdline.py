@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 """
-Command-line entry point to launch a DOM instance
+Module containing command-line entry points to launch Data Manager instances
+like DOMs and DIMs.
 """
 
 import logging
@@ -32,8 +33,9 @@ import threading
 import Pyro4
 
 from dfms.daemon import Daemon
-from dfms.dom.data_object_mgr import DataObjectMgr
-from dfms.dom.rest import RestServer
+from dfms.manager.data_island_manager import DataIslandManager
+from dfms.manager.data_object_mgr import DataObjectMgr
+from dfms.manager.rest import RestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
@@ -52,48 +54,45 @@ def launchServer(opts):
             logger.info("Adding %s to the system path" % (dfmsPath))
         sys.path.append(dfmsPath)
 
-    logger.info('Creating DataObjectManager %s' % (opts.domId))
-    dom = DataObjectMgr(opts.domId, not opts.noDLM)
+    logger.info('Creating DataObjectManager %s' % (opts.id))
+    dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
     if opts.rest:
-        server = RestServer(dom)
+        server = RestServer(dm)
         server.start(opts.restHost, opts.restPort)
 
     if not opts.noPyro:
-        dom_daemon = Pyro4.Daemon(port=opts.port)
-        uri = dom_daemon.register(dom)
+        daemon = Pyro4.Daemon(port=opts.port)
+        uri = daemon.register(dm)
 
-        logger.info('Registering DataObjectManager %s to NameServer' % (opts.domId))
+        logger.info('Registering DataObjectManager %s to NameServer' % (opts.id))
         try:
             ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-            ns.register(opts.domId, uri)
+            ns.register(opts.id, uri)
         except:
             logger.warning("Failed to register the DOM with Pyro's NameServer, life continues anyway")
 
     if not opts.noPyro:
-        dom_daemon.requestLoop()
+        daemon.requestLoop()
     else:
         try:
             threading.Event().wait()
         except KeyboardInterrupt:
             pass
 
-class DOMDaemon(Daemon):
+class DMDaemon(Daemon):
     def __init__(self, options):
         logsDir = getDfmsLogsDir(createIfMissing=True)
         pidDir  = getDfmsPidDir(createIfMissing=True)
-        pidfile = os.path.join(pidDir,  "dfmsDOM_%s.pid" % (options.domId))
-        stdout  = os.path.join(logsDir, "dfmsDOM_%s_stdout" % (options.domId))
-        stderr  = os.path.join(logsDir, "dfmsDOM_%s_stderr" % (options.domId))
-        super(DOMDaemon, self).__init__(pidfile, stdout=stdout, stderr=stderr)
+        pidfile = os.path.join(pidDir,  "dfms%s_%s.pid"    % (options.dmAcronym, options.id))
+        stdout  = os.path.join(logsDir, "dfms%s_%s_stdout" % (options.dmAcronym, options.id))
+        stderr  = os.path.join(logsDir, "dfms%s_%s_stderr" % (options.dmAcronym, options.id))
+        super(DMDaemon, self).__init__(pidfile, stdout=stdout, stderr=stderr)
         self._options = options
     def run(self):
         launchServer(self._options)
 
-# Function used as entry point by setuptools
-def main(args=sys.argv):
-
-    parser = optparse.OptionParser()
+def addCommonOptions(parser):
     parser.add_option("--no-pyro", action="store_true",
                       dest="noPyro", help="Don't start a Pyro daemon to expose this DOM instance", default=False)
     parser.add_option("-H", "--host", action="store", type="string",
@@ -104,8 +103,8 @@ def main(args=sys.argv):
                       dest="nsHost", help = "Name service host", default='localhost')
     parser.add_option("-p", "--nsPort", action="store", type="int",
                       dest="nsPort", help = "Name service port", default=9090)
-    parser.add_option("-i", "--domId", action="store", type="string",
-                      dest="domId", help = "The Data Object Manager ID")
+    parser.add_option("-i", "--id", action="store", type="string",
+                      dest="id", help = "The Data Object Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
@@ -116,32 +115,66 @@ def main(args=sys.argv):
                       dest="restHost", help="The host to bind the REST server on")
     parser.add_option("--restPort", action="store", type="int",
                       dest="restPort", help="The port to bind the REST server on")
-    parser.add_option("--no-dlm", action="store_true",
-                      dest="noDLM", help="Don't start the Data Lifecycle Manager on this DOM", default=False)
-    parser.add_option("--dfms-path", action="store", type="string",
-                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
-    (options, args) = parser.parse_args(args)
 
-    if not options.domId:
+def commonOptionsCheck(options, parser):
+    if not options.id:
         parser.error('Must provide a DOM ID via the -i command-line flag')
-
     # -d and -s are exclusive
     if options.daemon and options.stop:
         parser.error('-d and -s cannot be specified together')
 
+def start(options):
     # Start daemon
     if options.daemon:
-        daemon = DOMDaemon(options)
+        daemon = DMDaemon(options)
         daemon.start()
     # Stop daemon
     elif options.stop:
-        daemon = DOMDaemon(options)
+        daemon = DMDaemon(options)
         daemon.stop()
     # Start directly
     else:
         launchServer(options)
 
-if __name__ == '__main__':
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-    logging.getLogger('tornado').setLevel(logging.WARN)
-    main()
+# Entry-point function for the dfmsDOM script
+def dfmsDOM(args=sys.argv):
+    """
+    Entry point for the dfmsDIM command-line script, which starts a
+    DataObjectManager and exposes it through Pyro and a REST interface.
+    """
+
+    # Parse command-line and check options
+    parser = optparse.OptionParser()
+    addCommonOptions(parser)
+    parser.add_option("--no-dlm", action="store_true",
+                      dest="noDLM", help="Don't start the Data Lifecycle Manager on this DOM", default=False)
+    parser.add_option("--dfms-path", action="store", type="string",
+                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
+    (options, args) = parser.parse_args(args)
+    commonOptionsCheck(options, parser)
+
+    options.dmType = DataObjectMgr
+    options.dmArgs = (options.id, not options.noDLM)
+    options.dmKwargs = {}
+    options.dmAcronym = 'DOM'
+    start(options)
+
+def dfmsDIM(args=sys.argv):
+    """
+    Entry point for the dfmsDIM command-line script, which starts a
+    DataIslandManager and exposes it through Pyro and a REST interface.
+    """
+
+    # Parse command-line and check options
+    parser = optparse.OptionParser()
+    addCommonOptions(parser)
+    parser.add_option("-N", "--nodes", action="store", type="string",
+                      dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
+    (options, args) = parser.parse_args(args)
+    commonOptionsCheck(options, parser)
+
+    options.dmType = DataIslandManager
+    options.dmArgs = (options.dimId, options.nodes.split(','))
+    options.dmKwargs = {}
+    options.dmAcronym = 'DIM'
+    start(options)

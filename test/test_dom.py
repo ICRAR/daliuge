@@ -34,9 +34,9 @@ import pkg_resources
 
 from dfms import doutils, ngaslite
 from dfms.ddap_protocol import DOStates
-from dfms.dom import cmdline
-from dfms.dom.data_object_mgr import DataObjectMgr
-from dfms.dom.session import SessionStates
+from dfms.manager import cmdline
+from dfms.manager.data_object_mgr import DataObjectMgr
+from dfms.manager.session import SessionStates
 
 
 class TestDOM(unittest.TestCase):
@@ -249,7 +249,7 @@ class TestDOM(unittest.TestCase):
 def startDOM(restPort):
     # Make sure the graph executes quickly once triggered
     graphsRepository.defaultSleepTime = 0
-    cmdline.main(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID'])
+    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID'])
 
 class TestREST(unittest.TestCase):
 
@@ -298,8 +298,8 @@ class TestREST(unittest.TestCase):
 
             # We create two final archiving nodes, but this time from a template
             # available on the server-side
-            self.post('/templates/dfms.dom.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
-            self.post('/templates/dfms.dom.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
 
             # And link them to the leaf nodes of the complex graph
             self.post('/sessions/%s/graph/link?rhOID=archiving1&lhOID=S&linkType=0' % (sessionId), restPort)
