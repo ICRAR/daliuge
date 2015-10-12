@@ -54,11 +54,16 @@ class DataIslandManager(object):
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
         self._nsHost = nsHost or 'localhost'
+        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at this level
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     @property
     def dimId(self):
         return self._dimId
+
+    @property
+    def nodes(self):
+        return self._nodes[:]
 
     def startDOM(self, host, port):
         client = remote.createClient(host)
@@ -91,6 +96,9 @@ class DataIslandManager(object):
         ns = Pyro4.locateNS(host=self._nsHost)
         return Pyro4.Proxy(ns.lookup("dom_%s" % (node)))
 
+    def getSessionIds(self):
+        return self._sessionIds;
+
     def _createSession(self, sessionId, node, latch, exceptions):
         try:
             self.ensureDOM(node)
@@ -119,6 +127,36 @@ class DataIslandManager(object):
         latch.await()
         if thrExs:
             raise Exception("One or more errors occurred while creating sessions", thrExs)
+        self._sessionIds.append(sessionId)
+
+    def _destroySession(self, sessionId, node, latch, exceptions):
+        try:
+            self.ensureDOM(node)
+            with self.domAt(node) as dom:
+                dom.destroySession(sessionId)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Successfully destroyed session %s in %s' % (sessionId, node))
+        except Exception as e:
+            logger.error("Failed to destroy a session on node %s" % (node))
+            exceptions[node] = e
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def destroySession(self, sessionId):
+        """
+        Destroy a session in all underlying DOMs.
+        """
+        logger.info('Destroying Session %s in all nodes' % (sessionId))
+        latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
+        for node in self._nodes:
+            t = threading.Thread(target=self._destroySession, args=(sessionId, node, latch, thrExs))
+            t.start()
+        latch.await()
+        if thrExs:
+            raise Exception("One or more errors occurred while destroying sessions", thrExs)
+        self._sessionIds.remove(sessionId)
 
     def addGraphSpec(self, sessionId, graphSpec):
 
