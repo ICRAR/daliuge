@@ -46,15 +46,9 @@ def launchServer(opts):
         Pyro4.config.HOST = opts.host
 
     logger = logging.getLogger(__name__)
+    dmName = opts.dmType.__name__
 
-    # dfmsPath might contain code the user is adding
-    dfmsPath = os.path.expanduser(opts.dfmsPath)
-    if os.path.isdir(dfmsPath):
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Adding %s to the system path" % (dfmsPath))
-        sys.path.append(dfmsPath)
-
-    logger.info('Creating DataObjectManager %s' % (opts.id))
+    logger.info('Creating %s %s' % (dmName, opts.id))
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
     if opts.rest:
@@ -65,12 +59,9 @@ def launchServer(opts):
         daemon = Pyro4.Daemon(port=opts.port)
         uri = daemon.register(dm)
 
-        logger.info('Registering DataObjectManager %s to NameServer' % (opts.id))
-        try:
-            ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-            ns.register(opts.id, uri)
-        except:
-            logger.warning("Failed to register the DOM with Pyro's NameServer, life continues anyway")
+        logger.info('Registering %s %s to NameServer' % (dmName, opts.id))
+        ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
+        ns.register(opts.id, uri)
 
     if not opts.noPyro:
         daemon.requestLoop()
@@ -153,6 +144,14 @@ def dfmsDOM(args=sys.argv):
     (options, args) = parser.parse_args(args)
     commonOptionsCheck(options, parser)
 
+    # dfmsPath might contain code the user is adding
+    logger = logging.getLogger(__name__)
+    dfmsPath = os.path.expanduser(options.dfmsPath)
+    if os.path.isdir(dfmsPath):
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Adding %s to the system path" % (dfmsPath))
+        sys.path.append(dfmsPath)
+
     options.dmType = DataObjectMgr
     options.dmArgs = (options.id, not options.noDLM)
     options.dmKwargs = {}
@@ -174,7 +173,7 @@ def dfmsDIM(args=sys.argv):
     commonOptionsCheck(options, parser)
 
     options.dmType = DataIslandManager
-    options.dmArgs = (options.dimId, options.nodes.split(','))
+    options.dmArgs = (options.id, options.nodes.split(','))
     options.dmKwargs = {}
     options.dmAcronym = 'DIM'
     start(options)
