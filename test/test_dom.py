@@ -275,7 +275,7 @@ class TestREST(unittest.TestCase):
                     s = socket.create_connection(('localhost', restPort), 1)
                     break
                 except:
-                    time.sleep(1)
+                    time.sleep(0.2)
                     tries += 1
                     pass
 
@@ -320,7 +320,7 @@ class TestREST(unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while self.get('/sessions/%s/status' % (sessionId), restPort) == SessionStates.RUNNING:
-                time.sleep(1)
+                time.sleep(0.2)
 
             self.assertEquals(SessionStates.FINISHED, self.get('/sessions/%s/status' % (sessionId), restPort))
             self.delete('/sessions/%s' % (sessionId), restPort)
