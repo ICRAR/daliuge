@@ -102,12 +102,17 @@ class Session(object):
 
     def addGraphSpec(self, graphSpec):
         """
-        Adds the graph specification given in `graphSpec` to the list of graph
-        specifications currently held by this session. A graphSpec is a list of
-        dictionaries, each of which contains the information of one DataObject.
+        Adds the graph specification given in `graphSpec` to the
+        graph specification currently held by this session. A graphSpec is a
+        list of dictionaries, each of which contains the information of one
+        DataObject. Each DataObject specification is checked to see it contains
+        all the necessary details to construct a proper DataObject. If one
+        DataObject specification is found to be inconsistent the whole operation
+        fill wail.
 
         Adding graph specs to the session is only allowed while the session is
-        in the PRISTINE status; otherwise an exception will be raised.
+        in the PRISTINE or BUILDING status; otherwise an exception will be
+        raised.
 
         If the `graphSpec` being added contains DataObjects that have already
         been added to the session an exception will be raised. DataObjects are
@@ -120,17 +125,8 @@ class Session(object):
 
         self.status = SessionStates.BUILDING
 
-        if isinstance(graphSpec, basestring):
-            graphSpecDict = graph_loader.loadDataObjectSpecsS(graphSpec)
-        elif isinstance(graphSpec, dict):
-            graphSpecDict = graphSpec
-        elif isinstance(graphSpec, list):
-            graphSpecDict = {}
-            [graphSpecDict.__setitem__(spec['oid'],spec) for spec in graphSpec]
-        elif hasattr(graphSpec, 'read'):
-            graphSpecDict = graph_loader.loadDataObjectSpecs(graphSpec)
-        else:
-            raise TypeError('graphSpec should be either a string or a file-like object')
+        # This will check the consistency of each doSpec
+        graphSpecDict = graph_loader.loadDataObjectSpecs(graphSpec)
 
         for oid in graphSpecDict:
             if oid in self._graph:
