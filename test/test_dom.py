@@ -37,6 +37,7 @@ from dfms.ddap_protocol import DOStates
 from dfms.manager import cmdline
 from dfms.manager.data_object_mgr import DataObjectMgr
 from dfms.manager.session import SessionStates
+from dfms.manager.repository import memory, sleepAndCopy
 
 
 class TestDOM(unittest.TestCase):
@@ -57,9 +58,9 @@ class TestDOM(unittest.TestCase):
         dom2 = DataObjectMgr(2, useDLM=False)
 
         sessionId = 's1'
-        g1 = '[{"oid":"A", "type":"plain", "storage": "memory"}]'
-        g2 = '[{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]'
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},
+              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -105,12 +106,12 @@ class TestDOM(unittest.TestCase):
         dom2 = DataObjectMgr(2, useDLM=False)
 
         sessionId = 's1'
-        g1 = '[{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},\
-               {"oid":"B", "type":"plain", "storage": "memory"},\
-               {"oid":"C", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]'
-        g2 = '[{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},\
-               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]'
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
+               {"oid":"B", "type":"plain", "storage": "memory"},
+               {"oid":"C", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},
+               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
+        g2 = [{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},
+               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -180,26 +181,22 @@ class TestDOM(unittest.TestCase):
         dom3 = DataObjectMgr(3, useDLM=False)
         dom4 = DataObjectMgr(4, useDLM=False)
 
-        # The SumUpContainerChecksum is a BarrierAppDO
-        sumCRCCAppSpec = '"type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "sleepTime": 0'
-        memoryDOSpec   = '"type":"plain", "storage":"memory"'
-
         sessionId = 's1'
-        g1 = '[{{"oid":"A", {0}, "expectedSize":1}}]'.format(memoryDOSpec)
-        g2 = '[{{"oid":"B", {0}, "outputs":["C","D","E"]}},\
-               {{"oid":"C", {1}}},\
-               {{"oid":"D", {1}}},\
-               {{"oid":"E", {1}}},\
-               {{"oid":"F", {0}, "inputs":["C","D","E"]}}]'.format(sumCRCCAppSpec, memoryDOSpec)
-        g3 = '[{{"oid":"G", {0}, "outputs":["H","I","J"]}},\
-               {{"oid":"H", {1}}},\
-               {{"oid":"I", {1}}},\
-               {{"oid":"J", {1}}},\
-               {{"oid":"K", {0}, "inputs":["H","I","J"]}}]'.format(sumCRCCAppSpec, memoryDOSpec)
-        g4 = '[{{"oid":"L", {1}}},\
-               {{"oid":"M", {1}}},\
-               {{"oid":"N", {0}, "inputs":["L","M"], "outputs":["O"]}},\
-               {{"oid":"O", {1}}}]'.format(sumCRCCAppSpec, memoryDOSpec)
+        g1 = [memory('A', expectedSize=1)]
+        g2 = [sleepAndCopy('B', outputs=['C','D','E'], sleepTime=0),
+              memory('C'),
+              memory('D'),
+              memory('E'),
+              sleepAndCopy('F', inputs=['C','D','E'], sleepTime=0)]
+        g3 = [sleepAndCopy('G', outputs=['H','I','J'], sleepTime=0),
+              memory('H'),
+              memory('I'),
+              memory('J'),
+              sleepAndCopy('K', inputs=['H','I','J'], sleepTime=0)]
+        g4 = [memory('L'),
+              memory('M'),
+              sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
+              memory('O')]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -240,7 +237,7 @@ class TestDOM(unittest.TestCase):
             a.write('a')
 
         for doProxy in proxies.viewvalues():
-            self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED" % doProxy.uid)
+            self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED: %d" % (doProxy.uid, doProxy.status))
             doProxy._pyroRelease()
 
         for dom in [dom1, dom2, dom3, dom4]:

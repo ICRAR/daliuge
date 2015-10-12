@@ -114,28 +114,14 @@ def readObjectGraphS(s):
     """
     return createGraphFromDOSpecList(json.loads(s))
 
-def loadDataObjectSpecs(fileObj):
+def loadDataObjectSpecs(doSpecList):
     """
-    Loads the DataObject definitions from the file-like object `fileObj`, checks
-    that the DataObjects are correctly specified, and return a dictionary
-    containing all DataObject specifications (i.e., a dictionary of
-    dictionaries) keyed on the OID of each DataObject. Unlike `readObjectGraph`
-    and `readObjectGraphS`, this method doesn't actually create the DataObjects
-    themselves.
-    """
-    return _loadDataObjectSpecs(json.load(fileObj))
-
-def loadDataObjectSpecsS(s):
-    """
-    Loads the DataObject definitions from the string `s`, checks that
+    Loads the DataObject definitions from `doSpectList`, checks that
     the DataObjects are correctly specified, and return a dictionary containing
     all DataObject specifications (i.e., a dictionary of dictionaries) keyed on
     the OID of each DataObject. Unlike `readObjectGraph` and `readObjectGraphS`,
     this method doesn't actually create the DataObjects themselves.
     """
-    return _loadDataObjectSpecs(json.loads(s))
-
-def _loadDataObjectSpecs(doSpecList):
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug("Found %d DO definitions" % (len(doSpecList)))

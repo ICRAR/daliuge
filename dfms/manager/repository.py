@@ -35,11 +35,15 @@ from dfms.data_object import dodict
 def socket(uid, port=1111):
     return dodict({'oid':uid, 'type':'socket', 'storage':'memory', 'port':port})
 
-def memory(uid):
-    return dodict({'oid':uid, 'type':'plain', 'storage':'memory'})
+def memory(uid, **kwargs):
+    doSpec = dodict({'oid':uid, 'type':'plain', 'storage':'memory'})
+    doSpec.update(kwargs)
+    return doSpec
 
-def sleepAndCopy(uid):
-    return dodict({'oid':uid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
+def sleepAndCopy(uid, **kwargs):
+    doSpec = dodict({'oid':uid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
+    doSpec.update(kwargs)
+    return doSpec
 
 def complex_graph():
     """
