@@ -91,16 +91,17 @@ class DataIslandManager(object):
         ns = Pyro4.locateNS(host=self._nsHost)
         return Pyro4.Proxy(ns.lookup("dom_%s" % (node)))
 
-    def _createSession(self, sessionId, node, latch):
+    def _createSession(self, sessionId, node, latch, exceptions):
         try:
             self.ensureDOM(node)
             with self.domAt(node) as dom:
                 dom.createSession(sessionId)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully created session %s in %s' % (sessionId, node))
-        except:
+        except Exception as e:
             logger.error("Failed to create a session on node %s" % (node))
-            raise
+            exceptions[node] = e
+            raise # so it gets printed
         finally:
             latch.countDown()
 
@@ -111,10 +112,13 @@ class DataIslandManager(object):
 
         logger.info('Creating Session %s in all nodes' % (sessionId))
         latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
         for node in self._nodes:
-            t = threading.Thread(target=self._createSession, args=(sessionId, node, latch))
+            t = threading.Thread(target=self._createSession, args=(sessionId, node, latch, thrExs))
             t.start()
         latch.await()
+        if thrExs:
+            raise Exception("One or more errors occurred while creating sessions", thrExs)
 
     def addGraphSpec(self, sessionId, graphSpec):
 
@@ -142,6 +146,7 @@ class DataIslandManager(object):
 
         # Create the individual graphs on each DOM now that they are correctly
         # separated
+        # TODO: We should parallelize here
         doms = {}
         for node in self._nodes:
             domAtNode = self.domAt(node)
@@ -150,13 +155,17 @@ class DataIslandManager(object):
 
         self._interDOMRelations[sessionId].extend(interDOMRelations)
 
-    def _deploySession(self, sessionId, node, allUris, latch):
+    def _deploySession(self, sessionId, node, allUris, latch, exceptions):
         try:
             with self.domAt(node) as dom:
                 uris = dom.deploySession(sessionId)
                 allUris.update(uris)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully deployed session %s in %s' % (sessionId, node))
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while deploying session %s in %s" % (sessionId, node))
+            raise # so it gets printed
         finally:
             latch.countDown()
 
@@ -166,10 +175,14 @@ class DataIslandManager(object):
         allUris = {}
         logger.info('Deploying Session %s in all nodes' % (sessionId))
         latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
         for node in self._nodes:
-            t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch))
+            t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch, thrExs))
             t.start()
         latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
         # Retrieve all necessary proxies to establish the inter-DOM relationships
         # Creating proxies beforhand and reusing them means that we won't need
@@ -181,19 +194,97 @@ class DataIslandManager(object):
             if rel.lhs not in proxies:
                 proxies[rel.lhs] = Pyro4.Proxy(allUris[rel.lhs])
 
+        # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         for rel in self._interDOMRelations[sessionId]:
+            relType = rel.rel
             rhsDO = proxies[rel.rhs]
             lhsDO = proxies[rel.lhs]
 
-            relType = rel.rel
             if relType in data_object.LINKTYPE_1TON_APPEND_METHOD:
                 methodName = data_object.LINKTYPE_1TON_APPEND_METHOD[relType]
-                # TODO: This is very low-level Pyro, we might want to change it
-                # Same applies below
-                # TODO: fix order of operands
                 rhsDO._pyroInvoke(methodName, (lhsDO,), {})
             else:
                 relPropName = data_object.LINKTYPE_NTO1_PROPERTY[relType]
-                setattr(lhsDO, relPropName, rhsDO)
+                setattr(rhsDO, relPropName, lhsDO)
 
         return allUris
+
+    def _getGraphStatus(self, sessionId, node, allStatus, latch, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                allStatus.update(dom.getGraphStatus(sessionId))
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while getting the graph status for session %s in node %s" % (sessionId, node))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def getGraphStatus(self, sessionId):
+
+        allStatus = {}
+        thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._getGraphStatus, args=(sessionId, node, allStatus, latch, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
+        return allStatus
+
+    def _getGraph(self, sessionId, node, latch, allGraphs, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                allGraphs.update(dom.getGraph(sessionId))
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while getting the graph for session %s in node %s" % (sessionId, node))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def getGraph(self, sessionId):
+
+        allGraphs = {}
+        thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._getGraph, args=(sessionId, node, latch, allGraphs, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
+        return allGraphs
+
+    def _getSessionStatus(self, sessionId, node, allStatus, latch, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                allStatus[node] = dom.getSessionStatus(sessionId)
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while getting the status of session %s in node %s" % (sessionId, node))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def getSessionStatus(self, sessionId):
+
+        allStatus = {}
+        thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._getSessionStatus, args=(sessionId, node, allStatus, latch, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
+
+        # TODO: Maybe calculate a DIM-wide session status
+        return allStatus
