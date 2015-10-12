@@ -134,9 +134,10 @@ class EvtConsumerProxyCtx(object):
         # also check that the thread hosting the daemon is dead.
         try:
             for evt in self._evts:
-                self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
+                self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % (to))
         except:
             allFine = False
+            raise
         finally:
             self.daemon.shutdown()
             self.t.join(to)
