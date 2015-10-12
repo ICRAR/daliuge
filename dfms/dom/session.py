@@ -29,6 +29,7 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
+from dfms.data_object import AbstractDataObject
 from dfms.ddap_protocol import DOLinkType
 
 
@@ -251,7 +252,20 @@ class Session(object):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
             raise Exception("The session is currently not running, cannot get graph status")
         statusDict = {}
-        doutils.breadFirstTraverse(self._roots, lambda do: statusDict.__setitem__(do.oid, do.status))
+
+        # We shouldn't traverse the full graph because there might be nodes
+        # attached to our DOs that are actually part of other DOM (and have been
+        # wired together by the DIM after deploying each individual graph on
+        # each of the DOMs).
+        # We recognize such nodes because they are actually not an instance of
+        # AbstractDataObject (they are Pyro4.Proxy instances).
+        #
+        # The same trick is used in luigi_int.RunDataObjectTask.requires
+        def addToDict(do, downStreamDOs):
+            downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDataObject)]
+            statusDict[do.oid] = do.status
+
+        doutils.breadFirstTraverse(self._roots, addToDict)
         return statusDict
 
     def getGraph(self):
