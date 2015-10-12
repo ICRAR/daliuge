@@ -35,7 +35,7 @@ import Pyro4
 from dfms.daemon import Daemon
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.data_object_mgr import DataObjectMgr
-from dfms.manager.rest import RestServer
+from dfms.manager.rest import DOMRestServer, DIMRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
@@ -52,7 +52,7 @@ def launchServer(opts):
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
     if opts.rest:
-        server = RestServer(dm)
+        server = opts.restType(dm)
         server.start(opts.restHost, opts.restPort)
 
     if not opts.noPyro:
@@ -156,6 +156,7 @@ def dfmsDOM(args=sys.argv):
     options.dmArgs = (options.id, not options.noDLM)
     options.dmKwargs = {}
     options.dmAcronym = 'DOM'
+    options.restType = DOMRestServer
     start(options)
 
 def dfmsDIM(args=sys.argv):
@@ -176,4 +177,5 @@ def dfmsDIM(args=sys.argv):
     options.dmArgs = (options.id, options.nodes.split(','))
     options.dmKwargs = {}
     options.dmAcronym = 'DIM'
+    options.restType = DIMRestServer
     start(options)

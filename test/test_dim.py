@@ -19,18 +19,24 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import httplib
+import json
+import multiprocessing
 import random
 import socket
 import string
+from test import graphsRepository
 import threading
 import time
 import unittest
 
 import Pyro4
 from Pyro4.naming import NameServerDaemon
+import pkg_resources
 
 from dfms import doutils
 from dfms.ddap_protocol import DOStates
+from dfms.manager import cmdline
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.data_object_mgr import DataObjectMgr
 from dfms.manager.session import SessionStates
@@ -40,37 +46,43 @@ from dfms.utils import portIsOpen
 dimId = 'lala'
 hostname = socket.gethostname()
 
+def setUpDimTests(self):
+
+    # SleepAndCopyApps don't take time to execute
+    graphsRepository.defaultSleepTime = 0
+
+    # Start the NS
+    self._nsDaemon = NameServerDaemon()
+    threading.Thread(target=lambda:self._nsDaemon.requestLoop()).start()
+
+    # Start a DOM. This is the DOM which the DIM connects to.
+    #
+    # We start it here to avoid the DIM connecting via SSH to the localhost
+    # and spawning a dfmsDOM process; both things need proper setup which we
+    # cannot do here (ssh publick key installation, ssh service up, proper
+    # environment available, etc)
+    #
+    # Anyway, this is also useful because we can check that things have
+    # occurred at the DOM level in the test cases
+    domId = 'dom_' + hostname
+    self.dom = DataObjectMgr(domId, False)
+    self._domDaemon = Pyro4.Daemon(host='0.0.0.0', port=4000)
+    self._nsDaemon.nameserver.register(domId, self._domDaemon.register(self.dom, objectId='DOM_for_test'))
+    threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
+
+    # The DIM we're testing
+    self.dim = DataIslandManager(dimId, [hostname])
+
+def tearDownDimTests(self):
+    self._domDaemon.shutdown()
+    self._nsDaemon.shutdown()
+    while portIsOpen('localhost', Pyro4.config.NS_PORT):
+        time.sleep(0.01)
+
 class TestDIM(unittest.TestCase):
 
-    def setUp(self):
-
-        # Start the NS
-        self._nsDaemon = NameServerDaemon()
-        threading.Thread(target=lambda:self._nsDaemon.requestLoop()).start()
-
-        # Start a DOM. This is the DOM which the DIM connects to.
-        #
-        # We start it here to avoid the DIM connecting via SSH to the localhost
-        # and spawning a dfmsDOM process; both things need proper setup which we
-        # cannot do here (ssh publick key installation, ssh service up, proper
-        # environment available, etc)
-        #
-        # Anyway, this is also useful because we can check that things have
-        # occurred at the DOM level in the test cases
-        domId = 'dom_' + hostname
-        self.dom = DataObjectMgr(domId, False)
-        self._domDaemon = Pyro4.Daemon(host='0.0.0.0', port=4000)
-        self._nsDaemon.nameserver.register(domId, self._domDaemon.register(self.dom, objectId='DOM_for_test'))
-        threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
-
-        # The DIM we're testing
-        self.dim = DataIslandManager(dimId, [hostname])
-
-    def tearDown(self):
-        self._domDaemon.shutdown()
-        self._nsDaemon.shutdown()
-        while portIsOpen('localhost', Pyro4.config.NS_PORT):
-            time.sleep(0.01)
+    setUp = setUpDimTests
+    tearDown = tearDownDimTests
 
     def createSessionAndAddTypicalGraph(self, sessionId):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'location':hostname, 'consumers':['B']},
@@ -187,3 +199,118 @@ class TestDIM(unittest.TestCase):
             a.write(data)
             a.setCompleted()
         assertGraphStatus(sessionId, DOStates.COMPLETED)
+
+
+def startDIM(restPort):
+    # Make sure the graph executes quickly once triggered
+    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname])
+
+class TestREST(unittest.TestCase):
+
+    setUp = setUpDimTests
+    tearDown = tearDownDimTests
+
+    def test_fullRound(self):
+        """
+        A test that exercises most of the REST interface exposed on top of the
+        DataIslandManager
+        """
+
+        sessionId = 'lala'
+        restPort  = 8888
+
+        dimProcess = multiprocessing.Process(target=lambda restPort: startDIM(restPort), args=[restPort])
+        dimProcess.start()
+
+        try:
+            self.assertTrue(dimProcess.is_alive())
+
+            # Wait until the REST server becomes alive
+            tries = 0
+            while True and tries < 20: # max 10s
+                try:
+                    s = socket.create_connection(('localhost', restPort), 1)
+                    break
+                except:
+                    time.sleep(0.2)
+                    tries += 1
+                    pass
+
+            self.assertLess(tries, 20, "REST server didn't come up in time")
+
+            # The DIM is still empty
+            sessions = self.get('/sessions', restPort)
+            self.assertEquals(0, len(sessions))
+            dimStatus = self.get('', restPort)
+            self.assertEquals(1, len(dimStatus['nodes']))
+            self.assertEquals(hostname, dimStatus['nodes'][0])
+            self.assertEquals(0, len(dimStatus['sessionIds']))
+
+            # Create a session and check it exists
+            self.post('/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
+            sessions = self.get('/sessions', restPort)
+            self.assertEquals(1, len(sessions))
+            self.assertEquals(sessionId, sessions[0]['sessionId'])
+            self.assertDictEqual({hostname: SessionStates.PRISTINE}, sessions[0]['status'])
+
+            # Add this complex graph spec to the session
+            # The UID of the two leaf nodes of this complex.js graph are T and S
+            # Since the original complexGraph doesn't have location information
+            # we need to add it manually before submitting -- otherwise it will
+            # get rejected by the DIM.
+            complexGraphSpec = json.load(pkg_resources.resource_stream(__name__, 'graphs/complex.js')) # @UndefinedVariable
+            for doSpec in complexGraphSpec:
+                doSpec['location'] = hostname
+            self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
+            self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
+
+            # Now we deploy the graph...
+            self.post('/sessions/%s/deploy' % (sessionId), restPort)
+            self.assertEquals({hostname: SessionStates.RUNNING}, self.get('/sessions/%s/status' % (sessionId), restPort))
+
+            # ...and write to all 5 root nodes that are listening in ports
+            # starting at 1111
+            msg = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+            for i in xrange(5):
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 1111+i))
+                s.send(msg)
+                s.close()
+
+            # Wait until the graph has finished its execution. We'll know
+            # it finished by polling the status of the session
+            while SessionStates.RUNNING in self.get('/sessions/%s/status' % (sessionId), restPort).viewvalues():
+                time.sleep(0.2)
+
+            self.assertEquals({hostname: SessionStates.FINISHED}, self.get('/sessions/%s/status' % (sessionId), restPort))
+            self.delete('/sessions/%s' % (sessionId), restPort)
+            sessions = self.get('/sessions', restPort)
+            self.assertEquals(0, len(sessions))
+
+        finally:
+            dimProcess.terminate()
+
+    def get(self, url, port):
+        conn = httplib.HTTPConnection('localhost', port, timeout=3)
+        conn.request('GET', '/api' + url)
+        res = conn.getresponse()
+        self.assertEquals(httplib.OK, res.status)
+        jsonRes = json.load(res)
+        res.close()
+        conn.close()
+        return jsonRes
+
+    def post(self, url, port, content=None):
+        conn = httplib.HTTPConnection('localhost', port, timeout=3)
+        headers = {'Content-Type': 'application/json'} if content else {}
+        conn.request('POST', '/api' + url, content, headers)
+        res = conn.getresponse()
+        self.assertEquals(httplib.OK, res.status)
+        conn.close()
+
+    def delete(self, url, port):
+        conn = httplib.HTTPConnection('localhost', port, timeout=3)
+        conn.request('DELETE', '/api' + url)
+        res = conn.getresponse()
+        self.assertEquals(httplib.OK, res.status)
+        conn.close()
