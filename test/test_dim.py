@@ -30,11 +30,11 @@ import Pyro4
 from Pyro4.naming import NameServerDaemon
 
 from dfms import doutils
-from dfms.dim.data_island_manager import DataIslandManager
-from dfms.dom.data_object_mgr import DataObjectMgr
-from dfms.utils import portIsOpen
-from dfms.dom.session import SessionStates
 from dfms.ddap_protocol import DOStates
+from dfms.manager.data_island_manager import DataIslandManager
+from dfms.manager.data_object_mgr import DataObjectMgr
+from dfms.manager.session import SessionStates
+from dfms.utils import portIsOpen
 
 
 dimId = 'lala'

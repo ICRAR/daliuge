@@ -20,8 +20,10 @@
 #    MA 02111-1307  USA
 #
 import unittest
-from dfms.dom.session import Session, SessionStates
+
 from dfms.ddap_protocol import DOLinkType
+from dfms.manager.session import Session, SessionStates
+
 
 class TestSession(unittest.TestCase):
 

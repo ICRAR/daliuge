@@ -34,8 +34,8 @@ import inspect
 import logging
 
 from dfms import doutils
-from dfms.dom import repository
-from dfms.dom.session import Session
+from dfms.manager import repository
+from dfms.manager.session import Session
 from dfms.lifecycle.dlm import DataLifecycleManager
 
 
