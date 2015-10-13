@@ -62,7 +62,7 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
-class DataObjectMgr(object):
+class DataObjectManager(object):
     """
     The DataObjectManager.
 

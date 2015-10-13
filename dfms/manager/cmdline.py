@@ -34,7 +34,7 @@ import Pyro4
 
 from dfms.daemon import Daemon
 from dfms.manager.data_island_manager import DataIslandManager
-from dfms.manager.data_object_mgr import DataObjectMgr
+from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.rest import DOMRestServer, DIMRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
@@ -152,7 +152,7 @@ def dfmsDOM(args=sys.argv):
             logger.info("Adding %s to the system path" % (dfmsPath))
         sys.path.append(dfmsPath)
 
-    options.dmType = DataObjectMgr
+    options.dmType = DataObjectManager
     options.dmArgs = (options.id, not options.noDLM)
     options.dmKwargs = {}
     options.dmAcronym = 'DOM'

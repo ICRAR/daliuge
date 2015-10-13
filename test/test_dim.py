@@ -38,7 +38,7 @@ from dfms import doutils
 from dfms.ddap_protocol import DOStates
 from dfms.manager import cmdline
 from dfms.manager.data_island_manager import DataIslandManager
-from dfms.manager.data_object_mgr import DataObjectMgr
+from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
 
@@ -65,7 +65,7 @@ def setUpDimTests(self):
     # Anyway, this is also useful because we can check that things have
     # occurred at the DOM level in the test cases
     domId = 'dom_' + hostname
-    self.dom = DataObjectMgr(domId, False)
+    self.dom = DataObjectManager(domId, False)
     self._domDaemon = Pyro4.Daemon(host='0.0.0.0', port=4000)
     self._nsDaemon.nameserver.register(domId, self._domDaemon.register(self.dom, objectId='DOM_for_test'))
     threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
