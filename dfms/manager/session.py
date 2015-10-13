@@ -29,6 +29,7 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
+from dfms.data_object import AbstractDataObject
 from dfms.ddap_protocol import DOLinkType
 
 
@@ -101,12 +102,17 @@ class Session(object):
 
     def addGraphSpec(self, graphSpec):
         """
-        Adds the graph specification given in `graphSpec` to the list of graph
-        specifications currently held by this session. A graphSpec is a list of
-        dictionaries, each of which contains the information of one DataObject.
+        Adds the graph specification given in `graphSpec` to the
+        graph specification currently held by this session. A graphSpec is a
+        list of dictionaries, each of which contains the information of one
+        DataObject. Each DataObject specification is checked to see it contains
+        all the necessary details to construct a proper DataObject. If one
+        DataObject specification is found to be inconsistent the whole operation
+        fill wail.
 
         Adding graph specs to the session is only allowed while the session is
-        in the PRISTINE status; otherwise an exception will be raised.
+        in the PRISTINE or BUILDING status; otherwise an exception will be
+        raised.
 
         If the `graphSpec` being added contains DataObjects that have already
         been added to the session an exception will be raised. DataObjects are
@@ -119,17 +125,8 @@ class Session(object):
 
         self.status = SessionStates.BUILDING
 
-        if isinstance(graphSpec, basestring):
-            graphSpecDict = graph_loader.loadDataObjectSpecsS(graphSpec)
-        elif isinstance(graphSpec, dict):
-            graphSpecDict = graphSpec
-        elif isinstance(graphSpec, list):
-            graphSpecDict = {}
-            [graphSpecDict.__setitem__(spec['oid'],spec) for spec in graphSpec]
-        elif hasattr(graphSpec, 'read'):
-            graphSpecDict = graph_loader.loadDataObjectSpecs(graphSpec)
-        else:
-            raise TypeError('graphSpec should be either a string or a file-like object')
+        # This will check the consistency of each doSpec
+        graphSpecDict = graph_loader.loadDataObjectSpecs(graphSpec)
 
         for oid in graphSpecDict:
             if oid in self._graph:
@@ -190,7 +187,7 @@ class Session(object):
             return self._graph[oid]
         return None
 
-    def deploy(self):
+    def deploy(self, completedDOs=[]):
         """
         Creates the DataObjects represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -223,6 +220,11 @@ class Session(object):
         # Register them
         doutils.breadFirstTraverse(self._roots, self._registerDataObject)
 
+        # We move to COMPLETED the DOs that we were requested to
+        def moveToCompleted(do):
+            if do.uid in completedDOs: do.setCompleted()
+        doutils.breadFirstTraverse(self._roots, moveToCompleted)
+
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Starting Luigi FinishGraphExecution task for session %s" % (self._sessionId))
@@ -251,7 +253,20 @@ class Session(object):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
             raise Exception("The session is currently not running, cannot get graph status")
         statusDict = {}
-        doutils.breadFirstTraverse(self._roots, lambda do: statusDict.__setitem__(do.oid, do.status))
+
+        # We shouldn't traverse the full graph because there might be nodes
+        # attached to our DOs that are actually part of other DOM (and have been
+        # wired together by the DIM after deploying each individual graph on
+        # each of the DOMs).
+        # We recognize such nodes because they are actually not an instance of
+        # AbstractDataObject (they are Pyro4.Proxy instances).
+        #
+        # The same trick is used in luigi_int.RunDataObjectTask.requires
+        def addToDict(do, downStreamDOs):
+            downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDataObject)]
+            statusDict[do.oid] = do.status
+
+        doutils.breadFirstTraverse(self._roots, addToDict)
         return statusDict
 
     def getGraph(self):
