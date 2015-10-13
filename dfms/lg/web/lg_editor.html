@@ -6,7 +6,118 @@
 <!-- Original example: Copyright 1998-2015 by Northwoods Software Corporation. -->
 <!-- Ported for SDP logical graph: Copyright 2009-2015 by ICRAR -->
 <meta charset="UTF-8">
-<script src="go.js"></script>
+
+<!-- for the tree view stuff -->
+<style type="text/css">
+      body {
+        font-family:verdana;
+        font-size:12px;
+      }
+      li {
+            cursor:pointer;
+        display:block;
+        width:100px;
+      }
+      .Folder {
+      }
+      .ExpandCollapse {
+        float:left;
+        margin-right:5px;
+        width:8px;
+      }
+      ul {
+        list-style-type:none;
+      }
+      #Rollover {
+        position:absolute;
+        font-family:verdana;
+        font-size:12px;
+        top:0px;left:0px;
+        padding:5px 5px 5px 5px;
+        border:1px solid orange;
+        background-color:wheat;
+        color:orange;
+        display:none;
+        z-index:20000;
+      }
+      #DisplayInfo {
+        position:absolute;
+        font-family:verdana;
+        font-size:12px;
+        top:50px;
+        left:400px;
+        width:200px;
+        border:1px solid gray;
+        padding:2px 2px 2px 2px;
+        background-color:darkgray;
+        color:white;
+        z-index:200;
+      }
+</style>
+<script type="text/javascript">
+/* For the tree view stuff */
+    var GLOBAL_msg = null;
+    function showRollover(e, msg) {
+      if (!e) {
+        e = window.event;
+      }
+      if (GLOBAL_msg == null) {
+        GLOBAL_msg = msg;
+      }
+      var clientX = e.clientX + 20;
+      var clientY = e.clientY + 10;
+      var rollover = document.getElementById('Rollover');
+      rollover.innerHTML = GLOBAL_msg;
+      rollover.style.marginTop = clientY + "px";
+      rollover.style.marginLeft = clientX + "px";
+      rollover.style.display = "inline";
+      document.onmousemove = showRollover;
+    }
+    function clearRollover(e) {
+      if (!e) {
+        e = window.event;
+      }
+      var rollover = document.getElementById('Rollover');
+      rollover.style.display = "none";
+      GLOBAL_msg = null;
+      document.onmousemove = null;
+    }
+      function resolveSrcMouseover(e) {
+        var node = e.srcElement == undefined ? e.target : e.srcElement;
+        if (node.nodeName != "UL") {
+          node.style.fontWeight= "bold";
+          //showRollover(e, node.innerHTML);
+        }
+      }
+      function resolveSrcMouseout(e) {
+        var node = e.srcElement == undefined ? e.target : e.srcElement;
+        node.style.fontWeight = "normal";
+        //clearRollover(e);
+      }
+      function takeAction(e) {
+        var node = e.srcElement == undefined ? e.target : e.srcElement;
+        //document.getElementById("DisplayInfo").innerHTML = "Clicked " + node.innerHTML;
+        //alert(node.innerHTML);
+        var id = node.getAttribute("id");
+        if (id != null) {
+            if (id.indexOf("Folder") > -1) {
+              if (node.innerHTML == "-") {
+              node.innerHTML = "+";
+              document.getElementById("ExpandCollapse" + id).style.display = "none";
+            } else if (node.innerHTML == "+") {
+              node.innerHTML = "-";
+              document.getElementById("ExpandCollapse" + id).style.display = "block";
+            }
+          } else {
+            loadFromRemoteJson(id);
+            //alert(id);
+          }
+        }
+      }
+</script>
+
+<script src="/static/go.js"></script>
+<script src="/static/jquery.min.js"></script>
 <script id="code">
   function init() {
     //if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
@@ -435,6 +546,16 @@
                   cellSize: new go.Size(1, 1), spacing: new go.Size(4, 4) })
         },
         new go.Binding("background", "isHighlighted", function(h) { return h ? "rgba(255,0,0,0.2)" : "transparent"; }).ofObject(),
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        {
+          // the Node.location is at the center of each node
+          locationSpot: go.Spot.Center,
+          //isShadowed: true,
+          //shadowColor: "#888",
+          // handle mouse enter/leave events to show/hide the ports
+          mouseEnter: function (e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function (e, obj) { showPorts(obj.part, false); }
+        },
         $(go.Shape, "Rectangle",
           { fill: null, stroke: "#E69900", strokeWidth: 2 }),
         $(go.Panel, go.Panel.Vertical,  // title above Placeholder
@@ -584,8 +705,8 @@
     myDiagram.toolManager.linkingTool.temporaryLink.routing = go.Link.Orthogonal;
     myDiagram.toolManager.relinkingTool.temporaryLink.routing = go.Link.Orthogonal;
 
-    load();  // load an initial diagram from some JSON text
-
+    //load();  // load an initial diagram from some JSON text
+    loadFromRemoteJson('cont_img.json');
     // initialize the Palette that is on the left side of the page
     myPalette =
       $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
@@ -621,14 +742,54 @@
       });
   }
 
-
   // Show the diagram's model in JSON format that the user may edit
   function save() {
     document.getElementById("mySavedModel").value = myDiagram.model.toJson();
     myDiagram.isModified = false;
   }
+
+  function saveToRemote() {
+    var jsonModel = myDiagram.model.toJson();
+    var formData = {"lg_name":window.curr_lg_name, "lg_content":jsonModel};
+    $.ajax({
+        url : "/jsonbody",
+        type: "POST",
+        data : formData,
+        success: function(data, textStatus, jqXHR) {
+            //data - response from server
+            save();
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+          alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+        }
+    });
+  }
+
   function load() {
     myDiagram.model = go.Model.fromJson(document.getElementById("mySavedModel").value);
+  }
+
+  function loadFromRemoteJson(lgName) {
+    //given a logical graph name, get its JSON from the server
+    //alert("Previous lg name = " + window.curr_lg_name);
+    //alert("Requesting " + lgName.toString());
+    $.ajax({
+      url: "/jsonbody?lg_name=" + lgName.toString(),
+      type: 'get',
+      error: function(XMLHttpRequest, textStatus, errorThrown) {
+          if (404 == XMLHttpRequest.status) {
+            alert('Server cannot locate logical graph file ' + lgName.toString())
+          } else {
+            alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+          }
+      },
+      success: function(data){
+        //console.log(data);
+        myDiagram.model = go.Model.fromJson(data);
+        save();
+        window.curr_lg_name = lgName;
+      }
+    });
   }
 
   // add an SVG rendering of the diagram at the end of this page
@@ -655,6 +816,24 @@
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:70%">
       <div id="myDiagram" style="border: solid 1px gray; height: 720px"></div>
     </span>
+
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:16%">
+      <div id="myTree" style="border: solid 1px gray; height: 720px">
+      <ul onmouseover="resolveSrcMouseover(event);" onmouseout="resolveSrcMouseout(event);" onclick="takeAction(event);">
+        <li><div id="Folder1" class="ExpandCollapse">-</div><div class="Folder">SDP Pipelines</div></li>
+        <ul id="ExpandCollapseFolder1">
+          <li><div id="ingest.json">Ingest</div></li>
+          <li><div id="cont_img.json">Continuum Imaging</div></li>
+          <li><div id="spec_img.json">Spectral Line Imaging</div></li>
+        </ul>
+        <li><div id="Folder2" class="ExpandCollapse">-</div><div class="Folder">LOFAR Pipelines</div></li>
+        <ul id="ExpandCollapseFolder2">
+          <li><div id="lofar_std.json">Standard</div></li>
+          <li><div id="lofar_cal.json">Calibration</div></li>
+        </ul>
+      </ul>
+      </div>
+    </span>
   </div>
   <!--
   <p>
@@ -665,18 +844,16 @@
   <a href="../intro/templateMaps.html">Node Template Maps</a> in Diagrams.
   </p>
  -->
-  <p>
-  Mouse-over a Node to view its ports.
-  Drag from these ports to create new Links.
-  Selecting Links allows you to re-shape and re-link them.
-  Selecting a Node and then clicking its TextBlock will allow
-  you to edit text (except on the Start and End Nodes).
-  </p>
+
   <p>
   The Logical Graph model data is loaded from the JSON below.
   </p>
-  <button id="SaveButton" onclick="save()">Save</button>
+  <button id="SaveButton" onclick="saveToRemote()">Save</button>
   <button onclick="load()">Load</button>
+  <!--
+  <button onclick="loadFromRemoteJson('test')">Load Wrong</button>
+  <button onclick="loadFromRemoteJson('ingest.json')">Load Right</button>
+  -->
   <textarea id="mySavedModel" style="width:100%;height:300px">
 { "class": "go.GraphLinksModel",
   "linkFromPortIdProperty": "fromPort",
@@ -748,6 +925,13 @@
 {"from":-5, "to":-29, "fromPort":"R", "toPort":"L", "points":[-249.49999999999983,48.00000000000003,-239.49999999999983,48.00000000000003,-218.81847777190023,48.00000000000003,-218.81847777190023,48,-198.13695554380064,48,-188.13695554380064,48]}
  ]}
   </textarea>
+  <p>
+  Mouse-over a Node to view its ports.
+  Drag from these ports to create new Links.
+  Selecting Links allows you to re-shape and re-link them.
+  Selecting a Node and then clicking its TextBlock will allow
+  you to edit text (except on the Start and End Nodes).
+  </p>
   <p>Click the button below to render the current GoJS Diagram into SVG at one-half scale.
      The SVG is not interactive like the GoJS diagram, but can be used for printing or display.
   </p>
