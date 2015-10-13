@@ -130,8 +130,8 @@ class Split(BarrierAppDataObject):
         self.copy = self._getArg(kwargs, 'copy', False)
         self.copy_path = self._getArg(kwargs, 'copy_path', False)
 
-        self.timeout = timeout
-        self.casapy_path = casapy_path
+        self.timeout = self._getArg(kwargs, 'timeout', 3600)
+        self.casapy_path = self._getArg(kwargs, 'casapy_path', False) 
 
         self.transform_args = {
                     'regridms': self._getArg(kwargs, 'regridms', None),
