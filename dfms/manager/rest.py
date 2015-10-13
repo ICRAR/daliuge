@@ -182,7 +182,7 @@ class DOMRestServer(RestServer):
         return template(tpl, sessionId=sessionId, serverUrl=serverUrl)
 
     def visualizeDOM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/index.html')  # @UndefinedVariable
+        tpl = pkg_resources.resource_string(__name__, 'web/dom.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return template(tpl, domId=self.dom.domId, serverUrl=serverUrl)
@@ -197,6 +197,18 @@ class DIMRestServer(RestServer):
         self.dim = self.dm
         app.get(   '/api',                                   callback=self.getDIMStatus)
 
+        # The non-REST mappings that serve HTML-related content
+        app.get(  '/', callback=self.visualizeDIM)
+
     def getDIMStatus(self):
         response.content_type = 'application/json'
         return json.dumps({'nodes': self.dim.nodes, 'sessionIds': self.dim.getSessionIds()})
+
+    #===========================================================================
+    # non-REST methods
+    #===========================================================================
+    def visualizeDIM(self):
+        tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
+        urlparts = request.urlparts
+        serverUrl = urlparts.scheme + '://' + urlparts.netloc
+        return template(tpl, dimId=self.dim.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dim.nodes))
