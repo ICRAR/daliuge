@@ -219,7 +219,7 @@ class DataIslandManager(object):
         finally:
             latch.countDown()
 
-    def deploySession(self, sessionId):
+    def deploySession(self, sessionId, completedDOs=[]):
 
         # Deploy all graphs in parallel
         allUris = {}
@@ -234,7 +234,8 @@ class DataIslandManager(object):
         if thrExs:
             raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
-        # Retrieve all necessary proxies to establish the inter-DOM relationships
+        # Retrieve all necessary proxies we'll need afterward
+        # (i.e., those present in inter-DOM relationships and in completedDOs)
         # Creating proxies beforhand and reusing them means that we won't need
         # to establish that many TCP connections once and over again
         proxies = {}
@@ -243,6 +244,9 @@ class DataIslandManager(object):
                 proxies[rel.rhs] = Pyro4.Proxy(allUris[rel.rhs])
             if rel.lhs not in proxies:
                 proxies[rel.lhs] = Pyro4.Proxy(allUris[rel.lhs])
+        for uid in completedDOs:
+            if uid not in proxies:
+                proxies[uid] = Pyro4.Proxy(allUris[uid])
 
         # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         for rel in self._interDOMRelations[sessionId]:
@@ -256,6 +260,16 @@ class DataIslandManager(object):
             else:
                 relPropName = data_object.LINKTYPE_NTO1_PROPERTY[relType]
                 setattr(rhsDO, relPropName, lhsDO)
+
+        # Now that everything is wired up we move the requested DOs to COMPLETED
+        # (instead of doing it per-DOM, in which case we would certainly miss
+        # most of the events)
+        latch = CountDownLatch(len(completedDOs))
+        thrExs = {}
+        for uid in completedDOs:
+            t = threading.Thread(target=lambda proxy: proxy.setCompleted(), args=(proxies[uid],))
+            t.start()
+        latch.await()
 
         return allUris
 

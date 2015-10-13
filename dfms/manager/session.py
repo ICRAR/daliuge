@@ -187,7 +187,7 @@ class Session(object):
             return self._graph[oid]
         return None
 
-    def deploy(self):
+    def deploy(self, completedDOs=[]):
         """
         Creates the DataObjects represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -219,6 +219,11 @@ class Session(object):
 
         # Register them
         doutils.breadFirstTraverse(self._roots, self._registerDataObject)
+
+        # We move to COMPLETED the DOs that we were requested to
+        def moveToCompleted(do):
+            if do.uid in completedDOs: do.setCompleted()
+        doutils.breadFirstTraverse(self._roots, moveToCompleted)
 
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
