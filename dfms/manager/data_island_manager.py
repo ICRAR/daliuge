@@ -22,6 +22,7 @@
 import collections
 import logging
 import threading
+import time
 
 import Pyro4
 
@@ -94,7 +95,17 @@ class DataIslandManager(object):
 
     def domAt(self, node):
         ns = Pyro4.locateNS(host=self._nsHost)
-        return Pyro4.Proxy(ns.lookup("dom_%s" % (node)))
+        tries = 10
+        i = 0
+        while i < tries:
+            try:
+                uri = ns.lookup("dom_%s" % (node))
+            except:
+                i += 1
+                time.sleep(0.2)
+            else:
+                return Pyro4.Proxy(uri)
+        raise Exception("Couldn't find DataObjectManager for node %s after %d tries" % (node, tries))
 
     def getSessionIds(self):
         return self._sessionIds;

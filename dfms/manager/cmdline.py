@@ -108,8 +108,9 @@ def addCommonOptions(parser):
                       dest="restPort", help="The port to bind the REST server on")
 
 def commonOptionsCheck(options, parser):
+    # ID is mandatory
     if not options.id:
-        parser.error('Must provide a DOM ID via the -i command-line flag')
+        parser.error('Must provide a %s ID via the -i command-line flag' % (options.dmType.__name__))
     # -d and -s are exclusive
     if options.daemon and options.stop:
         parser.error('-d and -s cannot be specified together')
@@ -142,6 +143,14 @@ def dfmsDOM(args=sys.argv):
     parser.add_option("--dfms-path", action="store", type="string",
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
+
+    # Add DOM-specific options
+    options.dmType = DataObjectManager
+    options.dmArgs = (options.id,)
+    options.dmKwargs = {'useDLM': not options.noDLM}
+    options.dmAcronym = 'DOM'
+    options.restType = DOMRestServer
+
     commonOptionsCheck(options, parser)
 
     # dfmsPath might contain code the user is adding
@@ -152,11 +161,6 @@ def dfmsDOM(args=sys.argv):
             logger.info("Adding %s to the system path" % (dfmsPath))
         sys.path.append(dfmsPath)
 
-    options.dmType = DataObjectManager
-    options.dmArgs = (options.id, not options.noDLM)
-    options.dmKwargs = {}
-    options.dmAcronym = 'DOM'
-    options.restType = DOMRestServer
     start(options)
 
 def dfmsDIM(args=sys.argv):
@@ -171,11 +175,28 @@ def dfmsDIM(args=sys.argv):
     parser.add_option("-N", "--nodes", action="store", type="string",
                       dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
     (options, args) = parser.parse_args(args)
-    commonOptionsCheck(options, parser)
 
+    # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {}
+    options.dmKwargs = {'nsHost': options.nsHost}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
+
+    commonOptionsCheck(options, parser)
     start(options)
+
+if __name__ == '__main__':
+    # If this module is called directly, the first argument must be either
+    # dfmsDOM or dfmsDIM, the rest of the arguments are the normal ones
+    if len(sys.argv) == 1:
+        print 'Usage: %s [dfmsDOM|dfmsDIM] [options]' % (sys.argv[0])
+        sys.exit(1)
+    dm = sys.argv.pop(1)
+    if dm == 'dfmsDOM':
+        dfmsDOM()
+    elif dm == 'dfmsDIM':
+        dfmsDIM()
+    else:
+        print 'Usage: %s [dfmsDOM|dfmsDIM] [options]' % (sys.argv[0])
+        sys.exit(1)
