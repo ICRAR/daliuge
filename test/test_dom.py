@@ -35,7 +35,7 @@ import pkg_resources
 from dfms import doutils, ngaslite
 from dfms.ddap_protocol import DOStates
 from dfms.manager import cmdline
-from dfms.manager.data_object_mgr import DataObjectMgr
+from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.session import SessionStates
 from dfms.manager.repository import memory, sleepAndCopy
 
@@ -54,8 +54,8 @@ class TestDOM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dom1 = DataObjectMgr(1, useDLM=False)
-        dom2 = DataObjectMgr(2, useDLM=False)
+        dom1 = DataObjectManager(1, useDLM=False)
+        dom2 = DataObjectManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
@@ -102,8 +102,8 @@ class TestDOM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dom1 = DataObjectMgr(1, useDLM=False)
-        dom2 = DataObjectMgr(2, useDLM=False)
+        dom1 = DataObjectManager(1, useDLM=False)
+        dom2 = DataObjectManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
@@ -176,10 +176,10 @@ class TestDOM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DOs
         """
 
-        dom1 = DataObjectMgr(1, useDLM=False)
-        dom2 = DataObjectMgr(2, useDLM=False)
-        dom3 = DataObjectMgr(3, useDLM=False)
-        dom4 = DataObjectMgr(4, useDLM=False)
+        dom1 = DataObjectManager(1, useDLM=False)
+        dom2 = DataObjectManager(2, useDLM=False)
+        dom3 = DataObjectManager(3, useDLM=False)
+        dom4 = DataObjectManager(4, useDLM=False)
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
