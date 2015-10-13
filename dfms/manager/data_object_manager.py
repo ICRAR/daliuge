@@ -110,9 +110,9 @@ class DataObjectManager(object):
     def getGraph(self, sessionId):
         return self._sessions[sessionId].getGraph()
 
-    def deploySession(self, sessionId):
+    def deploySession(self, sessionId, completedDOs=[]):
         session = self._sessions[sessionId]
-        session.deploy()
+        session.deploy(completedDOs=completedDOs)
         roots = session.roots
 
         # We register the new DOs with the DLM if there is one

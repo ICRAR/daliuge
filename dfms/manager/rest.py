@@ -113,7 +113,10 @@ class RestServer(object):
         return json.dumps(self.dm.getSessionStatus(sessionId))
 
     def deploySession(self, sessionId):
-        self.dm.deploySession(sessionId)
+        completedDOs = []
+        if 'completed' in request.params:
+            completedDOs = request.params['completed'].split(',')
+        self.dm.deploySession(sessionId,completedDOs=completedDOs)
 
     def getGraph(self, sessionId):
         graphDict = self.dm.getGraph(sessionId)
