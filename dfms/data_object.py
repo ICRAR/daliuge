@@ -975,7 +975,7 @@ class DirectoryContainer(ContainerDataObject):
         ContainerDataObject.initialize(self, **kwargs)
 
         if 'dirname' not in kwargs:
-            raise Exception('DirectoryContainer needs a "directory" optional ')
+            raise Exception('DirectoryContainer needs a "dirname" parameter')
 
         directory = kwargs['dirname']
 

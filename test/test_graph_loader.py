@@ -24,7 +24,7 @@ import unittest
 
 from dfms import graph_loader
 from dfms.data_object import InMemoryDataObject, ContainerDataObject,\
-    AppDataObject
+    AppDataObject, DirectoryContainer
 from dfms.ddap_protocol import DOLinkType, DORel
 
 # Used in the textual representation of the graphs in these tests
@@ -51,6 +51,13 @@ class TestGraphLoader(unittest.TestCase):
         self.assertIsInstance(b, ContainerDataObject)
         self.assertEquals("B", b.oid)
         self.assertEquals("B", b.uid)
+
+        # A directory container
+        f = StringIO('[{"oid":"A", "type":"plain", "storage":"file", "dirname":"."}, \
+                       {"oid":"B", "type":"container", "container":"dfms.data_object.DirectoryContainer", "children":["A"], "dirname":"."}]')
+        a = graph_loader.readObjectGraph(f)[0]
+        b = a.parent
+        self.assertIsInstance(b, DirectoryContainer)
 
     def test_consumer(self):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]}, \
