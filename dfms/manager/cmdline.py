@@ -146,7 +146,7 @@ def dfmsDOM(args=sys.argv):
 
     # Add DOM-specific options
     options.dmType = DataObjectManager
-    options.dmArgs = (options.id)
+    options.dmArgs = (options.id,)
     options.dmKwargs = {'useDLM': not options.noDLM}
     options.dmAcronym = 'DOM'
     options.restType = DOMRestServer
