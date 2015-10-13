@@ -174,12 +174,14 @@ def dfmsDIM(args=sys.argv):
     addCommonOptions(parser)
     parser.add_option("-N", "--nodes", action="store", type="string",
                       dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
+    parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
+                      dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
     (options, args) = parser.parse_args(args)
 
     # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {'nsHost': options.nsHost}
+    options.dmKwargs = {'nsHost': options.nsHost, 'pkeyPath': options.pkeyPath}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 

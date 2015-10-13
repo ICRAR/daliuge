@@ -49,13 +49,14 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], nsHost=None):
+    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
         self._nsHost = nsHost or 'localhost'
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at this level
+        self._pkeyPath = pkeyPath
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     @property
@@ -67,7 +68,7 @@ class DataIslandManager(object):
         return self._nodes[:]
 
     def startDOM(self, host, port):
-        client = remote.createClient(host)
+        client = remote.createClient(host, pkeyPath=self._pkeyPath)
         if logger.isEnabledFor(logging.INFO):
             logger.info("DOM not present at %s:%d, starting it" % (host, port))
         out, err, status = remote.execRemoteWithClient(client, "dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}".format(host, port, self._nsHost))
