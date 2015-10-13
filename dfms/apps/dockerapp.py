@@ -175,6 +175,7 @@ class DockerApp(BarrierAppDataObject):
                 logger.debug("Image '%s' found, no need to pull it" % (self._image))
 
         self._containerIp = None
+        self._containerId = None
         self._waiters = []
 
     @property
@@ -185,6 +186,10 @@ class DockerApp(BarrierAppDataObject):
     def containerIp(self, containerIp):
         self._containerIp = containerIp
         self._fire('containerIp', containerIp=containerIp)
+
+    @property
+    def containerId(self):
+        return self._containerId
 
     def handleInterest(self, do):
 
@@ -254,7 +259,7 @@ class DockerApp(BarrierAppDataObject):
 
         # Create container
         container = c.create_container(self._image, cmd, volumes=vols, host_config=c.create_host_config(binds=binds))
-        cId = container['Id']
+        self._containerId = cId = container['Id']
         if logger.isEnabledFor(logging.INFO):
             logger.info("Created container %s for %r" % (cId, self))
 

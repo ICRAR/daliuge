@@ -20,8 +20,10 @@
 #    MA 02111-1307  USA
 #
 import unittest
-from dfms.dom.session import Session, SessionStates
+
 from dfms.ddap_protocol import DOLinkType
+from dfms.manager.session import Session, SessionStates
+
 
 class TestSession(unittest.TestCase):
 
@@ -31,7 +33,7 @@ class TestSession(unittest.TestCase):
             self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
 
-            s.addGraphSpec('[{"oid":"A", "type":"container"}]')
+            s.addGraphSpec([{"oid":"A", "type":"container"}])
             self.assertEquals(SessionStates.BUILDING, s.status)
 
             s.deploy()
@@ -44,24 +46,24 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec(self):
         with Session('1') as s:
-            s.addGraphSpec('[{"oid":"A", "type":"container"}]')
-            s.addGraphSpec('[{"oid":"B", "type":"container"}]')
-            s.addGraphSpec('[{"oid":"C", "type":"container"}]')
+            s.addGraphSpec([{"oid":"A", "type":"container"}])
+            s.addGraphSpec([{"oid":"B", "type":"container"}])
+            s.addGraphSpec([{"oid":"C", "type":"container"}])
 
             # Adding an existing DataObject
-            self.assertRaises(Exception, s.addGraphSpec, '[{"oid":"A", "type":"container"}]')
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"A", "type":"container"}])
 
             # Adding invalid specs
-            self.assertRaises(Exception, s.addGraphSpec, '[{"oid":"D", "type":"app"}]') # missing "storage"
-            self.assertRaises(Exception, s.addGraphSpec, '[{"oid":"D", "type":"plain", "storage":"invalid"}]') # invalid "storage"
-            self.assertRaises(Exception, s.addGraphSpec, '[{"oid":"D", "type":"invalid"}]') # invalid "type"
-            self.assertRaises(Exception, s.addGraphSpec, '[{"oid":"D", "type":"app", "storage":"null", "outputs":["X"]}]') # missing X DO
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app"}]) # missing "storage"
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"plain", "storage":"invalid"}]) # invalid "storage"
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"invalid"}]) # invalid "type"
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app", "storage":"null", "outputs":["X"]}]) # missing X DO
 
     def test_linking(self):
         with Session('1') as s:
-            s.addGraphSpec('[{"oid":"A", "type":"container"}]')
-            s.addGraphSpec('[{"oid":"B", "type":"app", "storage":"null", "app":"dfms.data_object.CRCAppDataObject"}]')
-            s.addGraphSpec('[{"oid":"C", "type":"container"}]')
+            s.addGraphSpec([{"oid":"A", "type":"container"}])
+            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dfms.data_object.CRCAppDataObject"}])
+            s.addGraphSpec([{"oid":"C", "type":"container"}])
 
             # Link them now
             s.linkGraphParts('A', 'B', DOLinkType.CONSUMER)

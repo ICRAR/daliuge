@@ -59,14 +59,14 @@ function getRender() {
 function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
 
 	refreshBtn.attr('disabled');
-	d3.json(serverUrl + '/api', function (error, response){
+	d3.json(serverUrl + '/api/sessions', function (error, response){
 		if( error ) {
 			console.error(error)
 			refreshBtn.attr('disabled', null);
 			return
 		}
 
-		var sessions = response['sessions'];
+		var sessions = response;
 		sessions.sort(function comp(a,b) {
 			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
 		});
@@ -79,17 +79,21 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
 		idCells.text(String)
 		idCells.exit().remove()
 
-		var statusCells = rows.selectAll('td.status').data(function values(s) { return [s.status]; });
-		statusCells.enter().append('td').classed('status', true).text(function(s) { return SESSION_STATUS[s]; })
-		statusCells.text(function(s) {return SESSION_STATUS[s]})
-		statusCells.exit().remove()
+		// See how many "thead tr th are there" in this table
+		var nHeads = d3.select(tbodyEl.node().parentNode).selectAll('thead tr th')[0].length;
+		if (nHeads > 1) {
+			var statusCells = rows.selectAll('td.status').data(function values(s) { return [s.status]; });
+			statusCells.enter().append('td').classed('status', true).text(function(s) { return SESSION_STATUS[s]; })
+			statusCells.text(function(s) {return SESSION_STATUS[s]})
+			statusCells.exit().remove()
 
-		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
-		statusCells.enter().append('td').classed('details', true)
-		    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
-		    .append('span').classed('glyphicon glyphicon-share-alt', true)
-		statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
-		statusCells.exit().remove()
+			statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
+			statusCells.enter().append('td').classed('details', true)
+			    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+			    .append('span').classed('glyphicon glyphicon-share-alt', true)
+			statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+			statusCells.exit().remove()
+		}
 
 		refreshBtn.attr('disabled', null);
 
@@ -112,6 +116,8 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 		xhr.post(JSON.stringify({sessionId: sessionId}), function(error, data) {
 			if( error != null ) {
 				console.error(error)
+				bootbox.alert('An error occurred while creating session ' + sessionId + ': ' + error.responseText)
+				return
 			}
 			loadSessions(serverUrl, tbodyEl, refreshBtn, false)
 		});

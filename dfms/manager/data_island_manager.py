@@ -22,6 +22,7 @@
 import collections
 import logging
 import threading
+import time
 
 import Pyro4
 
@@ -48,20 +49,26 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], nsHost=None):
+    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
         self._nsHost = nsHost or 'localhost'
+        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at this level
+        self._pkeyPath = pkeyPath
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     @property
     def dimId(self):
         return self._dimId
 
+    @property
+    def nodes(self):
+        return self._nodes[:]
+
     def startDOM(self, host, port):
-        client = remote.createClient(host)
+        client = remote.createClient(host, pkeyPath=self._pkeyPath)
         if logger.isEnabledFor(logging.INFO):
             logger.info("DOM not present at %s:%d, starting it" % (host, port))
         out, err, status = remote.execRemoteWithClient(client, "dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}".format(host, port, self._nsHost))
@@ -89,18 +96,32 @@ class DataIslandManager(object):
 
     def domAt(self, node):
         ns = Pyro4.locateNS(host=self._nsHost)
-        return Pyro4.Proxy(ns.lookup("dom_%s" % (node)))
+        tries = 10
+        i = 0
+        while i < tries:
+            try:
+                uri = ns.lookup("dom_%s" % (node))
+            except:
+                i += 1
+                time.sleep(0.2)
+            else:
+                return Pyro4.Proxy(uri)
+        raise Exception("Couldn't find DataObjectManager for node %s after %d tries" % (node, tries))
 
-    def _createSession(self, sessionId, node, latch):
+    def getSessionIds(self):
+        return self._sessionIds;
+
+    def _createSession(self, sessionId, node, latch, exceptions):
         try:
             self.ensureDOM(node)
             with self.domAt(node) as dom:
                 dom.createSession(sessionId)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully created session %s in %s' % (sessionId, node))
-        except:
+        except Exception as e:
             logger.error("Failed to create a session on node %s" % (node))
-            raise
+            exceptions[node] = e
+            raise # so it gets printed
         finally:
             latch.countDown()
 
@@ -111,10 +132,43 @@ class DataIslandManager(object):
 
         logger.info('Creating Session %s in all nodes' % (sessionId))
         latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
         for node in self._nodes:
-            t = threading.Thread(target=self._createSession, args=(sessionId, node, latch))
+            t = threading.Thread(target=self._createSession, args=(sessionId, node, latch, thrExs))
             t.start()
         latch.await()
+        if thrExs:
+            raise Exception("One or more errors occurred while creating sessions", thrExs)
+        self._sessionIds.append(sessionId)
+
+    def _destroySession(self, sessionId, node, latch, exceptions):
+        try:
+            self.ensureDOM(node)
+            with self.domAt(node) as dom:
+                dom.destroySession(sessionId)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Successfully destroyed session %s in %s' % (sessionId, node))
+        except Exception as e:
+            logger.error("Failed to destroy a session on node %s" % (node))
+            exceptions[node] = e
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def destroySession(self, sessionId):
+        """
+        Destroy a session in all underlying DOMs.
+        """
+        logger.info('Destroying Session %s in all nodes' % (sessionId))
+        latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
+        for node in self._nodes:
+            t = threading.Thread(target=self._destroySession, args=(sessionId, node, latch, thrExs))
+            t.start()
+        latch.await()
+        if thrExs:
+            raise Exception("One or more errors occurred while destroying sessions", thrExs)
+        self._sessionIds.remove(sessionId)
 
     def addGraphSpec(self, sessionId, graphSpec):
 
@@ -142,6 +196,7 @@ class DataIslandManager(object):
 
         # Create the individual graphs on each DOM now that they are correctly
         # separated
+        # TODO: We should parallelize here
         doms = {}
         for node in self._nodes:
             domAtNode = self.domAt(node)
@@ -150,28 +205,37 @@ class DataIslandManager(object):
 
         self._interDOMRelations[sessionId].extend(interDOMRelations)
 
-    def _deploySession(self, sessionId, node, allUris, latch):
+    def _deploySession(self, sessionId, node, allUris, latch, exceptions):
         try:
             with self.domAt(node) as dom:
                 uris = dom.deploySession(sessionId)
                 allUris.update(uris)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully deployed session %s in %s' % (sessionId, node))
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while deploying session %s in %s" % (sessionId, node))
+            raise # so it gets printed
         finally:
             latch.countDown()
 
-    def deploySession(self, sessionId):
+    def deploySession(self, sessionId, completedDOs=[]):
 
         # Deploy all graphs in parallel
         allUris = {}
         logger.info('Deploying Session %s in all nodes' % (sessionId))
         latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
         for node in self._nodes:
-            t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch))
+            t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch, thrExs))
             t.start()
         latch.await()
 
-        # Retrieve all necessary proxies to establish the inter-DOM relationships
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
+
+        # Retrieve all necessary proxies we'll need afterward
+        # (i.e., those present in inter-DOM relationships and in completedDOs)
         # Creating proxies beforhand and reusing them means that we won't need
         # to establish that many TCP connections once and over again
         proxies = {}
@@ -180,20 +244,111 @@ class DataIslandManager(object):
                 proxies[rel.rhs] = Pyro4.Proxy(allUris[rel.rhs])
             if rel.lhs not in proxies:
                 proxies[rel.lhs] = Pyro4.Proxy(allUris[rel.lhs])
+        for uid in completedDOs:
+            if uid not in proxies:
+                proxies[uid] = Pyro4.Proxy(allUris[uid])
 
+        # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         for rel in self._interDOMRelations[sessionId]:
+            relType = rel.rel
             rhsDO = proxies[rel.rhs]
             lhsDO = proxies[rel.lhs]
 
-            relType = rel.rel
             if relType in data_object.LINKTYPE_1TON_APPEND_METHOD:
                 methodName = data_object.LINKTYPE_1TON_APPEND_METHOD[relType]
-                # TODO: This is very low-level Pyro, we might want to change it
-                # Same applies below
-                # TODO: fix order of operands
                 rhsDO._pyroInvoke(methodName, (lhsDO,), {})
             else:
                 relPropName = data_object.LINKTYPE_NTO1_PROPERTY[relType]
-                setattr(lhsDO, relPropName, rhsDO)
+                setattr(rhsDO, relPropName, lhsDO)
+
+        # Now that everything is wired up we move the requested DOs to COMPLETED
+        # (instead of doing it per-DOM, in which case we would certainly miss
+        # most of the events)
+        latch = CountDownLatch(len(completedDOs))
+        thrExs = {}
+        for uid in completedDOs:
+            t = threading.Thread(target=lambda proxy: proxy.setCompleted(), args=(proxies[uid],))
+            t.start()
+        latch.await()
 
         return allUris
+
+    def _getGraphStatus(self, sessionId, node, allStatus, latch, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                allStatus.update(dom.getGraphStatus(sessionId))
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while getting the graph status for session %s in node %s" % (sessionId, node))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def getGraphStatus(self, sessionId):
+
+        allStatus = {}
+        thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._getGraphStatus, args=(sessionId, node, allStatus, latch, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
+        return allStatus
+
+    def _getGraph(self, sessionId, node, latch, allGraphs, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                allGraphs.update(dom.getGraph(sessionId))
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while getting the graph for session %s in node %s" % (sessionId, node))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def getGraph(self, sessionId):
+
+        allGraphs = {}
+        thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._getGraph, args=(sessionId, node, latch, allGraphs, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
+        return allGraphs
+
+    def _getSessionStatus(self, sessionId, node, allStatus, latch, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                allStatus[node] = dom.getSessionStatus(sessionId)
+        except Exception as e:
+            exceptions[node] = e
+            logger.error("An exception occurred while getting the status of session %s in node %s" % (sessionId, node))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
+    def getSessionStatus(self, sessionId):
+
+        allStatus = {}
+        thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
+        for node in self._nodes:
+            t = threading.Thread(target=self._getSessionStatus, args=(sessionId, node, allStatus, latch, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
+
+        # TODO: Maybe calculate a DIM-wide session status
+        return allStatus

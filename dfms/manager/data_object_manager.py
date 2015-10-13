@@ -34,8 +34,8 @@ import inspect
 import logging
 
 from dfms import doutils
-from dfms.dom import repository
-from dfms.dom.session import Session
+from dfms.manager import repository
+from dfms.manager.session import Session
 from dfms.lifecycle.dlm import DataLifecycleManager
 
 
@@ -62,7 +62,7 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
-class DataObjectMgr(object):
+class DataObjectManager(object):
     """
     The DataObjectManager.
 
@@ -110,9 +110,9 @@ class DataObjectMgr(object):
     def getGraph(self, sessionId):
         return self._sessions[sessionId].getGraph()
 
-    def deploySession(self, sessionId):
+    def deploySession(self, sessionId, completedDOs=[]):
         session = self._sessions[sessionId]
-        session.deploy()
+        session.deploy(completedDOs=completedDOs)
         roots = session.roots
 
         # We register the new DOs with the DLM if there is one

@@ -114,28 +114,14 @@ def readObjectGraphS(s):
     """
     return createGraphFromDOSpecList(json.loads(s))
 
-def loadDataObjectSpecs(fileObj):
+def loadDataObjectSpecs(doSpecList):
     """
-    Loads the DataObject definitions from the file-like object `fileObj`, checks
-    that the DataObjects are correctly specified, and return a dictionary
-    containing all DataObject specifications (i.e., a dictionary of
-    dictionaries) keyed on the OID of each DataObject. Unlike `readObjectGraph`
-    and `readObjectGraphS`, this method doesn't actually create the DataObjects
-    themselves.
-    """
-    return _loadDataObjectSpecs(json.load(fileObj))
-
-def loadDataObjectSpecsS(s):
-    """
-    Loads the DataObject definitions from the string `s`, checks that
+    Loads the DataObject definitions from `doSpectList`, checks that
     the DataObjects are correctly specified, and return a dictionary containing
     all DataObject specifications (i.e., a dictionary of dictionaries) keyed on
     the OID of each DataObject. Unlike `readObjectGraph` and `readObjectGraphS`,
     this method doesn't actually create the DataObjects themselves.
     """
-    return _loadDataObjectSpecs(json.loads(s))
-
-def _loadDataObjectSpecs(doSpecList):
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug("Found %d DO definitions" % (len(doSpecList)))
@@ -230,9 +216,20 @@ def _createPlain(doSpec, dryRun=False):
 def _createContainer(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
+
+    # if no 'container' is specified, we default to ContainerDataObject
+    if 'container' in doSpec:
+        containerTypeName = doSpec['container']
+        parts = containerTypeName.split('.')
+        module  = importlib.import_module('.'.join(parts[:-1]))
+        containerType = getattr(module, parts[-1])
+    else:
+        containerType = ContainerDataObject
+
     if dryRun:
         return
-    return ContainerDataObject(oid, uid, **kwargs)
+
+    return containerType(oid, uid, **kwargs)
 
 def _createSocket(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)

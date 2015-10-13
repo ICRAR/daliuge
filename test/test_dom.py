@@ -34,9 +34,10 @@ import pkg_resources
 
 from dfms import doutils, ngaslite
 from dfms.ddap_protocol import DOStates
-from dfms.dom import cmdline
-from dfms.dom.data_object_mgr import DataObjectMgr
-from dfms.dom.session import SessionStates
+from dfms.manager import cmdline
+from dfms.manager.data_object_manager import DataObjectManager
+from dfms.manager.session import SessionStates
+from dfms.manager.repository import memory, sleepAndCopy
 
 
 class TestDOM(unittest.TestCase):
@@ -53,13 +54,13 @@ class TestDOM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dom1 = DataObjectMgr(1, useDLM=False)
-        dom2 = DataObjectMgr(2, useDLM=False)
+        dom1 = DataObjectManager(1, useDLM=False)
+        dom2 = DataObjectManager(2, useDLM=False)
 
         sessionId = 's1'
-        g1 = '[{"oid":"A", "type":"plain", "storage": "memory"}]'
-        g2 = '[{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]'
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},
+              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -101,16 +102,16 @@ class TestDOM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dom1 = DataObjectMgr(1, useDLM=False)
-        dom2 = DataObjectMgr(2, useDLM=False)
+        dom1 = DataObjectManager(1, useDLM=False)
+        dom2 = DataObjectManager(2, useDLM=False)
 
         sessionId = 's1'
-        g1 = '[{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},\
-               {"oid":"B", "type":"plain", "storage": "memory"},\
-               {"oid":"C", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},\
-               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]'
-        g2 = '[{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},\
-               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]'
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
+               {"oid":"B", "type":"plain", "storage": "memory"},
+               {"oid":"C", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},
+               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
+        g2 = [{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},
+               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -175,31 +176,27 @@ class TestDOM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DOs
         """
 
-        dom1 = DataObjectMgr(1, useDLM=False)
-        dom2 = DataObjectMgr(2, useDLM=False)
-        dom3 = DataObjectMgr(3, useDLM=False)
-        dom4 = DataObjectMgr(4, useDLM=False)
-
-        # The SumUpContainerChecksum is a BarrierAppDO
-        sumCRCCAppSpec = '"type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "sleepTime": 0'
-        memoryDOSpec   = '"type":"plain", "storage":"memory"'
+        dom1 = DataObjectManager(1, useDLM=False)
+        dom2 = DataObjectManager(2, useDLM=False)
+        dom3 = DataObjectManager(3, useDLM=False)
+        dom4 = DataObjectManager(4, useDLM=False)
 
         sessionId = 's1'
-        g1 = '[{{"oid":"A", {0}, "expectedSize":1}}]'.format(memoryDOSpec)
-        g2 = '[{{"oid":"B", {0}, "outputs":["C","D","E"]}},\
-               {{"oid":"C", {1}}},\
-               {{"oid":"D", {1}}},\
-               {{"oid":"E", {1}}},\
-               {{"oid":"F", {0}, "inputs":["C","D","E"]}}]'.format(sumCRCCAppSpec, memoryDOSpec)
-        g3 = '[{{"oid":"G", {0}, "outputs":["H","I","J"]}},\
-               {{"oid":"H", {1}}},\
-               {{"oid":"I", {1}}},\
-               {{"oid":"J", {1}}},\
-               {{"oid":"K", {0}, "inputs":["H","I","J"]}}]'.format(sumCRCCAppSpec, memoryDOSpec)
-        g4 = '[{{"oid":"L", {1}}},\
-               {{"oid":"M", {1}}},\
-               {{"oid":"N", {0}, "inputs":["L","M"], "outputs":["O"]}},\
-               {{"oid":"O", {1}}}]'.format(sumCRCCAppSpec, memoryDOSpec)
+        g1 = [memory('A', expectedSize=1)]
+        g2 = [sleepAndCopy('B', outputs=['C','D','E'], sleepTime=0),
+              memory('C'),
+              memory('D'),
+              memory('E'),
+              sleepAndCopy('F', inputs=['C','D','E'], sleepTime=0)]
+        g3 = [sleepAndCopy('G', outputs=['H','I','J'], sleepTime=0),
+              memory('H'),
+              memory('I'),
+              memory('J'),
+              sleepAndCopy('K', inputs=['H','I','J'], sleepTime=0)]
+        g4 = [memory('L'),
+              memory('M'),
+              sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
+              memory('O')]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
         uris2 = dom2.quickDeploy(sessionId, g2)
@@ -240,7 +237,7 @@ class TestDOM(unittest.TestCase):
             a.write('a')
 
         for doProxy in proxies.viewvalues():
-            self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED" % doProxy.uid)
+            self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED: %d" % (doProxy.uid, doProxy.status))
             doProxy._pyroRelease()
 
         for dom in [dom1, dom2, dom3, dom4]:
@@ -249,7 +246,7 @@ class TestDOM(unittest.TestCase):
 def startDOM(restPort):
     # Make sure the graph executes quickly once triggered
     graphsRepository.defaultSleepTime = 0
-    cmdline.main(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID'])
+    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID'])
 
 class TestREST(unittest.TestCase):
 
@@ -275,7 +272,7 @@ class TestREST(unittest.TestCase):
                     s = socket.create_connection(('localhost', restPort), 1)
                     break
                 except:
-                    time.sleep(1)
+                    time.sleep(0.2)
                     tries += 1
                     pass
 
@@ -294,12 +291,12 @@ class TestREST(unittest.TestCase):
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
-            self.post('/sessions/%s/graph/parts' % (sessionId), restPort, pkg_resources.resource_string(__name__, 'graphs/complex.js'))  # @UndefinedVariable
+            self.post('/sessions/%s/graph/append' % (sessionId), restPort, pkg_resources.resource_string(__name__, 'graphs/complex.js'))  # @UndefinedVariable
 
             # We create two final archiving nodes, but this time from a template
             # available on the server-side
-            self.post('/templates/dfms.dom.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
-            self.post('/templates/dfms.dom.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
 
             # And link them to the leaf nodes of the complex graph
             self.post('/sessions/%s/graph/link?rhOID=archiving1&lhOID=S&linkType=0' % (sessionId), restPort)
@@ -320,7 +317,7 @@ class TestREST(unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while self.get('/sessions/%s/status' % (sessionId), restPort) == SessionStates.RUNNING:
-                time.sleep(1)
+                time.sleep(0.2)
 
             self.assertEquals(SessionStates.FINISHED, self.get('/sessions/%s/status' % (sessionId), restPort))
             self.delete('/sessions/%s' % (sessionId), restPort)
