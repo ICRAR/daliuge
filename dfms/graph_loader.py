@@ -216,9 +216,20 @@ def _createPlain(doSpec, dryRun=False):
 def _createContainer(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
+
+    # if no 'container' is specified, we default to ContainerDataObject
+    if 'container' in doSpec:
+        containerTypeName = doSpec['container']
+        parts = containerTypeName.split('.')
+        module  = importlib.import_module('.'.join(parts[:-1]))
+        containerType = getattr(module, parts[-1])
+    else:
+        containerType = ContainerDataObject
+
     if dryRun:
         return
-    return ContainerDataObject(oid, uid, **kwargs)
+
+    return containerType(oid, uid, **kwargs)
 
 def _createSocket(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
