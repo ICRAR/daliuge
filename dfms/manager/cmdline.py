@@ -146,8 +146,8 @@ def dfmsDOM(args=sys.argv):
 
     # Add DOM-specific options
     options.dmType = DataObjectManager
-    options.dmArgs = (options.id, not options.noDLM)
-    options.dmKwargs = {}
+    options.dmArgs = (options.id)
+    options.dmKwargs = {'useDLM': not options.noDLM}
     options.dmAcronym = 'DOM'
     options.restType = DOMRestServer
 
@@ -179,7 +179,7 @@ def dfmsDIM(args=sys.argv):
     # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {}
+    options.dmKwargs = {'nsHost': options.nsHost}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 
