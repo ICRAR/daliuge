@@ -22,6 +22,7 @@
 import os
 import sys
 import uuid
+import threading
 from chilesdo import Split, Clean, SourceFlux
 from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
 
