@@ -23,9 +23,12 @@
 A module containing utility code for running remote commands over SSH.
 '''
 
+import os
 import time
 
 from paramiko.client import SSHClient, AutoAddPolicy
+from paramiko.rsakey import RSAKey
+
 
 def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
     """
@@ -65,8 +68,10 @@ def execRemote(host, command, username=None, timeout=None, bufsize=-1):
     with createClient(host, username) as client:
         return execRemoteWithClient(client, command, timeout, bufsize)
 
-def createClient(host, username=None):
+def createClient(host, username=None, pkeyPath=None):
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
-    client.connect(host, username=username)
+
+    pkey = RSAKey.from_private_key_file(os.path.expanduser(pkeyPath)) if pkeyPath else None
+    client.connect(host, username=username, pkey=pkey)
     return client
