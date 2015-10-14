@@ -25,6 +25,7 @@ import os
 import sys
 import uuid
 import drivecasa
+import subprocess
 from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
 
 
@@ -128,10 +129,11 @@ class Split(BarrierAppDataObject):
         super(Split, self).initialize(**kwargs)
 
         self.copy = self._getArg(kwargs, 'copy', False)
-        self.copy_path = self._getArg(kwargs, 'copy_path', False)
+        self.copy_key = self._getArg(kwargs, 'copy_key', None)
+        self.copy_path = self._getArg(kwargs, 'copy_path', None)
 
         self.timeout = self._getArg(kwargs, 'timeout', 3600)
-        self.casapy_path = self._getArg(kwargs, 'casapy_path', False) 
+        self.casapy_path = self._getArg(kwargs, 'casapy_path', False)
 
         self.transform_args = {
                     'regridms': self._getArg(kwargs, 'regridms', None),
@@ -157,6 +159,15 @@ class Split(BarrierAppDataObject):
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
             drivecasa.commands.mstransform(script, infile, outdir, self.transform_args, overwrite = True)
             casa.run_script(script)
+
+            # remote data copy for aggregation and clean
+            if self.copy is True:
+                scp = 'scp -r -i %s %s %s' % (self.copy_key, outdir, self.copy_path)
+                proc = subprocess.Popen(scp, stdout = subprocess.PIPE, shell = True, close_fds = True)
+                out, err = proc.communicate()
+                if proc.returncode != 0:
+                   raise Exception(out)
+
             q.put(0)
 
         except Exception as e:

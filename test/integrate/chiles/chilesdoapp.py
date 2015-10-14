@@ -100,7 +100,6 @@ if __name__ == '__main__':
                         start = '1408 MHz',
                         width = '1412 kHz',
                         copy = False,
-                        copy_path = None,
                         casapy_path = CASAPY)
 
             sp.addInput(vis_in)
