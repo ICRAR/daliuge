@@ -33,12 +33,13 @@ VIS_ROOT = '/home/ec2-user/data/input/'
 VIS_OUT = '/home/ec2-user/data/output/'
 CUBE_OUT = '/home/ec2-user/data/output/'
 CUBE_NAME = 'cube1408~1412'
+KEY = '/home/ec2-user/.ssh/aws-sdp-sydney.pem'
 
 VIS = [
-        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/', '52.64.236.25'),
-        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/', '52.64.48.46'),
-        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/', '52.64.236.16'),
-        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/', '52.64.235.141')
+        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/', '52.64.236.25', 'ec2-user@172.31.2.74:' + VIS_ROOT),
+        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/', '52.64.48.46', 'ec2-user@172.31.2.74:' + VIS_ROOT),
+        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/', '52.64.236.16', 'ec2-user@172.31.2.74:' + VIS_ROOT),
+        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/', '52.64.235.141', 'ec2-user@172.31.2.74:' + VIS_ROOT)
         ]
 
 
@@ -124,8 +125,9 @@ if __name__ == '__main__':
                         interpolation = 'linear',
                         start = '1408 MHz',
                         width = '1412 kHz',
-                        copy = False,
-                        copy_path = None,
+                        copy = True,
+                        copy_path = v[3],
+                        copy_key = KEY,
                         casapy_path = CASAPY,
                         location = v[2])
 
