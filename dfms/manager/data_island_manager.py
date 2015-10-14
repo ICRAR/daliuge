@@ -170,6 +170,18 @@ class DataIslandManager(object):
             raise Exception("One or more errors occurred while destroying sessions", thrExs)
         self._sessionIds.remove(sessionId)
 
+    def _addGraphSpec(self, sessionId, node, graphSpec, latch, exceptions):
+        try:
+            with self.domAt(node) as dom:
+                dom.addGraphSpec(sessionId, graphSpec)
+            pass
+        except Exception as e:
+            logger.error("Failed to append graphSpec for session %s on node %s" % (sessionId, node))
+            exceptions[node] = e
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
     def addGraphSpec(self, sessionId, graphSpec):
 
         # The first step is to break down the graph into smaller graphs that
@@ -195,13 +207,18 @@ class DataIslandManager(object):
             interDOMRelations.extend(graph_loader.removeUnmetRelationships(doSpecs))
 
         # Create the individual graphs on each DOM now that they are correctly
-        # separated
-        # TODO: We should parallelize here
-        doms = {}
+        # separated.
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Adding individual graphSpec to each node' % (sessionId))
+        latch = CountDownLatch(len(self._nodes))
+        thrExs = {}
         for node in self._nodes:
-            domAtNode = self.domAt(node)
-            doms[node] = domAtNode
-            domAtNode.addGraphSpec(sessionId, perLocation[node])
+            t = threading.Thread(target=self._addGraphSpec, args=(sessionId, node, perLocation[node], latch, thrExs))
+            t.start()
+        latch.await()
+
+        if thrExs:
+            raise Exception("One or more errors occurred while adding the graphSpec to the individual DOMs", thrExs)
 
         self._interDOMRelations[sessionId].extend(interDOMRelations)
 
