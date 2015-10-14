@@ -171,8 +171,8 @@ class Split(BarrierAppDataObject):
             q.put(0)
 
         except Exception as e:
-            print str(e)
             q.put(-1)
+            raise
 
 
     def run(self):
