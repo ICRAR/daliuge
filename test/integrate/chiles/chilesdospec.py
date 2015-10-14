@@ -110,8 +110,8 @@ if __name__ == '__main__':
         flux.addInput(image_out)
         flux.addOutput(flux_out)
 
-        for v in VIS:
-            vis_in = directorySpec(uuid.uuid1(), dirname = v[0], location = v[2])
+        for i, v in enumerate(VIS):
+            vis_in = directorySpec('vis%d' % (i), dirname = v[0], location = v[2])
             dolist.append(vis_in)
             split_out = directorySpec(uuid.uuid1(), dirname = v[1], exists = False, location = v[2])
             dolist.append(split_out)
