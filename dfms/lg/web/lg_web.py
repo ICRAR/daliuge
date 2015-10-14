@@ -28,7 +28,7 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-lg_dir = None
+#lg_dir = None
 post_sem = threading.Semaphore(1)
 
 err_prefix = "[Error]"

@@ -28,6 +28,43 @@
       ul {
         list-style-type:none;
       }
+      .button {
+       border-top: 1px solid #96d1f8;
+       background: #65a9d7;
+       background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#65a9d7));
+       background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
+       background: -moz-linear-gradient(top, #3e779d, #65a9d7);
+       background: -ms-linear-gradient(top, #3e779d, #65a9d7);
+       background: -o-linear-gradient(top, #3e779d, #65a9d7);
+       padding: 11px 22px;
+       -webkit-border-radius: 8px;
+       -moz-border-radius: 8px;
+       border-radius: 8px;
+       -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+       -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+       box-shadow: rgba(0,0,0,1) 0 1px 0;
+       text-shadow: rgba(0,0,0,.4) 0 1px 0;
+       color: white;
+       font-size: 17px;
+       font-family: Helvetica, Arial, Sans-Serif;
+       text-decoration: none;
+       vertical-align: middle;
+       }
+    .button:hover {
+       border-top-color: #28597a;
+       background: #28597a;
+       color: #ccc;
+       }
+    .button:active {
+       border-top-color: #1b435e;
+       background: #1b435e;
+     }
+     .button:disabled {
+      border-top-color: #1b435e;
+      background: #28597a;
+      color: #809289;
+     }
+
       #Rollover {
         position:absolute;
         font-family:verdana;
@@ -91,7 +128,10 @@
       }
       function resolveSrcMouseout(e) {
         var node = e.srcElement == undefined ? e.target : e.srcElement;
-        node.style.fontWeight = "normal";
+        var id = node.getAttribute("id");
+        if (id == null || id != window.curr_lg_name) {
+          node.style.fontWeight = "normal";
+        }
         //clearRollover(e);
       }
       function takeAction(e) {
@@ -109,7 +149,10 @@
               document.getElementById("ExpandCollapse" + id).style.display = "block";
             }
           } else {
-            loadFromRemoteJson(id);
+            if (id != window.curr_lg_name && window.curr_lg_node != null) {
+              window.curr_lg_node.style.fontWeight = "normal";
+            }
+            loadFromRemoteJson(id, node);
             //alert(id);
           }
         }
@@ -139,10 +182,17 @@
       var button = document.getElementById("SaveButton");
       if (button) button.disabled = !myDiagram.isModified;
       var idx = document.title.indexOf("*");
+      var idx2 = window.curr_lg_node.innerHTML.indexOf("*");
       if (myDiagram.isModified) {
-        if (idx < 0) document.title += "*";
+        if (idx < 0) {
+          document.title += "*";
+          window.curr_lg_node.innerHTML += "*";
+        }
       } else {
-        if (idx >= 0) document.title = document.title.substr(0, idx);
+        if (idx >= 0) {
+          document.title = document.title.substr(0, idx);
+          window.curr_lg_node.innerHTML = window.curr_lg_node.innerHTML.substr(0, idx2)
+        }
       }
     });
 
@@ -706,7 +756,18 @@
     myDiagram.toolManager.relinkingTool.temporaryLink.routing = go.Link.Orthogonal;
 
     //load();  // load an initial diagram from some JSON text
-    loadFromRemoteJson('cont_img.json');
+    var first_click_id = "cont_img.json";
+    first_click_node = document.getElementById(first_click_id);
+
+    loadFromRemoteJson(first_click_id, first_click_node);
+    first_click_node.style.fontWeight= "bold";
+    window.curr_lg_name = first_click_id;
+    window.curr_lg_node = first_click_node;
+    /*
+    alert(window.curr_lg_name);
+    alert(window.curr_lg_node);
+    */
+
     // initialize the Palette that is on the left side of the page
     myPalette =
       $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
@@ -750,6 +811,11 @@
 
   function saveToRemote() {
     var jsonModel = myDiagram.model.toJson();
+    if (window.curr_lg_name == null) {
+      alert("lg_name is null");
+      return;
+    }
+    //alert(window.curr_lg_name);
     var formData = {"lg_name":window.curr_lg_name, "lg_content":jsonModel};
     $.ajax({
         url : "/jsonbody",
@@ -769,7 +835,7 @@
     myDiagram.model = go.Model.fromJson(document.getElementById("mySavedModel").value);
   }
 
-  function loadFromRemoteJson(lgName) {
+  function loadFromRemoteJson(lgName, node) {
     //given a logical graph name, get its JSON from the server
     //alert("Previous lg name = " + window.curr_lg_name);
     //alert("Requesting " + lgName.toString());
@@ -788,6 +854,7 @@
         myDiagram.model = go.Model.fromJson(data);
         save();
         window.curr_lg_name = lgName;
+        window.curr_lg_node = node
       }
     });
   }
@@ -810,15 +877,15 @@
 <div id="sample">
   <div style="width:100%; white-space:nowrap;">
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:190px">
-      <div id="myPalette" style="border: solid 1px gray; height: 720px"></div>
+      <div id="myPalette" style="border: solid 1px gray; height: 820px"></div>
     </span>
 
-    <span style="display: inline-block; vertical-align: top; padding: 5px; width:70%">
-      <div id="myDiagram" style="border: solid 1px gray; height: 720px"></div>
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:71%">
+      <div id="myDiagram" style="border: solid 1px gray; height: 820px"></div>
     </span>
 
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:16%">
-      <div id="myTree" style="border: solid 1px gray; height: 720px">
+      <div id="myTree" style="border: solid 1px gray; height: 820px">
       <ul onmouseover="resolveSrcMouseover(event);" onmouseout="resolveSrcMouseout(event);" onclick="takeAction(event);">
         <li><div id="Folder1" class="ExpandCollapse">-</div><div class="Folder">SDP Pipelines</div></li>
         <ul id="ExpandCollapseFolder1">
@@ -848,82 +915,13 @@
   <p>
   The Logical Graph model data is loaded from the JSON below.
   </p>
-  <button id="SaveButton" onclick="saveToRemote()">Save</button>
-  <button onclick="load()">Load</button>
+  <button id="SaveButton" onclick="saveToRemote()" class="button">Save</button>
+  <button onclick="load()" class="button">Load</button>
   <!--
   <button onclick="loadFromRemoteJson('test')">Load Wrong</button>
   <button onclick="loadFromRemoteJson('ingest.json')">Load Right</button>
   -->
   <textarea id="mySavedModel" style="width:100%;height:300px">
-{ "class": "go.GraphLinksModel",
-  "linkFromPortIdProperty": "fromPort",
-  "linkToPortIdProperty": "toPort",
-  "nodeDataArray": [
-{"category":"Comment", "loc":"85.00000000000017 61", "text":"Continuum Imaging Pipeline", "key":-13},
-{"category":"Start", "text":"Start", "key":-14, "loc":"-457 219"},
-{"category":"Branch", "text":"Self-Cal\nConverge?", "key":-6, "loc":"-290 218.99999999999991"},
-{"category":"Component", "text":"Update GSM", "key":-15, "loc":"-290.00000000000017 117.00000000000014"},
-{"category":"GSM", "text":"GSM", "key":-5, "loc":"-289.99999999999983 48.00000000000003"},
-{"category":"Component", "text":"Update LSM", "key":-17, "loc":"-289.99999999999994 394.00000000000006"},
-{"category":"Component", "text":"Cal. Source\nFinding", "key":-18, "loc":"-289.9999999999999 497.00000000000006"},
-{"category":"Component", "text":"Image Plane\nSpectral Averaging", "key":-19, "loc":"-290 600"},
-{"category":"LSM", "text":"LSM", "key":-9, "loc":"-89.99999999999993 117.00000000000011"},
-{"category":"Component", "text":"Predict", "key":-11, "loc":"292 117.00000000000006"},
-{"category":"Component", "text":"Predict", "key":-12, "loc":"-89.99999999999997 219.0000000000001"},
-{"category":"Component", "text":"Solve", "key":-16, "loc":"32.99999999999999 218.9999999999999"},
-{"category":"Component", "text":"Correct", "key":-20, "loc":"167 219.0000000000001"},
-{"category":"Component", "text":"Subtract", "key":-21, "loc":"291.9999999999999 219.0000000000001"},
-{"category":"Component", "text":"Flag", "key":-22, "loc":"421.9999999999999 218.9999999999999"},
-{"category":"Parameter", "text":"Calibration\nParameters", "key":-10, "loc":"32.999999999999986 301.00000000000006"},
-{"category":"Component", "text":"iFFT", "key":-23, "loc":"-94.00000000000014 456.99999999999994"},
-{"category":"Component", "text":"deGrid", "key":-24, "loc":"33 394.0000000000003"},
-{"category":"Component", "text":"Subtract", "key":-25, "loc":"174.00000000000014 394.0000000000001"},
-{"category":"Component", "text":"Flag", "key":-26, "loc":"301.00000000000045 394.00000000000006"},
-{"category":"Component", "text":"Grid", "key":-27, "loc":"422 394.00000000000006"},
-{"category":"Component", "text":"FFT", "key":-28, "loc":"422 462.9999999999999"},
-{"category":"Component", "text":"Identify\nComponent", "key":-31, "loc":"162 549.9999999999998"},
-{"category":"Component", "text":"Subtract \ncompnt frm\nimg plane", "key":-32, "loc":"-12.983875274658217 549.4822916666668"},
-{"category":"LoopCondition", "text":"Minor Cycle \nDone?", "key":-7, "loc":"422 551.0000000000001"},
-{"category":"LoopCondition", "text":"Major Cycle\nDone?", "key":-30, "loc":"423 645"},
-{"category":"Data", "text":"Vis data", "key":-3, "loc":"173.99999999999994 268.00000000000006"},
-{"category":"End", "text":"End", "key":-29, "loc":"-162 48"}
- ],
-  "linkDataArray": [
-{"from":-14, "to":-6, "fromPort":"R", "toPort":"L", "points":[-423.0998840332031,219,-413.0998840332031,219,-397.08556365966797,219,-397.08556365966797,219,-381.0712432861328,219,-371.0712432861328,219]},
-{"from":-15, "to":-5, "fromPort":"T", "toPort":"B", "points":[-289.99999999999994,100.56227569580086,-289.99999999999994,90.56227569580086,-289.99999999999994,82.50000000000006,-289.99999999999983,82.50000000000006,-289.99999999999983,74.43772430419925,-289.99999999999983,64.43772430419925]},
-{"from":-17, "to":-6, "fromPort":"T", "toPort":"B", "points":[-290,377.5622756958008,-290,367.5622756958008,-290,316.4065864562988,-290,316.4065864562988,-290,265.25089721679683,-290,255.25089721679686]},
-{"from":-18, "to":-17, "fromPort":"T", "toPort":"B", "points":[-290,472.6245513916016,-290,462.6245513916016,-290,441.53113784790037,-290,441.53113784790037,-290,420.4377243041992,-290,410.4377243041992]},
-{"from":-19, "to":-18, "fromPort":"T", "toPort":"B", "points":[-290,575.6245513916016,-290,565.6245513916016,-290,548.5,-290,548.5,-290,531.3754486083984,-290,521.3754486083984]},
-{"from":-9, "to":-15, "fromPort":"L", "toPort":"R", "points":[-124.0320608956473,117.00000000000006,-134.0320608956473,117.00000000000006,-180.97826875959132,117.00000000000006,-180.97826875959132,117.00000000000014,-227.92447662353533,117.00000000000014,-237.92447662353533,117.00000000000014]},
-{"from":-9, "to":-11, "fromPort":"R", "toPort":"L", "points":[-55.967939104352666,117.00000000000006,-45.967939104352666,117.00000000000006,101.34119524274554,117.00000000000006,101.34119524274554,117.00000000000006,248.65032958984375,117.00000000000006,258.65032958984375,117.00000000000006]},
-{"from":-12, "to":-16, "fromPort":"R", "toPort":"L", "points":[-56.65032958984375,219,-46.65032958984375,219,-25.853260040283203,219,-25.853260040283203,219,-5.056190490722656,219,4.943809509277344,219]},
-{"from":-16, "to":-20, "fromPort":"R", "toPort":"L", "points":[61.056190490722656,219,71.05619049072266,219,96.74302291870117,219,96.74302291870117,219,122.42985534667969,219,132.4298553466797,219]},
-{"from":-11, "to":-21, "fromPort":"B", "toPort":"T", "points":[292,133.4377243041992,292,143.4377243041992,292,168.00000000000006,291.9999999999999,168.00000000000006,291.9999999999999,192.5622756958009,291.9999999999999,202.5622756958009]},
-{"from":-20, "to":-21, "fromPort":"R", "toPort":"L", "points":[201.5701446533203,219,211.5701446533203,219,227.66929244995117,219,227.66929244995117,219,243.76844024658203,219,253.76844024658203,219]},
-{"from":-16, "to":-10, "fromPort":"B", "toPort":"T", "points":[33,235.43772430419924,33,245.43772430419924,33,248.07265497843434,32.999999999999986,248.07265497843434,32.999999999999986,250.70758565266942,32.999999999999986,260.7075856526694]},
-{"from":-23, "to":-24, "fromPort":"T", "toPort":"L", "points":[-94.00000000000014,440.56227569580074,-94.00000000000014,430.56227569580074,-94.00000000000014,394.0000000000003,-51.56102752685554,394.0000000000003,-9.122055053710938,394.0000000000003,0.8779449462890625,394.0000000000003]},
-{"from":-10, "to":-24, "fromPort":"B", "toPort":"T", "points":[32.999999999999986,341.29241434733086,32.999999999999986,351.29241434733086,32.999999999999986,359.4273450215659,33,359.4273450215659,33,367.56227569580096,33,377.56227569580096]},
-{"from":-24, "to":-25, "fromPort":"R", "toPort":"L", "points":[65.12205505371094,394.00000000000017,75.12205505371094,394.00000000000017,100.44524765014657,394.00000000000017,100.44524765014657,393.99999999999994,125.7684402465822,393.99999999999994,135.7684402465822,393.99999999999994]},
-{"from":-25, "to":-26, "fromPort":"R", "toPort":"L", "points":[212.2315597534181,394.0000000000001,222.2315597534181,394.0000000000001,244.83177566528343,394.0000000000001,244.83177566528343,394.00000000000006,267.4319915771488,394.00000000000006,277.4319915771488,394.00000000000006]},
-{"from":-26, "to":-27, "fromPort":"R", "toPort":"L", "points":[324.5680084228519,394.00000000000006,334.5680084228519,394.00000000000006,361.50000000000017,394.00000000000006,361.50000000000017,394.00000000000006,388.43199157714844,394.00000000000006,398.43199157714844,394.00000000000006]},
-{"from":-21, "to":-22, "fromPort":"R", "toPort":"L", "points":[330.23155975341797,219,340.23155975341797,219,364.3317756652832,219,364.3317756652832,219,388.43199157714844,219,398.43199157714844,219]},
-{"from":-22, "to":-27, "fromPort":"R", "toPort":"R", "points":[445.56800842285156,219,455.56800842285156,219,455.5680084228517,219,455.5680084228517,306.5000000000001,455.5680084228517,394.0000000000002,445.5680084228517,394.0000000000002]},
-{"from":-10, "to":-27, "fromPort":"R", "toPort":"T", "points":[79.7820358276367,301.0000000000001,89.7820358276367,301.0000000000001,422.0000000000001,301.0000000000001,422.0000000000001,334.2811378479006,422.0000000000001,367.562275695801,422.0000000000001,377.562275695801]},
-{"from":-27, "to":-28, "fromPort":"B", "toPort":"T", "points":[422,410.43772430419926,422,420.43772430419926,422,428.5,422.0000000000001,428.5,422.0000000000001,436.5622756958007,422.0000000000001,446.5622756958007]},
-{"from":-31, "to":-32, "fromPort":"L", "toPort":"R", "points":[112.78416442871091,550.0000000000001,102.78416442871091,550.0000000000001,74.30762672424315,550.0000000000001,74.30762672424315,549.4822916666667,45.83108901977539,549.4822916666667,35.83108901977539,549.4822916666667]},
-{"from":-6, "to":-15, "fromPort":"T", "toPort":"B", "visible":true, "points":[-290,182.74910278320306,-290,172.74910278320306,-290,158.09341354370116,-289.99999999999994,158.09341354370116,-289.99999999999994,143.4377243041993,-289.99999999999994,133.4377243041993]},
-{"from":-6, "to":-12, "fromPort":"R", "toPort":"L", "visible":true, "points":[-213.7820587158203,218.99999999999994,-203.7820587158203,218.99999999999994,-168.56586456298828,218.99999999999994,-168.56586456298828,219.0000000000001,-133.34967041015622,219.0000000000001,-123.34967041015622,219.0000000000001], "text":"No"},
-{"from":-17, "to":-9, "fromPort":"R", "toPort":"T", "points":[-239.14852905273432,394.00000000000006,-229.14852905273432,394.00000000000006,-197,394.00000000000006,-197,90.56227569580084,-89.99999999999999,90.56227569580084,-89.99999999999999,100.56227569580084]},
-{"from":-28, "to":-7, "fromPort":"B", "toPort":"T", "points":[422.0000000000001,479.4377243041991,422.0000000000001,489.4377243041991,422.0000000000001,503.05189641316724,422,503.05189641316724,422,516.6660685221354,422,526.6660685221354]},
-{"from":-7, "to":-31, "fromPort":"L", "toPort":"R", "visible":true, "points":[380.80638885498047,551,370.80638885498047,551,296.01111221313477,551,296.01111221313477,549.9999999999998,221.21583557128906,549.9999999999998,211.21583557128906,549.9999999999998], "text":"No; do Mmin times   "},
-{"from":-32, "to":-7, "fromPort":"T", "toPort":"T", "points":[-12.983875274658217,517.1691187540691,-12.983875274658217,507.16911875406913,422,507.16911875406913,422,511.9175936381023,422,516.6660685221354,422,526.6660685221354]},
-{"from":-30, "to":-23, "fromPort":"L", "toPort":"B", "visible":true, "points":[381.80638885498047,645,371.80638885498047,645,-94.00000000000014,645,-94.00000000000014,564.2188621520995,-94.00000000000014,483.43772430419915,-94.00000000000014,473.43772430419915], "text":"No; do Mmaj times"},
-{"from":-30, "to":-19, "fromPort":"B", "toPort":"B", "visible":true, "points":[423,669.3339314778646,423,679.3339314778646,-290,679.3339314778646,-290,656.8546900431315,-290,634.3754486083984,-290,624.3754486083984]},
-{"from":-9, "to":-12, "fromPort":"B", "toPort":"T", "points":[-89.99999999999999,133.43772430419926,-89.99999999999999,143.43772430419926,-89.99999999999999,168.00000000000009,-89.99999999999997,168.00000000000009,-89.99999999999997,192.5622756958009,-89.99999999999997,202.5622756958009]},
-{"from":-7, "to":-30, "fromPort":"B", "toPort":"T", "visible":true, "points":[422,575.3339314778646,422,585.3339314778646,422,598,423,598,423,610.6660685221354,423,620.6660685221354]},
-{"from":-3, "to":-25, "fromPort":"B", "toPort":"T", "points":[174,284.4377243041992,174,294.4377243041992,174,331.00000000000006,174.00000000000014,331.00000000000006,174.00000000000014,367.5622756958009,174.00000000000014,377.5622756958009]},
-{"from":-5, "to":-29, "fromPort":"R", "toPort":"L", "points":[-249.49999999999983,48.00000000000003,-239.49999999999983,48.00000000000003,-218.81847777190023,48.00000000000003,-218.81847777190023,48,-198.13695554380064,48,-188.13695554380064,48]}
- ]}
   </textarea>
   <p>
   Mouse-over a Node to view its ports.
