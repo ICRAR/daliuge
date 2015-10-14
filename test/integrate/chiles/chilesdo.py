@@ -25,6 +25,7 @@ import os
 import sys
 import uuid
 import drivecasa
+import subprocess
 from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
 
 
@@ -66,12 +67,12 @@ class Clean(BarrierAppDataObject):
         self.clean_args = {
                         'field':  self._getArg(kwargs, 'field', None),
                         'spw': '',
-                        'mode': self._getArg(kwargs, 'mode', None),
-                        'restfreq': self._getArg(kwargs, 'restfreq', None),
+                        'mode': str(self._getArg(kwargs, 'mode', None)),
+                        'restfreq': str(self._getArg(kwargs, 'restfreq', None)),
                         'nchan': self._getArg(kwargs, 'nchan', None),
-                        'start': self._getArg(kwargs, 'start', None),
-                        'width': self._getArg(kwargs, 'width', None),
-                        'interpolation': self._getArg(kwargs, 'interpolation', None),
+                        'start': str(self._getArg(kwargs, 'start', None)),
+                        'width': str(self._getArg(kwargs, 'width', None)),
+                        'interpolation': str(self._getArg(kwargs, 'interpolation', None)),
                         'gain': self._getArg(kwargs, 'gain', None),
                         'imsize': self._getArg(kwargs, 'imsize', None),
                         'cell': self._getArg(kwargs, 'cell', None),
@@ -128,21 +129,22 @@ class Split(BarrierAppDataObject):
         super(Split, self).initialize(**kwargs)
 
         self.copy = self._getArg(kwargs, 'copy', False)
-        self.copy_path = self._getArg(kwargs, 'copy_path', False)
+        self.copy_key = self._getArg(kwargs, 'copy_key', None)
+        self.copy_path = self._getArg(kwargs, 'copy_path', None)
 
         self.timeout = self._getArg(kwargs, 'timeout', 3600)
-        self.casapy_path = self._getArg(kwargs, 'casapy_path', False) 
+        self.casapy_path = self._getArg(kwargs, 'casapy_path', False)
 
         self.transform_args = {
                     'regridms': self._getArg(kwargs, 'regridms', None),
-                    'restfreq': self._getArg(kwargs, 'restfreq', None),
+                    'restfreq': str(self._getArg(kwargs, 'restfreq', None)),
                     'mode': self._getArg(kwargs, 'mode', None),
                     'nchan': self._getArg(kwargs, 'nchan', None),
                     'outframe': self._getArg(kwargs, 'outframe', None),
                     'interpolation': self._getArg(kwargs, 'interpolation', None),
                     'veltype': 'radio',
-                    'start': self._getArg(kwargs, 'start', None),
-                    'width': self._getArg(kwargs, 'width', None),
+                    'start': str(self._getArg(kwargs, 'start', None)),
+                    'width': str(self._getArg(kwargs, 'width', None)),
                     'spw': '',
                     'combinespws': True,
                     'nspw': 1,
@@ -157,11 +159,20 @@ class Split(BarrierAppDataObject):
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
             drivecasa.commands.mstransform(script, infile, outdir, self.transform_args, overwrite = True)
             casa.run_script(script)
+
+            # remote data copy for aggregation and clean
+            if self.copy is True:
+                scp = 'scp -o StrictHostKeyChecking=no -r -i %s %s %s' % (self.copy_key, outdir, self.copy_path)
+                proc = subprocess.Popen(scp, stdout = subprocess.PIPE, shell = True, close_fds = True)
+                out, err = proc.communicate()
+                if proc.returncode != 0:
+                   raise Exception(out)
+
             q.put(0)
 
         except Exception as e:
-            print str(e)
             q.put(-1)
+            raise
 
 
     def run(self):

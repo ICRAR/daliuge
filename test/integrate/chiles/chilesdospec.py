@@ -33,12 +33,14 @@ VIS_ROOT = '/home/ec2-user/data/input/'
 VIS_OUT = '/home/ec2-user/data/output/'
 CUBE_OUT = '/home/ec2-user/data/output/'
 CUBE_NAME = 'cube1408~1412'
+KEY = '/home/ec2-user/.ssh/aws-sdp-sydney.pem'
 
+# 172.31.2.74 172.31.5.15 172.31.5.14 172.31.5.16 172.31.5.13
 VIS = [
-        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/', '52.64.236.25'),
-        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/', '52.64.48.46'),
-        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/', '52.64.236.16'),
-        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/', '52.64.235.141')
+        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/', '172.31.5.15', 'ec2-user@172.31.2.74:' + VIS_ROOT),
+        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/', '172.31.5.14', 'ec2-user@172.31.2.74:' + VIS_ROOT),
+        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/', '172.31.5.16', 'ec2-user@172.31.2.74:' + VIS_ROOT),
+        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/', '172.31.5.13', 'ec2-user@172.31.2.74:' + VIS_ROOT)
         ]
 
 
@@ -79,9 +81,9 @@ if __name__ == '__main__':
 
         vis_in_a = []
 
-        flux_out = memorySpec(uuid.uuid1())
+        flux_out = memorySpec(uuid.uuid1(), location = '172.31.2.74')
         dolist.append(flux_out)
-        flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY)
+        flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY, location = '172.31.2.74')
         dolist.append(flux)
 
         cl = cleanSpec(uuid.uuid1(),
@@ -97,20 +99,21 @@ if __name__ == '__main__':
                         cell = ['1.0arcsec'],
                         phasecenter = '10h01m53.9,+02d24m52s',
                         weighting = 'natural',
-                        casapy_path = CASAPY)
+                        casapy_path = CASAPY,
+                        location = '172.31.2.74')
 
         dolist.append(cl)
 
-        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False)
+        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False, location = '172.31.2.74')
         dolist.append(image_out)
         cl.addOutput(image_out)
         flux.addInput(image_out)
         flux.addOutput(flux_out)
 
-        for v in VIS:
-            vis_in = directorySpec(uuid.uuid1(), dirname = v[0])
+        for i, v in enumerate(VIS):
+            vis_in = directorySpec('vis%d' % (i), dirname = v[0], location = v[2])
             dolist.append(vis_in)
-            split_out = directorySpec(uuid.uuid1(), dirname = v[1], exists = False)
+            split_out = directorySpec(uuid.uuid1(), dirname = v[1], exists = False, location = v[2])
             dolist.append(split_out)
 
             vis_in_a.append(vis_in)
@@ -122,10 +125,11 @@ if __name__ == '__main__':
                         nchan = 256,
                         outframe = 'lsrk',
                         interpolation = 'linear',
-                        start = '1408 MHz',
-                        width = '1412 kHz',
-                        copy = False,
-                        copy_path = None,
+                        start = '1408MHz',
+                        width = '1412kHz',
+                        copy = True,
+                        copy_path = v[3],
+                        copy_key = KEY,
                         casapy_path = CASAPY,
                         location = v[2])
 
