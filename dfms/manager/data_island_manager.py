@@ -55,7 +55,7 @@ class DataIslandManager(object):
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
         self._nsHost = nsHost or 'localhost'
-        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at this level
+        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
@@ -160,12 +160,14 @@ class DataIslandManager(object):
         Destroy a session in all underlying DOMs.
         """
         logger.info('Destroying Session %s in all nodes' % (sessionId))
-        latch = CountDownLatch(len(self._nodes))
         thrExs = {}
+
+        latch = CountDownLatch(len(self._nodes))
         for node in self._nodes:
             t = threading.Thread(target=self._destroySession, args=(sessionId, node, latch, thrExs))
             t.start()
         latch.await()
+
         if thrExs:
             raise Exception("One or more errors occurred while destroying sessions", thrExs)
         self._sessionIds.remove(sessionId)
@@ -238,11 +240,13 @@ class DataIslandManager(object):
 
     def deploySession(self, sessionId, completedDOs=[]):
 
-        # Deploy all graphs in parallel
-        allUris = {}
         logger.info('Deploying Session %s in all nodes' % (sessionId))
-        latch = CountDownLatch(len(self._nodes))
+
+        allUris = {}
         thrExs = {}
+
+        # Deploy all graphs in parallel
+        latch = CountDownLatch(len(self._nodes))
         for node in self._nodes:
             t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch, thrExs))
             t.start()
@@ -282,7 +286,6 @@ class DataIslandManager(object):
         # (instead of doing it per-DOM, in which case we would certainly miss
         # most of the events)
         latch = CountDownLatch(len(completedDOs))
-        thrExs = {}
         for uid in completedDOs:
             t = threading.Thread(target=lambda proxy: proxy.setCompleted(), args=(proxies[uid],))
             t.start()
