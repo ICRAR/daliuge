@@ -959,9 +959,11 @@ class ContainerDataObject(AbstractDataObject):
         return self._children[:]
 
     def exists(self):
-        # TODO: Or should it be __and__? Depends on what the exact contract of
-        #       "exists" is
-        return reduce(lambda a,b: a or b, [c.exists() for c in self._children])
+        if self._children:
+            # TODO: Or should it be __and__? Depends on what the exact contract of
+            #       "exists" is
+            return reduce(lambda a,b: a or b, [c.exists() for c in self._children])
+        return True
 
 class DirectoryContainer(ContainerDataObject):
     """
