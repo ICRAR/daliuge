@@ -162,7 +162,7 @@ class Split(BarrierAppDataObject):
 
             # remote data copy for aggregation and clean
             if self.copy is True:
-                scp = 'scp -r -i %s %s %s' % (self.copy_key, outdir, self.copy_path)
+                scp = 'scp -o StrictHostKeyChecking=no -r -i %s %s %s' % (self.copy_key, outdir, self.copy_path)
                 proc = subprocess.Popen(scp, stdout = subprocess.PIPE, shell = True, close_fds = True)
                 out, err = proc.communicate()
                 if proc.returncode != 0:
