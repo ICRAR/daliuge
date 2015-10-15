@@ -146,7 +146,7 @@ class TestDIM(unittest.TestCase):
         c = Pyro4.Proxy(uris['C'])
 
         # This should be happening before the sleepTime expires
-        with doutils.EvtConsumerProxyCtx(self, c, 2):
+        with doutils.EvtConsumerProxyCtx(self, c, 5):
             pass
 
         self.assertEquals(DOStates.COMPLETED, c.status)
