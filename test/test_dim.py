@@ -36,7 +36,6 @@ import pkg_resources
 
 from dfms import doutils
 from dfms.ddap_protocol import DOStates
-from dfms.manager import cmdline
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.session import SessionStates
@@ -84,9 +83,9 @@ class TestDIM(unittest.TestCase):
     setUp = setUpDimTests
     tearDown = tearDownDimTests
 
-    def createSessionAndAddTypicalGraph(self, sessionId):
+    def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'location':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':0, 'outputs':['C'], 'location':hostname},
+                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'location':hostname},
                      {'oid':'C', 'type':'plain', 'storage':'memory', 'location':hostname}]
         self.dim.createSession(sessionId)
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -136,6 +135,21 @@ class TestDIM(unittest.TestCase):
             a.setCompleted()
 
         self.assertEquals(data, doutils.allDataObjectContents(c))
+
+    def test_deployGraphWithCompletedDOs(self):
+
+        sessionId = 'lalo'
+        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=2)
+
+        # Deploy now and get the uris. With that we get then A's and C's proxies
+        uris = self.dim.deploySession(sessionId, completedDOs=['A'])
+        c = Pyro4.Proxy(uris['C'])
+
+        # This should be happening before the sleepTime expires
+        with doutils.EvtConsumerProxyCtx(self, c, 2):
+            pass
+
+        self.assertEquals(DOStates.COMPLETED, c.status)
 
     def test_sessionStatus(self):
 
@@ -203,6 +217,7 @@ class TestDIM(unittest.TestCase):
 
 def startDIM(restPort):
     # Make sure the graph executes quickly once triggered
+    from dfms.manager import cmdline
     cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname])
 
 class TestREST(unittest.TestCase):
