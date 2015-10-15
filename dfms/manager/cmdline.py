@@ -85,21 +85,21 @@ class DMDaemon(Daemon):
 
 def addCommonOptions(parser):
     parser.add_option("--no-pyro", action="store_true",
-                      dest="noPyro", help="Don't start a Pyro daemon to expose this DOM instance", default=False)
+                      dest="noPyro", help="Don't start a Pyro daemon to expose this DM instance", default=False)
     parser.add_option("-H", "--host", action="store", type="string",
-                      dest="host", help = "The host to bind this DOM on", default='localhost')
+                      dest="host", help = "The host to bind this DM on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
-                      dest="port", help = "The port to bind this DOM on", default=0)
+                      dest="port", help = "The port to bind this DM on", default=0)
     parser.add_option("-n", "--nsHost", action="store", type="string",
                       dest="nsHost", help = "Name service host", default='localhost')
     parser.add_option("-p", "--nsPort", action="store", type="int",
                       dest="nsPort", help = "Name service port", default=9090)
     parser.add_option("-i", "--id", action="store", type="string",
-                      dest="id", help = "The Data Object Manager ID")
+                      dest="id", help = "The Data Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
-                      dest="stop", help="Stop a DOM instance running as daemon", default=False)
+                      dest="stop", help="Stop a DM instance running as daemon", default=False)
     parser.add_option("--rest", action="store_true",
                       dest="rest", help="Start the REST interface to receive external commands", default=False)
     parser.add_option("--restHost", action="store",
