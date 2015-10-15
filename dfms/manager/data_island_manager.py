@@ -218,7 +218,7 @@ class DataIslandManager(object):
         # Create the individual graphs on each DOM now that they are correctly
         # separated.
         if logger.isEnabledFor(logging.INFO):
-            logger.info('Adding individual graphSpec to each node' % (sessionId))
+            logger.info('Adding individual graphSpec of session %s to each node' % (sessionId))
         latch = CountDownLatch(len(self._nodes))
         thrExs = {}
         for node in self._nodes:
