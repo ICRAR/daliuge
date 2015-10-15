@@ -176,6 +176,8 @@ def dfmsDIM(args=sys.argv):
                       dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
     parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
                       dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
+    parser.add_option("--domRestPort", action="store", type="int",
+                      dest="domRestPort", help = "Port used by DOMs started by this DIM to expose their REST interface", default=None)
     (options, args) = parser.parse_args(args)
 
     # Add DIM-specific options
