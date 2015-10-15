@@ -25,9 +25,12 @@ like DOMs and DIMs.
 """
 
 import logging
+import sys
+logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.INFO, stream=sys.stdout)
+logging.captureWarnings(True)
+
 import optparse
 import os
-import sys
 import threading
 
 import Pyro4
