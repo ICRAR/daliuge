@@ -192,12 +192,15 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 				drawGraph()
 			}
 
-			// Only during PRISITINE we need to update the graph structure
-			// Otherwise we need to start updating the status of the graph
-			if( status != 0 ) {
+			// During PRISITINE and BUILDING we need to update the graph structure
+			// During DEPLOYING we call ourselves again anyway, because we need
+			// to know when we go to RUNNING.
+			// During RUNNING (or potentially FINISHED, if the execution is
+			// extremely fast) we need to start updating the status of the graph
+			if( status == 3 || status == 4 ) {
 				startGraphStatusUpdates(serverUrl, sessionId, delay)
 			}
-			else {
+			else if( status == 0 || status == 1 || status == 2 ){
 				// schedule a new JSON request
 				d3.timer(updateGraph, delay)
 			}
