@@ -186,7 +186,7 @@ def dfmsDIM(args=sys.argv):
     # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {'nsHost': options.nsHost, 'pkeyPath': options.pkeyPath}
+    options.dmKwargs = {'nsHost': options.nsHost, 'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 
