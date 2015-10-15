@@ -49,7 +49,7 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None):
+    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None, domRestPort=None):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
@@ -57,6 +57,7 @@ class DataIslandManager(object):
         self._nsHost = nsHost or 'localhost'
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
+        self._domRestPort = domRestPort
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     @property
@@ -67,11 +68,17 @@ class DataIslandManager(object):
     def nodes(self):
         return self._nodes[:]
 
+    def dfmsDOMCommandLine(self, host, port):
+        cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}'.format(host, port, self._nsHost)
+        if self._domRestPort:
+            cmdline += ' --restPort {0}'.format(self._domRestPort)
+        return cmdline
+
     def startDOM(self, host, port):
         client = remote.createClient(host, pkeyPath=self._pkeyPath)
         if logger.isEnabledFor(logging.INFO):
             logger.info("DOM not present at %s:%d, starting it" % (host, port))
-        out, err, status = remote.execRemoteWithClient(client, "dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}".format(host, port, self._nsHost))
+        out, err, status = remote.execRemoteWithClient(client, self.dfmsDOMCommandLine(host, port))
         if status != 0:
             logger.error("Failed to start the DOM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, port, out, err))
             raise Exception("Failed to start the DOM on %s:%d" % (host, port))
