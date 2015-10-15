@@ -245,6 +245,16 @@ class DataIslandManager(object):
         finally:
             latch.countDown()
 
+    def _moveToCompleted(self, do, uid, latch, exceptions):
+        try:
+            do.setCompleted()
+        except Exception as e:
+            exceptions[do.uid] = e
+            logger.error("An exception occurred while moving DO %s to COMPLETED" % (uid))
+            raise # so it gets printed
+        finally:
+            latch.countDown()
+
     def deploySession(self, sessionId, completedDOs=[]):
 
         logger.info('Deploying Session %s in all nodes' % (sessionId))
@@ -292,11 +302,18 @@ class DataIslandManager(object):
         # Now that everything is wired up we move the requested DOs to COMPLETED
         # (instead of doing it per-DOM, in which case we would certainly miss
         # most of the events)
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Moving following DataObjects to COMPLETED right away: %r' % (completedDOs,))
+
+        thrExs = {}
         latch = CountDownLatch(len(completedDOs))
         for uid in completedDOs:
-            t = threading.Thread(target=lambda proxy: proxy.setCompleted(), args=(proxies[uid],))
+            t = threading.Thread(target=self._moveToCompleted, args=(proxies[uid],uid, latch, thrExs))
             t.start()
         latch.await()
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while moving DOs to COMPLETED: %s" % (sessionId), thrExs)
 
         return allUris
 
