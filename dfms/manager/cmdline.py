@@ -65,6 +65,7 @@ def launchServer(opts):
         logger.info('Registering %s %s to NameServer' % (dmName, opts.id))
         ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
         ns.register(opts.id, uri)
+        del ns
 
     if not opts.noPyro:
         daemon.requestLoop()
