@@ -38,7 +38,6 @@ import random
 import socket
 import sys
 import threading
-import warnings
 
 from ddap_protocol import DOStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDOStates,\
@@ -342,7 +341,7 @@ class AbstractDataObject(object):
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
-            warnings.warn('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
+            logger.warn('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
 
         # see __init__ for the initialization to None
         if self._size is None:
@@ -590,7 +589,7 @@ class AbstractDataObject(object):
     @parent.setter
     def parent(self, parent):
         if self._parent and parent:
-            warnings.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
+            logger.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
@@ -834,7 +833,7 @@ class FileDataObject(AbstractDataObject):
         #       of valid filename characters; otherwise encode them
         self._fnm = self._root + os.sep + self._oid + '___' + self.uid
         if os.path.isfile(self._fnm):
-            warnings.warn('File %s already exists, overwriting' % (self._fnm))
+            logger.warn('File %s already exists, overwriting' % (self._fnm))
 
         self._wio = None
 
