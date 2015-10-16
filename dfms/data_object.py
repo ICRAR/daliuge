@@ -188,7 +188,7 @@ class AbstractDataObject(object):
         # Expected data size, used to automatically move the DO to COMPLETED
         # after successive calls to write()
         self._expectedSize = -1
-        if kwargs.has_key('expectedSize'):
+        if kwargs.has_key('expectedSize') and kwargs['expectedSize']:
             self._expectedSize = int(kwargs.pop('expectedSize'))
 
         # All DOs are precious unless stated otherwise; used for replication
