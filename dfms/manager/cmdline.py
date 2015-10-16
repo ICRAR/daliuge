@@ -25,12 +25,9 @@ like DOMs and DIMs.
 """
 
 import logging
-import sys
-logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", level=logging.INFO, stream=sys.stdout)
-logging.captureWarnings(True)
-
 import optparse
 import os
+import sys
 import threading
 
 import Pyro4
@@ -132,12 +129,27 @@ def start(options):
     else:
         launchServer(options)
 
+def setupLogging():
+    if logging.root.handlers:
+        # Mmmm, somebody already did some logging, it hopefully wasn't us
+        # Let's reset it
+        for h in logging.root.handlers[:]:
+            logging.root.removeHandler(h)
+        pass
+
+    # Let's configure logging now
+    logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", stream=sys.stdout, level=logging.INFO)
+    logging.getLogger("tornado").setLevel(logging.WARN)
+    logging.getLogger("luigi-interface").setLevel(logging.WARN)
+
 # Entry-point function for the dfmsDOM script
 def dfmsDOM(args=sys.argv):
     """
     Entry point for the dfmsDIM command-line script, which starts a
     DataObjectManager and exposes it through Pyro and a REST interface.
     """
+
+    setupLogging()
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
@@ -172,6 +184,8 @@ def dfmsDIM(args=sys.argv):
     Entry point for the dfmsDIM command-line script, which starts a
     DataIslandManager and exposes it through Pyro and a REST interface.
     """
+
+    setupLogging()
 
     # Parse command-line and check options
     parser = optparse.OptionParser()

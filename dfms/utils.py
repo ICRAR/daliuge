@@ -23,10 +23,14 @@
 Module containing miscellaneous utility classes and functions.
 """
 
+import errno
+import logging
 import os
 import socket
 import threading
 
+
+logger = logging.getLogger(__name__)
 
 class CountDownLatch(object):
     """
@@ -54,7 +58,7 @@ class CountDownLatch(object):
             self.lock.wait()
         self.lock.release()
 
-def portIsOpen(host, port, timeout=10):
+def portIsOpen(host, port, timeout=None):
     """
     Checks if a given host/port is opened, with a given timeout. The check is
     done by simply opening a connection and then closing it.
@@ -65,8 +69,16 @@ def portIsOpen(host, port, timeout=10):
         s.connect((host, port))
         s.close()
         return True
-    except socket.error:
+    except socket.timeout:
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Timed out while tyring to connect to %s:%d with timeout of %f [s]' % (host, port, timeout))
         return False
+    except socket.error as e:
+        if e.errno == errno.ECONNREFUSED:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Refused connection to %s:%d' % (host, port))
+            return False
+        raise
 
 def getDfmsDir():
     """
