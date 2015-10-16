@@ -58,7 +58,27 @@ class DataIslandManager(object):
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
         self._domRestPort = domRestPort
+        self.startNodeChecker()
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
+
+    def startNodeChecker(self):
+        self._nodeCheckerEvt = threading.Event()
+        self._nodeCheckerThread = threading.Thread(name='Node checker Thread', target=self._checkNodes)
+        self._nodeCheckerThread.daemon = True
+        self._nodeCheckerThread.start()
+
+    def stopNodeChecker(self):
+        self._nodeCheckerEvt.set()
+        self._nodeCheckerThread.join()
+
+    __del__ = stopNodeChecker
+
+    def _checkNodes(self):
+        while True:
+            for n in self._nodes:
+                self.ensureDOM(n)
+            if self._nodeCheckerEvt.wait(10000):
+                break
 
     @property
     def dimId(self):
@@ -97,6 +117,7 @@ class DataIslandManager(object):
             return
 
         self.startDOM(host, port)
+
         # Wait a bit until the DOM starts; if it doesn't we fail
         if not portIsOpen(host, port, 10):
             raise Exception("DOM started at %s:%d, but couldn't connect to it" % (host, port))
