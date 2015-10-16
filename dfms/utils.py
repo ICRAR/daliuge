@@ -64,12 +64,12 @@ def portIsOpen(host, port, timeout=None):
     Checks if a given host/port is opened, with a given timeout. The check is
     done by simply opening a connection and then closing it.
     """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(timeout)
 
     start = time.time()
     while True:
         try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(timeout)
             s.connect((host, port))
             s.close()
             return True
