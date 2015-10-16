@@ -64,7 +64,7 @@ class Clean(BarrierAppDataObject):
         self.casapy_path = self._getArg(kwargs, 'casapy_path', None) 
 
         self.clean_args = {
-                        'field':  self._getArg(kwargs, 'field', None),
+                        'field':  str(self._getArg(kwargs, 'field', None)),
                         'spw': '',
                         'mode': str(self._getArg(kwargs, 'mode', None)),
                         'restfreq': str(self._getArg(kwargs, 'restfreq', None)),
@@ -75,8 +75,8 @@ class Clean(BarrierAppDataObject):
                         'gain': self._getArg(kwargs, 'gain', None),
                         'imsize': self._getArg(kwargs, 'imsize', None),
                         'cell': [str(x) for x in self._getArg(kwargs, 'cell', [])],
-                        'phasecenter': self._getArg(kwargs, 'phasecenter', None),
-                        'weighting': self._getArg(kwargs, 'weighting', None),
+                        'phasecenter': str(self._getArg(kwargs, 'phasecenter', None)),
+                        'weighting': str(self._getArg(kwargs, 'weighting', None)),
                         'usescratch': False }
 
 
