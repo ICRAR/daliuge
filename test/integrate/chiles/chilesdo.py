@@ -19,14 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import threading
 import Queue
-import os
-import sys
-import uuid
-import drivecasa
 import subprocess
-from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
+import threading
+
+import drivecasa
+
+from dfms.data_object import BarrierAppDataObject
 
 
 class SourceFlux(BarrierAppDataObject):
@@ -75,7 +74,7 @@ class Clean(BarrierAppDataObject):
                         'interpolation': str(self._getArg(kwargs, 'interpolation', None)),
                         'gain': self._getArg(kwargs, 'gain', None),
                         'imsize': self._getArg(kwargs, 'imsize', None),
-                        'cell': self._getArg(kwargs, 'cell', None),
+                        'cell': [str(x) for x in self._getArg(kwargs, 'cell', [])],
                         'phasecenter': self._getArg(kwargs, 'phasecenter', None),
                         'weighting': self._getArg(kwargs, 'weighting', None),
                         'usescratch': False }
@@ -103,12 +102,15 @@ class Clean(BarrierAppDataObject):
 
     def run(self):
 
-        vis = []
         inp = self.inputs
         out = self.outputs[0]
 
-        for i in inp:
-            vis.append(i.path)
+        #for i in inp:
+        #    vis.append(i.path)
+        # The data was copied over by the previous task into our 'input' folder,
+        # we need to convert the inputs' paths then
+        # TODO: we should probably use an Scp App to do this to have a cleaner graph
+        vis = [i.path.replace('/output/','/input/') for i in inp]
 
         print 'Cleaning ', vis
 
