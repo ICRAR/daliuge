@@ -28,6 +28,7 @@ import logging
 import os
 import socket
 import threading
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -65,20 +66,28 @@ def portIsOpen(host, port, timeout=None):
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
-    try:
-        s.connect((host, port))
-        s.close()
-        return True
-    except socket.timeout:
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Timed out while tyring to connect to %s:%d with timeout of %f [s]' % (host, port, timeout))
-        return False
-    except socket.error as e:
-        if e.errno == errno.ECONNREFUSED:
+
+    start = time.time()
+    while True:
+        try:
+            s.connect((host, port))
+            s.close()
+            return True
+        except socket.timeout:
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Refused connection to %s:%d' % (host, port))
+                logger.debug('Timed out while tyring to connect to %s:%d with timeout of %f [s]' % (host, port, timeout))
             return False
-        raise
+        except socket.error as e:
+            # If the port is closed we keep trying until enough time has gone by
+            if e.errno == errno.ECONNREFUSED:
+                if time.time() - start > timeout:
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug('Refused connection to %s:%d during %f seconds' % (host, port, timeout))
+                    return False
+                time.sleep(0.5)
+                continue
+            # Any other error should be raised
+            raise
 
 def getDfmsDir():
     """
