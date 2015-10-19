@@ -84,9 +84,9 @@ if __name__ == '__main__':
 
         dolist = []
 
-        flux_out = memorySpec(uuid.uuid1(), location = ch05)
+        flux_out = memorySpec(uuid.uuid1(), node = ch05)
         dolist.append(flux_out)
-        flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY, location = ch05)
+        flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY, node = ch05)
         dolist.append(flux)
 
         cl = cleanSpec(uuid.uuid1(),
@@ -103,20 +103,20 @@ if __name__ == '__main__':
                         phasecenter = '10h01m53.9,+02d24m52s',
                         weighting = 'natural',
                         casapy_path = CASAPY,
-                        location = ch05)
+                        node = ch05)
 
         dolist.append(cl)
 
-        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False, location = ch05)
+        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False, node = ch05)
         dolist.append(image_out)
         cl.addOutput(image_out)
         flux.addInput(image_out)
         flux.addOutput(flux_out)
 
         for i, v in enumerate(VIS):
-            vis_in = directorySpec('vis%d' % (i), dirname = v[0], location = v[2])
+            vis_in = directorySpec('vis%d' % (i), dirname = v[0], node = v[2])
             dolist.append(vis_in)
-            split_out = directorySpec(uuid.uuid1(), dirname = v[1], exists = False, location = v[2])
+            split_out = directorySpec(uuid.uuid1(), dirname = v[1], exists = False, node = v[2])
             dolist.append(split_out)
 
             sp = splitSpec(uuid.uuid1(), 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                         copy_path = v[3],
                         copy_key = KEY,
                         casapy_path = CASAPY,
-                        location = v[2])
+                        node = v[2])
 
             dolist.append(sp)
 

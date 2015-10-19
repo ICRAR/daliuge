@@ -43,7 +43,7 @@ class DataIslandManager(object):
 
     One of the key aspects of the DIM is that it receives a physical graph for
     the whole island, which it must distribute among the different DOMs. For
-    this it requires that all the nodes in the graph declare a location (a host
+    this it requires that all the nodes in the graph declare a node (a host
     name), which should be part of the Data Island. This way the DIM breaks down
     the physical graph in parts that belong to the different DOMs, creates them
     individually, and links them later at deployment time.
@@ -216,24 +216,24 @@ class DataIslandManager(object):
 
         # The first step is to break down the graph into smaller graphs that
         # belong to the same node, so we can submit that graph into the individual
-        # DOMs. For this we need to make sure that our graph has a 'location'
+        # DOMs. For this we need to make sure that our graph has a 'node'
         # attribute set
-        perLocation = collections.defaultdict(list)
+        perNode = collections.defaultdict(list)
         for doSpec in graphSpec:
-            if 'location' not in doSpec:
-                raise Exception("DataObject %s doesn't specify a location attribute" % (doSpec['oid']))
+            if 'node' not in doSpec:
+                raise Exception("DataObject %s doesn't specify a node attribute" % (doSpec['oid']))
 
-            loc = doSpec['location']
+            loc = doSpec['node']
             if loc not in self._nodes:
-                raise Exception("DataObject %s's location %s does not belong to this DIM" % (doSpec['oid'], loc))
+                raise Exception("DataObject %s's node %s does not belong to this DIM" % (doSpec['oid'], loc))
 
-            perLocation[loc].append(doSpec)
+            perNode[loc].append(doSpec)
 
-        # At each location the relationships between DOs should be local at the
+        # At each node the relationships between DOs should be local at the
         # moment of submitting the graph; thus we record the inter-DOM
         # relationships separately and remove them from the original graph spec
         interDOMRelations = []
-        for loc,doSpecs in perLocation.viewitems():
+        for loc,doSpecs in perNode.viewitems():
             interDOMRelations.extend(graph_loader.removeUnmetRelationships(doSpecs))
 
         # Create the individual graphs on each DOM now that they are correctly
@@ -243,7 +243,7 @@ class DataIslandManager(object):
         latch = CountDownLatch(len(self._nodes))
         thrExs = {}
         for node in self._nodes:
-            t = threading.Thread(target=self._addGraphSpec, args=(sessionId, node, perLocation[node], latch, thrExs))
+            t = threading.Thread(target=self._addGraphSpec, args=(sessionId, node, perNode[node], latch, thrExs))
             t.start()
         latch.await()
 
@@ -283,7 +283,7 @@ class DataIslandManager(object):
         allUris = {}
         thrExs = {}
 
-        # Deploy all graphs in parallel
+        # Deploy all individual graphs in parallel
         latch = CountDownLatch(len(self._nodes))
         for node in self._nodes:
             t = threading.Thread(target=self._deploySession, args=(sessionId, node, allUris, latch, thrExs))
@@ -295,7 +295,7 @@ class DataIslandManager(object):
 
         # Retrieve all necessary proxies we'll need afterward
         # (i.e., those present in inter-DOM relationships and in completedDOs)
-        # Creating proxies beforhand and reusing them means that we won't need
+        # Creating proxies beforehand and reusing them means that we won't need
         # to establish that many TCP connections once and over again
         proxies = {}
         for rel in self._interDOMRelations[sessionId]:
@@ -307,6 +307,7 @@ class DataIslandManager(object):
             if uid not in proxies:
                 proxies[uid] = Pyro4.Proxy(allUris[uid])
 
+        # Establish the inter-DOM relationships between DataObjects.
         # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         for rel in self._interDOMRelations[sessionId]:
             relType = rel.rel
@@ -321,8 +322,8 @@ class DataIslandManager(object):
                 setattr(rhsDO, relPropName, lhsDO)
 
         # Now that everything is wired up we move the requested DOs to COMPLETED
-        # (instead of doing it per-DOM, in which case we would certainly miss
-        # most of the events)
+        # (instead of doing it at the DOM-level deployment time, in which case
+        # we would certainly miss most of the events)
         if logger.isEnabledFor(logging.INFO):
             logger.info('Moving following DataObjects to COMPLETED right away: %r' % (completedDOs,))
 
