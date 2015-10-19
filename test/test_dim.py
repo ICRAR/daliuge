@@ -84,9 +84,9 @@ class TestDIM(unittest.TestCase):
     tearDown = tearDownDimTests
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'location':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'location':hostname},
-                     {'oid':'C', 'type':'plain', 'storage':'memory', 'location':hostname}]
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'consumers':['B']},
+                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
+                     {'oid':'C', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
         self.dim.addGraphSpec(sessionId, graphSpec)
 
@@ -100,16 +100,16 @@ class TestDIM(unittest.TestCase):
 
         sessionId = 'lalo'
 
-        # No location specified
+        # No node specified
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory'}]
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
-        # Wrong location specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'location':'unknown_host'}]
+        # Wrong node specified
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':'unknown_host'}]
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
         # OK
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'location':hostname}]
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
         self.dim.addGraphSpec(sessionId, graphSpec)
         graphFromDOM = self.dom.getGraph(sessionId)
@@ -270,12 +270,12 @@ class TestREST(unittest.TestCase):
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
-            # Since the original complexGraph doesn't have location information
+            # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
             complexGraphSpec = json.load(pkg_resources.resource_stream(__name__, 'graphs/complex.js')) # @UndefinedVariable
             for doSpec in complexGraphSpec:
-                doSpec['location'] = hostname
+                doSpec['node'] = hostname
             self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
             self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
