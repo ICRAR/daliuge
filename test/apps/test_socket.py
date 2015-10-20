@@ -1,0 +1,87 @@
+#
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2015
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
+import threading
+import unittest
+
+from dfms import doutils, utils
+from dfms.apps.socket_listener import SocketListenerApp
+from dfms.data_object import InMemoryDataObject
+from dfms.ddap_protocol import DOStates
+from dfms.doutils import DOWaiterCtx
+from test.test_data_object import SumupContainerChecksum
+
+
+try:
+    from crc32c import crc32  # @UnusedImport
+except:
+    from binascii import crc32  # @Reimport
+
+class TestSocketListener(unittest.TestCase):
+
+    def test_socket_listener(self):
+        '''
+        A simple test to check that SocketListenerApps are indeed working as
+        expected; that is, they write the data they receive into their output,
+        and finish when the connection is closed from the client side
+
+        The data flow diagram looks like this:
+
+        A --> B --> C --> D
+        '''
+
+        host = 'localhost'
+        port = 9933
+        data = 'shine on you crazy diamond'
+
+        a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port)
+        b = InMemoryDataObject('oid:B', 'uid:B')
+        c = SumupContainerChecksum('oid:C', 'uid:C')
+        d = InMemoryDataObject('oid:D', 'uid:D')
+        a.addOutput(b)
+        b.addConsumer(c)
+        c.addOutput(d)
+
+        # Create the socket, write, and close the connection, allowing
+        # A to move to COMPLETED
+        with DOWaiterCtx(self, d, 3): # That's plenty of time
+            threading.Thread(target=lambda a: a.execute(), args=(a,)).start()
+            utils.writeToRemotePort(host, port, data, 1)
+
+        for do in [a,b,c,d]:
+            self.assertEquals(DOStates.COMPLETED, do.status)
+
+        # Our expectations are fulfilled!
+        bContents = doutils.allDataObjectContents(b)
+        dContents = int(doutils.allDataObjectContents(d))
+        self.assertEquals(data, bContents)
+        self.assertEquals(crc32(data, 0), dContents)
+
+    def test_invalid(self):
+
+        # Shouldn't allow inputs
+        a = SocketListenerApp('a', 'a', port=1)
+        a.addOutput(InMemoryDataObject('c', 'c'))
+        self.assertRaises(Exception, a.addInput, InMemoryDataObject('b', 'b'))
+        self.assertRaises(Exception, a.addStreamingInput, InMemoryDataObject('b', 'b'))
+
+        # Shouldn't be able to open ports <= 1024
+        self.assertRaises(Exception, a.execute)

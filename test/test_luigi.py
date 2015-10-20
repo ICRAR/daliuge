@@ -19,6 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from dfms.apps.socket_listener import SocketListenerApp
+import time
+import errno
 '''
 Created on 20 Jul 2015
 
@@ -32,7 +35,7 @@ import unittest
 from luigi import scheduler, worker
 import pkg_resources
 
-from dfms import doutils, graph_loader
+from dfms import doutils, graph_loader, utils
 from dfms.luigi_int import FinishGraphExecution
 import graphsRepository
 
@@ -96,12 +99,15 @@ class LuigiTests(unittest.TestCase):
         w = worker.Worker(scheduler=sch)
         w.add(task)
 
+        # Start executing the SocketListenerApps so they open their ports
+        def startSocketListeners(do):
+            if isinstance(do, SocketListenerApp):
+                threading.Thread(target=lambda do: do.execute(), args=(do,)).start()
+        doutils.breadFirstTraverse(task.roots, startSocketListeners)
+
         # Write to the initial nodes of the graph to trigger the graph execution
         for i in xrange(socketListeners):
-            port = 1111 + i
-            t = threading.Thread(None, self.writeToLocalhostSocket, 'socketWriter', [port])
-            t.daemon = 1
-            t.start()
+            threading.Thread(target=utils.writeToRemotePort, name='socketWriter', args=("localhost", 1111+i, test_data, 2)).start()
 
         # Run the graph! Luigi will either monitor or execute the DOs
         w.run()
@@ -111,13 +117,6 @@ class LuigiTests(unittest.TestCase):
         # and should exist
         doutils.breadFirstTraverse(task.roots,\
                                    lambda do: self.assertTrue(do.isCompleted() and do.exists(), "%s is not COMPLETED or doesn't exist" % (do.uid)))
-
-    def writeToLocalhostSocket(self, port):
-        import socket
-        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.connect(("localhost", port))
-        socket.send(test_data)
-        socket.close()
 
 if __name__ == '__main__':
     unittest.main()

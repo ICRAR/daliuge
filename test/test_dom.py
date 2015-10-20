@@ -23,7 +23,6 @@ import httplib
 import json
 import multiprocessing
 import random
-import socket
 import string
 from test import graphsRepository
 import time
@@ -32,7 +31,7 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from dfms import doutils, ngaslite
+from dfms import doutils, ngaslite, utils
 from dfms.ddap_protocol import DOStates
 from dfms.manager import cmdline
 from dfms.manager.data_object_manager import DataObjectManager
@@ -59,7 +58,7 @@ class TestDOM(unittest.TestCase):
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},
+        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCAppDataObject"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
@@ -108,7 +107,7 @@ class TestDOM(unittest.TestCase):
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
                {"oid":"B", "type":"plain", "storage": "memory"},
-               {"oid":"C", "type":"app", "app":"dfms.data_object.CRCAppDataObject"},
+               {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCAppDataObject"},
                {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
         g2 = [{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},
                {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
@@ -266,17 +265,7 @@ class TestREST(unittest.TestCase):
             self.assertTrue(domProcess.is_alive())
 
             # Wait until the REST server becomes alive
-            tries = 0
-            while True and tries < 20: # max 10s
-                try:
-                    s = socket.create_connection(('localhost', restPort), 1)
-                    break
-                except:
-                    time.sleep(0.2)
-                    tries += 1
-                    pass
-
-            self.assertLess(tries, 20, "REST server didn't come up in time")
+            self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
 
             # The DOM is still empty
             domInfo = self.get('', restPort)
@@ -303,16 +292,13 @@ class TestREST(unittest.TestCase):
             self.post('/sessions/%s/graph/link?rhOID=archiving2&lhOID=T&linkType=0' % (sessionId), restPort)
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy' % (sessionId), restPort)
+            self.post('/sessions/%s/deploy?completed=SL_A,SL_B,SL_C,SL_D,SL_K' % (sessionId), restPort)
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
             msg = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
             for i in xrange(5):
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 1111+i))
-                s.send(msg)
-                s.close()
+                self.assertTrue(utils.writeToRemotePort('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i))
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session

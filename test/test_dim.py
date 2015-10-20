@@ -34,7 +34,7 @@ import Pyro4
 from Pyro4.naming import NameServerDaemon
 import pkg_resources
 
-from dfms import doutils
+from dfms import doutils, utils
 from dfms.ddap_protocol import DOStates
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.data_object_manager import DataObjectManager
@@ -51,6 +51,7 @@ def setUpDimTests(self):
     graphsRepository.defaultSleepTime = 0
 
     # Start the NS
+    Pyro4.config.SOCK_REUSE = True
     self._nsDaemon = NameServerDaemon()
     threading.Thread(target=lambda:self._nsDaemon.requestLoop()).start()
 
@@ -241,17 +242,7 @@ class TestREST(unittest.TestCase):
             self.assertTrue(dimProcess.is_alive())
 
             # Wait until the REST server becomes alive
-            tries = 0
-            while True and tries < 20: # max 10s
-                try:
-                    s = socket.create_connection(('localhost', restPort), 1)
-                    break
-                except:
-                    time.sleep(0.2)
-                    tries += 1
-                    pass
-
-            self.assertLess(tries, 20, "REST server didn't come up in time")
+            self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
 
             # The DIM is still empty
             sessions = self.get('/sessions', restPort)
@@ -280,17 +271,14 @@ class TestREST(unittest.TestCase):
             self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy' % (sessionId), restPort)
+            self.post('/sessions/%s/deploy?completed=SL_A,SL_B,SL_C,SL_D,SL_K' % (sessionId), restPort)
             self.assertEquals({hostname: SessionStates.RUNNING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
             msg = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
             for i in xrange(5):
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 1111+i))
-                s.send(msg)
-                s.close()
+                self.assertTrue(utils.writeToRemotePort('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i))
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session

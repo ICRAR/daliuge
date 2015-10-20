@@ -62,7 +62,7 @@ class TestSession(unittest.TestCase):
     def test_linking(self):
         with Session('1') as s:
             s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dfms.data_object.CRCAppDataObject"}])
+            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dfms.apps.crc.CRCAppDataObject"}])
             s.addGraphSpec([{"oid":"C", "type":"container"}])
 
             # Link them now

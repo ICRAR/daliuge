@@ -30,8 +30,8 @@ Created on 20 Jul 2015
 import unittest
 
 from dfms import doutils
-from dfms.data_object import InMemoryDataObject, CRCAppDataObject, \
-    FileDataObject
+from dfms.data_object import InMemoryDataObject, FileDataObject, \
+    BarrierAppDataObject
 from dfms.doutils import DOFile
 
 
@@ -49,13 +49,13 @@ class DOUtilsTest(unittest.TestCase):
         order (although H has a dependency on I)
         """
         a =          InMemoryDataObject('a', 'a')
-        b =            CRCAppDataObject('b', 'b')
-        c =            CRCAppDataObject('c', 'c')
+        b =        BarrierAppDataObject('b', 'b')
+        c =        BarrierAppDataObject('c', 'c')
         d =          InMemoryDataObject('d', 'd')
         e =          InMemoryDataObject('e', 'e')
         f =          InMemoryDataObject('f', 'f')
-        g =            CRCAppDataObject('g', 'g')
-        h =            CRCAppDataObject('h', 'h')
+        g =        BarrierAppDataObject('g', 'g')
+        h =        BarrierAppDataObject('h', 'h')
         i =          InMemoryDataObject('i', 'i')
         j =          InMemoryDataObject('j', 'j')
 

@@ -27,8 +27,7 @@ import shutil
 
 from dfms import doutils
 from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, \
-    InMemorySocketListenerDataObject, \
-    NullDataObject, CRCAppDataObject, BarrierAppDataObject, \
+    NullDataObject, BarrierAppDataObject, \
     DirectoryContainer, ContainerDataObject
 from dfms.ddap_protocol import DOStates, ExecutionMode, AppDOStates
 from dfms.doutils import DOWaiterCtx
@@ -62,9 +61,9 @@ class SumupContainerChecksum(BarrierAppDataObject):
     """
     def run(self):
         crcSum = 0
-        for inputDO in self._inputs.values():
+        for inputDO in self.inputs:
             crcSum += inputDO.checksum
-        outputDO = self._outputs.values()[0]
+        outputDO = self.outputs[0]
         outputDO.write(str(crcSum))
 
 class TestDataObject(unittest.TestCase):
@@ -108,7 +107,7 @@ class TestDataObject(unittest.TestCase):
         Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
         """
         dobA = doType('oid:A', 'uid:A', expectedSize = self._test_do_sz * ONE_MB)
-        dobB = CRCAppDataObject('oid:B', 'uid:B')
+        dobB = SumupContainerChecksum('oid:B', 'uid:B')
         dobC = InMemoryDataObject('oid:C', 'uid:C')
         dobB.addInput(dobA)
         dobB.addOutput(dobC)
@@ -208,7 +207,7 @@ class TestDataObject(unittest.TestCase):
         Using the container data object to implement a join/barrier dataflow.
 
         A1, A2 and A3 are FileDataObjects
-        B1, B2 and B3 are CRCResultDataObjects
+        B1, B2 and B3 are SumupContainerChecksum
         C1, C2 and C3 are InMemoryDataObjects
         D is a SumupContainerChecksum
         E is a InMemoryDataObject
@@ -230,9 +229,9 @@ class TestDataObject(unittest.TestCase):
         doA3 = FileDataObject('oid:A3', 'uid:A3', expectedSize=filelen)
 
         # CRC Result DOs, storing the result in memory
-        doB1 = CRCAppDataObject('oid:B1', 'uid:B1')
-        doB2 = CRCAppDataObject('oid:B2', 'uid:B2')
-        doB3 = CRCAppDataObject('oid:B3', 'uid:B3')
+        doB1 = SumupContainerChecksum('oid:B1', 'uid:B1')
+        doB2 = SumupContainerChecksum('oid:B2', 'uid:B2')
+        doB3 = SumupContainerChecksum('oid:B3', 'uid:B3')
         doC1 = InMemoryDataObject('oid:C1', 'uid:C1')
         doC2 = InMemoryDataObject('oid:C2', 'uid:C2')
         doC3 = InMemoryDataObject('oid:C3', 'uid:C3')
@@ -332,44 +331,6 @@ class TestDataObject(unittest.TestCase):
         self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(e).strip())
         self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(f).strip())
 
-    def test_socket_listener(self):
-        '''
-        A simple test to check that SocketListeners are indeed working as expected;
-        that is, they write the data they receive into themselves, and set themselves
-        as completed when the connection is closed from the client side
-
-        The data flow diagram looks like this:
-
-        clientSocket --> A --> B
-        '''
-
-        host = 'localhost'
-        port = 9933
-        data = 'shine on you crazy diamond'
-
-        a = InMemorySocketListenerDataObject('oid:A', 'uid:A', host=host, port=port)
-        b = CRCAppDataObject('oid:B', 'uid:B')
-        c = InMemoryDataObject('oid:C', 'uid:C')
-        a.addConsumer(b)
-        b.addOutput(c)
-
-        # Create the socket, write, and close the connection, allowing
-        # A to move to COMPLETED
-        with DOWaiterCtx(self, c, 3): # That's plenty of time
-            import socket
-            socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            socket.connect((host, port))
-            socket.send(data)
-            socket.close()
-
-        for do in [a,b,c]:
-            self.assertEquals(DOStates.COMPLETED, do.status)
-
-        # Our expectations are fulfilled!
-        aContents = doutils.allDataObjectContents(a)
-        cContents = int(doutils.allDataObjectContents(c))
-        self.assertEquals(data, aContents)
-        self.assertEquals(crc32(data, 0), cContents)
 
     def test_dataObjectWroteFromOutside(self):
         """
@@ -417,9 +378,6 @@ class TestDataObject(unittest.TestCase):
         # Try to write on a DO that is already COMPLETED
         self.assertRaises(Exception, do.write, '')
 
-        # Failure to initialize (ports < 1024 cannot be opened by normal users)
-        self.assertRaises(Exception, InMemorySocketListenerDataObject, 'a', 'a', host='localhost', port=1)
-
         # Invalid reading on a DO that isn't COMPLETED yet
         do = InMemoryDataObject('a', 'a')
         self.assertRaises(Exception, do.open)
@@ -454,7 +412,7 @@ class TestDataObject(unittest.TestCase):
         required, and not always internally by themselves
         """
         a = InMemoryDataObject('a', 'a', executionMode=mode, expectedSize=1)
-        b = CRCAppDataObject('b', 'b')
+        b = SumupContainerChecksum('b', 'b')
         c = InMemoryDataObject('c', 'c')
         a.addConsumer(b)
         c.addProducer(b)
@@ -500,7 +458,7 @@ class TestDataObject(unittest.TestCase):
 
         a = InMemoryDataObject('a', 'a')
         b = LastCharWriterApp('b', 'b')
-        c = CRCAppDataObject('c', 'c')
+        c = SumupContainerChecksum('c', 'c')
         d = InMemoryDataObject('d', 'd')
         e = InMemoryDataObject('e', 'e')
         a.addStreamingConsumer(b)
