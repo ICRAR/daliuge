@@ -266,9 +266,14 @@ class DataIslandManager(object):
         finally:
             latch.countDown()
 
-    def _moveToCompleted(self, do, uid, latch, exceptions):
+    def _triggerDataObject(self, do, uid, latch, exceptions):
         try:
-            do.setCompleted()
+            if hasattr(do, 'execute'):
+                t = threading.Thread(target=lambda:do.execute())
+                t.daemon = True
+                t.start()
+            else:
+                do.setCompleted()
         except Exception as e:
             exceptions[do.uid] = e
             logger.error("An exception occurred while moving DO %s to COMPLETED" % (uid))
@@ -330,7 +335,7 @@ class DataIslandManager(object):
         thrExs = {}
         latch = CountDownLatch(len(completedDOs))
         for uid in completedDOs:
-            t = threading.Thread(target=self._moveToCompleted, args=(proxies[uid],uid, latch, thrExs))
+            t = threading.Thread(target=self._triggerDataObject, args=(proxies[uid],uid, latch, thrExs))
             t.start()
         latch.await()
 

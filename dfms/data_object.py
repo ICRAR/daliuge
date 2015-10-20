@@ -24,8 +24,7 @@
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
 """
-Data object is the centre of the data-driven architecture
-It should be based on the UML class diagram
+Module containing the core DataObject classes.
 """
 
 from abc import ABCMeta, abstractmethod
@@ -33,11 +32,11 @@ from cStringIO import StringIO
 import collections
 import heapq
 import logging
-import os, time
+import os
 import random
-import socket
 import sys
 import threading
+import time
 
 from ddap_protocol import DOStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDOStates,\
@@ -47,10 +46,10 @@ from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
 
 try:
-    from crc32c import crc32
+    from crc32c import crc32  # @UnusedImport
     _checksumType = ChecksumTypes.CRC_32C
 except:
-    from binascii import crc32
+    from binascii import crc32  # @Reimport
     _checksumType = ChecksumTypes.CRC_32
 
 
@@ -1189,121 +1188,6 @@ class BarrierAppDataObject(AppDataObject):
     # TODO: another thing we need to check
     def exists(self):
         return True
-
-class CRCAppDataObject(BarrierAppDataObject):
-    '''
-    An BarrierAppDataObject that calculates the CRC of the single DataObject it
-    consumes. It assumes the DataObject being consumed is not a container.
-    This is a simple example of an BarrierAppDataObject being implemented, and
-    not something really intended to be used in a production system
-    '''
-
-    def run(self):
-        if len(self._inputs) != 1:
-            raise Exception("This application read only from one DataObject")
-        if len(self._outputs) != 1:
-            raise Exception("This application writes only one DataObject")
-
-        inputDO = self._inputs.values()[0]
-        outputDO = self._outputs.values()[0]
-
-        bufsize = 4 * 1024 ** 2
-        desc = inputDO.open()
-        buf = inputDO.read(desc, bufsize)
-        crc = 0
-        while buf:
-            crc = crc32(buf, crc)
-            buf = inputDO.read(desc, bufsize)
-        inputDO.close(desc)
-
-        # Rely on whatever implementation we decide to use
-        # for storing our data
-        outputDO.write(str(crc))
-
-
-#===============================================================================
-# SocketListener class and mix-ins follow
-#===============================================================================
-
-_socketListenerCounter = 0
-_socketListenerLock = threading.RLock()
-class SocketListener(object):
-    '''
-    A class that listens on a socket for data. The server-side socket expects
-    only one client, and assumes that the client will close the connection after
-    all its data has been sent.
-    '''
-
-    # By modifying this value before creating an instance of this object
-    # we can actually allow to create dummy SocketListeners that don't actually
-    # open the server-side socket (and therefore don't receive data). This can
-    # be useful during testing, which is why it defaults to False.
-    _dryRun = False
-
-    def __init__(self, *args, **kwargs):
-        super(SocketListener, self).__init__(*args, **kwargs)
-        self.createSocket(**kwargs)
-
-    def createSocket(self, **kwargs):
-        host = None
-        port = None
-        if 'host' in kwargs:
-            host = kwargs['host']
-        if 'port' in kwargs:
-            port = int(kwargs['port'])
-
-        if not host:
-            host = '127.0.0.1'
-        if not port:
-            port = 1111
-
-        self._host = host
-        self._port = port
-        with _socketListenerLock:
-            global _socketListenerCounter
-            counter = _socketListenerCounter
-            _socketListenerCounter += 1
-
-        # Don't really listen for data if running dry
-        if self._dryRun:
-            return
-
-        # Accept one connection at most
-        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        serverSocket.bind((host, port))
-        serverSocket.listen(1)
-        self._listenerThread = threading.Thread(None, self.processData, "Socket_Listener_%s" % (counter), [serverSocket])
-        self._listenerThread.setDaemon(1)
-        self._listenerThread.start()
-        # TODO: we still need to join this thread, or at least try
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Successfully listening for requests on %s:%d' % (host, port))
-
-    def processData(self, serverSocket):
-        clientSocket, address = serverSocket.accept()
-        serverSocket.close()
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
-
-        while True:
-            data = clientSocket.recv(4096)
-            if not data:
-                break
-            self.write(data)
-        clientSocket.close()
-        self.setCompleted()
-
-    @property
-    def host(self):
-        return self._host
-
-    @property
-    def port(self):
-        return self._port
-
-class InMemorySocketListenerDataObject(SocketListener, InMemoryDataObject): pass
-class FileSocketListenerDataObject(SocketListener, FileDataObject): pass
 
 class dodict(dict):
     """

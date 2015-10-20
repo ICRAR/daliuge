@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from dfms.apps.socket_listener import SocketListenerApp
 """
 Module containing functions to load a fully-functional DataObject graph from its
 full JSON representation.
@@ -31,7 +32,7 @@ import logging
 
 from dfms import doutils
 from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
-    FileDataObject, NgasDataObject, SocketListener, LINKTYPE_NTO1_PROPERTY, \
+    FileDataObject, NgasDataObject, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD
 from dfms.ddap_protocol import DORel, DOLinkType
 
@@ -235,13 +236,9 @@ def _createSocket(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
 
-    # 'storage' is mandatory
-    storageType = STORAGE_TYPES[doSpec['storage']]
-    class socketType(SocketListener, storageType): pass
-
     if dryRun:
         return
-    return socketType(oid, uid, **kwargs)
+    return SocketListenerApp(oid, uid, **kwargs)
 
 def _createApp(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)

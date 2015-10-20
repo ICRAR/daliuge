@@ -30,7 +30,6 @@ import socket
 import threading
 import time
 
-
 logger = logging.getLogger(__name__)
 
 class CountDownLatch(object):
@@ -59,23 +58,44 @@ class CountDownLatch(object):
             self.lock.wait()
         self.lock.release()
 
-def portIsOpen(host, port, timeout=None):
+def portIsOpen(host, port, connectTimeout=None):
     """
-    Checks if a given host/port is opened, with a given timeout. The check is
-    done by simply opening a connection and then closing it.
+    Checks if a given host/port is opened, with a given `connectTimeout`. The
+    check is done by simply opening a connection and then closing it.
+    """
+    return writeToRemotePort(host, port, data=None, connectTimeout=connectTimeout)
+
+def writeToRemotePort(host, port, data=None, connectTimeout=None):
+    """
+    Writes the given data into the port specified by `host`:`port`. A maximum
+    waiting time of `connectTimeout` can be specified (in seconds), in which
+    case this method will try to establish a connection with the remote port for
+    at least that amount of time.
+
+    This method returns `True` if the connection was successfully established
+    with the given timeout, and if the data was successfully sent; `False`
+    otherwise.
     """
 
     start = time.time()
     while True:
         try:
+            if connectTimeout is not None:
+                timeout = connectTimeout - (time.time() - start)
+                if timeout <= 0:
+                    return False
+            else:
+                timeout = None
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(timeout)
             s.connect((host, port))
+            if data is not None:
+                s.send(data)
             s.close()
             return True
         except socket.timeout:
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Timed out while tyring to connect to %s:%d with timeout of %f [s]' % (host, port, timeout))
+                logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]' % (host, port, timeout))
             return False
         except socket.error as e:
             # If the port is closed we keep trying until enough time has gone by
@@ -84,7 +104,7 @@ def portIsOpen(host, port, timeout=None):
                     if logger.isEnabledFor(logging.DEBUG):
                         logger.debug('Refused connection to %s:%d during %f seconds' % (host, port, timeout))
                     return False
-                time.sleep(0.5)
+                time.sleep(0.1)
                 continue
             # Any other error should be raised
             raise

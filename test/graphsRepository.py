@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from dfms.apps.socket_listener import SocketListenerApp
 """
 A modules that contains several functions returning different "physical graphs",
 at this moment represented simply by a number of DataObjects interconnected.
@@ -40,8 +41,7 @@ import random
 import time
 
 from dfms import doutils
-from dfms.data_object import InMemoryDataObject, \
-    InMemorySocketListenerDataObject, BarrierAppDataObject, ContainerDataObject
+from dfms.data_object import InMemoryDataObject, BarrierAppDataObject, ContainerDataObject
 from dfms.ddap_protocol import ExecutionMode
 from test.test_data_object import SumupContainerChecksum
 
@@ -116,11 +116,11 @@ def _testGraph(execMode):
     """
     A test graph that looks like this:
 
-        |--> B1 --> C1 --|
-        |--> B2 --> C2 --|
-    A --|--> B3 --> C3 --| --> D --> E
-        |--> .. --> .. --|
-        |--> BN --> CN --|
+                 |--> B1 --> C1 --|
+                 |--> B2 --> C2 --|
+    SL_A --> A --|--> B3 --> C3 --| --> D --> E
+                 |--> .. --> .. --|
+                 |--> BN --> CN --|
 
     B and C DOs are InMemorySleepAndCopyApp DOs (see above). D is simply a
     container. A is a socket listener, so we can actually write to it externally
@@ -138,9 +138,12 @@ def _testGraph(execMode):
     dMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
     eMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
 
-    a = InMemorySocketListenerDataObject('oid:A', 'uid:A', executionMode=aMode, lifespan=lifespan)
-    d =           SumupContainerChecksum('oid:D', 'uid:D', executionMode=dMode, lifespan=lifespan)
-    e =               InMemoryDataObject('oid:E', 'uid:E', executionMode=eMode, lifespan=lifespan)
+    sl_a =      SocketListenerApp('oid:SL_A', 'uid:SL_A', executionMode=aMode, lifespan=lifespan)
+    a    =     InMemoryDataObject('oid:A', 'uid:A', executionMode=aMode, lifespan=lifespan)
+    d    = SumupContainerChecksum('oid:D', 'uid:D', executionMode=dMode, lifespan=lifespan)
+    e    =     InMemoryDataObject('oid:E', 'uid:E', executionMode=eMode, lifespan=lifespan)
+
+    sl_a.addOutput(a)
     e.addProducer(d)
     for i in xrange(random.SystemRandom().randint(10, 20)):
         b =    SleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), executionMode=bMode, lifespan=lifespan)
@@ -148,38 +151,35 @@ def _testGraph(execMode):
         a.addConsumer(b)
         b.addOutput(c)
         c.addConsumer(d)
-    return a
+    return sl_a
 
 def test_pg():
     """
     A very simple graph that looks like this:
 
-    A --> B --> C
+    A --> B --> C --> D
     """
-    island_one = "192.168.1.1:7777"
-    island_two = "192.168.1.2:7777"
-    dobA = InMemorySocketListenerDataObject('Obj-A', 'Obj-A', lifespan=lifespan)
-    dobB = SleepAndCopyApp('Obj-B', 'Obj-B', lifespan=lifespan)
-    dobC = InMemoryDataObject('Obj-C', 'Obj-C', lifespan=lifespan)
+    a =  SocketListenerApp('A', 'A', lifespan=lifespan)
+    b = InMemoryDataObject('B', 'B', lifespan=lifespan)
+    c =    SleepAndCopyApp('C', 'C', lifespan=lifespan)
+    d = InMemoryDataObject('D', 'D', lifespan=lifespan)
 
-    dobA.location = island_one
-    dobB.location = island_one
-    dobC.location = island_two
+    a.addOutput(b)
+    b.addConsumer(c)
+    c.addOutput(d)
 
-    dobA.addConsumer(dobB)
-    dobB.addOutput(dobC)
-
-    return dobA
+    return a
 
 def container_pg():
     '''
     Creates the following graph:
 
-         |--> B --> D --|
-     A --|              |--> F --> G
-         |--> C --> E --|
+                |--> B --> D --|
+     SL --> A --|              |--> F --> G
+                |--> C --> E --|
     '''
-    a = InMemorySocketListenerDataObject('A', 'A', lifespan=lifespan)
+    sl= SocketListenerApp('SL', 'SL', lifespan=lifespan)
+    a = InMemoryDataObject('A', 'A', lifespan=lifespan)
     b = SleepAndCopyApp('B', 'B', lifespan=lifespan)
     c = SleepAndCopyApp('C', 'C', lifespan=lifespan)
     d = InMemoryDataObject('D', 'D', lifespan=lifespan)
@@ -190,6 +190,7 @@ def container_pg():
     i = InMemoryDataObject('I', 'I', lifespan=lifespan)
 
     # Wire together
+    sl.addOutput(a)
     a.addConsumer(b)
     a.addConsumer(c)
     b.addOutput(d)
@@ -202,47 +203,47 @@ def container_pg():
     g.addConsumer(h)
     h.addOutput(i)
 
-    return a
+    return sl
 
 def complex_graph():
     """
     This method creates the following graph
 
-    A -----> E --> G --|                         |--> N ------> Q --> S
-                       |              |---> L ---|
-    B -----------------|--> I --> J --|          |--> O -->|
-                       |              |                    |--> R --> T
-    C --|              |              |---> M ------> P -->|
-        |--> F --> H --|                |
-    D --|                         K ----|
+    SL_A --> A -----> E --> G --|                         |--> N ------> Q --> S
+                                |              |---> L ---|
+    SL_B --> B -----------------|--> I --> J --|          |--> O -->|
+                                |              |                    |--> R --> T
+    SL_C --> C --|              |              |---> M ------> P -->|
+                 |--> F --> H --|                |
+    SL_D --> D --|                SL_K --> K ----|
 
-    In this example the "leaves" of the graph are R and T, while the
-    "roots" are A, B, C, D and I.
+    In this example the "leaves" of the graph are S and T, while the
+    "roots" are SL_A, SL_B, SL_C, SL_D and SL_K.
 
-    E, F, I, L, M, Q and R are AppDataObjects; A, B, C, D and K are plain DOs
-    that listen in a socket. The rest are plain in-memory DOs
+    E, F, I, L, M, Q and R are AppDataObjects; SL_* are SocketListenerApps. The
+    rest are plain in-memory DOs
     """
 
-    a =  InMemorySocketListenerDataObject('a', 'a', lifespan=lifespan, port=1111)
-    b =  InMemorySocketListenerDataObject('b', 'b', lifespan=lifespan, port=1112)
-    c =  InMemorySocketListenerDataObject('c', 'c', lifespan=lifespan, port=1113)
-    d =  InMemorySocketListenerDataObject('d', 'd', lifespan=lifespan, port=1114)
-    k =  InMemorySocketListenerDataObject('k', 'k', lifespan=lifespan, port=1115)
-    e, f, i, l, m, q, r    = [   SleepAndCopyApp(uid, uid, lifespan=lifespan) for uid in ['e', 'f', 'i', 'l', 'm', 'q', 'r']]
-    g, h, j, n, o, p, s, t = [InMemoryDataObject(uid, uid, lifespan=lifespan) for uid in ['g', 'h', 'j', 'n', 'o', 'p', 's', 't']]
+    sl_a,sl_b,sl_c,sl_d,sl_k = [ SocketListenerApp('sl_' + uid, 'sl_' + uid, lifespan=lifespan, port=port) for uid,port in [('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]]
+    a, b, c, d, k            = [InMemoryDataObject(uid, uid, lifespan=lifespan) for uid in ['a', 'b', 'c', 'd', 'k']]
+    e, f, i, l, m, q, r      = [   SleepAndCopyApp(uid, uid, lifespan=lifespan) for uid in ['e', 'f', 'i', 'l', 'm', 'q', 'r']]
+    g, h, j, n, o, p, s, t   = [InMemoryDataObject(uid, uid, lifespan=lifespan) for uid in ['g', 'h', 'j', 'n', 'o', 'p', 's', 't']]
 
     for plainDO, appDO in [(a,e), (b,i), (c,f), (d,f), (h,i), (j,l), (j,m), (k,m), (n,q), (o,r), (p,r)]:
         plainDO.addConsumer(appDO)
-    for appDO, plainDO in [(e,g), (f,h), (i,j), (l,n), (l,o), (m,p), (q,s), (r,t)]:
+    for appDO, plainDO in [(sl_a,a), (sl_b,b), (sl_c,c), (sl_d,d), (sl_k,k), (e,g), (f,h), (i,j), (l,n), (l,o), (m,p), (q,s), (r,t)]:
         appDO.addOutput(plainDO)
 
-    return [a, b, c, d, k]
+    return [sl_a, sl_b, sl_c, sl_d, sl_k]
 
 def mwa_fornax_pg():
     num_coarse_ch = 24
     num_split = 3 # number of time splits per channel
-    dob_root = InMemorySocketListenerDataObject("MWA_LTA", "MWA_LTA", lifespan=lifespan)
+
+    dob_root_sl = SocketListenerApp("MWA_LTA_SL", "MWA_LTA_SL", lifespan=lifespan)
+    dob_root = InMemoryDataObject("MWA_LTA", "MWA_LTA", lifespan=lifespan)
     dob_root.location = "Pawsey"
+    dob_root_sl.addOutput(dob_root)
 
     #container
     dob_comb_img_oid = "Combined_image"
@@ -299,7 +300,7 @@ def mwa_fornax_pg():
     dob_cube.location = dob_comb_img.location
     adob_concat.addOutput(dob_cube)
 
-    return dob_root
+    return dob_root_sl
 
 def chunks(l, n):
     """
@@ -362,10 +363,12 @@ def lofar_standard_pip_pg():
             # one for calibration pipeline, the other for target / imaging pipeline
             stri = "%s_SB%02d" % (sli, i)
             time_slice_oid = "Socket_{0}".format(stri)
-            dob_time_slice = InMemorySocketListenerDataObject(time_slice_oid, time_slice_oid, lifespan=lifespan)
+            dob_time_slice_sl = SocketListenerApp(time_slice_oid + "_SL", time_slice_oid + "_SL", lifespan=lifespan)
+            dob_time_slice = InMemoryDataObject(time_slice_oid, time_slice_oid, lifespan=lifespan)
+            dob_time_slice_sl.addOutput(dob_time_slice)
             # all the same sub-bands (i) will be on the same node regardless of its time slice j
             dob_time_slice.location = "Node%03d.Groningen" % i
-            roots.append(dob_time_slice)
+            roots.append(dob_time_slice_sl)
 
             oid_data_writer = "DataWriter_{0}".format(stri)
             dob_ingest = SleepAndCopyApp(oid_data_writer, oid_data_writer, lifespan=lifespan)
@@ -480,7 +483,9 @@ def pip_cont_img_pg():
     num_facet = 2
     num_grid = 4
     stokes = ['I', 'Q', 'U', 'V']
-    dob_root = InMemorySocketListenerDataObject("FullDataset", "FullDataset", lifespan=lifespan)
+    dob_root_sl = SocketListenerApp("FullDataset_SL", "FullDataset_SL", lifespan=lifespan)
+    dob_root = InMemoryDataObject("FullDataset", "FullDataset", lifespan=lifespan)
+    dob_root_sl.addOutput(dob_root)
     dob_root.location = "Buf01"
 
     adob_sp_beam = SleepAndCopyApp("SPLT_BEAM", "SPLT_BEAM", lifespan=lifespan)
@@ -488,61 +493,61 @@ def pip_cont_img_pg():
     dob_root.addConsumer(adob_sp_beam)
 
     for i in range(1, num_beam + 1):
-        id = i
-        dob_beam = InMemoryDataObject("BEAM_{0}".format(id), "BEAM_{0}".format(id), lifespan=lifespan)
+        uid = i
+        dob_beam = InMemoryDataObject("BEAM_{0}".format(uid), "BEAM_{0}".format(uid), lifespan=lifespan)
         adob_sp_beam.addOutput(dob_beam)
-        adob_sp_time = SleepAndCopyApp("SPLT_TIME_{0}".format(id), "SPLT_TIME_{0}".format(id), lifespan=lifespan)
+        adob_sp_time = SleepAndCopyApp("SPLT_TIME_{0}".format(uid), "SPLT_TIME_{0}".format(uid), lifespan=lifespan)
         dob_beam.addConsumer(adob_sp_time)
         for j in range(1, num_time + 1):
-            id = "%d-%d" % (i, j)
-            dob_time = InMemoryDataObject("TIME_{0}".format(id), "TIME_{0}".format(id), lifespan=lifespan)
+            uid = "%d-%d" % (i, j)
+            dob_time = InMemoryDataObject("TIME_{0}".format(uid), "TIME_{0}".format(uid), lifespan=lifespan)
             adob_sp_time.addOutput(dob_time)
-            adob_sp_freq = SleepAndCopyApp("SPLT_FREQ_{0}".format(id), "SPLT_FREQ_{0}".format(id), lifespan=lifespan)
+            adob_sp_freq = SleepAndCopyApp("SPLT_FREQ_{0}".format(uid), "SPLT_FREQ_{0}".format(uid), lifespan=lifespan)
             dob_time.addConsumer(adob_sp_freq)
             for k in range(1, num_freq + 1):
-                id = "%d-%d-%d" % (i, j, k)
-                dob_freq = InMemoryDataObject("FREQ_{0}".format(id), "FREQ_{0}".format(id), lifespan=lifespan)
+                uid = "%d-%d-%d" % (i, j, k)
+                dob_freq = InMemoryDataObject("FREQ_{0}".format(uid), "FREQ_{0}".format(uid), lifespan=lifespan)
                 adob_sp_freq.addOutput(dob_freq)
-                adob_sp_facet = SleepAndCopyApp("SPLT_FACET_{0}".format(id), "SPLT_FACET_{0}".format(id), lifespan=lifespan)
+                adob_sp_facet = SleepAndCopyApp("SPLT_FACET_{0}".format(uid), "SPLT_FACET_{0}".format(uid), lifespan=lifespan)
                 dob_freq.addConsumer(adob_sp_facet)
                 for l in range(1, num_facet + 1):
-                    id = "%d-%d-%d-%d" % (i, j, k, l)
-                    dob_facet = InMemoryDataObject("FACET_{0}".format(id), "FACET_{0}".format(id), lifespan=lifespan)
+                    uid = "%d-%d-%d-%d" % (i, j, k, l)
+                    dob_facet = InMemoryDataObject("FACET_{0}".format(uid), "FACET_{0}".format(uid), lifespan=lifespan)
                     adob_sp_facet.addOutput(dob_facet)
 
-                    adob_ph_rot = SleepAndCopyApp("PH_ROTATN_{0}".format(id), "PH_ROTATN_{0}".format(id), lifespan=lifespan)
+                    adob_ph_rot = SleepAndCopyApp("PH_ROTATN_{0}".format(uid), "PH_ROTATN_{0}".format(uid), lifespan=lifespan)
                     dob_facet.addConsumer(adob_ph_rot)
-                    dob_ph_rot = InMemoryDataObject("PH_ROTD_{0}".format(id), "PH_ROTD_{0}".format(id), lifespan=lifespan)
+                    dob_ph_rot = InMemoryDataObject("PH_ROTD_{0}".format(uid), "PH_ROTD_{0}".format(uid), lifespan=lifespan)
                     adob_ph_rot.addOutput(dob_ph_rot)
-                    adob_sp_stokes = SleepAndCopyApp("SPLT_STOKES_{0}".format(id), "SPLT_STOKES_{0}".format(id), lifespan=lifespan)
+                    adob_sp_stokes = SleepAndCopyApp("SPLT_STOKES_{0}".format(uid), "SPLT_STOKES_{0}".format(uid), lifespan=lifespan)
                     dob_ph_rot.addConsumer(adob_sp_stokes)
 
-                    adob_w_kernel = SleepAndCopyApp("CACL_W_Knl_{0}".format(id), "CACL_W_Knl_{0}".format(id), lifespan=lifespan)
+                    adob_w_kernel = SleepAndCopyApp("CACL_W_Knl_{0}".format(uid), "CACL_W_Knl_{0}".format(uid), lifespan=lifespan)
                     dob_facet.addConsumer(adob_w_kernel)
-                    dob_w_knl = InMemoryDataObject("W_Knl_{0}".format(id), "W_Knl_{0}".format(id), lifespan=lifespan)
+                    dob_w_knl = InMemoryDataObject("W_Knl_{0}".format(uid), "W_Knl_{0}".format(uid), lifespan=lifespan)
                     adob_w_kernel.addOutput(dob_w_knl)
 
-                    adob_a_kernel = SleepAndCopyApp("CACL_A_Knl_{0}".format(id), "CACL_A_Knl_{0}".format(id), lifespan=lifespan)
+                    adob_a_kernel = SleepAndCopyApp("CACL_A_Knl_{0}".format(uid), "CACL_A_Knl_{0}".format(uid), lifespan=lifespan)
                     dob_facet.addConsumer(adob_a_kernel)
-                    dob_a_knl = InMemoryDataObject("A_Knl_{0}".format(id), "A_Knl_{0}".format(id), lifespan=lifespan)
+                    dob_a_knl = InMemoryDataObject("A_Knl_{0}".format(uid), "A_Knl_{0}".format(uid), lifespan=lifespan)
                     adob_a_kernel.addOutput(dob_a_knl)
 
-                    adob_create_kernel = SleepAndCopyApp("CREATE_Knl_{0}".format(id), "CREATE_Knl_{0}".format(id), lifespan=lifespan)
+                    adob_create_kernel = SleepAndCopyApp("CREATE_Knl_{0}".format(uid), "CREATE_Knl_{0}".format(uid), lifespan=lifespan)
                     dob_w_knl.addConsumer(adob_create_kernel)
                     dob_a_knl.addConsumer(adob_create_kernel)
 
 
                     for stoke in stokes:
-                        id = "%s-%d-%d-%d-%d" % (stoke, i, j, k, l)
-                        #print "id = {0}".format(id)
+                        uid = "%s-%d-%d-%d-%d" % (stoke, i, j, k, l)
+                        #print "uid = {0}".format(uid)
 
-                        dob_stoke = InMemoryDataObject("STOKE_{0}".format(id), "STOKE_{0}".format(id), lifespan=lifespan)
+                        dob_stoke = InMemoryDataObject("STOKE_{0}".format(uid), "STOKE_{0}".format(uid), lifespan=lifespan)
                         adob_sp_stokes.addOutput(dob_stoke)
 
                         dob_stoke.addConsumer(adob_create_kernel)
 
 
-                        dob_aw = InMemoryDataObject("A_{0}".format(id), "A_{0}".format(id), lifespan=lifespan)
+                        dob_aw = InMemoryDataObject("A_{0}".format(uid), "A_{0}".format(uid), lifespan=lifespan)
                         adob_create_kernel.addOutput(dob_aw)
 
                         # we do not do loop yet
@@ -554,10 +559,10 @@ def pip_cont_img_pg():
                             dob_gridded_cell = InMemoryDataObject("Grided_Cell_{0}".format(gid), "Grided_Cell_{0}".format(gid), lifespan=lifespan)
                             adob_gridding.addOutput(dob_gridded_cell)
                             griders.append(dob_gridded_cell)
-                        adob_gridded_bar = SleepAndCopyApp("GRIDDED_BARRIER_{0}".format(id), "GRIDDED_BARRIER_{0}".format(id), lifespan=lifespan)
+                        adob_gridded_bar = SleepAndCopyApp("GRIDDED_BARRIER_{0}".format(uid), "GRIDDED_BARRIER_{0}".format(uid), lifespan=lifespan)
                         for grider in griders:
                             grider.addConsumer(adob_gridded_bar)
-                        dob_gridded_stoke = InMemoryDataObject("GRIDDED_STOKE_{0}".format(id), "GRIDDED_STOKE_{0}".format(id), lifespan=lifespan)
+                        dob_gridded_stoke = InMemoryDataObject("GRIDDED_STOKE_{0}".format(uid), "GRIDDED_STOKE_{0}".format(uid), lifespan=lifespan)
                         adob_gridded_bar.addOutput(dob_gridded_stoke)
 
                         FFTers = []
@@ -569,10 +574,10 @@ def pip_cont_img_pg():
                             dob_ffted_cell = InMemoryDataObject("FFTed_Cell_{0}".format(gid), "FFTed_Cell_{0}".format(gid), lifespan=lifespan)
                             adob_fft.addOutput(dob_ffted_cell)
                             FFTers.append(dob_ffted_cell)
-                        adob_ffted_bar = SleepAndCopyApp("FFTed_BARRIER_{0}".format(id), "FFTed_BARRIER_{0}".format(id), lifespan=lifespan)
+                        adob_ffted_bar = SleepAndCopyApp("FFTed_BARRIER_{0}".format(uid), "FFTed_BARRIER_{0}".format(uid), lifespan=lifespan)
                         for ffter in FFTers:
                             ffter.addConsumer(adob_ffted_bar)
-                        dob_ffted_stoke = InMemoryDataObject("FFTed_STOKE_{0}".format(id), "FFTed_STOKE_{0}".format(id), lifespan=lifespan)
+                        dob_ffted_stoke = InMemoryDataObject("FFTed_STOKE_{0}".format(uid), "FFTed_STOKE_{0}".format(uid), lifespan=lifespan)
                         adob_ffted_bar.addOutput(dob_ffted_stoke)
 
                         cleaners = []
@@ -584,20 +589,20 @@ def pip_cont_img_pg():
                             dob_cleaned_cell = InMemoryDataObject("CLEANed_Cell_{0}".format(gid), "CLEANed_Cell_{0}".format(gid), lifespan=lifespan)
                             adob_cleaner.addOutput(dob_cleaned_cell)
                             cleaners.append(dob_cleaned_cell)
-                        adob_cleaned_bar = SleepAndCopyApp("CLEANed_BARRIER_{0}".format(id), "CLEANed_BARRIER_{0}".format(id), lifespan=lifespan)
+                        adob_cleaned_bar = SleepAndCopyApp("CLEANed_BARRIER_{0}".format(uid), "CLEANed_BARRIER_{0}".format(uid), lifespan=lifespan)
                         for cleaner in cleaners:
                             cleaner.addConsumer(adob_cleaned_bar)
-                        dob_decon_stoke = InMemoryDataObject("CLEANed_STOKE_{0}".format(id), "CLEANed_STOKE_{0}".format(id), lifespan=lifespan)
+                        dob_decon_stoke = InMemoryDataObject("CLEANed_STOKE_{0}".format(uid), "CLEANed_STOKE_{0}".format(uid), lifespan=lifespan)
                         adob_cleaned_bar.addOutput(dob_decon_stoke)
 
-                        adob_create_prod = SleepAndCopyApp("CRT-PROD_{0}".format(id), "CRT-PROD_{0}".format(id), lifespan=lifespan)
+                        adob_create_prod = SleepAndCopyApp("CRT-PROD_{0}".format(uid), "CRT-PROD_{0}".format(uid), lifespan=lifespan)
                         dob_decon_stoke.addConsumer(adob_create_prod)
 
-                        dob_prod = InMemoryDataObject("PRODUCT_{0}".format(id), "PRODUCT_{0}".format(id), lifespan=lifespan)
+                        dob_prod = InMemoryDataObject("PRODUCT_{0}".format(uid), "PRODUCT_{0}".format(uid), lifespan=lifespan)
                         adob_create_prod.addOutput(dob_prod)
 
 
-    return dob_root
+    return dob_root_sl
 
 def chiles_pg():
 
@@ -616,9 +621,11 @@ def chiles_pg():
         stri = "%02d" % i
         oid    = "Obs_day_{0}".format(stri)
         appOid = "Receive_" + oid
-        dob_obs = InMemorySocketListenerDataObject(oid, oid, lifespan=lifespan, port=1110+i)
+        dob_obs_sl = SocketListenerApp(oid + "_SL", oid + "_SL", lifespan=lifespan, port=1110+i)
+        dob_obs = InMemoryDataObject(oid, oid, lifespan=lifespan)
+        dob_obs_sl.addOutput(dob_obs)
         dob_obs.location = "{0}.aws-ec2.sydney".format(i)
-        roots.append(dob_obs)
+        roots.append(dob_obs_sl)
 
         for j in range(1, num_subb + 1):
             app_oid = "mstransform_{0}_{1}".format(stri, "%02d" % j)

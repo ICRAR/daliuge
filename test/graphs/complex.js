@@ -1,30 +1,54 @@
 [
 	{
-		"oid":       "A",
+		"oid":       "SL_A",
 		"type":      "socket",
-		"storage":   "memory",
 		"port":      1111,
+		"reuse_addr": true,
+		"outputs": ["A"]
+	},
+	{
+		"oid":       "SL_B",
+		"type":      "socket",
+		"port":      1112,
+		"reuse_addr": true,
+		"outputs": ["B"]
+	},
+	{
+		"oid":       "SL_C",
+		"type":      "socket",
+		"port":      1113,
+		"reuse_addr": true,
+		"outputs": ["C"]
+	},
+	{
+		"oid":       "SL_D",
+		"type":      "socket",
+		"port":      1114,
+		"reuse_addr": true,
+		"outputs": ["D"]
+	},
+	{
+		"oid":       "A",
+		"type":      "plain",
+		"storage":   "memory",
 		"consumers": ["E"]
 	},
 	{
 		"oid":       "B",
-		"type":      "socket",
+		"type":      "plain",
 		"storage":   "memory",
-		"port":      1112,
 		"consumers": ["I"]
 	},
 	{
 		"oid":       "C",
-		"type":      "socket",
+		"type":      "plain",
 		"storage":   "memory",
-		"port":      1113,
 		"consumers": ["F"]
 	},
 	{
 		"oid":       "D",
-		"type":      "socket",
+		"type":      "plain",
 		"storage":   "memory",
-		"port":      1114,
 		"consumers": ["F"]
 	},
 	{
@@ -64,10 +88,16 @@
 		"consumers": ["L", "M"]
 	},
 	{
-		"oid":       "K",
+		"oid":       "SL_K",
 		"type":      "socket",
-		"storage":   "memory",
 		"port":      1115,
+		"reuse_addr": true,
+		"outputs": ["K"]
+	},
+	{
+		"oid":       "K",
+		"type":      "plain",
+		"storage":   "memory",
 		"consumers": ["M"]
 	},
 	{

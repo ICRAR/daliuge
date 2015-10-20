@@ -33,7 +33,7 @@ system-wide installed artifacts.
 from dfms.data_object import dodict
 
 def socket(uid, port=1111):
-    return dodict({'oid':uid, 'type':'socket', 'storage':'memory', 'port':port})
+    return dodict({'oid':uid, 'type':'socket', 'port':port})
 
 def memory(uid, **kwargs):
     doSpec = dodict({'oid':uid, 'type':'plain', 'storage':'memory'})
@@ -49,31 +49,32 @@ def complex_graph():
     """
     This method creates the following graph
 
-    A -----> E --> G --|                         |--> N ------> Q --> S
-                       |              |---> L ---|
-    B -----------------|--> I --> J --|          |--> O -->|
-                       |              |                    |--> R --> T
-    C --|              |              |---> M ------> P -->|
-        |--> F --> H --|                |
-    D --|                         K ----|
+    SL_A --> A -----> E --> G --|                         |--> N ------> Q --> S
+                                |              |---> L ---|
+    SL_B --> B -----------------|--> I --> J --|          |--> O -->|
+                                |              |                    |--> R --> T
+    SL_C --> C --|              |              |---> M ------> P -->|
+                 |--> F --> H --|                |
+    SL_D --> D --|                SL_K --> K ----|
 
-    In this example the "leaves" of the graph are R and T, while the
-    "roots" are A, B, C, D and I.
+    In this example the "leaves" of the graph are S and T, while the
+    "roots" are SL_A, SL_B, SL_C, SL_D and SL_K.
 
-    E, F, I, L, M, Q and R are AppDataObjects; A, B, C, D and K are plain DOs
-    that listen in a socket. The rest are plain in-memory DOs
+    E, F, I, L, M, Q and R are AppDataObjects; SL_* are SocketListenerApps. The
+    rest are plain in-memory DOs
     """
 
-    a,b,c,d,k       = [socket(uid,port) for uid,port in ('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]
+    sl_a,sl_b,sl_c,sl_d,sl_k       = [socket('sl_' + uid,port) for uid,port in ('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]
+    a,b,c,d,k       = [memory(uid) for uid in ('a'),('b'),('c'),('d'),('k')]
     e,f,i,l,m,q,r   = [sleepAndCopy(uid) for uid in ['e', 'f', 'i', 'l', 'm', 'q', 'r']]
     g,h,j,n,o,p,s,t = [memory(uid) for uid in ['g', 'h', 'j', 'n', 'o', 'p', 's', 't']]
 
     for plainDO, appDO in [(a,e), (b,i), (c,f), (d,f), (h,i), (j,l), (j,m), (k,m), (n,q), (o,r), (p,r)]:
         plainDO.addConsumer(appDO)
-    for appDO, plainDO in [(e,g), (f,h), (i,j), (l,n), (l,o), (m,p), (q,s), (r,t)]:
+    for appDO, plainDO in [(sl_a,a), (sl_b,b), (sl_c,c), (sl_d,d), (sl_k,k), (e,g), (f,h), (i,j), (l,n), (l,o), (m,p), (q,s), (r,t)]:
         appDO.addOutput(plainDO)
 
-    return [a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t]
+    return [sl_a,sl_b,sl_c,sl_d,sl_k,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t]
 
 def archiving_app(uid, host, port):
     return [{'oid':uid, 'type':'app', 'app':'dfms.apps.archiving.NgasArchivingApp','ngasSrv':host,'ngasPort':port}]
@@ -84,7 +85,10 @@ def pip_cont_img_pg(num_beam=1, num_time=2, num_freq=2, num_facet=2, num_grid=4,
     """
 
     allDOs = []
-    dob_root = socket('FullDataset')
+    dob_root_sl = socket('FullDataset_SL')
+    dob_root = memory('FullDataset')
+    dob_root_sl.addOutput(dob_root)
+    allDOs.append(dob_root_sl)
     allDOs.append(dob_root)
 
     adob_sp_beam = sleepAndCopy("SPLT_BEAM")

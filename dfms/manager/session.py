@@ -29,7 +29,7 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
-from dfms.data_object import AbstractDataObject
+from dfms.data_object import AbstractDataObject, BarrierAppDataObject
 from dfms.ddap_protocol import DOLinkType
 
 
@@ -221,9 +221,19 @@ class Session(object):
         doutils.breadFirstTraverse(self._roots, self._registerDataObject)
 
         # We move to COMPLETED the DOs that we were requested to
-        def moveToCompleted(do):
-            if do.uid in completedDOs: do.setCompleted()
-        doutils.breadFirstTraverse(self._roots, moveToCompleted)
+        # BarrierAppDataObjects are here considered as having to be executed and
+        # not directly moved to COMPLETED.
+        # TODO: We should possibly unify this initial triggering into a more
+        #       solid concept that encompasses these two and other types of DOs
+        def triggerDO(do):
+            if do.uid in completedDOs:
+                if isinstance(do, BarrierAppDataObject):
+                    t = threading.Thread(target=lambda:do.execute())
+                    t.daemon = True
+                    t.start()
+                else:
+                    do.setCompleted()
+        doutils.breadFirstTraverse(self._roots, triggerDO)
 
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
