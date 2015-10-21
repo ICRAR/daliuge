@@ -49,7 +49,7 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None, domRestPort=None):
+    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None, domRestPort=8888):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
@@ -87,6 +87,10 @@ class DataIslandManager(object):
     @property
     def nodes(self):
         return self._nodes[:]
+
+    @property
+    def domRestPort(self):
+        return self._domRestPort
 
     def dfmsDOMCommandLine(self, host, port):
         cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}'.format(host, port, self._nsHost)

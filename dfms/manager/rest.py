@@ -214,4 +214,4 @@ class DIMRestServer(RestServer):
         tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return template(tpl, dimId=self.dim.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dim.nodes))
+        return template(tpl, dimId=self.dim.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dim.nodes), domRestPort=self.dim.domRestPort)
