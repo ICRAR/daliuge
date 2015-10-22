@@ -27,7 +27,7 @@ from setuptools import find_packages
 #
 # HACK - HACK - HACK - HACK
 import subprocess
-subprocess.check_call(['pip','install','numpy'])
+subprocess.check_call(['easy_install','numpy'])
 
 setup(
       name='dfms',
@@ -40,8 +40,8 @@ setup(
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*']
       },
-      install_requires=["Pyro4", "luigi", "psutil", "paramiko", "bottle", "tornado", "drive-casa", "docker-py","spead2==0.4.0"],
-      dependency_links=["https://github.com/davepallot/drive-casa/tarball/0.6.7#egg=drive-casa-0.6.7",
+      install_requires=["Pyro4", "luigi", "psutil", "paramiko", "bottle", "tornado", "drive-casa==0.6.6", "docker-py","spead2==0.4.0"],
+      dependency_links=["https://github.com/davepallot/drive-casa/tarball/0.6.7#egg=drive-casa-0.6.6",
                         "https://github.com/ska-sa/spead2/tarball/v0.4.0#egg=spead2-0.4.0"],
       test_suite="test",
       entry_points= {
