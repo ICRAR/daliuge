@@ -27,7 +27,7 @@ from setuptools import find_packages
 #
 # HACK - HACK - HACK - HACK
 import subprocess
-subprocess.check_call(['easy_install','numpy'])
+subprocess.check_call(['pip','install','numpy'])
 
 setup(
       name='dfms',
