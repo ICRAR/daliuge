@@ -28,6 +28,7 @@ Utility methods and classes to be used when interacting with DataObjects
 import inspect
 import logging
 import threading
+import traceback
 import types
 
 import Pyro4
@@ -76,7 +77,10 @@ class DOWaiterCtx(object):
             do.addConsumer(EvtConsumer(evt))
             self._evts.append(evt)
         return self
-    def __exit__(self, typ, value, traceback):
+    def __exit__(self, typ, value, tb):
+        if typ is not None:
+            traceback.print_tb(tb)
+            self._test.fail('%r' % (value,))
         to = self._timeout
         for evt in self._evts:
             self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
