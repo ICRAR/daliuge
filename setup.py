@@ -40,7 +40,7 @@ setup(
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*']
       },
-      install_requires=["Pyro4", "luigi", "psutil", "paramiko", "bottle", "tornado", "drive-casa==0.7", "docker-py","spead2==0.4.0"],
+      install_requires=["Pyro4", "luigi<2.0", "psutil", "paramiko", "bottle", "tornado", "drive-casa==0.7", "docker-py","spead2==0.4.0"],
       test_suite="test",
       entry_points= {
           'console_scripts':[
