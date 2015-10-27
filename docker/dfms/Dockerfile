@@ -3,5 +3,5 @@ FROM dfms/centos7:base
 
 # Get the DFMS sources and install them in the system
 RUN git clone https://github.com/SKA-ScienceDataProcessor/dfms ~/dfms && \
-    cd ~/dfms && git checkout origin/spead2 && \
+    cd ~/dfms && \
     python setup.py install
