@@ -126,3 +126,23 @@ class DockerTests(unittest.TestCase):
         client = AutoVersionClient()
         for dockerApp in b, c:
             client.remove_container(dockerApp.containerId)
+
+    def test_quotedCommands(self):
+        """
+        A test to check that commands using quotes are correctly executed, which
+        means that their quotes were correctly escaped when the final docker
+        command was executed
+        """
+
+        def assertMsgIsCorrect(msg, command):
+            a = DockerApp('a', 'a', image='ubuntu:14.04', command=command)
+            b = FileDataObject('b','b')
+            a.addOutput(b)
+            with DOWaiterCtx(self, b, 1):
+                a.execute()
+            self.assertEquals(msg, doutils.allDataObjectContents(b))
+
+        msg = "This is a message with a single quote: '"
+        assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
+        msg = 'This is a message with a double quotes: "'
+        assertMsgIsCorrect(msg, "echo -n '{0}' > %o0".format(msg))

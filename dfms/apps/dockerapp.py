@@ -30,6 +30,7 @@ import time
 
 from docker.client import AutoVersionClient
 
+from dfms import utils
 from dfms.data_object import BarrierAppDataObject, FileDataObject, \
     DirectoryContainer
 
@@ -216,6 +217,8 @@ class DockerApp(BarrierAppDataObject):
         vols = dockerInputs + dockerOutputs
         binds  = [i.path + ":" + dockerInputs[x] + ":ro" for x,i in enumerate(self.inputs)]
         binds += [o.path + ":" + dockerOutputs[x]        for x,o in enumerate(self.outputs)]
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Volume bindings: %r" % (binds))
 
         # Replace any input/output placeholders that might be found in the
         # command line by the real path of the inputs and outputs
@@ -226,7 +229,7 @@ class DockerApp(BarrierAppDataObject):
             cmd = cmd.replace("%%o%d" % (x), o)
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Command after placeholder replacement is: '%s'" % (cmd))
+            logger.debug("Command after placeholder replacement is: %s" % (cmd))
 
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
@@ -241,13 +244,13 @@ class DockerApp(BarrierAppDataObject):
         # We achieve this by creating a user with the same UID if one doesn't
         # exist, and running the command as the correct user via "su".
         uid = os.getuid()
-        cmd = "id -u {0} &> /dev/null || adduser --uid {0} r; cd; su - $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, cmd.replace("'","\\'"))
+        cmd = "id -u {0} &> /dev/null || adduser --uid {0} r; cd; su - $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, utils.escapeQuotes(cmd, doubleQuotes=False))
 
         # Embed the command in bash
-        cmd = '/bin/bash -c "%s"' % (cmd.replace('"','\\"'))
+        cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Command after user creation and wrapping is: '%s'" % (cmd))
+            logger.debug("Command after user creation and wrapping is: %s" % (cmd))
 
         # If we're mapping files that don't exist yet (i.e., FileDataObjects
         # in the outputs) we need to touch them first; otherwise the mapping
@@ -269,6 +272,9 @@ class DockerApp(BarrierAppDataObject):
         if logger.isEnabledFor(logging.INFO):
             logger.info("Started container %s" % (cId))
 
+        # Figure out the container's IP and save it
+        # Setting self.containerIp will trigger an event being sent to the
+        # registered listeners
         inspection = c.inspect_container(container)
         self.containerIp = inspection['NetworkSettings']['IPAddress']
 
@@ -277,3 +283,15 @@ class DockerApp(BarrierAppDataObject):
         end = time.time()
         if logger.isEnabledFor(logging.INFO):
             logger.info("Container %s finished in %.2f [s] with exit code %d" % (cId, (end-start), self._exitCode))
+
+        if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
+            msg = "Container %s finished successfully" % (cId,)
+            stdout = c.logs(container, stdout=True, stderr=False)
+            stderr = c.logs(container, stdout=False, stderr=True)
+            logger.debug(msg + ", output follows.\n==STDOUT==%s\n==STDERR==\n%s", stdout, stderr)
+        elif self._exitCode != 0:
+            stdout = c.logs(container, stdout=True, stderr=False)
+            stderr = c.logs(container, stdout=False, stderr=True)
+            msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
+            logger.error(msg + ", output follows.\n==STDOUT==%s\n==STDERR==\n%s", stdout, stderr)
+            raise Exception(msg)

@@ -147,3 +147,14 @@ def createDirIfMissing(path):
     if os.path.exists(path):
         return
     os.makedirs(path)
+
+def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
+    """
+    Escapes single and double quotes in a string. Useful to include commands
+    in a shell invocation or similar.
+    """
+    if singleQuotes:
+        s = s.replace("'","'\\''")
+    if doubleQuotes:
+        s = s.replace('"','\\"')
+    return s
