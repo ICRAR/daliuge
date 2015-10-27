@@ -25,6 +25,7 @@ import random
 import shutil
 import string
 import unittest
+import warnings
 
 from docker.client import AutoVersionClient
 from docker.errors import DockerException
@@ -33,7 +34,6 @@ from dfms import doutils
 from dfms.apps.dockerapp import DockerApp
 from dfms.data_object import FileDataObject
 from dfms.doutils import DOWaiterCtx
-import warnings
 
 
 class DockerTests(unittest.TestCase):
