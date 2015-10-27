@@ -34,13 +34,13 @@
 
       .button {
        border-top: 1px solid #96d1f8;
-       background: #65a9d7;
+       background: #7FB5DA;
        background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#65a9d7));
        background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
        background: -moz-linear-gradient(top, #3e779d, #65a9d7);
        background: -ms-linear-gradient(top, #3e779d, #65a9d7);
        background: -o-linear-gradient(top, #3e779d, #65a9d7);
-       padding: 11px 22px;
+       padding: 10px 22px;
        -webkit-border-radius: 8px;
        -moz-border-radius: 8px;
        border-radius: 8px;
@@ -49,7 +49,7 @@
        box-shadow: rgba(0,0,0,1) 0 1px 0;
        text-shadow: rgba(0,0,0,.4) 0 1px 0;
        color: white;
-       font-size: 17px;
+       font-size: 16px;
        font-family: Helvetica, Arial, Sans-Serif;
        text-decoration: none;
        vertical-align: middle;
@@ -101,8 +101,73 @@
 
       #jsoneditor {
         width:100%;
-        height:300px;
+        height:850px;
       }
+
+      /*----- Tabs -----*/
+.tabs {
+    width:100%;
+    display:inline-block;
+}
+
+    /*----- Tab Links -----*/
+    /* Clearfix */
+    .tab-links:after {
+        display:block;
+        clear:both;
+        content:'';
+    }
+
+    .tab-links li {
+        margin:0px 5px;
+        float:left;
+        list-style:none;
+    }
+
+        .tab-links a {
+            padding:11px 15px;
+            display:inline-block;
+            border-radius:3px 3px 0px 0px;
+            background:#7FB5DA;
+            font-size:16px;
+            font-weight:600;
+            color:#4c4c4c;
+            transition:all linear 0.15s;
+        }
+
+        .tab-links a:hover {
+            background:#a7cce5;
+            text-decoration:none;
+        }
+
+    li.active a, li.active a:hover {
+        background:#fff;
+        color:#4c4c4c;
+    }
+
+    /*----- Content of Tabs -----*/
+    .tab-content {
+        padding:0px;
+        border-radius:3px;
+        box-shadow:-1px 1px 1px rgba(0,0,0,0.15);
+        background:#fff;
+    }
+
+        .tab {
+            display:none;
+        }
+
+        .tab.active {
+            display:block;
+        }
+
+        .panel { font-size: 16px;
+                 font-weight:600;
+                text-align: center;
+                display:inline-block;
+                color:#4c4c4c;
+              padding: 4px;  vertical-align: top; width: 100%; }
+
 </style>
 <script type="text/javascript">
 /* For the tree view stuff */
@@ -210,6 +275,9 @@
         }
       }
     });
+
+    btt = document.getElementById("pngButton");
+    btt.disabled = true;
 
     // setup the json editor
     var container = document.getElementById('jsoneditor');
@@ -819,6 +887,20 @@
     alert(window.curr_lg_node);
     */
 
+    jQuery(document).ready(function() {
+    jQuery('.tabs .tab-links a').on('click', function(e)  {
+        var currentAttrValue = jQuery(this).attr('href');
+
+        // Show/Hide Tabs
+        jQuery('.tabs ' + currentAttrValue).show().siblings().hide();
+
+        // Change/remove current tab to active
+        jQuery(this).parent('li').addClass('active').siblings().removeClass('active');
+
+        e.preventDefault();
+      });
+    });
+
     // initialize the Palette that is on the left side of the page
     myPalette =
       $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
@@ -931,7 +1013,7 @@
   // add an SVG rendering of the diagram at the end of this page
   function makeSVG() {
     var svg = myDiagram.makeSvg({
-        scale: 0.5
+        scale: 1.0
       });
     svg.style.border = "1px solid black";
     obj = document.getElementById("SVGArea");
@@ -940,21 +1022,87 @@
       obj.replaceChild(svg, obj.children[0]);
     }
   }
+
+  function makePNG() {
+    var svg = myDiagram.makeImage({
+        scale: 1.0,
+        background: "White",
+        details: 1.0
+      });
+    svg.style.border = "1px solid black";
+    obj = document.getElementById("SVGArea");
+    obj.appendChild(svg);
+    if (obj.children.length > 0) {
+      obj.replaceChild(svg, obj.children[0]);
+    }
+  }
+
+  function setButtonStatus(obj) {
+    btt = document.getElementById("pngButton");
+    if ("PNG" == obj.innerHTML) {
+      btt.disabled = false;
+    } else {
+      btt.disabled = true;
+    }
+  }
+
 </script>
 </head>
 <body onload="init()">
 <div id="sample">
   <div style="width:100%; white-space:nowrap;">
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:190px">
-      <div id="myPalette" style="border: solid 1px gray; height: 720px"></div>
+      <div class="panel"><br/>Palette <br/><br/></div>
+      <div id="myPalette" style="border: solid 1px gray; height: 850px"></div>
     </span>
-
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:71%">
-      <div id="myDiagram" style="border: solid 1px gray; height: 720px"></div>
+      <div class="tabs">
+        <ul class="tab-links">
+          <li class="active"><a href="#tab1" onclick="setButtonStatus(this)">Diagram</a></li>
+          <li><a href="#tab2" onclick="setButtonStatus(this)">JSON</a></li>
+          <li>
+            <a href="#tab3" onclick="setButtonStatus(this)">PNG</a></li>
+          </li>
+
+          <li>
+              <div class="buttonwrapper">
+              <button id="SaveButton" onclick="saveToRemote(true)" class="button">Save Diagram</button>
+              </div>
+          </li>
+          <li>
+            &nbsp;
+          </li>
+          <li>
+              <div class="buttonwrapper">
+              <button id="LoadButton" onclick="load()" class="button" disabled>Save JSON</button>
+              </div>
+          </li>
+          <li>
+            &nbsp;
+          </li>
+          <li>
+            <div class="buttonwrapper">
+            <button id="pngButton" class="button" onclick="makePNG()">Export PNG</button>
+          </div>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div id="tab1" class="tab active">
+             <div id="myDiagram" style="border: solid 1px gray; height: 850px"></div>
+          </div>
+          <div id="tab2" class="tab">
+            <div id="jsoneditor"></div>
+          </div>
+          <div id="tab3" class="tab">
+            <div id="SVGArea"></div>
+          </div>
+        </div>
+      </div>
     </span>
 
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:16%">
-      <div id="myTree" style="border: solid 1px gray; height: 720px">
+      <div class="panel"><br/>Logical Graphs <br/><br/></div>
+      <div id="myTree" style="border: solid 1px gray; height: 850px">
       <ul onmouseover="resolveSrcMouseover(event);" onmouseout="resolveSrcMouseout(event);" onclick="takeAction(event);">
         <li><div id="Folder1" class="ExpandCollapse">-</div><div class="Folder">SDP Pipelines</div></li>
         <ul id="ExpandCollapseFolder1">
@@ -980,10 +1128,12 @@
   <a href="../intro/templateMaps.html">Node Template Maps</a> in Diagrams.
   </p>
  -->
+ <!--
   <div class="buttonwrapper">
   <button id="SaveButton" onclick="saveToRemote(true)" class="button">Save Diagram</button>
   <button id="LoadButton" onclick="load()" class="button" disabled>Save JSON</button>
   </div>
+-->
   <!--
   <button onclick="loadFromRemoteJson('test')">Load Wrong</button>
   <button onclick="loadFromRemoteJson('ingest.json')">Load Right</button>
@@ -992,19 +1142,21 @@
   <textarea id="mySavedModel" style="width:100%;height:300px">
   </textarea>
   -->
-  <div id="jsoneditor"></div>
-  <p>
+
+
   Mouse-over a Node to view its ports.
   Drag from these ports to create new Links.
   Selecting Links allows you to re-shape and re-link them.
   Selecting a Node and then clicking its TextBlock will allow
-  you to edit text (except on the Start and End Nodes).
+  you to edit text (except on the Start and End Nodes). <br/>Any issues please email chen DOT wu AT icrar DOT org
+
+  <!--
+  <p>Click the button below to render the current logical graph Diagram into PNG.
+     The PNG is not interactive like the Diagram, but can be used for printing or display.
   </p>
-  <p>Click the button below to render the current GoJS Diagram into SVG at one-half scale.
-     The SVG is not interactive like the GoJS diagram, but can be used for printing or display.
-  </p>
-  <button onclick="makeSVG()">Render as SVG</button>
-  <div id="SVGArea"></div>
+  -->
+
+  <!-- <div id="SVGArea"></div> -->
 </div>
 </body>
 </html>
