@@ -979,10 +979,7 @@ class DirectoryContainer(ContainerDataObject):
 
         directory = kwargs['dirname']
 
-        check_exists = True
-        if 'exists' in kwargs:
-            check_exists = kwargs['exists']
-
+        check_exists = self._getArg(kwargs, 'check_exists', True)
         if check_exists is True:
             if not os.path.isdir(directory):
                 raise Exception('%s is not a directory' % (directory))

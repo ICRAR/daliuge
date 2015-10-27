@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
         dolist.append(cl)
 
-        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False, node = ch05)
+        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, check_exists = False, node = ch05)
         dolist.append(image_out)
         cl.addOutput(image_out)
         flux.addInput(image_out)
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         for i, v in enumerate(VIS):
             vis_in = directorySpec('vis%d' % (i), dirname = v[0], node = v[2])
             dolist.append(vis_in)
-            split_out = directorySpec(uuid.uuid1(), dirname = v[1], exists = False, node = v[2])
+            split_out = directorySpec(uuid.uuid1(), dirname = v[1], check_exists = False, node = v[2])
             dolist.append(split_out)
 
             sp = splitSpec(uuid.uuid1(), 
