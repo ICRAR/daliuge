@@ -32,6 +32,7 @@ from bottle import route, run, request, get, static_file, template, redirect, re
 post_sem = threading.Semaphore(1)
 
 err_prefix = "[Error]"
+DEFAULT_LG_NAME = "cont_img.json"
 
 def lg_exists(lg_name):
     return os.path.exists("{0}/{1}".format(lg_dir, lg_name))
@@ -69,6 +70,8 @@ def jsonbody():
     """
     #print "get jsonbody is called"
     lg_name = request.query.get('lg_name')
+    if (lg_name is None or len(lg_name) == 0):
+        redirect('/jsonbody?lg_name={0}'.format(DEFAULT_LG_NAME))
     if (lg_exists(lg_name)):
         #print "Loading {0}".format(lg_name)
         lg_path = "{0}/{1}".format(lg_dir, lg_name)
@@ -79,6 +82,24 @@ def jsonbody():
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
+@get('/lg_editor')
+def load_lg_editor():
+    """
+    Let the LG editor load the specified logical graph JSON representation
+    """
+    lg_name = request.query.get('lg_name')
+    if (lg_name is None or len(lg_name) == 0):
+        #lg_name = DEFAULT_LG_NAME
+        redirect('/lg_editor?lg_name={0}'.format(DEFAULT_LG_NAME))
+
+    if (lg_exists(lg_name)):
+        return template('lg_editor.html', lg_json_name=lg_name)
+    else:
+        response.status = 404
+        return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
+
+
+
 if __name__ == "__main__":
     """
     e.g. python lg_web -d /tmp/
@@ -86,6 +107,9 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-d", "--lgdir", action="store", type="string", dest="lg_path",
                           help="logical graph path (input)")
+    parser.add_option("-p", "--port", action="store", type="int", dest="lg_port", default=8084,
+                      help="logical graph editor port (8084 by default)")
+
     (options, args) = parser.parse_args()
     if (None == options.lg_path):
         parser.print_help()
@@ -97,4 +121,4 @@ if __name__ == "__main__":
     global lg_dir
     lg_dir = options.lg_path
     # Let's use tornado, since luigi already depends on it
-    run(host="0.0.0.0", server='tornado', port=8084, debug=True)
+    run(host="0.0.0.0", server='tornado', port=options.lg_port, debug=True)
