@@ -145,48 +145,48 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 		d3.json(serverUrl + '/api/sessions/' + sessionId, function(error, sessionInfo) {
 
 			if (error) {
-				console.error(error)
-				return
+				console.error(error);
+				return;
 			}
 
-			var doSpecs = sessionInfo['graph']
-			var status  = sessionInfo['sessionStatus']
-			d3.select('#session-status').text(SESSION_STATUS[status])
+			var doSpecs = sessionInfo['graph'];
+			var status  = sessionInfo['sessionStatus'];
+			d3.select('#session-status').text(SESSION_STATUS[status]);
 
 			// Get sorted oids
 			var oids = Object.keys(doSpecs);
 			oids.sort();
 
 			// Keep track of modifications to see if we need to re-draw
-			var modified = false
+			var modified = false;
 
 			// #1: create missing nodes in the graph
 			// Because oids is sorted, they will be created in oid order
 			for(var idx in oids) {
-				var doSpec = doSpecs[oids[idx]]
-				modified |= _addNode(g, doSpec)
+				var doSpec = doSpecs[oids[idx]];
+				modified |= _addNode(g, doSpec);
 			}
 
 			// #2: establish missing relationships
-			for(idx in oids) {
-				var doSpec = doSpecs[oids[idx]]
-				var lhOid = doSpec.oid
+			for(var idx in oids) {
+				var doSpec = doSpecs[oids[idx]];
+				var lhOid = doSpec.oid;
 
 				// x-to-many relationships producing lh->rh edges
-				for(relIdx in TO_MANY_LTR_RELS) {
+				for(var relIdx in TO_MANY_LTR_RELS) {
 					var rel = TO_MANY_LTR_RELS[relIdx];
 					if( rel in doSpec ) {
-						for(rhOid in doSpec[rel]) {
-							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid])
+						for(var rhOid in doSpec[rel]) {
+							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
 						}
 					}
 				}
 				// x-to-many relationships producing rh->lh edges
-				for(relIdx in TO_MANY_RTL_RELS) {
-					var rel = TO_MANY_RTL_RELS[relIdx]
+				for(var relIdx in TO_MANY_RTL_RELS) {
+					var rel = TO_MANY_RTL_RELS[relIdx];
 					if( rel in doSpec ) {
-						for(rhOid in doSpec[rel]) {
-							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid)
+						for(var rhOid in doSpec[rel]) {
+							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
 						}
 					}
 				}
@@ -195,7 +195,7 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 			}
 
 			if( modified ) {
-				drawGraph()
+				drawGraph();
 			}
 
 			// During PRISITINE and BUILDING we need to update the graph structure
@@ -204,44 +204,44 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 			// During RUNNING (or potentially FINISHED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if( status == 3 || status == 4 ) {
-				startGraphStatusUpdates(serverUrl, sessionId, delay)
+				startGraphStatusUpdates(serverUrl, sessionId, delay);
 			}
 			else if( status == 0 || status == 1 || status == 2 ){
 				// schedule a new JSON request
-				d3.timer(updateGraph, delay)
+				d3.timer(updateGraph, delay);
 			}
 
 		})
 		// This makes d3.timer invoke us only once
-		return true
+		return true;
 	}
-	d3.timer(updateGraph)
+	d3.timer(updateGraph);
 }
 
 function _addNode(g, doSpec) {
 
 	if( g.hasNode(g) ) {
-		return false
+		return false;
 	}
 
-	var typeClass = doSpec.type
-	var typeShape = TYPE_SHAPES[doSpec.type]
-	var notes = ''
+	var typeClass = doSpec.type;
+	var typeShape = TYPE_SHAPES[doSpec.type];
+	var notes = '';
 	if( doSpec.type == 'app' ) {
-		var nameParts = doSpec.app.split('.')
-		notes = nameParts[nameParts.length - 1]
+		var nameParts = doSpec.app.split('.');
+		notes = nameParts[nameParts.length - 1];
 	}
 	else if( doSpec.type == 'plain' ) {
-		notes = 'storage: ' + doSpec.storage
+		notes = 'storage: ' + doSpec.storage;
 	}
 	else if( doSpec.type == 'socket' ) {
-		notes = 'port: ' + doSpec.port
+		notes = 'port: ' + doSpec.port;
 	}
 
-	var oid = doSpec.oid
+	var oid = doSpec.oid;
 	var html = '<div class="do-label" id="id_' + oid + '">';
 	html += '<span>' + oid + '</span>';
-	html += '<span class="notes">' + notes + '</span>'
+	html += '<span class="notes">' + notes + '</span>';
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",
@@ -252,23 +252,23 @@ function _addNode(g, doSpec) {
 		class: typeClass,
 		shape: typeShape
 	});
-	return true
+	return true;
 }
 
 function _addEdge(g, fromOid, toOid) {
 	if( g.hasEdge(fromOid, toOid) ) {
-		return false
+		return false;
 	}
 	if( !g.hasNode(fromOid) ) {
-		console.error('No DataObject found with oid ' + fromOid)
-		return false
+		console.error('No DataObject found with oid ' + fromOid);
+		return false;
 	}
 	if( !g.hasNode(toOid) ) {
-		console.error('No DataObject found with oid ' + toOid)
-		return false
+		console.error('No DataObject found with oid ' + toOid);
+		return false;
 	}
 	g.setEdge(fromOid, toOid, {width: 40});
-	return true
+	return true;
 }
 
 
