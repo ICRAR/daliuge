@@ -24,7 +24,7 @@ import sys
 import uuid
 import threading
 from chilesdo import Split, Clean, SourceFlux
-from dfms.data_object import DirectoryContainer, BarrierAppDataObject, InMemoryDataObject
+from dfms.data_object import DirectoryContainer, InMemoryDataObject
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
@@ -78,15 +78,15 @@ if __name__ == '__main__':
                     weighting = 'natural',
                     casapy_path = CASAPY)
 
-        image_out = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, exists = False)
+        image_out = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, check_exists = False)
         cl.addOutput(image_out)
         flux.addInput(image_out)
         flux.addOutput(flux_out)
 
         for v in VIS:
             vis_in = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = v[0])
-            split_out = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = v[1], exists = False)
-            
+            split_out = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname = v[1], check_exists = False)
+
             vis_in_a.append(vis_in)
 
             sp = Split(uuid.uuid1(), 
