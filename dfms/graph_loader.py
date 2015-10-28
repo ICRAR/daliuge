@@ -33,14 +33,15 @@ import logging
 from dfms import doutils
 from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
     FileDataObject, NgasDataObject, LINKTYPE_NTO1_PROPERTY, \
-    LINKTYPE_1TON_APPEND_METHOD
+    LINKTYPE_1TON_APPEND_METHOD, NullDataObject
 from dfms.ddap_protocol import DORel, DOLinkType
 
 
 STORAGE_TYPES = {
     'memory': InMemoryDataObject,
     'file'  : FileDataObject,
-    'ngas'  : NgasDataObject
+    'ngas'  : NgasDataObject,
+    'null'  : NullDataObject
 }
 
 # Dictionary for the key used to store 1-to-N relationships between DataObjects
