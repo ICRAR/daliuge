@@ -200,7 +200,7 @@ class TestDIM(unittest.TestCase):
             graphStatusByDom = self.dom.getGraphStatus(sessionId)
             self.assertDictEqual(graphStatusByDim, graphStatusByDom)
             for doStatus in graphStatusByDim.viewvalues():
-                self.assertEquals(expectedStatus, doStatus)
+                self.assertEquals(expectedStatus, doStatus['status'])
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)

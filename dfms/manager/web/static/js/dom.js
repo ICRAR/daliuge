@@ -20,10 +20,11 @@
 //    MA 02111-1307  USA
 //
 
-var SESSION_STATUS = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished']
-var STATUS_CLASSES = ['initialized', 'writing', 'completed', 'expired', 'deleted']
-var TYPE_CLASSES   = ['app', 'container', 'socket', 'plain']
-var TYPE_SHAPES    = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
+var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished']
+var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'expired', 'deleted']
+var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error']
+var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
+var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
@@ -139,7 +140,7 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
  * @param g The graph
  * @param doSpecs A list of DOSpecs, which are simple dictionaries
  */
-function startStatusQuery(g, serverUrl, sessionId, delay) {
+function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 	function updateGraph() {
 		d3.json(serverUrl + '/api/sessions/' + sessionId, function(error, sessionInfo) {
 
@@ -152,23 +153,28 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 			var status  = sessionInfo['sessionStatus']
 			d3.select('#session-status').text(SESSION_STATUS[status])
 
+			// Get sorted oids
+			var oids = Object.keys(doSpecs);
+			oids.sort();
+
 			// Keep track of modifications to see if we need to re-draw
 			var modified = false
 
 			// #1: create missing nodes in the graph
-			for(idx in doSpecs) {
-				var doSpec = doSpecs[idx]
+			// Because oids is sorted, they will be created in oid order
+			for(var idx in oids) {
+				var doSpec = doSpecs[oids[idx]]
 				modified |= _addNode(g, doSpec)
 			}
 
 			// #2: establish missing relationships
-			for(idx in doSpecs) {
-				var doSpec = doSpecs[idx]
+			for(idx in oids) {
+				var doSpec = doSpecs[oids[idx]]
 				var lhOid = doSpec.oid
 
 				// x-to-many relationships producing lh->rh edges
 				for(relIdx in TO_MANY_LTR_RELS) {
-					var rel = TO_MANY_LTR_RELS[relIdx]
+					var rel = TO_MANY_LTR_RELS[relIdx];
 					if( rel in doSpec ) {
 						for(rhOid in doSpec[rel]) {
 							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid])
@@ -279,14 +285,25 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 				return;
 			}
 
-			// Change from {A:1, B:2...} to [1,2...]
-			var statuses = Object.keys(response).map(function(k) {return response[k]});
+			// Change from {B:{status:2,execStatus:0}, A:{status:1}, ...}
+			//          to [{status:1},{status:2,execStatus:0}...]
+			// (i.e., sort by key and get values only)
+			var keys = Object.keys(response);
+			keys.sort();
+			var statuses = keys.map(function(k) {return response[k]});
 
 			// This works assuming that the status list comes in the same order
 			// that the graph was created, which is true
 			// Anyway, we could double-check in the future
 			d3.selectAll('g.nodes').selectAll('g.node')
-			.data(statuses).attr("class", function(s) { return "node " + STATUS_CLASSES[s]})
+			.data(statuses).attr("class", function(s) {
+				if ( typeof s.execStatus != 'undefined' ) {
+					return "node " + EXECSTATUS_CLASSES[s.execStatus];
+				}
+				else {
+					return "node " + STATUS_CLASSES[s.status];
+				}
+			})
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				return prevVal && (curVal == 2);
