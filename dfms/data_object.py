@@ -851,10 +851,6 @@ class FileDataObject(AbstractDataObject):
         hostname = os.uname()[1] # TODO: change when necessary
         return "file://" + hostname + self._fnm
 
-    def ensureExists(self):
-        if not os.path.exists(self._fnm):
-            open(self._fnm, 'a').close()
-
 class NgasDataObject(AbstractDataObject):
     '''
     A DataObject that points to data stored in an NGAS server
