@@ -22,6 +22,8 @@
 """
 Module containing the logic of a session -- a given graph execution
 """
+
+import collections
 import logging
 import threading
 
@@ -29,7 +31,8 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
-from dfms.data_object import AbstractDataObject, BarrierAppDataObject
+from dfms.data_object import AbstractDataObject, BarrierAppDataObject, \
+    AppDataObject
 from dfms.ddap_protocol import DOLinkType
 
 
@@ -262,7 +265,7 @@ class Session(object):
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
             raise Exception("The session is currently not running, cannot get graph status")
-        statusDict = {}
+        statusDict = collections.defaultdict(dict)
 
         # We shouldn't traverse the full graph because there might be nodes
         # attached to our DOs that are actually part of other DOM (and have been
@@ -274,7 +277,9 @@ class Session(object):
         # The same trick is used in luigi_int.RunDataObjectTask.requires
         def addToDict(do, downStreamDOs):
             downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDataObject)]
-            statusDict[do.oid] = do.status
+            if isinstance(do, AppDataObject):
+                statusDict[do.oid]['execStatus'] = do.execStatus
+            statusDict[do.oid]['status'] = do.status
 
         doutils.breadFirstTraverse(self._roots, addToDict)
         return statusDict
