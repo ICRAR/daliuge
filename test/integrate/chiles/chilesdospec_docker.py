@@ -19,6 +19,10 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""
+Similar to chilesdospec, but it generates a series of DockerApp DOs instead of
+directly generating Clean, Flux and Split DOs.
+"""
 import json
 import os
 import sys
@@ -28,55 +32,65 @@ from dfms.data_object import dodict
 
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
-CASAPY = '/home/ec2-user/casa-release-4.4.0-el6/'
-VIS_ROOT = '/home/ec2-user/data/input/'
-VIS_OUT = '/home/ec2-user/data/output/'
-CUBE_OUT = '/home/ec2-user/data/output/'
+CASAPY = '/opt/casa-release-4.4.0-el6/'
+VIS_ROOT = '/opt/data/chiles/input/'
+VIS_OUT = '/opt/data/chiles/output/'
+CUBE_OUT = '/opt/data/chiles/output/'
 CUBE_NAME = 'cube1408~1412'
-KEY = '/home/ec2-user/.ssh/aws-sdp-sydney.pem'
 
 # Internal AWS IP addresses. ch05 does the Clean-ing
-ch01 = '172.31.4.12'
-ch02 = '172.31.9.163'
-ch03 = '172.31.11.184'
-ch04 = '172.31.11.87'
-ch05 = '172.31.0.36'
 VIS = [
-        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS/20131025_951_4_calibrated_deepfield.ms', VIS_OUT + '20131025_951_4/', ch01, 'ec2-user@' + ch05 + ':' + VIS_ROOT),
-        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS/20131031_951_4_calibrated_deepfield.ms', VIS_OUT + '20131031_951_4/', ch03, 'ec2-user@' + ch05 + ':' + VIS_ROOT),
-        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS/20131121_946_6_calibrated_deepfield.ms', VIS_OUT + '20131121_946_6/', ch04, 'ec2-user@' + ch05 + ':' + VIS_ROOT),
-        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS/20140105_946_6_calibrated_deepfield.ms', VIS_OUT + '20140105_946_6/', ch02, 'ec2-user@' + ch05 + ':' + VIS_ROOT)
+        (VIS_ROOT + '20131025_951_4_FINAL_PRODUCTS', VIS_OUT + '20131025_951_4/'),
+        (VIS_ROOT + '20131031_951_4_FINAL_PRODUCTS', VIS_OUT + '20131031_951_4/'),
+        (VIS_ROOT + '20131121_946_6_FINAL_PRODUCTS', VIS_OUT + '20131121_946_6/'),
+        (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS', VIS_OUT + '20140105_946_6/')
         ]
 
-
-def memorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'plain', 'storage':'memory'})
+def fileDoSpec(uid, **kwargs):
+    doSpec = dodict({'oid':str(uid), 'type':'plain', 'storage':'file'})
     doSpec.update(kwargs)
-    return doSpec 
-
+    return doSpec
 
 def directorySpec(uid, **kwargs):
     doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.data_object.DirectoryContainer'})
     doSpec.update(kwargs)
-    return doSpec 
+    return doSpec
 
+def casapyDockerAppSpec(uid, script):
+    cmd = 'cd; ' + os.path.join(CASAPY, 'casapy') + ' --colors=NoColor --nologger --nogui -c "%s"' % (script)
+    return dodict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.dockerapp.DockerApp',
+                   'image':'dfms/casapy_centos7_dfms:0.1',
+                   'command':cmd, 'user': 'dfms'})
 
 def fluxSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.SourceFlux'})
-    doSpec.update(kwargs)
-    return doSpec 
-
+    script  = "ia.open('%i0.image');"
+    script += "flux = ia.pixelvalue([128,128,0,179])['value']['value'];"
+    script += "f = open('%o0','w'); f.write(str(flux)); f.close()"
+    return casapyDockerAppSpec(uid, script)
 
 def splitSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Split'})
-    doSpec.update(kwargs)
-    return doSpec
-
+    transform_args = kwargs.copy()
+    transform_args.update({
+        'vis': "%i0",
+        'outputvis': "%o0"
+    })
+    script  = "import shutil; shutil.rmtree('%o0', True); "
+    script += "mstransform(**{})".format(repr(transform_args))
+    return casapyDockerAppSpec(uid, script)
 
 def cleanSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Clean'})
-    doSpec.update(kwargs)
-    return doSpec
+    clean_args = kwargs.copy()
+    clean_args.update({
+        'niter': 0,
+        'mask': '',
+        'modelimage': '',
+        'imagename': '%o0',
+        'vis': ['%i0','%i1','%i2','%i3'],
+        'threshold': '0Jy',
+    })
+    script  = "import shutil; shutil.rmtree('%o0', True); "
+    script += "clean(**{})".format(repr(clean_args))
+    return casapyDockerAppSpec(uid, script)
 
 
 if __name__ == '__main__':
@@ -84,9 +98,9 @@ if __name__ == '__main__':
 
         dolist = []
 
-        flux_out = memorySpec(uuid.uuid1(), node = ch05)
+        flux_out = fileDoSpec('final_flux', dirname = VIS_OUT)
         dolist.append(flux_out)
-        flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY, node = ch05)
+        flux = fluxSpec(uuid.uuid1())
         dolist.append(flux)
 
         cl = cleanSpec(uuid.uuid1(),
@@ -102,25 +116,20 @@ if __name__ == '__main__':
                         cell = ['1.0arcsec'],
                         phasecenter = '10h01m53.9,+02d24m52s',
                         weighting = 'natural',
-                        casapy_path = CASAPY,
-                        node = ch05)
-
+                        usescratch = False)
         dolist.append(cl)
 
-        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, check_exists = False, node = ch05)
+        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, check_exists = False)
         dolist.append(image_out)
         cl.addOutput(image_out)
         flux.addInput(image_out)
         flux.addOutput(flux_out)
 
         for i, v in enumerate(VIS):
-            vis_in = directorySpec('vis%d' % (i), dirname = v[0], node = v[2])
-            dolist.append(vis_in)
-            split_out = directorySpec(uuid.uuid1(), dirname = v[1], check_exists = False, node = v[2])
-            dolist.append(split_out)
-
-            sp = splitSpec(uuid.uuid1(), 
-                        regridms = True, 
+            vis_in = directorySpec('vis%d' % (i), dirname = v[0])
+            split_out = directorySpec(uuid.uuid1(), dirname = v[1], check_exists = False)
+            sp = splitSpec(uuid.uuid1(),
+                        regridms = True,
                         restfreq = '1420.405752MHz',
                         mode = 'frequency',
                         nchan = 256,
@@ -128,19 +137,22 @@ if __name__ == '__main__':
                         interpolation = 'linear',
                         start = '1408MHz',
                         width = '1412kHz',
-                        copy = True,
-                        copy_path = v[3],
-                        copy_key = KEY,
-                        casapy_path = CASAPY,
-                        node = v[2])
-
-            dolist.append(sp)
-
+                        veltype = 'radio',
+                        spw = '',
+                        combinespws = True,
+                        nspw = 1,
+                        createmms = False,
+                        datacolumn = 'data'
+                        )
             sp.addInput(vis_in)
             sp.addOutput(split_out)
             cl.addInput(split_out)
 
-        print json.dumps(dolist)
+            dolist.append(vis_in)
+            dolist.append(split_out)
+            dolist.append(sp)
+
+        print json.dumps(dolist, indent=2)
 
     except Exception as e:
         import traceback
