@@ -231,7 +231,10 @@
               window.curr_lg_node.style.fontWeight = "normal";
             }
             loadFromRemoteJson(id, node);
-            //alert(id);
+            // see https://developer.mozilla.org/en-US/docs/Web/API/History_API
+            var arr = window.location.href.split('?lg_name=');
+            window.history.pushState(id, "page 2", arr[0] + "?lg_name=" + id);
+            //alert(window.);
           }
         }
       }
@@ -433,6 +436,7 @@
               margin: 8,
               maxSize: new go.Size(160, NaN),
               wrap: go.TextBlock.WrapFit,
+              textAlign: "center",
               editable: true
             },
             new go.Binding("text").makeTwoWay())
@@ -631,6 +635,7 @@
             new go.Binding("text"))
         ),
         // three named ports, one on each side except the top, all output only:
+        makePort("T", go.Spot.Top, true, false),
         makePort("L", go.Spot.Left, true, false),
         makePort("R", go.Spot.Right, true, false),
         makePort("B", go.Spot.Bottom, true, false)
@@ -875,7 +880,8 @@
     myDiagram.toolManager.relinkingTool.temporaryLink.routing = go.Link.Orthogonal;
 
     //load();  // load an initial diagram from some JSON text
-    var first_click_id = "cont_img.json";
+    //var first_click_id = "cont_img.json";
+    var first_click_id = "{{lg_json_name}}";
     first_click_node = document.getElementById(first_click_id);
 
     loadFromRemoteJson(first_click_id, first_click_node);
@@ -1108,12 +1114,18 @@
         <ul id="ExpandCollapseFolder1">
           <li><div id="ingest.json">Ingest</div></li>
           <li><div id="cont_img.json">Continuum Imaging</div></li>
+          <li><div id="fast_cont_img.json">Fast Continuum Imaging (RD)</div></li>
           <li><div id="spec_img.json">Spectral Line Imaging</div></li>
         </ul>
         <li><div id="Folder2" class="ExpandCollapse">-</div><div class="Folder">LOFAR Pipelines</div></li>
         <ul id="ExpandCollapseFolder2">
           <li><div id="lofar_std.json">Standard</div></li>
           <li><div id="lofar_cal.json">Calibration</div></li>
+        </ul>
+        <li><div id="Folder3" class="ExpandCollapse">-</div><div class="Folder">CHILES Pipelines</div></li>
+        <ul id="ExpandCollapseFolder2">
+          <li><div id="chiles_simple.json">Simple</div></li>
+          <li><div id="chiles_imaging.json">ICRAR Imaging</div></li>
         </ul>
       </ul>
       </div>
