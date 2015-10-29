@@ -115,8 +115,8 @@ class RestServer(object):
 
     def deploySession(self, sessionId):
         completedDOs = []
-        if 'completed' in request.params:
-            completedDOs = request.params['completed'].split(',')
+        if 'completed' in request.forms:
+            completedDOs = request.forms['completed'].split(',')
         self.dm.deploySession(sessionId,completedDOs=completedDOs)
 
     def getGraph(self, sessionId):

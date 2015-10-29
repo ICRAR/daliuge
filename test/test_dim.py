@@ -266,7 +266,7 @@ class TestREST(unittest.TestCase):
             self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy?completed=SL_A,SL_B,SL_C,SL_D,SL_K' % (sessionId), restPort)
+            self.post('/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
             self.assertEquals({hostname: SessionStates.RUNNING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -298,9 +298,9 @@ class TestREST(unittest.TestCase):
         conn.close()
         return jsonRes
 
-    def post(self, url, port, content=None):
+    def post(self, url, port, content=None, mimeType=None):
         conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        headers = {'Content-Type': 'application/json'} if content else {}
+        headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
         conn.request('POST', '/api' + url, content, headers)
         res = conn.getresponse()
         self.assertEquals(httplib.OK, res.status)
