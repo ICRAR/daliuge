@@ -22,7 +22,6 @@
 import collections
 import logging
 import threading
-import time
 
 import Pyro4
 
@@ -49,12 +48,11 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None, domRestPort=8888):
+    def __init__(self, dimId, nodes=['localhost'], pkeyPath=None, domRestPort=8888):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
-        self._nsHost = nsHost or 'localhost'
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
         self._domRestPort = domRestPort
@@ -93,7 +91,7 @@ class DataIslandManager(object):
         return self._domRestPort
 
     def dfmsDOMCommandLine(self, host, port):
-        cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}'.format(host, port, self._nsHost)
+        cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0}'.format(host, port)
         if self._domRestPort:
             cmdline += ' --restPort {0}'.format(self._domRestPort)
         return cmdline
@@ -127,18 +125,7 @@ class DataIslandManager(object):
             raise Exception("DOM started at %s:%d, but couldn't connect to it" % (host, port))
 
     def domAt(self, node):
-        ns = Pyro4.locateNS(host=self._nsHost)
-        tries = 10
-        i = 0
-        while i < tries:
-            try:
-                uri = ns.lookup("dom_%s" % (node))
-            except:
-                i += 1
-                time.sleep(0.2)
-            else:
-                return Pyro4.Proxy(uri)
-        raise Exception("Couldn't find DataObjectManager for node %s after %d tries" % (node, tries))
+        return Pyro4.Proxy("PYRO:dom_{0}@{0}:{1}".format(node, DOM_PORT))
 
     def getSessionIds(self):
         return self._sessionIds;

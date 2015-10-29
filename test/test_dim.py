@@ -50,11 +50,6 @@ def setUpDimTests(self):
     # SleepAndCopyApps don't take time to execute
     graphsRepository.defaultSleepTime = 0
 
-    # Start the NS
-    Pyro4.config.SOCK_REUSE = True
-    self._nsDaemon = NameServerDaemon()
-    threading.Thread(target=lambda:self._nsDaemon.requestLoop()).start()
-
     # Start a DOM. This is the DOM which the DIM connects to.
     #
     # We start it here to avoid the DIM connecting via SSH to the localhost
@@ -67,7 +62,7 @@ def setUpDimTests(self):
     domId = 'dom_' + hostname
     self.dom = DataObjectManager(domId, False)
     self._domDaemon = Pyro4.Daemon(host='0.0.0.0', port=4000)
-    self._nsDaemon.nameserver.register(domId, self._domDaemon.register(self.dom, objectId='DOM_for_test'))
+    domId, self._domDaemon.register(self.dom, objectId=domId)
     threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
 
     # The DIM we're testing
@@ -75,8 +70,8 @@ def setUpDimTests(self):
 
 def tearDownDimTests(self):
     self._domDaemon.shutdown()
-    self._nsDaemon.shutdown()
-    while portIsOpen('localhost', Pyro4.config.NS_PORT):
+    # shutdown() is asynchronous, make sure it finishes
+    while portIsOpen('localhost', 4000):
         time.sleep(0.01)
 
 class TestDIM(unittest.TestCase):
