@@ -57,12 +57,8 @@ def launchServer(opts):
 
     if not opts.noPyro:
         daemon = Pyro4.Daemon(port=opts.port)
-        uri = daemon.register(dm)
-
-        logger.info('Registering %s %s to NameServer' % (dmName, opts.id))
-        ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-        ns.register(opts.id, uri)
-        del ns
+        uri = daemon.register(dm, objectId=opts.id)
+        logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
 
     if not opts.noPyro:
         daemon.requestLoop()
@@ -91,10 +87,6 @@ def addCommonOptions(parser):
                       dest="host", help = "The host to bind this DM on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
                       dest="port", help = "The port to bind this DM on", default=0)
-    parser.add_option("-n", "--nsHost", action="store", type="string",
-                      dest="nsHost", help = "Name service host", default='localhost')
-    parser.add_option("-p", "--nsPort", action="store", type="int",
-                      dest="nsPort", help = "Name service port", default=9090)
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help = "The Data Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
@@ -201,7 +193,7 @@ def dfmsDIM(args=sys.argv):
     # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {'nsHost': options.nsHost, 'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort}
+    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 
