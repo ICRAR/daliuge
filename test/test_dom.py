@@ -292,7 +292,7 @@ class TestREST(unittest.TestCase):
             self.post('/sessions/%s/graph/link?rhOID=archiving2&lhOID=T&linkType=0' % (sessionId), restPort)
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy?completed=SL_A,SL_B,SL_C,SL_D,SL_K' % (sessionId), restPort)
+            self.post('/sessions/%s/deploy' % (sessionId), restPort, 'completed=SL_A,SL_B,SL_C,SL_D,SL_K', mimeType='application/x-www-form-urlencoded')
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -331,9 +331,9 @@ class TestREST(unittest.TestCase):
         conn.close()
         return jsonRes
 
-    def post(self, url, port, content=None):
+    def post(self, url, port, content=None, mimeType=None):
         conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        headers = {'Content-Type': 'application/json'} if content else {}
+        headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
         conn.request('POST', '/api' + url, content, headers)
         res = conn.getresponse()
         self.assertEquals(httplib.OK, res.status)
