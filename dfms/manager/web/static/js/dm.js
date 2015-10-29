@@ -29,6 +29,28 @@ var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'paralle
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
 
+function uniqueSessionStatus(status) {
+
+	// If we are querying the DIM we need to reduce the individual
+	// session status to a single one for display
+	if( status != null && typeof status === 'object' ) {
+		// Reduce to single common value, or to -1
+		return Object.keys(status)
+			.map(function(k){return status[k]})
+			.reduce(function(prev, v, idx, array) {
+				if( prev == -1 ) { return -1; }
+				return (prev == v) ? v : -1;
+			});
+	}
+
+	// otherwise we simply return the status, which should be an integer
+	return status;
+}
+
+function sessionStatusToString(status) {
+	return (status == -1) ? 'Indeterminate' : SESSION_STATUS[status];
+}
+
 function getRender() {
 
 	var render = new dagreD3.render();
@@ -80,21 +102,17 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
 		idCells.text(String)
 		idCells.exit().remove()
 
-		// See how many "thead tr th are there" in this table
-		var nHeads = d3.select(tbodyEl.node().parentNode).selectAll('thead tr th')[0].length;
-		if (nHeads > 1) {
-			var statusCells = rows.selectAll('td.status').data(function values(s) { return [s.status]; });
-			statusCells.enter().append('td').classed('status', true).text(function(s) { return SESSION_STATUS[s]; })
-			statusCells.text(function(s) {return SESSION_STATUS[s]})
-			statusCells.exit().remove()
+		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
+		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
+		statusCells.text(function(s) {return SESSION_STATUS[s]})
+		statusCells.exit().remove()
 
-			statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
-			statusCells.enter().append('td').classed('details', true)
-			    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
-			    .append('span').classed('glyphicon glyphicon-share-alt', true)
-			statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
-			statusCells.exit().remove()
-		}
+		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
+		statusCells.enter().append('td').classed('details', true)
+		    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		    .append('span').classed('glyphicon glyphicon-share-alt', true)
+		statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		statusCells.exit().remove()
 
 		refreshBtn.attr('disabled', null);
 
@@ -150,8 +168,8 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 			}
 
 			var doSpecs = sessionInfo['graph'];
-			var status  = sessionInfo['sessionStatus'];
-			d3.select('#session-status').text(SESSION_STATUS[status]);
+			var status  = uniqueSessionStatus(sessionInfo['status']);
+			d3.select('#session-status').text(sessionStatusToString(status));
 
 			// Get sorted oids
 			var oids = Object.keys(doSpecs);
@@ -206,7 +224,7 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 			if( status == 3 || status == 4 ) {
 				startGraphStatusUpdates(serverUrl, sessionId, delay);
 			}
-			else if( status == 0 || status == 1 || status == 2 ){
+			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
 				d3.timer(updateGraph, delay);
 			}
@@ -318,7 +336,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 						console.error(error);
 						return;
 					}
-					d3.select('#session-status').text(SESSION_STATUS[status]);
+					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
 				})
 			}
 		})
