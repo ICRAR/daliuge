@@ -81,7 +81,7 @@ def writeToRemotePort(host, port, data=None, timeout=0):
     start = time.time()
     while True:
         try:
-            if timeout is not None:
+            if timeout is not None and timeout != 0:
                 thisTimeout = timeout - (time.time() - start)
                 if thisTimeout <= 0:
                     return False
