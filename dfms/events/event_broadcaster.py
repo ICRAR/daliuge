@@ -29,9 +29,9 @@
 #       Event and LocalEventBroadcaster. We could also collapse the hierarchy of
 #       the latter since there is no point in maintaining it anymore
 
-import threading
-import logging
 from collections import defaultdict
+import logging
+
 
 logger = logging.getLogger(__name__)
 
