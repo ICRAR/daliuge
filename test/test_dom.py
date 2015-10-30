@@ -24,7 +24,6 @@ import json
 import multiprocessing
 import random
 import string
-from test import graphsRepository
 import time
 import unittest
 
@@ -35,8 +34,8 @@ from dfms import doutils, ngaslite, utils
 from dfms.ddap_protocol import DOStates
 from dfms.manager import cmdline
 from dfms.manager.data_object_manager import DataObjectManager
-from dfms.manager.session import SessionStates
 from dfms.manager.repository import memory, sleepAndCopy
+from dfms.manager.session import SessionStates
 
 
 class TestDOM(unittest.TestCase):
@@ -244,8 +243,9 @@ class TestDOM(unittest.TestCase):
 
 def startDOM(restPort):
     # Make sure the graph executes quickly once triggered
+    from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID'])
+    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID', '-q'])
 
 class TestREST(unittest.TestCase):
 
