@@ -71,7 +71,7 @@ def tearDownDimTests(self):
     self._domDaemon.shutdown()
     self.dim.shutdown()
     # shutdown() is asynchronous, make sure it finishes
-    while portIsOpen(hostname, 4000, 1):
+    while portIsOpen(hostname, 4000):
         time.sleep(0.01)
 
 class TestDIM(unittest.TestCase):
@@ -135,14 +135,14 @@ class TestDIM(unittest.TestCase):
     def test_deployGraphWithCompletedDOs(self):
 
         sessionId = 'lalo'
-        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=2)
+        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
         uris = self.dim.deploySession(sessionId, completedDOs=['A'])
         c = Pyro4.Proxy(uris['C'])
 
         # This should be happening before the sleepTime expires
-        with doutils.EvtConsumerProxyCtx(self, c, 5):
+        with doutils.EvtConsumerProxyCtx(self, c, 2):
             pass
 
         self.assertEquals(DOStates.COMPLETED, c.status)
