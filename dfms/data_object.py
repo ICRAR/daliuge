@@ -656,9 +656,7 @@ class AbstractDataObject(object):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
 
-            t = threading.Thread(None, lambda consumer, uid: consumer.dataObjectCompleted(uid), args=[consumer, self.uid])
-            t.daemon = 1
-            t.start()
+            consumer.dataObjectCompleted(self.uid)
         self.subscribe(dataObjectCompleted, eventType='status')
 
     @property
@@ -1149,7 +1147,10 @@ class BarrierAppDataObject(AppDataObject):
         super(BarrierAppDataObject, self).dataObjectCompleted(uid)
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
-            self.execute()
+            # Return immediately, but schedule the execution of this app
+            t = threading.Thread(None, lambda: self.execute())
+            t.daemon = 1
+            t.start()
 
     def execute(self):
         """
