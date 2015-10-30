@@ -28,7 +28,7 @@ import logging
 import optparse
 import os
 import sys
-import threading
+import time
 
 import Pyro4
 
@@ -64,7 +64,8 @@ def launchServer(opts):
         daemon.requestLoop()
     else:
         try:
-            threading.Event().wait()
+            while True:
+                time.sleep(3600)
         except KeyboardInterrupt:
             pass
 
