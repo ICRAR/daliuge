@@ -70,7 +70,7 @@ def setUpDimTests(self):
 def tearDownDimTests(self):
     self._domDaemon.shutdown()
     # shutdown() is asynchronous, make sure it finishes
-    while portIsOpen('localhost', 4000):
+    while portIsOpen(hostname, 4000, 1):
         time.sleep(0.01)
 
 class TestDIM(unittest.TestCase):

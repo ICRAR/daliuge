@@ -113,7 +113,7 @@ class DataIslandManager(object):
         if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Checking DOM presence at %s:%d" % (host, port))
 
-        if portIsOpen(host, port):
+        if portIsOpen(host, port, 10):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("DOM already present at %s:%d" % (host, port))
             return
