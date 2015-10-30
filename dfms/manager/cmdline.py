@@ -69,6 +69,10 @@ def launchServer(opts):
         except KeyboardInterrupt:
             pass
 
+    # kind of a hack, but it's sufficient for the time being
+    if hasattr(dm, 'shutdown'):
+        dm.shutdown()
+
 class DMDaemon(Daemon):
     def __init__(self, options):
         logsDir = getDfmsLogsDir(createIfMissing=True)
