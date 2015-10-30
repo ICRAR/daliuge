@@ -31,7 +31,6 @@ import time
 import unittest
 
 import Pyro4
-from Pyro4.naming import NameServerDaemon
 import pkg_resources
 
 from dfms import doutils, utils
@@ -214,7 +213,7 @@ class TestDIM(unittest.TestCase):
 def startDIM(restPort):
     # Make sure the graph executes quickly once triggered
     from dfms.manager import cmdline
-    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname])
+    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname, '-q'])
 
 class TestREST(unittest.TestCase):
 
