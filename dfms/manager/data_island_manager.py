@@ -61,21 +61,26 @@ class DataIslandManager(object):
 
     def startNodeChecker(self):
         self._nodeCheckerEvt = threading.Event()
-        self._nodeCheckerThread = threading.Thread(name='Node checker Thread', target=self._checkNodes)
-        self._nodeCheckerThread.daemon = True
+        self._nodeCheckerThread = threading.Thread(name='NodeChecker Thread', target=self._checkNodes)
         self._nodeCheckerThread.start()
 
     def stopNodeChecker(self):
-        self._nodeCheckerEvt.set()
-        self._nodeCheckerThread.join()
+        if not self._nodeCheckerEvt.isSet():
+            self._nodeCheckerEvt.set()
+            self._nodeCheckerThread.join()
 
-    __del__ = stopNodeChecker
+    # Explicit shutdown
+    def shutdown(self):
+        self.stopNodeChecker()
 
     def _checkNodes(self):
         while True:
             for n in self._nodes:
-                self.ensureDOM(n)
-            if self._nodeCheckerEvt.wait(10000):
+                try:
+                    self.ensureDOM(n)
+                except:
+                    logger.warning("Couldn't ensure a DOM for node %s, will try again later" % (n))
+            if self._nodeCheckerEvt.wait(60):
                 break
 
     @property
@@ -98,8 +103,6 @@ class DataIslandManager(object):
 
     def startDOM(self, host, port):
         client = remote.createClient(host, pkeyPath=self._pkeyPath)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("DOM not present at %s:%d, starting it" % (host, port))
         out, err, status = remote.execRemoteWithClient(client, self.dfmsDOMCommandLine(host, port))
         if status != 0:
             logger.error("Failed to start the DOM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, port, out, err))
@@ -117,6 +120,9 @@ class DataIslandManager(object):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("DOM already present at %s:%d" % (host, port))
             return
+
+        if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("DOM not present at %s:%d, will start it now" % (host, port))
 
         self.startDOM(host, port)
 

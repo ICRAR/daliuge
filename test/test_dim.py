@@ -60,7 +60,7 @@ def setUpDimTests(self):
     # occurred at the DOM level in the test cases
     domId = 'dom_' + hostname
     self.dom = DataObjectManager(domId, False)
-    self._domDaemon = Pyro4.Daemon(host='0.0.0.0', port=4000)
+    self._domDaemon = Pyro4.Daemon(host=hostname, port=4000)
     domId, self._domDaemon.register(self.dom, objectId=domId)
     threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
 
@@ -69,6 +69,7 @@ def setUpDimTests(self):
 
 def tearDownDimTests(self):
     self._domDaemon.shutdown()
+    self.dim.shutdown()
     # shutdown() is asynchronous, make sure it finishes
     while portIsOpen(hostname, 4000, 1):
         time.sleep(0.01)
