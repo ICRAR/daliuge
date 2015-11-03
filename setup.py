@@ -6,7 +6,7 @@ from setuptools import find_packages
 # HACK - HACK - HACK - HACK
 #
 # We externally make sure that numpy is installed because spead2 needs it there
-# at compile time (and therefore at runtime too).o
+# at compile time (and therefore at runtime too).
 
 # An initial solution for this problem was to add numpy to the setup_requires
 # argument of spead2's setup invocation. This solves the problem of compiling
