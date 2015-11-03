@@ -23,12 +23,16 @@
 A module containing utility code for running remote commands over SSH.
 '''
 
+import logging
 import os
 import time
 
 from paramiko.client import SSHClient, AutoAddPolicy
 from paramiko.rsakey import RSAKey
+import scp
 
+
+logger = logging.getLogger(__name__)
 
 def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
     """
@@ -69,9 +73,39 @@ def execRemote(host, command, username=None, timeout=None, bufsize=-1):
         return execRemoteWithClient(client, command, timeout, bufsize)
 
 def createClient(host, username=None, pkeyPath=None):
+    """
+    Creates an SSH client object that can be used to perform SSH-related
+    operations
+    """
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
 
     pkey = RSAKey.from_private_key_file(os.path.expanduser(pkeyPath)) if pkeyPath else None
     client.connect(host, username=username, pkey=pkey)
     return client
+
+def __scpProgress(filename, size, sent):
+    if size == sent and logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Finished scp-ing %s (%d bytes)" % (filename, sent))
+
+def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pkeyPath=None):
+    """
+    Copies the files located at `host`:`remotePath` to `localPath` connecting
+    to `host` as `username`. A `recursive` flag can be specified, as well as a
+    private key (via `pkeyPath`) to be used when creating the connection.
+    """
+    client = createClient(host, username=username, pkeyPath=pkeyPath)
+    with scp.SCPClient(client.get_transport(), progress=__scpProgress) as scpClient:
+        scpClient.get(remote_path=remotePath, local_path=localPath, recursive=recursive)
+    client.close()
+
+def copyTo(host, localFiles, remotePath='.', recursive=False, username=None, pkeyPath=None):
+    """
+    Copies the files located at `localPath` to `host`:`remotePath` connecting
+    to `host` as `username`. A `recursive` flag can be specified, as well as a
+    private key (via `pkeyPath`) to be used when creating the connection.
+    """
+    client = createClient(host, username=username, pkeyPath=pkeyPath)
+    with scp.SCPClient(client.get_transport(), progress=__scpProgress) as scpClient:
+        scpClient.put(localFiles, remote_path=remotePath, recursive=recursive)
+    client.close()
