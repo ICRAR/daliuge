@@ -68,7 +68,7 @@ class ScpApp(BarrierAppDataObject):
         # See comment above regarding identification of DO types, and why we
         # can't simply do:
         # if inp.__class__ != out.__class__:
-        if hasattr(inp, 'children') and hasattr(out, 'children'):
+        if hasattr(inp, 'children') != hasattr(out, 'children'):
             raise Exception("Input and output must be of the same type")
 
         # This app's location must be equal to at least one of the I/O
