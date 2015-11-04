@@ -139,7 +139,7 @@ if __name__ == '__main__':
                     node = node)
         split_out = directorySpec(uuid.uuid1(), dirname = splitOutDir, check_exists = False, node = node)
         scp = scpSpec('scp_%d' % (i), node = node, pkeyPath = KEY_PATH)
-        scpOut = directorySpec(uuid.uuid1(), dirname = splitCopyDir, check_exists = False, node = node)
+        scpOut = directorySpec(uuid.uuid1(), dirname = splitCopyDir, check_exists = False, node = ch05)
 
         # Establish relationships
         sp.addInput(vis_in)
