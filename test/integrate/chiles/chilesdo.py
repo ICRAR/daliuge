@@ -20,7 +20,6 @@
 #    MA 02111-1307  USA
 #
 import Queue
-import subprocess
 import threading
 
 import drivecasa
@@ -85,7 +84,7 @@ class Clean(BarrierAppDataObject):
         try:
             script = []
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
-            dirty_maps = drivecasa.commands.clean(script,
+            drivecasa.commands.clean(script,
                                             vis_path = vis,
                                             out_path = outcube,
                                             niter = 0,
@@ -105,12 +104,7 @@ class Clean(BarrierAppDataObject):
         inp = self.inputs
         out = self.outputs[0]
 
-        #for i in inp:
-        #    vis.append(i.path)
-        # The data was copied over by the previous task into our 'input' folder,
-        # we need to convert the inputs' paths then
-        # TODO: we should probably use an Scp App to do this to have a cleaner graph
-        vis = [i.path.replace('/output/','/input/') for i in inp]
+        vis = [i.path for i in inp]
 
         print 'Cleaning ', vis
 
@@ -129,10 +123,6 @@ class Split(BarrierAppDataObject):
     def initialize(self, **kwargs):
 
         super(Split, self).initialize(**kwargs)
-
-        self.copy = self._getArg(kwargs, 'copy', False)
-        self.copy_key = self._getArg(kwargs, 'copy_key', None)
-        self.copy_path = self._getArg(kwargs, 'copy_path', None)
 
         self.timeout = self._getArg(kwargs, 'timeout', 3600)
         self.casapy_path = self._getArg(kwargs, 'casapy_path', False)
@@ -161,18 +151,9 @@ class Split(BarrierAppDataObject):
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
             drivecasa.commands.mstransform(script, infile, outdir, self.transform_args, overwrite = True)
             casa.run_script(script)
-
-            # remote data copy for aggregation and clean
-            if self.copy is True:
-                scp = 'scp -o StrictHostKeyChecking=no -r -i %s %s %s' % (self.copy_key, outdir, self.copy_path)
-                proc = subprocess.Popen(scp, stdout = subprocess.PIPE, shell = True, close_fds = True)
-                out, err = proc.communicate()
-                if proc.returncode != 0:
-                   raise Exception(out)
-
             q.put(0)
 
-        except Exception as e:
+        except Exception:
             q.put(-1)
             raise
 
