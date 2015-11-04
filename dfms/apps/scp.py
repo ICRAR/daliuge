@@ -20,8 +20,7 @@
 #    MA 02111-1307  USA
 #
 from dfms import remote
-from dfms.data_object import BarrierAppDataObject, FileDataObject, \
-    DirectoryContainer
+from dfms.data_object import BarrierAppDataObject
 
 
 class ScpApp(BarrierAppDataObject):
@@ -62,10 +61,14 @@ class ScpApp(BarrierAppDataObject):
         if len(self.outputs) != 1:
             raise Exception("Only one output is supported by the ScpApp, %d given" % (len(self.outputs)))
 
-        # Input and output must be of the same type
         inp = self.inputs[0]
         out = self.outputs[0]
-        if inp.__class__ != out.__class__:
+
+        # Input and output must be of the same type
+        # See comment above regarding identification of DO types, and why we
+        # can't simply do:
+        # if inp.__class__ != out.__class__:
+        if hasattr(inp, 'children') and hasattr(out, 'children'):
             raise Exception("Input and output must be of the same type")
 
         # This app's location must be equal to at least one of the I/O
