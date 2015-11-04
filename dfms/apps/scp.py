@@ -48,7 +48,12 @@ class ScpApp(BarrierAppDataObject):
 
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:
-            if not isinstance(i, (FileDataObject, DirectoryContainer)):
+            # The current only way to check if we are handling a FileDataObject
+            # or a DirectoryDataObject is by checking if they have a `path`
+            # attribute. Calling `isinstance(i, (FileDataObject, DirectoryContainer))`
+            # doesn't work because the input/output might be a Pyro4.Proxy object
+            # that fails the test
+            if not hasattr(i, 'path'):
                 raise Exception("%r is not supported by the ScpApp" % (i))
 
         # Only one input and one output are supported
@@ -67,7 +72,10 @@ class ScpApp(BarrierAppDataObject):
         if self.node != inp.node and self.node != out.node:
             raise Exception("%r is deployed in a node different from its input AND its output" % (self,))
 
-        recursive = isinstance(inp, DirectoryContainer)
+        # See comment above regarding identification of File/Directory DOs and
+        # why we can't simply do:
+        # recursive = isinstance(inp, DirectoryContainer)
+        recursive = hasattr(inp, 'children')
         if self.node == inp.node:
             remote.copyTo(self._toHost, inp.path, remotePath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath)
         else:
