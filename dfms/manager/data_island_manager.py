@@ -78,7 +78,7 @@ class DataIslandManager(object):
         while True:
             for n in self._nodes:
                 try:
-                    self.ensureDOM(n, self._domCheckTimeout)
+                    self.ensureDOM(n, timeout=self._domCheckTimeout)
                 except:
                     logger.warning("Couldn't ensure a DOM for node %s, will try again later" % (n))
             if self._nodeCheckerEvt.wait(60):
