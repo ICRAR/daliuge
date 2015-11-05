@@ -63,6 +63,39 @@ __N_TO_ONE_RELS = {
 
 logger = logging.getLogger(__name__)
 
+def addLink(linkType, lhDOSpec, rhOID, force=False):
+    """
+    Adds a link from `lhDOSpec` to point to `rhOID`. The link type (e.g., a
+    consumer) is signaled by `linkType`.
+    """
+
+    lhOID = lhDOSpec['oid']
+
+    # 1-N relationship
+    if linkType in __ONE_TO_N_RELS:
+        rel = __ONE_TO_N_RELS[linkType]
+        if not rel in lhDOSpec:
+            relList = []
+            lhDOSpec[rel] = relList
+        else:
+            relList = lhDOSpec[rel]
+        if rhOID not in relList:
+            relList.append(rhOID)
+        else:
+            raise Exception("DataObject %s is already part of %s's %s" % (rhOID, lhOID, rel))
+    # N-1 relationship, overwrite existing relationship only if `force` is specified
+    elif linkType in __N_TO_ONE_RELS:
+        rel = __N_TO_ONE_RELS[linkType]
+        if rel and not force:
+            raise Exception("DataObject %s already has a '%s', use 'force' to override" % (lhOID, rel))
+        lhDOSpec[rel] = rhOID
+    else:
+        raise ValueError("Cannot handle link type %d" % (linkType))
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Successfully linked %s and %s via '%s'" % (lhOID, rhOID, rel))
+
+
 def removeUnmetRelationships(doSpecList):
     unmetRelationships = []
 
