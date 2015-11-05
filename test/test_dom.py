@@ -32,7 +32,7 @@ import pkg_resources
 
 from dfms import doutils, ngaslite, utils
 from dfms.ddap_protocol import DOStates
-from dfms.manager import cmdline, repository
+from dfms.manager import cmdline
 from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
