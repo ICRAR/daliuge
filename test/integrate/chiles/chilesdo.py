@@ -20,12 +20,15 @@
 #    MA 02111-1307  USA
 #
 import Queue
+import logging
 import threading
 
 import drivecasa
 
 from dfms.data_object import BarrierAppDataObject
 
+
+logger = logging.getLogger(__name__)
 
 class SourceFlux(BarrierAppDataObject):
 
@@ -41,7 +44,8 @@ class SourceFlux(BarrierAppDataObject):
         inp = self.inputs[0]
         out = self.outputs[0]
 
-        print 'Calculating source flux on ', inp.path + '.image'
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Calculating source flux on %s.image' % (inp.path))
 
         casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
         casa.run_script(['ia.open("'"%s"'")' % (inp.path + '.image')])
@@ -49,8 +53,9 @@ class SourceFlux(BarrierAppDataObject):
         casaout, _ = casa.run_script(['print flux'])
         flux = float(casaout[0])
         if flux > 9E-4:
-            print 'Valid flux: %s' % flux
-            out.write(str(flux))
+            if logger.isEnabledFor(logging.INFO):
+                logger.info('Valid flux found: %f' % (flux))
+        out.write(str(flux))
 
 
 class Clean(BarrierAppDataObject):
@@ -64,7 +69,6 @@ class Clean(BarrierAppDataObject):
 
         self.clean_args = {
                         'field':  str(self._getArg(kwargs, 'field', None)),
-                        'spw': '',
                         'mode': str(self._getArg(kwargs, 'mode', None)),
                         'restfreq': str(self._getArg(kwargs, 'restfreq', None)),
                         'nchan': self._getArg(kwargs, 'nchan', None),
@@ -106,9 +110,10 @@ class Clean(BarrierAppDataObject):
 
         vis = [i.path for i in inp]
 
-        print 'Cleaning ', vis
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Cleaning %r" % (vis))
 
-        q = Queue.Queue()    
+        q = Queue.Queue()
         t = threading.Thread(target = self.invoke_clean, args = (q, vis, out.path))
         t.start()
         t.join()
@@ -162,7 +167,8 @@ class Split(BarrierAppDataObject):
         inp = self.inputs[0]
         out = self.outputs[0]
 
-        print 'Splitting ', inp.path
+        if logger.isEnabledFor(logging.INFO):
+            logger.info('Splitting %s' % (inp.path))
 
         q = Queue.Queue()
         t = threading.Thread(target = self.invoke_split, args = (q, inp.path, out.path))
