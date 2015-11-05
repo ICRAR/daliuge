@@ -85,7 +85,7 @@ class Clean(BarrierAppDataObject):
             script = []
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
             drivecasa.commands.clean(script,
-                                            vis_path = vis,
+                                            vis_paths = vis,
                                             out_path = outcube,
                                             niter = 0,
                                             threshold_in_jy = 0,
