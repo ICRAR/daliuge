@@ -48,7 +48,7 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], pkeyPath=None, domRestPort=8888):
+    def __init__(self, dimId, nodes=['localhost'], pkeyPath=None, domRestPort=8888, domCheckTimeout=10):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
@@ -56,6 +56,7 @@ class DataIslandManager(object):
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
         self._domRestPort = domRestPort
+        self._domCheckTimeout = domCheckTimeout
         self.startNodeChecker()
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
@@ -77,7 +78,7 @@ class DataIslandManager(object):
         while True:
             for n in self._nodes:
                 try:
-                    self.ensureDOM(n)
+                    self.ensureDOM(n, self._domCheckTimeout)
                 except:
                     logger.warning("Couldn't ensure a DOM for node %s, will try again later" % (n))
             if self._nodeCheckerEvt.wait(60):
@@ -110,13 +111,13 @@ class DataIslandManager(object):
         if logger.isEnabledFor(logging.INFO):
             logger.info("DOM successfully started at %s:%d" % (host, port))
 
-    def ensureDOM(self, host, port=DOM_PORT):
+    def ensureDOM(self, host, port=DOM_PORT, timeout=10):
         # We rely on having ssh keys for this, since we're using
         # the dfms.remote module, which authenticates using public keys
         if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Checking DOM presence at %s:%d" % (host, port))
 
-        if portIsOpen(host, port, 10):
+        if portIsOpen(host, port, timeout):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("DOM already present at %s:%d" % (host, port))
             return
@@ -127,7 +128,7 @@ class DataIslandManager(object):
         self.startDOM(host, port)
 
         # Wait a bit until the DOM starts; if it doesn't we fail
-        if not portIsOpen(host, port, 10):
+        if not portIsOpen(host, port, timeout):
             raise Exception("DOM started at %s:%d, but couldn't connect to it" % (host, port))
 
     def domAt(self, node):

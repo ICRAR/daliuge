@@ -209,6 +209,8 @@ def dfmsDIM(args=sys.argv):
                       dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
     parser.add_option("--domRestPort", action="store", type="int",
                       dest="domRestPort", help = "Port used by DOMs started by this DIM to expose their REST interface", default=None)
+    parser.add_option("--domCheckTimeout", action="store", type="int",
+                      dest="domCheckTimeout", help="Maximum timeout used when automatically checking for DOM presence", default=10)
     (options, args) = parser.parse_args(args)
 
     commonOptionsCheck(options, parser)
@@ -217,7 +219,7 @@ def dfmsDIM(args=sys.argv):
     # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort}
+    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort, 'domCheckTimeout': options.domCheckTimeout}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 
