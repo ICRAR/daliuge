@@ -392,6 +392,12 @@ class DataIslandManager(object):
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
+
+        # The graphs coming from the DOMs are not interconnected, we need to
+        # add the missing connections to the graph before returning upstream
+        for rel in self._interDOMRelations[sessionId]:
+            graph_loader.addLink(rel.rel, allGraphs[rel.lhs], rel.rhs)
+
         return allGraphs
 
     def _getSessionStatus(self, sessionId, node, allStatus, latch, exceptions):
