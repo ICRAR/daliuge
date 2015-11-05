@@ -138,7 +138,7 @@ if __name__ == '__main__':
                     casapy_path = CASAPY,
                     node = node)
         split_out = directorySpec(uuid.uuid1(), dirname = splitOutDir, check_exists = False, node = node)
-        scp = scpSpec('scp_%d' % (i), node = node, pkeyPath = KEY_PATH)
+        scp = scpSpec('scp_%d' % (i), node = node, pkeyPath = KEY_PATH, timeout=3600)
         scpOut = directorySpec(uuid.uuid1(), dirname = splitCopyDir, check_exists = False, node = ch05)
 
         # Establish relationships
