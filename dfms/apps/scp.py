@@ -42,6 +42,7 @@ class ScpApp(BarrierAppDataObject):
         BarrierAppDataObject.initialize(self, **kwargs)
         self._remoteUser = self._getArg(kwargs, 'remoteUser', None)
         self._pkeyPath   = self._getArg(kwargs, 'pkeyPath', None)
+        self._timeout    = self._getArg(kwargs, 'timeout', None)
 
     def run(self):
 
@@ -80,6 +81,6 @@ class ScpApp(BarrierAppDataObject):
         # recursive = isinstance(inp, DirectoryContainer)
         recursive = hasattr(inp, 'children')
         if self.node == inp.node:
-            remote.copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath)
+            remote.copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath, timeout=self._timeout)
         else:
-            remote.copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath)
+            remote.copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath, timeout=self._timeout)

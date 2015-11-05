@@ -88,24 +88,28 @@ def __scpProgress(filename, size, sent):
     if size == sent and logger.isEnabledFor(logging.DEBUG):
         logger.debug("Finished scp-ing %s (%d bytes)" % (filename, sent))
 
-def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pkeyPath=None):
+def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
     """
     Copies the files located at `host`:`remotePath` to `localPath` connecting
     to `host` as `username`. A `recursive` flag can be specified, as well as a
     private key (via `pkeyPath`) to be used when creating the connection.
     """
+    if timeout is None:
+        timeout = 5.0
     client = createClient(host, username=username, pkeyPath=pkeyPath)
-    with scp.SCPClient(client.get_transport(), progress=__scpProgress) as scpClient:
+    with scp.SCPClient(client.get_transport(), progress=__scpProgress, socket_timeout=timeout) as scpClient:
         scpClient.get(remote_path=remotePath, local_path=localPath, recursive=recursive)
     client.close()
 
-def copyTo(host, localFiles, remotePath='.', recursive=False, username=None, pkeyPath=None):
+def copyTo(host, localFiles, remotePath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
     """
     Copies the files located at `localPath` to `host`:`remotePath` connecting
     to `host` as `username`. A `recursive` flag can be specified, as well as a
     private key (via `pkeyPath`) to be used when creating the connection.
     """
+    if timeout is None:
+        timeout = 5.0
     client = createClient(host, username=username, pkeyPath=pkeyPath)
-    with scp.SCPClient(client.get_transport(), progress=__scpProgress) as scpClient:
+    with scp.SCPClient(client.get_transport(), progress=__scpProgress, socket_timeout=timeout) as scpClient:
         scpClient.put(localFiles, remote_path=remotePath, recursive=recursive)
     client.close()
