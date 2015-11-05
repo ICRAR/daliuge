@@ -94,9 +94,9 @@ class Clean(BarrierAppDataObject):
             casa.run_script(script)
             q.put(0)
 
-        except Exception as e:
-            print str(e)
+        except Exception:
             q.put(-1)
+            raise
 
 
     def run(self):
