@@ -6,7 +6,7 @@ from setuptools import find_packages
 # HACK - HACK - HACK - HACK
 #
 # We externally make sure that numpy is installed because spead2 needs it there
-# at compile time (and therefore at runtime too).o
+# at compile time (and therefore at runtime too).
 
 # An initial solution for this problem was to add numpy to the setup_requires
 # argument of spead2's setup invocation. This solves the problem of compiling
@@ -40,7 +40,7 @@ setup(
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*']
       },
-      install_requires=["Pyro4", "luigi<2.0", "psutil", "paramiko", "bottle", "tornado", "drive-casa==0.7", "docker-py","spead2==0.4.0"],
+      install_requires=["Pyro4", "luigi<2.0", "psutil", "paramiko", "bottle", "tornado", "drive-casa==0.7", "docker-py","spead2==0.4.0","scp"],
       test_suite="test",
       entry_points= {
           'console_scripts':[

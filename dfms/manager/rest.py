@@ -60,6 +60,7 @@ class RestServer(object):
 
         # The non-REST mappings that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
+        app.get(  '/session', callback=self.visualizeSession)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -103,7 +104,7 @@ class RestServer(object):
         graphDict = self.dm.getGraph(sessionId)
         status = self.dm.getSessionStatus(sessionId)
         response.content_type = 'application/json'
-        return json.dumps({'sessionStatus': status, 'graph': graphDict})
+        return json.dumps({'status': status, 'graph': graphDict})
 
     def destroySession(self, sessionId):
         self.dm.destroySession(sessionId)
@@ -114,8 +115,8 @@ class RestServer(object):
 
     def deploySession(self, sessionId):
         completedDOs = []
-        if 'completed' in request.params:
-            completedDOs = request.params['completed'].split(',')
+        if 'completed' in request.forms:
+            completedDOs = request.forms['completed'].split(',')
         self.dm.deploySession(sessionId,completedDOs=completedDOs)
 
     def getGraph(self, sessionId):
@@ -139,6 +140,13 @@ class RestServer(object):
         staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
         return static_file(filepath, root=staticRoot)
 
+    def visualizeSession(self):
+        sessionId = request.params['sessionId']
+        tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
+        urlparts = request.urlparts
+        serverUrl = urlparts.scheme + '://' + urlparts.netloc
+        return template(tpl, sessionId=sessionId, serverUrl=serverUrl)
+
 class DOMRestServer(RestServer):
     """
     A REST server for DataObjectManagers. It includes mappings for DOM-specific
@@ -153,7 +161,6 @@ class DOMRestServer(RestServer):
         app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
 
         # The non-REST mappings that serve HTML-related content
-        app.get(  '/session', callback=self.visualizeSession)
         app.get(  '/', callback=self.visualizeDOM)
 
     def getDOMStatus(self):
@@ -177,13 +184,6 @@ class DOMRestServer(RestServer):
     #===========================================================================
     # non-REST methods
     #===========================================================================
-    def visualizeSession(self):
-        sessionId = request.params['sessionId']
-        tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
-        urlparts = request.urlparts
-        serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return template(tpl, sessionId=sessionId, serverUrl=serverUrl)
-
     def visualizeDOM(self):
         tpl = pkg_resources.resource_string(__name__, 'web/dom.html')  # @UndefinedVariable
         urlparts = request.urlparts

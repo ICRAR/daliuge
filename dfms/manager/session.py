@@ -22,6 +22,8 @@
 """
 Module containing the logic of a session -- a given graph execution
 """
+
+import collections
 import logging
 import threading
 
@@ -29,7 +31,8 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
-from dfms.data_object import AbstractDataObject, BarrierAppDataObject
+from dfms.data_object import AbstractDataObject, BarrierAppDataObject, \
+    AppDataObject
 from dfms.ddap_protocol import DOLinkType
 
 
@@ -156,31 +159,9 @@ class Session(object):
         if rhDOSpec is None: missingOids.append(rhOID)
         if missingOids:
             oids = 'OID' if len(missingOids) == 1 else 'OIDs'
-            raise Exception('No DataObject found for %s %s' % (oids, missingOids))
+            raise Exception('No DataObject found for %s %r' % (oids, missingOids))
 
-        # 1-N relationship
-        if linkType in _LINKTYPE_TO_NREL:
-            rel = _LINKTYPE_TO_NREL[linkType]
-            if not rel in lhDOSpec:
-                relList = []
-                lhDOSpec[rel] = relList
-            else:
-                relList = lhDOSpec[rel]
-            if rhOID not in relList:
-                relList.append(rhOID)
-            else:
-                raise Exception("DataObject %s is already part of %s's %s" % (rhOID, lhOID, rel))
-        # N-1 relationship, overwrite existing relationship only if `force` is specified
-        elif linkType in _LINKTYPE_TO_REL:
-            rel = _LINKTYPE_TO_REL[linkType]
-            if rel and not force:
-                raise Exception("DataObject %s already has a '%s', use 'force' to override" % (lhOID, rel))
-            lhDOSpec[rel] = rhOID
-        else:
-            raise ValueError("Cannot handle link type %d" % (linkType))
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Successfully linked %s and %s via '%s'" % (lhOID, rhOID, rel))
+        graph_loader.addLink(linkType, lhDOSpec, rhOID, force=force)
 
     def findByOidInParts(self, oid):
         if oid in self._graph:
@@ -262,7 +243,7 @@ class Session(object):
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
             raise Exception("The session is currently not running, cannot get graph status")
-        statusDict = {}
+        statusDict = collections.defaultdict(dict)
 
         # We shouldn't traverse the full graph because there might be nodes
         # attached to our DOs that are actually part of other DOM (and have been
@@ -274,7 +255,9 @@ class Session(object):
         # The same trick is used in luigi_int.RunDataObjectTask.requires
         def addToDict(do, downStreamDOs):
             downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDataObject)]
-            statusDict[do.oid] = do.status
+            if isinstance(do, AppDataObject):
+                statusDict[do.oid]['execStatus'] = do.execStatus
+            statusDict[do.oid]['status'] = do.status
 
         doutils.breadFirstTraverse(self._roots, addToDict)
         return statusDict

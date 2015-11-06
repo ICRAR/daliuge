@@ -22,7 +22,6 @@
 import collections
 import logging
 import threading
-import time
 
 import Pyro4
 
@@ -49,35 +48,40 @@ class DataIslandManager(object):
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], nsHost=None, pkeyPath=None, domRestPort=8888):
+    def __init__(self, dimId, nodes=['localhost'], pkeyPath=None, domRestPort=8888, domCheckTimeout=10):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
-        self._nsHost = nsHost or 'localhost'
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
         self._domRestPort = domRestPort
+        self._domCheckTimeout = domCheckTimeout
         self.startNodeChecker()
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
     def startNodeChecker(self):
         self._nodeCheckerEvt = threading.Event()
-        self._nodeCheckerThread = threading.Thread(name='Node checker Thread', target=self._checkNodes)
-        self._nodeCheckerThread.daemon = True
+        self._nodeCheckerThread = threading.Thread(name='NodeChecker Thread', target=self._checkNodes)
         self._nodeCheckerThread.start()
 
     def stopNodeChecker(self):
-        self._nodeCheckerEvt.set()
-        self._nodeCheckerThread.join()
+        if not self._nodeCheckerEvt.isSet():
+            self._nodeCheckerEvt.set()
+            self._nodeCheckerThread.join()
 
-    __del__ = stopNodeChecker
+    # Explicit shutdown
+    def shutdown(self):
+        self.stopNodeChecker()
 
     def _checkNodes(self):
         while True:
             for n in self._nodes:
-                self.ensureDOM(n)
-            if self._nodeCheckerEvt.wait(10000):
+                try:
+                    self.ensureDOM(n, timeout=self._domCheckTimeout)
+                except:
+                    logger.warning("Couldn't ensure a DOM for node %s, will try again later" % (n))
+            if self._nodeCheckerEvt.wait(60):
                 break
 
     @property
@@ -93,15 +97,13 @@ class DataIslandManager(object):
         return self._domRestPort
 
     def dfmsDOMCommandLine(self, host, port):
-        cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0} --nsHost {2}'.format(host, port, self._nsHost)
+        cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0}'.format(host, port)
         if self._domRestPort:
             cmdline += ' --restPort {0}'.format(self._domRestPort)
         return cmdline
 
     def startDOM(self, host, port):
         client = remote.createClient(host, pkeyPath=self._pkeyPath)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("DOM not present at %s:%d, starting it" % (host, port))
         out, err, status = remote.execRemoteWithClient(client, self.dfmsDOMCommandLine(host, port))
         if status != 0:
             logger.error("Failed to start the DOM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, port, out, err))
@@ -109,36 +111,28 @@ class DataIslandManager(object):
         if logger.isEnabledFor(logging.INFO):
             logger.info("DOM successfully started at %s:%d" % (host, port))
 
-    def ensureDOM(self, host, port=DOM_PORT):
+    def ensureDOM(self, host, port=DOM_PORT, timeout=10):
         # We rely on having ssh keys for this, since we're using
         # the dfms.remote module, which authenticates using public keys
         if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Checking DOM presence at %s:%d" % (host, port))
 
-        if portIsOpen(host, port):
+        if portIsOpen(host, port, timeout):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("DOM already present at %s:%d" % (host, port))
             return
 
+        if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("DOM not present at %s:%d, will start it now" % (host, port))
+
         self.startDOM(host, port)
 
         # Wait a bit until the DOM starts; if it doesn't we fail
-        if not portIsOpen(host, port, 10):
+        if not portIsOpen(host, port, timeout):
             raise Exception("DOM started at %s:%d, but couldn't connect to it" % (host, port))
 
     def domAt(self, node):
-        ns = Pyro4.locateNS(host=self._nsHost)
-        tries = 10
-        i = 0
-        while i < tries:
-            try:
-                uri = ns.lookup("dom_%s" % (node))
-            except:
-                i += 1
-                time.sleep(0.2)
-            else:
-                return Pyro4.Proxy(uri)
-        raise Exception("Couldn't find DataObjectManager for node %s after %d tries" % (node, tries))
+        return Pyro4.Proxy("PYRO:dom_{0}@{0}:{1}".format(node, DOM_PORT))
 
     def getSessionIds(self):
         return self._sessionIds;
@@ -398,6 +392,12 @@ class DataIslandManager(object):
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
+
+        # The graphs coming from the DOMs are not interconnected, we need to
+        # add the missing connections to the graph before returning upstream
+        for rel in self._interDOMRelations[sessionId]:
+            graph_loader.addLink(rel.rel, allGraphs[rel.rhs], rel.lhs)
+
         return allGraphs
 
     def _getSessionStatus(self, sessionId, node, allStatus, latch, exceptions):

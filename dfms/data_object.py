@@ -176,6 +176,13 @@ class AbstractDataObject(object):
         # Maybe we want to have a different default value for this one?
         self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DO)
 
+        # The physical node where this DataObject resides.
+        # This piece of information is mandatory when submitting the physical
+        # graph via the DataIslandManager, but in simpler scenarios such as
+        # tests or graph submissions via the DataObjectManager it might be
+        # missing. We thus default to '127.0.0.1'
+        self._node = self._getArg(kwargs, 'node', '127.0.0.1')
+
         # Expected lifespan for this object, used by to expire them
         lifespan = -1
         if kwargs.has_key('lifespan'):
@@ -656,9 +663,7 @@ class AbstractDataObject(object):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
 
-            t = threading.Thread(None, lambda consumer, uid: consumer.dataObjectCompleted(uid), args=[consumer, self.uid])
-            t.daemon = 1
-            t.start()
+            consumer.dataObjectCompleted(self.uid)
         self.subscribe(dataObjectCompleted, eventType='status')
 
     @property
@@ -800,6 +805,10 @@ class AbstractDataObject(object):
     @location.setter
     def location(self, value):
         self._location = value
+
+    @property
+    def node(self):
+        return self._node
 
     @property
     def uri(self):
@@ -1149,7 +1158,10 @@ class BarrierAppDataObject(AppDataObject):
         super(BarrierAppDataObject, self).dataObjectCompleted(uid)
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
-            self.execute()
+            # Return immediately, but schedule the execution of this app
+            t = threading.Thread(None, lambda: self.execute())
+            t.daemon = 1
+            t.start()
 
     def execute(self):
         """

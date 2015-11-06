@@ -58,19 +58,20 @@ class CountDownLatch(object):
             self.lock.wait()
         self.lock.release()
 
-def portIsOpen(host, port, connectTimeout=None):
+def portIsOpen(host, port, timeout=0):
     """
     Checks if a given host/port is opened, with a given `connectTimeout`. The
     check is done by simply opening a connection and then closing it.
     """
-    return writeToRemotePort(host, port, data=None, connectTimeout=connectTimeout)
+    return writeToRemotePort(host, port, data=None, timeout=timeout)
 
-def writeToRemotePort(host, port, data=None, connectTimeout=None):
+def writeToRemotePort(host, port, data=None, timeout=0):
     """
     Writes the given data into the port specified by `host`:`port`. A maximum
-    waiting time of `connectTimeout` can be specified (in seconds), in which
-    case this method will try to establish a connection with the remote port for
-    at least that amount of time.
+    waiting time of `timeout` can be specified (in seconds), in which case this
+    method will try to establish a connection with the remote port for at least
+    that amount of time. A values of 0 (the default) means that no waiting is
+    performed, and a value of `None` means that an infinite timeout is used.
 
     This method returns `True` if the connection was successfully established
     with the given timeout, and if the data was successfully sent; `False`
@@ -80,14 +81,14 @@ def writeToRemotePort(host, port, data=None, connectTimeout=None):
     start = time.time()
     while True:
         try:
-            if connectTimeout is not None:
-                timeout = connectTimeout - (time.time() - start)
-                if timeout <= 0:
+            if timeout is not None and timeout != 0:
+                thisTimeout = timeout - (time.time() - start)
+                if thisTimeout <= 0:
                     return False
             else:
-                timeout = None
+                thisTimeout = None
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(timeout)
+            s.settimeout(thisTimeout)
             s.connect((host, port))
             if data is not None:
                 s.send(data)
@@ -95,15 +96,16 @@ def writeToRemotePort(host, port, data=None, connectTimeout=None):
             return True
         except socket.timeout:
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]' % (host, port, timeout))
+                logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]' % (host, port, thisTimeout))
             return False
         except socket.error as e:
             # If the port is closed we keep trying until enough time has gone by
             if e.errno == errno.ECONNREFUSED:
-                if time.time() - start > timeout:
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('Refused connection to %s:%d during %f seconds' % (host, port, timeout))
-                    return False
+                if timeout is not None:
+                    if time.time() - start > timeout:
+                        if logger.isEnabledFor(logging.DEBUG):
+                            logger.debug('Refused connection to %s:%d for more than %f seconds' % (host, port, timeout))
+                        return False
                 time.sleep(0.1)
                 continue
             # Any other error should be raised
