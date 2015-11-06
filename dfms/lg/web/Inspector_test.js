@@ -363,7 +363,8 @@ Inspector.prototype.showObjectProperties = function(obj) {
   } else if (proto.constructor === Object) { // arbitrary JS Object (for the Part.data)
     var name = 'data';
     var gok = {'__gohashid':1, 'loc':1, 'isGroup':1, 'group':1,
-              'fromPort':1, 'toPort':1, 'points':1, 'visible':1};
+              'fromPort':1, 'toPort':1, 'points':1, 'visible':1,
+              'columnDefinitions':1, 'var_list':1};
     //gok[] = 1;
     var go_readonly = {'key':1, 'category':1, 'from':1, 'to':1};
 

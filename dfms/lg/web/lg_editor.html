@@ -694,6 +694,69 @@
         //new go.Binding("clean", "clean_para")
       ));
 
+    myDiagram.nodeTemplateMap.add("Variables",
+       $(go.Node, "Auto",
+        $(go.Shape, { fill: "white" }),
+        $(go.Panel, "Table",
+          new go.Binding("itemArray", "var_list"),
+          $(go.RowColumnDefinition,
+            { row: 0, background: "lightgray" }),
+          $(go.RowColumnDefinition,
+            { row: 1, separatorStroke: "black" }),
+          // the table headers -- remains even if itemArray is empty
+          $(go.Panel, "TableRow",
+            { isPanelMain: true },
+            new go.Binding("itemArray", "columnDefinitions"),
+            {
+              itemTemplate:  // bound to a column definition object
+                $(go.Panel,
+                  new go.Binding("column"),
+                  $(go.TextBlock,
+                    { margin: new go.Margin(2, 2, 0, 2), font: "bold 10pt sans-serif" },
+                    new go.Binding("text"))
+                )
+            }
+          ),
+
+          { // the rows for the var_list
+            defaultAlignment: go.Spot.Left,
+            defaultColumnSeparatorStroke: "black",
+            itemTemplate:  // bound to a person/row data object
+              $(go.Panel, "TableRow",
+                // which in turn consists of a collection of cell objects,
+                // held by the "columns" property in an Array
+                new go.Binding("itemArray", "columns"),
+                // you could also have other Bindings here for the whole row
+                {
+                  itemTemplate:  // bound to a cell object
+                    $(go.Panel,  // each of which as "attr" and "text" properties
+                      { stretch: go.GraphObject.Fill, alignment: go.Spot.TopLeft },
+                      new go.Binding("column", "attr",
+                                     function(a, elt) {  // ELT is this bound item/cell Panel
+                                       // elt.data will be the cell object
+                                       // elt.panel.data will be the person/row data object
+                                       // elt.part.data will be the node data object
+                                       // "columnDefinitions" is on the node data object, so:
+                                       var cd = findColumnDefinitionForName(elt.part.data, a);
+                                       //console.log(cd.column);
+                                       if (cd !== null) {
+                                        //console.log(cd.column);
+                                        return cd.column;
+                                      }
+
+                                       throw new Error("unknown column name: " + a);
+                                     }),
+                      // you could also have other Bindings here for this cell
+                      $(go.TextBlock, { editable: true },
+                        { margin: new go.Margin(2, 2, 0, 2), wrap: go.TextBlock.None },
+                        new go.Binding("text").makeTwoWay())
+                    )
+                }
+              )
+          }
+        )
+      ));
+
     // this function is used to highlight a Group that the selection may be dropped into
     function highlightGroup(e, grp, show) {
       if (!grp) return;
@@ -770,6 +833,7 @@
           $(go.Placeholder,
             { padding: 5, alignment: go.Spot.TopLeft })
         ),  // end Vertical Panel
+        new go.Binding("num_of_splits", "num_of_splits"),
         makePort("T", go.Spot.Top, true, true),
         makePort("L", go.Spot.Left, true, true),
         makePort("R", go.Spot.Right, true, true),
@@ -928,33 +992,57 @@
     });
 
     // initialize the Palette that is on the left side of the page
+    var paletteModel =  $(go.GraphLinksModel,{
+                        copiesArrays: true,
+                        copiesArrayObjects: true,
+                        nodeDataArray:[// specify the contents of the Palette
+                        { category: "Start", text: "Start" },
+                        { category: "Component", text: "Component", execution_time: 5,
+                        Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
+                        Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
+                        { category: "Data", text: "Data", data_volume: 5},
+                        { category: "TM", text: "TM" },
+                        { category: "GSM", text: "GSM" },
+                        { category: "Branch", text: "Branch\nCondition" },
+                        { category: "LoopCondition", text: "Loop\nCondition" },
+                        { category: "Metadata", text: "Metadata" },
+                        { category: "End", text: "End" },
+                        { category: "LSM", text: "LSM" },
+                        { category: "Parameter", text: "Parameter" },
+                        { category: "SplitData", text: "Data Splits", isGroup: true, num_of_splits: "${num_channel} * ${num_beam}"},
+                        { category: "Variables", text: "Global Variables",
+                          columnDefinitions: [
+                              // each column definition needs to specify the column used
+                              { attr: "name", text: "Var", column: 0 },
+                              { attr: "value", text: "Val", column: 1 },
+                              { attr: "unit", text: "Unit", column: 2 }
+                          ],
+                          var_list: [  // the table of var_list
+                            // each row is a person with an Array of Objects associating a column name with a text value
+                            { columns: [{ attr: "name", text: "num_channel" }, { attr: "value", text: "1024" }, { attr: "unit", text: ""}] }
+                          ]},
+                        { category: "Comment", text: "Comment"}
+
+                        ]});
     myPalette =
       $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
         {
-          "animationManager.duration": 800, // slightly longer than default (600ms) animation
+          "animationManager.duration": 600, // slightly longer than default (600ms) animation
           nodeTemplateMap: myDiagram.nodeTemplateMap,  // share the templates used by myDiagram
           groupTemplateMap: myDiagram.groupTemplateMap,
-          model: new go.GraphLinksModel([  // specify the contents of the Palette
-            { category: "Start", text: "Start" },
-            { category: "Component", text: "Component", execution_time: 5,
-            Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
-            Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
-            { category: "Data", text: "Data", data_volume: 5},
-            { category: "TM", text: "TM" },
-            { category: "GSM", text: "GSM" },
-            { category: "Branch", text: "Branch\nCondition" },
-            { category: "LoopCondition", text: "Loop\nCondition" },
-            { category: "Metadata", text: "Metadata" },
-            { category: "End", text: "End" },
-            { category: "LSM", text: "LSM" },
-            { category: "Parameter", text: "Parameter" },
-            { category: "SplitData", text: "Split Data", isGroup: true},
-            { category: "Comment", text: "Comment"}
-          ])
+          model: paletteModel
         });
 
   makeInspector();
 
+  }
+
+  function findColumnDefinitionForName(nodedata, attrname) {
+    var columns = nodedata.columnDefinitions;
+    for (var i = 0; i < columns.length; i++) {
+      if (columns[i].attr === attrname) return columns[i];
+    }
+    return null;
   }
 
   // Make all ports on a node visible when the mouse is over the node
