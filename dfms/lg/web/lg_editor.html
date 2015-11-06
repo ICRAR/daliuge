@@ -16,7 +16,9 @@
       li {
             cursor:pointer;
         display:block;
-        width:100px;
+        width:90px;
+        /*padding-left:5px;*/
+
       }
       .Folder {
       }
@@ -27,6 +29,7 @@
       }
       ul {
         list-style-type:none;
+        padding-left:14px;
       }
       .buttonwrapper {
     text-align: center;
@@ -243,7 +246,9 @@
 <script src="/static/go.js"></script>
 <script src="/static/jquery.min.js"></script>
 <link href="/static/jsoneditor.min.css" rel="stylesheet" type="text/css">
+<link href="/static/Inspector_test.css" rel="stylesheet" type="text/css">
 <script src="/static/jsoneditor.min.js"></script>
+<script src="/static/Inspector_test.js"></script>
 <script id="code">
   function init() {
     //if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
@@ -317,6 +322,8 @@
     };
     var editor = new JSONEditor(container, options);
     window.json_editor = editor;
+
+    //makeInspector();
 
     // helper definitions for node templates
 
@@ -415,6 +422,17 @@
             },
             new go.Binding("text").makeTwoWay())
         ),
+        new go.Binding("execution_time", "execution_time"),
+        new go.Binding("Arg01", "Arg01"),
+        new go.Binding("Arg02", "Arg02"),
+        new go.Binding("Arg03", "Arg03"),
+        new go.Binding("Arg04", "Arg04"),
+        new go.Binding("Arg05", "Arg05"),
+        new go.Binding("Arg06", "Arg06"),
+        new go.Binding("Arg07", "Arg07"),
+        new go.Binding("Arg08", "Arg08"),
+        new go.Binding("Arg09", "Arg09"),
+        new go.Binding("Arg10", "Arg10"),
         // four named ports, one on each side:
         makePort("T", go.Spot.Top, true, true),
         makePort("L", go.Spot.Left, true, true),
@@ -441,6 +459,7 @@
             },
             new go.Binding("text").makeTwoWay())
         ),
+        new go.Binding("data_volume", "data_volume"),
         // four named ports, one on each side:
         makePort("T", go.Spot.Top, true, true),
         makePort("L", go.Spot.Left, true, true),
@@ -672,6 +691,7 @@
           },
           new go.Binding("text").makeTwoWay())
         // no ports, because no links are allowed to connect with a comment
+        //new go.Binding("clean", "clean_para")
       ));
 
     // this function is used to highlight a Group that the selection may be dropped into
@@ -916,8 +936,10 @@
           groupTemplateMap: myDiagram.groupTemplateMap,
           model: new go.GraphLinksModel([  // specify the contents of the Palette
             { category: "Start", text: "Start" },
-            { category: "Component", text: "Component"},
-            { category: "Data", text: "Data" },
+            { category: "Component", text: "Component", execution_time: 5,
+            Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
+            Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
+            { category: "Data", text: "Data", data_volume: 5},
             { category: "TM", text: "TM" },
             { category: "GSM", text: "GSM" },
             { category: "Branch", text: "Branch\nCondition" },
@@ -927,9 +949,11 @@
             { category: "LSM", text: "LSM" },
             { category: "Parameter", text: "Parameter" },
             { category: "SplitData", text: "Split Data", isGroup: true},
-            { category: "Comment", text: "Comment" }
+            { category: "Comment", text: "Comment"}
           ])
         });
+
+  makeInspector();
 
   }
 
@@ -1052,6 +1076,39 @@
     }
   }
 
+  function makeInspector() {
+    //alert("inspector is called");
+    var alist = ["location", "clean"];
+    var inspector = new Inspector('myInspector', myDiagram,
+      {
+        acceptButton: true,
+        resetButton: true,
+
+
+        /*
+        propertyNames: {
+              "Node": alist
+        },
+        */
+
+
+
+
+        // example predicate, only show data objects:
+        inspectPredicate: function(value) {
+          return !(value instanceof go.GraphObject)
+        }
+
+
+
+
+
+      });
+
+
+    window.inspector = inspector;
+  }
+
 </script>
 </head>
 <body onload="init()">
@@ -1075,15 +1132,18 @@
               <button id="SaveButton" onclick="saveToRemote(true)" class="button">Save Diagram</button>
               </div>
           </li>
-          <li>
+
+          <li style="width:52px">
             &nbsp;
           </li>
+
           <li>
+
               <div class="buttonwrapper">
               <button id="LoadButton" onclick="load()" class="button" disabled>Save JSON</button>
               </div>
           </li>
-          <li>
+          <li style="width:35px">
             &nbsp;
           </li>
           <li>
@@ -1108,7 +1168,7 @@
 
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:16%">
       <div class="panel"><br/>Logical Graphs <br/><br/></div>
-      <div id="myTree" style="border: solid 1px gray; height: 850px">
+      <div id="myTree" style="border: solid 1px gray; height: 350px">
       <ul onmouseover="resolveSrcMouseover(event);" onmouseout="resolveSrcMouseout(event);" onclick="takeAction(event);">
         <li><div id="Folder1" class="ExpandCollapse">-</div><div class="Folder">SDP Pipelines</div></li>
         <ul id="ExpandCollapseFolder1">
@@ -1123,11 +1183,13 @@
           <li><div id="lofar_cal.json">Calibration</div></li>
         </ul>
         <li><div id="Folder3" class="ExpandCollapse">-</div><div class="Folder">CHILES Pipelines</div></li>
-        <ul id="ExpandCollapseFolder2">
+        <ul id="ExpandCollapseFolder3">
           <li><div id="chiles_simple.json">Simple</div></li>
           <li><div id="chiles_imaging.json">ICRAR Imaging</div></li>
         </ul>
       </ul>
+      </div>
+      <div id="myInspector" class = "inspector-container">
       </div>
     </span>
   </div>
