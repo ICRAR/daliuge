@@ -29,9 +29,9 @@
 #       Event and LocalEventBroadcaster. We could also collapse the hierarchy of
 #       the latter since there is no point in maintaining it anymore
 
-import threading
-import logging
 from collections import defaultdict
+import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class EventBroadcaster(object):
             setattr(e, k, v)
         return e
 
-class AbstractEventBroadcaster(EventBroadcaster):
+class LocalEventBroadcaster(EventBroadcaster):
 
     __ALL_EVENTS = 'SPECIAL_EVENT_TYPE_THAT_WILL_NEVER_EXIST_EXCEPT_HERE'
 
@@ -94,40 +94,5 @@ class AbstractEventBroadcaster(EventBroadcaster):
             return
 
         e = self._createEvent(eventType, **attrs)
-        self.callBack(callbacks, e)
-
-    def callBack(self, callbacks, event):
-        pass
-
-class LocalEventBroadcaster(AbstractEventBroadcaster):
-    """
-    A simple event broadcaster that calls all necessary callbacks in sequence
-    """
-    def callBack(self, callbacks, event):
         for fn in callbacks:
-            fn(event)
-
-class ThreadedEventBroadcaster(AbstractEventBroadcaster):
-    """
-    An simple event broadcaster that creates a new daemon thread for each
-    subscriber when an event is fired and starts them. This way even firing is
-    handled asynchronously from the caller, and also in parallel for different
-    subscribers.
-    """
-
-    def __init__(self):
-        super(ThreadedEventBroadcaster, self).__init__()
-        self._countLock = threading.RLock()
-        self._counter = 1
-
-    def getAndIncreaseCounter(self):
-        with self._countLock:
-            c = self._counter
-            self._counter +=1
-            return c
-
-    def callBack(self, callbacks, event):
-        for fn in callbacks:
-            t = threading.Thread(None, lambda fn, e: fn(e), 'eb-%d' % (self.getAndIncreaseCounter()), [fn, event])
-            t.daemon = 1
-            t.start()
+            fn(e)

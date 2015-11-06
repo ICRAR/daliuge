@@ -47,12 +47,12 @@ VIS = [
         ]
 
 def fileDoSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'plain', 'storage':'file'})
+    doSpec = dodict({'oid':str(uid), 'type':'plain', 'storage':'file', 'node': 'localhost'})
     doSpec.update(kwargs)
     return doSpec
 
 def directorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.data_object.DirectoryContainer'})
+    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.data_object.DirectoryContainer', 'node': 'localhost'})
     doSpec.update(kwargs)
     return doSpec
 
@@ -60,7 +60,8 @@ def casapyDockerAppSpec(uid, script):
     cmd = 'cd; ' + os.path.join(CASAPY, 'casapy') + ' --colors=NoColor --nologger --nogui -c "%s"' % (script)
     return dodict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.dockerapp.DockerApp',
                    'image':'dfms/casapy_centos7_dfms:0.1',
-                   'command':cmd, 'user': 'dfms'})
+                   'command':cmd, 'user': 'dfms',
+                   'node': 'localhost'})
 
 def fluxSpec(uid, **kwargs):
     script  = "ia.open('%i0.image');"

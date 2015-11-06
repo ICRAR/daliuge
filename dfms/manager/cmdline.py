@@ -28,7 +28,7 @@ import logging
 import optparse
 import os
 import sys
-import threading
+import time
 
 import Pyro4
 
@@ -57,20 +57,21 @@ def launchServer(opts):
 
     if not opts.noPyro:
         daemon = Pyro4.Daemon(port=opts.port)
-        uri = daemon.register(dm)
-
-        logger.info('Registering %s %s to NameServer' % (dmName, opts.id))
-        ns = Pyro4.locateNS(host=opts.nsHost, port=opts.nsPort)
-        ns.register(opts.id, uri)
-        del ns
+        uri = daemon.register(dm, objectId=opts.id)
+        logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
 
     if not opts.noPyro:
         daemon.requestLoop()
     else:
         try:
-            threading.Event().wait()
+            while True:
+                time.sleep(3600)
         except KeyboardInterrupt:
             pass
+
+    # kind of a hack, but it's sufficient for the time being
+    if hasattr(dm, 'shutdown'):
+        dm.shutdown()
 
 class DMDaemon(Daemon):
     def __init__(self, options):
@@ -91,10 +92,6 @@ def addCommonOptions(parser):
                       dest="host", help = "The host to bind this DM on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
                       dest="port", help = "The port to bind this DM on", default=0)
-    parser.add_option("-n", "--nsHost", action="store", type="string",
-                      dest="nsHost", help = "Name service host", default='localhost')
-    parser.add_option("-p", "--nsPort", action="store", type="int",
-                      dest="nsPort", help = "Name service port", default=9090)
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help = "The Data Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
@@ -107,6 +104,10 @@ def addCommonOptions(parser):
                       dest="restHost", help="The host to bind the REST server on")
     parser.add_option("--restPort", action="store", type="int",
                       dest="restPort", help="The port to bind the REST server on")
+    parser.add_option("-v", "--verbose", action="store_true",
+                      dest="verbose", help="Be verbose, including debugging information", default=False)
+    parser.add_option("-q", "--quiet", action="store_true",
+                      dest="quiet", help="Limit output to warnings and errors", default=False)
 
 def commonOptionsCheck(options, parser):
     # ID is mandatory
@@ -115,6 +116,9 @@ def commonOptionsCheck(options, parser):
     # -d and -s are exclusive
     if options.daemon and options.stop:
         parser.error('-d and -s cannot be specified together')
+    # -v and -q are exclusive
+    if options.verbose and options.quiet:
+        parser.error('-v and -q cannot be specified together')
 
 def start(options):
     # Start daemon
@@ -129,16 +133,26 @@ def start(options):
     else:
         launchServer(options)
 
-def setupLogging():
+def setupLogging(opts):
     if logging.root.handlers:
-        # Mmmm, somebody already did some logging, it hopefully wasn't us
-        # Let's reset it
+        # Mmmm, somebody already did some logging, it shouldn't have been us
+        # Let's reset the root handlers
         for h in logging.root.handlers[:]:
             logging.root.removeHandler(h)
         pass
 
+    if opts.verbose and opts.quiet:
+        raise Exception
+    if opts.verbose:
+        level = logging.DEBUG
+    elif opts.quiet:
+        level = logging.WARN
+    else:
+        level = logging.INFO
+
     # Let's configure logging now
-    logging.basicConfig(format="%(asctime)-15s [%(levelname)-5s] [%(threadName)-15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", stream=sys.stdout, level=logging.INFO)
+    logging.basicConfig(format="%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", stream=sys.stdout, level=logging.INFO)
+    logging.getLogger("dfms").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
 
@@ -149,8 +163,6 @@ def dfmsDOM(args=sys.argv):
     DataObjectManager and exposes it through Pyro and a REST interface.
     """
 
-    setupLogging()
-
     # Parse command-line and check options
     parser = optparse.OptionParser()
     addCommonOptions(parser)
@@ -160,6 +172,9 @@ def dfmsDOM(args=sys.argv):
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
 
+    commonOptionsCheck(options, parser)
+    setupLogging(options)
+
     # Add DOM-specific options
     options.dmType = DataObjectManager
     options.dmArgs = (options.id,)
@@ -167,7 +182,6 @@ def dfmsDOM(args=sys.argv):
     options.dmAcronym = 'DOM'
     options.restType = DOMRestServer
 
-    commonOptionsCheck(options, parser)
 
     # dfmsPath might contain code the user is adding
     logger = logging.getLogger(__name__)
@@ -179,13 +193,12 @@ def dfmsDOM(args=sys.argv):
 
     start(options)
 
+# Entry-point function for the dfmsDOM script
 def dfmsDIM(args=sys.argv):
     """
     Entry point for the dfmsDIM command-line script, which starts a
     DataIslandManager and exposes it through Pyro and a REST interface.
     """
-
-    setupLogging()
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
@@ -196,16 +209,20 @@ def dfmsDIM(args=sys.argv):
                       dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
     parser.add_option("--domRestPort", action="store", type="int",
                       dest="domRestPort", help = "Port used by DOMs started by this DIM to expose their REST interface", default=None)
+    parser.add_option("--domCheckTimeout", action="store", type="int",
+                      dest="domCheckTimeout", help="Maximum timeout used when automatically checking for DOM presence", default=10)
     (options, args) = parser.parse_args(args)
+
+    commonOptionsCheck(options, parser)
+    setupLogging(options)
 
     # Add DIM-specific options
     options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {'nsHost': options.nsHost, 'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort}
+    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'domRestPort': options.domRestPort, 'domCheckTimeout': options.domCheckTimeout}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 
-    commonOptionsCheck(options, parser)
     start(options)
 
 if __name__ == '__main__':

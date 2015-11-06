@@ -24,7 +24,6 @@ import json
 import multiprocessing
 import random
 import string
-from test import graphsRepository
 import time
 import unittest
 
@@ -35,8 +34,8 @@ from dfms import doutils, ngaslite, utils
 from dfms.ddap_protocol import DOStates
 from dfms.manager import cmdline
 from dfms.manager.data_object_manager import DataObjectManager
-from dfms.manager.session import SessionStates
 from dfms.manager.repository import memory, sleepAndCopy
+from dfms.manager.session import SessionStates
 
 
 class TestDOM(unittest.TestCase):
@@ -244,8 +243,9 @@ class TestDOM(unittest.TestCase):
 
 def startDOM(restPort):
     # Make sure the graph executes quickly once triggered
+    from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID'])
+    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID', '-q'])
 
 class TestREST(unittest.TestCase):
 
@@ -280,7 +280,21 @@ class TestREST(unittest.TestCase):
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
-            self.post('/sessions/%s/graph/append' % (sessionId), restPort, pkg_resources.resource_string(__name__, 'graphs/complex.js'))  # @UndefinedVariable
+            # PRO-242: use timestamps for final DROPs that get archived into the public NGAS
+            graph = json.loads(pkg_resources.resource_string(__name__, 'graphs/complex.js')) # @UndefinedVariable
+            suffix = '_' + str(int(time.time()))
+            oidsToReplace = ('S','T')
+            for doSpec in graph:
+                if doSpec['oid'] in oidsToReplace:
+                    doSpec['oid'] += suffix
+                for rel in ('inputs','outputs'):
+                    if rel in doSpec:
+                        for oid in doSpec[rel][:]:
+                            if oid in oidsToReplace:
+                                doSpec[rel].remove(oid)
+                                doSpec[rel].append(oid + suffix)
+
+            self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(graph))
 
             # We create two final archiving nodes, but this time from a template
             # available on the server-side
@@ -288,11 +302,11 @@ class TestREST(unittest.TestCase):
             self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
 
             # And link them to the leaf nodes of the complex graph
-            self.post('/sessions/%s/graph/link?rhOID=archiving1&lhOID=S&linkType=0' % (sessionId), restPort)
-            self.post('/sessions/%s/graph/link?rhOID=archiving2&lhOID=T&linkType=0' % (sessionId), restPort)
+            self.post('/sessions/%s/graph/link?rhOID=archiving1&lhOID=S%s&linkType=0' % (sessionId, suffix), restPort)
+            self.post('/sessions/%s/graph/link?rhOID=archiving2&lhOID=T%s&linkType=0' % (sessionId, suffix), restPort)
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy?completed=SL_A,SL_B,SL_C,SL_D,SL_K' % (sessionId), restPort)
+            self.post('/sessions/%s/deploy' % (sessionId), restPort, 'completed=SL_A,SL_B,SL_C,SL_D,SL_K', mimeType='application/x-www-form-urlencoded')
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -315,8 +329,8 @@ class TestREST(unittest.TestCase):
                 response = ngaslite.retrieve('ngas.ddns.net', doId)
                 buff = response.read()
                 self.assertEquals(msg*copies, buff, "%s's replica doesn't look correct" % (doId))
-            checkReplica('T', 9)
-            checkReplica('S', 4)
+            checkReplica('T%s' % (suffix), 9)
+            checkReplica('S%s' % (suffix), 4)
 
         finally:
             domProcess.terminate()
@@ -331,9 +345,9 @@ class TestREST(unittest.TestCase):
         conn.close()
         return jsonRes
 
-    def post(self, url, port, content=None):
+    def post(self, url, port, content=None, mimeType=None):
         conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        headers = {'Content-Type': 'application/json'} if content else {}
+        headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
         conn.request('POST', '/api' + url, content, headers)
         res = conn.getresponse()
         self.assertEquals(httplib.OK, res.status)

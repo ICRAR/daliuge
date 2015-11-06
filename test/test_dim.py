@@ -31,7 +31,6 @@ import time
 import unittest
 
 import Pyro4
-from Pyro4.naming import NameServerDaemon
 import pkg_resources
 
 from dfms import doutils, utils
@@ -50,11 +49,6 @@ def setUpDimTests(self):
     # SleepAndCopyApps don't take time to execute
     graphsRepository.defaultSleepTime = 0
 
-    # Start the NS
-    Pyro4.config.SOCK_REUSE = True
-    self._nsDaemon = NameServerDaemon()
-    threading.Thread(target=lambda:self._nsDaemon.requestLoop()).start()
-
     # Start a DOM. This is the DOM which the DIM connects to.
     #
     # We start it here to avoid the DIM connecting via SSH to the localhost
@@ -66,8 +60,8 @@ def setUpDimTests(self):
     # occurred at the DOM level in the test cases
     domId = 'dom_' + hostname
     self.dom = DataObjectManager(domId, False)
-    self._domDaemon = Pyro4.Daemon(host='0.0.0.0', port=4000)
-    self._nsDaemon.nameserver.register(domId, self._domDaemon.register(self.dom, objectId='DOM_for_test'))
+    self._domDaemon = Pyro4.Daemon(host=hostname, port=4000)
+    domId, self._domDaemon.register(self.dom, objectId=domId)
     threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
 
     # The DIM we're testing
@@ -75,8 +69,9 @@ def setUpDimTests(self):
 
 def tearDownDimTests(self):
     self._domDaemon.shutdown()
-    self._nsDaemon.shutdown()
-    while portIsOpen('localhost', Pyro4.config.NS_PORT):
+    self.dim.shutdown()
+    # shutdown() is asynchronous, make sure it finishes
+    while portIsOpen(hostname, 4000):
         time.sleep(0.01)
 
 class TestDIM(unittest.TestCase):
@@ -140,14 +135,14 @@ class TestDIM(unittest.TestCase):
     def test_deployGraphWithCompletedDOs(self):
 
         sessionId = 'lalo'
-        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=2)
+        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
         uris = self.dim.deploySession(sessionId, completedDOs=['A'])
         c = Pyro4.Proxy(uris['C'])
 
         # This should be happening before the sleepTime expires
-        with doutils.EvtConsumerProxyCtx(self, c, 5):
+        with doutils.EvtConsumerProxyCtx(self, c, 2):
             pass
 
         self.assertEquals(DOStates.COMPLETED, c.status)
@@ -200,7 +195,7 @@ class TestDIM(unittest.TestCase):
             graphStatusByDom = self.dom.getGraphStatus(sessionId)
             self.assertDictEqual(graphStatusByDim, graphStatusByDom)
             for doStatus in graphStatusByDim.viewvalues():
-                self.assertEquals(expectedStatus, doStatus)
+                self.assertEquals(expectedStatus, doStatus['status'])
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
@@ -219,7 +214,7 @@ class TestDIM(unittest.TestCase):
 def startDIM(restPort):
     # Make sure the graph executes quickly once triggered
     from dfms.manager import cmdline
-    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname])
+    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname, '-q'])
 
 class TestREST(unittest.TestCase):
 
@@ -271,7 +266,7 @@ class TestREST(unittest.TestCase):
             self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy?completed=SL_A,SL_B,SL_C,SL_D,SL_K' % (sessionId), restPort)
+            self.post('/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
             self.assertEquals({hostname: SessionStates.RUNNING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -303,9 +298,9 @@ class TestREST(unittest.TestCase):
         conn.close()
         return jsonRes
 
-    def post(self, url, port, content=None):
+    def post(self, url, port, content=None, mimeType=None):
         conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        headers = {'Content-Type': 'application/json'} if content else {}
+        headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
         conn.request('POST', '/api' + url, content, headers)
         res = conn.getresponse()
         self.assertEquals(httplib.OK, res.status)

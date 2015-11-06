@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.apps.socket_listener import SocketListenerApp
 """
 A modules that contains several functions returning different "physical graphs",
 at this moment represented simply by a number of DataObjects interconnected.
@@ -41,6 +40,7 @@ import random
 import time
 
 from dfms import doutils
+from dfms.apps.socket_listener import SocketListenerApp
 from dfms.data_object import InMemoryDataObject, BarrierAppDataObject, ContainerDataObject
 from dfms.ddap_protocol import ExecutionMode
 from test.test_data_object import SumupContainerChecksum

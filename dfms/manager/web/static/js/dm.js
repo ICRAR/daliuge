@@ -20,13 +20,36 @@
 //    MA 02111-1307  USA
 //
 
-var SESSION_STATUS = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished']
-var STATUS_CLASSES = ['initialized', 'writing', 'completed', 'expired', 'deleted']
-var TYPE_CLASSES   = ['app', 'container', 'socket', 'plain']
-var TYPE_SHAPES    = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
+var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished']
+var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'expired', 'deleted']
+var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error']
+var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
+var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
+
+function uniqueSessionStatus(status) {
+
+	// If we are querying the DIM we need to reduce the individual
+	// session status to a single one for display
+	if( status != null && typeof status === 'object' ) {
+		// Reduce to single common value, or to -1
+		return Object.keys(status)
+			.map(function(k){return status[k]})
+			.reduce(function(prev, v, idx, array) {
+				if( prev == -1 ) { return -1; }
+				return (prev == v) ? v : -1;
+			});
+	}
+
+	// otherwise we simply return the status, which should be an integer
+	return status;
+}
+
+function sessionStatusToString(status) {
+	return (status == -1) ? 'Indeterminate' : SESSION_STATUS[status];
+}
 
 function getRender() {
 
@@ -79,21 +102,17 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
 		idCells.text(String)
 		idCells.exit().remove()
 
-		// See how many "thead tr th are there" in this table
-		var nHeads = d3.select(tbodyEl.node().parentNode).selectAll('thead tr th')[0].length;
-		if (nHeads > 1) {
-			var statusCells = rows.selectAll('td.status').data(function values(s) { return [s.status]; });
-			statusCells.enter().append('td').classed('status', true).text(function(s) { return SESSION_STATUS[s]; })
-			statusCells.text(function(s) {return SESSION_STATUS[s]})
-			statusCells.exit().remove()
+		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
+		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
+		statusCells.text(function(s) {return SESSION_STATUS[s]})
+		statusCells.exit().remove()
 
-			statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
-			statusCells.enter().append('td').classed('details', true)
-			    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
-			    .append('span').classed('glyphicon glyphicon-share-alt', true)
-			statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
-			statusCells.exit().remove()
-		}
+		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
+		statusCells.enter().append('td').classed('details', true)
+		    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		    .append('span').classed('glyphicon glyphicon-share-alt', true)
+		statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		statusCells.exit().remove()
 
 		refreshBtn.attr('disabled', null);
 
@@ -139,48 +158,53 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
  * @param g The graph
  * @param doSpecs A list of DOSpecs, which are simple dictionaries
  */
-function startStatusQuery(g, serverUrl, sessionId, delay) {
+function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 	function updateGraph() {
 		d3.json(serverUrl + '/api/sessions/' + sessionId, function(error, sessionInfo) {
 
 			if (error) {
-				console.error(error)
-				return
+				console.error(error);
+				return;
 			}
 
-			var doSpecs = sessionInfo['graph']
-			var status  = sessionInfo['sessionStatus']
-			d3.select('#session-status').text(SESSION_STATUS[status])
+			var doSpecs = sessionInfo['graph'];
+			var status  = uniqueSessionStatus(sessionInfo['status']);
+			d3.select('#session-status').text(sessionStatusToString(status));
+
+			// Get sorted oids
+			var oids = Object.keys(doSpecs);
+			oids.sort();
 
 			// Keep track of modifications to see if we need to re-draw
-			var modified = false
+			var modified = false;
 
 			// #1: create missing nodes in the graph
-			for(idx in doSpecs) {
-				var doSpec = doSpecs[idx]
-				modified |= _addNode(g, doSpec)
+			// Because oids is sorted, they will be created in oid order
+			for(var idx in oids) {
+				var doSpec = doSpecs[oids[idx]];
+				modified |= _addNode(g, doSpec);
 			}
 
 			// #2: establish missing relationships
-			for(idx in doSpecs) {
-				var doSpec = doSpecs[idx]
-				var lhOid = doSpec.oid
+			for(var idx in oids) {
+				var doSpec = doSpecs[oids[idx]];
+				var lhOid = doSpec.oid;
 
 				// x-to-many relationships producing lh->rh edges
-				for(relIdx in TO_MANY_LTR_RELS) {
-					var rel = TO_MANY_LTR_RELS[relIdx]
+				for(var relIdx in TO_MANY_LTR_RELS) {
+					var rel = TO_MANY_LTR_RELS[relIdx];
 					if( rel in doSpec ) {
-						for(rhOid in doSpec[rel]) {
-							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid])
+						for(var rhOid in doSpec[rel]) {
+							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
 						}
 					}
 				}
 				// x-to-many relationships producing rh->lh edges
-				for(relIdx in TO_MANY_RTL_RELS) {
-					var rel = TO_MANY_RTL_RELS[relIdx]
+				for(var relIdx in TO_MANY_RTL_RELS) {
+					var rel = TO_MANY_RTL_RELS[relIdx];
 					if( rel in doSpec ) {
-						for(rhOid in doSpec[rel]) {
-							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid)
+						for(var rhOid in doSpec[rel]) {
+							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
 						}
 					}
 				}
@@ -189,7 +213,7 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 			}
 
 			if( modified ) {
-				drawGraph()
+				drawGraph();
 			}
 
 			// During PRISITINE and BUILDING we need to update the graph structure
@@ -198,44 +222,44 @@ function startStatusQuery(g, serverUrl, sessionId, delay) {
 			// During RUNNING (or potentially FINISHED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if( status == 3 || status == 4 ) {
-				startGraphStatusUpdates(serverUrl, sessionId, delay)
+				startGraphStatusUpdates(serverUrl, sessionId, delay);
 			}
-			else if( status == 0 || status == 1 || status == 2 ){
+			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
-				d3.timer(updateGraph, delay)
+				d3.timer(updateGraph, delay);
 			}
 
 		})
 		// This makes d3.timer invoke us only once
-		return true
+		return true;
 	}
-	d3.timer(updateGraph)
+	d3.timer(updateGraph);
 }
 
 function _addNode(g, doSpec) {
 
 	if( g.hasNode(g) ) {
-		return false
+		return false;
 	}
 
-	var typeClass = doSpec.type
-	var typeShape = TYPE_SHAPES[doSpec.type]
-	var notes = ''
+	var typeClass = doSpec.type;
+	var typeShape = TYPE_SHAPES[doSpec.type];
+	var notes = '';
 	if( doSpec.type == 'app' ) {
-		var nameParts = doSpec.app.split('.')
-		notes = nameParts[nameParts.length - 1]
+		var nameParts = doSpec.app.split('.');
+		notes = nameParts[nameParts.length - 1];
 	}
 	else if( doSpec.type == 'plain' ) {
-		notes = 'storage: ' + doSpec.storage
+		notes = 'storage: ' + doSpec.storage;
 	}
 	else if( doSpec.type == 'socket' ) {
-		notes = 'port: ' + doSpec.port
+		notes = 'port: ' + doSpec.port;
 	}
 
-	var oid = doSpec.oid
+	var oid = doSpec.oid;
 	var html = '<div class="do-label" id="id_' + oid + '">';
 	html += '<span>' + oid + '</span>';
-	html += '<span class="notes">' + notes + '</span>'
+	html += '<span class="notes">' + notes + '</span>';
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",
@@ -246,23 +270,23 @@ function _addNode(g, doSpec) {
 		class: typeClass,
 		shape: typeShape
 	});
-	return true
+	return true;
 }
 
 function _addEdge(g, fromOid, toOid) {
 	if( g.hasEdge(fromOid, toOid) ) {
-		return false
+		return false;
 	}
 	if( !g.hasNode(fromOid) ) {
-		console.error('No DataObject found with oid ' + fromOid)
-		return false
+		console.error('No DataObject found with oid ' + fromOid);
+		return false;
 	}
 	if( !g.hasNode(toOid) ) {
-		console.error('No DataObject found with oid ' + toOid)
-		return false
+		console.error('No DataObject found with oid ' + toOid);
+		return false;
 	}
 	g.setEdge(fromOid, toOid, {width: 40});
-	return true
+	return true;
 }
 
 
@@ -279,14 +303,25 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 				return;
 			}
 
-			// Change from {A:1, B:2...} to [1,2...]
-			var statuses = Object.keys(response).map(function(k) {return response[k]});
+			// Change from {B:{status:2,execStatus:0}, A:{status:1}, ...}
+			//          to [{status:1},{status:2,execStatus:0}...]
+			// (i.e., sort by key and get values only)
+			var keys = Object.keys(response);
+			keys.sort();
+			var statuses = keys.map(function(k) {return response[k]});
 
 			// This works assuming that the status list comes in the same order
 			// that the graph was created, which is true
 			// Anyway, we could double-check in the future
 			d3.selectAll('g.nodes').selectAll('g.node')
-			.data(statuses).attr("class", function(s) { return "node " + STATUS_CLASSES[s]})
+			.data(statuses).attr("class", function(s) {
+				if ( typeof s.execStatus != 'undefined' ) {
+					return "node " + EXECSTATUS_CLASSES[s.execStatus];
+				}
+				else {
+					return "node " + STATUS_CLASSES[s.status];
+				}
+			})
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				return prevVal && (curVal == 2);
@@ -301,7 +336,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, delay) {
 						console.error(error);
 						return;
 					}
-					d3.select('#session-status').text(SESSION_STATUS[status]);
+					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
 				})
 			}
 		})

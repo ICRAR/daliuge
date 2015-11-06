@@ -59,12 +59,13 @@ svg {
   fill: #ffe;
 }
 
+/* DO states */
 .node.writing :first-child {
-  fill: #ffed68;
+  fill: #ecde7b;
 }
 
 .node.completed :first-child {
-  fill: #7f7;
+  fill: #7bdc7b;
 }
 
 .node.expired :first-child {
@@ -73,6 +74,23 @@ svg {
 
 .node.deleted :first-child {
   color: #700000;
+}
+
+/* AppDataObject states */
+.node.not_run :first-child {
+  fill: #ffe;
+}
+
+.node.running :first-child {
+  fill: #ecde7b;
+}
+
+.node.finished :first-child {
+  fill: #7bdc7b;
+}
+
+.node.error :first-child {
+  fill: #e44f33;
 }
 
 .node.container polygon {
@@ -106,7 +124,7 @@ svg {
 }
 
 .notes {
-  font-size: 70%;
+  font-size: 90%;
 }
 
 .do-label span {

@@ -426,7 +426,8 @@ class TestDataObject(unittest.TestCase):
             # b hasn't been triggered
             self.assertEquals(c.status, DOStates.INITIALIZED)
             # Now let b consume a
-            b.dataObjectCompleted('a')
+            with DOWaiterCtx(self, [c]):
+                b.dataObjectCompleted('a')
             self.assertEquals(c.status, DOStates.COMPLETED)
         elif mode == ExecutionMode.DO:
             # b is already done
