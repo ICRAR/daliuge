@@ -422,17 +422,6 @@
             },
             new go.Binding("text").makeTwoWay())
         ),
-        new go.Binding("execution_time", "execution_time"),
-        new go.Binding("Arg01", "Arg01"),
-        new go.Binding("Arg02", "Arg02"),
-        new go.Binding("Arg03", "Arg03"),
-        new go.Binding("Arg04", "Arg04"),
-        new go.Binding("Arg05", "Arg05"),
-        new go.Binding("Arg06", "Arg06"),
-        new go.Binding("Arg07", "Arg07"),
-        new go.Binding("Arg08", "Arg08"),
-        new go.Binding("Arg09", "Arg09"),
-        new go.Binding("Arg10", "Arg10"),
         // four named ports, one on each side:
         makePort("T", go.Spot.Top, true, true),
         makePort("L", go.Spot.Left, true, true),
@@ -459,7 +448,6 @@
             },
             new go.Binding("text").makeTwoWay())
         ),
-        new go.Binding("data_volume", "data_volume"),
         // four named ports, one on each side:
         makePort("T", go.Spot.Top, true, true),
         makePort("L", go.Spot.Left, true, true),
@@ -754,8 +742,59 @@
                 }
               )
           }
-        )
+        ),
+      new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+      {
+        contextMenu:     // define a context menu for each node
+          $(go.Adornment, "Vertical",  // that has one button
+            $("ContextMenuButton",
+              $(go.TextBlock, "Add variable"),
+              { click: addVarToTable }),
+            // more ContextMenuButtons would go here
+            $("ContextMenuButton",
+              $(go.TextBlock, "Remove last variable"),
+              { click: removeVarFrmTable })
+          )  // end Adornment
+      }
       ));
+
+    function addVarToTable(e, obj) {
+      //alert("Add " + e.toString());
+      var n = myDiagram.selection.first();
+      if (n === null) return;
+      var d = n.data;
+      myDiagram.startTransaction("insertIntoTable");
+      // add item as second in the list, at index #1
+      // of course this new data could be more realistic:
+      myDiagram.model.insertArrayItem(d.var_list, -1, {
+        columns: [{ attr: "name", text: "bandwidth" },
+                  { attr: "value", text: "1024" },
+                  { attr: "unit", text: "MHz" }]
+      });
+      myDiagram.commitTransaction("insertIntoTable");
+    }
+
+    function removeVarFrmTable(e, obj) {
+      //alert("Remove " + e.toString());
+      var n = myDiagram.selection.first();
+      if (n === null) return;
+      var d = n.data;
+      len = d.var_list.length;
+      if (len < 1) {
+        return;
+      }
+
+      myDiagram.startTransaction("removeFromTable");
+      // remove second item of list, at index #1
+      try {
+        myDiagram.model.removeArrayItem(d.var_list, len - 1);
+      } catch (err) {
+        myDiagram.rollbackTransaction("removeFromTable");
+      }
+      myDiagram.commitTransaction("removeFromTable");
+    }
+
+
 
     // this function is used to highlight a Group that the selection may be dropped into
     function highlightGroup(e, grp, show) {
@@ -833,76 +872,12 @@
           $(go.Placeholder,
             { padding: 5, alignment: go.Spot.TopLeft })
         ),  // end Vertical Panel
-        new go.Binding("num_of_splits", "num_of_splits"),
         makePort("T", go.Spot.Top, true, true),
         makePort("L", go.Spot.Left, true, true),
         makePort("R", go.Spot.Right, true, true),
         makePort("B", go.Spot.Bottom, true, true)
       );
-    /*
-    $(go.Group, "Auto",
-      { layout: $(go.LayeredDigraphLayout,
-                  { direction: 0, columnSpacing: 10 }) },
-      $(go.Shape, "RoundedRectangle", // surrounds everything
-        {parameter1: 10, fill: "#17a963", stroke: "#ffffff" }),
-      $(go.Panel, "Vertical",  // position header above the subgraph
-        { defaultAlignment: go.Spot.Left },
-        $(go.Panel, "Horizontal",  // the header
-          { defaultAlignment: go.Spot.Top },
-          $("SubGraphExpanderButton"),  // this Panel acts as a Button
-          $(go.TextBlock,     // group title near top, next to button
-            { font: "Bold 12pt Sans-Serif", stroke: "#ffffff"  },
-            new go.Binding("text", "text"))
-        ),
-        $(go.Placeholder,     // represents area for all member parts
-          { padding: new go.Margin(0, 10), background: "white" })
-      ),
-      makePort("T", go.Spot.Top, true, true),
-      makePort("L", go.Spot.Left, true, true),
-      makePort("R", go.Spot.Right, true, true),
-      makePort("B", go.Spot.Bottom, true, true)
-    );
-*/
-    /*
-    $(go.Group, "Vertical", {"isSubGraphExpanded": true},
-      $(go.Panel, "Auto",
 
-        $(go.Shape, "RoundedRectangle",  // surrounds the Placeholder
-          { parameter1: 14,
-            fill: "rgba(128,128,128,0.33)" }),
-        $(go.Placeholder,    // represents the area of all member parts,
-          { padding: 0})  // with some extra padding around them
-      ),
-      $("SubGraphExpanderButton"),
-      $(go.TextBlock,         // group title
-        { alignment: go.Spot.Right, font: "Bold 12pt Sans-Serif" },
-        new go.Binding("text", "text")),
-        makeMyPort("T", go.Spot.Top, true, true),
-        makeMyPort("L", go.Spot.Left, true, true),
-        makeMyPort("R", go.Spot.Right, true, true),
-        makeMyPort("B", go.Spot.Bottom, true, true)
-    );
-    */
-    /*
-    $(go.Group, "Vertical",
-      { selectionObjectName: "PH",
-        locationObjectName: "PH",
-        resizable: true,
-        resizeObjectName: "PH" },
-      new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
-      $(go.TextBlock,  // group title
-        { font: "Bold 12pt Sans-Serif" },
-        new go.Binding("text", "text")),
-      $(go.Shape,  // using a Shape instead of a Placeholder
-        { name: "PH",
-          fill: "lightyellow" },
-        new go.Binding("desiredSize", "size", go.Size.parse).makeTwoWay(go.Size.stringify)),
-        makePort("T", go.Spot.Top, true, true),
-        makePort("L", go.Spot.Left, true, true),
-        makePort("R", go.Spot.Right, true, true),
-        makePort("B", go.Spot.Bottom, true, true)
-    );
-  */
     myDiagram.groupTemplateMap.add("SplitData", myDiagram.groupTemplate);
 
 
@@ -943,6 +918,24 @@
             new go.Binding("text", "text").makeTwoWay())
         )
       );
+
+    myDiagram.contextMenu =
+    $(go.Adornment, "Vertical",
+      $("ContextMenuButton",
+        $(go.TextBlock, "Undo"),
+        { click: function(e, obj) { e.diagram.commandHandler.undo(); } },
+        new go.Binding("visible", "", function(o) {
+                                          return o.diagram.commandHandler.canUndo();
+                                        }).ofObject()),
+      $("ContextMenuButton",
+        $(go.TextBlock, "Redo"),
+        { click: function(e, obj) { e.diagram.commandHandler.redo(); } },
+        new go.Binding("visible", "", function(o) {
+                                          return o.diagram.commandHandler.canRedo();
+                                        }).ofObject())
+
+    );
+    myDiagram.undoManager.isEnabled = true;
 
     // Make link labels visible if coming out of a "conditional" node.
     // This listener is called by the "LinkDrawn" and "LinkRelinked" DiagramEvents.
@@ -1013,8 +1006,8 @@
                         { category: "Variables", text: "Global Variables",
                           columnDefinitions: [
                               // each column definition needs to specify the column used
-                              { attr: "name", text: "Var", column: 0 },
-                              { attr: "value", text: "Val", column: 1 },
+                              { attr: "name", text: "Var name", column: 0 },
+                              { attr: "value", text: "Value", column: 1 },
                               { attr: "unit", text: "Unit", column: 2 }
                           ],
                           var_list: [  // the table of var_list
