@@ -259,6 +259,18 @@
         {
           initialContentAlignment: go.Spot.Center,
           allowDrop: true,  // must be true to accept drops from the Palette
+          "draggingTool.dragsLink": true,
+          //"linkingTool.isUnconnectedLinkValid": true,
+          "relinkingTool.isUnconnectedLinkValid": true,
+          /*
+          "relinkingTool.portGravity": 20,
+          "relinkingTool.fromHandleArchetype":
+            $(go.Shape, "Diamond", { segmentIndex: 0, cursor: "pointer", desiredSize: new go.Size(8, 8), fill: "tomato", stroke: "darkred" }),
+          "relinkingTool.toHandleArchetype":
+            $(go.Shape, "Diamond", { segmentIndex: -1, cursor: "pointer", desiredSize: new go.Size(8, 8), fill: "darkred", stroke: "tomato" }),
+          "linkReshapingTool.handleArchetype":
+            $(go.Shape, "Diamond", { desiredSize: new go.Size(7, 7), fill: "lightblue", stroke: "deepskyblue" }),
+            */
           "LinkDrawn": showLinkLabel,  // this DiagramEvent listener is defined below
           "LinkRelinked": showLinkLabel,
           "animationManager.duration": 800, // slightly longer than default (600ms) animation
@@ -823,7 +835,7 @@
                 : e.diagram.commandHandler.addTopLevelParts(e.diagram.selection, true));
       if (!ok) e.diagram.currentTool.doCancel();
     }
-    myDiagram.groupTemplate =
+    var dataScatterGroupTemplate =
     $(go.Group, go.Panel.Auto,
         {
           background: "transparent",
@@ -878,7 +890,54 @@
         makePort("B", go.Spot.Bottom, true, true)
       );
 
-    myDiagram.groupTemplateMap.add("SplitData", myDiagram.groupTemplate);
+    var dataGatherGroupTemplate =
+    $(go.Group, go.Panel.Auto,
+        {
+          background: "transparent",
+          ungroupable: true,
+          // highlight when dragging into the Group
+          mouseDragEnter: function(e, grp, prev) { highlightGroup(e, grp, true); },
+          mouseDragLeave: function(e, grp, next) { highlightGroup(e, grp, false); },
+          computesBoundsAfterDrag: true,
+          // when the selection is dropped into a Group, add the selected Parts into that Group;
+          // if it fails, cancel the tool, rolling back any changes
+          mouseDrop: finishDrop,
+          handlesDragDropForMembers: true,  // don't need to define handlers on member Nodes and Links
+          // Groups containing Nodes lay out their members vertically
+          layout:
+            $(go.GridLayout,
+              { wrappingColumn: 1, alignment: go.GridLayout.Position,
+                  cellSize: new go.Size(1, 1), spacing: new go.Size(4, 4) })
+        },
+        new go.Binding("background", "isHighlighted", function(h) { return h ? "rgba(255,0,0,0.2)" : "transparent"; }).ofObject(),
+        $(go.Shape, "Rectangle",
+          { fill: null, stroke: "#0099CC", strokeWidth: 2 }),
+        $(go.Panel, go.Panel.Vertical,  // title above Placeholder
+          $(go.Panel, go.Panel.Horizontal,  // button next to TextBlock
+            { stretch: go.GraphObject.Horizontal, background: "#33D3E5", margin: 1 },
+            $("SubGraphExpanderButton",
+              { alignment: go.Spot.Right, margin: 5 }),
+            $(go.TextBlock,
+              {
+                alignment: go.Spot.Left,
+                editable: true,
+                margin: 5,
+                font: "bold 16px sans-serif",
+                stroke: "#006080"
+              },
+              new go.Binding("text", "text").makeTwoWay())
+          ),  // end Horizontal Panel
+          $(go.Placeholder,
+            { padding: 5, alignment: go.Spot.TopLeft })
+        ),  // end Vertical Panel
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      );  // end Group and call to add to template Map
+
+    myDiagram.groupTemplateMap.add("SplitData", dataScatterGroupTemplate);
+    myDiagram.groupTemplateMap.add("DataGather", dataGatherGroupTemplate);
 
 
     // replace the default Link template in the linkTemplateMap
@@ -918,6 +977,47 @@
             new go.Binding("text", "text").makeTwoWay())
         )
       );
+
+    var scatterGatherLinkTemplate =
+    $(go.Link,  // the whole link panel
+        {
+          routing: go.Link.AvoidsNodes,
+          curve: go.Link.JumpOver,
+          corner: 5, toShortLength: 4,
+          relinkableFrom: true,
+          relinkableTo: true,
+          reshapable: true,
+          resegmentable: true,
+          // mouse-overs subtly highlight links:
+          mouseEnter: function(e, link) { link.findObject("HIGHLIGHT").stroke = "rgba(30,144,255,0.2)"; },
+          mouseLeave: function(e, link) { link.findObject("HIGHLIGHT").stroke = "transparent"; }
+        },
+        new go.Binding("points").makeTwoWay(),
+        $(go.Shape,  // the highlight shape, normally transparent
+          { isPanelMain: true, strokeWidth: 8, stroke: "transparent", name: "HIGHLIGHT" }),
+        $(go.Shape,  // the link path shape
+          { isPanelMain: true, stroke: "orange", strokeWidth: 2, strokeDashArray: [4, 2] }),
+        $(go.Shape,  // the arrowhead
+          { toArrow: "circle", stroke: null, fill: "#0099CC"}),
+        $(go.Shape,  // the arrowhead
+          { fromArrow: "block", stroke: null, fill: "orange"}),
+        $(go.Panel, "Auto",  // the link label, normally not visible
+          { visible: false, name: "LABEL", segmentIndex: 1, segmentFraction: 0.9},
+          new go.Binding("visible", "visible").makeTwoWay(),
+          $(go.Shape, "RoundedRectangle",  // the label shape
+            { fill: "#F8F8F8", stroke: null }),
+          $(go.TextBlock, "Yes",  // the label
+            {
+              textAlign: "center",
+              font: "10pt helvetica, arial, sans-serif",
+              stroke: "#333333",
+              editable: true
+            },
+            new go.Binding("text", "text").makeTwoWay())
+        )
+      );
+
+    myDiagram.linkTemplateMap.add("scatterGatherLink", scatterGatherLinkTemplate);
 
     myDiagram.contextMenu =
     $(go.Adornment, "Vertical",
@@ -1002,7 +1102,8 @@
                         { category: "End", text: "End" },
                         { category: "LSM", text: "LSM" },
                         { category: "Parameter", text: "Parameter" },
-                        { category: "SplitData", text: "Data Splits", isGroup: true, num_of_splits: "${num_channel} * ${num_beam}"},
+                        { category: "SplitData", text: "Data Scatter", isGroup: true, num_of_splits: "${num_channel} * ${num_beam}", scatter_axis: "frequency"},
+                        { category: "DataGather", text: "Data Gather", isGroup: true, num_of_inputs: "${num_channel} * ${num_beam}", gather_axis: "frequency"},
                         { category: "Variables", text: "Global Variables",
                           columnDefinitions: [
                               // each column definition needs to specify the column used
@@ -1016,6 +1117,9 @@
                           ]},
                         { category: "Comment", text: "Comment"}
 
+                        ],
+                        linkDataArray:[
+                        { category:"scatterGatherLink", points: new go.List(go.Point).addAll([new go.Point(0, 0), new go.Point(30, 0), new go.Point(30, 40), new go.Point(60, 40)]) }
                         ]});
     myPalette =
       $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
@@ -1023,6 +1127,7 @@
           "animationManager.duration": 600, // slightly longer than default (600ms) animation
           nodeTemplateMap: myDiagram.nodeTemplateMap,  // share the templates used by myDiagram
           groupTemplateMap: myDiagram.groupTemplateMap,
+          linkTemplateMap: myDiagram.linkTemplateMap,
           model: paletteModel
         });
 
