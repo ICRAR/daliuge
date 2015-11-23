@@ -34,7 +34,7 @@ import Pyro4
 import pkg_resources
 
 from dfms import doutils, utils
-from dfms.ddap_protocol import DOStates
+from dfms.ddap_protocol import DROPStates
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.session import SessionStates
@@ -145,7 +145,7 @@ class TestDIM(unittest.TestCase):
         with doutils.EvtConsumerProxyCtx(self, c, 2):
             pass
 
-        self.assertEquals(DOStates.COMPLETED, c.status)
+        self.assertEquals(DROPStates.COMPLETED, c.status)
 
     def test_sessionStatus(self):
 
@@ -200,7 +200,7 @@ class TestDIM(unittest.TestCase):
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
         uris = self.dim.deploySession(sessionId)
-        assertGraphStatus(sessionId, DOStates.INITIALIZED)
+        assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
@@ -208,7 +208,7 @@ class TestDIM(unittest.TestCase):
         with doutils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
-        assertGraphStatus(sessionId, DOStates.COMPLETED)
+        assertGraphStatus(sessionId, DROPStates.COMPLETED)
 
 
 def startDIM(restPort):

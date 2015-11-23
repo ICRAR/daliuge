@@ -32,7 +32,7 @@ from docker.errors import DockerException
 
 from dfms import doutils
 from dfms.apps.dockerapp import DockerApp
-from dfms.data_object import FileDataObject
+from dfms.data_object import FileDROP
 from dfms.doutils import DOWaiterCtx
 
 
@@ -59,9 +59,9 @@ class DockerTests(unittest.TestCase):
             warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
             return
 
-        a = FileDataObject('a', 'a')
+        a = FileDROP('a', 'a')
         b = DockerApp('b', 'b', image='ubuntu:14.04', command='cp %i0 %o0')
-        c = FileDataObject('c', 'c')
+        c = FileDROP('c', 'c')
 
         b.addInput(a)
         b.addOutput(c)
@@ -102,10 +102,10 @@ class DockerTests(unittest.TestCase):
             warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
             return
 
-        a = FileDataObject('a', 'a')
+        a = FileDROP('a', 'a')
         b = DockerApp('b', 'b', image='ubuntu:14.04', command='cat %i0 > /dev/tcp/%containerIp[c]%/8000')
         c = DockerApp('c', 'c', image='ubuntu:14.04', command='nc -l 8000 > %o0')
-        d = FileDataObject('d', 'd')
+        d = FileDROP('d', 'd')
 
         b.addInput(a)
         b.addOutput(d)
@@ -136,7 +136,7 @@ class DockerTests(unittest.TestCase):
 
         def assertMsgIsCorrect(msg, command):
             a = DockerApp('a', 'a', image='ubuntu:14.04', command=command)
-            b = FileDataObject('b','b')
+            b = FileDROP('b','b')
             a.addOutput(b)
             with DOWaiterCtx(self, b, 1):
                 a.execute()

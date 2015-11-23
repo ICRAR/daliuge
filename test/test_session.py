@@ -21,7 +21,7 @@
 #
 import unittest
 
-from dfms.ddap_protocol import DOLinkType
+from dfms.ddap_protocol import DROPLinkType
 from dfms.manager.session import Session, SessionStates
 
 
@@ -62,12 +62,12 @@ class TestSession(unittest.TestCase):
     def test_linking(self):
         with Session('1') as s:
             s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dfms.apps.crc.CRCAppDataObject"}])
+            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dfms.apps.crc.CRCApp"}])
             s.addGraphSpec([{"oid":"C", "type":"container"}])
 
             # Link them now
-            s.linkGraphParts('A', 'B', DOLinkType.CONSUMER)
-            s.linkGraphParts('B', 'C', DOLinkType.OUTPUT)
+            s.linkGraphParts('A', 'B', DROPLinkType.CONSUMER)
+            s.linkGraphParts('B', 'C', DROPLinkType.OUTPUT)
 
             # Deploy and check that the actual DROPs are linked together
             s.deploy()

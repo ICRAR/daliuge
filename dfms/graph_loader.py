@@ -31,34 +31,34 @@ import json
 import logging
 
 from dfms import doutils
-from dfms.data_object import ContainerDataObject, InMemoryDataObject, \
-    FileDataObject, NgasDataObject, LINKTYPE_NTO1_PROPERTY, \
-    LINKTYPE_1TON_APPEND_METHOD, NullDataObject
-from dfms.ddap_protocol import DORel, DOLinkType
+from dfms.data_object import ContainerDROP, InMemoryDROP, \
+    FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
+    LINKTYPE_1TON_APPEND_METHOD, NullDROP
+from dfms.ddap_protocol import DROPRel, DROPLinkType
 
 
 STORAGE_TYPES = {
-    'memory': InMemoryDataObject,
-    'file'  : FileDataObject,
-    'ngas'  : NgasDataObject,
-    'null'  : NullDataObject
+    'memory': InMemoryDROP,
+    'file'  : FileDROP,
+    'ngas'  : NgasDROP,
+    'null'  : NullDROP
 }
 
 # Dictionary for the key used to store 1-to-N relationships between DROPs
 # in the the DROP specification format
 __ONE_TO_N_RELS = {
-    DOLinkType.CONSUMER:           'consumers',
-    DOLinkType.STREAMING_CONSUMER: 'streamingConsumers',
-    DOLinkType.INPUT:              'inputs',
-    DOLinkType.STREAMING_INPUT:    'streamingInputs',
-    DOLinkType.OUTPUT:             'outputs',
-    DOLinkType.CHILD:              'children',
-    DOLinkType.PRODUCER:           'producers'
+    DROPLinkType.CONSUMER:           'consumers',
+    DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
+    DROPLinkType.INPUT:              'inputs',
+    DROPLinkType.STREAMING_INPUT:    'streamingInputs',
+    DROPLinkType.OUTPUT:             'outputs',
+    DROPLinkType.CHILD:              'children',
+    DROPLinkType.PRODUCER:           'producers'
 }
 
 # Same for above, but for n-to-1 relationships
 __N_TO_ONE_RELS = {
-    DOLinkType.PARENT: 'parent'
+    DROPLinkType.PARENT: 'parent'
 }
 
 logger = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ def removeUnmetRelationships(doSpecList):
                 # Find missing OIDs in relationship and keep track of them
                 missingOids = [oid for oid in doSpec[rel] if oid not in doSpecsDict]
                 for oid in missingOids:
-                    unmetRelationships.append(DORel(oid, link, doSpec['oid']))
+                    unmetRelationships.append(DROPRel(oid, link, doSpec['oid']))
                 # Remove them from the current DROP spec
                 [doSpec[rel].remove(oid) for oid in missingOids]
                 # Remove the relationship list entirely if it has no elements
@@ -127,7 +127,7 @@ def removeUnmetRelationships(doSpecList):
                 if oid in doSpecsDict:
                     continue
                 # Keep track of missing relationship
-                unmetRelationships.append(DORel(oid, link, doSpec['oid']))
+                unmetRelationships.append(DROPRel(oid, link, doSpec['oid']))
                 # Remove relationship from current DROP spec
                 del doSpec[rel]
 
@@ -252,14 +252,14 @@ def _createContainer(doSpec, dryRun=False):
     oid, uid = _getIds(doSpec)
     kwargs   = _getKwargs(doSpec)
 
-    # if no 'container' is specified, we default to ContainerDataObject
+    # if no 'container' is specified, we default to ContainerDROP
     if 'container' in doSpec:
         containerTypeName = doSpec['container']
         parts = containerTypeName.split('.')
         module  = importlib.import_module('.'.join(parts[:-1]))
         containerType = getattr(module, parts[-1])
     else:
-        containerType = ContainerDataObject
+        containerType = ContainerDROP
 
     if dryRun:
         return

@@ -24,8 +24,8 @@ import unittest
 
 from dfms import doutils, utils
 from dfms.apps.socket_listener import SocketListenerApp
-from dfms.data_object import InMemoryDataObject
-from dfms.ddap_protocol import DOStates
+from dfms.data_object import InMemoryDROP
+from dfms.ddap_protocol import DROPStates
 from dfms.doutils import DOWaiterCtx
 from test.test_data_object import SumupContainerChecksum
 
@@ -53,9 +53,9 @@ class TestSocketListener(unittest.TestCase):
         data = 'shine on you crazy diamond'
 
         a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port)
-        b = InMemoryDataObject('oid:B', 'uid:B')
+        b = InMemoryDROP('oid:B', 'uid:B')
         c = SumupContainerChecksum('oid:C', 'uid:C')
-        d = InMemoryDataObject('oid:D', 'uid:D')
+        d = InMemoryDROP('oid:D', 'uid:D')
         a.addOutput(b)
         b.addConsumer(c)
         c.addOutput(d)
@@ -67,7 +67,7 @@ class TestSocketListener(unittest.TestCase):
             utils.writeToRemotePort(host, port, data, 1)
 
         for do in [a,b,c,d]:
-            self.assertEquals(DOStates.COMPLETED, do.status)
+            self.assertEquals(DROPStates.COMPLETED, do.status)
 
         # Our expectations are fulfilled!
         bContents = doutils.allDataObjectContents(b)
@@ -79,9 +79,9 @@ class TestSocketListener(unittest.TestCase):
 
         # Shouldn't allow inputs
         a = SocketListenerApp('a', 'a', port=1)
-        a.addOutput(InMemoryDataObject('c', 'c'))
-        self.assertRaises(Exception, a.addInput, InMemoryDataObject('b', 'b'))
-        self.assertRaises(Exception, a.addStreamingInput, InMemoryDataObject('b', 'b'))
+        a.addOutput(InMemoryDROP('c', 'c'))
+        self.assertRaises(Exception, a.addInput, InMemoryDROP('b', 'b'))
+        self.assertRaises(Exception, a.addStreamingInput, InMemoryDROP('b', 'b'))
 
         # Shouldn't be able to open ports <= 1024
         self.assertRaises(Exception, a.execute)

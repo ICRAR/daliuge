@@ -33,7 +33,7 @@ import types
 
 import Pyro4
 
-from dfms.data_object import AppDataObject
+from dfms.data_object import AppDROP
 from dfms.io import IOForURL, OpenMode
 
 
@@ -179,14 +179,14 @@ def getUpstreamObjects(dataObject):
     Returns a list of all direct "upstream" DROPs for the given
     DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
-     * A is a producer of B (therefore A is an AppDataObject)
-     * A is a normal or streaming input of B (and B is therefore an AppDataObject)
+     * A is a producer of B (therefore A is an AppDROP)
+     * A is a normal or streaming input of B (and B is therefore an AppDROP)
 
     In practice if A is an upstream DROP of B means that it must be moved
     to the COMPLETED state before B can do so.
     """
     upObjs = []
-    if isinstance(dataObject, AppDataObject):
+    if isinstance(dataObject, AppDROP):
         upObjs += dataObject.inputs
         upObjs += dataObject.streamingInputs
     else:
@@ -198,14 +198,14 @@ def getDownstreamObjects(dataObject):
     Returns a list of all direct "downstream" DROPs for the given
     DROP. An DROP A is "downstream" with respect to DROP B if
     any of the following conditions are true:
-     * A is an output of B (therefore B is an AppDataObject)
-     * A is a normal or streaming consumer of B (and A is therefore an AppDataObject)
+     * A is an output of B (therefore B is an AppDROP)
+     * A is a normal or streaming consumer of B (and A is therefore an AppDROP)
 
     In practice if A is a downstream DROP of B means that it cannot
     advance to the COMPLETED state until B does so.
     """
     downObjs = []
-    if isinstance(dataObject, AppDataObject):
+    if isinstance(dataObject, AppDROP):
         downObjs += dataObject.outputs
     else:
         downObjs += dataObject.consumers

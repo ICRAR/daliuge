@@ -20,17 +20,17 @@
 #    MA 02111-1307  USA
 #
 from dfms import remote
-from dfms.data_object import BarrierAppDataObject
+from dfms.data_object import BarrierAppDROP
 
 
-class ScpApp(BarrierAppDataObject):
+class ScpApp(BarrierAppDROP):
     """
-    A BarrierAppDataObject that copies the content of its single input onto its
+    A BarrierAppDROP that copies the content of its single input onto its
     single output via SSH's scp protocol.
 
     Because of the nature of the scp protocol, the input and output DROPs
     of this application must both be filesystem-based; i.e., they must be an
-    instance of FileDataObject or of DirectoryContainer.
+    instance of FileDROP or of DirectoryContainer.
 
     Depending on the physical location of each DROP (this application, and
     its input and outputs) this application will copy data FROM another host or
@@ -39,7 +39,7 @@ class ScpApp(BarrierAppDataObject):
     """
 
     def initialize(self, **kwargs):
-        BarrierAppDataObject.initialize(self, **kwargs)
+        BarrierAppDROP.initialize(self, **kwargs)
         self._remoteUser = self._getArg(kwargs, 'remoteUser', None)
         self._pkeyPath   = self._getArg(kwargs, 'pkeyPath', None)
         self._timeout    = self._getArg(kwargs, 'timeout', None)
@@ -48,9 +48,9 @@ class ScpApp(BarrierAppDataObject):
 
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:
-            # The current only way to check if we are handling a FileDataObject
+            # The current only way to check if we are handling a FileDROP
             # or a DirectoryDataObject is by checking if they have a `path`
-            # attribute. Calling `isinstance(i, (FileDataObject, DirectoryContainer))`
+            # attribute. Calling `isinstance(i, (FileDROP, DirectoryContainer))`
             # doesn't work because the input/output might be a Pyro4.Proxy object
             # that fails the test
             if not hasattr(i, 'path'):

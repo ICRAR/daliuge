@@ -27,14 +27,14 @@ import logging
 
 import spead2.recv
 
-from dfms.data_object import BarrierAppDataObject
+from dfms.data_object import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)
 
-class SpeadReceiverApp(BarrierAppDataObject):
+class SpeadReceiverApp(BarrierAppDROP):
     """
-    A BarrierAppDataObject that listens for data using the SPEAD protocol.
+    A BarrierAppDROP that listens for data using the SPEAD protocol.
 
     This application opens a stream and adds a UDP reader on a specific host and
     port to listen for the data of item `itemId`. The stream is listened until
@@ -44,7 +44,7 @@ class SpeadReceiverApp(BarrierAppDataObject):
     Just like the SocketListenerApp, this application expects no input
     DROPs, and therefore raises an exception whenever one is added. On the
     output side, one or more outputs can be specified with the restriction that
-    they are not ContainerDataObjects so data can be written into them through
+    they are not ContainerDROPs so data can be written into them through
     the framework.
     """
 

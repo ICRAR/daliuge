@@ -31,7 +31,7 @@ import time
 from docker.client import AutoVersionClient
 
 from dfms import utils
-from dfms.data_object import BarrierAppDataObject, FileDataObject, \
+from dfms.data_object import BarrierAppDROP, FileDROP, \
     DirectoryContainer
 
 
@@ -59,9 +59,9 @@ class ContainerIpWaiter(object):
         self._evt.wait(timeout)
         return self._uid, self._containerIp
 
-class DockerApp(BarrierAppDataObject):
+class DockerApp(BarrierAppDROP):
     """
-    A BarrierAppDataObject that represents a process running in a container
+    A BarrierAppDROP that represents a process running in a container
     hosted by a local docker daemon. Depending on the host system, the docker
     daemon might be automatically activated when a client tries to connect to
     it via its unix socket (like with systemd) or it needs to be brought up
@@ -91,7 +91,7 @@ class DockerApp(BarrierAppDataObject):
 
     Data volumes are a file-specific feature. For this reason, this DockerApp
     application supports file-system based input/output DROPs only, namely
-    the FileDataObject and the DirectoryContainer types.
+    the FileDROP and the DirectoryContainer types.
 
     Since the command to be run in the container receives most probably as
     arguments the paths of its inputs and outputs, and since these might not be
@@ -166,7 +166,7 @@ class DockerApp(BarrierAppDataObject):
     """
 
     def initialize(self, **kwargs):
-        BarrierAppDataObject.initialize(self, **kwargs)
+        BarrierAppDROP.initialize(self, **kwargs)
 
         self._image = self._getArg(kwargs, 'image', None)
         if not self._image:
@@ -238,7 +238,7 @@ class DockerApp(BarrierAppDataObject):
 
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:
-            if not isinstance(i, (FileDataObject, DirectoryContainer)):
+            if not isinstance(i, (FileDROP, DirectoryContainer)):
                 raise Exception("%r is not supported by the DockerApp" % (i))
 
         # We bind the inputs and outputs inside the docker under the DFMS_ROOT

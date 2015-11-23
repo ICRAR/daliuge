@@ -31,8 +31,8 @@ import time
 import luigi
 
 from dfms import doutils
-from dfms.data_object import AbstractDataObject, BarrierAppDataObject
-from dfms.ddap_protocol import ExecutionMode, DOStates
+from dfms.data_object import AbstractDROP, BarrierAppDROP
+from dfms.ddap_protocol import ExecutionMode, DROPStates
 
 
 logger = logging.getLogger(__name__)
@@ -44,11 +44,11 @@ class RunDataObjectTask(luigi.Task):
 
     Which of the two actions is performed depends on the nature of the
     DROP and on the execution mode set in the DROP's upstream
-    objects: only AppDataObjects can be triggered automatically by
-    their upstream objects. Since AppDataObjects only reference one
+    objects: only BarrierAppDROP can be triggered automatically by
+    their upstream objects. Since BarrierAppDROP only reference one
     upstream object (their producer) we need only to check the producer's
     execution mode, and if it's set to ExecutionMode.EXTERNAL then this task
-    needs to manually execute the AppDataObject DROP. In any other case this
+    needs to manually execute the AppDROP. In any other case this
     task simply waits until the DROP's status has moved to COMPLETED.
 
     The complete() test for both cases is still the same, regardless of who is
@@ -63,7 +63,7 @@ class RunDataObjectTask(luigi.Task):
 
         do = self.data_obj
         self.execDO  = False
-        if isinstance(do, BarrierAppDataObject):
+        if isinstance(do, BarrierAppDROP):
             for inputDO in do.inputs:
                 if inputDO.executionMode == ExecutionMode.EXTERNAL:
                     self.execDO = True
@@ -74,7 +74,7 @@ class RunDataObjectTask(luigi.Task):
         if not self.execDO:
             self._evt = threading.Event()
             def setEvtOnCompleted(e):
-                if e.status == DOStates.COMPLETED:
+                if e.status == DROPStates.COMPLETED:
                     self._evt.set()
             do.subscribe(setEvtOnCompleted, 'status')
 
@@ -109,10 +109,10 @@ class RunDataObjectTask(luigi.Task):
         # for those nodes connected to an external graph. We shouldn't schedule
         # those objects though, since they are scheduled by their own DOM.
         # We simply filter then the upObjs here to return only those that are
-        # actually an instance of AbstractDataObject, thus removing any Pyro
+        # actually an instance of AbstractDROP, thus removing any Pyro
         # Proxy instances from the list
         upObjs = doutils.getUpstreamObjects(self.data_obj)
-        upObjs = filter(lambda do: isinstance(do, AbstractDataObject), upObjs)
+        upObjs = filter(lambda do: isinstance(do, AbstractDROP), upObjs)
 
         for req in upObjs:
             if logger.isEnabledFor(logging.DEBUG):

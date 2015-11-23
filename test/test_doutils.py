@@ -30,8 +30,8 @@ Created on 20 Jul 2015
 import unittest
 
 from dfms import doutils
-from dfms.data_object import InMemoryDataObject, FileDataObject, \
-    BarrierAppDataObject
+from dfms.data_object import InMemoryDROP, FileDROP, \
+    BarrierAppDROP
 from dfms.doutils import DOFile
 
 
@@ -48,16 +48,16 @@ class DOUtilsTest(unittest.TestCase):
         B, C, G and H are AppDOs. The names have been given in breadth-first
         order (although H has a dependency on I)
         """
-        a =          InMemoryDataObject('a', 'a')
-        b =        BarrierAppDataObject('b', 'b')
-        c =        BarrierAppDataObject('c', 'c')
-        d =          InMemoryDataObject('d', 'd')
-        e =          InMemoryDataObject('e', 'e')
-        f =          InMemoryDataObject('f', 'f')
-        g =        BarrierAppDataObject('g', 'g')
-        h =        BarrierAppDataObject('h', 'h')
-        i =          InMemoryDataObject('i', 'i')
-        j =          InMemoryDataObject('j', 'j')
+        a =          InMemoryDROP('a', 'a')
+        b =        BarrierAppDROP('b', 'b')
+        c =        BarrierAppDROP('c', 'c')
+        d =          InMemoryDROP('d', 'd')
+        e =          InMemoryDROP('e', 'e')
+        f =          InMemoryDROP('f', 'f')
+        g =        BarrierAppDROP('g', 'g')
+        h =        BarrierAppDROP('h', 'h')
+        i =          InMemoryDROP('i', 'i')
+        j =          InMemoryDROP('j', 'j')
 
         a.addConsumer(b)
         a.addConsumer(c)
@@ -155,7 +155,7 @@ class DOUtilsTest(unittest.TestCase):
         a given DROP. The DOFile class will decide whether the data should be read
         directly or through the DROP
         """
-        do = FileDataObject('a', 'a', expectedSize=5)
+        do = FileDROP('a', 'a', expectedSize=5)
         do.write('abcde')
         with DOFile(do) as f:
             self.assertEquals('abcde', f.read())

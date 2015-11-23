@@ -19,11 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.data_object import BarrierAppDataObject, ContainerDataObject
+from dfms.data_object import BarrierAppDROP, ContainerDROP
 from dfms.io import NgasIO, OpenMode, NgasLiteIO
 from dfms.doutils import DOFile
 
-class ExternalStoreApp(BarrierAppDataObject):
+class ExternalStoreApp(BarrierAppDROP):
     """
     An application that takes its input DROP (which must be one, and only
     one) and creates a copy of it in a completely external store, from the point
@@ -70,8 +70,8 @@ class NgasArchivingApp(ExternalStoreApp):
         self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
 
     def store(self, inDO):
-        if isinstance(inDO, ContainerDataObject):
-            raise Exception("ContainerDataObjects are not supported as inputs for this application")
+        if isinstance(inDO, ContainerDROP):
+            raise Exception("ContainerDROPs are not supported as inputs for this application")
 
         size = -1 if inDO.size is None else inDO.size
         try:

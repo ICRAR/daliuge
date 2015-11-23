@@ -38,9 +38,9 @@ import sys
 import threading
 import time
 
-from ddap_protocol import DOStates
-from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDOStates,\
-    DOLinkType
+from ddap_protocol import DROPStates
+from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates,\
+    DROPLinkType
 from dfms.events.event_broadcaster import LocalEventBroadcaster
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 #===============================================================================
 
 
-class AbstractDataObject(object):
+class AbstractDROP(object):
     """
     Base class for all DROP implementations.
 
@@ -108,7 +108,7 @@ class AbstractDataObject(object):
         specific initialization has occurred in the subclasses.
         """
 
-        super(AbstractDataObject, self).__init__()
+        super(AbstractDROP, self).__init__()
 
         # Copy it since we're going to modify it
         kwargs = dict(kwargs)
@@ -120,7 +120,7 @@ class AbstractDataObject(object):
         self._bcaster = LocalEventBroadcaster()
 
         # 1-to-N relationship: one DROP may have many consumers and producers.
-        # The potential consumers and producers are always AppDataObjects instances
+        # The potential consumers and producers are always AppDROPs instances
         self._consumers = []
         self._producers = []
 
@@ -204,7 +204,7 @@ class AbstractDataObject(object):
 
         try:
             self.initialize(**kwargs)
-            self._status = DOStates.INITIALIZED # no need to use synchronised self.status here
+            self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
         except:
             # It doesn't make sense to set an internal status here because
             # the creation of the object is actually raising an exception,
@@ -271,7 +271,7 @@ class AbstractDataObject(object):
         # it could trigger its "undeletion", but this would require an automatic
         # recalculation of its new expiration date, which is maybe something we
         # don't have to have
-        if self.status != DOStates.COMPLETED:
+        if self.status != DROPStates.COMPLETED:
             raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
 
         io = self.getIO()
@@ -312,7 +312,7 @@ class AbstractDataObject(object):
         return io.read(count, **kwargs)
 
     def _checkStateAndDescriptor(self, descriptor):
-        if self.status != DOStates.COMPLETED:
+        if self.status != DROPStates.COMPLETED:
             raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
         if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
@@ -334,7 +334,7 @@ class AbstractDataObject(object):
         final writing logic via the `self.writeMeta()` method.
         '''
 
-        if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
+        if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
         # We lazily initialize our writing IO instance because the data of this
@@ -368,14 +368,14 @@ class AbstractDataObject(object):
         if self._expectedSize > 0:
             remaining = self._expectedSize - self._size
             if remaining > 0:
-                self.status = DOStates.WRITING
+                self.status = DROPStates.WRITING
             else:
                 if remaining < 0:
                     logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
                 logger.debug("Automatically moving DROP %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
                 self.setCompleted()
         else:
-            self.status = DOStates.WRITING
+            self.status = DROPStates.WRITING
 
         return nbytes
 
@@ -431,7 +431,7 @@ class AbstractDataObject(object):
     def checksum(self, value):
         if self._checksum is not None:
             raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % (self))
-        if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % (self))
         self._checksum = value
 
@@ -453,7 +453,7 @@ class AbstractDataObject(object):
     def checksumType(self, value):
         if self._checksumType is not None:
             raise Exception("The checksum type for DROP %s is already set, cannot overwrite with new value" % (self))
-        if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("DROP %s is still not fully written, cannot manually set a checksum type yet" % (self))
         self._checksumType = value
 
@@ -554,7 +554,7 @@ class AbstractDataObject(object):
     def size(self, size):
         if self._size is not None:
             raise Exception("The size of DROP %s is already calculated, cannot overwrite with new value" % (self))
-        if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("DROP %s is still not fully written, cannot manually set a size yet" % (self))
         self._size = size
 
@@ -587,7 +587,7 @@ class AbstractDataObject(object):
     def parent(self):
         """
         The DROP that acts as the parent of the current one. This
-        parent/child relationship is created by ContainerDataObjects, which are
+        parent/child relationship is created by ContainerDROPs, which are
         a specific kind of DROP.
         """
         return self._parent
@@ -618,13 +618,13 @@ class AbstractDataObject(object):
         """
         Adds a consumer to this DROP.
 
-        Consumers are normally (but not necessarily) AppDataObjects that get
+        Consumers are normally (but not necessarily) AppDROPs that get
         notified when this DROP moves into the COMPLETED state. This is
         notified by calling the consumer's `dataObjectCompleted` method with the
         UID of this DROP.
 
         This is one of the key mechanisms by which the DROP graph is
-        executed automatically. If AppDataObject B consumes DROP A, then
+        executed automatically. If AppDROP B consumes DROP A, then
         as soon as A transitions to COMPLETED B will be notified and will
         probably start its execution.
         """
@@ -656,7 +656,7 @@ class AbstractDataObject(object):
             return
 
         def dataObjectCompleted(e):
-            if e.status != DOStates.COMPLETED:
+            if e.status != DROPStates.COMPLETED:
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
                 return
@@ -679,7 +679,7 @@ class AbstractDataObject(object):
         """
         Adds a producer to this DROP.
 
-        Producers are AppDataObjects that write into this DROP; from the
+        Producers are AppDROPs that write into this DROP; from the
         producers' point of view, this DROP is one of its many outputs.
 
         When a producer has finished its execution, this DROP will be
@@ -703,7 +703,7 @@ class AbstractDataObject(object):
         moves to the COMPLETED state.
 
         This is one of the key mechanisms through which the execution of a
-        DROP graph is accomplished. If AppDataObject A produces DROP
+        DROP graph is accomplished. If AppDROP A produces DROP
         B, as soon as A finishes its execution B will be notified and will move
         itself to COMPLETED.
         """
@@ -736,7 +736,7 @@ class AbstractDataObject(object):
         """
         Adds a streaming consumer to this DROP.
 
-        Streaming consumers are AppDataObjects that receive the data written
+        Streaming consumers are AppDROPs that receive the data written
         into this DROP *as it gets written*, and therefore do not need to
         wait until this DROP has been moved to the COMPLETED state.
         """
@@ -768,7 +768,7 @@ class AbstractDataObject(object):
         to COMPLETED, or when the expected amount of data held by a DROP
         is not known in advanced.
         '''
-        if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
+        if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("DROP %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
 
         # Close our writing IO instance.
@@ -778,7 +778,7 @@ class AbstractDataObject(object):
 
         if logger.isEnabledFor(logging.INFO):
             logger.info("Moving DROP %s/%s to COMPLETED" % (self._oid, self._uid))
-        self.status = DOStates.COMPLETED
+        self.status = DROPStates.COMPLETED
 
         # Signal our streaming consumers that the show is over
         for ic in self._streamingConsumers:
@@ -790,7 +790,7 @@ class AbstractDataObject(object):
         '''
         # Mind you we're not accessing _status, but status. This way we use the
         # lock in status() to access _status
-        return (self.status == DOStates.COMPLETED)
+        return (self.status == DROPStates.COMPLETED)
 
     @property
     def location(self):
@@ -823,7 +823,7 @@ class AbstractDataObject(object):
     def uri(self, uri):
         self._uri = uri
 
-class FileDataObject(AbstractDataObject):
+class FileDROP(AbstractDROP):
     """
     A DROP that points to data stored in a mounted filesystem.
     """
@@ -860,7 +860,7 @@ class FileDataObject(AbstractDataObject):
         hostname = os.uname()[1] # TODO: change when necessary
         return "file://" + hostname + self._fnm
 
-class NgasDataObject(AbstractDataObject):
+class NgasDROP(AbstractDROP):
     '''
     A DROP that points to data stored in an NGAS server
     '''
@@ -880,7 +880,7 @@ class NgasDataObject(AbstractDataObject):
     def dataURL(self):
         return "ngas://%s:%d/%s" % (self._ngasSrv, self._ngasPort, self.uid)
 
-class InMemoryDataObject(AbstractDataObject):
+class InMemoryDROP(AbstractDROP):
     """
     A DROP that points data stored in memory.
     """
@@ -896,7 +896,7 @@ class InMemoryDataObject(AbstractDataObject):
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
-class NullDataObject(AbstractDataObject):
+class NullDROP(AbstractDROP):
     """
     A DROP that doesn't store any data.
     """
@@ -908,19 +908,19 @@ class NullDataObject(AbstractDataObject):
     def dataURL(self):
         return "null://"
 
-class ContainerDataObject(AbstractDataObject):
+class ContainerDROP(AbstractDROP):
     """
     A DROP that doesn't directly point to some piece of data, but instead
     holds references to other DROPs (its children), and from them its own
     internal state is deduced.
 
-    Because of its nature, ContainerDataObjects cannot be written to directly,
+    Because of its nature, ContainerDROPs cannot be written to directly,
     and likewise they cannot be read from directly. One instead has to pay
     attention to its "children" DROPs if I/O must be performed.
     """
 
     def initialize(self, **kwargs):
-        super(ContainerDataObject, self).initialize(**kwargs)
+        super(ContainerDROP, self).initialize(**kwargs)
         self._children = []
 
     #===========================================================================
@@ -938,7 +938,7 @@ class ContainerDataObject(AbstractDataObject):
             raise Exception("Circular dependency between DROPs %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
+            logger.debug("Adding new child for ContainerDROP %s/%s: %s" % (self.oid, self.uid, child.uid))
 
         self._children.append(child)
         child.parent = self
@@ -968,16 +968,16 @@ class ContainerDataObject(AbstractDataObject):
             return reduce(lambda a,b: a or b, [c.exists() for c in self._children])
         return True
 
-class DirectoryContainer(ContainerDataObject):
+class DirectoryContainer(ContainerDROP):
     """
-    A ContainerDataObject that represents a filesystem directory. It only allows
-    FileDataObjects and DirectoryContainers to be added as children. Children
+    A ContainerDROP that represents a filesystem directory. It only allows
+    FileDROPs and DirectoryContainers to be added as children. Children
     can only be added if they are placed directly within the directory
     represented by this DirectoryContainer.
     """
 
     def initialize(self, **kwargs):
-        ContainerDataObject.initialize(self, **kwargs)
+        ContainerDROP.initialize(self, **kwargs)
 
         if 'dirname' not in kwargs:
             raise Exception('DirectoryContainer needs a "dirname" parameter')
@@ -992,13 +992,13 @@ class DirectoryContainer(ContainerDataObject):
         self._path = os.path.abspath(directory)
 
     def addChild(self, child):
-        if isinstance(child, (FileDataObject, DirectoryContainer)):
+        if isinstance(child, (FileDROP, DirectoryContainer)):
             path = child.path
             if os.path.dirname(path) != self.path:
                 raise Exception('Child DROP is not under %s' % (self.path))
-            ContainerDataObject.addChild(self, child)
+            ContainerDROP.addChild(self, child)
         else:
-            raise TypeError('Child data object is not of type FileDataObject or DirectoryContainer')
+            raise TypeError('Child data object is not of type FileDROP or DirectoryContainer')
 
     @property
     def path(self):
@@ -1006,18 +1006,18 @@ class DirectoryContainer(ContainerDataObject):
 
 
 #===============================================================================
-# AppDataObject classes follow
+# AppDROP classes follow
 #===============================================================================
 
 
-class AppDataObject(ContainerDataObject):
+class AppDROP(ContainerDROP):
 
     '''
-    An AppDataObject is a DROP representing an application that reads data
+    An AppDROP is a DROP representing an application that reads data
     from one or more DROPs (its inputs), and writes data onto one or more
     DROPs (its outputs).
 
-    AppDataObjects accept two different kind of inputs: "normal" and "streaming"
+    AppDROPs accept two different kind of inputs: "normal" and "streaming"
     inputs. Normal inputs are DROPs that must be on the COMPLETED state
     (and therefore their data must be fully written) before this application is
     run, while streaming inputs are DROPs that feed chunks of data into
@@ -1033,17 +1033,17 @@ class AppDataObject(ContainerDataObject):
     `initialize` time, while other might start during the first invocation of
     `dataWritten`. A common scenario anyway is to start an application only
     after all its inputs have moved to COMPLETED (implying that none of them is
-    an streaming input); for these cases see the `BarrierAppDataObject`.
+    an streaming input); for these cases see the `BarrierAppDROP`.
     '''
 
     def initialize(self, **kwargs):
 
-        super(AppDataObject, self).initialize(**kwargs)
+        super(AppDROP, self).initialize(**kwargs)
 
         # Inputs and Outputs are the DROPs that get read from and written
-        # to by this AppDataObject, respectively. An input DROP will see
-        # this AppDataObject as one of its consumers, while an output DROP
-        # will see this AppDataObject as one of its producers.
+        # to by this AppDROP, respectively. An input DROP will see
+        # this AppDROP as one of its consumers, while an output DROP
+        # will see this AppDROP as one of its producers.
         #
         # Input objects will 
         self._inputs  = collections.OrderedDict()
@@ -1053,9 +1053,9 @@ class AppDataObject(ContainerDataObject):
         # of the consumers
         self._streamingInputs  = collections.OrderedDict()
 
-        # An AppDataObject has a second, separate state machine indicating its
+        # An AppDROP has a second, separate state machine indicating its
         # execution status.
-        self._execStatus = AppDOStates.NOT_RUN
+        self._execStatus = AppDROPStates.NOT_RUN
 
     def addInput(self, inputDataObject):
         if inputDataObject not in self._inputs.values():
@@ -1066,7 +1066,7 @@ class AppDataObject(ContainerDataObject):
     @property
     def inputs(self):
         """
-        The list of inputs set into this AppDataObject
+        The list of inputs set into this AppDROP
         """
         return self._inputs.values()
 
@@ -1079,7 +1079,7 @@ class AppDataObject(ContainerDataObject):
             outputDataObject.addProducer(self)
 
             def appFinished(e):
-                if e.execStatus not in (AppDOStates.FINISHED, AppDOStates.ERROR):
+                if e.execStatus not in (AppDROPStates.FINISHED, AppDROPStates.ERROR):
                     if logger.isEnabledFor(logging.DEBUG):
                         logger.debug('Skipping event for output %s: %s' %(outputDataObject, str(e.__dict__)) )
                     return
@@ -1091,7 +1091,7 @@ class AppDataObject(ContainerDataObject):
     @property
     def outputs(self):
         """
-        The list of outputs set into this AppDataObject
+        The list of outputs set into this AppDROP
         """
         return self._outputs.values()
 
@@ -1104,28 +1104,28 @@ class AppDataObject(ContainerDataObject):
     @property
     def streamingInputs(self):
         """
-        The list of streaming inputs set into this AppDataObject
+        The list of streaming inputs set into this AppDROP
         """
         return self._streamingInputs.values()
 
     def dataObjectCompleted(self, uid):
         """
         Callback invoked when the DROP with UID `uid` (which is either a
-        normal or a streaming input of this AppDataObject) has moved to the
+        normal or a streaming input of this AppDROP) has moved to the
         COMPLETED state. By default no action is performed.
         """
 
     def dataWritten(self, uid, data):
         """
         Callback invoked when `data` has been written into the DROP with
-        UID `uid` (which is one of the streaming inputs of this AppDataObject).
+        UID `uid` (which is one of the streaming inputs of this AppDROP).
         By default no action is performed
         """
 
     @property
     def execStatus(self):
         """
-        The execution status of this AppDataObject
+        The execution status of this AppDROP
         """
         return self._execStatus
 
@@ -1136,9 +1136,9 @@ class AppDataObject(ContainerDataObject):
         self._execStatus = execStatus
         self._fire('execStatus', execStatus=execStatus)
 
-class BarrierAppDataObject(AppDataObject):
+class BarrierAppDROP(AppDROP):
     """
-    An AppDataObject accepts no streaming inputs and waits until all its inputs
+    An AppDROP accepts no streaming inputs and waits until all its inputs
     have been moved to COMPLETED to execute its 'run' method, which must be
     overwritten by subclasses.
 
@@ -1148,14 +1148,14 @@ class BarrierAppDataObject(AppDataObject):
     """
 
     def initialize(self, **kwargs):
-        super(BarrierAppDataObject, self).initialize(**kwargs)
+        super(BarrierAppDROP, self).initialize(**kwargs)
         self._completedInputs = []
 
     def addStreamingInput(self, streamingInputDO):
-        raise Exception("BarrierAppDataObjects don't accept streaming inputs")
+        raise Exception("BarrierAppDROPs don't accept streaming inputs")
 
     def dataObjectCompleted(self, uid):
-        super(BarrierAppDataObject, self).dataObjectCompleted(uid)
+        super(BarrierAppDROP, self).dataObjectCompleted(uid)
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
             # Return immediately, but schedule the execution of this app
@@ -1173,16 +1173,16 @@ class BarrierAppDataObject(AppDataObject):
 
         # Keep track of the state of this application. Setting the state
         # will fire an event to the subscribers of the execStatus events
-        self.execStatus = AppDOStates.RUNNING
+        self.execStatus = AppDROPStates.RUNNING
         try:
             self.run()
-            self.execStatus = AppDOStates.FINISHED
+            self.execStatus = AppDROPStates.FINISHED
         except:
-            self.execStatus = AppDOStates.ERROR
+            self.execStatus = AppDROPStates.ERROR
             raise
         finally:
             # TODO: This needs to be defined more clearly
-            self.status = DOStates.COMPLETED
+            self.status = DROPStates.COMPLETED
 
     def run(self):
         """
@@ -1239,22 +1239,22 @@ class dodict(dict):
         return self[name]
 
 
-# Dictionary mapping 1-to-many DOLinkType constants to the corresponding methods
+# Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
 # used to append a a DROP into a relationship collection of another
 # (e.g., one uses `addConsumer` to add a DOLinkeType.CONSUMER DROP into
 # another)
 LINKTYPE_1TON_APPEND_METHOD = {
-    DOLinkType.CONSUMER:           'addConsumer',
-    DOLinkType.STREAMING_CONSUMER: 'addStreamingConsumer',
-    DOLinkType.INPUT:              'addInput',
-    DOLinkType.STREAMING_INPUT:    'addStreamingInput',
-    DOLinkType.OUTPUT:             'addOutput',
-    DOLinkType.CHILD:              'addChild',
-    DOLinkType.PRODUCER:           'addProducer'
+    DROPLinkType.CONSUMER:           'addConsumer',
+    DROPLinkType.STREAMING_CONSUMER: 'addStreamingConsumer',
+    DROPLinkType.INPUT:              'addInput',
+    DROPLinkType.STREAMING_INPUT:    'addStreamingInput',
+    DROPLinkType.OUTPUT:             'addOutput',
+    DROPLinkType.CHILD:              'addChild',
+    DROPLinkType.PRODUCER:           'addProducer'
 }
 
 # Same as above, but for N-to-1 relationships, in which case we indicate not a
 # method but a property
 LINKTYPE_NTO1_PROPERTY = {
-    DOLinkType.PARENT: 'parent'
+    DROPLinkType.PARENT: 'parent'
 }

@@ -31,22 +31,22 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
-from dfms.data_object import AbstractDataObject, BarrierAppDataObject, \
-    AppDataObject
-from dfms.ddap_protocol import DOLinkType
+from dfms.data_object import AbstractDROP, BarrierAppDROP, \
+    AppDROP
+from dfms.ddap_protocol import DROPLinkType
 
 
 _LINKTYPE_TO_NREL = {
-    DOLinkType.CONSUMER: 'consumers',
-    DOLinkType.STREAMING_CONSUMER: 'streamingConsumers',
-    DOLinkType.CHILD: 'children',
-    DOLinkType.INPUT: 'inputs',
-    DOLinkType.STREAMING_INPUT: 'streamingInputs',
-    DOLinkType.OUTPUT: 'outputs',
-    DOLinkType.PRODUCER: 'producers'
+    DROPLinkType.CONSUMER: 'consumers',
+    DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
+    DROPLinkType.CHILD: 'children',
+    DROPLinkType.INPUT: 'inputs',
+    DROPLinkType.STREAMING_INPUT: 'streamingInputs',
+    DROPLinkType.OUTPUT: 'outputs',
+    DROPLinkType.PRODUCER: 'producers'
 }
 _LINKTYPE_TO_REL = {
-    DOLinkType.PARENT: 'parent',
+    DROPLinkType.PARENT: 'parent',
 }
 
 logger = logging.getLogger(__name__)
@@ -202,13 +202,13 @@ class Session(object):
         doutils.breadFirstTraverse(self._roots, self._registerDataObject)
 
         # We move to COMPLETED the DROPs that we were requested to
-        # BarrierAppDataObjects are here considered as having to be executed and
+        # BarrierAppDROPs are here considered as having to be executed and
         # not directly moved to COMPLETED.
         # TODO: We should possibly unify this initial triggering into a more
         #       solid concept that encompasses these two and other types of DROPs
         def triggerDO(do):
             if do.uid in completedDOs:
-                if isinstance(do, BarrierAppDataObject):
+                if isinstance(do, BarrierAppDROP):
                     t = threading.Thread(target=lambda:do.execute())
                     t.daemon = True
                     t.start()
@@ -250,12 +250,12 @@ class Session(object):
         # wired together by the DIM after deploying each individual graph on
         # each of the DOMs).
         # We recognize such nodes because they are actually not an instance of
-        # AbstractDataObject (they are Pyro4.Proxy instances).
+        # AbstractDROP (they are Pyro4.Proxy instances).
         #
         # The same trick is used in luigi_int.RunDataObjectTask.requires
         def addToDict(do, downStreamDOs):
-            downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDataObject)]
-            if isinstance(do, AppDataObject):
+            downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDROP)]
+            if isinstance(do, AppDROP):
                 statusDict[do.oid]['execStatus'] = do.execStatus
             statusDict[do.oid]['status'] = do.status
 

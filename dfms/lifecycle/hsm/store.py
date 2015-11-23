@@ -25,7 +25,7 @@ import warnings
 import json
 import logging
 import os
-from dfms.data_object import FileDataObject, InMemoryDataObject, NgasDataObject
+from dfms.data_object import FileDROP, InMemoryDROP, NgasDROP
 
 '''
 Implementation of the different storage layers that are then used by the HSM to
@@ -91,7 +91,7 @@ class FileSystemStore(AbstractStore):
     """
     A filesystem store implementation. It requires a mount point at construction
     time which is used as the root of the store; thus this store uses a mounted
-    device fully. It creates FileDataObjects that live directly in the root of
+    device fully. It creates FileDROPs that live directly in the root of
     the filesystem, and monitors the usage of the filesystem.
     """
     def __init__(self, mountPoint):
@@ -123,7 +123,7 @@ class FileSystemStore(AbstractStore):
 
     def createDataObject(self, oid, uid, **kwargs):
         kwargs['dirname'] = self._mountPoint
-        return FileDataObject(oid, uid, **kwargs)
+        return FileDROP(oid, uid, **kwargs)
 
     def __str__(self):
         return self._mountPoint
@@ -131,7 +131,7 @@ class FileSystemStore(AbstractStore):
 class MemoryStore(AbstractStore):
     """
     A store that uses RAM memory as its storage mechanism. It creates
-    InMemoryDataObjects and monitors the RAM usage of the system.
+    InMemoryDROPs and monitors the RAM usage of the system.
     """
 
     def __init__(self):
@@ -144,7 +144,7 @@ class MemoryStore(AbstractStore):
         self._setAvailableSpace(vmem.free)
 
     def createDataObject(self, oid, uid, **kwargs):
-        return InMemoryDataObject(oid, uid, **kwargs)
+        return InMemoryDROP(oid, uid, **kwargs)
 
     def __str__(self):
         return 'Memory'
@@ -152,7 +152,7 @@ class MemoryStore(AbstractStore):
 class NgasStore(AbstractStore):
     """
     A store that a given NGAS server as its storage mechanism. It creates
-    NgasDataObjects and monitors the disks usage of the NGAS system.
+    NgasDROPs and monitors the disks usage of the NGAS system.
     """
     def __init__(self, host=None, port=None, initialCheck=True):
 
@@ -198,7 +198,7 @@ class NgasStore(AbstractStore):
     def createDataObject(self, oid, uid, **kwargs):
         kwargs['ngasSrv']  = self._host
         kwargs['ngasPort'] = self._port
-        return NgasDataObject(oid, uid, **kwargs)
+        return NgasDROP(oid, uid, **kwargs)
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient
@@ -216,7 +216,7 @@ class DirectoryStore(AbstractStore):
     SIZES file that must be present at the root level, while the currently used
     space is determined by summing up the individual sizes of all files within
     the directory, recursively.
-    This store creates FileDataObjects that live inside the store's directory.
+    This store creates FileDROPs that live inside the store's directory.
     """
 
     __SIZE_FILE = 'SIZE'
@@ -246,7 +246,7 @@ class DirectoryStore(AbstractStore):
 
     def createDataObject(self, oid, uid, **kwargs):
         kwargs['dirname'] = self._dirName
-        return FileDataObject(oid, uid, **kwargs)
+        return FileDROP(oid, uid, **kwargs)
 
     def _updateSpaces(self):
         used = self._dirUsage(self._dirName)
