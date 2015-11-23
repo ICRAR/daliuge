@@ -90,7 +90,7 @@ class DockerApp(BarrierAppDataObject):
     running in the container.
 
     Data volumes are a file-specific feature. For this reason, this DockerApp
-    application supports file-system based input/output DataObjects only, namely
+    application supports file-system based input/output DROPs only, namely
     the FileDataObject and the DirectoryContainer types.
 
     Since the command to be run in the container receives most probably as

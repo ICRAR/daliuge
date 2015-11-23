@@ -21,7 +21,7 @@
 #
 """
 A small module that measures the average memory consumption of different
-DataObject types. It was initially developed to address PRO-234.
+DROP types. It was initially developed to address PRO-234.
 """
 
 from optparse import OptionParser
@@ -34,10 +34,10 @@ from dfms import data_object
 
 def measure(n, DOtype):
     """
-    Create `n` DataObjects of type `DOtype` and measure how much memory does the
+    Create `n` DROPs of type `DOtype` and measure how much memory does the
     program use at the beginning and the end of the process. It returns a list
     with the total amount of memory, user time and system time used during the
-    creation of all the DataObject instances
+    creation of all the DROP instances
     """
     p = psutil.Process()
     mem1 = p.memory_info()[0]
@@ -56,13 +56,13 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--csv", action="store_true", dest="csv", help = "Output results in CSV format", default=False)
     parser.add_option("-i", "--instances", action="store", type="int",
-                      dest="instances", help = "Number of DataObject instances to create and measure")
+                      dest="instances", help = "Number of DROP instances to create and measure")
     parser.add_option("-t", "--type", action="store", type="string",
-                      dest="type", help = "DataObject type to instantiate")
+                      dest="type", help = "DROP type to instantiate")
     (options, args) = parser.parse_args(sys.argv)
 
     if options.type is None:
-        parser.error("DataObject type to instantiate not specified")
+        parser.error("DROP type to instantiate not specified")
     if options.instances is None:
         parser.error("Number of instances to create not specified")
 

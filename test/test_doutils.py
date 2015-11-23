@@ -39,7 +39,7 @@ class DOUtilsTest(unittest.TestCase):
 
     def _createGraph(self):
         """
-        Creates the following graph of DataObjects:
+        Creates the following graph of DROPs:
 
         A |--> B ----> D --> G --> I --|
           |--> C -|--> E --------------|-> H --> J

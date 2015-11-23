@@ -21,7 +21,7 @@
 #
 """
 A modules that contains several functions returning different "physical graphs",
-at this moment represented simply by a number of DataObjects interconnected.
+at this moment represented simply by a number of DROPs interconnected.
 
 Graph-creator methods must accept no arguments, and must return the starting
 point(s) for the graph they create.
@@ -66,9 +66,9 @@ class SleepAndCopyApp(BarrierAppDataObject):
     """
     A simple application consumer that sleeps between 0 and 4 seconds (or the
     specified amount of time) and then fully copies the contents of the
-    DataObject it consumes into each of the DataObjects it writes to. If there
-    are more than one DataObject being consumed, the individual contents of each
-    DataObjects are written into each output.
+    DROP it consumes into each of the DROPs it writes to. If there
+    are more than one DROP being consumed, the individual contents of each
+    DROPs are written into each output.
     """
     def initialize(self, **kwargs):
         super(SleepAndCopyApp, self).initialize(**kwargs)
@@ -694,7 +694,7 @@ def chiles_pg():
 def listGraphFunctions():
     """
     Returns a generator that iterates over the names of the functions of this
-    module that return a DataObject graph. Such functions are recognized because
+    module that return a DROP graph. Such functions are recognized because
     they accept no arguments at all.
     """
     allNames = dict(globals())

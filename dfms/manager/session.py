@@ -60,9 +60,9 @@ class SessionStates:
 
 class Session(object):
     """
-    A DataObject graph execution.
+    A DROP graph execution.
 
-    A session is the runtime incarnation of a given DataObject graph that gets
+    A session is the runtime incarnation of a given DROP graph that gets
     executed in our framework. Thus, different executions of the same graph
     parts or specifications lead to different sessions.
 
@@ -71,7 +71,7 @@ class Session(object):
     can be connected later. The first time a "graph part" is added to the
     session its status is changed to BUILDING. Once all the parts have been
     submitted, users can finally deploy the session, which will move the session
-    to the DEPLOYING status first, create the actual DataObjects, and then move
+    to the DEPLOYING status first, create the actual DROPs, and then move
     the session to the RUNNING status later. Once the execution of the
     graph has finished the session is moved to FINISHED.
     """
@@ -108,17 +108,17 @@ class Session(object):
         Adds the graph specification given in `graphSpec` to the
         graph specification currently held by this session. A graphSpec is a
         list of dictionaries, each of which contains the information of one
-        DataObject. Each DataObject specification is checked to see it contains
-        all the necessary details to construct a proper DataObject. If one
-        DataObject specification is found to be inconsistent the whole operation
+        DROP. Each DROP specification is checked to see it contains
+        all the necessary details to construct a proper DROP. If one
+        DROP specification is found to be inconsistent the whole operation
         fill wail.
 
         Adding graph specs to the session is only allowed while the session is
         in the PRISTINE or BUILDING status; otherwise an exception will be
         raised.
 
-        If the `graphSpec` being added contains DataObjects that have already
-        been added to the session an exception will be raised. DataObjects are
+        If the `graphSpec` being added contains DROPs that have already
+        been added to the session an exception will be raised. DROPs are
         uniquely identified by their OID at this point.
         """
 
@@ -133,24 +133,24 @@ class Session(object):
 
         for oid in graphSpecDict:
             if oid in self._graph:
-                raise Exception('DataObject with OID %s already exists, cannot add twice' % (oid))
+                raise Exception('DROP with OID %s already exists, cannot add twice' % (oid))
 
         self._graph.update(graphSpecDict)
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Added a graph definition with %d DataObjects" % (len(graphSpecDict)))
+            logger.debug("Added a graph definition with %d DROPs" % (len(graphSpecDict)))
 
     def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
         """
-        Links together two DataObject specifications (i.e., those pointed by
-        `lhOID` and `rhOID`) using `linkType`. The DataObject specifications
+        Links together two DROP specifications (i.e., those pointed by
+        `lhOID` and `rhOID`) using `linkType`. The DROP specifications
         must both already be part of one of the graph specs contained in this
         session; otherwise an exception will be raised.
         """
         if self.status != SessionStates.BUILDING:
             raise Exception("Can't link DROPs anymore since this session isn't in the BUILDING state")
 
-        # Look for the two DataObjects in all our graph parts and reporting
+        # Look for the two DROPs in all our graph parts and reporting
         # missing DROPs
         lhDOSpec = self.findByOidInParts(lhOID)
         rhDOSpec = self.findByOidInParts(rhOID)
@@ -159,7 +159,7 @@ class Session(object):
         if rhDOSpec is None: missingOids.append(rhOID)
         if missingOids:
             oids = 'OID' if len(missingOids) == 1 else 'OIDs'
-            raise Exception('No DataObject found for %s %r' % (oids, missingOids))
+            raise Exception('No DROP found for %s %r' % (oids, missingOids))
 
         graph_loader.addLink(linkType, lhDOSpec, rhOID, force=force)
 
@@ -170,11 +170,11 @@ class Session(object):
 
     def deploy(self, completedDOs=[]):
         """
-        Creates the DataObjects represented by all the graph specs contained in
+        Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
 
         When this method has finished executing a Pyro Daemon will also be
-        up and running, servicing requests to access to all the DataObjects
+        up and running, servicing requests to access to all the DROPs
         belonging to this session
         """
 
@@ -192,9 +192,9 @@ class Session(object):
         self._daemonT.daemon = True
         self._daemonT.start()
 
-        # Create the real DataObjects from the graph specs
+        # Create the real DROPs from the graph specs
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Creating DataObjects for session %s" % (self._sessionId))
+            logger.debug("Creating DROPs for session %s" % (self._sessionId))
 
         self._roots = graph_loader.createGraphFromDOSpecList(self._graph.values())
 

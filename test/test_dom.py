@@ -42,7 +42,7 @@ class TestDOM(unittest.TestCase):
 
     def test_runGraphOneDOPerDOM(self):
         """
-        A test that creates three DataObjects in two different DOMs, wire two of
+        A test that creates three DROPs in two different DOMs, wire two of
         them together externally (i.e., using their proxies), and runs the graph.
         For this the graphs that are fed into the DOMs must *not* express the
         inter-DOM relationships. The graph looks like:
@@ -88,7 +88,7 @@ class TestDOM(unittest.TestCase):
 
     def test_runGraphSeveralDOsPerDOM(self):
         """
-        A test that creates several DataObjects in two different DOMs and  runs
+        A test that creates several DROPs in two different DOMs and  runs
         the graph. The graph looks like this
 
         DOM #1                 DOM #2
@@ -151,7 +151,7 @@ class TestDOM(unittest.TestCase):
 
     def test_runWithFourDOMs(self):
         """
-        A test that creates several DataObjects in two different DOMs and  runs
+        A test that creates several DROPs in two different DOMs and  runs
         the graph. The graph looks like this
 
                      DOM #2

@@ -56,8 +56,8 @@ def isContainer(do):
 class SumupContainerChecksum(BarrierAppDataObject):
     """
     A dummy BarrierAppDataObject that recursively sums up the checksums of
-    all the individual DataObjects it consumes, and then stores the final
-    result in its output DataObject
+    all the individual DROPs it consumes, and then stores the final
+    result in its output DROP
     """
     def run(self):
         crcSum = 0
@@ -273,7 +273,7 @@ class TestDataObject(unittest.TestCase):
     def test_app_multiple_outputs(self):
         """
         A small method that tests that the AppDataObjects writing to two
-        different DataObjects outputs works
+        different DROPs outputs works
 
         The graph constructed by this example looks as follow:
 
@@ -281,7 +281,7 @@ class TestDataObject(unittest.TestCase):
         A --> B --> C --> D --|
                               |--> F
 
-        Here B and D are an AppDataObjects, with D writing to two DataObjects
+        Here B and D are an AppDataObjects, with D writing to two DROPs
         outputs (E and F) and reading from C. C, in turn, is written by B, which
         in turns reads the data from A
         """
@@ -335,8 +335,8 @@ class TestDataObject(unittest.TestCase):
     def test_dataObjectWroteFromOutside(self):
         """
         A different scenario to those tested above, in which the data
-        represented by the DataObject isn't actually written *through* the
-        DataObject. Still, the DataObject needs to be moved to COMPLETED once
+        represented by the DROP isn't actually written *through* the
+        DROP. Still, the DROP needs to be moved to COMPLETED once
         the data is written, and reading from it should still yield a correct
         result
         """

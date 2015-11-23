@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """
-Module containing the code that integrates our DataObjects with Luigi.
+Module containing the code that integrates our DROPs with Luigi.
 """
 
 import importlib
@@ -39,17 +39,17 @@ logger = logging.getLogger(__name__)
 
 class RunDataObjectTask(luigi.Task):
     """
-    A Luigi Task that, for a given DataObject, either simply monitors it or
+    A Luigi Task that, for a given DROP, either simply monitors it or
     actually executes it.
 
     Which of the two actions is performed depends on the nature of the
-    DataObject and on the execution mode set in the DataObject's upstream
-    objects: only AppDataObject DataObjects can be triggered automatically by
-    their upstream objects. Since AppDataObject DataObjects only reference one
+    DROP and on the execution mode set in the DROP's upstream
+    objects: only AppDataObjects can be triggered automatically by
+    their upstream objects. Since AppDataObjects only reference one
     upstream object (their producer) we need only to check the producer's
     execution mode, and if it's set to ExecutionMode.EXTERNAL then this task
-    needs to manually execute the AppDataObject DataObject. In any other case this
-    task simply waits until the DataObject's status has moved to COMPLETED.
+    needs to manually execute the AppDataObject DROP. In any other case this
+    task simply waits until the DROP's status has moved to COMPLETED.
 
     The complete() test for both cases is still the same, regardless of who is
     driving the execution: the DROP must be COMPLETED and must exist.
@@ -69,7 +69,7 @@ class RunDataObjectTask(luigi.Task):
                     self.execDO = True
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("%s will execute or monitor DataObject %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
+            logger.debug("%s will execute or monitor DROP %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
 
         if not self.execDO:
             self._evt = threading.Event()
@@ -122,8 +122,8 @@ class RunDataObjectTask(luigi.Task):
 
 class FinishGraphExecution(luigi.Task):
     """
-    A Luigi Task that creates a DataObject graph and waits until it has finished
-    its execution fully. The DataObject graph is created by feeding this Task
+    A Luigi Task that creates a DROP graph and waits until it has finished
+    its execution fully. The DROP graph is created by feeding this Task
     with a property pgCreator parameter, which is the name of a function with
     no arguments that returns the top-level nodes of the graph.
 

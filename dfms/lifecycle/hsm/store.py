@@ -30,7 +30,7 @@ from dfms.data_object import FileDataObject, InMemoryDataObject, NgasDataObject
 '''
 Implementation of the different storage layers that are then used by the HSM to
 store data. Each layer keeps track of its used space, and knows how to create
-DataObjects that use that layer as its storage mechanism.
+DROPs that use that layer as its storage mechanism.
 
 @author: rtobar
 '''

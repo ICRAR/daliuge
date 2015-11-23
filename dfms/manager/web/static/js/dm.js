@@ -278,11 +278,11 @@ function _addEdge(g, fromOid, toOid) {
 		return false;
 	}
 	if( !g.hasNode(fromOid) ) {
-		console.error('No DataObject found with oid ' + fromOid);
+		console.error('No DROP found with oid ' + fromOid);
 		return false;
 	}
 	if( !g.hasNode(toOid) ) {
-		console.error('No DataObject found with oid ' + toOid);
+		console.error('No DROP found with oid ' + toOid);
 		return false;
 	}
 	g.setEdge(fromOid, toOid, {width: 40});

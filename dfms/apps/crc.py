@@ -33,17 +33,17 @@ except:
 
 class CRCAppDataObject(BarrierAppDataObject):
     '''
-    An BarrierAppDataObject that calculates the CRC of the single DataObject it
-    consumes. It assumes the DataObject being consumed is not a container.
+    An BarrierAppDataObject that calculates the CRC of the single DROP it
+    consumes. It assumes the DROP being consumed is not a container.
     This is a simple example of an BarrierAppDataObject being implemented, and
     not something really intended to be used in a production system
     '''
 
     def run(self):
         if len(self.inputs) != 1:
-            raise Exception("This application read only from one DataObject")
+            raise Exception("This application read only from one DROP")
         if len(self.outputs) != 1:
-            raise Exception("This application writes only one DataObject")
+            raise Exception("This application writes only one DROP")
 
         inputDO = self.inputs[0]
         outputDO = self.outputs[0]
