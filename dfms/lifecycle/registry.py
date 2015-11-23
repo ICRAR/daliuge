@@ -25,8 +25,8 @@ used by the DLM to keep track of which DROPs are where, and therefore in which
 phase they currently are
 
 The registry simply (for the time being) keeps a record of:
- * Which DataObjects (i.e., which oids) are out there
- * For each DataObject, which instances(i.e., which uids) are out there
+ * Which DROPs (i.e., which oids) are out there
+ * For each DROP, which instances(i.e., which uids) are out there
 
 @author: rtobar
 '''
@@ -41,7 +41,7 @@ from dfms.ddap_protocol import DOPhases
 
 logger = logging.getLogger(__name__)
 
-class DataObject(object):
+class DROP(object):
     oid         = None
     phase       = DOPhases.GAS
     instances   = []
@@ -64,46 +64,46 @@ class Registry():
     @abstractmethod
     def addDataObject(self, dataObject):
         """
-        Adds a new DataObject to the registry
+        Adds a new DROP to the registry
         """
 
     @abstractmethod
     def addDataObjectInstance(self, dataObject):
         """
-        Adds a new DataObject instance to the registry. The registry should have
-        a record already for the DataObject that the new instance belongs to
+        Adds a new DROP instance to the registry. The registry should have
+        a record already for the DROP that the new instance belongs to
         """
 
     @abstractmethod
     def getDataObjectUids(self, dataObject):
         """
         Returns a list with the UIDs of all known instances of the given
-        DataObject
+        DROP
         """
 
     @abstractmethod
     def setDataObjectPhase(self, dataObject, phase):
         """
-        Records the phase of the given DataObject
+        Records the phase of the given DROP
         """
 
     @abstractmethod
     def recordNewAccess(self, oid):
         """
-        Appends a new record to the list of access times of the given DataObject
+        Appends a new record to the list of access times of the given DROP
         (i.e., when it has been accessed for reading)
         """
 
     @abstractmethod
     def getLastAccess(self, oid):
         """
-        Returns the last access time for the given DataObject, or -1 if it has
+        Returns the last access time for the given DROP, or -1 if it has
         never been accessed
         """
 
     def _checkDOIsInRegistry(self, oid):
         if not self._dos.has_key(oid):
-            raise Exception('DataObject %s is not present in the registry' % (oid))
+            raise Exception('DROP %s is not present in the registry' % (oid))
 
 class InMemoryRegistry(Registry):
 
@@ -116,7 +116,7 @@ class InMemoryRegistry(Registry):
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
         # Check that the DROP is not in the registry
-        doRow = DataObject()
+        doRow = DROP()
         doRow.oid       = dataObject.oid
         doRow.phase     = dataObject.phase
         doRow.instances = {dataObject.uid: dataObject}
@@ -128,7 +128,7 @@ class InMemoryRegistry(Registry):
         '''
         self._checkDOIsInRegistry(dataObject.oid)
         if self._dos[dataObject.oid].instances.has_key(dataObject.uid):
-            raise Exception('DataObject %s/%s already present in registry' % (dataObject.oid, dataObject.uid))
+            raise Exception('DROP %s/%s already present in registry' % (dataObject.oid, dataObject.uid))
         self._dos[dataObject.oid].instances[dataObject.uid] = dataObject
 
     def getDataObjectUids(self, dataObject):
@@ -165,16 +165,16 @@ class RDBMSRegistry(Registry):
 
     # The following tables should be defined in the database we're pointing at
     #
-    # DataObject:
+    # dfms_drop:
     #   oid   (PK)
     #   phase (int)
     #
-    # DataObjectInstance:
+    # dfms_dropinstance:
     #   uid     (PK)
     #   oid     (FK)
     #   dataRef ()
     #
-    # DataObjectAccessTime:
+    # dfms_dropaccesstime:
     #   oid (FK, PK)
     #   accessTime (PK)
 
@@ -236,7 +236,7 @@ class RDBMSRegistry(Registry):
     def addDataObject(self, dataObject, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute("INSERT INTO DataObject (oid, phase) VALUES ({0},{1})".format(*self._paramNames(2)),
+            cur.execute("INSERT INTO dfms_drop (oid, phase) VALUES ({0},{1})".format(*self._paramNames(2)),
                         self._bindD(dataObject.oid, dataObject.phase))
             self.addDataObjectInstance(dataObject, conn)
             cur.close()
@@ -244,14 +244,14 @@ class RDBMSRegistry(Registry):
     def addDataObjectInstance(self, dataObject, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('INSERT INTO DataObjectInstance (oid, uid, dataRef) VALUES ({0},{1},{2})'.format(*self._paramNames(3)),
+            cur.execute('INSERT INTO dfms_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})'.format(*self._paramNames(3)),
                         self._bindD(dataObject.oid, dataObject.uid, dataObject.dataURL))
             cur.close()
 
     def getDataObjectUids(self, dataObject, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('SELECT uid FROM DataObjectInstance WHERE oid = {0}'.format(*self._paramNames(1)),
+            cur.execute('SELECT uid FROM dfms_dropinstance WHERE oid = {0}'.format(*self._paramNames(1)),
                         self._bindD(dataObject.oid))
             rows = cur.fetchall()
             cur.close()
@@ -260,21 +260,21 @@ class RDBMSRegistry(Registry):
     def setDataObjectPhase(self, dataObject, phase, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('UPDATE DataObject SET phase = {0} WHERE oid = {1}'.format(*self._paramNames(2)),
+            cur.execute('UPDATE dfms_drop SET phase = {0} WHERE oid = {1}'.format(*self._paramNames(2)),
                         self._bindD(dataObject.oid, dataObject.phase))
             cur.close()
 
     def recordNewAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('INSERT INTO DataObjectAccessTime (oid, accessTime) VALUES ({0},{1})'.format(*self._paramNames(2)),
+            cur.execute('INSERT INTO dfms_dropaccesstime (oid, accessTime) VALUES ({0},{1})'.format(*self._paramNames(2)),
                         self._bindD(oid, self._dbmod.TimestampFromTicks(time.time())))
             cur.close()
 
     def getLastAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('SELECT accessTime FROM DataObjectAccessTime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1'.format(*self._paramNames(1)),
+            cur.execute('SELECT accessTime FROM dfms_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1'.format(*self._paramNames(1)),
                         self._bindD(oid))
             row = cur.fetchone()
             cur.close()

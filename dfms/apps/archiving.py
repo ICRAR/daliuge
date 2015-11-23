@@ -25,7 +25,7 @@ from dfms.doutils import DOFile
 
 class ExternalStoreApp(BarrierAppDataObject):
     """
-    An application that takes its input DataObject (which must be one, and only
+    An application that takes its input DROP (which must be one, and only
     one) and creates a copy of it in a completely external store, from the point
     of view of the DFMS framework.
 
@@ -54,8 +54,8 @@ class ExternalStoreApp(BarrierAppDataObject):
 
 class NgasArchivingApp(ExternalStoreApp):
     '''
-    An ExternalStoreApp class that takes its input DataObject and archives it in
-    an NGAS server. It currently deals with non-container DataObjects only.
+    An ExternalStoreApp class that takes its input DROP and archives it in
+    an NGAS server. It currently deals with non-container DROPs only.
 
     The archiving to NGAS occurs through the framework and not by spawning a
     new NGAS client process. This way we can read the different storage types

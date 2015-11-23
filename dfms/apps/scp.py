@@ -28,14 +28,14 @@ class ScpApp(BarrierAppDataObject):
     A BarrierAppDataObject that copies the content of its single input onto its
     single output via SSH's scp protocol.
 
-    Because of the nature of the scp protocol, the input and output DataObjects
+    Because of the nature of the scp protocol, the input and output DROPs
     of this application must both be filesystem-based; i.e., they must be an
     instance of FileDataObject or of DirectoryContainer.
 
-    Depending on the physical location of each DataObject (this application, and
+    Depending on the physical location of each DROP (this application, and
     its input and outputs) this application will copy data FROM another host or
     TO other host. This application's node must thus coincide with one of the
-    two I/O DataObjects.
+    two I/O DROPs.
     """
 
     def initialize(self, **kwargs):

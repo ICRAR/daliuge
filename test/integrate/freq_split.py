@@ -1,6 +1,6 @@
 """
 Split the measurementset using MSTransform along the frequency axis
-Used as a template to be wrapped by the DataObject framework
+Used as a template to be wrapped by the DROP framework
 
 chen.wu@icrar.org
 """

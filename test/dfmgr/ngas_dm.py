@@ -1,5 +1,5 @@
 """
-This module contains classes to "glue" Luigi, NGAS, and DataObject together into
+This module contains classes to "glue" Luigi, NGAS, and DROP together into
 a dataflow deployment and execution system
 
 created on 14-June-2015 by chen.wu@icrar.org
@@ -22,7 +22,7 @@ class DataFlowException(Exception):
 
 class DataObjectTask(luigi.Task):
     """
-    A Luigi Task that wraps a DataObject
+    A Luigi Task that wraps a DROP
     Constructor parameters: a data object it wants to wrap, and the
     session ID
     """

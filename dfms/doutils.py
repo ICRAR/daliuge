@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 '''
-Utility methods and classes to be used when interacting with DataObjects
+Utility methods and classes to be used when interacting with DROPs
 
 @author: rtobar, July 3, 2015
 '''
@@ -54,7 +54,7 @@ class EvtConsumer(object):
 class DOWaiterCtx(object):
     """
     Class used by unit tests to trigger the execution of a physical graph and
-    wait until the given set of DataObjects have reached its COMPLETED status.
+    wait until the given set of DROPs have reached its COMPLETED status.
 
     It does so by appending an EvtConsumer consumer to each DROP before they are
     used in the execution, and finally checking that the events have been set.
@@ -93,11 +93,11 @@ class EvtConsumerProxyCtx(object):
     summary, this class is similar to DOWaiterCtx, but works for remote objects
     (i.e., Pyro proxies).
 
-    Since the graph is remote (i.e., it is hosted by a DOM), the DataObjects
-    given to this class are actually Pyro proxies to the real DataObjects, and
+    Since the graph is remote (i.e., it is hosted by a DOM), the DROPs
+    given to this class are actually Pyro proxies to the real DROPs, and
     therefore the consumer that is appended into them is hosted by a Pyro Daemon
     local to this class. This class creates the daemon, starts a separate thread
-    to listen for incoming requests, waits until the DataObjects have reached
+    to listen for incoming requests, waits until the DROPs have reached
     the COMPLETED state, stops the daemon, its listening thread, and uses the
     test class to assert basic facts.
     """
@@ -165,7 +165,7 @@ def allDataObjectContents(dataObject):
 
 def copyDataObjectContents(source, target, bufsize=4096):
     '''
-    Manually copies data from one DataObject into another, in bufsize steps
+    Manually copies data from one DROP into another, in bufsize steps
     '''
     desc = source.open()
     buf = source.read(desc, bufsize)
@@ -176,13 +176,13 @@ def copyDataObjectContents(source, target, bufsize=4096):
 
 def getUpstreamObjects(dataObject):
     """
-    Returns a list of all direct "upstream" DataObjects for the given
-    DataObject. An DataObject A is "upstream" with respect to DataObject B if
+    Returns a list of all direct "upstream" DROPs for the given
+    DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
      * A is a producer of B (therefore A is an AppDataObject)
      * A is a normal or streaming input of B (and B is therefore an AppDataObject)
 
-    In practice if A is an upstream DataObject of B means that it must be moved
+    In practice if A is an upstream DROP of B means that it must be moved
     to the COMPLETED state before B can do so.
     """
     upObjs = []
@@ -195,13 +195,13 @@ def getUpstreamObjects(dataObject):
 
 def getDownstreamObjects(dataObject):
     """
-    Returns a list of all direct "downstream" DataObjects for the given
-    DataObject. An DataObject A is "downstream" with respect to DataObject B if
+    Returns a list of all direct "downstream" DROPs for the given
+    DROP. An DROP A is "downstream" with respect to DROP B if
     any of the following conditions are true:
      * A is an output of B (therefore B is an AppDataObject)
      * A is a normal or streaming consumer of B (and A is therefore an AppDataObject)
 
-    In practice if A is a downstream DataObject of B means that it cannot
+    In practice if A is a downstream DROP of B means that it cannot
     advance to the COMPLETED state until B does so.
     """
     downObjs = []
@@ -215,7 +215,7 @@ def getDownstreamObjects(dataObject):
 def getLeafNodes(nodes):
     """
     Returns a list of all the "leaf nodes" of the graph pointed by `nodes`.
-    `nodes` is either a single DataObject, or a list of DataObjects.
+    `nodes` is either a single DROP, or a list of DROPs.
     """
 
     nodes = listify(nodes)
@@ -231,8 +231,8 @@ def getLeafNodes(nodes):
 
 def depthFirstTraverse(node, func = None, visited = []):
     """
-    Depth-first traversal of a DataObject graph. For each node in the graph the
-    function func, if given, is executed with the current DataObject as the only
+    Depth-first traversal of a DROP graph. For each node in the graph the
+    function func, if given, is executed with the current DROP as the only
     argument. The visited argument maintains the list of nodes already visited.
     This implementation is recursive.
     """
@@ -248,10 +248,10 @@ def depthFirstTraverse(node, func = None, visited = []):
 
 def breadFirstTraverse(toVisit, func = None):
     """
-    Breadth-first traversal of a DataObject graph.
+    Breadth-first traversal of a DROP graph.
 
     For each node in the graph the function `func` is executed, if given. `func`
-    must accept at least one argument, the DataObject being currently visited.
+    must accept at least one argument, the DROP being currently visited.
     If two arguments are specified, the second argument will be a list of
     nodes that will be visited subsequently; `func` can alter this list in order
     to remove certain nodes from the traversal process.
@@ -301,12 +301,12 @@ def listify(o):
 class DOFile(object):
     """
     A file-like object (currently only supporting the read() operation, more to
-    be added in the future) that wraps the DataObject given at construction
+    be added in the future) that wraps the DROP given at construction
     time.
 
     Depending on the underlying storage of the data the file-like object
     returned by this method will directly access the data pointed by the
-    DataObject if possible, or will access it through the DataObject methods
+    DROP if possible, or will access it through the DROP methods
     instead.
 
     Objects of this class will automatically close themselves when no referenced

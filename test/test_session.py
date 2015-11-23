@@ -50,7 +50,7 @@ class TestSession(unittest.TestCase):
             s.addGraphSpec([{"oid":"B", "type":"container"}])
             s.addGraphSpec([{"oid":"C", "type":"container"}])
 
-            # Adding an existing DataObject
+            # Adding an existing DROP
             self.assertRaises(Exception, s.addGraphSpec, [{"oid":"A", "type":"container"}])
 
             # Adding invalid specs

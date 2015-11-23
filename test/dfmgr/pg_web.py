@@ -172,7 +172,7 @@ def root():
     return template('graphs_list.html', graphNames=graphsRepository.listGraphFunctions())
 
 #===============================================================================
-# DataObject JSON serialization methods, originally found in AbstractDataObject
+# DROP JSON serialization methods, originally found in AbstractDataObject
 # class and slightly modified afterwards
 #===============================================================================
 def get_type_code(dataObject):
@@ -187,7 +187,7 @@ def get_type_code(dataObject):
 
 def to_json_obj(dataObject, allDOsDict):
     """
-    JSON serialisation of a DataObject for displaying with dagreD3. Its
+    JSON serialisation of a DROP for displaying with dagreD3. Its
     implementation should be similar to the DataObjectTask for Luigi, since both
     should represent the same dependencies
     """

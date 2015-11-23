@@ -51,7 +51,7 @@ class DOPhases:
 class ChecksumTypes:
     """
     An enumeration of different methods to calculate the checksum of a piece of
-    data. DataObjects (in certain conditions) calculate and keep the checksum of
+    data. DROPs (in certain conditions) calculate and keep the checksum of
     the data they represent, and therefore also know the method used to
     calculate it.
     """
@@ -59,13 +59,13 @@ class ChecksumTypes:
 
 class ExecutionMode:
     """
-    Execution modes for a DataObject. DROP means that a DataObject will trigger
+    Execution modes for a DROP. DROP means that a DROP will trigger
     its consumers automatically when it becomes COMPLETED. EXTERNAL means that
-    a DataObject will *not* trigger its consumers automatically, and instead
+    a DROP will *not* trigger its consumers automatically, and instead
     this should be done by an external entity, probably by subscribing to
-    changes on the DataObject's status.
+    changes on the DROP's status.
 
-    This value exists per DataObject, and therefore we can achieve a mixed
+    This value exists per DROP, and therefore we can achieve a mixed
     execution mode for the entire graph, where some DROPs trigger automatically
     their consumers, while others must be manually executed from the outside.
 
@@ -75,7 +75,7 @@ class ExecutionMode:
     DROP, EXTERNAL = xrange(2)
 
 # This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
-# lhs and rhs are DataObject OIDs
+# lhs and rhs are DROP OIDs
 # rel is one of DOLinkType
 DORel = collections.namedtuple('DORel', ['lhs', 'rel', 'rhs'])
 

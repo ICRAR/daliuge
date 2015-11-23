@@ -219,11 +219,11 @@ class DataIslandManager(object):
         perNode = collections.defaultdict(list)
         for doSpec in graphSpec:
             if 'node' not in doSpec:
-                raise Exception("DataObject %s doesn't specify a node attribute" % (doSpec['oid']))
+                raise Exception("DROP %s doesn't specify a node attribute" % (doSpec['oid']))
 
             loc = doSpec['node']
             if loc not in self._nodes:
-                raise Exception("DataObject %s's node %s does not belong to this DIM" % (doSpec['oid'], loc))
+                raise Exception("DROP %s's node %s does not belong to this DIM" % (doSpec['oid'], loc))
 
             perNode[loc].append(doSpec)
 
@@ -310,7 +310,7 @@ class DataIslandManager(object):
             if uid not in proxies:
                 proxies[uid] = Pyro4.Proxy(allUris[uid])
 
-        # Establish the inter-DOM relationships between DataObjects.
+        # Establish the inter-DOM relationships between DROPs.
         # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         for rel in self._interDOMRelations[sessionId]:
             relType = rel.rel
@@ -328,7 +328,7 @@ class DataIslandManager(object):
         # (instead of doing it at the DOM-level deployment time, in which case
         # we would certainly miss most of the events)
         if logger.isEnabledFor(logging.INFO):
-            logger.info('Moving following DataObjects to COMPLETED right away: %r' % (completedDOs,))
+            logger.info('Moving following DROPs to COMPLETED right away: %r' % (completedDOs,))
 
         thrExs = {}
         latch = CountDownLatch(len(completedDOs))

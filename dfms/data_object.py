@@ -24,7 +24,7 @@
 # chen.wu@icrar.org   15/Feb/2015     Created
 #
 """
-Module containing the core DataObject classes.
+Module containing the core DROP classes.
 """
 
 from abc import ABCMeta, abstractmethod
@@ -56,36 +56,36 @@ except:
 logger = logging.getLogger(__name__)
 
 #===============================================================================
-# DataObject classes follow
+# DROP classes follow
 #===============================================================================
 
 
 class AbstractDataObject(object):
     """
-    Base class for all DataObject implementations.
+    Base class for all DROP implementations.
 
-    A DataObject is a representation of a piece of data. DataObjects are created,
+    A DROP is a representation of a piece of data. DROPs are created,
     written once, potentially read many times, and they finally potentially
     expire and get deleted. Subclasses implement different storage mechanisms
-    to hold the data represented by the DataObject.
+    to hold the data represented by the DROP.
 
-    If the data represented by this DataObject is written *through* this object
-    (i.e., calling the ``write`` method), this DataObject will keep track of the
+    If the data represented by this DROP is written *through* this object
+    (i.e., calling the ``write`` method), this DROP will keep track of the
     data's size and checksum. If the data is written externally, the size and
     checksum can be fed into this object for future reference.
 
-    DataObjects can have consumers attached to them. 'Normal' consumers will
-    wait until the DataObject they 'consume' (their 'input') moves to the
+    DROPs can have consumers attached to them. 'Normal' consumers will
+    wait until the DROP they 'consume' (their 'input') moves to the
     COMPLETED state and then will consume it, most typically by opening it
     and reading its contents, but any other operation could also be performed.
     How the consumption is triggered depends on the producer's `executionMode`
     flag, which dictates whether it should trigger the consumption itself or
     if it should be manually triggered by an external entity. On the other hand,
     streaming consumers receive the data that is written into its input
-    *as it gets written*. This mechanism is driven always by the DataObject that
+    *as it gets written*. This mechanism is driven always by the DROP that
     acts as a streaming input. Apart from receiving the data as it gets
-    written into the DataObject, streaming consumers are also notified when the
-    DataObjects moves to the COMPLETED state, at which point no more data should
+    written into the DROP, streaming consumers are also notified when the
+    DROPs moves to the COMPLETED state, at which point no more data should
     be expected to arrive at the consumer side.
     """
 
@@ -96,7 +96,7 @@ class AbstractDataObject(object):
 
     def __init__(self, oid, uid, **kwargs):
         """
-        Creates a DataObject. The only mandatory argument are the Object ID
+        Creates a DROP. The only mandatory argument are the Object ID
         (`oid`) and the Unique ID (`uid`) of the new object (see the `self.oid`
         and `self.uid` methods for more information). Any extra arguments must
         be keyed, and will be processed either by this method, or by the
@@ -119,20 +119,20 @@ class AbstractDataObject(object):
 
         self._bcaster = LocalEventBroadcaster()
 
-        # 1-to-N relationship: one DataObject may have many consumers and producers.
+        # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDataObjects instances
         self._consumers = []
         self._producers = []
 
         # Set holding the UID of the producers that have finished their
-        # execution. Once all producers have finished, this DataObject moves
+        # execution. Once all producers have finished, this DROP moves
         # itself to the COMPLETED state
         self._finishedProducers = set()
         self._finishedProducersLock = threading.Lock()
 
         # Streaming consumers are objects that consume the data written in
-        # this DataObject *as it gets written*, and therefore don't have to
-        # wait until this DataObject has moved to COMPLETED.
+        # this DROP *as it gets written*, and therefore don't have to
+        # wait until this DROP has moved to COMPLETED.
         # An object cannot be a streaming consumers and a 'normal' consumer
         # at the same time, although this rule is imposed simply to enforce
         # efficiency (why would a consumer want to consume the data twice?) and
@@ -148,9 +148,9 @@ class AbstractDataObject(object):
         self._phase    = None
 
         # Calculating the checksum and maintaining the data size internally
-        # implies that the data represented by this DataObject is written
-        # *through* this DataObject. This might not always be the case though,
-        # since data could be written externally and the DataObject simply be
+        # implies that the data represented by this DROP is written
+        # *through* this DROP. This might not always be the case though,
+        # since data could be written externally and the DROP simply be
         # moved to COMPLETED at the end of the process. In this case we return a
         # None checksum and size (when requested), signaling that we don't have
         # this information.
@@ -176,7 +176,7 @@ class AbstractDataObject(object):
         # Maybe we want to have a different default value for this one?
         self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DROP)
 
-        # The physical node where this DataObject resides.
+        # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
         # graph via the DataIslandManager, but in simpler scenarios such as
         # tests or graph submissions via the DataObjectManager it might be
@@ -245,26 +245,26 @@ class AbstractDataObject(object):
 
     def incrRefCount(self):
         """
-        Increments the reference count of this DataObject by one atomically.
+        Increments the reference count of this DROP by one atomically.
         """
         with self._refLock:
             self._refCount += 1
 
     def decrRefCount(self):
         """
-        Decrements the reference count of this DataObject by one atomically.
+        Decrements the reference count of this DROP by one atomically.
         """
         with self._refLock:
             self._refCount -= 1
 
     def open(self, **kwargs):
         """
-        Opens the DataObject for reading, and returns a "DataObject descriptor"
+        Opens the DROP for reading, and returns a "DROP descriptor"
         that must be used when invoking the read() and close() methods.
-        DataObjects maintain a internal reference count based on the number
+        DROPs maintain a internal reference count based on the number
         of times they are opened for reading; because of that after a successful
         call to this method the corresponding close() method must eventually be
-        invoked. Failing to do so will result in DataObjects not expiring and
+        invoked. Failing to do so will result in DROPs not expiring and
         getting deleted.
         """
         # TODO: We could also allow opening EXPIRED DROPs, in which case
@@ -272,7 +272,7 @@ class AbstractDataObject(object):
         # recalculation of its new expiration date, which is maybe something we
         # don't have to have
         if self.status != DOStates.COMPLETED:
-            raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
+            raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
 
         io = self.getIO()
         io.open(OpenMode.OPEN_READ, **kwargs)
@@ -292,7 +292,7 @@ class AbstractDataObject(object):
 
     def close(self, descriptor, **kwargs):
         """
-        Closes the given DataObject descriptor, decreasing the DataObject's
+        Closes the given DROP descriptor, decreasing the DROP's
         internal reference count and releasing the underlying resources
         associated to the descriptor.
         """
@@ -305,7 +305,7 @@ class AbstractDataObject(object):
 
     def read(self, descriptor, count=4096, **kwargs):
         """
-        Reads `count` bytes from the given DataObject `descriptor`.
+        Reads `count` bytes from the given DROP `descriptor`.
         """
         self._checkStateAndDescriptor(descriptor)
         io = self._rios[descriptor]
@@ -313,13 +313,13 @@ class AbstractDataObject(object):
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DOStates.COMPLETED:
-            raise Exception("DataObject %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
+            raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
         if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
     def isBeingRead(self):
         """
-        Returns `True` if the DataObject is currently being read; `False`
+        Returns `True` if the DROP is currently being read; `False`
         otherwise
         """
         with self._refLock:
@@ -327,9 +327,9 @@ class AbstractDataObject(object):
 
     def write(self, data, **kwargs):
         '''
-        Writes the given `data` into this DataObject. This method is only meant
-        to be called while the DataObject is in INITIALIZED or WRITING state;
-        once the DataObject is COMPLETE or beyond only reading is allowed.
+        Writes the given `data` into this DROP. This method is only meant
+        to be called while the DROP is in INITIALIZED or WRITING state;
+        once the DROP is COMPLETE or beyond only reading is allowed.
         The underlying storage mechanism is responsible for implementing the
         final writing logic via the `self.writeMeta()` method.
         '''
@@ -372,7 +372,7 @@ class AbstractDataObject(object):
             else:
                 if remaining < 0:
                     logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                logger.debug("Automatically moving DataObject %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                logger.debug("Automatically moving DROP %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
                 self.setCompleted()
         else:
             self.status = DOStates.WRITING
@@ -383,18 +383,18 @@ class AbstractDataObject(object):
     def getIO(self):
         """
         Returns an instance of one of the `dfms.io.DataIO` instances that
-        handles the data contents of this DataObject.
+        handles the data contents of this DROP.
         """
 
     def delete(self):
         """
-        Deletes the data represented by this DataObject.
+        Deletes the data represented by this DROP.
         """
         self.getIO().delete()
 
     def exists(self):
         """
-        Returns `True` if the data represented by this DataObject exists indeed
+        Returns `True` if the data represented by this DROP exists indeed
         in the underlying storage mechanism
         """
         return self.getIO().exists()
@@ -402,8 +402,8 @@ class AbstractDataObject(object):
     @abstractmethod
     def dataURL(self):
         """
-        A URL that points to the data referenced by this DataObject. Different
-        DataObject implementations will use different URI schemes.
+        A URL that points to the data referenced by this DROP. Different
+        DROP implementations will use different URI schemes.
         """
 
     def _updateChecksum(self, chunk):
@@ -416,11 +416,11 @@ class AbstractDataObject(object):
     @property
     def checksum(self):
         """
-        The checksum value for the data represented by this DataObject. Its
+        The checksum value for the data represented by this DROP. Its
         value is automatically calculated if the data was actually written
-        through this DataObject (using the `self.write()` method directly or
+        through this DROP (using the `self.write()` method directly or
         indirectly). In the case that the data has been externally written, the
-        checksum can be set externally after the DataObject has been moved to
+        checksum can be set externally after the DROP has been moved to
         COMPLETED or beyond.
 
         :see: `self.checksumType`
@@ -430,19 +430,19 @@ class AbstractDataObject(object):
     @checksum.setter
     def checksum(self, value):
         if self._checksum is not None:
-            raise Exception("The checksum for DataObject %s is already calculated, cannot overwrite with new value" % (self))
+            raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % (self))
         if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("DataObject %s is still not fully written, cannot manually set a checksum yet" % (self))
+            raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % (self))
         self._checksum = value
 
     @property
     def checksumType(self):
         """
-        The algorithm used to compute this DataObject's data checksum. Its value
+        The algorithm used to compute this DROP's data checksum. Its value
         if automatically set if the data was actually written through this
-        DataObject (using the `self.write()` method directly or indirectly). In
+        DROP (using the `self.write()` method directly or indirectly). In
         the case that the data has been externally written, the checksum type
-        can be set externally after the DataObject has been moved to COMPLETED
+        can be set externally after the DROP has been moved to COMPLETED
         or beyond.
 
         :see: `self.checksum`
@@ -452,17 +452,17 @@ class AbstractDataObject(object):
     @checksumType.setter
     def checksumType(self, value):
         if self._checksumType is not None:
-            raise Exception("The checksum type for DataObject %s is already set, cannot overwrite with new value" % (self))
+            raise Exception("The checksum type for DROP %s is already set, cannot overwrite with new value" % (self))
         if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("DataObject %s is still not fully written, cannot manually set a checksum type yet" % (self))
+            raise Exception("DROP %s is still not fully written, cannot manually set a checksum type yet" % (self))
         self._checksumType = value
 
     @property
     def oid(self):
         """
-        The DataObject's Object ID (OID). OIDs are unique identifiers given to
-        semantically different DataObjects (and by consequence the data they
-        represent). This means that different DataObjects that point to the same
+        The DROP's Object ID (OID). OIDs are unique identifiers given to
+        semantically different DROPs (and by consequence the data they
+        represent). This means that different DROPs that point to the same
         data semantically speaking, either in the same or in a different
         storage, will share the same OID.
         """
@@ -471,8 +471,8 @@ class AbstractDataObject(object):
     @property
     def uid(self):
         """
-        The DataObject's Unique ID (UID). Unlike the OID, the UID is globally
-        different for all DataObject instances, regardless of the data they
+        The DROP's Unique ID (UID). Unlike the OID, the UID is globally
+        different for all DROP instances, regardless of the data they
         point to.
         """
         return self._uid
@@ -480,9 +480,9 @@ class AbstractDataObject(object):
     @property
     def executionMode(self):
         """
-        The execution mode of this DataObject. If `ExecutionMode.DROP` it means
-        that this DataObject will automatically trigger the execution of all its
-        consumers. If `ExecutionMode.EXTERNAL` it means that this DataObject
+        The execution mode of this DROP. If `ExecutionMode.DROP` it means
+        that this DROP will automatically trigger the execution of all its
+        consumers. If `ExecutionMode.EXTERNAL` it means that this DROP
         will *not* trigger its consumers, and therefore an external entity will
         have to do it.
         """
@@ -490,30 +490,30 @@ class AbstractDataObject(object):
 
     def subscribe(self, callback, eventType=None):
         """
-        Adds a new subscription to events fired from this DataObject.
+        Adds a new subscription to events fired from this DROP.
         """
         self._bcaster.subscribe(callback, eventType=eventType)
 
     def unsubscribe(self, callback, eventType=None):
         """
-        Removes a subscription from events fired from this DataObject.
+        Removes a subscription from events fired from this DROP.
         """
         self._bcaster.unsubscribe(callback, eventType=eventType)
 
     def handleInterest(self, do):
         """
-        Main mechanism through which a DataObject handles its interest in a
-        second DataObject it isn't directly related to.
+        Main mechanism through which a DROP handles its interest in a
+        second DROP it isn't directly related to.
 
-        A call to this method should be expected for each DataObject this
-        DataObject is interested in. The default implementation does nothing,
+        A call to this method should be expected for each DROP this
+        DROP is interested in. The default implementation does nothing,
         but implementations are free to perform any action, such as subscribing
         to events or storing information.
 
         At this layer only the handling of such an interest exists. The
         expression of such interest, and the invocation of this method wherever
         necessary, is currently left as a responsibility of the entity creating
-        the DataObjects. In the case of a Session in a DataObjectManager for
+        the DROPs. In the case of a Session in a DataObjectManager for
         example this step would be performed using deployment-time information
         contained in the dospec dictionaries held in the session.
         """
@@ -526,8 +526,8 @@ class AbstractDataObject(object):
     @property
     def phase(self):
         """
-        This DataObject's phase. The phase indicates the availability of a
-        DataObject.
+        This DROP's phase. The phase indicates the availability of a
+        DROP.
         """
         return self._phase
 
@@ -542,33 +542,33 @@ class AbstractDataObject(object):
     @property
     def size(self):
         """
-        The size of the data pointed by this DataObject. Its value is
+        The size of the data pointed by this DROP. Its value is
         automatically calculated if the data was actually written through this
-        DataObject (using the `self.write()` method directly or indirectly). In
+        DROP (using the `self.write()` method directly or indirectly). In
         the case that the data has been externally written, the size can be set
-        externally after the DataObject has been moved to COMPLETED or beyond.
+        externally after the DROP has been moved to COMPLETED or beyond.
         """
         return self._size
 
     @size.setter
     def size(self, size):
         if self._size is not None:
-            raise Exception("The size of DataObject %s is already calculated, cannot overwrite with new value" % (self))
+            raise Exception("The size of DROP %s is already calculated, cannot overwrite with new value" % (self))
         if self.status in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("DataObject %s is still not fully written, cannot manually set a size yet" % (self))
+            raise Exception("DROP %s is still not fully written, cannot manually set a size yet" % (self))
         self._size = size
 
     @property
     def precious(self):
         """
-        Whether this DataObject should be considered as 'precious' or not
+        Whether this DROP should be considered as 'precious' or not
         """
         return self._precious
 
     @property
     def status(self):
         """
-        The current status of this DataObject.
+        The current status of this DROP.
         """
         with self._statusLock:
             return self._status
@@ -586,16 +586,16 @@ class AbstractDataObject(object):
     @property
     def parent(self):
         """
-        The DataObject that acts as the parent of the current one. This
+        The DROP that acts as the parent of the current one. This
         parent/child relationship is created by ContainerDataObjects, which are
-        a specific kind of DataObject.
+        a specific kind of DROP.
         """
         return self._parent
 
     @parent.setter
     def parent(self, parent):
         if self._parent and parent:
-            logger.warn("A parent is already set in DataObject %s/%s, overwriting with new value" % (self._oid, self._uid))
+            logger.warn("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
@@ -608,7 +608,7 @@ class AbstractDataObject(object):
     @property
     def consumers(self):
         """
-        The list of 'normal' consumers held by this DataObject.
+        The list of 'normal' consumers held by this DROP.
 
         :see: `self.addConsumer()`
         """
@@ -616,15 +616,15 @@ class AbstractDataObject(object):
 
     def addConsumer(self, consumer):
         """
-        Adds a consumer to this DataObject.
+        Adds a consumer to this DROP.
 
         Consumers are normally (but not necessarily) AppDataObjects that get
-        notified when this DataObject moves into the COMPLETED state. This is
+        notified when this DROP moves into the COMPLETED state. This is
         notified by calling the consumer's `dataObjectCompleted` method with the
-        UID of this DataObject.
+        UID of this DROP.
 
-        This is one of the key mechanisms by which the DataObject graph is
-        executed automatically. If AppDataObject B consumes DataObject A, then
+        This is one of the key mechanisms by which the DROP graph is
+        executed automatically. If AppDataObject B consumes DROP A, then
         as soon as A transitions to COMPLETED B will be notified and will
         probably start its execution.
         """
@@ -643,15 +643,15 @@ class AbstractDataObject(object):
         # Add the reverse reference too automatically
         if consumer in self._consumers:
             return
-        logger.debug('Adding new consumer for DataObject %s/%s: %s' %(self.oid, self.uid, consumer))
+        logger.debug('Adding new consumer for DROP %s/%s: %s' %(self.oid, self.uid, consumer))
         self._consumers.append(consumer)
 
         # Automatic back-reference
         if hasattr(consumer, 'addInput'):
             consumer.addInput(self)
 
-        # Only trigger consumers automatically if the DataObject graph's
-        # execution is driven by the DataObjects themselves
+        # Only trigger consumers automatically if the DROP graph's
+        # execution is driven by the DROPs themselves
         if self._executionMode == ExecutionMode.EXTERNAL:
             return
 
@@ -669,7 +669,7 @@ class AbstractDataObject(object):
     @property
     def producers(self):
         """
-        The list of producers that write to this DataObject
+        The list of producers that write to this DROP
 
         :see: `self.addProducer()`
         """
@@ -677,12 +677,12 @@ class AbstractDataObject(object):
 
     def addProducer(self, producer):
         """
-        Adds a producer to this DataObject.
+        Adds a producer to this DROP.
 
-        Producers are AppDataObjects that write into this DataObject; from the
-        producers' point of view, this DataObject is one of its many outputs.
+        Producers are AppDataObjects that write into this DROP; from the
+        producers' point of view, this DROP is one of its many outputs.
 
-        When a producer has finished its execution, this DataObject will be
+        When a producer has finished its execution, this DROP will be
         notified via the self.producerFinished() method.
         """
 
@@ -698,12 +698,12 @@ class AbstractDataObject(object):
 
     def producerFinished(self, uid):
         """
-        Callback called by each of the producers of this DataObject when their
-        execution finishes. Once all producers have finished this DataObject
+        Callback called by each of the producers of this DROP when their
+        execution finishes. Once all producers have finished this DROP
         moves to the COMPLETED state.
 
         This is one of the key mechanisms through which the execution of a
-        DataObject graph is accomplished. If AppDataObject A produces DataObject
+        DROP graph is accomplished. If AppDataObject A produces DROP
         B, as soon as A finishes its execution B will be notified and will move
         itself to COMPLETED.
         """
@@ -726,7 +726,7 @@ class AbstractDataObject(object):
     @property
     def streamingConsumers(self):
         """
-        The list of 'streaming' consumers held by this DataObject.
+        The list of 'streaming' consumers held by this DROP.
 
         :see: `self.addStreamingConsumer()`
         """
@@ -734,11 +734,11 @@ class AbstractDataObject(object):
 
     def addStreamingConsumer(self, streamingConsumer):
         """
-        Adds a streaming consumer to this DataObject.
+        Adds a streaming consumer to this DROP.
 
         Streaming consumers are AppDataObjects that receive the data written
-        into this DataObject *as it gets written*, and therefore do not need to
-        wait until this DataObject has been moved to the COMPLETED state.
+        into this DROP *as it gets written*, and therefore do not need to
+        wait until this DROP has been moved to the COMPLETED state.
         """
 
         # Consumers have a "consume" method that gets invoked when
@@ -754,7 +754,7 @@ class AbstractDataObject(object):
         # Add if not already present
         if streamingConsumer in self._streamingConsumers:
             return
-        logger.debug('Adding new streaming streaming consumer for DataObject %s/%s: %s' %(self.oid, self.uid, streamingConsumer))
+        logger.debug('Adding new streaming streaming consumer for DROP %s/%s: %s' %(self.oid, self.uid, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
@@ -765,11 +765,11 @@ class AbstractDataObject(object):
         '''
         Moves this DROP to the COMPLETED state. This can be used when not all the
         expected data has arrived for a given DROP, but it should still be moved
-        to COMPLETED, or when the expected amount of data held by a DataObject
+        to COMPLETED, or when the expected amount of data held by a DROP
         is not known in advanced.
         '''
         if self.status not in [DOStates.INITIALIZED, DOStates.WRITING]:
-            raise Exception("DataObject %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
+            raise Exception("DROP %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
 
         # Close our writing IO instance.
         # If written externally, self._wio will have remained None
@@ -777,7 +777,7 @@ class AbstractDataObject(object):
             self._wio.close()
 
         if logger.isEnabledFor(logging.INFO):
-            logger.info("Moving DataObject %s/%s to COMPLETED" % (self._oid, self._uid))
+            logger.info("Moving DROP %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DOStates.COMPLETED
 
         # Signal our streaming consumers that the show is over
@@ -795,7 +795,7 @@ class AbstractDataObject(object):
     @property
     def location(self):
         """
-        An attribute indicating the physical location of this DataObject. Its
+        An attribute indicating the physical location of this DROP. Its
         value doesn't necessarily represent the real physical location of the
         object or its data, and should simply be used as an informal piece of
         information
@@ -813,9 +813,9 @@ class AbstractDataObject(object):
     @property
     def uri(self):
         """
-        An attribute indicating the URI of this DataObject. The meaning of this
+        An attribute indicating the URI of this DROP. The meaning of this
         URI is not formal, and it's currently used to hold the Pyro URI of
-        DataObjects that are activated via a Pyro Daemon.
+        DROPs that are activated via a Pyro Daemon.
         """
         return self._uri
 
@@ -825,7 +825,7 @@ class AbstractDataObject(object):
 
 class FileDataObject(AbstractDataObject):
     """
-    A DataObject that points to data stored in a mounted filesystem.
+    A DROP that points to data stored in a mounted filesystem.
     """
 
     def initialize(self, **kwargs):
@@ -851,7 +851,7 @@ class FileDataObject(AbstractDataObject):
     @property
     def path(self):
         """
-        Returns the absolute path of the file pointed by this DataObject.
+        Returns the absolute path of the file pointed by this DROP.
         """
         return self._fnm
 
@@ -862,7 +862,7 @@ class FileDataObject(AbstractDataObject):
 
 class NgasDataObject(AbstractDataObject):
     '''
-    A DataObject that points to data stored in an NGAS server
+    A DROP that points to data stored in an NGAS server
     '''
 
     def initialize(self, **kwargs):
@@ -882,7 +882,7 @@ class NgasDataObject(AbstractDataObject):
 
 class InMemoryDataObject(AbstractDataObject):
     """
-    A DataObject that points data stored in memory.
+    A DROP that points data stored in memory.
     """
 
     def initialize(self, **kwargs):
@@ -898,7 +898,7 @@ class InMemoryDataObject(AbstractDataObject):
 
 class NullDataObject(AbstractDataObject):
     """
-    A DataObject that doesn't store any data.
+    A DROP that doesn't store any data.
     """
 
     def getIO(self):
@@ -910,13 +910,13 @@ class NullDataObject(AbstractDataObject):
 
 class ContainerDataObject(AbstractDataObject):
     """
-    A DataObject that doesn't directly point to some piece of data, but instead
-    holds references to other DataObjects (its children), and from them its own
+    A DROP that doesn't directly point to some piece of data, but instead
+    holds references to other DROPs (its children), and from them its own
     internal state is deduced.
 
     Because of its nature, ContainerDataObjects cannot be written to directly,
     and likewise they cannot be read from directly. One instead has to pay
-    attention to its "children" DataObjects if I/O must be performed.
+    attention to its "children" DROPs if I/O must be performed.
     """
 
     def initialize(self, **kwargs):
@@ -935,7 +935,7 @@ class ContainerDataObject(AbstractDataObject):
 
         # Avoid circular dependencies between Containers
         if child == self.parent:
-            raise Exception("Circular dependency between DataObjects %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
+            raise Exception("Circular dependency between DROPs %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Adding new child for ContainerDataObject %s/%s: %s" % (self.oid, self.uid, child.uid))
@@ -995,7 +995,7 @@ class DirectoryContainer(ContainerDataObject):
         if isinstance(child, (FileDataObject, DirectoryContainer)):
             path = child.path
             if os.path.dirname(path) != self.path:
-                raise Exception('Child DataObject is not under %s' % (self.path))
+                raise Exception('Child DROP is not under %s' % (self.path))
             ContainerDataObject.addChild(self, child)
         else:
             raise TypeError('Child data object is not of type FileDataObject or DirectoryContainer')
@@ -1013,18 +1013,18 @@ class DirectoryContainer(ContainerDataObject):
 class AppDataObject(ContainerDataObject):
 
     '''
-    An AppDataObject is a DataObject representing an application that reads data
-    from one or more DataObjects (its inputs), and writes data onto one or more
-    DataObjects (its outputs).
+    An AppDataObject is a DROP representing an application that reads data
+    from one or more DROPs (its inputs), and writes data onto one or more
+    DROPs (its outputs).
 
     AppDataObjects accept two different kind of inputs: "normal" and "streaming"
-    inputs. Normal inputs are DataObjects that must be on the COMPLETED state
+    inputs. Normal inputs are DROPs that must be on the COMPLETED state
     (and therefore their data must be fully written) before this application is
-    run, while streaming inputs are DataObjects that feed chunks of data into
+    run, while streaming inputs are DROPs that feed chunks of data into
     this application as the data gets written into the them.
 
     This class contains two methods that should be overwritten as needed by
-    subclasses: `dataObjectCompleted`, invoked when input DataObjects move to
+    subclasses: `dataObjectCompleted`, invoked when input DROPs move to
     COMPLETED, and `dataWritten`, invoked with the data coming from streaming
     inputs.
 
@@ -1040,9 +1040,9 @@ class AppDataObject(ContainerDataObject):
 
         super(AppDataObject, self).initialize(**kwargs)
 
-        # Inputs and Outputs are the DataObjects that get read from and written
-        # to by this AppDataObject, respectively. An input DataObject will see
-        # this AppDataObject as one of its consumers, while an output DataObject
+        # Inputs and Outputs are the DROPs that get read from and written
+        # to by this AppDataObject, respectively. An input DROP will see
+        # this AppDataObject as one of its consumers, while an output DROP
         # will see this AppDataObject as one of its producers.
         #
         # Input objects will 
@@ -1110,14 +1110,14 @@ class AppDataObject(ContainerDataObject):
 
     def dataObjectCompleted(self, uid):
         """
-        Callback invoked when the DataObject with UID `uid` (which is either a
+        Callback invoked when the DROP with UID `uid` (which is either a
         normal or a streaming input of this AppDataObject) has moved to the
         COMPLETED state. By default no action is performed.
         """
 
     def dataWritten(self, uid, data):
         """
-        Callback invoked when `data` has been written into the DataObject with
+        Callback invoked when `data` has been written into the DROP with
         UID `uid` (which is one of the streaming inputs of this AppDataObject).
         By default no action is performed
         """
@@ -1196,20 +1196,20 @@ class BarrierAppDataObject(AppDataObject):
 
 class dodict(dict):
     """
-    An intermediate representation of a DataObject that can be easily serialized
+    An intermediate representation of a DROP that can be easily serialized
     into a transport format such as JSON or XML.
 
     This dictionary holds all the important information needed to call any given
-    DataObject constructor. The most essential pieces of information are the
-    DataObject's OID, and its type (which determines the class to instantiate).
+    DROP constructor. The most essential pieces of information are the
+    DROP's OID, and its type (which determines the class to instantiate).
     Depending on the type more fields will be required. This class doesn't
     enforce these requirements though, as it only acts as an information
     container.
 
     This class also offers a few utility methods to make it look more like an
-    actual DataObject class. This way, users can use the same set of methods
-    both to create DataObjects representations (i.e., instances of this class)
-    and actual DataObject instances.
+    actual DROP class. This way, users can use the same set of methods
+    both to create DROPs representations (i.e., instances of this class)
+    and actual DROP instances.
 
     Users of this class are, for example, the graph_loader module which deals
     with JSON -> DROP representation transformations, and the different
@@ -1240,8 +1240,8 @@ class dodict(dict):
 
 
 # Dictionary mapping 1-to-many DOLinkType constants to the corresponding methods
-# used to append a a DataObject into a relationship collection of another
-# (e.g., one uses `addConsumer` to add a DOLinkeType.CONSUMER DataObject into
+# used to append a a DROP into a relationship collection of another
+# (e.g., one uses `addConsumer` to add a DOLinkeType.CONSUMER DROP into
 # another)
 LINKTYPE_1TON_APPEND_METHOD = {
     DOLinkType.CONSUMER:           'addConsumer',

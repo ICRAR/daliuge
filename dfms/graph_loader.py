@@ -21,7 +21,7 @@
 #
 from dfms.apps.socket_listener import SocketListenerApp
 """
-Module containing functions to load a fully-functional DataObject graph from its
+Module containing functions to load a fully-functional DROP graph from its
 full JSON representation.
 """
 
@@ -44,7 +44,7 @@ STORAGE_TYPES = {
     'null'  : NullDataObject
 }
 
-# Dictionary for the key used to store 1-to-N relationships between DataObjects
+# Dictionary for the key used to store 1-to-N relationships between DROPs
 # in the the DROP specification format
 __ONE_TO_N_RELS = {
     DOLinkType.CONSUMER:           'consumers',
@@ -82,12 +82,12 @@ def addLink(linkType, lhDOSpec, rhOID, force=False):
         if rhOID not in relList:
             relList.append(rhOID)
         else:
-            raise Exception("DataObject %s is already part of %s's %s" % (rhOID, lhOID, rel))
+            raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
     # N-1 relationship, overwrite existing relationship only if `force` is specified
     elif linkType in __N_TO_ONE_RELS:
         rel = __N_TO_ONE_RELS[linkType]
         if rel and not force:
-            raise Exception("DataObject %s already has a '%s', use 'force' to override" % (lhOID, rel))
+            raise Exception("DROP %s already has a '%s', use 'force' to override" % (lhOID, rel))
         lhDOSpec[rel] = rhOID
     else:
         raise ValueError("Cannot handle link type %d" % (linkType))
@@ -135,27 +135,27 @@ def removeUnmetRelationships(doSpecList):
 
 def readObjectGraph(fileObj):
     """
-    Loads the DataObject definitions from file-like object `fileObj`, creating
-    all DataObjects, establishing their relationships, and returns the root
-    nodes of the graph represented by the DataObjects.
+    Loads the DROP definitions from file-like object `fileObj`, creating
+    all DROPs, establishing their relationships, and returns the root
+    nodes of the graph represented by the DROPs.
     """
     return createGraphFromDOSpecList(json.load(fileObj))
 
 def readObjectGraphS(s):
     """
-    Loads the DataObject definitions from the string `s`, creating all
-    DataObjects, establishing their relationships, and returns the root nodes of
-    the graph represented by the DataObjects.
+    Loads the DROP definitions from the string `s`, creating all
+    DROPs, establishing their relationships, and returns the root nodes of
+    the graph represented by the DROPs.
     """
     return createGraphFromDOSpecList(json.loads(s))
 
 def loadDataObjectSpecs(doSpecList):
     """
-    Loads the DataObject definitions from `doSpectList`, checks that
-    the DataObjects are correctly specified, and return a dictionary containing
-    all DataObject specifications (i.e., a dictionary of dictionaries) keyed on
-    the OID of each DataObject. Unlike `readObjectGraph` and `readObjectGraphS`,
-    this method doesn't actually create the DataObjects themselves.
+    Loads the DROP definitions from `doSpectList`, checks that
+    the DROPs are correctly specified, and return a dictionary containing
+    all DROP specifications (i.e., a dictionary of dictionaries) keyed on
+    the OID of each DROP. Unlike `readObjectGraph` and `readObjectGraphS`,
+    this method doesn't actually create the DROPs themselves.
     """
 
     if logger.isEnabledFor(logging.DEBUG):
@@ -196,7 +196,7 @@ def createGraphFromDOSpecList(doSpecList):
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug("Found %d DROP definitions" % (len(doSpecList)))
 
-    # Step #1: create the actual DataObjects
+    # Step #1: create the actual DROPs
     dataObjects = collections.OrderedDict()
     for doSpec in doSpecList:
 

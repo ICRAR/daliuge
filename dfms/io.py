@@ -238,7 +238,7 @@ class FileIO(DataIO):
 
 class NgasIO(DataIO):
     '''
-    A DataObject whose data is finally stored into NGAS. Since NGAS doesn't
+    A DROP whose data is finally stored into NGAS. Since NGAS doesn't
     support appending data to existing files, we store all the data temporarily
     in a file on the local filesystem and then move it to the NGAS destination
     '''

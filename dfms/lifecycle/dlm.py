@@ -244,7 +244,7 @@ class DataLifecycleManager(object):
 
     def _deleteDataObject(self, do):
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Deleting DataObject %s/%s" % (do.oid, do.uid))
+            logger.debug("Deleting DROP %s/%s" % (do.oid, do.uid))
         do.delete()
         do.status = DOStates.DELETED
 
@@ -259,11 +259,11 @@ class DataLifecycleManager(object):
             if do.status == DOStates.COMPLETED and \
                now > do.expirationDate:
                 if do.isBeingRead():
-                    logger.info("DataObject %s/%s has expired but is currently being read, " \
+                    logger.info("DROP %s/%s has expired but is currently being read, " \
                                  "will skip expiration for the time being" % (do.oid, do.uid))
                     continue
                 if (logger.isEnabledFor(logging.DEBUG)):
-                    logger.debug('Marking DataObject %s/%s as EXPIRED' % (do.oid, do.uid))
+                    logger.debug('Marking DROP %s/%s as EXPIRED' % (do.oid, do.uid))
                 do.status = DOStates.EXPIRED
 
     def _disappeared(self, dataObject):
@@ -277,7 +277,7 @@ class DataLifecycleManager(object):
 
                 toRemove.append(do)
                 if logger.isEnabledFor(logging.WARNING):
-                    logger.warning('DataObject %s/%s has disappeared' % (do.oid, do.uid))
+                    logger.warning('DROP %s/%s has disappeared' % (do.oid, do.uid))
 
                 # Check if it's replicated
                 uids = self._reg.getDataObjectUids(do)
@@ -295,19 +295,19 @@ class DataLifecycleManager(object):
                             replicas.append(siblingDO)
                         else:
                             if logger.isEnabledFor(logging.WARNING):
-                                logger.warning('DataObject %s/%s (replicated from %s/%s) has disappeared' % (siblingDO.oid, siblingDO.uid, do.oid, do.uid))
+                                logger.warning('DROP %s/%s (replicated from %s/%s) has disappeared' % (siblingDO.oid, siblingDO.uid, do.oid, do.uid))
                             toRemove.append(siblingDO)
 
                     if len(replicas) > 1:
-                        logger.info("DataObject %s/%s has still more than one replica, no action needed")
+                        logger.info("DROP %s/%s has still more than one replica, no action needed")
                     elif len(replicas) == 1:
-                        logger.info("Only one replica left for DataObject %s/%s, will create a new one")
+                        logger.info("Only one replica left for DROP %s/%s, will create a new one")
                         self.replicateDataObject(replicas[0])
                     else:
                         definitelyLost = True
 
                 if definitelyLost:
-                    logger.error("No available replica found for DataObject %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
+                    logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
                     do.phase = DOPhases.LOST
                     self._reg.setDataObjectPhase(do, do.phase)
 
@@ -417,11 +417,11 @@ class DataLifecycleManager(object):
         oid = dataObject.oid
         uid = dataObject.uid
         if dataObject.precious and self.isReplicable(dataObject):
-            logger.debug("Replicating DataObject %s/%s because it's precious" % (oid, uid))
+            logger.debug("Replicating DROP %s/%s because it's precious" % (oid, uid))
             try:
                 self.replicateDataObject(dataObject)
             except:
-                logger.exception("Problem while replicating DataObject %s/%s" % (oid, uid))
+                logger.exception("Problem while replicating DROP %s/%s" % (oid, uid))
 
     def isReplicable(self, do):
         return not isinstance(do, ContainerDataObject)
@@ -436,7 +436,7 @@ class DataLifecycleManager(object):
 
         # Check that the DROP is complete already
         if dataObject.status != DOStates.COMPLETED:
-            raise Exception("DataObject %s/%s not in COMPLETED state" % (oid, uid))
+            raise Exception("DROP %s/%s not in COMPLETED state" % (oid, uid))
 
         # Get the size of the DROP. This cannot currently be done in some of them,
         # like in the AbstractDataObject
@@ -473,13 +473,13 @@ class DataLifecycleManager(object):
         newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+            logger.debug('Creating new DROP %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
         # For the time being we manually copy the contents of the current DROP into it
         newDO = store.createDataObject(dataObject.oid, newUid, expectedSize=dataObject.size, precious=dataObject.precious)
         doutils.copyDataObjectContents(dataObject, newDO)
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('DataObject %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+            logger.debug('DROP %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
         return newDO, newUid

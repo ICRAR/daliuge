@@ -66,9 +66,9 @@ class DataObjectManager(object):
     """
     The DataObjectManager.
 
-    A DataObjectManager, as the name states, manages DataObjects. It does so not
+    A DataObjectManager, as the name states, manages DROPs. It does so not
     directly, but via Sessions, which represent and encapsulate separate,
-    independent DataObject graph executions. All DataObjects created by the
+    independent DROP graph executions. All DROPs created by the
     different Sessions are also given to a common DataLifecycleManager, which
     takes care of expiring them when needed, replicating them, and moving them
     across the HSM.
