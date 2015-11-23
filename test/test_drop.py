@@ -30,7 +30,7 @@ from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
     DirectoryContainer, ContainerDROP
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
-from dfms.droputils import DOWaiterCtx
+from dfms.droputils import DROPWaiterCtx
 
 
 try:
@@ -113,7 +113,7 @@ class TestDataObject(unittest.TestCase):
         dobB.addOutput(dobC)
 
         test_crc = 0
-        with DOWaiterCtx(self, dobC):
+        with DROPWaiterCtx(self, dobC):
             for _ in range(self._test_num_blocks):
                 dobA.write(self._test_block)
                 test_crc = crc32(self._test_block, test_crc)
@@ -192,7 +192,7 @@ class TestDataObject(unittest.TestCase):
         eResExpected = "and another one\nwe have an a here\n"
         gResExpected = "dna rehtona eno\new evah na a ereh\n"
 
-        with DOWaiterCtx(self, g):
+        with DROPWaiterCtx(self, g):
             a.write(contents)
             a.setCompleted()
 
@@ -254,7 +254,7 @@ class TestDataObject(unittest.TestCase):
 
         # Write data into the initial "A" DROPs, which should trigger
         # the whole chain explained above
-        with DOWaiterCtx(self, doE):
+        with DROPWaiterCtx(self, doE):
             for dobA in doAList: # this should be parallel for
                 for _ in range(self._test_num_blocks):
                     dobA.write(self._test_block)
@@ -321,7 +321,7 @@ class TestDataObject(unittest.TestCase):
         d.addOutput(f)
 
         # Start the execution
-        with DOWaiterCtx(self, [e,f]):
+        with DROPWaiterCtx(self, [e,f]):
             a.write('20')
             a.setCompleted()
 
@@ -419,14 +419,14 @@ class TestDataObject(unittest.TestCase):
 
         # Write and check
         dosToWaitFor = [] if mode == ExecutionMode.EXTERNAL else [c]
-        with DOWaiterCtx(self, dosToWaitFor):
+        with DROPWaiterCtx(self, dosToWaitFor):
             a.write('1')
 
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
             self.assertEquals(c.status, DROPStates.INITIALIZED)
             # Now let b consume a
-            with DOWaiterCtx(self, [c]):
+            with DROPWaiterCtx(self, [c]):
                 b.dataObjectCompleted('a')
             self.assertEquals(c.status, DROPStates.COMPLETED)
         elif mode == ExecutionMode.DROP:
@@ -484,7 +484,7 @@ class TestDataObject(unittest.TestCase):
         a.write('fghij')
         checkDOStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, 'j')
         a.write('k')
-        with DOWaiterCtx(self, [d,e]):
+        with DROPWaiterCtx(self, [d,e]):
             a.setCompleted()
         checkDOStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
 

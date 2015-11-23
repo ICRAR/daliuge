@@ -51,7 +51,7 @@ class EvtConsumer(object):
         self._evt.set()
 
 
-class DOWaiterCtx(object):
+class DROPWaiterCtx(object):
     """
     Class used by unit tests to trigger the execution of a physical graph and
     wait until the given set of DROPs have reached its COMPLETED status.
@@ -61,7 +61,7 @@ class DOWaiterCtx(object):
     It should be used like this inside a test class:
 
     # There is a physical graph that looks like: a -> b -> c
-    with DOWaiterCtx(self, c):
+    with DROPWaiterCtx(self, c):
         a.write('a')
         a.setCompleted()
     """
@@ -90,7 +90,7 @@ class EvtConsumerProxyCtx(object):
     """
     Class used by unit tests to trigger the execution of a remote physical graph
     and wait until the given set of nodes have reached its COMPLETED status. In
-    summary, this class is similar to DOWaiterCtx, but works for remote objects
+    summary, this class is similar to DROPWaiterCtx, but works for remote objects
     (i.e., Pyro proxies).
 
     Since the graph is remote (i.e., it is hosted by a DOM), the DROPs
@@ -298,7 +298,7 @@ def listify(o):
         return list(o)
     return [o]
 
-class DOFile(object):
+class DROPFile(object):
     """
     A file-like object (currently only supporting the read() operation, more to
     be added in the future) that wraps the DROP given at construction

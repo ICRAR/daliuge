@@ -27,7 +27,7 @@ from dfms import droputils
 from dfms.apps.socket_listener import SocketListenerApp
 from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
-from dfms.droputils import DOWaiterCtx
+from dfms.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
 
 
@@ -63,7 +63,7 @@ class TestSocketListener(unittest.TestCase):
 
         # Create the socket, write, and close the connection, allowing
         # A to move to COMPLETED
-        with DOWaiterCtx(self, d, 3): # That's plenty of time
+        with DROPWaiterCtx(self, d, 3): # That's plenty of time
             threading.Thread(target=lambda a: a.execute(), args=(a,)).start()
             utils.writeToRemotePort(host, port, data, 1)
 

@@ -1241,7 +1241,7 @@ class dodict(dict):
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
 # used to append a a DROP into a relationship collection of another
-# (e.g., one uses `addConsumer` to add a DOLinkeType.CONSUMER DROP into
+# (e.g., one uses `addConsumer` to add a DROPLinkeType.CONSUMER DROP into
 # another)
 LINKTYPE_1TON_APPEND_METHOD = {
     DROPLinkType.CONSUMER:           'addConsumer',

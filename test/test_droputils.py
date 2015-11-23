@@ -32,7 +32,7 @@ import unittest
 from dfms import droputils
 from dfms.drop import InMemoryDROP, FileDROP, \
     BarrierAppDROP
-from dfms.droputils import DOFile
+from dfms.droputils import DROPFile
 
 
 class DOUtilsTest(unittest.TestCase):
@@ -151,13 +151,13 @@ class DOUtilsTest(unittest.TestCase):
 
     def test_DOFile(self):
         """
-        This test exercises the DOFile mechanism to read the data represented by
-        a given DROP. The DOFile class will decide whether the data should be read
+        This test exercises the DROPFile mechanism to read the data represented by
+        a given DROP. The DROPFile class will decide whether the data should be read
         directly or through the DROP
         """
         do = FileDROP('a', 'a', expectedSize=5)
         do.write('abcde')
-        with DOFile(do) as f:
+        with DROPFile(do) as f:
             self.assertEquals('abcde', f.read())
             self.assertTrue(do.isBeingRead())
             self.assertIsNotNone(f._io)
