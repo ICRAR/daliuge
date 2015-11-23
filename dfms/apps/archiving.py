@@ -21,7 +21,7 @@
 #
 from dfms.drop import BarrierAppDROP, ContainerDROP
 from dfms.io import NgasIO, OpenMode, NgasLiteIO
-from dfms.droputils import DOFile
+from dfms.droputils import DROPFile
 
 class ExternalStoreApp(BarrierAppDROP):
     """
@@ -82,7 +82,7 @@ class NgasArchivingApp(ExternalStoreApp):
         ngasIO.open(OpenMode.OPEN_WRITE)
 
         # Copy in blocks of 4096 bytes
-        with DOFile(inDO) as f:
+        with DROPFile(inDO) as f:
             while True:
                 buff = f.read(4096)
                 ngasIO.write(buff)

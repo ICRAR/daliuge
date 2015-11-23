@@ -30,7 +30,7 @@ from dfms import droputils
 from dfms.apps.spead_receiver import SpeadReceiverApp
 from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
-from dfms.droputils import DOWaiterCtx
+from dfms.droputils import DROPWaiterCtx
 
 
 class TestSpeadReceiverApp(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestSpeadReceiverApp(unittest.TestCase):
         threading.Thread(target=lambda: a.execute()).start()
         time.sleep(1)
         msg = os.urandom(size)
-        with DOWaiterCtx(self, b, timeout=1):
+        with DROPWaiterCtx(self, b, timeout=1):
             ig = spead2.send.ItemGroup(flavour=spead2.Flavour(4, 64, 48))
             item = ig.add_item(itemId, 'main_data', 'a char array', shape=(size,), format=[('c',8)])
             item.value = msg

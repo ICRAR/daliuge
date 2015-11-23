@@ -33,7 +33,7 @@ from docker.errors import DockerException
 from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
 from dfms.drop import FileDROP
-from dfms.droputils import DOWaiterCtx
+from dfms.droputils import DROPWaiterCtx
 
 
 class DockerTests(unittest.TestCase):
@@ -68,7 +68,7 @@ class DockerTests(unittest.TestCase):
 
         # Random data so we always check different contents
         data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-        with DOWaiterCtx(self, c, 100):
+        with DROPWaiterCtx(self, c, 100):
             a.write(data)
             a.setCompleted()
 
@@ -116,7 +116,7 @@ class DockerTests(unittest.TestCase):
         b.handleInterest(c)
 
         data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-        with DOWaiterCtx(self, d, 100):
+        with DROPWaiterCtx(self, d, 100):
             a.write(data)
             a.setCompleted()
 
@@ -138,7 +138,7 @@ class DockerTests(unittest.TestCase):
             a = DockerApp('a', 'a', image='ubuntu:14.04', command=command)
             b = FileDROP('b','b')
             a.addOutput(b)
-            with DOWaiterCtx(self, b, 1):
+            with DROPWaiterCtx(self, b, 1):
                 a.execute()
             self.assertEquals(msg, droputils.allDataObjectContents(b))
 
