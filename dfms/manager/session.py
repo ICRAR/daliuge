@@ -30,7 +30,8 @@ import threading
 import Pyro4
 from luigi import scheduler, worker
 
-from dfms import luigi_int, graph_loader, doutils
+from dfms import luigi_int, graph_loader
+from dfms import droputils
 from dfms.drop import AbstractDROP, BarrierAppDROP, \
     AppDROP
 from dfms.ddap_protocol import DROPLinkType
@@ -199,7 +200,7 @@ class Session(object):
         self._roots = graph_loader.createGraphFromDOSpecList(self._graph.values())
 
         # Register them
-        doutils.breadFirstTraverse(self._roots, self._registerDataObject)
+        droputils.breadFirstTraverse(self._roots, self._registerDataObject)
 
         # We move to COMPLETED the DROPs that we were requested to
         # BarrierAppDROPs are here considered as having to be executed and
@@ -214,7 +215,7 @@ class Session(object):
                     t.start()
                 else:
                     do.setCompleted()
-        doutils.breadFirstTraverse(self._roots, triggerDO)
+        droputils.breadFirstTraverse(self._roots, triggerDO)
 
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
@@ -259,7 +260,7 @@ class Session(object):
                 statusDict[do.oid]['execStatus'] = do.execStatus
             statusDict[do.oid]['status'] = do.status
 
-        doutils.breadFirstTraverse(self._roots, addToDict)
+        droputils.breadFirstTraverse(self._roots, addToDict)
         return statusDict
 
     def getGraph(self):

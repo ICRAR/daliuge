@@ -33,7 +33,7 @@ import importlib
 import inspect
 import logging
 
-from dfms import doutils
+from dfms import droputils
 from dfms.manager import repository
 from dfms.manager.session import Session
 from dfms.lifecycle.dlm import DataLifecycleManager
@@ -119,11 +119,11 @@ class DataObjectManager(object):
         if self._dlm:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Registering new DROPs with the DataLifecycleManager')
-            doutils.breadFirstTraverse(roots, lambda do: self._dlm.addDataObject(do))
+            droputils.breadFirstTraverse(roots, lambda do: self._dlm.addDataObject(do))
 
         # Finally, we also collect the Pyro URIs of our DROPs and return them
         uris = {}
-        doutils.breadFirstTraverse(roots, lambda do: uris.__setitem__(do.uid, do.uri))
+        droputils.breadFirstTraverse(roots, lambda do: uris.__setitem__(do.uid, do.uri))
         return uris
 
     def destroySession(self, sessionId):

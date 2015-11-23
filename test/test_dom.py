@@ -30,7 +30,8 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from dfms import doutils, ngaslite, utils
+from dfms import ngaslite, utils
+from dfms import droputils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import cmdline
 from dfms.manager.data_object_manager import DataObjectManager
@@ -72,13 +73,13 @@ class TestDOM(unittest.TestCase):
         a.addConsumer(b)
 
         # Run! We wait until c is completed
-        with doutils.EvtConsumerProxyCtx(self, c, 1):
+        with droputils.EvtConsumerProxyCtx(self, c, 1):
             a.write('a')
             a.setCompleted()
 
         for do in a, b, c:
             self.assertEquals(DROPStates.COMPLETED, do.status)
-        self.assertEquals(a.checksum, int(doutils.allDataObjectContents(c)))
+        self.assertEquals(a.checksum, int(droputils.allDataObjectContents(c)))
 
         for doProxy in a,b,c:
             doProxy._pyroRelease()
@@ -131,7 +132,7 @@ class TestDOM(unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        with doutils.EvtConsumerProxyCtx(self, f, 5):
+        with droputils.EvtConsumerProxyCtx(self, f, 5):
             a.write('a')
             a.setCompleted()
             b.write('a')
@@ -140,8 +141,8 @@ class TestDOM(unittest.TestCase):
         for do in a,b,c,d,e,f:
             self.assertEquals(DROPStates.COMPLETED, do.status, "DROP %s is not COMPLETED" % (do.uid))
 
-        self.assertEquals(a.checksum, int(doutils.allDataObjectContents(d)))
-        self.assertEquals(b.checksum + d.checksum, int(doutils.allDataObjectContents(f)))
+        self.assertEquals(a.checksum, int(droputils.allDataObjectContents(d)))
+        self.assertEquals(b.checksum + d.checksum, int(droputils.allDataObjectContents(f)))
 
         for doProxy in a,b,c,d,e,f:
             doProxy._pyroRelease()
@@ -231,7 +232,7 @@ class TestDOM(unittest.TestCase):
         k.addOutput(m)
 
         # Run! This should trigger the full execution of the graph
-        with doutils.EvtConsumerProxyCtx(self, o, 1):
+        with droputils.EvtConsumerProxyCtx(self, o, 1):
             a.write('a')
 
         for doProxy in proxies.viewvalues():

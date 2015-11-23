@@ -25,12 +25,12 @@ import os, unittest
 import random
 import shutil
 
-from dfms import doutils
+from dfms import droputils
 from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
     DirectoryContainer, ContainerDROP
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
-from dfms.doutils import DOWaiterCtx
+from dfms.droputils import DOWaiterCtx
 
 
 try:
@@ -87,7 +87,7 @@ class TestDataObject(unittest.TestCase):
         a = NullDROP('A', 'A', expectedSize=5)
         a.write("1234")
         a.write("5")
-        allContents = doutils.allDataObjectContents(a)
+        allContents = droputils.allDataObjectContents(a)
         self.assertFalse(allContents)
 
     def test_write_FileDataObject(self):
@@ -119,7 +119,7 @@ class TestDataObject(unittest.TestCase):
                 test_crc = crc32(self._test_block, test_crc)
 
         # Read the checksum from dobC
-        dobCChecksum = int(doutils.allDataObjectContents(dobC))
+        dobCChecksum = int(droputils.allDataObjectContents(dobC))
 
         self.assertNotEquals(dobA.checksum, 0)
         self.assertEquals(dobA.checksum, test_crc)
@@ -142,7 +142,7 @@ class TestDataObject(unittest.TestCase):
             def run(self):
                 do = self._inputs.values()[0]
                 output = self._outputs.values()[0]
-                allLines = StringIO(doutils.allDataObjectContents(do)).readlines()
+                allLines = StringIO(droputils.allDataObjectContents(do)).readlines()
                 for line in allLines:
                     if self._substring in line:
                         output.write(line)
@@ -151,7 +151,7 @@ class TestDataObject(unittest.TestCase):
             def run(self):
                 do = self._inputs.values()[0]
                 output = self._outputs.values()[0]
-                sortedLines = StringIO(doutils.allDataObjectContents(do)).readlines()
+                sortedLines = StringIO(droputils.allDataObjectContents(do)).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
                     output.write(line)
@@ -160,7 +160,7 @@ class TestDataObject(unittest.TestCase):
             def run(self):
                 do = self._inputs.values()[0]
                 output = self._outputs.values()[0]
-                allLines = StringIO(doutils.allDataObjectContents(do)).readlines()
+                allLines = StringIO(droputils.allDataObjectContents(do)).readlines()
                 for line in allLines:
                     buf = ''
                     for c in line:
@@ -199,7 +199,7 @@ class TestDataObject(unittest.TestCase):
         # Get intermediate and final results and compare
         actualRes   = []
         for i in [c, e, g]:
-            actualRes.append(doutils.allDataObjectContents(i))
+            actualRes.append(droputils.allDataObjectContents(i))
         map(lambda x, y: self.assertEquals(x, y), [cResExpected, eResExpected, gResExpected], actualRes)
 
     def test_join(self):
@@ -265,7 +265,7 @@ class TestDataObject(unittest.TestCase):
 
         # The results we want to compare
         sum_crc = doC1.checksum + doC2.checksum + doC3.checksum
-        dobEData = int(doutils.allDataObjectContents(doE))
+        dobEData = int(droputils.allDataObjectContents(doE))
 
         self.assertNotEquals(sum_crc, 0)
         self.assertEquals(sum_crc, dobEData)
@@ -291,7 +291,7 @@ class TestDataObject(unittest.TestCase):
             def run(self):
                 inputDO = self._inputs.values()[0]
                 output = self._outputs.values()[0]
-                howMany = int(doutils.allDataObjectContents(inputDO))
+                howMany = int(droputils.allDataObjectContents(inputDO))
                 for i in xrange(howMany):
                     output.write(str(i) + " ")
 
@@ -301,7 +301,7 @@ class TestDataObject(unittest.TestCase):
                 inputDO = self._inputs.values()[0]
                 outputs = self._outputs.values()
 
-                numbers = doutils.allDataObjectContents(inputDO).strip().split()
+                numbers = droputils.allDataObjectContents(inputDO).strip().split()
                 for n in numbers:
                     outputs[int(n) % 2].write(n + " ")
 
@@ -328,8 +328,8 @@ class TestDataObject(unittest.TestCase):
         # Check the final results are correct
         for do in [a,b,c,d,e]:
             self.assertEquals(do.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (do))
-        self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(e).strip())
-        self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(f).strip())
+        self.assertEquals("0 2 4 6 8 10 12 14 16 18", droputils.allDataObjectContents(e).strip())
+        self.assertEquals("1 3 5 7 9 11 13 15 17 19", droputils.allDataObjectContents(f).strip())
 
 
     def test_dataObjectWroteFromOutside(self):
@@ -350,7 +350,7 @@ class TestDataObject(unittest.TestCase):
         a.setCompleted()
 
         # Read from the DROP
-        self.assertEquals(msg, doutils.allDataObjectContents(a))
+        self.assertEquals(msg, droputils.allDataObjectContents(a))
         self.assertIsNone(a.checksum)
         self.assertIsNone(a.size)
 
@@ -488,7 +488,7 @@ class TestDataObject(unittest.TestCase):
             a.setCompleted()
         checkDOStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
 
-        self.assertEquals('ejk', doutils.allDataObjectContents(d))
+        self.assertEquals('ejk', droputils.allDataObjectContents(d))
 
     def test_directoryContainer(self):
         """

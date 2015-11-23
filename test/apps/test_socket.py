@@ -22,11 +22,12 @@
 import threading
 import unittest
 
-from dfms import doutils, utils
+from dfms import utils
+from dfms import droputils
 from dfms.apps.socket_listener import SocketListenerApp
 from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
-from dfms.doutils import DOWaiterCtx
+from dfms.droputils import DOWaiterCtx
 from test.test_drop import SumupContainerChecksum
 
 
@@ -70,8 +71,8 @@ class TestSocketListener(unittest.TestCase):
             self.assertEquals(DROPStates.COMPLETED, do.status)
 
         # Our expectations are fulfilled!
-        bContents = doutils.allDataObjectContents(b)
-        dContents = int(doutils.allDataObjectContents(d))
+        bContents = droputils.allDataObjectContents(b)
+        dContents = int(droputils.allDataObjectContents(d))
         self.assertEquals(data, bContents)
         self.assertEquals(crc32(data, 0), dContents)
 

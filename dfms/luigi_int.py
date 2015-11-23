@@ -30,7 +30,7 @@ import time
 
 import luigi
 
-from dfms import doutils
+from dfms import droputils
 from dfms.drop import AbstractDROP, BarrierAppDROP
 from dfms.ddap_protocol import ExecutionMode, DROPStates
 
@@ -111,7 +111,7 @@ class RunDataObjectTask(luigi.Task):
         # We simply filter then the upObjs here to return only those that are
         # actually an instance of AbstractDROP, thus removing any Pyro
         # Proxy instances from the list
-        upObjs = doutils.getUpstreamObjects(self.data_obj)
+        upObjs = droputils.getUpstreamObjects(self.data_obj)
         upObjs = filter(lambda do: isinstance(do, AbstractDROP), upObjs)
 
         for req in upObjs:
@@ -144,8 +144,8 @@ class FinishGraphExecution(luigi.Task):
         else:
             roots = self.pgCreator
 
-        self._roots = doutils.listify(roots)
-        self._leaves = doutils.getLeafNodes(self._roots)
+        self._roots = droputils.listify(roots)
+        self._leaves = droputils.getLeafNodes(self._roots)
         self._completed = False
 
     def requires(self):
