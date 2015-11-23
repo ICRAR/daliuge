@@ -66,7 +66,7 @@ class ScpApp(BarrierAppDataObject):
         out = self.outputs[0]
 
         # Input and output must be of the same type
-        # See comment above regarding identification of DO types, and why we
+        # See comment above regarding identification of DROP types, and why we
         # can't simply do:
         # if inp.__class__ != out.__class__:
         if hasattr(inp, 'children') != hasattr(out, 'children'):
@@ -76,7 +76,7 @@ class ScpApp(BarrierAppDataObject):
         if self.node != inp.node and self.node != out.node:
             raise Exception("%r is deployed in a node different from its input AND its output" % (self,))
 
-        # See comment above regarding identification of File/Directory DOs and
+        # See comment above regarding identification of File/Directory DROPs and
         # why we can't simply do:
         # recursive = isinstance(inp, DirectoryContainer)
         recursive = hasattr(inp, 'children')

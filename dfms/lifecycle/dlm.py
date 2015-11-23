@@ -93,7 +93,7 @@ The requirements referenced by the above documentation read (taken from PDR03
    associated data artefacts from a given active scheduling while it is still
    processed and before the next scheduling block starts.
 
-Regarding point #5, although it's not totally clear WHEN expired DOs must be
+Regarding point #5, although it's not totally clear WHEN expired DROPs must be
 deleted, PDR02-02-01 "Data Layer Data Challenges" states in section 7.2,
 "DataObject State Model":
 
@@ -103,7 +103,7 @@ deleted, PDR02-02-01 "Data Layer Data Challenges" states in section 7.2,
 We are implementing this mechanism in the DLM as well, as part of the background
 periodical checks it performs. After discussing this with Chen, it also became
 apparent that external users such as the dataflow manager could probably also
-request an explicit cleanup, maybe even bypassing the expiration date of DOs.
+request an explicit cleanup, maybe even bypassing the expiration date of DROPs.
 
 A simpler definition of the DLM is also given in PDR03 "Requirement analysis",
 section 2.C.3.2, "Data Life Cycle Manager":
@@ -156,21 +156,21 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
 
 class DataObjectChecker(DataLifecycleManagerBackgroundTask):
     '''
-    A thread that performs several checks on existing DOs
+    A thread that performs several checks on existing DROPs
     '''
 
     def doTask(self, dlm):
-        # Expire DOs that are already too old
+        # Expire DROPs that are already too old
         dlm.expireCompletedDataObjects()
 
-        # Check that DOs still exist, and mark them as lost
+        # Check that DROPs still exist, and mark them as lost
         # if they are not found
         dlm.deleteLostDataObjects()
 
 class DataObjectGarbageCollector(DataLifecycleManagerBackgroundTask):
     '''
-    A thread that performs "garbage collection" of DOs; that is, it physically
-    deleted DOs that are marked as EXPIRED
+    A thread that performs "garbage collection" of DROPs; that is, it physically
+    deleted DROPs that are marked as EXPIRED
     '''
 
     def doTask(self, dlm):
@@ -179,10 +179,10 @@ class DataObjectGarbageCollector(DataLifecycleManagerBackgroundTask):
 
 class DataObjectMover(DataLifecycleManagerBackgroundTask):
     '''
-    A thread that automatically moves DOs between layers of the HSM.
+    A thread that automatically moves DROPs between layers of the HSM.
     This is supposed to be based on rules and configuration parameters which we
     still don't consider here. The driving rule we currently use is how
-    frequently is the DO accessed.
+    frequently is the DROP accessed.
     '''
 
     def doTask(self, dlm):
@@ -227,7 +227,7 @@ class DataLifecycleManager(object):
         self._doChecker.join()
         self._doGarbageCollector.join()
 
-        # Unsubscribe to all events coming from the DOs
+        # Unsubscribe to all events coming from the DROPs
         for do in self._dos.values():
             do.unsubscribe(self.doEventHandler)
 
@@ -317,32 +317,32 @@ class DataLifecycleManager(object):
 
     def moveDataObjectsAround(self):
         '''
-        Moves DOs to different layers of the HSM if necessary, currently based
+        Moves DROPs to different layers of the HSM if necessary, currently based
         only on the access times
         '''
         # Big questions here that need some answers/experimentation
         #  1 "Migrating" implies that the data is no longer in its original
         #    location, but has been moved rather than copied to a new place.
-        #  2 That means that the DO doesn't represent actually the same data, or
+        #  2 That means that the DROP doesn't represent actually the same data, or
         #    at least not in the same physical location. The question is thus
-        #    whether a new DO would be required for this migrated DO, or if
+        #    whether a new DROP would be required for this migrated DROP, or if
         #    the currently existing one should be modified?
         #  3 If a new one is required, then the original, and users of the
         #    original have to be notified that a change has occurred.
-        #  4 Or not? Who is actually accessing DOs and how do they get their
+        #  4 Or not? Who is actually accessing DROPs and how do they get their
         #    references? Maybe it's the DLM who delivers the references
         #    (there is an "Open DataObject" Activity Diagram drawn, but doesn't
         #    clarify who is performing the actions and where are they taking
         #    place), and references can be considered as invalid, in which case
         #    a new reference must be retrieved via the DLM. This would probably
         #    make sense since the DLM is managing the lifecycle of the different
-        #    DO instances, and knows where they actually are.
-        #  5 If somebody is currently reading from a DO that is meant to be
+        #    DROP instances, and knows where they actually are.
+        #  5 If somebody is currently reading from a DROP that is meant to be
         #    moved we have to not move it. This would probably not happen anyway
-        #    since we're using the access times to decide which DOs must be
+        #    since we're using the access times to decide which DROPs must be
         #    moved to what storage layer
         #  6 The other alternative (to the question posed in 2) is to modify the
-        #    current DO. This doesn't sound like a good idea, since we are
+        #    current DROP. This doesn't sound like a good idea, since we are
         #    effectively creating a new instance of the data but in a different
         #    media (plus the relative complexity of actually implementing such
         #    flexibility).
@@ -352,14 +352,14 @@ class DataLifecycleManager(object):
         #
         # PS: The Open DataObject Activity is actually used as part of the
         # "Data Object Lifecycle (nominal)" State Diagram, used as the activity
-        # that should be executed when entering the "Read" state of DOs. This is
+        # that should be executed when entering the "Read" state of DROPs. This is
         # confusing because the "Open DataObject" activity includes actions like
-        # "Locate DataObject" and "Resolve Location", although it's the DO
+        # "Locate DataObject" and "Resolve Location", although it's the DROP
         # that is opening itself, and thus opening it should mean simply to open
         # the underlying media. Moreover, in the same activity diagram one can
         # see the "DataLifecycleDb", which would correspond to the DLM. If this
-        # activity is really run from DOs it would mean that DOs depend on the
-        # DLM, while the DLM manages DOs.
+        # activity is really run from DROPs it would mean that DROPs depend on the
+        # DLM, while the DLM manages DROPs.
 
         for do in self._dos.values:
 
@@ -367,8 +367,8 @@ class DataLifecycleManager(object):
             if do.isBeingRead():
                 continue
 
-            # EXPIRED DOs will soon be deleted
-            # DELETED DOs do not exist anymore
+            # EXPIRED DROPs will soon be deleted
+            # DELETED DROPs do not exist anymore
             if do.status in (DOStates.DELETED, DOStates.EXPIRED):
                 continue
 
@@ -381,18 +381,18 @@ class DataLifecycleManager(object):
 
     def addDataObject(self, dataObject):
 
-        # Keep track of the DO and subscribe to the events it generates
+        # Keep track of the DROP and subscribe to the events it generates
         self._dos[dataObject.uid] = dataObject
         dataObject.phase = DOPhases.GAS
         dataObject.subscribe(self.doEventHandler)
         self._reg.addDataObject(dataObject)
 
         # TODO: We currently use a background thread that scans
-        #       all DOs for their status and compares its expiration date
-        #       with the current time in order to determine which DOs must be
+        #       all DROPs for their status and compares its expiration date
+        #       with the current time in order to determine which DROPs must be
         #       moved to EXPIRED. We might want to explore other alternatives to
         #       perform this task, like using threading.Timers (probably not) or
-        #       any other that doesn't mean looping over all DOs
+        #       any other that doesn't mean looping over all DROPs
 
     def doEventHandler(self, event):
         if event.type == 'open':
@@ -412,7 +412,7 @@ class DataLifecycleManager(object):
         '''
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
-        # Check the kind of storage used by this DO. If it's already persisted
+        # Check the kind of storage used by this DROP. If it's already persisted
         # in a persistent storage media we don't need to save it again
         oid = dataObject.oid
         uid = dataObject.uid
@@ -434,11 +434,11 @@ class DataLifecycleManager(object):
         oid = dataObject.oid
         uid = dataObject.uid
 
-        # Check that the DO is complete already
+        # Check that the DROP is complete already
         if dataObject.status != DOStates.COMPLETED:
             raise Exception("DataObject %s/%s not in COMPLETED state" % (oid, uid))
 
-        # Get the size of the DO. This cannot currently be done in some of them,
+        # Get the size of the DROP. This cannot currently be done in some of them,
         # like in the AbstractDataObject
         size = dataObject.size
 
@@ -447,15 +447,15 @@ class DataLifecycleManager(object):
         availableSpace = store.getAvailableSpace()
 
         if size > availableSpace:
-            raise Exception("Cannot replicate DO to store %s: not enough space left")
+            raise Exception("Cannot replicate DROP to store %s: not enough space left")
 
-        # Create new DO and write the contents of the original into it
+        # Create new DROP and write the contents of the original into it
         # TODO: In a real world application this will probably happen in a separate
         #       worker thread with a working queue, or in separate threads, one
         #       for each replication task (or a mix of the two)
         newDO, newUid = self._replicate(dataObject, store)
 
-        # The DOs (both) should now be tagged as SOLID
+        # The DROPs (both) should now be tagged as SOLID
         newDO.phase = DOPhases.SOLID
         dataObject.phase = DOPhases.SOLID
 
@@ -475,7 +475,7 @@ class DataLifecycleManager(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('Creating new DataObject %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
 
-        # For the time being we manually copy the contents of the current DO into it
+        # For the time being we manually copy the contents of the current DROP into it
         newDO = store.createDataObject(dataObject.oid, newUid, expectedSize=dataObject.size, precious=dataObject.precious)
         doutils.copyDataObjectContents(dataObject, newDO)
 

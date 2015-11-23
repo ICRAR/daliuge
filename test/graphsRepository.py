@@ -30,9 +30,9 @@ All the graphs created in this repository have (up to now) a corresponding
 test method in the test_luigi module, where it is automatically verified that
 the graph can actually be executed with luigi.
 """
-# All DOs created in the methods of this module have a lifespan of half an hour.
+# All DROPs created in the methods of this module have a lifespan of half an hour.
 # This is to allow sufficient time for users to feed data into the initial
-# DOs (often a SocketListener DO) and let the graph execute
+# DROPs (often a SocketListener DROP) and let the graph execute
 
 import collections
 import inspect
@@ -48,10 +48,10 @@ from test.test_data_object import SumupContainerChecksum
 
 lifespan = 1800
 
-# All the SleepAndCopyApp DOs below are created by default with a sleeping time
+# All the SleepAndCopyApp DROPs below are created by default with a sleeping time
 # of up to 4 seconds (randomly generated). If a specific sleeping time needs to
 # be used instead (e.g., during automatic tests) the following variable can be
-# changed. This value can still be overridden by the per-DO specified sleepTime
+# changed. This value can still be overridden by the per-DROP specified sleepTime
 # argument which has more precedence
 defaultSleepTime = None
 
@@ -122,14 +122,14 @@ def _testGraph(execMode):
                  |--> .. --> .. --|
                  |--> BN --> CN --|
 
-    B and C DOs are InMemorySleepAndCopyApp DOs (see above). D is simply a
+    B and C DROPs are InMemorySleepAndCopyApp DROPs (see above). D is simply a
     container. A is a socket listener, so we can actually write to it externally
-    and watch the progress of the luigi tasks. We give DOs a long lifespan;
+    and watch the progress of the luigi tasks. We give DROPs a long lifespan;
     otherwise they will expire and luigi will see it as a failed task (which is
     actually right!)
 
-    If execMode is given we use that in all DOs. If it's None we use a mixture
-    of DO/EXTERNAL execution modes.
+    If execMode is given we use that in all DROPs. If it's None we use a mixture
+    of DROP/EXTERNAL execution modes.
     """
 
     aMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
@@ -221,7 +221,7 @@ def complex_graph():
     "roots" are SL_A, SL_B, SL_C, SL_D and SL_K.
 
     E, F, I, L, M, Q and R are AppDataObjects; SL_* are SocketListenerApps. The
-    rest are plain in-memory DOs
+    rest are plain in-memory DROPs
     """
 
     sl_a,sl_b,sl_c,sl_d,sl_k = [ SocketListenerApp('sl_' + uid, 'sl_' + uid, lifespan=lifespan, port=port) for uid,port in [('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]]

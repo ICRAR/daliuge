@@ -21,7 +21,7 @@
 #
 '''
 Module containing the base class and a simple implementation of the registry
-used by the DLM to keep track of which DOs are where, and therefore in which
+used by the DLM to keep track of which DROPs are where, and therefore in which
 phase they currently are
 
 The registry simply (for the time being) keeps a record of:
@@ -115,7 +115,7 @@ class InMemoryRegistry(Registry):
         '''
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
-        # Check that the DO is not in the registry
+        # Check that the DROP is not in the registry
         doRow = DataObject()
         doRow.oid       = dataObject.oid
         doRow.phase     = dataObject.phase

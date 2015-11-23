@@ -227,7 +227,7 @@ class DataIslandManager(object):
 
             perNode[loc].append(doSpec)
 
-        # At each node the relationships between DOs should be local at the
+        # At each node the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-DOM
         # relationships separately and remove them from the original graph spec
         interDOMRelations = []
@@ -274,7 +274,7 @@ class DataIslandManager(object):
                 do.setCompleted()
         except Exception as e:
             exceptions[do.uid] = e
-            logger.error("An exception occurred while moving DO %s to COMPLETED" % (uid))
+            logger.error("An exception occurred while moving DROP %s to COMPLETED" % (uid))
             raise # so it gets printed
         finally:
             latch.countDown()
@@ -324,7 +324,7 @@ class DataIslandManager(object):
                 relPropName = data_object.LINKTYPE_NTO1_PROPERTY[relType]
                 setattr(rhsDO, relPropName, lhsDO)
 
-        # Now that everything is wired up we move the requested DOs to COMPLETED
+        # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DOM-level deployment time, in which case
         # we would certainly miss most of the events)
         if logger.isEnabledFor(logging.INFO):
@@ -338,7 +338,7 @@ class DataIslandManager(object):
         latch.await()
 
         if thrExs:
-            raise Exception("One ore more exceptions occurred while moving DOs to COMPLETED: %s" % (sessionId), thrExs)
+            raise Exception("One ore more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
 
         return allUris
 

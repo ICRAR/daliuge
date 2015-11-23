@@ -52,7 +52,7 @@ class RunDataObjectTask(luigi.Task):
     task simply waits until the DataObject's status has moved to COMPLETED.
 
     The complete() test for both cases is still the same, regardless of who is
-    driving the execution: the DO must be COMPLETED and must exist.
+    driving the execution: the DROP must be COMPLETED and must exist.
     """
 
     data_obj  = luigi.Parameter()
@@ -153,7 +153,7 @@ class FinishGraphExecution(luigi.Task):
             self._req = []
             for dob in self._leaves:
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug("Adding leaf DO as requirement to FinishGraphExecution: %s/%s" % (dob.oid, dob.uid))
+                    logger.debug("Adding leaf DROP as requirement to FinishGraphExecution: %s/%s" % (dob.oid, dob.uid))
                 self._req.append(RunDataObjectTask(dob, self.sessionId))
         return self._req
 

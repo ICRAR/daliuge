@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 class EvtConsumer(object):
     '''
     Small utility class that sets the internal flag of the given threading.Event
-    object when consuming a DO. Used throughout the tests as a barrier to wait
-    until all DOs of a given graph have executed
+    object when consuming a DROP. Used throughout the tests as a barrier to wait
+    until all DROPs of a given graph have executed
     '''
     def __init__(self, evt):
         self._evt = evt
@@ -56,7 +56,7 @@ class DOWaiterCtx(object):
     Class used by unit tests to trigger the execution of a physical graph and
     wait until the given set of DataObjects have reached its COMPLETED status.
 
-    It does so by appending an EvtConsumer consumer to each DO before they are
+    It does so by appending an EvtConsumer consumer to each DROP before they are
     used in the execution, and finally checking that the events have been set.
     It should be used like this inside a test class:
 
@@ -83,7 +83,7 @@ class DOWaiterCtx(object):
             self._test.fail('%r' % (value,))
         to = self._timeout
         for evt in self._evts:
-            self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % to)
+            self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
 
 
 class EvtConsumerProxyCtx(object):
@@ -138,7 +138,7 @@ class EvtConsumerProxyCtx(object):
         # also check that the thread hosting the daemon is dead.
         try:
             for evt in self._evts:
-                self._test.assertTrue(evt.wait(to), "Waiting for DO failed with timeout %d" % (to))
+                self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % (to))
         except:
             allFine = False
             raise
@@ -323,11 +323,11 @@ class DOFile(object):
         if self._io:
             self._io.open(OpenMode.OPEN_READ)
 
-            # TODO: This is still very insufficient, since when we `open` a DO
+            # TODO: This is still very insufficient, since when we `open` a DROP
             #       for reading we don't only increment its reference count,
             #       but also check that it's in a proper state, and we also
             #       fire an 'open' event. We then should have two explicitly
-            #       different mechanisms to open a DO, one actually opening the
+            #       different mechanisms to open a DROP, one actually opening the
             #       underlying storage and the other not doing it (because we
             #       do it here).
             #       The same concerns are valid for the close() operation

@@ -152,8 +152,8 @@ class DOUtilsTest(unittest.TestCase):
     def test_DOFile(self):
         """
         This test exercises the DOFile mechanism to read the data represented by
-        a given DO. The DOFile class will decide whether the data should be read
-        directly or through the DO
+        a given DROP. The DOFile class will decide whether the data should be read
+        directly or through the DROP
         """
         do = FileDataObject('a', 'a', expectedSize=5)
         do.write('abcde')
@@ -166,7 +166,7 @@ class DOUtilsTest(unittest.TestCase):
     def test_BFSWithFiltering(self):
         """
         Checks that the BFS works if the given function does filtering on the
-        downstream DOs.
+        downstream DROPs.
         """
         a, _, c, _, e, _, _, h, _, j = self._createGraph()
 

@@ -41,7 +41,7 @@ DFMS_ROOT = '/dfms_root'
 
 class ContainerIpWaiter(object):
     """
-    A class that remembers the target DO's uid and containerIp properties
+    A class that remembers the target DROP's uid and containerIp properties
     when its internal event has been set, and returns them when waitForIp is
     called, which previously waits for the event to be set.
     """

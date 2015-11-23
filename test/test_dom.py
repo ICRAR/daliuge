@@ -125,7 +125,7 @@ class TestDOM(unittest.TestCase):
         e = Pyro4.Proxy(uris2['E'])
         f = Pyro4.Proxy(uris2['F'])
         for do,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
-            self.assertEquals(uid, do.uid, "Proxy is not the DO we think should be (assumed: %s/ actual: %s)" % (uid, do.uid))
+            self.assertEquals(uid, do.uid, "Proxy is not the DROP we think should be (assumed: %s/ actual: %s)" % (uid, do.uid))
         e.addInput(d)
         e.addInput(b)
 
@@ -138,7 +138,7 @@ class TestDOM(unittest.TestCase):
             b.setCompleted()
 
         for do in a,b,c,d,e,f:
-            self.assertEquals(DOStates.COMPLETED, do.status, "DO %s is not COMPLETED" % (do.uid))
+            self.assertEquals(DOStates.COMPLETED, do.status, "DROP %s is not COMPLETED" % (do.uid))
 
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(d)))
         self.assertEquals(b.checksum + d.checksum, int(doutils.allDataObjectContents(f)))
@@ -171,7 +171,7 @@ class TestDOM(unittest.TestCase):
                      |        |--> J --|        |
                      +--------------------------+
 
-        B, F, G, K and N are AppDOs; the rest are plain in-memory DOs
+        B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
         dom1 = DataObjectManager(1, useDLM=False)
@@ -322,7 +322,7 @@ class TestREST(unittest.TestCase):
             self.assertEquals(SessionStates.FINISHED, self.get('/sessions/%s/status' % (sessionId), restPort))
             self.delete('/sessions/%s' % (sessionId), restPort)
 
-            # We put an NGAS archiving at the end of the chain, let's check that the DOs were copied over there
+            # We put an NGAS archiving at the end of the chain, let's check that the DROPs were copied over there
             # Since the graph consists on several SleepAndCopy apps, T should contain the message repeated
             # 9 times, and S should have it 4 times
             def checkReplica(doId, copies):
