@@ -47,7 +47,7 @@ class TestDataLifecycleManager(TestCase):
         :param dfms.data_object.AbstractDataObject dataObject:
         '''
         dataObject.write(' ')
-        # all DOs submitted to this method have expectedSize=1, so this
+        # all DROPs submitted to this method have expectedSize=1, so this
         # will trigger the change to COMPLETED
 
     def test_basicCreation(self):
@@ -84,10 +84,10 @@ class TestDataLifecycleManager(TestCase):
             dataObject = data_object.FileDataObject('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
             manager.addDataObject(dataObject)
 
-            # Writing moves the DO to COMPLETE
+            # Writing moves the DROP to COMPLETE
             self._writeAndClose(dataObject)
 
-            # Wait now, the DO should be moved by the DLM to EXPIRED
+            # Wait now, the DROP should be moved by the DLM to EXPIRED
             time.sleep(1)
 
             self.assertEquals(DOStates.EXPIRED, dataObject.status)
@@ -105,7 +105,7 @@ class TestDataLifecycleManager(TestCase):
             # Let the DLM do its work
             time.sleep(1)
 
-            # Check that the DO is marked as LOST
+            # Check that the DROP is marked as LOST
             self.assertEquals(DOPhases.LOST, do.phase)
 
     def test_cleanupExpiredDataObjects(self):
@@ -114,7 +114,7 @@ class TestDataLifecycleManager(TestCase):
             manager.addDataObject(do)
             self._writeAndClose(do)
 
-            # Wait 2 seconds, the DO is still COMPLETED
+            # Wait 2 seconds, the DROP is still COMPLETED
             time.sleep(0.5)
             self.assertEquals(DOStates.COMPLETED, do.status)
             self.assertTrue(do.exists())

@@ -61,7 +61,7 @@ def complex_graph():
     "roots" are SL_A, SL_B, SL_C, SL_D and SL_K.
 
     E, F, I, L, M, Q and R are AppDataObjects; SL_* are SocketListenerApps. The
-    rest are plain in-memory DOs
+    rest are plain in-memory DROPs
     """
 
     sl_a,sl_b,sl_c,sl_d,sl_k       = [socket('sl_' + uid,port) for uid,port in ('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]

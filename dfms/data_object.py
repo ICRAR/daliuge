@@ -162,7 +162,7 @@ class AbstractDataObject(object):
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
-        # might be written externally and not through this DO
+        # might be written externally and not through this DROP
         self._wio = None
 
         # DataIO objects used for reading.
@@ -191,13 +191,13 @@ class AbstractDataObject(object):
         if lifespan != -1:
             self._expirationDate = time.time() + lifespan
 
-        # Expected data size, used to automatically move the DO to COMPLETED
+        # Expected data size, used to automatically move the DROP to COMPLETED
         # after successive calls to write()
         self._expectedSize = -1
         if kwargs.has_key('expectedSize') and kwargs['expectedSize']:
             self._expectedSize = int(kwargs.pop('expectedSize'))
 
-        # All DOs are precious unless stated otherwise; used for replication
+        # All DROPs are precious unless stated otherwise; used for replication
         self._precious = True
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs.pop('precious'))
@@ -267,7 +267,7 @@ class AbstractDataObject(object):
         invoked. Failing to do so will result in DataObjects not expiring and
         getting deleted.
         """
-        # TODO: We could also allow opening EXPIRED DOs, in which case
+        # TODO: We could also allow opening EXPIRED DROPs, in which case
         # it could trigger its "undeletion", but this would require an automatic
         # recalculation of its new expiration date, which is maybe something we
         # don't have to have
@@ -338,7 +338,7 @@ class AbstractDataObject(object):
             raise Exception("No more writing expected")
 
         # We lazily initialize our writing IO instance because the data of this
-        # DO might not be written through this DO
+        # DROP might not be written through this DROP
         if not self._wio:
             self._wio = self.getIO()
             self._wio.open(OpenMode.OPEN_WRITE)
@@ -480,7 +480,7 @@ class AbstractDataObject(object):
     @property
     def executionMode(self):
         """
-        The execution mode of this DataObject. If `ExecutionMode.DO` it means
+        The execution mode of this DataObject. If `ExecutionMode.DROP` it means
         that this DataObject will automatically trigger the execution of all its
         consumers. If `ExecutionMode.EXTERNAL` it means that this DataObject
         will *not* trigger its consumers, and therefore an external entity will
@@ -630,7 +630,7 @@ class AbstractDataObject(object):
         """
 
         # Consumers have a "consume" method that gets invoked when
-        # this DO moves to COMPLETED
+        # this DROP moves to COMPLETED
         if not hasattr(consumer, 'dataObjectCompleted'):
             raise Exception("The consumer %s doesn't have a 'dataObjectCompleted' method, cannot add to %s" % (consumer, self))
 
@@ -715,12 +715,12 @@ class AbstractDataObject(object):
         with self._finishedProducersLock:
             nFinished = len(self._finishedProducers)
             if nFinished >= len(self._producers):
-                raise Exception("More producers finished that registered in DO %r" % (self))
+                raise Exception("More producers finished that registered in DROP %r" % (self))
             self._finishedProducers.add(uid)
 
         if (nFinished+1) == len(self._producers):
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("All producers finished for DO %r, proceeding to COMPLETE" % (self))
+                logger.debug("All producers finished for DROP %r, proceeding to COMPLETE" % (self))
             self.setCompleted()
 
     @property
@@ -742,7 +742,7 @@ class AbstractDataObject(object):
         """
 
         # Consumers have a "consume" method that gets invoked when
-        # this DO moves to COMPLETED
+        # this DROP moves to COMPLETED
         if not hasattr(streamingConsumer, 'dataObjectCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
             raise Exception("The streaming consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (streamingConsumer))
 
@@ -763,8 +763,8 @@ class AbstractDataObject(object):
 
     def setCompleted(self):
         '''
-        Moves this DO to the COMPLETED state. This can be used when not all the
-        expected data has arrived for a given DO, but it should still be moved
+        Moves this DROP to the COMPLETED state. This can be used when not all the
+        expected data has arrived for a given DROP, but it should still be moved
         to COMPLETED, or when the expected amount of data held by a DataObject
         is not known in advanced.
         '''
@@ -786,7 +786,7 @@ class AbstractDataObject(object):
 
     def isCompleted(self):
         '''
-        Checks whether this DO is currently in the COMPLETED state or not
+        Checks whether this DROP is currently in the COMPLETED state or not
         '''
         # Mind you we're not accessing _status, but status. This way we use the
         # lock in status() to access _status
@@ -924,7 +924,7 @@ class ContainerDataObject(AbstractDataObject):
         self._children = []
 
     #===========================================================================
-    # No data-related operations should actually be called in Container DOs
+    # No data-related operations should actually be called in Container DROPs
     #===========================================================================
     def getIO(self):
         return ErrorIO()
@@ -1212,7 +1212,7 @@ class dodict(dict):
     and actual DataObject instances.
 
     Users of this class are, for example, the graph_loader module which deals
-    with JSON -> DO representation transformations, and the different
+    with JSON -> DROP representation transformations, and the different
     repositories where graph templates are expected to be found by the
     DataObjectManager.
     """

@@ -45,7 +45,7 @@ class DockerTests(unittest.TestCase):
         """
         Simple test for a dockerized application. It copies the contents of one
         file into another via the command-line cp utility. It then checks that
-        the contents of the target DO are correct, and that the target file is
+        the contents of the target DROP are correct, and that the target file is
         actually owned by our process.
 
         The test will not run if a docker daemon cannot be contacted though;
@@ -84,7 +84,7 @@ class DockerTests(unittest.TestCase):
     def test_clientServer(self):
         """
         A client-server duo. The server outputs the data it receives to its
-        output DO, which in turn is the data held in its input DO. The graph
+        output DROP, which in turn is the data held in its input DROP. The graph
         looks like this:
 
         A --|--> B(client) --|--> D

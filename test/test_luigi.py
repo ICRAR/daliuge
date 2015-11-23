@@ -109,7 +109,7 @@ class LuigiTests(unittest.TestCase):
         for i in xrange(socketListeners):
             threading.Thread(target=utils.writeToRemotePort, name='socketWriter', args=("localhost", 1111+i, test_data, 2)).start()
 
-        # Run the graph! Luigi will either monitor or execute the DOs
+        # Run the graph! Luigi will either monitor or execute the DROPs
         w.run()
         w.stop()
 

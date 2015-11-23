@@ -45,7 +45,7 @@ STORAGE_TYPES = {
 }
 
 # Dictionary for the key used to store 1-to-N relationships between DataObjects
-# in the the DO specification format
+# in the the DROP specification format
 __ONE_TO_N_RELS = {
     DOLinkType.CONSUMER:           'consumers',
     DOLinkType.STREAMING_CONSUMER: 'streamingConsumers',
@@ -99,12 +99,12 @@ def addLink(linkType, lhDOSpec, rhOID, force=False):
 def removeUnmetRelationships(doSpecList):
     unmetRelationships = []
 
-    # Step #1: Index DO specs
+    # Step #1: Index DROP specs
     doSpecsDict = {}
     [doSpecsDict.__setitem__(doSpec['oid'], doSpec) for doSpec in doSpecList]
 
     # Step #2: find unmet relationships and remove them from the original
-    # DO spec, keeping track of them
+    # DROP spec, keeping track of them
     for doSpec in doSpecList:
 
         # 1-N relationships
@@ -114,7 +114,7 @@ def removeUnmetRelationships(doSpecList):
                 missingOids = [oid for oid in doSpec[rel] if oid not in doSpecsDict]
                 for oid in missingOids:
                     unmetRelationships.append(DORel(oid, link, doSpec['oid']))
-                # Remove them from the current DO spec
+                # Remove them from the current DROP spec
                 [doSpec[rel].remove(oid) for oid in missingOids]
                 # Remove the relationship list entirely if it has no elements
                 if not doSpec[rel]: del doSpec[rel]
@@ -128,7 +128,7 @@ def removeUnmetRelationships(doSpecList):
                     continue
                 # Keep track of missing relationship
                 unmetRelationships.append(DORel(oid, link, doSpec['oid']))
-                # Remove relationship from current DO spec
+                # Remove relationship from current DROP spec
                 del doSpec[rel]
 
     return unmetRelationships
@@ -159,9 +159,9 @@ def loadDataObjectSpecs(doSpecList):
     """
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Found %d DO definitions" % (len(doSpecList)))
+        logger.debug("Found %d DROP definitions" % (len(doSpecList)))
 
-    # Step #1: Check the DO specs and collect them
+    # Step #1: Check the DROP specs and collect them
     doSpecs = {}
     for doSpec in doSpecList:
 
@@ -179,7 +179,7 @@ def loadDataObjectSpecs(doSpecList):
         for rel in __ONE_TO_N_RELS.viewvalues():
             if rel in doSpec:
                 # A KeyError will be raised if a oid has been specified in the
-                # relationship list but doesn't exist in the list of DOs
+                # relationship list but doesn't exist in the list of DROPs
                 for oid in doSpec[rel]: doSpecs[oid]
 
         # N-1 relationships
@@ -194,7 +194,7 @@ def loadDataObjectSpecs(doSpecList):
 def createGraphFromDOSpecList(doSpecList):
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Found %d DO definitions" % (len(doSpecList)))
+        logger.debug("Found %d DROP definitions" % (len(doSpecList)))
 
     # Step #1: create the actual DataObjects
     dataObjects = collections.OrderedDict()

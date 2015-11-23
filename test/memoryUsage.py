@@ -75,7 +75,7 @@ if __name__ == '__main__':
     if options.csv:
         print "%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f" % (options.type, n, mem, uTime*1e3, sTime*1e3, tTime*1e3, memAvg, uTimeAvg*1e6, sTimeAvg*1e6, tTimeAvg*1e6)
     else:
-        print "%d bytes used by %d %ss (%.2f bytes per DO)" % (mem, n, dotype.__name__, memAvg)
-        print "Total time:  %.2f msec (%.2f msec per DO)" % (tTime, tTimeAvg)
-        print "User time:   %.2f msec (%.2f msec per DO)" % (uTime, uTimeAvg)
-        print "System time: %.2f msec (%.2f msec per DO)" % (sTime, sTimeAvg)
+        print "%d bytes used by %d %ss (%.2f bytes per DROP)" % (mem, n, dotype.__name__, memAvg)
+        print "Total time:  %.2f msec (%.2f msec per DROP)" % (tTime, tTimeAvg)
+        print "User time:   %.2f msec (%.2f msec per DROP)" % (uTime, uTimeAvg)
+        print "System time: %.2f msec (%.2f msec per DROP)" % (sTime, sTimeAvg)

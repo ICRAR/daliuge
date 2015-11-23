@@ -89,7 +89,7 @@ def buildSimpleIngestPDG(ssid, nsHost=None, nsPort=9090, lifespan=3600):
 
     try:
         dobA = Pyro4.Proxy(uriA) # get hold of the root of the graph
-        dobB = Pyro4.Proxy(uriB) # each DO is already associated with a data object mgr
+        dobB = Pyro4.Proxy(uriB) # each DROP is already associated with a data object mgr
         dobC = Pyro4.Proxy(uriC)
         dobD = Pyro4.Proxy(uriD)
         #"""

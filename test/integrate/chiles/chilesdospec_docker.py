@@ -20,8 +20,8 @@
 #    MA 02111-1307  USA
 #
 """
-Similar to chilesdospec, but it generates a series of DockerApp DOs instead of
-directly generating Clean, Flux and Split DOs.
+Similar to chilesdospec, but it generates a series of DockerApp DROPs instead of
+directly generating Clean, Flux and Split DROPs.
 """
 import json
 import os

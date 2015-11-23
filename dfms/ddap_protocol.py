@@ -66,10 +66,10 @@ class ExecutionMode:
     changes on the DataObject's status.
 
     This value exists per DataObject, and therefore we can achieve a mixed
-    execution mode for the entire graph, where some DOs trigger automatically
+    execution mode for the entire graph, where some DROPs trigger automatically
     their consumers, while others must be manually executed from the outside.
 
-    Note that if all DOs in a graph have ExecutionMode == DROP it means that
+    Note that if all DROPs in a graph have ExecutionMode == DROP it means that
     the graph effectively drives its own execution without external intervention.
     """
     DROP, EXTERNAL = xrange(2)

@@ -148,10 +148,10 @@ class Session(object):
         session; otherwise an exception will be raised.
         """
         if self.status != SessionStates.BUILDING:
-            raise Exception("Can't link DOs anymore since this session isn't in the BUILDING state")
+            raise Exception("Can't link DROPs anymore since this session isn't in the BUILDING state")
 
         # Look for the two DataObjects in all our graph parts and reporting
-        # missing DOs
+        # missing DROPs
         lhDOSpec = self.findByOidInParts(lhOID)
         rhDOSpec = self.findByOidInParts(rhOID)
         missingOids = []
@@ -184,7 +184,7 @@ class Session(object):
 
         self.status = SessionStates.DEPLOYING
 
-        # Create the Pyro daemon that will serve the DO proxies and start it
+        # Create the Pyro daemon that will serve the DROP proxies and start it
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Starting Pyro4 Daemon for session %s" % (self._sessionId))
         self._daemon = Pyro4.Daemon()
@@ -201,11 +201,11 @@ class Session(object):
         # Register them
         doutils.breadFirstTraverse(self._roots, self._registerDataObject)
 
-        # We move to COMPLETED the DOs that we were requested to
+        # We move to COMPLETED the DROPs that we were requested to
         # BarrierAppDataObjects are here considered as having to be executed and
         # not directly moved to COMPLETED.
         # TODO: We should possibly unify this initial triggering into a more
-        #       solid concept that encompasses these two and other types of DOs
+        #       solid concept that encompasses these two and other types of DROPs
         def triggerDO(do):
             if do.uid in completedDOs:
                 if isinstance(do, BarrierAppDataObject):
@@ -246,7 +246,7 @@ class Session(object):
         statusDict = collections.defaultdict(dict)
 
         # We shouldn't traverse the full graph because there might be nodes
-        # attached to our DOs that are actually part of other DOM (and have been
+        # attached to our DROPs that are actually part of other DOM (and have been
         # wired together by the DIM after deploying each individual graph on
         # each of the DOMs).
         # We recognize such nodes because they are actually not an instance of

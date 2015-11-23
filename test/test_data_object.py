@@ -216,7 +216,7 @@ class TestDataObject(unittest.TestCase):
         --> A2 --> B2 --> C2 --|--> D --> E
         --> A3 --> B3 --> C3 --|
 
-        Upon writing all A* DOs, the execution of B* DOs should be triggered,
+        Upon writing all A* DROPs, the execution of B* DROPs should be triggered,
         after which "C" will transition to COMPLETE. Once all "C"s have moved to
         COMPLETED "D"'s execution will also be triggered, and finally E will
         hold the sum of B1, B2 and B3's checksums
@@ -228,7 +228,7 @@ class TestDataObject(unittest.TestCase):
         doA2 = FileDataObject('oid:A2', 'uid:A2', expectedSize=filelen)
         doA3 = FileDataObject('oid:A3', 'uid:A3', expectedSize=filelen)
 
-        # CRC Result DOs, storing the result in memory
+        # CRC Result DROPs, storing the result in memory
         doB1 = SumupContainerChecksum('oid:B1', 'uid:B1')
         doB2 = SumupContainerChecksum('oid:B2', 'uid:B2')
         doB3 = SumupContainerChecksum('oid:B3', 'uid:B3')
@@ -236,7 +236,7 @@ class TestDataObject(unittest.TestCase):
         doC2 = InMemoryDataObject('oid:C2', 'uid:C2')
         doC3 = InMemoryDataObject('oid:C3', 'uid:C3')
 
-        # The final DO that sums up the CRCs from the container DO
+        # The final DROP that sums up the CRCs from the container DROP
         doD = SumupContainerChecksum('oid:D', 'uid:D')
         doE = InMemoryDataObject('oid:E', 'uid:E')
 
@@ -252,14 +252,14 @@ class TestDataObject(unittest.TestCase):
             doC.addConsumer(doD)
         doD.addOutput(doE)
 
-        # Write data into the initial "A" DOs, which should trigger
+        # Write data into the initial "A" DROPs, which should trigger
         # the whole chain explained above
         with DOWaiterCtx(self, doE):
             for dobA in doAList: # this should be parallel for
                 for _ in range(self._test_num_blocks):
                     dobA.write(self._test_block)
 
-        # All DOs are completed now that the chain executed correctly
+        # All DROPs are completed now that the chain executed correctly
         for do in doAList + doBList + doCList:
             self.assertTrue(do.status, DOStates.COMPLETED)
 
@@ -305,7 +305,7 @@ class TestDataObject(unittest.TestCase):
                 for n in numbers:
                     outputs[int(n) % 2].write(n + " ")
 
-        # Create DOs
+        # Create DROPs
         a =     InMemoryDataObject('oid:A', 'uid:A')
         b =        NumberWriterApp('oid:B', 'uid:B')
         c =     InMemoryDataObject('oid:A', 'uid:A')
@@ -341,7 +341,7 @@ class TestDataObject(unittest.TestCase):
         result
         """
 
-        # Write, but not through the DO
+        # Write, but not through the DROP
         a = FileDataObject('A', 'A')
         filename = a.path
         msg = 'a message'
@@ -349,12 +349,12 @@ class TestDataObject(unittest.TestCase):
             f.write(msg)
         a.setCompleted()
 
-        # Read from the DO
+        # Read from the DROP
         self.assertEquals(msg, doutils.allDataObjectContents(a))
         self.assertIsNone(a.checksum)
         self.assertIsNone(a.size)
 
-        # We can manually set the size because the DO wasn't able to calculate
+        # We can manually set the size because the DROP wasn't able to calculate
         # it itself; if we couldn't an exception would be thrown
         a.size = len(msg)
 
@@ -371,14 +371,14 @@ class TestDataObject(unittest.TestCase):
         do.setCompleted()
         self.assertEquals(do.status, DOStates.COMPLETED)
 
-        # Try to overwrite the DO's checksum and size
+        # Try to overwrite the DROP's checksum and size
         self.assertRaises(Exception, lambda: setattr(do, 'checksum', 0))
         self.assertRaises(Exception, lambda: setattr(do, 'size', 0))
 
-        # Try to write on a DO that is already COMPLETED
+        # Try to write on a DROP that is already COMPLETED
         self.assertRaises(Exception, do.write, '')
 
-        # Invalid reading on a DO that isn't COMPLETED yet
+        # Invalid reading on a DROP that isn't COMPLETED yet
         do = InMemoryDataObject('a', 'a')
         self.assertRaises(Exception, do.open)
         self.assertRaises(Exception, do.read, 1)
@@ -408,7 +408,7 @@ class TestDataObject(unittest.TestCase):
 
     def _test_graphExecutionDriver(self, mode):
         """
-        A small test to check that DOs executions can be driven externally if
+        A small test to check that DROPs executions can be driven externally if
         required, and not always internally by themselves
         """
         a = InMemoryDataObject('a', 'a', executionMode=mode, expectedSize=1)
@@ -435,7 +435,7 @@ class TestDataObject(unittest.TestCase):
 
     def test_objectAsNormalAndStreamingInput(self):
         """
-        A test that checks that a DO can act as normal and streaming input of
+        A test that checks that a DROP can act as normal and streaming input of
         different AppDataObjects at the same time. We use the following graph:
 
         A --|--> B --> D
@@ -492,7 +492,7 @@ class TestDataObject(unittest.TestCase):
 
     def test_directoryContainer(self):
         """
-        A small, simple test for the DirectoryContainer DO that checks it allows
+        A small, simple test for the DirectoryContainer DROP that checks it allows
         only valid children to be added
         """
 
@@ -504,7 +504,7 @@ class TestDataObject(unittest.TestCase):
         if not os.path.exists(dirname2):
             os.makedirs(dirname2)
 
-        # DOs involved
+        # DROPs involved
         a = FileDataObject('a', 'a', dirname=dirname)
         b = FileDataObject('b', 'b', dirname=dirname)
         c = FileDataObject('c', 'c', dirname=dirname2)

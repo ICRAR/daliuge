@@ -115,13 +115,13 @@ class DataObjectManager(object):
         session.deploy(completedDOs=completedDOs)
         roots = session.roots
 
-        # We register the new DOs with the DLM if there is one
+        # We register the new DROPs with the DLM if there is one
         if self._dlm:
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Registering new DOs with the DataLifecycleManager')
+                logger.debug('Registering new DROPs with the DataLifecycleManager')
             doutils.breadFirstTraverse(roots, lambda do: self._dlm.addDataObject(do))
 
-        # Finally, we also collect the Pyro URIs of our DOs and return them
+        # Finally, we also collect the Pyro URIs of our DROPs and return them
         uris = {}
         doutils.breadFirstTraverse(roots, lambda do: uris.__setitem__(do.uid, do.uri))
         return uris

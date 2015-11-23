@@ -148,7 +148,7 @@ if __name__ == '__main__':
         scp.addOutput(scpOut)
         cl.addInput(scpOut)
 
-        # Add to ifnal list of DOs
+        # Add to ifnal list of DROPs
         dolist.append(vis_in)
         dolist.append(sp)
         dolist.append(split_out)
