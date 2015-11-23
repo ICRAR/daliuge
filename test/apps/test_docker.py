@@ -32,7 +32,7 @@ from docker.errors import DockerException
 
 from dfms import doutils
 from dfms.apps.dockerapp import DockerApp
-from dfms.data_object import FileDROP
+from dfms.drop import FileDROP
 from dfms.doutils import DOWaiterCtx
 
 

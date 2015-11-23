@@ -31,7 +31,7 @@ import json
 import logging
 
 from dfms import doutils
-from dfms.data_object import ContainerDROP, InMemoryDROP, \
+from dfms.drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
 from dfms.ddap_protocol import DROPRel, DROPLinkType

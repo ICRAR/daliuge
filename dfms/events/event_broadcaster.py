@@ -24,7 +24,7 @@
 # dave.pallot@icrar.org   9/Apr/2015     Created
 #
 
-# TODO: Maybe these classes should be moved down to the dfms.data_object module
+# TODO: Maybe these classes should be moved down to the dfms.drop module
 #       now that they are only used there. The only ones actually used are
 #       Event and LocalEventBroadcaster. We could also collapse the hierarchy of
 #       the latter since there is no point in maintaining it anymore

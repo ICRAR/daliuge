@@ -23,7 +23,7 @@ from cStringIO import StringIO
 import unittest
 
 from dfms import graph_loader
-from dfms.data_object import InMemoryDROP, ContainerDROP,\
+from dfms.drop import InMemoryDROP, ContainerDROP,\
     AppDROP, DirectoryContainer
 from dfms.ddap_protocol import DROPLinkType, DROPRel
 
@@ -53,8 +53,7 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEquals("B", b.uid)
 
         # A directory container
-        f = StringIO('[{"oid":"A", "type":"plain", "storage":"file", "dirname":"."}, \
-                       {"oid":"B", "type":"container", "container":"dfms.data_object.DirectoryContainer", "children":["A"], "dirname":"."}]')
+        f = StringIO('[{"oid":"A", "type":"plain", "storage":"file", "dirname":"."}, {"oid":"B", "type":"container", "container":"dfms.drop.DirectoryContainer", "children":["A"], "dirname":"."}]')
         a = graph_loader.readObjectGraph(f)[0]
         b = a.parent
         self.assertIsInstance(b, DirectoryContainer)

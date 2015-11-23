@@ -113,7 +113,7 @@ class InMemoryRegistry(Registry):
 
     def addDataObject(self, dataObject):
         '''
-        :param dfms.data_object.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDataObject dataObject:
         '''
         # Check that the DROP is not in the registry
         doRow = DROP()
@@ -124,7 +124,7 @@ class InMemoryRegistry(Registry):
 
     def addDataObjectInstance(self, dataObject):
         '''
-        :param dfms.data_object.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDataObject dataObject:
         '''
         self._checkDOIsInRegistry(dataObject.oid)
         if self._dos[dataObject.oid].instances.has_key(dataObject.uid):

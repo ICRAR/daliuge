@@ -27,7 +27,7 @@ incoming data in a TCP socket.
 import logging
 import socket
 
-from dfms.data_object import BarrierAppDROP
+from dfms.drop import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)

@@ -23,7 +23,7 @@
 Module containing an example application that calculates a CRC value
 """
 
-from dfms.data_object import BarrierAppDROP
+from dfms.drop import BarrierAppDROP
 
 
 try:

@@ -23,7 +23,7 @@ import json
 import os
 import uuid
 
-from dfms.data_object import dodict
+from dfms.drop import dodict
 
 
 # Directories and paths
@@ -56,7 +56,7 @@ def memorySpec(uid, **kwargs):
 
 
 def directorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.data_object.DirectoryContainer'})
+    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer'})
     doSpec.update(kwargs)
     return doSpec 
 

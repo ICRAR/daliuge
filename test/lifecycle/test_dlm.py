@@ -31,7 +31,7 @@ import time
 import unittest
 from unittest.case import TestCase
 
-from dfms import data_object
+from dfms import drop
 from dfms.ddap_protocol import DROPStates, DROPPhases
 from dfms.lifecycle import dlm
 
@@ -44,7 +44,7 @@ class TestDataLifecycleManager(TestCase):
 
     def _writeAndClose(self, dataObject):
         '''
-        :param dfms.data_object.AbstractDROP dataObject:
+        :param dfms.drop.AbstractDROP dataObject:
         '''
         dataObject.write(' ')
         # all DROPs submitted to this method have expectedSize=1, so this
@@ -57,12 +57,12 @@ class TestDataLifecycleManager(TestCase):
 
     def test_dataObjectAddition(self):
         with dlm.DataLifecycleManager() as manager:
-            dataObject = data_object.FileDROP('oid:A', 'uid:A1', expectedSize=10)
+            dataObject = drop.FileDROP('oid:A', 'uid:A1', expectedSize=10)
             manager.addDataObject(dataObject)
 
     def test_dataObjectCompleteTriggersReplication(self):
         with dlm.DataLifecycleManager() as manager:
-            dataObject = data_object.FileDROP('oid:A', 'uid:A1', expectedSize=1)
+            dataObject = drop.FileDROP('oid:A', 'uid:A1', expectedSize=1)
             manager.addDataObject(dataObject)
             self._writeAndClose(dataObject)
 
@@ -72,7 +72,7 @@ class TestDataLifecycleManager(TestCase):
             self.assertEquals(2, len(manager.getDataObjectUids(dataObject)))
 
             # Try the same with a non-precious data object, it shouldn't be replicated
-            dataObject = data_object.FileDROP('oid:B', 'uid:B1', expectedSize=1, precious=False)
+            dataObject = drop.FileDROP('oid:B', 'uid:B1', expectedSize=1, precious=False)
             manager.addDataObject(dataObject)
             self._writeAndClose(dataObject)
             self.assertEquals(DROPPhases.GAS, dataObject.phase)
@@ -81,7 +81,7 @@ class TestDataLifecycleManager(TestCase):
     def test_expiringNormalDataObject(self):
 
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-            dataObject = data_object.FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
+            dataObject = drop.FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
             manager.addDataObject(dataObject)
 
             # Writing moves the DROP to COMPLETE
@@ -95,7 +95,7 @@ class TestDataLifecycleManager(TestCase):
 
     def test_lostDataObject(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-            do = data_object.FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=10, precious=False)
+            do = drop.FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=10, precious=False)
             manager.addDataObject(do)
             self._writeAndClose(do)
 
@@ -110,7 +110,7 @@ class TestDataLifecycleManager(TestCase):
 
     def test_cleanupExpiredDataObjects(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
-            do = data_object.FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=1, precious=False)
+            do = drop.FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=1, precious=False)
             manager.addDataObject(do)
             self._writeAndClose(do)
 

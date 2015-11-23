@@ -29,7 +29,7 @@ import sys
 
 import psutil
 
-from dfms import data_object
+from dfms import drop
 
 
 def measure(n, DOtype):
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         parser.error("Number of instances to create not specified")
 
     n = options.instances
-    dotype = getattr(data_object, options.type)
+    dotype = getattr(drop, options.type)
     mem, uTime, sTime = measure(n, dotype)
     tTime = uTime + sTime
     memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in mem, uTime, sTime, tTime]

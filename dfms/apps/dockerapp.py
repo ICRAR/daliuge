@@ -31,7 +31,7 @@ import time
 from docker.client import AutoVersionClient
 
 from dfms import utils
-from dfms.data_object import BarrierAppDROP, FileDROP, \
+from dfms.drop import BarrierAppDROP, FileDROP, \
     DirectoryContainer
 
 

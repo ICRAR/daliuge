@@ -30,7 +30,7 @@ different way would have to be thought if we want to have these templates as
 system-wide installed artifacts.
 """
 
-from dfms.data_object import dodict
+from dfms.drop import dodict
 
 def socket(uid, port=1111):
     return dodict({'oid':uid, 'type':'socket', 'port':port})

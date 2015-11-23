@@ -33,7 +33,7 @@ import types
 
 import Pyro4
 
-from dfms.data_object import AppDROP
+from dfms.drop import AppDROP
 from dfms.io import IOForURL, OpenMode
 
 
