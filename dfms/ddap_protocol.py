@@ -59,7 +59,7 @@ class ChecksumTypes:
 
 class ExecutionMode:
     """
-    Execution modes for a DataObject. DO means that a DataObject will trigger
+    Execution modes for a DataObject. DROP means that a DataObject will trigger
     its consumers automatically when it becomes COMPLETED. EXTERNAL means that
     a DataObject will *not* trigger its consumers automatically, and instead
     this should be done by an external entity, probably by subscribing to
@@ -69,10 +69,10 @@ class ExecutionMode:
     execution mode for the entire graph, where some DOs trigger automatically
     their consumers, while others must be manually executed from the outside.
 
-    Note that if all DOs in a given graph have ExecutionMode == DO it means that
+    Note that if all DOs in a graph have ExecutionMode == DROP it means that
     the graph effectively drives its own execution without external intervention.
     """
-    DO, EXTERNAL = xrange(2)
+    DROP, EXTERNAL = xrange(2)
 
 # This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
 # lhs and rhs are DataObject OIDs
