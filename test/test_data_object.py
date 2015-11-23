@@ -404,7 +404,7 @@ class TestDataObject(unittest.TestCase):
         self._test_graphExecutionDriver(ExecutionMode.EXTERNAL)
 
     def test_DOGraphExecutionDriver(self):
-        self._test_graphExecutionDriver(ExecutionMode.DO)
+        self._test_graphExecutionDriver(ExecutionMode.DROP)
 
     def _test_graphExecutionDriver(self, mode):
         """
@@ -429,7 +429,7 @@ class TestDataObject(unittest.TestCase):
             with DOWaiterCtx(self, [c]):
                 b.dataObjectCompleted('a')
             self.assertEquals(c.status, DOStates.COMPLETED)
-        elif mode == ExecutionMode.DO:
+        elif mode == ExecutionMode.DROP:
             # b is already done
             self.assertEquals(c.status, DOStates.COMPLETED)
 

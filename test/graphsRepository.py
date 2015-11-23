@@ -104,7 +104,7 @@ class SleepAndCopyApp(BarrierAppDataObject):
 # recognized as such
 #===============================================================================
 def testGraphDODriven():
-    return _testGraph(ExecutionMode.DO)
+    return _testGraph(ExecutionMode.DROP)
 
 def testGraphLuigiDriven():
     return _testGraph(ExecutionMode.EXTERNAL)
@@ -133,8 +133,8 @@ def _testGraph(execMode):
     """
 
     aMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
-    bMode = execMode if execMode is not None else ExecutionMode.DO
-    cMode = execMode if execMode is not None else ExecutionMode.DO
+    bMode = execMode if execMode is not None else ExecutionMode.DROP
+    cMode = execMode if execMode is not None else ExecutionMode.DROP
     dMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
     eMode = execMode if execMode is not None else ExecutionMode.EXTERNAL
 

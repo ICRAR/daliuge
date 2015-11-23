@@ -174,7 +174,7 @@ class AbstractDataObject(object):
         self._rios = {}
 
         # Maybe we want to have a different default value for this one?
-        self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DO)
+        self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DROP)
 
         # The physical node where this DataObject resides.
         # This piece of information is mandatory when submitting the physical
