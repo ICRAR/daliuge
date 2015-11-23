@@ -30,10 +30,10 @@ import warnings
 from docker.client import AutoVersionClient
 from docker.errors import DockerException
 
-from dfms import doutils
+from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
 from dfms.drop import FileDROP
-from dfms.doutils import DOWaiterCtx
+from dfms.droputils import DOWaiterCtx
 
 
 class DockerTests(unittest.TestCase):
@@ -72,7 +72,7 @@ class DockerTests(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, doutils.allDataObjectContents(c))
+        self.assertEquals(data, droputils.allDataObjectContents(c))
 
         # We own the file, not root
         uid = os.getuid()
@@ -120,7 +120,7 @@ class DockerTests(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, doutils.allDataObjectContents(d))
+        self.assertEquals(data, droputils.allDataObjectContents(d))
 
         # Now remove the containers
         client = AutoVersionClient()
@@ -140,7 +140,7 @@ class DockerTests(unittest.TestCase):
             a.addOutput(b)
             with DOWaiterCtx(self, b, 1):
                 a.execute()
-            self.assertEquals(msg, doutils.allDataObjectContents(b))
+            self.assertEquals(msg, droputils.allDataObjectContents(b))
 
         msg = "This is a message with a single quote: '"
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))

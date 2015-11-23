@@ -30,7 +30,7 @@ import importlib
 import json
 import logging
 
-from dfms import doutils
+from dfms import droputils
 from dfms.drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
@@ -233,7 +233,7 @@ def createGraphFromDOSpecList(doSpecList):
     # We're done! Return the roots of the graph to the caller
     roots = []
     for do in dataObjects.itervalues():
-        if not doutils.getUpstreamObjects(do):
+        if not droputils.getUpstreamObjects(do):
             roots.append(do)
 
     return roots

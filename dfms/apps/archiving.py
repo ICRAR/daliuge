@@ -21,7 +21,7 @@
 #
 from dfms.drop import BarrierAppDROP, ContainerDROP
 from dfms.io import NgasIO, OpenMode, NgasLiteIO
-from dfms.doutils import DOFile
+from dfms.droputils import DOFile
 
 class ExternalStoreApp(BarrierAppDROP):
     """

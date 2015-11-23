@@ -29,10 +29,10 @@ Created on 20 Jul 2015
 
 import unittest
 
-from dfms import doutils
+from dfms import droputils
 from dfms.drop import InMemoryDROP, FileDROP, \
     BarrierAppDROP
-from dfms.doutils import DOFile
+from dfms.droputils import DOFile
 
 
 class DOUtilsTest(unittest.TestCase):
@@ -103,20 +103,20 @@ class DOUtilsTest(unittest.TestCase):
             downstreamNodes = [downstreamNodes]
 
         # Normal check
-        self.assertSetEqual(set(downstreamNodes), set(doutils.getDownstreamObjects(node)))
+        self.assertSetEqual(set(downstreamNodes), set(droputils.getDownstreamObjects(node)))
         # Check the other way too
         for downNode in downstreamNodes:
-            self.assertTrue(node in doutils.getUpstreamObjects(downNode))
+            self.assertTrue(node in droputils.getUpstreamObjects(downNode))
 
     def assertUpstream(self, node, upstreamNodes):
         if not isinstance(upstreamNodes, list):
             upstreamNodes = [upstreamNodes]
 
         # Normal check
-        self.assertSetEqual(set(upstreamNodes), set(doutils.getUpstreamObjects(node)))
+        self.assertSetEqual(set(upstreamNodes), set(droputils.getUpstreamObjects(node)))
         # Check the other way too
         for upNode in upstreamNodes:
-            self.assertTrue(node in doutils.getDownstreamObjects(upNode))
+            self.assertTrue(node in droputils.getDownstreamObjects(upNode))
 
     def testDepthFirstSearch(self):
         """
@@ -124,7 +124,7 @@ class DOUtilsTest(unittest.TestCase):
         """
         a, b, c, d, e, f, g, h, i, j = self._createGraph()
         nodesList = []
-        doutils.depthFirstTraverse(a, lambda n: nodesList.append(n))
+        droputils.depthFirstTraverse(a, lambda n: nodesList.append(n))
 
         self.assertListEqual(nodesList, [a, b, d, g, i, h, j, c, e, f])
         pass
@@ -135,7 +135,7 @@ class DOUtilsTest(unittest.TestCase):
         """
         a, b, c, d, e, f, g, h, i, j = self._createGraph()
         nodesList = []
-        doutils.breadFirstTraverse(a, lambda n: nodesList.append(n))
+        droputils.breadFirstTraverse(a, lambda n: nodesList.append(n))
 
         self.assertListEqual(nodesList, [a, b, c, d, e, f, g, h, i, j])
         pass
@@ -145,7 +145,7 @@ class DOUtilsTest(unittest.TestCase):
         Checks that the getLeafNodes works correctly
         """
         a, _, _, _, _, f, _, _, _, j = self._createGraph()
-        endNodes = doutils.getLeafNodes(a)
+        endNodes = droputils.getLeafNodes(a)
         self.assertSetEqual(set([j, f]), set(endNodes))
         pass
 
@@ -174,7 +174,7 @@ class DOUtilsTest(unittest.TestCase):
         def filtering(do, downStreamDOs):
             downStreamDOs[:] = [x for x in downStreamDOs if x.uid not in ('b','f')]
             visitedNodes.append(do)
-        doutils.breadFirstTraverse(a, filtering)
+        droputils.breadFirstTraverse(a, filtering)
 
         self.assertEquals(5, len(visitedNodes))
         self.assertListEqual(visitedNodes, [a,c,e,h,j])

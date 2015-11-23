@@ -124,7 +124,7 @@ import string
 import threading
 import time
 
-from dfms import doutils
+from dfms import droputils
 from dfms.drop import ContainerDROP
 from dfms.ddap_protocol import DROPStates, DROPPhases
 import hsm.manager
@@ -477,7 +477,7 @@ class DataLifecycleManager(object):
 
         # For the time being we manually copy the contents of the current DROP into it
         newDO = store.createDataObject(dataObject.oid, newUid, expectedSize=dataObject.size, precious=dataObject.precious)
-        doutils.copyDataObjectContents(dataObject, newDO)
+        droputils.copyDataObjectContents(dataObject, newDO)
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('DROP %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))

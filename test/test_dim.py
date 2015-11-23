@@ -33,7 +33,8 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from dfms import doutils, utils
+from dfms import utils
+from dfms import droputils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.data_object_manager import DataObjectManager
@@ -126,11 +127,11 @@ class TestDIM(unittest.TestCase):
         c = Pyro4.Proxy(uris['C'])
 
         data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-        with doutils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, doutils.allDataObjectContents(c))
+        self.assertEquals(data, droputils.allDataObjectContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
 
@@ -142,7 +143,7 @@ class TestDIM(unittest.TestCase):
         c = Pyro4.Proxy(uris['C'])
 
         # This should be happening before the sleepTime expires
-        with doutils.EvtConsumerProxyCtx(self, c, 2):
+        with droputils.EvtConsumerProxyCtx(self, c, 2):
             pass
 
         self.assertEquals(DROPStates.COMPLETED, c.status)
@@ -170,7 +171,7 @@ class TestDIM(unittest.TestCase):
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
         data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-        with doutils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
 
@@ -205,7 +206,7 @@ class TestDIM(unittest.TestCase):
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
         data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-        with doutils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
         assertGraphStatus(sessionId, DROPStates.COMPLETED)

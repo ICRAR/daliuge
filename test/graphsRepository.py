@@ -39,7 +39,7 @@ import inspect
 import random
 import time
 
-from dfms import doutils
+from dfms import droputils
 from dfms.apps.socket_listener import SocketListenerApp
 from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
 from dfms.ddap_protocol import ExecutionMode
@@ -97,7 +97,7 @@ class SleepAndCopyApp(BarrierAppDROP):
                 self.copyRecursive(child, outputs)
         else:
             for outputDO in outputs:
-                doutils.copyDataObjectContents(inputDO, outputDO)
+                droputils.copyDataObjectContents(inputDO, outputDO)
 
 #===============================================================================
 # Methods that create graphs follow. They must have no arguments to be

@@ -26,11 +26,11 @@ import unittest
 
 import spead2.send
 
-from dfms import doutils
+from dfms import droputils
 from dfms.apps.spead_receiver import SpeadReceiverApp
 from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
-from dfms.doutils import DOWaiterCtx
+from dfms.droputils import DOWaiterCtx
 
 
 class TestSpeadReceiverApp(unittest.TestCase):
@@ -62,4 +62,4 @@ class TestSpeadReceiverApp(unittest.TestCase):
             self.assertEquals(DROPStates.COMPLETED, do.status)
 
         self.assertEquals(size, b.size)
-        self.assertEquals(msg, doutils.allDataObjectContents(b))
+        self.assertEquals(msg, droputils.allDataObjectContents(b))

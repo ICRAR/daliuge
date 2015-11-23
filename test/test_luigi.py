@@ -35,7 +35,8 @@ import unittest
 from luigi import scheduler, worker
 import pkg_resources
 
-from dfms import doutils, graph_loader, utils
+from dfms import graph_loader, utils
+from dfms import droputils
 from dfms.luigi_int import FinishGraphExecution
 import graphsRepository
 
@@ -103,7 +104,7 @@ class LuigiTests(unittest.TestCase):
         def startSocketListeners(do):
             if isinstance(do, SocketListenerApp):
                 threading.Thread(target=lambda do: do.execute(), args=(do,)).start()
-        doutils.breadFirstTraverse(task.roots, startSocketListeners)
+        droputils.breadFirstTraverse(task.roots, startSocketListeners)
 
         # Write to the initial nodes of the graph to trigger the graph execution
         for i in xrange(socketListeners):
@@ -115,7 +116,7 @@ class LuigiTests(unittest.TestCase):
 
         # ... but at the end all the nodes of the graph should be completed
         # and should exist
-        doutils.breadFirstTraverse(task.roots,\
+        droputils.breadFirstTraverse(task.roots,\
                                    lambda do: self.assertTrue(do.isCompleted() and do.exists(), "%s is not COMPLETED or doesn't exist" % (do.uid)))
 
 if __name__ == '__main__':
