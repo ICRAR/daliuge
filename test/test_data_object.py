@@ -26,10 +26,10 @@ import random
 import shutil
 
 from dfms import doutils
-from dfms.data_object import FileDataObject, AppDataObject, InMemoryDataObject, \
-    NullDataObject, BarrierAppDataObject, \
-    DirectoryContainer, ContainerDataObject
-from dfms.ddap_protocol import DOStates, ExecutionMode, AppDOStates
+from dfms.data_object import FileDROP, AppDROP, InMemoryDROP, \
+    NullDROP, BarrierAppDROP, \
+    DirectoryContainer, ContainerDROP
+from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dfms.doutils import DOWaiterCtx
 
 
@@ -44,8 +44,8 @@ def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
 
 def isContainer(do):
-    # return isinstance(do, ContainerDataObject)
-    # A Pyro-friendly way to check for a ContainerDataObject is to see if
+    # return isinstance(do, ContainerDROP)
+    # A Pyro-friendly way to check for a ContainerDROP is to see if
     # invoking its 'children' attribute fails or not
     try:
         do.children
@@ -53,9 +53,9 @@ def isContainer(do):
     except AttributeError:
         return False
 
-class SumupContainerChecksum(BarrierAppDataObject):
+class SumupContainerChecksum(BarrierAppDROP):
     """
-    A dummy BarrierAppDataObject that recursively sums up the checksums of
+    A dummy BarrierAppDROP that recursively sums up the checksums of
     all the individual DROPs it consumes, and then stores the final
     result in its output DROP
     """
@@ -82,9 +82,9 @@ class TestDataObject(unittest.TestCase):
 
     def test_NullDataObject(self):
         """
-        Check that the NullDataObject is usable for testing
+        Check that the NullDROP is usable for testing
         """
-        a = NullDataObject('A', 'A', expectedSize=5)
+        a = NullDROP('A', 'A', expectedSize=5)
         a.write("1234")
         a.write("5")
         allContents = doutils.allDataObjectContents(a)
@@ -92,23 +92,23 @@ class TestDataObject(unittest.TestCase):
 
     def test_write_FileDataObject(self):
         """
-        Test a FileDataObject and a simple AppDataObject (for checksum calculation)
+        Test a FileDROP and a simple AppDROP (for checksum calculation)
         """
-        self._test_write_withDataObjectType(FileDataObject)
+        self._test_write_withDataObjectType(FileDROP)
 
     def test_write_InMemoryDataObject(self):
         """
-        Test an InMemoryDataObject and a simple AppDataObject (for checksum calculation)
+        Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
         """
-        self._test_write_withDataObjectType(InMemoryDataObject)
+        self._test_write_withDataObjectType(InMemoryDROP)
 
     def _test_write_withDataObjectType(self, doType):
         """
-        Test an AbstractDataObject and a simple AppDataObject (for checksum calculation)
+        Test an AbstractDataObject and a simple AppDROP (for checksum calculation)
         """
         dobA = doType('oid:A', 'uid:A', expectedSize = self._test_do_sz * ONE_MB)
         dobB = SumupContainerChecksum('oid:B', 'uid:B')
-        dobC = InMemoryDataObject('oid:C', 'uid:C')
+        dobC = InMemoryDROP('oid:C', 'uid:C')
         dobB.addInput(dobA)
         dobB.addOutput(dobC)
 
@@ -134,7 +134,7 @@ class TestDataObject(unittest.TestCase):
         cat someFile | grep 'a' | sort | rev
         '''
 
-        class GrepResult(BarrierAppDataObject):
+        class GrepResult(BarrierAppDROP):
             def initialize(self, **kwargs):
                 super(GrepResult, self).initialize(**kwargs)
                 self._substring = kwargs['substring']
@@ -147,7 +147,7 @@ class TestDataObject(unittest.TestCase):
                     if self._substring in line:
                         output.write(line)
 
-        class SortResult(BarrierAppDataObject):
+        class SortResult(BarrierAppDROP):
             def run(self):
                 do = self._inputs.values()[0]
                 output = self._outputs.values()[0]
@@ -156,7 +156,7 @@ class TestDataObject(unittest.TestCase):
                 for line in sortedLines:
                     output.write(line)
 
-        class RevResult(BarrierAppDataObject):
+        class RevResult(BarrierAppDROP):
             def run(self):
                 do = self._inputs.values()[0]
                 output = self._outputs.values()[0]
@@ -171,13 +171,13 @@ class TestDataObject(unittest.TestCase):
                         else:
                             buf += c
 
-        a = InMemoryDataObject('oid:A', 'uid:A')
+        a = InMemoryDROP('oid:A', 'uid:A')
         b = GrepResult('oid:B', 'uid:B', substring="a")
-        c = InMemoryDataObject('oid:C', 'uid:C')
+        c = InMemoryDROP('oid:C', 'uid:C')
         d = SortResult('oid:D', 'uid:D')
-        e = InMemoryDataObject('oid:E', 'uid:E')
+        e = InMemoryDROP('oid:E', 'uid:E')
         f = RevResult('oid:F', 'oid:F')
-        g = InMemoryDataObject('oid:G', 'uid:G')
+        g = InMemoryDROP('oid:G', 'uid:G')
 
         a.addConsumer(b)
         b.addOutput(c)
@@ -206,11 +206,11 @@ class TestDataObject(unittest.TestCase):
         """
         Using the container data object to implement a join/barrier dataflow.
 
-        A1, A2 and A3 are FileDataObjects
+        A1, A2 and A3 are FileDROPs
         B1, B2 and B3 are SumupContainerChecksum
-        C1, C2 and C3 are InMemoryDataObjects
+        C1, C2 and C3 are InMemoryDROPs
         D is a SumupContainerChecksum
-        E is a InMemoryDataObject
+        E is a InMemoryDROP
 
         --> A1 --> B1 --> C1 --|
         --> A2 --> B2 --> C2 --|--> D --> E
@@ -224,21 +224,21 @@ class TestDataObject(unittest.TestCase):
 
         filelen = self._test_do_sz * ONE_MB
         #create file data objects
-        doA1 = FileDataObject('oid:A1', 'uid:A1', expectedSize=filelen)
-        doA2 = FileDataObject('oid:A2', 'uid:A2', expectedSize=filelen)
-        doA3 = FileDataObject('oid:A3', 'uid:A3', expectedSize=filelen)
+        doA1 = FileDROP('oid:A1', 'uid:A1', expectedSize=filelen)
+        doA2 = FileDROP('oid:A2', 'uid:A2', expectedSize=filelen)
+        doA3 = FileDROP('oid:A3', 'uid:A3', expectedSize=filelen)
 
         # CRC Result DROPs, storing the result in memory
         doB1 = SumupContainerChecksum('oid:B1', 'uid:B1')
         doB2 = SumupContainerChecksum('oid:B2', 'uid:B2')
         doB3 = SumupContainerChecksum('oid:B3', 'uid:B3')
-        doC1 = InMemoryDataObject('oid:C1', 'uid:C1')
-        doC2 = InMemoryDataObject('oid:C2', 'uid:C2')
-        doC3 = InMemoryDataObject('oid:C3', 'uid:C3')
+        doC1 = InMemoryDROP('oid:C1', 'uid:C1')
+        doC2 = InMemoryDROP('oid:C2', 'uid:C2')
+        doC3 = InMemoryDROP('oid:C3', 'uid:C3')
 
         # The final DROP that sums up the CRCs from the container DROP
         doD = SumupContainerChecksum('oid:D', 'uid:D')
-        doE = InMemoryDataObject('oid:E', 'uid:E')
+        doE = InMemoryDROP('oid:E', 'uid:E')
 
         # Wire together
         doAList = [doA1,doA2,doA3]
@@ -261,7 +261,7 @@ class TestDataObject(unittest.TestCase):
 
         # All DROPs are completed now that the chain executed correctly
         for do in doAList + doBList + doCList:
-            self.assertTrue(do.status, DOStates.COMPLETED)
+            self.assertTrue(do.status, DROPStates.COMPLETED)
 
         # The results we want to compare
         sum_crc = doC1.checksum + doC2.checksum + doC3.checksum
@@ -272,7 +272,7 @@ class TestDataObject(unittest.TestCase):
 
     def test_app_multiple_outputs(self):
         """
-        A small method that tests that the AppDataObjects writing to two
+        A small method that tests that the AppDROPs writing to two
         different DROPs outputs works
 
         The graph constructed by this example looks as follow:
@@ -281,13 +281,13 @@ class TestDataObject(unittest.TestCase):
         A --> B --> C --> D --|
                               |--> F
 
-        Here B and D are an AppDataObjects, with D writing to two DROPs
+        Here B and D are an AppDROPs, with D writing to two DROPs
         outputs (E and F) and reading from C. C, in turn, is written by B, which
         in turns reads the data from A
         """
 
         # This is used as "B"
-        class NumberWriterApp(BarrierAppDataObject):
+        class NumberWriterApp(BarrierAppDROP):
             def run(self):
                 inputDO = self._inputs.values()[0]
                 output = self._outputs.values()[0]
@@ -296,7 +296,7 @@ class TestDataObject(unittest.TestCase):
                     output.write(str(i) + " ")
 
         # This is used as "D"
-        class OddAndEvenContainerApp(BarrierAppDataObject):
+        class OddAndEvenContainerApp(BarrierAppDROP):
             def run(self):
                 inputDO = self._inputs.values()[0]
                 outputs = self._outputs.values()
@@ -306,12 +306,12 @@ class TestDataObject(unittest.TestCase):
                     outputs[int(n) % 2].write(n + " ")
 
         # Create DROPs
-        a =     InMemoryDataObject('oid:A', 'uid:A')
+        a =     InMemoryDROP('oid:A', 'uid:A')
         b =        NumberWriterApp('oid:B', 'uid:B')
-        c =     InMemoryDataObject('oid:A', 'uid:A')
+        c =     InMemoryDROP('oid:A', 'uid:A')
         d = OddAndEvenContainerApp('oid:D', 'uid:D')
-        e =     InMemoryDataObject('oid:E', 'uid:E')
-        f =     InMemoryDataObject('oid:F', 'uid:F')
+        e =     InMemoryDROP('oid:E', 'uid:E')
+        f =     InMemoryDROP('oid:F', 'uid:F')
 
         # Wire them together
         a.addConsumer(b)
@@ -327,7 +327,7 @@ class TestDataObject(unittest.TestCase):
 
         # Check the final results are correct
         for do in [a,b,c,d,e]:
-            self.assertEquals(do.status, DOStates.COMPLETED, "%r is not yet COMPLETED" % (do))
+            self.assertEquals(do.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (do))
         self.assertEquals("0 2 4 6 8 10 12 14 16 18", doutils.allDataObjectContents(e).strip())
         self.assertEquals("1 3 5 7 9 11 13 15 17 19", doutils.allDataObjectContents(f).strip())
 
@@ -342,7 +342,7 @@ class TestDataObject(unittest.TestCase):
         """
 
         # Write, but not through the DROP
-        a = FileDataObject('A', 'A')
+        a = FileDROP('A', 'A')
         filename = a.path
         msg = 'a message'
         with open(filename, 'w') as f:
@@ -364,12 +364,12 @@ class TestDataObject(unittest.TestCase):
         """
 
         # Nice and easy
-        do = InMemoryDataObject('a', 'a')
-        self.assertEquals(do.status, DOStates.INITIALIZED)
+        do = InMemoryDROP('a', 'a')
+        self.assertEquals(do.status, DROPStates.INITIALIZED)
         do.write('a')
-        self.assertEquals(do.status, DOStates.WRITING)
+        self.assertEquals(do.status, DROPStates.WRITING)
         do.setCompleted()
-        self.assertEquals(do.status, DOStates.COMPLETED)
+        self.assertEquals(do.status, DROPStates.COMPLETED)
 
         # Try to overwrite the DROP's checksum and size
         self.assertRaises(Exception, lambda: setattr(do, 'checksum', 0))
@@ -379,7 +379,7 @@ class TestDataObject(unittest.TestCase):
         self.assertRaises(Exception, do.write, '')
 
         # Invalid reading on a DROP that isn't COMPLETED yet
-        do = InMemoryDataObject('a', 'a')
+        do = InMemoryDROP('a', 'a')
         self.assertRaises(Exception, do.open)
         self.assertRaises(Exception, do.read, 1)
         self.assertRaises(Exception, do.close, 1)
@@ -397,7 +397,7 @@ class TestDataObject(unittest.TestCase):
         do.close(fd)
 
         # Expire it, then try to set it as COMPLETED again
-        do.status = DOStates.EXPIRED
+        do.status = DROPStates.EXPIRED
         self.assertRaises(Exception, do.setCompleted)
 
     def test_externalGraphExecutionDriver(self):
@@ -411,9 +411,9 @@ class TestDataObject(unittest.TestCase):
         A small test to check that DROPs executions can be driven externally if
         required, and not always internally by themselves
         """
-        a = InMemoryDataObject('a', 'a', executionMode=mode, expectedSize=1)
+        a = InMemoryDROP('a', 'a', executionMode=mode, expectedSize=1)
         b = SumupContainerChecksum('b', 'b')
-        c = InMemoryDataObject('c', 'c')
+        c = InMemoryDROP('c', 'c')
         a.addConsumer(b)
         c.addProducer(b)
 
@@ -424,19 +424,19 @@ class TestDataObject(unittest.TestCase):
 
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
-            self.assertEquals(c.status, DOStates.INITIALIZED)
+            self.assertEquals(c.status, DROPStates.INITIALIZED)
             # Now let b consume a
             with DOWaiterCtx(self, [c]):
                 b.dataObjectCompleted('a')
-            self.assertEquals(c.status, DOStates.COMPLETED)
+            self.assertEquals(c.status, DROPStates.COMPLETED)
         elif mode == ExecutionMode.DROP:
             # b is already done
-            self.assertEquals(c.status, DOStates.COMPLETED)
+            self.assertEquals(c.status, DROPStates.COMPLETED)
 
     def test_objectAsNormalAndStreamingInput(self):
         """
         A test that checks that a DROP can act as normal and streaming input of
-        different AppDataObjects at the same time. We use the following graph:
+        different AppDROPs at the same time. We use the following graph:
 
         A --|--> B --> D
             |--> C --> E
@@ -445,23 +445,23 @@ class TestDataObject(unittest.TestCase):
         input
         """
 
-        class LastCharWriterApp(AppDataObject):
+        class LastCharWriterApp(AppDROP):
             def initialize(self, **kwargs):
                 super(LastCharWriterApp, self).initialize(**kwargs)
                 self._lastChar = None
             def dataWritten(self, uid, data):
-                self.execStatus = AppDOStates.RUNNING
+                self.execStatus = AppDROPStates.RUNNING
                 outputDO = self._outputs.values()[0]
                 self._lastChar = data[-1]
                 outputDO.write(self._lastChar)
             def dataObjectCompleted(self, uid):
-                self.execStatus = AppDOStates.FINISHED
+                self.execStatus = AppDROPStates.FINISHED
 
-        a = InMemoryDataObject('a', 'a')
+        a = InMemoryDROP('a', 'a')
         b = LastCharWriterApp('b', 'b')
         c = SumupContainerChecksum('c', 'c')
-        d = InMemoryDataObject('d', 'd')
-        e = InMemoryDataObject('e', 'e')
+        d = InMemoryDROP('d', 'd')
+        e = InMemoryDROP('e', 'e')
         a.addStreamingConsumer(b)
         a.addConsumer(c)
         b.addOutput(d)
@@ -478,15 +478,15 @@ class TestDataObject(unittest.TestCase):
             self.assertEquals(eStatus, e.status)
             self.assertEquals(lastChar, b._lastChar)
 
-        checkDOStates(DOStates.INITIALIZED , DOStates.INITIALIZED, DOStates.INITIALIZED, None)
+        checkDOStates(DROPStates.INITIALIZED , DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
         a.write('abcde')
-        checkDOStates(DOStates.WRITING, DOStates.WRITING, DOStates.INITIALIZED, 'e')
+        checkDOStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, 'e')
         a.write('fghij')
-        checkDOStates(DOStates.WRITING, DOStates.WRITING, DOStates.INITIALIZED, 'j')
+        checkDOStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, 'j')
         a.write('k')
         with DOWaiterCtx(self, [d,e]):
             a.setCompleted()
-        checkDOStates(DOStates.COMPLETED, DOStates.COMPLETED, DOStates.COMPLETED, 'k')
+        checkDOStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
 
         self.assertEquals('ejk', doutils.allDataObjectContents(d))
 
@@ -505,10 +505,10 @@ class TestDataObject(unittest.TestCase):
             os.makedirs(dirname2)
 
         # DROPs involved
-        a = FileDataObject('a', 'a', dirname=dirname)
-        b = FileDataObject('b', 'b', dirname=dirname)
-        c = FileDataObject('c', 'c', dirname=dirname2)
-        d = FileDataObject('d', 'd', dirname=dirname2)
+        a = FileDROP('a', 'a', dirname=dirname)
+        b = FileDROP('b', 'b', dirname=dirname)
+        c = FileDROP('c', 'c', dirname=dirname2)
+        d = FileDROP('d', 'd', dirname=dirname2)
         cont1 = DirectoryContainer('e', 'e', dirname=dirname)
         cont2 = DirectoryContainer('f', 'f', dirname=dirname2)
 
@@ -517,9 +517,9 @@ class TestDataObject(unittest.TestCase):
         self.assertEquals(os.path.realpath('/tmp/.hidden/inside'), os.path.realpath(cont2.path))
 
         # Certain children-to-be are rejected
-        self.assertRaises(TypeError, cont1.addChild, NullDataObject('g', 'g'))
-        self.assertRaises(TypeError, cont1.addChild, InMemoryDataObject('h', 'h'))
-        self.assertRaises(TypeError, cont1.addChild, ContainerDataObject('i', 'i'))
+        self.assertRaises(TypeError, cont1.addChild, NullDROP('g', 'g'))
+        self.assertRaises(TypeError, cont1.addChild, InMemoryDROP('h', 'h'))
+        self.assertRaises(TypeError, cont1.addChild, ContainerDROP('i', 'i'))
         self.assertRaises(Exception, cont1.addChild, c)
         self.assertRaises(Exception, cont1.addChild, d)
         self.assertRaises(Exception, cont2.addChild, a)
@@ -540,30 +540,30 @@ class TestDataObject(unittest.TestCase):
         A test that checks that multiple-producers correctly drive the state of
         their shared output
         """
-        class App(BarrierAppDataObject): pass
+        class App(BarrierAppDROP): pass
 
         a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in xrange(5)]
-        f = InMemoryDataObject('F', 'F')
+        f = InMemoryDROP('F', 'F')
         for do in a,b,c,d,e:
             do.addOutput(f)
 
-        self.assertEquals(DOStates.INITIALIZED, f.status)
+        self.assertEquals(DROPStates.INITIALIZED, f.status)
         for do in a,b,c,d,e:
-            self.assertEquals(AppDOStates.NOT_RUN, do.execStatus)
+            self.assertEquals(AppDROPStates.NOT_RUN, do.execStatus)
 
         # Run the first 4 ones, F should still be in INITIALIZED
         for do in a,b,c,d:
             do.execute()
-        self.assertEquals(DOStates.INITIALIZED, f.status)
-        self.assertEquals(AppDOStates.NOT_RUN, e.execStatus)
+        self.assertEquals(DROPStates.INITIALIZED, f.status)
+        self.assertEquals(AppDROPStates.NOT_RUN, e.execStatus)
         for do in a,b,c,d:
-            self.assertEquals(AppDOStates.FINISHED, do.execStatus)
+            self.assertEquals(AppDROPStates.FINISHED, do.execStatus)
 
         # Run the final one, now F should be COMPLETED
         e.execute()
-        self.assertEquals(DOStates.COMPLETED, f.status)
+        self.assertEquals(DROPStates.COMPLETED, f.status)
         for do in a,b,c,d,e:
-            self.assertEquals(AppDOStates.FINISHED, do.execStatus)
+            self.assertEquals(AppDROPStates.FINISHED, do.execStatus)
 
 if __name__ == '__main__':
     unittest.main()

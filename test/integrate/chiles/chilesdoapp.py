@@ -24,7 +24,7 @@ import sys
 import uuid
 import threading
 from chilesdo import Split, Clean, SourceFlux
-from dfms.data_object import DirectoryContainer, InMemoryDataObject
+from dfms.data_object import DirectoryContainer, InMemoryDROP
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
         vis_in_a = []
 
-        flux_out = InMemoryDataObject(uuid.uuid1(), uuid.uuid1())
+        flux_out = InMemoryDROP(uuid.uuid1(), uuid.uuid1())
 
         flux = SourceFlux(uuid.uuid1(), uuid.uuid1(), casapy_path = CASAPY)
 

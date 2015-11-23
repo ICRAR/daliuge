@@ -60,7 +60,7 @@ def complex_graph():
     In this example the "leaves" of the graph are S and T, while the
     "roots" are SL_A, SL_B, SL_C, SL_D and SL_K.
 
-    E, F, I, L, M, Q and R are AppDataObjects; SL_* are SocketListenerApps. The
+    E, F, I, L, M, Q and R are AppDROPs; SL_* are SocketListenerApps. The
     rest are plain in-memory DROPs
     """
 

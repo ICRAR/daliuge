@@ -24,7 +24,7 @@ import unittest
 
 from Pyro4.naming_storage import sqlite3
 
-from dfms.data_object import InMemoryDataObject
+from dfms.data_object import InMemoryDROP
 from dfms.lifecycle.registry import RDBMSRegistry
 
 
@@ -45,7 +45,7 @@ class TestRDBMSRegistry(unittest.TestCase):
         os.unlink(DBFILE)
 
     def test_addDataObject(self):
-        a = InMemoryDataObject('a', 'a')
+        a = InMemoryDROP('a', 'a')
         registry = RDBMSRegistry('sqlite3', DBFILE)
         registry.addDataObject(a)
 
@@ -60,8 +60,8 @@ class TestRDBMSRegistry(unittest.TestCase):
 
     def test_addDataObjectInstances(self):
 
-        a1 = InMemoryDataObject('a', 'a1')
-        a2 = InMemoryDataObject('a', 'a2')
+        a1 = InMemoryDROP('a', 'a1')
+        a2 = InMemoryDROP('a', 'a2')
         registry = RDBMSRegistry('sqlite3', DBFILE)
         registry.addDataObject(a1)
 
@@ -92,7 +92,7 @@ class TestRDBMSRegistry(unittest.TestCase):
 
     def test_dataObjectAccess(self):
 
-        a1 = InMemoryDataObject('a', 'a1')
+        a1 = InMemoryDROP('a', 'a1')
         registry = RDBMSRegistry('sqlite3', DBFILE)
         registry.addDataObject(a1)
 

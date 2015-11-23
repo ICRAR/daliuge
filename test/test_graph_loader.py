@@ -23,19 +23,19 @@ from cStringIO import StringIO
 import unittest
 
 from dfms import graph_loader
-from dfms.data_object import InMemoryDataObject, ContainerDataObject,\
-    AppDataObject, DirectoryContainer
-from dfms.ddap_protocol import DOLinkType, DORel
+from dfms.data_object import InMemoryDROP, ContainerDROP,\
+    AppDROP, DirectoryContainer
+from dfms.ddap_protocol import DROPLinkType, DROPRel
 
 # Used in the textual representation of the graphs in these tests
-class DummyApp(AppDataObject): pass
+class DummyApp(AppDROP): pass
 
 class TestGraphLoader(unittest.TestCase):
 
     def test_singleMemoryDO(self):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory"}]')
         a = graph_loader.readObjectGraph(f)[0]
-        self.assertIsInstance(a, InMemoryDataObject)
+        self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
 
@@ -43,12 +43,12 @@ class TestGraphLoader(unittest.TestCase):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory"}, \
                        {"oid":"B", "type":"container", "children":["A"]}]')
         a = graph_loader.readObjectGraph(f)[0]
-        self.assertIsInstance(a, InMemoryDataObject)
+        self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
         self.assertIsNotNone(a.parent)
         b = a.parent
-        self.assertIsInstance(b, ContainerDataObject)
+        self.assertIsInstance(b, ContainerDROP)
         self.assertEquals("B", b.oid)
         self.assertEquals("B", b.uid)
 
@@ -63,7 +63,7 @@ class TestGraphLoader(unittest.TestCase):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]}, \
                        {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]')
         a = graph_loader.readObjectGraph(f)[0]
-        self.assertIsInstance(a, InMemoryDataObject)
+        self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
         self.assertEquals(1, len(a.consumers))
@@ -76,20 +76,20 @@ class TestGraphLoader(unittest.TestCase):
     def test_removeUnmetRelationships(self):
 
         # Unmet relationsips are
-        # DORel(D, CONSUMER, A)
-        # DORel(D, STREAMING_CONSUMER, C)
-        # DORel(Z, PRODUCER, A)
-        # DORel(X, PRODUCER, A)
+        # DROPRel(D, CONSUMER, A)
+        # DROPRel(D, STREAMING_CONSUMER, C)
+        # DROPRel(Z, PRODUCER, A)
+        # DROPRel(X, PRODUCER, A)
         graphDesc = [{'oid':'A', 'consumers':['B', 'D'], 'producers':['Z','X']},
                      {'oid':'B', 'outputs':['C']},
                      {'oid':'C', 'streamingConsumers':['D']}]
 
         unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
         self.assertEquals(4, len(unmetRelationships))
-        self.assertIn(DORel('D', DOLinkType.CONSUMER, 'A'), unmetRelationships)
-        self.assertIn(DORel('D', DOLinkType.STREAMING_CONSUMER, 'C'), unmetRelationships)
-        self.assertIn(DORel('Z', DOLinkType.PRODUCER, 'A'), unmetRelationships)
-        self.assertIn(DORel('X', DOLinkType.PRODUCER, 'A'), unmetRelationships)
+        self.assertIn(DROPRel('D', DROPLinkType.CONSUMER, 'A'), unmetRelationships)
+        self.assertIn(DROPRel('D', DROPLinkType.STREAMING_CONSUMER, 'C'), unmetRelationships)
+        self.assertIn(DROPRel('Z', DROPLinkType.PRODUCER, 'A'), unmetRelationships)
+        self.assertIn(DROPRel('X', DROPLinkType.PRODUCER, 'A'), unmetRelationships)
 
         # The original doSpecs have changed as well
         a = graphDesc[0]

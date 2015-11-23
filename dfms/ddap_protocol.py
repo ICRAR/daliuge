@@ -33,18 +33,18 @@ class ArchElType:
     """
     DOM = 'DOM' # data object manager
 
-class DOLinkType:
+class DROPLinkType:
     CONSUMER, STREAMING_CONSUMER, PRODUCER, \
     PARENT, CHILD, \
     INPUT, STREAMING_INPUT, OUTPUT = xrange(8)
 
-class DOStates:
+class DROPStates:
     INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = xrange(5)
 
-class AppDOStates:
+class AppDROPStates:
     NOT_RUN, RUNNING, FINISHED, ERROR = xrange(4)
 
-class DOPhases:
+class DROPPhases:
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
 
 # https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Standards_and_common_use
@@ -76,8 +76,8 @@ class ExecutionMode:
 
 # This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
 # lhs and rhs are DROP OIDs
-# rel is one of DOLinkType
-DORel = collections.namedtuple('DORel', ['lhs', 'rel', 'rhs'])
+# rel is one of DROPLinkType
+DROPRel = collections.namedtuple('DROPRel', ['lhs', 'rel', 'rhs'])
 
 class REST_API_DOM: # RESTful API (url patterns)
     """

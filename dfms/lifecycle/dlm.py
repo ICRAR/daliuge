@@ -125,8 +125,8 @@ import threading
 import time
 
 from dfms import doutils
-from dfms.data_object import ContainerDataObject
-from dfms.ddap_protocol import DOStates, DOPhases
+from dfms.data_object import ContainerDROP
+from dfms.ddap_protocol import DROPStates, DROPPhases
 import hsm.manager
 import registry
 
@@ -246,17 +246,17 @@ class DataLifecycleManager(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Deleting DROP %s/%s" % (do.oid, do.uid))
         do.delete()
-        do.status = DOStates.DELETED
+        do.status = DROPStates.DELETED
 
     def deleteExpiredDataObjects(self):
         for do in self._dos.values():
-            if do.status == DOStates.EXPIRED:
+            if do.status == DROPStates.EXPIRED:
                 self._deleteDataObject(do)
 
     def expireCompletedDataObjects(self):
         now = time.time()
         for do in self._dos.values():
-            if do.status == DOStates.COMPLETED and \
+            if do.status == DROPStates.COMPLETED and \
                now > do.expirationDate:
                 if do.isBeingRead():
                     logger.info("DROP %s/%s has expired but is currently being read, " \
@@ -264,10 +264,10 @@ class DataLifecycleManager(object):
                     continue
                 if (logger.isEnabledFor(logging.DEBUG)):
                     logger.debug('Marking DROP %s/%s as EXPIRED' % (do.oid, do.uid))
-                do.status = DOStates.EXPIRED
+                do.status = DROPStates.EXPIRED
 
     def _disappeared(self, dataObject):
-        return dataObject.status != DOStates.DELETED and not dataObject.exists()
+        return dataObject.status != DROPStates.DELETED and not dataObject.exists()
 
     def deleteLostDataObjects(self):
 
@@ -308,7 +308,7 @@ class DataLifecycleManager(object):
 
                 if definitelyLost:
                     logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
-                    do.phase = DOPhases.LOST
+                    do.phase = DROPPhases.LOST
                     self._reg.setDataObjectPhase(do, do.phase)
 
         # All those objects identified as lost have to go now
@@ -369,7 +369,7 @@ class DataLifecycleManager(object):
 
             # EXPIRED DROPs will soon be deleted
             # DELETED DROPs do not exist anymore
-            if do.status in (DOStates.DELETED, DOStates.EXPIRED):
+            if do.status in (DROPStates.DELETED, DROPStates.EXPIRED):
                 continue
 
             # 1. Data that is not being used anymore should be moved down in the
@@ -383,7 +383,7 @@ class DataLifecycleManager(object):
 
         # Keep track of the DROP and subscribe to the events it generates
         self._dos[dataObject.uid] = dataObject
-        dataObject.phase = DOPhases.GAS
+        dataObject.phase = DROPPhases.GAS
         dataObject.subscribe(self.doEventHandler)
         self._reg.addDataObject(dataObject)
 
@@ -397,7 +397,7 @@ class DataLifecycleManager(object):
     def doEventHandler(self, event):
         if event.type == 'open':
             self.handleOpenedDO(event.oid, event.uid)
-        elif event.type == 'status' and event.status == DOStates.COMPLETED:
+        elif event.type == 'status' and event.status == DROPStates.COMPLETED:
             self.handleCompletedDO(self._dos[event.uid])
         else:
             if logger.isEnabledFor(logging.DEBUG):
@@ -405,7 +405,7 @@ class DataLifecycleManager(object):
 
     def handleOpenedDO(self, oid, uid):
         dos = self._dos[uid]
-        if dos.status == DOStates.COMPLETED:
+        if dos.status == DROPStates.COMPLETED:
             self._reg.recordNewAccess(oid)
 
     def handleCompletedDO(self, dataObject):
@@ -424,7 +424,7 @@ class DataLifecycleManager(object):
                 logger.exception("Problem while replicating DROP %s/%s" % (oid, uid))
 
     def isReplicable(self, do):
-        return not isinstance(do, ContainerDataObject)
+        return not isinstance(do, ContainerDROP)
 
     def replicateDataObject(self, dataObject):
         '''
@@ -435,7 +435,7 @@ class DataLifecycleManager(object):
         uid = dataObject.uid
 
         # Check that the DROP is complete already
-        if dataObject.status != DOStates.COMPLETED:
+        if dataObject.status != DROPStates.COMPLETED:
             raise Exception("DROP %s/%s not in COMPLETED state" % (oid, uid))
 
         # Get the size of the DROP. This cannot currently be done in some of them,
@@ -456,13 +456,13 @@ class DataLifecycleManager(object):
         newDO, newUid = self._replicate(dataObject, store)
 
         # The DROPs (both) should now be tagged as SOLID
-        newDO.phase = DOPhases.SOLID
-        dataObject.phase = DOPhases.SOLID
+        newDO.phase = DROPPhases.SOLID
+        dataObject.phase = DROPPhases.SOLID
 
         # Update our own registry
         self._dos[newUid] = newDO
         self._reg.addDataObjectInstance(newDO)
-        self._reg.setDataObjectPhase(dataObject, DOPhases.SOLID)
+        self._reg.setDataObjectPhase(dataObject, DROPPhases.SOLID)
 
     def getDataObjectUids(self, dataObject):
         return self._reg.getDataObjectUids(dataObject)

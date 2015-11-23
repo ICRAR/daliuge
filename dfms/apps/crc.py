@@ -23,7 +23,7 @@
 Module containing an example application that calculates a CRC value
 """
 
-from dfms.data_object import BarrierAppDataObject
+from dfms.data_object import BarrierAppDROP
 
 
 try:
@@ -31,11 +31,11 @@ try:
 except:
     from binascii import crc32  # @Reimport
 
-class CRCAppDataObject(BarrierAppDataObject):
+class CRCApp(BarrierAppDROP):
     '''
-    An BarrierAppDataObject that calculates the CRC of the single DROP it
+    An BarrierAppDROP that calculates the CRC of the single DROP it
     consumes. It assumes the DROP being consumed is not a container.
-    This is a simple example of an BarrierAppDataObject being implemented, and
+    This is a simple example of an BarrierAppDROP being implemented, and
     not something really intended to be used in a production system
     '''
 

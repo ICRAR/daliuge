@@ -31,7 +31,7 @@ import Pyro4
 import pkg_resources
 
 from dfms import doutils, ngaslite, utils
-from dfms.ddap_protocol import DOStates
+from dfms.ddap_protocol import DROPStates
 from dfms.manager import cmdline
 from dfms.manager.data_object_manager import DataObjectManager
 from dfms.manager.repository import memory, sleepAndCopy
@@ -57,7 +57,7 @@ class TestDOM(unittest.TestCase):
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCAppDataObject"},
+        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)
@@ -77,7 +77,7 @@ class TestDOM(unittest.TestCase):
             a.setCompleted()
 
         for do in a, b, c:
-            self.assertEquals(DOStates.COMPLETED, do.status)
+            self.assertEquals(DROPStates.COMPLETED, do.status)
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(c)))
 
         for doProxy in a,b,c:
@@ -106,7 +106,7 @@ class TestDOM(unittest.TestCase):
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
                {"oid":"B", "type":"plain", "storage": "memory"},
-               {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCAppDataObject"},
+               {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp"},
                {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
         g2 = [{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},
                {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
@@ -138,7 +138,7 @@ class TestDOM(unittest.TestCase):
             b.setCompleted()
 
         for do in a,b,c,d,e,f:
-            self.assertEquals(DOStates.COMPLETED, do.status, "DROP %s is not COMPLETED" % (do.uid))
+            self.assertEquals(DROPStates.COMPLETED, do.status, "DROP %s is not COMPLETED" % (do.uid))
 
         self.assertEquals(a.checksum, int(doutils.allDataObjectContents(d)))
         self.assertEquals(b.checksum + d.checksum, int(doutils.allDataObjectContents(f)))
@@ -235,7 +235,7 @@ class TestDOM(unittest.TestCase):
             a.write('a')
 
         for doProxy in proxies.viewvalues():
-            self.assertEquals(DOStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED: %d" % (doProxy.uid, doProxy.status))
+            self.assertEquals(DROPStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED: %d" % (doProxy.uid, doProxy.status))
             doProxy._pyroRelease()
 
         for dom in [dom1, dom2, dom3, dom4]:

@@ -28,8 +28,8 @@ import spead2.send
 
 from dfms import doutils
 from dfms.apps.spead_receiver import SpeadReceiverApp
-from dfms.data_object import InMemoryDataObject
-from dfms.ddap_protocol import DOStates
+from dfms.data_object import InMemoryDROP
+from dfms.ddap_protocol import DROPStates
 from dfms.doutils import DOWaiterCtx
 
 
@@ -44,7 +44,7 @@ class TestSpeadReceiverApp(unittest.TestCase):
         self._stream = spead2.send.UdpStream(thread_pool, "localhost", port, spead2.send.StreamConfig(rate=1e7))
 
         a = SpeadReceiverApp('a','a',port=port, itemId=itemId)
-        b = InMemoryDataObject('b','b')
+        b = InMemoryDROP('b','b')
         a.addOutput(b)
 
         size = 1024
@@ -59,7 +59,7 @@ class TestSpeadReceiverApp(unittest.TestCase):
             self._stream.send_heap(ig.get_end())
 
         for do in a,b:
-            self.assertEquals(DOStates.COMPLETED, do.status)
+            self.assertEquals(DROPStates.COMPLETED, do.status)
 
         self.assertEquals(size, b.size)
         self.assertEquals(msg, doutils.allDataObjectContents(b))

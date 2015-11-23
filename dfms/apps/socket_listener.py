@@ -27,20 +27,20 @@ incoming data in a TCP socket.
 import logging
 import socket
 
-from dfms.data_object import BarrierAppDataObject
+from dfms.data_object import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)
 
-class SocketListenerApp(BarrierAppDataObject):
+class SocketListenerApp(BarrierAppDROP):
     '''
-    A BarrierAppDataObject that listens on a socket for data. The server-side
+    A BarrierAppDROP that listens on a socket for data. The server-side
     socket expects only one client, and assumes that the client will close the
     connection after all its data has been sent.
 
     This application expects no input DROPs, and therefore raises an
     exception whenever one is added. On the output side, one or more outputs
-    can be specified with the restriction that they are not ContainerDataObjects
+    can be specified with the restriction that they are not ContainerDROPs
     so data can be written into them through the framework.
     '''
 

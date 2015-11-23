@@ -25,12 +25,12 @@ import threading
 
 import drivecasa
 
-from dfms.data_object import BarrierAppDataObject
+from dfms.data_object import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)
 
-class SourceFlux(BarrierAppDataObject):
+class SourceFlux(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         
@@ -58,7 +58,7 @@ class SourceFlux(BarrierAppDataObject):
         out.write(str(flux))
 
 
-class Clean(BarrierAppDataObject):
+class Clean(BarrierAppDROP):
 
     def initialize(self, **kwargs):
 
@@ -123,7 +123,7 @@ class Clean(BarrierAppDataObject):
             raise Exception('Error cleaning')
 
 
-class Split(BarrierAppDataObject):
+class Split(BarrierAppDROP):
 
     def initialize(self, **kwargs):
 

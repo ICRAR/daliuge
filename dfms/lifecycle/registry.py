@@ -36,14 +36,14 @@ import importlib
 import logging
 import time
 
-from dfms.ddap_protocol import DOPhases
+from dfms.ddap_protocol import DROPPhases
 
 
 logger = logging.getLogger(__name__)
 
 class DROP(object):
     oid         = None
-    phase       = DOPhases.GAS
+    phase       = DROPPhases.GAS
     instances   = []
     accessTimes = []
 

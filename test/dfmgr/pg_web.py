@@ -28,8 +28,9 @@ import time
 from bottle import route, run, request, get, static_file, template, redirect
 
 from dfms import doutils
-from dfms.data_object import ContainerDataObject, SocketListener, AppDataObject
+from dfms.data_object import ContainerDROP, AppDROP
 from dfms.luigi_int import FinishGraphExecution
+from dfms.apps.socket_listener import SocketListenerApp
 
 
 def encode_decimal(obj):
@@ -125,9 +126,9 @@ def execute():
     pgCreator="test.graphsRepository.%s" % (pg_name)
 
     # TODO: Not exactly thread-safe here...
-    SocketListener._dryRun = False
+    SocketListenerApp._dryRun = False
     task = FinishGraphExecution(pgCreator=pgCreator, sessionId=ssid)
-    SocketListener._dryRun = True
+    SocketListenerApp._dryRun = True
 
     no_workers = 5 # parallel workers
     for i in range(no_workers):
