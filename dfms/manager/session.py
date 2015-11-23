@@ -31,7 +31,7 @@ import Pyro4
 from luigi import scheduler, worker
 
 from dfms import luigi_int, graph_loader, doutils
-from dfms.data_object import AbstractDROP, BarrierAppDROP, \
+from dfms.drop import AbstractDROP, BarrierAppDROP, \
     AppDROP
 from dfms.ddap_protocol import DROPLinkType
 

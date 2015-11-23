@@ -41,9 +41,9 @@ import time
 
 from dfms import doutils
 from dfms.apps.socket_listener import SocketListenerApp
-from dfms.data_object import InMemoryDROP, BarrierAppDROP, ContainerDROP
+from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
 from dfms.ddap_protocol import ExecutionMode
-from test.test_data_object import SumupContainerChecksum
+from test.test_drop import SumupContainerChecksum
 
 
 lifespan = 1800

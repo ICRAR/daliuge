@@ -108,7 +108,7 @@ class TestDOM(unittest.TestCase):
                {"oid":"B", "type":"plain", "storage": "memory"},
                {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp"},
                {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
-        g2 = [{"oid":"E", "type":"app", "app":"test.test_data_object.SumupContainerChecksum"},
+        g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
                {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
         uris1 = dom1.quickDeploy(sessionId, g1)

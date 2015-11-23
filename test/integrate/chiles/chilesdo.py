@@ -25,7 +25,7 @@ import threading
 
 import drivecasa
 
-from dfms.data_object import BarrierAppDROP
+from dfms.drop import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)

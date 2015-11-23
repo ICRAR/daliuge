@@ -28,7 +28,7 @@ import os
 import sys
 import uuid
 
-from dfms.data_object import dodict
+from dfms.drop import dodict
 
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
@@ -52,7 +52,7 @@ def fileDoSpec(uid, **kwargs):
     return doSpec
 
 def directorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.data_object.DirectoryContainer', 'node': 'localhost'})
+    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer', 'node': 'localhost'})
     doSpec.update(kwargs)
     return doSpec
 

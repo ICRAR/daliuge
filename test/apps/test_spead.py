@@ -28,7 +28,7 @@ import spead2.send
 
 from dfms import doutils
 from dfms.apps.spead_receiver import SpeadReceiverApp
-from dfms.data_object import InMemoryDROP
+from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
 from dfms.doutils import DOWaiterCtx
 

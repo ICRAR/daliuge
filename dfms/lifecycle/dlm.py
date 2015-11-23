@@ -125,7 +125,7 @@ import threading
 import time
 
 from dfms import doutils
-from dfms.data_object import ContainerDROP
+from dfms.drop import ContainerDROP
 from dfms.ddap_protocol import DROPStates, DROPPhases
 import hsm.manager
 import registry
@@ -410,7 +410,7 @@ class DataLifecycleManager(object):
 
     def handleCompletedDO(self, dataObject):
         '''
-        :param dfms.data_object.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDataObject dataObject:
         '''
         # Check the kind of storage used by this DROP. If it's already persisted
         # in a persistent storage media we don't need to save it again
@@ -428,7 +428,7 @@ class DataLifecycleManager(object):
 
     def replicateDataObject(self, dataObject):
         '''
-        :param dfms.data_object.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDataObject dataObject:
         '''
 
         oid = dataObject.oid

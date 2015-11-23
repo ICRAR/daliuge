@@ -25,7 +25,7 @@ import warnings
 import json
 import logging
 import os
-from dfms.data_object import FileDROP, InMemoryDROP, NgasDROP
+from dfms.drop import FileDROP, InMemoryDROP, NgasDROP
 
 '''
 Implementation of the different storage layers that are then used by the HSM to

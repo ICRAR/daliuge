@@ -25,7 +25,7 @@ import threading
 
 import Pyro4
 
-from dfms import remote, graph_loader, data_object
+from dfms import remote, graph_loader, drop
 from dfms.utils import CountDownLatch, portIsOpen
 
 
@@ -317,11 +317,11 @@ class DataIslandManager(object):
             rhsDO = proxies[rel.rhs]
             lhsDO = proxies[rel.lhs]
 
-            if relType in data_object.LINKTYPE_1TON_APPEND_METHOD:
-                methodName = data_object.LINKTYPE_1TON_APPEND_METHOD[relType]
+            if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
+                methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
                 rhsDO._pyroInvoke(methodName, (lhsDO,), {})
             else:
-                relPropName = data_object.LINKTYPE_NTO1_PROPERTY[relType]
+                relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
                 setattr(rhsDO, relPropName, lhsDO)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED

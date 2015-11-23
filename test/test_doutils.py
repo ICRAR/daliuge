@@ -30,7 +30,7 @@ Created on 20 Jul 2015
 import unittest
 
 from dfms import doutils
-from dfms.data_object import InMemoryDROP, FileDROP, \
+from dfms.drop import InMemoryDROP, FileDROP, \
     BarrierAppDROP
 from dfms.doutils import DOFile
 

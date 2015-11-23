@@ -31,7 +31,7 @@ import time
 import luigi
 
 from dfms import doutils
-from dfms.data_object import AbstractDROP, BarrierAppDROP
+from dfms.drop import AbstractDROP, BarrierAppDROP
 from dfms.ddap_protocol import ExecutionMode, DROPStates
 
 

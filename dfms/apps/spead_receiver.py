@@ -27,7 +27,7 @@ import logging
 
 import spead2.recv
 
-from dfms.data_object import BarrierAppDROP
+from dfms.drop import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)

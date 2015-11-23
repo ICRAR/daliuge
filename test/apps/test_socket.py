@@ -24,10 +24,10 @@ import unittest
 
 from dfms import doutils, utils
 from dfms.apps.socket_listener import SocketListenerApp
-from dfms.data_object import InMemoryDROP
+from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
 from dfms.doutils import DOWaiterCtx
-from test.test_data_object import SumupContainerChecksum
+from test.test_drop import SumupContainerChecksum
 
 
 try:

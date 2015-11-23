@@ -26,7 +26,7 @@ import random
 import shutil
 
 from dfms import doutils
-from dfms.data_object import FileDROP, AppDROP, InMemoryDROP, \
+from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
     DirectoryContainer, ContainerDROP
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates

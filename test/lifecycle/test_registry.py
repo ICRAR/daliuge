@@ -24,7 +24,7 @@ import unittest
 
 from Pyro4.naming_storage import sqlite3
 
-from dfms.data_object import InMemoryDROP
+from dfms.drop import InMemoryDROP
 from dfms.lifecycle.registry import RDBMSRegistry
 
 

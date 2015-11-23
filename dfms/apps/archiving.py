@@ -19,7 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.data_object import BarrierAppDROP, ContainerDROP
+from dfms.drop import BarrierAppDROP, ContainerDROP
 from dfms.io import NgasIO, OpenMode, NgasLiteIO
 from dfms.doutils import DOFile
 

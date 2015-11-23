@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 from dfms import remote
-from dfms.data_object import BarrierAppDROP
+from dfms.drop import BarrierAppDROP
 
 
 class ScpApp(BarrierAppDROP):

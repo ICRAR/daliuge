@@ -28,7 +28,7 @@ import time
 from bottle import route, run, request, get, static_file, template, redirect
 
 from dfms import doutils
-from dfms.data_object import ContainerDROP, AppDROP
+from dfms.drop import ContainerDROP, AppDROP
 from dfms.luigi_int import FinishGraphExecution
 from dfms.apps.socket_listener import SocketListenerApp
 

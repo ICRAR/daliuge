@@ -24,7 +24,7 @@ import sys
 import uuid
 import threading
 from chilesdo import Split, Clean, SourceFlux
-from dfms.data_object import DirectoryContainer, InMemoryDROP
+from dfms.drop import DirectoryContainer, InMemoryDROP
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
