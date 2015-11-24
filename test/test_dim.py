@@ -37,7 +37,7 @@ from dfms import utils
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager.data_island_manager import DataIslandManager
-from dfms.manager.data_object_manager import DataObjectManager
+from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
 
@@ -50,19 +50,19 @@ def setUpDimTests(self):
     # SleepAndCopyApps don't take time to execute
     graphsRepository.defaultSleepTime = 0
 
-    # Start a DOM. This is the DOM which the DIM connects to.
+    # Start a DM. This is the DM which the DIM connects to.
     #
     # We start it here to avoid the DIM connecting via SSH to the localhost
-    # and spawning a dfmsDOM process; both things need proper setup which we
+    # and spawning a dfmsDM process; both things need proper setup which we
     # cannot do here (ssh publick key installation, ssh service up, proper
     # environment available, etc)
     #
     # Anyway, this is also useful because we can check that things have
-    # occurred at the DOM level in the test cases
-    domId = 'dom_' + hostname
-    self.dom = DataObjectManager(domId, False)
+    # occurred at the DM level in the test cases
+    domId = 'dm_' + hostname
+    self.dom = DROPManager(domId, False)
     self._domDaemon = Pyro4.Daemon(host=hostname, port=4000)
-    domId, self._domDaemon.register(self.dom, objectId=domId)
+    self._domDaemon.register(self.dom, objectId=domId)
     threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
 
     # The DIM we're testing

@@ -34,27 +34,27 @@ from dfms import ngaslite, utils
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import cmdline
-from dfms.manager.data_object_manager import DataObjectManager
+from dfms.manager.drop_manager import DROPManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
 
 
-class TestDOM(unittest.TestCase):
+class TestDM(unittest.TestCase):
 
     def test_runGraphOneDOPerDOM(self):
         """
-        A test that creates three DROPs in two different DOMs, wire two of
+        A test that creates three DROPs in two different DMs, wire two of
         them together externally (i.e., using their proxies), and runs the graph.
-        For this the graphs that are fed into the DOMs must *not* express the
-        inter-DOM relationships. The graph looks like:
+        For this the graphs that are fed into the DMs must *not* express the
+        inter-DM relationships. The graph looks like:
 
-        DOM #1     DOM #2
+        DM #1      DM #2
         =======    =============
         | A --|----|-> B --> C |
         =======    =============
         """
-        dom1 = DataObjectManager(1, useDLM=False)
-        dom2 = DataObjectManager(2, useDLM=False)
+        dom1 = DROPManager(1, useDLM=False)
+        dom2 = DROPManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
@@ -89,10 +89,10 @@ class TestDOM(unittest.TestCase):
 
     def test_runGraphSeveralDOsPerDOM(self):
         """
-        A test that creates several DROPs in two different DOMs and  runs
+        A test that creates several DROPs in two different DMs and  runs
         the graph. The graph looks like this
 
-        DOM #1                 DOM #2
+        DM #1                  DM #2
         ===================    ================
         | A --> C --> D --|----|-|            |
         |                 |    | |--> E --> F |
@@ -101,8 +101,8 @@ class TestDOM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dom1 = DataObjectManager(1, useDLM=False)
-        dom2 = DataObjectManager(2, useDLM=False)
+        dom1 = DROPManager(1, useDLM=False)
+        dom2 = DROPManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
@@ -117,7 +117,7 @@ class TestDOM(unittest.TestCase):
         self.assertEquals(4, len(uris1))
         self.assertEquals(2, len(uris2))
 
-        # We externally wire the Proxy objects to establish the inter-DOM
+        # We externally wire the Proxy objects to establish the inter-DM
         # relationships
         a = Pyro4.Proxy(uris1['A'])
         b = Pyro4.Proxy(uris1['B'])
@@ -152,20 +152,20 @@ class TestDOM(unittest.TestCase):
 
     def test_runWithFourDOMs(self):
         """
-        A test that creates several DROPs in two different DOMs and  runs
+        A test that creates several DROPs in two different DMs and  runs
         the graph. The graph looks like this
 
-                     DOM #2
+                      DM #2
                      +--------------------------+
                      |        |--> C --|        |
                  +---|--> B --|--> D --|--> F --|--|
                  |   |        |--> E --|        |  |
-        DOM #1   |   +--------------------------+  |  DOM #4
+        DM #1    |   +--------------------------+  |   DM #4
         +-----+  |                                 |  +---------------------+
         |     |  |                                 |--|--> L --|            |
         | A --|--+                                    |        |--> N --> O |
         |     |  |                                 |--|--> M --|            |
-        +-----+  |   DOM #3                        |  +---------------------+
+        +-----+  |    DM #3                        |  +---------------------+
                  |   +--------------------------+  |
                  |   |        |--> H --|        |  |
                  +---|--> G --|--> I --|--> K --|--|
@@ -175,10 +175,10 @@ class TestDOM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dom1 = DataObjectManager(1, useDLM=False)
-        dom2 = DataObjectManager(2, useDLM=False)
-        dom3 = DataObjectManager(3, useDLM=False)
-        dom4 = DataObjectManager(4, useDLM=False)
+        dom1 = DROPManager(1, useDLM=False)
+        dom2 = DROPManager(2, useDLM=False)
+        dom3 = DROPManager(3, useDLM=False)
+        dom4 = DROPManager(4, useDLM=False)
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
@@ -211,8 +211,8 @@ class TestDOM(unittest.TestCase):
         allUris.update(uris3)
         allUris.update(uris4)
 
-        # We externally wire the Proxy objects to establish the inter-DOM
-        # relationships. Intra-DOM relationships are already established
+        # We externally wire the Proxy objects to establish the inter-DM
+        # relationships. Intra-DM relationships are already established
         proxies = {}
         for uid,uri in allUris.viewitems():
             proxies[uid] = Pyro4.Proxy(uri)
@@ -242,24 +242,24 @@ class TestDOM(unittest.TestCase):
         for dom in [dom1, dom2, dom3, dom4]:
             dom.destroySession(sessionId)
 
-def startDOM(restPort):
+def startDM(restPort):
     # Make sure the graph executes quickly once triggered
     from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsDOM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID', '-q'])
+    cmdline.dfmsDM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID', '-q'])
 
 class TestREST(unittest.TestCase):
 
     def test_fullRound(self):
         """
         A test that exercises most of the REST interface exposed on top of the
-        DataObjectManager
+        DROPManager
         """
 
         sessionId = 'lala'
         restPort  = 8888
 
-        domProcess = multiprocessing.Process(target=lambda restPort: startDOM(restPort), args=[restPort])
+        domProcess = multiprocessing.Process(target=lambda restPort: startDM(restPort), args=[restPort])
         domProcess.start()
 
         try:
@@ -268,7 +268,7 @@ class TestREST(unittest.TestCase):
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
 
-            # The DOM is still empty
+            # The DM is still empty
             domInfo = self.get('', restPort)
             self.assertEquals(0, len(domInfo['sessions']))
 

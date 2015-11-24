@@ -104,10 +104,10 @@ class RunDataObjectTask(luigi.Task):
 
         # The requires() method will be called not only when creating the
         # initial tree of tasks, but also at runtime. For a given graph in a
-        # DOM that has been connected with to other graph running in a different
-        # DOM, it will mean that at runtime more upstream objects will be found
+        # DM that has been connected with to other graph running in a different
+        # DM, it will mean that at runtime more upstream objects will be found
         # for those nodes connected to an external graph. We shouldn't schedule
-        # those objects though, since they are scheduled by their own DOM.
+        # those objects though, since they are scheduled by their own DM.
         # We simply filter then the upObjs here to return only those that are
         # actually an instance of AbstractDROP, thus removing any Pyro
         # Proxy instances from the list

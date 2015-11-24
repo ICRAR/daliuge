@@ -179,7 +179,7 @@ class AbstractDROP(object):
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
         # graph via the DataIslandManager, but in simpler scenarios such as
-        # tests or graph submissions via the DataObjectManager it might be
+        # tests or graph submissions via the DROPManager it might be
         # missing. We thus default to '127.0.0.1'
         self._node = self._getArg(kwargs, 'node', '127.0.0.1')
 
@@ -513,7 +513,7 @@ class AbstractDROP(object):
         At this layer only the handling of such an interest exists. The
         expression of such interest, and the invocation of this method wherever
         necessary, is currently left as a responsibility of the entity creating
-        the DROPs. In the case of a Session in a DataObjectManager for
+        the DROPs. In the case of a Session in a DROPManager for
         example this step would be performed using deployment-time information
         contained in the dospec dictionaries held in the session.
         """
@@ -1214,7 +1214,7 @@ class dodict(dict):
     Users of this class are, for example, the graph_loader module which deals
     with JSON -> DROP representation transformations, and the different
     repositories where graph templates are expected to be found by the
-    DataObjectManager.
+    DROPManager.
     """
     def _addSomething(self, otherDoDict, key):
         if key not in self:

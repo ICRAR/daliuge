@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """
-Module containing the REST layer that exposes the DataObjectManager methods to
+Module containing the REST layer that exposes the DROPManager methods to
 the outside world
 """
 
@@ -147,9 +147,9 @@ class RestServer(object):
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return template(tpl, sessionId=sessionId, serverUrl=serverUrl)
 
-class DOMRestServer(RestServer):
+class DMRestServer(RestServer):
     """
-    A REST server for DataObjectManagers. It includes mappings for DOM-specific
+    A REST server for DROPManagers. It includes mappings for DM-specific
     methods and the mapping for the main visualization HTML pages.
     """
 
