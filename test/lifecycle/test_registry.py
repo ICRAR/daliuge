@@ -44,10 +44,10 @@ class TestRDBMSRegistry(unittest.TestCase):
     def tearDown(self):
         os.unlink(DBFILE)
 
-    def test_addDataObject(self):
+    def test_addDrop(self):
         a = InMemoryDROP('a', 'a')
         registry = RDBMSRegistry('sqlite3', DBFILE)
-        registry.addDataObject(a)
+        registry.addDrop(a)
 
         conn = sqlite3.connect(DBFILE)
         cur = conn.cursor()
@@ -58,19 +58,19 @@ class TestRDBMSRegistry(unittest.TestCase):
         cur.close()
         conn.close()
 
-    def test_addDataObjectInstances(self):
+    def test_addDropInstances(self):
 
         a1 = InMemoryDROP('a', 'a1')
         a2 = InMemoryDROP('a', 'a2')
         registry = RDBMSRegistry('sqlite3', DBFILE)
-        registry.addDataObject(a1)
+        registry.addDrop(a1)
 
-        uids = registry.getDataObjectUids(a1)
+        uids = registry.getDropUids(a1)
         self.assertEquals(1, len(uids))
         self.assertEquals('a1', uids[0])
 
-        registry.addDataObjectInstance(a2)
-        uids = registry.getDataObjectUids(a1)
+        registry.addDropInstance(a2)
+        uids = registry.getDropUids(a1)
         uids.sort()
         self.assertEquals(2, len(uids))
         self.assertEquals('a1', uids[0])
@@ -90,11 +90,11 @@ class TestRDBMSRegistry(unittest.TestCase):
         cur.close()
         conn.close()
 
-    def test_dataObjectAccess(self):
+    def test_dropAccess(self):
 
         a1 = InMemoryDROP('a', 'a1')
         registry = RDBMSRegistry('sqlite3', DBFILE)
-        registry.addDataObject(a1)
+        registry.addDrop(a1)
 
         self.assertEquals(-1, registry.getLastAccess('a'))
         registry.recordNewAccess('a')

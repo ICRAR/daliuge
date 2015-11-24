@@ -49,7 +49,7 @@ class ScpApp(BarrierAppDROP):
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:
             # The current only way to check if we are handling a FileDROP
-            # or a DirectoryDataObject is by checking if they have a `path`
+            # or a DirectoryContainer is by checking if they have a `path`
             # attribute. Calling `isinstance(i, (FileDROP, DirectoryContainer))`
             # doesn't work because the input/output might be a Pyro4.Proxy object
             # that fails the test

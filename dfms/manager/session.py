@@ -79,7 +79,7 @@ class Session(object):
 
     def __init__(self, sessionId):
         self._sessionId = sessionId
-        self._graph = {} # key: oid, value: doSpec dictionary
+        self._graph = {} # key: oid, value: dropSpec dictionary
         self._statusLock = threading.Lock()
         self._roots = []
         self._daemon = None
@@ -129,8 +129,8 @@ class Session(object):
 
         self.status = SessionStates.BUILDING
 
-        # This will check the consistency of each doSpec
-        graphSpecDict = graph_loader.loadDataObjectSpecs(graphSpec)
+        # This will check the consistency of each dropSpec
+        graphSpecDict = graph_loader.loadDropSpecs(graphSpec)
 
         for oid in graphSpecDict:
             if oid in self._graph:
@@ -153,23 +153,23 @@ class Session(object):
 
         # Look for the two DROPs in all our graph parts and reporting
         # missing DROPs
-        lhDOSpec = self.findByOidInParts(lhOID)
-        rhDOSpec = self.findByOidInParts(rhOID)
+        lhDropSpec = self.findByOidInParts(lhOID)
+        rhDropSpec = self.findByOidInParts(rhOID)
         missingOids = []
-        if lhDOSpec is None: missingOids.append(lhOID)
-        if rhDOSpec is None: missingOids.append(rhOID)
+        if lhDropSpec is None: missingOids.append(lhOID)
+        if rhDropSpec is None: missingOids.append(rhOID)
         if missingOids:
             oids = 'OID' if len(missingOids) == 1 else 'OIDs'
             raise Exception('No DROP found for %s %r' % (oids, missingOids))
 
-        graph_loader.addLink(linkType, lhDOSpec, rhOID, force=force)
+        graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     def findByOidInParts(self, oid):
         if oid in self._graph:
             return self._graph[oid]
         return None
 
-    def deploy(self, completedDOs=[]):
+    def deploy(self, completedDrops=[]):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -197,25 +197,25 @@ class Session(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Creating DROPs for session %s" % (self._sessionId))
 
-        self._roots = graph_loader.createGraphFromDOSpecList(self._graph.values())
+        self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
 
         # Register them
-        droputils.breadFirstTraverse(self._roots, self._registerDataObject)
+        droputils.breadFirstTraverse(self._roots, self._registerDrop)
 
         # We move to COMPLETED the DROPs that we were requested to
         # BarrierAppDROPs are here considered as having to be executed and
         # not directly moved to COMPLETED.
         # TODO: We should possibly unify this initial triggering into a more
         #       solid concept that encompasses these two and other types of DROPs
-        def triggerDO(do):
-            if do.uid in completedDOs:
-                if isinstance(do, BarrierAppDROP):
-                    t = threading.Thread(target=lambda:do.execute())
+        def triggerDrop(drop):
+            if drop.uid in completedDrops:
+                if isinstance(drop, BarrierAppDROP):
+                    t = threading.Thread(target=lambda:drop.execute())
                     t.daemon = True
                     t.start()
                 else:
-                    do.setCompleted()
-        droputils.breadFirstTraverse(self._roots, triggerDO)
+                    drop.setCompleted()
+        droputils.breadFirstTraverse(self._roots, triggerDrop)
 
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
@@ -232,9 +232,9 @@ class Session(object):
         if logger.isEnabledFor(logging.INFO):
             logger.info("Session %s is now RUNNING" % (self._sessionId))
 
-    def _registerDataObject(self, dataObject):
-        uri = self._daemon.register(dataObject)
-        dataObject.uri = uri
+    def _registerDrop(self, drop):
+        uri = self._daemon.register(drop)
+        drop.uri = uri
 
     def _run(self, worker):
         worker.run()
@@ -253,12 +253,12 @@ class Session(object):
         # We recognize such nodes because they are actually not an instance of
         # AbstractDROP (they are Pyro4.Proxy instances).
         #
-        # The same trick is used in luigi_int.RunDataObjectTask.requires
-        def addToDict(do, downStreamDOs):
-            downStreamDOs[:] = [dsDO for dsDO in downStreamDOs if isinstance(dsDO, AbstractDROP)]
-            if isinstance(do, AppDROP):
-                statusDict[do.oid]['execStatus'] = do.execStatus
-            statusDict[do.oid]['status'] = do.status
+        # The same trick is used in luigi_int.RunDROPTask.requires
+        def addToDict(drop, downStreamDrops):
+            downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
+            if isinstance(drop, AppDROP):
+                statusDict[drop.oid]['execStatus'] = drop.execStatus
+            statusDict[drop.oid]['status'] = drop.status
 
         droputils.breadFirstTraverse(self._roots, addToDict)
         return statusDict

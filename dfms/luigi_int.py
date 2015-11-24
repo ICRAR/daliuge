@@ -37,7 +37,7 @@ from dfms.ddap_protocol import ExecutionMode, DROPStates
 
 logger = logging.getLogger(__name__)
 
-class RunDataObjectTask(luigi.Task):
+class RunDROPTask(luigi.Task):
     """
     A Luigi Task that, for a given DROP, either simply monitors it or
     actually executes it.
@@ -59,30 +59,30 @@ class RunDataObjectTask(luigi.Task):
     sessionId = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
-        super(RunDataObjectTask, self).__init__(*args, **kwargs)
+        super(RunDROPTask, self).__init__(*args, **kwargs)
 
-        do = self.data_obj
-        self.execDO  = False
-        if isinstance(do, BarrierAppDROP):
-            for inputDO in do.inputs:
-                if inputDO.executionMode == ExecutionMode.EXTERNAL:
-                    self.execDO = True
+        drop = self.data_obj
+        self.execDrop  = False
+        if isinstance(drop, BarrierAppDROP):
+            for inputDrop in drop.inputs:
+                if inputDrop.executionMode == ExecutionMode.EXTERNAL:
+                    self.execDrop = True
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("%s will execute or monitor DROP %s/%s?: %s" % (self.__class__, do.oid, do.uid, ("execute" if self.execDO else "monitor")))
+            logger.debug("%s will execute or monitor DROP %s/%s?: %s" % (self.__class__, drop.oid, drop.uid, ("execute" if self.execDrop else "monitor")))
 
-        if not self.execDO:
+        if not self.execDrop:
             self._evt = threading.Event()
             def setEvtOnCompleted(e):
                 if e.status == DROPStates.COMPLETED:
                     self._evt.set()
-            do.subscribe(setEvtOnCompleted, 'status')
+            drop.subscribe(setEvtOnCompleted, 'status')
 
     def complete(self):
         return self.data_obj.isCompleted() and self.data_obj.exists()
 
     def run(self):
-        if self.execDO:
+        if self.execDrop:
             self.data_obj.execute()
         else:
             timeout = None
@@ -94,13 +94,13 @@ class RunDataObjectTask(luigi.Task):
 
     def requires(self):
         """
-        The list of RunDataObjectTask that are required by this one.
+        The list of RunDROPTask that are required by this one.
         We use self.__class__ to create the new dependencies so this method
         doesn't need to be rewritten by all subclasses
         """
         re = []
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Checking requirements for RunDataObjectTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
+            logger.debug("Checking requirements for RunDROPTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
 
         # The requires() method will be called not only when creating the
         # initial tree of tasks, but also at runtime. For a given graph in a
@@ -112,12 +112,12 @@ class RunDataObjectTask(luigi.Task):
         # actually an instance of AbstractDROP, thus removing any Pyro
         # Proxy instances from the list
         upObjs = droputils.getUpstreamObjects(self.data_obj)
-        upObjs = filter(lambda do: isinstance(do, AbstractDROP), upObjs)
+        upObjs = filter(lambda drop: isinstance(drop, AbstractDROP), upObjs)
 
         for req in upObjs:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
-            re.append(RunDataObjectTask(req, self.sessionId))
+            re.append(RunDROPTask(req, self.sessionId))
         return re
 
 class FinishGraphExecution(luigi.Task):
@@ -130,7 +130,7 @@ class FinishGraphExecution(luigi.Task):
     For a number of testing graphs please see the graphsRepository module.
     """
     sessionId = luigi.Parameter(default=time.time())
-    pgCreator = luigi.Parameter(default='testGraphDODriven')
+    pgCreator = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
         super(FinishGraphExecution, self).__init__(*args, **kwargs)
@@ -151,10 +151,10 @@ class FinishGraphExecution(luigi.Task):
     def requires(self):
         if self._req is None:
             self._req = []
-            for dob in self._leaves:
+            for drop in self._leaves:
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug("Adding leaf DROP as requirement to FinishGraphExecution: %s/%s" % (dob.oid, dob.uid))
-                self._req.append(RunDataObjectTask(dob, self.sessionId))
+                    logger.debug("Adding leaf DROP as requirement to FinishGraphExecution: %s/%s" % (drop.oid, drop.uid))
+                self._req.append(RunDROPTask(drop, self.sessionId))
         return self._req
 
     def run(self):

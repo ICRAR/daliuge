@@ -32,14 +32,14 @@ class DummyApp(AppDROP): pass
 
 class TestGraphLoader(unittest.TestCase):
 
-    def test_singleMemoryDO(self):
+    def test_singleMemoryDrop(self):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory"}]')
         a = graph_loader.readObjectGraph(f)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
 
-    def test_containerDO(self):
+    def test_containerDrop(self):
         f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory"}, \
                        {"oid":"B", "type":"container", "children":["A"]}]')
         a = graph_loader.readObjectGraph(f)[0]
@@ -90,7 +90,7 @@ class TestGraphLoader(unittest.TestCase):
         self.assertIn(DROPRel('Z', DROPLinkType.PRODUCER, 'A'), unmetRelationships)
         self.assertIn(DROPRel('X', DROPLinkType.PRODUCER, 'A'), unmetRelationships)
 
-        # The original doSpecs have changed as well
+        # The original dropSpecs have changed as well
         a = graphDesc[0]
         c = graphDesc[2]
 

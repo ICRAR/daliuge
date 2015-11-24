@@ -500,7 +500,7 @@ class AbstractDROP(object):
         """
         self._bcaster.unsubscribe(callback, eventType=eventType)
 
-    def handleInterest(self, do):
+    def handleInterest(self, drop):
         """
         Main mechanism through which a DROP handles its interest in a
         second DROP it isn't directly related to.
@@ -515,7 +515,7 @@ class AbstractDROP(object):
         necessary, is currently left as a responsibility of the entity creating
         the DROPs. In the case of a Session in a DROPManager for
         example this step would be performed using deployment-time information
-        contained in the dospec dictionaries held in the session.
+        contained in the dropspec dictionaries held in the session.
         """
 
     def _fire(self, eventType, **kwargs):
@@ -620,7 +620,7 @@ class AbstractDROP(object):
 
         Consumers are normally (but not necessarily) AppDROPs that get
         notified when this DROP moves into the COMPLETED state. This is
-        notified by calling the consumer's `dataObjectCompleted` method with the
+        notified by calling the consumer's `dropCompleted` method with the
         UID of this DROP.
 
         This is one of the key mechanisms by which the DROP graph is
@@ -631,8 +631,8 @@ class AbstractDROP(object):
 
         # Consumers have a "consume" method that gets invoked when
         # this DROP moves to COMPLETED
-        if not hasattr(consumer, 'dataObjectCompleted'):
-            raise Exception("The consumer %s doesn't have a 'dataObjectCompleted' method, cannot add to %s" % (consumer, self))
+        if not hasattr(consumer, 'dropCompleted'):
+            raise Exception("The consumer %s doesn't have a 'dropCompleted' method, cannot add to %s" % (consumer, self))
 
         # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
@@ -655,7 +655,7 @@ class AbstractDROP(object):
         if self._executionMode == ExecutionMode.EXTERNAL:
             return
 
-        def dataObjectCompleted(e):
+        def dropCompleted(e):
             if e.status != DROPStates.COMPLETED:
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
@@ -663,8 +663,8 @@ class AbstractDROP(object):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
 
-            consumer.dataObjectCompleted(self.uid)
-        self.subscribe(dataObjectCompleted, eventType='status')
+            consumer.dropCompleted(self.uid)
+        self.subscribe(dropCompleted, eventType='status')
 
     @property
     def producers(self):
@@ -743,8 +743,8 @@ class AbstractDROP(object):
 
         # Consumers have a "consume" method that gets invoked when
         # this DROP moves to COMPLETED
-        if not hasattr(streamingConsumer, 'dataObjectCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
-            raise Exception("The streaming consumer %r doesn't have a 'dataObjectCompleted' and/or 'dataWritten' method" % (streamingConsumer))
+        if not hasattr(streamingConsumer, 'dropCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
+            raise Exception("The streaming consumer %r doesn't have a 'dropCompleted' and/or 'dataWritten' method" % (streamingConsumer))
 
         # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
@@ -782,7 +782,7 @@ class AbstractDROP(object):
 
         # Signal our streaming consumers that the show is over
         for ic in self._streamingConsumers:
-            ic.dataObjectCompleted(self.uid)
+            ic.dropCompleted(self.uid)
 
     def isCompleted(self):
         '''
@@ -830,7 +830,7 @@ class FileDROP(AbstractDROP):
 
     def initialize(self, **kwargs):
         """
-        File data object-specific initialization.
+        FileDROP-specific initialization.
         """
         self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
         if (not os.path.exists(self._root)):
@@ -998,7 +998,7 @@ class DirectoryContainer(ContainerDROP):
                 raise Exception('Child DROP is not under %s' % (self.path))
             ContainerDROP.addChild(self, child)
         else:
-            raise TypeError('Child data object is not of type FileDROP or DirectoryContainer')
+            raise TypeError('Child DROP is not of type FileDROP or DirectoryContainer')
 
     @property
     def path(self):
@@ -1024,7 +1024,7 @@ class AppDROP(ContainerDROP):
     this application as the data gets written into the them.
 
     This class contains two methods that should be overwritten as needed by
-    subclasses: `dataObjectCompleted`, invoked when input DROPs move to
+    subclasses: `dropCompleted`, invoked when input DROPs move to
     COMPLETED, and `dataWritten`, invoked with the data coming from streaming
     inputs.
 
@@ -1057,11 +1057,11 @@ class AppDROP(ContainerDROP):
         # execution status.
         self._execStatus = AppDROPStates.NOT_RUN
 
-    def addInput(self, inputDataObject):
-        if inputDataObject not in self._inputs.values():
-            uid = inputDataObject.uid
-            self._inputs[uid] = inputDataObject
-            inputDataObject.addConsumer(self)
+    def addInput(self, inputDrop):
+        if inputDrop not in self._inputs.values():
+            uid = inputDrop.uid
+            self._inputs[uid] = inputDrop
+            inputDrop.addConsumer(self)
 
     @property
     def inputs(self):
@@ -1070,22 +1070,22 @@ class AppDROP(ContainerDROP):
         """
         return self._inputs.values()
 
-    def addOutput(self, outputDataObject):
-        if outputDataObject is self:
+    def addOutput(self, outputDrop):
+        if outputDrop is self:
             raise Exception('Cannot add an AppConsumer as its own output')
-        if outputDataObject not in self._outputs.values():
-            uid = outputDataObject.uid
-            self._outputs[uid] = outputDataObject
-            outputDataObject.addProducer(self)
+        if outputDrop not in self._outputs.values():
+            uid = outputDrop.uid
+            self._outputs[uid] = outputDrop
+            outputDrop.addProducer(self)
 
             def appFinished(e):
                 if e.execStatus not in (AppDROPStates.FINISHED, AppDROPStates.ERROR):
                     if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('Skipping event for output %s: %s' %(outputDataObject, str(e.__dict__)) )
+                        logger.debug('Skipping event for output %s: %s' %(outputDrop, str(e.__dict__)) )
                     return
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('Notifying %r that its producer %r has finished: %s' %(outputDataObject, self, str(e.__dict__)))
-                outputDataObject.producerFinished(self.uid)
+                    logger.debug('Notifying %r that its producer %r has finished: %s' %(outputDrop, self, str(e.__dict__)))
+                outputDrop.producerFinished(self.uid)
             self.subscribe(appFinished, eventType='execStatus')
 
     @property
@@ -1095,11 +1095,11 @@ class AppDROP(ContainerDROP):
         """
         return self._outputs.values()
 
-    def addStreamingInput(self, streamingInputDO):
-        if streamingInputDO not in self._streamingInputs.values():
-            uid = streamingInputDO.uid
-            self._streamingInputs[uid] = streamingInputDO
-            streamingInputDO.addStreamingConsumer(self)
+    def addStreamingInput(self, streamingInputDrop):
+        if streamingInputDrop not in self._streamingInputs.values():
+            uid = streamingInputDrop.uid
+            self._streamingInputs[uid] = streamingInputDrop
+            streamingInputDrop.addStreamingConsumer(self)
 
     @property
     def streamingInputs(self):
@@ -1108,7 +1108,7 @@ class AppDROP(ContainerDROP):
         """
         return self._streamingInputs.values()
 
-    def dataObjectCompleted(self, uid):
+    def dropCompleted(self, uid):
         """
         Callback invoked when the DROP with UID `uid` (which is either a
         normal or a streaming input of this AppDROP) has moved to the
@@ -1151,11 +1151,11 @@ class BarrierAppDROP(AppDROP):
         super(BarrierAppDROP, self).initialize(**kwargs)
         self._completedInputs = []
 
-    def addStreamingInput(self, streamingInputDO):
+    def addStreamingInput(self, streamingInputDrop):
         raise Exception("BarrierAppDROPs don't accept streaming inputs")
 
-    def dataObjectCompleted(self, uid):
-        super(BarrierAppDROP, self).dataObjectCompleted(uid)
+    def dropCompleted(self, uid):
+        super(BarrierAppDROP, self).dropCompleted(uid)
         self._completedInputs.append(uid)
         if len(self._completedInputs) == len(self._inputs):
             # Return immediately, but schedule the execution of this app
@@ -1194,7 +1194,7 @@ class BarrierAppDROP(AppDROP):
     def exists(self):
         return True
 
-class dodict(dict):
+class dropdict(dict):
     """
     An intermediate representation of a DROP that can be easily serialized
     into a transport format such as JSON or XML.
@@ -1216,23 +1216,23 @@ class dodict(dict):
     repositories where graph templates are expected to be found by the
     DROPManager.
     """
-    def _addSomething(self, otherDoDict, key):
+    def _addSomething(self, other, key):
         if key not in self:
             self[key] = []
-        self[key].append(otherDoDict['oid'])
+        self[key].append(other['oid'])
 
-    def addConsumer(self, otherDoDict):
-        self._addSomething(otherDoDict, 'consumers')
-    def addStreamingConsumer(self, otherDoDict):
-        self._addSomething(otherDoDict, 'streamingConsumers')
-    def addInput(self, otherDoDict):
-        self._addSomething(otherDoDict, 'inputs')
-    def addStreamingInput(self, otherDoDict):
-        self._addSomething(otherDoDict, 'streamingInputs')
-    def addOutput(self, otherDoDict):
-        self._addSomething(otherDoDict, 'outputs')
-    def addProducer(self, otherDoDict):
-        self._addSomething(otherDoDict, 'producers')
+    def addConsumer(self, other):
+        self._addSomething(other, 'consumers')
+    def addStreamingConsumer(self, other):
+        self._addSomething(other, 'streamingConsumers')
+    def addInput(self, other):
+        self._addSomething(other, 'inputs')
+    def addStreamingInput(self, other):
+        self._addSomething(other, 'streamingInputs')
+    def addOutput(self, other):
+        self._addSomething(other, 'outputs')
+    def addProducer(self, other):
+        self._addSomething(other, 'producers')
     def __setattr__(self, name, value):
         self[name] = value
     def __getattr__(self, name):

@@ -32,9 +32,9 @@ import psutil
 from dfms import drop
 
 
-def measure(n, DOtype):
+def measure(n, droptype):
     """
-    Create `n` DROPs of type `DOtype` and measure how much memory does the
+    Create `n` DROPs of type `droptype` and measure how much memory does the
     program use at the beginning and the end of the process. It returns a list
     with the total amount of memory, user time and system time used during the
     creation of all the DROP instances
@@ -42,10 +42,10 @@ def measure(n, DOtype):
     p = psutil.Process()
     mem1 = p.memory_info()[0]
     uTime1, sTime1 = p.cpu_times()
-    dos = []
+    drops = []
     for i in xrange(n):
         uid = str(i)
-        dos.append(DOtype(uid, uid))
+        drops.append(droptype(uid, uid))
     mem2 = p.memory_info()[0]
     uTime2, sTime2 = p.cpu_times()
 
@@ -67,15 +67,15 @@ if __name__ == '__main__':
         parser.error("Number of instances to create not specified")
 
     n = options.instances
-    dotype = getattr(drop, options.type)
-    mem, uTime, sTime = measure(n, dotype)
+    droptype = getattr(drop, options.type)
+    mem, uTime, sTime = measure(n, droptype)
     tTime = uTime + sTime
     memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in mem, uTime, sTime, tTime]
 
     if options.csv:
         print "%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f" % (options.type, n, mem, uTime*1e3, sTime*1e3, tTime*1e3, memAvg, uTimeAvg*1e6, sTimeAvg*1e6, tTimeAvg*1e6)
     else:
-        print "%d bytes used by %d %ss (%.2f bytes per DROP)" % (mem, n, dotype.__name__, memAvg)
+        print "%d bytes used by %d %ss (%.2f bytes per DROP)" % (mem, n, droptype.__name__, memAvg)
         print "Total time:  %.2f msec (%.2f msec per DROP)" % (tTime, tTimeAvg)
         print "User time:   %.2f msec (%.2f msec per DROP)" % (uTime, uTimeAvg)
         print "System time: %.2f msec (%.2f msec per DROP)" % (sTime, sTimeAvg)

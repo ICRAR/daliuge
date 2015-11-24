@@ -42,11 +42,11 @@ VIS = [
 
 
 class Barrier(object):
-    def __init__(self, do):
+    def __init__(self, drop):
         self._evt = threading.Event()
-        do.addConsumer(self)
+        drop.addConsumer(self)
 
-    def dataObjectCompleted(self, do):
+    def dropCompleted(self, drop):
         self._evt.set()
 
     def wait(self, timeout = None):

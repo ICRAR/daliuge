@@ -63,22 +63,22 @@ __N_TO_ONE_RELS = {
 
 logger = logging.getLogger(__name__)
 
-def addLink(linkType, lhDOSpec, rhOID, force=False):
+def addLink(linkType, lhDropSpec, rhOID, force=False):
     """
-    Adds a link from `lhDOSpec` to point to `rhOID`. The link type (e.g., a
+    Adds a link from `lhDropSpec` to point to `rhOID`. The link type (e.g., a
     consumer) is signaled by `linkType`.
     """
 
-    lhOID = lhDOSpec['oid']
+    lhOID = lhDropSpec['oid']
 
     # 1-N relationship
     if linkType in __ONE_TO_N_RELS:
         rel = __ONE_TO_N_RELS[linkType]
-        if not rel in lhDOSpec:
+        if not rel in lhDropSpec:
             relList = []
-            lhDOSpec[rel] = relList
+            lhDropSpec[rel] = relList
         else:
-            relList = lhDOSpec[rel]
+            relList = lhDropSpec[rel]
         if rhOID not in relList:
             relList.append(rhOID)
         else:
@@ -88,7 +88,7 @@ def addLink(linkType, lhDOSpec, rhOID, force=False):
         rel = __N_TO_ONE_RELS[linkType]
         if rel and not force:
             raise Exception("DROP %s already has a '%s', use 'force' to override" % (lhOID, rel))
-        lhDOSpec[rel] = rhOID
+        lhDropSpec[rel] = rhOID
     else:
         raise ValueError("Cannot handle link type %d" % (linkType))
 
@@ -96,40 +96,40 @@ def addLink(linkType, lhDOSpec, rhOID, force=False):
         logger.debug("Successfully linked %s and %s via '%s'" % (lhOID, rhOID, rel))
 
 
-def removeUnmetRelationships(doSpecList):
+def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
     # Step #1: Index DROP specs
-    doSpecsDict = {}
-    [doSpecsDict.__setitem__(doSpec['oid'], doSpec) for doSpec in doSpecList]
+    dropSpecsDict = {}
+    [dropSpecsDict.__setitem__(dropSpec['oid'], dropSpec) for dropSpec in dropSpecList]
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
-    for doSpec in doSpecList:
+    for dropSpec in dropSpecList:
 
         # 1-N relationships
         for link,rel in __ONE_TO_N_RELS.viewitems():
-            if rel in doSpec:
+            if rel in dropSpec:
                 # Find missing OIDs in relationship and keep track of them
-                missingOids = [oid for oid in doSpec[rel] if oid not in doSpecsDict]
+                missingOids = [oid for oid in dropSpec[rel] if oid not in dropSpecsDict]
                 for oid in missingOids:
-                    unmetRelationships.append(DROPRel(oid, link, doSpec['oid']))
+                    unmetRelationships.append(DROPRel(oid, link, dropSpec['oid']))
                 # Remove them from the current DROP spec
-                [doSpec[rel].remove(oid) for oid in missingOids]
+                [dropSpec[rel].remove(oid) for oid in missingOids]
                 # Remove the relationship list entirely if it has no elements
-                if not doSpec[rel]: del doSpec[rel]
+                if not dropSpec[rel]: del dropSpec[rel]
 
         # N-1 relationships
         for link,rel in __N_TO_ONE_RELS.viewitems():
-            if rel in doSpec:
+            if rel in dropSpec:
                 # Check if OID is missing
-                oid = doSpec[rel]
-                if oid in doSpecsDict:
+                oid = dropSpec[rel]
+                if oid in dropSpecsDict:
                     continue
                 # Keep track of missing relationship
-                unmetRelationships.append(DROPRel(oid, link, doSpec['oid']))
+                unmetRelationships.append(DROPRel(oid, link, dropSpec['oid']))
                 # Remove relationship from current DROP spec
-                del doSpec[rel]
+                del dropSpec[rel]
 
     return unmetRelationships
 
@@ -139,7 +139,7 @@ def readObjectGraph(fileObj):
     all DROPs, establishing their relationships, and returns the root
     nodes of the graph represented by the DROPs.
     """
-    return createGraphFromDOSpecList(json.load(fileObj))
+    return createGraphFromDropSpecList(json.load(fileObj))
 
 def readObjectGraphS(s):
     """
@@ -147,11 +147,11 @@ def readObjectGraphS(s):
     DROPs, establishing their relationships, and returns the root nodes of
     the graph represented by the DROPs.
     """
-    return createGraphFromDOSpecList(json.loads(s))
+    return createGraphFromDropSpecList(json.loads(s))
 
-def loadDataObjectSpecs(doSpecList):
+def loadDropSpecs(dropSpecList):
     """
-    Loads the DROP definitions from `doSpectList`, checks that
+    Loads the DROP definitions from `dropSpectList`, checks that
     the DROPs are correctly specified, and return a dictionary containing
     all DROP specifications (i.e., a dictionary of dictionaries) keyed on
     the OID of each DROP. Unlike `readObjectGraph` and `readObjectGraphS`,
@@ -159,102 +159,102 @@ def loadDataObjectSpecs(doSpecList):
     """
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Found %d DROP definitions" % (len(doSpecList)))
+        logger.debug("Found %d DROP definitions" % (len(dropSpecList)))
 
     # Step #1: Check the DROP specs and collect them
-    doSpecs = {}
-    for doSpec in doSpecList:
+    dropSpecs = {}
+    for dropSpec in dropSpecList:
 
         # 'type' is mandatory
-        doType = doSpec['type']
+        dropType = dropSpec['type']
 
-        cf = __CREATION_FUNCTIONS[doType]
-        cf(doSpec, dryRun=True)
-        doSpecs[doSpec['oid']] = doSpec
+        cf = __CREATION_FUNCTIONS[dropType]
+        cf(dropSpec, dryRun=True)
+        dropSpecs[dropSpec['oid']] = dropSpec
 
     # Step #2: check relationships
-    for doSpec in doSpecList:
+    for dropSpec in dropSpecList:
 
         # 1-N relationships
         for rel in __ONE_TO_N_RELS.viewvalues():
-            if rel in doSpec:
+            if rel in dropSpec:
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
-                for oid in doSpec[rel]: doSpecs[oid]
+                for oid in dropSpec[rel]: dropSpecs[oid]
 
         # N-1 relationships
         for rel in __N_TO_ONE_RELS.viewvalues():
-            if rel in doSpec:
+            if rel in dropSpec:
                 # See comment above
-                doSpecs[doSpec[rel]]
+                dropSpecs[dropSpec[rel]]
 
     # Done!
-    return doSpecs
+    return dropSpecs
 
-def createGraphFromDOSpecList(doSpecList):
+def createGraphFromDropSpecList(dropSpecList):
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Found %d DROP definitions" % (len(doSpecList)))
+        logger.debug("Found %d DROP definitions" % (len(dropSpecList)))
 
     # Step #1: create the actual DROPs
-    dataObjects = collections.OrderedDict()
-    for doSpec in doSpecList:
+    drops = collections.OrderedDict()
+    for dropSpec in dropSpecList:
 
         # 'type' is mandatory
-        doType = doSpec['type']
+        dropType = dropSpec['type']
 
-        cf = __CREATION_FUNCTIONS[doType]
-        do = cf(doSpec)
-        dataObjects[do.oid] = do
+        cf = __CREATION_FUNCTIONS[dropType]
+        drop = cf(dropSpec)
+        drops[drop.oid] = drop
 
     # Step #2: establish relationships
-    for doSpec in doSpecList:
+    for dropSpec in dropSpecList:
 
         # 'oid' is mandatory
-        oid = doSpec['oid']
-        dataObject = dataObjects[oid]
+        oid = dropSpec['oid']
+        drop = drops[oid]
 
         # 1-N relationships
         for link,rel in __ONE_TO_N_RELS.viewitems():
-            if rel in doSpec:
-                for oid in doSpec[rel]:
-                    lhDO = dataObjects[oid]
+            if rel in dropSpec:
+                for oid in dropSpec[rel]:
+                    lhDrop = drops[oid]
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
-                    relFunc = getattr(dataObject, relFuncName)
-                    relFunc(lhDO)
+                    relFunc = getattr(drop, relFuncName)
+                    relFunc(lhDrop)
 
         # N-1 relationships
         for link,rel in __N_TO_ONE_RELS.viewitems():
-            if rel in doSpec:
-                lhDO = dataObjects[doSpec[rel]]
+            if rel in dropSpec:
+                lhDrop = drops[dropSpec[rel]]
                 propName = LINKTYPE_NTO1_PROPERTY[link]
-                setattr(dataObject, propName, lhDO)
+                setattr(drop, propName, lhDrop)
 
     # We're done! Return the roots of the graph to the caller
     roots = []
-    for do in dataObjects.itervalues():
-        if not droputils.getUpstreamObjects(do):
-            roots.append(do)
+    for drop in drops.itervalues():
+        if not droputils.getUpstreamObjects(drop):
+            roots.append(drop)
 
     return roots
 
-def _createPlain(doSpec, dryRun=False):
-    oid, uid = _getIds(doSpec)
-    kwargs   = _getKwargs(doSpec)
+def _createPlain(dropSpec, dryRun=False):
+    oid, uid = _getIds(dropSpec)
+    kwargs   = _getKwargs(dropSpec)
 
     # 'storage' is mandatory
-    storageType = STORAGE_TYPES[doSpec['storage']]
+    storageType = STORAGE_TYPES[dropSpec['storage']]
     if dryRun:
         return
     return storageType(oid, uid, **kwargs)
 
-def _createContainer(doSpec, dryRun=False):
-    oid, uid = _getIds(doSpec)
-    kwargs   = _getKwargs(doSpec)
+def _createContainer(dropSpec, dryRun=False):
+    oid, uid = _getIds(dropSpec)
+    kwargs   = _getKwargs(dropSpec)
 
     # if no 'container' is specified, we default to ContainerDROP
-    if 'container' in doSpec:
-        containerTypeName = doSpec['container']
+    if 'container' in dropSpec:
+        containerTypeName = dropSpec['container']
         parts = containerTypeName.split('.')
         module  = importlib.import_module('.'.join(parts[:-1]))
         containerType = getattr(module, parts[-1])
@@ -266,20 +266,20 @@ def _createContainer(doSpec, dryRun=False):
 
     return containerType(oid, uid, **kwargs)
 
-def _createSocket(doSpec, dryRun=False):
-    oid, uid = _getIds(doSpec)
-    kwargs   = _getKwargs(doSpec)
+def _createSocket(dropSpec, dryRun=False):
+    oid, uid = _getIds(dropSpec)
+    kwargs   = _getKwargs(dropSpec)
 
     if dryRun:
         return
     return SocketListenerApp(oid, uid, **kwargs)
 
-def _createApp(doSpec, dryRun=False):
-    oid, uid = _getIds(doSpec)
-    kwargs   = _getKwargs(doSpec)
+def _createApp(dropSpec, dryRun=False):
+    oid, uid = _getIds(dropSpec)
+    kwargs   = _getKwargs(dropSpec)
     del kwargs['app']
 
-    appName = doSpec['app']
+    appName = dropSpec['app']
     parts   = appName.split('.')
     module  = importlib.import_module('.'.join(parts[:-1]))
     appType = getattr(module, parts[-1])
@@ -288,16 +288,16 @@ def _createApp(doSpec, dryRun=False):
         return
     return appType(oid, uid, **kwargs)
 
-def _getIds(doSpec):
+def _getIds(dropSpec):
     # uid is copied from oid if not explicitly given
-    oid = doSpec['oid']
+    oid = dropSpec['oid']
     uid = oid
-    if doSpec.has_key('uid'):
-        uid = doSpec['uid']
+    if dropSpec.has_key('uid'):
+        uid = dropSpec['uid']
     return oid, uid
 
-def _getKwargs(doSpec):
-    kwargs = dict(doSpec)
+def _getKwargs(dropSpec):
+    kwargs = dict(dropSpec)
     del kwargs['oid']
     if kwargs.has_key('uid'):
         del kwargs['uid']

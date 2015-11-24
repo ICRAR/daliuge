@@ -23,7 +23,7 @@ import json
 import os
 import uuid
 
-from dfms.drop import dodict
+from dfms.drop import dropdict
 
 
 # Directories and paths
@@ -50,48 +50,48 @@ CUBE_NAME = 'cube1408~1412'
 
 
 def memorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'plain', 'storage':'memory'})
-    doSpec.update(kwargs)
-    return doSpec 
+    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'memory'})
+    dropSpec.update(kwargs)
+    return dropSpec 
 
 
 def directorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer'})
-    doSpec.update(kwargs)
-    return doSpec 
+    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer'})
+    dropSpec.update(kwargs)
+    return dropSpec 
 
 
 def fluxSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.SourceFlux'})
-    doSpec.update(kwargs)
-    return doSpec 
+    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.SourceFlux'})
+    dropSpec.update(kwargs)
+    return dropSpec 
 
 
 def splitSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Split'})
-    doSpec.update(kwargs)
-    return doSpec
+    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Split'})
+    dropSpec.update(kwargs)
+    return dropSpec
 
 
 def scpSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.scp.ScpApp'})
-    doSpec.update(kwargs)
-    return doSpec
+    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.scp.ScpApp'})
+    dropSpec.update(kwargs)
+    return dropSpec
 
 def cleanSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Clean'})
-    doSpec.update(kwargs)
-    return doSpec
+    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Clean'})
+    dropSpec.update(kwargs)
+    return dropSpec
 
 
 if __name__ == '__main__':
 
-    dolist = []
+    droplist = []
 
     flux_out = memorySpec(uuid.uuid1(), node = ch05)
-    dolist.append(flux_out)
+    droplist.append(flux_out)
     flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY, node = ch05)
-    dolist.append(flux)
+    droplist.append(flux)
 
     cl = cleanSpec(uuid.uuid1(),
                     field = 'deepfield',
@@ -109,10 +109,10 @@ if __name__ == '__main__':
                     casapy_path = CASAPY,
                     node = ch05)
 
-    dolist.append(cl)
+    droplist.append(cl)
 
     image_out = directorySpec(uuid.uuid1(), dirname = os.path.join(OUTPUTS_DIR, CUBE_NAME), check_exists = False, node = ch05)
-    dolist.append(image_out)
+    droplist.append(image_out)
     cl.addOutput(image_out)
     flux.addInput(image_out)
     flux.addOutput(flux_out)
@@ -149,10 +149,10 @@ if __name__ == '__main__':
         cl.addInput(scpOut)
 
         # Add to ifnal list of DROPs
-        dolist.append(vis_in)
-        dolist.append(sp)
-        dolist.append(split_out)
-        dolist.append(scp)
-        dolist.append(scpOut)
+        droplist.append(vis_in)
+        droplist.append(sp)
+        droplist.append(split_out)
+        droplist.append(scp)
+        droplist.append(scpOut)
 
-    print json.dumps(dolist, indent=2)
+    print json.dumps(droplist, indent=2)

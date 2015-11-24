@@ -53,16 +53,16 @@ class TestDM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dom1 = DROPManager(1, useDLM=False)
-        dom2 = DROPManager(2, useDLM=False)
+        dm1 = DROPManager(1, useDLM=False)
+        dm2 = DROPManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
-        uris1 = dom1.quickDeploy(sessionId, g1)
-        uris2 = dom2.quickDeploy(sessionId, g2)
+        uris1 = dm1.quickDeploy(sessionId, g1)
+        uris2 = dm2.quickDeploy(sessionId, g2)
         self.assertEquals(1, len(uris1))
         self.assertEquals(2, len(uris2))
 
@@ -77,17 +77,17 @@ class TestDM(unittest.TestCase):
             a.write('a')
             a.setCompleted()
 
-        for do in a, b, c:
-            self.assertEquals(DROPStates.COMPLETED, do.status)
-        self.assertEquals(a.checksum, int(droputils.allDataObjectContents(c)))
+        for drop in a, b, c:
+            self.assertEquals(DROPStates.COMPLETED, drop.status)
+        self.assertEquals(a.checksum, int(droputils.allDropContents(c)))
 
-        for doProxy in a,b,c:
-            doProxy._pyroRelease()
+        for dropProxy in a,b,c:
+            dropProxy._pyroRelease()
 
-        dom1.destroySession(sessionId)
-        dom2.destroySession(sessionId)
+        dm1.destroySession(sessionId)
+        dm2.destroySession(sessionId)
 
-    def test_runGraphSeveralDOsPerDOM(self):
+    def test_runGraphSeveralDropsPerDM(self):
         """
         A test that creates several DROPs in two different DMs and  runs
         the graph. The graph looks like this
@@ -101,8 +101,8 @@ class TestDM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dom1 = DROPManager(1, useDLM=False)
-        dom2 = DROPManager(2, useDLM=False)
+        dm1 = DROPManager(1, useDLM=False)
+        dm2 = DROPManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
@@ -112,8 +112,8 @@ class TestDM(unittest.TestCase):
         g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
                {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
-        uris1 = dom1.quickDeploy(sessionId, g1)
-        uris2 = dom2.quickDeploy(sessionId, g2)
+        uris1 = dm1.quickDeploy(sessionId, g1)
+        uris2 = dm2.quickDeploy(sessionId, g2)
         self.assertEquals(4, len(uris1))
         self.assertEquals(2, len(uris2))
 
@@ -125,8 +125,8 @@ class TestDM(unittest.TestCase):
         d = Pyro4.Proxy(uris1['D'])
         e = Pyro4.Proxy(uris2['E'])
         f = Pyro4.Proxy(uris2['F'])
-        for do,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
-            self.assertEquals(uid, do.uid, "Proxy is not the DROP we think should be (assumed: %s/ actual: %s)" % (uid, do.uid))
+        for drop,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
+            self.assertEquals(uid, drop.uid, "Proxy is not the DROP we think should be (assumed: %s/ actual: %s)" % (uid, drop.uid))
         e.addInput(d)
         e.addInput(b)
 
@@ -138,19 +138,19 @@ class TestDM(unittest.TestCase):
             b.write('a')
             b.setCompleted()
 
-        for do in a,b,c,d,e,f:
-            self.assertEquals(DROPStates.COMPLETED, do.status, "DROP %s is not COMPLETED" % (do.uid))
+        for drop in a,b,c,d,e,f:
+            self.assertEquals(DROPStates.COMPLETED, drop.status, "DROP %s is not COMPLETED" % (drop.uid))
 
-        self.assertEquals(a.checksum, int(droputils.allDataObjectContents(d)))
-        self.assertEquals(b.checksum + d.checksum, int(droputils.allDataObjectContents(f)))
+        self.assertEquals(a.checksum, int(droputils.allDropContents(d)))
+        self.assertEquals(b.checksum + d.checksum, int(droputils.allDropContents(f)))
 
-        for doProxy in a,b,c,d,e,f:
-            doProxy._pyroRelease()
+        for dropProxy in a,b,c,d,e,f:
+            dropProxy._pyroRelease()
 
-        dom1.destroySession(sessionId)
-        dom2.destroySession(sessionId)
+        dm1.destroySession(sessionId)
+        dm2.destroySession(sessionId)
 
-    def test_runWithFourDOMs(self):
+    def test_runWithFourDMs(self):
         """
         A test that creates several DROPs in two different DMs and  runs
         the graph. The graph looks like this
@@ -175,10 +175,10 @@ class TestDM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dom1 = DROPManager(1, useDLM=False)
-        dom2 = DROPManager(2, useDLM=False)
-        dom3 = DROPManager(3, useDLM=False)
-        dom4 = DROPManager(4, useDLM=False)
+        dm1 = DROPManager(1, useDLM=False)
+        dm2 = DROPManager(2, useDLM=False)
+        dm3 = DROPManager(3, useDLM=False)
+        dm4 = DROPManager(4, useDLM=False)
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
@@ -197,10 +197,10 @@ class TestDM(unittest.TestCase):
               sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
               memory('O')]
 
-        uris1 = dom1.quickDeploy(sessionId, g1)
-        uris2 = dom2.quickDeploy(sessionId, g2)
-        uris3 = dom3.quickDeploy(sessionId, g3)
-        uris4 = dom4.quickDeploy(sessionId, g4)
+        uris1 = dm1.quickDeploy(sessionId, g1)
+        uris2 = dm2.quickDeploy(sessionId, g2)
+        uris3 = dm3.quickDeploy(sessionId, g3)
+        uris4 = dm4.quickDeploy(sessionId, g4)
         self.assertEquals(1, len(uris1))
         self.assertEquals(5, len(uris2))
         self.assertEquals(5, len(uris3))
@@ -235,18 +235,18 @@ class TestDM(unittest.TestCase):
         with droputils.EvtConsumerProxyCtx(self, o, 1):
             a.write('a')
 
-        for doProxy in proxies.viewvalues():
-            self.assertEquals(DROPStates.COMPLETED, doProxy.status, "Status of '%s' is not COMPLETED: %d" % (doProxy.uid, doProxy.status))
-            doProxy._pyroRelease()
+        for dropProxy in proxies.viewvalues():
+            self.assertEquals(DROPStates.COMPLETED, dropProxy.status, "Status of '%s' is not COMPLETED: %d" % (dropProxy.uid, dropProxy.status))
+            dropProxy._pyroRelease()
 
-        for dom in [dom1, dom2, dom3, dom4]:
-            dom.destroySession(sessionId)
+        for dm in [dm1, dm2, dm3, dm4]:
+            dm.destroySession(sessionId)
 
 def startDM(restPort):
     # Make sure the graph executes quickly once triggered
     from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsDM(['--no-pyro','--rest','--restPort', str(restPort),'-i','domID', '-q'])
+    cmdline.dfmsDM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dmID', '-q'])
 
 class TestREST(unittest.TestCase):
 
@@ -259,25 +259,25 @@ class TestREST(unittest.TestCase):
         sessionId = 'lala'
         restPort  = 8888
 
-        domProcess = multiprocessing.Process(target=lambda restPort: startDM(restPort), args=[restPort])
-        domProcess.start()
+        dmProcess = multiprocessing.Process(target=lambda restPort: startDM(restPort), args=[restPort])
+        dmProcess.start()
 
         try:
-            self.assertTrue(domProcess.is_alive())
+            self.assertTrue(dmProcess.is_alive())
 
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
 
             # The DM is still empty
-            domInfo = self.get('', restPort)
-            self.assertEquals(0, len(domInfo['sessions']))
+            dmInfo = self.get('', restPort)
+            self.assertEquals(0, len(dmInfo['sessions']))
 
             # Create a session and check it exists
             self.post('/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
-            domInfo = self.get('', restPort)
-            self.assertEquals(1, len(domInfo['sessions']))
-            self.assertEquals(sessionId, domInfo['sessions'][0]['sessionId'])
-            self.assertEquals(SessionStates.PRISTINE, domInfo['sessions'][0]['status'])
+            dmInfo = self.get('', restPort)
+            self.assertEquals(1, len(dmInfo['sessions']))
+            self.assertEquals(sessionId, dmInfo['sessions'][0]['sessionId'])
+            self.assertEquals(SessionStates.PRISTINE, dmInfo['sessions'][0]['status'])
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
@@ -285,15 +285,15 @@ class TestREST(unittest.TestCase):
             graph = json.loads(pkg_resources.resource_string(__name__, 'graphs/complex.js')) # @UndefinedVariable
             suffix = '_' + str(int(time.time()))
             oidsToReplace = ('S','T')
-            for doSpec in graph:
-                if doSpec['oid'] in oidsToReplace:
-                    doSpec['oid'] += suffix
+            for dropSpec in graph:
+                if dropSpec['oid'] in oidsToReplace:
+                    dropSpec['oid'] += suffix
                 for rel in ('inputs','outputs'):
-                    if rel in doSpec:
-                        for oid in doSpec[rel][:]:
+                    if rel in dropSpec:
+                        for oid in dropSpec[rel][:]:
                             if oid in oidsToReplace:
-                                doSpec[rel].remove(oid)
-                                doSpec[rel].append(oid + suffix)
+                                dropSpec[rel].remove(oid)
+                                dropSpec[rel].append(oid + suffix)
 
             self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(graph))
 
@@ -326,15 +326,15 @@ class TestREST(unittest.TestCase):
             # We put an NGAS archiving at the end of the chain, let's check that the DROPs were copied over there
             # Since the graph consists on several SleepAndCopy apps, T should contain the message repeated
             # 9 times, and S should have it 4 times
-            def checkReplica(doId, copies):
-                response = ngaslite.retrieve('ngas.ddns.net', doId)
+            def checkReplica(dropId, copies):
+                response = ngaslite.retrieve('ngas.ddns.net', dropId)
                 buff = response.read()
-                self.assertEquals(msg*copies, buff, "%s's replica doesn't look correct" % (doId))
+                self.assertEquals(msg*copies, buff, "%s's replica doesn't look correct" % (dropId))
             checkReplica('T%s' % (suffix), 9)
             checkReplica('S%s' % (suffix), 4)
 
         finally:
-            domProcess.terminate()
+            dmProcess.terminate()
 
     def get(self, url, port):
         conn = httplib.HTTPConnection('localhost', port, timeout=3)

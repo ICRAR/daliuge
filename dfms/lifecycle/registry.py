@@ -47,7 +47,7 @@ class DROP(object):
     instances   = []
     accessTimes = []
 
-class DataObjectInstance(object):
+class DROPInstance(object):
     oid     = None
     uid     = None
     storage = None
@@ -62,27 +62,27 @@ class Registry():
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def addDataObject(self, dataObject):
+    def addDrop(self, drop):
         """
         Adds a new DROP to the registry
         """
 
     @abstractmethod
-    def addDataObjectInstance(self, dataObject):
+    def addDropInstance(self, drop):
         """
         Adds a new DROP instance to the registry. The registry should have
         a record already for the DROP that the new instance belongs to
         """
 
     @abstractmethod
-    def getDataObjectUids(self, dataObject):
+    def getDropUids(self, drop):
         """
         Returns a list with the UIDs of all known instances of the given
         DROP
         """
 
     @abstractmethod
-    def setDataObjectPhase(self, dataObject, phase):
+    def setDropPhase(self, drop, phase):
         """
         Records the phase of the given DROP
         """
@@ -101,51 +101,51 @@ class Registry():
         never been accessed
         """
 
-    def _checkDOIsInRegistry(self, oid):
-        if not self._dos.has_key(oid):
+    def _checkDropIsInRegistry(self, oid):
+        if not self._drops.has_key(oid):
             raise Exception('DROP %s is not present in the registry' % (oid))
 
 class InMemoryRegistry(Registry):
 
     def __init__(self):
         super(InMemoryRegistry, self).__init__()
-        self._dos= {}
+        self._drops= {}
 
-    def addDataObject(self, dataObject):
+    def addDrop(self, drop):
         '''
-        :param dfms.drop.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDROP drop:
         '''
         # Check that the DROP is not in the registry
-        doRow = DROP()
-        doRow.oid       = dataObject.oid
-        doRow.phase     = dataObject.phase
-        doRow.instances = {dataObject.uid: dataObject}
-        self._dos[doRow.oid] = doRow
+        dropRow = DROP()
+        dropRow.oid       = drop.oid
+        dropRow.phase     = drop.phase
+        dropRow.instances = {drop.uid: drop}
+        self._drops[dropRow.oid] = dropRow
 
-    def addDataObjectInstance(self, dataObject):
+    def addDropInstance(self, drop):
         '''
-        :param dfms.drop.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDROP drop:
         '''
-        self._checkDOIsInRegistry(dataObject.oid)
-        if self._dos[dataObject.oid].instances.has_key(dataObject.uid):
-            raise Exception('DROP %s/%s already present in registry' % (dataObject.oid, dataObject.uid))
-        self._dos[dataObject.oid].instances[dataObject.uid] = dataObject
+        self._checkDropIsInRegistry(drop.oid)
+        if self._drops[drop.oid].instances.has_key(drop.uid):
+            raise Exception('DROP %s/%s already present in registry' % (drop.oid, drop.uid))
+        self._drops[drop.oid].instances[drop.uid] = drop
 
-    def getDataObjectUids(self, dataObject):
-        self._checkDOIsInRegistry(dataObject.oid)
-        return self._dos[dataObject.oid].instances.keys()
+    def getDropUids(self, drop):
+        self._checkDropIsInRegistry(drop.oid)
+        return self._drops[drop.oid].instances.keys()
 
-    def setDataObjectPhase(self, dataObject, phase):
-        self._checkDOIsInRegistry(dataObject.oid)
-        self._dos[dataObject.oid].phase = phase
+    def setDropPhase(self, drop, phase):
+        self._checkDropIsInRegistry(drop.oid)
+        self._drops[drop.oid].phase = phase
 
     def recordNewAccess(self, oid):
-        self._checkDOIsInRegistry(oid)
-        self._dos[oid].accessTimes.append(time.time())
+        self._checkDropIsInRegistry(oid)
+        self._drops[oid].accessTimes.append(time.time())
 
     def getLastAccess(self, oid):
-        if oid in self._dos and self._dos[oid].accessTimes:
-            return self._dos[oid].accesTimes[-1]
+        if oid in self._drops and self._drops[oid].accessTimes:
+            return self._drops[oid].accesTimes[-1]
         else:
             return -1
 
@@ -233,35 +233,35 @@ class RDBMSRegistry(Registry):
         else:
             return data
 
-    def addDataObject(self, dataObject, conn=None):
+    def addDrop(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
             cur.execute("INSERT INTO dfms_drop (oid, phase) VALUES ({0},{1})".format(*self._paramNames(2)),
-                        self._bindD(dataObject.oid, dataObject.phase))
-            self.addDataObjectInstance(dataObject, conn)
+                        self._bindD(drop.oid, drop.phase))
+            self.addDropInstance(drop, conn)
             cur.close()
 
-    def addDataObjectInstance(self, dataObject, conn=None):
+    def addDropInstance(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
             cur.execute('INSERT INTO dfms_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})'.format(*self._paramNames(3)),
-                        self._bindD(dataObject.oid, dataObject.uid, dataObject.dataURL))
+                        self._bindD(drop.oid, drop.uid, drop.dataURL))
             cur.close()
 
-    def getDataObjectUids(self, dataObject, conn=None):
+    def getDropUids(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
             cur.execute('SELECT uid FROM dfms_dropinstance WHERE oid = {0}'.format(*self._paramNames(1)),
-                        self._bindD(dataObject.oid))
+                        self._bindD(drop.oid))
             rows = cur.fetchall()
             cur.close()
             return [r[0] for r in rows]
 
-    def setDataObjectPhase(self, dataObject, phase, conn=None):
+    def setDropPhase(self, drop, phase, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
             cur.execute('UPDATE dfms_drop SET phase = {0} WHERE oid = {1}'.format(*self._paramNames(2)),
-                        self._bindD(dataObject.oid, dataObject.phase))
+                        self._bindD(drop.oid, drop.phase))
             cur.close()
 
     def recordNewAccess(self, oid, conn=None):

@@ -59,7 +59,7 @@ svg {
   fill: #ffe;
 }
 
-/* DO states */
+/* DROP states */
 .node.writing :first-child {
   fill: #ecde7b;
 }
@@ -127,6 +127,6 @@ svg {
   font-size: 90%;
 }
 
-.do-label span {
+.drop-label span {
   display: block;
 }

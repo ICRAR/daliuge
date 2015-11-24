@@ -154,20 +154,20 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
                 break
             self.doTask(dlm)
 
-class DataObjectChecker(DataLifecycleManagerBackgroundTask):
+class DROPChecker(DataLifecycleManagerBackgroundTask):
     '''
     A thread that performs several checks on existing DROPs
     '''
 
     def doTask(self, dlm):
         # Expire DROPs that are already too old
-        dlm.expireCompletedDataObjects()
+        dlm.expireCompletedDrops()
 
         # Check that DROPs still exist, and mark them as lost
         # if they are not found
-        dlm.deleteLostDataObjects()
+        dlm.deleteLostDrops()
 
-class DataObjectGarbageCollector(DataLifecycleManagerBackgroundTask):
+class DROPGarbageCollector(DataLifecycleManagerBackgroundTask):
     '''
     A thread that performs "garbage collection" of DROPs; that is, it physically
     deleted DROPs that are marked as EXPIRED
@@ -175,9 +175,9 @@ class DataObjectGarbageCollector(DataLifecycleManagerBackgroundTask):
 
     def doTask(self, dlm):
         # The names says it all
-        dlm.deleteExpiredDataObjects()
+        dlm.deleteExpiredDrops()
 
-class DataObjectMover(DataLifecycleManagerBackgroundTask):
+class DROPMover(DataLifecycleManagerBackgroundTask):
     '''
     A thread that automatically moves DROPs between layers of the HSM.
     This is supposed to be based on rules and configuration parameters which we
@@ -186,18 +186,18 @@ class DataObjectMover(DataLifecycleManagerBackgroundTask):
     '''
 
     def doTask(self, dlm):
-        dlm.moveDataObjectsAround()
+        dlm.moveDropsAround()
 
 class DataLifecycleManager(object):
 
     def __init__(self, **kwargs):
         self._hsm = hsm.manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
-        # TODO: When iteration over the values of _dos we always do _dos.values()
-        # instead of _dos.itervalues() to get a full, thread-safe copy of the
+        # TODO: When iteration over the values of _drops we always do _drops.values()
+        # instead of _drops.itervalues() to get a full, thread-safe copy of the
         # dictionary values. Maybe there's a better approach for thread-safety
         # here
-        self._dos = {}
+        self._drops = {}
 
         self._checkPeriod = 10
         if kwargs.has_key('checkPeriod'):
@@ -210,13 +210,13 @@ class DataLifecycleManager(object):
     def startup(self):
         # Spawn the background threads
         finishedEvent = threading.Event()
-        doChecker = DataObjectChecker(self, self._checkPeriod, finishedEvent)
-        doChecker.start()
-        doGarbageCollector = DataObjectGarbageCollector(self, self._cleanupPeriod, finishedEvent)
-        doGarbageCollector.start()
+        dropChecker = DROPChecker(self, self._checkPeriod, finishedEvent)
+        dropChecker.start()
+        dropGarbageCollector = DROPGarbageCollector(self, self._cleanupPeriod, finishedEvent)
+        dropGarbageCollector.start()
 
-        self._doChecker = doChecker
-        self._doGarbageCollector = doGarbageCollector
+        self._dropChecker = dropChecker
+        self._dropGarbageCollector = dropGarbageCollector
         self._finishedEvent = finishedEvent
 
     def cleanup(self):
@@ -224,12 +224,12 @@ class DataLifecycleManager(object):
 
         # Join the background threads
         self._finishedEvent.set()
-        self._doChecker.join()
-        self._doGarbageCollector.join()
+        self._dropChecker.join()
+        self._dropGarbageCollector.join()
 
         # Unsubscribe to all events coming from the DROPs
-        for do in self._dos.values():
-            do.unsubscribe(self.doEventHandler)
+        for drop in self._drops.values():
+            drop.unsubscribe(self.dropEventHandler)
 
     #
     # Support for 'with' keyword
@@ -242,45 +242,45 @@ class DataLifecycleManager(object):
         self.cleanup()
 
 
-    def _deleteDataObject(self, do):
+    def _deleteDrop(self, drop):
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Deleting DROP %s/%s" % (do.oid, do.uid))
-        do.delete()
-        do.status = DROPStates.DELETED
+            logger.debug("Deleting DROP %s/%s" % (drop.oid, drop.uid))
+        drop.delete()
+        drop.status = DROPStates.DELETED
 
-    def deleteExpiredDataObjects(self):
-        for do in self._dos.values():
-            if do.status == DROPStates.EXPIRED:
-                self._deleteDataObject(do)
+    def deleteExpiredDrops(self):
+        for drop in self._drops.values():
+            if drop.status == DROPStates.EXPIRED:
+                self._deleteDrop(drop)
 
-    def expireCompletedDataObjects(self):
+    def expireCompletedDrops(self):
         now = time.time()
-        for do in self._dos.values():
-            if do.status == DROPStates.COMPLETED and \
-               now > do.expirationDate:
-                if do.isBeingRead():
+        for drop in self._drops.values():
+            if drop.status == DROPStates.COMPLETED and \
+               now > drop.expirationDate:
+                if drop.isBeingRead():
                     logger.info("DROP %s/%s has expired but is currently being read, " \
-                                 "will skip expiration for the time being" % (do.oid, do.uid))
+                                 "will skip expiration for the time being" % (drop.oid, drop.uid))
                     continue
                 if (logger.isEnabledFor(logging.DEBUG)):
-                    logger.debug('Marking DROP %s/%s as EXPIRED' % (do.oid, do.uid))
-                do.status = DROPStates.EXPIRED
+                    logger.debug('Marking DROP %s/%s as EXPIRED' % (drop.oid, drop.uid))
+                drop.status = DROPStates.EXPIRED
 
-    def _disappeared(self, dataObject):
-        return dataObject.status != DROPStates.DELETED and not dataObject.exists()
+    def _disappeared(self, drop):
+        return drop.status != DROPStates.DELETED and not drop.exists()
 
-    def deleteLostDataObjects(self):
+    def deleteLostDrops(self):
 
         toRemove = []
-        for do in self._dos.values():
-            if self._disappeared(do):
+        for drop in self._drops.values():
+            if self._disappeared(drop):
 
-                toRemove.append(do)
+                toRemove.append(drop)
                 if logger.isEnabledFor(logging.WARNING):
-                    logger.warning('DROP %s/%s has disappeared' % (do.oid, do.uid))
+                    logger.warning('DROP %s/%s has disappeared' % (drop.oid, drop.uid))
 
                 # Check if it's replicated
-                uids = self._reg.getDataObjectUids(do)
+                uids = self._reg.getDropUids(drop)
                 definitelyLost = False
                 if len(uids) <= 1:
                     definitelyLost = True
@@ -289,33 +289,33 @@ class DataLifecycleManager(object):
                     # Replicas haven't disappeared as well, right?
                     replicas = []
                     for uid in uids:
-                        if uid == do.uid: pass
-                        siblingDO = self._dos[uid]
-                        if not self._disappeared(siblingDO):
-                            replicas.append(siblingDO)
+                        if uid == drop.uid: pass
+                        siblingDrop = self._drops[uid]
+                        if not self._disappeared(siblingDrop):
+                            replicas.append(siblingDrop)
                         else:
                             if logger.isEnabledFor(logging.WARNING):
-                                logger.warning('DROP %s/%s (replicated from %s/%s) has disappeared' % (siblingDO.oid, siblingDO.uid, do.oid, do.uid))
-                            toRemove.append(siblingDO)
+                                logger.warning('DROP %s/%s (replicated from %s/%s) has disappeared' % (siblingDrop.oid, siblingDrop.uid, drop.oid, drop.uid))
+                            toRemove.append(siblingDrop)
 
                     if len(replicas) > 1:
                         logger.info("DROP %s/%s has still more than one replica, no action needed")
                     elif len(replicas) == 1:
                         logger.info("Only one replica left for DROP %s/%s, will create a new one")
-                        self.replicateDataObject(replicas[0])
+                        self.replicateDrop(replicas[0])
                     else:
                         definitelyLost = True
 
                 if definitelyLost:
-                    logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (do.oid, do.uid))
-                    do.phase = DROPPhases.LOST
-                    self._reg.setDataObjectPhase(do, do.phase)
+                    logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (drop.oid, drop.uid))
+                    drop.phase = DROPPhases.LOST
+                    self._reg.setDropPhase(drop, drop.phase)
 
         # All those objects identified as lost have to go now
-        for do in toRemove:
-            del self._dos[do.uid]
+        for drop in toRemove:
+            del self._drops[drop.uid]
 
-    def moveDataObjectsAround(self):
+    def moveDropsAround(self):
         '''
         Moves DROPs to different layers of the HSM if necessary, currently based
         only on the access times
@@ -329,7 +329,7 @@ class DataLifecycleManager(object):
         #    the currently existing one should be modified?
         #  3 If a new one is required, then the original, and users of the
         #    original have to be notified that a change has occurred.
-        #  4 Or not? Who is actually accessing DROPs and how do they get their
+        #  4 Or not? Who is actually accessing DROPs and how drop they get their
         #    references? Maybe it's the DLM who delivers the references
         #    (there is an "Open DataObject" Activity Diagram drawn, but doesn't
         #    clarify who is performing the actions and where are they taking
@@ -361,31 +361,31 @@ class DataLifecycleManager(object):
         # activity is really run from DROPs it would mean that DROPs depend on the
         # DLM, while the DLM manages DROPs.
 
-        for do in self._dos.values:
+        for drop in self._drops.values:
 
             # Don't touch these
-            if do.isBeingRead():
+            if drop.isBeingRead():
                 continue
 
             # EXPIRED DROPs will soon be deleted
-            # DELETED DROPs do not exist anymore
-            if do.status in (DROPStates.DELETED, DROPStates.EXPIRED):
+            # DELETED DROPs drop not exist anymore
+            if drop.status in (DROPStates.DELETED, DROPStates.EXPIRED):
                 continue
 
             # 1. Data that is not being used anymore should be moved down in the
             #    hierarchy
-            lastAccess = self._reg.getLastAccess(do.oid)
+            lastAccess = self._reg.getLastAccess(drop.oid)
             timeUnread = time.time() - lastAccess
             if lastAccess != -1 and timeUnread > 10:
-                self.moveDataObjectDown(do)
+                self.moveDropDown(drop)
 
-    def addDataObject(self, dataObject):
+    def addDrop(self, drop):
 
         # Keep track of the DROP and subscribe to the events it generates
-        self._dos[dataObject.uid] = dataObject
-        dataObject.phase = DROPPhases.GAS
-        dataObject.subscribe(self.doEventHandler)
-        self._reg.addDataObject(dataObject)
+        self._drops[drop.uid] = drop
+        drop.phase = DROPPhases.GAS
+        drop.subscribe(self.dropEventHandler)
+        self._reg.addDrop(drop)
 
         # TODO: We currently use a background thread that scans
         #       all DROPs for their status and compares its expiration date
@@ -394,53 +394,53 @@ class DataLifecycleManager(object):
         #       perform this task, like using threading.Timers (probably not) or
         #       any other that doesn't mean looping over all DROPs
 
-    def doEventHandler(self, event):
+    def dropEventHandler(self, event):
         if event.type == 'open':
-            self.handleOpenedDO(event.oid, event.uid)
+            self.handleOpenedDrop(event.oid, event.uid)
         elif event.type == 'status' and event.status == DROPStates.COMPLETED:
-            self.handleCompletedDO(self._dos[event.uid])
+            self.handleCompletedDrop(self._drops[event.uid])
         else:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Received event: ' + str(event.__dict__))
 
-    def handleOpenedDO(self, oid, uid):
-        dos = self._dos[uid]
-        if dos.status == DROPStates.COMPLETED:
+    def handleOpenedDrop(self, oid, uid):
+        drop = self._drops[uid]
+        if drop.status == DROPStates.COMPLETED:
             self._reg.recordNewAccess(oid)
 
-    def handleCompletedDO(self, dataObject):
+    def handleCompletedDrop(self, drop):
         '''
-        :param dfms.drop.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDROP drop:
         '''
         # Check the kind of storage used by this DROP. If it's already persisted
         # in a persistent storage media we don't need to save it again
-        oid = dataObject.oid
-        uid = dataObject.uid
-        if dataObject.precious and self.isReplicable(dataObject):
+        oid = drop.oid
+        uid = drop.uid
+        if drop.precious and self.isReplicable(drop):
             logger.debug("Replicating DROP %s/%s because it's precious" % (oid, uid))
             try:
-                self.replicateDataObject(dataObject)
+                self.replicateDrop(drop)
             except:
                 logger.exception("Problem while replicating DROP %s/%s" % (oid, uid))
 
-    def isReplicable(self, do):
-        return not isinstance(do, ContainerDROP)
+    def isReplicable(self, drop):
+        return not isinstance(drop, ContainerDROP)
 
-    def replicateDataObject(self, dataObject):
+    def replicateDrop(self, drop):
         '''
-        :param dfms.drop.AbstractDataObject dataObject:
+        :param dfms.drop.AbstractDROP drop:
         '''
 
-        oid = dataObject.oid
-        uid = dataObject.uid
+        oid = drop.oid
+        uid = drop.uid
 
         # Check that the DROP is complete already
-        if dataObject.status != DROPStates.COMPLETED:
+        if drop.status != DROPStates.COMPLETED:
             raise Exception("DROP %s/%s not in COMPLETED state" % (oid, uid))
 
         # Get the size of the DROP. This cannot currently be done in some of them,
-        # like in the AbstractDataObject
-        size = dataObject.size
+        # like in the AbstractDROP
+        size = drop.size
 
         # Check which layer of the hsm should host the replicated copy
         store = self._hsm.getSlowestStore()
@@ -453,33 +453,33 @@ class DataLifecycleManager(object):
         # TODO: In a real world application this will probably happen in a separate
         #       worker thread with a working queue, or in separate threads, one
         #       for each replication task (or a mix of the two)
-        newDO, newUid = self._replicate(dataObject, store)
+        newDrop, newUid = self._replicate(drop, store)
 
         # The DROPs (both) should now be tagged as SOLID
-        newDO.phase = DROPPhases.SOLID
-        dataObject.phase = DROPPhases.SOLID
+        newDrop.phase = DROPPhases.SOLID
+        drop.phase = DROPPhases.SOLID
 
         # Update our own registry
-        self._dos[newUid] = newDO
-        self._reg.addDataObjectInstance(newDO)
-        self._reg.setDataObjectPhase(dataObject, DROPPhases.SOLID)
+        self._drops[newUid] = newDrop
+        self._reg.addDropInstance(newDrop)
+        self._reg.setDropPhase(drop, DROPPhases.SOLID)
 
-    def getDataObjectUids(self, dataObject):
-        return self._reg.getDataObjectUids(dataObject)
+    def getDropUids(self, drop):
+        return self._reg.getDropUids(drop)
 
-    def _replicate(self, dataObject, store):
+    def _replicate(self, drop, store):
 
         # Dummy, but safe, new UID
         newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Creating new DROP %s/%s from %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+            logger.debug('Creating new DROP %s/%s from %s/%s' % (drop.oid, newUid, drop.oid, drop.uid))
 
         # For the time being we manually copy the contents of the current DROP into it
-        newDO = store.createDataObject(dataObject.oid, newUid, expectedSize=dataObject.size, precious=dataObject.precious)
-        droputils.copyDataObjectContents(dataObject, newDO)
+        newDrop = store.createDrop(drop.oid, newUid, expectedSize=drop.size, precious=drop.precious)
+        droputils.copyDropContents(drop, newDrop)
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('DROP %s/%s successfully replicated to %s/%s' % (dataObject.oid, newUid, dataObject.oid, dataObject.uid))
+            logger.debug('DROP %s/%s successfully replicated to %s/%s' % (drop.oid, newUid, drop.oid, drop.uid))
 
-        return newDO, newUid
+        return newDrop, newUid

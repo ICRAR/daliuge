@@ -58,8 +58,8 @@ class TestSpeadReceiverApp(unittest.TestCase):
             self._stream.send_heap(ig.get_heap())
             self._stream.send_heap(ig.get_end())
 
-        for do in a,b:
-            self.assertEquals(DROPStates.COMPLETED, do.status)
+        for drop in a,b:
+            self.assertEquals(DROPStates.COMPLETED, drop.status)
 
         self.assertEquals(size, b.size)
-        self.assertEquals(msg, droputils.allDataObjectContents(b))
+        self.assertEquals(msg, droputils.allDropContents(b))

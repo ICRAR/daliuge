@@ -80,7 +80,7 @@ class AbstractStore(object):
         return self._totalSpace
 
     @abstractmethod
-    def createDataObject(self, oid, uid, **kwargs):
+    def createDrop(self, oid, uid, **kwargs):
         pass
 
     @abstractmethod
@@ -121,7 +121,7 @@ class FileSystemStore(AbstractStore):
         self._setTotalSpace(totalSpace)
         self._setAvailableSpace(availableSpace)
 
-    def createDataObject(self, oid, uid, **kwargs):
+    def createDrop(self, oid, uid, **kwargs):
         kwargs['dirname'] = self._mountPoint
         return FileDROP(oid, uid, **kwargs)
 
@@ -143,7 +143,7 @@ class MemoryStore(AbstractStore):
         self._setTotalSpace(vmem.total)
         self._setAvailableSpace(vmem.free)
 
-    def createDataObject(self, oid, uid, **kwargs):
+    def createDrop(self, oid, uid, **kwargs):
         return InMemoryDROP(oid, uid, **kwargs)
 
     def __str__(self):
@@ -195,7 +195,7 @@ class NgasStore(AbstractStore):
         self._setTotalSpace(totalAvailable + totalStored)
         self._setAvailableSpace(totalAvailable)
 
-    def createDataObject(self, oid, uid, **kwargs):
+    def createDrop(self, oid, uid, **kwargs):
         kwargs['ngasSrv']  = self._host
         kwargs['ngasPort'] = self._port
         return NgasDROP(oid, uid, **kwargs)
@@ -244,7 +244,7 @@ class DirectoryStore(AbstractStore):
         self._dirName = dirName
         self.updateSpaces()
 
-    def createDataObject(self, oid, uid, **kwargs):
+    def createDrop(self, oid, uid, **kwargs):
         kwargs['dirname'] = self._dirName
         return FileDROP(oid, uid, **kwargs)
 

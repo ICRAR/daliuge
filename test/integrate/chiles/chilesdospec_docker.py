@@ -28,7 +28,7 @@ import os
 import sys
 import uuid
 
-from dfms.drop import dodict
+from dfms.drop import dropdict
 
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
@@ -46,19 +46,19 @@ VIS = [
         (VIS_ROOT + '20140105_946_6_FINAL_PRODUCTS', VIS_OUT + '20140105_946_6/')
         ]
 
-def fileDoSpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'plain', 'storage':'file', 'node': 'localhost'})
-    doSpec.update(kwargs)
-    return doSpec
+def fileDropSpec(uid, **kwargs):
+    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'file', 'node': 'localhost'})
+    dropSpec.update(kwargs)
+    return dropSpec
 
 def directorySpec(uid, **kwargs):
-    doSpec = dodict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer', 'node': 'localhost'})
-    doSpec.update(kwargs)
-    return doSpec
+    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer', 'node': 'localhost'})
+    dropSpec.update(kwargs)
+    return dropSpec
 
 def casapyDockerAppSpec(uid, script):
     cmd = 'cd; ' + os.path.join(CASAPY, 'casapy') + ' --colors=NoColor --nologger --nogui -c "%s"' % (script)
-    return dodict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.dockerapp.DockerApp',
+    return dropdict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.dockerapp.DockerApp',
                    'image':'dfms/casapy_centos7_dfms:0.1',
                    'command':cmd, 'user': 'dfms',
                    'node': 'localhost'})
@@ -97,12 +97,12 @@ def cleanSpec(uid, **kwargs):
 if __name__ == '__main__':
     try:
 
-        dolist = []
+        droplist = []
 
-        flux_out = fileDoSpec('final_flux', dirname = VIS_OUT)
-        dolist.append(flux_out)
+        flux_out = fileDropSpec('final_flux', dirname = VIS_OUT)
+        droplist.append(flux_out)
         flux = fluxSpec(uuid.uuid1())
-        dolist.append(flux)
+        droplist.append(flux)
 
         cl = cleanSpec(uuid.uuid1(),
                         field = 'deepfield',
@@ -118,10 +118,10 @@ if __name__ == '__main__':
                         phasecenter = '10h01m53.9,+02d24m52s',
                         weighting = 'natural',
                         usescratch = False)
-        dolist.append(cl)
+        droplist.append(cl)
 
         image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, check_exists = False)
-        dolist.append(image_out)
+        droplist.append(image_out)
         cl.addOutput(image_out)
         flux.addInput(image_out)
         flux.addOutput(flux_out)
@@ -149,11 +149,11 @@ if __name__ == '__main__':
             sp.addOutput(split_out)
             cl.addInput(split_out)
 
-            dolist.append(vis_in)
-            dolist.append(split_out)
-            dolist.append(sp)
+            droplist.append(vis_in)
+            droplist.append(split_out)
+            droplist.append(sp)
 
-        print json.dumps(dolist, indent=2)
+        print json.dumps(droplist, indent=2)
 
     except Exception as e:
         import traceback
