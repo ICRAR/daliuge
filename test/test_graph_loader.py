@@ -19,13 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from cStringIO import StringIO
 import unittest
 
 from dfms import graph_loader
-from dfms.drop import InMemoryDROP, ContainerDROP,\
-    AppDROP, DirectoryContainer
 from dfms.ddap_protocol import DROPLinkType, DROPRel
+from dfms.drop import InMemoryDROP, ContainerDROP, \
+    AppDROP, DirectoryContainer
+
 
 # Used in the textual representation of the graphs in these tests
 class DummyApp(AppDROP): pass
@@ -33,16 +33,16 @@ class DummyApp(AppDROP): pass
 class TestGraphLoader(unittest.TestCase):
 
     def test_singleMemoryDrop(self):
-        f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory"}]')
-        a = graph_loader.readObjectGraph(f)[0]
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory"}]
+        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
 
     def test_containerDrop(self):
-        f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory"}, \
-                       {"oid":"B", "type":"container", "children":["A"]}]')
-        a = graph_loader.readObjectGraph(f)[0]
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory"},
+                        {"oid":"B", "type":"container", "children":["A"]}]
+        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)
@@ -53,15 +53,16 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEquals("B", b.uid)
 
         # A directory container
-        f = StringIO('[{"oid":"A", "type":"plain", "storage":"file", "dirname":"."}, {"oid":"B", "type":"container", "container":"dfms.drop.DirectoryContainer", "children":["A"], "dirname":"."}]')
-        a = graph_loader.readObjectGraph(f)[0]
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":"file", "dirname":"."},
+                        {"oid":"B", "type":"container", "container":"dfms.drop.DirectoryContainer", "children":["A"], "dirname":"."}]
+        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         b = a.parent
         self.assertIsInstance(b, DirectoryContainer)
 
     def test_consumer(self):
-        f = StringIO('[{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]}, \
-                       {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]')
-        a = graph_loader.readObjectGraph(f)[0]
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]},
+                        {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
+        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEquals("A", a.oid)
         self.assertEquals("A", a.uid)

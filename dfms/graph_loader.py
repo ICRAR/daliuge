@@ -133,22 +133,6 @@ def removeUnmetRelationships(dropSpecList):
 
     return unmetRelationships
 
-def readObjectGraph(fileObj):
-    """
-    Loads the DROP definitions from file-like object `fileObj`, creating
-    all DROPs, establishing their relationships, and returns the root
-    nodes of the graph represented by the DROPs.
-    """
-    return createGraphFromDropSpecList(json.load(fileObj))
-
-def readObjectGraphS(s):
-    """
-    Loads the DROP definitions from the string `s`, creating all
-    DROPs, establishing their relationships, and returns the root nodes of
-    the graph represented by the DROPs.
-    """
-    return createGraphFromDropSpecList(json.loads(s))
-
 def loadDropSpecs(dropSpecList):
     """
     Loads the DROP definitions from `dropSpectList`, checks that
