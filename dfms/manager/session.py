@@ -247,9 +247,9 @@ class Session(object):
         statusDict = collections.defaultdict(dict)
 
         # We shouldn't traverse the full graph because there might be nodes
-        # attached to our DROPs that are actually part of other DOM (and have been
+        # attached to our DROPs that are actually part of other DM (and have been
         # wired together by the DIM after deploying each individual graph on
-        # each of the DOMs).
+        # each of the DMs).
         # We recognize such nodes because they are actually not an instance of
         # AbstractDROP (they are Pyro4.Proxy instances).
         #

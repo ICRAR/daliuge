@@ -93,7 +93,7 @@ class EvtConsumerProxyCtx(object):
     summary, this class is similar to DROPWaiterCtx, but works for remote objects
     (i.e., Pyro proxies).
 
-    Since the graph is remote (i.e., it is hosted by a DOM), the DROPs
+    Since the graph is remote (i.e., it is hosted by a DM), the DROPs
     given to this class are actually Pyro proxies to the real DROPs, and
     therefore the consumer that is appended into them is hosted by a Pyro Daemon
     local to this class. This class creates the daemon, starts a separate thread

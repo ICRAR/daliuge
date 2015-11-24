@@ -44,7 +44,7 @@ setup(
       test_suite="test",
       entry_points= {
           'console_scripts':[
-              'dfmsDOM=dfms.manager.cmdline:dfmsDOM',
+              'dfmsDM=dfms.manager.cmdline:dfmsDM',
               'dfmsDIM=dfms.manager.cmdline:dfmsDIM'
           ],
       }

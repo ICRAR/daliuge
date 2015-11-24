@@ -24,7 +24,7 @@ This module contains template functions for building physical graphs. It
 currently is part of the repository for practical reasons, but it needs to be
 moved out from the dfms project since it's too specific.
 
-A piece of code exists already in the DOM that would potentially look up for
+A piece of code exists already in the DM that would potentially look up for
 these kind of template functions under a per-user plug-in directory system. A
 different way would have to be thought if we want to have these templates as
 system-wide installed artifacts.

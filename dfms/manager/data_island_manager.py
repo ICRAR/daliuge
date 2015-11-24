@@ -30,33 +30,33 @@ from dfms.utils import CountDownLatch, portIsOpen
 
 
 logger = logging.getLogger(__name__)
-DOM_PORT = 4000
+DM_PORT = 4000
 
 class DataIslandManager(object):
     """
     The DataIslandManager
 
-    A DataIslandManager manages a number of DataObjectManagers, one per node
+    A DataIslandManager manages a number of DROPManagers, one per node
     in the Data Island. It offers roughly the same methods as those offered
-    by the DOM since it offers the same capabilities.
+    by the DM since it offers the same capabilities.
 
     One of the key aspects of the DIM is that it receives a physical graph for
-    the whole island, which it must distribute among the different DOMs. For
+    the whole island, which it must distribute among the different DMs. For
     this it requires that all the nodes in the graph declare a node (a host
     name), which should be part of the Data Island. This way the DIM breaks down
-    the physical graph in parts that belong to the different DOMs, creates them
+    the physical graph in parts that belong to the different DMs, creates them
     individually, and links them later at deployment time.
     """
 
-    def __init__(self, dimId, nodes=['localhost'], pkeyPath=None, domRestPort=8888, domCheckTimeout=10):
+    def __init__(self, dimId, nodes=['localhost'], pkeyPath=None, dmRestPort=8888, dmCheckTimeout=10):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
         self._interDOMRelations = collections.defaultdict(list)
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
-        self._domRestPort = domRestPort
-        self._domCheckTimeout = domCheckTimeout
+        self._dmRestPort = dmRestPort
+        self._dmCheckTimeout = dmCheckTimeout
         self.startNodeChecker()
         logger.info('Created DataIslandManager for nodes: %r' % (self._nodes))
 
@@ -78,9 +78,9 @@ class DataIslandManager(object):
         while True:
             for n in self._nodes:
                 try:
-                    self.ensureDOM(n, timeout=self._domCheckTimeout)
+                    self.ensureDM(n, timeout=self._dmCheckTimeout)
                 except:
-                    logger.warning("Couldn't ensure a DOM for node %s, will try again later" % (n))
+                    logger.warning("Couldn't ensure a DM for node %s, will try again later" % (n))
             if self._nodeCheckerEvt.wait(60):
                 break
 
@@ -94,52 +94,52 @@ class DataIslandManager(object):
 
     @property
     def domRestPort(self):
-        return self._domRestPort
+        return self._dmRestPort
 
-    def dfmsDOMCommandLine(self, host, port):
-        cmdline = 'dfmsDOM --rest -i dom_{0} -P {1} -d --host {0}'.format(host, port)
-        if self._domRestPort:
-            cmdline += ' --restPort {0}'.format(self._domRestPort)
+    def dfmsDMCommandLine(self, host, port):
+        cmdline = 'dfmsDM --rest -i dm_{0} -P {1} -d --host {0}'.format(host, port)
+        if self._dmRestPort:
+            cmdline += ' --restPort {0}'.format(self._dmRestPort)
         return cmdline
 
-    def startDOM(self, host, port):
+    def startDM(self, host, port):
         client = remote.createClient(host, pkeyPath=self._pkeyPath)
-        out, err, status = remote.execRemoteWithClient(client, self.dfmsDOMCommandLine(host, port))
+        out, err, status = remote.execRemoteWithClient(client, self.dfmsDMCommandLine(host, port))
         if status != 0:
-            logger.error("Failed to start the DOM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, port, out, err))
-            raise Exception("Failed to start the DOM on %s:%d" % (host, port))
+            logger.error("Failed to start the DM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, port, out, err))
+            raise Exception("Failed to start the DM on %s:%d" % (host, port))
         if logger.isEnabledFor(logging.INFO):
-            logger.info("DOM successfully started at %s:%d" % (host, port))
+            logger.info("DM successfully started at %s:%d" % (host, port))
 
-    def ensureDOM(self, host, port=DOM_PORT, timeout=10):
+    def ensureDM(self, host, port=DM_PORT, timeout=10):
         # We rely on having ssh keys for this, since we're using
         # the dfms.remote module, which authenticates using public keys
         if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Checking DOM presence at %s:%d" % (host, port))
+                logger.debug("Checking DM presence at %s:%d" % (host, port))
 
         if portIsOpen(host, port, timeout):
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("DOM already present at %s:%d" % (host, port))
+                logger.debug("DM already present at %s:%d" % (host, port))
             return
 
         if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("DOM not present at %s:%d, will start it now" % (host, port))
+                logger.debug("DM not present at %s:%d, will start it now" % (host, port))
 
-        self.startDOM(host, port)
+        self.startDM(host, port)
 
-        # Wait a bit until the DOM starts; if it doesn't we fail
+        # Wait a bit until the DM starts; if it doesn't we fail
         if not portIsOpen(host, port, timeout):
-            raise Exception("DOM started at %s:%d, but couldn't connect to it" % (host, port))
+            raise Exception("DM started at %s:%d, but couldn't connect to it" % (host, port))
 
     def domAt(self, node):
-        return Pyro4.Proxy("PYRO:dom_{0}@{0}:{1}".format(node, DOM_PORT))
+        return Pyro4.Proxy("PYRO:dm_{0}@{0}:{1}".format(node, DM_PORT))
 
     def getSessionIds(self):
         return self._sessionIds;
 
     def _createSession(self, sessionId, node, latch, exceptions):
         try:
-            self.ensureDOM(node)
+            self.ensureDM(node)
             with self.domAt(node) as dom:
                 dom.createSession(sessionId)
             if logger.isEnabledFor(logging.DEBUG):
@@ -153,7 +153,7 @@ class DataIslandManager(object):
 
     def createSession(self, sessionId):
         """
-        Creates a session in all underlying DOMs.
+        Creates a session in all underlying DMs.
         """
 
         logger.info('Creating Session %s in all nodes' % (sessionId))
@@ -169,7 +169,7 @@ class DataIslandManager(object):
 
     def _destroySession(self, sessionId, node, latch, exceptions):
         try:
-            self.ensureDOM(node)
+            self.ensureDM(node)
             with self.domAt(node) as dom:
                 dom.destroySession(sessionId)
             if logger.isEnabledFor(logging.DEBUG):
@@ -183,7 +183,7 @@ class DataIslandManager(object):
 
     def destroySession(self, sessionId):
         """
-        Destroy a session in all underlying DOMs.
+        Destroy a session in all underlying DMs.
         """
         logger.info('Destroying Session %s in all nodes' % (sessionId))
         thrExs = {}
@@ -214,7 +214,7 @@ class DataIslandManager(object):
 
         # The first step is to break down the graph into smaller graphs that
         # belong to the same node, so we can submit that graph into the individual
-        # DOMs. For this we need to make sure that our graph has a 'node'
+        # DMs. For this we need to make sure that our graph has a 'node'
         # attribute set
         perNode = collections.defaultdict(list)
         for doSpec in graphSpec:
@@ -228,13 +228,13 @@ class DataIslandManager(object):
             perNode[loc].append(doSpec)
 
         # At each node the relationships between DROPs should be local at the
-        # moment of submitting the graph; thus we record the inter-DOM
+        # moment of submitting the graph; thus we record the inter-DM
         # relationships separately and remove them from the original graph spec
         interDOMRelations = []
         for loc,doSpecs in perNode.viewitems():
             interDOMRelations.extend(graph_loader.removeUnmetRelationships(doSpecs))
 
-        # Create the individual graphs on each DOM now that they are correctly
+        # Create the individual graphs on each DM now that they are correctly
         # separated.
         if logger.isEnabledFor(logging.INFO):
             logger.info('Adding individual graphSpec of session %s to each node' % (sessionId))
@@ -246,7 +246,7 @@ class DataIslandManager(object):
         latch.await()
 
         if thrExs:
-            raise Exception("One or more errors occurred while adding the graphSpec to the individual DOMs", thrExs)
+            raise Exception("One or more errors occurred while adding the graphSpec to the individual DMs", thrExs)
 
         self._interDOMRelations[sessionId].extend(interDOMRelations)
 
@@ -297,7 +297,7 @@ class DataIslandManager(object):
             raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
         # Retrieve all necessary proxies we'll need afterward
-        # (i.e., those present in inter-DOM relationships and in completedDOs)
+        # (i.e., those present in inter-DM relationships and in completedDOs)
         # Creating proxies beforehand and reusing them means that we won't need
         # to establish that many TCP connections once and over again
         proxies = {}
@@ -310,7 +310,7 @@ class DataIslandManager(object):
             if uid not in proxies:
                 proxies[uid] = Pyro4.Proxy(allUris[uid])
 
-        # Establish the inter-DOM relationships between DROPs.
+        # Establish the inter-DM relationships between DROPs.
         # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         for rel in self._interDOMRelations[sessionId]:
             relType = rel.rel
@@ -325,7 +325,7 @@ class DataIslandManager(object):
                 setattr(rhsDO, relPropName, lhsDO)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
-        # (instead of doing it at the DOM-level deployment time, in which case
+        # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
         if logger.isEnabledFor(logging.INFO):
             logger.info('Moving following DROPs to COMPLETED right away: %r' % (completedDOs,))
@@ -393,7 +393,7 @@ class DataIslandManager(object):
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
 
-        # The graphs coming from the DOMs are not interconnected, we need to
+        # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
         for rel in self._interDOMRelations[sessionId]:
             graph_loader.addLink(rel.rel, allGraphs[rel.rhs], rel.lhs)

@@ -62,11 +62,11 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
-class DataObjectManager(object):
+class DROPManager(object):
     """
-    The DataObjectManager.
+    The DROPManager.
 
-    A DataObjectManager, as the name states, manages DROPs. It does so not
+    A DROPManager, as the name states, manages DROPs. It does so not
     directly, but via Sessions, which represent and encapsulate separate,
     independent DROP graph executions. All DROPs created by the
     different Sessions are also given to a common DataLifecycleManager, which
