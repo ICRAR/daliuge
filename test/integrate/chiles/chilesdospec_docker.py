@@ -26,7 +26,6 @@ directly generating Clean, Flux and Split DROPs.
 import json
 import os
 import sys
-import uuid
 
 from dfms.drop import dropdict
 
@@ -99,12 +98,12 @@ if __name__ == '__main__':
 
         droplist = []
 
-        flux_out = fileDropSpec('final_flux', dirname = VIS_OUT)
+        flux_out = fileDropSpec('Flux', dirname = VIS_OUT)
         droplist.append(flux_out)
-        flux = fluxSpec(uuid.uuid1())
+        flux = fluxSpec('FluxExtractor')
         droplist.append(flux)
 
-        cl = cleanSpec(uuid.uuid1(),
+        cl = cleanSpec('Cleaning',
                         field = 'deepfield',
                         mode = 'frequency',
                         restfreq = '1420.405752MHz',
@@ -120,7 +119,7 @@ if __name__ == '__main__':
                         usescratch = False)
         droplist.append(cl)
 
-        image_out = directorySpec(uuid.uuid1(), dirname = CUBE_OUT + CUBE_NAME, check_exists = False)
+        image_out = directorySpec('CleanedImage', dirname = CUBE_OUT + CUBE_NAME, check_exists = False)
         droplist.append(image_out)
         cl.addOutput(image_out)
         flux.addInput(image_out)
@@ -128,8 +127,8 @@ if __name__ == '__main__':
 
         for i, v in enumerate(VIS):
             vis_in = directorySpec('vis%d' % (i), dirname = v[0])
-            split_out = directorySpec(uuid.uuid1(), dirname = v[1], check_exists = False)
-            sp = splitSpec(uuid.uuid1(),
+            split_out = directorySpec('SplitOutput_%d' %(i), dirname = v[1], check_exists = False)
+            sp = splitSpec('Splitting_%d' % (i),
                         regridms = True,
                         restfreq = '1420.405752MHz',
                         mode = 'frequency',
