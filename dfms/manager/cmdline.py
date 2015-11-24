@@ -172,11 +172,11 @@ def dfmsDM(args=sys.argv):
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
 
+    options.dmType = DROPManager
     commonOptionsCheck(options, parser)
     setupLogging(options)
 
     # Add DM-specific options
-    options.dmType = DROPManager
     options.dmArgs = (options.id,)
     options.dmKwargs = {'useDLM': not options.noDLM}
     options.dmAcronym = 'DM'
@@ -213,11 +213,11 @@ def dfmsDIM(args=sys.argv):
                       dest="dmCheckTimeout", help="Maximum timeout used when automatically checking for DM presence", default=10)
     (options, args) = parser.parse_args(args)
 
+    options.dmType = DataIslandManager
     commonOptionsCheck(options, parser)
     setupLogging(options)
 
     # Add DIM-specific options
-    options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
     options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmRestPort': options.dmRestPort, 'dmCheckTimeout': options.dmCheckTimeout}
     options.dmAcronym = 'DIM'
