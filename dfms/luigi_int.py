@@ -45,9 +45,9 @@ class RunDROPTask(luigi.Task):
     Which of the two actions is performed depends on the nature of the
     DROP and on the execution mode set in the DROP's upstream
     objects: only BarrierAppDROP can be triggered automatically by
-    their upstream objects. Since BarrierAppDROP only reference one
-    upstream object (their producer) we need only to check the producer's
-    execution mode, and if it's set to ExecutionMode.EXTERNAL then this task
+    their upstream objects. Since BarrierAppDROPs can reference more than one
+    upstream object (their producers) we need to check all producer's execution
+    mode. If all of them are set to ExecutionMode.EXTERNAL then this task
     needs to manually execute the AppDROP. In any other case this
     task simply waits until the DROP's status has moved to COMPLETED.
 

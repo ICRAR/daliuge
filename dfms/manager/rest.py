@@ -20,8 +20,8 @@
 #    MA 02111-1307  USA
 #
 """
-Module containing the REST layer that exposes the DROPManager methods to
-the outside world
+Module containing the REST layer that exposes the methods of the different
+Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
 import json

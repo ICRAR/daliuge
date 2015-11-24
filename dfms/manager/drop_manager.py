@@ -19,11 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-# Who                   When          What
-# ------------------------------------------------
-# chen.wu@icrar.org   10/12/2014     Created as compute island mgr
-#                     13/04/2015     change name to DOMgr
-#
 """
 A data object managers manages all local Data Object instances
 on a single address space

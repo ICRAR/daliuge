@@ -1021,7 +1021,7 @@ class AppDROP(ContainerDROP):
     inputs. Normal inputs are DROPs that must be on the COMPLETED state
     (and therefore their data must be fully written) before this application is
     run, while streaming inputs are DROPs that feed chunks of data into
-    this application as the data gets written into the them.
+    this application as the data gets written into them.
 
     This class contains two methods that should be overwritten as needed by
     subclasses: `dropCompleted`, invoked when input DROPs move to
