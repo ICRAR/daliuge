@@ -114,10 +114,10 @@ class RestServer(object):
         return json.dumps(self.dm.getSessionStatus(sessionId))
 
     def deploySession(self, sessionId):
-        completedDOs = []
+        completedDrops = []
         if 'completed' in request.forms:
-            completedDOs = request.forms['completed'].split(',')
-        self.dm.deploySession(sessionId,completedDOs=completedDOs)
+            completedDrops = request.forms['completed'].split(',')
+        self.dm.deploySession(sessionId,completedDrops=completedDrops)
 
     def getGraph(self, sessionId):
         graphDict = self.dm.getGraph(sessionId)
@@ -154,41 +154,39 @@ class DMRestServer(RestServer):
     """
 
     def initializeSpecifics(self, app):
-
-        self.dom = self.dm
-        app.get(   '/api',                                   callback=self.getDOMStatus)
+        app.get(   '/api',                                   callback=self.getDMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',   callback=self.linkGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
 
         # The non-REST mappings that serve HTML-related content
-        app.get(  '/', callback=self.visualizeDOM)
+        app.get(  '/', callback=self.visualizeDM)
 
-    def getDOMStatus(self):
+    def getDMStatus(self):
         # we currently return the sessionIds, more things might be added in the
         # future
         response.content_type = 'application/json'
-        return json.dumps({'sessions': self.sessions(), 'templates': self.dom.getTemplates()})
+        return json.dumps({'sessions': self.sessions(), 'templates': self.dm.getTemplates()})
 
     def linkGraphParts(self, sessionId):
         params = request.params
         lhOID = params['lhOID']
         rhOID = params['rhOID']
         linkType = int(params['linkType'])
-        self.dom.linkGraphParts(sessionId, lhOID, rhOID, linkType)
+        self.dm.linkGraphParts(sessionId, lhOID, rhOID, linkType)
 
     def materializeTemplate(self, tpl):
         tplParams = dict(request.params)
         sessionId = tplParams.pop('sessionId')
-        self.dom.materializeTemplate(tpl, sessionId, **tplParams)
+        self.dm.materializeTemplate(tpl, sessionId, **tplParams)
 
     #===========================================================================
     # non-REST methods
     #===========================================================================
-    def visualizeDOM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/dom.html')  # @UndefinedVariable
+    def visualizeDM(self):
+        tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return template(tpl, domId=self.dom.domId, serverUrl=serverUrl)
+        return template(tpl, dmId=self.dm.dmId, serverUrl=serverUrl)
 
 class DIMRestServer(RestServer):
     """
@@ -197,7 +195,6 @@ class DIMRestServer(RestServer):
     """
 
     def initializeSpecifics(self, app):
-        self.dim = self.dm
         app.get(   '/api',                                   callback=self.getDIMStatus)
 
         # The non-REST mappings that serve HTML-related content
@@ -205,13 +202,13 @@ class DIMRestServer(RestServer):
 
     def getDIMStatus(self):
         response.content_type = 'application/json'
-        return json.dumps({'nodes': self.dim.nodes, 'sessionIds': self.dim.getSessionIds()})
+        return json.dumps({'nodes': self.dm.nodes, 'sessionIds': self.dm.getSessionIds()})
 
     #===========================================================================
     # non-REST methods
     #===========================================================================
     def visualizeDIM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
+        tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return template(tpl, dimId=self.dim.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dim.nodes), domRestPort=self.dim.domRestPort)
+        return template(tpl, dimId=self.dm.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dm.nodes), dmRestPort=self.dm.dmRestPort)

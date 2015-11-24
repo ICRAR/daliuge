@@ -59,17 +59,17 @@ def setUpDimTests(self):
     #
     # Anyway, this is also useful because we can check that things have
     # occurred at the DM level in the test cases
-    domId = 'dm_' + hostname
-    self.dom = DROPManager(domId, False)
-    self._domDaemon = Pyro4.Daemon(host=hostname, port=4000)
-    self._domDaemon.register(self.dom, objectId=domId)
-    threading.Thread(target=lambda: self._domDaemon.requestLoop()).start()
+    dmId = 'dm_' + hostname
+    self.dm = DROPManager(dmId, False)
+    self._dmDaemon = Pyro4.Daemon(host=hostname, port=4000)
+    self._dmDaemon.register(self.dm, objectId=dmId)
+    threading.Thread(target=lambda: self._dmDaemon.requestLoop()).start()
 
     # The DIM we're testing
     self.dim = DataIslandManager(dimId, [hostname])
 
 def tearDownDimTests(self):
-    self._domDaemon.shutdown()
+    self._dmDaemon.shutdown()
     self.dim.shutdown()
     # shutdown() is asynchronous, make sure it finishes
     while portIsOpen(hostname, 4000):
@@ -90,8 +90,8 @@ class TestDIM(unittest.TestCase):
     def test_createSession(self):
         sessionId = 'lalo'
         self.dim.createSession(sessionId)
-        self.assertEquals(1, len(self.dom.getSessionIds()))
-        self.assertEquals(sessionId, self.dom.getSessionIds()[0])
+        self.assertEquals(1, len(self.dm.getSessionIds()))
+        self.assertEquals(sessionId, self.dm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
 
@@ -109,12 +109,12 @@ class TestDIM(unittest.TestCase):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
         self.dim.addGraphSpec(sessionId, graphSpec)
-        graphFromDOM = self.dom.getGraph(sessionId)
-        self.assertEquals(1, len(graphFromDOM))
-        doSpec = graphFromDOM.values()[0]
-        self.assertEquals('A', doSpec['oid'])
-        self.assertEquals('plain', doSpec['type'])
-        self.assertEquals('memory', doSpec['storage'])
+        graphFromDM = self.dm.getGraph(sessionId)
+        self.assertEquals(1, len(graphFromDM))
+        dropSpec = graphFromDM.values()[0]
+        self.assertEquals('A', dropSpec['oid'])
+        self.assertEquals('plain', dropSpec['type'])
+        self.assertEquals('memory', dropSpec['storage'])
 
     def test_deployGraph(self):
 
@@ -131,7 +131,7 @@ class TestDIM(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDataObjectContents(c))
+        self.assertEquals(data, droputils.allDropContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
 
@@ -139,7 +139,7 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId, completedDOs=['A'])
+        uris = self.dim.deploySession(sessionId, completedDrops=['A'])
         c = Pyro4.Proxy(uris['C'])
 
         # This should be happening before the sleepTime expires
@@ -155,7 +155,7 @@ class TestDIM(unittest.TestCase):
             self.assertEquals(1, len(sessionStatus))
             self.assertIn(hostname, sessionStatus)
             self.assertEquals(status, sessionStatus[hostname])
-            self.assertEquals(status, self.dom.getSessionStatus(sessionId))
+            self.assertEquals(status, self.dm.getSessionStatus(sessionId))
 
         sessionId = 'lala'
         self.dim.createSession(sessionId)
@@ -165,7 +165,7 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
         assertSessionStatus(sessionId, SessionStates.BUILDING)
 
-        uris = self.dim.deploySession(sessionId)
+        uris = self.dm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
         a = Pyro4.Proxy(uris['A'])
@@ -186,17 +186,17 @@ class TestDIM(unittest.TestCase):
         self.assertEquals(3, len(graphSpecFromDim))
         for oid in ('A','B','C'):
             self.assertIn(oid, graphSpecFromDim)
-        graphSepcFromDom = self.dom.getGraph(sessionId)
-        self.assertDictEqual(graphSepcFromDom, graphSpecFromDim)
+        graphSepcFromDM = self.dm.getGraph(sessionId)
+        self.assertDictEqual(graphSepcFromDM, graphSpecFromDim)
 
     def test_getGraphStatus(self):
 
         def assertGraphStatus(sessionId, expectedStatus):
             graphStatusByDim = self.dim.getGraphStatus(sessionId)
-            graphStatusByDom = self.dom.getGraphStatus(sessionId)
-            self.assertDictEqual(graphStatusByDim, graphStatusByDom)
-            for doStatus in graphStatusByDim.viewvalues():
-                self.assertEquals(expectedStatus, doStatus['status'])
+            graphStatusByDM = self.dm.getGraphStatus(sessionId)
+            self.assertDictEqual(graphStatusByDim, graphStatusByDM)
+            for dropStatus in graphStatusByDim.viewvalues():
+                self.assertEquals(expectedStatus, dropStatus['status'])
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
@@ -261,8 +261,8 @@ class TestREST(unittest.TestCase):
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
             complexGraphSpec = json.load(pkg_resources.resource_stream(__name__, 'graphs/complex.js')) # @UndefinedVariable
-            for doSpec in complexGraphSpec:
-                doSpec['node'] = hostname
+            for dropSpec in complexGraphSpec:
+                dropSpec['node'] = hostname
             self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
             self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
 

@@ -19,9 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.apps.socket_listener import SocketListenerApp
-import time
-import errno
 '''
 Created on 20 Jul 2015
 
@@ -35,8 +32,9 @@ import unittest
 from luigi import scheduler, worker
 import pkg_resources
 
-from dfms import graph_loader, utils
 from dfms import droputils
+from dfms import graph_loader, utils
+from dfms.apps.socket_listener import SocketListenerApp
 from dfms.luigi_int import FinishGraphExecution
 import graphsRepository
 
@@ -79,8 +77,8 @@ class LuigiTests(unittest.TestCase):
     def test_testGraphMixed(self):
         self._test_graph('testGraphMixed')
 
-    def test_testGraphDODriven(self):
-        self._test_graph('testGraphDODriven')
+    def test_testGraphDropDriven(self):
+        self._test_graph('testGraphDropDriven')
 
     def test_test_pg(self):
         self._test_graph('test_pg')
@@ -101,9 +99,9 @@ class LuigiTests(unittest.TestCase):
         w.add(task)
 
         # Start executing the SocketListenerApps so they open their ports
-        def startSocketListeners(do):
-            if isinstance(do, SocketListenerApp):
-                threading.Thread(target=lambda do: do.execute(), args=(do,)).start()
+        def startSocketListeners(drop):
+            if isinstance(drop, SocketListenerApp):
+                threading.Thread(target=lambda drop: drop.execute(), args=(drop,)).start()
         droputils.breadFirstTraverse(task.roots, startSocketListeners)
 
         # Write to the initial nodes of the graph to trigger the graph execution
@@ -117,7 +115,7 @@ class LuigiTests(unittest.TestCase):
         # ... but at the end all the nodes of the graph should be completed
         # and should exist
         droputils.breadFirstTraverse(task.roots,\
-                                   lambda do: self.assertTrue(do.isCompleted() and do.exists(), "%s is not COMPLETED or doesn't exist" % (do.uid)))
+                                   lambda drop: self.assertTrue(drop.isCompleted() and drop.exists(), "%s is not COMPLETED or doesn't exist" % (drop.uid)))
 
 if __name__ == '__main__':
     unittest.main()

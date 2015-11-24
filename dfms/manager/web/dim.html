@@ -48,7 +48,7 @@
 
 var serverUrl = '{{serverUrl}}';
 var nodes = {{!nodes}}
-var domRestPort = {{domRestPort}}
+var dmRestPort = {{dmRestPort}}
 var refreshBtn = d3.select('#refreshListBtn');
 var addSessionBtn = d3.select('#addSessionBtn');
 var tbodyEl = d3.select('#sessionsTable tbody')
@@ -59,7 +59,7 @@ newRow = rows.enter().append('tr')
 newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 newRow.append('td').classed('id', true).text(String)
 newRow.append('td').classed('details', true)
-      .append('a').attr('href', function(n) { return 'http://' + n + ':' + domRestPort + '/'; })
+      .append('a').attr('href', function(n) { return 'http://' + n + ':' + dmRestPort + '/'; })
       .append('span').classed('glyphicon glyphicon-share-alt', true)
 
 // Listeners for the two buttons

@@ -43,13 +43,13 @@ class ExternalStoreApp(BarrierAppDROP):
             raise Exception("Only one input is expected by this application")
 
         # ... and go!
-        inDO = self.inputs[0]
-        self.store(inDO)
+        inDrop = self.inputs[0]
+        self.store(inDrop)
 
-    def store(self, inputDO):
+    def store(self, inputDrop):
         """
         Method implemented by subclasses. It should stores the contents of
-        `inputDO` into an external store.
+        `inputDrop` into an external store.
         """
 
 class NgasArchivingApp(ExternalStoreApp):
@@ -69,20 +69,20 @@ class NgasArchivingApp(ExternalStoreApp):
         self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
         self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
 
-    def store(self, inDO):
-        if isinstance(inDO, ContainerDROP):
+    def store(self, inDrop):
+        if isinstance(inDrop, ContainerDROP):
             raise Exception("ContainerDROPs are not supported as inputs for this application")
 
-        size = -1 if inDO.size is None else inDO.size
+        size = -1 if inDrop.size is None else inDrop.size
         try:
-            ngasIO = NgasIO(self._ngasSrv, inDO.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
+            ngasIO = NgasIO(self._ngasSrv, inDrop.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
         except:
-            ngasIO = NgasLiteIO(self._ngasSrv, inDO.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
+            ngasIO = NgasLiteIO(self._ngasSrv, inDrop.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
 
         ngasIO.open(OpenMode.OPEN_WRITE)
 
         # Copy in blocks of 4096 bytes
-        with DROPFile(inDO) as f:
+        with DROPFile(inDrop) as f:
             while True:
                 buff = f.read(4096)
                 ngasIO.write(buff)

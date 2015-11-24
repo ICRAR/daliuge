@@ -76,10 +76,10 @@ def buildSimpleIngestPDG(ssid, nsHost=None, nsPort=9090, lifespan=3600):
 
     print 'Creating data objects'
     #ssid = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f') #sessionId
-    uriA = domServ001.createDataObject('A', 'A', ssid, lifespan=lifespan)
-    uriB = domServ001.createDataObject('B', 'B', ssid, lifespan=lifespan, appDataObj = True)
-    uriC = domServ002.createDataObject('C', 'C', ssid, lifespan=lifespan, appDataObj = True)
-    uriD = domServ002.createDataObject('D', 'D', ssid, lifespan=lifespan, appDataObj = True)
+    uriA = domServ001.createDrop('A', 'A', ssid, lifespan=lifespan)
+    uriB = domServ001.createDrop('B', 'B', ssid, lifespan=lifespan, appDataObj = True)
+    uriC = domServ002.createDrop('C', 'C', ssid, lifespan=lifespan, appDataObj = True)
+    uriD = domServ002.createDrop('D', 'D', ssid, lifespan=lifespan, appDataObj = True)
 
     print 'Starting data objects daemons on both data object managers'
     ret = domServ001.startDOBDaemon(ssid)

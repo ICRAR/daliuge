@@ -107,7 +107,7 @@ class SocketListenerApp(BarrierAppDROP):
         return self._port
 
     # Avoid inputs
-    def addInput(self, inputDataObject):
-        raise Exception("SocketListenerApp %r should have no inputs, tried to attach %r" % (self, inputDataObject))
-    def addStreamingInput(self, streamingInputDO):
-        raise Exception("SocketListenerApp %r should have no streaming inputs, tried to attach %r" % (self, streamingInputDO))
+    def addInput(self, inputDrop):
+        raise Exception("SocketListenerApp %r should have no inputs, tried to attach %r" % (self, inputDrop))
+    def addStreamingInput(self, streamingInputDrop):
+        raise Exception("SocketListenerApp %r should have no streaming inputs, tried to attach %r" % (self, streamingInputDrop))

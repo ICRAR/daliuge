@@ -88,22 +88,22 @@ class SleepAndCopyApp(BarrierAppDROP):
     def copyAll(self):
         inputs  = self._inputs.values()
         outputs = self._outputs.values()
-        for inputDO in inputs:
-            self.copyRecursive(inputDO, outputs)
+        for inputDrop in inputs:
+            self.copyRecursive(inputDrop, outputs)
 
-    def copyRecursive(self, inputDO, outputs):
-        if isinstance(inputDO, ContainerDROP):
-            for child in inputDO.children:
+    def copyRecursive(self, inputDrop, outputs):
+        if isinstance(inputDrop, ContainerDROP):
+            for child in inputDrop.children:
                 self.copyRecursive(child, outputs)
         else:
-            for outputDO in outputs:
-                droputils.copyDataObjectContents(inputDO, outputDO)
+            for outputDrop in outputs:
+                droputils.copyDropContents(inputDrop, outputDrop)
 
 #===============================================================================
 # Methods that create graphs follow. They must have no arguments to be
 # recognized as such
 #===============================================================================
-def testGraphDODriven():
+def testGraphDropDriven():
     return _testGraph(ExecutionMode.DROP)
 
 def testGraphLuigiDriven():
@@ -229,10 +229,10 @@ def complex_graph():
     e, f, i, l, m, q, r      = [   SleepAndCopyApp(uid, uid, lifespan=lifespan) for uid in ['e', 'f', 'i', 'l', 'm', 'q', 'r']]
     g, h, j, n, o, p, s, t   = [InMemoryDROP(uid, uid, lifespan=lifespan) for uid in ['g', 'h', 'j', 'n', 'o', 'p', 's', 't']]
 
-    for plainDO, appDO in [(a,e), (b,i), (c,f), (d,f), (h,i), (j,l), (j,m), (k,m), (n,q), (o,r), (p,r)]:
-        plainDO.addConsumer(appDO)
-    for appDO, plainDO in [(sl_a,a), (sl_b,b), (sl_c,c), (sl_d,d), (sl_k,k), (e,g), (f,h), (i,j), (l,n), (l,o), (m,p), (q,s), (r,t)]:
-        appDO.addOutput(plainDO)
+    for plainDrop, appDrop in [(a,e), (b,i), (c,f), (d,f), (h,i), (j,l), (j,m), (k,m), (n,q), (o,r), (p,r)]:
+        plainDrop.addConsumer(appDrop)
+    for appDrop, plainDrop in [(sl_a,a), (sl_b,b), (sl_c,c), (sl_d,d), (sl_k,k), (e,g), (f,h), (i,j), (l,n), (l,o), (m,p), (q,s), (r,t)]:
+        appDrop.addOutput(plainDrop)
 
     return [sl_a, sl_b, sl_c, sl_d, sl_k]
 
@@ -648,10 +648,10 @@ def chiles_pg():
         appOid = "Combine_" + oid
         dob = InMemoryDROP(oid, oid)
         dob.location = "{0}.aws-ec2.sydney".format(j % num_obs)
-        subbandCombineAppDo = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
-        subbandCombineAppDo.addOutput(dob)
+        subbandCombineAppDrop = SleepAndCopyApp(appOid, appOid, lifespan=lifespan)
+        subbandCombineAppDrop.addOutput(dob)
         for dob_sb in v:
-            subbandCombineAppDo.addInput(dob_sb)
+            subbandCombineAppDrop.addInput(dob_sb)
 
         app_oid = oid.replace("Subband_", "Clean_")
         adob_clean = SleepAndCopyApp(app_oid, app_oid, lifespan=lifespan)
@@ -665,13 +665,13 @@ def chiles_pg():
         img_list.append(dob_img)
 
     #container + app that produces it
-    combineAppDo = SleepAndCopyApp('Combine', 'Combine')
+    combineAppDrop = SleepAndCopyApp('Combine', 'Combine')
     dob_comb_img_oid = "Combined_image"
     dob_comb_img = InMemoryDROP(dob_comb_img_oid, dob_comb_img_oid, lifespan=lifespan)
     dob_comb_img.location = "10.1.1.100:7777"
-    combineAppDo.addOutput(dob_comb_img)
+    combineAppDrop.addOutput(dob_comb_img)
     for dob_img in img_list:
-        combineAppDo.addInput(dob_img)
+        combineAppDrop.addInput(dob_img)
 
     #concatenate all images
     adob_concat_oid = "Concat_image"

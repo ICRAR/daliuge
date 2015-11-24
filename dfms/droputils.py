@@ -47,7 +47,7 @@ class EvtConsumer(object):
     '''
     def __init__(self, evt):
         self._evt = evt
-    def dataObjectCompleted(self, do):
+    def dropCompleted(self, drop):
         self._evt.set()
 
 
@@ -66,15 +66,15 @@ class DROPWaiterCtx(object):
         a.setCompleted()
     """
 
-    def __init__(self, test, dos, timeout=1):
-        self._dos = listify(dos)
+    def __init__(self, test, drops, timeout=1):
+        self._drops = listify(drops)
         self._test = test
         self._timeout = timeout
         self._evts = []
     def __enter__(self):
-        for do in self._dos:
+        for drop in self._drops:
             evt = threading.Event()
-            do.addConsumer(EvtConsumer(evt))
+            drop.addConsumer(EvtConsumer(evt))
             self._evts.append(evt)
         return self
     def __exit__(self, typ, value, tb):
@@ -102,8 +102,8 @@ class EvtConsumerProxyCtx(object):
     test class to assert basic facts.
     """
 
-    def __init__(self, test, dos, timeout=1):
-        self._dos = listify(dos)
+    def __init__(self, test, drops, timeout=1):
+        self._drops = listify(drops)
         self._test = test
         self._timeout = timeout
         self._evts = []
@@ -116,13 +116,13 @@ class EvtConsumerProxyCtx(object):
         t.daemon = 1
         t.start()
 
-        # Attach a (proxy) EvtConsumer to each (proxy) do
-        for do in self._dos:
+        # Attach a (proxy) EvtConsumer to each (proxy) drop
+        for drop in self._drops:
             evt = threading.Event()
             consumer = EvtConsumer(evt)
             uri = daemon.register(consumer)
             consumerProxy = Pyro4.Proxy(uri)
-            do.addConsumer(consumerProxy)
+            drop.addConsumer(consumerProxy)
             self._evts.append(evt)
 
         self.daemon = daemon
@@ -150,20 +150,20 @@ class EvtConsumerProxyCtx(object):
 
 
 
-def allDataObjectContents(dataObject):
+def allDropContents(drop):
     '''
-    Returns all the data contained in a given dataObject
+    Returns all the data contained in a given DROP
     '''
-    desc = dataObject.open()
-    buf = dataObject.read(desc)
+    desc = drop.open()
+    buf = drop.read(desc)
     allContents = buf
     while buf:
-        buf = dataObject.read(desc)
+        buf = drop.read(desc)
         allContents += buf
-    dataObject.close(desc)
+    drop.close(desc)
     return allContents
 
-def copyDataObjectContents(source, target, bufsize=4096):
+def copyDropContents(source, target, bufsize=4096):
     '''
     Manually copies data from one DROP into another, in bufsize steps
     '''
@@ -174,7 +174,7 @@ def copyDataObjectContents(source, target, bufsize=4096):
         buf = source.read(desc, bufsize)
     source.close(desc)
 
-def getUpstreamObjects(dataObject):
+def getUpstreamObjects(drop):
     """
     Returns a list of all direct "upstream" DROPs for the given
     DROP. An DROP A is "upstream" with respect to DROP B if
@@ -186,14 +186,14 @@ def getUpstreamObjects(dataObject):
     to the COMPLETED state before B can do so.
     """
     upObjs = []
-    if isinstance(dataObject, AppDROP):
-        upObjs += dataObject.inputs
-        upObjs += dataObject.streamingInputs
+    if isinstance(drop, AppDROP):
+        upObjs += drop.inputs
+        upObjs += drop.streamingInputs
     else:
-        upObjs += dataObject.producers
+        upObjs += drop.producers
     return upObjs
 
-def getDownstreamObjects(dataObject):
+def getDownstreamObjects(drop):
     """
     Returns a list of all direct "downstream" DROPs for the given
     DROP. An DROP A is "downstream" with respect to DROP B if
@@ -205,11 +205,11 @@ def getDownstreamObjects(dataObject):
     advance to the COMPLETED state until B does so.
     """
     downObjs = []
-    if isinstance(dataObject, AppDROP):
-        downObjs += dataObject.outputs
+    if isinstance(drop, AppDROP):
+        downObjs += drop.outputs
     else:
-        downObjs += dataObject.consumers
-        downObjs += dataObject.streamingConsumers
+        downObjs += drop.consumers
+        downObjs += drop.streamingConsumers
     return downObjs
 
 def getLeafNodes(nodes):
@@ -243,8 +243,8 @@ def depthFirstTraverse(node, func = None, visited = []):
 
     dependencies = getDownstreamObjects(node)
     if dependencies:
-        for do in [d for d in dependencies if d not in visited]:
-            depthFirstTraverse(do, func, visited)
+        for drop in [d for d in dependencies if d not in visited]:
+            depthFirstTraverse(drop, func, visited)
 
 def breadFirstTraverse(toVisit, func = None):
     """
@@ -282,7 +282,7 @@ def breadFirstTraverse(toVisit, func = None):
                 raise Exception("Unsupported number of arguments for function %r: %d. Expected 1 or 2" % (func, nArgs))
 
         # Enqueue its dependencies, making sure they are enqueued only once
-        nextVisits = [do for do in dependencies if do not in found]
+        nextVisits = [drop for drop in dependencies if drop not in found]
         toVisit += nextVisits
         found += nextVisits
 
@@ -315,9 +315,9 @@ class DROPFile(object):
 
     Objects of this class can also be used in a `with` context.
     """
-    def __init__(self, do):
-        self._do = do
-        self._io = IOForURL(do.dataURL)
+    def __init__(self, drop):
+        self._drop = drop
+        self._io = IOForURL(drop.dataURL)
 
     def open(self):
         if self._io:
@@ -331,9 +331,9 @@ class DROPFile(object):
             #       underlying storage and the other not doing it (because we
             #       do it here).
             #       The same concerns are valid for the close() operation
-            self._do.incrRefCount()
+            self._drop.incrRefCount()
         else:
-            self._fd = self._do.open()
+            self._fd = self._drop.open()
         self._isClosed = False
 
     @property
@@ -347,16 +347,16 @@ class DROPFile(object):
         if self._io:
             self._io.close()
 
-            # See the comment above regarding the call to do.incrRefCount()
-            self._do.decrRefCount()
+            # See the comment above regarding the call to drop.incrRefCount()
+            self._drop.decrRefCount()
         else:
-            self._do.close(self._fd)
+            self._drop.close(self._fd)
         self._isClosed = True
 
     def read(self, size=4096):
         if self._io:
             return self._io.read(size)
-        return self._do.read(self._fd, size)
+        return self._drop.read(self._fd, size)
 
     # Support for the `with` keyword
     def __enter__(self):

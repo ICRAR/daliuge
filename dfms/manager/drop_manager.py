@@ -74,14 +74,14 @@ class DROPManager(object):
     across the HSM.
     """
 
-    def __init__(self, domId, useDLM=True):
-        self._domId = domId
+    def __init__(self, dmId, useDLM=True):
+        self._dmId = dmId
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
 
     @property
-    def domId(self):
-        return self._domId
+    def dmId(self):
+        return self._dmId
 
     def createSession(self, sessionId):
         if sessionId in self._sessions:
@@ -110,20 +110,20 @@ class DROPManager(object):
     def getGraph(self, sessionId):
         return self._sessions[sessionId].getGraph()
 
-    def deploySession(self, sessionId, completedDOs=[]):
+    def deploySession(self, sessionId, completedDrops=[]):
         session = self._sessions[sessionId]
-        session.deploy(completedDOs=completedDOs)
+        session.deploy(completedDrops=completedDrops)
         roots = session.roots
 
         # We register the new DROPs with the DLM if there is one
         if self._dlm:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Registering new DROPs with the DataLifecycleManager')
-            droputils.breadFirstTraverse(roots, lambda do: self._dlm.addDataObject(do))
+            droputils.breadFirstTraverse(roots, lambda drop: self._dlm.addDrop(drop))
 
         # Finally, we also collect the Pyro URIs of our DROPs and return them
         uris = {}
-        droputils.breadFirstTraverse(roots, lambda do: uris.__setitem__(do.uid, do.uri))
+        droputils.breadFirstTraverse(roots, lambda drop: uris.__setitem__(drop.uid, drop.uri))
         return uris
 
     def destroySession(self, sessionId):

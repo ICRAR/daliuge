@@ -67,12 +67,12 @@ class TestSocketListener(unittest.TestCase):
             threading.Thread(target=lambda a: a.execute(), args=(a,)).start()
             utils.writeToRemotePort(host, port, data, 1)
 
-        for do in [a,b,c,d]:
-            self.assertEquals(DROPStates.COMPLETED, do.status)
+        for drop in [a,b,c,d]:
+            self.assertEquals(DROPStates.COMPLETED, drop.status)
 
         # Our expectations are fulfilled!
-        bContents = droputils.allDataObjectContents(b)
-        dContents = int(droputils.allDataObjectContents(d))
+        bContents = droputils.allDropContents(b)
+        dContents = int(droputils.allDropContents(d))
         self.assertEquals(data, bContents)
         self.assertEquals(crc32(data, 0), dContents)
 

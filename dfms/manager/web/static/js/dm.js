@@ -257,7 +257,7 @@ function _addNode(g, doSpec) {
 	}
 
 	var oid = doSpec.oid;
-	var html = '<div class="do-label" id="id_' + oid + '">';
+	var html = '<div class="drop-label" id="id_' + oid + '">';
 	html += '<span>' + oid + '</span>';
 	html += '<span class="notes">' + notes + '</span>';
 	html += "</div>";

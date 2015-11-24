@@ -52,7 +52,7 @@ class DataIslandManager(object):
         self._dimId = dimId
         self._nodes = nodes
         self._connectTimeout = 100
-        self._interDOMRelations = collections.defaultdict(list)
+        self._interDMRelations = collections.defaultdict(list)
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the DIM level
         self._pkeyPath = pkeyPath
         self._dmRestPort = dmRestPort
@@ -93,7 +93,7 @@ class DataIslandManager(object):
         return self._nodes[:]
 
     @property
-    def domRestPort(self):
+    def dmRestPort(self):
         return self._dmRestPort
 
     def dfmsDMCommandLine(self, host, port):
@@ -131,7 +131,7 @@ class DataIslandManager(object):
         if not portIsOpen(host, port, timeout):
             raise Exception("DM started at %s:%d, but couldn't connect to it" % (host, port))
 
-    def domAt(self, node):
+    def dmAt(self, node):
         return Pyro4.Proxy("PYRO:dm_{0}@{0}:{1}".format(node, DM_PORT))
 
     def getSessionIds(self):
@@ -140,8 +140,8 @@ class DataIslandManager(object):
     def _createSession(self, sessionId, node, latch, exceptions):
         try:
             self.ensureDM(node)
-            with self.domAt(node) as dom:
-                dom.createSession(sessionId)
+            with self.dmAt(node) as dm:
+                dm.createSession(sessionId)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully created session %s in %s' % (sessionId, node))
         except Exception as e:
@@ -170,8 +170,8 @@ class DataIslandManager(object):
     def _destroySession(self, sessionId, node, latch, exceptions):
         try:
             self.ensureDM(node)
-            with self.domAt(node) as dom:
-                dom.destroySession(sessionId)
+            with self.dmAt(node) as dm:
+                dm.destroySession(sessionId)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully destroyed session %s in %s' % (sessionId, node))
         except Exception as e:
@@ -200,8 +200,8 @@ class DataIslandManager(object):
 
     def _addGraphSpec(self, sessionId, node, graphSpec, latch, exceptions):
         try:
-            with self.domAt(node) as dom:
-                dom.addGraphSpec(sessionId, graphSpec)
+            with self.dmAt(node) as dm:
+                dm.addGraphSpec(sessionId, graphSpec)
             pass
         except Exception as e:
             logger.error("Failed to append graphSpec for session %s on node %s" % (sessionId, node))
@@ -217,22 +217,22 @@ class DataIslandManager(object):
         # DMs. For this we need to make sure that our graph has a 'node'
         # attribute set
         perNode = collections.defaultdict(list)
-        for doSpec in graphSpec:
-            if 'node' not in doSpec:
-                raise Exception("DROP %s doesn't specify a node attribute" % (doSpec['oid']))
+        for dropSpec in graphSpec:
+            if 'node' not in dropSpec:
+                raise Exception("DROP %s doesn't specify a node attribute" % (dropSpec['oid']))
 
-            loc = doSpec['node']
+            loc = dropSpec['node']
             if loc not in self._nodes:
-                raise Exception("DROP %s's node %s does not belong to this DIM" % (doSpec['oid'], loc))
+                raise Exception("DROP %s's node %s does not belong to this DIM" % (dropSpec['oid'], loc))
 
-            perNode[loc].append(doSpec)
+            perNode[loc].append(dropSpec)
 
         # At each node the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-DM
         # relationships separately and remove them from the original graph spec
-        interDOMRelations = []
-        for loc,doSpecs in perNode.viewitems():
-            interDOMRelations.extend(graph_loader.removeUnmetRelationships(doSpecs))
+        interDMRelations = []
+        for loc,dropSpecs in perNode.viewitems():
+            interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
@@ -248,12 +248,12 @@ class DataIslandManager(object):
         if thrExs:
             raise Exception("One or more errors occurred while adding the graphSpec to the individual DMs", thrExs)
 
-        self._interDOMRelations[sessionId].extend(interDOMRelations)
+        self._interDMRelations[sessionId].extend(interDMRelations)
 
     def _deploySession(self, sessionId, node, allUris, latch, exceptions):
         try:
-            with self.domAt(node) as dom:
-                uris = dom.deploySession(sessionId)
+            with self.dmAt(node) as dm:
+                uris = dm.deploySession(sessionId)
                 allUris.update(uris)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully deployed session %s in %s' % (sessionId, node))
@@ -264,22 +264,22 @@ class DataIslandManager(object):
         finally:
             latch.countDown()
 
-    def _triggerDataObject(self, do, uid, latch, exceptions):
+    def _triggerDrop(self, drop, uid, latch, exceptions):
         try:
-            if hasattr(do, 'execute'):
-                t = threading.Thread(target=lambda:do.execute())
+            if hasattr(drop, 'execute'):
+                t = threading.Thread(target=lambda:drop.execute())
                 t.daemon = True
                 t.start()
             else:
-                do.setCompleted()
+                drop.setCompleted()
         except Exception as e:
-            exceptions[do.uid] = e
+            exceptions[drop.uid] = e
             logger.error("An exception occurred while moving DROP %s to COMPLETED" % (uid))
             raise # so it gets printed
         finally:
             latch.countDown()
 
-    def deploySession(self, sessionId, completedDOs=[]):
+    def deploySession(self, sessionId, completedDrops=[]):
 
         logger.info('Deploying Session %s in all nodes' % (sessionId))
 
@@ -297,43 +297,43 @@ class DataIslandManager(object):
             raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
         # Retrieve all necessary proxies we'll need afterward
-        # (i.e., those present in inter-DM relationships and in completedDOs)
+        # (i.e., those present in inter-DM relationships and in completedDrops)
         # Creating proxies beforehand and reusing them means that we won't need
         # to establish that many TCP connections once and over again
         proxies = {}
-        for rel in self._interDOMRelations[sessionId]:
+        for rel in self._interDMRelations[sessionId]:
             if rel.rhs not in proxies:
                 proxies[rel.rhs] = Pyro4.Proxy(allUris[rel.rhs])
             if rel.lhs not in proxies:
                 proxies[rel.lhs] = Pyro4.Proxy(allUris[rel.lhs])
-        for uid in completedDOs:
+        for uid in completedDrops:
             if uid not in proxies:
                 proxies[uid] = Pyro4.Proxy(allUris[uid])
 
         # Establish the inter-DM relationships between DROPs.
-        # DORel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
-        for rel in self._interDOMRelations[sessionId]:
+        # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
+        for rel in self._interDMRelations[sessionId]:
             relType = rel.rel
-            rhsDO = proxies[rel.rhs]
-            lhsDO = proxies[rel.lhs]
+            rhsDrop = proxies[rel.rhs]
+            lhsDrop = proxies[rel.lhs]
 
             if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
                 methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
-                rhsDO._pyroInvoke(methodName, (lhsDO,), {})
+                rhsDrop._pyroInvoke(methodName, (lhsDrop,), {})
             else:
                 relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
-                setattr(rhsDO, relPropName, lhsDO)
+                setattr(rhsDrop, relPropName, lhsDrop)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
         if logger.isEnabledFor(logging.INFO):
-            logger.info('Moving following DROPs to COMPLETED right away: %r' % (completedDOs,))
+            logger.info('Moving following DROPs to COMPLETED right away: %r' % (completedDrops,))
 
         thrExs = {}
-        latch = CountDownLatch(len(completedDOs))
-        for uid in completedDOs:
-            t = threading.Thread(target=self._triggerDataObject, args=(proxies[uid],uid, latch, thrExs))
+        latch = CountDownLatch(len(completedDrops))
+        for uid in completedDrops:
+            t = threading.Thread(target=self._triggerDrop, args=(proxies[uid],uid, latch, thrExs))
             t.start()
         latch.await()
 
@@ -344,8 +344,8 @@ class DataIslandManager(object):
 
     def _getGraphStatus(self, sessionId, node, allStatus, latch, exceptions):
         try:
-            with self.domAt(node) as dom:
-                allStatus.update(dom.getGraphStatus(sessionId))
+            with self.dmAt(node) as dm:
+                allStatus.update(dm.getGraphStatus(sessionId))
         except Exception as e:
             exceptions[node] = e
             logger.error("An exception occurred while getting the graph status for session %s in node %s" % (sessionId, node))
@@ -370,8 +370,8 @@ class DataIslandManager(object):
 
     def _getGraph(self, sessionId, node, latch, allGraphs, exceptions):
         try:
-            with self.domAt(node) as dom:
-                allGraphs.update(dom.getGraph(sessionId))
+            with self.dmAt(node) as dm:
+                allGraphs.update(dm.getGraph(sessionId))
         except Exception as e:
             exceptions[node] = e
             logger.error("An exception occurred while getting the graph for session %s in node %s" % (sessionId, node))
@@ -395,15 +395,15 @@ class DataIslandManager(object):
 
         # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
-        for rel in self._interDOMRelations[sessionId]:
+        for rel in self._interDMRelations[sessionId]:
             graph_loader.addLink(rel.rel, allGraphs[rel.rhs], rel.lhs)
 
         return allGraphs
 
     def _getSessionStatus(self, sessionId, node, allStatus, latch, exceptions):
         try:
-            with self.domAt(node) as dom:
-                allStatus[node] = dom.getSessionStatus(sessionId)
+            with self.dmAt(node) as dm:
+                allStatus[node] = dm.getSessionStatus(sessionId)
         except Exception as e:
             exceptions[node] = e
             logger.error("An exception occurred while getting the status of session %s in node %s" % (sessionId, node))

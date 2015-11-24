@@ -45,18 +45,18 @@ class CRCApp(BarrierAppDROP):
         if len(self.outputs) != 1:
             raise Exception("This application writes only one DROP")
 
-        inputDO = self.inputs[0]
-        outputDO = self.outputs[0]
+        inputDrop = self.inputs[0]
+        outputDrop = self.outputs[0]
 
         bufsize = 4 * 1024 ** 2
-        desc = inputDO.open()
-        buf = inputDO.read(desc, bufsize)
+        desc = inputDrop.open()
+        buf = inputDrop.read(desc, bufsize)
         crc = 0
         while buf:
             crc = crc32(buf, crc)
-            buf = inputDO.read(desc, bufsize)
-        inputDO.close(desc)
+            buf = inputDrop.read(desc, bufsize)
+        inputDrop.close(desc)
 
         # Rely on whatever implementation we decide to use
         # for storing our data
-        outputDO.write(str(crc))
+        outputDrop.write(str(crc))

@@ -35,7 +35,7 @@ from dfms.drop import InMemoryDROP, FileDROP, \
 from dfms.droputils import DROPFile
 
 
-class DOUtilsTest(unittest.TestCase):
+class DropUtilsTest(unittest.TestCase):
 
     def _createGraph(self):
         """
@@ -149,19 +149,19 @@ class DOUtilsTest(unittest.TestCase):
         self.assertSetEqual(set([j, f]), set(endNodes))
         pass
 
-    def test_DOFile(self):
+    def test_DROPFile(self):
         """
         This test exercises the DROPFile mechanism to read the data represented by
         a given DROP. The DROPFile class will decide whether the data should be read
         directly or through the DROP
         """
-        do = FileDROP('a', 'a', expectedSize=5)
-        do.write('abcde')
-        with DROPFile(do) as f:
+        drop = FileDROP('a', 'a', expectedSize=5)
+        drop.write('abcde')
+        with DROPFile(drop) as f:
             self.assertEquals('abcde', f.read())
-            self.assertTrue(do.isBeingRead())
+            self.assertTrue(drop.isBeingRead())
             self.assertIsNotNone(f._io)
-        self.assertFalse(do.isBeingRead())
+        self.assertFalse(drop.isBeingRead())
 
     def test_BFSWithFiltering(self):
         """
@@ -171,9 +171,9 @@ class DOUtilsTest(unittest.TestCase):
         a, _, c, _, e, _, _, h, _, j = self._createGraph()
 
         visitedNodes = []
-        def filtering(do, downStreamDOs):
-            downStreamDOs[:] = [x for x in downStreamDOs if x.uid not in ('b','f')]
-            visitedNodes.append(do)
+        def filtering(drop, downStreamDrops):
+            downStreamDrops[:] = [x for x in downStreamDrops if x.uid not in ('b','f')]
+            visitedNodes.append(drop)
         droputils.breadFirstTraverse(a, filtering)
 
         self.assertEquals(5, len(visitedNodes))

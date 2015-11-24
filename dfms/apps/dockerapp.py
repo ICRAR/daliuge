@@ -46,13 +46,13 @@ class ContainerIpWaiter(object):
     called, which previously waits for the event to be set.
     """
 
-    def __init__(self, do):
+    def __init__(self, drop):
         self._evt = threading.Event()
-        self._uid = do.uid
-        do.subscribe(self.containerIpChanged, 'containerIp')
+        self._uid = drop.uid
+        drop.subscribe(self.containerIpChanged, 'containerIp')
 
-    def containerIpChanged(self, do):
-        self._containerIp = do.containerIp
+    def containerIpChanged(self, drop):
+        self._containerIp = drop.containerIp
         self._evt.set()
 
     def waitForIp(self, timeout=None):
@@ -224,15 +224,15 @@ class DockerApp(BarrierAppDROP):
     def containerId(self):
         return self._containerId
 
-    def handleInterest(self, do):
+    def handleInterest(self, drop):
 
         # The only interest we currently have is the containerIp of other
         # DockerApps, and only if our command actually uses this IP
-        if isinstance(do, DockerApp):
-            if '%containerIp[{0}]%'.format(do.uid) in self._command:
-                self._waiters.append(ContainerIpWaiter(do))
+        if isinstance(drop, DockerApp):
+            if '%containerIp[{0}]%'.format(drop.uid) in self._command:
+                self._waiters.append(ContainerIpWaiter(drop))
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('%r: Added ContainerIpWaiter for %r' % (self, do))
+                    logger.debug('%r: Added ContainerIpWaiter for %r' % (self, drop))
 
     def run(self):
 
