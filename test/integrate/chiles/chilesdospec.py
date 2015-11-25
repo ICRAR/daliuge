@@ -21,7 +21,6 @@
 #
 import json
 import os
-import uuid
 
 from dfms.drop import dropdict
 
@@ -88,12 +87,12 @@ if __name__ == '__main__':
 
     droplist = []
 
-    flux_out = memorySpec(uuid.uuid1(), node = ch05)
+    flux_out = memorySpec('Flux', node = ch05)
     droplist.append(flux_out)
-    flux = fluxSpec(uuid.uuid1(), casapy_path = CASAPY, node = ch05)
+    flux = fluxSpec('FluxExtractor', casapy_path = CASAPY, node = ch05)
     droplist.append(flux)
 
-    cl = cleanSpec(uuid.uuid1(),
+    cl = cleanSpec('Cleaning',
                     field = 'deepfield',
                     mode = 'frequency',
                     restfreq = '1420.405752MHz',
@@ -111,7 +110,7 @@ if __name__ == '__main__':
 
     droplist.append(cl)
 
-    image_out = directorySpec(uuid.uuid1(), dirname = os.path.join(OUTPUTS_DIR, CUBE_NAME), check_exists = False, node = ch05)
+    image_out = directorySpec('CleanedImage', dirname = os.path.join(OUTPUTS_DIR, CUBE_NAME), check_exists = False, node = ch05)
     droplist.append(image_out)
     cl.addOutput(image_out)
     flux.addInput(image_out)
@@ -126,7 +125,7 @@ if __name__ == '__main__':
 
         # vis -> SPLIT -> out -> scp -> out
         vis_in = directorySpec('vis%d' % (i), dirname = visDir, node = node)
-        sp = splitSpec(uuid.uuid1(),
+        sp = splitSpec('Splitting_%d' % (i),
                     regridms = True,
                     restfreq = '1420.405752MHz',
                     mode = 'frequency',
@@ -137,9 +136,9 @@ if __name__ == '__main__':
                     width = '1412kHz',
                     casapy_path = CASAPY,
                     node = node)
-        split_out = directorySpec(uuid.uuid1(), dirname = splitOutDir, check_exists = False, node = node)
-        scp = scpSpec('scp_%d' % (i), node = node, pkeyPath = KEY_PATH, timeout=3600)
-        scpOut = directorySpec(uuid.uuid1(), dirname = splitCopyDir, check_exists = False, node = ch05)
+        split_out = directorySpec('SplitOutput_%d' %(i), dirname = splitOutDir, check_exists = False, node = node)
+        scp = scpSpec('Scp_%d' % (i), node = node, pkeyPath = KEY_PATH, timeout=3600)
+        scpOut = directorySpec('SplitOutput_%d_Copy' % (i), dirname = splitCopyDir, check_exists = False, node = ch05)
 
         # Establish relationships
         sp.addInput(vis_in)
