@@ -49,10 +49,10 @@ class ContainerIpWaiter(object):
     def __init__(self, drop):
         self._evt = threading.Event()
         self._uid = drop.uid
-        drop.subscribe(self.containerIpChanged, 'containerIp')
+        drop.subscribe(self, 'containerIp')
 
-    def containerIpChanged(self, drop):
-        self._containerIp = drop.containerIp
+    def handleEvent(self, e):
+        self._containerIp = e.containerIp
         self._evt.set()
 
     def waitForIp(self, timeout=None):

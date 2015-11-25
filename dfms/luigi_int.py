@@ -73,10 +73,11 @@ class RunDROPTask(luigi.Task):
 
         if not self.execDrop:
             self._evt = threading.Event()
-            def setEvtOnCompleted(e):
-                if e.status == DROPStates.COMPLETED:
-                    self._evt.set()
-            drop.subscribe(setEvtOnCompleted, 'status')
+            drop.subscribe(self, 'status')
+
+    def handleEvent(self, e):
+        if e.status == DROPStates.COMPLETED:
+            self._evt.set()
 
     def complete(self):
         return self.data_obj.isCompleted() and self.data_obj.exists()

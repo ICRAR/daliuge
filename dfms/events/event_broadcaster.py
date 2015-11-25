@@ -19,80 +19,93 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-# Who                   When          What
-# ------------------------------------------------
-# dave.pallot@icrar.org   9/Apr/2015     Created
-#
 
-# TODO: Maybe these classes should be moved down to the dfms.drop module
-#       now that they are only used there. The only ones actually used are
-#       Event and LocalEventBroadcaster. We could also collapse the hierarchy of
-#       the latter since there is no point in maintaining it anymore
-
-from collections import defaultdict
+import collections
 import logging
 
 
 logger = logging.getLogger(__name__)
 
 class Event(object):
-    pass
+    """
+    An event sent through the dfms framework.
 
-class EventBroadcaster(object):
+    Events have at least a field describing the type of event they are (instead
+    of having subclasses of the `Event` class), and therefore this class makes
+    sure that at least that field exists. Any other piece of information can be
+    attached to individual instances of this class, depending on the event type.
+    """
 
-    def subscribe(self, callback, eventType=None):
-        pass
+    def __init__(self):
+        self.type = None
 
-    def unsubscribe(self, callback, eventType=None):
-        pass
+class EventFirer(object):
+    """
+    An object that fires events.
 
-    def fire(self, eventType, **attrs):
-        pass
+    Objects that have an interest on receiving events from this object subscribe
+    to it via the `subscribe` method; likewise they can unsubscribe from it via
+    the `unsubscribe` method. Events are handled to the listeners by calling
+    their `handleEvent` method with the event as its sole argument.
 
-    def _createEvent(self, eventType, **attrs):
+    Listeners can specify the type of event they listen to at subscription time,
+    or can also prefer to receive all events fired by this object if they wish
+    so.
+    """
+
+    __ALL_EVENTS = object()
+
+    def __init__(self):
+        self._listeners = collections.defaultdict(list)
+
+    def subscribe(self, listener, eventType=None):
+        """
+        Subscribes `listener` to events fired by this object. If `eventType` is
+        not `None` then `listener` will only receive events of `eventType` that
+        originate from this object, otherwise it will receive all events.
+        """
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Adding listener to %r eventType=%s: %r' %(self, eventType, listener))
+
+        eventType = eventType or EventFirer.__ALL_EVENTS
+        self._listeners[eventType].append(listener)
+
+    def unsubscribe(self, listener, eventType=None):
+        """
+        Unsubscribes `listener` from events fired by this object.
+        """
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Removing listener to %r eventType=%s: %r' %(self, eventType, listener))
+
+        eventType = eventType or EventFirer.__ALL_EVENTS
+        if listener in self._listeners[eventType]:
+            self._listeners[eventType].remove(listener)
+
+    def _fireEvent(self, eventType, **attrs):
+        """
+        Delivers an event of `eventType` to all interested listeners.
+
+        All the key-value pairs contained in `attrs` are set as attributes of
+        the event being sent.
+        """
+
+        # Which listeners should we call?
+        listeners = []
+        if eventType in self._listeners:
+            listeners += self._listeners[eventType]
+        if EventFirer.__ALL_EVENTS in self._listeners:
+            listeners += self._listeners[EventFirer.__ALL_EVENTS]
+        if not listeners:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('No listeners found for eventType=%s' %(eventType))
+            return
+
+        # Now that we are sure there are listeners for our event
+        # create it and send it to all of them
         e = Event()
         e.type = eventType
         for k, v in attrs.iteritems():
             setattr(e, k, v)
-        return e
 
-class LocalEventBroadcaster(EventBroadcaster):
-
-    __ALL_EVENTS = 'SPECIAL_EVENT_TYPE_THAT_WILL_NEVER_EXIST_EXCEPT_HERE'
-
-    def __init__(self):
-        self._callbacks = defaultdict(list)
-
-    def subscribe(self, callback, eventType=None):
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Adding subscription to %r eventType=%s: %s' %(self, eventType, callback))
-
-        if eventType is None:
-            eventType = self.__ALL_EVENTS
-        self._callbacks[eventType].append(callback)
-
-    def unsubscribe(self, callback, eventType=None):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Removing subscription to %r eventType=%s: %s' %(self, eventType, callback))
-        if eventType is None:
-            eventType = self.__ALL_EVENTS
-        if callback in self._callbacks[eventType]:
-            self._callbacks[eventType].remove(callback)
-
-    def fire(self, eventType, **attrs):
-
-        # Which callbacks should we call?
-        callbacks = []
-        if eventType in self._callbacks:
-            callbacks += self._callbacks[eventType]
-        if self.__ALL_EVENTS in self._callbacks:
-            callbacks += self._callbacks[self.__ALL_EVENTS]
-        if not callbacks:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('No callbacks found for eventType=%s' %(eventType))
-            return
-
-        e = self._createEvent(eventType, **attrs)
-        for fn in callbacks:
-            fn(e)
+        for l in listeners:
+            l.handleEvent(e)

@@ -39,9 +39,9 @@ import threading
 import time
 
 from ddap_protocol import DROPStates
-from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates,\
+from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType
-from dfms.events.event_broadcaster import LocalEventBroadcaster
+from dfms.events.event_broadcaster import EventFirer
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
 
@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 #===============================================================================
 
 
-class AbstractDROP(object):
+class AbstractDROP(EventFirer):
     """
     Base class for all DROP implementations.
 
@@ -116,8 +116,6 @@ class AbstractDROP(object):
         # So far only these three are mandatory
         self._oid = str(oid)
         self._uid = str(uid)
-
-        self._bcaster = LocalEventBroadcaster()
 
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
@@ -488,18 +486,6 @@ class AbstractDROP(object):
         """
         return self._executionMode
 
-    def subscribe(self, callback, eventType=None):
-        """
-        Adds a new subscription to events fired from this DROP.
-        """
-        self._bcaster.subscribe(callback, eventType=eventType)
-
-    def unsubscribe(self, callback, eventType=None):
-        """
-        Removes a subscription from events fired from this DROP.
-        """
-        self._bcaster.unsubscribe(callback, eventType=eventType)
-
     def handleInterest(self, drop):
         """
         Main mechanism through which a DROP handles its interest in a
@@ -521,7 +507,7 @@ class AbstractDROP(object):
     def _fire(self, eventType, **kwargs):
         kwargs['oid'] = self.oid
         kwargs['uid'] = self.uid
-        self._bcaster.fire(eventType, **kwargs)
+        self._fireEvent(eventType, **kwargs)
 
     @property
     def phase(self):
@@ -650,22 +636,6 @@ class AbstractDROP(object):
         if hasattr(consumer, 'addInput'):
             consumer.addInput(self)
 
-        # Only trigger consumers automatically if the DROP graph's
-        # execution is driven by the DROPs themselves
-        if self._executionMode == ExecutionMode.EXTERNAL:
-            return
-
-        def dropCompleted(e):
-            if e.status != DROPStates.COMPLETED:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('Skipping event for consumer %s: %s' %(consumer, str(e.__dict__)) )
-                return
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Triggering consumer %s: %s' %(consumer, str(e.__dict__)))
-
-            consumer.dropCompleted(self.uid)
-        self.subscribe(dropCompleted, eventType='status')
-
     @property
     def producers(self):
         """
@@ -780,9 +750,13 @@ class AbstractDROP(object):
             logger.info("Moving DROP %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DROPStates.COMPLETED
 
-        # Signal our streaming consumers that the show is over
-        for ic in self._streamingConsumers:
-            ic.dropCompleted(self.uid)
+        # Signal our normal/streaming consumers that the show is over
+        # This happens only if this DROP's execution mode is DROP; in the case
+        # that its value is EXTERNAL we don't signal our consumers since an
+        # external entity will take care of that
+        if self._executionMode == ExecutionMode.DROP:
+            for consumer in self._consumers + self._streamingConsumers:
+                consumer.dropCompleted(self.uid)
 
     def isCompleted(self):
         '''
@@ -1078,16 +1052,6 @@ class AppDROP(ContainerDROP):
             self._outputs[uid] = outputDrop
             outputDrop.addProducer(self)
 
-            def appFinished(e):
-                if e.execStatus not in (AppDROPStates.FINISHED, AppDROPStates.ERROR):
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('Skipping event for output %s: %s' %(outputDrop, str(e.__dict__)) )
-                    return
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('Notifying %r that its producer %r has finished: %s' %(outputDrop, self, str(e.__dict__)))
-                outputDrop.producerFinished(self.uid)
-            self.subscribe(appFinished, eventType='execStatus')
-
     @property
     def outputs(self):
         """
@@ -1183,6 +1147,13 @@ class BarrierAppDROP(AppDROP):
         finally:
             # TODO: This needs to be defined more clearly
             self.status = DROPStates.COMPLETED
+
+        # Signal our outputs that we're done
+        # TODO: In the future we'll want to pass down the execStatus to our
+        #       outputs so they decide what to do (i.e., continue with the next
+        #       application, set themselves as CANCELLED, etc.)
+        for outputDrop in self.outputs:
+            outputDrop.producerFinished(self.uid)
 
     def run(self):
         """
