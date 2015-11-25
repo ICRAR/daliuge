@@ -441,7 +441,7 @@ class TestDROP(unittest.TestCase):
         A --|--> B --> D
             |--> C --> E
 
-        Here B is uses A as a streaming input, while C uses it as a normal
+        Here B uses A as a streaming input, while C uses it as a normal
         input
         """
 
@@ -456,6 +456,8 @@ class TestDROP(unittest.TestCase):
                 outputDrop.write(self._lastChar)
             def dropCompleted(self, uid):
                 self.execStatus = AppDROPStates.FINISHED
+                for outputDrop in self.outputs:
+                    outputDrop.producerFinished(self.uid)
 
         a = InMemoryDROP('a', 'a')
         b = LastCharWriterApp('b', 'b')

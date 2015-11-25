@@ -229,7 +229,7 @@ class DataLifecycleManager(object):
 
         # Unsubscribe to all events coming from the DROPs
         for drop in self._drops.values():
-            drop.unsubscribe(self.dropEventHandler)
+            drop.unsubscribe(self)
 
     #
     # Support for 'with' keyword
@@ -384,7 +384,7 @@ class DataLifecycleManager(object):
         # Keep track of the DROP and subscribe to the events it generates
         self._drops[drop.uid] = drop
         drop.phase = DROPPhases.GAS
-        drop.subscribe(self.dropEventHandler)
+        drop.subscribe(self)
         self._reg.addDrop(drop)
 
         # TODO: We currently use a background thread that scans
@@ -394,7 +394,7 @@ class DataLifecycleManager(object):
         #       perform this task, like using threading.Timers (probably not) or
         #       any other that doesn't mean looping over all DROPs
 
-    def dropEventHandler(self, event):
+    def handleEvent(self, event):
         if event.type == 'open':
             self.handleOpenedDrop(event.oid, event.uid)
         elif event.type == 'status' and event.status == DROPStates.COMPLETED:
