@@ -27,12 +27,14 @@ like DMs and DIMs.
 import logging
 import optparse
 import os
+import signal
 import sys
 import time
 
 import Pyro4
+import daemon
+from lockfile.pidlockfile import PIDLockFile
 
-from dfms.daemon import Daemon
 from dfms.manager.data_island_manager import DataIslandManager
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.rest import DMRestServer, DIMRestServer
@@ -73,18 +75,6 @@ def launchServer(opts):
     if hasattr(dm, 'shutdown'):
         dm.shutdown()
 
-class DMDaemon(Daemon):
-    def __init__(self, options):
-        logsDir = getDfmsLogsDir(createIfMissing=True)
-        pidDir  = getDfmsPidDir(createIfMissing=True)
-        pidfile = os.path.join(pidDir,  "dfms%s_%s.pid"    % (options.dmAcronym, options.id))
-        stdout  = os.path.join(logsDir, "dfms%s_%s_stdout" % (options.dmAcronym, options.id))
-        stderr  = os.path.join(logsDir, "dfms%s_%s_stderr" % (options.dmAcronym, options.id))
-        super(DMDaemon, self).__init__(pidfile, stdout=stdout, stderr=stderr)
-        self._options = options
-    def run(self):
-        launchServer(self._options)
-
 def addCommonOptions(parser):
     parser.add_option("--no-pyro", action="store_true",
                       dest="noPyro", help="Don't start a Pyro daemon to expose this instance", default=False)
@@ -120,15 +110,37 @@ def commonOptionsCheck(options, parser):
     if options.verbose and options.quiet:
         parser.error('-v and -q cannot be specified together')
 
-def start(options):
-    # Start daemon
+def start(options, parser):
+
+    # Perform common option checks
+    commonOptionsCheck(options, parser)
+
+    # Setup the loggers
+    setupLogging(options)
+
+    # Start daemon?
     if options.daemon:
-        daemon = DMDaemon(options)
-        daemon.start()
-    # Stop daemon
+
+        pidDir  = getDfmsPidDir(createIfMissing=True)
+        logsDir = getDfmsLogsDir(createIfMissing=True)
+        pidfile = os.path.join(pidDir,  "dfms%s_%s.pid"    % (options.dmAcronym, options.id))
+        stdout  = os.path.join(logsDir, "dfms%s_%s_stdout" % (options.dmAcronym, options.id))
+        stderr  = os.path.join(logsDir, "dfms%s_%s_stderr" % (options.dmAcronym, options.id))
+        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1),
+                                  stdout=open(stdout, 'w+'),
+                                  stderr=open(stderr, 'w+')):
+            launchServer(options)
+
+    # Stop daemon?
     elif options.stop:
-        daemon = DMDaemon(options)
-        daemon.stop()
+        pidDir = getDfmsPidDir()
+        pidfile = os.path.join(pidDir,  "dfms%s_%s.pid"    % (options.dmAcronym, options.id))
+        pid = PIDLockFile(pidfile).read_pid()
+        if pid is None:
+            sys.stderr.write('Cannot read PID file, is there an instance running?\n')
+        else:
+            os.kill(pid, signal.SIGTERM)
+
     # Start directly
     else:
         launchServer(options)
@@ -172,26 +184,14 @@ def dfmsDM(args=sys.argv):
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
 
-    options.dmType = DROPManager
-    commonOptionsCheck(options, parser)
-    setupLogging(options)
-
     # Add DM-specific options
+    options.dmType = DROPManager
     options.dmArgs = (options.id,)
-    options.dmKwargs = {'useDLM': not options.noDLM}
+    options.dmKwargs = {'useDLM': not options.noDLM, 'dfmsPath': options.dfmsPath}
     options.dmAcronym = 'DM'
     options.restType = DMRestServer
 
-
-    # dfmsPath might contain code the user is adding
-    logger = logging.getLogger(__name__)
-    dfmsPath = os.path.expanduser(options.dfmsPath)
-    if os.path.isdir(dfmsPath):
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Adding %s to the system path" % (dfmsPath))
-        sys.path.append(dfmsPath)
-
-    start(options)
+    start(options, parser)
 
 # Entry-point function for the dfmsDIM script
 def dfmsDIM(args=sys.argv):
@@ -213,17 +213,14 @@ def dfmsDIM(args=sys.argv):
                       dest="dmCheckTimeout", help="Maximum timeout used when automatically checking for DM presence", default=10)
     (options, args) = parser.parse_args(args)
 
-    options.dmType = DataIslandManager
-    commonOptionsCheck(options, parser)
-    setupLogging(options)
-
     # Add DIM-specific options
+    options.dmType = DataIslandManager
     options.dmArgs = (options.id, options.nodes.split(','))
     options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmRestPort': options.dmRestPort, 'dmCheckTimeout': options.dmCheckTimeout}
     options.dmAcronym = 'DIM'
     options.restType = DIMRestServer
 
-    start(options)
+    start(options, parser)
 
 if __name__ == '__main__':
     # If this module is called directly, the first argument must be either
