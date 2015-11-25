@@ -208,7 +208,7 @@ class DIMRestServer(RestServer):
     # non-REST methods
     #===========================================================================
     def visualizeDIM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
+        tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return template(tpl, dimId=self.dm.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dm.nodes), dmRestPort=self.dm.dmRestPort)
