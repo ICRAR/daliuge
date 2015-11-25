@@ -27,11 +27,13 @@ on a single address space
 import importlib
 import inspect
 import logging
+import os
+import sys
 
 from dfms import droputils
+from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository
 from dfms.manager.session import Session
-from dfms.lifecycle.dlm import DataLifecycleManager
 
 
 logger = logging.getLogger(__name__)
@@ -69,10 +71,19 @@ class DROPManager(object):
     across the HSM.
     """
 
-    def __init__(self, dmId, useDLM=True):
+    def __init__(self, dmId, useDLM=True, dfmsPath=None):
         self._dmId = dmId
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
+
+        # dfmsPath contains code added by the user with possible
+        # DROP applications
+        if dfmsPath:
+            dfmsPath = os.path.expanduser(dfmsPath)
+            if os.path.isdir(dfmsPath):
+                if logger.isEnabledFor(logging.INFO):
+                    logger.info("Adding %s to the system path" % (dfmsPath))
+                sys.path.append(dfmsPath)
 
     @property
     def dmId(self):
