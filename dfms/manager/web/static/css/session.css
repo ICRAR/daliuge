@@ -76,7 +76,7 @@ svg {
   color: #700000;
 }
 
-/* AppDataObject states */
+/* AppDROP states */
 .node.not_run :first-child {
   fill: #ffe;
 }
