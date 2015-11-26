@@ -41,7 +41,7 @@ import time
 from ddap_protocol import DROPStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType
-from dfms.events.event_broadcaster import EventFirer
+from dfms.event import EventFirer
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
 
