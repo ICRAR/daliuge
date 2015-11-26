@@ -135,10 +135,10 @@ class Split(BarrierAppDROP):
         self.transform_args = {
                     'regridms': self._getArg(kwargs, 'regridms', None),
                     'restfreq': str(self._getArg(kwargs, 'restfreq', None)),
-                    'mode': self._getArg(kwargs, 'mode', None),
+                    'mode': str(self._getArg(kwargs, 'mode', None)),
                     'nchan': self._getArg(kwargs, 'nchan', None),
-                    'outframe': self._getArg(kwargs, 'outframe', None),
-                    'interpolation': self._getArg(kwargs, 'interpolation', None),
+                    'outframe': str(self._getArg(kwargs, 'outframe', None)),
+                    'interpolation': str(self._getArg(kwargs, 'interpolation', None)),
                     'veltype': 'radio',
                     'start': str(self._getArg(kwargs, 'start', None)),
                     'width': str(self._getArg(kwargs, 'width', None)),
