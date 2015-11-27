@@ -48,8 +48,8 @@ VIS = [
 CUBE_NAME = 'cube1408~1412'
 
 
-def memorySpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'memory'})
+def fileSpec(uid, **kwargs):
+    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'file'})
     dropSpec.update(kwargs)
     return dropSpec 
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     droplist = []
 
-    flux_out = memorySpec('Flux', node = ch05)
+    flux_out = fileSpec('Flux', node = ch05, dirname = os.path.join(OUTPUTS_DIR))
     droplist.append(flux_out)
     flux = fluxSpec('FluxExtractor', casapy_path = CASAPY, node = ch05)
     droplist.append(flux)
