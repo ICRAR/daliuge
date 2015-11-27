@@ -19,8 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import httplib
-
 '''
 A small, httplib-only dependent flavor of the NGAS "read" and "write" methods.
 Installing the NGAS client libraries is still a not-so-trivial exercise, and
@@ -29,6 +27,9 @@ still need to access NGAS from time to time.
 
 @author: rtobar
 '''
+
+import httplib
+
 
 def retrieve(host, fileId, port=7777, timeout=None):
     """

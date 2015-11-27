@@ -19,10 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-# Who                   When          What
-# ------------------------------------------------
-# chen.wu@icrar.org   15/Feb/2015     Created
-#
 """
 Module containing the core DROP classes.
 """

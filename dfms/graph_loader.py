@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.apps.socket_listener import SocketListenerApp
 """
 Module containing functions to load a fully-functional DROP graph from its
 full JSON representation.
@@ -27,14 +26,14 @@ full JSON representation.
 
 import collections
 import importlib
-import json
 import logging
 
 from dfms import droputils
+from dfms.apps.socket_listener import SocketListenerApp
+from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
-from dfms.ddap_protocol import DROPRel, DROPLinkType
 
 
 STORAGE_TYPES = {
