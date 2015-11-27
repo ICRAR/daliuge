@@ -19,24 +19,49 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-# Who                   When          What
-# ------------------------------------------------
-# chen.wu@icrar.org   11/12/2014     Created
-#
 import collections
 
 class DROPLinkType:
+    """
+    An enumeration of the different relationships that can exist between DROPs.
+
+    Although not explicitly stated in this enumeration, each link type has a
+    corresponding inverse. This way, if X is a consumer of Y, Y is an input of
+    X. The full list is:
+     * CONSUMER           / INPUT
+     * STREAMING_CONSUMER / STREAMING_INPUT
+     * PRODUCER           / OUTPUT
+     * PARENT             / CHILD
+    """
     CONSUMER, STREAMING_CONSUMER, PRODUCER, \
     PARENT, CHILD, \
     INPUT, STREAMING_INPUT, OUTPUT = xrange(8)
 
 class DROPStates:
+    """
+    An enumeration of the different states a DROP can be found in. DROPs start
+    in the INITIALIZED state, go optionally through WRITING and arrive to
+    COMPLETED. Later, they transition through EXPIRED, eventually arriving to
+    DELETED.
+    """
     INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = xrange(5)
 
 class AppDROPStates:
+    """
+    An enumeration of the different execution states an AppDROP can be found in.
+    AppDROPs start in the NOT_RUN state, and move to the RUNNING state when they
+    are started. Depending on the execution result they eventually move to the
+    FINISHED or ERROR state.
+    """
     NOT_RUN, RUNNING, FINISHED, ERROR = xrange(4)
 
 class DROPPhases:
+    """
+    An enumeration of the different phases a DROP can be found in. Phases
+    represent the persistence of the data associated to a DROP and the presence
+    of replicas. Phases range from PLASMA (no replicas, volatile storage) to
+    SOLID (fully backed up replica available).
+    """
     PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
 
 # https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Standards_and_common_use
