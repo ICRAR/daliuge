@@ -215,6 +215,12 @@ class TestDROP(unittest.TestCase):
         self.assertEquals(DROPStates.ERROR, c.status)
 
     def test_branch_failure(self):
+        self.branch_failure(False)
+
+    def test_branch_too_many_failures(self):
+        self.branch_failure(True)
+
+    def branch_failure(self, tooManyFailures):
         """
         Using the container data object to implement a join/barrier dataflow.
 
@@ -268,19 +274,32 @@ class TestDROP(unittest.TestCase):
         with DROPWaiterCtx(self, e):
             #for dropA in dropAList: # this should be parallel for
             a1.write(' '); a1.setCompleted()
-            a2.write(' '); a2.setCompleted()
+            if tooManyFailures:
+                a2.setError()
+            else:
+                a2.write(' '); a2.setCompleted()
             a3.setError()
 
-        # All DROPs are completed now that the chain executed correctly
-        #for drop in dropAList + dropBList + dropCList:
-        #    self.assertTrue(drop.status, DROPStates.COMPLETED)
+        if tooManyFailures:
+            completedDrops = dropAList[0:1] + dropBList[0:1] + dropCList[0:1]
+            errorDrops = dropAList[1:] + dropBList[1:] + dropCList[1:] + [d, e]
+        else:
+            completedDrops = dropAList[0:2] + dropBList[0:2] + dropCList[0:2] + [d, e]
+            errorDrops = dropAList[2:] + dropBList[2:] + dropCList[2:]
+
+        for drop in completedDrops:
+            self.assertEquals(drop.status, DROPStates.COMPLETED)
+        for drop in errorDrops:
+            self.assertEquals(drop.status, DROPStates.ERROR)
 
         # The results we want to compare
-        sum_crc = c1.checksum + c2.checksum
-        dropEData = int(droputils.allDropContents(e))
+        # (only in case that at least two branches executed)
+        if not tooManyFailures:
+            sum_crc = c1.checksum + c2.checksum
+            dropEData = int(droputils.allDropContents(e))
 
-        self.assertNotEquals(sum_crc, 0)
-        self.assertEquals(sum_crc, dropEData)
+            self.assertNotEquals(sum_crc, 0)
+            self.assertEquals(sum_crc, dropEData)
 
     def test_join(self):
         """
@@ -341,7 +360,7 @@ class TestDROP(unittest.TestCase):
 
         # All DROPs are completed now that the chain executed correctly
         for drop in dropAList + dropBList + dropCList:
-            self.assertTrue(drop.status, DROPStates.COMPLETED)
+            self.assertEqual(drop.status, DROPStates.COMPLETED)
 
         # The results we want to compare
         sum_crc = c1.checksum + c2.checksum + c3.checksum
