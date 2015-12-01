@@ -26,12 +26,22 @@ import threading
 import Pyro4
 
 from dfms import remote, graph_loader, drop
-from dfms.utils import CountDownLatch, portIsOpen
+from dfms.utils import portIsOpen
 from dfms.manager.constants import ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT,\
     NODE_DEFAULT_PORT, NODE_DEFAULT_REST_PORT
+from multiprocessing.pool import ThreadPool
+import functools
 
 
 logger = logging.getLogger(__name__)
+
+class ThreadPollCtx(ThreadPool):
+    def __enter__(self):
+        return self
+    def __exit__(self, typ, value, traceback):
+        self.close()
+        self.join()
+        if value: return False
 
 class CompositeManager(object):
     """
@@ -171,7 +181,7 @@ class CompositeManager(object):
     def getSessionIds(self):
         return self._sessionIds;
 
-    def _createSession(self, sessionId, host, latch, exceptions):
+    def _createSession(self, sessionId, exceptions, host):
         try:
             self.ensureDM(host)
             with self.dmAt(host) as dm:
@@ -182,8 +192,6 @@ class CompositeManager(object):
             logger.error("Failed to create a session on host %s" % (host))
             exceptions[host] = e
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def createSession(self, sessionId):
         """
@@ -191,17 +199,17 @@ class CompositeManager(object):
         """
 
         logger.info('Creating Session %s in all hosts' % (sessionId))
-        latch = CountDownLatch(len(self._dmHosts))
+
         thrExs = {}
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._createSession, args=(sessionId, host, latch, thrExs))
-            t.start()
-        latch.await()
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._createSession, sessionId, thrExs), self._dmHosts)
         if thrExs:
             raise Exception("One or more errors occurred while creating sessions", thrExs)
+
         self._sessionIds.append(sessionId)
 
-    def _destroySession(self, sessionId, host, latch, exceptions):
+
+    def _destroySession(self, sessionId, exceptions, host):
         try:
             self.ensureDM(host)
             with self.dmAt(host) as dm:
@@ -212,8 +220,6 @@ class CompositeManager(object):
             logger.error("Failed to destroy a session on host %s" % (host))
             exceptions[host] = e
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def destroySession(self, sessionId):
         """
@@ -222,17 +228,13 @@ class CompositeManager(object):
         logger.info('Destroying Session %s in all hosts' % (sessionId))
         thrExs = {}
 
-        latch = CountDownLatch(len(self._dmHosts))
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._destroySession, args=(sessionId, host, latch, thrExs))
-            t.start()
-        latch.await()
-
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._destroySession, sessionId, thrExs), self._dmHosts)
         if thrExs:
             raise Exception("One or more errors occurred while destroying sessions", thrExs)
         self._sessionIds.remove(sessionId)
 
-    def _addGraphSpec(self, sessionId, host, graphSpec, latch, exceptions):
+    def _addGraphSpec(self, sessionId, exceptions, (host, graphSpec)):
         try:
             with self.dmAt(host) as dm:
                 dm.addGraphSpec(sessionId, graphSpec)
@@ -241,8 +243,6 @@ class CompositeManager(object):
             logger.error("Failed to append graphSpec for session %s on host %s" % (sessionId, host))
             exceptions[host] = e
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def addGraphSpec(self, sessionId, graphSpec):
 
@@ -272,19 +272,17 @@ class CompositeManager(object):
         # separated.
         if logger.isEnabledFor(logging.INFO):
             logger.info('Adding individual graphSpec of session %s to each DM' % (sessionId))
-        latch = CountDownLatch(len(self._dmHosts))
+
         thrExs = {}
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._addGraphSpec, args=(sessionId, host, perPartition[host], latch, thrExs))
-            t.start()
-        latch.await()
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._addGraphSpec, sessionId, thrExs), [(host, perPartition[host]) for host in self._dmHosts])
 
         if thrExs:
             raise Exception("One or more errors occurred while adding the graphSpec to the individual DMs", thrExs)
 
         self._interDMRelations[sessionId].extend(interDMRelations)
 
-    def _deploySession(self, sessionId, host, allUris, latch, exceptions):
+    def _deploySession(self, sessionId, allUris, exceptions, host):
         try:
             with self.dmAt(host) as dm:
                 uris = dm.deploySession(sessionId)
@@ -295,10 +293,8 @@ class CompositeManager(object):
             exceptions[host] = e
             logger.error("An exception occurred while deploying session %s in %s" % (sessionId, host))
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
-    def _triggerDrop(self, drop, uid, latch, exceptions):
+    def _triggerDrop(self, exceptions, (drop, uid)):
         try:
             if hasattr(drop, 'execute'):
                 t = threading.Thread(target=lambda:drop.execute())
@@ -310,8 +306,6 @@ class CompositeManager(object):
             exceptions[drop.uid] = e
             logger.error("An exception occurred while moving DROP %s to COMPLETED" % (uid))
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def deploySession(self, sessionId, completedDrops=[]):
 
@@ -321,12 +315,8 @@ class CompositeManager(object):
         thrExs = {}
 
         # Deploy all individual graphs in parallel
-        latch = CountDownLatch(len(self._dmHosts))
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._deploySession, args=(sessionId, host, allUris, latch, thrExs))
-            t.start()
-        latch.await()
-
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._deploySession, sessionId, allUris, thrExs), self._dmHosts)
         if thrExs:
             raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
@@ -364,19 +354,16 @@ class CompositeManager(object):
         if logger.isEnabledFor(logging.INFO):
             logger.info('Moving following DROPs to COMPLETED right away: %r' % (completedDrops,))
 
-        thrExs = {}
-        latch = CountDownLatch(len(completedDrops))
-        for uid in completedDrops:
-            t = threading.Thread(target=self._triggerDrop, args=(proxies[uid],uid, latch, thrExs))
-            t.start()
-        latch.await()
-
-        if thrExs:
-            raise Exception("One ore more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
+        if completedDrops:
+            thrExs = {}
+            with ThreadPollCtx(len(completedDrops)) as tp:
+                tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
+            if thrExs:
+                raise Exception("One ore more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
 
         return allUris
 
-    def _getGraphStatus(self, sessionId, host, allStatus, latch, exceptions):
+    def _getGraphStatus(self, sessionId, allStatus, exceptions, host):
         try:
             with self.dmAt(host) as dm:
                 allStatus.update(dm.getGraphStatus(sessionId))
@@ -384,25 +371,20 @@ class CompositeManager(object):
             exceptions[host] = e
             logger.error("An exception occurred while getting the graph status for session %s in host %s" % (sessionId, host))
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def getGraphStatus(self, sessionId):
 
         allStatus = {}
         thrExs = {}
 
-        latch = CountDownLatch(len(self._dmHosts))
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._getGraphStatus, args=(sessionId, host, allStatus, latch, thrExs))
-            t.start()
-        latch.await()
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._getGraphStatus, sessionId, allStatus, thrExs), self._dmHosts)
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
         return allStatus
 
-    def _getGraph(self, sessionId, host, latch, allGraphs, exceptions):
+    def _getGraph(self, sessionId, allGraphs, exceptions, host):
         try:
             with self.dmAt(host) as dm:
                 allGraphs.update(dm.getGraph(sessionId))
@@ -410,19 +392,14 @@ class CompositeManager(object):
             exceptions[host] = e
             logger.error("An exception occurred while getting the graph for session %s in host %s" % (sessionId, host))
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def getGraph(self, sessionId):
 
         allGraphs = {}
         thrExs = {}
 
-        latch = CountDownLatch(len(self._dmHosts))
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._getGraph, args=(sessionId, host, latch, allGraphs, thrExs))
-            t.start()
-        latch.await()
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._getGraph, sessionId, allGraphs, thrExs), self._dmHosts)
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
@@ -434,7 +411,7 @@ class CompositeManager(object):
 
         return allGraphs
 
-    def _getSessionStatus(self, sessionId, host, allStatus, latch, exceptions):
+    def _getSessionStatus(self, sessionId, allStatus, exceptions, host):
         try:
             with self.dmAt(host) as dm:
                 allStatus[host] = dm.getSessionStatus(sessionId)
@@ -442,19 +419,14 @@ class CompositeManager(object):
             exceptions[host] = e
             logger.error("An exception occurred while getting the status of session %s in host %s" % (sessionId, host))
             raise # so it gets printed
-        finally:
-            latch.countDown()
 
     def getSessionStatus(self, sessionId):
 
         allStatus = {}
         thrExs = {}
 
-        latch = CountDownLatch(len(self._dmHosts))
-        for host in self._dmHosts:
-            t = threading.Thread(target=self._getSessionStatus, args=(sessionId, host, allStatus, latch, thrExs))
-            t.start()
-        latch.await()
+        with ThreadPollCtx(len(self._dmHosts)) as tp:
+            tp.map(functools.partial(self._getSessionStatus, sessionId, allStatus, thrExs), self._dmHosts)
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
