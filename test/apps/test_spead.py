@@ -24,7 +24,11 @@ import threading
 import time
 import unittest
 
-import spead2.send
+USE_SPEAD = True
+try:
+    import spead2.send
+except:
+    USE_SPEAD = False
 
 from dfms import droputils
 from dfms.apps.spead_receiver import SpeadReceiverApp
@@ -34,7 +38,7 @@ from dfms.droputils import DROPWaiterCtx
 
 
 class TestSpeadReceiverApp(unittest.TestCase):
-
+    @unittest.skipIf(USE_SPEAD is False, "skipping test")
     def test_speadApp(self):
 
         port = 1111

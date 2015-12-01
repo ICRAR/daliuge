@@ -46,7 +46,7 @@ class Barrier(object):
         self._evt = threading.Event()
         drop.addConsumer(self)
 
-    def dropCompleted(self, drop):
+    def dropCompleted(self, drop, state):
         self._evt.set()
 
     def wait(self, timeout = None):
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
         flux = SourceFlux(uuid.uuid1(), uuid.uuid1(), casapy_path = CASAPY)
 
-        cl = Clean(uuid.uuid1(), 
+        cl = Clean(uuid.uuid1(),
                     uuid.uuid1(),
                     field = 'deepfield',
                     mode = 'frequency',
@@ -89,9 +89,9 @@ if __name__ == '__main__':
 
             vis_in_a.append(vis_in)
 
-            sp = Split(uuid.uuid1(), 
-                        uuid.uuid1(), 
-                        regridms = True, 
+            sp = Split(uuid.uuid1(),
+                        uuid.uuid1(),
+                        regridms = True,
                         restfreq = '1420.405752MHz',
                         mode = 'frequency',
                         nchan = 256,
@@ -106,7 +106,7 @@ if __name__ == '__main__':
             sp.addOutput(split_out)
 
             cl.addInput(split_out)
-        
+
         # start
         for i in vis_in_a:
             i.setCompleted()

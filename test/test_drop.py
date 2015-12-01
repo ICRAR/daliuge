@@ -62,7 +62,8 @@ class SumupContainerChecksum(BarrierAppDROP):
     def run(self):
         crcSum = 0
         for inputDrop in self.inputs:
-            crcSum += inputDrop.checksum
+            if inputDrop.status == DROPStates.COMPLETED:
+                crcSum += inputDrop.checksum
         outputDrop = self.outputs[0]
         outputDrop.write(str(crcSum))
 
@@ -201,6 +202,85 @@ class TestDROP(unittest.TestCase):
         for i in [c, e, g]:
             actualRes.append(droputils.allDropContents(i))
         map(lambda x, y: self.assertEquals(x, y), [cResExpected, eResExpected, gResExpected], actualRes)
+
+    def test_errorState(self):
+        a = InMemoryDROP('a', 'a')
+        b = SumupContainerChecksum('b', 'b')
+        c = InMemoryDROP('c', 'c')
+        c.addProducer(b)
+        b.addInput(a)
+        a.setError()
+        self.assertEquals(DROPStates.ERROR, a.status)
+        self.assertEquals(DROPStates.ERROR, b.status)
+        self.assertEquals(DROPStates.ERROR, c.status)
+
+    def test_branch_failure(self):
+        """
+        Using the container data object to implement a join/barrier dataflow.
+
+        A1, A2 and A3 are FileDROPs
+        B1, B2 and B3 are SumupContainerChecksum
+        C1, C2 and C3 are InMemoryDROPs
+        D is a SumupContainerChecksum
+        E is a InMemoryDROP
+
+        --> A1 --> B1 --> C1 --|
+        --> A2 --> B2 --> C2 --|--> D --> E
+        --> A3 --> B3 --> C3 --|
+
+        Upon writing all A* DROPs, the execution of B* DROPs should be triggered,
+        after which "C" will transition to COMPLETE. Once all "C"s have moved to
+        COMPLETED "D"'s execution will also be triggered, and finally E will
+        hold the sum of B1, B2 and B3's checksums
+        """
+
+        #create file data objects
+        a1 = InMemoryDROP('oid:A1', 'uid:A1')
+        a2 = InMemoryDROP('oid:A2', 'uid:A2')
+        a3 = InMemoryDROP('oid:A3', 'uid:A3')
+
+        # CRC Result DROPs, storing the result in memory
+        b1 = SumupContainerChecksum('oid:B1', 'uid:B1')
+        b2 = SumupContainerChecksum('oid:B2', 'uid:B2')
+        b3 = SumupContainerChecksum('oid:B3', 'uid:B3')
+        c1 = InMemoryDROP('oid:C1', 'uid:C1')
+        c2 = InMemoryDROP('oid:C2', 'uid:C2')
+        c3 = InMemoryDROP('oid:C3', 'uid:C3')
+
+        # The final DROP that sums up the CRCs from the container DROP
+        d = SumupContainerChecksum('oid:D', 'uid:D', input_error_threshold = 33)
+        e = InMemoryDROP('oid:E', 'uid:E')
+
+        # Wire together
+        dropAList = [a1,a2,a3]
+        dropBList = [b1,b2,b3]
+        dropCList = [c1,c2,c3]
+        for dropA,dropB in map(lambda a,b: (a,b), dropAList, dropBList):
+            dropA.addConsumer(dropB)
+        for dropB,dropC in map(lambda b,c: (b,c), dropBList, dropCList):
+            dropB.addOutput(dropC)
+        for dropC in dropCList:
+            dropC.addConsumer(d)
+        d.addOutput(e)
+
+        # Write data into the initial "A" DROPs, which should trigger
+        # the whole chain explained above
+        with DROPWaiterCtx(self, e):
+            #for dropA in dropAList: # this should be parallel for
+            a1.write(' '); a1.setCompleted()
+            a2.write(' '); a2.setCompleted()
+            a3.setError()
+
+        # All DROPs are completed now that the chain executed correctly
+        #for drop in dropAList + dropBList + dropCList:
+        #    self.assertTrue(drop.status, DROPStates.COMPLETED)
+
+        # The results we want to compare
+        sum_crc = c1.checksum + c2.checksum
+        dropEData = int(droputils.allDropContents(e))
+
+        self.assertNotEquals(sum_crc, 0)
+        self.assertEquals(sum_crc, dropEData)
 
     def test_join(self):
         """
@@ -427,7 +507,7 @@ class TestDROP(unittest.TestCase):
             self.assertEquals(c.status, DROPStates.INITIALIZED)
             # Now let b consume a
             with DROPWaiterCtx(self, [c]):
-                b.dropCompleted('a')
+                b.dropCompleted('a', DROPStates.COMPLETED)
             self.assertEquals(c.status, DROPStates.COMPLETED)
         elif mode == ExecutionMode.DROP:
             # b is already done
@@ -454,10 +534,10 @@ class TestDROP(unittest.TestCase):
                 outputDrop = self._outputs.values()[0]
                 self._lastChar = data[-1]
                 outputDrop.write(self._lastChar)
-            def dropCompleted(self, uid):
+            def dropCompleted(self, uid, status):
                 self.execStatus = AppDROPStates.FINISHED
                 for outputDrop in self.outputs:
-                    outputDrop.producerFinished(self.uid)
+                    outputDrop.producerFinished(self.uid, self.status)
 
         a = InMemoryDROP('a', 'a')
         b = LastCharWriterApp('b', 'b')

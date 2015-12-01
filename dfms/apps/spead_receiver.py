@@ -25,8 +25,11 @@ Module containing an (python) application that receives spead2 data
 
 import logging
 
-import spead2.recv
-
+try:
+    import spead2.recv
+except:
+    pass
+    
 from dfms.drop import BarrierAppDROP
 
 

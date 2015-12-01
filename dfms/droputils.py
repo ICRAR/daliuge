@@ -47,7 +47,7 @@ class EvtConsumer(object):
     '''
     def __init__(self, evt):
         self._evt = evt
-    def dropCompleted(self, drop):
+    def dropCompleted(self, drop, status):
         self._evt.set()
 
 
