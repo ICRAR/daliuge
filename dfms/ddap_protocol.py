@@ -44,7 +44,7 @@ class DROPStates:
     COMPLETED. Later, they transition through EXPIRED, eventually arriving to
     DELETED.
     """
-    INITIALIZED, WRITING, COMPLETED, EXPIRED, DELETED = xrange(5)
+    INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED = xrange(6)
 
 class AppDROPStates:
     """

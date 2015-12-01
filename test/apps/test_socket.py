@@ -85,4 +85,5 @@ class TestSocketListener(unittest.TestCase):
         self.assertRaises(Exception, a.addStreamingInput, InMemoryDROP('b', 'b'))
 
         # Shouldn't be able to open ports <= 1024
-        self.assertRaises(Exception, a.execute)
+        a.execute()
+        self.assertEquals(a.status, DROPStates.ERROR)

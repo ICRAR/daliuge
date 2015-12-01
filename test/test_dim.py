@@ -43,7 +43,7 @@ from dfms.utils import portIsOpen
 
 
 dimId = 'lala'
-hostname = socket.gethostname()
+hostname = ''
 
 def setUpDimTests(self):
 

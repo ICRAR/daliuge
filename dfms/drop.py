@@ -33,6 +33,7 @@ import random
 import sys
 import threading
 import time
+import math
 
 from ddap_protocol import DROPStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
@@ -118,10 +119,10 @@ class AbstractDROP(EventFirer):
         self._consumers = []
         self._producers = []
 
-        # Set holding the UID of the producers that have finished their
+        # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
         # itself to the COMPLETED state
-        self._finishedProducers = set()
+        self._finishedProducers = []
         self._finishedProducersLock = threading.Lock()
 
         # Streaming consumers are objects that consume the data written in
@@ -662,7 +663,7 @@ class AbstractDROP(EventFirer):
         if hasattr(producer, 'addOutput'):
             producer.addOutput(self)
 
-    def producerFinished(self, uid):
+    def producerFinished(self, uid, drop_state):
         """
         Callback called by each of the producers of this DROP when their
         execution finishes. Once all producers have finished this DROP
@@ -678,16 +679,26 @@ class AbstractDROP(EventFirer):
         if uid not in [p.uid for p in self._producers]:
             raise Exception("%s is not a producer of %r" % (uid, self))
 
+        finished = False
         with self._finishedProducersLock:
+            self._finishedProducers.append(drop_state)
             nFinished = len(self._finishedProducers)
-            if nFinished >= len(self._producers):
-                raise Exception("More producers finished that registered in DROP %r" % (self))
-            self._finishedProducers.add(uid)
+            nProd = len(self._producers)
 
-        if (nFinished+1) == len(self._producers):
+            if nFinished > nProd:
+                raise Exception("More producers finished that registered in DROP %r" % (self))
+            elif nFinished == nProd:
+                finished = True
+
+        if finished:
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("All producers finished for DROP %r, proceeding to COMPLETE" % (self))
-            self.setCompleted()
+                logger.debug("All producers finished for DROP %r" % (self))
+
+            # decided that if any producer fails then fail the data drop
+            if DROPStates.ERROR in self._finishedProducers:
+                self.setError()
+            else:
+                self.setCompleted()
 
     @property
     def streamingConsumers(self):
@@ -727,6 +738,24 @@ class AbstractDROP(EventFirer):
         if hasattr(streamingConsumer, 'addStreamingInput'):
             streamingConsumer.addStreamingInput(self)
 
+    def setError(self):
+        '''
+        Moves this DROP to the ERROR state.
+        '''
+        # Close our writing IO instance.
+        # If written externally, self._wio will have remained None
+        if self._wio:
+            self._wio.close()
+
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Moving DROP %s/%s to ERROR" % (self._oid, self._uid))
+        self.status = DROPStates.ERROR
+
+        if self._executionMode == ExecutionMode.DROP:
+            for consumer in self._consumers + self._streamingConsumers:
+                consumer.dropCompleted(self.uid, DROPStates.ERROR)
+
+
     def setCompleted(self):
         '''
         Moves this DROP to the COMPLETED state. This can be used when not all the
@@ -752,7 +781,7 @@ class AbstractDROP(EventFirer):
         # external entity will take care of that
         if self._executionMode == ExecutionMode.DROP:
             for consumer in self._consumers + self._streamingConsumers:
-                consumer.dropCompleted(self.uid)
+                consumer.dropCompleted(self.uid, DROPStates.COMPLETED)
 
     def isCompleted(self):
         '''
@@ -1015,7 +1044,7 @@ class AppDROP(ContainerDROP):
         # this AppDROP as one of its consumers, while an output DROP
         # will see this AppDROP as one of its producers.
         #
-        # Input objects will 
+        # Input objects will
         self._inputs  = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
@@ -1068,11 +1097,11 @@ class AppDROP(ContainerDROP):
         """
         return self._streamingInputs.values()
 
-    def dropCompleted(self, uid):
+    def dropCompleted(self, uid, drop_state):
         """
         Callback invoked when the DROP with UID `uid` (which is either a
         normal or a streaming input of this AppDROP) has moved to the
-        COMPLETED state. By default no action is performed.
+        COMPLETED or ERROR state. By default no action is performed.
         """
 
     def dataWritten(self, uid, data):
@@ -1110,18 +1139,46 @@ class BarrierAppDROP(AppDROP):
     def initialize(self, **kwargs):
         super(BarrierAppDROP, self).initialize(**kwargs)
         self._completedInputs = []
+        self._errorInputs = []
+        self._input_error_threshold = int(self._getArg(kwargs, 'input_error_threshold', 0))
 
     def addStreamingInput(self, streamingInputDrop):
         raise Exception("BarrierAppDROPs don't accept streaming inputs")
 
-    def dropCompleted(self, uid):
-        super(BarrierAppDROP, self).dropCompleted(uid)
-        self._completedInputs.append(uid)
-        if len(self._completedInputs) == len(self._inputs):
-            # Return immediately, but schedule the execution of this app
-            t = threading.Thread(None, lambda: self.execute())
-            t.daemon = 1
-            t.start()
+    def dropCompleted(self, uid, drop_state):
+        super(BarrierAppDROP, self).dropCompleted(uid, drop_state)
+
+        if drop_state == DROPStates.ERROR:
+            self._errorInputs.append(uid)
+        elif drop_state == DROPStates.COMPLETED:
+            self._completedInputs.append(uid)
+        else:
+            raise Exception('Invalid DROP state in dropCompleted: %s' % drop_state)
+
+        error_len = len(self._errorInputs)
+        ok_len = len(self._completedInputs)
+
+        if (error_len + ok_len) == len(self._inputs):
+            # calculate the number of errors that have already occurred
+            percent_failed = math.floor((error_len/float(len(self._inputs))) * 100)
+
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Error on inputs for %r: %d/%d" % (self, percent_failed, self._input_error_threshold))
+
+            # if we hit the input error threshold then ERROR the drop and move on
+            if percent_failed > self._input_error_threshold:
+                if logger.isEnabledFor(logging.INFO):
+                    logger.info("Error threshold reached on %r, not executing it: %d/%d" % (self, percent_failed, self._input_error_threshold))
+
+                self.execStatus = AppDROPStates.ERROR
+                self.status =  DROPStates.ERROR
+                for outputDrop in self.outputs:
+                    outputDrop.producerFinished(self.uid, self.status)
+            else:
+                # Return immediately, but schedule the execution of this app
+                t = threading.Thread(None, lambda: self.execute())
+                t.daemon = 1
+                t.start()
 
     def execute(self):
         """
@@ -1133,23 +1190,27 @@ class BarrierAppDROP(AppDROP):
 
         # Keep track of the state of this application. Setting the state
         # will fire an event to the subscribers of the execStatus events
-        self.execStatus = AppDROPStates.RUNNING
+
+        # TODO: This needs to be defined more clearly
+        drop_state = DROPStates.COMPLETED
+
         try:
+            self.execStatus = AppDROPStates.RUNNING
             self.run()
             self.execStatus = AppDROPStates.FINISHED
-        except:
+        except Exception as e:
             self.execStatus = AppDROPStates.ERROR
-            raise
-        finally:
-            # TODO: This needs to be defined more clearly
-            self.status = DROPStates.COMPLETED
+            drop_state = DROPStates.ERROR
+            logger.exception('Error while executing %r' % (self))
+
+        self.status = drop_state
 
         # Signal our outputs that we're done
         # TODO: In the future we'll want to pass down the execStatus to our
         #       outputs so they decide what to do (i.e., continue with the next
         #       application, set themselves as CANCELLED, etc.)
         for outputDrop in self.outputs:
-            outputDrop.producerFinished(self.uid)
+            outputDrop.producerFinished(self.uid, self.status)
 
     def run(self):
         """
