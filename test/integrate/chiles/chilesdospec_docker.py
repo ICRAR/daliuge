@@ -46,12 +46,12 @@ VIS = [
         ]
 
 def fileDropSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'file', 'node': 'localhost'})
+    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'file', 'node': 'localhost', 'island': 'localhost'})
     dropSpec.update(kwargs)
     return dropSpec
 
 def directorySpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer', 'node': 'localhost'})
+    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer', 'node': 'localhost', 'island': 'localhost'})
     dropSpec.update(kwargs)
     return dropSpec
 
@@ -60,7 +60,7 @@ def casapyDockerAppSpec(uid, script):
     return dropdict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.dockerapp.DockerApp',
                    'image':'dfms/casapy_centos7_dfms:0.1',
                    'command':cmd, 'user': 'dfms',
-                   'node': 'localhost'})
+                   'node': 'localhost', 'island': 'localhost'})
 
 def fluxSpec(uid, **kwargs):
     script  = "ia.open('%i0.image');"
