@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from dfms.manager.constants import NODE_DEFAULT_REST_PORT,\
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 """
 Module containing command-line entry points to launch Data Manager instances
 like DMs and DIMs.
@@ -35,9 +37,9 @@ import Pyro4
 import daemon
 from lockfile.pidlockfile import PIDLockFile
 
-from dfms.manager.data_island_manager import DataIslandManager
+from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.drop_manager import DROPManager
-from dfms.manager.rest import DMRestServer, DIMRestServer
+from dfms.manager.rest import DMRestServer, CompositeManagerRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
@@ -75,7 +77,7 @@ def launchServer(opts):
     if hasattr(dm, 'shutdown'):
         dm.shutdown()
 
-def addCommonOptions(parser):
+def addCommonOptions(parser, defaultRestPort):
     parser.add_option("--no-pyro", action="store_true",
                       dest="noPyro", help="Don't start a Pyro daemon to expose this instance", default=False)
     parser.add_option("-H", "--host", action="store", type="string",
@@ -93,7 +95,7 @@ def addCommonOptions(parser):
     parser.add_option("--restHost", action="store",
                       dest="restHost", help="The host to bind the REST server on")
     parser.add_option("--restPort", action="store", type="int",
-                      dest="restPort", help="The port to bind the REST server on")
+                      dest="restPort", help="The port to bind the REST server on", default=defaultRestPort)
     parser.add_option("-v", "--verbose", action="store_true",
                       dest="verbose", help="Be verbose, including debugging information", default=False)
     parser.add_option("-q", "--quiet", action="store_true",
@@ -177,7 +179,7 @@ def dfmsDM(args=sys.argv):
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
-    addCommonOptions(parser)
+    addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this DROPManager", default=False)
     parser.add_option("--dfms-path", action="store", type="string",
@@ -193,46 +195,61 @@ def dfmsDM(args=sys.argv):
 
     start(options, parser)
 
-# Entry-point function for the dfmsDIM script
-def dfmsDIM(args=sys.argv):
+def dfmsCompositeManager(args, dmType, acronym, dmRestPort):
     """
-    Entry point for the dfmsDIM command-line script, which starts a
-    DataIslandManager and exposes it through Pyro and a REST interface.
+    Common entry point for the dfmsDIM and dfmsMM command-line scripts. It
+    starts the corresponding CompositeManager and exposes it through Pyro and a
+    REST interface.
     """
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
-    addCommonOptions(parser)
+    addCommonOptions(parser, dmRestPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
-                      dest="nodes", help = "Comma-separated list of node names managed by this DIM", default='localhost')
+                      dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default='localhost')
     parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
                       dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
-    parser.add_option("--dmRestPort", action="store", type="int",
-                      dest="dmRestPort", help = "Port used by DMs started by this DIM to expose their REST interface", default=None)
     parser.add_option("--dmCheckTimeout", action="store", type="int",
                       dest="dmCheckTimeout", help="Maximum timeout used when automatically checking for DM presence", default=10)
     (options, args) = parser.parse_args(args)
 
     # Add DIM-specific options
-    options.dmType = DataIslandManager
+    options.dmType = dmType
     options.dmArgs = (options.id, options.nodes.split(','))
-    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmRestPort': options.dmRestPort, 'dmCheckTimeout': options.dmCheckTimeout}
-    options.dmAcronym = 'DIM'
-    options.restType = DIMRestServer
+    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmCheckTimeout': options.dmCheckTimeout}
+    options.dmAcronym = acronym
+    options.restType = CompositeManagerRestServer
 
     start(options, parser)
 
+# Entry-point function for the dfmsDIM script
+def dfmsDIM(args=sys.argv):
+    """
+    Entry point for the dfmsDIM command-line script.
+    """
+    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT)
+
+# Entry-point function for the dfmsDIM script
+def dfmsMM(args=sys.argv):
+    """
+    Entry point for the dfmsMM command-line script.
+    """
+    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT)
+
+
 if __name__ == '__main__':
-    # If this module is called directly, the first argument must be either
+    # If this module is called directly, the first argument must be dfmsMM,
     # dfmsDM or dfmsDIM, the rest of the arguments are the normal ones
     if len(sys.argv) == 1:
-        print 'Usage: %s [dfmsDM|dfmsDIM] [options]' % (sys.argv[0])
+        print 'Usage: %s [dfmsDM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
         sys.exit(1)
     dm = sys.argv.pop(1)
     if dm == 'dfmsDM':
         dfmsDM()
     elif dm == 'dfmsDIM':
         dfmsDIM()
+    elif dm == 'dfmsMM':
+        dfmsMM()
     else:
-        print 'Usage: %s [dfmsDM|dfmsDIM] [options]' % (sys.argv[0])
+        print 'Usage: %s [dfmsDM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
         sys.exit(1)

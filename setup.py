@@ -60,7 +60,8 @@ setup(
       entry_points= {
           'console_scripts':[
               'dfmsDM=dfms.manager.cmdline:dfmsDM',
-              'dfmsDIM=dfms.manager.cmdline:dfmsDIM'
+              'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
+              'dfmsMM=dfms.manager.cmdline:dfmsMM'
           ],
       }
 )

@@ -72,7 +72,7 @@ class DROPManager(object):
     """
 
     def __init__(self, dmId, useDLM=True, dfmsPath=None):
-        self._dmId = dmId
+        self._id = dmId
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
 
@@ -86,8 +86,8 @@ class DROPManager(object):
                 sys.path.append(dfmsPath)
 
     @property
-    def dmId(self):
-        return self._dmId
+    def id(self):
+        return self._id
 
     def createSession(self, sessionId):
         if sessionId in self._sessions:
