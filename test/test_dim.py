@@ -36,7 +36,7 @@ import pkg_resources
 from dfms import utils
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates
-from dfms.manager.data_island_manager import DataIslandManager
+from dfms.manager.composite_manager import DataIslandManager
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
@@ -244,8 +244,8 @@ class TestREST(unittest.TestCase):
             sessions = self.get('/sessions', restPort)
             self.assertEquals(0, len(sessions))
             dimStatus = self.get('', restPort)
-            self.assertEquals(1, len(dimStatus['nodes']))
-            self.assertEquals(hostname, dimStatus['nodes'][0])
+            self.assertEquals(1, len(dimStatus['hosts']))
+            self.assertEquals(hostname, dimStatus['hosts'][0])
             self.assertEquals(0, len(dimStatus['sessionIds']))
 
             # Create a session and check it exists

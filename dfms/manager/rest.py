@@ -186,9 +186,9 @@ class DMRestServer(RestServer):
         tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return template(tpl, dmId=self.dm.dmId, serverUrl=serverUrl)
+        return template(tpl, dmId=self.dm.id, serverUrl=serverUrl)
 
-class DIMRestServer(RestServer):
+class CompositeManagerRestServer(RestServer):
     """
     A REST server for DataIslandManagers. It includes mappings for DIM-specific
     methods.
@@ -202,7 +202,7 @@ class DIMRestServer(RestServer):
 
     def getDIMStatus(self):
         response.content_type = 'application/json'
-        return json.dumps({'nodes': self.dm.nodes, 'sessionIds': self.dm.getSessionIds()})
+        return json.dumps({'hosts': self.dm.dmHosts, 'sessionIds': self.dm.getSessionIds()})
 
     #===========================================================================
     # non-REST methods
@@ -211,4 +211,9 @@ class DIMRestServer(RestServer):
         tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
         urlparts = request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return template(tpl, dimId=self.dm.dimId, serverUrl=serverUrl, nodes=json.dumps(self.dm.nodes), dmRestPort=self.dm.dmRestPort)
+        return template(tpl,
+                        dmId=self.dm.id,
+                        dmType=self.dm.__class__.__name__,
+                        dmRestPort=self.dm.dmRestPort,
+                        serverUrl=serverUrl,
+                        hosts=json.dumps(self.dm.dmHosts))
