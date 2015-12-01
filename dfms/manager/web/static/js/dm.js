@@ -31,16 +31,45 @@ var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
 
 function uniqueSessionStatus(status) {
 
-	// If we are querying the DIM we need to reduce the individual
-	// session status to a single one for display
+	// If we are querying one of the Composite Managers (like the DIM or the MM)
+	// we need to reduce the individual session status to a single one for display
 	if( status != null && typeof status === 'object' ) {
+
+		// Reduce, reduce, reduce
+		while( true ) {
+
+			// Get the values from the status object
+			status = Object.keys(status).map(function(k){return status[k]});
+
+			// If the values in the resulting array are not objects then
+			// we already hit the bottom level and we have simply numbers
+			// in the array
+			if ( typeof status[0] !== 'object' ) {
+				break;
+			}
+
+			// Otherwise, we create an object which consists on the merged
+			// objects contained in the array
+			// e.g., [{a:'b'}, {b:'c'}] -> {a:'b', b:'c'}
+			// After that we're OK for the next iteration
+			status = status.reduce(
+				function(prev, v, idx, array) {
+					if( idx == 0 ) { return v; }
+					for (var attrname in prev) {
+						v[attrname] = prev[attrname];
+					}
+					return v;
+				}
+			)
+		}
+
 		// Reduce to single common value, or to -1
-		return Object.keys(status)
-			.map(function(k){return status[k]})
-			.reduce(function(prev, v, idx, array) {
+		return status.reduce(
+			function(prev, v, idx, array) {
 				if( prev == -1 ) { return -1; }
 				return (prev == v) ? v : -1;
-			});
+			}
+		);
 	}
 
 	// otherwise we simply return the status, which should be an integer
