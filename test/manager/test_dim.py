@@ -259,7 +259,7 @@ class TestREST(unittest.TestCase):
             # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
-            complexGraphSpec = json.load(pkg_resources.resource_stream(__name__, 'graphs/complex.js')) # @UndefinedVariable
+            complexGraphSpec = json.load(pkg_resources.resource_stream('test', 'graphs/complex.js')) # @UndefinedVariable
             for dropSpec in complexGraphSpec:
                 dropSpec['node'] = hostname
             self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
