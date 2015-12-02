@@ -147,21 +147,21 @@ class RestServer(object):
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return template(tpl, sessionId=sessionId, serverUrl=serverUrl)
 
-class DMRestServer(RestServer):
+class NMRestServer(RestServer):
     """
-    A REST server for DROPManagers. It includes mappings for DM-specific
+    A REST server for NodeManagers. It includes mappings for NM-specific
     methods and the mapping for the main visualization HTML pages.
     """
 
     def initializeSpecifics(self, app):
-        app.get(   '/api',                                   callback=self.getDMStatus)
+        app.get(   '/api',                                   callback=self.getNMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',   callback=self.linkGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
 
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDM)
 
-    def getDMStatus(self):
+    def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
         # future
         response.content_type = 'application/json'
@@ -195,12 +195,12 @@ class CompositeManagerRestServer(RestServer):
     """
 
     def initializeSpecifics(self, app):
-        app.get(   '/api',                                   callback=self.getDIMStatus)
+        app.get(   '/api',                                   callback=self.getCMStatus)
 
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDIM)
 
-    def getDIMStatus(self):
+    def getCMStatus(self):
         response.content_type = 'application/json'
         return json.dumps({'hosts': self.dm.dmHosts, 'sessionIds': self.dm.getSessionIds()})
 

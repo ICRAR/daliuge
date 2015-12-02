@@ -34,7 +34,7 @@ from dfms import ngaslite, utils
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import cmdline
-from dfms.manager.drop_manager import DROPManager
+from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
 
@@ -53,8 +53,8 @@ class TestDM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dm1 = DROPManager(1, useDLM=False)
-        dm2 = DROPManager(2, useDLM=False)
+        dm1 = NodeManager(1, useDLM=False)
+        dm2 = NodeManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
@@ -101,8 +101,8 @@ class TestDM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1 = DROPManager(1, useDLM=False)
-        dm2 = DROPManager(2, useDLM=False)
+        dm1 = NodeManager(1, useDLM=False)
+        dm2 = NodeManager(2, useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
@@ -175,10 +175,10 @@ class TestDM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dm1 = DROPManager(1, useDLM=False)
-        dm2 = DROPManager(2, useDLM=False)
-        dm3 = DROPManager(3, useDLM=False)
-        dm4 = DROPManager(4, useDLM=False)
+        dm1 = NodeManager(1, useDLM=False)
+        dm2 = NodeManager(2, useDLM=False)
+        dm3 = NodeManager(3, useDLM=False)
+        dm4 = NodeManager(4, useDLM=False)
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
@@ -246,14 +246,14 @@ def startDM(restPort):
     # Make sure the graph executes quickly once triggered
     from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsDM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dmID', '-q'])
+    cmdline.dfmsNM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dmID', '-q'])
 
 class TestREST(unittest.TestCase):
 
     def test_fullRound(self):
         """
         A test that exercises most of the REST interface exposed on top of the
-        DROPManager
+        NodeManager
         """
 
         sessionId = 'lala'

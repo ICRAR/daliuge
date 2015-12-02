@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2014
+#    (c) UWA - The University of Western Australia, 2015
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -20,161 +20,97 @@
 #    MA 02111-1307  USA
 #
 """
-A data object managers manages all local Data Object instances
-on a single address space
+Module containing the base interface for all DROP managers.
 """
-
-import importlib
-import inspect
-import logging
-import os
-import sys
-
-from dfms import droputils
-from dfms.lifecycle.dlm import DataLifecycleManager
-from dfms.manager import repository
-from dfms.manager.session import Session
-
-
-logger = logging.getLogger(__name__)
-
-def _functionAsTemplate(f):
-    args, _, _, defaults = inspect.getargspec(f)
-
-    # 'defaults' might be shorter than 'args' if some of the arguments
-    # are not optional. In the general case anyway the optional
-    # arguments go at the end of the method declaration, and therefore
-    # a reverse iteration should yield the correct match between
-    # arguments and their defaults
-    defaults = list(defaults) if defaults else []
-    defaults.reverse()
-    argsList = []
-    for i, arg in enumerate(reversed(args)):
-        if i >= len(defaults):
-            # mandatory argument
-            argsList.append({'name':arg})
-        else:
-            # optional with default value
-            argsList.append({'name':arg, 'default':defaults[i]})
-
-    return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
+import abc
 
 class DROPManager(object):
     """
-    The DROPManager.
+    Base class for all DROPManagers.
 
-    A DROPManager, as the name states, manages DROPs. It does so not
-    directly, but via Sessions, which represent and encapsulate separate,
-    independent DROP graph executions. All DROPs created by the
-    different Sessions are also given to a common DataLifecycleManager, which
-    takes care of expiring them when needed, replicating them, and moving them
-    across the HSM.
+    A DROPManager, as the name states, manages the creation and execution of
+    DROPs. In order to support parallel DROP graphs execution, a DROPManager
+    separates them into "sessions".
+
+    Sessions follow a simple lifecycle:
+     * They are created in the PRISTINE status
+     * One or more graph specifications are appended to them, which can also
+       be linked together, building up the final graph specification. While
+       building the graph the session is in the BUILDING status.
+     * Once all graph specifications have been appended and linked together,
+       the graph is deployed, meaning that the DROPs are effectively created.
+       During this process the session transitions between the DEPLOYING and
+       RUNNING states.
+     * One all DROPs contained in a session have transitioned to COMPLETED (or
+       ERROR, if there has been an error during the execution) the session moves
+       to FINISHED.
+
+    Graph specifications are currently accepted in the form of a list of
+    dictionaries, where each dictionary is a DROP specification. A DROP
+    specification in turn consists on key/value pairs in the dictionary which
+    state the type of DROP, some key parameters, and instance-specific
+    parameters as well used to create the DROP.
     """
 
-    def __init__(self, dmId, useDLM=True, dfmsPath=None):
-        self._id = dmId
-        self._dlm = DataLifecycleManager() if useDLM else None
-        self._sessions = {}
+    __metaclass__ = abc.ABCMeta
 
-        # dfmsPath contains code added by the user with possible
-        # DROP applications
-        if dfmsPath:
-            dfmsPath = os.path.expanduser(dfmsPath)
-            if os.path.isdir(dfmsPath):
-                if logger.isEnabledFor(logging.INFO):
-                    logger.info("Adding %s to the system path" % (dfmsPath))
-                sys.path.append(dfmsPath)
+    def __init__(self, dmId):
+        self._id = dmId
 
     @property
     def id(self):
         return self._id
 
+    @abc.abstractmethod
     def createSession(self, sessionId):
-        if sessionId in self._sessions:
-            raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
-        self._sessions[sessionId] = Session(sessionId)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Created session %s' % (sessionId))
+        """
+        Creates a session on this DROPManager with id `sessionId`. A session
+        represents an isolated DROP graph execution.
+        """
 
+    @abc.abstractmethod
     def getSessionStatus(self, sessionId):
-        return self._sessions[sessionId].status
+        """
+        Returns the status of the session `sessionId`.
+        """
 
-    def quickDeploy(self, sessionId, graphSpec):
-        self.createSession(sessionId)
-        self.addGraphSpec(sessionId, graphSpec)
-        return self.deploySession(sessionId)
-
-    def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
-        self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
-
+    @abc.abstractmethod
     def addGraphSpec(self, sessionId, graphSpec):
-        self._sessions[sessionId].addGraphSpec(graphSpec)
+        """
+        Adds a graph specification `graphSpec` (i.e., a description of the DROPs
+        that should be created) to the current graph specification held by
+        session `sessionId`.
+        """
 
+    @abc.abstractmethod
     def getGraphStatus(self, sessionId):
-        return self._sessions[sessionId].getGraphStatus()
+        """
+        Returns the status of the graph being executed in session `sessionId`.
+        """
 
+    @abc.abstractmethod
     def getGraph(self, sessionId):
-        return self._sessions[sessionId].getGraph()
+        """
+        Returns a specification of the graph currently held by session
+        `sessionId`.
+        """
 
+    @abc.abstractmethod
     def deploySession(self, sessionId, completedDrops=[]):
-        session = self._sessions[sessionId]
-        session.deploy(completedDrops=completedDrops)
-        roots = session.roots
+        """
+        Deploys the graph specification held by session `sessionId`, effectively
+        creating all DROPs, linking them together, and moving those whose UID
+        is in `completedDrops` to the COMPLETED state.
+        """
 
-        # We register the new DROPs with the DLM if there is one
-        if self._dlm:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Registering new DROPs with the DataLifecycleManager')
-            droputils.breadFirstTraverse(roots, lambda drop: self._dlm.addDrop(drop))
-
-        # Finally, we also collect the Pyro URIs of our DROPs and return them
-        uris = {}
-        droputils.breadFirstTraverse(roots, lambda drop: uris.__setitem__(drop.uid, drop.uri))
-        return uris
-
+    @abc.abstractmethod
     def destroySession(self, sessionId):
-        session = self._sessions.pop(sessionId)
-        session.destroy()
+        """
+        Destroys the session `sessionId`
+        """
 
+    @abc.abstractmethod
     def getSessionIds(self):
-        return self._sessions.keys()
-
-    def getTemplates(self):
-
-        # TODO: we currently have a hardcoded list of functions, but we should
-        #       load these repositories in a different way, like in this
-        #       commented code
-        #tplDir = os.path.expanduser("~/.dfms/templates")
-        #if not os.path.isdir(tplDir):
-        #    logger.warning('%s directory not found, no templates available' % (tplDir))
-        #    return []
-        #
-        #templates = []
-        #for fname in os.listdir(tplDir):
-        #    if not  os.path.isfile(fname): continue
-        #    if fname[-3:] != '.py': continue
-        #
-        #    with open(fname) as f:
-        #        m = imp.load_module(fname[-3:], f, fname)
-        #        functions = m.list_templates()
-        #        for f in functions:
-        #            templates.append(_functionAsTemplate(f))
-
-        templates = []
-        for f in repository.complex_graph, repository.pip_cont_img_pg, repository.archiving_app:
-            templates.append(_functionAsTemplate(f))
-        return templates
-
-    def materializeTemplate(self, tpl, sessionId, **tplParams):
-        # tpl currently has the form <full.mod.path.functionName>
-        parts = tpl.split('.')
-        module = importlib.import_module('.'.join(parts[:-1]))
-        tplFunction = getattr(module, parts[-1])
-
-        # invoke the template function with the given parameters
-        # and add the new graph spec to the session
-        graphSpec = tplFunction(**tplParams)
-        self.addGraphSpec(sessionId, graphSpec)
-
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Added graph from template %s to session %s with params: %s' % (tpl, sessionId, tplParams))
+        """
+        Returns the IDs of the sessions currently held by this DROPManager.
+        """
