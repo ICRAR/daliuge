@@ -23,7 +23,6 @@ import httplib
 import json
 import multiprocessing
 import random
-import socket
 import string
 from test import graphsRepository
 import threading
@@ -37,7 +36,7 @@ from dfms import utils
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager.composite_manager import DataIslandManager
-from dfms.manager.drop_manager import DROPManager
+from dfms.manager.node_manager import NodeManager
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
 
@@ -59,8 +58,8 @@ def setUpDimTests(self):
     #
     # Anyway, this is also useful because we can check that things have
     # occurred at the DM level in the test cases
-    dmId = 'dm_' + hostname
-    self.dm = DROPManager(dmId, False)
+    dmId = 'nm_' + hostname
+    self.dm = NodeManager(dmId, False)
     self._dmDaemon = Pyro4.Daemon(host=hostname, port=4000)
     self._dmDaemon.register(self.dm, objectId=dmId)
     threading.Thread(target=lambda: self._dmDaemon.requestLoop()).start()

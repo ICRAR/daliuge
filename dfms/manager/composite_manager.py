@@ -26,24 +26,25 @@ import threading
 import Pyro4
 
 from dfms import remote, graph_loader, drop
-from dfms.utils import CountDownLatch, portIsOpen
-from dfms.manager.constants import ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT,\
+from dfms.manager.constants import ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT, \
     NODE_DEFAULT_PORT, NODE_DEFAULT_REST_PORT
+from dfms.manager.drop_manager import DROPManager
+from dfms.utils import CountDownLatch, portIsOpen
 
 
 logger = logging.getLogger(__name__)
 
-class CompositeManager(object):
+class CompositeManager(DROPManager):
     """
-    A DataManager that in turn manages DataManagers (sigh...).
+    A DROPManager that in turn manages DROPManagers (sigh...).
 
-    Data Managers form a hierarchy where those at the bottom actually hold
+    DROP Managers form a hierarchy where those at the bottom actually hold
     DROPs while those in the levels above rely commands and aggregate results,
     making the system more manageable and scalable. The CompositeManager class
     implements the upper part of this hierarchy in a generic way by holding
-    references to a number of sub-DataManagers and communicating with them to
-    complete each operation. The only assumption about sub-DataManagers is that
-    they obey the DataManager interface, and therefore this CompositeManager
+    references to a number of sub-DROPManagers and communicating with them to
+    complete each operation. The only assumption about sub-DROPManagers is that
+    they obey the DROPManager interface, and therefore this CompositeManager
     class allows for multiple levels of hierarchy seamlessly.
 
     Having different levels of Data Management hierarchy implies that the
@@ -76,19 +77,18 @@ class CompositeManager(object):
         :param: dmCheckTimeout The timeout used before giving up and declaring
                 a sub-DM as not-yet-present in a given host
         """
-        self._id = dmId
+        super(CompositeManager, self).__init__(dmId)
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._dmExec = dmExec
         self._dmIdSpec = dmIdSpec
         self._dmHosts = dmHosts
         self._interDMRelations = collections.defaultdict(list)
-        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the multi-manager level
+        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmRestPort = dmRestPort
         self._dmCheckTimeout = dmCheckTimeout
         self.startDMChecker()
-        logger.info('Created DataManager for hosts: %r' % (self._dmHosts))
 
     def startDMChecker(self):
         self._dmCheckerEvt = threading.Event()
@@ -464,7 +464,7 @@ class CompositeManager(object):
 
 class DataIslandManager(CompositeManager):
     """
-    The DataIslandManager, which manages a number of DROPManagers.
+    The DataIslandManager, which manages a number of NodeManagers.
     """
 
     def __init__(self, dmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
@@ -472,11 +472,12 @@ class DataIslandManager(CompositeManager):
                                                 NODE_DEFAULT_PORT,
                                                 NODE_DEFAULT_REST_PORT,
                                                 'node',
-                                                'dfmsDM',
-                                                'dm_%s',
+                                                'dfmsNM',
+                                                'nm_%s',
                                                 dmHosts=dmHosts,
                                                 pkeyPath=pkeyPath,
                                                 dmCheckTimeout=dmCheckTimeout)
+        logger.info('Created DataIslandManager for hosts: %r' % (self._dmHosts))
 
 class MasterManager(CompositeManager):
     """
@@ -493,3 +494,4 @@ class MasterManager(CompositeManager):
                                             dmHosts=dmHosts,
                                             pkeyPath=pkeyPath,
                                             dmCheckTimeout=dmCheckTimeout)
+        logger.info('Created MasterManager for hosts: %r' % (self._dmHosts))

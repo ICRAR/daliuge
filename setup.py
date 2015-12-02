@@ -59,7 +59,7 @@ setup(
       test_suite="test",
       entry_points= {
           'console_scripts':[
-              'dfmsDM=dfms.manager.cmdline:dfmsDM',
+              'dfmsNM=dfms.manager.cmdline:dfmsNM',
               'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
               'dfmsMM=dfms.manager.cmdline:dfmsMM'
           ],

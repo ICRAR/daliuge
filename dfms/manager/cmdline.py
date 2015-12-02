@@ -38,8 +38,8 @@ import daemon
 from lockfile.pidlockfile import PIDLockFile
 
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
-from dfms.manager.drop_manager import DROPManager
-from dfms.manager.rest import DMRestServer, CompositeManagerRestServer
+from dfms.manager.node_manager import NodeManager
+from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
@@ -170,28 +170,28 @@ def setupLogging(opts):
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
 
-# Entry-point function for the dfmsDM script
-def dfmsDM(args=sys.argv):
+# Entry-point function for the dfmsNM script
+def dfmsNM(args=sys.argv):
     """
-    Entry point for the dfmsDIM command-line script, which starts a
-    DROPManager and exposes it through Pyro and a REST interface.
+    Entry point for the dfmsNM command-line script, which starts a
+    NodeManager and exposes it through Pyro and a REST interface.
     """
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
-                      dest="noDLM", help="Don't start the Data Lifecycle Manager on this DROPManager", default=False)
+                      dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dfms-path", action="store", type="string",
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
-    options.dmType = DROPManager
+    options.dmType = NodeManager
     options.dmArgs = (options.id,)
     options.dmKwargs = {'useDLM': not options.noDLM, 'dfmsPath': options.dfmsPath}
-    options.dmAcronym = 'DM'
-    options.restType = DMRestServer
+    options.dmAcronym = 'NM'
+    options.restType = NMRestServer
 
     start(options, parser)
 
@@ -239,17 +239,17 @@ def dfmsMM(args=sys.argv):
 
 if __name__ == '__main__':
     # If this module is called directly, the first argument must be dfmsMM,
-    # dfmsDM or dfmsDIM, the rest of the arguments are the normal ones
+    # dfmsNM or dfmsDIM, the rest of the arguments are the normal ones
     if len(sys.argv) == 1:
-        print 'Usage: %s [dfmsDM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
+        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
         sys.exit(1)
     dm = sys.argv.pop(1)
-    if dm == 'dfmsDM':
-        dfmsDM()
+    if dm == 'dfmsNM':
+        dfmsNM()
     elif dm == 'dfmsDIM':
         dfmsDIM()
     elif dm == 'dfmsMM':
         dfmsMM()
     else:
-        print 'Usage: %s [dfmsDM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
+        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
         sys.exit(1)
