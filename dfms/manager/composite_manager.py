@@ -35,14 +35,6 @@ import functools
 
 logger = logging.getLogger(__name__)
 
-class ThreadPollCtx(ThreadPool):
-    def __enter__(self):
-        return self
-    def __exit__(self, typ, value, traceback):
-        self.close()
-        self.join()
-        if value: return False
-
 class CompositeManager(object):
     """
     A DataManager that in turn manages DataManagers (sigh...).
@@ -97,6 +89,7 @@ class CompositeManager(object):
         self._pkeyPath = pkeyPath
         self._dmRestPort = dmRestPort
         self._dmCheckTimeout = dmCheckTimeout
+        self._tp = ThreadPool(len(dmHosts*2))
         self.startDMChecker()
         logger.info('Created DataManager for hosts: %r' % (self._dmHosts))
 
@@ -113,6 +106,8 @@ class CompositeManager(object):
     # Explicit shutdown
     def shutdown(self):
         self.stopDMChecker()
+        self._tp.close()
+        self._tp.join()
 
     def _checkDM(self):
         while True:
@@ -201,8 +196,7 @@ class CompositeManager(object):
         logger.info('Creating Session %s in all hosts' % (sessionId))
 
         thrExs = {}
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._createSession, sessionId, thrExs), self._dmHosts)
+        self._tp.map(functools.partial(self._createSession, sessionId, thrExs), self._dmHosts)
         if thrExs:
             raise Exception("One or more errors occurred while creating sessions", thrExs)
 
@@ -228,8 +222,7 @@ class CompositeManager(object):
         logger.info('Destroying Session %s in all hosts' % (sessionId))
         thrExs = {}
 
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._destroySession, sessionId, thrExs), self._dmHosts)
+        self._tp.map(functools.partial(self._destroySession, sessionId, thrExs), self._dmHosts)
         if thrExs:
             raise Exception("One or more errors occurred while destroying sessions", thrExs)
         self._sessionIds.remove(sessionId)
@@ -274,8 +267,7 @@ class CompositeManager(object):
             logger.info('Adding individual graphSpec of session %s to each DM' % (sessionId))
 
         thrExs = {}
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._addGraphSpec, sessionId, thrExs), [(host, perPartition[host]) for host in self._dmHosts])
+        self._tp.map(functools.partial(self._addGraphSpec, sessionId, thrExs), [(host, perPartition[host]) for host in self._dmHosts])
 
         if thrExs:
             raise Exception("One or more errors occurred while adding the graphSpec to the individual DMs", thrExs)
@@ -315,8 +307,7 @@ class CompositeManager(object):
         thrExs = {}
 
         # Deploy all individual graphs in parallel
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._deploySession, sessionId, allUris, thrExs), self._dmHosts)
+        self._tp.map(functools.partial(self._deploySession, sessionId, allUris, thrExs), self._dmHosts)
         if thrExs:
             raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
@@ -356,8 +347,7 @@ class CompositeManager(object):
 
         if completedDrops:
             thrExs = {}
-            with ThreadPollCtx(len(completedDrops)) as tp:
-                tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
+            self._tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
             if thrExs:
                 raise Exception("One ore more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
 
@@ -377,8 +367,7 @@ class CompositeManager(object):
         allStatus = {}
         thrExs = {}
 
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._getGraphStatus, sessionId, allStatus, thrExs), self._dmHosts)
+        self._tp.map(functools.partial(self._getGraphStatus, sessionId, allStatus, thrExs), self._dmHosts)
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
@@ -398,8 +387,7 @@ class CompositeManager(object):
         allGraphs = {}
         thrExs = {}
 
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._getGraph, sessionId, allGraphs, thrExs), self._dmHosts)
+        self._tp.map(functools.partial(self._getGraph, sessionId, allGraphs, thrExs), self._dmHosts)
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
@@ -425,8 +413,7 @@ class CompositeManager(object):
         allStatus = {}
         thrExs = {}
 
-        with ThreadPollCtx(len(self._dmHosts)) as tp:
-            tp.map(functools.partial(self._getSessionStatus, sessionId, allStatus, thrExs), self._dmHosts)
+        self._tp.map(functools.partial(self._getSessionStatus, sessionId, allStatus, thrExs), self._dmHosts)
 
         if thrExs:
             raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
