@@ -282,7 +282,7 @@ class TestREST(unittest.TestCase):
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
             # PRO-242: use timestamps for final DROPs that get archived into the public NGAS
-            graph = json.loads(pkg_resources.resource_string(__name__, 'graphs/complex.js')) # @UndefinedVariable
+            graph = json.loads(pkg_resources.resource_string('test', 'graphs/complex.js')) # @UndefinedVariable
             suffix = '_' + str(int(time.time()))
             oidsToReplace = ('S','T')
             for dropSpec in graph:
