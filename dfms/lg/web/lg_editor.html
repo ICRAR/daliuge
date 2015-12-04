@@ -839,6 +839,7 @@
     $(go.Group, go.Panel.Auto,
         {
           background: "transparent",
+          resizable: true,
           // highlight when dragging into the Group
           mouseDragEnter: function(e, grp, prev) { highlightGroup(e, grp, true); },
           mouseDragLeave: function(e, grp, next) { highlightGroup(e, grp, false); },
@@ -846,12 +847,14 @@
           // when the selection is dropped into a Group, add the selected Parts into that Group;
           // if it fails, cancel the tool, rolling back any changes
           mouseDrop: finishDrop,
-          handlesDragDropForMembers: true,  // don't need to define handlers on member Nodes and Links
+          handlesDragDropForMembers: true//,  // don't need to define handlers on member Nodes and Links
           // Groups containing Groups lay out their members horizontally
+          /*
           layout:
             $(go.GridLayout,
               { wrappingWidth: Infinity, alignment: go.GridLayout.Position,
                   cellSize: new go.Size(1, 1), spacing: new go.Size(4, 4) })
+        */
         },
         new go.Binding("background", "isHighlighted", function(h) { return h ? "rgba(255,0,0,0.2)" : "transparent"; }).ofObject(),
         new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
@@ -895,6 +898,7 @@
         {
           background: "transparent",
           ungroupable: true,
+          resizable: true,
           // highlight when dragging into the Group
           mouseDragEnter: function(e, grp, prev) { highlightGroup(e, grp, true); },
           mouseDragLeave: function(e, grp, next) { highlightGroup(e, grp, false); },
@@ -902,14 +906,26 @@
           // when the selection is dropped into a Group, add the selected Parts into that Group;
           // if it fails, cancel the tool, rolling back any changes
           mouseDrop: finishDrop,
-          handlesDragDropForMembers: true,  // don't need to define handlers on member Nodes and Links
+          handlesDragDropForMembers: true // don't need to define handlers on member Nodes and Links
           // Groups containing Nodes lay out their members vertically
+          /*
           layout:
             $(go.GridLayout,
               { wrappingColumn: 1, alignment: go.GridLayout.Position,
                   cellSize: new go.Size(1, 1), spacing: new go.Size(4, 4) })
+          */
         },
         new go.Binding("background", "isHighlighted", function(h) { return h ? "rgba(255,0,0,0.2)" : "transparent"; }).ofObject(),
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        {
+          // the Node.location is at the center of each node
+          locationSpot: go.Spot.Center,
+          //isShadowed: true,
+          //shadowColor: "#888",
+          // handle mouse enter/leave events to show/hide the ports
+          mouseEnter: function (e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function (e, obj) { showPorts(obj.part, false); }
+        },
         $(go.Shape, "Rectangle",
           { fill: null, stroke: "#0099CC", strokeWidth: 2 }),
         $(go.Panel, go.Panel.Vertical,  // title above Placeholder
@@ -936,8 +952,68 @@
         makePort("B", go.Spot.Bottom, true, true)
       );  // end Group and call to add to template Map
 
+      var xGatherGroupTemplate =
+      $(go.Group, go.Panel.Auto,
+          {
+            background: "transparent",
+            ungroupable: true,
+            resizable: true,
+            // highlight when dragging into the Group
+            mouseDragEnter: function(e, grp, prev) { highlightGroup(e, grp, true); },
+            mouseDragLeave: function(e, grp, next) { highlightGroup(e, grp, false); },
+            computesBoundsAfterDrag: true,
+            // when the selection is dropped into a Group, add the selected Parts into that Group;
+            // if it fails, cancel the tool, rolling back any changes
+            mouseDrop: finishDrop,
+            handlesDragDropForMembers: true // don't need to define handlers on member Nodes and Links
+            // Groups containing Nodes lay out their members vertically
+            /*
+            layout:
+              $(go.GridLayout,
+                { wrappingColumn: 1, alignment: go.GridLayout.Position,
+                    cellSize: new go.Size(1, 1), spacing: new go.Size(4, 4) })
+            */
+          },
+          new go.Binding("background", "isHighlighted", function(h) { return h ? "rgba(255,0,0,0.2)" : "transparent"; }).ofObject(),
+          new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+          {
+            // the Node.location is at the center of each node
+            locationSpot: go.Spot.Center,
+            //isShadowed: true,
+            //shadowColor: "#888",
+            // handle mouse enter/leave events to show/hide the ports
+            mouseEnter: function (e, obj) { showPorts(obj.part, true); },
+            mouseLeave: function (e, obj) { showPorts(obj.part, false); }
+          },
+          $(go.Shape, "Rectangle",
+            { fill: null, stroke: "#0099CC", strokeWidth: 2 }),
+          $(go.Panel, go.Panel.Vertical,  // title above Placeholder
+            $(go.Panel, go.Panel.Horizontal,  // button next to TextBlock
+              { stretch: go.GraphObject.Horizontal, background: "#33E55A", margin: 1 },
+              $("SubGraphExpanderButton",
+                { alignment: go.Spot.Right, margin: 5 }),
+              $(go.TextBlock,
+                {
+                  alignment: go.Spot.Left,
+                  editable: true,
+                  margin: 5,
+                  font: "bold 16px sans-serif",
+                  stroke: "#006080"
+                },
+                new go.Binding("text", "text").makeTwoWay())
+            ),  // end Horizontal Panel
+            $(go.Placeholder,
+              { padding: 5, alignment: go.Spot.TopLeft })
+          ),  // end Vertical Panel
+          makePort("T", go.Spot.Top, true, true),
+          makePort("L", go.Spot.Left, true, true),
+          makePort("R", go.Spot.Right, true, true),
+          makePort("B", go.Spot.Bottom, true, true)
+        );  // end Group and call to add to template Map
+
     myDiagram.groupTemplateMap.add("SplitData", dataScatterGroupTemplate);
     myDiagram.groupTemplateMap.add("DataGather", dataGatherGroupTemplate);
+    myDiagram.groupTemplateMap.add("GroupBy", xGatherGroupTemplate);
 
 
     // replace the default Link template in the linkTemplateMap
@@ -1102,8 +1178,9 @@
                         { category: "End", text: "End" },
                         { category: "LSM", text: "LSM" },
                         { category: "Parameter", text: "Parameter" },
-                        { category: "SplitData", text: "Data Scatter", isGroup: true, num_of_splits: "${num_channel} * ${num_beam}", scatter_axis: "frequency"},
-                        { category: "DataGather", text: "Data Gather", isGroup: true, num_of_inputs: "${num_channel} * ${num_beam}", gather_axis: "frequency"},
+                        { category: "SplitData", text: "Scatter", isGroup: true, num_of_splits: "${num_channel} * ${num_beam}", scatter_axis: "frequency"},
+                        { category: "DataGather", text: "Gather", isGroup: true, num_of_inputs: "${num_channel} * ${num_beam}", gather_axis: "frequency"},
+                        { category: "GroupBy", text: "Group By", isGroup: true, num_of_inputs: "${num_channel} * ${num_beam}", gather_axis: "frequency", group_by: "time"},
                         { category: "Variables", text: "Global Variables",
                           columnDefinitions: [
                               // each column definition needs to specify the column used
