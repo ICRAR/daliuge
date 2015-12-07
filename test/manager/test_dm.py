@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import httplib
 import json
 import multiprocessing
 import random
@@ -30,13 +29,14 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from dfms import ngaslite, utils
 from dfms import droputils
+from dfms import ngaslite, utils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import cmdline
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
+from test.manager import testutils
 
 
 class TestDM(unittest.TestCase):
@@ -269,12 +269,12 @@ class TestREST(unittest.TestCase):
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
 
             # The DM is still empty
-            dmInfo = self.get('', restPort)
+            dmInfo = testutils.get(self, '', restPort)
             self.assertEquals(0, len(dmInfo['sessions']))
 
             # Create a session and check it exists
-            self.post('/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
-            dmInfo = self.get('', restPort)
+            testutils.post(self, '/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
+            dmInfo = testutils.get(self, '', restPort)
             self.assertEquals(1, len(dmInfo['sessions']))
             self.assertEquals(sessionId, dmInfo['sessions'][0]['sessionId'])
             self.assertEquals(SessionStates.PRISTINE, dmInfo['sessions'][0]['status'])
@@ -295,19 +295,19 @@ class TestREST(unittest.TestCase):
                                 dropSpec[rel].remove(oid)
                                 dropSpec[rel].append(oid + suffix)
 
-            self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(graph))
+            testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(graph))
 
             # We create two final archiving nodes, but this time from a template
             # available on the server-side
-            self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
-            self.post('/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
 
             # And link them to the leaf nodes of the complex graph
-            self.post('/sessions/%s/graph/link?rhOID=archiving1&lhOID=S%s&linkType=0' % (sessionId, suffix), restPort)
-            self.post('/sessions/%s/graph/link?rhOID=archiving2&lhOID=T%s&linkType=0' % (sessionId, suffix), restPort)
+            testutils.post(self, '/sessions/%s/graph/link?rhOID=archiving1&lhOID=S%s&linkType=0' % (sessionId, suffix), restPort)
+            testutils.post(self, '/sessions/%s/graph/link?rhOID=archiving2&lhOID=T%s&linkType=0' % (sessionId, suffix), restPort)
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy' % (sessionId), restPort, 'completed=SL_A,SL_B,SL_C,SL_D,SL_K', mimeType='application/x-www-form-urlencoded')
+            testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, 'completed=SL_A,SL_B,SL_C,SL_D,SL_K', mimeType='application/x-www-form-urlencoded')
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -317,11 +317,11 @@ class TestREST(unittest.TestCase):
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while self.get('/sessions/%s/status' % (sessionId), restPort) == SessionStates.RUNNING:
+            while testutils.get(self, '/sessions/%s/status' % (sessionId), restPort) == SessionStates.RUNNING:
                 time.sleep(0.2)
 
-            self.assertEquals(SessionStates.FINISHED, self.get('/sessions/%s/status' % (sessionId), restPort))
-            self.delete('/sessions/%s' % (sessionId), restPort)
+            self.assertEquals(SessionStates.FINISHED, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
 
             # We put an NGAS archiving at the end of the chain, let's check that the DROPs were copied over there
             # Since the graph consists on several SleepAndCopy apps, T should contain the message repeated
@@ -335,28 +335,3 @@ class TestREST(unittest.TestCase):
 
         finally:
             dmProcess.terminate()
-
-    def get(self, url, port):
-        conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        conn.request('GET', '/api' + url)
-        res = conn.getresponse()
-        self.assertEquals(httplib.OK, res.status)
-        jsonRes = json.load(res)
-        res.close()
-        conn.close()
-        return jsonRes
-
-    def post(self, url, port, content=None, mimeType=None):
-        conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
-        conn.request('POST', '/api' + url, content, headers)
-        res = conn.getresponse()
-        self.assertEquals(httplib.OK, res.status)
-        conn.close()
-
-    def delete(self, url, port):
-        conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        conn.request('DELETE', '/api' + url)
-        res = conn.getresponse()
-        self.assertEquals(httplib.OK, res.status)
-        conn.close()
