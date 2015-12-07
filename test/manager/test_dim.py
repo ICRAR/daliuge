@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import httplib
 import json
 import multiprocessing
 import random
@@ -32,13 +31,14 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from dfms import utils
 from dfms import droputils
+from dfms import utils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager.composite_manager import DataIslandManager
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
+from test.manager import testutils
 
 
 dimId = 'lala'
@@ -240,16 +240,16 @@ class TestREST(unittest.TestCase):
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
 
             # The DIM is still empty
-            sessions = self.get('/sessions', restPort)
+            sessions = testutils.get(self, '/sessions', restPort)
             self.assertEquals(0, len(sessions))
-            dimStatus = self.get('', restPort)
+            dimStatus = testutils.get(self, '', restPort)
             self.assertEquals(1, len(dimStatus['hosts']))
             self.assertEquals(hostname, dimStatus['hosts'][0])
             self.assertEquals(0, len(dimStatus['sessionIds']))
 
             # Create a session and check it exists
-            self.post('/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
-            sessions = self.get('/sessions', restPort)
+            testutils.post(self, '/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
+            sessions = testutils.get(self, '/sessions', restPort)
             self.assertEquals(1, len(sessions))
             self.assertEquals(sessionId, sessions[0]['sessionId'])
             self.assertDictEqual({hostname: SessionStates.PRISTINE}, sessions[0]['status'])
@@ -262,12 +262,12 @@ class TestREST(unittest.TestCase):
             complexGraphSpec = json.load(pkg_resources.resource_stream('test', 'graphs/complex.js')) # @UndefinedVariable
             for dropSpec in complexGraphSpec:
                 dropSpec['node'] = hostname
-            self.post('/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
-            self.assertEquals({hostname: SessionStates.BUILDING}, self.get('/sessions/%s/status' % (sessionId), restPort))
+            testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
+            self.assertEquals({hostname: SessionStates.BUILDING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
-            self.post('/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
-            self.assertEquals({hostname: SessionStates.RUNNING}, self.get('/sessions/%s/status' % (sessionId), restPort))
+            testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
+            self.assertEquals({hostname: SessionStates.RUNNING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -277,38 +277,13 @@ class TestREST(unittest.TestCase):
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while SessionStates.RUNNING in self.get('/sessions/%s/status' % (sessionId), restPort).viewvalues():
+            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort).viewvalues():
                 time.sleep(0.2)
 
-            self.assertEquals({hostname: SessionStates.FINISHED}, self.get('/sessions/%s/status' % (sessionId), restPort))
-            self.delete('/sessions/%s' % (sessionId), restPort)
-            sessions = self.get('/sessions', restPort)
+            self.assertEquals({hostname: SessionStates.FINISHED}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
+            sessions = testutils.get(self, '/sessions', restPort)
             self.assertEquals(0, len(sessions))
 
         finally:
             dimProcess.terminate()
-
-    def get(self, url, port):
-        conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        conn.request('GET', '/api' + url)
-        res = conn.getresponse()
-        self.assertEquals(httplib.OK, res.status)
-        jsonRes = json.load(res)
-        res.close()
-        conn.close()
-        return jsonRes
-
-    def post(self, url, port, content=None, mimeType=None):
-        conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
-        conn.request('POST', '/api' + url, content, headers)
-        res = conn.getresponse()
-        self.assertEquals(httplib.OK, res.status)
-        conn.close()
-
-    def delete(self, url, port):
-        conn = httplib.HTTPConnection('localhost', port, timeout=3)
-        conn.request('DELETE', '/api' + url)
-        res = conn.getresponse()
-        self.assertEquals(httplib.OK, res.status)
-        conn.close()
