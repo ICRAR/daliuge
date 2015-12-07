@@ -19,10 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.manager.drop_manager import DROPManager
 """
-A data object managers manages all local Data Object instances
-on a single address space
+Module containing the NodeManager, which directly manages DROP instances, and
+thus represents the bottom of the DROP management hierarchy.
 """
 
 import importlib
@@ -34,6 +33,7 @@ import sys
 from dfms import droputils
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository
+from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import Session
 
 
