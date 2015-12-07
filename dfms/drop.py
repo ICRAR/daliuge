@@ -37,7 +37,7 @@ import math
 
 from ddap_protocol import DROPStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
-    DROPLinkType
+    DROPLinkType, DROPPhases
 from dfms.event import EventFirer
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 
@@ -140,7 +140,14 @@ class AbstractDROP(EventFirer):
         self._parent   = None
         self._status   = None
         self._statusLock = threading.RLock()
-        self._phase    = None
+
+        # Current and target phases.
+        # Phases represent the resiliency of data. An initial phase of PLASMA
+        # is set on each DROP representing its lack of non-transient storage
+        # support. A target phase is also set to hint the Data Lifecycle Manager
+        # about the level of resilience that this DROP should achieve.
+        self._phase = DROPPhases.PLASMA
+        self._targetPhase = self._getArg(kwargs, 'targetPhase', DROPPhases.GAS)
 
         # Calculating the checksum and maintaining the data size internally
         # implies that the data represented by this DROP is written
@@ -174,9 +181,16 @@ class AbstractDROP(EventFirer):
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
         # graph via the DataIslandManager, but in simpler scenarios such as
-        # tests or graph submissions via the DROPManager it might be
-        # missing. We thus default to '127.0.0.1'
-        self._node = self._getArg(kwargs, 'node', '127.0.0.1')
+        # tests or graph submissions via the NodeManager it might be
+        # missing.
+        self._node = self._getArg(kwargs, 'node', None)
+
+        # The host representing the Data Island where this DROP resides
+        # This piece of information is mandatory when submitting the physical
+        # graph via the MasterManager, but in simpler scenarios such as tests or
+        # graphs submissions via the DataIslandManager or NodeManager it might
+        # missing.
+        self._dataIsland = self._getArg(kwargs, 'island', None)
 
         # Expected lifespan for this object, used by to expire them
         lifespan = -1
@@ -213,7 +227,7 @@ class AbstractDROP(EventFirer):
         if kwargs.has_key(key):
             val = kwargs.pop(key)
         elif logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Defaulting %s to %s" % (key, str(val)))
+            logger.debug("Defaulting %s to %s in %r" % (key, str(val), self))
         return val
 
     def __hash__(self):
@@ -519,6 +533,10 @@ class AbstractDROP(EventFirer):
         self._phase = phase
 
     @property
+    def targetPhase(self):
+        return self._targetPhase
+
+    @property
     def expirationDate(self):
         return self._expirationDate
 
@@ -808,6 +826,10 @@ class AbstractDROP(EventFirer):
     @property
     def node(self):
         return self._node
+
+    @property
+    def dataIsland(self):
+        return self._dataIsland
 
     @property
     def uri(self):
