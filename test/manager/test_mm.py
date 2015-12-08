@@ -34,63 +34,69 @@ import pkg_resources
 from dfms import droputils
 from dfms import utils
 from dfms.ddap_protocol import DROPStates
-from dfms.manager.composite_manager import DataIslandManager
+from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
 from test.manager import testutils
+from dfms.manager import constants
 
 
 dimId = 'lala'
-hostname = ''
+hostname = 'localhost'
 
-def setUpDimTests(self):
+def setUpMMTests(self):
 
     # SleepAndCopyApps don't take time to execute
     graphsRepository.defaultSleepTime = 0
 
-    # Start a DM. This is the DM which the DIM connects to.
-    #
-    # We start it here to avoid the DIM connecting via SSH to the localhost
-    # and spawning a dfmsDM process; both things need proper setup which we
-    # cannot do here (ssh publick key installation, ssh service up, proper
-    # environment available, etc)
-    #
-    # Anyway, this is also useful because we can check that things have
-    # occurred at the DM level in the test cases
-    dmId = 'nm_' + hostname
-    self.dm = NodeManager(dmId, False)
-    self._dmDaemon = Pyro4.Daemon(host=hostname, port=4000)
-    self._dmDaemon.register(self.dm, objectId=dmId)
-    threading.Thread(target=lambda: self._dmDaemon.requestLoop()).start()
+    # Start a NM and a DIM. See test_dim for more details
+    nmId = 'nm_' + hostname
+    dimId = 'dim_' + hostname
+    mmId = 'mm_' + hostname
+
+    self.nm = NodeManager(nmId, False)
+    self._nmDaemon = Pyro4.Daemon(host=hostname, port=constants.NODE_DEFAULT_PORT)
+    self._nmDaemon.register(self.nm, objectId=nmId)
+    threading.Thread(target=lambda: self._nmDaemon.requestLoop()).start()
 
     # The DIM we're testing
     self.dim = DataIslandManager(dimId, [hostname])
+    self._dimDaemon = Pyro4.Daemon(host=hostname, port=constants.ISLAND_DEFAULT_PORT)
+    self._dimDaemon.register(self.dim, objectId=dimId)
+    threading.Thread(target=lambda: self._dimDaemon.requestLoop()).start()
 
-def tearDownDimTests(self):
-    self._dmDaemon.shutdown()
+    self.mm = MasterManager(mmId, [hostname])
+
+def tearDownMMTests(self):
+    self._nmDaemon.shutdown()
+    self._dimDaemon.shutdown()
     self.dim.shutdown()
-    # shutdown() is asynchronous, make sure it finishes
-    while portIsOpen(hostname, 4000):
+    self.mm.shutdown()
+
+    # daemon.shutdown() is asynchronous, make sure it finishes
+    while portIsOpen(hostname, constants.NODE_DEFAULT_PORT):
+        time.sleep(0.01)
+    while portIsOpen(hostname, constants.ISLAND_DEFAULT_PORT):
         time.sleep(0.01)
 
-class TestDIM(unittest.TestCase):
+class TestMM(unittest.TestCase):
 
-    setUp = setUpDimTests
-    tearDown = tearDownDimTests
+    setUp = setUpMMTests
+    tearDown = tearDownMMTests
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
-                     {'oid':'C', 'type':'plain', 'storage':'memory', 'node':hostname}]
-        self.dim.createSession(sessionId)
-        self.dim.addGraphSpec(sessionId, graphSpec)
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname, 'consumers':['B']},
+                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname, 'island':hostname},
+                     {'oid':'C', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname}]
+        self.mm.createSession(sessionId)
+        self.mm.addGraphSpec(sessionId, graphSpec)
 
     def test_createSession(self):
         sessionId = 'lalo'
-        self.dim.createSession(sessionId)
-        self.assertEquals(1, len(self.dm.getSessionIds()))
-        self.assertEquals(sessionId, self.dm.getSessionIds()[0])
+        self.mm.createSession(sessionId)
+        self.assertEquals(1, len(self.nm.getSessionIds()))
+        self.assertEquals(sessionId, self.nm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
 
@@ -98,19 +104,33 @@ class TestDIM(unittest.TestCase):
 
         # No node specified
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory'}]
-        self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # Wrong node specified
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':'unknown_host'}]
-        self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+
+        # No island specified
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
+        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+
+        # Wrong island specified
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'island':'unknown_host'}]
+        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # OK
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
-        self.dim.createSession(sessionId)
-        self.dim.addGraphSpec(sessionId, graphSpec)
-        graphFromDM = self.dm.getGraph(sessionId)
-        self.assertEquals(1, len(graphFromDM))
-        dropSpec = graphFromDM.values()[0]
+        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'island':hostname}]
+        self.mm.createSession(sessionId)
+        self.mm.addGraphSpec(sessionId, graphSpec)
+
+        graphFromNM = self.nm.getGraph(sessionId)
+        graphFromDIM = self.dim.getGraph(sessionId)
+        graphFromMM = self.dim.getGraph(sessionId)
+        self.assertDictEqual(graphFromNM, graphFromDIM)
+        self.assertDictEqual(graphFromMM, graphFromDIM)
+
+        self.assertEquals(1, len(graphFromMM))
+        dropSpec = graphFromMM.values()[0]
         self.assertEquals('A', dropSpec['oid'])
         self.assertEquals('plain', dropSpec['type'])
         self.assertEquals('memory', dropSpec['storage'])
@@ -121,7 +141,7 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId)
+        uris = self.mm.deploySession(sessionId)
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
 
@@ -138,7 +158,7 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId, completedDrops=['A'])
+        uris = self.mm.deploySession(sessionId, completedDrops=['A'])
         c = Pyro4.Proxy(uris['C'])
 
         # This should be happening before the sleepTime expires
@@ -150,21 +170,24 @@ class TestDIM(unittest.TestCase):
     def test_sessionStatus(self):
 
         def assertSessionStatus(sessionId, status):
-            sessionStatus = self.dim.getSessionStatus(sessionId)
-            self.assertEquals(1, len(sessionStatus))
-            self.assertIn(hostname, sessionStatus)
-            self.assertEquals(status, sessionStatus[hostname])
-            self.assertEquals(status, self.dm.getSessionStatus(sessionId))
+            sessionStatusMM  = self.mm.getSessionStatus(sessionId)
+            sessionStatusDIM = self.dim.getSessionStatus(sessionId)
+            sessionStatusNM  = self.nm.getSessionStatus(sessionId)
+            self.assertEquals(1, len(sessionStatusMM))
+            self.assertIn(hostname, sessionStatusMM)
+            self.assertDictEqual(sessionStatusDIM, sessionStatusMM[hostname])
+            self.assertEquals(sessionStatusNM, sessionStatusMM[hostname][hostname])
+            self.assertEquals(sessionStatusNM, status)
 
         sessionId = 'lala'
-        self.dim.createSession(sessionId)
+        self.mm.createSession(sessionId)
         assertSessionStatus(sessionId, SessionStates.PRISTINE)
 
         sessionId = 'lalo'
         self.createSessionAndAddTypicalGraph(sessionId)
         assertSessionStatus(sessionId, SessionStates.BUILDING)
 
-        uris = self.dm.deploySession(sessionId)
+        uris = self.nm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
         a = Pyro4.Proxy(uris['A'])
@@ -181,25 +204,29 @@ class TestDIM(unittest.TestCase):
         sessionId = 'lalo'
         self.createSessionAndAddTypicalGraph(sessionId)
 
-        graphSpecFromDim = self.dim.getGraph(sessionId)
-        self.assertEquals(3, len(graphSpecFromDim))
+        graphSpecFromMM = self.mm.getGraph(sessionId)
+        self.assertEquals(3, len(graphSpecFromMM))
         for oid in ('A','B','C'):
-            self.assertIn(oid, graphSpecFromDim)
-        graphSepcFromDM = self.dm.getGraph(sessionId)
-        self.assertDictEqual(graphSepcFromDM, graphSpecFromDim)
+            self.assertIn(oid, graphSpecFromMM)
+        graphSepcFromNM = self.nm.getGraph(sessionId)
+        graphSepcFromDIM = self.dim.getGraph(sessionId)
+        self.assertDictEqual(graphSepcFromNM, graphSpecFromMM)
+        self.assertDictEqual(graphSepcFromDIM, graphSpecFromMM)
 
     def test_getGraphStatus(self):
 
         def assertGraphStatus(sessionId, expectedStatus):
-            graphStatusByDim = self.dim.getGraphStatus(sessionId)
-            graphStatusByDM = self.dm.getGraphStatus(sessionId)
-            self.assertDictEqual(graphStatusByDim, graphStatusByDM)
-            for dropStatus in graphStatusByDim.viewvalues():
+            graphStatusByDIM = self.dim.getGraphStatus(sessionId)
+            graphStatusByDM = self.nm.getGraphStatus(sessionId)
+            graphStatusByMM = self.mm.getGraphStatus(sessionId)
+            self.assertDictEqual(graphStatusByDIM, graphStatusByMM)
+            self.assertDictEqual(graphStatusByDIM, graphStatusByDM)
+            for dropStatus in graphStatusByMM.viewvalues():
                 self.assertEquals(expectedStatus, dropStatus['status'])
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
-        uris = self.dim.deploySession(sessionId)
+        uris = self.mm.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
         a = Pyro4.Proxy(uris['A'])
@@ -211,15 +238,15 @@ class TestDIM(unittest.TestCase):
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
 
 
-def startDIM(restPort):
+def startMM(restPort):
     # Make sure the graph executes quickly once triggered
     from dfms.manager import cmdline
-    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname, '-q'])
+    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','mmID','-N',hostname, '-q'])
 
 class TestREST(unittest.TestCase):
 
-    setUp = setUpDimTests
-    tearDown = tearDownDimTests
+    setUp = setUpMMTests
+    tearDown = tearDownMMTests
 
     def test_fullRound(self):
         """
@@ -230,11 +257,11 @@ class TestREST(unittest.TestCase):
         sessionId = 'lala'
         restPort  = 8888
 
-        dimProcess = multiprocessing.Process(target=lambda restPort: startDIM(restPort), args=[restPort])
-        dimProcess.start()
+        mmProcess = multiprocessing.Process(target=lambda restPort: startMM(restPort), args=[restPort])
+        mmProcess.start()
 
         try:
-            self.assertTrue(dimProcess.is_alive())
+            self.assertTrue(mmProcess.is_alive())
 
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
@@ -286,4 +313,4 @@ class TestREST(unittest.TestCase):
             self.assertEquals(0, len(sessions))
 
         finally:
-            dimProcess.terminate()
+            mmProcess.terminate()
