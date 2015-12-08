@@ -99,6 +99,13 @@ def writeToRemotePort(host, port, data=None, timeout=0):
                 logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]' % (host, port, thisTimeout))
             return False
         except socket.error as e:
+            # If the connection becomes suddenly closed from the server-side.
+            # We assume that it's not re-opening any time soon, so we simply
+            # return False
+            if e.errno == errno.ECONNRESET:
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug("Connection closed by %s:%d, assuming it will stay closed" % (host, port))
+                return False
             # If the port is closed we keep trying until enough time has gone by
             if e.errno == errno.ECONNREFUSED:
                 if timeout is not None:

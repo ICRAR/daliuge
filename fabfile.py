@@ -6,15 +6,11 @@ Authors: A Wicenec and D Pallot
 ICRAR 2015
 """
 import os
-import time, urllib
 
-from fabric.api import run, sudo, put, env, require, local, task
-from fabric.context_managers import cd, hide, settings
-from fabric.contrib.console import confirm
-from fabric.contrib.files import append, sed, comment, exists
-from fabric.decorators import task, serial
-from fabric.operations import prompt
-from fabric.utils import puts, abort, fastprint
+from fabric.api import run, put, env, local
+from fabric.context_managers import cd
+from fabric.contrib.files import append, exists
+from fabric.decorators import task
 
 
 APP_PYTHON_VERSION = '2.7'
@@ -287,7 +283,3 @@ def virtualenv_clean():
     print "### REMOVING VIRTUAL ENV ###"
 
     run('rm -rf {0}'.format(env.APP_DIR_ABS))
-
-
-
-
