@@ -38,7 +38,8 @@ setup(
       url='',
       packages=find_packages(),
       package_data = {
-        'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*']
+        'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
+        'dfms.lg': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map']
       },
 
       # Keep alpha-sorted please

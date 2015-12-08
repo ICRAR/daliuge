@@ -28,24 +28,59 @@ which will then be deployed and monitored by the Physical Graph Manager
 """
 import json, os
 from dfms.drop import dropdict
-from UserDict import UserDict
+from collections import defaultdict
 
 class GraphException(Exception):
     pass
 
-class LGNode(UserDict):
-    def __init__(self, *arg, **kw):
-        UserDict.__init__(self, *arg, **kw)
-        self._outs = []
+class LGNode():
+    def __init__(self, jd, group_q, done_dict):
+        """
+        jd: json_dict (dict)
+        group_q: group queue (defaultdict)
+        done_dict: LGNode that have been processed (Dict)
+        """
+        self._jd = jd
+        self._children = []
+        self._outs = [] # event flow target
+        if (jd.has_key('isGroup') and jd['isGroup'] == True):
+            for wn in group_q[self.id]:
+                wn.group = self
+                self.add_child(wn)
+            group_q.pop(self.id) # not thread safe
 
-    def get_id(self):
-        return self['key']
+        if (jd.has_key('group')):
+            grp_id = jd['group']
+            if (done_dict.has_key(grp_id)):
+                grp_nd = done_dict[grp_id]
+                self.group = grp_nd
+                grp_nd.add_child(self)
+            else:
+                group_q[grp_id].append(self)
 
-    def add_box(self, lg_node):
-        pass
+        done_dict[self.id] = self
+
+    @property
+    def jd(self):
+        return self._jd
+
+    @property
+    def id(self):
+        return self._jd['key']
+
+    @property
+    def group(self):
+        return self._grp
+
+    @group.setter
+    def group(self, value):
+        self._grp = value
 
     def add_output(self, lg_node):
-        pass
+        self._outs.append(lg_node)
+
+    def add_child(self, lg_node):
+        self._children.append(lg_node)
 
 class LG():
     """
@@ -60,15 +95,23 @@ class LG():
             raise GraphException("Logical graph {0} not found".format(json_path))
         with open(json_path) as df:
             lg = json.load(df)
+            self._done_dict = dict()
+            self._group_q = defaultdict(list)
+            self._output_q = defaultdict(list)
+            for jd in lg['nodeDataArray']:
+                LGNode(jd, self._group_q, self._done_dict)
+
+            for lk in lg['linkDataArray']:
+                self._done_dict[lk['from']].add_output(self._done_dict[lk['to']])
+
+            """
             sd = self._find_start(lg):
             if (sd is None):
                 raise GraphException("No start DROP!")
             else:
                 self._start = sd
-            """
-            parse the graph
-            """
             self._parse_local(None, lg)
+            """
 
     def _find_start(self, lg):
         """
