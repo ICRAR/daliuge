@@ -33,6 +33,7 @@ import types
 
 import Pyro4
 
+from dfms.ddap_protocol import DROPStates
 from dfms.drop import AppDROP
 from dfms.io import IOForURL, OpenMode
 
@@ -44,25 +45,12 @@ class EvtConsumer(object):
     Small utility class that sets the internal flag of the given threading.Event
     object when consuming a DROP. Used throughout the tests as a barrier to wait
     until all DROPs of a given graph have executed.
-
-    TODO: This class is currently connected to each DROP by calling
-          drop.addConsumer(evtConsumer). This goes against the idea of having
-          method calls only between DROPs, while external entities simply listen
-          to events. The bad news is that the default serializer class used by
-          Pyro >= 4.20 is the 'serpent' serializer, not the 'pickle' one. In the
-          'serpent' serializer "most custom classes aren't dealt with
-          automatically", as shown in the Pyro documentation (see link below).
-          Thus, in order to support passing events via Pyro we'd need to
-          manually configure all our Pyro systems (manually tested, it works)
-          with:
-
-           Pyro4.config.SERIALIZER = 'pickle'
-           Pyro4.config.SERIALIZERS_ACCEPTED = ['pickle']
     '''
     def __init__(self, evt):
         self._evt = evt
-    def dropCompleted(self, drop, status):
-        self._evt.set()
+    def handleEvent(self, e):
+        if e.status in (DROPStates.COMPLETED, DROPStates.ERROR):
+            self._evt.set()
 
 
 class DROPWaiterCtx(object):
@@ -88,7 +76,7 @@ class DROPWaiterCtx(object):
     def __enter__(self):
         for drop in self._drops:
             evt = threading.Event()
-            drop.addConsumer(EvtConsumer(evt))
+            drop.subscribe(EvtConsumer(evt), 'status')
             self._evts.append(evt)
         return self
     def __exit__(self, typ, value, tb):
@@ -136,7 +124,7 @@ class EvtConsumerProxyCtx(object):
             consumer = EvtConsumer(evt)
             uri = daemon.register(consumer)
             consumerProxy = Pyro4.Proxy(uri)
-            drop.addConsumer(consumerProxy)
+            drop.subscribe(consumerProxy, 'status')
             self._evts.append(evt)
 
         self.daemon = daemon
