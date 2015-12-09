@@ -273,10 +273,6 @@ class AbstractDROP(EventFirer):
         invoked. Failing to do so will result in DROPs not expiring and
         getting deleted.
         """
-        # TODO: We could also allow opening EXPIRED DROPs, in which case
-        # it could trigger its "undeletion", but this would require an automatic
-        # recalculation of its new expiration date, which is maybe something we
-        # don't have to have
         if self.status != DROPStates.COMPLETED:
             raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
 
@@ -513,6 +509,13 @@ class AbstractDROP(EventFirer):
         """
 
     def _fire(self, eventType, **kwargs):
+        """
+        Delivers an event of `eventType` to all interested listeners.
+
+        All the key-value pairs contained in `attrs` are set as attributes of
+        the event being sent. On top of that, the `uid` and `oid` attributes are
+        also added, carrying the uid and oid of the current DROP, respectively.
+        """
         kwargs['oid'] = self.oid
         kwargs['uid'] = self.uid
         self._fireEvent(eventType, **kwargs)
@@ -520,8 +523,7 @@ class AbstractDROP(EventFirer):
     @property
     def phase(self):
         """
-        This DROP's phase. The phase indicates the availability of a
-        DROP.
+        This DROP's phase. The phase indicates the resilience of a DROP.
         """
         return self._phase
 
