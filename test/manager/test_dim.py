@@ -41,8 +41,7 @@ from dfms.utils import portIsOpen
 from test.manager import testutils
 
 
-dimId = 'lala'
-hostname = ''
+hostname = 'localhost'
 
 def setUpDimTests(self):
 
@@ -58,6 +57,7 @@ def setUpDimTests(self):
     #
     # Anyway, this is also useful because we can check that things have
     # occurred at the DM level in the test cases
+    dimId = 'lala'
     dmId = 'nm_' + hostname
     self.dm = NodeManager(dmId, False)
     self._dmDaemon = Pyro4.Daemon(host=hostname, port=4000)
