@@ -1220,7 +1220,7 @@ class BarrierAppDROP(AppDROP):
             self.execStatus = AppDROPStates.RUNNING
             self.run()
             self.execStatus = AppDROPStates.FINISHED
-        except Exception as e:
+        except Exception:
             self.execStatus = AppDROPStates.ERROR
             drop_state = DROPStates.ERROR
             logger.exception('Error while executing %r' % (self))
