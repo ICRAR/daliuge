@@ -19,14 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import ABCMeta, abstractmethod
-import psutil
-import warnings
-import json
-import logging
-import os
-from dfms.drop import FileDROP, InMemoryDROP, NgasDROP
-
 '''
 Implementation of the different storage layers that are then used by the HSM to
 store data. Each layer keeps track of its used space, and knows how to create
@@ -34,6 +26,15 @@ DROPs that use that layer as its storage mechanism.
 
 @author: rtobar
 '''
+
+from abc import ABCMeta, abstractmethod
+import json
+import logging
+import os
+
+import psutil
+
+from dfms.drop import FileDROP, InMemoryDROP, NgasDROP
 
 
 logger = logging.getLogger(__name__)
@@ -159,13 +160,14 @@ class NgasStore(AbstractStore):
         try:
             from ngamsPClient import ngamsPClient  # @UnusedImport
         except:
-            warnings.warn("NGAMS client libs not found, cannot use NGAMS as a store")
+            logger.error("NGAMS client libs not found, cannot use NGAMS as a store")
             raise
 
         # Some sane defaults
         if not host:
             host = 'localhost'
-            warnings.warn('Defaulting NGAS host to %s' % (host))
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Defaulting NGAS host to %s' % (host))
         if not port:
             port = 7777
             if logger.isEnabledFor(logging.DEBUG):

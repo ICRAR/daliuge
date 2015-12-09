@@ -24,7 +24,7 @@ from cStringIO import StringIO
 import logging
 import os
 import urlparse
-import warnings
+
 from dfms import ngaslite
 
 
@@ -249,7 +249,7 @@ class NgasIO(DataIO):
         try:
             from ngamsPClient import ngamsPClient  # @UnusedImport @UnresolvedImport
         except:
-            warnings.warn("No NGAMS client libs found, cannot use NgasIO")
+            logger.error("No NGAMS client libs found, cannot use NgasIO")
             raise
 
         super(NgasIO, self).__init__()
