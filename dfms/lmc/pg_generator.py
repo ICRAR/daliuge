@@ -105,6 +105,9 @@ class LGNode():
     def group(self, value):
         self._grp = value
 
+    def has_group(self):
+        return self.group is not None
+
     def has_converted(self):
         return self._converted
 
@@ -160,7 +163,7 @@ class LGNode():
     def is_gather(self):
         return (self._jd['category'] == 'DataGather')
 
-    def is_barrier(self):
+    def is_groupby(self):
         return (self._jd['category'] == 'GroupBy')
 
     @property
@@ -189,6 +192,8 @@ class LGNode():
         oid = self.make_oid(iid)
         dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
         kwargs['iid'] = iid
+        kwargs['dt'] = self.jd['category']
+        kwargs['nm'] = self.jd['text']
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -230,7 +235,7 @@ class LG():
 
         self._drop_list = []
 
-    def to_pg_tpl(self, input_dict, curr_node=None, iid=0):
+    def to_pg_tpl(self, input_dict, curr_node=None, iid=-1):
         """
         convert lg to physical graph template (pg_tpl)
 
@@ -249,25 +254,27 @@ class LG():
 
         1. traverse the graph from start
         """
+
         if (curr_node is None):
             curr_node = self.start_node
 
         for input_node in curr_node.inputs:
             if (not input_node.has_converted()):
-                self.to_pg_tpl(input_dict, input_node)
+                self.to_pg_tpl(input_dict, input_node, iid=iid)
 
-        # This appears wrong, what if curr_node is also a scatter
-        if (curr_node.group.is_scatter() and (not curr_node.group.has_converted())):
+        if (curr_node.has_group() and curr_node.group.is_scatter() and (not curr_node.group.has_converted())):
             curr_node = curr_node.group
 
         #depth first traversal
         if (curr_node.is_group()):
             curr_node.complete_conversion()
-            if (curr_node.is_scatter()):
+            if (curr_node.is_scatter() and curr_node.has_child()):
                 for i in range(curr_node.dop):
                     #go over each child
-                    for ch_node in curr_node.children:
-                        self.to_pg_tpl(input_dict, ch_node, i)
+                    #for ch_node in curr_node.children:
+                    # get a random one
+                    ch_node = curr_node.children[0]
+                    self.to_pg_tpl(input_dict, ch_node, '{0}/{1}'.format(iid, i))
             elif (curr_node.is_groupby()):
                 """
                 Implement a dict / hashtable
@@ -275,7 +282,7 @@ class LG():
                 the keys in this dict determines the number of groups
                 """
                 grpby_dict = defaultdict(list)
-                prod_list = input_dict[curr_node.id]
+                prod_list = input_dict[curr_node.make_oid(iid=iid)]
                 for prod in prod_list:
                     #prod_iid = prod['iid']
                     grpby_dict[prod['iid']].append(prod)
@@ -289,9 +296,9 @@ class LG():
                 """
                 if gather is inside a scatter, need to identify the iid
                 """
-                prod_list = input_dict[curr_node.id]
+                prod_list = input_dict[curr_node.make_oid(iid=iid)]
                 # this should be a BarrierDrop
-                gather_drop = curr_node.make_single_drop(iid=curr_node.iid)
+                gather_drop = curr_node.make_single_drop(iid=iid)
                 try:
                     gather_width = int(curr_node.jd['num_of_inputs'])
                 except:
@@ -301,22 +308,23 @@ class LG():
                     prodd.addOutput(gather_drop)
                     gather_drop.addInput(prodd)
             else:
-                # do gathering
+                # do nothing
                 pass
         else:
             curr_drop = curr_node.make_single_drop(iid)
             curr_node.complete_conversion()
+            self._drop_list.append(curr_drop)
             # find curr_node's producers (DROPs)
-            prod_list = input_dict[curr_node.id]
+            prod_list = input_dict[curr_node.make_oid(iid=iid)]
             #establish the PG links
             for prod in prod_list:
                 prod.addOutput(curr_drop)
                 curr_drop.addInput(prod)
 
-            # prefil a list of producers for each "next" LGNode
+            # prefill a list of producers for each "next" LGNode
             for next_node in curr_node.outputs:
-                input_dict[next_node.id].append(curr_drop)
-                self.to_pg_tpl(input_dict, next_node)
+                input_dict[next_node.make_oid(iid=iid)].append(curr_drop)
+                self.to_pg_tpl(input_dict, next_node, iid=iid)
 
     @property
     def start_node(self):
