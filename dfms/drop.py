@@ -234,10 +234,7 @@ class AbstractDROP(EventFirer):
         return hash(self._uid)
 
     def __repr__(self):
-        re = "%s %s/%s" % (self.__class__.__name__, self.oid, self.uid)
-        if self.location:
-            re += "@{0}".format(self.location)
-        return re
+        return "%s %s/%s" % (self.__class__.__name__, self.oid, self.uid)
 
     def initialize(self, **kwargs):
         """
@@ -810,20 +807,6 @@ class AbstractDROP(EventFirer):
         return (self.status == DROPStates.COMPLETED)
 
     @property
-    def location(self):
-        """
-        An attribute indicating the physical location of this DROP. Its
-        value doesn't necessarily represent the real physical location of the
-        object or its data, and should simply be used as an informal piece of
-        information
-        """
-        return self._location
-
-    @location.setter
-    def location(self, value):
-        self._location = value
-
-    @property
     def node(self):
         return self._node
 
@@ -1220,7 +1203,7 @@ class BarrierAppDROP(AppDROP):
             self.execStatus = AppDROPStates.RUNNING
             self.run()
             self.execStatus = AppDROPStates.FINISHED
-        except Exception as e:
+        except Exception:
             self.execStatus = AppDROPStates.ERROR
             drop_state = DROPStates.ERROR
             logger.exception('Error while executing %r' % (self))
