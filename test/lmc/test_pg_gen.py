@@ -30,4 +30,4 @@ class TestPGGen(unittest.TestCase):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
         #fp = os.path.realpath("{0}/../../lg/web/lofar_std.json".format(os.path.dirname(os.path.realpath(__file__))))
         lg = LG(fp)
-        self.assertEquals(len(lg._done_dict.keys()), 39)
+        self.assertEquals(len(lg._done_dict.keys()), 36)
