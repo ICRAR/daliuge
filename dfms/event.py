@@ -39,6 +39,9 @@ class Event(object):
     def __init__(self):
         self.type = None
 
+    def __repr__(self, *args, **kwargs):
+        return 'Event %r' % (self.__dict__)
+
 class EventFirer(object):
     """
     An object that fires events.

@@ -524,6 +524,8 @@ class TestDROP(unittest.TestCase):
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
             self.assertEquals(c.status, DROPStates.INITIALIZED)
+            self.assertEquals(b.status, DROPStates.INITIALIZED)
+            self.assertEquals(b.execStatus, AppDROPStates.NOT_RUN)
             # Now let b consume a
             with DROPWaiterCtx(self, [c]):
                 b.dropCompleted('a', DROPStates.COMPLETED)
@@ -555,8 +557,7 @@ class TestDROP(unittest.TestCase):
                 outputDrop.write(self._lastChar)
             def dropCompleted(self, uid, status):
                 self.execStatus = AppDROPStates.FINISHED
-                for outputDrop in self.outputs:
-                    outputDrop.producerFinished(self.uid, self.status)
+                self._notifyAppIsFinished()
 
         a = InMemoryDROP('a', 'a')
         b = LastCharWriterApp('b', 'b')

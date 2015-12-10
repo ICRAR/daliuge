@@ -175,7 +175,14 @@ class AbstractDROP(EventFirer):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
-        # Maybe we want to have a different default value for this one?
+        # The execution mode.
+        # When set to DROP (the default) the graph execution will be driven by
+        # DROPs themselves by firing and listening to events, and reacting
+        # accordingly by executing themselves or moving to the COMPLETED state.
+        # When set to EXTERNAL, DROPs do no react to these events, and remain
+        # in the state they currently are. In this case an external entity must
+        # listen to the events and decide when to trigger the execution of the
+        # applications.
         self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DROP)
 
         # The physical node where this DROP resides.
@@ -619,20 +626,15 @@ class AbstractDROP(EventFirer):
         Adds a consumer to this DROP.
 
         Consumers are normally (but not necessarily) AppDROPs that get
-        notified when this DROP moves into the COMPLETED state. This is
-        notified by calling the consumer's `dropCompleted` method with the
-        UID of this DROP.
+        notified when this DROP moves into the COMPLETED or ERROR states.
+        This is done by firing an event of type `dropCompleted` to which the
+        consumer subscribes to.
 
         This is one of the key mechanisms by which the DROP graph is
         executed automatically. If AppDROP B consumes DROP A, then
         as soon as A transitions to COMPLETED B will be notified and will
         probably start its execution.
         """
-
-        # Consumers have a "consume" method that gets invoked when
-        # this DROP moves to COMPLETED
-        if not hasattr(consumer, 'dropCompleted'):
-            raise Exception("The consumer %s doesn't have a 'dropCompleted' method, cannot add to %s" % (consumer, self))
 
         # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
@@ -645,6 +647,15 @@ class AbstractDROP(EventFirer):
             return
         logger.debug('Adding new consumer for DROP %s/%s: %s' %(self.oid, self.uid, consumer))
         self._consumers.append(consumer)
+
+        # Subscribe the consumer to events sent when this DROP moves to
+        # COMPLETED. This way the consumer will be notified that its input has
+        # finished.
+        # This only happens if this DROP's execution mode is 'DROP'; otherwise
+        # an external entity will trigger the execution of the consumer at the
+        # right time
+        if self.executionMode == ExecutionMode.DROP:
+            self.subscribe(consumer, 'dropCompleted')
 
         # Automatic back-reference
         if hasattr(consumer, 'addInput'):
@@ -680,11 +691,20 @@ class AbstractDROP(EventFirer):
         if hasattr(producer, 'addOutput'):
             producer.addOutput(self)
 
+    def handleEvent(self, e):
+        """
+        Handles the arrival of a new event. Events are delivered from those
+        objects this DROP is subscribed to.
+        """
+        if e.type == 'producerFinished':
+            self.producerFinished(e.uid, e.status)
+
     def producerFinished(self, uid, drop_state):
         """
-        Callback called by each of the producers of this DROP when their
-        execution finishes. Once all producers have finished this DROP
-        moves to the COMPLETED state.
+        Method called each time one of the producers of this DROP finishes
+        its execution. Once all producers have finished this DROP moves to the
+        COMPLETED state (or to ERROR if one of the producers is on the ERROR
+        state).
 
         This is one of the key mechanisms through which the execution of a
         DROP graph is accomplished. If AppDROP A produces DROP
@@ -755,6 +775,15 @@ class AbstractDROP(EventFirer):
         if hasattr(streamingConsumer, 'addStreamingInput'):
             streamingConsumer.addStreamingInput(self)
 
+        # Subscribe the streaming consumer to events sent when this DROP moves
+        # to COMPLETED. This way the streaming consumer will be notified that
+        # its input has finished
+        # This only happens if this DROP's execution mode is 'DROP'; otherwise
+        # an external entity will trigger the execution of the consumer at the
+        # right time
+        if self.executionMode == ExecutionMode.DROP:
+            self.subscribe(streamingConsumer, 'dropCompleted')
+
     def setError(self):
         '''
         Moves this DROP to the ERROR state.
@@ -768,10 +797,8 @@ class AbstractDROP(EventFirer):
             logger.info("Moving DROP %s/%s to ERROR" % (self._oid, self._uid))
         self.status = DROPStates.ERROR
 
-        if self._executionMode == ExecutionMode.DROP:
-            for consumer in self._consumers + self._streamingConsumers:
-                consumer.dropCompleted(self.uid, DROPStates.ERROR)
-
+        # Signal our subscribers that the show is over
+        self._fire('dropCompleted', status=DROPStates.ERROR)
 
     def setCompleted(self):
         '''
@@ -792,13 +819,8 @@ class AbstractDROP(EventFirer):
             logger.info("Moving DROP %s/%s to COMPLETED" % (self._oid, self._uid))
         self.status = DROPStates.COMPLETED
 
-        # Signal our normal/streaming consumers that the show is over
-        # This happens only if this DROP's execution mode is DROP; in the case
-        # that its value is EXTERNAL we don't signal our consumers since an
-        # external entity will take care of that
-        if self._executionMode == ExecutionMode.DROP:
-            for consumer in self._consumers + self._streamingConsumers:
-                consumer.dropCompleted(self.uid, DROPStates.COMPLETED)
+        # Signal our subscribers that the show is over
+        self._fire('dropCompleted', status=DROPStates.COMPLETED)
 
     def isCompleted(self):
         '''
@@ -1084,6 +1106,10 @@ class AppDROP(ContainerDROP):
             self._outputs[uid] = outputDrop
             outputDrop.addProducer(self)
 
+            # Subscribe the output DROP to events sent by this AppDROP when it
+            # finishes its execution.
+            self.subscribe(outputDrop, 'producerFinished')
+
     @property
     def outputs(self):
         """
@@ -1103,6 +1129,14 @@ class AppDROP(ContainerDROP):
         The list of streaming inputs set into this AppDROP
         """
         return self._streamingInputs.values()
+
+    def handleEvent(self, e):
+        """
+        Handles the arrival of a new event. Events are delivered from those
+        objects this DROP is subscribed to.
+        """
+        if e.type == 'dropCompleted':
+            self.dropCompleted(e.uid, e.status)
 
     def dropCompleted(self, uid, drop_state):
         """
@@ -1131,6 +1165,15 @@ class AppDROP(ContainerDROP):
             return
         self._execStatus = execStatus
         self._fire('execStatus', execStatus=execStatus)
+
+    def _notifyAppIsFinished(self):
+        """
+        Method invoked by subclasses when the execution of the application is
+        over. Subclasses must make sure that both the status and execStatus
+        properties are set to their correct values correctly before invoking
+        this method.
+        """
+        self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
 class BarrierAppDROP(AppDROP):
     """
@@ -1179,8 +1222,7 @@ class BarrierAppDROP(AppDROP):
 
                 self.execStatus = AppDROPStates.ERROR
                 self.status =  DROPStates.ERROR
-                for outputDrop in self.outputs:
-                    outputDrop.producerFinished(self.uid, self.status)
+                self._notifyAppIsFinished()
             else:
                 # Return immediately, but schedule the execution of this app
                 t = threading.Thread(None, lambda: self.execute())
@@ -1211,13 +1253,7 @@ class BarrierAppDROP(AppDROP):
             logger.exception('Error while executing %r' % (self))
 
         self.status = drop_state
-
-        # Signal our outputs that we're done
-        # TODO: In the future we'll want to pass down the execStatus to our
-        #       outputs so they decide what to do (i.e., continue with the next
-        #       application, set themselves as CANCELLED, etc.)
-        for outputDrop in self.outputs:
-            outputDrop.producerFinished(self.uid, self.status)
+        self._notifyAppIsFinished()
 
     def run(self):
         """
