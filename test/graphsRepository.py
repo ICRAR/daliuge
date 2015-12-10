@@ -175,7 +175,7 @@ def container_pg():
     Creates the following graph:
 
                 |--> B --> D --|
-     SL --> A --|              |--> F --> G
+     SL --> A --|              |--> F --> G --> H --> I
                 |--> C --> E --|
     '''
     sl= SocketListenerApp('SL', 'SL', lifespan=lifespan)
