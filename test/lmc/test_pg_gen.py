@@ -18,16 +18,26 @@
 #    License along with this library; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
-#
 
 import unittest, os, pkg_resources
+import pprint
 
 from dfms.lmc.pg_generator import LGNode, LG
+from collections import defaultdict
 
 class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
-        #fp = os.path.realpath("{0}/../../lg/web/lofar_std.json".format(os.path.dirname(os.path.realpath(__file__))))
         lg = LG(fp)
         self.assertEquals(len(lg._done_dict.keys()), 36)
+        #input_dict = defaultdict(list)
+        #lg.to_pg_tpl(input_dict)
+
+    def test_pg_test(self):
+        fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_cal.json'
+        lg = LG(fp)
+        lg.convert_to_tpl()
+        #input_dict = defaultdict(list)
+        #lg.to_pg_tpl(input_dict)
+        pprint.pprint(dict(lg._drop_dict))
