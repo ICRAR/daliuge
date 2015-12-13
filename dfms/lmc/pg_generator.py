@@ -71,6 +71,8 @@ class LGNode():
         self._ssid = ssid
         self._isgrp = False
         self._converted = False
+        self._h_level = None
+        self._g_h = None
         if (jd.has_key('isGroup') and jd['isGroup'] == True):
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -110,6 +112,11 @@ class LGNode():
 
     def has_converted(self):
         return self._converted
+        """
+        if (self.is_group()):
+            return self._converted
+        return False
+        """
 
     def complete_conversion(self):
         self._converted = True
@@ -145,6 +152,38 @@ class LGNode():
     def inputs(self):
         return self._inputs
 
+    @property
+    def h_level(self):
+        if (self._h_level is None):
+            l = 0
+            cg = self
+            while(cg.has_group()):
+                cg = cg.group
+                l += 1
+            self._h_level = l
+        return self._h_level
+
+    @property
+    def group_hierarchy(self):
+        if (self._g_h is None):
+            l = '0'
+            cg = self
+            while(cg.has_group()):
+                cg = cg.group
+                l += '/{0}'.format(cg.gid)
+            self._g_h = l
+        return self._g_h
+
+    def h_related(self, that_lgn):
+        that_gh = that_lgn.group_hierarchy
+        this_gh = self.group_hierarchy
+        if (len(that_gh) + len(this_gh) <= 1):
+            # at least one is at the root level
+            return True
+
+        return (that_gh.find(this_gh) > -1 or this_gh.find(that_gh) > -1)
+
+
     def has_child(self):
         return len(self._children) > 0
 
@@ -152,7 +191,7 @@ class LGNode():
         return len(self._outs) > 0
 
     def is_start(self):
-        return (self._jd['category'] == 'Start')
+        return (not self.has_group())
 
     def is_group(self):
         return self._isgrp
@@ -170,10 +209,15 @@ class LGNode():
     def dop(self):
         """
         Degree of Parallelism:  integer
-
-        dummy impl.
+        default:    1
         """
-        return 3
+        if (self.is_scatter()):
+            return 3 # dummy impl.
+        else:
+            return 1
+
+    def h_dops(self):
+        pass
 
     def make_oid(self, iid=0):
         """
@@ -216,26 +260,108 @@ class LG():
             self._done_dict = dict()
             self._group_q = defaultdict(list)
             self._output_q = defaultdict(list)
-            start_list = []
+            self._start_list = []
             for jd in lg['nodeDataArray']:
                 lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
                 if (lgn.is_start()):
-                    start_list.append(lgn)
+                    self._start_list.append(lgn)
 
-            st_len = len(start_list)
-            if (st_len != 1):
-                raise GraphException("This logical graph has {0} 'Start' node.".format(st_len))
-            self._start_node = start_list[0]
-
-            for lk in lg['linkDataArray']:
+            self._lg_links = lg['linkDataArray']
+            """
+            for lk in self._lg_links:
                 src = self._done_dict[lk['from']]
                 tgt = self._done_dict[lk['to']]
                 src.add_output(tgt)
                 tgt.add_input(src)
+            """
 
         self._drop_list = []
 
-    def to_pg_tpl(self, input_dict, curr_node=None, iid=-1):
+        # key - lgn id, val - a list of pgns associated with this lgn
+        self._drop_dict = defaultdict(list)
+
+    def lgn_to_pgn(self, lgn, iid='0'):
+        """
+        convert logical graph node to physical graph node
+        without considering pg links
+
+        iid:    instance id (string)
+        """
+        # convert itself
+        if (lgn.is_group()):
+            # do not create actual DROPs for group constructs
+            self._drop_dict[lgn.id].append(iid)
+            for i in range(lgn.dop):
+                for child in lgn.children:
+                    self.lgn_to_pgn(child, '{0}/{1}'.format(iid, i))
+        else:
+            self._drop_dict[lgn.id].append(lgn.make_single_drop(iid))
+        # deal with children accordingly
+
+    def convert_to_tpl(self):
+        """
+        1. just create pgn anyway
+        2. sort out the links
+        """
+        # each pg node needs to be taggged with iid
+        # based purely on its h-level
+        for lgn in self._start_list:
+            self.lgn_to_pgn(lgn)
+
+        for lk in self._lg_links:
+            src_lgn = self._done_dict[lk['from']]
+            tgt_lgn = self._done_dict[lk['to']]
+            #src.add_output(tgt)
+            #tgt.add_input(src)
+
+    def _align_iid(self, lgnode, lgnode_ref, iid, expand_char='*'):
+        """
+        Helper function
+
+        if expand_char is None, then do not expand iid at all
+        """
+        l = lgnode.h_level
+        r = lgnode_ref.h_level
+
+        if (l == r):
+            return iid
+
+        if (l > r):
+            # shorten iid
+            # e.g. 0/1/2/3 --> 0/1
+            iids = iid.split('/')
+            niid = ''
+            for i in range(l + 1):
+                niid += iids[i]
+                if (i < l):
+                    niid += '/'
+            return niid
+        elif (expand_char is not None):
+            # expand idd with the expand_char
+            # e.g. 0/1 --> 0/1/*/*
+            for i in range(r - l):
+                iid += '/{0}'.format(expand_char)
+        else:
+            return iid
+
+    def _regex_iid(self, iid, regex_char='*'):
+        """
+        e.g.
+        0/1/2/3 -->
+        [0/1/2/*, 0/1/*/*, 0/*/*/*]
+        """
+        iids = str(iid).split("/")
+        if (len(iids) == 1):
+            return [str(iid)]
+
+        relist = []
+        for i in range(len(iids) - 1):
+            iids[-1 * (i + 1)] = regex_char
+            relist.append('/'.join(iids))
+
+        return relist
+
+    def to_pg_tpl(self, input_dict, curr_node=None, iid=0):
         """
         convert lg to physical graph template (pg_tpl)
 
@@ -255,15 +381,26 @@ class LG():
         1. traverse the graph from start
         """
 
+        """
         if (curr_node is None):
             curr_node = self.start_node
+        """
 
+        # see if any inputs are missing
         for input_node in curr_node.inputs:
-            if (not input_node.has_converted()):
-                self.to_pg_tpl(input_dict, input_node, iid=iid)
+            if (input_node.has_converted()):
+                continue
 
-        if (curr_node.has_group() and curr_node.group.is_scatter() and (not curr_node.group.has_converted())):
-            curr_node = curr_node.group
+            if (not curr_node.h_related(input_node)):
+                raise GraphException("{0} and {1} are not hierarchically related".format(curr_node.id, input_node.id))
+
+            self.to_pg_tpl(input_dict, input_node, iid=self._align_iid(curr_node, input_node, iid, expand_char=None))
+
+        if (curr_node.has_group()):
+            if ((not curr_node.group.has_converted())):
+                curr_node = curr_node.group
+        else:
+            pass
 
         #depth first traversal
         if (curr_node.is_group()):
@@ -315,20 +452,23 @@ class LG():
             curr_node.complete_conversion()
             self._drop_list.append(curr_drop)
             # find curr_node's producers (DROPs)
-            prod_list = input_dict[curr_node.make_oid(iid=iid)]
-            #establish the PG links
-            for prod in prod_list:
-                prod.addOutput(curr_drop)
-                curr_drop.addInput(prod)
+            _iids = self._regex_iid(iid) + [iid]
+            for _iid in _iids:
+                prod_list = input_dict[curr_node.make_oid(iid=_iid)]
+                #establish the PG links
+                for prod in prod_list:
+                    prod.addOutput(curr_drop)
+                    curr_drop.addInput(prod)
 
             # prefill a list of producers for each "next" LGNode
             for next_node in curr_node.outputs:
-                input_dict[next_node.make_oid(iid=iid)].append(curr_drop)
-                self.to_pg_tpl(input_dict, next_node, iid=iid)
+                if (next_node.has_converted()):
+                    continue
+                niid = self._align_iid(curr_node, next_node, iid)
+                input_dict[next_node.make_oid(iid=niid)].append(curr_drop)
+                # TODO - need to restore the "target" hierarchy
+                self.to_pg_tpl(input_dict, next_node, iid=niid)
 
-    @property
-    def start_node(self):
-        return self._start_node
 
     def _parse_local(self, in_dict, lg):
         """
