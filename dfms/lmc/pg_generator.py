@@ -182,8 +182,8 @@ class LGNode():
         dop difference between inner node/group and outer group
         e.g for each outer group, how many instances of inner nodes/groups
         """
-        if (self.is_group() or that_lgn.is_group()):
-            raise GraphException("Cannot compute dop diff between groups.")
+        # if (self.is_group() or that_lgn.is_group()):
+        #     raise GraphException("Cannot compute dop diff between groups.")
         if (self.h_related(that_lgn)):
             il = self.h_level
             al = that_lgn.h_level
@@ -315,6 +315,9 @@ class LG():
             raise GLinkException("{0} and {1} are not hierarchically related".format(src.id, tgt.id))
         if (src.is_scatter() or tgt.is_scatter()):
             raise GLinkException("Scatter construct {0} cannot link to another Scatter {1}".format(src.id, tgt.id))
+        if (src.is_gather() and (not tgt.is_group())):
+            if (tgt.jd['category'] != 'Component'):
+                raise GLinkException("Gather {0}'s output {1} must be Component if it is not Group".format(src.id, tgt.id))
         if (tgt.is_groupby()):
             if (src.is_group()):
                 raise GLinkException("GroupBy {0} input must not be a group {1}".format(tgt.id, src.id))
@@ -324,6 +327,10 @@ class LG():
                 raise GLinkException("GroupBy {0} requires at least one Scatter around input {1}".format(tgt.id, src.id))
             elif (tgt.gid != 0):
                 raise GraphException("GroupBy {0} cannot be embedded inside another group {1}".format(tgt.id, tgt.gid))
+        elif (tgt.is_gather() and (not src.is_group())):
+            if (src.jd['category'] != 'Data'):
+                raise GLinkException("Gather {0}'s input {1} should be either a group or Data".format(tgt.id, src.id))
+
         if (src.is_groupby() and not (tgt.is_gather())):
             raise GLinkException("Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(src.id, tgt.id))
 
@@ -351,7 +358,7 @@ class LG():
         for i in xrange(0, len(l), n):
             yield l[i:i+n]
 
-    def convert_to_tpl(self):
+    def unroll_to_tpl(self):
         """
         1. just create pgn anyway
         2. sort out the links
@@ -366,20 +373,24 @@ class LG():
             tid = lk['to'] # target
             slgn = self._done_dict[sid]
             tlgn = self._done_dict[tid]
-
+            chunk_size = slgn.dop_diff(tlgn)
             if (slgn.is_group() and (not tlgn.is_group())):
                 #slgn cannot be groupby, since groupby's output must be a Scatter (i.e. group)
                 #slgn cannot be scatter, since scatter does not link
-                #so, slgn must be gather
-                tdrops = self._drop_dict[tlgn.id]
+                # Therefore, slgn must be Gather
+                tdrops = self._drop_dict[tlgn.id] # must be a list of Components
+                sdrop_iids = self._drop_dict[slgn.id]
 
             elif (slgn.is_group() and tlgn.is_group()):
                 if (slgn.is_groupby()):
+                    # tlgn must be Gather
+                    # it is possible that Group By is not yet created, but will be eventually
                     pass
-                else: #slgn is gather
+                else: #slgn is Gather
+                    # tlgn must also be a Gather
                     pass
             elif (not slgn.is_group() and (not tlgn.is_group())):
-                chunk_size = slgn.dop_diff(tlgn)
+                #chunk_size = slgn.dop_diff(tlgn)
                 #print "chunk_size = {0}".format(chunk_size)
                 sdrops = self._drop_dict[slgn.id]
                 tdrops = self._drop_dict[tlgn.id]
@@ -404,15 +415,31 @@ class LG():
                         # the last bit of iid (current h id) is GrougBy key
                         gby = gdd['iid'].split('/')[-1] # TODO could be any bit in the future
                         grpby_dict[gby].append(gdd)
-                    # for each group, create a Barrier DROP as AppDROP (Consumer)
                     del self._drop_dict[tlgn.id]
                     for gbyid, drop_list in grpby_dict.iteritems():
-                        # this should be a BarrierDrop
+                        # for each group, create a Barrier DROP as AppDROP (Consumer)
                         grpby_drop = tlgn.make_single_drop(iid='0-grp_{0}'.format(gbyid)) # TODO make it barrier
                         self._drop_dict[tlgn.id].append(grpby_drop)
                         for drp in drop_list:
                             drp.addOutput(grpby_drop)
                             grpby_drop.addInput(drp)
+                elif (tlgn.is_gather()):
+                    if (slgn.h_level < tlgn.h_level):
+                        raise GraphException("Gather {0} has higher h-level than its input {1}".format(tlgn.id, slgn.id))
+                    #chunk_size = slgn.dop_diff(tlgn)
+                    # src must be data
+                    sdrops = self._drop_dict[slgn.id]
+                    tdrop_iids = self._drop_dict[tlgn.id]
+                    tmp_list = []
+                    for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
+                        bar_drop = tlgn.make_single_drop(iid=tdrop_iids[i])
+                        tmp_list.append(bar_drop)
+                        for sdrop in chunk:
+                            sdrop.addOutput(bar_drop)
+                            bar_drop.addInput(sdrop)
+                    self._drop_dict[tlgn.id] = tmp_list
+                else:
+                    raise GraphException("Unsupported target group {0}".format(tlgn.id))
 
     def _align_iid(self, lgnode, lgnode_ref, iid, expand_char='*'):
         """
