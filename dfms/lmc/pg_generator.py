@@ -54,6 +54,9 @@ from collections import defaultdict
 class GraphException(Exception):
     pass
 
+class GLinkException(GraphException):
+    pass
+
 class LGNode():
     def __init__(self, jd, group_q, done_dict, ssid):
         """
@@ -174,6 +177,34 @@ class LGNode():
             self._g_h = l
         return self._g_h
 
+    def dop_diff(self, that_lgn):
+        """
+        dop difference between inner node/group and outer group
+        e.g for each outer group, how many instances of inner nodes/groups
+        """
+        if (self.is_group() or that_lgn.is_group()):
+            raise GraphException("Cannot compute dop diff between groups.")
+        if (self.h_related(that_lgn)):
+            il = self.h_level
+            al = that_lgn.h_level
+            if (il == al):
+                return 1
+            elif (il > al):
+                oln = that_lgn
+                iln = self
+            else:
+                iln = that_lgn
+                oln = self
+            re_dop = 1
+            cg = iln
+            while(cg.gid != oln.gid):
+                re_dop *= cg.group.dop
+                cg = cg.group
+                #print "re_dop = ", re_dop
+            return re_dop
+        else:
+            raise GraphException("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
+
     def h_related(self, that_lgn):
         that_gh = that_lgn.group_hierarchy
         this_gh = self.group_hierarchy
@@ -182,7 +213,6 @@ class LGNode():
             return True
 
         return (that_gh.find(this_gh) > -1 or this_gh.find(that_gh) > -1)
-
 
     def has_child(self):
         return len(self._children) > 0
@@ -226,7 +256,7 @@ class LGNode():
         """
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid)
 
-    def make_single_drop(self, iid=0, **kwargs):
+    def make_single_drop(self, iid='0', **kwargs):
         """
         make only one drop from a LG nodes
         one-one mapping
@@ -267,18 +297,36 @@ class LG():
                     self._start_list.append(lgn)
 
             self._lg_links = lg['linkDataArray']
-            """
+
             for lk in self._lg_links:
                 src = self._done_dict[lk['from']]
                 tgt = self._done_dict[lk['to']]
+                self.validate_link(src, tgt)
                 src.add_output(tgt)
                 tgt.add_input(src)
-            """
 
         self._drop_list = []
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = defaultdict(list)
+
+    def validate_link(self, src, tgt):
+        if (not src.h_related(tgt)):
+            raise GLinkException("{0} and {1} are not hierarchically related".format(src.id, tgt.id))
+        if (src.is_scatter() or tgt.is_scatter()):
+            raise GLinkException("Scatter construct {0} cannot link to another Scatter {1}".format(src.id, tgt.id))
+        if (tgt.is_groupby()):
+            if (src.is_group()):
+                raise GLinkException("GroupBy {0} input must not be a group {1}".format(tgt.id, src.id))
+            elif (len(tgt.inputs) > 0):
+                raise GLinkException("GroupBy {0} already has input {2} other than {1}".format(tgt.id, src.id, tgt.inputs[0].id))
+            elif (src.gid == 0):
+                raise GLinkException("GroupBy {0} requires at least one Scatter around input {1}".format(tgt.id, src.id))
+            elif (tgt.gid != 0):
+                raise GraphException("GroupBy {0} cannot be embedded inside another group {1}".format(tgt.id, tgt.gid))
+        if (src.is_groupby() and not (tgt.is_gather())):
+            raise GLinkException("Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(src.id, tgt.id))
+
 
     def lgn_to_pgn(self, lgn, iid='0'):
         """
@@ -287,7 +335,6 @@ class LG():
 
         iid:    instance id (string)
         """
-        # convert itself
         if (lgn.is_group()):
             # do not create actual DROPs for group constructs
             self._drop_dict[lgn.id].append(iid)
@@ -296,7 +343,13 @@ class LG():
                     self.lgn_to_pgn(child, '{0}/{1}'.format(iid, i))
         else:
             self._drop_dict[lgn.id].append(lgn.make_single_drop(iid))
-        # deal with children accordingly
+
+    def _split_list(self, l, n):
+        """
+        Yield successive n-sized chunks from l.
+        """
+        for i in xrange(0, len(l), n):
+            yield l[i:i+n]
 
     def convert_to_tpl(self):
         """
@@ -309,10 +362,57 @@ class LG():
             self.lgn_to_pgn(lgn)
 
         for lk in self._lg_links:
-            src_lgn = self._done_dict[lk['from']]
-            tgt_lgn = self._done_dict[lk['to']]
-            #src.add_output(tgt)
-            #tgt.add_input(src)
+            sid = lk['from'] # source
+            tid = lk['to'] # target
+            slgn = self._done_dict[sid]
+            tlgn = self._done_dict[tid]
+
+            if (slgn.is_group() and (not tlgn.is_group())):
+                #slgn cannot be groupby, since groupby's output must be a Scatter (i.e. group)
+                #slgn cannot be scatter, since scatter does not link
+                #so, slgn must be gather
+                tdrops = self._drop_dict[tlgn.id]
+
+            elif (slgn.is_group() and tlgn.is_group()):
+                if (slgn.is_groupby()):
+                    pass
+                else: #slgn is gather
+                    pass
+            elif (not slgn.is_group() and (not tlgn.is_group())):
+                chunk_size = slgn.dop_diff(tlgn)
+                #print "chunk_size = {0}".format(chunk_size)
+                sdrops = self._drop_dict[slgn.id]
+                tdrops = self._drop_dict[tlgn.id]
+                #print "len(tdrop) = ", len(tdrops), "len(sdrop) = ", len(sdrops)
+                if (slgn.h_level >= tlgn.h_level):
+                    for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
+                        # distribute slgn evenly to tlgn
+                        for sdrop in chunk:
+                            sdrop.addOutput(tdrops[i])
+                            tdrops[i].addInput(sdrop)
+                else:
+                    for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
+                        # distribute tlgn evenly to slgn
+                        for tdrop in chunk:
+                            sdrops[i].addOutput(tdrop)
+                            tdrop.addInput(sdrops[i])
+            else: # slgn is not group, but tlgn is group
+                sdrops = self._drop_dict[slgn.id]
+                if (tlgn.is_groupby()):
+                    grpby_dict = defaultdict(list)
+                    for gdd in sdrops:
+                        # the last bit of iid (current h id) is GrougBy key
+                        gby = gdd['iid'].split('/')[-1] # TODO could be any bit in the future
+                        grpby_dict[gby].append(gdd)
+                    # for each group, create a Barrier DROP as AppDROP (Consumer)
+                    del self._drop_dict[tlgn.id]
+                    for gbyid, drop_list in grpby_dict.iteritems():
+                        # this should be a BarrierDrop
+                        grpby_drop = tlgn.make_single_drop(iid='0-grp_{0}'.format(gbyid)) # TODO make it barrier
+                        self._drop_dict[tlgn.id].append(grpby_drop)
+                        for drp in drop_list:
+                            drp.addOutput(grpby_drop)
+                            grpby_drop.addInput(drp)
 
     def _align_iid(self, lgnode, lgnode_ref, iid, expand_char='*'):
         """
