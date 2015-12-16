@@ -54,7 +54,10 @@ from collections import defaultdict
 class GraphException(Exception):
     pass
 
-class GLinkException(GraphException):
+class GInvalidLink(GraphException):
+    pass
+
+class GInvalidNode(GraphException):
     pass
 
 class LGNode():
@@ -76,6 +79,9 @@ class LGNode():
         self._converted = False
         self._h_level = None
         self._g_h = None
+        self._dop = None
+        self._gaw = None
+        self._grpw = None
         if (jd.has_key('isGroup') and jd['isGroup'] == True):
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -141,6 +147,8 @@ class LGNode():
         """
         Add a group member
         """
+        if (lg_node.is_group() and not (lg_node.is_scatter())):
+            raise GInvalidNode("Only Scatter Groups can be nested, but {0} is not Scatter".format(lg_node.id))
         self._children.append(lg_node)
 
     @property
@@ -169,12 +177,13 @@ class LGNode():
     @property
     def group_hierarchy(self):
         if (self._g_h is None):
-            l = '0'
+            glist = []
             cg = self
             while(cg.has_group()):
+                glist.append(str(cg.gid))
                 cg = cg.group
-                l += '/{0}'.format(cg.gid)
-            self._g_h = l
+            glist.append('0')
+            self._g_h = '/'.join(reversed(glist))
         return self._g_h
 
     def dop_diff(self, that_lgn):
@@ -197,13 +206,12 @@ class LGNode():
                 oln = self
             re_dop = 1
             cg = iln
-            while(cg.gid != oln.gid):
+            while(cg.gid != oln.gid and cg.has_group()):
                 re_dop *= cg.group.dop
                 cg = cg.group
-                #print "re_dop = ", re_dop
             return re_dop
         else:
-            raise GraphException("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
+            raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
 
     def h_related(self, that_lgn):
         that_gh = that_lgn.group_hierarchy
@@ -236,15 +244,70 @@ class LGNode():
         return (self._jd['category'] == 'GroupBy')
 
     @property
+    def gather_width(self):
+        """
+        Gather width
+        """
+        if (self.is_gather()):
+            if (self._gaw is None):
+                try:
+                    self._gaw = int(self.jd['num_of_inputs'])
+                except:
+                    self._gaw = 1
+            return self._gaw
+        else:
+            """
+            We WILL use the true OO style to replace all type-related exceptions
+            """
+            raise GraphException("Non-Gather LGN {0} does not have gather_width".format(self.id))
+
+    @property
+    def groupby_width(self):
+        """
+        GroupBy count
+        """
+        if (self.is_groupby()):
+            if (self._grpw is None):
+                tlgn = self.inputs[0]
+                re_dop = 1
+                cg = tlgn.group # exclude its own group
+                while (cg.has_group()):
+                    re_dop *= cg.group.dop
+                    cg = cg.group
+                self._grpw = re_dop
+            return self._grpw
+        else:
+            raise GraphException("Non-GroupBy LGN {0} does not have groupby_width".format(self.id))
+
+    @property
     def dop(self):
         """
         Degree of Parallelism:  integer
         default:    1
         """
-        if (self.is_scatter()):
-            return 3 # dummy impl.
-        else:
-            return 1
+        if (self._dop is None):
+            if (self.is_group()):
+                if (self.is_scatter()):
+                    # dummy implementation for the scatter group
+                    try:
+                        self._dop = int(self.jd['num_of_splits'])
+                    except:
+                        self._dop = 4 # dummy impl.
+                elif (self.is_gather()):
+                    tlgn = self.inputs[0]
+                    if (tlgn.is_groupby()):
+                        tt = tlgn.dop
+                    else:
+                        tt = self.dop_diff(tlgn)
+                    self._dop = tt / self.gather_width
+                elif (self.is_groupby()):
+                    tlgn = self.inputs[0]
+                    self._dop = tlgn.group.dop
+                else:
+                    raise GInvalidNode("Unrecognised Group LGN: {0}").format(self.id)
+            else:
+                self._dop = 1
+        return self._dop
 
     def h_dops(self):
         pass
@@ -291,8 +354,12 @@ class LG():
             self._group_q = defaultdict(list)
             self._output_q = defaultdict(list)
             self._start_list = []
+            all_list = []
             for jd in lg['nodeDataArray']:
                 lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
+                all_list.append(lgn)
+
+            for lgn in all_list:
                 if (lgn.is_start()):
                     self._start_list.append(lgn)
 
@@ -309,31 +376,37 @@ class LG():
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = defaultdict(list)
+        del all_list
 
     def validate_link(self, src, tgt):
-        if (not src.h_related(tgt)):
-            raise GLinkException("{0} and {1} are not hierarchically related".format(src.id, tgt.id))
         if (src.is_scatter() or tgt.is_scatter()):
-            raise GLinkException("Scatter construct {0} cannot link to another Scatter {1}".format(src.id, tgt.id))
+            raise GInvalidLink("Scatter construct {0} cannot link to another Scatter {1}".format(src.id, tgt.id))
+
+        if (src.is_gather()):
+            raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
+
+        """
         if (src.is_gather() and (not tgt.is_group())):
             if (tgt.jd['category'] != 'Component'):
-                raise GLinkException("Gather {0}'s output {1} must be Component if it is not Group".format(src.id, tgt.id))
+                raise GInvalidLink("Gather {0}'s output {1} must be Component if it is not Group".format(src.id, tgt.id))
+        """
         if (tgt.is_groupby()):
             if (src.is_group()):
-                raise GLinkException("GroupBy {0} input must not be a group {1}".format(tgt.id, src.id))
+                raise GInvalidLink("GroupBy {0} input must not be a group {1}".format(tgt.id, src.id))
             elif (len(tgt.inputs) > 0):
-                raise GLinkException("GroupBy {0} already has input {2} other than {1}".format(tgt.id, src.id, tgt.inputs[0].id))
+                raise GInvalidLink("GroupBy {0} already has input {2} other than {1}".format(tgt.id, src.id, tgt.inputs[0].id))
             elif (src.gid == 0):
-                raise GLinkException("GroupBy {0} requires at least one Scatter around input {1}".format(tgt.id, src.id))
-            elif (tgt.gid != 0):
-                raise GraphException("GroupBy {0} cannot be embedded inside another group {1}".format(tgt.id, tgt.gid))
-        elif (tgt.is_gather() and (not src.is_group())):
-            if (src.jd['category'] != 'Data'):
-                raise GLinkException("Gather {0}'s input {1} should be either a group or Data".format(tgt.id, src.id))
+                raise GInvalidLink("GroupBy {0} requires at least one Scatter around input {1}".format(tgt.id, src.id))
+        elif (tgt.is_gather()):
+            if (src.jd['category'] != 'Data' and (not src.is_groupby())):
+                raise GInvalidLink("Gather {0}'s input {1} should be either a GroupBy or Data".format(tgt.id, src.id))
 
         if (src.is_groupby() and not (tgt.is_gather())):
-            raise GLinkException("Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(src.id, tgt.id))
-
+            raise GInvalidLink("Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(src.id, tgt.id))
+        if (not src.h_related(tgt)):
+            raise GInvalidLink("{0} and {1} are not hierarchically related: {2} and {3}".format(src.id, tgt.id,
+            src.group_hierarchy,
+            tgt.group_hierarchy))
 
     def lgn_to_pgn(self, lgn, iid='0'):
         """
@@ -343,11 +416,24 @@ class LG():
         iid:    instance id (string)
         """
         if (lgn.is_group()):
-            # do not create actual DROPs for group constructs
-            self._drop_dict[lgn.id].append(iid)
+            is_sca = False
+            if (lgn.is_scatter()):
+                is_sca = True
             for i in range(lgn.dop):
+                miid = '{0}/{1}'.format(iid, i)
+                if (not is_sca): # make GroupBy and Gather drops
+                    self._drop_dict[lgn.id].append(lgn.make_single_drop(miid))
                 for child in lgn.children:
-                    self.lgn_to_pgn(child, '{0}/{1}'.format(iid, i))
+                    # add artificial logical links to the "first" children
+                    if (not is_sca):
+                        if (len(child.inputs) == 0):
+                            lgn.add_input(child)
+                            child.add_output(lgn)
+                            lk = dict()
+                            lk['from'] = lgn.id
+                            lk['to'] = child.id
+                            self._lg_links.append(lk)
+                    self.lgn_to_pgn(child, miid)
         else:
             self._drop_dict[lgn.id].append(lgn.make_single_drop(iid))
 
@@ -358,8 +444,32 @@ class LG():
         for i in xrange(0, len(l), n):
             yield l[i:i+n]
 
+    def _unroll_gather_as_output(self, slgn, tlgn, sdrops, tdrops, chunk_size):
+        if (slgn.h_level < tlgn.h_level):
+            raise GraphException("Gather {0} has higher h-level than its input {1}".format(tlgn.id, slgn.id))
+        # src must be data
+        for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
+            for sdrop in chunk:
+                sdrop.addOutput(tdrops[i])
+                tdrops[i].addInput(sdrop)
+
+    def _get_chunk_size(self, s, t):
+        """
+        Assumption:
+        s or t cannot be Scatter as Scatter does not convert into DROPs
+        """
+        if (t.is_gather()):
+            ret = t.gather_width
+        elif (t.is_groupby()):
+            ret = t.groupby_width
+        else:
+            ret = s.dop_diff(t)
+        return ret
+
     def unroll_to_tpl(self):
         """
+        Not thread-safe!
+
         1. just create pgn anyway
         2. sort out the links
         """
@@ -373,28 +483,25 @@ class LG():
             tid = lk['to'] # target
             slgn = self._done_dict[sid]
             tlgn = self._done_dict[tid]
-            chunk_size = slgn.dop_diff(tlgn)
+            sdrops = self._drop_dict[sid]
+            tdrops = self._drop_dict[tid]
+            chunk_size = self._get_chunk_size(slgn, tlgn)
             if (slgn.is_group() and (not tlgn.is_group())):
-                #slgn cannot be groupby, since groupby's output must be a Scatter (i.e. group)
-                #slgn cannot be scatter, since scatter does not link
-                # Therefore, slgn must be Gather
-                tdrops = self._drop_dict[tlgn.id] # must be a list of Components
-                sdrop_iids = self._drop_dict[slgn.id]
-
+                # this link must be artifically added (within group link)
+                # since
+                # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
+                # 2. Scatter "naturally" does not have output
+                if (len(sdrops) != len(tdrops)):
+                    err_info = "For within-group links, # {2} Group Inputs {0} must be the same as # {3} of Component Outputs {1}".format(slgn.id,
+                    tlgn.id, len(sdrops), len(tdrops))
+                    raise GraphException(err_info)
+                for i, sdrop in enumerate(sdrops):
+                    sdrop.addOutput(tdrops[i])
+                    tdrops[i].addInput(sdrop)
             elif (slgn.is_group() and tlgn.is_group()):
-                if (slgn.is_groupby()):
-                    # tlgn must be Gather
-                    # it is possible that Group By is not yet created, but will be eventually
-                    pass
-                else: #slgn is Gather
-                    # tlgn must also be a Gather
-                    pass
+                # slgn must be GroupBy and tlgn must be Gather
+                self._unroll_gather_as_output(slgn, tlgn, sdrops, tdrops, chunk_size)
             elif (not slgn.is_group() and (not tlgn.is_group())):
-                #chunk_size = slgn.dop_diff(tlgn)
-                #print "chunk_size = {0}".format(chunk_size)
-                sdrops = self._drop_dict[slgn.id]
-                tdrops = self._drop_dict[tlgn.id]
-                #print "len(tdrop) = ", len(tdrops), "len(sdrop) = ", len(sdrops)
                 if (slgn.h_level >= tlgn.h_level):
                     for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
                         # distribute slgn evenly to tlgn
@@ -408,230 +515,29 @@ class LG():
                             sdrops[i].addOutput(tdrop)
                             tdrop.addInput(sdrops[i])
             else: # slgn is not group, but tlgn is group
-                sdrops = self._drop_dict[slgn.id]
                 if (tlgn.is_groupby()):
                     grpby_dict = defaultdict(list)
                     for gdd in sdrops:
                         # the last bit of iid (current h id) is GrougBy key
                         gby = gdd['iid'].split('/')[-1] # TODO could be any bit in the future
                         grpby_dict[gby].append(gdd)
-                    del self._drop_dict[tlgn.id]
-                    for gbyid, drop_list in grpby_dict.iteritems():
-                        # for each group, create a Barrier DROP as AppDROP (Consumer)
-                        grpby_drop = tlgn.make_single_drop(iid='0-grp_{0}'.format(gbyid)) # TODO make it barrier
-                        self._drop_dict[tlgn.id].append(grpby_drop)
+                    grp_keys = grpby_dict.keys()
+                    if (len(grp_keys) != len(tdrops)):
+                        raise GraphException("# of Group keys {0} != # of Group Drops {1} for LGN {2}".format(len(grp_keys),
+                        len(tdrops),
+                        tlgn.id))
+                    grp_keys.sort()
+                    for i, gk in enumerate(grp_keys):
+                        grpby_drop = tdrops[i]
+                        drop_list = grpby_dict[gk]
                         for drp in drop_list:
                             drp.addOutput(grpby_drop)
                             grpby_drop.addInput(drp)
                 elif (tlgn.is_gather()):
-                    if (slgn.h_level < tlgn.h_level):
-                        raise GraphException("Gather {0} has higher h-level than its input {1}".format(tlgn.id, slgn.id))
-                    #chunk_size = slgn.dop_diff(tlgn)
-                    # src must be data
-                    sdrops = self._drop_dict[slgn.id]
-                    tdrop_iids = self._drop_dict[tlgn.id]
-                    tmp_list = []
-                    for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
-                        bar_drop = tlgn.make_single_drop(iid=tdrop_iids[i])
-                        tmp_list.append(bar_drop)
-                        for sdrop in chunk:
-                            sdrop.addOutput(bar_drop)
-                            bar_drop.addInput(sdrop)
-                    self._drop_dict[tlgn.id] = tmp_list
+                    self._unroll_gather_as_output(slgn, tlgn, sdrops, tdrops, chunk_size)
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
 
-    def _align_iid(self, lgnode, lgnode_ref, iid, expand_char='*'):
-        """
-        Helper function
-
-        if expand_char is None, then do not expand iid at all
-        """
-        l = lgnode.h_level
-        r = lgnode_ref.h_level
-
-        if (l == r):
-            return iid
-
-        if (l > r):
-            # shorten iid
-            # e.g. 0/1/2/3 --> 0/1
-            iids = iid.split('/')
-            niid = ''
-            for i in range(l + 1):
-                niid += iids[i]
-                if (i < l):
-                    niid += '/'
-            return niid
-        elif (expand_char is not None):
-            # expand idd with the expand_char
-            # e.g. 0/1 --> 0/1/*/*
-            for i in range(r - l):
-                iid += '/{0}'.format(expand_char)
-        else:
-            return iid
-
-    def _regex_iid(self, iid, regex_char='*'):
-        """
-        e.g.
-        0/1/2/3 -->
-        [0/1/2/*, 0/1/*/*, 0/*/*/*]
-        """
-        iids = str(iid).split("/")
-        if (len(iids) == 1):
-            return [str(iid)]
-
-        relist = []
-        for i in range(len(iids) - 1):
-            iids[-1 * (i + 1)] = regex_char
-            relist.append('/'.join(iids))
-
-        return relist
-
-    def to_pg_tpl(self, input_dict, curr_node=None, iid=0):
-        """
-        convert lg to physical graph template (pg_tpl)
-
-        curr_node:  is always LG node
-        input_dict: key - next LGNode id, val - prodcued DROP, which is pre-filled when
-                    processing the input LGNode (defaultdict)
-        iid:        instance id (integer)
-
-        1. create (parallel) DROP instances of curr_node
-        2. establish links from input DROPs to each DROP instances created in 1
-            2.1 those input DROPs are obtained from input_dict
-
-        Difference between LG links and PG links:
-            LG links for traversing the LG
-            PG links are created amongst DROPs
-
-        1. traverse the graph from start
-        """
-
-        """
-        if (curr_node is None):
-            curr_node = self.start_node
-        """
-
-        # see if any inputs are missing
-        for input_node in curr_node.inputs:
-            if (input_node.has_converted()):
-                continue
-
-            if (not curr_node.h_related(input_node)):
-                raise GraphException("{0} and {1} are not hierarchically related".format(curr_node.id, input_node.id))
-
-            self.to_pg_tpl(input_dict, input_node, iid=self._align_iid(curr_node, input_node, iid, expand_char=None))
-
-        if (curr_node.has_group()):
-            if ((not curr_node.group.has_converted())):
-                curr_node = curr_node.group
-        else:
-            pass
-
-        #depth first traversal
-        if (curr_node.is_group()):
-            curr_node.complete_conversion()
-            if (curr_node.is_scatter() and curr_node.has_child()):
-                for i in range(curr_node.dop):
-                    #go over each child
-                    #for ch_node in curr_node.children:
-                    # get a random one
-                    ch_node = curr_node.children[0]
-                    self.to_pg_tpl(input_dict, ch_node, '{0}/{1}'.format(iid, i))
-            elif (curr_node.is_groupby()):
-                """
-                Implement a dict / hashtable
-                use input DROP's iid as the key for the dict
-                the keys in this dict determines the number of groups
-                """
-                grpby_dict = defaultdict(list)
-                prod_list = input_dict[curr_node.make_oid(iid=iid)]
-                for prod in prod_list:
-                    #prod_iid = prod['iid']
-                    grpby_dict[prod['iid']].append(prod)
-                for prod_iid, drop_list in grpby_dict.iteritems():
-                    # this should be a BarrierDrop
-                    grpby_drop = curr_node.make_single_drop(iid=prod_iid)
-                    for drp in drop_list:
-                        drp.addOutput(grpby_drop)
-                        grpby_drop.addInput(drp)
-            elif (curr_node.is_gather()):
-                """
-                if gather is inside a scatter, need to identify the iid
-                """
-                prod_list = input_dict[curr_node.make_oid(iid=iid)]
-                # this should be a BarrierDrop
-                gather_drop = curr_node.make_single_drop(iid=iid)
-                try:
-                    gather_width = int(curr_node.jd['num_of_inputs'])
-                except:
-                    gather_width = len(prod_list) # by default, gather all
-                for pri in range(gather_width * curr_node.iid, gather_width * (curr_node.iid + 1)):
-                    prodd = prod_list[pri]
-                    prodd.addOutput(gather_drop)
-                    gather_drop.addInput(prodd)
-            else:
-                # do nothing
-                pass
-        else:
-            curr_drop = curr_node.make_single_drop(iid)
-            curr_node.complete_conversion()
-            self._drop_list.append(curr_drop)
-            # find curr_node's producers (DROPs)
-            _iids = self._regex_iid(iid) + [iid]
-            for _iid in _iids:
-                prod_list = input_dict[curr_node.make_oid(iid=_iid)]
-                #establish the PG links
-                for prod in prod_list:
-                    prod.addOutput(curr_drop)
-                    curr_drop.addInput(prod)
-
-            # prefill a list of producers for each "next" LGNode
-            for next_node in curr_node.outputs:
-                if (next_node.has_converted()):
-                    continue
-                niid = self._align_iid(curr_node, next_node, iid)
-                input_dict[next_node.make_oid(iid=niid)].append(curr_drop)
-                # TODO - need to restore the "target" hierarchy
-                self.to_pg_tpl(input_dict, next_node, iid=niid)
-
-
-    def _parse_local(self, in_dict, lg):
-        """
-        Parse out all DROPs at the local level (each level represents a box)
-        Four types of boxes:
-        1. "Diagram" root level
-        2. "Group By" box
-        3. "Gather" box
-        4. "Scatter" box
-
-        Levels can be nested and hierarchical
-        """
-        if (in_dict is None):
-            """
-            Entire diagram level
-            """
-            pass
-        else:
-            pass
-
-    def get_ds_list(self):
-        """
-        get a list of DSS
-        """
-        pass
-
-def para_lg(lg):
-    """
-    Parallelise the logical graph
-    1. Parse lg into LG_node_graph,
-    2 list all Data Scatters (DS),
-    3. for each DS, determine DoP
-    4. fork out new DROPs based on DoP for each DS
-    5. produce pg (DROP definitions)
-    """
-    pass
 
 def l2g(lg, num_procs):
     """

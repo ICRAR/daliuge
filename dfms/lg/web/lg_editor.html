@@ -1178,9 +1178,9 @@
                         { category: "End", text: "End" },
                         { category: "LSM", text: "LSM" },
                         { category: "Parameter", text: "Parameter" },
-                        { category: "SplitData", text: "Scatter", isGroup: true, num_of_splits: "${num_channel} * ${num_beam}", scatter_axis: "frequency"},
-                        { category: "DataGather", text: "Gather", isGroup: true, num_of_inputs: "${num_channel} * ${num_beam}", gather_axis: "frequency"},
-                        { category: "GroupBy", text: "Group By", isGroup: true, num_of_inputs: "${num_channel} * ${num_beam}", gather_axis: "frequency", group_by: "time"},
+                        { category: "SplitData", text: "Scatter", isGroup: true, num_of_copies: 4, scatter_axis: "time"},
+                        { category: "DataGather", text: "Gather", isGroup: true, num_of_inputs: 2, gather_axis: "frequency"},
+                        { category: "GroupBy", text: "Group By", isGroup: true, group_key: -1, group_axis: "frequency"},
                         { category: "Variables", text: "Global Variables",
                           columnDefinitions: [
                               // each column definition needs to specify the column used
