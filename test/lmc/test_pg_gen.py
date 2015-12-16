@@ -29,15 +29,19 @@ class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
-        self.assertEquals(len(lg._done_dict.keys()), 36)
+        self.assertEquals(len(lg._done_dict.keys()), 35)
+        lg.unroll_to_tpl()
+        #pprint.pprint(dict(lg._drop_dict))
         #input_dict = defaultdict(list)
         #lg.to_pg_tpl(input_dict)
 
     def test_pg_test(self):
-        fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_cal.json'
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_cal.json')
+        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_cal.json'
         lg = LG(fp)
-        lg.convert_to_tpl()
+        lg.unroll_to_tpl()
         #input_dict = defaultdict(list)
         #lg.to_pg_tpl(input_dict)
         pprint.pprint(dict(lg._drop_dict))
