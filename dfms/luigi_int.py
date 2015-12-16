@@ -31,8 +31,8 @@ import time
 import luigi
 
 from dfms import droputils
-from dfms.drop import AbstractDROP, BarrierAppDROP
 from dfms.ddap_protocol import ExecutionMode, DROPStates
+from dfms.drop import AbstractDROP, BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)
@@ -73,14 +73,17 @@ class RunDROPTask(luigi.Task):
 
         if not self.execDrop:
             self._evt = threading.Event()
-            drop.subscribe(self, 'status')
+            if isinstance(drop, BarrierAppDROP):
+                drop.subscribe(self, 'producerFinished')
+            elif isinstance(drop, AbstractDROP):
+                drop.subscribe(self, 'dropCompleted')
 
     def handleEvent(self, e):
-        if e.status == DROPStates.COMPLETED:
-            self._evt.set()
+        self._evt.set()
 
     def complete(self):
-        return self.data_obj.isCompleted() and self.data_obj.exists()
+        return (self.data_obj.isCompleted() and self.data_obj.exists()) or \
+                self.data_obj.status == DROPStates.ERROR
 
     def run(self):
         if self.execDrop:
