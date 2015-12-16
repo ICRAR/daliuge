@@ -47,7 +47,7 @@ Examples of logical graph node JSON representation
   u'text': u'DD Calibration'}
 
 """
-import json, os, datetime, time
+import json, os, datetime, time, math
 from dfms.drop import dropdict
 from collections import defaultdict
 
@@ -231,6 +231,9 @@ class LGNode():
     def is_start(self):
         return (not self.has_group())
 
+    def is_group_start(self):
+        return (self.has_group() and self.jd.has_key("group_start") and 1 == int(self.jd["group_start"]))
+
     def is_group(self):
         return self._isgrp
 
@@ -257,7 +260,7 @@ class LGNode():
             return self._gaw
         else:
             """
-            We WILL use the true OO style to replace all type-related exceptions
+            TODO: use OO style to replace all type-related statements!
             """
             raise GraphException("Non-Gather LGN {0} does not have gather_width".format(self.id))
 
@@ -299,7 +302,7 @@ class LGNode():
                         tt = tlgn.dop
                     else:
                         tt = self.dop_diff(tlgn)
-                    self._dop = tt / self.gather_width
+                    self._dop = int(math.ceil(tt / float(self.gather_width)))
                 elif (self.is_groupby()):
                     tlgn = self.inputs[0]
                     self._dop = tlgn.group.dop
@@ -308,9 +311,6 @@ class LGNode():
             else:
                 self._dop = 1
         return self._dop
-
-    def h_dops(self):
-        pass
 
     def make_oid(self, iid=0):
         """
@@ -343,6 +343,7 @@ class LG():
         """
         parse JSON into LG object graph first
         """
+        self._g_var = []
         if (not os.path.exists(json_path)):
             raise GraphException("Logical graph {0} not found".format(json_path))
         if (ssid is None):
@@ -360,8 +361,11 @@ class LG():
                 all_list.append(lgn)
 
             for lgn in all_list:
-                if (lgn.is_start()):
-                    self._start_list.append(lgn)
+                if (lgn.is_start() and lgn.jd["category"] != "Comment"):
+                    if (lgn.jd["category"] == "Variables"):
+                        self._g_var.append(lgn)
+                    else:
+                        self._start_list.append(lgn)
 
             self._lg_links = lg['linkDataArray']
 
@@ -371,8 +375,6 @@ class LG():
                 self.validate_link(src, tgt)
                 src.add_output(tgt)
                 tgt.add_input(src)
-
-        self._drop_list = []
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = defaultdict(list)
@@ -423,16 +425,28 @@ class LG():
                 miid = '{0}/{1}'.format(iid, i)
                 if (not is_sca): # make GroupBy and Gather drops
                     self._drop_dict[lgn.id].append(lgn.make_single_drop(miid))
-                for child in lgn.children:
+                if (not is_sca):
                     # add artificial logical links to the "first" children
-                    if (not is_sca):
+                    non_inputs = []
+                    grp_starts = []
+                    for child in lgn.children:
                         if (len(child.inputs) == 0):
-                            lgn.add_input(child)
-                            child.add_output(lgn)
-                            lk = dict()
-                            lk['from'] = lgn.id
-                            lk['to'] = child.id
-                            self._lg_links.append(lk)
+                            non_inputs.append(child)
+                        if (child.is_group_start()):
+                            grp_starts.append(child)
+                    if (len(grp_starts) == 0):
+                        gs_list = non_inputs
+                    else:
+                        gs_list = grp_starts
+                    for gs in gs_list:
+                        lgn.add_input(gs)
+                        gs.add_output(lgn)
+                        lk = dict()
+                        lk['from'] = lgn.id
+                        lk['to'] = gs.id
+                        self._lg_links.append(lk)
+
+                for child in lgn.children:
                     self.lgn_to_pgn(child, miid)
         else:
             self._drop_dict[lgn.id].append(lgn.make_single_drop(iid))
@@ -450,7 +464,11 @@ class LG():
         # src must be data
         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
             for sdrop in chunk:
-                sdrop.addOutput(tdrops[i])
+                try:
+                    sdrop.addOutput(tdrops[i])
+                except Exception, e:
+                    print "  ***   ", i, ", ", len(tdrops)
+                    raise e
                 tdrops[i].addInput(sdrop)
 
     def _get_chunk_size(self, s, t):
