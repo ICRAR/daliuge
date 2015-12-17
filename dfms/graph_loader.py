@@ -203,7 +203,11 @@ def createGraphFromDropSpecList(dropSpecList):
                 for oid in dropSpec[rel]:
                     lhDrop = drops[oid]
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
-                    relFunc = getattr(drop, relFuncName)
+                    try:
+                        relFunc = getattr(drop, relFuncName)
+                    except AttributeError:
+                        logger.error('%r cannot be linked to %r due to missing method "%s"' % (drop, lhDrop, relFuncName))
+                        raise
                     relFunc(lhDrop)
 
         # N-1 relationships
