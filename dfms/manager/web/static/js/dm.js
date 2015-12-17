@@ -284,6 +284,9 @@ function _addNode(g, doSpec) {
 	else if( doSpec.type == 'socket' ) {
 		notes = 'port: ' + doSpec.port;
 	}
+	if( doSpec.nm ) {
+		notes += '<br/>' + doSpec.nm
+	}
 
 	var oid = doSpec.oid;
 	var html = '<div class="drop-label" id="id_' + oid + '">';
