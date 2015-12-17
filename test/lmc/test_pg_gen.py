@@ -19,7 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest, os, pkg_resources
+import unittest, os, pkg_resources, json
 import pprint
 
 from dfms.lmc.pg_generator import LGNode, LG
@@ -31,8 +31,10 @@ class TestPGGen(unittest.TestCase):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
         #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
-        self.assertEquals(len(lg._done_dict.keys()), 35)
-        lg.unroll_to_tpl()
+        self.assertEquals(len(lg._done_dict.keys()), 33)
+        drop_list = lg.unroll_to_tpl()
+        print json.dumps(drop_list, indent=2)
+        #pprint.pprint(drop_list)
         #pprint.pprint(dict(lg._drop_dict))
         #input_dict = defaultdict(list)
         #lg.to_pg_tpl(input_dict)
@@ -44,4 +46,4 @@ class TestPGGen(unittest.TestCase):
         lg.unroll_to_tpl()
         #input_dict = defaultdict(list)
         #lg.to_pg_tpl(input_dict)
-        pprint.pprint(dict(lg._drop_dict))
+        #pprint.pprint(dict(lg._drop_dict))

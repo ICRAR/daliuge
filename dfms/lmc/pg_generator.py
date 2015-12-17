@@ -50,6 +50,7 @@ Examples of logical graph node JSON representation
 import json, os, datetime, time, math
 from dfms.drop import dropdict
 from collections import defaultdict
+from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
 
 class GraphException(Exception):
     pass
@@ -228,8 +229,17 @@ class LGNode():
     def has_output(self):
         return len(self._outs) > 0
 
+    def is_start_node(self):
+        return self.jd['category'] == 'Start'
+
+    def is_end_node(self):
+        return self.jd['category'] == 'End'
+
     def is_start(self):
         return (not self.has_group())
+
+    def is_start_listener(self):
+        return (len(self.inputs) == 1 and self.inputs[0].jd['category'] == 'Start')
 
     def is_group_start(self):
         return (self.has_group() and self.jd.has_key("group_start") and 1 == int(self.jd["group_start"]))
@@ -245,6 +255,9 @@ class LGNode():
 
     def is_groupby(self):
         return (self._jd['category'] == 'GroupBy')
+
+    def is_branch(self):
+        return (self._jd['category'] == 'Branch')
 
     @property
     def gather_width(self):
@@ -319,6 +332,64 @@ class LGNode():
         """
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid)
 
+    def _create_test_drop_spec(self, oid, kwargs):
+        """
+        TODO
+        This is a test funciton only
+        should be replaced by LGNode class specific methods
+        """
+        drop_type = self.jd['category']
+        if (drop_type in ['Data', 'LSM', 'Metadata', 'GSM']):
+            dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
+            kwargs['dirname'] = '/tmp'
+            if (self.is_start_listener()):
+                #create socket listener DROP first
+                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
+                dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
+                'type':'app', 'app':'dfms.apps.socket_listener.SocketListenerApp'})
+                kwargs['listener_drop'] = dropSpec_socket
+                dropSpec_socket.addOutput(dropSpec)
+            else:
+                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
+        elif (drop_type == 'Component'):
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            # add more arguments
+            for i in range(10):
+                k = "Arg%02d" % (i + 1,)
+                if (not self.jd.has_key(k)):
+                    continue
+                v = self.jd[k]
+                if (v is not None and len(str(v)) > 0):
+                    if (v.find("=") > -1):
+                        kv = v.split("=")
+                        kwargs[kv[0]] = kv[1]
+                    else:
+                        kwargs[k] = v
+        elif (drop_type == 'GroupBy'):
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory'})
+            kwargs['grp-data_drop'] = dropSpec_grp
+            dropSpec.addOutput(dropSpec_grp)
+            dropSpec_grp.addProducer(dropSpec)
+        elif  (drop_type == 'DataGather'):
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec_gather = dropdict({'oid':"{0}-gather-data".format(oid), 'type':'plain', 'storage':'memory'})
+            kwargs['gather-data_drop'] = dropSpec_gather
+            dropSpec.addOutput(dropSpec_gather)
+            dropSpec_gather.addProducer(dropSpec)
+        elif (drop_type == 'Branch'):
+            # create an App first
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain', 'storage':'null'})
+            kwargs['null_drop'] = dropSpec_null
+            dropSpec.addOutput(dropSpec_null)
+            dropSpec_null.addProducer(dropSpec)
+        elif (drop_type in ['Start', 'End']):
+            dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'null'})
+        else:
+            raise GraphException("Unrecognised DROP type {0}".format(drop_type))
+        return dropSpec
+
     def make_single_drop(self, iid='0', **kwargs):
         """
         make only one drop from a LG nodes
@@ -327,7 +398,7 @@ class LGNode():
         Dummy implementation as of 09/12/15
         """
         oid = self.make_oid(iid)
-        dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
+        dropSpec = self._create_test_drop_spec(oid, kwargs)
         kwargs['iid'] = iid
         kwargs['dt'] = self.jd['category']
         kwargs['nm'] = self.jd['text']
@@ -357,6 +428,8 @@ class LG():
             self._start_list = []
             all_list = []
             for jd in lg['nodeDataArray']:
+                if (jd['category'] == 'Comment'):
+                    continue
                 lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
                 all_list.append(lgn)
 
@@ -386,7 +459,9 @@ class LG():
 
         if (src.is_gather()):
             raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
-
+        elif (src.is_branch()):
+            if (tgt.jd['category'] != 'Component' and (not tgt.is_end_node())):
+                raise GInvalidLink("Branch {0}'s output {1} must be Component".format(src.id, tgt.id))
         """
         if (src.is_gather() and (not tgt.is_group())):
             if (tgt.jd['category'] != 'Component'):
@@ -402,6 +477,9 @@ class LG():
         elif (tgt.is_gather()):
             if (src.jd['category'] != 'Data' and (not src.is_groupby())):
                 raise GInvalidLink("Gather {0}'s input {1} should be either a GroupBy or Data".format(tgt.id, src.id))
+        elif (tgt.is_branch()):
+            if (src.jd['category'] != 'Data'):
+                raise GInvalidLink("Branch {0}'s input {1} should be Data".format(tgt.id, src.id))
 
         if (src.is_groupby() and not (tgt.is_gather())):
             raise GInvalidLink("Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(src.id, tgt.id))
@@ -424,7 +502,12 @@ class LG():
             for i in range(lgn.dop):
                 miid = '{0}/{1}'.format(iid, i)
                 if (not is_sca): # make GroupBy and Gather drops
-                    self._drop_dict[lgn.id].append(lgn.make_single_drop(miid))
+                    src_gdrop = lgn.make_single_drop(miid)
+                    self._drop_dict[lgn.id].append(src_gdrop)
+                    if (lgn.is_groupby()):
+                        self._drop_dict['new_added'].append(src_gdrop['grp-data_drop'])
+                    elif (lgn.is_gather()):
+                        self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
                 if (not is_sca):
                     # add artificial logical links to the "first" children
                     non_inputs = []
@@ -449,7 +532,13 @@ class LG():
                 for child in lgn.children:
                     self.lgn_to_pgn(child, miid)
         else:
-            self._drop_dict[lgn.id].append(lgn.make_single_drop(iid))
+            #TODO !!
+            src_drop = lgn.make_single_drop(iid)
+            self._drop_dict[lgn.id].append(src_drop)
+            if (lgn.is_branch()):
+                self._drop_dict['new_added'].append(src_drop['null_drop'])
+            elif (lgn.is_start_listener()):
+                self._drop_dict['new_added'].append(src_drop['listener_drop'])
 
     def _split_list(self, l, n):
         """
@@ -464,12 +553,7 @@ class LG():
         # src must be data
         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
             for sdrop in chunk:
-                try:
-                    sdrop.addOutput(tdrops[i])
-                except Exception, e:
-                    print "  ***   ", i, ", ", len(tdrops)
-                    raise e
-                tdrops[i].addInput(sdrop)
+                self._link_drops(slgn, tlgn, sdrop, tdrops[i])
 
     def _get_chunk_size(self, s, t):
         """
@@ -483,6 +567,27 @@ class LG():
         else:
             ret = s.dop_diff(t)
         return ret
+
+    def _link_drops(self, slgn, tlgn, src_drop, tgt_drop):
+        """
+        """
+        if (slgn.is_branch()):
+            sdrop = src_drop['null_drop']
+        elif (slgn.is_gather()):
+            sdrop = src_drop['gather-data_drop']
+        elif (slgn.is_groupby()):
+            sdrop = src_drop['grp-data_drop']
+        else:
+            sdrop = src_drop
+
+        tdrop = tgt_drop
+        if (slgn.jd['category'] == 'Component'):
+            sdrop.addOutput(tdrop)
+            tdrop.addProducer(sdrop)
+        else:
+            sdrop.addConsumer(tdrop)
+            tdrop.addInput(sdrop)
+
 
     def unroll_to_tpl(self):
         """
@@ -514,24 +619,23 @@ class LG():
                     tlgn.id, len(sdrops), len(tdrops))
                     raise GraphException(err_info)
                 for i, sdrop in enumerate(sdrops):
-                    sdrop.addOutput(tdrops[i])
-                    tdrops[i].addInput(sdrop)
+                    self._link_drops(slgn, tlgn, sdrop, tdrops[i])
             elif (slgn.is_group() and tlgn.is_group()):
                 # slgn must be GroupBy and tlgn must be Gather
                 self._unroll_gather_as_output(slgn, tlgn, sdrops, tdrops, chunk_size)
             elif (not slgn.is_group() and (not tlgn.is_group())):
+                if (slgn.is_start_node() or tlgn.is_end_node()):
+                    continue
                 if (slgn.h_level >= tlgn.h_level):
                     for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
                         # distribute slgn evenly to tlgn
                         for sdrop in chunk:
-                            sdrop.addOutput(tdrops[i])
-                            tdrops[i].addInput(sdrop)
+                            self._link_drops(slgn, tlgn, sdrop, tdrops[i])
                 else:
                     for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
                         # distribute tlgn evenly to slgn
                         for tdrop in chunk:
-                            sdrops[i].addOutput(tdrop)
-                            tdrop.addInput(sdrops[i])
+                            self._link_drops(slgn, tlgn, sdrops[i], tdrop)
             else: # slgn is not group, but tlgn is group
                 if (tlgn.is_groupby()):
                     grpby_dict = defaultdict(list)
@@ -549,13 +653,40 @@ class LG():
                         grpby_drop = tdrops[i]
                         drop_list = grpby_dict[gk]
                         for drp in drop_list:
+                            self._link_drops(slgn, tlgn, drp, grpby_drop)
+                            """
                             drp.addOutput(grpby_drop)
                             grpby_drop.addInput(drp)
+                            """
                 elif (tlgn.is_gather()):
                     self._unroll_gather_as_output(slgn, tlgn, sdrops, tdrops, chunk_size)
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
+        #clean up extra drops
+        for lid, lgn in self._done_dict.iteritems():
+            if ((lgn.is_start_node() or lgn.is_end_node()) and self._drop_dict.has_key(lid)):
+                del self._drop_dict[lid]
+            elif (lgn.is_branch()):
+                for branch_drop in self._drop_dict[lid]:
+                    if (branch_drop.has_key('null_drop')):
+                        del branch_drop['null_drop']
+            elif (lgn.is_start_listener()):
+                for sl_drop in self._drop_dict[lid]:
+                    if (sl_drop.has_key('listener_drop')):
+                        del sl_drop['listener_drop']
+            elif (lgn.is_groupby()):
+                for sl_drop in self._drop_dict[lid]:
+                    if (sl_drop.has_key('grp-data_drop')):
+                        del sl_drop['grp-data_drop']
+            elif (lgn.is_gather()):
+                for sl_drop in self._drop_dict[lid]:
+                    if (sl_drop.has_key('gather-data_drop')):
+                        del sl_drop['gather-data_drop']
 
+        ret = []
+        for drop_list in self._drop_dict.values():
+            ret += drop_list
+        return ret
 
 def l2g(lg, num_procs):
     """
