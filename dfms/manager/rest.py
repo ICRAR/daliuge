@@ -28,6 +28,7 @@ import json
 import threading
 
 from bottle import Bottle, template, static_file, request, run, response
+import bottle
 import pkg_resources
 
 
@@ -42,6 +43,10 @@ class RestServer(object):
     """
 
     def __init__(self, dm):
+
+        # Increase maximum file sizes
+        bottle.BaseRequest.MEMFILE_MAX = 1024 * 1024 * 10
+
         super(RestServer, self).__init__()
         app = Bottle()
         self.app = app
