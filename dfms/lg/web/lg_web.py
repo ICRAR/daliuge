@@ -33,6 +33,7 @@ post_sem = threading.Semaphore(1)
 
 err_prefix = "[Error]"
 DEFAULT_LG_NAME = "cont_img.json"
+DEFAULT_PGT_VIEW_NAME = "lofar_pgt-view.json"
 
 def lg_exists(lg_name):
     return os.path.exists("{0}/{1}".format(lg_dir, lg_name))
@@ -80,7 +81,7 @@ def jsonbody():
         return data
     else:
         response.status = 404
-        return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
+        return "{0}: JSON graph {1} not found\n".format(err_prefix, lg_name)
 
 @get('/lg_editor')
 def load_lg_editor():
@@ -98,7 +99,17 @@ def load_lg_editor():
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
+@get('/pg_viewer')
+def load_pg_viewer():
+    pgt_name = request.query.get('pgt_view_name')
+    if (pgt_name is None or len(pgt_name) == 0):
+        redirect('/pg_viewer?pgt_view_name={0}'.format(DEFAULT_PGT_VIEW_NAME))
 
+    if (lg_exists(pgt_name)):
+        return template('pg_viewer.html', pgt_view_json_name=pgt_name)
+    else:
+        response.status = 404
+        return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
 
 if __name__ == "__main__":
     """
