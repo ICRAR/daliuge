@@ -22,7 +22,7 @@
 import unittest, os, pkg_resources, json
 import pprint
 
-from dfms.lmc.pg_generator import LGNode, LG
+from dfms.lmc.pg_generator import LGNode, LG, PGT
 from collections import defaultdict
 
 class TestPGGen(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestPGGen(unittest.TestCase):
         lg = LG(fp)
         self.assertEquals(len(lg._done_dict.keys()), 33)
         drop_list = lg.unroll_to_tpl()
-        print json.dumps(drop_list, indent=2)
+        #print json.dumps(drop_list, indent=2)
         #pprint.pprint(drop_list)
         #pprint.pprint(dict(lg._drop_dict))
         #input_dict = defaultdict(list)
@@ -47,3 +47,10 @@ class TestPGGen(unittest.TestCase):
         #input_dict = defaultdict(list)
         #lg.to_pg_tpl(input_dict)
         #pprint.pprint(dict(lg._drop_dict))
+
+    def test_pgt_to_json(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgt = PGT(drop_list)
+        print pgt.to_gojs_json()

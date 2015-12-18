@@ -346,7 +346,7 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
-                'type':'app', 'app':'dfms.apps.socket_listener.SocketListenerApp'})
+                'type':'app', 'app':'dfms.apps.socket_listener.SocketListenerApp', 'nm':'lstnr'})
                 kwargs['listener_drop'] = dropSpec_socket
                 dropSpec_socket.addOutput(dropSpec)
             else:
@@ -367,20 +367,20 @@ class LGNode():
                         kwargs[k] = v
         elif (drop_type == 'GroupBy'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
-            dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory'})
+            dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory', 'nm':'grpdata'})
             kwargs['grp-data_drop'] = dropSpec_grp
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
         elif  (drop_type == 'DataGather'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
-            dropSpec_gather = dropdict({'oid':"{0}-gather-data".format(oid), 'type':'plain', 'storage':'memory'})
+            dropSpec_gather = dropdict({'oid':"{0}-gather-data".format(oid), 'type':'plain', 'storage':'memory', 'nm':'gthrdt'})
             kwargs['gather-data_drop'] = dropSpec_gather
             dropSpec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
             # create an App first
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
-            dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain', 'storage':'null'})
+            dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain', 'storage':'null', 'nm':'null'})
             kwargs['null_drop'] = dropSpec_null
             dropSpec.addOutput(dropSpec_null)
             dropSpec_null.addProducer(dropSpec)
@@ -404,6 +404,58 @@ class LGNode():
         kwargs['nm'] = self.jd['text']
         dropSpec.update(kwargs)
         return dropSpec
+
+class PGT():
+    """
+    An DROP representation of Physical Graph Template
+    """
+
+    def __init__(self, drop_list):
+        self._drop_list = drop_list
+
+    def to_gojs_json(self):
+        """
+        Convert to JSON for visualisation in GOJS
+        """
+        ret = dict()
+        ret['class'] = 'go.GraphLinksModel'
+        nodes = []
+        links = []
+        key_dict = dict() # key - oid, value - GOJS key
+        for i, drop in enumerate(self._drop_list):
+            oid = drop['oid']
+            node = dict()
+            node['key'] = i
+            key_dict[oid] = i
+            node['oid'] = oid
+            tt = drop['type']
+            if ('plain' == tt):
+                node['category'] = 'Data'
+            elif ('app' == tt):
+                node['category'] = 'Component'
+            node['text'] = drop['nm']
+            nodes.append(node)
+        ret['nodeDataArray'] = nodes
+
+        for drop in self._drop_list:
+            oid = drop['oid']
+            myk = key_dict[oid]
+            if (drop.has_key('inputs')):
+                for inp in drop['inputs']:
+                    link = dict()
+                    link['from'] = key_dict[inp]
+                    link['to'] = myk
+                    links.append(link)
+            if (drop.has_key('outputs')):
+                for oup in drop['outputs']:
+                    link = dict()
+                    link['from'] = myk
+                    link['to'] = key_dict[oup]
+                    links.append(link)
+
+        ret['linkDataArray'] = links
+        return json.dumps(ret, indent=2)
+
 
 class LG():
     """
@@ -483,6 +535,14 @@ class LG():
 
         if (src.is_groupby() and not (tgt.is_gather())):
             raise GInvalidLink("Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(src.id, tgt.id))
+
+        elif (src.is_branch()):
+            o = src.outputs
+            if (len(o) < 2):
+                pass
+            else:
+                raise GInvalidLink("Branch {0} must have two outputs, but it has {1} now".format(src.id, len(o)))
+
         if (not src.h_related(tgt)):
             raise GInvalidLink("{0} and {1} are not hierarchically related: {2} and {3}".format(src.id, tgt.id,
             src.group_hierarchy,
