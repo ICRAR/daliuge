@@ -5,9 +5,55 @@
 <!-- Copyright 1998-2015 by Northwoods Software Corporation. -->
 <!-- ported by ICRAR 2015 -->
 <meta charset="UTF-8">
+<style type="text/css">
+#infoBoxHolder {
+    z-index: 300;
+    position: absolute;
+    left: 5px;
+  }
+
+  #infoBox {
+    border: 1px solid #999;
+    padding: 8px;
+    background-color: whitesmoke;
+    opacity:0.9;
+    position: relative;
+    width: 170px;
+    //height: 60px;
+    font-family: arial, helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 11px;
+  }
+
+  /* this is known as the "clearfix" hack to allow
+     floated objects to add to the height of a div */
+  #infoBox:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+  }
+
+  div.infoTitle {
+    width: 30px;
+    font-weight: normal;
+    color:  #787878;
+    float: left;
+    margin-left: 4px;
+  }
+
+  div.infoValues {
+    width: 100px;
+    text-align: right;
+    float: right;
+  }
+</style>
 <script src="/static/go.js"></script>
 <script src="/static/jquery.min.js"></script>
 <script id="code">
+  var lastStroked = null;  // this remembers the last highlit Shape
   function init() {
     var $ = go.GraphObject.make;  // for conciseness in defining templates
 
@@ -15,8 +61,9 @@
       $(go.Diagram, "myDiagram",  // must be the ID or reference to div
         {
           initialAutoScale: go.Diagram.UniformToFill,
-          layout: $(go.LayeredDigraphLayout)
+          layout: $(go.LayeredDigraphLayout),
           // other Layout properties are set by the layout function, defined below
+          mouseOver: doMouseOver  // this event handler is defined below
         });
 
       myDiagram.nodeTemplateMap.add("",
@@ -35,7 +82,8 @@
           $(go.Node, "Spot",
             { locationSpot: go.Spot.Center },
             $(go.Shape, "Rectangle",
-              { fill: "#00A9C9",  // the initial value, but data-binding may provide different value
+              { name: "SHAPE",
+                fill: "#00A9C9",  // the initial value, but data-binding may provide different value
                 stroke: "#ffffff",
                 desiredSize: new go.Size(100, 30) },
               new go.Binding("fill", "fill")),
@@ -51,7 +99,8 @@
             $(go.Node, "Spot",
               { locationSpot: go.Spot.Center },
               $(go.Shape, "Parallelogram2",
-                { fill: "#004080",  // the initial value, but data-binding may provide different value
+                { name: "SHAPE",
+                  fill: "#004080",  // the initial value, but data-binding may provide different value
                   stroke: "#ffffff",
                   desiredSize: new go.Size(100, 30) },
                 new go.Binding("fill", "fill")),
@@ -76,6 +125,83 @@
     // generate a tree with the default values
     //rebuildGraph();
     loadFromRemoteJson();
+
+    // Make sure the infoBox is momentarily hidden if the user tries to mouse over it
+    var infoBoxH = document.getElementById("infoBoxHolder");
+    infoBoxH.addEventListener("mousemove", function() {
+      var box = document.getElementById("infoBoxHolder");
+      box.style.left = parseInt(box.style.left) + "px";
+      box.style.top = parseInt(box.style.top)+30 + "px";
+    }, false);
+
+    var diagramDiv = document.getElementById("myDiagram");
+
+    // Make sure the infoBox is hidden when the mouse is not over the Diagram
+    diagramDiv.addEventListener("mouseout", function(e) {
+      if (lastStroked !== null) lastStroked.stroke = null;
+      lastStroked = null;
+
+      var infoBox = document.getElementById("infoBox");
+      var elem = document.elementFromPoint(e.clientX, e.clientY);
+      if (elem !== null && (elem === infoBox || elem.parentNode === infoBox)) {
+        var box = document.getElementById("infoBoxHolder");
+        box.style.left = parseInt(box.style.left) + "px";
+        box.style.top = parseInt(box.style.top)+30 + "px";
+      } else {
+        var box = document.getElementById("infoBoxHolder");
+        box.innerHTML = "";
+      }
+    }, false);
+  } // end init
+
+  // Called when the mouse is over the diagram's background
+  function doMouseOver(e) {
+      if (e === undefined) e = myDiagram.lastInput;
+      var doc = e.documentPoint;
+      // find all Nodes that are within 100 units
+      var list = myDiagram.findObjectsNear(doc, 100, null, function(x) { return x instanceof go.Node; });
+      // now find the one that is closest to e.documentPoint
+      var closest = null;
+      var closestDist = 999999999;
+      list.each(function(node) {
+        var dist = doc.distanceSquaredPoint(node.getDocumentPoint(go.Spot.Center));
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = node;
+        }
+      });
+      highlightNode(e, closest);
+    }
+
+    // Called with a Node (or null) that the mouse is over or near
+  function highlightNode(e, node) {
+    if (node !== null) {
+      var shape = node.findObject("SHAPE");
+      shape.stroke = "white";
+      if (lastStroked !== null && lastStroked !== shape) lastStroked.stroke = null;
+      lastStroked = shape;
+      updateInfoBox(e.viewPoint, node.data);
+    } else {
+      if (lastStroked !== null) lastStroked.stroke = null;
+      lastStroked = null;
+      document.getElementById("infoBoxHolder").innerHTML = "";
+    }
+  }
+
+  function updateInfoBox(mousePt, data) {
+    var x =
+    "<div id='infoBox'>" +
+    "<div>" + data.oid + "</div>" +
+    "<div class='infoTitle'>Type</div>" +
+    "<div class='infoValues'>" + data.category + "</div><br/>" +
+    "<div class='infoTitle'>Name</div>" +
+    "<div class='infoValues'>" + data.text + "</div>" +
+    "</div>"
+
+    var box = document.getElementById("infoBoxHolder");
+    box.innerHTML = x;
+    box.style.left = mousePt.x+70 + "px";
+    box.style.top = mousePt.y+20 + "px";
   }
 
   function loadFromRemoteJson() {
@@ -299,6 +425,9 @@
     </span>
   </div>
   <div id="myDiagram" style="border: solid 1px black; background: white; width: 100%; height: 800px"></div>
+  <div id="infoBoxHolder">
+      <!-- Initially Empty, it is populated when updateInfoBox is called -->
+  </div>
 </div>
 </body>
 </html>
