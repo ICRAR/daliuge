@@ -1239,6 +1239,20 @@
     window.json_editor_user = true;
   }
 
+  function genPGT() {
+    var button = document.getElementById("SaveButton");
+    if (button && button.disabled == false) {
+      alert("Save the logical graph diagram first.")
+      return
+    } else if (window.curr_lg_name == null) {
+      alert("lg_name is null");
+      return;
+    } else {
+      url = "/gen_pgt?lg_name=" + window.curr_lg_name.toString()
+      window.open(url)
+    }
+  }
+
   function saveToRemote(saveEditor) {
     var jsonModel = myDiagram.model.toJson();
     if (window.curr_lg_name == null) {
@@ -1411,7 +1425,15 @@
           </li>
           <li>
             <div class="buttonwrapper">
-            <button id="pngButton" class="button" onclick="makePNG()">Export PNG</button>
+            <button id="pngButton" class="button" onclick="makePNG()">Export</button>
+          </div>
+          </li>
+          <li style="width:35px">
+            &nbsp;
+          </li>
+          <li>
+            <div class="buttonwrapper">
+            <button id="pgButton" class="button" onclick="genPGT()">Gen PGT</button>
           </div>
           </li>
         </ul>
