@@ -21,15 +21,18 @@
 #
 #    chen.wu@icrar.org
 
-import json, decimal, urllib2
+import json, decimal, urllib2, time
 import subprocess, commands
 import threading
 import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
+from dfms.lmc.pg_generator import LG, PGT, GraphException
+
 #lg_dir = None
 post_sem = threading.Semaphore(1)
+gen_pgt_sem = threading.Semaphore(1)
 
 err_prefix = "[Error]"
 DEFAULT_LG_NAME = "cont_img.json"
@@ -110,6 +113,35 @@ def load_pg_viewer():
     else:
         response.status = 404
         return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
+
+@get('/gen_pgt')
+def gen_pgt():
+    lg_name = request.query.get('lg_name')
+    if (lg_exists(lg_name)):
+        try:
+            lg = LG(lg_name)
+            drop_list = lg.unroll_to_tpl()
+            pgt = PGT(drop_list)
+            pgt_content = pgt.to_gojs_json()
+        except GraphException, ge:
+            response.status = 500
+            return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
+        pgt_name = lg_name.replace(".json", "_pgt.json")
+        pgt_path = "{0}/{1}".format(lg_dir, pgt_name)
+        gen_pgt_sem.acquire()
+        try:
+            # overwrite file on disks
+            with open(pgt_path, "w") as f:
+                f.write(pgt_content)
+        except Exception, excmd2:
+            response.status = 500
+            return "Fail to save PGT {0}:{1}".format(pgt_path, str(excmd2))
+        finally:
+            gen_pgt_sem.release()
+        redirect('/pg_viewer?pgt_view_name={0}'.format(pgt_name))
+    else:
+        response.status = 404
+        return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
 if __name__ == "__main__":
     """
