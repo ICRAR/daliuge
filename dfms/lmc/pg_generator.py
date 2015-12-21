@@ -342,17 +342,26 @@ class LGNode():
         if (drop_type in ['Data', 'LSM', 'Metadata', 'GSM']):
             dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
             kwargs['dirname'] = '/tmp'
+            if (self.jd.has_key('data_volume')):
+                kwargs['dw'] = int(self.jd['data_volume']) #dw -- data weight
+            else:
+                kwargs['dw'] = 1
             if (self.is_start_listener()):
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
-                'type':'app', 'app':'dfms.apps.socket_listener.SocketListenerApp', 'nm':'lstnr'})
+                'type':'app', 'app':'dfms.apps.socket_listener.SocketListenerApp', 'nm':'lstnr', 'tw':1})
+                # tw -- task weight
                 kwargs['listener_drop'] = dropSpec_socket
                 dropSpec_socket.addOutput(dropSpec)
             else:
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
         elif (drop_type == 'Component'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            if (self.jd.has_key('execution_time')):
+                kwargs['tw'] = int(self.jd['execution_time'])
+            else:
+                kwargs['tw'] = 5
             # add more arguments
             for i in range(10):
                 k = "Arg%02d" % (i + 1,)
@@ -367,21 +376,34 @@ class LGNode():
                         kwargs[k] = v
         elif (drop_type == 'GroupBy'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
-            dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory', 'nm':'grpdata'})
+            dw = int(self.inputs[0].jd['data_volume']) * self.groupby_width
+            dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory',
+            'nm':'grpdata', 'dw':dw})
             kwargs['grp-data_drop'] = dropSpec_grp
+            kwargs['tw'] = 0 # barriar literarlly takes no time for its own computation
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
-        elif  (drop_type == 'DataGather'):
+        elif (drop_type == 'DataGather'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
-            dropSpec_gather = dropdict({'oid':"{0}-gather-data".format(oid), 'type':'plain', 'storage':'memory', 'nm':'gthrdt'})
+            gi = self.inputs[0]
+            if (gi.is_groupby()):
+                gii = gi.inputs[0]
+                dw = int(gii.jd['data_volume']) * gi.groupby_width * self.gather_width
+            else: # data
+                dw = int(gi.jd['data_volume']) * self.gather_width
+            dropSpec_gather = dropdict({'oid':"{0}-gather-data".format(oid),
+            'type':'plain', 'storage':'memory', 'nm':'gthrdt', 'dw':dw})
             kwargs['gather-data_drop'] = dropSpec_gather
+            kwargs['tw'] = 0
             dropSpec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
             # create an App first
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
-            dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain', 'storage':'null', 'nm':'null'})
+            dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain',
+            'storage':'null', 'nm':'null', 'dw':0})
             kwargs['null_drop'] = dropSpec_null
+            kwargs['tw'] = 0
             dropSpec.addOutput(dropSpec_null)
             dropSpec_null.addProducer(dropSpec)
         elif (drop_type in ['Start', 'End']):
@@ -413,6 +435,49 @@ class PGT():
     def __init__(self, drop_list):
         self._drop_list = drop_list
 
+    def to_pyrros_input(self, outf):
+        """
+        Convert to PYRROS format for mapping and decomposition
+        http://www.cs.ucsb.edu/~tyang/papers/PYRROScode.html
+        """
+        key_dict = dict() # key - oid, value - GOJS key
+        links_dict = dict()
+        drop_dict = dict()
+        for i, drop in enumerate(self._drop_list):
+            oid = drop['oid']
+            key_dict[oid] = i
+            drop_dict[oid] = drop
+
+        with open(outf, "w") as f:
+            f.write("{0}\n".format(len(self._drop_list)))
+            for i, drop in enumerate(self._drop_list):
+                oid = drop['oid']
+                myk = key_dict[oid]
+                tt = drop['type']
+                if ('plain' == tt):
+                    obk = 'consumers' # outbound keyword
+                    tw = 0
+                elif ('app' == tt):
+                    obk = 'outputs'
+                    tw = drop['tw']
+                f.write("{0} {1} {2}\n".format(myk, tw, 0))
+                if (drop.has_key(obk)):
+                    oel = []
+                    for oup in drop[obk]:
+                        link_k = "{0}->{1}".format(myk, key_dict[oup])
+                        if (links_dict.has_key(link_k)):
+                            continue
+                        else:
+                            links_dict[link_k] = 1
+                        oel.append(str(key_dict[oup]))
+                        if ('plain' == tt):
+                            oel.append(str(drop['dw']))
+                        elif ('app' == tt):
+                            oel.append(str(drop_dict[oup]['dw']))
+                    oel.append('-1')
+                    f.write("{0}\n".format(" ".join(oel)))
+            f.write("-1\n")
+
     def to_gojs_json(self):
         """
         Convert to JSON for visualisation in GOJS
@@ -421,6 +486,7 @@ class PGT():
         ret['class'] = 'go.GraphLinksModel'
         nodes = []
         links = []
+        links_dict = {}
         key_dict = dict() # key - oid, value - GOJS key
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
@@ -440,22 +506,38 @@ class PGT():
         for drop in self._drop_list:
             oid = drop['oid']
             myk = key_dict[oid]
-            if (drop.has_key('inputs')):
-                for inp in drop['inputs']:
+            tt = drop['type']
+            if ('plain' == tt): # data
+                ikw = 'producers'
+                okw = 'consumers'
+            elif ('app' == tt):
+                ikw = 'inputs'
+                okw = 'outputs'
+            if (drop.has_key(ikw)):
+                for inp in drop[ikw]:
                     link = dict()
                     link['from'] = key_dict[inp]
                     link['to'] = myk
+                    link_k = "{0}->{1}".format(key_dict[inp], myk)
+                    if (links_dict.has_key(link_k)):
+                        continue
+                    else:
+                        links_dict[link_k] = 1
                     links.append(link)
-            if (drop.has_key('outputs')):
-                for oup in drop['outputs']:
+            if (drop.has_key(okw)):
+                for oup in drop[okw]:
                     link = dict()
                     link['from'] = myk
                     link['to'] = key_dict[oup]
+                    link_k = "{0}->{1}".format(myk, key_dict[oup])
+                    if (links_dict.has_key(link_k)):
+                        continue
+                    else:
+                        links_dict[link_k] = 1
                     links.append(link)
 
         ret['linkDataArray'] = links
         return json.dumps(ret, indent=2)
-
 
 class LG():
     """

@@ -54,3 +54,10 @@ class TestPGGen(unittest.TestCase):
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
         print pgt.to_gojs_json()
+
+    def test_pgt_to_pyrros(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgt = PGT(drop_list)
+        pgt.to_pyrros_input('/tmp/lofar_pgt.pyrros')
