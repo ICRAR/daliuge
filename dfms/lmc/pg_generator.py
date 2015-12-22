@@ -47,7 +47,7 @@ Examples of logical graph node JSON representation
   u'text': u'DD Calibration'}
 
 """
-import json, os, datetime, time, math
+import json, os, datetime, time, math, uuid, commands
 from dfms.drop import dropdict
 from collections import defaultdict
 from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
@@ -59,6 +59,9 @@ class GInvalidLink(GraphException):
     pass
 
 class GInvalidNode(GraphException):
+    pass
+
+class GPGTException(GraphException):
     pass
 
 class LGNode():
@@ -239,7 +242,8 @@ class LGNode():
         return (not self.has_group())
 
     def is_start_listener(self):
-        return (len(self.inputs) == 1 and self.inputs[0].jd['category'] == 'Start')
+        return (len(self.inputs) == 1 and self.inputs[0].jd['category'] == 'Start' and
+        self.jd['category'] == 'Data')
 
     def is_group_start(self):
         return (self.has_group() and self.jd.has_key("group_start") and 1 == int(self.jd["group_start"]))
@@ -380,7 +384,7 @@ class LGNode():
             dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory',
             'nm':'grpdata', 'dw':dw})
             kwargs['grp-data_drop'] = dropSpec_grp
-            kwargs['tw'] = 0 # barriar literarlly takes no time for its own computation
+            kwargs['tw'] = 1 # barriar literarlly takes no time for its own computation
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
         elif (drop_type == 'DataGather'):
@@ -394,7 +398,7 @@ class LGNode():
             dropSpec_gather = dropdict({'oid':"{0}-gather-data".format(oid),
             'type':'plain', 'storage':'memory', 'nm':'gthrdt', 'dw':dw})
             kwargs['gather-data_drop'] = dropSpec_gather
-            kwargs['tw'] = 0
+            kwargs['tw'] = 1
             dropSpec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
@@ -427,9 +431,9 @@ class LGNode():
         dropSpec.update(kwargs)
         return dropSpec
 
-class PGT():
+class PGT(object):
     """
-    An DROP representation of Physical Graph Template
+    A DROP representation of Physical Graph Template
     """
 
     def __init__(self, drop_list):
@@ -442,7 +446,7 @@ class PGT():
         """
         key_dict = dict() # key - oid, value - GOJS key
         links_dict = dict()
-        drop_dict = dict()
+        drop_dict = dict() # key - oid, value - drop
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
             key_dict[oid] = i
@@ -456,7 +460,7 @@ class PGT():
                 tt = drop['type']
                 if ('plain' == tt):
                     obk = 'consumers' # outbound keyword
-                    tw = 0
+                    tw = 1
                 elif ('app' == tt):
                     obk = 'outputs'
                     tw = drop['tw']
@@ -478,7 +482,7 @@ class PGT():
                     f.write("{0}\n".format(" ".join(oel)))
             f.write("-1\n")
 
-    def to_gojs_json(self):
+    def to_gojs_json(self, string_rep=True):
         """
         Convert to JSON for visualisation in GOJS
         """
@@ -486,7 +490,7 @@ class PGT():
         ret['class'] = 'go.GraphLinksModel'
         nodes = []
         links = []
-        links_dict = {}
+        links_dict = dict()
         key_dict = dict() # key - oid, value - GOJS key
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
@@ -508,22 +512,9 @@ class PGT():
             myk = key_dict[oid]
             tt = drop['type']
             if ('plain' == tt): # data
-                ikw = 'producers'
                 okw = 'consumers'
             elif ('app' == tt):
-                ikw = 'inputs'
                 okw = 'outputs'
-            if (drop.has_key(ikw)):
-                for inp in drop[ikw]:
-                    link = dict()
-                    link['from'] = key_dict[inp]
-                    link['to'] = myk
-                    link_k = "{0}->{1}".format(key_dict[inp], myk)
-                    if (links_dict.has_key(link_k)):
-                        continue
-                    else:
-                        links_dict[link_k] = 1
-                    links.append(link)
             if (drop.has_key(okw)):
                 for oup in drop[okw]:
                     link = dict()
@@ -537,7 +528,96 @@ class PGT():
                     links.append(link)
 
         ret['linkDataArray'] = links
-        return json.dumps(ret, indent=2)
+        if (string_rep):
+            return json.dumps(ret, indent=2)
+        else:
+            return ret
+
+class PGTP(PGT):
+    """
+    DROP and GOJS representations of Physical Graph Template with Partitions
+    """
+
+    def __init__(self, drop_list, pyrros_path, num_partitions=0):
+        """
+        num_partitions:  number of partitions supplied by users (int)
+        """
+        super(PGTP, self).__init__(drop_list)
+        if (not os.path.exists(pyrros_path)):
+            raise GPGTException("Invalid PYRROS path: {0}".format(pyrros_path))
+        else:
+            self._pyrros_path = pyrros_path
+        if (num_partitions == 0):
+            self._num_parts = self._get_opt_num_parts()
+        else:
+            self._num_parts = num_partitions
+
+    def _get_opt_num_parts(self):
+        """
+        dummy for now
+        """
+        leng = len(self._drop_list)
+        return int(math.ceil(leng / 10.0))
+
+    def _parse_pyrros_output(self, pyrros_out, jsobj):
+        """
+        parse pyrros result, and add group node into the GOJS json
+        """
+
+        key_dict = dict() #k - gojs key, v - gojs group id
+        groups = set()
+
+        start_k = len(self._drop_list)
+        with open(pyrros_out, "r") as f:
+            num_pts = int(f.readline())
+            if (num_pts != self._num_parts):
+                raise GPGTException("Inconsistent number of partitions: {0} != {1}".format(num_pts,
+                self._num_parts))
+            line = f.readline()
+            while (len(line) > 0):
+                la = line.split()
+                key_dict[int(la[0])] = int(la[1])
+                groups.add(la[1])
+                line = f.readline()
+
+        node_list = jsobj['nodeDataArray']
+        for node in node_list:
+            node['group'] = key_dict[node['key']]
+
+        for gid in groups:
+            gn = dict()
+            gn['key'] = start_k + gid
+            gn['isGroup'] = True
+            gn['text'] = 'Island_{0}'.format(gid)
+            node_list.append(gn)
+
+
+    def to_gojs_json(self, string_rep=True):
+        jsobj = super(PGTP, self).to_gojs_json(string_rep=False)
+        uid = uuid.uuid1()
+
+        pyrros_in = "/tmp/{0}_pyrros.in".format(uid)
+        pyrros_out = "/tmp/{0}_pyrros.out".format(uid)
+        remove_list = [pyrros_in, pyrros_out]
+        try:
+            self.to_pyrros_input(pyrros_in)
+            if (os.path.exists(pyrros_in) and os.stat(pyrros_in).st_size > 0):
+                cmd = "{0} -i {1} -p {2} -x {3}".format(self._pyrros_path,
+                pyrros_in, self._num_parts, pyrros_out)
+                ret = commands.getstatusoutput(cmd)
+                if (14848 == ret[0] and
+                os.path.exists(pyrros_out) and
+                os.stat(pyrros_out).st_size > 0):
+                    self._parse_pyrros_output(pyrros_out, jsobj)
+                    return super(PGTP, self).to_gojs_json()
+                else:
+                    err_msg = "PYRROS Schedule failed: {0}/{1}".format(ret[0], ret[1])
+                    raise GPGTException(err_msg)
+        finally:
+            for f in remove_list:
+                if (os.path.exists(f)):
+                    pass
+                    #os.remove(f)
 
 class LG():
     """
