@@ -296,6 +296,12 @@
       }
     });
 
+    myDiagram.addDiagramListener("AnimationFinished", function(e) {
+      if (myDiagram.isModified) {
+        alert("Warning: the \"Save Diagram\" button is always enabled for this Logical Graph!")
+      }
+    });
+
     btt = document.getElementById("pngButton");
     btt.disabled = true;
 
