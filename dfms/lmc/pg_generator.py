@@ -439,10 +439,200 @@ class PGT(object):
     def __init__(self, drop_list):
         self._drop_list = drop_list
 
-    def to_pyrros_input(self, outf):
+    def to_partition_input(self, outf):
+        """
+        Convert to format for mapping and decomposition
+        """
+        raise GPGTException("Must be implemented by PGTP sub-class only")
+
+    def get_opt_num_parts(self):
+        """
+        dummy for now
+        """
+        leng = len(self._drop_list)
+        return int(math.ceil(leng / 10.0))
+
+    def to_gojs_json(self, string_rep=True):
+        """
+        Convert to JSON for visualisation in GOJS
+        """
+        ret = dict()
+        ret['class'] = 'go.GraphLinksModel'
+        nodes = []
+        links = []
+        links_dict = dict()
+        key_dict = dict() # key - oid, value - GOJS key
+        for i, drop in enumerate(self._drop_list):
+            oid = drop['oid']
+            node = dict()
+            node['key'] = i + 1
+            key_dict[oid] = i + 1
+            node['oid'] = oid
+            tt = drop['type']
+            if ('plain' == tt):
+                node['category'] = 'Data'
+            elif ('app' == tt):
+                node['category'] = 'Component'
+            node['text'] = drop['nm']
+            nodes.append(node)
+        ret['nodeDataArray'] = nodes
+
+        for drop in self._drop_list:
+            oid = drop['oid']
+            myk = key_dict[oid]
+            tt = drop['type']
+            if ('plain' == tt): # data
+                okw = 'consumers'
+            elif ('app' == tt):
+                okw = 'outputs'
+            if (drop.has_key(okw)):
+                for oup in drop[okw]:
+                    link = dict()
+                    link['from'] = myk
+                    link['to'] = key_dict[oup]
+                    link_k = "{0}->{1}".format(myk, key_dict[oup])
+                    if (links_dict.has_key(link_k)):
+                        #print link_k
+                        continue
+                    else:
+                        links_dict[link_k] = 1
+                        links.append(link)
+
+        ret['linkDataArray'] = links
+        if (string_rep):
+            return json.dumps(ret, indent=2)
+        else:
+            return ret
+
+class MetisPGTP(PGT):
+    """
+    DROP and GOJS representations of Physical Graph Template with Partitions
+    Based on METIS
+    http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
+    """
+    def __init__(self, drop_list, metis_path, num_partitions=0):
+        """
+        num_partitions:  number of partitions supplied by users (int)
+        TODO - integrate from within PYTHON module (using C API) soon!
+        """
+        super(MetisPGTP, self).__init__(drop_list)
+        self._raw_jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False)
+        if (not os.path.exists(metis_path)):
+            raise GPGTException("Invalid METIS path: {0}".format(metis_path))
+        else:
+            self._metis_path = metis_path
+        if (num_partitions == 0):
+            self._num_parts = self.get_opt_num_parts()
+        else:
+            self._num_parts = num_partitions
+
+    def to_partition_input(self, outf):
+        """
+        Convert to METIS format for mapping and decomposition
+        NOTE - Since METIS only supports Undirected Graph, we have to produce
+        both upstream and downstream nodes to fit its input format
+        """
+        key_dict = dict() # key - oid, value - GOJS key
+        links_dict = dict()
+        drop_dict = dict() # key - oid, value - drop
+        for i, drop in enumerate(self._drop_list):
+            oid = drop['oid']
+            key_dict[oid] = i + 1 #METIS index starts from 1
+            drop_dict[oid] = drop
+
+        lc = 0
+        lines = []
+
+        for i, drop in enumerate(self._drop_list):
+            line = []
+            oid = drop['oid']
+            myk = key_dict[oid]
+
+            if (myk != i + 1):
+                raise GPGTException("GOJS key {0} is not ordered: {1}!".format(myk, i + 1))
+
+            tt = drop['type']
+            if ('plain' == tt):
+                dst = 'consumers' # outbound keyword
+                ust = 'producers'
+                tw = 0 # task weight is zero for a Data DROP
+                sz = drop['dw'] # size
+            elif ('app' == tt):
+                dst = 'outputs'
+                ust = 'inputs'
+                tw = drop['tw']
+                sz = 0
+            line.append(str(sz))
+            line.append(str(tw))
+            if (drop.has_key(dst)):
+                for oup in drop[dst]:
+                    link_k = "dst_{0}->{1}".format(myk, key_dict[oup])
+                    if (links_dict.has_key(link_k)):
+                        #print "===", link_k
+                        continue
+                    else:
+                        links_dict[link_k] = 1
+                        lc += 1
+                        line.append(str(key_dict[oup]))
+                        if ('plain' == tt):
+                            lw = drop['dw']
+                        elif ('app' == tt):
+                            lw = drop_dict[oup]['dw']
+                        if (lw <= 0):
+                            lw = 1
+                        line.append(str(lw))
+            if (drop.has_key(ust)):
+                for inp in drop[ust]:
+                    link_k = "ust_{1}->{0}".format(myk, key_dict[inp])
+                    if (links_dict.has_key(link_k)):
+                        #print "===", link_k
+                        continue
+                    else:
+                        links_dict[link_k] = 1
+                        lc += 1
+                        line.append(str(key_dict[inp]))
+                        if ('plain' == tt):
+                            lw = drop['dw']
+                        elif ('app' == tt):
+                            lw = drop_dict[inp]['dw']
+                        if (lw <= 0):
+                            lw = 1
+                        line.append(str(lw))
+            lines.append(" ".join(line))
+
+        if (lc % 2 != 0):
+            raise GPGTException("Double Edget count {0} is not even!".format(lc))
+        header = "{0} {1} 111 1".format(len(self._drop_list), lc / 2)
+        lines.insert(0, header)
+        with open(outf, "w") as f:
+            f.write("\n".join(lines))
+
+        print "link count = {0}, ".format(lc)
+
+class PyrrosPGTP(PGT):
+    """
+    DROP and GOJS representations of Physical Graph Template with Partitions
+    Based on PYRROS
+    http://www.cs.ucsb.edu/~tyang/papers/PYRROScode.html
+    """
+
+    def __init__(self, drop_list, pyrros_path, num_partitions=0):
+        """
+        num_partitions:  number of partitions supplied by users (int)
+        """
+        super(PyrrosPGTP, self).__init__(drop_list)
+        if (not os.path.exists(pyrros_path)):
+            raise GPGTException("Invalid PYRROS path: {0}".format(pyrros_path))
+        else:
+            self._pyrros_path = pyrros_path
+        if (num_partitions == 0):
+            self._num_parts = self.get_opt_num_parts()
+        else:
+            self._num_parts = num_partitions
+
+    def to_partition_input(self, outf):
         """
         Convert to PYRROS format for mapping and decomposition
-        http://www.cs.ucsb.edu/~tyang/papers/PYRROScode.html
         """
         key_dict = dict() # key - oid, value - GOJS key
         links_dict = dict()
@@ -482,83 +672,6 @@ class PGT(object):
                     f.write("{0}\n".format(" ".join(oel)))
             f.write("-1\n")
 
-    def to_gojs_json(self, string_rep=True):
-        """
-        Convert to JSON for visualisation in GOJS
-        """
-        ret = dict()
-        ret['class'] = 'go.GraphLinksModel'
-        nodes = []
-        links = []
-        links_dict = dict()
-        key_dict = dict() # key - oid, value - GOJS key
-        for i, drop in enumerate(self._drop_list):
-            oid = drop['oid']
-            node = dict()
-            node['key'] = i
-            key_dict[oid] = i
-            node['oid'] = oid
-            tt = drop['type']
-            if ('plain' == tt):
-                node['category'] = 'Data'
-            elif ('app' == tt):
-                node['category'] = 'Component'
-            node['text'] = drop['nm']
-            nodes.append(node)
-        ret['nodeDataArray'] = nodes
-
-        for drop in self._drop_list:
-            oid = drop['oid']
-            myk = key_dict[oid]
-            tt = drop['type']
-            if ('plain' == tt): # data
-                okw = 'consumers'
-            elif ('app' == tt):
-                okw = 'outputs'
-            if (drop.has_key(okw)):
-                for oup in drop[okw]:
-                    link = dict()
-                    link['from'] = myk
-                    link['to'] = key_dict[oup]
-                    link_k = "{0}->{1}".format(myk, key_dict[oup])
-                    if (links_dict.has_key(link_k)):
-                        continue
-                    else:
-                        links_dict[link_k] = 1
-                    links.append(link)
-
-        ret['linkDataArray'] = links
-        if (string_rep):
-            return json.dumps(ret, indent=2)
-        else:
-            return ret
-
-class PGTP(PGT):
-    """
-    DROP and GOJS representations of Physical Graph Template with Partitions
-    """
-
-    def __init__(self, drop_list, pyrros_path, num_partitions=0):
-        """
-        num_partitions:  number of partitions supplied by users (int)
-        """
-        super(PGTP, self).__init__(drop_list)
-        if (not os.path.exists(pyrros_path)):
-            raise GPGTException("Invalid PYRROS path: {0}".format(pyrros_path))
-        else:
-            self._pyrros_path = pyrros_path
-        if (num_partitions == 0):
-            self._num_parts = self._get_opt_num_parts()
-        else:
-            self._num_parts = num_partitions
-
-    def _get_opt_num_parts(self):
-        """
-        dummy for now
-        """
-        leng = len(self._drop_list)
-        return int(math.ceil(leng / 10.0))
-
     def _parse_pyrros_output(self, pyrros_out, jsobj):
         """
         parse pyrros result, and add group node into the GOJS json
@@ -571,18 +684,22 @@ class PGTP(PGT):
         with open(pyrros_out, "r") as f:
             num_pts = int(f.readline())
             if (num_pts != self._num_parts):
+                #self._num_parts = num_pts
                 raise GPGTException("Inconsistent number of partitions: {0} != {1}".format(num_pts,
                 self._num_parts))
+
             line = f.readline()
             while (len(line) > 0):
+                print "\t", line
                 la = line.split()
                 key_dict[int(la[0])] = int(la[1])
-                groups.add(la[1])
+                groups.add(int(la[1]))
                 line = f.readline()
 
         node_list = jsobj['nodeDataArray']
         for node in node_list:
-            node['group'] = key_dict[node['key']]
+            if (key_dict.has_key(node['key'])):
+                node['group'] = key_dict[int(node['key'])] + start_k
 
         for gid in groups:
             gn = dict()
@@ -593,14 +710,18 @@ class PGTP(PGT):
 
 
     def to_gojs_json(self, string_rep=True):
-        jsobj = super(PGTP, self).to_gojs_json(string_rep=False)
-        uid = uuid.uuid1()
+        jsobj = super(PyrrosPGTP, self).to_gojs_json(string_rep=False)
+        #uid = uuid.uuid1()
+        uid = "pgtp"
 
         pyrros_in = "/tmp/{0}_pyrros.in".format(uid)
         pyrros_out = "/tmp/{0}_pyrros.out".format(uid)
         remove_list = [pyrros_in, pyrros_out]
+        for f in remove_list:
+            if (os.path.exists(f)):
+                os.remove(f)
         try:
-            self.to_pyrros_input(pyrros_in)
+            self.to_partition_input(pyrros_in)
             if (os.path.exists(pyrros_in) and os.stat(pyrros_in).st_size > 0):
                 cmd = "{0} -i {1} -p {2} -x {3}".format(self._pyrros_path,
                 pyrros_in, self._num_parts, pyrros_out)
@@ -609,15 +730,18 @@ class PGTP(PGT):
                 os.path.exists(pyrros_out) and
                 os.stat(pyrros_out).st_size > 0):
                     self._parse_pyrros_output(pyrros_out, jsobj)
-                    return super(PGTP, self).to_gojs_json()
+                    if (string_rep):
+                        return json.dumps(jsobj, indent=2)
+                    else:
+                        return jsobj
                 else:
-                    err_msg = "PYRROS Schedule failed: {0}/{1}".format(ret[0], ret[1])
+                    err_msg = "PYRROS Schedule failed: '{2}': {0}/{1}".format(ret[0], ret[1], cmd)
                     raise GPGTException(err_msg)
         finally:
             for f in remove_list:
                 if (os.path.exists(f)):
-                    pass
-                    #os.remove(f)
+                    #pass
+                    os.remove(f)
 
 class LG():
     """
