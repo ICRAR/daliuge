@@ -28,7 +28,7 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.lmc.pg_generator import LG, PGT, GraphException
+from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -121,7 +121,12 @@ def gen_pgt():
         try:
             lg = LG(lg_name)
             drop_list = lg.unroll_to_tpl()
-            pgt = PGT(drop_list)
+            part = request.query.get('num_par')
+            if (part is None):
+                pgt = PGT(drop_list)
+            else:
+                metis_path = "/Users/Chen/proj/metis/metis-5.1.0/build/Darwin-x86_64/programs/gpmetis"
+                pgt = MetisPGTP(drop_list, metis_path, int(part))
             pgt_content = pgt.to_gojs_json()
         except GraphException, ge:
             response.status = 500
