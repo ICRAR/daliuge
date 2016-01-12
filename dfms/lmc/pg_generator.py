@@ -621,9 +621,6 @@ class MetisPGTP(PGT):
         metis_in = "/tmp/{0}_metis".format(uid)
         metis_out = "/tmp/{0}_metis.part.{1}".format(uid, self._num_parts)
         remove_list = [metis_in, metis_out]
-        for f in remove_list:
-            if (os.path.exists(f)):
-                os.remove(f)
         try:
             self.to_partition_input(metis_in)
             if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):

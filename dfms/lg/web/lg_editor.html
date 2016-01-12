@@ -107,6 +107,24 @@
         height:850px;
       }
 
+      #myform {
+        width:800px;
+
+      }
+
+
+      #myform input {
+      float:left;
+      display:inline;
+      }
+
+      #myform label {
+          color: #2D2D2D;
+          font-size: 15px;
+          width:450px;
+          display: block;
+      }
+
       /*----- Tabs -----*/
 .tabs {
     width:100%;
@@ -1259,6 +1277,13 @@
     }
   }
 
+  function genPGTP() {
+    var f = document.getElementById("pgtp_form");
+    var h = document.getElementById("pgtp_lg_name");
+    h.value = window.curr_lg_name.toString();
+    f.submit();
+  }
+
   function saveToRemote(saveEditor) {
     var jsonModel = myDiagram.model.toJson();
     if (window.curr_lg_name == null) {
@@ -1404,54 +1429,86 @@
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:71%">
       <div class="tabs">
         <ul class="tab-links">
-          <li class="active"><a href="#tab1" onclick="setButtonStatus(this)">Diagram</a></li>
+          <li class="active"><a href="#tab1" onclick="setButtonStatus(this)">Graph</a></li>
           <li><a href="#tab2" onclick="setButtonStatus(this)">JSON</a></li>
           <li>
             <a href="#tab3" onclick="setButtonStatus(this)">PNG</a></li>
           </li>
-
           <li>
-              <div class="buttonwrapper">
-              <button id="SaveButton" onclick="saveToRemote(true)" class="button">Save Diagram</button>
-              </div>
+            <a href="#tab4" onclick="">Mapping</a></li>
           </li>
 
           <li style="width:52px">
             &nbsp;
           </li>
 
-          <li>
+          <li style="width:35px">
+            &nbsp;
+          </li>
+          <li style="width:35px">
+            &nbsp;
+          </li>
 
-              <div class="buttonwrapper">
-              <button id="LoadButton" onclick="load()" class="button" disabled>Save JSON</button>
-              </div>
-          </li>
-          <li style="width:35px">
-            &nbsp;
-          </li>
-          <li>
-            <div class="buttonwrapper">
-            <button id="pngButton" class="button" onclick="makePNG()">Export</button>
-          </div>
-          </li>
-          <li style="width:35px">
-            &nbsp;
-          </li>
-          <li>
-            <div class="buttonwrapper">
-            <button id="pgButton" class="button" onclick="genPGT()">Gen PGT</button>
-          </div>
-          </li>
         </ul>
         <div class="tab-content">
           <div id="tab1" class="tab active">
+            <div class="buttonwrapper">
+            <button id="SaveButton" onclick="saveToRemote(true)" class="button">Save Graph</button>
+            </div>
              <div id="myDiagram" style="border: solid 1px gray; height: 850px"></div>
           </div>
           <div id="tab2" class="tab">
+            <div class="buttonwrapper">
+            <button id="LoadButton" onclick="load()" class="button" disabled>Save JSON</button>
+            </div>
             <div id="jsoneditor"></div>
           </div>
           <div id="tab3" class="tab">
+            <div class="buttonwrapper">
+            <button id="pngButton" class="button" onclick="makePNG()">Export</button>
+          </div>
             <div id="SVGArea"></div>
+          </div>
+          <div id="tab4" class="tab">
+            <div class="buttonwrapper">
+            <button id="pgButton" class="button" onclick="genPGT()">Generate Physical Graph Template</button>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <div align="center">
+              <table style="font-size:15px">
+              <tr>
+              <form action="/gen_pgt" method="get" id="pgtp_form" target="_blank">
+              <td># of Partitions: </td><td><input type="number" name="num_par" min="1" value="5"></td>
+              </tr>
+              <tr>
+              <td>Partition label: </td>
+              <td>
+              <input type="radio" name="par_name" value="0" checked> Data Island
+              <input type="radio" name="par_name" value="1"> Compute Node
+              </td>
+            </tr>
+            <tr><td>
+              Minimise cost of:
+            </td>
+            <td>
+              <input type="radio" name="min_goal" value="0" checked> Between-Partition Links
+              <input type="radio" name="min_goal" value="1"> Total Communication Volume
+            </td>
+            </tr>
+            <td>
+              <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name">
+            </td>
+            <td>
+              <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
+              <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition</button>
+            </td>
+            </form>
+          </table>
+            </div>
+          </div>
           </div>
         </div>
       </div>
