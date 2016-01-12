@@ -1289,8 +1289,8 @@ class dropdict(dict):
     """
     def _addSomething(self, other, key):
         if key not in self:
-            self[key] = []
-        self[key].append(other['oid'])
+            self[key] = set()
+        self[key].add(other['oid'])
 
     def addConsumer(self, other):
         self._addSomething(other, 'consumers')
