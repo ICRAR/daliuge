@@ -342,6 +342,12 @@ class DockerApp(BarrierAppDROP):
 
     @staticmethod
     def _kwargs_from_env(ssl_version=None, assert_hostname=False):
+        """
+        Look for parameters to make Docker work under OS X
+        :param ssl_version:     which SSL version
+        :param assert_hostname: perform hostname checking
+        :return:
+        """
         params = {}
         config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
         if os.path.exists(config_file_name):
