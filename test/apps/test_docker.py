@@ -159,4 +159,3 @@ class DockerTests(unittest.TestCase):
         with DROPWaiterCtx(self, b, 1):
             a.setCompleted()
         self.assertEquals(a.dataURL, droputils.allDropContents(c))
-        print a.dataURL
