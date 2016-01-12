@@ -45,6 +45,7 @@ setup(
       # Keep alpha-sorted please
       install_requires=[
             "bottle",
+            "configobj",
             "docker-py",
             "drive-casa==0.7",
             "lockfile",
