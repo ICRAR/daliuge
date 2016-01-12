@@ -22,7 +22,7 @@
 import unittest, os, pkg_resources, json
 import pprint
 
-from dfms.lmc.pg_generator import LGNode, LG, PGT, PGTP
+from dfms.lmc.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP
 from collections import defaultdict
 
 class TestPGGen(unittest.TestCase):
@@ -55,12 +55,35 @@ class TestPGGen(unittest.TestCase):
         pgt = PGT(drop_list)
         #print pgt.to_gojs_json()
 
-    def test_pgt_to_pyrros(self):
+    """
+    def test_pyrros_pgtp_input(self):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
-        pgt = PGT(drop_list)
-        pgt.to_pyrros_input('/tmp/lofar_pgt_02.pyrros')
+        pgtp = PyrrosPGTP(drop_list, '/Users/Chen/proj/pyrros/pysched1')
+        pgtp.to_partition_input('/tmp/dfms_lofar_pgt.pyrros')
+
+    def test_metis_pgtp_input(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgtp = MetisPGTP(drop_list, '/Users/Chen/proj/metis/metis-5.1.0/build/Darwin-x86_64/programs/gpmetis')
+        pgtp.to_partition_input('/tmp/dfms_lofar_pgtp.metis')
+
+    def test_metis_pgtp_input_01(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_two.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgtp = MetisPGTP(drop_list, '/Users/Chen/proj/metis/metis-5.1.0/build/Darwin-x86_64/programs/gpmetis')
+        pgtp.to_partition_input('/tmp/dfms_chiles2_pgtp.metis')
+
+    def test_metis_pgtp_input_02(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_simple.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgtp = MetisPGTP(drop_list, '/Users/Chen/proj/metis/metis-5.1.0/build/Darwin-x86_64/programs/gpmetis')
+        pgtp.to_partition_input('/tmp/dfms_chiles1_pgtp.metis')
+    """
 
     """
     def test_pgtp_to_json(self):
@@ -68,5 +91,20 @@ class TestPGGen(unittest.TestCase):
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGTP(drop_list, '/Users/Chen/proj/pyrros/pysched1', num_partitions=30)
+        print pgt.to_gojs_json()
+
+    def test_pyrros_pgtp_to_json_02(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_simple.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgt = PyrrosPGTP(drop_list, '/Users/Chen/proj/pyrros/pysched1', num_partitions=7)
+        print pgt.to_gojs_json()
+
+
+    def test_pgtp_to_json3(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_two.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        pgt = PGTP(drop_list, '/Users/Chen/proj/pyrros/pysched1', num_partitions=20)
         print pgt.to_gojs_json()
     """
