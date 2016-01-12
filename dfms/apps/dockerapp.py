@@ -28,6 +28,8 @@ import os
 import threading
 import time
 
+from configobj import ConfigObj
+from docker import tls
 from docker.client import AutoVersionClient
 
 from dfms import utils
@@ -192,7 +194,8 @@ class DockerApp(BarrierAppDROP):
             logger.info("%r with image '%s' and command '%s' created" % (self, self._image, self._command))
 
         # Check if we have the image; otherwise pull it.
-        c = AutoVersionClient()
+        extra_kwargs = self._kwargs_from_env()
+        c = AutoVersionClient(**extra_kwargs)
         found = reduce(lambda a,b: a or self._image in b['RepoTags'], c.images(), False)
 
         if not found:
@@ -298,7 +301,8 @@ class DockerApp(BarrierAppDROP):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Command after user creation and wrapping is: %s" % (cmd))
 
-        c = AutoVersionClient()
+        extra_kwargs = self._kwargs_from_env()
+        c = AutoVersionClient(**extra_kwargs)
 
         # Create container
         container = c.create_container(self._image, cmd, volumes=vols, host_config=c.create_host_config(binds=binds), user=user, environment=env)
@@ -335,3 +339,32 @@ class DockerApp(BarrierAppDROP):
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
             raise Exception(msg)
+
+    @staticmethod
+    def _kwargs_from_env(ssl_version=None, assert_hostname=False):
+        params = {}
+        config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
+        if os.path.exists(config_file_name):
+            config = ConfigObj(config_file_name)
+
+            host = config['DOCKER_HOST']
+            cert_path = config['DOCKER_CERT_PATH']
+            tls_verify = config['DOCKER_TLS_VERIFY']
+
+            if host:
+                params['base_url'] = (host.replace('tcp://', 'https://')
+                                      if tls_verify else host)
+
+            if tls_verify and not cert_path:
+                cert_path = os.path.join(os.path.expanduser('~'), '.docker')
+
+            if tls_verify and cert_path:
+                params['tls'] = tls.TLSConfig(
+                        client_cert=(os.path.join(cert_path, 'cert.pem'),
+                                     os.path.join(cert_path, 'key.pem')),
+                        ca_cert=os.path.join(cert_path, 'ca.pem'),
+                        verify=True,
+                        ssl_version=ssl_version,
+                        assert_hostname=assert_hostname)
+
+        return params
