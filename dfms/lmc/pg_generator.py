@@ -460,7 +460,6 @@ class PGT(object):
         ret['class'] = 'go.GraphLinksModel'
         nodes = []
         links = []
-        links_dict = dict()
         key_dict = dict() # key - oid, value - GOJS key
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
@@ -490,13 +489,7 @@ class PGT(object):
                     link = dict()
                     link['from'] = myk
                     link['to'] = key_dict[oup]
-                    link_k = "{0}->{1}".format(myk, key_dict[oup])
-                    if (links_dict.has_key(link_k)):
-                        #print link_k
-                        continue
-                    else:
-                        links_dict[link_k] = 1
-                        links.append(link)
+                    links.append(link)
 
         ret['linkDataArray'] = links
         if (string_rep):
@@ -516,7 +509,6 @@ class MetisPGTP(PGT):
         TODO - integrate from within PYTHON module (using C API) soon!
         """
         super(MetisPGTP, self).__init__(drop_list)
-        self._raw_jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False)
         if (not os.path.exists(metis_path)):
             raise GPGTException("Invalid METIS path: {0}".format(metis_path))
         else:
@@ -533,7 +525,6 @@ class MetisPGTP(PGT):
         both upstream and downstream nodes to fit its input format
         """
         key_dict = dict() # key - oid, value - GOJS key
-        links_dict = dict()
         drop_dict = dict() # key - oid, value - drop
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
@@ -564,40 +555,22 @@ class MetisPGTP(PGT):
                 sz = 0
             line.append(str(sz))
             line.append(str(tw))
+            adj_drops = [] #adjacent drops (all neighbours)
             if (drop.has_key(dst)):
-                for oup in drop[dst]:
-                    link_k = "dst_{0}->{1}".format(myk, key_dict[oup])
-                    if (links_dict.has_key(link_k)):
-                        #print "===", link_k
-                        continue
-                    else:
-                        links_dict[link_k] = 1
-                        lc += 1
-                        line.append(str(key_dict[oup]))
-                        if ('plain' == tt):
-                            lw = drop['dw']
-                        elif ('app' == tt):
-                            lw = drop_dict[oup]['dw']
-                        if (lw <= 0):
-                            lw = 1
-                        line.append(str(lw))
+                adj_drops += drop[dst]
             if (drop.has_key(ust)):
-                for inp in drop[ust]:
-                    link_k = "ust_{1}->{0}".format(myk, key_dict[inp])
-                    if (links_dict.has_key(link_k)):
-                        #print "===", link_k
-                        continue
-                    else:
-                        links_dict[link_k] = 1
-                        lc += 1
-                        line.append(str(key_dict[inp]))
-                        if ('plain' == tt):
-                            lw = drop['dw']
-                        elif ('app' == tt):
-                            lw = drop_dict[inp]['dw']
-                        if (lw <= 0):
-                            lw = 1
-                        line.append(str(lw))
+                adj_drops += drop[ust]
+
+            for inp in adj_drops:
+                lc += 1
+                line.append(str(key_dict[inp]))
+                if ('plain' == tt):
+                    lw = drop['dw']
+                elif ('app' == tt):
+                    lw = drop_dict[inp]['dw']
+                if (lw <= 0):
+                    lw = 1
+                line.append(str(lw))
             lines.append(" ".join(line))
 
         if (lc % 2 != 0):
