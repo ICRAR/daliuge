@@ -89,16 +89,20 @@ class DockerApp(BarrierAppDROP):
     inside the docker container, where c will have to be written by the process
     running in the container.
 
-    Data volumes are a file-specific feature. For this reason, this DockerApp
-    application supports file-system based input/output DROPs only, namely
-    the FileDROP and the DirectoryContainer types.
-
     Since the command to be run in the container receives most probably as
     arguments the paths of its inputs and outputs, and since these might not be
     known precisely until runtime, users should use placeholders for them in the
     command-line specification. Placeholders for input locations take the form
-    of "%iX", where X starts from 0 and refers to the X-th input. Likewise,
-    output locations are specified as "%oX".
+    of "%iX", where X starts from 0 and refers to the X-th filesystem-related
+    input. Likewise, output locations are specified as "%oX".
+
+    Data volumes are a file-specific feature. For this reason, volumes are setup
+    for file-system based input/output DROPs only, namely the FileDROP and the
+    DirectoryContainer types. Other DROP types can instead pass down their
+    dataURL property via the command-line by using placeholders. Placeholders
+    for input DROP dataURLs take the form of "%iDataURLX", where X starts from 0
+    and refers to the X-th non-filesystem related input. Likewise, output
+    dataURLs are specified as "%oDataURLX".
 
     Users
     -----
@@ -236,19 +240,17 @@ class DockerApp(BarrierAppDROP):
 
     def run(self):
 
-        # Check inputs/outputs are of a valid type
-        for i in self.inputs + self.outputs:
-            if not isinstance(i, (FileDROP, DirectoryContainer)):
-                raise Exception("%r is not supported by the DockerApp" % (i))
-
         # We bind the inputs and outputs inside the docker under the DFMS_ROOT
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
-        dockerInputs  = [DFMS_ROOT + i.path for i in self.inputs]
-        dockerOutputs = [DFMS_ROOT + o.path for o in self.outputs]
+        # Volume bindings are setup for FileDROPs and DirectoryContainers only
+        fsInputs  = [i for i in self.inputs if isinstance(i, (FileDROP, DirectoryContainer))]
+        fsOutputs = [o for o in self.outputs if isinstance(o, (FileDROP, DirectoryContainer))]
+        dockerInputs  = [DFMS_ROOT + i.path for i in fsInputs]
+        dockerOutputs = [DFMS_ROOT + o.path for o in fsOutputs]
         vols = dockerInputs + [os.path.dirname(x) for x in dockerOutputs]
-        binds  = [                i.path  + ":" +                  dockerInputs[x]  for x,i in enumerate(self.inputs)]
-        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x]) for x,o in enumerate(self.outputs)]
+        binds  = [                i.path  + ":" +                  dockerInputs[x]  for x,i in enumerate(fsInputs)]
+        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x]) for x,o in enumerate(fsOutputs)]
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Volume bindings: %r" % (binds))
 
@@ -261,7 +263,21 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.replace("%%o%d" % (x), o)
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Command after placeholder replacement is: %s" % (cmd))
+            logger.debug("Command after volume binding placeholder replacement is: %s" % (cmd))
+
+        # Intputs/outputs that are not FileDROPs or DirectoryContainers can't
+        # bind their data via volumes into the docker container. Instead they
+        # communicate their dataURL via command-line replacement
+        inputDataURLs  = [i.dataURL for i in self.inputs if not isinstance(i, (FileDROP, DirectoryContainer))]
+        outputDataURLs = [o.dataURL for o in self.outputs if not isinstance(o, (FileDROP, DirectoryContainer))]
+
+        for x,i in enumerate(inputDataURLs):
+            cmd = cmd.replace("%%iDataURL%d" % (x), i)
+        for x,o in enumerate(outputDataURLs):
+            cmd = cmd.replace("%%oDataURL%d" % (x), o)
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Command after data URL placeholder replacement is: %s" % (cmd))
 
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs

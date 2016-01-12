@@ -32,9 +32,8 @@ from docker.errors import DockerException
 
 from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
-from dfms.drop import FileDROP
+from dfms.drop import FileDROP, NgasDROP
 from dfms.droputils import DROPWaiterCtx
-
 
 class DockerTests(unittest.TestCase):
 
@@ -146,3 +145,18 @@ class DockerTests(unittest.TestCase):
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
         msg = 'This is a message with a double quotes: "'
         assertMsgIsCorrect(msg, "echo -n '{0}' > %o0".format(msg))
+
+    def test_dataURLReference(self):
+        """
+        A test to check that DROPs other than FileDROPs and DirectoryContainers
+        can pass their dataURLs into docker containers
+        """
+        a = NgasDROP('a', 'a') # not a filesystem-related DROP, we can reference its URL in the command-line
+        b = DockerApp('b', 'b', image="ubuntu:14.04", command="echo -n '%iDataURL0' > %o0")
+        c = FileDROP('c', 'c')
+        b.addInput(a)
+        b.addOutput(c)
+        with DROPWaiterCtx(self, b, 1):
+            a.setCompleted()
+        self.assertEquals(a.dataURL, droputils.allDropContents(c))
+        print a.dataURL
