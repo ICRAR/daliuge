@@ -580,7 +580,71 @@ class MetisPGTP(PGT):
         with open(outf, "w") as f:
             f.write("\n".join(lines))
 
-        print "link count = {0}, ".format(lc)
+        #print "link count = {0}, ".format(lc)
+
+    def _parse_metis_output(self, metis_out, jsobj):
+        """
+        parse METIS result, and add group node into the GOJS json
+        """
+
+        key_dict = dict() #k - gojs key, v - gojs group id
+        groups = set()
+
+        start_k = len(self._drop_list) + 1
+        with open(metis_out, "r") as f:
+            lines = f.readlines()
+            if (len(lines) != start_k - 1):
+                raise GPGTException("{0} drops, but only {1} have partition".format(start_k - 1, len(lines)))
+
+            for i, line in enumerate(lines):
+                gid = int(line)
+                key_dict[i + 1] = gid
+                groups.add(gid)
+
+        node_list = jsobj['nodeDataArray']
+        for node in node_list:
+            if (key_dict.has_key(node['key'])):
+                node['group'] = key_dict[int(node['key'])] + start_k
+
+        for gid in groups:
+            gn = dict()
+            gn['key'] = start_k + gid
+            gn['isGroup'] = True
+            gn['text'] = 'Island_{0}'.format(gid)
+            node_list.append(gn)
+
+    def to_gojs_json(self, string_rep=True):
+        jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False)
+        #uid = uuid.uuid1()
+        uid = int(time.time() * 1000)
+
+        metis_in = "/tmp/{0}_metis".format(uid)
+        metis_out = "/tmp/{0}_metis.part.{1}".format(uid, self._num_parts)
+        remove_list = [metis_in, metis_out]
+        for f in remove_list:
+            if (os.path.exists(f)):
+                os.remove(f)
+        try:
+            self.to_partition_input(metis_in)
+            if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):
+                cmd = "{0} {1} {2}".format(self._metis_path,
+                metis_in, self._num_parts)
+                ret = commands.getstatusoutput(cmd)
+                if (0 == ret[0] and
+                os.path.exists(metis_out) and
+                os.stat(metis_out).st_size > 0):
+                    self._parse_metis_output(metis_out, jsobj)
+                    if (string_rep):
+                        return json.dumps(jsobj, indent=2)
+                    else:
+                        return jsobj
+                else:
+                    err_msg = "METIS failed: '{2}': {0}/{1}".format(ret[0], ret[1], cmd)
+                    raise GPGTException(err_msg)
+        finally:
+            for f in remove_list:
+                if (os.path.exists(f)):
+                    os.remove(f)
 
 class PyrrosPGTP(PGT):
     """
