@@ -503,20 +503,22 @@ class MetisPGTP(PGT):
     Based on METIS
     http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
     """
-    def __init__(self, drop_list, metis_path, num_partitions=0):
+    def __init__(self, drop_list, num_partitions=0, min_goal=0, par_label="Data Island"):
         """
         num_partitions:  number of partitions supplied by users (int)
         TODO - integrate from within PYTHON module (using C API) soon!
         """
         super(MetisPGTP, self).__init__(drop_list)
-        if (not os.path.exists(metis_path)):
-            raise GPGTException("Invalid METIS path: {0}".format(metis_path))
-        else:
-            self._metis_path = metis_path
-        if (num_partitions == 0):
+        self._metis_path = "gpmetis" # assuming it is installed at the sys path
+        if (num_partitions <= 0):
             self._num_parts = self.get_opt_num_parts()
         else:
             self._num_parts = num_partitions
+        if (1 == min_goal):
+            self._obj_type = 'vol'
+        else:
+            self._obj_type = 'cut'
+        self._par_label = par_label
 
     def to_partition_input(self, outf):
         """
@@ -610,7 +612,7 @@ class MetisPGTP(PGT):
             gn = dict()
             gn['key'] = start_k + gid
             gn['isGroup'] = True
-            gn['text'] = 'Island_{0}'.format(gid)
+            gn['text'] = '{1}_{0}'.format(gid, self._par_label)
             node_list.append(gn)
 
     def to_gojs_json(self, string_rep=True):
@@ -624,8 +626,8 @@ class MetisPGTP(PGT):
         try:
             self.to_partition_input(metis_in)
             if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):
-                cmd = "{0} {1} {2}".format(self._metis_path,
-                metis_in, self._num_parts)
+                cmd = "{0} -objtype={3} {1} {2}".format(self._metis_path,
+                metis_in, self._num_parts, self._obj_type)
                 ret = commands.getstatusoutput(cmd)
                 if (0 == ret[0] and
                 os.path.exists(metis_out) and

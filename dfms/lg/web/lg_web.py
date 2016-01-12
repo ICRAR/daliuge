@@ -125,8 +125,9 @@ def gen_pgt():
             if (part is None):
                 pgt = PGT(drop_list)
             else:
-                metis_path = "/Users/Chen/proj/metis/metis-5.1.0/build/Darwin-x86_64/programs/gpmetis"
-                pgt = MetisPGTP(drop_list, metis_path, int(part))
+                par_label = request.query.get('par_label')
+                min_goal = int(request.query.get('min_goal'))
+                pgt = MetisPGTP(drop_list, int(part), min_goal, par_label)
             pgt_content = pgt.to_gojs_json()
         except GraphException, ge:
             response.status = 500

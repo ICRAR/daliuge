@@ -1484,17 +1484,16 @@
               <td># of Partitions: </td><td><input type="number" name="num_par" min="1" value="5"></td>
               </tr>
               <tr>
-              <td>Partition label: </td>
+              <td>Partition label</td>
               <td>
-              <input type="radio" name="par_name" value="0" checked> Data Island
-              <input type="radio" name="par_name" value="1"> Compute Node
+              <input type="text" name="par_label" value="Data Island">
               </td>
             </tr>
             <tr><td>
-              Minimise cost of:
+              Minimise
             </td>
             <td>
-              <input type="radio" name="min_goal" value="0" checked> Between-Partition Links
+              <input type="radio" name="min_goal" value="0" checked> Edge cut
               <input type="radio" name="min_goal" value="1"> Total Communication Volume
             </td>
             </tr>
