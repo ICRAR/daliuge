@@ -308,10 +308,11 @@ class LGNode():
         if (self._dop is None):
             if (self.is_group()):
                 if (self.is_scatter()):
-                    # dummy implementation for the scatter group
-                    try:
-                        self._dop = int(self.jd['num_of_splits'])
-                    except:
+                    for kw in ['num_of_copies', 'num_of_splits']:
+                        if (self.jd.has_key(kw)):
+                            self._dop = int(self.jd[kw])
+                            break
+                    if (self._dop is None):
                         self._dop = 4 # dummy impl.
                 elif (self.is_gather()):
                     tlgn = self.inputs[0]
