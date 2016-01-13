@@ -503,7 +503,7 @@ class MetisPGTP(PGT):
     Based on METIS
     http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
     """
-    def __init__(self, drop_list, num_partitions=0, min_goal=0, par_label="Data Island"):
+    def __init__(self, drop_list, num_partitions=0, min_goal=0, par_label="Partition", ptype=0):
         """
         num_partitions:  number of partitions supplied by users (int)
         TODO - integrate from within PYTHON module (using C API) soon!
@@ -518,7 +518,14 @@ class MetisPGTP(PGT):
             self._obj_type = 'vol'
         else:
             self._obj_type = 'cut'
+
+        if (0 == ptype):
+            self._ptype = 'kway'
+        else:
+            self._ptype = 'rb'
+
         self._par_label = par_label
+        self._metis_logs = []
 
     def to_partition_input(self, outf):
         """
@@ -584,6 +591,31 @@ class MetisPGTP(PGT):
 
         #print "link count = {0}, ".format(lc)
 
+    def _set_metis_log(self, logtext):
+        self._metis_logs = logtext.split("\n")
+
+    def get_partition_info(self, entry_key=[' - Edgecut:']):
+        """
+        partition parameter and log entry
+        return a string
+        """
+        if (self._obj_type == 'vol'):
+            min_g = "Total comm. volume"
+        else:
+            min_g = "Edge cut"
+        if (self._ptype == 'kway'):
+            pa = "K-way"
+        else:
+            pa = "Recursive bisect"
+        ret = []
+        pparam = "{0} partitions (asked) - Algorithm: {2} - Min goal: {1}".format(self._num_parts, min_g, pa)
+        ret.append(pparam)
+        for l in self._metis_logs:
+            for ek in entry_key:
+                if (l.startswith(ek)):
+                    ret.append(l)
+        return " ".join(ret)
+
     def _parse_metis_output(self, metis_out, jsobj):
         """
         parse METIS result, and add group node into the GOJS json
@@ -626,13 +658,14 @@ class MetisPGTP(PGT):
         try:
             self.to_partition_input(metis_in)
             if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):
-                cmd = "{0} -objtype={3} {1} {2}".format(self._metis_path,
-                metis_in, self._num_parts, self._obj_type)
+                cmd = "{0} -ptype={4} -objtype={3} {1} {2}".format(self._metis_path,
+                metis_in, self._num_parts, self._obj_type, self._ptype)
                 ret = commands.getstatusoutput(cmd)
                 if (0 == ret[0] and
                 os.path.exists(metis_out) and
                 os.stat(metis_out).st_size > 0):
                     self._parse_metis_output(metis_out, jsobj)
+                    self._set_metis_log(ret[1])
                     if (string_rep):
                         return json.dumps(jsobj, indent=2)
                     else:
