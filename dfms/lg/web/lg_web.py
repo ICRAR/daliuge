@@ -37,6 +37,8 @@ gen_pgt_sem = threading.Semaphore(1)
 err_prefix = "[Error]"
 DEFAULT_LG_NAME = "cont_img.json"
 DEFAULT_PGT_VIEW_NAME = "lofar_pgt-view.json"
+MAX_PGT_FN_CNT= 300
+pgt_fn_count = 0
 
 def lg_exists(lg_name):
     return os.path.exists("{0}/{1}".format(lg_dir, lg_name))
@@ -127,14 +129,20 @@ def gen_pgt():
             else:
                 par_label = request.query.get('par_label')
                 min_goal = int(request.query.get('min_goal'))
-                pgt = MetisPGTP(drop_list, int(part), min_goal, par_label)
+                ptype = int(request.query.get('ptype'))
+                pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype)
             pgt_content = pgt.to_gojs_json()
         except GraphException, ge:
             response.status = 500
             return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
-        pgt_name = lg_name.replace(".json", "_pgt.json")
-        pgt_path = "{0}/{1}".format(lg_dir, pgt_name)
+
+        global pgt_fn_count
         gen_pgt_sem.acquire()
+        pgt_fn_count += 1
+        if (pgt_fn_count == MAX_PGT_FN_CNT + 1):
+            pgt_fn_count = 0
+        pgt_name = lg_name.replace(".json", "{0}_pgt.json".format(pgt_fn_count))
+        pgt_path = "{0}/{1}".format(lg_dir, pgt_name)
         try:
             # overwrite file on disks
             with open(pgt_path, "w") as f:
@@ -144,7 +152,17 @@ def gen_pgt():
             return "Fail to save PGT {0}:{1}".format(pgt_path, str(excmd2))
         finally:
             gen_pgt_sem.release()
-        redirect('/pg_viewer?pgt_view_name={0}'.format(pgt_name))
+        #redirect('/pg_viewer?pgt_view_name={0}'.format(pgt_name))
+        if (part is None):
+            part_info = ''
+            is_part = ''
+        else:
+            part_info = pgt.get_partition_info()
+            is_part = 'Partition'
+        return template('pg_viewer.html',
+        pgt_view_json_name=pgt_name,
+        partition_info=part_info,
+        is_partition_page=is_part)
     else:
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)

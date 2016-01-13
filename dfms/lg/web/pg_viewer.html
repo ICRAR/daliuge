@@ -207,7 +207,9 @@
   function highlightNode(e, node) {
     if (node !== null) {
       var shape = node.findObject("SHAPE");
-      shape.stroke = "white";
+      if (shape !== null) {
+        shape.stroke = "white";
+      }
       if (lastStroked !== null && lastStroked !== shape) lastStroked.stroke = null;
       lastStroked = shape;
       updateInfoBox(e.viewPoint, node.data);
@@ -410,7 +412,7 @@
 <div id="sample">
   <div style="margin-bottom: 5px; padding: 5px; background-color: aliceblue">
     <span style="display: inline-block; vertical-align: top; padding: 5px">
-      <b>Physical Graph Template</b><br /><br />
+      <b>Physical Graph Template {{is_partition_page}}</b><br />{{partition_info}}<br />
       <!--
       MinNodes: <input type="text" size="2" id="minNodes" value="20" /><br />
       MaxNodes: <input type="text" size="2" id="maxNodes" value="100" /><br />
