@@ -1029,7 +1029,7 @@ class LG():
                 # since
                 # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
-                if (slgn.is_gather()):
+                if (slgn.is_gather() and tlgn.gid != sid): # not the artifical link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
                     for i, ga_drop in enumerate(sdrops):
                         j = (i + 1) * slgn.gather_width
