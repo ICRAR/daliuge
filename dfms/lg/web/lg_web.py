@@ -130,7 +130,10 @@ def gen_pgt():
                 par_label = request.query.get('par_label')
                 min_goal = int(request.query.get('min_goal'))
                 ptype = int(request.query.get('ptype'))
-                pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype)
+                ufactor = 100 - int(request.query.get('max_load_imb')) + 1
+                if (ufactor <= 0):
+                    ufactor = 1
+                pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
             pgt_content = pgt.to_gojs_json()
         except GraphException, ge:
             response.status = 500
