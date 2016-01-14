@@ -867,15 +867,13 @@ class LG():
             raise GInvalidLink("Scatter construct {0} cannot link to another Scatter {1}".format(src.id, tgt.id))
 
         if (src.is_gather()):
-            raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
+            if (not (tgt.jd['category'] == 'Component' and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
+                raise GInvalidLink("Gather {0}'s output {1} must be a Group-Start Component inside a Group with the same H level as Gather's input".format(src.id, tgt.id))
+            #raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
         elif (src.is_branch()):
             if (tgt.jd['category'] != 'Component' and (not tgt.is_end_node())):
                 raise GInvalidLink("Branch {0}'s output {1} must be Component".format(src.id, tgt.id))
-        """
-        if (src.is_gather() and (not tgt.is_group())):
-            if (tgt.jd['category'] != 'Component'):
-                raise GInvalidLink("Gather {0}'s output {1} must be Component if it is not Group".format(src.id, tgt.id))
-        """
+
         if (tgt.is_groupby()):
             if (src.is_group()):
                 raise GInvalidLink("GroupBy {0} input must not be a group {1}".format(tgt.id, src.id))
@@ -1031,12 +1029,25 @@ class LG():
                 # since
                 # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
-                if (len(sdrops) != len(tdrops)):
-                    err_info = "For within-group links, # {2} Group Inputs {0} must be the same as # {3} of Component Outputs {1}".format(slgn.id,
-                    tlgn.id, len(sdrops), len(tdrops))
-                    raise GraphException(err_info)
-                for i, sdrop in enumerate(sdrops):
-                    self._link_drops(slgn, tlgn, sdrop, tdrops[i])
+                if (slgn.is_gather()):
+                    # gather iteration case, tgt must be a Group-Start Component
+                    for i, ga_drop in enumerate(sdrops):
+                        j = (i + 1) * slgn.gather_width
+                        if (j >= tlgn.group.dop and j % tlgn.group.dop == 0):
+                            continue
+                        while (j < (i + 2) * slgn.gather_width and j < tlgn.group.dop * (i + 1)):
+                            if (ga_drop.has_key('gather-data_drop')):
+                                gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
+                                gddrop.addConsumer(tdrops[j])
+                                tdrops[j].addInput(gddrop)
+                                j += 1
+                else:
+                    if (len(sdrops) != len(tdrops)):
+                        err_info = "For within-group links, # {2} Group Inputs {0} must be the same as # {3} of Component Outputs {1}".format(slgn.id,
+                        tlgn.id, len(sdrops), len(tdrops))
+                        raise GraphException(err_info)
+                    for i, sdrop in enumerate(sdrops):
+                        self._link_drops(slgn, tlgn, sdrop, tdrops[i])
             elif (slgn.is_group() and tlgn.is_group()):
                 # slgn must be GroupBy and tlgn must be Gather
                 self._unroll_gather_as_output(slgn, tlgn, sdrops, tdrops, chunk_size)
