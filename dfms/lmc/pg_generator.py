@@ -504,7 +504,7 @@ class MetisPGTP(PGT):
     Based on METIS
     http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
     """
-    def __init__(self, drop_list, num_partitions=0, min_goal=0, par_label="Partition", ptype=0):
+    def __init__(self, drop_list, num_partitions=0, min_goal=0, par_label="Partition", ptype=0, ufactor=10):
         """
         num_partitions:  number of partitions supplied by users (int)
         TODO - integrate from within PYTHON module (using C API) soon!
@@ -526,6 +526,7 @@ class MetisPGTP(PGT):
             self._ptype = 'rb'
 
         self._par_label = par_label
+        self._u_factor = ufactor
         self._metis_logs = []
 
     def to_partition_input(self, outf):
@@ -556,7 +557,7 @@ class MetisPGTP(PGT):
             if ('plain' == tt):
                 dst = 'consumers' # outbound keyword
                 ust = 'producers'
-                tw = 0 # task weight is zero for a Data DROP
+                tw = 1 # task weight is zero for a Data DROP
                 sz = drop['dw'] # size
             elif ('app' == tt):
                 dst = 'outputs'
@@ -609,7 +610,7 @@ class MetisPGTP(PGT):
         else:
             pa = "Recursive bisect"
         ret = []
-        pparam = "{0} partitions (asked) - Algorithm: {2} - Min goal: {1}".format(self._num_parts, min_g, pa)
+        pparam = "{0} partitions (asked) - Algorithm: {2} - Min objective: {1} - Load balancing: {3}%".format(self._num_parts, min_g, pa, 101 - self._u_factor)
         ret.append(pparam)
         for l in self._metis_logs:
             for ek in entry_key:
@@ -659,8 +660,8 @@ class MetisPGTP(PGT):
         try:
             self.to_partition_input(metis_in)
             if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):
-                cmd = "{0} -ptype={4} -objtype={3} {1} {2}".format(self._metis_path,
-                metis_in, self._num_parts, self._obj_type, self._ptype)
+                cmd = "{0} -ptype={4} -objtype={3} -ufactor={5} {1} {2}".format(self._metis_path,
+                metis_in, self._num_parts, self._obj_type, self._ptype, self._u_factor)
                 ret = commands.getstatusoutput(cmd)
                 if (0 == ret[0] and
                 os.path.exists(metis_out) and

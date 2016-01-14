@@ -1481,7 +1481,7 @@
               <table style="font-size:15px">
               <tr>
               <form action="/gen_pgt" method="get" id="pgtp_form" target="_blank">
-              <td># of Partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
+              <td># of partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
               </tr>
               <tr>
               <td>Partition label</td>
@@ -1490,21 +1490,26 @@
               </td>
             </tr>
             <tr><td>
-              Minimisation goal
+              Minimise
             </td>
             <td>
               <input type="radio" name="min_goal" value="0" checked> Edge cut
               <input type="radio" name="min_goal" value="1"> Total Communication Volume
             </td>
             </tr>
-            <tr><td>
-              Partition algorithm
-            </td>
-            <td>
-              <input type="radio" name="ptype" value="0" checked> <a href="http://glaros.dtc.umn.edu/gkhome/node/81" target="_blank">K-way partitioning</a>
-              <input type="radio" name="ptype" value="1"> <a href="http://glaros.dtc.umn.edu/gkhome/node/107" target="_blank">Recursive bisectioning</a>
-            </td>
+            <tr>
+              <td>Load balancing</td><td><input type="number" name="max_load_imb" min="1" max="100" value="100">%</td>
             </tr>
+            <tr>
+              <td>
+                Partition algorithm
+              </td>
+              <td>
+                <input type="radio" name="ptype" value="0" checked> <a href="http://glaros.dtc.umn.edu/gkhome/node/81" target="_blank">K-way partitioning</a>
+                <input type="radio" name="ptype" value="1"> <a href="http://glaros.dtc.umn.edu/gkhome/node/107" target="_blank">Recursive bisectioning</a>
+              </td>
+            </tr>
+            <tr>
             <td>
               <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name">
             </td>
@@ -1512,6 +1517,7 @@
               <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
               <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition</button>
             </td>
+            </tr>
             </form>
           </table>
             </div>
