@@ -176,3 +176,14 @@ class MasterManagerClient(BaseDROPManagerClient):
     """
     def __init__(self, host='localhost', port=constants.MASTER_DEFAULT_REST_PORT):
         super(MasterManagerClient, self).__init__(host=host, port=port)
+
+
+class SetEncoder(json.JSONEncoder):
+    """
+    The dictdrop uses a set which is not serializable into JSON, so this encoder helps
+    perform the serialization
+    """
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)
