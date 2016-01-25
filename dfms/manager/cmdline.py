@@ -183,7 +183,7 @@ def dfmsNM(args=sys.argv):
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dfms-path", action="store", type="string",
-                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/")
+                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/lib")
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
