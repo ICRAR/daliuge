@@ -27,12 +27,14 @@ Created on 22 Jun 2015
 
 import os
 import shutil
+import tempfile
 import time
 import unittest
 from unittest.case import TestCase
 
 from dfms.ddap_protocol import DROPStates, DROPPhases
-from dfms.drop import FileDROP
+from dfms.drop import FileDROP, DirectoryContainer, BarrierAppDROP
+from dfms.droputils import DROPWaiterCtx
 from dfms.lifecycle import dlm
 
 
@@ -128,6 +130,42 @@ class TestDataLifecycleManager(TestCase):
             time.sleep(1)
             self.assertEquals(DROPStates.DELETED, drop.status)
             self.assertFalse(drop.exists())
+
+    def test_expireAfterUse(self):
+        """
+        Simple test for the expireAfterUse flag. Two DROPs are created with
+        different values, and after they are used we check whether their data
+        is still there or not
+        """
+        with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
+            a = DirectoryContainer('a', 'a', precious=False, expireAfterUse=True, dirname=tempfile.mkdtemp())
+            b_dirname = tempfile.mkdtemp()
+            b = DirectoryContainer('b', 'b', precious=False, expireAfterUse=False, dirname=b_dirname)
+            c = BarrierAppDROP('c', 'c')
+            d = BarrierAppDROP('d', 'd')
+            a.addConsumer(c)
+            a.addConsumer(d)
+            b.addConsumer(c)
+            b.addConsumer(d)
+
+            manager.addDrop(a)
+            manager.addDrop(b)
+            manager.addDrop(b)
+            manager.addDrop(c)
+
+            # Make sure all consumers are done
+            with DROPWaiterCtx(self, [c,d], 1):
+                a.setCompleted()
+                b.setCompleted()
+
+            # Both directories should be there, but after cleanup A's shouldn't
+            # be there anymore
+            self.assertTrue(a.exists())
+            self.assertTrue(b.exists())
+            time.sleep(2)
+            self.assertFalse(a.exists())
+            self.assertTrue(b.exists())
+            b.delete()
 
 if __name__ == '__main__':
     unittest.main()
