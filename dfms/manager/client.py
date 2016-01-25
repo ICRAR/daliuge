@@ -61,8 +61,6 @@ class BaseDROPManagerClient(object):
         Appends a graph to session `sessionId`, without creating its DROPs yet,
         but checking that the graph looks correct
         """
-        if isinstance(graphSpec, list):
-            graphSpec = json.dumps(graphSpec)
         self._post_json('/sessions/%s/graph/append' % (sessionId), graphSpec)
         logger.info('Successfully appended graph to session %s on %s:%s' % (sessionId, self.host, self.port))
 
