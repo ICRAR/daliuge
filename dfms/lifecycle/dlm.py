@@ -126,7 +126,7 @@ import time
 
 from dfms import droputils
 from dfms.drop import ContainerDROP
-from dfms.ddap_protocol import DROPStates, DROPPhases
+from dfms.ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 import hsm.manager
 import registry
 
@@ -256,15 +256,33 @@ class DataLifecycleManager(object):
     def expireCompletedDrops(self):
         now = time.time()
         for drop in self._drops.values():
-            if drop.status == DROPStates.COMPLETED and \
-               now > drop.expirationDate:
-                if drop.isBeingRead():
-                    logger.info("DROP %s/%s has expired but is currently being read, " \
-                                 "will skip expiration for the time being" % (drop.oid, drop.uid))
+
+            if drop.status != DROPStates.COMPLETED:
+                continue
+
+            # Expire-after-use: mark as expired if all consumers
+            # are finished using this DROP
+            if drop.expireAfterUse:
+                allDone = all([c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR] for c in drop.consumers])
+                if not allDone:
                     continue
-                if (logger.isEnabledFor(logging.DEBUG)):
-                    logger.debug('Marking DROP %s/%s as EXPIRED' % (drop.oid, drop.uid))
-                drop.status = DROPStates.EXPIRED
+
+            # Otherwise, we check the expiration date
+            # (if no lifespan was specified for the DROP, its expiration
+            # date will be -1 and it will be skipped)
+            elif drop.expirationDate == -1 or \
+                 now <= drop.expirationDate:
+                continue
+
+            if drop.isBeingRead():
+                logger.info("%r has expired but is currently being read, " \
+                             "will skip expiration for the time being" % (drop,))
+                continue
+
+            # Finally!
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Marking %r as EXPIRED' % (drop,))
+            drop.status = DROPStates.EXPIRED
 
     def _disappeared(self, drop):
         return drop.status != DROPStates.DELETED and not drop.exists()

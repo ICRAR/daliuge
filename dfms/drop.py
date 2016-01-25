@@ -28,18 +28,20 @@ from cStringIO import StringIO
 import collections
 import heapq
 import logging
+import math
 import os
 import random
+import shutil
 import sys
 import threading
 import time
-import math
 
-from ddap_protocol import DROPStates
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases
 from dfms.event import EventFirer
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
+
+from ddap_protocol import DROPStates
 
 
 try:
@@ -84,6 +86,14 @@ class AbstractDROP(EventFirer):
     written into the DROP, streaming consumers are also notified when the
     DROPs moves to the COMPLETED state, at which point no more data should
     be expected to arrive at the consumer side.
+
+    DROPs' data can be expired automatically by the system after the DROP has
+    transitioned to the COMPLETED state if they are created by a DROP Manager.
+    Expiration can either be triggered by an interval relative to the creation
+    time of the DROP (via the `lifespan` keyword), or by specifying that the
+    DROP should be expired after all its consumers have finished (via the
+    `expireAfterUse` keyword). These two methods are mutually exclusive. If none
+    is specified no expiration occurs.
     """
 
     # This ensures that:
@@ -199,13 +209,21 @@ class AbstractDROP(EventFirer):
         # missing.
         self._dataIsland = self._getArg(kwargs, 'island', None)
 
+        # DROP expiration.
+        # Expiration can be time-driven or usage-driven, which are mutually
+        # exclusive methods. If time-driven, a relative lifespan is assigned to
+        # the DROP.
         # Expected lifespan for this object, used by to expire them
-        lifespan = -1
-        if kwargs.has_key('lifespan'):
-            lifespan = float(kwargs.pop('lifespan'))
+        if 'lifespan' in kwargs and 'expireAfterUse' in kwargs:
+            raise ValueError("%r specifies both `lifespan` and `expireAfterUse`" \
+                             "but they are mutually exclusive" % (self,))
+
+        self._expireAfterUse = self._getArg(kwargs, 'expireAfterUse', False)
         self._expirationDate = -1
-        if lifespan != -1:
-            self._expirationDate = time.time() + lifespan
+        if not self._expireAfterUse:
+            lifespan = float(self._getArg(kwargs, 'lifespan', -1))
+            if lifespan != -1:
+                self._expirationDate = time.time() + lifespan
 
         # Expected data size, used to automatically move the DROP to COMPLETED
         # after successive calls to write()
@@ -545,6 +563,10 @@ class AbstractDROP(EventFirer):
     @property
     def expirationDate(self):
         return self._expirationDate
+
+    @property
+    def expireAfterUse(self):
+        return self._expireAfterUse
 
     @property
     def size(self):
@@ -976,14 +998,15 @@ class ContainerDROP(AbstractDROP):
         #       this recursive deletion will be needed, while this delete method
         #       will go hand-to-hand with the rest of the I/O methods above,
         #       which are currently raise a NotImplementedError
-        for c in [c for c in self._children if c.exists()]:
-            c.delete()
+        if self._children:
+            for c in [c for c in self._children if c.exists()]:
+                c.delete()
 
     @property
     def expirationDate(self):
         if self._children:
             return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
-        return -1
+        return self._expirationDate
 
     @property
     def children(self):
@@ -991,9 +1014,9 @@ class ContainerDROP(AbstractDROP):
 
     def exists(self):
         if self._children:
-            # TODO: Or should it be __and__? Depends on what the exact contract of
+            # TODO: Or should it be all()? Depends on what the exact contract of
             #       "exists" is
-            return reduce(lambda a,b: a or b, [c.exists() for c in self._children])
+            return any([c.exists() for c in  self._children])
         return True
 
 class DirectoryContainer(ContainerDROP):
@@ -1032,6 +1055,11 @@ class DirectoryContainer(ContainerDROP):
     def path(self):
         return self._path
 
+    def delete(self):
+        shutil.rmtree(self._path)
+
+    def exists(self):
+        return os.path.isdir(self._path)
 
 #===============================================================================
 # AppDROP classes follow

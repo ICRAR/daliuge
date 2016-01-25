@@ -44,6 +44,7 @@ setup(
 
       # Keep alpha-sorted please
       install_requires=[
+            "boto3",
             "bottle",
             "configobj",
             "docker-py",

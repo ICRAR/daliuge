@@ -69,7 +69,7 @@ class RunDROPTask(luigi.Task):
                     self.execDrop = True
 
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("%s will execute or monitor DROP %s/%s?: %s" % (self.__class__, drop.oid, drop.uid, ("execute" if self.execDrop else "monitor")))
+            logger.debug("%s will execute or monitor %r?: %s" % (self.__class__, drop, ("execute" if self.execDrop else "monitor")))
 
         if not self.execDrop:
             self._evt = threading.Event()

@@ -348,7 +348,7 @@ class DockerApp(BarrierAppDROP):
             msg = "Container %s finished successfully" % (cId,)
             stdout = c.logs(container, stdout=True, stderr=False)
             stderr = c.logs(container, stdout=False, stderr=True)
-            logger.debug(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+            logger.debug(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
         elif self._exitCode != 0:
             stdout = c.logs(container, stdout=True, stderr=False)
             stderr = c.logs(container, stdout=False, stderr=True)
