@@ -125,7 +125,7 @@ class BaseDROPManagerClient(object):
 
     def _post_json(self, url, content):
         if not isinstance(content, basestring):
-            content = json.dumps(content)
+            content = json.dumps(content, cls=SetEncoder)
         self._POST(url, content, 'application/json')
 
     def _GET(self, url):
