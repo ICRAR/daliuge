@@ -21,6 +21,7 @@
 #
 
 import networkx as nx
+from collections import defaultdict
 
 class Schedule(object):
     """
@@ -34,6 +35,59 @@ class Schedule(object):
     def to_gojs_json(self):
         pass
 
+class Partition(object):
+    """
+    Resource cluster
+    """
+    def __init__(self, gid, max_dop):
+        """
+        gid:    cluster/partition id (string)
+        max_dop:    maximum allowed degree of parallelism in this partition (int)
+        """
+        self._gid = gid
+        self._dag = nx.DiGraph()
+        self._max_dop = max_dop
+        #print "My dop = {0}".format(self._max_dop)
+
+    def can_add(self, u, uw, v, vw):
+        if (len(self._dag.nodes()) == 0):
+            return True
+
+        if (self._dag.node.has_key(u)):
+            unew = False
+        else:
+            unew = True
+        if (self._dag.node.has_key(v)):
+            vnew = False
+        else:
+            vnew = True
+
+        self.add(u, uw, v, vw)
+
+        mydop = DAGUtil.get_max_dop(self._dag)
+        if (mydop > self._max_dop):
+            ret = False
+        else:
+            ret = True
+
+        if (unew):
+            self.remove(u)
+        if (vnew):
+            self.remove(v)
+
+        return ret
+
+    def add(self, u, uw, v, vw):
+        self._dag.add_node(u, weight=uw)
+        self._dag.add_node(v, weight=vw)
+        self._dag.add_edge(u, v)
+
+    def remove(self, n):
+        self._dag.remove_node(n)
+
+    @property
+    def cardinality(self):
+        return len(self._dag.nodes())
 
 class Scheduler(object):
     """
@@ -43,11 +97,46 @@ class Scheduler(object):
     3. map each cluster to a resource unit
     """
 
-    def __init__(self, drop_list):
+    def __init__(self, drop_list, max_dop=8):
         """
         turn drop_list into DAG, and check its validity
         """
-        pass
+        self._drop_list = drop_list
+        self._key_dict = dict() # {oid : node_id}
+        self._drop_dict = dict() # {oid : drop}
+        for i, drop in enumerate(self._drop_list):
+            oid = drop['oid']
+            self._key_dict[oid] = i + 1 # starting from 1
+            self._drop_dict[oid] = drop
+        self._dag = self._build_dag()#
+        self._max_dop = max_dop
+
+    def _build_dag(self):
+        """
+        return a networkx Digraph (DAG)
+
+        tw - task weight
+        dw - data weight / volume
+        """
+        G = nx.DiGraph()
+        for i, drop in enumerate(self._drop_list):
+            oid = drop['oid']
+            myk = i + 1
+            tt = drop['type']
+            if ('plain' == tt):
+                obk = 'consumers' # outbound keyword
+                tw = 0
+            elif ('app' == tt):
+                obk = 'outputs'
+                tw = drop['tw']
+            G.add_node(myk, weight=tw)
+            if (drop.has_key(obk)):
+                for oup in drop[obk]:
+                    if ('plain' == tt):
+                        G.add_weighted_edges_from([(myk, self._key_dict[oup], drop['dw'])])
+                    elif ('app' == tt):
+                        G.add_weighted_edges_from([(myk, self._key_dict[oup], self._drop_dict[oup]['dw'])])
+        return G
 
     def partition_dag(self):
         pass
@@ -61,17 +150,65 @@ class Scheduler(object):
     def map_cluster(self):
         pass
 
-class SarkarScheduler(Scheduler):
+class MySarkarScheduler(Scheduler):
     """
-    Based on
-    V. Sarkar, Partitioning and Scheduling Parallel Programs for Execution on
-    Multiprocessors. Cambridge, MA: MIT Press, 1989.
+    Based on "V. Sarkar, Partitioning and Scheduling Parallel Programs for Execution on
+    Multiprocessors. Cambridge, MA: MIT Press, 1989."
+
+    Main change
+    We do not order independent tasks within the same cluster. This could blow the cluster, therefore
+    we allow for a cost constraint on the number of parallel tasks (e.g. # of cores) within each cluster
+
+    Why
+    1. we only need to topologically sort the DAG once since we do not add new edges in the cluster
+    2. closer to requirements
+    3. adjustable for local schedulers
     """
-    def __init__(self, drop_list):
-        super(SarkarScheduler, self).__init__(drop_list)
+    def __init__(self, drop_list, max_dop=8):
+        super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop)
 
     def partition_dag(self):
-        pass
+        G = self._dag
+        st_gid = len(self._drop_list) + 1
+        el = G.edges(data=True)
+        el.sort(key=lambda ed: ed[2]['weight'] * -1)
+        topo_sorted = nx.topological_sort(G)
+        g_dict = dict() #{gid : Partition}
+        curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
+        for e in el:
+            u = e[0]
+            gu = G.node[u]
+            v = e[1]
+            gv = G.node[v]
+            ow = G.edge[u][v]['weight']
+            G.edge[u][v]['weight'] = 0 #edge zeroing
+            new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
+            #print "{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v)
+            if (new_lpl <= curr_lpl): #try to accept the edge zeroing
+                ugid = gu.get('gid', None)
+                vgid = gv.get('gid', None)
+                if (ugid and (not vgid)):
+                    part = g_dict[ugid]
+                elif ((not ugid) and vgid):
+                    part = g_dict[vgid]
+                elif (not ugid and (not vgid)):
+                    part = Partition(st_gid, self._max_dop)
+                    g_dict[st_gid] = part
+                    st_gid += 1
+                else: #elif (ugid and vgid):
+                    # cannot change Partition once is in!
+                    part = None
+                uw = gu['weight']
+                vw = gv['weight']
+                if (part is not None and part.can_add(u, uw, v, vw)):
+                    part.add(u, uw, v, vw)
+                    gu['gid'] = part._gid
+                    gv['gid'] = part._gid
+                    curr_lpl = new_lpl
+                else:
+                    G.edge[u][v]['weight'] = ow
+            else:
+                G.edge[u][v]['weight'] = ow
 
     def merge_cluster(self, num_partitions):
         pass
@@ -103,7 +240,7 @@ class DAGUtil(object):
     Helper functions dealing with DAG
     """
     @staticmethod
-    def get_longest_path(G, weight='weight', default_weight=1, show_path=True):
+    def get_longest_path(G, weight='weight', default_weight=1, show_path=True, topo_sort=None):
         """
         Ported from:
         https://github.com/networkx/networkx/blob/master/networkx/algorithms/dag.py
@@ -128,7 +265,9 @@ class DAGUtil(object):
 
         """
         dist = {} # stores {v : (length, u)}
-        for v in nx.topological_sort(G):
+        if (topo_sort is None):
+            topo_sort = nx.topological_sort(G)
+        for v in topo_sort:
             us = [
             (dist[u][0] + #accumulate
             data.get(weight, default_weight) + #edge weight

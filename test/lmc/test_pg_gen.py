@@ -23,6 +23,7 @@ import unittest, os, pkg_resources, json
 import pprint
 
 from dfms.lmc.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP
+from dfms.lmc.scheduler import Scheduler, MySarkarScheduler
 from collections import defaultdict
 
 class TestPGGen(unittest.TestCase):
@@ -75,3 +76,17 @@ class TestPGGen(unittest.TestCase):
         drop_list = lg.unroll_to_tpl()
         pgtp = MetisPGTP(drop_list)
         pgtp.to_partition_input('/tmp/dfms_chiles1_pgtp.metis')
+
+    def test_basic_scheduler(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        mys = Scheduler(drop_list)
+        #print mys._dag.edges(data=True)
+
+    def test_mysarkar_scheduler(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        mys = MySarkarScheduler(drop_list)
+        mys.partition_dag()
