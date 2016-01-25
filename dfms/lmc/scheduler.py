@@ -107,7 +107,7 @@ class DAGUtil(object):
         """
         Ported from:
         https://github.com/networkx/networkx/blob/master/networkx/algorithms/dag.py
-        To add node weight
+        Added node weight
 
         Returns the longest path in a DAG
         If G has edges with 'weight' attribute the edge data are used as weight values.
@@ -153,6 +153,35 @@ class DAGUtil(object):
             path.reverse()
         return (path, lp)
 
+    @staticmethod
+    def get_max_width(G, weight='weight', default_weight=1):
+        """
+        Get the antichain with the maximum "weighted" width of this DAG
+        weight: float (for example, it could be RAM consumption in GB)
+        Return : float
+        """
+        max_width = 0
+        for antichain in nx.antichains(G):
+            t = 0
+            for n in antichain:
+                t += G.node[n].get(weight, default_weight)
+            if (t > max_width):
+                max_width = t
+        return max_width
+
+    @staticmethod
+    def get_max_dop(G):
+        """
+        Get the maximum degree of parallelism of this DAG
+        return : int
+        """
+        max_dop = 0
+        for antichain in nx.antichains(G):
+            leng = len(antichain)
+            if (leng > max_dop):
+                max_dop = leng
+        return max_dop
+
 if __name__ == "__main__":
     G = nx.DiGraph()
     G.add_weighted_edges_from([(4,3,1.2), (3,2,4), (2,1,2)])
@@ -162,5 +191,7 @@ if __name__ == "__main__":
     print G.edges(data=True)
 
     lp = DAGUtil.get_longest_path(G)
-
     print "The longest path is {0} with a length of {1}".format(lp[0], lp[1])
+    mw = DAGUtil.get_max_width(G)
+    dop = DAGUtil.get_max_dop(G)
+    print "The max (weighted) width = {0}, and the max degree of parallelism = {1}".format(mw, dop)
