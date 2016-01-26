@@ -58,6 +58,7 @@ setup(
             "scp",
             "spead2==0.4.0",
             "tornado",
+            "networkx",
       ],
       test_suite="test",
       entry_points= {

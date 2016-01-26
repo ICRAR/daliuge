@@ -51,6 +51,7 @@ import json, os, datetime, time, math, uuid, commands
 from dfms.drop import dropdict
 from collections import defaultdict
 from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
+from dfms.lmc.scheduler import MySarkarScheduler
 
 class GraphException(Exception):
     pass
@@ -680,6 +681,63 @@ class MetisPGTP(PGT):
                 if (os.path.exists(f)):
                     os.remove(f)
 
+class MySarkarPGTP(PGT):
+    """
+    use the MySarkarScheduler to produce the PGTP
+    """
+    def __init__(self, drop_list, num_partitions=0, par_label="Partition", max_dop=8):
+        """
+        num_partitions: 0 - only do the initial logical partition
+                        >1 - does logical partition, partition mergeing and
+                        physical mapping
+        """
+        super(MySarkarPGTP, self).__init__(drop_list)
+        self._num_parts = num_partitions
+        self._num_parts_done = 0
+        self._max_dop = max_dop # max dop per partition
+        self._scheduler = MySarkarScheduler(drop_list, max_dop)
+        self._par_label = par_label
+        self._lpl = None # longest path
+        self._ptime = None # partition time
+
+    def get_partition_info(self, entry_key=[' - Edgecut:']):
+        """
+        partition parameter and log entry
+        return a string
+        """
+        return "{0} partitions asked, {2} produced - Algorithm: {1} - Execution time: {3} - Partition time: {4:.2f} seconds - Max DoP: {5}".format(self._num_parts,
+        "MySarkar Scheduler", self._num_parts_done, self._lpl, self._ptime, self._max_dop)
+
+    def to_partition_input(self, outf):
+        pass
+
+    def to_gojs_json(self, string_rep=True):
+        jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False)
+        self._num_parts_done, self._lpl, self._ptime = self._scheduler.partition_dag()
+        G = self._scheduler._dag
+        leng = len(self._drop_list)
+
+        key_dict = dict() #k - gojs key, v - gojs group id
+        groups = set()
+        node_list = jsobj['nodeDataArray']
+        for node in node_list:
+            gid = G.node[node['key']]['gid']
+            node['group'] = gid
+            groups.add(gid)
+
+        for gid in groups:
+            gn = dict()
+            gn['key'] = gid
+            #print "group key = {0}".format(gid)
+            gn['isGroup'] = True
+            gn['text'] = '{1}_{0}'.format((gid - leng), self._par_label)
+            node_list.append(gn)
+
+        if (string_rep):
+            return json.dumps(jsobj, indent=2)
+        else:
+            return jsobj
+
 class PyrrosPGTP(PGT):
     """
     DROP and GOJS representations of Physical Graph Template with Partitions
@@ -687,19 +745,23 @@ class PyrrosPGTP(PGT):
     http://www.cs.ucsb.edu/~tyang/papers/PYRROScode.html
     """
 
-    def __init__(self, drop_list, pyrros_path, num_partitions=0):
+    def __init__(self, drop_list, num_partitions=1):
         """
         num_partitions:  number of partitions supplied by users (int)
         """
         super(PyrrosPGTP, self).__init__(drop_list)
-        if (not os.path.exists(pyrros_path)):
-            raise GPGTException("Invalid PYRROS path: {0}".format(pyrros_path))
-        else:
-            self._pyrros_path = pyrros_path
-        if (num_partitions == 0):
+        self._pyrros_path = "pysched1"
+        if (num_partitions == 1):
             self._num_parts = self.get_opt_num_parts()
         else:
             self._num_parts = num_partitions
+
+    def get_partition_info(self, entry_key=[' - Edgecut:']):
+        """
+        partition parameter and log entry
+        return a string
+        """
+        return "{0} partitions (asked) - Algorithm: {1}".format(self._num_parts, "Pyrros")
 
     def to_partition_input(self, outf):
         """
@@ -729,11 +791,6 @@ class PyrrosPGTP(PGT):
                 if (drop.has_key(obk)):
                     oel = []
                     for oup in drop[obk]:
-                        link_k = "{0}->{1}".format(myk, key_dict[oup])
-                        if (links_dict.has_key(link_k)):
-                            continue
-                        else:
-                            links_dict[link_k] = 1
                         oel.append(str(key_dict[oup]))
                         if ('plain' == tt):
                             oel.append(str(drop['dw']))
@@ -751,7 +808,7 @@ class PyrrosPGTP(PGT):
         key_dict = dict() #k - gojs key, v - gojs group id
         groups = set()
 
-        start_k = len(self._drop_list)
+        start_k = len(self._drop_list) + 1
         with open(pyrros_out, "r") as f:
             num_pts = int(f.readline())
             if (num_pts != self._num_parts):
@@ -761,7 +818,7 @@ class PyrrosPGTP(PGT):
 
             line = f.readline()
             while (len(line) > 0):
-                print "\t", line
+                #print "\t", line
                 la = line.split()
                 key_dict[int(la[0])] = int(la[1])
                 groups.add(int(la[1]))
@@ -770,11 +827,16 @@ class PyrrosPGTP(PGT):
         node_list = jsobj['nodeDataArray']
         for node in node_list:
             if (key_dict.has_key(node['key'])):
-                node['group'] = key_dict[int(node['key'])] + start_k
+                gid = key_dict[int(node['key'])] + start_k
+                node['group'] = gid
+                print "{0} --> {1}".format(node['key'], gid)
+            else:
+                print "Node without group: {0}".format(node['key'])
 
         for gid in groups:
             gn = dict()
             gn['key'] = start_k + gid
+            print "group key = {0}".format(start_k + gid)
             gn['isGroup'] = True
             gn['text'] = 'Island_{0}'.format(gid)
             node_list.append(gn)
@@ -806,13 +868,13 @@ class PyrrosPGTP(PGT):
                     else:
                         return jsobj
                 else:
-                    err_msg = "PYRROS Schedule failed: '{2}': {0}/{1}".format(ret[0], ret[1], cmd)
+                    err_msg = "PYRROS Schedule failed:\n'{2}': {0}/\n{1}".format(ret[0], ret[1], cmd)
                     raise GPGTException(err_msg)
         finally:
             for f in remove_list:
                 if (os.path.exists(f)):
-                    #pass
-                    os.remove(f)
+                    pass
+                    #os.remove(f)
 
 class LG():
     """
