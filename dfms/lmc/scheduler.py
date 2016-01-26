@@ -22,6 +22,7 @@
 
 import networkx as nx
 from collections import defaultdict
+import time
 
 class Schedule(object):
     """
@@ -30,9 +31,6 @@ class Schedule(object):
     """
     @property
     def makespan(self):
-        pass
-
-    def to_gojs_json(self):
         pass
 
 class Partition(object):
@@ -168,10 +166,18 @@ class MySarkarScheduler(Scheduler):
         super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop)
 
     def partition_dag(self):
+        """
+        Return a tuple of
+            1. the # of partitions formed (int)
+            2. the parallel time (longest path, int)
+            3. partition time (seconds, float)
+        """
         G = self._dag
         st_gid = len(self._drop_list) + 1
+        init_c = st_gid
         el = G.edges(data=True)
         el.sort(key=lambda ed: ed[2]['weight'] * -1)
+        stt = time.time()
         topo_sorted = nx.topological_sort(G)
         g_dict = dict() #{gid : Partition}
         curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
@@ -209,6 +215,15 @@ class MySarkarScheduler(Scheduler):
                     G.edge[u][v]['weight'] = ow
             else:
                 G.edge[u][v]['weight'] = ow
+
+        #for an unallocated node, it forms its own partition
+        edt = time.time() - stt
+        for n in G.nodes(data=True):
+            if (not n[1].has_key('gid')):
+                n[1]['gid'] = st_gid
+                st_gid += 1
+
+        return ((st_gid - init_c), curr_lpl, edt)
 
     def merge_cluster(self, num_partitions):
         pass

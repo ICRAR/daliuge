@@ -1284,6 +1284,13 @@
     f.submit();
   }
 
+  function genPGTP02() {
+    var f = document.getElementById("pgtp_form_02");
+    var h = document.getElementById("pgtp_lg_name_02");
+    h.value = window.curr_lg_name.toString();
+    f.submit();
+  }
+
   function saveToRemote(saveEditor) {
     var jsonModel = myDiagram.model.toJson();
     if (window.curr_lg_name == null) {
@@ -1512,14 +1519,46 @@
             <tr>
             <td>
               <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name">
+              <input type="hidden" name="algo" value="metis">
             </td>
             <td>
               <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-              <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition</button>
+              <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition (Metis)</button>
             </td>
             </tr>
             </form>
           </table>
+          <br/>
+          <br/>
+          <table style="font-size:15px">
+          <tr>
+          <form action="/gen_pgt" method="get" id="pgtp_form_02" target="_blank">
+          <td># of partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
+          </tr>
+          <tr>
+          <td>Partition label</td>
+          <td>
+          <input type="text" name="par_label" value="Partition">
+          </td>
+        </tr>
+        <tr>
+        <td>Max DoP per partition</td>
+        <td>
+        <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
+        </td>
+      </tr>
+        <tr>
+        <td>
+          <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_02">
+          <input type="hidden" name="algo" value="mysarkar">
+        </td>
+        <td>
+          <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
+          <button id="pgtButton02" class="button" onclick="genPGTP02()">Generate Physical Graph Template Partition (MySarkar)</button>
+        </td>
+        </tr>
+        </form>
+      </table>
             </div>
           </div>
           </div>

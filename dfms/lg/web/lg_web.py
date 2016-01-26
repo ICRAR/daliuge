@@ -28,7 +28,7 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP
+from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -128,12 +128,20 @@ def gen_pgt():
                 pgt = PGT(drop_list)
             else:
                 par_label = request.query.get('par_label')
-                min_goal = int(request.query.get('min_goal'))
-                ptype = int(request.query.get('ptype'))
-                ufactor = 100 - int(request.query.get('max_load_imb')) + 1
-                if (ufactor <= 0):
-                    ufactor = 1
-                pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
+                algo = request.query.get('algo')
+                if ('metis' == algo):
+                    min_goal = int(request.query.get('min_goal'))
+                    ptype = int(request.query.get('ptype'))
+                    ufactor = 100 - int(request.query.get('max_load_imb')) + 1
+                    if (ufactor <= 0):
+                        ufactor = 1
+                    pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
+                elif ('mysarkar' == algo):
+                    pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')))
+                elif ('pyrros' == algo):
+                    pgt = PyrrosPGTP(drop_list, int(part))
+                else:
+                    raise GraphException("Unknown partition algorithm: {0}".format(algo))
             pgt_content = pgt.to_gojs_json()
         except GraphException, ge:
             response.status = 500
@@ -191,4 +199,4 @@ if __name__ == "__main__":
     global lg_dir
     lg_dir = options.lg_path
     # Let's use tornado, since luigi already depends on it
-    run(host="0.0.0.0", server='tornado', port=options.lg_port, debug=True)
+    run(host="0.0.0.0", server='tornado', port=options.lg_port, debug=False)
