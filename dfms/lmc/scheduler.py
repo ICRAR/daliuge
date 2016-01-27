@@ -45,6 +45,7 @@ class Partition(object):
         self._gid = gid
         self._dag = nx.DiGraph()
         self._max_dop = max_dop
+        self._max_antichains = None # a list of max (width) antichains
         #print "My dop = {0}".format(self._max_dop)
 
     def can_add(self, u, uw, v, vw):
@@ -60,9 +61,19 @@ class Partition(object):
         else:
             vnew = True
 
-        self.add(u, uw, v, vw)
+        print "Before: {0} - max antichains: {1}".format(self._dag.edges(),
+        DAGUtil.get_max_antichains(self._dag))
 
-        mydop = DAGUtil.get_max_dop(self._dag)
+        self._dag.add_node(u, weight=uw)
+        self._dag.add_node(v, weight=vw)
+        self._dag.add_edge(u, v)
+
+        if (unew and vnew):
+            mydop = DAGUtil.get_max_dop(self._dag)
+        else:
+            mydop = self.probe_max_dop(u, v, unew, vnew)
+            #mydop = DAGUtil.get_max_dop(self._dag)#
+
         if (mydop > self._max_dop):
             ret = False
         else:
@@ -76,12 +87,74 @@ class Partition(object):
         return ret
 
     def add(self, u, uw, v, vw):
+        if (self._dag.node.has_key(u)):
+            unew = False
+        else:
+            unew = True
+        if (self._dag.node.has_key(v)):
+            vnew = False
+        else:
+            vnew = True
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
         self._dag.add_edge(u, v)
+        if (unew and vnew): # we know this is fast
+            self._max_antichains = DAGUtil.get_max_antichains(self._dag)
+        else:
+            self.probe_max_dop(u, v, unew, vnew, update=True)
 
     def remove(self, n):
         self._dag.remove_node(n)
+
+    def probe_max_dop(self, u, v, unew, vnew, update=False):
+        """
+        an incremental antichain (hopefylly more efficient than the antichains)
+        only works for DoP, not for weighted width
+        """
+        if (self._max_antichains is None):
+            new_ac = DAGUtil.get_max_antichains(self._dag)
+            if (update):
+                self._max_antichains = new_ac
+            if (len(new_ac) == 0):
+                if (update):
+                    self._max_antichains = None
+                return 0
+            else:
+                return len(new_ac[0])
+        else:
+            new_ac = []
+            if (unew):
+                ups = nx.descendants(self._dag, u) #TODO this could be accumulated!
+                new_node = u
+            elif (vnew):
+                ups = nx.ancestors(self._dag, v)
+                new_node = v
+            else:
+                raise Exception("u v are both new/old")
+
+            for i, ma in enumerate(self._max_antichains): # missing elements in the current max_antichains!
+                """
+                incremental updates
+                """
+                found = False
+                for n in ma:
+                    if (n in ups):
+                        found = True
+                        break
+                if (found):
+                    if (len(ma) == 1):
+                        new_ac.append([new_node])
+                else:
+                    #print "ma {0} add {1}".format(ma, new_node)
+                    ma.append(new_node)
+                    new_ac.append(ma)
+            if (len(new_ac) > 0):
+                if (update):
+                    self._max_antichains = new_ac
+                    #print "antichain copyied ", new_ac, self._max_antichains
+                return len(new_ac[0])
+            else:
+                return len(self._max_antichains[0])
 
     @property
     def cardinality(self):
@@ -335,6 +408,25 @@ class DAGUtil(object):
             if (leng > max_dop):
                 max_dop = leng
         return max_dop
+
+    @staticmethod
+    def get_max_antichains(G):
+        """
+        what if an empty antichain is returned?
+        """
+        max_dop = 0
+        ret = []
+        for antichain in nx.antichains(G):
+            leng = len(antichain)
+            if (0 == leng):
+                continue
+            if (leng == max_dop):
+                ret.append(antichain)
+            elif (leng > max_dop):
+                del ret[:]
+                ret.append(antichain)
+                max_dop = leng
+        return ret
 
 if __name__ == "__main__":
     G = nx.DiGraph()
