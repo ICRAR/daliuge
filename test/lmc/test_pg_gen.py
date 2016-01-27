@@ -21,9 +21,10 @@
 
 import unittest, os, pkg_resources, json
 import pprint
+import networkx as nx
 
 from dfms.lmc.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP, MySarkarPGTP
-from dfms.lmc.scheduler import Scheduler, MySarkarScheduler
+from dfms.lmc.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
 from collections import defaultdict
 
 class TestPGGen(unittest.TestCase):
@@ -85,11 +86,12 @@ class TestPGGen(unittest.TestCase):
         #print mys._dag.edges(data=True)
 
     def test_mysarkar_scheduler(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_two.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         mys = MySarkarScheduler(drop_list)
-        mys.partition_dag()
+        num_parts_done, lpl, ptime = mys.partition_dag()
+        print "parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime)
 
     def test_mysarkar_pgtp_part(self):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
