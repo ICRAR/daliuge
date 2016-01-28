@@ -19,7 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest
+import unittest, pkg_resources
+from dfms.lmc.pg_generator import LG
 from dfms.lmc.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
 
 class TestScheduler(unittest.TestCase):
@@ -40,3 +41,21 @@ class TestScheduler(unittest.TestCase):
         l = part.probe_max_dop(2, 5, False, True, True)
         r = DAGUtil.get_max_dop(part._dag)
         assert l == r, "l = {0}, r = {1}".format(l, r)
+
+    def test_basic_scheduler(self):
+        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        mys = Scheduler(drop_list)
+        #print mys._dag.edges(data=True)
+
+    def test_mysarkar_scheduler(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        mdp = 8
+        for lgn in lgnames:
+            fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            mys = MySarkarScheduler(drop_list, max_dop=mdp)
+            num_parts_done, lpl, ptime = mys.partition_dag()
+            print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)

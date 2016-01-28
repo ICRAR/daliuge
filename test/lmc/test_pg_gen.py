@@ -78,21 +78,6 @@ class TestPGGen(unittest.TestCase):
         pgtp = MetisPGTP(drop_list)
         pgtp.to_partition_input('/tmp/dfms_chiles1_pgtp.metis')
 
-    def test_basic_scheduler(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        mys = Scheduler(drop_list)
-        #print mys._dag.edges(data=True)
-
-    def test_mysarkar_scheduler(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_two.json')
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        mys = MySarkarScheduler(drop_list)
-        num_parts_done, lpl, ptime = mys.partition_dag()
-        print "parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime)
-
     def test_mysarkar_pgtp_part(self):
         fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
         lg = LG(fp)
