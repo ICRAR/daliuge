@@ -29,16 +29,55 @@ class SchedulerException(Exception):
 
 class Schedule(object):
     """
-    The scheduling solution object, which contains:
-    which drop is executed at where [and when]
+    The scheduling solution with schedule-related properties
     """
+    def __init__(self, dag, max_dop):
+        self._dag = dag
+        self._max_dop = max_dop
+        self._lpl = None
+        self._wkldist = None
+        self._wkl = None
+
     @property
     def makespan(self):
+        if (self._lpl is None):
+            self._lpl = DAGUtil.get_longest_path(self._dag, show_path=False)[1]
+        return self._lpl
+
+    @property
+    def gantt_chart(self):
+        """
+        return GOJS JSON string for Gantt chart (X - time, Y - drop)
+        """
+        pass
+
+    @property
+    def workload(self):
+        """
+        Integrated (weighted average) Workload
+        Return: Integer
+        """
+        pass
+
+    @property
+    def workload_dist(self):
+        """
+        Workload distribution over the entire makespan
+        Return: a self._lpl x self._max_dop matrix
+                (X - time, Y - resource unit / parallel lane)
+
+        1. colummn peek
+        2. each node will be tagged "start/finish" time
+        3. for each v, find a u with the latest finish time as the start time (st)
+        4. column peek st across all lanes, get the first idle lane, schedule v
+            (this may mean go back in time)
+        """
         pass
 
 class Partition(object):
     """
-    Resource cluster
+    Logical partition, multiple (1 ~ N) of these will be placed onto a single
+    physical partition
     """
     def __init__(self, gid, max_dop):
         """
@@ -47,9 +86,22 @@ class Partition(object):
         """
         self._gid = gid
         self._dag = nx.DiGraph()
-        self._max_dop = max_dop
+        self._ask_max_dop = max_dop
         self._max_antichains = None # a list of max (width) antichains
-        #print "My dop = {0}".format(self._max_dop)
+        self._lpl = None
+        self._schedule = None
+        self._max_dop = None
+        #print "My dop = {0}".format(self._ask_max_dop)
+
+    @property
+    def schedule(self):
+        if (self._schedule is None):
+            self._schedule = Schedule(self._dag)
+        return self._schedule
+
+    def recompute_schedule(self):
+        self._schedule = None
+        return self.schedule
 
     def can_add(self, u, uw, v, vw):
         if (len(self._dag.nodes()) == 0):
@@ -81,7 +133,7 @@ class Partition(object):
             #     err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(u, v, unew, vnew)
             #     raise SchedulerException("{2}: mydop = {0}, mydop_slow = {1}".format(mydop, mydop_slow, err_msg))
 
-        if (mydop > self._max_dop):
+        if (mydop > self._ask_max_dop):
             ret = False
         else:
             ret = True
@@ -107,8 +159,9 @@ class Partition(object):
         self._dag.add_edge(u, v)
         if (unew and vnew): # we know this is fast
             self._max_antichains = DAGUtil.get_max_antichains(self._dag)
+            self._max_dop = 1
         else:
-            self.probe_max_dop(u, v, unew, vnew, update=True)
+            self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
             #DAGUtil.get_max_dop(self._dag)#
 
     def remove(self, n):
@@ -116,8 +169,8 @@ class Partition(object):
 
     def probe_max_dop(self, u, v, unew, vnew, update=False):
         """
-        an incremental antichain (hopefylly more efficient than the antichains)
-        only works for DoP, not for weighted width
+        an incremental antichain (which appears significantly more efficient than the networkx antichains)
+        But only works for DoP, not for weighted width
         """
         if (self._max_antichains is None):
             new_ac = DAGUtil.get_max_antichains(self._dag)
@@ -170,8 +223,11 @@ class Scheduler(object):
     """
     Static Scheduling consists of three steps:
     1. partition the DAG into an optimal number (M) of clusters
-    2. merge clusters into a given number (N) of resource units (if M > N)
+        goal - minimising execution time while maintaining intra-partition DoP
+    2. merge partitions into a given number (N) of resource units (if M > N)
+        goal - minimise logical communication cost while maintaining load balancing
     3. map each cluster to a resource unit
+        goal - minimise physical communication cost amongst physical partitions
     """
 
     def __init__(self, drop_list, max_dop=8):
@@ -234,12 +290,15 @@ class MySarkarScheduler(Scheduler):
 
     Main change
     We do not order independent tasks within the same cluster. This could blow the cluster, therefore
-    we allow for a cost constraint on the number of parallel tasks (e.g. # of cores) within each cluster
+    we allow for a cost constraint on the number of concurrent tasks (e.g. # of cores) within each cluster
 
     Why
     1. we only need to topologically sort the DAG once since we do not add new edges in the cluster
     2. closer to requirements
     3. adjustable for local schedulers
+
+    Similar ideas:
+    http://stackoverflow.com/questions/3974731
     """
     def __init__(self, drop_list, max_dop=8):
         super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop)
@@ -425,7 +484,7 @@ class DAGUtil(object):
     @staticmethod
     def prune_antichains(antichains):
         """
-        Prun a list of antichains to keep those with Top-2 lengths
+        Prune a list of antichains to keep those with Top-2 lengths
         """
         ret = []
         leng_dict = defaultdict(list)
@@ -444,14 +503,17 @@ class DAGUtil(object):
             ret = leng_dict[ll[0]] + leng_dict[ll[1]]
         return ret
 
-
 if __name__ == "__main__":
     G = nx.DiGraph()
-    G.add_weighted_edges_from([(4,3,1.2), (3,2,4), (2,1,2)])
+    G.add_weighted_edges_from([(4,3,1.2), (3,2,4), (2,1,2), (5,3,1.1)])
     G.add_weighted_edges_from([(3,6,5.2), (6,7,2)])
+    G.add_weighted_edges_from([(9,12,2.1)]) # testing independent nodes
     G.node[7]['weight'] = 65
     print G.nodes(data=True)
     print G.edges(data=True)
+
+    print "topological sort\n"
+    print nx.topological_sort(G)
 
     lp = DAGUtil.get_longest_path(G)
     print "The longest path is {0} with a length of {1}".format(lp[0], lp[1])
