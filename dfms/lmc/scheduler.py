@@ -24,6 +24,9 @@ import networkx as nx
 from collections import defaultdict
 import time
 
+class SchedulerException(Exception):
+    pass
+
 class Schedule(object):
     """
     The scheduling solution object, which contains:
@@ -39,7 +42,7 @@ class Partition(object):
     """
     def __init__(self, gid, max_dop):
         """
-        gid:    cluster/partition id (string)
+        gid:        cluster/partition id (string)
         max_dop:    maximum allowed degree of parallelism in this partition (int)
         """
         self._gid = gid
@@ -61,8 +64,8 @@ class Partition(object):
         else:
             vnew = True
 
-        print "Before: {0} - max antichains: {1}".format(self._dag.edges(),
-        DAGUtil.get_max_antichains(self._dag))
+        # print "Before: {0} - slow max antichains: {1}, fast max: {2}".format(self._dag.edges(),
+        # DAGUtil.get_max_antichains(self._dag), self._max_antichains)
 
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
@@ -72,7 +75,11 @@ class Partition(object):
             mydop = DAGUtil.get_max_dop(self._dag)
         else:
             mydop = self.probe_max_dop(u, v, unew, vnew)
-            #mydop = DAGUtil.get_max_dop(self._dag)#
+            #TODO - put the following code in a unit test!
+            # mydop_slow = DAGUtil.get_max_dop(self._dag)#
+            # if (mydop_slow != mydop):
+            #     err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(u, v, unew, vnew)
+            #     raise SchedulerException("{2}: mydop = {0}, mydop_slow = {1}".format(mydop, mydop_slow, err_msg))
 
         if (mydop > self._max_dop):
             ret = False
@@ -102,6 +109,7 @@ class Partition(object):
             self._max_antichains = DAGUtil.get_max_antichains(self._dag)
         else:
             self.probe_max_dop(u, v, unew, vnew, update=True)
+            #DAGUtil.get_max_dop(self._dag)#
 
     def remove(self, n):
         self._dag.remove_node(n)
@@ -122,7 +130,6 @@ class Partition(object):
             else:
                 return len(new_ac[0])
         else:
-            new_ac = []
             if (unew):
                 ups = nx.descendants(self._dag, u) #TODO this could be accumulated!
                 new_node = u
@@ -130,32 +137,31 @@ class Partition(object):
                 ups = nx.ancestors(self._dag, v)
                 new_node = v
             else:
-                raise Exception("u v are both new/old")
-
-            for i, ma in enumerate(self._max_antichains): # missing elements in the current max_antichains!
+                raise SchedulerException("u v are both new/old")
+            new_ac = [[new_node]] # the new node will be the first default antichain
+            md = 1
+            for ma in self._max_antichains: # missing elements in the current max_antichains!
+                mma = list(ma)
                 """
                 incremental updates
                 """
                 found = False
-                for n in ma:
+                for n in mma:
                     if (n in ups):
                         found = True
                         break
-                if (found):
-                    if (len(ma) == 1):
-                        new_ac.append([new_node])
-                else:
-                    #print "ma {0} add {1}".format(ma, new_node)
-                    ma.append(new_node)
-                    new_ac.append(ma)
-            if (len(new_ac) > 0):
+                if (not found):
+                    mma.append(new_node)
+                if (len(mma) > md):
+                    md = len(mma)
+                new_ac.append(mma) # carry over, then prune it
+            new_acs = DAGUtil.prune_antichains(new_ac)
+            if (len(new_acs) > 0):
                 if (update):
-                    self._max_antichains = new_ac
-                    #print "antichain copyied ", new_ac, self._max_antichains
-                return len(new_ac[0])
+                    self._max_antichains = new_acs
+                return md
             else:
-                return len(self._max_antichains[0])
-
+                raise SchedulerException("No antichains")
     @property
     def cardinality(self):
         return len(self._dag.nodes())
@@ -412,21 +418,32 @@ class DAGUtil(object):
     @staticmethod
     def get_max_antichains(G):
         """
-        what if an empty antichain is returned?
+        return a list of antichains with Top-2 lengths
         """
-        max_dop = 0
+        return DAGUtil.prune_antichains(nx.antichains(G))
+
+    @staticmethod
+    def prune_antichains(antichains):
+        """
+        Prun a list of antichains to keep those with Top-2 lengths
+        """
         ret = []
-        for antichain in nx.antichains(G):
+        leng_dict = defaultdict(list)
+        for antichain in antichains:
             leng = len(antichain)
             if (0 == leng):
                 continue
-            if (leng == max_dop):
-                ret.append(antichain)
-            elif (leng > max_dop):
-                del ret[:]
-                ret.append(antichain)
-                max_dop = leng
+            leng_dict[leng].append(antichain)
+        ll = list(reversed(sorted(leng_dict.keys())))
+        lengl = len(ll)
+        if (lengl == 0):
+            pass
+        elif (leng == 1):
+            ret = leng_dict[ll[0]]
+        else:
+            ret = leng_dict[ll[0]] + leng_dict[ll[1]]
         return ret
+
 
 if __name__ == "__main__":
     G = nx.DiGraph()
