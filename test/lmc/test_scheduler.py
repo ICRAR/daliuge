@@ -57,5 +57,10 @@ class TestScheduler(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             mys = MySarkarScheduler(drop_list, max_dop=mdp)
-            num_parts_done, lpl, ptime = mys.partition_dag()
+            num_parts_done, lpl, ptime, parts = mys.partition_dag()
             print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+            for part in parts:
+                if (part.cardinality > 10):
+                    ma = part.schedule.schedule_matrix
+                    print ma.shape
+                    print ma
