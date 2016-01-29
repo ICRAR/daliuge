@@ -34,6 +34,7 @@ from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
+from dfms.json_drop import JsonDROP
 from dfms.s3_drop import S3DROP
 
 STORAGE_TYPES = {
@@ -42,6 +43,7 @@ STORAGE_TYPES = {
     'ngas'  : NgasDROP,
     'null'  : NullDROP,
     's3'    : S3DROP,
+    'json'  : JsonDROP,
 }
 
 # Dictionary for the key used to store 1-to-N relationships between DROPs
