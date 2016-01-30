@@ -30,17 +30,17 @@ class TestScheduler(unittest.TestCase):
         G = part._dag
         #G.add_edge(1, 2)
         assert(part.probe_max_dop(1, 2, True, True, True) == DAGUtil.get_max_dop(part._dag))
-        print "-----"
+        #print "-----"
         G.add_edge(2, 3)
         assert(part.probe_max_dop(2, 3, False, True, True) == DAGUtil.get_max_dop(part._dag))
-        print "-----"
+        #print "-----"
         G.add_edge(1, 4)
         assert(part.probe_max_dop(1, 4, False, True, True) == DAGUtil.get_max_dop(part._dag))
-        print "-----"
+        #print "-----"
         G.add_edge(2, 5)
         l = part.probe_max_dop(2, 5, False, True, True)
         r = DAGUtil.get_max_dop(part._dag)
-        print l, r
+        #print l, r
         assert l == r, "l = {0}, r = {1}".format(l, r)
 
     def test_basic_scheduler(self):
@@ -54,7 +54,7 @@ class TestScheduler(unittest.TestCase):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         #lgnames = [lgnames[1]]
         mdp = 8
-        s_matrix = True
+        s_matrix = False
         for lgn in lgnames:
             fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
             lg = LG(fp)
@@ -70,4 +70,5 @@ class TestScheduler(unittest.TestCase):
                         print ma.shape
                         print ma
                         #print part._dag.edges(data=True)
+                        print DAGUtil.ganttchart_matrix(part.schedule._dag, part.schedule._topo_sort)
                         print
