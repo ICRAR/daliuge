@@ -713,7 +713,7 @@ class MySarkarPGTP(PGT):
 
     def to_gojs_json(self, string_rep=True):
         jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False)
-        self._num_parts_done, self._lpl, self._ptime = self._scheduler.partition_dag()
+        self._num_parts_done, self._lpl, self._ptime, parts = self._scheduler.partition_dag()
         G = self._scheduler._dag
         leng = len(self._drop_list)
 
