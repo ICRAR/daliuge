@@ -39,7 +39,6 @@ class Schedule(object):
         self._max_dop = max_dop
         self._topo_sort = nx.topological_sort(self._dag)
         DAGUtil.label_schedule(self._dag, topo_sort=self._topo_sort)
-        #self._gantt_mat = DAGUtil.ganttchart_matrix(self._dag, topo_sort=self._topo_sort))
         self._lpl = None
         self._wkldist = None
         self._wkl = None
@@ -47,7 +46,8 @@ class Schedule(object):
     @property
     def makespan(self):
         if (self._lpl is None):
-            self._lpl = DAGUtil.get_longest_path(self._dag, show_path=False)[1]
+            lpl = DAGUtil.get_longest_path(self._dag, show_path=True)
+            self._lpl = lpl[1] - (len(lpl[0]) - 1) #TODO find out why
         return self._lpl
 
     @property
@@ -57,7 +57,17 @@ class Schedule(object):
                 (X - time, Y - resource unit / parallel lane)
         """
         G = self._dag
-        N = int(math.ceil(DAGUtil.get_longest_path(G, show_path=False)[1]))
+        if (DEBUG):
+            lpl_str = []
+            lpl_c = 0
+            for lpn in lpl[0]:
+                ww = G.node[lpn].get('weight', 0)
+                lpl_str.append("{0}({1})".format(lpn, ww))
+                lpl_c += ww
+            print "lpl: ", " -> ".join(lpl_str)
+            print "lplt = ", lpl_c
+
+        N = self.makespan
         M = self._max_dop
         ma = np.zeros((M, N), dtype=int)
         pr = np.zeros((M), dtype=int)
@@ -70,7 +80,6 @@ class Schedule(object):
                 edt = node['edt']
             except KeyError, ke:
                 raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
-            #print i, n, stt, edt
             if (edt == stt):
                 continue
             if (prev_n in G.predecessors(n)):
@@ -78,23 +87,26 @@ class Schedule(object):
             else:
                 found = None
                 for i in range(M):
-                    if (pr[i] <= stt): #i != last_pid and
+                    if (pr[i] <= stt):
                         found = i
                         break
                 if (found is None):
                     raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
                     DAGUtil.get_max_dop(G), G.nodes(data=True)))
                 curr_pid = found
-            ma[curr_pid, stt:edt + 1] = np.ones((1, edt + 1 - stt)) * n
+            ma[curr_pid, stt:edt] = np.ones((1, edt - stt)) * n
             pr[curr_pid] = edt
             last_pid = curr_pid
             prev_n = n
         return ma
 
     @property
-    def workload(self):
+    def workload(self, phases=None):
         """
         Integrated (weighted average) Workload
+        But we also support "phased" workloads which can be reformulated as a
+        multi-constraint clustering problem solved by Metis.
+
         Return: Integer
         """
         pass
@@ -102,12 +114,8 @@ class Schedule(object):
     def workload_dist(self):
         """
         Workload distribution over the entire makespan
-        1. colummn peek
-        2. each node will be tagged "start/finish" time
-        3. for each v, find a u with the latest finish time as the start time (st)
-        4. column peek st across all lanes, get the first idle lane, schedule v
-            (this may mean go back in time)
         """
+        #TODO use numpy.count_nonzero to process each colummn of the scheduling matrix
         pass
 
 class Partition(object):
@@ -200,12 +208,13 @@ class Partition(object):
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
         self._dag.add_edge(u, v)
+
         if (unew and vnew): # we know this is fast
             self._max_antichains = DAGUtil.get_max_antichains(self._dag)
             self._max_dop = 1
         else:
             self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
-            #DAGUtil.get_max_dop(self._dag)#
+            #self._max_dop = DAGUtil.get_max_dop(self._dag)# this is too slow!
 
     def remove(self, n):
         self._dag.remove_node(n)
@@ -227,7 +236,7 @@ class Partition(object):
                 return len(new_ac[0])
         else:
             if (unew):
-                ups = nx.descendants(self._dag, u) #TODO this could be accumulated!
+                ups = nx.descendants(self._dag, u)
                 new_node = u
             elif (vnew):
                 ups = nx.ancestors(self._dag, v)
@@ -307,14 +316,14 @@ class Scheduler(object):
                 tw = 0
             elif ('app' == tt):
                 obk = 'outputs'
-                tw = drop['tw']
+                tw = int(drop['tw'])
             G.add_node(myk, weight=tw)
             if (drop.has_key(obk)):
                 for oup in drop[obk]:
                     if ('plain' == tt):
-                        G.add_weighted_edges_from([(myk, self._key_dict[oup], drop['dw'])])
+                        G.add_weighted_edges_from([(myk, self._key_dict[oup], int(drop['dw']))])
                     elif ('app' == tt):
-                        G.add_weighted_edges_from([(myk, self._key_dict[oup], self._drop_dict[oup]['dw'])])
+                        G.add_weighted_edges_from([(myk, self._key_dict[oup], int(self._drop_dict[oup]['dw']))])
         return G
 
     def partition_dag(self):
@@ -552,25 +561,23 @@ class DAGUtil(object):
             parents = G.predecessors(v)
             if (len(parents) == 0):
                 gv['stt'] = 0
-                edge = 0
             else:
                 # get the latest end time of one of its parents
                 ledt = -1
-                edge = 0
                 for parent in parents:
-                    pedt = G.node[parent]['edt']
+                    pedt = G.node[parent]['edt'] + G.edge[parent][v].get(weight, 0)
                     if (pedt > ledt):
                         ledt = pedt
-                        edge = G.edge[parent][v].get(weight, 0)
-                gv['stt'] = int(math.ceil(ledt)) + int(math.ceil(edge))
-            gv['edt'] = gv['stt'] + int(math.ceil(gv.get(weight, 0)))
+                gv['stt'] = ledt
+            gv['edt'] = gv['stt'] + gv.get(weight, 0)
 
     @staticmethod
     def ganttchart_matrix(G, topo_sort=None):
         """
         a M by N matrix
         """
-        N = int(math.ceil(DAGUtil.get_longest_path(G, show_path=False)[1]))
+        lpl = DAGUtil.get_longest_path(G, show_path=True)
+        N = lpl[1] - (len(lpl[0]) - 1)
         M = len(G.nodes())
         ma = np.zeros((M, N), dtype=np.int)
         if (topo_sort is None):
@@ -583,18 +590,18 @@ class DAGUtil(object):
             except KeyError, ke:
                 raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
             #print i, n, stt, edt
-            leng = edt + 1 - stt
+            leng = edt - stt
             if (edt == stt):
                 continue
-            ma[i, stt:edt + 1] = np.ones((1, leng))
-            print ma[i, :]
+            ma[i, stt:edt] = np.ones((1, leng))
+            #print ma[i, :]
         return ma
 
 if __name__ == "__main__":
     G = nx.DiGraph()
-    G.add_weighted_edges_from([(4,3,1.2), (3,2,4), (2,1,2), (5,3,1.1)])
-    G.add_weighted_edges_from([(3,6,5.2), (6,7,2)])
-    G.add_weighted_edges_from([(9,12,2.1)]) # testing independent nodes
+    G.add_weighted_edges_from([(4,3,1), (3,2,4), (2,1,2), (5,3,1)])
+    G.add_weighted_edges_from([(3,6,5), (6,7,2)])
+    G.add_weighted_edges_from([(9,12,2)]) # testing independent nodes
     G.node[3]['weight'] = 65
     print G.pred[12].items()
     print G.node[G.predecessors(12)[0]]
@@ -622,5 +629,10 @@ if __name__ == "__main__":
     print G.nodes(data=True)
     gantt_matrix = DAGUtil.ganttchart_matrix(G)
     print gantt_matrix
+    print gantt_matrix.shape
+    # sch = Schedule(G, 5)
+    # sch_mat = sch.schedule_matrix
+    # print sch_mat
+    # print sch_mat.shape
 
-    print DAGUtil.prune_antichains([[], [64], [62], [62, 64], [61], [61, 64], [61, 62], [61, 62, 64], [5], [1]])
+    #print DAGUtil.prune_antichains([[], [64], [62], [62, 64], [61], [61, 64], [61, 62], [61, 62, 64], [5], [1]])
