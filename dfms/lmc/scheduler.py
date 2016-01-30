@@ -25,6 +25,8 @@ import numpy as np
 from collections import defaultdict
 import time, math
 
+DEBUG = 0
+
 class SchedulerException(Exception):
     pass
 
@@ -76,11 +78,12 @@ class Schedule(object):
             else:
                 found = None
                 for i in range(M):
-                    if (i != last_pid and pr[i] <= stt):
+                    if (pr[i] <= stt): #i != last_pid and
                         found = i
                         break
                 if (found is None):
-                    raise SchedulerException("Cannot find a idle PID, max_dop could be wrong")
+                    raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
+                    DAGUtil.get_max_dop(G), G.nodes(data=True)))
                 curr_pid = found
             ma[curr_pid, stt:edt + 1] = np.ones((1, edt + 1 - stt)) * n
             pr[curr_pid] = edt
@@ -149,8 +152,14 @@ class Partition(object):
         else:
             vnew = True
 
-        # print "Before: {0} - slow max antichains: {1}, fast max: {2}".format(self._dag.edges(),
-        # DAGUtil.get_max_antichains(self._dag), self._max_antichains)
+        if (DEBUG):
+            slow_max = DAGUtil.get_max_antichains(self._dag)
+            fast_max = self._max_antichains
+            info = "Before: {0} - slow max: {1}, fast max: {2}, u: {3}, v: {4}, unew:{5}, vnew:{6}".format(self._dag.edges(),
+            slow_max, fast_max, u, v, unew, vnew)
+            print info
+            if (len(slow_max) != len(fast_max)):
+                raise SchedulerException("ERROR - {0}".format(info))
 
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
@@ -161,10 +170,11 @@ class Partition(object):
         else:
             mydop = self.probe_max_dop(u, v, unew, vnew)
             #TODO - put the following code in a unit test!
-            # mydop_slow = DAGUtil.get_max_dop(self._dag)#
-            # if (mydop_slow != mydop):
-            #     err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(u, v, unew, vnew)
-            #     raise SchedulerException("{2}: mydop = {0}, mydop_slow = {1}".format(mydop, mydop_slow, err_msg))
+            if (DEBUG):
+                mydop_slow = DAGUtil.get_max_dop(self._dag)#
+                if (mydop_slow != mydop):
+                    err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(u, v, unew, vnew)
+                    raise SchedulerException("{2}: mydop = {0}, mydop_slow = {1}".format(mydop, mydop_slow, err_msg))
 
         if (mydop > self._ask_max_dop):
             ret = False
@@ -224,23 +234,26 @@ class Partition(object):
                 new_node = v
             else:
                 raise SchedulerException("u v are both new/old")
-            new_ac = [[new_node]] # the new node will be the first default antichain
+            new_ac = []
             md = 1
             for ma in self._max_antichains: # missing elements in the current max_antichains!
-                mma = list(ma)
                 """
                 incremental updates
                 """
                 found = False
-                for n in mma:
+                for n in ma:
                     if (n in ups):
                         found = True
                         break
                 if (not found):
+                    mma = list(ma)
                     mma.append(new_node)
-                if (len(mma) > md):
-                    md = len(mma)
-                new_ac.append(mma) # carry over, then prune it
+                    new_ac.append(mma)
+                    if (len(mma) > md):
+                        md = len(mma)
+                elif (len(ma) > md):
+                    md = len(ma)
+                new_ac.append(ma) # carry over, then prune it
             new_acs = DAGUtil.prune_antichains(new_ac)
             if (len(new_acs) > 0):
                 if (update):
@@ -512,31 +525,20 @@ class DAGUtil(object):
     @staticmethod
     def get_max_antichains(G):
         """
-        return a list of antichains with Top-2 lengths
+        return a list of antichains with Top-3 lengths
         """
         return DAGUtil.prune_antichains(nx.antichains(G))
 
     @staticmethod
     def prune_antichains(antichains):
         """
-        Prune a list of antichains to keep those with Top-2 lengths
+        Prune a list of antichains to keep those with Top-3 lengths
         """
-        ret = []
+        todo = []
         leng_dict = defaultdict(list)
         for antichain in antichains:
-            leng = len(antichain)
-            if (0 == leng):
-                continue
-            leng_dict[leng].append(antichain)
-        ll = list(reversed(sorted(leng_dict.keys())))
-        lengl = len(ll)
-        if (lengl == 0):
-            pass
-        elif (leng == 1):
-            ret = leng_dict[ll[0]]
-        else:
-            ret = leng_dict[ll[0]] + leng_dict[ll[1]]
-        return ret
+            todo.append(antichain)
+        return todo
 
     @staticmethod
     def label_schedule(G, weight='weight', topo_sort=None):
@@ -620,3 +622,5 @@ if __name__ == "__main__":
     print G.nodes(data=True)
     gantt_matrix = DAGUtil.ganttchart_matrix(G)
     print gantt_matrix
+
+    print DAGUtil.prune_antichains([[], [64], [62], [62, 64], [61], [61, 64], [61, 62], [61, 62, 64], [5], [1]])
