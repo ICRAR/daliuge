@@ -40,8 +40,8 @@ class Schedule(object):
         self._topo_sort = nx.topological_sort(self._dag)
         DAGUtil.label_schedule(self._dag, topo_sort=self._topo_sort)
         self._lpl = None
-        self._wkldist = None
         self._wkl = None
+        self._sma = None
 
     @property
     def makespan(self):
@@ -56,67 +56,65 @@ class Schedule(object):
         Return: a self._lpl x self._max_dop matrix
                 (X - time, Y - resource unit / parallel lane)
         """
-        G = self._dag
-        if (DEBUG):
-            lpl_str = []
-            lpl_c = 0
-            for lpn in lpl[0]:
-                ww = G.node[lpn].get('weight', 0)
-                lpl_str.append("{0}({1})".format(lpn, ww))
-                lpl_c += ww
-            print "lpl: ", " -> ".join(lpl_str)
-            print "lplt = ", lpl_c
+        if (self._sma is None):
+            G = self._dag
+            if (DEBUG):
+                lpl_str = []
+                lpl_c = 0
+                for lpn in lpl[0]:
+                    ww = G.node[lpn].get('weight', 0)
+                    lpl_str.append("{0}({1})".format(lpn, ww))
+                    lpl_c += ww
+                print "lpl: ", " -> ".join(lpl_str)
+                print "lplt = ", lpl_c
 
-        N = self.makespan
-        M = self._max_dop
-        ma = np.zeros((M, N), dtype=int)
-        pr = np.zeros((M), dtype=int)
-        last_pid = -1
-        prev_n = None
-        for n in self._topo_sort:
-            node = G.node[n]
-            try:
-                stt = node['stt']
-                edt = node['edt']
-            except KeyError, ke:
-                raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
-            if (edt == stt):
-                continue
-            if (prev_n in G.predecessors(n)):
-                curr_pid = last_pid
-            else:
-                found = None
-                for i in range(M):
-                    if (pr[i] <= stt):
-                        found = i
-                        break
-                if (found is None):
-                    raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
-                    DAGUtil.get_max_dop(G), G.nodes(data=True)))
-                curr_pid = found
-            ma[curr_pid, stt:edt] = np.ones((1, edt - stt)) * n
-            pr[curr_pid] = edt
-            last_pid = curr_pid
-            prev_n = n
-        return ma
+            N = self.makespan
+            M = self._max_dop
+            ma = np.zeros((M, N), dtype=int)
+            pr = np.zeros((M), dtype=int)
+            last_pid = -1
+            prev_n = None
+            for n in self._topo_sort:
+                node = G.node[n]
+                try:
+                    stt = node['stt']
+                    edt = node['edt']
+                except KeyError, ke:
+                    raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
+                if (edt == stt):
+                    continue
+                if (prev_n in G.predecessors(n)):
+                    curr_pid = last_pid
+                else:
+                    found = None
+                    for i in range(M):
+                        if (pr[i] <= stt):
+                            found = i
+                            break
+                    if (found is None):
+                        raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
+                        DAGUtil.get_max_dop(G), G.nodes(data=True)))
+                    curr_pid = found
+                ma[curr_pid, stt:edt] = np.ones((1, edt - stt)) * n
+                pr[curr_pid] = edt
+                last_pid = curr_pid
+                prev_n = n
+            self._sma = ma
+        return self._sma
 
     @property
-    def workload(self, phases=None):
+    def workload(self):
         """
-        Integrated (weighted average) Workload
-        But we also support "phased" workloads which can be reformulated as a
-        multi-constraint clustering problem solved by Metis.
-
-        Return: Integer
+        Return: (integer)
+            the mean # of resource units per time unit consumed by the graph/partition
         """
-        pass
-
-    def workload_dist(self):
-        """
-        Workload distribution over the entire makespan
-        """
-        #TODO use numpy.count_nonzero to process each colummn of the scheduling matrix
-        pass
+        if (self._wkl is None):
+            ma = self.schedule_matrix
+            c = []
+            for i in range(ma.shape[1]):
+                c.append(np.count_nonzero(ma[:,i]))
+            self._wkl = int(np.mean(np.array(c))) # since METIS only accepts integer
+        return self._wkl
 
 class Partition(object):
     """
@@ -151,14 +149,8 @@ class Partition(object):
         if (len(self._dag.nodes()) == 0):
             return True
 
-        if (self._dag.node.has_key(u)):
-            unew = False
-        else:
-            unew = True
-        if (self._dag.node.has_key(v)):
-            vnew = False
-        else:
-            vnew = True
+        unew = False if self._dag.node.has_key(u) else True
+        vnew = False if self._dag.node.has_key(v) else True
 
         if (DEBUG):
             slow_max = DAGUtil.get_max_antichains(self._dag)
@@ -183,28 +175,16 @@ class Partition(object):
                 if (mydop_slow != mydop):
                     err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(u, v, unew, vnew)
                     raise SchedulerException("{2}: mydop = {0}, mydop_slow = {1}".format(mydop, mydop_slow, err_msg))
-
-        if (mydop > self._ask_max_dop):
-            ret = False
-        else:
-            ret = True
-
+        ret = False if mydop > self._ask_max_dop else True
         if (unew):
             self.remove(u)
         if (vnew):
             self.remove(v)
-
         return ret
 
     def add(self, u, uw, v, vw):
-        if (self._dag.node.has_key(u)):
-            unew = False
-        else:
-            unew = True
-        if (self._dag.node.has_key(v)):
-            vnew = False
-        else:
-            vnew = True
+        unew = False if self._dag.node.has_key(u) else True
+        vnew = False if self._dag.node.has_key(v) else True
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
         self._dag.add_edge(u, v)
@@ -263,10 +243,9 @@ class Partition(object):
                 elif (len(ma) > md):
                     md = len(ma)
                 new_ac.append(ma) # carry over, then prune it
-            new_acs = DAGUtil.prune_antichains(new_ac)
-            if (len(new_acs) > 0):
+            if (len(new_ac) > 0):
                 if (update):
-                    self._max_antichains = new_acs
+                    self._max_antichains = new_ac
                 return md
             else:
                 raise SchedulerException("No antichains")

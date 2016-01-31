@@ -60,15 +60,22 @@ class TestScheduler(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             print "Partitioning ", lgn
+            lll = len(lgn) + len("Partitioning ") + 1
+            print "=" * lll
             mys = MySarkarScheduler(drop_list, max_dop=mdp)
             num_parts_done, lpl, ptime, parts = mys.partition_dag()
             print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
             if (s_matrix):
-                for part in parts:
+                for i, part in enumerate(parts):
                     if (part.cardinality > 5):
                         ma = part.schedule.schedule_matrix
-                        print ma.shape
+                        ga = DAGUtil.ganttchart_matrix(part.schedule._dag, part.schedule._topo_sort)
+                        print "Partition ", i
+                        print "scheduling matrix: ", ma.shape
                         print ma
-                        #print part._dag.edges(data=True)
-                        print DAGUtil.ganttchart_matrix(part.schedule._dag, part.schedule._topo_sort)
+                        print "ganttchart matrix: ", ga.shape
+                        print ga
+                        print "Workload: ", part.schedule.workload
                         print
+            print "-" * lll
+            print
