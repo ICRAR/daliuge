@@ -51,6 +51,7 @@ setup(
             "drive-casa==0.7",
             "lockfile",
             "luigi<2.0",
+            "networkx",
             "paramiko",
             "psutil",
             "Pyro4",
@@ -58,7 +59,6 @@ setup(
             "scp",
             "spead2==0.4.0",
             "tornado",
-            "networkx",
       ],
       test_suite="test",
       entry_points= {
