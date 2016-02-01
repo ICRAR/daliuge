@@ -1488,6 +1488,9 @@
               <table style="font-size:15px">
               <tr>
               <form action="/gen_pgt" method="get" id="pgtp_form" target="_blank">
+              <td> Method I</td><td>Minimise data movement while constrained by load balancing </td>
+              </tr>
+              <tr>
               <td># of partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
               </tr>
               <tr>
@@ -1523,7 +1526,7 @@
             </td>
             <td>
               <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-              <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition (Metis)</button>
+              <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition (I)</button>
             </td>
             </tr>
             </form>
@@ -1533,7 +1536,7 @@
           <table style="font-size:15px">
           <tr>
           <form action="/gen_pgt" method="get" id="pgtp_form_02" target="_blank">
-          <td># of partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
+          <td>Partition Method II </td><td>Minimise execution time while constrained by each partition's DoP<input type="hidden" name="num_par" value="5"></td>
           </tr>
           <tr>
           <td>Partition label</td>
@@ -1554,11 +1557,15 @@
         </td>
         <td>
           <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-          <button id="pgtButton02" class="button" onclick="genPGTP02()">Generate Physical Graph Template Partition (MySarkar)</button>
+          <button id="pgtButton02" class="button" onclick="genPGTP02()">Generate Physical Graph Template Partition (II)</button>
         </td>
         </tr>
         </form>
+
       </table>
+      <br/>
+      <br/>A hybrid method which combines Method I and II is coming soon...
+
             </div>
           </div>
           </div>

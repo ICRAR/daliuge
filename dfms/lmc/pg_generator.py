@@ -705,7 +705,7 @@ class MySarkarPGTP(PGT):
         partition parameter and log entry
         return a string
         """
-        return "{0} partitions asked, {2} produced - Algorithm: {1} - Execution time: {3} - Partition time: {4:.2f} seconds - Max DoP: {5}".format(self._num_parts,
+        return "{2} partitions produced - Algorithm: {1} - Execution time: {3} - Partition time: {4:.2f} seconds - Max DoP: {5}".format(self._num_parts,
         "MySarkar Scheduler", self._num_parts_done, self._lpl, self._ptime, self._max_dop)
 
     def to_partition_input(self, outf):
