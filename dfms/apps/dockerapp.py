@@ -191,8 +191,16 @@ class DockerApp(BarrierAppDROP):
         # process writes to the filesystem
         self._user = self._getArg(kwargs, 'user', None)
 
-        # In some cases we
+        # In some cases we want to make sure the command in the container runs
+        # as a certain user, so we wrap up the command line in a small script
+        # that will create the user if missing and switch to it
         self._ensureUserAndSwitch = self._getArg(kwargs, 'ensureUserAndSwitch', self._user is None)
+
+        # By default containers are removed from the filesystem, but people
+        # might want to preserve them.
+        # TODO: This might be something that the data lifecycle manager could
+        # handle, but for the time being we do it here
+        self._removeContainer = self._getArg(kwargs, 'removeContainer', True)
 
         if logger.isEnabledFor(logging.INFO):
             logger.info("%r with image '%s' and command '%s' created" % (self, self._image, self._command))
@@ -320,8 +328,15 @@ class DockerApp(BarrierAppDROP):
         extra_kwargs = self._kwargs_from_env()
         c = AutoVersionClient(**extra_kwargs)
 
+        # Remove the container unless it's specified that we should keep it
+        # (used below)
+        def rm(container):
+            if self._removeContainer:
+                c.remove_container(container)
+
         # Create container
-        container = c.create_container(self._image, cmd, volumes=vols, host_config=c.create_host_config(binds=binds), user=user, environment=env)
+        container = c.create_container(self._image, cmd, volumes=vols, host_config=c.create_host_config(binds=binds), user=user, environment=env,
+                                       )
         self._containerId = cId = container['Id']
         if logger.isEnabledFor(logging.INFO):
             logger.info("Created container %s for %r" % (cId, self))
@@ -354,7 +369,10 @@ class DockerApp(BarrierAppDROP):
             stderr = c.logs(container, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
+            rm(container)
             raise Exception(msg)
+
+        rm(container)
 
     @staticmethod
     def _kwargs_from_env(ssl_version=None, assert_hostname=False):
