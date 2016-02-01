@@ -1306,6 +1306,7 @@ class BarrierAppDROP(AppDROP):
     def exists(self):
         return True
 
+
 class dropdict(dict):
     """
     An intermediate representation of a DROP that can be easily serialized
@@ -1330,8 +1331,9 @@ class dropdict(dict):
     """
     def _addSomething(self, other, key):
         if key not in self:
-            self[key] = set()
-        self[key].add(other['oid'])
+            self[key] = []
+        if not self[key].contains(other['oid']):
+            self[key].append(other['oid'])
 
     def addConsumer(self, other):
         self._addSomething(other, 'consumers')

@@ -268,7 +268,7 @@ class DockerApp(BarrierAppDROP):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Command after volume binding placeholder replacement is: %s" % (cmd))
 
-        # Intputs/outputs that are not FileDROPs or DirectoryContainers can't
+        # Inputs/outputs that are not FileDROPs or DirectoryContainers can't
         # bind their data via volumes into the docker container. Instead they
         # communicate their dataURL via command-line replacement
         inputDataURLs  = [i.dataURL for i in self.inputs if not isinstance(i, (FileDROP, DirectoryContainer))]
@@ -285,7 +285,7 @@ class DockerApp(BarrierAppDROP):
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
         for waiter in self._waiters:
-            uid, ip = waiter.waitForIp();
+            uid, ip = waiter.waitForIp()
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Command after IP replacement is: %s" % (cmd))
