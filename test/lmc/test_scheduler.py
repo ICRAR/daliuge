@@ -53,9 +53,10 @@ class TestScheduler(unittest.TestCase):
     def test_mysarkar_scheduler(self):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         #lgnames = [lgnames[1]]
+        tgt_partnum = [15, 15, 10, 10, 5]
         mdp = 8
         s_matrix = False
-        for lgn in lgnames:
+        for i, lgn in enumerate(lgnames):
             fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
@@ -77,5 +78,6 @@ class TestScheduler(unittest.TestCase):
                         print ga
                         print "Workload: ", part.schedule.workload
                         print
+            #mys.merge_partitions(tgt_partnum[i])
             print "-" * lll
             print

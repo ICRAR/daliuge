@@ -23,7 +23,7 @@
 import networkx as nx
 import numpy as np
 from collections import defaultdict
-import time, math
+import os, time, math, pkg_resources, platform
 
 DEBUG = 0
 
@@ -116,10 +116,19 @@ class Schedule(object):
             self._wkl = int(np.mean(np.array(c))) # since METIS only accepts integer
         return self._wkl
 
+    @property
+    def efficiency(self):
+        """
+        resource usage percentage (integer)
+        """
+        return int(float(self.workload) / self._max_dop * 100)
+
 class Partition(object):
     """
-    Logical partition, multiple (1 ~ N) of these will be placed onto a single
-    physical partition
+    Logical partition, multiple (1 ~ N) of these can be placed onto a single
+    physical resource unit
+
+    Logical partition can be nested, and it somewhat resembles the DataDROPManager
     """
     def __init__(self, gid, max_dop):
         """
@@ -133,7 +142,21 @@ class Partition(object):
         self._lpl = None
         self._schedule = None
         self._max_dop = None
+        self._parent_id = None
+        self._child_parts = None
         #print "My dop = {0}".format(self._ask_max_dop)
+
+    @property
+    def parent_id(self):
+        return self._parent_id
+
+    @parent_id.setter
+    def parent_id(self, value):
+        self._parent_id = value
+
+    @property
+    def partition_id(self):
+        return self._gid
 
     @property
     def schedule(self):
@@ -256,12 +279,12 @@ class Partition(object):
 class Scheduler(object):
     """
     Static Scheduling consists of three steps:
-    1. partition the DAG into an optimal number (M) of clusters
+    1. partition the DAG into an optimal number (M) of partitions
         goal - minimising execution time while maintaining intra-partition DoP
-    2. merge partitions into a given number (N) of resource units (if M > N)
+    2. merge partitions into a given number (N) of partitions (if M > N)
         goal - minimise logical communication cost while maintaining load balancing
-    3. map each cluster to a resource unit
-        goal - minimise physical communication cost amongst physical partitions
+    3. map each merged partition to a resource unit
+        goal - minimise physical communication cost amongst resource units
     """
 
     def __init__(self, drop_list, max_dop=8):
@@ -277,6 +300,9 @@ class Scheduler(object):
             self._drop_dict[oid] = drop
         self._dag = self._build_dag()#
         self._max_dop = max_dop
+        self._parts = None # partitions
+        self._part_dict = dict() #{gid : part}
+        self._part_edges = [] # edges amongst all partitions
 
     def _build_dag(self):
         """
@@ -306,15 +332,58 @@ class Scheduler(object):
         return G
 
     def partition_dag(self):
-        pass
+        raise SchedulerException("Not implemented. Try subclass instead")
 
-    def merge_cluster(self, num_partitions):
+    def merge_partitions(self, num_partitions):
         """
-        Return a schedule
+        Merge M partitions into N partitions where N < M
+            implemented using METIS for now
         """
-        pass
+        # 1. build the bi-directional graph (each partition is a node)
+        metis = DAGUtil.import_metis()
+        G = nx.Graph()
+        G.graph['edge_weight_attr'] = 'weight'
+        G.graph['node_weight_attr'] = ['wkl', 'eff']
 
-    def map_cluster(self):
+        st_gid = len(self._drop_list) + len(self._parts) + 2
+
+        for part in self._parts:
+            sc = part.schedule
+            G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
+
+        for e in self._part_edges:
+            u = e[0]
+            v = e[1]
+            ugid = self._dag.node[u].get('gid', None)
+            vgid = self._dag.node[v].get('gid', None)
+            G.add_edge(ugid, vgid) # repeating is fine
+            ew = self._dag.edge[u][v]['weight']
+            try:
+                G[ugid][vgid]['weight'] += ew
+            except KeyError, ke:
+                G[ugid][vgid]['weight'] = ew
+        print G.edges(data=True)
+        print G.nodes(data=True)
+        #metis_graph = metis.networkx_to_metis(G)
+        (edgecuts, metis_parts) = metis.part_graph(G, nparts=num_partitions)
+
+        assert(len(metis_parts) == len(G.nodes())) #test only
+        parent_parts = []
+        for i, pt in enumerate(metis_parts):
+            parent_id = pt + st_gid
+            child_part = self._part_dict[G.nodes()[i]]
+            child_part.parent_id = parent_id
+            print "Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id)
+            #parent_part = Partition(parent_id, None)
+            #self._parts.append(parent_part)
+
+        print "edgecuts: ", edgecuts
+        return edgecuts
+
+    def map_partitions(self):
+        """
+        map logical partitions to physical resources
+        """
         pass
 
 class MySarkarScheduler(Scheduler):
@@ -373,8 +442,9 @@ class MySarkarScheduler(Scheduler):
                 elif (not ugid and (not vgid)):
                     part = Partition(st_gid, self._max_dop)
                     g_dict[st_gid] = part
+                    parts.append(part) # will it get rejected?
+                    self._part_dict[st_gid] = part
                     st_gid += 1
-                    parts.append(part)
                 else: #elif (ugid and vgid):
                     # cannot change Partition once is in!
                     part = None
@@ -387,8 +457,10 @@ class MySarkarScheduler(Scheduler):
                     curr_lpl = new_lpl
                 else:
                     G.edge[u][v]['weight'] = ow
+                    self._part_edges.append(e)
             else:
                 G.edge[u][v]['weight'] = ow
+                self._part_edges.append(e)
 
         #for an unallocated node, it forms its own partition
         edt = time.time() - stt
@@ -396,14 +468,8 @@ class MySarkarScheduler(Scheduler):
             if (not n[1].has_key('gid')):
                 n[1]['gid'] = st_gid
                 st_gid += 1
-
+        self._parts = parts
         return ((st_gid - init_c), curr_lpl, edt, parts)
-
-    def merge_cluster(self, num_partitions):
-        pass
-
-    def map_cluster(self):
-        pass
 
 class DSCScheduler(Schedule):
     """
@@ -416,12 +482,6 @@ class DSCScheduler(Schedule):
         super(DSCScheduler, self).__init__(drop_list)
 
     def partition_dag(self):
-        pass
-
-    def merge_cluster(self, num_partitions):
-        pass
-
-    def map_cluster(self):
         pass
 
 class DAGUtil(object):
@@ -575,6 +635,49 @@ class DAGUtil(object):
             ma[i, stt:edt] = np.ones((1, leng))
             #print ma[i, :]
         return ma
+
+    @staticmethod
+    def import_metis():
+        try:
+            import metis as mt
+        except:
+            pl = platform.platform()
+            if (pl.startswith('Darwin')): # a clumsy way
+                ext = 'dylib'
+            else:
+                ext = 'so' # what about Microsoft??!!
+            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.lmc', 'lib/libmetis.{0}'.format(ext))
+            import metis as mt
+        return mt
+
+    @staticmethod
+    def metis_part(G, num_partitions):
+        """
+        Use metis binary executable (instead of library)
+        """
+        outf = '/tmp/mm'
+        lines = []
+        part_id_line_dict = dict() # {part_id: line_num}
+        line_part_id_dict = dict()
+        for i, n in enumerate(G.nodes()):
+            part_id_line_dict[n] = i + 1
+            line_part_id_dict[i + 1] = n
+
+        for i, node in enumerate(G.nodes(data=True)):
+            n = node[0]
+            line = []
+            line.append(node[1]['wkl'])
+            line.append(node[1]['eff'])
+            for m in G.neighbors(n):
+                line.append(part_id_line_dict[m])
+                line.append(G[m][n]['weight'])
+            lines.append(" ".join(line))
+
+        header = "{0} {1} 011 2".format(len(G.nodes()), len(G.edges()))
+        lines.insert(0, header)
+        with open(outf, "w") as f:
+            f.write("\n".join(lines))
+
 
 if __name__ == "__main__":
     G = nx.DiGraph()
