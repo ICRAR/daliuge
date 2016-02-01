@@ -26,6 +26,7 @@ Module containing the core DROP classes.
 from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
 import collections
+import errno
 import heapq
 import logging
 import math
@@ -887,6 +888,8 @@ class FileDROP(AbstractDROP):
             os.mkdir(self._root)
         self._root = os.path.abspath(self._root)
 
+        self._delete_parent_dir = self._getArg(kwargs, 'delete_parent_directory', False)
+
         # TODO: Make sure the parts that make up the filename are composed
         #       of valid filename characters; otherwise encode them
         self._fnm = self._root + os.sep + self._oid + '___' + self.uid
@@ -904,6 +907,16 @@ class FileDROP(AbstractDROP):
         Returns the absolute path of the file pointed by this DROP.
         """
         return self._fnm
+
+    def delete(self):
+        AbstractDROP.delete(self)
+        if self._delete_parent_dir:
+            try:
+                os.rmdir(self._root)
+            except OSError, e:
+                # Silently ignore "Directory not empty" errors
+                if e.errno != errno.ENOTEMPTY:
+                    raise
 
     @property
     def dataURL(self):
@@ -1293,6 +1306,7 @@ class BarrierAppDROP(AppDROP):
     def exists(self):
         return True
 
+
 class dropdict(dict):
     """
     An intermediate representation of a DROP that can be easily serialized
@@ -1317,8 +1331,9 @@ class dropdict(dict):
     """
     def _addSomething(self, other, key):
         if key not in self:
-            self[key] = set()
-        self[key].add(other['oid'])
+            self[key] = []
+        if other['oid'] not in self[key]:
+            self[key].append(other['oid'])
 
     def addConsumer(self, other):
         self._addSomething(other, 'consumers')
