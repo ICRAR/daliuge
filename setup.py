@@ -39,7 +39,8 @@ setup(
       packages=find_packages(),
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
-        'dfms.lg': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map', 'web/img/jsoneditor-icons.png', 'web/pg_viewer.html']
+        'dfms.lg': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map', 'web/img/jsoneditor-icons.png', 'web/pg_viewer.html'],
+        'dfms.lmc': ['lib/libmetis.*']
       },
 
       # Keep alpha-sorted please
@@ -51,6 +52,8 @@ setup(
             "drive-casa==0.7",
             "lockfile",
             "luigi<2.0",
+            "metis",
+            "networkx",
             "paramiko",
             "psutil",
             "Pyro4",
@@ -58,8 +61,10 @@ setup(
             "scp",
             "spead2==0.4.0",
             "tornado",
-            "networkx",
       ],
+      dependency_links=[
+        'https://bitbucket.org/kw/metis-python/get/metis-0.2a1.zip#egg=metis'
+        ],
       test_suite="test",
       entry_points= {
           'console_scripts':[
