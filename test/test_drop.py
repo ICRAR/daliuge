@@ -24,6 +24,7 @@ from cStringIO import StringIO
 import os, unittest
 import random
 import shutil
+import tempfile
 
 from dfms import droputils
 from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
@@ -591,6 +592,35 @@ class TestDROP(unittest.TestCase):
         checkDropStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
 
         self.assertEquals('ejk', droputils.allDropContents(d))
+
+    def test_fileDROP_delete_parent_dir(self):
+        """
+        A test to check that FileDROPs delete their parent directory upon
+        drop.delete() if they are instructed to do so.
+        """
+
+        def assertFiles(delete_parent_directory, parentDirExists, tempDir=None):
+            tempDir = tempDir or tempfile.mkdtemp()
+            a = FileDROP('a', 'a', dirname=tempDir, delete_parent_directory=delete_parent_directory)
+            a.write(' ')
+            a.setCompleted()
+            self.assertTrue(a.exists())
+            self.assertTrue(os.path.isdir(tempDir))
+            a.delete()
+            self.assertFalse(a.exists())
+            self.assertEquals(parentDirExists, os.path.isdir(tempDir))
+            if parentDirExists:
+                shutil.rmtree(tempDir)
+
+        # Test 1: no deletion commanded, directory exists after .delete()
+        assertFiles(False, True)
+        # Test 2: deletion commanded, directory doesn't exist after .delete()
+        assertFiles(True, False)
+        # Test 3: deletion commanded, directory not empty, delete still works
+        tempDir = tempfile.mkdtemp()
+        with open(os.path.join(tempDir, 'b'), 'w') as f:
+            f.write(' ')
+        assertFiles(True, True, tempDir=tempDir)
 
     def test_directoryContainer(self):
         """
