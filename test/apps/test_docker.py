@@ -129,7 +129,7 @@ class DockerTests(unittest.TestCase):
             a = DockerApp('a', 'a', image='ubuntu:14.04', command=command)
             b = FileDROP('b','b')
             a.addOutput(b)
-            with DROPWaiterCtx(self, b, 1):
+            with DROPWaiterCtx(self, b, 100):
                 a.execute()
             self.assertEquals(msg, droputils.allDropContents(b))
 
@@ -148,6 +148,6 @@ class DockerTests(unittest.TestCase):
         c = FileDROP('c', 'c')
         b.addInput(a)
         b.addOutput(c)
-        with DROPWaiterCtx(self, b, 1):
+        with DROPWaiterCtx(self, b, 100):
             a.setCompleted()
         self.assertEquals(a.dataURL, droputils.allDropContents(c))
