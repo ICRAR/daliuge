@@ -1332,7 +1332,7 @@ class dropdict(dict):
     def _addSomething(self, other, key):
         if key not in self:
             self[key] = []
-        if not self[key].contains(other['oid']):
+        if other['oid'] not in self[key]:
             self[key].append(other['oid'])
 
     def addConsumer(self, other):
