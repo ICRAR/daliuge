@@ -55,8 +55,8 @@ class TestScheduler(unittest.TestCase):
         #lgnames = [lgnames[1]]
         tgt_partnum = [15, 15, 10, 10, 5]
         mdp = 8
-        s_matrix = False
-        for i, lgn in enumerate(lgnames):
+        s_matrix = True
+        for j, lgn in enumerate(lgnames):
             fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
@@ -71,13 +71,13 @@ class TestScheduler(unittest.TestCase):
                     if (part.cardinality > 5):
                         ma = part.schedule.schedule_matrix
                         ga = DAGUtil.ganttchart_matrix(part.schedule._dag, part.schedule._topo_sort)
-                        print "Partition ", i
-                        print "scheduling matrix: ", ma.shape
-                        print ma
-                        print "ganttchart matrix: ", ga.shape
-                        print ga
-                        print "Workload: ", part.schedule.workload
-                        print
-            #mys.merge_partitions(tgt_partnum[i])
+                        # print "Partition ", i
+                        # print "scheduling matrix: ", ma.shape
+                        # print ma
+                        # print "ganttchart matrix: ", ga.shape
+                        # print ga
+                        # print "Workload: ", part.schedule.workload
+                        # print
+            mys.merge_partitions(tgt_partnum[j])
             print "-" * lll
             print
