@@ -345,7 +345,7 @@ class Scheduler(object):
         G.graph['edge_weight_attr'] = 'weight'
         G.graph['node_weight_attr'] = ['wkl', 'eff']
 
-        st_gid = len(self._drop_list) + len(self._parts) + 2
+        st_gid = len(self._drop_list) + len(self._parts) + 1
 
         for part in self._parts:
             sc = part.schedule
@@ -655,6 +655,7 @@ class DAGUtil(object):
     def metis_part(G, num_partitions):
         """
         Use metis binary executable (instead of library)
+        This is used only for testing when libmetis halts unexpectedly
         """
         outf = '/tmp/mm'
         lines = []

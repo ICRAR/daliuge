@@ -415,7 +415,7 @@ class LGNode():
         elif (drop_type in ['Start', 'End']):
             dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'null'})
         else:
-            raise GraphException("Unrecognised DROP type {0}".format(drop_type))
+            raise GraphException("Unrecognised DROP type '{0}'".format(drop_type))
         return dropSpec
 
     def make_single_drop(self, iid='0', **kwargs):
@@ -685,7 +685,7 @@ class MySarkarPGTP(PGT):
     """
     use the MySarkarScheduler to produce the PGTP
     """
-    def __init__(self, drop_list, num_partitions=0, par_label="Partition", max_dop=8):
+    def __init__(self, drop_list, num_partitions=0, par_label="Partition", max_dop=8, merge_parts=False):
         """
         num_partitions: 0 - only do the initial logical partition
                         >1 - does logical partition, partition mergeing and
@@ -699,14 +699,24 @@ class MySarkarPGTP(PGT):
         self._par_label = par_label
         self._lpl = None # longest path
         self._ptime = None # partition time
+        self._merge_parts = merge_parts
+        self._edge_cuts = None
 
-    def get_partition_info(self, entry_key=[' - Edgecut:']):
+    def get_partition_info(self, entry_key=None):
         """
         partition parameter and log entry
         return a string
         """
-        return "{2} partitions produced - Algorithm: {1} - Execution time: {3} - Partition time: {4:.2f} seconds - Max DoP: {5}".format(self._num_parts,
-        "MySarkar Scheduler", self._num_parts_done, self._lpl, self._ptime, self._max_dop)
+        if (self._merge_parts):
+            part_str = "{0} outer partitions requested, ".format(self._num_parts)
+            ed_str = " - Edgecut: {0}".format(self._edge_cuts)
+            part_str1 = " inner "
+        else:
+            part_str = ""
+            ed_str = ""
+            part_str1 = ""
+        return "{6}{2}{8}partitions produced - Algorithm: {1} - Execution time: {3} - Partition time: {4:.2f} seconds - Max DoP: {5}{7}".format(self._num_parts,
+        "MySarkar Scheduler", self._num_parts_done, self._lpl, self._ptime, self._max_dop, part_str, ed_str, part_str1)
 
     def to_partition_input(self, outf):
         pass
@@ -725,6 +735,7 @@ class MySarkarPGTP(PGT):
             node['group'] = gid
             groups.add(gid)
 
+        inner_parts = []
         for gid in groups:
             gn = dict()
             gn['key'] = gid
@@ -732,6 +743,28 @@ class MySarkarPGTP(PGT):
             gn['isGroup'] = True
             gn['text'] = '{1}_{0}'.format((gid - leng), self._par_label)
             node_list.append(gn)
+            inner_parts.append(gn)
+
+        if (self._merge_parts):
+            in_out_part_map = dict()
+            lengnow = len(node_list)
+            outer_groups = set()
+            self._edge_cuts = self._scheduler.merge_partitions(self._num_parts)
+
+            for part in parts:
+                gid = part.parent_id
+                outer_groups.add(gid)
+                in_out_part_map[part.partition_id] = gid
+
+            for gid in outer_groups:
+                gn = dict()
+                gn['key'] = gid
+                gn['isGroup'] = True
+                gn['text'] = 'Out_{0}_{1}'.format(gid - lengnow, self._par_label)
+                node_list.append(gn)
+
+            for ip in inner_parts:
+                ip['group'] = in_out_part_map[ip['key']]
 
         if (string_rep):
             return json.dumps(jsobj, indent=2)

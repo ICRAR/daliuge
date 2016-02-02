@@ -1291,6 +1291,13 @@
     f.submit();
   }
 
+  function genPGTP03() {
+    var f = document.getElementById("pgtp_form_03");
+    var h = document.getElementById("pgtp_lg_name_03");
+    h.value = window.curr_lg_name.toString();
+    f.submit();
+  }
+
   function saveToRemote(saveEditor) {
     var jsonModel = myDiagram.model.toJson();
     if (window.curr_lg_name == null) {
@@ -1536,7 +1543,7 @@
           <table style="font-size:15px">
           <tr>
           <form action="/gen_pgt" method="get" id="pgtp_form_02" target="_blank">
-          <td>Partition Method II </td><td>Minimise execution time while constrained by each partition's DoP<input type="hidden" name="num_par" value="5"></td>
+          <td>Method II </td><td>Minimise execution time while constrained by each partition's DoP<input type="hidden" name="num_par" value="5"></td>
           </tr>
           <tr>
           <td>Partition label</td>
@@ -1561,10 +1568,48 @@
         </td>
         </tr>
         </form>
-
+        <br/>
+        <br/>
       </table>
       <br/>
-      <br/>A hybrid method which combines Method I and II is coming soon...
+      <br/>
+      <table style="font-size:15px">
+      <tr>
+      <form action="/gen_pgt" method="get" id="pgtp_form_03" target="_blank">
+        <td>Method III </td><td>Inner partitioning with Method II, then outer partitioning with Method I<input type="hidden" name="merge_par" value="1"></td>
+      </tr>
+      <tr>
+        <td># of outer partitions</td>
+        <td>
+        <input type="number" name="num_par" min="2" value="5">
+        </td>
+      </tr>
+      <tr>
+        <td>Partition label</td>
+        <td>
+        <input type="text" name="par_label" value="Partition">
+        </td>
+      </tr>
+      <tr>
+        <td>Max DoP per inner partition</td>
+        <td>
+        <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
+        </td>
+      </tr>
+    <tr>
+    <td>
+      <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_03">
+      <input type="hidden" name="algo" value="mysarkar">
+    </td>
+    <td>
+      <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
+      <button id="pgtButton03" class="button" onclick="genPGTP03()">Generate Physical Graph Template Partition (III)</button>
+    </td>
+    </tr>
+    </form>
+
+  </table>
+
 
             </div>
           </div>
