@@ -28,7 +28,8 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, SchedulerException
+from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
+from dfms.lmc.scheduler import SchedulerException
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -137,7 +138,12 @@ def gen_pgt():
                         ufactor = 1
                     pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
                 elif ('mysarkar' == algo):
-                    pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')))
+                    mp = request.query.get('merge_par')
+                    if ('1' == mp):
+                        mpp = True
+                    else:
+                        mpp = False
+                    pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
                 elif ('pyrros' == algo):
                     pgt = PyrrosPGTP(drop_list, int(part))
                 else:
