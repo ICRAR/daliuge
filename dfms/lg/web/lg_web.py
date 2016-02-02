@@ -28,7 +28,7 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
+from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, SchedulerException
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -146,6 +146,9 @@ def gen_pgt():
         except GraphException, ge:
             response.status = 500
             return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
+        except SchedulerException, se:
+            response.status = 500
+            return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
 
         global pgt_fn_count
         gen_pgt_sem.acquire()

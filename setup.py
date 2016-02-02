@@ -63,7 +63,7 @@ setup(
             "tornado",
       ],
       dependency_links=[
-        'https://bitbucket.org/kw/metis-python/get/metis-0.2a1.zip#egg=metis'
+        'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis'
         ],
       test_suite="test",
       entry_points= {

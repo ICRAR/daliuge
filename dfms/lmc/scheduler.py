@@ -362,22 +362,23 @@ class Scheduler(object):
                 G[ugid][vgid]['weight'] += ew
             except KeyError, ke:
                 G[ugid][vgid]['weight'] = ew
-        print G.edges(data=True)
-        print G.nodes(data=True)
-        #metis_graph = metis.networkx_to_metis(G)
+        #DAGUtil.metis_part(G, 15)
+        # since METIS does not allow zero edge weight, reset them to one
+        for e in G.edges(data=True):
+            if (e[2]['weight'] == 0):
+                e[2]['weight'] = 1
+        #print G.nodes(data=True)
         (edgecuts, metis_parts) = metis.part_graph(G, nparts=num_partitions)
-
-        assert(len(metis_parts) == len(G.nodes())) #test only
+        #assert(len(metis_parts) == len(G.nodes())) #test only
         parent_parts = []
         for i, pt in enumerate(metis_parts):
             parent_id = pt + st_gid
             child_part = self._part_dict[G.nodes()[i]]
             child_part.parent_id = parent_id
-            print "Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id)
+            #print "Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id)
             #parent_part = Partition(parent_id, None)
             #self._parts.append(parent_part)
-
-        print "edgecuts: ", edgecuts
+        print "Edgecuts of merged partitions: ", edgecuts
         return edgecuts
 
     def map_partitions(self):
@@ -666,18 +667,20 @@ class DAGUtil(object):
         for i, node in enumerate(G.nodes(data=True)):
             n = node[0]
             line = []
-            line.append(node[1]['wkl'])
-            line.append(node[1]['eff'])
+            line.append(str(node[1]['wkl']))
+            line.append(str(node[1]['eff']))
             for m in G.neighbors(n):
-                line.append(part_id_line_dict[m])
-                line.append(G[m][n]['weight'])
+                line.append(str(part_id_line_dict[m]))
+                a = G[m][n]['weight']
+                if (0 == a):
+                    print "G[{0}][{1}]['weight'] = {2}".format(m, n, a)
+                line.append(str(G[m][n]['weight']))
             lines.append(" ".join(line))
 
         header = "{0} {1} 011 2".format(len(G.nodes()), len(G.edges()))
         lines.insert(0, header)
         with open(outf, "w") as f:
             f.write("\n".join(lines))
-
 
 if __name__ == "__main__":
     G = nx.DiGraph()
