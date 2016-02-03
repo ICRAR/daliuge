@@ -152,8 +152,8 @@ class LGNode():
         """
         Add a group member
         """
-        if (lg_node.is_group() and not (lg_node.is_scatter())):
-            raise GInvalidNode("Only Scatter Groups can be nested, but {0} is not Scatter".format(lg_node.id))
+        if (lg_node.is_group() and (not (lg_node.is_scatter())) and (not (lg_node.is_loop()))):
+            raise GInvalidNode("Only Scatters or Loops can be nested, but {0} is not Scatter".format(lg_node.id))
         self._children.append(lg_node)
 
     @property
@@ -249,14 +249,20 @@ class LGNode():
     def is_group_start(self):
         return (self.has_group() and self.jd.has_key("group_start") and 1 == int(self.jd["group_start"]))
 
+    def is_group_end(self):
+        return (self.has_group() and self.jd.has_key("group_end") and 1 == int(self.jd["group_end"]))
+
     def is_group(self):
         return self._isgrp
 
     def is_scatter(self):
-        return (self._isgrp and self._jd['category'] == 'SplitData')
+        return (self.is_group() and self._jd['category'] == 'SplitData')
 
     def is_gather(self):
         return (self._jd['category'] == 'DataGather')
+
+    def is_loop(self):
+        return (self.is_group() and self._jd['category'] == 'Loop')
 
     def is_groupby(self):
         return (self._jd['category'] == 'GroupBy')
@@ -316,7 +322,10 @@ class LGNode():
                     if (self._dop is None):
                         self._dop = 4 # dummy impl.
                 elif (self.is_gather()):
-                    tlgn = self.inputs[0]
+                    try:
+                        tlgn = self.inputs[0]
+                    except IndexError, ie:
+                        raise GInvalidLink("Gather '{0}' does not have input!".format(self.id))
                     if (tlgn.is_groupby()):
                         tt = tlgn.dop
                     else:
@@ -325,8 +334,10 @@ class LGNode():
                 elif (self.is_groupby()):
                     tlgn = self.inputs[0]
                     self._dop = tlgn.group.dop
+                elif (self.is_loop()):
+                    self._dop = self.jd.get('num_of_iter', 1)
                 else:
-                    raise GInvalidNode("Unrecognised Group LGN: {0}").format(self.id)
+                    raise GInvalidNode("Unrecognised (Group) Logical Graph Node: '{0}'".format(self._jd['category']))
             else:
                 self._dop = 1
         return self._dop
@@ -414,8 +425,10 @@ class LGNode():
             dropSpec_null.addProducer(dropSpec)
         elif (drop_type in ['Start', 'End']):
             dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'null'})
+        elif (drop_type == 'Loop'):
+            pass
         else:
-            raise GraphException("Unrecognised DROP type '{0}'".format(drop_type))
+            raise GraphException("Unknown DROP type: '{0}'".format(drop_type))
         return dropSpec
 
     def make_single_drop(self, iid='0', **kwargs):
@@ -1006,38 +1019,51 @@ class LG():
         iid:    instance id (string)
         """
         if (lgn.is_group()):
-            is_sca = False
-            if (lgn.is_scatter()):
-                is_sca = True
-            for i in range(lgn.dop):
-                miid = '{0}/{1}'.format(iid, i)
-                if (not is_sca): # make GroupBy and Gather drops
-                    src_gdrop = lgn.make_single_drop(miid)
-                    self._drop_dict[lgn.id].append(src_gdrop)
-                    if (lgn.is_groupby()):
-                        self._drop_dict['new_added'].append(src_gdrop['grp-data_drop'])
-                    elif (lgn.is_gather()):
-                        self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
-                if (not is_sca):
-                    # add artificial logical links to the "first" children
-                    non_inputs = []
-                    grp_starts = []
-                    for child in lgn.children:
-                        if (len(child.inputs) == 0):
-                            non_inputs.append(child)
-                        if (child.is_group_start()):
-                            grp_starts.append(child)
-                    if (len(grp_starts) == 0):
-                        gs_list = non_inputs
-                    else:
-                        gs_list = grp_starts
-                    for gs in gs_list:
+            extra_links_drops = (not lgn.is_scatter())
+            if (extra_links_drops):
+                non_inputs = []
+                grp_starts = []
+                grp_ends = []
+                for child in lgn.children:
+                    if (len(child.inputs) == 0):
+                        non_inputs.append(child)
+                    if (child.is_group_start()):
+                        grp_starts.append(child)
+                    elif (child.is_group_end()):
+                        grp_ends.append(child)
+                if (len(grp_starts) == 0):
+                    gs_list = non_inputs
+                else:
+                    gs_list = grp_starts
+                if (lgn.is_loop()):
+                    if (len(grp_starts) == 0 or len(grp_ends) == 0):
+                        raise GInvalidNode("Loop '{0}' should have at least one Start Component and one End Data".format(lgn.jd['text']))
+                    for ge in grp_ends:
+                        for gs in grp_starts: # make an artificial circle
+                            ge.add_output(gs)
+                            gs.add_input(ge)
+                            lk = dict()
+                            lk['from'] = ge.id
+                            lk['to'] = gs.id
+                            self._lg_links.append(lk)
+                else:
+                    for gs in gs_list: # add artificial logical links to the "first" children
                         lgn.add_input(gs)
                         gs.add_output(lgn)
                         lk = dict()
                         lk['from'] = lgn.id
                         lk['to'] = gs.id
                         self._lg_links.append(lk)
+
+            for i in range(lgn.dop):
+                miid = '{0}/{1}'.format(iid, i)
+                if (extra_links_drops and not lgn.is_loop()): # make GroupBy and Gather drops
+                    src_gdrop = lgn.make_single_drop(miid)
+                    self._drop_dict[lgn.id].append(src_gdrop)
+                    if (lgn.is_groupby()):
+                        self._drop_dict['new_added'].append(src_gdrop['grp-data_drop'])
+                    elif (lgn.is_gather()):
+                        self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
 
                 for child in lgn.children:
                     self.lgn_to_pgn(child, miid)
@@ -1149,16 +1175,26 @@ class LG():
             elif (not slgn.is_group() and (not tlgn.is_group())):
                 if (slgn.is_start_node() or tlgn.is_end_node()):
                     continue
-                if (slgn.h_level >= tlgn.h_level):
-                    for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
-                        # distribute slgn evenly to tlgn
-                        for sdrop in chunk:
-                            self._link_drops(slgn, tlgn, sdrop, tdrops[i])
+                elif ((slgn.group is not None) and slgn.group.is_loop() and slgn.gid == tlgn.gid and slgn.is_group_end() and tlgn.is_group_start()):
+                    # Re-link to the next iteration's start
+                    lsd = len(sdrops)
+                    if (lsd != len(tdrops)):
+                        raise GraphException("# of sdrops '{0}' != # of tdrops '{1}'for Loop '{2}'".format(slgn.jd['text'],
+                        tlgn.jd['text'], slgn.group.jd['text']))
+                    for i, sdrop in enumerate(sdrops):
+                        if (i < lsd - 1):
+                            self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 else:
-                    for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
-                        # distribute tlgn evenly to slgn
-                        for tdrop in chunk:
-                            self._link_drops(slgn, tlgn, sdrops[i], tdrop)
+                    if (slgn.h_level >= tlgn.h_level):
+                        for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
+                            # distribute slgn evenly to tlgn
+                            for sdrop in chunk:
+                                self._link_drops(slgn, tlgn, sdrop, tdrops[i])
+                    else:
+                        for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
+                            # distribute tlgn evenly to slgn
+                            for tdrop in chunk:
+                                self._link_drops(slgn, tlgn, sdrops[i], tdrop)
             else: # slgn is not group, but tlgn is group
                 if (tlgn.is_groupby()):
                     grpby_dict = defaultdict(list)
