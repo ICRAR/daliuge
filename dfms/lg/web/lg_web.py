@@ -155,6 +155,9 @@ def gen_pgt():
         except SchedulerException, se:
             response.status = 500
             return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
+        except Exception, exp:
+            response.status = 500
+            return "Graph partition exception {1}: {0}".format(str(exp), lg_name)
 
         global pgt_fn_count
         gen_pgt_sem.acquire()

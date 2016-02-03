@@ -328,7 +328,7 @@ class Scheduler(object):
                     if ('plain' == tt):
                         G.add_weighted_edges_from([(myk, self._key_dict[oup], int(drop['dw']))])
                     elif ('app' == tt):
-                        G.add_weighted_edges_from([(myk, self._key_dict[oup], int(self._drop_dict[oup]['dw']))])
+                        G.add_weighted_edges_from([(myk, self._key_dict[oup], int(self._drop_dict[oup].get('dw', 5)))])
         return G
 
     def partition_dag(self):
