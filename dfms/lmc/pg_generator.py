@@ -51,7 +51,8 @@ import json, os, datetime, time, math, uuid, commands
 from dfms.drop import dropdict
 from collections import defaultdict
 from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
-from dfms.lmc.scheduler import MySarkarScheduler
+from dfms.lmc.scheduler import MySarkarScheduler, DAGUtil
+import networkx as nx
 
 class GraphException(Exception):
     pass
@@ -551,13 +552,19 @@ class MetisPGTP(PGT):
         """
         key_dict = dict() # key - oid, value - GOJS key
         drop_dict = dict() # key - oid, value - drop
+
+        G = nx.Graph()
+        G.graph['edge_weight_attr'] = 'weight'
+        G.graph['node_weight_attr'] = 'tw'
+        G.graph['node_size_attr'] = 'dw'
+
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
             key_dict[oid] = i + 1 #METIS index starts from 1
             drop_dict[oid] = drop
 
-        lc = 0
-        lines = []
+        #lc = 0
+        #lines = []
 
         for i, drop in enumerate(self._drop_list):
             line = []
@@ -572,14 +579,15 @@ class MetisPGTP(PGT):
                 dst = 'consumers' # outbound keyword
                 ust = 'producers'
                 tw = 1 # task weight is zero for a Data DROP
-                sz = drop['dw'] # size
+                sz = drop.get('dw', 1) # size
             elif ('app' == tt):
                 dst = 'outputs'
                 ust = 'inputs'
                 tw = drop['tw']
-                sz = 0
-            line.append(str(sz))
-            line.append(str(tw))
+                sz = 1
+            G.add_node(myk, tw=tw, sz=sz)
+            #line.append(str(sz))
+            #line.append(str(tw))
             adj_drops = [] #adjacent drops (all neighbours)
             if (drop.has_key(dst)):
                 adj_drops += drop[dst]
@@ -587,30 +595,35 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                lc += 1
+                #lc += 1
                 line.append(str(key_dict[inp]))
                 if ('plain' == tt):
                     lw = drop['dw']
                 elif ('app' == tt):
-                    lw = drop_dict[inp]['dw']
+                    lw = drop_dict[inp].get('dw', 1)
                 if (lw <= 0):
                     lw = 1
-                line.append(str(lw))
-            lines.append(" ".join(line))
-
-        if (lc % 2 != 0):
-            raise GPGTException("Double Edget count {0} is not even!".format(lc))
-        header = "{0} {1} 111 1".format(len(self._drop_list), lc / 2)
-        lines.insert(0, header)
-        with open(outf, "w") as f:
-            f.write("\n".join(lines))
+                G.add_edge(myk, key_dict[inp], weight=lw)
+                #line.append(str(lw))
+            #lines.append(" ".join(line))
+        for e in G.edges(data=True):
+            if (e[2]['weight'] == 0):
+                e[2]['weight'] = 1
+        return G
+        # if (lc % 2 != 0):
+        #     raise GPGTException("Double Edget count {0} is not even!".format(lc))
+        #
+        # header = "{0} {1} 111 1".format(len(self._drop_list), lc / 2)
+        # lines.insert(0, header)
+        # with open(outf, "w") as f:
+        #     f.write("\n".join(lines))
 
         #print "link count = {0}, ".format(lc)
 
     def _set_metis_log(self, logtext):
         self._metis_logs = logtext.split("\n")
 
-    def get_partition_info(self, entry_key=[' - Edgecut:']):
+    def get_partition_info(self, entry_key=[' - Data movement:']):
         """
         partition parameter and log entry
         return a string
@@ -641,15 +654,20 @@ class MetisPGTP(PGT):
         groups = set()
 
         start_k = len(self._drop_list) + 1
-        with open(metis_out, "r") as f:
-            lines = f.readlines()
-            if (len(lines) != start_k - 1):
-                raise GPGTException("{0} drops, but only {1} have partition".format(start_k - 1, len(lines)))
-
-            for i, line in enumerate(lines):
-                gid = int(line)
+        if (type(metis_out) == list): # METIS API
+            for i, gid in enumerate(metis_out):
                 key_dict[i + 1] = gid
                 groups.add(gid)
+        else: # METIS Command line
+            with open(metis_out, "r") as f:
+                lines = f.readlines()
+                if (len(lines) != start_k - 1):
+                    raise GPGTException("{0} drops, but only {1} have partition".format(start_k - 1, len(lines)))
+
+                for i, line in enumerate(lines):
+                    gid = int(line)
+                    key_dict[i + 1] = gid
+                    groups.add(gid)
 
         node_list = jsobj['nodeDataArray']
         for node in node_list:
@@ -672,7 +690,21 @@ class MetisPGTP(PGT):
         metis_out = "/tmp/{0}_metis.part.{1}".format(uid, self._num_parts)
         remove_list = [metis_in, metis_out]
         try:
-            self.to_partition_input(metis_in)
+            G = self.to_partition_input(metis_in)
+            metis = DAGUtil.import_metis()
+            recursive_param = False if self._ptype == 'kway' else True
+            if (recursive_param and self._obj_type == 'vol'):
+                raise GPGTException("Recursive partitioning does not support total volume minimisation.")
+            (edgecuts, metis_parts) = metis.part_graph(G,
+            nparts=self._num_parts, recursive=recursive_param,
+            objtype=self._obj_type, ufactor=self._u_factor)
+            self._set_metis_log(" - Data movement: {0}".format(edgecuts))
+            self._parse_metis_output(metis_parts, jsobj)
+            if (string_rep):
+                return json.dumps(jsobj, indent=2)
+            else:
+                return jsobj
+            """
             if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):
                 cmd = "{0} -ptype={4} -objtype={3} -ufactor={5} {1} {2}".format(self._metis_path,
                 metis_in, self._num_parts, self._obj_type, self._ptype, self._u_factor)
@@ -689,6 +721,7 @@ class MetisPGTP(PGT):
                 else:
                     err_msg = "METIS failed: '{2}': {0}/{1}".format(ret[0], ret[1], cmd)
                     raise GPGTException(err_msg)
+            """
         finally:
             for f in remove_list:
                 if (os.path.exists(f)):
@@ -722,7 +755,7 @@ class MySarkarPGTP(PGT):
         """
         if (self._merge_parts):
             part_str = "{0} outer partitions requested, ".format(self._num_parts)
-            ed_str = " - Edgecut: {0}".format(self._edge_cuts)
+            ed_str = " - Data movement: {0}".format(self._edge_cuts)
             part_str1 = " inner "
         else:
             part_str = ""
@@ -972,7 +1005,10 @@ class LG():
 
     def validate_link(self, src, tgt):
         if (src.is_scatter() or tgt.is_scatter()):
-            raise GInvalidLink("Scatter construct {0} cannot link to another Scatter {1}".format(src.id, tgt.id))
+            raise GInvalidLink("Scatter construct {0} or {1} cannot be linked".format(src.jd['text'], tgt.jd['text']))
+
+        if (src.is_loop() or tgt.is_loop()):
+            raise GInvalidLink("Loop construct {0} or {1} cannot be linked".format(src.jd['text'], tgt.jd['text']))
 
         if (src.is_gather()):
             if (not (tgt.jd['category'] == 'Component' and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
