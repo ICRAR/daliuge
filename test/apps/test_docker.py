@@ -24,6 +24,7 @@ import os
 import random
 import shutil
 import string
+import tempfile
 import unittest
 import warnings
 
@@ -34,6 +35,7 @@ from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
 from dfms.drop import FileDROP, NgasDROP
 from dfms.droputils import DROPWaiterCtx
+
 
 class DockerTests(unittest.TestCase):
 
@@ -151,3 +153,28 @@ class DockerTests(unittest.TestCase):
         with DROPWaiterCtx(self, b, 100):
             a.setCompleted()
         self.assertEquals(a.dataURL, droputils.allDropContents(c))
+
+    def test_additional_bindings(self):
+
+        # Some additional stuff to bind into docker
+        tempDir  = tempfile.mkdtemp()
+        tempFile = tempfile.mktemp()
+        with open(tempFile, 'w') as f:
+            f.write('data')
+
+        # One binding specifies the target path in the container, the other doesn't
+        # so it defaults to the same path
+        a = DockerApp('a', 'a', image='ubuntu:14.04', command="cp /opt/file %s" % (tempDir,), \
+                      additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)])
+        a.execute()
+
+        # We copied the file into the directory, but since in the container the
+        # file was called "file" we'll see it with that name in tempDir
+        self.assertEquals(1, len(os.listdir(tempDir)))
+        with open(os.path.join(tempDir, 'file')) as f:
+            data = f.read()
+        self.assertEquals('data', data)
+
+        # Cleanup
+        os.unlink(tempFile)
+        shutil.rmtree(tempDir)
