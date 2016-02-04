@@ -21,7 +21,7 @@
 #
 #    chen.wu@icrar.org
 
-import json, decimal, urllib2, time
+import json, decimal, urllib2, time, traceback
 import subprocess, commands
 import threading
 import os, time
@@ -157,6 +157,8 @@ def gen_pgt():
             return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
         except Exception, exp:
             response.status = 500
+            trace_msg = traceback.format_exc()
+            print trace_msg
             return "Graph partition exception {1}: {0}".format(str(exp), lg_name)
 
         global pgt_fn_count
