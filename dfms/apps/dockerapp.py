@@ -106,6 +106,10 @@ class DockerApp(BarrierAppDROP):
     and refers to the X-th non-filesystem related input. Likewise, output
     dataURLs are specified as "%oDataURLX".
 
+    Additional volume bindings can be specified via the keyword arguments when
+    creating the DockerApp. The host file/directories must exist at the moment
+    of creating the DockerApp; otherwise it will fail to initialize.
+
     Users
     -----
 
@@ -202,6 +206,18 @@ class DockerApp(BarrierAppDROP):
         # handle, but for the time being we do it here
         self._removeContainer = self._getArg(kwargs, 'removeContainer', True)
 
+        # Additional volume bindings can be specified for existing files/dirs
+        # on the host system.
+        self._additionalBindings = {}
+        for binding in self._getArg(kwargs, 'additionalBindings', []):
+            if binding.find(':') == -1:
+                host_path = container_path = binding
+            else:
+                host_path, container_path = binding.split(':')
+            if not os.path.exists(host_path):
+                raise ValueError("'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
+            self._additionalBindings[host_path] = container_path
+
         if logger.isEnabledFor(logging.INFO):
             logger.info("%r with image '%s' and command '%s' created" % (self, self._image, self._command))
 
@@ -262,6 +278,7 @@ class DockerApp(BarrierAppDROP):
         vols = dockerInputs + [os.path.dirname(x) for x in dockerOutputs]
         binds  = [                i.path  + ":" +                  dockerInputs[x]  for x,i in enumerate(fsInputs)]
         binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x]) for x,o in enumerate(fsOutputs)]
+        binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Volume bindings: %r" % (binds))
 
