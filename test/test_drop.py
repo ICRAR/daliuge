@@ -29,7 +29,7 @@ import tempfile
 from dfms import droputils
 from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
-    DirectoryContainer, ContainerDROP
+    DirectoryContainer, ContainerDROP, InputFiredAppDROP
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dfms.droputils import DROPWaiterCtx
 
@@ -696,6 +696,39 @@ class TestDROP(unittest.TestCase):
         self.assertEquals(DROPStates.COMPLETED, f.status)
         for drop in a,b,c,d,e:
             self.assertEquals(AppDROPStates.FINISHED, drop.execStatus)
+
+    def test_eager_inputFired_app(self):
+        """
+        Tests that InputFiredApps works as expected
+        """
+
+        # No n_effective_inputs given
+        self.assertRaises(ValueError, InputFiredAppDROP, 'a', 'a')
+        # Invalid values
+        self.assertRaises(ValueError, InputFiredAppDROP, 'a', 'a', n_effective_inputs=-2)
+        self.assertRaises(ValueError, InputFiredAppDROP, 'a', 'a', n_effective_inputs=0)
+
+        # More effective inputs than inputs
+        a = InMemoryDROP('b', 'b')
+        b = InputFiredAppDROP('a', 'a', n_effective_inputs=2)
+        b.addInput(a)
+        self.assertRaises(Exception, a.setCompleted)
+
+        # 2 effective inputs, 4 outputs. Trigger 2 inputs and make sure the
+        # app has run
+        a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in xrange(4)]
+        e = InputFiredAppDROP('e', 'e', n_effective_inputs=2)
+        map(lambda x: e.addInput(x), [a,b,c,d])
+
+        with DROPWaiterCtx(self, e, 5):
+            a.setCompleted()
+            b.setCompleted()
+
+        self.assertEquals(AppDROPStates.FINISHED, e.execStatus)
+        self.assertEquals(DROPStates.COMPLETED, a.status)
+        self.assertEquals(DROPStates.COMPLETED, b.status)
+        self.assertEquals(DROPStates.INITIALIZED, c.status)
+        self.assertEquals(DROPStates.INITIALIZED, d.status)
 
 if __name__ == '__main__':
     unittest.main()
