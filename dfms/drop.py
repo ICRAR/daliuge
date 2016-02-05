@@ -1216,28 +1216,60 @@ class AppDROP(ContainerDROP):
         """
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
-class BarrierAppDROP(AppDROP):
+class InputFiredAppDROP(AppDROP):
     """
-    An AppDROP accepts no streaming inputs and waits until all its inputs
-    have been moved to COMPLETED to execute its 'run' method, which must be
-    overwritten by subclasses.
+    An InputFiredAppDROP accepts no streaming inputs and waits until a given
+    amount of inputs (called *effective inputs*) have moved to COMPLETED to
+    execute its 'run' method, which must be overwritten by subclasses. This way,
+    this application allows to continue the execution of the graph given a
+    minimum amount of inputs being ready. The transitions of subsequent inputs
+    to the COMPLETED state have no effect.
 
-    In the case that this object has more than one input it effectively acts as
-    a logical barrier that joins two threads of executions. In the case that
-    this object has only one input this will act simply like a batch execution.
+    The amount of effective inputs must be less or equal to the amount of inputs
+    added to this application once the graph is being executed. The special
+    value of -1 means that all inputs are considered as effective, in which case
+    this class acts as a BarrierAppDROP, effectively blocking until all its
+    inputs have moved to the COMPLETED state.
+
+    An input error threshold controls the behavior of the application given an
+    error in one or more of its inputs (i.e., a DROP moving to the ERROR state).
+    The threshold is a value within 0 and 100 that indicates the tolerance
+    to erroneous effective inputs, and after which the application will not be
+    run but moved to the ERROR state itself instead.
     """
-
     def initialize(self, **kwargs):
-        super(BarrierAppDROP, self).initialize(**kwargs)
+        super(InputFiredAppDROP, self).initialize(**kwargs)
         self._completedInputs = []
         self._errorInputs = []
+
+        # Error threshold must be within 0 and 100
         self._input_error_threshold = int(self._getArg(kwargs, 'input_error_threshold', 0))
+        if self._input_error_threshold < 0 or self._input_error_threshold > 100:
+            raise ValueError("%r: input_error_threshold not within [0,100]" % (self,))
+
+        # Amount of effective inputs
+        if 'n_effective_inputs' not in kwargs:
+            raise ValueError("%r: n_effective_inputs is mandatory" % (self,))
+        self._n_effective_inputs = int(kwargs['n_effective_inputs'])
+        if self._n_effective_inputs < -1 or self._n_effective_inputs == 0:
+            raise ValueError("%r: n_effective_inputs must be > 0 or equals to -1" % (self,))
 
     def addStreamingInput(self, streamingInputDrop):
-        raise Exception("BarrierAppDROPs don't accept streaming inputs")
+        raise Exception("InputFiredAppDROPs don't accept streaming inputs")
 
     def dropCompleted(self, uid, drop_state):
-        super(BarrierAppDROP, self).dropCompleted(uid, drop_state)
+        super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
+
+        # A value of -1 means all inputs
+        n_inputs = len(self._inputs)
+        n_eff_inputs = self._n_effective_inputs
+        if n_eff_inputs == -1:
+            n_eff_inputs = n_inputs
+
+        # More effective inputs than inputs, this is a horror
+        if n_eff_inputs > n_inputs:
+            raise Exception("%r: More effective inputs (%d) than inputs (%d)" % \
+                            (self, self._n_effective_inputs, n_inputs))
 
         if drop_state == DROPStates.ERROR:
             self._errorInputs.append(uid)
@@ -1249,9 +1281,9 @@ class BarrierAppDROP(AppDROP):
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
 
-        if (error_len + ok_len) == len(self._inputs):
+        if (error_len + ok_len) == n_eff_inputs:
             # calculate the number of errors that have already occurred
-            percent_failed = math.floor((error_len/float(len(self._inputs))) * 100)
+            percent_failed = math.floor((error_len/float(n_eff_inputs)) * 100)
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Error on inputs for %r: %d/%d" % (self, percent_failed, self._input_error_threshold))
@@ -1305,6 +1337,16 @@ class BarrierAppDROP(AppDROP):
     # TODO: another thing we need to check
     def exists(self):
         return True
+
+class BarrierAppDROP(InputFiredAppDROP):
+    """
+    A BarrierAppDROP is an InputFireAppDROP that waits for all its inputs to
+    complete, effectively blocking the flow of the graph execution.
+    """
+    def initialize(self, **kwargs):
+        # Blindly override existing value if any
+        kwargs['n_effective_inputs'] = -1
+        super(BarrierAppDROP, self).initialize(**kwargs)
 
 
 class dropdict(dict):

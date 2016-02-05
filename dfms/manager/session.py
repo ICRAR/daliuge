@@ -30,11 +30,10 @@ import threading
 import Pyro4
 from luigi import scheduler, worker
 
-from dfms import luigi_int, graph_loader
 from dfms import droputils
-from dfms.drop import AbstractDROP, BarrierAppDROP, \
-    AppDROP
+from dfms import luigi_int, graph_loader
 from dfms.ddap_protocol import DROPLinkType
+from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
 
 
 _LINKTYPE_TO_NREL = {
@@ -203,13 +202,13 @@ class Session(object):
         droputils.breadFirstTraverse(self._roots, self._registerDrop)
 
         # We move to COMPLETED the DROPs that we were requested to
-        # BarrierAppDROPs are here considered as having to be executed and
+        # InputFiredAppDROP are here considered as having to be executed and
         # not directly moved to COMPLETED.
         # TODO: We should possibly unify this initial triggering into a more
         #       solid concept that encompasses these two and other types of DROPs
         def triggerDrop(drop):
             if drop.uid in completedDrops:
-                if isinstance(drop, BarrierAppDROP):
+                if isinstance(drop, InputFiredAppDROP):
                     t = threading.Thread(target=lambda:drop.execute())
                     t.daemon = True
                     t.start()
