@@ -44,7 +44,7 @@ class TestScheduler(unittest.TestCase):
         assert l == r, "l = {0}, r = {1}".format(l, r)
 
     def test_basic_scheduler(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         mys = Scheduler(drop_list)
@@ -57,7 +57,7 @@ class TestScheduler(unittest.TestCase):
         mdp = 8
         s_matrix = True
         for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             print "Partitioning ", lgn

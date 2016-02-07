@@ -30,7 +30,7 @@ from collections import defaultdict
 class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
         #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
         self.assertEquals(len(lg._done_dict.keys()), 33)
@@ -42,7 +42,7 @@ class TestPGGen(unittest.TestCase):
         #lg.to_pg_tpl(input_dict)
 
     def test_pg_test(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_cal.json')
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_cal.json')
         #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_cal.json'
         lg = LG(fp)
         lg.unroll_to_tpl()
@@ -51,7 +51,7 @@ class TestPGGen(unittest.TestCase):
         #pprint.pprint(dict(lg._drop_dict))
 
     def test_pgt_to_json(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
@@ -61,7 +61,7 @@ class TestPGGen(unittest.TestCase):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list)
@@ -71,7 +71,7 @@ class TestPGGen(unittest.TestCase):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list)

@@ -617,7 +617,7 @@ class DAGUtil(object):
                 ext = 'dylib'
             else:
                 ext = 'so' # what about Microsoft??!!
-            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.lmc', 'lib/libmetis.{0}'.format(ext))
+            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.dropmake', 'lib/libmetis.{0}'.format(ext))
             import metis as mt
         return mt
 
