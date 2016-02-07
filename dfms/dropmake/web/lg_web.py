@@ -28,9 +28,9 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
-from dfms.lmc.scheduler import SchedulerException
-from dfms.lmc.pg_manager import PGManager
+from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
+from dfms.dropmake.scheduler import SchedulerException
+from dfms.dropmake.pg_manager import PGManager
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
