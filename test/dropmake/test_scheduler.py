@@ -20,8 +20,8 @@
 #    MA 02111-1307  USA
 
 import unittest, pkg_resources
-from dfms.lmc.pg_generator import LG
-from dfms.lmc.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
+from dfms.dropmake.pg_generator import LG
+from dfms.dropmake.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
 
 class TestScheduler(unittest.TestCase):
 
