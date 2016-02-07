@@ -57,31 +57,23 @@ class TestPGGen(unittest.TestCase):
         pgt = PGT(drop_list)
         #print pgt.to_gojs_json()
 
-    def test_metis_pgtp_input(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        pgtp = MetisPGTP(drop_list)
-        pgtp.to_partition_input('/tmp/dfms_lofar_pgtp.metis')
+    def test_metis_pgtp(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        tgt_partnum = [15, 15, 10, 10, 5]
+        for i, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MetisPGTP(drop_list)
+            pgtp.json
 
-    def test_metis_pgtp_input_01(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_two.json')
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        pgtp = MetisPGTP(drop_list)
-        pgtp.to_partition_input('/tmp/dfms_chiles2_pgtp.metis')
-
-    def test_metis_pgtp_input_02(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/chiles_simple.json')
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        pgtp = MetisPGTP(drop_list)
-        pgtp.to_partition_input('/tmp/dfms_chiles1_pgtp.metis')
-
-    def test_mysarkar_pgtp_part(self):
-        fp = pkg_resources.resource_filename('dfms.lg', 'web/lofar_std.json')
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        pgtp = MySarkarPGTP(drop_list)
-        pgtp.to_partition_input(None)
+    def test_mysarkar_pgtp(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        tgt_partnum = [15, 15, 10, 10, 5]
+        for i, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.lg', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MySarkarPGTP(drop_list)
+            pgtp.json
         #print pgtp.to_gojs_json()

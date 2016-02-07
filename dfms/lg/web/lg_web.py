@@ -30,6 +30,7 @@ from bottle import route, run, request, get, static_file, template, redirect, re
 
 from dfms.lmc.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
 from dfms.lmc.scheduler import SchedulerException
+from dfms.lmc.pg_manager import PGManager
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -126,8 +127,10 @@ def gen_pgt():
             drop_list = lg.unroll_to_tpl()
             part = request.query.get('num_par')
             if (part is None):
+                is_part = ''
                 pgt = PGT(drop_list)
             else:
+                is_part = 'Partition'
                 par_label = request.query.get('par_label')
                 algo = request.query.get('algo')
                 if ('metis' == algo):
@@ -139,16 +142,16 @@ def gen_pgt():
                     pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
                 elif ('mysarkar' == algo):
                     mp = request.query.get('merge_par')
-                    if ('1' == mp):
-                        mpp = True
-                    else:
-                        mpp = False
+                    mpp = True if '1' == mp else False
                     pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
                 elif ('pyrros' == algo):
                     pgt = PyrrosPGTP(drop_list, int(part))
                 else:
                     raise GraphException("Unknown partition algorithm: {0}".format(algo))
-            pgt_content = pgt.to_gojs_json()
+
+            pgt_id = pg_mgr.add_pgt(pgt, lg_name)
+            part_info = pgt.get_partition_info()
+            return template('pg_viewer.html', pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
         except GraphException, ge:
             response.status = 500
             return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
@@ -160,34 +163,6 @@ def gen_pgt():
             trace_msg = traceback.format_exc()
             print trace_msg
             return "Graph partition exception {1}: {0}".format(str(exp), lg_name)
-
-        global pgt_fn_count
-        gen_pgt_sem.acquire()
-        pgt_fn_count += 1
-        if (pgt_fn_count == MAX_PGT_FN_CNT + 1):
-            pgt_fn_count = 0
-        pgt_name = lg_name.replace(".json", "{0}_pgt.json".format(pgt_fn_count))
-        pgt_path = "{0}/{1}".format(lg_dir, pgt_name)
-        try:
-            # overwrite file on disks
-            with open(pgt_path, "w") as f:
-                f.write(pgt_content)
-        except Exception, excmd2:
-            response.status = 500
-            return "Fail to save PGT {0}:{1}".format(pgt_path, str(excmd2))
-        finally:
-            gen_pgt_sem.release()
-        #redirect('/pg_viewer?pgt_view_name={0}'.format(pgt_name))
-        if (part is None):
-            part_info = ''
-            is_part = ''
-        else:
-            part_info = pgt.get_partition_info()
-            is_part = 'Partition'
-        return template('pg_viewer.html',
-        pgt_view_json_name=pgt_name,
-        partition_info=part_info,
-        is_partition_page=is_part)
     else:
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
@@ -210,7 +185,8 @@ if __name__ == "__main__":
         print("{0} does not exist.".format(options.lg_path))
         sys.exit(1)
 
-    global lg_dir
+    global lg_dir, pg_mgr
     lg_dir = options.lg_path
+    pg_mgr = PGManager(lg_dir)
     # Let's use tornado, since luigi already depends on it
     run(host="0.0.0.0", server='tornado', port=options.lg_port, debug=False)

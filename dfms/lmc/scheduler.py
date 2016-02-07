@@ -287,49 +287,19 @@ class Scheduler(object):
         goal - minimise physical communication cost amongst resource units
     """
 
-    def __init__(self, drop_list, max_dop=8):
+    def __init__(self, drop_list, max_dop=8, dag=None):
         """
         turn drop_list into DAG, and check its validity
         """
         self._drop_list = drop_list
-        self._key_dict = dict() # {oid : node_id}
-        self._drop_dict = dict() # {oid : drop}
-        for i, drop in enumerate(self._drop_list):
-            oid = drop['oid']
-            self._key_dict[oid] = i + 1 # starting from 1
-            self._drop_dict[oid] = drop
-        self._dag = self._build_dag()#
+        if (dag is None):
+            self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
+        else:
+            self._dag = dag
         self._max_dop = max_dop
         self._parts = None # partitions
         self._part_dict = dict() #{gid : part}
         self._part_edges = [] # edges amongst all partitions
-
-    def _build_dag(self):
-        """
-        return a networkx Digraph (DAG)
-
-        tw - task weight
-        dw - data weight / volume
-        """
-        G = nx.DiGraph()
-        for i, drop in enumerate(self._drop_list):
-            oid = drop['oid']
-            myk = i + 1
-            tt = drop['type']
-            if ('plain' == tt):
-                obk = 'consumers' # outbound keyword
-                tw = 0
-            elif ('app' == tt):
-                obk = 'outputs'
-                tw = int(drop['tw'])
-            G.add_node(myk, weight=tw)
-            if (drop.has_key(obk)):
-                for oup in drop[obk]:
-                    if ('plain' == tt):
-                        G.add_weighted_edges_from([(myk, self._key_dict[oup], int(drop['dw']))])
-                    elif ('app' == tt):
-                        G.add_weighted_edges_from([(myk, self._key_dict[oup], int(self._drop_dict[oup].get('dw', 5)))])
-        return G
 
     def partition_dag(self):
         raise SchedulerException("Not implemented. Try subclass instead")
@@ -404,8 +374,8 @@ class MySarkarScheduler(Scheduler):
     Similar ideas:
     http://stackoverflow.com/questions/3974731
     """
-    def __init__(self, drop_list, max_dop=8):
-        super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop)
+    def __init__(self, drop_list, max_dop=8, dag=None):
+        super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
 
     def partition_dag(self):
         """
@@ -650,6 +620,40 @@ class DAGUtil(object):
             os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.lmc', 'lib/libmetis.{0}'.format(ext))
             import metis as mt
         return mt
+
+    @staticmethod
+    def build_dag_from_drops(drop_list):
+        """
+        return a networkx Digraph (DAG)
+
+        tw - task weight
+        dw - data weight / volume
+        """
+        key_dict = dict() # {oid : node_id}
+        drop_dict = dict() # {oid : drop}
+        for i, drop in enumerate(drop_list):
+            oid = drop['oid']
+            key_dict[oid] = i + 1 # starting from 1
+            drop_dict[oid] = drop
+        G = nx.DiGraph()
+        for i, drop in enumerate(drop_list):
+            oid = drop['oid']
+            myk = i + 1
+            tt = drop['type']
+            if ('plain' == tt):
+                obk = 'consumers' # outbound keyword
+                tw = 0
+            elif ('app' == tt):
+                obk = 'outputs'
+                tw = int(drop['tw'])
+            G.add_node(myk, weight=tw)
+            if (drop.has_key(obk)):
+                for oup in drop[obk]:
+                    if ('plain' == tt):
+                        G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
+                    elif ('app' == tt):
+                        G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
+        return G
 
     @staticmethod
     def metis_part(G, num_partitions):
