@@ -51,7 +51,7 @@ import json, os, datetime, time, math, uuid, commands
 from dfms.drop import dropdict
 from collections import defaultdict
 from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
-from dfms.lmc.scheduler import MySarkarScheduler, DAGUtil
+from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil
 import networkx as nx
 
 class GraphException(Exception):
