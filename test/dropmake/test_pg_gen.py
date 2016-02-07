@@ -23,8 +23,8 @@ import unittest, os, pkg_resources, json
 import pprint
 import networkx as nx
 
-from dfms.lmc.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP, MySarkarPGTP
-from dfms.lmc.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
+from dfms.dropmake.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP, MySarkarPGTP
+from dfms.dropmake.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
 from collections import defaultdict
 
 class TestPGGen(unittest.TestCase):
