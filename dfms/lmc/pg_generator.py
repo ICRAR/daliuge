@@ -115,6 +115,10 @@ class LGNode():
         return self._id
 
     @property
+    def text(self):
+        return self.jd.get('text', '')
+
+    @property
     def group(self):
         return self._grp
 
@@ -443,7 +447,7 @@ class LGNode():
         dropSpec = self._create_test_drop_spec(oid, kwargs)
         kwargs['iid'] = iid
         kwargs['dt'] = self.jd['category']
-        kwargs['nm'] = self.jd['text']
+        kwargs['nm'] = self.text
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -454,6 +458,8 @@ class PGT(object):
 
     def __init__(self, drop_list):
         self._drop_list = drop_list
+        self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
+        self._json_str = None
 
     def to_partition_input(self, outf):
         """
@@ -467,6 +473,29 @@ class PGT(object):
         """
         leng = len(self._drop_list)
         return int(math.ceil(leng / 10.0))
+
+    def get_partition_info(self):
+        return "No partitioning. - Completion time: {0}".format(DAGUtil.get_longest_path(self.dag, show_path=False)[1])
+
+    @property
+    def dag(self):
+        """
+            Return the networkx nx.DiGraph object
+
+        The weight of the same edge (u, v) also depends.
+        If it is called after the partitioning, it could have been zeroed
+        if both u and v is allocated to the same DropIsland
+        """
+        return self._dag
+
+    @property
+    def json(self):
+        """
+            Return the JSON string representation of the PGT
+        """
+        if (self._json_str is None):
+            self._json_str = self.to_gojs_json()
+        return self._json_str
 
     def to_gojs_json(self, string_rep=True):
         """
@@ -562,18 +591,12 @@ class MetisPGTP(PGT):
             oid = drop['oid']
             key_dict[oid] = i + 1 #METIS index starts from 1
             drop_dict[oid] = drop
-
-        #lc = 0
-        #lines = []
-
         for i, drop in enumerate(self._drop_list):
             line = []
             oid = drop['oid']
             myk = key_dict[oid]
-
             if (myk != i + 1):
                 raise GPGTException("GOJS key {0} is not ordered: {1}!".format(myk, i + 1))
-
             tt = drop['type']
             if ('plain' == tt):
                 dst = 'consumers' # outbound keyword
@@ -586,8 +609,6 @@ class MetisPGTP(PGT):
                 tw = drop['tw']
                 sz = 1
             G.add_node(myk, tw=tw, sz=sz)
-            #line.append(str(sz))
-            #line.append(str(tw))
             adj_drops = [] #adjacent drops (all neighbours)
             if (drop.has_key(dst)):
                 adj_drops += drop[dst]
@@ -595,7 +616,6 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                #lc += 1
                 line.append(str(key_dict[inp]))
                 if ('plain' == tt):
                     lw = drop['dw']
@@ -604,21 +624,10 @@ class MetisPGTP(PGT):
                 if (lw <= 0):
                     lw = 1
                 G.add_edge(myk, key_dict[inp], weight=lw)
-                #line.append(str(lw))
-            #lines.append(" ".join(line))
         for e in G.edges(data=True):
             if (e[2]['weight'] == 0):
                 e[2]['weight'] = 1
         return G
-        # if (lc % 2 != 0):
-        #     raise GPGTException("Double Edget count {0} is not even!".format(lc))
-        #
-        # header = "{0} {1} 111 1".format(len(self._drop_list), lc / 2)
-        # lines.insert(0, header)
-        # with open(outf, "w") as f:
-        #     f.write("\n".join(lines))
-
-        #print "link count = {0}, ".format(lc)
 
     def _set_metis_log(self, logtext):
         self._metis_logs = logtext.split("\n")
@@ -637,7 +646,8 @@ class MetisPGTP(PGT):
         else:
             pa = "Recursive bisect"
         ret = []
-        pparam = "{0} partitions (asked) - Algorithm: {2} - Min objective: {1} - Load balancing: {3}%".format(self._num_parts, min_g, pa, 101 - self._u_factor)
+        pparam = "{0} partitions (asked) - Algorithm: {2} - Completion time: {4} - Min objective: {1} - Load balancing: {3}%".format(self._num_parts, min_g, pa, 101 - self._u_factor, DAGUtil.get_longest_path(self.dag, show_path=False)[1])
+        #pparam = "{0} partitions (asked) - Algorithm: {2} - Min objective: {1} - Load balancing: {3}%".format(self._num_parts, min_g, pa, 101 - self._u_factor)
         ret.append(pparam)
         for l in self._metis_logs:
             for ek in entry_key:
@@ -647,27 +657,17 @@ class MetisPGTP(PGT):
 
     def _parse_metis_output(self, metis_out, jsobj):
         """
-        parse METIS result, and add group node into the GOJS json
+        1. parse METIS result, and add group node into the GOJS json
+        2. also update edge weight for self._dag
         """
 
         key_dict = dict() #k - gojs key, v - gojs group id
         groups = set()
 
         start_k = len(self._drop_list) + 1
-        if (type(metis_out) == list): # METIS API
-            for i, gid in enumerate(metis_out):
-                key_dict[i + 1] = gid
-                groups.add(gid)
-        else: # METIS Command line
-            with open(metis_out, "r") as f:
-                lines = f.readlines()
-                if (len(lines) != start_k - 1):
-                    raise GPGTException("{0} drops, but only {1} have partition".format(start_k - 1, len(lines)))
-
-                for i, line in enumerate(lines):
-                    gid = int(line)
-                    key_dict[i + 1] = gid
-                    groups.add(gid)
+        for i, gid in enumerate(metis_out):
+            key_dict[i + 1] = gid
+            groups.add(gid)
 
         node_list = jsobj['nodeDataArray']
         for node in node_list:
@@ -681,51 +681,29 @@ class MetisPGTP(PGT):
             gn['text'] = '{1}_{0}'.format(gid, self._par_label)
             node_list.append(gn)
 
+        for e in self.dag.edges(data=True):
+            if (key_dict[e[0]] == key_dict[e[1]]):
+                e[2]['weight'] = 0
+
     def to_gojs_json(self, string_rep=True):
         jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False)
         #uid = uuid.uuid1()
         uid = int(time.time() * 1000)
+        G = self.to_partition_input(None)
+        metis = DAGUtil.import_metis()
+        recursive_param = False if self._ptype == 'kway' else True
+        if (recursive_param and self._obj_type == 'vol'):
+            raise GPGTException("Recursive partitioning does not support total volume minimisation.")
+        (edgecuts, metis_parts) = metis.part_graph(G,
+        nparts=self._num_parts, recursive=recursive_param,
+        objtype=self._obj_type, ufactor=self._u_factor)
+        self._set_metis_log(" - Data movement: {0}".format(edgecuts))
+        self._parse_metis_output(metis_parts, jsobj)
+        if (string_rep):
+            return json.dumps(jsobj, indent=2)
+        else:
+            return jsobj
 
-        metis_in = "/tmp/{0}_metis".format(uid)
-        metis_out = "/tmp/{0}_metis.part.{1}".format(uid, self._num_parts)
-        remove_list = [metis_in, metis_out]
-        try:
-            G = self.to_partition_input(metis_in)
-            metis = DAGUtil.import_metis()
-            recursive_param = False if self._ptype == 'kway' else True
-            if (recursive_param and self._obj_type == 'vol'):
-                raise GPGTException("Recursive partitioning does not support total volume minimisation.")
-            (edgecuts, metis_parts) = metis.part_graph(G,
-            nparts=self._num_parts, recursive=recursive_param,
-            objtype=self._obj_type, ufactor=self._u_factor)
-            self._set_metis_log(" - Data movement: {0}".format(edgecuts))
-            self._parse_metis_output(metis_parts, jsobj)
-            if (string_rep):
-                return json.dumps(jsobj, indent=2)
-            else:
-                return jsobj
-            """
-            if (os.path.exists(metis_in) and os.stat(metis_in).st_size > 0):
-                cmd = "{0} -ptype={4} -objtype={3} -ufactor={5} {1} {2}".format(self._metis_path,
-                metis_in, self._num_parts, self._obj_type, self._ptype, self._u_factor)
-                ret = commands.getstatusoutput(cmd)
-                if (0 == ret[0] and
-                os.path.exists(metis_out) and
-                os.stat(metis_out).st_size > 0):
-                    self._parse_metis_output(metis_out, jsobj)
-                    self._set_metis_log(ret[1])
-                    if (string_rep):
-                        return json.dumps(jsobj, indent=2)
-                    else:
-                        return jsobj
-                else:
-                    err_msg = "METIS failed: '{2}': {0}/{1}".format(ret[0], ret[1], cmd)
-                    raise GPGTException(err_msg)
-            """
-        finally:
-            for f in remove_list:
-                if (os.path.exists(f)):
-                    os.remove(f)
 
 class MySarkarPGTP(PGT):
     """
@@ -741,7 +719,7 @@ class MySarkarPGTP(PGT):
         self._num_parts = num_partitions
         self._num_parts_done = 0
         self._max_dop = max_dop # max dop per partition
-        self._scheduler = MySarkarScheduler(drop_list, max_dop)
+        self._scheduler = MySarkarScheduler(drop_list, max_dop, dag=self.dag)
         self._par_label = par_label
         self._lpl = None # longest path
         self._ptime = None # partition time
@@ -761,7 +739,7 @@ class MySarkarPGTP(PGT):
             part_str = ""
             ed_str = ""
             part_str1 = ""
-        return "{6}{2}{8}partitions produced - Algorithm: {1} - Execution time: {3} - Partition time: {4:.2f} seconds - Max DoP: {5}{7}".format(self._num_parts,
+        return "{6}{2}{8} partitions produced - Algorithm: {1} - Completion time: {3} - Max DoP: {5}{7}".format(self._num_parts,
         "MySarkar Scheduler", self._num_parts_done, self._lpl, self._ptime, self._max_dop, part_str, ed_str, part_str1)
 
     def to_partition_input(self, outf):
@@ -779,6 +757,7 @@ class MySarkarPGTP(PGT):
         for node in node_list:
             gid = G.node[node['key']]['gid']
             node['group'] = gid
+            key_dict[node['key']] = gid
             groups.add(gid)
 
         inner_parts = []
@@ -811,6 +790,12 @@ class MySarkarPGTP(PGT):
 
             for ip in inner_parts:
                 ip['group'] = in_out_part_map[ip['key']]
+
+            for e in self.dag.edges(data=True):
+                # if u.inner_part.outer_part == v.inner_part.outer_part
+                if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
+                    e[2]['weight'] = 0
+            self._lpl = DAGUtil.get_longest_path(self.dag, show_path=False)[1]
 
         if (string_rep):
             return json.dumps(jsobj, indent=2)
@@ -1005,10 +990,10 @@ class LG():
 
     def validate_link(self, src, tgt):
         if (src.is_scatter() or tgt.is_scatter()):
-            raise GInvalidLink("Scatter construct {0} or {1} cannot be linked".format(src.jd['text'], tgt.jd['text']))
+            raise GInvalidLink("Scatter construct {0} or {1} cannot be linked".format(src.text, tgt.text))
 
         if (src.is_loop() or tgt.is_loop()):
-            raise GInvalidLink("Loop construct {0} or {1} cannot be linked".format(src.jd['text'], tgt.jd['text']))
+            raise GInvalidLink("Loop construct {0} or {1} cannot be linked".format(src.text, tgt.text))
 
         if (src.is_gather()):
             if (not (tgt.jd['category'] == 'Component' and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
@@ -1073,7 +1058,7 @@ class LG():
                     gs_list = grp_starts
                 if (lgn.is_loop()):
                     if (len(grp_starts) == 0 or len(grp_ends) == 0):
-                        raise GInvalidNode("Loop '{0}' should have at least one Start Component and one End Data".format(lgn.jd['text']))
+                        raise GInvalidNode("Loop '{0}' should have at least one Start Component and one End Data".format(lgn.text))
                     for ge in grp_ends:
                         for gs in grp_starts: # make an artificial circle
                             ge.add_output(gs)
@@ -1160,7 +1145,6 @@ class LG():
             sdrop.addConsumer(tdrop)
             tdrop.addInput(sdrop)
 
-
     def unroll_to_tpl(self):
         """
         Not thread-safe!
@@ -1215,8 +1199,8 @@ class LG():
                     # Re-link to the next iteration's start
                     lsd = len(sdrops)
                     if (lsd != len(tdrops)):
-                        raise GraphException("# of sdrops '{0}' != # of tdrops '{1}'for Loop '{2}'".format(slgn.jd['text'],
-                        tlgn.jd['text'], slgn.group.jd['text']))
+                        raise GraphException("# of sdrops '{0}' != # of tdrops '{1}'for Loop '{2}'".format(slgn.text,
+                        tlgn.text, slgn.group.text))
                     for i, sdrop in enumerate(sdrops):
                         if (i < lsd - 1):
                             self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
