@@ -1,0 +1,26 @@
+{ "class": "go.GraphLinksModel",
+  "linkFromPortIdProperty": "fromPort",
+  "linkToPortIdProperty": "toPort",
+  "nodeDataArray": [ 
+{"category":"Branch", "text":"con", "key":-6, "loc":"-626.3281249999998 -950.0000000000006"},
+{"category":"End", "text":"End", "key":-9, "loc":"-302.3281249999999 -890.0000000000005"},
+{"category":"TM", "text":"TM001", "key":-7, "loc":"-228.32812500000006 -1028.999999999999"},
+{"category":"Branch", "text":"Branch\nCondition", "key":-8, "loc":"-674.328125 -794"},
+{"category":"LoopCondition", "text":"Loop\nCondition", "key":-10, "loc":"-701.3281250000003 -1160.0000000000002"},
+{"category":"Data", "text":"Data", "data_volume":10, "key":-3, "loc":"-175.328125 -1218"},
+{"category":"Comment", "text":"Comment", "key":-13, "loc":"-441.328125 -1007"},
+{"category":"Component", "text":"Component", "execution_time":6, "Arg01":"-start 1024 -end 2048", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-15, "loc":"-609.3281249999997 -1016.9999999999998"},
+{"category":"Branch", "text":"BranchCondition001", "key":-16, "loc":"-934.328125 -1209.9999999999995"},
+{"category":"SplitData", "text":"Data Splits", "isGroup":true, "num_of_splits":"${num_channel} * ${num_beam}", "key":-11, "loc":"-901.328125 -969"},
+{"category":"Data", "text":"ddaa", "data_volume":123, "key":-17, "loc":"-855.328125 -1133"},
+{"category":"Component", "text":"ccffrr", "execution_time":5, "Arg01":"one", "Arg02":"two", "Arg03":"three", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "Arg11":"my parameter", "key":-2, "loc":"-748.3281249999997 -1067.999999999999"},
+{"category":"SplitData", "text":"Data Splits002", "isGroup":true, "num_of_splits":"12", "key":-12, "loc":"-260.328125 -787"},
+{"category":"Variables", "text":"Global Variables", "columnDefinitions":[ {"attr":"name", "text":"Var name", "column":0},{"attr":"value", "text":"Value", "column":1},{"attr":"unit", "text":"Unit", "column":2} ], "var_list":[ {"columns":[ {"attr":"name", "text":"bandwidth"},{"attr":"value", "text":"1024"},{"attr":"unit", "text":"MHz"} ]},{"columns":[ {"attr":"name", "text":"bandwidth"},{"attr":"value", "text":"1024"},{"attr":"unit", "text":"MHz"} ]},{"columns":[ {"attr":"name", "text":"bandwidth"},{"attr":"value", "text":"1024"},{"attr":"unit", "text":"MHz"} ]},{"columns":[ {"attr":"name", "text":"bandwidth"},{"attr":"value", "text":"1024"},{"attr":"unit", "text":"MHz"} ]} ], "key":-14, "loc":"-1118.3281249999998 -795.9999999999993"},
+{"category":"DataGather", "text":"Data Gather", "isGroup":true, "num_of_inputs":"${num_channel} * ${num_beam}", "gather_axis":"frequency", "key":-18, "loc":"-590 -573.6734375"},
+{"category":"DataGather", "text":"Gather", "isGroup":true, "num_of_inputs":"${num_channel} * ${num_beam}", "gather_axis":"frequency", "key":-19, "loc":"-945.328125 -663"}
+ ],
+  "linkDataArray": [ 
+{"category":"scatterGatherLink", "points":[-609.3281249999997,-1033.437724304199,-609.3281249999997,-1043.437724304199,-609.3281249999997,-1084.5518964131672,-701.328125,-1084.5518964131672,-701.328125,-1125.6660685221354,-701.328125,-1135.6660685221354], "to":-10, "toPort":"B", "from":-15, "fromPort":"T"},
+{"from":-2, "to":-11, "fromPort":"T", "toPort":"T", "points":[-748.328125,-1084.437724304199,-748.328125,-1094.437724304199,-849.806935625846,-1094.437724304199,-849.806935625846,-1053.8406883239745,-849.806935625846,-1013.24365234375,-849.806935625846,-1003.24365234375]},
+{"from":-11, "to":-19, "fromPort":"B", "toPort":"T", "points":[-849.806935625846,-963,-849.806935625846,-953,-849.806935625846,-830.66328125,-906.781545000846,-830.66328125,-906.781545000846,-708.3265625,-906.781545000846,-698.3265625]}
+ ]}
