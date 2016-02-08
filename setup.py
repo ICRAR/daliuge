@@ -27,8 +27,15 @@ from setuptools import find_packages
 #
 # HACK - HACK - HACK - HACK
 import subprocess
-subprocess.check_call(['pip','install','numpy'])
+try:
+    subprocess.check_call(['pip','install','numpy'])
+except subprocess.CalledProcessError:
+    try:
+        subprocess.check_call(['easy_install','numpy'])
+    except subprocess.CalledProcessError:
+        raise Exception("Couldn't install numpy manually, sorry :(")
 
+# The rest is pretty standard thankfully
 setup(
       name='dfms',
       version='0.1',
@@ -58,9 +65,11 @@ setup(
             "Pyro4",
             "python-daemon",
             "scp",
-            "spead2==0.4.0",
             "tornado",
       ],
+      extra_require={
+        'spead': ["spead2==0.4.0"]
+      },
       dependency_links=[
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis'
         ],
