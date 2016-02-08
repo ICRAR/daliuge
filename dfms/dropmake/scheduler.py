@@ -67,9 +67,11 @@ class Schedule(object):
                     lpl_c += ww
                 print "lpl: ", " -> ".join(lpl_str)
                 print "lplt = ", lpl_c
-
             N = self.makespan
             M = self._max_dop
+            if (N < 1):
+                N = 1
+            #print "N (makespan) is ", N, "M is ", M
             ma = np.zeros((M, N), dtype=int)
             pr = np.zeros((M), dtype=int)
             last_pid = -1
@@ -222,6 +224,10 @@ class Partition(object):
     def remove(self, n):
         self._dag.remove_node(n)
 
+    def add_node(self, u, weight):
+        self._dag.add_node(u, weight=weight)
+        self._max_dop = 1
+
     def probe_max_dop(self, u, v, unew, vnew, update=False):
         """
         an incremental antichain (which appears significantly more efficient than the networkx antichains)
@@ -348,7 +354,7 @@ class Scheduler(object):
             #print "Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id)
             #parent_part = Partition(parent_id, None)
             #self._parts.append(parent_part)
-        print "Edgecuts of merged partitions: ", edgecuts
+        #print "Edgecuts of merged partitions: ", edgecuts
         return edgecuts
 
     def map_partitions(self):
@@ -391,7 +397,7 @@ class MySarkarScheduler(Scheduler):
         el.sort(key=lambda ed: ed[2]['weight'] * -1)
         stt = time.time()
         topo_sorted = nx.topological_sort(G)
-        g_dict = dict() #{gid : Partition}
+        g_dict = self._part_dict#dict() #{gid : Partition}
         curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
         parts = []
         for e in el:
@@ -414,7 +420,7 @@ class MySarkarScheduler(Scheduler):
                     part = Partition(st_gid, self._max_dop)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
-                    self._part_dict[st_gid] = part
+                    #self._part_dict[st_gid] = part
                     st_gid += 1
                 else: #elif (ugid and vgid):
                     # cannot change Partition once is in!
@@ -438,6 +444,10 @@ class MySarkarScheduler(Scheduler):
         for n in G.nodes(data=True):
             if (not n[1].has_key('gid')):
                 n[1]['gid'] = st_gid
+                part = Partition(st_gid, self._max_dop)
+                part.add_node(n[0], n[1].get('weight', 1))
+                g_dict[st_gid] = part
+                parts.append(part) # will it get rejected?
                 st_gid += 1
         self._parts = parts
         return ((st_gid - init_c), curr_lpl, edt, parts)
@@ -643,10 +653,14 @@ class DAGUtil(object):
             if ('plain' == tt):
                 obk = 'consumers' # outbound keyword
                 tw = 0
+                dtp = 0
             elif ('app' == tt):
                 obk = 'outputs'
                 tw = int(drop['tw'])
-            G.add_node(myk, weight=tw)
+                dtp = 1
+            else:
+                raise SchedulerException("Drop Type '{0}' is not yet supported".format(tt))
+            G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp)
             if (drop.has_key(obk)):
                 for oup in drop[obk]:
                     if ('plain' == tt):
