@@ -25,7 +25,7 @@ https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Grap
 """
 import threading
 
-from pg_generator import GraphException
+from dfms.dropmake.pg_generator import GraphException
 
 MAX_PGT_FN_CNT = 300
 
