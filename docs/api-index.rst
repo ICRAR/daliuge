@@ -8,3 +8,4 @@ a complete reference please go to the source code.
  api/dfms
  api/manager
  api/apps
+ api/dropmake
