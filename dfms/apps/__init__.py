@@ -19,3 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""
+The dfms.apps package contains several general-purpose applications in form of
+DROPs that we have developed as examples and for real-life use. Most of them
+are based on the :class:`BarrierAppDROP`.
+"""

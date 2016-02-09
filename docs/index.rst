@@ -10,16 +10,18 @@ Welcome to the Data Flow Management System (DFMS).
 
 DFMS is an on-going prototyping activity that is part of the `SDP Consortium
 <https://www.skatelescope.org/sdp/>`_. It aims to prototype the main risk items
-of the proposed SDP architecture to confirm the design choices and the different
-product selection.
+of the proposed SDP architecture to confirm the design choices and the
+different product selection. At the same time, DFMS is written in such a way
+that it can be reused by any other project needing its functionality.
 
 Development and maintenance of DFMS is currently hosted at ICRAR_.
 
 .. toctree::
+ :maxdepth: 2
 
-	intro
-	drops
-	graphs
-	managers
+ intro
+ installing
+ overview
+ api-index
 
 .. _ICRAR: http://www.icrar.org
