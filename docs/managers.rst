@@ -1,5 +1,5 @@
 DROP Managers
-=============
+-------------
 
 The runtime environment of DFMS consists on a hierarchy of *DROP Managers*.
 DROP Managers offer a standard interface to external entities to interact with
@@ -21,7 +21,7 @@ hierarchy levels currently present are:
 
 
 Interface
----------
+^^^^^^^^^
 
 All managers in the hierarchy expose a REST interface to external users. The interface is exactly the same independent of the level of the manager in the hierarchy.
 
