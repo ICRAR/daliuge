@@ -21,8 +21,6 @@
 #
 '''
 Utility methods and classes to be used when interacting with DROPs
-
-@author: rtobar, July 3, 2015
 '''
 
 import inspect
@@ -60,12 +58,12 @@ class DROPWaiterCtx(object):
 
     It does so by appending an EvtConsumer consumer to each DROP before they are
     used in the execution, and finally checking that the events have been set.
-    It should be used like this inside a test class:
+    It should be used like this inside a test class::
 
-    # There is a physical graph that looks like: a -> b -> c
-    with DROPWaiterCtx(self, c):
-        a.write('a')
-        a.setCompleted()
+     # There is a physical graph that looks like: a -> b -> c
+     with DROPWaiterCtx(self, c):
+         a.write('a')
+         a.setCompleted()
     """
 
     def __init__(self, test, drops, timeout=1):
@@ -181,8 +179,8 @@ def getUpstreamObjects(drop):
     Returns a list of all direct "upstream" DROPs for the given
     DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
-     * A is a producer of B (therefore A is an AppDROP)
-     * A is a normal or streaming input of B (and B is therefore an AppDROP)
+    * A is a producer of B (therefore A is an AppDROP)
+    * A is a normal or streaming input of B (and B is therefore an AppDROP)
 
     In practice if A is an upstream DROP of B means that it must be moved
     to the COMPLETED state before B can do so.
@@ -200,8 +198,8 @@ def getDownstreamObjects(drop):
     Returns a list of all direct "downstream" DROPs for the given
     DROP. An DROP A is "downstream" with respect to DROP B if
     any of the following conditions are true:
-     * A is an output of B (therefore B is an AppDROP)
-     * A is a normal or streaming consumer of B (and A is therefore an AppDROP)
+    * A is an output of B (therefore B is an AppDROP)
+    * A is a normal or streaming consumer of B (and A is therefore an AppDROP)
 
     In practice if A is a downstream DROP of B means that it cannot
     advance to the COMPLETED state until B does so.

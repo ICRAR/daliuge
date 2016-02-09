@@ -19,3 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""
+The dfms.manager package contains all python modules implementing the DROP
+Manager concepts, including their external interface, a web UI and a client.:!
+"""
