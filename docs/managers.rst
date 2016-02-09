@@ -6,7 +6,7 @@ DROP Managers offer a standard interface to external entities to interact with
 the runtime system, allowing users to submit physical graphs, deploy them, let
 them run and query their status.
 
-DROP Managers are hierarchicaly organized, mirroring the topology of their
+DROP Managers are hierarchically organized, mirroring the topology of their
 environment, and thus enable scalable solutions. The current design is flexible
 enough to add more intermediate levels if necessary in the future. The
 hierarchy levels currently present are:
