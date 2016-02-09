@@ -1,4 +1,4 @@
 Introduction
 ============
 
-.. include:: ../README.rst
+.. include:: _intro.rst
