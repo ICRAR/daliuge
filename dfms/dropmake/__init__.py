@@ -24,7 +24,4 @@
 Prototypical implementation of DataFlow Manager
 https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4+Data+Flow+Manager
 The sub-modules are based on the proposed (latest) product tree as of 8 Dec 2015
-
-7 Feb 2016 (chen.wu@icrar.org)
-    This module is merged from lg and lmc modules, and now renamed as "DropMake"
 """

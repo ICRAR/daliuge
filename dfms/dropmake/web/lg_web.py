@@ -108,6 +108,9 @@ def load_lg_editor():
 
 @get('/pg_viewer')
 def load_pg_viewer():
+    """
+    RESTful interface for loading the Physical Graph Viewer
+    """
     pgt_name = request.query.get('pgt_view_name')
     if (pgt_name is None or len(pgt_name) == 0):
         redirect('/pg_viewer?pgt_view_name={0}'.format(DEFAULT_PGT_VIEW_NAME))
@@ -120,6 +123,9 @@ def load_pg_viewer():
 
 @get('/gen_pgt')
 def gen_pgt():
+    """
+    RESTful interface for translating Logical Graphs to Physical Graphs
+    """
     lg_name = request.query.get('lg_name')
     if (lg_exists(lg_name)):
         try:
