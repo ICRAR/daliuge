@@ -12,7 +12,7 @@ once, read many times. Additionally, it also allows for data deletion.
 
 A DROP starts in the **INITIALIZED** state, meaning that its data is not
 present yet. From there it jumps into **COMPLETED** once its data has been
-written, optionally passing through **WRITING** if the writting occurs
+written, optionally passing through **WRITING** if the writing occurs
 *through* dfms (see `Input/Output`_). Once in the **COMPLETED** state the data
 can be read as many times as needed. Eventually, the DROP will transition to
 **EXPIRED**, denying any further reads. Finally the data is deleted and the DROP
