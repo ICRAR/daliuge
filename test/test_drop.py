@@ -730,5 +730,28 @@ class TestDROP(unittest.TestCase):
         self.assertEquals(DROPStates.INITIALIZED, c.status)
         self.assertEquals(DROPStates.INITIALIZED, d.status)
 
+    def test_n_tries_app(self):
+
+        class FailOnlyTheFirstTimeApp(BarrierAppDROP):
+            def initialize(self, **kwargs):
+                BarrierAppDROP.initialize(self, **kwargs)
+                self.i = 0
+            def run(self):
+                if self.i == 0:
+                    self.i = 1
+                    raise Exception
+
+        # Check that we have a normal failure with the default values
+        a = FailOnlyTheFirstTimeApp('a', 'a')
+        a.execute()
+        self.assertEquals(DROPStates.ERROR, a.status)
+        self.assertEquals(AppDROPStates.ERROR, a.execStatus)
+
+        # But it should run if we specify a bigger amount of tries
+        a = FailOnlyTheFirstTimeApp('a', 'a', n_tries=2)
+        a.execute()
+        self.assertEquals(DROPStates.COMPLETED, a.status)
+        self.assertEquals(AppDROPStates.FINISHED, a.execStatus)
+
 if __name__ == '__main__':
     unittest.main()

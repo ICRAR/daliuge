@@ -1225,6 +1225,10 @@ class InputFiredAppDROP(AppDROP):
     minimum amount of inputs being ready. The transitions of subsequent inputs
     to the COMPLETED state have no effect.
 
+    Normally only one call to the `run` method will happen per application.
+    However users can override this by specifying a different number of tries
+    before finally giving up.
+
     The amount of effective inputs must be less or equal to the amount of inputs
     added to this application once the graph is being executed. The special
     value of -1 means that all inputs are considered as effective, in which case
@@ -1253,6 +1257,11 @@ class InputFiredAppDROP(AppDROP):
         self._n_effective_inputs = int(kwargs['n_effective_inputs'])
         if self._n_effective_inputs < -1 or self._n_effective_inputs == 0:
             raise ValueError("%r: n_effective_inputs must be > 0 or equals to -1" % (self,))
+
+        # Number of tries
+        self._n_tries = int(self._getArg(kwargs, 'n_tries', 1))
+        if self._n_tries < 1:
+            raise ValueError('Invalid n_tries, must be a positive number')
 
     def addStreamingInput(self, streamingInputDrop):
         raise Exception("InputFiredAppDROPs don't accept streaming inputs")
@@ -1310,20 +1319,26 @@ class InputFiredAppDROP(AppDROP):
         all its inputs are COMPLETED.
         """
 
-        # Keep track of the state of this application. Setting the state
-        # will fire an event to the subscribers of the execStatus events
+        # TODO: We need to be defined more clearly how the state is set in
+        #       applications, for the time being they follow their execState.
 
-        # TODO: This needs to be defined more clearly
+        # Run at most self._n_tries if there are errors during the execution
+        tries = 0
         drop_state = DROPStates.COMPLETED
+        self.execStatus = AppDROPStates.RUNNING
+        while tries < self._n_tries:
+            try:
+                self.run()
+                self.execStatus = AppDROPStates.FINISHED
+                break
+            except:
+                tries += 1
+                logger.exception('Error while executing %r (try %d/%d)' % (self, tries, self._n_tries))
 
-        try:
-            self.execStatus = AppDROPStates.RUNNING
-            self.run()
-            self.execStatus = AppDROPStates.FINISHED
-        except Exception:
+        # We gave up running the application, go to error
+        if tries == self._n_tries:
             self.execStatus = AppDROPStates.ERROR
             drop_state = DROPStates.ERROR
-            logger.exception('Error while executing %r' % (self))
 
         self.status = drop_state
         self._notifyAppIsFinished()
