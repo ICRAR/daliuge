@@ -51,9 +51,9 @@ def setUpMMTests(self):
     graphsRepository.defaultSleepTime = 0
 
     # Start a NM and a DIM. See test_dim for more details
-    nmId = 'nm_' + hostname
-    dimId = 'dim_' + hostname
-    mmId = 'mm_' + hostname
+    nmId = 'nm'
+    dimId = 'dim'
+    mmId = 'mm'
 
     self.nm = NodeManager(nmId, False)
     self._nmDaemon = Pyro4.Daemon(host=hostname, port=constants.NODE_DEFAULT_PORT)

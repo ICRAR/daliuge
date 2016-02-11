@@ -58,7 +58,7 @@ def setUpDimTests(self):
     # Anyway, this is also useful because we can check that things have
     # occurred at the DM level in the test cases
     dimId = 'lala'
-    dmId = 'nm_' + hostname
+    dmId = 'nm'
     self.dm = NodeManager(dmId, False)
     self._dmDaemon = Pyro4.Daemon(host=hostname, port=4000)
     self._dmDaemon.register(self.dm, objectId=dmId)

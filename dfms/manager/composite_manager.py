@@ -57,7 +57,7 @@ class CompositeManager(DROPManager):
     construction time.
     """
 
-    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, dmIdSpec, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, subDmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
         """
         Creates a new CompositeManager with ID `dmId`. The sub-DMs it manages
         are to be located at `dmHosts`, and should be listening on port
@@ -70,8 +70,7 @@ class CompositeManager(DROPManager):
         :param: partitionAttr The attribute on each dropSpec that specifies the
                 partitioning of the graph at this CompositeManager level.
         :param: dmExec The name of the executable that starts a sub-DM
-        :param: dmIdSpec The string specification to generate sub-DM IDs. It should
-                contain a '%s' expression that represent the host of the sub-DM.
+        :param: subDmId The sub-DM ID.
         :param: dmHosts The list of hosts under which the sub-DMs should be found.
         :param: pkeyPath The path to the SSH private key to be used when connecting
                 to the remote hosts to start the sub-DMs if necessary. A value
@@ -83,7 +82,7 @@ class CompositeManager(DROPManager):
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._dmExec = dmExec
-        self._dmIdSpec = dmIdSpec
+        self._subDmId = subDmId
         self._dmHosts = dmHosts
         self._interDMRelations = collections.defaultdict(list)
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
@@ -132,13 +131,10 @@ class CompositeManager(DROPManager):
         return self._dmRestPort
 
     def subDMCommandLine(self, host):
-        cmdline = '{0} --rest -i {1} -P {2} -d --host {3}'.format(self._dmExec, self.dmIdAtHost(host), self._dmPort, host)
+        cmdline = '{0} --rest -i {1} -P {2} -d --host {3}'.format(self._dmExec, self._subDmId, self._dmPort, host)
         if self._dmRestPort:
             cmdline += ' --restPort {0}'.format(self._dmRestPort)
         return cmdline
-
-    def dmIdAtHost(self, host):
-        return self._dmIdSpec % (host)
 
     def startDM(self, host):
         client = remote.createClient(host, pkeyPath=self._pkeyPath)
@@ -171,7 +167,7 @@ class CompositeManager(DROPManager):
             raise Exception("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
 
     def dmAt(self, host):
-        return Pyro4.Proxy("PYRO:{0}@{1}:{2}".format(self.dmIdAtHost(host), host, self._dmPort))
+        return Pyro4.Proxy("PYRO:{0}@{1}:{2}".format(self._subDmId, host, self._dmPort))
 
     def getSessionIds(self):
         return self._sessionIds;
@@ -432,7 +428,7 @@ class DataIslandManager(CompositeManager):
                                                 NODE_DEFAULT_REST_PORT,
                                                 'node',
                                                 'dfmsNM',
-                                                'nm_%s',
+                                                'nm',
                                                 dmHosts=dmHosts,
                                                 pkeyPath=pkeyPath,
                                                 dmCheckTimeout=dmCheckTimeout)
@@ -449,7 +445,7 @@ class MasterManager(CompositeManager):
                                             ISLAND_DEFAULT_REST_PORT,
                                             'island',
                                             'dfmsDIM',
-                                            'dim_%s',
+                                            'dim',
                                             dmHosts=dmHosts,
                                             pkeyPath=pkeyPath,
                                             dmCheckTimeout=dmCheckTimeout)
