@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT,\
-    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, NODE_DEFAULT_PORT,\
+    ISLAND_DEFAULT_PORT, MASTER_DEFAULT_PORT
 """
 Module containing command-line entry points to launch Data Manager instances
 like DMs and DIMs.
@@ -77,13 +78,13 @@ def launchServer(opts):
     if hasattr(dm, 'shutdown'):
         dm.shutdown()
 
-def addCommonOptions(parser, defaultRestPort):
+def addCommonOptions(parser, defaultPyroPort, defaultRestPort):
     parser.add_option("--no-pyro", action="store_true",
                       dest="noPyro", help="Don't start a Pyro daemon to expose this instance", default=False)
     parser.add_option("-H", "--host", action="store", type="string",
                       dest="host", help = "The host to bind this instance on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
-                      dest="port", help = "The port to bind this instance on", default=0)
+                      dest="port", help = "The port to bind this instance on", default=defaultPyroPort)
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help = "The Data Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
@@ -179,7 +180,7 @@ def dfmsNM(args=sys.argv):
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
-    addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
+    addCommonOptions(parser, NODE_DEFAULT_PORT, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dfms-path", action="store", type="string",
@@ -195,7 +196,7 @@ def dfmsNM(args=sys.argv):
 
     start(options, parser)
 
-def dfmsCompositeManager(args, dmType, acronym, dmRestPort):
+def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestPort):
     """
     Common entry point for the dfmsDIM and dfmsMM command-line scripts. It
     starts the corresponding CompositeManager and exposes it through Pyro and a
@@ -204,7 +205,7 @@ def dfmsCompositeManager(args, dmType, acronym, dmRestPort):
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
-    addCommonOptions(parser, dmRestPort)
+    addCommonOptions(parser, dmPort, dmRestPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
                       dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default='localhost')
     parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
@@ -227,14 +228,14 @@ def dfmsDIM(args=sys.argv):
     """
     Entry point for the dfmsDIM command-line script.
     """
-    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT)
+    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT)
 
 # Entry-point function for the dfmsDIM script
 def dfmsMM(args=sys.argv):
     """
     Entry point for the dfmsMM command-line script.
     """
-    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT)
+    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_PORT, MASTER_DEFAULT_REST_PORT)
 
 
 if __name__ == '__main__':
