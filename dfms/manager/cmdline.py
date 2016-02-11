@@ -61,7 +61,7 @@ def launchServer(opts):
 
     if not opts.noPyro:
         daemon = Pyro4.Daemon(port=opts.port)
-        uri = daemon.register(dm, objectId=opts.id)
+        uri = daemon.register(dm, objectId=opts.dmAcronym.lower())
         logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
 
     if not opts.noPyro:
