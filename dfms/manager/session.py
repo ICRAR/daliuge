@@ -76,7 +76,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId):
+    def __init__(self, sessionId, host=None):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
         self._statusLock = threading.Lock()
@@ -84,6 +84,7 @@ class Session(object):
         self._daemon = None
         self._worker = None
         self._status = SessionStates.PRISTINE
+        self._host = host
 
     @property
     def sessionId(self):
@@ -187,7 +188,7 @@ class Session(object):
         # Create the Pyro daemon that will serve the DROP proxies and start it
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Starting Pyro4 Daemon for session %s" % (self._sessionId))
-        self._daemon = Pyro4.Daemon()
+        self._daemon = Pyro4.Daemon(host=self._host)
         self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
         self._daemonT.daemon = True
         self._daemonT.start()

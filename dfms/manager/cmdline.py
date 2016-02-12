@@ -45,10 +45,6 @@ from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
 def launchServer(opts):
-    if (opts.host is None):
-        Pyro4.config.HOST = 'localhost'
-    else:
-        Pyro4.config.HOST = opts.host
 
     logger = logging.getLogger(__name__)
     dmName = opts.dmType.__name__
@@ -61,7 +57,7 @@ def launchServer(opts):
         server.start(opts.restHost, opts.restPort)
 
     if not opts.noPyro:
-        daemon = Pyro4.Daemon(port=opts.port)
+        daemon = Pyro4.Daemon(host=opts.host, port=opts.port)
         uri = daemon.register(dm, objectId=opts.dmAcronym.lower())
         logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
 
@@ -188,9 +184,11 @@ def dfmsNM(args=sys.argv):
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
+    # Note that the host we use to expose the NodeManager itself through Pyro is
+    # also used to expose the Sessions it creates
     options.dmType = NodeManager
     options.dmArgs = (options.id,)
-    options.dmKwargs = {'useDLM': not options.noDLM, 'dfmsPath': options.dfmsPath}
+    options.dmKwargs = {'useDLM': not options.noDLM, 'dfmsPath': options.dfmsPath, 'host': options.host}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
 

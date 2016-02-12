@@ -74,10 +74,11 @@ class NodeManager(DROPManager):
     NodeManager is needed for each computing node, thus its name.
     """
 
-    def __init__(self, dmId, useDLM=True, dfmsPath=None):
+    def __init__(self, dmId, useDLM=True, dfmsPath=None, host=None):
         super(NodeManager, self).__init__(dmId)
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
+        self._host = host
 
         # dfmsPath contains code added by the user with possible
         # DROP applications
@@ -91,7 +92,7 @@ class NodeManager(DROPManager):
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
-        self._sessions[sessionId] = Session(sessionId)
+        self._sessions[sessionId] = Session(sessionId, self._host)
         if logger.isEnabledFor(logging.INFO):
             logger.info('Created session %s' % (sessionId))
 
