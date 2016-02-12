@@ -167,3 +167,8 @@ def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     if doubleQuotes:
         s = s.replace('"','\\"')
     return s
+
+def isLocalhost(host):
+    return host == 'localhost' or \
+           host.startswith('127.0') or \
+           host == socket.gethostname()
