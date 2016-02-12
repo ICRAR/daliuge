@@ -23,11 +23,13 @@
 Similar to chilesdospec, but it generates a series of DockerApp DROPs instead of
 directly generating Clean, Flux and Split DROPs.
 """
-import json
+
 import os
 import sys
+import time
 
 from dfms.drop import dropdict
+from dfms.manager import client
 
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
@@ -96,6 +98,7 @@ def cleanSpec(uid, **kwargs):
 if __name__ == '__main__':
     try:
 
+        sessionId = 'Chiles-Docker-%s' % (time.time(),)
         droplist = []
 
         flux_out = fileDropSpec('Flux', dirname = VIS_OUT)
@@ -126,7 +129,7 @@ if __name__ == '__main__':
         flux.addOutput(flux_out)
 
         for i, v in enumerate(VIS):
-            vis_in = directorySpec('vis%d' % (i), dirname = v[0])
+            vis_in = directorySpec('vis%d' % (i), dirname = v[0], check_exists = False)
             split_out = directorySpec('SplitOutput_%d' %(i), dirname = v[1], check_exists = False)
             sp = splitSpec('Splitting_%d' % (i),
                         regridms = True,
@@ -152,7 +155,10 @@ if __name__ == '__main__':
             droplist.append(split_out)
             droplist.append(sp)
 
-        print json.dumps(droplist, indent=2)
+        c = client.DataIslandManagerClient()
+        c.create_session(sessionId)
+        c.append_graph(sessionId, droplist)
+        c.deploy_session(sessionId)
 
     except Exception as e:
         import traceback
