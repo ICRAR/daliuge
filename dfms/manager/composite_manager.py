@@ -27,7 +27,7 @@ import threading
 
 import Pyro4
 
-from dfms import remote, graph_loader, drop
+from dfms import remote, graph_loader, drop, utils
 from dfms.manager.constants import ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT, \
     NODE_DEFAULT_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
@@ -274,6 +274,23 @@ class CompositeManager(DROPManager):
         try:
             with self.dmAt(host) as dm:
                 uris = dm.deploySession(sessionId)
+
+                # Perform some URI cosmetics. If the remote host is binding the
+                # Pyro Daemons to all interfaces, the URIs will look like
+                # PYRO:objID@0.0.0.0:port, and any proxy initialized with such
+                # URI will try to contact 0.0.0.0:port *locally*
+                # We thus replace any 0.0.0.0s we see by the `host`
+                for uid, origUri in uris.items():
+                    if utils.isLocalhost(host) or \
+                       '0.0.0.0' not in origUri:
+                        continue
+                    uri = Pyro4.URI(origUri)
+                    uri.host = host
+                    uri = uri.asString()
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug('Sanitized Pyro uri for DROP %s: %s -> %s' % (uid, origUri, uri))
+                    uris[uid] = uri
+
                 allUris.update(uris)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Successfully deployed session %s in %s' % (sessionId, host))

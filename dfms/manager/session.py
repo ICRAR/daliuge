@@ -234,7 +234,9 @@ class Session(object):
 
     def _registerDrop(self, drop):
         uri = self._daemon.register(drop)
-        drop.uri = uri
+        drop.uri = uri.asString()
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Registered %r with Pyro. URI is %s" % (drop, uri))
 
     def _run(self, worker):
         worker.run()
