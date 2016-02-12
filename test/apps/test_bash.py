@@ -22,7 +22,6 @@
 """
 Test the Bash App
 """
-import logging
 import os
 import random
 import shutil
@@ -36,13 +35,9 @@ from dfms.droputils import DROPWaiterCtx
 
 
 class BashAppTests(unittest.TestCase):
-    def setUp(self):
-        self._level = logging.getLogger().getEffectiveLevel()
-        logging.basicConfig(level=logging.DEBUG)
 
     def tearDown(self):
         shutil.rmtree("/tmp/sdp_dfms", True)
-        logging.basicConfig(level=self._level)
 
     def test_echo(self):
         a = FileDROP('a', 'a')
