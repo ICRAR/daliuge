@@ -130,7 +130,7 @@ class Partition(object):
     Logical partition, multiple (1 ~ N) of these can be placed onto a single
     physical resource unit
 
-    Logical partition can be nested, and it somewhat resembles the DataDROPManager
+    Logical partition can be nested, and it somewhat resembles the `dfms.manager.drop_manager`
     """
     def __init__(self, gid, max_dop):
         """
@@ -162,6 +162,9 @@ class Partition(object):
 
     @property
     def schedule(self):
+        """
+        Get the schedule assocaited with this partition
+        """
         if (self._schedule is None):
             self._schedule = Schedule(self._dag, self._max_dop)
         return self._schedule
@@ -171,8 +174,13 @@ class Partition(object):
         return self.schedule
 
     def can_add(self, u, uw, v, vw):
+        """
+        Check if nodes u and/or v can join this partition
+        A node may be rejected due to reasons such as: DoP overflow or
+        completion time deadline overdue, etc.
+        """
         if (len(self._dag.nodes()) == 0):
-            return True
+            return (True, False, False)
 
         unew = False if self._dag.node.has_key(u) else True
         vnew = False if self._dag.node.has_key(v) else True
@@ -205,9 +213,13 @@ class Partition(object):
             self.remove(u)
         if (vnew):
             self.remove(v)
-        return ret
+        return (ret, unew, vnew)
 
-    def add(self, u, uw, v, vw):
+    def add(self, u, uw, v, vw, sequential=False, global_dag=None):
+        """
+        Add nodes u and/or v to the partition
+        if sequential is True, break antichains to sequential chains
+        """
         unew = False if self._dag.node.has_key(u) else True
         vnew = False if self._dag.node.has_key(v) else True
         self._dag.add_node(u, weight=uw)
@@ -218,19 +230,57 @@ class Partition(object):
             self._max_antichains = DAGUtil.get_max_antichains(self._dag)
             self._max_dop = 1
         else:
+            if (sequential):
+                # break potential antichain to sequential chain
+                if (unew):
+                    v_ups = nx.ancestors(self._dag, v)
+                    for vup in v_ups:
+                        if (u == vup):
+                            continue
+                        if (len(self._dag.predecessors(vup)) == 0):
+                            # link u to "root" parent of v to break antichain
+                            self._dag.add_edge(u, vup)
+                            # change the original global graph
+                            if (global_dag is not None):
+                                try:
+                                    global_dag.edge[u][vup]
+                                except Exception, exp:
+                                    print "adding {0} -- > {1}".format(u, vup)
+                                    global_dag.add_edge(u, vup, weight=0)
+                else:
+                    u_downs = nx.descendants(self._dag, u)
+                    for udo in u_downs:
+                        if (udo == v):
+                            continue
+                        if (len(self._dag.successors(udo)) == 0):
+                            # link "leaf" children of u to v to break antichain
+                            self._dag.add_edge(udo, v)
+                            # change the original global graph
+                            if (global_dag is not None):
+                                try:
+                                    global_dag.edge[udo][v]
+                                except Exception, exp:
+                                    print "adding {0} -- > {1}".format(udo, v)
+                                    global_dag.add_edge(udo, v, weight=0)
             self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
             #self._max_dop = DAGUtil.get_max_dop(self._dag)# this is too slow!
 
     def remove(self, n):
+        """
+        Remove node n from the partition
+        """
         self._dag.remove_node(n)
 
     def add_node(self, u, weight):
+        """
+        Add a single node u to the partition
+        """
         self._dag.add_node(u, weight=weight)
         self._max_dop = 1
 
     def probe_max_dop(self, u, v, unew, vnew, update=False):
         """
-        an incremental antichain (which appears significantly more efficient than the networkx antichains)
+        An incremental antichain (which appears significantly more efficient than the networkx antichains)
         But only works for DoP, not for weighted width
         """
         if (self._max_antichains is None):
@@ -255,9 +305,7 @@ class Partition(object):
             new_ac = []
             md = 1
             for ma in self._max_antichains: # missing elements in the current max_antichains!
-                """
-                incremental updates
-                """
+                #incremental updates
                 found = False
                 for n in ma:
                     if (n in ups):
@@ -383,6 +431,27 @@ class MySarkarScheduler(Scheduler):
     def __init__(self, drop_list, max_dop=8, dag=None):
         super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
 
+    def override_cannot_add(self):
+        """
+        Whether this scheduler will override the False result from `Partition.can_add()`
+        """
+        return False
+
+    def still_join_partition(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
+        """
+        This is called ONLY IF can_add on partition has returned "False"
+        Parameters:
+            u - node u, v - node v, uw - weight of node u, vw - weight of node v
+            curr_lpl - current longest path length, ow - current edge weight
+            rem_el - remainig edges to be zeroed
+            ow - original edge length
+        Returns:
+            Boolean
+
+        MySarkarScheduler always returns False
+        """
+        return False
+
     def partition_dag(self):
         """
         Return a tuple of
@@ -400,13 +469,14 @@ class MySarkarScheduler(Scheduler):
         g_dict = self._part_dict#dict() #{gid : Partition}
         curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
         parts = []
-        for e in el:
+        for i, e in enumerate(el):
             u = e[0]
             gu = G.node[u]
             v = e[1]
             gv = G.node[v]
             ow = G.edge[u][v]['weight']
             G.edge[u][v]['weight'] = 0 #edge zeroing
+            recover_edge = False
             new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
             #print "{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v)
             if (new_lpl <= curr_lpl): #try to accept the edge zeroing
@@ -427,15 +497,29 @@ class MySarkarScheduler(Scheduler):
                     part = None
                 uw = gu['weight']
                 vw = gv['weight']
-                if (part is not None and part.can_add(u, uw, v, vw)):
-                    part.add(u, uw, v, vw)
-                    gu['gid'] = part._gid
-                    gv['gid'] = part._gid
-                    curr_lpl = new_lpl
+
+                if (part is None):
+                    recover_edge = True
                 else:
-                    G.edge[u][v]['weight'] = ow
-                    self._part_edges.append(e)
-            else:
+                    ca, unew, vnew = part.can_add(u, uw, v, vw)
+                    if (ca):
+                        part.add(u, uw, v, vw)
+                        gu['gid'] = part._gid
+                        gv['gid'] = part._gid
+                        curr_lpl = new_lpl
+                    else:
+                        if (self.override_cannot_add() and
+                        self.still_join_partition(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):])):
+                            # sequentialisation
+                            part.add(u, uw, v, vw, sequential=True, global_dag=G)
+                            gu['gid'] = part._gid
+                            gv['gid'] = part._gid
+                            curr_lpl = new_lpl
+                            # resort G since new edges were added during sequentialisation
+                            topo_sorted = nx.topological_sort(G)
+                        else:
+                            recover_edge = True
+            if (recover_edge):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
 
@@ -451,6 +535,63 @@ class MySarkarScheduler(Scheduler):
                 st_gid += 1
         self._parts = parts
         return ((st_gid - init_c), curr_lpl, edt, parts)
+
+class MinNumPartsScheduler(MySarkarScheduler):
+    """
+    A special type of partition that aims to schedule the DAG on time but at minimum cost.
+    In this particular case, the cost is the number of partitions that will be generated.
+    The assumption is # of partitions (with certain DoP) more or less represents resource footprint.
+    """
+    def __init__(self, drop_list, deadline, max_dop=8, dag=None, optimistic_factor=0.5):
+        super(MinNumPartsScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
+        self._deadline = deadline
+        self._optimistic_factor = optimistic_factor
+
+    def override_cannot_add(self):
+        return True
+
+    def still_join_partition(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
+        """
+        This is called ONLY IF can_add on partition has returned "False"
+        Parameters:
+            u - node u, v - node v, uw - weight of node u, vw - weight of node v
+            curr_lpl - current longest path length, ow - current edge weight
+            rem_el - remainig edges to be zeroed
+            ow - original edge length
+        Returns:
+            Boolean
+
+        It looks ahead to compute the probability of time being critical
+        and compares that with the _optimistic_factor
+        probility = (num of edges need to be zeroed to meet the deadline) /
+        (num of remaining unzeroed edges)
+        """
+        if (unew and vnew):
+            return True
+        # compute time criticality probility
+        ttlen = float(len(rem_el))
+        if (ttlen == 0):
+            return False
+        c = 0
+        for i, e in enumerate(rem_el):
+            c = i
+            edge_weight = self._dag.edge[e[0]][e[1]]['weight']
+            if ((curr_lpl - edge_weight) <= self._deadline):
+                break
+        # probability that remaining edges will be zeroed in order to meet the deadline
+        prob = (c + 1) / ttlen
+        time_critical = True if (prob > self._optimistic_factor) else False
+        if (time_critical):
+            # enforce sequentialisation
+            # see Figure 3 in
+            # Gerasoulis, A. and Yang, T., 1993. On the granularity and clustering of directed acyclic task graphs.
+            # Parallel and Distributed Systems, IEEE Transactions on, 4(6), pp.686-701.
+            #TODO 1. formal proof: u cannot be the leaf node in the partition otherwise ca would have been true
+            #TODO 2. check if this is on the critical path at all?
+            nw = uw if unew else vw
+            return (ow >= nw) # assuming "stay out of partition == parallelism"
+        else: # join the partition to minimise num_part
+            return True
 
 class DSCScheduler(Schedule):
     """
@@ -594,7 +735,7 @@ class DAGUtil(object):
     @staticmethod
     def ganttchart_matrix(G, topo_sort=None):
         """
-        a M by N matrix
+        Return a M (# of DROPs) by N (longest path length) matrix
         """
         lpl = DAGUtil.get_longest_path(G, show_path=True)
         N = lpl[1] - (len(lpl[0]) - 1)
