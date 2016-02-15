@@ -21,7 +21,8 @@
 
 import unittest, pkg_resources
 from dfms.dropmake.pg_generator import LG
-from dfms.dropmake.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
+from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
+Partition, MinNumPartsScheduler)
 
 class TestScheduler(unittest.TestCase):
 
@@ -50,6 +51,24 @@ class TestScheduler(unittest.TestCase):
         mys = Scheduler(drop_list)
         #print mys._dag.edges(data=True)
 
+    def test_minnumparts_scheduler(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        tgt_deadline = [200, 300, 90, 80, 160] #250
+        mdp = 8
+        ofa = 0.5
+        for j, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            print "MinNumPartsScheduler Partitioning ", lgn
+            lll = len(lgn) + len("Partitioning ") + 1
+            print "=" * lll
+            mps = MinNumPartsScheduler(drop_list, tgt_deadline[j], max_dop=mdp, optimistic_factor=ofa)
+            num_parts_done, lpl, ptime, parts = mps.partition_dag()
+            print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+            print "-" * lll
+            print
+
     def test_mysarkar_scheduler(self):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         #lgnames = [lgnames[1]]
@@ -60,7 +79,7 @@ class TestScheduler(unittest.TestCase):
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
-            print "Partitioning ", lgn
+            print "MySarkarScheduler Partitioning ", lgn
             lll = len(lgn) + len("Partitioning ") + 1
             print "=" * lll
             mys = MySarkarScheduler(drop_list, max_dop=mdp)

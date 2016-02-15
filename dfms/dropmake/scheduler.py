@@ -245,7 +245,7 @@ class Partition(object):
                                 try:
                                     global_dag.edge[u][vup]
                                 except Exception, exp:
-                                    print "adding {0} -- > {1}".format(u, vup)
+                                    #print "adding {0} -- > {1}".format(u, vup)
                                     global_dag.add_edge(u, vup, weight=0)
                 else:
                     u_downs = nx.descendants(self._dag, u)
@@ -260,7 +260,7 @@ class Partition(object):
                                 try:
                                     global_dag.edge[udo][v]
                                 except Exception, exp:
-                                    print "adding {0} -- > {1}".format(udo, v)
+                                    #print "adding {0} -- > {1}".format(udo, v)
                                     global_dag.add_edge(udo, v, weight=0)
             self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
             #self._max_dop = DAGUtil.get_max_dop(self._dag)# this is too slow!
@@ -437,7 +437,7 @@ class MySarkarScheduler(Scheduler):
         """
         return False
 
-    def still_join_partition(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
+    def is_time_critical(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
         """
         This is called ONLY IF can_add on partition has returned "False"
         Parameters:
@@ -450,7 +450,8 @@ class MySarkarScheduler(Scheduler):
 
         MySarkarScheduler always returns False
         """
-        return False
+        print "MySarkar time criticality is called"
+        return True
 
     def partition_dag(self):
         """
@@ -479,7 +480,8 @@ class MySarkarScheduler(Scheduler):
             recover_edge = False
             new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
             #print "{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v)
-            if (new_lpl <= curr_lpl): #try to accept the edge zeroing
+            if ((new_lpl <= curr_lpl) or
+            (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))): #try to accept the edge zeroing
                 ugid = gu.get('gid', None)
                 vgid = gv.get('gid', None)
                 if (ugid and (not vgid)):
@@ -501,24 +503,34 @@ class MySarkarScheduler(Scheduler):
                 if (part is None):
                     recover_edge = True
                 else:
+                    # sttt = time.time()
                     ca, unew, vnew = part.can_add(u, uw, v, vw)
+                    # print "part.can_add took {0} seconds".format(time.time() - sttt)
                     if (ca):
                         part.add(u, uw, v, vw)
                         gu['gid'] = part._gid
                         gv['gid'] = part._gid
                         curr_lpl = new_lpl
                     else:
+
                         if (self.override_cannot_add() and
-                        self.still_join_partition(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):])):
+                        (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
                             # sequentialisation
                             part.add(u, uw, v, vw, sequential=True, global_dag=G)
+                            #part.add(u, uw, v, vw)
                             gu['gid'] = part._gid
                             gv['gid'] = part._gid
                             curr_lpl = new_lpl
                             # resort G since new edges were added during sequentialisation
-                            topo_sorted = nx.topological_sort(G)
+                            #topo_sorted = nx.topological_sort(G)
                         else:
                             recover_edge = True
+                        """
+                        print "partition rejected '{0}' --> '{1}'".format(u, v)
+                        recover_edge = True
+                        """
+            else:
+                print "new_lpl {0} > curr_lpl {1}".format(new_lpl, curr_lpl)
             if (recover_edge):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
@@ -550,7 +562,7 @@ class MinNumPartsScheduler(MySarkarScheduler):
     def override_cannot_add(self):
         return True
 
-    def still_join_partition(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
+    def is_time_critical(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
         """
         This is called ONLY IF can_add on partition has returned "False"
         Parameters:
@@ -566,6 +578,7 @@ class MinNumPartsScheduler(MySarkarScheduler):
         probility = (num of edges need to be zeroed to meet the deadline) /
         (num of remaining unzeroed edges)
         """
+        #print "MinNumPartsScheduler time criticality is called"
         if (unew and vnew):
             return True
         # compute time criticality probility
@@ -581,17 +594,19 @@ class MinNumPartsScheduler(MySarkarScheduler):
         # probability that remaining edges will be zeroed in order to meet the deadline
         prob = (c + 1) / ttlen
         time_critical = True if (prob > self._optimistic_factor) else False
-        if (time_critical):
-            # enforce sequentialisation
-            # see Figure 3 in
-            # Gerasoulis, A. and Yang, T., 1993. On the granularity and clustering of directed acyclic task graphs.
-            # Parallel and Distributed Systems, IEEE Transactions on, 4(6), pp.686-701.
-            #TODO 1. formal proof: u cannot be the leaf node in the partition otherwise ca would have been true
-            #TODO 2. check if this is on the critical path at all?
-            nw = uw if unew else vw
-            return (ow >= nw) # assuming "stay out of partition == parallelism"
-        else: # join the partition to minimise num_part
-            return True
+        #print "time criticality is {0}, prob is {1}".format(time_critical, prob)
+        return time_critical
+        # if (time_critical):
+        #     # enforce sequentialisation
+        #     # see Figure 3 in
+        #     # Gerasoulis, A. and Yang, T., 1993. On the granularity and clustering of directed acyclic task graphs.
+        #     # Parallel and Distributed Systems, IEEE Transactions on, 4(6), pp.686-701.
+        #     #TODO 1. formal proof: u cannot be the leaf node in the partition otherwise ca would have been true
+        #     #TODO 2. check if this is on the critical path at all?
+        #     nw = uw if unew else vw
+        #     return (ow >= nw) # assuming "stay out of partition == parallelism"
+        # else: # join the partition to minimise num_part
+        #     return True
 
 class DSCScheduler(Schedule):
     """
