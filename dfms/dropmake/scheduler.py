@@ -492,7 +492,6 @@ class MySarkarScheduler(Scheduler):
                     part = Partition(st_gid, self._max_dop)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
-                    #self._part_dict[st_gid] = part
                     st_gid += 1
                 else: #elif (ugid and vgid):
                     # cannot change Partition once is in!
@@ -503,21 +502,17 @@ class MySarkarScheduler(Scheduler):
                 if (part is None):
                     recover_edge = True
                 else:
-                    # sttt = time.time()
                     ca, unew, vnew = part.can_add(u, uw, v, vw)
-                    # print "part.can_add took {0} seconds".format(time.time() - sttt)
                     if (ca):
                         part.add(u, uw, v, vw)
                         gu['gid'] = part._gid
                         gv['gid'] = part._gid
                         curr_lpl = new_lpl
                     else:
-
                         if (self.override_cannot_add() and
                         (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
                             # sequentialisation
                             part.add(u, uw, v, vw, sequential=True, global_dag=G)
-                            #part.add(u, uw, v, vw)
                             gu['gid'] = part._gid
                             gv['gid'] = part._gid
                             curr_lpl = new_lpl
@@ -525,12 +520,6 @@ class MySarkarScheduler(Scheduler):
                             #topo_sorted = nx.topological_sort(G)
                         else:
                             recover_edge = True
-                        """
-                        print "partition rejected '{0}' --> '{1}'".format(u, v)
-                        recover_edge = True
-                        """
-            else:
-                print "new_lpl {0} > curr_lpl {1}".format(new_lpl, curr_lpl)
             if (recover_edge):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
@@ -564,7 +553,9 @@ class MinNumPartsScheduler(MySarkarScheduler):
 
     def is_time_critical(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
         """
-        This is called ONLY IF can_add on partition has returned "False"
+        This is called ONLY IF either can_add on partition has returned "False"
+        or the new critical path is longer than the old one at each iteration
+
         Parameters:
             u - node u, v - node v, uw - weight of node u, vw - weight of node v
             curr_lpl - current longest path length, ow - current edge weight
@@ -578,7 +569,6 @@ class MinNumPartsScheduler(MySarkarScheduler):
         probility = (num of edges need to be zeroed to meet the deadline) /
         (num of remaining unzeroed edges)
         """
-        #print "MinNumPartsScheduler time criticality is called"
         if (unew and vnew):
             return True
         # compute time criticality probility
