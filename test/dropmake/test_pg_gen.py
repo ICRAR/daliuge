@@ -23,7 +23,7 @@ import unittest, os, pkg_resources, json
 import pprint
 import networkx as nx
 
-from dfms.dropmake.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP, MySarkarPGTP
+from dfms.dropmake.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP
 from dfms.dropmake.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
 from collections import defaultdict
 
@@ -75,5 +75,16 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list)
+            pgtp.json
+
+    def test_minnumparts_pgtp(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        #tgt_partnum = [15, 15, 10, 10, 5]
+        tgt_deadline = [200, 300, 90, 80, 160]
+        for i, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MinNumPartsPGTP(drop_list, tgt_deadline[i])
             pgtp.json
         #print pgtp.to_gojs_json()
