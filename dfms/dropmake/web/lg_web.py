@@ -28,7 +28,7 @@ import os, time
 from optparse import OptionParser
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP
+from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP
 from dfms.dropmake.scheduler import SchedulerException
 from dfms.dropmake.pg_manager import PGManager
 
@@ -51,6 +51,9 @@ def server_static(filepath):
 
 @route('/jsonbody', method='POST')
 def jsonbody():
+    """
+    Post graph JSON representation to LG or PG manager
+    """
     # see the table in http://bottlepy.org/docs/dev/tutorial.html#html-form-handling
     lg_name = request.POST['lg_name']
     if (lg_exists(lg_name)):
@@ -150,6 +153,10 @@ def gen_pgt():
                     mp = request.query.get('merge_par')
                     mpp = True if '1' == mp else False
                     pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
+                elif ('min_num_parts' == algo):
+                    time_greedy = 1 - float(request.query.get('time_greedy')) / 100.0 # assuming between 1 to 100
+                    pgt = MinNumPartsPGTP(drop_list, int(request.query.get('deadline')),
+                    int(part), par_label, int(request.query.get('max_dop')), merge_parts=False, optimistic_factor=time_greedy)
                 elif ('pyrros' == algo):
                     pgt = PyrrosPGTP(drop_list, int(part))
                 else:
