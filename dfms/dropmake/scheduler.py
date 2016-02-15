@@ -220,6 +220,8 @@ class Partition(object):
         Add nodes u and/or v to the partition
         if sequential is True, break antichains to sequential chains
         """
+        # if (self.partition_id == 180):
+        #     print "u = ", u, ", v = ", v, ", partition = ", self.partition_id
         unew = False if self._dag.node.has_key(u) else True
         vnew = False if self._dag.node.has_key(v) else True
         self._dag.add_node(u, weight=uw)
@@ -232,6 +234,7 @@ class Partition(object):
         else:
             if (sequential):
                 # break potential antichain to sequential chain
+                #print "-----"
                 if (unew):
                     v_ups = nx.ancestors(self._dag, v)
                     for vup in v_ups:
@@ -245,8 +248,11 @@ class Partition(object):
                                 try:
                                     global_dag.edge[u][vup]
                                 except Exception, exp:
-                                    #print "adding {0} -- > {1}".format(u, vup)
+                                    #print "unew adding {0} -- > {1}, v = {2}".format(u, vup, v)
                                     global_dag.add_edge(u, vup, weight=0)
+                                    if (not nx.is_directed_acyclic_graph(global_dag)):
+                                        global_dag.remove_edge(u, vup)
+                                    #print global_dag.edge[u]
                 else:
                     u_downs = nx.descendants(self._dag, u)
                     for udo in u_downs:
@@ -260,8 +266,25 @@ class Partition(object):
                                 try:
                                     global_dag.edge[udo][v]
                                 except Exception, exp:
-                                    #print "adding {0} -- > {1}".format(udo, v)
+                                    #print "vnew adding {0} -- > {1}, u = {2}".format(udo, v, u)
                                     global_dag.add_edge(udo, v, weight=0)
+                                    if (not nx.is_directed_acyclic_graph(global_dag)):
+                                        global_dag.remove_edge(udo, v)
+                                    #print global_dag.edge[udo]
+                                    # try:
+                                    #     nx.topological_sort(global_dag)
+                                    # except Exception, exp:
+                                    #     raise Exception("sort error: {0}".format(exp))
+                # print "****** partition is still DAG: {0}".format(nx.is_directed_acyclic_graph(self._dag))
+                # try:
+                #     nx.topological_sort(global_dag)
+                # except Exception, exp:
+                #     print " ^^^^ global dag is still DAG? {0}".format(nx.is_directed_acyclic_graph(global_dag))
+                #     print list(nx.simple_cycles(global_dag))
+                #     raise Exception("After partition {1}, sort error: {0}".format(exp, self.partition_id))
+                # print ""
+                # print self._dag.edges()
+                # print ""
             self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
             #self._max_dop = DAGUtil.get_max_dop(self._dag)# this is too slow!
 
@@ -513,11 +536,16 @@ class MySarkarScheduler(Scheduler):
                         (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
                             # sequentialisation
                             part.add(u, uw, v, vw, sequential=True, global_dag=G)
+                            #print "serialisation done for part {0}".format(part.partition_id)
                             gu['gid'] = part._gid
                             gv['gid'] = part._gid
                             curr_lpl = new_lpl
                             # resort G since new edges were added during sequentialisation
-                            #topo_sorted = nx.topological_sort(G)
+                            try:
+                                topo_sorted = nx.topological_sort(G)
+                            except Exception, exp:
+                                print G.edges()
+                                raise exp
                         else:
                             recover_edge = True
             if (recover_edge):
