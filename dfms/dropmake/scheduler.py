@@ -232,9 +232,8 @@ class Partition(object):
             self._max_antichains = DAGUtil.get_max_antichains(self._dag)
             self._max_dop = 1
         else:
-            if (sequential):
+            if (sequential and (global_dag is not None)):
                 # break potential antichain to sequential chain
-                #print "-----"
                 if (unew):
                     v_ups = nx.ancestors(self._dag, v)
                     for vup in v_ups:
@@ -244,15 +243,9 @@ class Partition(object):
                             # link u to "root" parent of v to break antichain
                             self._dag.add_edge(u, vup)
                             # change the original global graph
-                            if (global_dag is not None):
-                                try:
-                                    global_dag.edge[u][vup]
-                                except Exception, exp:
-                                    #print "unew adding {0} -- > {1}, v = {2}".format(u, vup, v)
-                                    global_dag.add_edge(u, vup, weight=0)
-                                    if (not nx.is_directed_acyclic_graph(global_dag)):
-                                        global_dag.remove_edge(u, vup)
-                                    #print global_dag.edge[u]
+                            global_dag.add_edge(u, vup, weight=0)
+                            if (not nx.is_directed_acyclic_graph(global_dag)):
+                                global_dag.remove_edge(u, vup)
                 else:
                     u_downs = nx.descendants(self._dag, u)
                     for udo in u_downs:
@@ -262,29 +255,10 @@ class Partition(object):
                             # link "leaf" children of u to v to break antichain
                             self._dag.add_edge(udo, v)
                             # change the original global graph
-                            if (global_dag is not None):
-                                try:
-                                    global_dag.edge[udo][v]
-                                except Exception, exp:
-                                    #print "vnew adding {0} -- > {1}, u = {2}".format(udo, v, u)
-                                    global_dag.add_edge(udo, v, weight=0)
-                                    if (not nx.is_directed_acyclic_graph(global_dag)):
-                                        global_dag.remove_edge(udo, v)
-                                    #print global_dag.edge[udo]
-                                    # try:
-                                    #     nx.topological_sort(global_dag)
-                                    # except Exception, exp:
-                                    #     raise Exception("sort error: {0}".format(exp))
-                # print "****** partition is still DAG: {0}".format(nx.is_directed_acyclic_graph(self._dag))
-                # try:
-                #     nx.topological_sort(global_dag)
-                # except Exception, exp:
-                #     print " ^^^^ global dag is still DAG? {0}".format(nx.is_directed_acyclic_graph(global_dag))
-                #     print list(nx.simple_cycles(global_dag))
-                #     raise Exception("After partition {1}, sort error: {0}".format(exp, self.partition_id))
-                # print ""
-                # print self._dag.edges()
-                # print ""
+                            global_dag.add_edge(udo, v, weight=0)
+                            if (not nx.is_directed_acyclic_graph(global_dag)):
+                                global_dag.remove_edge(udo, v)
+
             self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
             #self._max_dop = DAGUtil.get_max_dop(self._dag)# this is too slow!
 

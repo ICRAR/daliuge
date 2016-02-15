@@ -51,7 +51,7 @@ import json, os, datetime, time, math, uuid, commands
 from dfms.drop import dropdict
 from collections import defaultdict
 from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
-from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil
+from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler
 import networkx as nx
 
 class GraphException(Exception):
@@ -493,9 +493,10 @@ class PGT(object):
         """
             Return the JSON string representation of the PGT
         """
-        if (self._json_str is None):
-            self._json_str = self.to_gojs_json()
-        return self._json_str
+        # if (self._json_str is None):
+        #     self._json_str = self.to_gojs_json()
+        # return self._json_str
+        return self.to_gojs_json()
 
     def to_gojs_json(self, string_rep=True):
         """
@@ -524,17 +525,11 @@ class PGT(object):
         for drop in self._drop_list:
             oid = drop['oid']
             myk = key_dict[oid]
-            tt = drop['type']
-            if ('plain' == tt): # data
-                okw = 'consumers'
-            elif ('app' == tt):
-                okw = 'outputs'
-            if (drop.has_key(okw)):
-                for oup in drop[okw]:
-                    link = dict()
-                    link['from'] = myk
-                    link['to'] = key_dict[oup]
-                    links.append(link)
+            for oup in self.dag.successors(myk):
+                link = dict()
+                link['from'] = myk
+                link['to'] = oup
+                links.append(link)
 
         ret['linkDataArray'] = links
         if (string_rep):
@@ -719,12 +714,15 @@ class MySarkarPGTP(PGT):
         self._num_parts = num_partitions
         self._num_parts_done = 0
         self._max_dop = max_dop # max dop per partition
-        self._scheduler = MySarkarScheduler(drop_list, max_dop, dag=self.dag)
         self._par_label = par_label
         self._lpl = None # longest path
         self._ptime = None # partition time
         self._merge_parts = merge_parts
         self._edge_cuts = None
+        self.init_scheduler()
+
+    def init_scheduler(self):
+        self._scheduler = MySarkarScheduler(self._drop_list, self._max_dop, dag=self.dag)
 
     def get_partition_info(self, entry_key=None):
         """
@@ -740,15 +738,16 @@ class MySarkarPGTP(PGT):
             ed_str = ""
             part_str1 = ""
         return "{6}{2}{8} partitions produced - Algorithm: {1} - Completion time: {3} - Max DoP: {5}{7}".format(self._num_parts,
-        "MySarkar Scheduler", self._num_parts_done, self._lpl, self._ptime, self._max_dop, part_str, ed_str, part_str1)
+        type(self).__name__, self._num_parts_done, self._lpl, self._ptime, self._max_dop, part_str, ed_str, part_str1)
 
     def to_partition_input(self, outf):
         pass
 
     def to_gojs_json(self, string_rep=True):
-        jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False)
         self._num_parts_done, self._lpl, self._ptime, parts = self._scheduler.partition_dag()
+        jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False)
         G = self._scheduler._dag
+        #print "The same DAG? ", (G == self.dag)
         leng = len(self._drop_list)
 
         key_dict = dict() #k - gojs key, v - gojs group id
@@ -801,6 +800,21 @@ class MySarkarPGTP(PGT):
             return json.dumps(jsobj, indent=2)
         else:
             return jsobj
+
+class MinNumPartsPGTP(MySarkarPGTP):
+    def __init__(self, drop_list, deadline, num_partitions=0, par_label="Partition", max_dop=8, merge_parts=False, optimistic_factor=0.5):
+        """
+        num_partitions: 0 - only do the initial logical partition
+                        >1 - does logical partition, partition mergeing and
+                        physical mapping
+        """
+        self._deadline = deadline
+        self._opf = optimistic_factor
+        super(MinNumPartsPGTP, self).__init__(drop_list, num_partitions, par_label, max_dop, merge_parts)
+
+    def init_scheduler(self):
+        self._scheduler = MinNumPartsScheduler(self._drop_list, self._deadline, max_dop=self._max_dop, dag=self.dag, optimistic_factor=self._opf)
+
 
 class PyrrosPGTP(PGT):
     """

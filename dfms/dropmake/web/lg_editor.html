@@ -1359,6 +1359,13 @@
     f.submit();
   }
 
+  function genPGTP04() {
+    var f = document.getElementById("pgtp_form_04");
+    var h = document.getElementById("pgtp_lg_name_04");
+    h.value = window.curr_lg_name.toString();
+    f.submit();
+  }
+
   function saveToRemote(saveEditor) {
     var jsonModel = myDiagram.model.toJson();
     if (window.curr_lg_name == null) {
@@ -1706,6 +1713,52 @@
     </td>
     </tr>
     </form>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr><td/><td/></tr>
+    <tr>
+    <form action="/gen_pgt" method="get" id="pgtp_form_04" target="_blank">
+      <td>Method IV </td><td>Minimise # of Partitions while constrained by Time Deadline<input type="hidden" name="num_par" value="5"></td>
+    </tr>
+    <tr>
+      <td>Deadline (time unit)</td>
+      <td>
+      <input type="number" name="deadline" value="300">
+      </td>
+    </tr>
+    <tr>
+      <td>Greediness of deadline pursue</td><td><input type="number" name="time_greedy" min="1" max="100" value="50">%</td>
+    </tr>
+    <tr>
+      <td>Partition label</td>
+      <td>
+      <input type="text" name="par_label" value="DropIsland">
+      </td>
+    </tr>
+    <tr>
+      <td>Max DoP per partition</td>
+      <td>
+      <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
+      </td>
+    </tr>
+  <tr>
+  <td>
+    <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_04">
+    <input type="hidden" name="algo" value="min_num_parts">
+  </td>
+  <td>
+    <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
+    <button id="pgtButton03" class="button" onclick="genPGTP04()">Generate Physical Graph Template Partition (IV)</button>
+  </td>
+  </tr>
+  </form>
 
   </table>
 
