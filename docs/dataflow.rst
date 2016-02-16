@@ -1,5 +1,5 @@
-Preliminary Concepts
---------------------
+Concepts and Background
+-----------------------
 
 This section briefly introduces key concepts and motivations underpinning DFMS.
 
@@ -52,10 +52,30 @@ Concretely, we have made the following changes to the existing dataflow model:
 * We introduced a small number of control flow graph nodes at the logical level
   such as *Scatter*, *Gather*, *GroupBy*, *Loop*, etc. These additional control
   nodes allow pipeline developers to systematically express complex data
-  partitioning and event flow patterns based on various requirments and science
+  partitioning and event flow patterns based on various requirements and science
   processing goals. More importantly, we transform these control nodes into
   ordinary DROPs at the physical level. Thus they are nearly transparent to the
   underlying graph/dataflow execution engine, which focuses solely on exploring
   parallelisms orthogonal to these control nodes placed by applications. In this
   way, the Data-Driven framework enjoys the best from both worlds - expressivity
   at the application level and flexibility at the dataflow system level.
+
+DFMS Functions
+^^^^^^^^^^^^^^
+The DFMS prototype provides eight Graph-based functions as shown in Figure 1 below.
+
+.. figure:: images/dfms_func_as_graphs.jpg
+
+   Figure 1. Graph-centric Functions of the DFMS Prototype
+
+Section [`Graphs`_] will delve into each function and its implementations in detail.
+Here we briefly discuss how they work together in our data-driven framework.
+First of all, the *Logical Graph Template* (topleft in Fig. 1) essentially
+represents high-level data processing capabilities. In the context of SDP for example, they
+could be "Process Visibility Data" or "Stage Data Products". Many such templates
+are managed by the *LogicalGraph Template Repository* (bottomleft in Fig. 1).
+A Logical Graph Template is first selected from the LogicalGraph Template Repository
+for a specific pipeline and then filled with scheduling block parameters. This generates
+a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
+Using profiles of pipeline components and COMP hardware resources, the DFMS prototype
+then "translates" a Logical Graph into a *Physical Graph Template*.
