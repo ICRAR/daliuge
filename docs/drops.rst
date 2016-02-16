@@ -87,7 +87,7 @@ DROPs that a connected by an edge in a physical graph that are deployed on separ
 Drop Component Interface
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The DFMS framework uses Docker containers as its primary interface to 3rd party applications. Docker containers have the bring the following benefits over traditional tools management:
+The DFMS framework uses Docker containers as its primary interface to 3rd party applications. Docker containers have the following benefits over traditional tools management:
 
 * Portability.
 * Versioning and component reuse.
