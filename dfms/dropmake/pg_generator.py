@@ -458,8 +458,16 @@ class PGT(object):
 
     def __init__(self, drop_list):
         self._drop_list = drop_list
+        self._extra_drops = [] # artifacts DROPs produced during L2G mapping
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
         self._json_str = None
+
+    @property
+    def drops(self):
+        if (self._extra_drops is None):
+            return self._drop_list
+        else:
+            return self._drop_list + self._extra_drops
 
     def to_partition_input(self, outf):
         """
@@ -502,11 +510,13 @@ class PGT(object):
         """
         Convert to JSON for visualisation in GOJS
         """
+        G = self.dag
         ret = dict()
         ret['class'] = 'go.GraphLinksModel'
         nodes = []
         links = []
         key_dict = dict() # key - oid, value - GOJS key
+
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
             node = dict()
@@ -520,17 +530,90 @@ class PGT(object):
                 node['category'] = 'Component'
             node['text'] = drop['nm']
             nodes.append(node)
-        ret['nodeDataArray'] = nodes
 
-        for drop in self._drop_list:
+        if (self._extra_drops is None):
+            extra_drops = []
+            remove_edges = []
+            add_edges = [] # a list of tuples
+            add_nodes = []
+            for drop in self._drop_list:
+                oid = drop['oid']
+                myk = key_dict[oid]
+                for i, oup in enumerate(G.successors(myk)):
+                    link = dict()
+                    link['from'] = myk
+                    from_dt = 0 if drop['type'] == 'plain' else 1
+                    to_dt = G.node[oup]['dt']
+                    if (from_dt == to_dt):
+                        to_drop = G.node[oup]['drop_spec']
+                        if (from_dt == 0):
+                            # add an extra app DROP
+                            extra_oid = "{0}_TransApp_{1}".format(oid, i)
+                            dropSpec = dropdict({'oid':extra_oid, 'type':'app',
+                            'app':'dfms.drop.BarrierAppDROP', 'nm':'go_app', 'tw':1})
+                            # create links
+                            drop.addConsumer(dropSpec)
+                            dropSpec.addInput(drop)
+                            dropSpec.addOutput(to_drop)
+                            to_drop.addProducer(dropSpec)
+                            mydt = 1
+                        else:
+                            # add an extra data DROP
+                            extra_oid = "{0}_TransData_{1}".format(oid, i)
+                            dropSpec = dropdict({'oid':extra_oid, 'type':'plain',
+                            'storage':'memory', 'nm':'go_data', 'dw':1})
+                            drop.addOutput(dropSpec)
+                            dropSpec.addProducer(drop)
+                            dropSpec.addConsumer(to_drop)
+                            to_drop.addInput(dropSpec)
+                            mydt = 0
+                        extra_drops.append(dropSpec)
+                        lid = len(extra_drops) * -1
+                        link['to'] = lid
+                        endlink = dict()
+                        endlink['from'] = lid
+                        endlink['to'] = oup
+                        links.append(endlink)
+                        # global graph updates
+                        # the new drop must have the same gid as the to_drop
+                        add_nodes.append((lid, 1, mydt, dropSpec, G.node[oup].get('gid', None)))
+                        remove_edges.append((myk, oup))
+                        add_edges.append((myk, lid))
+                        add_edges.append((lid, oup))
+                    else:
+                        link['to'] = oup
+                    links.append(link)
+            for gn in add_nodes:
+                #print "added gid = {0} for new node {1}".format(gn[4], gn[0])
+                G.add_node(gn[0], weight=gn[1], dt=gn[2], drop_spec=gn[3], gid=gn[4])
+            G.remove_edges_from(remove_edges)
+            G.add_edges_from(add_edges)
+            self._extra_drops = extra_drops
+        else:
+            for drop in self._drop_list:
+                oid = drop['oid']
+                myk = key_dict[oid]
+                for oup in G.successors(myk):
+                    link = dict()
+                    link['from'] = myk
+                    link['to'] = oup
+                    links.append(link)
+
+        # going through the extra_drops
+        for i, drop in enumerate(self._extra_drops):
             oid = drop['oid']
-            myk = key_dict[oid]
-            for oup in self.dag.successors(myk):
-                link = dict()
-                link['from'] = myk
-                link['to'] = oup
-                links.append(link)
+            node = dict()
+            node['key'] = (i + 1) * -1
+            node['oid'] = oid
+            tt = drop['type']
+            if ('plain' == tt):
+                node['category'] = 'Data'
+            elif ('app' == tt):
+                node['category'] = 'Component'
+            node['text'] = drop['nm']
+            nodes.append(node)
 
+        ret['nodeDataArray'] = nodes
         ret['linkDataArray'] = links
         if (string_rep):
             return json.dumps(ret, indent=2)
@@ -755,6 +838,8 @@ class MySarkarPGTP(PGT):
         node_list = jsobj['nodeDataArray']
         for node in node_list:
             gid = G.node[node['key']]['gid']
+            if (gid is None):
+                raise GPGTException("Node {0} does not have a Partition".format(node['key']))
             node['group'] = gid
             key_dict[node['key']] = gid
             groups.add(gid)
@@ -811,6 +896,7 @@ class MinNumPartsPGTP(MySarkarPGTP):
         self._deadline = deadline
         self._opf = optimistic_factor
         super(MinNumPartsPGTP, self).__init__(drop_list, num_partitions, par_label, max_dop, merge_parts)
+        self._extra_drops = None # force it to re-calculate the extra drops due to extra links during linearisation
 
     def init_scheduler(self):
         self._scheduler = MinNumPartsScheduler(self._drop_list, self._deadline, max_dop=self._max_dop, dag=self.dag, optimistic_factor=self._opf)
