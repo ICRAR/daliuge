@@ -68,9 +68,14 @@ execution. This is internally implemented the DROP event mechanism as follows:
 Input/Output
 ^^^^^^^^^^^^
 
-The data represented by a DROP can be read from or written to by an application
-either via dfms itself or externally. In the first case, the application at the
-time of running will use the methods available in the DROP to read or write
-data from/to it. In the latter case case the application will get a reference
-to the data from the DROP, and will use whatever mechanism it wants to perform
-I/O.
+I/O can be performed on the data that is represented by a DROP by obtaining 
+a reference to its I/O object and calling the necessary POSIX like methods.
+In this instance, the data is passing through the DROP instance. The application
+is free to bypass the DROP interface and perform I/O directly on the data. 
+In this case, the application must ensure that the data being written, for example,
+is being placed in the correct location and is in the expected format for storage or
+subsequent upstream processing by other application DROPs.
+
+
+
+The DFMS framework provides various convenience data DROP objects
