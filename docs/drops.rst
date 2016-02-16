@@ -74,11 +74,11 @@ In this instance, the data is passing through the DROP instance. The application
 is free to bypass the DROP interface and perform I/O directly on the data. 
 In this case, the application must ensure that the data being written, for example,
 is being placed in the correct location and is in the expected format for storage or
-subsequent upstream processing by other application DROPs.
+subsequent upstream processing by other application DROPs. The DFMS provides various 
+commonly used data DROPs with their associated I/O objects.
 
-The DFMS provides various commonly used data DROPs with their associated I/O objects.
-
-:ref:`dfms.io.MemoryIO`
 
 Drop Channels
 ^^^^^^^^^^^^^
+
+DROPs that a connected by an edge in a physical graph that are deployed on separate nodes or islands from each other are automatically given a Pyro stub (remote method invocation interface) in order for them to communicate to each other. It's the job of the Master DROP and Island Managers to generate and exchange stubs between DROP instances before the graph is deployed to the various data islands and nodes within islands respectively. If there is no DROP separation within the physical graph then its implied that the DROPs are going to be executed within a single address space on a single node within a single island, as a result, basic method calls are used.
