@@ -75,7 +75,3 @@ is free to bypass the DROP interface and perform I/O directly on the data.
 In this case, the application must ensure that the data being written, for example,
 is being placed in the correct location and is in the expected format for storage or
 subsequent upstream processing by other application DROPs.
-
-
-
-The DFMS framework provides various convenience data DROP objects
