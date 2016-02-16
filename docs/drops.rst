@@ -94,4 +94,4 @@ The DFMS framework uses Docker containers as its primary interface to 3rd party 
 * Lightweight footprint.
 * Simple maintenance.
 
-The application programmer can make use to the `dfms.apps.dockerapp <http://dfms.readthedocs.org/en/latest/api/apps.html?highlight=docker#module-dfms.apps.dockerapp>`_ object as an interface to their container and the DROP framework. Refer to the documentation for details. 
+The application programmer can make use of the `dfms.apps.dockerapp <http://dfms.readthedocs.org/en/latest/api/apps.html?highlight=docker#module-dfms.apps.dockerapp>`_ object which is the interface between a Docker container and the DROP framework. Refer to the documentation for details. 
