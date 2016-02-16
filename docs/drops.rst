@@ -82,3 +82,16 @@ Drop Channels
 ^^^^^^^^^^^^^
 
 DROPs that a connected by an edge in a physical graph that are deployed on separate nodes or islands from each other are automatically given a Pyro stub (remote method invocation interface) in order for them to communicate to each other. It's the job of the Master DROP and Island Managers to generate and exchange stubs between DROP instances before the graph is deployed to the various data islands and nodes within islands respectively. If there is no DROP separation within a physical graph parition then its implied that the DROPs are going to be executed within a single address space, as a result, basic method calls are used.
+
+
+Drop Component Interface
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The DFMS framework uses Docker containers as its primary interface to 3rd party applications. Docker containers have the bring the following benefits over traditional tools management:
+
+* Portability.
+* Versioning and component reuse.
+* Lightweight footprint.
+* Simple maintenance.
+
+The application programmer can make use to the `dfms.apps.dockerapp <http://dfms.readthedocs.org/en/latest/api/apps.html?highlight=docker#module-dfms.apps.dockerapp>`_ object as an interface to their container and the DROP framework. Refer to the documentation for details. 
