@@ -209,10 +209,14 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 
 			// #1: create missing nodes in the graph
 			// Because oids is sorted, they will be created in oid order
+			var time0 = new Date().getTime();
 			for(var idx in oids) {
 				var doSpec = doSpecs[oids[idx]];
 				modified |= _addNode(g, doSpec);
 			}
+
+			var time1 = new Date().getTime();
+			console.log('Took %d [ms] to create the nodes', (time1 - time0))
 
 			// #2: establish missing relationships
 			for(var idx in oids) {
@@ -241,9 +245,15 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 				// there currently are no x-to-one relationships producing lh->rh edges
 			}
 
+			var time2 = new Date().getTime();
+			console.log('Took %d [ms] to create the edges', (time2 - time1))
+
 			if( modified ) {
 				drawGraph();
 			}
+
+			var time3 = new Date().getTime();
+			console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
 			// During PRISITINE and BUILDING we need to update the graph structure
 			// During DEPLOYING we call ourselves again anyway, because we need
