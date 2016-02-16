@@ -808,7 +808,7 @@ class DAGUtil(object):
                 dtp = 1
             else:
                 raise SchedulerException("Drop Type '{0}' is not yet supported".format(tt))
-            G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp)
+            G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp, drop_spec=drop)
             if (drop.has_key(obk)):
                 for oup in drop[obk]:
                     if ('plain' == tt):
