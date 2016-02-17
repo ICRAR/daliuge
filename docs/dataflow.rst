@@ -66,6 +66,8 @@ Concretely, we have made the following changes to the existing dataflow model:
   hardware resources in order to meet performance requirements at minimum cost
   (e.g. power consumption).
 
+.. _dfms_functions:
+
 DFMS Functions
 ^^^^^^^^^^^^^^
 The DFMS prototype provides eight Graph-based functions as shown in Figure 1 below.
