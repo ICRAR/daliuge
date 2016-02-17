@@ -10,46 +10,82 @@ details in the DFMS prototype.
 Logical Graph
 ^^^^^^^^^^^^^
 
-A *logical graph* is a compact representation of the logical operation of a processing
+A *logical graph* is a compact representation of the logical operations in a processing
 pipeline without concerning underlying hardware resources. Such operations are
-referred to as "construct" in a *logical graph*. The relationship between a DROP
-and a construct resembles the one between "object and class" in OO
+referred to as **construct** in a *logical graph*. The relationship between a DROP
+and a *construct* resembles the one between "object and class" in OO
 programming languages. In other words, most constructs are DROP templates and
-multiple DROPs correspond to a single construct. Each construct has several
-associated properties that users can adjust during the development of *logical graph*.
-For component and data construct, execution time and data volumes are two very important
-properties.
+multiple DROPs correspond to a single construct.
 
 .. figure:: images/scatter_example.png
 
-   Figure 2. An logical graph example with *Scatter*, Gather, and Group By constructs
+   Figure 2. An example of *logical graph* with data constructs (e.g. Data1 - Data5),
+   component constructs (i.e. Component 1,3,4,5), and control flow constructs
+   (Scatter, Gather, and Group-By). This example can be viewed
+   `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in the DFMS prototype.
 
-Fig. 2 shows an example *logical graph* with several data constructs (e.g. Data1 - Data5),
-component constructs (i.e. Component 1,3,4,5), and three control flow constructs
-(Scatter, Gather, and Group-By).
+Construct properties
+""""""""""""""""""
+Each construct has several
+associated properties that users have control over during the development of *logical graph*.
+For Component and Data construct, **Execution time** and **Data volume** are two very important
+properties. Such properties can be directly obtained from parametric models or
+`estimated <http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=546196>`_ from the profiling information (e.g. pipeline component workload characterisation) and COMP platform specification.
 
-* *Scatter* construct represents data parallelism, constructs inside a Scatter
-  make up processing against a single data partition within the enclosing
-  Scatter construct. A useful property of *Scatter* is *num_of_copies*.
-  In this nested Scatter example in Fig. 2, if the num_of_copies for "Scatter1"
-  and Scatter2 is 5 and 4 respectively, the generated physical graph
-  will have in total 20 Data1/Component1/Data3 DROPs, but only 5 Component 5 DROPs
-  since it is inside Scatter1 Construct but outside Scatter2.
+Control flow constructs
+"""""""""""""""""""""""
+Control flow constructs form the "skeleton" of the *logical graph*, and determine
+the final structure of the *physical graph* to be generated. DFMS currently supports
+four control flow constructs:
 
-* *Gather* construct Coming soon!
+* **Scatter** indicates data parallelism. Constructs inside a *Scatter*
+  represent a group of components consuming a single data partition within the enclosing
+  *Scatter*. A useful property of *Scatter* is *num_of_copies*.
+  In this nested Scatter example in Fig. 2, if the num_of_copies for *Scatter1*
+  and *Scatter2* is 5 and 4 respectively, the generated physical graph
+  will have in total 20 Data1/Component1/Data3 DROPs, but only 5 DROPs for construct "Component 5",
+  which is inside *Scatter1* Construct but outside *Scatter2*.
 
-* *Group-By* construct Coming soon!
+* **Gather** indicates data barriers. Constructs inside a *Gather* represent a group
+  of component consuming a sequence of data partitions as a whole. *Gather* has a property
+  named "num_of_inputs", which is essentially the Gather "width" stating how many
+  partitions each *Gather* instance (translated into a *BarrierAppDROP*, see :ref:`drop.execution`)
+  can handle. This in turn is used by DFMS to determine how many *Gather* instances should be
+  generated in the *physical graph*. *Gather* sometimes can be used in conjunction with
+  *Group By* (see middle-right in Fig.2), in which case, data held in a sequence of groups are processed
+  together by components enclosed by *Gather*.
 
-* *Loop* construct Coming soon!
+* **Group By** indicates data resorting (e.g. `corner turning <https://mnras.oxfordjournals.org/content/410/3/2075.full>`_ in radio astronomy).
+  The semantic is analogous to "Group By" used in SQL statement for relational
+  databases, but only applicable to data DROPs. Current DFMS prototype requires *Group By* used in
+  conjunction with nested *Scatter* such that data DROPs that are originally sorted
+  in the order of [outer_partition_id][inner_partition_id] are now resorted as [inner_partition_id][outer_partition_id].
+  In terms of parallelism, *Group By*
+  is comparable to `"static" MapReduce <http://openmymind.net/2011/1/20/Understanding-Map-Reduce/>`_,
+  where the keys used by all Reducers are known a prior.
+
+* **Loop** indicates iterations. Constructs inside a *Loop* represent a group of
+  components and data that will be repeatedly executed / produced for a fixed number of
+  times. Given the basic DROP principle of "writing once, read many times", current
+  DFMS prototype does not support dynamic branch condition for *Loop*.
+  Instead, each *Loop* construct has a property named "num_of_iterations" that must be
+  determined during *logical graph* development. In other words, a "num_of_iterations"
+  number of DROPs for each construct inside a *Loop* will be statically generated
+  in the *physical graph*.
+
+  .. figure:: images/loop_example.png
+
+     Figure 3. A nested-Loop (minor and major cycle) example of logical graph for
+     continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in the DFMS prototype.
 
 Logical graphs serve as a way to describe a give algorithm or process. They are
 not a suitable description of the precise execution of such process. To achieve
 this, logical graphs are translated into *physical graphs*.
 
-From Logical to Physical
-^^^^^^^^^^^^^^^^^^^^^^^^
+Translation
+^^^^^^^^^^^
 
-In general, we follow these steps to generate a physical graph.
+DFMS follows the following steps to generate a *physical graph*.
 
 * **Validity checking**. This is similar to compiler syntax error checking. For example, DFMS
   currently does not allow cyclic in the logical graph.
@@ -65,7 +101,11 @@ In general, we follow these steps to generate a physical graph.
 * **Resource mapping**. This step maps logical partitions onto a given set of resources
   in certain optimal ways (load balancing, etc.)
 
-We have implemented the following algorithms for the graph partitioning and resource mapping steps:
+The DFMS prototype has tailored `DAG scheduling <http://dl.acm.org/citation.cfm?id=344618>`_
+and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_
+algorithms, all of which are currently configured to utilise uniform hardware resources.
+Support for heterogenous resources using the `List scheduling <https://en.wikipedia.org/wiki/List_scheduling>`_
+algorithm will be made available shortly.
 
 * **Load balancing**. Given the available resource units (e.g. number of nodes),
   produce a partitioning scheme such that each partition has similar workload while
