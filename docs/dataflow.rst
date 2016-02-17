@@ -42,12 +42,11 @@ Concretely, we have made the following changes to the existing dataflow model:
   (persistent) states. In our graph model, both application (task) and data nodes
   are termed as **DROPs**. What are really moving on the edge are **DROP Events**.
 
-* We differentiate between two kinds of dataflow graphs - **Logical Graph** and
-  **Physical Graph**. While the former provides a higher level of computation
-  abstraction in a resource-independent manner, the latter represents the actual
-  execution plan consisting of inter-connected DROPs mapped onto a given set of
-  hardware resources in order to meet performance requirements at minimum cost
-  (e.g. power consumption).
+* While nodes/actors in the traditional dataflow are stateless functions, we
+  express both computation and data nodes as stateful DROPs. Statefulness not only
+  allows us to manage DROPs through persistent checkpointing, versioning and recovery
+  after restart, etc., but also enables data sharing amongst multiple processing
+  pipelines in situations like re-processing or commensal observations.
 
 * We introduced a small number of control flow graph nodes at the logical level
   such as *Scatter*, *Gather*, *GroupBy*, *Loop*, etc. These additional control
@@ -60,22 +59,42 @@ Concretely, we have made the following changes to the existing dataflow model:
   way, the Data-Driven framework enjoys the best from both worlds - expressivity
   at the application level and flexibility at the dataflow system level.
 
+* Finally, we differentiate between two kinds of dataflow graphs - **Logical Graph** and
+  **Physical Graph**. While the former provides a higher level of computation
+  abstraction in a resource-independent manner, the latter represents the actual
+  execution plan consisting of inter-connected DROPs mapped onto a given set of
+  hardware resources in order to meet performance requirements at minimum cost
+  (e.g. power consumption).
+
 DFMS Functions
 ^^^^^^^^^^^^^^
 The DFMS prototype provides eight Graph-based functions as shown in Figure 1 below.
 
 .. figure:: images/dfms_func_as_graphs.jpg
 
-   Figure 1. Graph-centric Functions of the DFMS Prototype
+   Figure 1. Graph-based Functions of the DFMS Prototype
 
-Section [`Graphs`_] will delve into each function and its implementations in detail.
+The [`Graphs`_] section will go through implementation details for each function.
 Here we briefly discuss how they work together in our data-driven framework.
-First of all, the *Logical Graph Template* (topleft in Fig. 1) essentially
-represents high-level data processing capabilities. In the context of SDP for example, they
-could be "Process Visibility Data" or "Stage Data Products". Many such templates
+First of all, the *Logical Graph Template* (topleft in Fig. 1) represents high-level
+data processing capabilities. In the case of SDP, they could be, for example,
+"Process Visibility Data" or "Stage Data Products". All logical graph templates
 are managed by the *LogicalGraph Template Repository* (bottomleft in Fig. 1).
-A Logical Graph Template is first selected from the LogicalGraph Template Repository
-for a specific pipeline and then filled with scheduling block parameters. This generates
-a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
-Using profiles of pipeline components and COMP hardware resources, the DFMS prototype
-then "translates" a Logical Graph into a *Physical Graph Template*.
+The logical graph template is first selected from this repository
+for a specific pipeline and is then filled with scheduling block parameters.
+This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
+Using profiling information of pipeline components and COMP hardware resources, the DFMS prototype
+then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes
+a manifest of ALL DROPs without specifying their physical locations.
+Once the information on resource availability (e.g. compute node, storage, etc.) is presented,
+DFMS associates each DROP in the physical graph template with an available resource unit
+in order to meet pre-defined requirements such as performance, cost, etc.
+Doing so essentially transforms the physical graph template into a *Physical Graph*,
+consisting of inter-connected DROPs mapped onto a given set of resources. Before an
+observation starts, DFMS deploys all the DROPs onto these resources as per the
+location information stated in the physical graph. The deployment process is
+facilitated through `DROP Managers`_, which are daemon processes managing deployed DROPs
+on designated resources. Once an observation starts, Graph `Execution`_ is cascading down
+graph edges through either data DROPs that triggers its next consumers or application DROPs
+that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
+are persistently preserved as Science Products.
