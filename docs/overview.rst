@@ -1,9 +1,13 @@
 Overview
 ========
 
-.. contents::
+The following sections give an overview of the different modules present in
+DFMS.
 
-.. include:: dataflow.rst
-.. include:: drops.rst
-.. include:: graphs.rst
-.. include:: managers.rst
+.. toctree::
+ :maxdepth: 2
+
+ dataflow
+ drops
+ graphs
+ managers
