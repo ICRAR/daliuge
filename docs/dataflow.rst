@@ -13,7 +13,7 @@ opportunities that are previously masked by "artificial" control flow imposed by
 applications or programmers. A similar example is the ``make`` tool, where the
 programmer focuses on defining each target and its dependencies. The burden of
 exploring parallelism to efficiently execute many individual compiling tasks in
-a correct order lies within the responsibility of the Make utility.
+a correct order lies within the responsibility of the ``make`` utility.
 
 Graph
 ^^^^^
@@ -78,25 +78,29 @@ The DFMS prototype provides eight Graph-based functions as shown in Figure 1 bel
 
 The :doc:`graphs` section will go through implementation details for each function.
 Here we briefly discuss how they work together in our data-driven framework.
-First of all, the *Logical Graph Template* (topleft in Fig. 1) represents high-level
-data processing capabilities. In the case of SDP, they could be, for example,
-"Process Visibility Data" or "Stage Data Products". All logical graph templates
-are managed by the *LogicalGraph Template Repository* (bottomleft in Fig. 1).
-The logical graph template is first selected from this repository
-for a specific pipeline and is then filled with scheduling block parameters.
-This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
-Using profiling information of pipeline components and COMP hardware resources, the DFMS prototype
-then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes
-a manifest of ALL DROPs without specifying their physical locations.
-Once the information on resource availability (e.g. compute node, storage, etc.) is presented,
-DFMS associates each DROP in the physical graph template with an available resource unit
-in order to meet pre-defined requirements such as performance, cost, etc.
-Doing so essentially transforms the physical graph template into a *Physical Graph*,
-consisting of inter-connected DROPs mapped onto a given set of resources. Before an
-observation starts, DFMS deploys all the DROPs onto these resources as per the
-location information stated in the physical graph. The deployment process is
-facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
-on designated resources. Once an observation starts, Graph :ref:`drop.execution` is cascading down
-graph edges through either data DROPs that triggers its next consumers or application DROPs
-that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
-are persistently preserved as Science Products.
+
+* First of all, the *Logical Graph Template* (topleft in Fig. 1) represents high-level
+  data processing capabilities. In the case of SDP, they could be, for example,
+  "Process Visibility Data" or "Stage Data Products".
+
+* All logical graph templates are managed by the *LogicalGraph Template Repository* (bottomleft in Fig. 1).
+  The logical graph template is first selected from this repository for a specific pipeline and
+  is then filled with scheduling block parameters. This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
+
+* Using profiling information of pipeline components and COMP hardware resources, the DFMS prototype
+  then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes a manifest of ALL DROPs without specifying their physical locations.
+
+* Once the information on resource availability (e.g. compute node, storage, etc.) is presented,
+  DFMS associates each DROP in the physical graph template with an available resource unit
+  in order to meet pre-defined requirements such as performance, cost, etc.
+  Doing so essentially transforms the physical graph template into a *Physical Graph*,
+  consisting of inter-connected DROPs mapped onto a given set of resources.
+
+* Before an observation starts, DFMS deploys all the DROPs onto these resources as per the
+  location information stated in the physical graph. The deployment process is
+  facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
+  on designated resources.
+
+* Once an observation starts, Graph :ref:`drop.execution` is cascading down graph edges through either data DROPs that triggers its next consumers or application DROPs
+  that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
+  are persistently preserved as Science Products.
