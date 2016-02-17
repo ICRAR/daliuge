@@ -14,6 +14,8 @@ dfms.io
 .. automodule:: dfms.io
    :members:
 
+.. _api.dfms.drop:
+
 dfms.drop
 ^^^^^^^^^
 .. automodule:: dfms.drop

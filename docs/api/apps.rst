@@ -4,6 +4,8 @@ dfms.apps
 .. automodule:: dfms.apps
 .. contents::
 
+.. _api.dfms.apps.dockerapp:
+
 dfms.apps.dockerapp
 ^^^^^^^^^^^^^^^^^^^
 .. automodule:: dfms.apps.dockerapp

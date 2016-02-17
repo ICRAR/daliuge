@@ -1,3 +1,6 @@
+
+.. _drop.managers:
+
 DROP Managers
 -------------
 
@@ -27,7 +30,7 @@ consequences:
 
 * Submitting the same physical graph to a DROP Manager will create two different
   sessions
-* Two physical graph executions can run at the same time in a givem DROP
+* Two physical graph executions can run at the same time in a given DROP
   Manager.
 
 Sessions have a simple lifecycle: they are first created, then a physical graph
@@ -36,11 +39,14 @@ graph can be deployed (i.e., the DROPs are created), which leaves the session in
 a running state. Once the graph has finished its execution the session is
 finished and can be deleted.
 
+
+.. _node_drop_manager:
+
 Node DROP Manager
 ^^^^^^^^^^^^^^^^^
 
 *Node DROP Managers* sit at the bottom of the DROP management hierarchy. They
-are the direct responsibles for creating and deleting DROPs, and for ultimately
+are the direct responsible for creating and deleting DROPs, and for ultimately
 running the system.
 
 The Node DROP Manager works mainly as a collection of sessions that are created,
@@ -53,7 +59,7 @@ Data Island DROP Manager
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 *Data Island DROP Managers* sit on top of Node DROP Managers. They follow the
-assummed topology where a set of nodes is grouped into a logical *Data Island*.
+assumed topology where a set of nodes is grouped into a logical *Data Island*.
 The Data Island DROP Manager is the public interface of the whole Data Island to
 external users, relaying messages to the individual Node DROP Managers as
 needed.
@@ -94,9 +100,16 @@ The hierarchy contains the following entry points::
  POST   /api/sessions/<sessionId>/graph/append
 
 The interface indicate the object with which one is currently interacting, which
-should be self-explanatory. GET methods are queries performed on the
-corresponding object. POST methods send data to a manager to create new objects
-or to perform an action. DELETE methods delete objects from the manager.
+should be self-explanatory. ``GET`` methods are queries performed on the
+corresponding object. ``POST`` methods send data to a manager to create new
+objects or to perform an action. ``DELETE`` methods delete objects from the
+manager.
+
+Of particular attention is the ``POST /api/sessions/<sessionId>/graph/append``
+method used to feed a manager with a physical graph. The content of such request
+is a JSON list of objects, where each object contains a full description of a
+DROP to be created by the manager.
+
 
 Clients
 ^^^^^^^
