@@ -57,6 +57,8 @@ allow for a continuous operation of applications as data gets written into
 their inputs. Once all the data has been written, the normal event notifying
 that the DROP has moved to the **COMPLETED** state is also fired.
 
+.. _drop.execution:
+
 Execution
 ^^^^^^^^^
 
@@ -78,13 +80,13 @@ execution. This is internally implemented the DROP event mechanism as follows:
 Input/Output
 ^^^^^^^^^^^^
 
-I/O can be performed on the data that is represented by a DROP by obtaining 
+I/O can be performed on the data that is represented by a DROP by obtaining
 a reference to its I/O object and calling the necessary POSIX like methods.
 In this case, the data is passing through the DROP instance. The application
-is free to bypass the DROP interface and perform I/O directly on the data. 
+is free to bypass the DROP interface and perform I/O directly on the data.
 In this case, the application must ensure that the data being written, for example,
 is placed in the correct location and is in the expected format for storage or
-subsequent upstream processing by other application DROPs. The DFMS provides various 
+subsequent upstream processing by other application DROPs. The DFMS provides various
 commonly used data DROPs with their associated I/O objects.
 
 

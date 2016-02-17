@@ -93,8 +93,8 @@ Doing so essentially transforms the physical graph template into a *Physical Gra
 consisting of inter-connected DROPs mapped onto a given set of resources. Before an
 observation starts, DFMS deploys all the DROPs onto these resources as per the
 location information stated in the physical graph. The deployment process is
-facilitated through `DROP Managers`_, which are daemon processes managing deployed DROPs
-on designated resources. Once an observation starts, Graph `Execution`_ is cascading down
+facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
+on designated resources. Once an observation starts, Graph :ref:`drop.execution` is cascading down
 graph edges through either data DROPs that triggers its next consumers or application DROPs
 that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
 are persistently preserved as Science Products.
