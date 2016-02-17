@@ -10,7 +10,7 @@ constraints on the order or timing of operations beyond what is inherent in the
 data dependencies among compute tasks. The removal of explicit scheduling of
 compute task in the dataflow model has opened up new (e.g. parallelism)
 opportunities that are previously masked by "artificial" control flow imposed by
-applications or programmers. A similar example is the Make tool, where the
+applications or programmers. A similar example is the ``make`` tool, where the
 programmer focuses on defining each target and its dependencies. The burden of
 exploring parallelism to efficiently execute many individual compiling tasks in
 a correct order lies within the responsibility of the Make utility.
@@ -74,7 +74,7 @@ The DFMS prototype provides eight Graph-based functions as shown in Figure 1 bel
 
    Figure 1. Graph-based Functions of the DFMS Prototype
 
-The [`Graphs`_] section will go through implementation details for each function.
+The :doc:`graphs` section will go through implementation details for each function.
 Here we briefly discuss how they work together in our data-driven framework.
 First of all, the *Logical Graph Template* (topleft in Fig. 1) represents high-level
 data processing capabilities. In the case of SDP, they could be, for example,
