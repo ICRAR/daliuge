@@ -129,15 +129,21 @@ Basic steps
   logical partitions (a.k.a. *DropIsland*) and generates an order of DROP
   execution sequence within each partition such that certain performance
   requirements (e.g. total completion time, total data movement, etc.) are met
-  under given constraints (e.g. resource footprint).
-  This step produces the **Physical Graph Template Partition**.
+  under given constraints (e.g. resource footprint). An important assumption is
+  that the cost of moving data within the same partition is far
+  less than that between two different partitions. This step produces
+  the **Physical Graph Template Partition**.
 
 * **Resource mapping**. Maps each logical partition onto a given set of resources
-  in certain optimal ways (load balancing, etc.). This steps requires
+  in certain optimal ways (load balancing, etc.). Concretely, each DROP is assigned
+  a physical resource id (such as IP address, hostname, etc.). This steps requires
   near real-time resource usage information from the COMP platform or the Local Monitor & Control (LMC).
   It also needs DROP managers to coordinate the DROP deployment.
   In some cases, this mapping step is merged with the previous *Graph partitioning* step
-  to directly produce DROPs to resource mapping.
+  to directly map DROPs to resources.
+
+In the following context, we use the term **Scheduling** to refer to the combination of
+both *Graph partitioning* and *Resource mapping*.
 
 Algorithms
 """"""""""
@@ -147,18 +153,43 @@ The DFMS prototype has tailored several heuristics-based algorithms from previou
 and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_ to perform these two steps. These algorithms are currently configured by DFMS to utilise uniform hardware resources.
 Support for heterogenous resources using the `List scheduling <https://en.wikipedia.org/wiki/List_scheduling>`_
 algorithm will be made available shortly. With these algorithms, the DFMS prototype
-currently can deal with the following translation / mapping problems:
+currently attempts to address the following translation problems:
 
-* **Load balancing**. Given the available resource units (e.g. number of nodes),
-  produce a partitioning scheme such that each partition has similar workload while
-  the inter-node data movement is minimal.
+* **Minimise the total cost of data movement** but subject to a given **degree of load balancing**.
+  In this problem, a number `N` of available resource units (e.g. a number of compute nodes)
+  are given, the translation process aims to produce `M` DropIslands (`M <= N`)
+  from the *physical graph template* such that (1) the total volume of data traveling
+  between two distinct DropIslands is minimised, and (2) the workload variations
+  measured in aggregated **execution time** (DROP property) between a pair of DropIslands is less than a given
+  percentage `p` %. To solve this problem, graph partitioning and resource mapping steps are merged into one.
 
-* **Minimise pipeline execution time** while constrain the Degree of Parallelism
-  (DoP, e.g. number of cores) for each virtual or physical resource unit.
+* **Minimise the total completion time** but subject to a given **degree of parallelism** (DoP)
+  (e.g. number of cores per node) that each DropIsland is allowed to take advantage of.
+  In the 1st version of this problem, no information regarding resources is given.
+  DFMS simply strives to come up with the optimal number of DropIslands such that
+  (1) the total completion time of the pipeline (which depends on both execution time
+  and the cost of data movement on the graph critical path) is minimised, and (2)
+  the maximum degree of parallelism within each DropIsland is
+  never greater than the given level *DoP*. In the 2nd version of this problem,
+  a number of resources of identical performance capability are also given in addition
+  to the *DoP*. This practical problem is a natural extension of version 1,
+  and is solved in DFMS by using the
+  `"two-phase" method <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=580873>`_.
 
-* **Finish the pipeline execution on time** but using the minimum number of partitions,
-  each of which has limited resource constraints (i.e. number of cores)
-
+* **Minimise the number of DropIslands** but subject to (1) a given **completion time deadline**,
+  and (2) a given **degree of parallelism** (DoP) (e.g. number of cores per node)
+  that each DropIsland is allowed to take advantage of. In this problem, both completion
+  time and resource footprint become the minimisation goals. The motivation of this problem
+  is clear. If both scheduing schemes can finish the processing
+  within 5 minutes, the one using less resources should be preferred. Since a DropIsland
+  is mapped onto resources, and its capacity is already constrained by a given DoP,
+  the number of DropIslands is proportional to the amount of resources needed.
+  Consequently, schedules that require less number of DropIslands are supurior.
+  Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design,
+  DFMS uses a "look-ahead" strategy at each optimisation step to adaptively
+  choose from two conflicting objective functions (deadline or resource) for
+  local optimisation, which is more likely to lead to global optimum than simple
+  greedy strategies.
 
 Physical Graph
 ^^^^^^^^^^^^^^
