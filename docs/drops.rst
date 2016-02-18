@@ -19,6 +19,8 @@ can be read as many times as needed. Eventually, the DROP will transition to
 moves to the final **DELETED** state. If any I/O error occurs the DROP will be
 moved to the **ERROR** state.
 
+.. _drop.events:
+
 Events
 ^^^^^^
 
@@ -89,6 +91,7 @@ is placed in the correct location and is in the expected format for storage or
 subsequent upstream processing by other application DROPs. The DFMS provides various
 commonly used data DROPs with their associated I/O objects.
 
+.. _drop.channels:
 
 DROP Channels
 ^^^^^^^^^^^^^
