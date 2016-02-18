@@ -106,28 +106,48 @@ Translation
 While a *logical graph* provides a compact way to express complex processing logic,
 it contains high level control flow specifications that are not directly usable
 by the underlying graph execution engine and DROP managers. To achieve that,
-logical graphs are translated into *physical graphs*. The translation process in the DFMS prototype
-involves the following steps:
+logical graphs are translated into *physical graphs*. The translation process essentially
+creates all DROPs and is implemented in the :doc:`api/dropmake` module.
 
-* **Validity checking**. This is similar to compiler syntax error checking. For example, DFMS
-  currently does not allow cyclic in the logical graph.
+Basic steps
+"""""""""""
+**DropMake** in the DFMS prototype involves the following steps:
 
-* **Construct unrolling**. This step "unrolls" the logical graph based on control constructs,
-  creates all necessary DROPs, establishes directed edges amongst DROPs. This step
-  produces the Physical Graph Template.
+* **Validity checking**. Checks whether the *logical graph* is ready to be translated.
+  This step is similar to semantic error checking used in compilers.
+  For example, DFMS currently does not allow any cycles in the logical graph. Another
+  example is that *Gather* can be placed only after a *Group By* or a *Data* construct
+  as shown in Figure 2. Any validity errors
+  will be displayed as exceptions on the *logical graph* editor.
 
-* **Graph partitioning**. This step uses various algorithms to partition the *physical graph
-  template* to meet certain goals under some given constraints. Each logical partition
-  could be scheduled onto some physical resource unit.
+* **Construct unrolling**. Unrolls the *logical graph* by (1) creating all necessary DROPs
+  (including "artifact" DROPs that do not appear in the original *logical graph*),
+  and (2) establishing directed edges amongst all newly generated DROPs. This step
+  produces the **Physical Graph Template**.
 
-* **Resource mapping**. This step maps logical partitions onto a given set of resources
-  in certain optimal ways (load balancing, etc.)
+* **Graph partitioning**. Decomposes the *Physical Graph Template* into a set of
+  logical partitions (a.k.a. *DropIsland*) and generates an order of DROP
+  execution sequence within each partition such that certain performance
+  requirements (e.g. total completion time, total data movement, etc.) are met
+  under given constraints (e.g. resource footprint).
+  This step produces the **Physical Graph Template Partition**.
 
-The DFMS prototype has tailored `DAG scheduling <http://dl.acm.org/citation.cfm?id=344618>`_
-and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_
-algorithms, all of which are currently configured to utilise uniform hardware resources.
+* **Resource mapping**. Maps each logical partition onto a given set of resources
+  in certain optimal ways (load balancing, etc.). This steps requires
+  near real-time resource usage information from the COMP platform or the Local Monitor & Control (LMC).
+  It also needs DROP managers to coordinate the DROP deployment.
+  In some cases, this mapping step is merged with the previous *Graph partitioning* step
+  to directly produce DROPs to resource mapping.
+
+Algorithms
+""""""""""
+Scheduling an Acyclic Directed Graph (DAG) that involves graph partitioning and resource mapping as stated in `Basic steps`_
+is known to be an `NP-hard problem <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=210815>`_.
+The DFMS prototype has tailored several heuristics-based algorithms from previous research on `DAG scheduling <http://dl.acm.org/citation.cfm?id=344618>`_
+and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_ to perform these two steps. These algorithms are currently configured by DFMS to utilise uniform hardware resources.
 Support for heterogenous resources using the `List scheduling <https://en.wikipedia.org/wiki/List_scheduling>`_
-algorithm will be made available shortly.
+algorithm will be made available shortly. With these algorithms, the DFMS prototype
+currently can deal with the following translation / mapping problems:
 
 * **Load balancing**. Given the available resource units (e.g. number of nodes),
   produce a partitioning scheme such that each partition has similar workload while
@@ -162,3 +182,7 @@ Physical graphs are the final product fed into the :ref:`drop.managers`. The
 fact that they contain DROPs means that they describe exactly what an execution
 consists of. They also contain partitioning information that allows the
 different managers to distribute them across different nodes and Data Islands.
+
+Deployment
+""""""""""
+Use the client.
