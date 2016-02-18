@@ -180,26 +180,27 @@ currently attempts to address the following translation problems:
   and (2) a given **degree of parallelism** (DoP) (e.g. number of cores per node)
   that each DropIsland is allowed to take advantage of. In this problem, both completion
   time and resource footprint become the minimisation goals. The motivation of this problem
-  is clear. If both scheduing schemes can finish the processing
-  within 5 minutes, the one using less resources should be preferred. Since a DropIsland
+  is clear. If both schedules can complete the processing pipeline
+  within 5 minutes, the schedule that consumes less resources is preferred. Since a DropIsland
   is mapped onto resources, and its capacity is already constrained by a given DoP,
   the number of DropIslands is proportional to the amount of resources needed.
   Consequently, schedules that require less number of DropIslands are supurior.
   Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design,
   DFMS uses a "look-ahead" strategy at each optimisation step to adaptively
   choose from two conflicting objective functions (deadline or resource) for
-  local optimisation, which is more likely to lead to global optimum than simple
+  local optimisation, which is more likely to lead to the global optimum than
   greedy strategies.
 
 Physical Graph
 ^^^^^^^^^^^^^^
 
-A *physical graph* is a collection of inter-connected DROPs representing an
-execution plan. The nodes of a physical graph are DROPs representing either
-data or applications.
-
-Edges on the graph always run between a data DROP and an application DROP. This
-establishes a set of reciprocal relationships between DROPs:
+The `Translation`_ process produces the *physical graph specification*, which, once
+deployed and instantiated "live", becomes the *Physical Graph*, representing a
+collection of inter-connected DROPs in a distributed
+execution plan across multiple resource units. The nodes of a physical graph are
+DROPs representing either data or applications. The two DROP nodes connected by
+an edge always have different types from each other. This establishes a set of
+reciprocal relationships between DROPs:
 
 * A data DROP is the *input* of an application DROP; on the other hand
   the application is a *consumer* of the data DROP.
@@ -209,11 +210,19 @@ establishes a set of reciprocal relationships between DROPs:
 * Finally, a data DROP can be the *output* of an application DROP, in
   which case the application is the *producer* of the data DROP.
 
-Physical graphs are the final product fed into the :ref:`drop.managers`. The
-fact that they contain DROPs means that they describe exactly what an execution
-consists of. They also contain partitioning information that allows the
-different managers to distribute them across different nodes and Data Islands.
+Physical graph specifications are the final (the only) graph products that will be submitted
+to the :ref:`drop.managers`. Once DROP managers accept a physical graph specification,
+it is their responsibility to create and deploy DROP instances on their managed resources as
+prescribed in the physical graph specification such as partitioning information
+(produced during the `Translation`_) that allows different managers to distribute
+graph partitions (i.e. DropIslands) across different nodes and Data Islands by
+setting up proper :ref:`drop.channels`. The fact that physical graphs are made
+of DROPs means that they describe exactly what an :ref:`drop.execution` consists
+of. In this sense, *physical graph* is the graph execution engine.
 
-Deployment
-""""""""""
-Use the client.
+In addition to DROP managers, the DFMS prototype also includes a *Physical Graph Manager*,
+which allows users to manage all currently running and past physical graphs within
+the system. Although current *Physical Graph Manager* implementation only supports
+"add" and "get" physical graph specifications, features such as graph event monitoring
+(through the DROP :ref:`drop.events` subscription mechanism) and the graph statistics dashboard will
+be added in the near future.
