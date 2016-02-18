@@ -25,7 +25,7 @@ multiple DROPs correspond to a single construct.
    `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in the DFMS prototype.
 
 Construct properties
-""""""""""""""""""
+""""""""""""""""""""
 Each construct has several
 associated properties that users have control over during the development of *logical graph*.
 For Component and Data construct, **Execution time** and **Data volume** are two very important
@@ -36,7 +36,7 @@ Control flow constructs
 """""""""""""""""""""""
 Control flow constructs form the "skeleton" of the *logical graph*, and determine
 the final structure of the *physical graph* to be generated. DFMS currently supports
-four control flow constructs:
+the following flow constructs:
 
 * **Scatter** indicates data parallelism. Constructs inside a *Scatter*
   represent a group of components consuming a single data partition within the enclosing
@@ -59,7 +59,7 @@ four control flow constructs:
   The semantic is analogous to "Group By" used in SQL statement for relational
   databases, but only applicable to data DROPs. Current DFMS prototype requires *Group By* used in
   conjunction with nested *Scatter* such that data DROPs that are originally sorted
-  in the order of [outer_partition_id][inner_partition_id] are now resorted as [inner_partition_id][outer_partition_id].
+  in the order of ``[outer_partition_id][inner_partition_id]`` are resorted as ``[inner_partition_id][outer_partition_id]``.
   In terms of parallelism, *Group By*
   is comparable to `"static" MapReduce <http://openmymind.net/2011/1/20/Understanding-Map-Reduce/>`_,
   where the keys used by all Reducers are known a prior.
@@ -76,16 +76,38 @@ four control flow constructs:
   .. figure:: images/loop_example.png
 
      Figure 3. A nested-Loop (minor and major cycle) example of logical graph for
-     continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in the DFMS prototype.
+     a continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in the DFMS prototype.
 
-Logical graphs serve as a way to describe a give algorithm or process. They are
-not a suitable description of the precise execution of such process. To achieve
-this, logical graphs are translated into *physical graphs*.
+Repository
+""""""""""
+The DFMS prototype uses a Web-based *logical graph* editor as the default user interface
+to the underlying *logical graph repository*, which currently is simply a managed
+POSIX file system directory. Each logical graph is physically stored as a
+JSON-formatted textual file, and can be accessed and modified remotely through
+the *logical graph* editor via the RESTful interface. For example, the JSON file for the continuous
+imaging pipeline as shown partially in Fig. 3. can be accessed `through HTTP GET <http://sdp-dfms.ddns.net/jsonbody?lg_name=cont_img.json>`_.
+The editor also provides a Web-based JSON editor so that users can directly change
+the graph JSON content inside the repository.
+
+
+Select template
+"""""""""""""""
+While the DFMS *logical graph* editor does not differentiate between *logical graph*
+and *logical graph template*, users can create either of them using the editor. After all,
+the only differences between these two are the populated values for some parameters.
+Once a template is created or selected, users can simply copy and paste the JSON content into
+the new *logical graph* and fill in those parameter values (as construct properites)
+using the editor. Note that the public version of the *logical graph* editor has
+not yet opened its "create new logical graph" API.
+
 
 Translation
 ^^^^^^^^^^^
-
-DFMS follows the following steps to generate a *physical graph*.
+While a *logical graph* provides a compact way to express complex processing logic,
+it contains high level control flow specifications that are not directly usable
+by the underlying graph execution engine and DROP managers. To achieve that,
+logical graphs are translated into *physical graphs*. The translation process in the DFMS prototype
+involves the following steps:
 
 * **Validity checking**. This is similar to compiler syntax error checking. For example, DFMS
   currently does not allow cyclic in the logical graph.
