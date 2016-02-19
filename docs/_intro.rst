@@ -20,7 +20,7 @@ management, distributed systems (databases), graph theory, and HPC scheduling.
 DFMS has also borrowed useful ideas from existing dataflow-related open
 sources (mostly *Python*!) such as `Luigi <http://luigi.readthedocs.org/>`_,
 `TensorFlow <http://www.tensorflow.org/>`_, `Airflow <https://github.com/airbnb/airflow>`_,
-`Snamemake <https://bitbucket.org/snakemake/snakemake/wiki/Home>`_, etc.
+`Snakemake <https://bitbucket.org/snakemake/snakemake/wiki/Home>`_, etc.
 Nevertheless, we believe DFMS has some unique features well suited
 for data-intensive applications:
 
