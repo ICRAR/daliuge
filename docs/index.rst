@@ -24,4 +24,6 @@ Development and maintenance of DFMS is currently hosted at ICRAR_.
  overview
  api-index
 
+Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
+
 .. _ICRAR: http://www.icrar.org
