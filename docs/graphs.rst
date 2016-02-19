@@ -49,7 +49,8 @@ the following flow constructs:
 * **Gather** indicates data barriers. Constructs inside a *Gather* represent a group
   of component consuming a sequence of data partitions as a whole. *Gather* has a property
   named "num_of_inputs", which is essentially the Gather "width" stating how many
-  partitions each *Gather* instance (translated into a *BarrierAppDROP*, see :ref:`drop.execution`)
+  partitions each *Gather* instance (translated into a *BarrierAppDROP*, see
+  :ref:`drop.component.iface`)
   can handle. This in turn is used by DFMS to determine how many *Gather* instances should be
   generated in the *physical graph*. *Gather* sometimes can be used in conjunction with
   *Group By* (see middle-right in Fig.2), in which case, data held in a sequence of groups are processed
@@ -96,7 +97,7 @@ While the DFMS *logical graph* editor does not differentiate between *logical gr
 and *logical graph template*, users can create either of them using the editor. After all,
 the only differences between these two are the populated values for some parameters.
 Once a template is created or selected, users can simply copy and paste the JSON content into
-the new *logical graph* and fill in those parameter values (as construct properites)
+the new *logical graph* and fill in those parameter values (as construct properties)
 using the editor. Note that the public version of the *logical graph* editor has
 not yet opened its "create new logical graph" API.
 
@@ -184,7 +185,7 @@ currently attempts to address the following translation problems:
   within 5 minutes, the schedule that consumes less resources is preferred. Since a DropIsland
   is mapped onto resources, and its capacity is already constrained by a given DoP,
   the number of DropIslands is proportional to the amount of resources needed.
-  Consequently, schedules that require less number of DropIslands are supurior.
+  Consequently, schedules that require less number of DropIslands are superior.
   Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design,
   DFMS uses a "look-ahead" strategy at each optimisation step to adaptively
   choose from two conflicting objective functions (deadline or resource) for
@@ -210,14 +211,14 @@ reciprocal relationships between DROPs:
 * Finally, a data DROP can be the *output* of an application DROP, in
   which case the application is the *producer* of the data DROP.
 
-Physical graph specifications are the final (the only) graph products that will be submitted
+Physical graph specifications are the final (and only) graph products that will be submitted
 to the :ref:`drop.managers`. Once DROP managers accept a physical graph specification,
 it is their responsibility to create and deploy DROP instances on their managed resources as
 prescribed in the physical graph specification such as partitioning information
 (produced during the `Translation`_) that allows different managers to distribute
 graph partitions (i.e. DropIslands) across different nodes and Data Islands by
 setting up proper :ref:`drop.channels`. The fact that physical graphs are made
-of DROPs means that they describe exactly what an :ref:`drop.execution` consists
+of DROPs means that they describe exactly what an :ref:`graph.execution` consists
 of. In this sense, *physical graph* is the graph execution engine.
 
 In addition to DROP managers, the DFMS prototype also includes a *Physical Graph Manager*,
@@ -226,3 +227,29 @@ the system. Although current *Physical Graph Manager* implementation only suppor
 "add" and "get" physical graph specifications, features such as graph event monitoring
 (through the DROP :ref:`drop.events` subscription mechanism) and the graph statistics dashboard will
 be added in the near future.
+
+.. _graph.execution:
+
+Execution
+^^^^^^^^^
+
+A physical graph has the ability to advance its own
+execution. This is internally implemented via the DROP event mechanism as follows:
+
+* Once a data DROP moves to the COMPLETED or ERROR state it will fire an event
+  to all its consumers. Consumers will then deem if they can start their
+  execution depending on their nature and configuration. A specific type of
+  application is the ``BarrierAppDROP``, which waits until all its inputs are in
+  the **COMPLETED** to start its execution.
+* On the other hand, data DROPs receive an even every time their producers
+  finish their execution. Once all the producers of a DROP have finished, the
+  DROP moves itself to the **COMPLETED** state, notifying its consumers, and so
+  on.
+
+Failures on applications and data DROPs are transmitted likewise automatically
+via events. Data DROPs move to **ERROR** if any of its producers move to
+**ERROR**, and application DROPs move the **ERROR** if a given input error
+threshold (defaults to 0) is passed (i.e., when more than a given percentage of
+inputs move to **ERROR**). This way whole branches of execution might fail, but
+after reaching a gathering point the execution might still resume if enough
+inputs are present.

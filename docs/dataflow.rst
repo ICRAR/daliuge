@@ -101,6 +101,6 @@ Here we briefly discuss how they work together in our data-driven framework.
   facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
   on designated resources.
 
-* Once an observation starts, Graph :ref:`drop.execution` is cascading down graph edges through either data DROPs that triggers its next consumers or application DROPs
+* Once an observation starts, Graph :ref:`graph.execution` is cascading down graph edges through either data DROPs that triggers its next consumers or application DROPs
   that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
   are persistently preserved as Science Products.
