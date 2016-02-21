@@ -124,6 +124,14 @@ def load_pg_viewer():
         response.status = 404
         return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
 
+@get('/show_gantt_chart')
+def show_gantt_chart():
+    """
+    Restful interface to show the gantt chart
+    """
+    pgt_id = request.query.get('pgt_id')
+    return template('matrix_vis.html', pgt_view_json_name=pgt_id)
+
 @get('/pgt_gantt_chart')
 def get_gantt_chart():
     """

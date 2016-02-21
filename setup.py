@@ -46,7 +46,8 @@ setup(
       packages=find_packages(),
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
-        'dfms.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map', 'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'lib/libmetis.*']
+        'dfms.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map',
+        'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html', 'lib/libmetis.*']
       },
 
       # Keep alpha-sorted please
