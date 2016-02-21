@@ -59,24 +59,6 @@ allow for a continuous operation of applications as data gets written into
 their inputs. Once all the data has been written, the normal event notifying
 that the DROP has moved to the **COMPLETED** state is also fired.
 
-.. _drop.execution:
-
-Execution
-^^^^^^^^^
-
-A collection of interconnected DROPs has the ability to advance its own
-execution. This is internally implemented the DROP event mechanism as follows:
-
-* Once a data DROP moves to the COMPLETED or ERROR state it will fire an event
-  to all its consumers. Consumers will then deem if they can start their
-  execution depending on their nature and configuration. A specific type of
-  application is the *BarrierAppDROP*, which waits until all its inputs are in
-  the **COMPLETED** to start its execution.
-* On the other hand, data DROPs receive an even every time their producers
-  finish their execution. Once all the producers of a DROP have finished, the
-  DROP moves itself to the **COMPLETED** state, notifying its consumers, and so
-  on.
-
 .. _drop.io:
 
 Input/Output
@@ -98,6 +80,8 @@ DROP Channels
 
 DROPs that are connected by an edge in a physical graph that are deployed on separate nodes or islands from each other are automatically given a Pyro stub (remote method invocation interface) to allow them to communicate with each other. It's the job of the Master DROP and Island Managers to generate and exchange stubs between DROP instances before the graph is deployed to the various data islands and nodes within islands respectively. If there is no DROP separation within a physical graph partition then its implied that the DROPs are going to be executed within a single address space, as a result, basic method calls are used between DROP instances.
 
+
+.. _drop.component.iface:
 
 DROP Component Interface
 ^^^^^^^^^^^^^^^^^^^^^^^^
