@@ -46,7 +46,9 @@ Concretely, we have made the following changes to the existing dataflow model:
   express both computation and data nodes as stateful DROPs. Statefulness not only
   allows us to manage DROPs through persistent checkpointing, versioning and recovery
   after restart, etc., but also enables data sharing amongst multiple processing
-  pipelines in situations like re-processing or commensal observations.
+  pipelines in situations like re-processing or commensal observations. However,
+  all the state information is kept in the Drop wrapper, the ‘payload’ of the
+  Drops, i.e. pipeline component algorithms and data are stateless.
 
 * We introduced a small number of control flow graph nodes at the logical level
   such as *Scatter*, *Gather*, *GroupBy*, *Loop*, etc. These additional control
@@ -103,4 +105,6 @@ Here we briefly discuss how they work together in our data-driven framework.
 
 * Once an observation starts, Graph :ref:`drop.execution` is cascading down graph edges through either data DROPs that triggers its next consumers or application DROPs
   that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
-  are persistently preserved as Science Products.
+  are persistently preserved as Science Products by using an explicit persist
+  consumer, which very likely will be specifically dedicated to a certain
+  science data product.
