@@ -501,10 +501,10 @@ class PGT(object):
         """
             Return the JSON string representation of the PGT
         """
-        # if (self._json_str is None):
-        #     self._json_str = self.to_gojs_json()
-        # return self._json_str
-        return self.to_gojs_json()
+        if (self._json_str is None):
+            self._json_str = self.to_gojs_json()
+        return self._json_str
+        # return self.to_gojs_json()
 
     def to_gojs_json(self, string_rep=True):
         """
@@ -802,6 +802,7 @@ class MySarkarPGTP(PGT):
         self._ptime = None # partition time
         self._merge_parts = merge_parts
         self._edge_cuts = None
+        self._partitions = None
         self.init_scheduler()
 
     def init_scheduler(self):
@@ -830,6 +831,7 @@ class MySarkarPGTP(PGT):
         self._num_parts_done, self._lpl, self._ptime, parts = self._scheduler.partition_dag()
         jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False)
         G = self._scheduler._dag
+        self._partitions = parts
         #print "The same DAG? ", (G == self.dag)
         leng = len(self._drop_list)
 

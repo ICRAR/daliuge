@@ -745,7 +745,8 @@ class DAGUtil(object):
         Return a M (# of DROPs) by N (longest path length) matrix
         """
         lpl = DAGUtil.get_longest_path(G, show_path=True)
-        N = lpl[1] - (len(lpl[0]) - 1)
+        #N = lpl[1] - (len(lpl[0]) - 1)
+        N = lpl[1]
         M = len(G.nodes())
         ma = np.zeros((M, N), dtype=np.int)
         if (topo_sort is None):
@@ -761,7 +762,12 @@ class DAGUtil(object):
             leng = edt - stt
             if (edt == stt):
                 continue
-            ma[i, stt:edt] = np.ones((1, leng))
+            try:
+                ma[i, stt:edt] = np.ones((1, leng))
+            except Exception, ex:
+                print i, stt, edt, leng
+                print M, N
+                raise ex
             #print ma[i, :]
         return ma
 
