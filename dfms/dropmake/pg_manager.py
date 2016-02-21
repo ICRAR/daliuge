@@ -23,9 +23,11 @@
 Refer to
 https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Graph+Manager
 """
-import threading
+import threading, json
+import networkx as nx
 
 from dfms.dropmake.pg_generator import GraphException
+from dfms.dropmake.scheduler import DAGUtil, SchedulerException
 
 MAX_PGT_FN_CNT = 300
 
@@ -71,3 +73,40 @@ class PGManager(object):
             The PGT object given its PGT id
         """
         return self._pgt_dict.get(pgt_id, None)
+
+    def get_gantt_chart(self, pgt_id, json_str=True):
+        """
+        Return:
+            the gantt chart matrix (numarray) given a PGT id
+        """
+        pgt = self.get_pgt(pgt_id)
+        if (pgt is None):
+            raise GraphException("PGT {0} not found".format(pgt_id))
+        try:
+            gcm = DAGUtil.ganttchart_matrix(pgt.dag)
+        except SchedulerException, se:
+            topo_sort = nx.topological_sort(pgt.dag)
+            DAGUtil.label_schedule(pgt.dag, topo_sort=topo_sort)
+            gcm = DAGUtil.ganttchart_matrix(pgt.dag, topo_sort=topo_sort)
+
+        if (json_str):
+            gcm = json.dumps(gcm.tolist())
+        return gcm
+
+    def get_schedule_matrices(self, pgt_id, json_str=True):
+        """
+        Return:
+            a list of schedule matrices (numarrays) given a PGT id
+        """
+        pgt = self.get_pgt(pgt_id)
+        if (pgt is None):
+            raise GraphException("PGT {0} not found".format(pgt_id))
+        jsobj = []
+        for part in pgt._partitions:
+            sm = part.schedule.schedule_matrix
+            if (json_str):
+                sm = sm.tolist()
+            jsobj.append(sm)
+        if (json_str):
+            jsobj = json.dumps(jsobj)
+        return jsobj

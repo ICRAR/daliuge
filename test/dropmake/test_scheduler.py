@@ -87,7 +87,7 @@ class TestScheduler(unittest.TestCase):
             print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
             if (s_matrix):
                 for i, part in enumerate(parts):
-                    if (part.cardinality > 5):
+                    if (part.cardinality > 0):
                         ma = part.schedule.schedule_matrix
                         ga = DAGUtil.ganttchart_matrix(part.schedule._dag, part.schedule._topo_sort)
                         # print "Partition ", i

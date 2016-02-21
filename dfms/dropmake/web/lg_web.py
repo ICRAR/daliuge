@@ -124,6 +124,33 @@ def load_pg_viewer():
         response.status = 404
         return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
 
+@get('/pgt_gantt_chart')
+def get_gantt_chart():
+    """
+    RESTful interface to retrieve a Gantt Chart matrix associated with a PGT
+    """
+    pgt_id = request.query.get('pgt_id')
+    try:
+        ret = pg_mgr.get_gantt_chart(pgt_id)
+        return ret
+    except GraphException, ge:
+        response.status = 500
+        return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
+
+@get('/pgt_schedule_mat')
+def get_schedule_mat():
+    """
+    RESTful interface to retrieve a list of schedule matrices
+    associated with a PGT
+    """
+    pgt_id = request.query.get('pgt_id')
+    try:
+        ret = pg_mgr.get_schedule_matrices(pgt_id)
+        return ret
+    except GraphException, ge:
+        response.status = 500
+        return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
+
 @get('/gen_pgt')
 def gen_pgt():
     """
