@@ -42,15 +42,16 @@ Concretely, we have made the following changes to the existing dataflow model:
   elevating them as actors who have autonomy to manage their own lifecycles and
   trigger appropriate "consumer" applications based on their own internal
   (persistent) states. In our graph model, both application (task) and data nodes
-  are termed as **DROPs**. What are really moving on the edge are **DROP Events**.
+  are termed as **DROPs**. What are really moving on the edge are
+  :ref:`Drop Events <drop.events>`.
 
 * While nodes/actors in the traditional dataflow are stateless functions, we
   express both computation and data nodes as stateful DROPs. Statefulness not only
   allows us to manage DROPs through persistent checkpointing, versioning and recovery
   after restart, etc., but also enables data sharing amongst multiple processing
-  pipelines in situations like re-processing or commensal observations. However,
-  all the state information is kept in the Drop wrapper, the ‘payload’ of the
-  Drops, i.e. pipeline component algorithms and data are stateless.
+  pipelines in situations like re-processing or commensal observations.
+  All the state information is kept in the Drop wrapper, while the payload of the
+  Drops, i.e. pipeline component algorithms and data, are stateless.
 
 * We introduced a small number of control flow graph nodes at the logical level
   such as *Scatter*, *Gather*, *GroupBy*, *Loop*, etc. These additional control
@@ -76,18 +77,22 @@ DFMS Functions
 ^^^^^^^^^^^^^^
 The DFMS prototype provides eight Graph-based functions as shown in Figure 1 below.
 
+.. _dataflow.fig.funcs:
+
 .. figure:: images/dfms_func_as_graphs.jpg
 
-   Figure 1. Graph-based Functions of the DFMS Prototype
+   Graph-based Functions of the DFMS Prototype
 
 The :doc:`graphs` section will go through implementation details for each function.
 Here we briefly discuss how they work together in our data-driven framework.
 
-* First of all, the *Logical Graph Template* (topleft in Fig. 1) represents high-level
+* First of all, the *Logical Graph Template* (topleft in
+  :numref:`dataflow.fig.funcs`) represents high-level
   data processing capabilities. In the case of SDP, they could be, for example,
   "Process Visibility Data" or "Stage Data Products".
 
-* All logical graph templates are managed by the *LogicalGraph Template Repository* (bottomleft in Fig. 1).
+* All logical graph templates are managed by the *LogicalGraph Template
+  * Repository* (bottomleft in :numref:`dataflow.fig.funcs`).
   The logical graph template is first selected from this repository for a specific pipeline and
   is then filled with scheduling block parameters. This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
 
@@ -105,7 +110,7 @@ Here we briefly discuss how they work together in our data-driven framework.
   facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
   on designated resources.
 
-* Once an observation starts, Graph :ref:`graph.execution` is cascading down graph edges through either data DROPs that triggers its next consumers or application DROPs
+* Once an observation starts, the graph :ref:`graph.execution` cascades down the graph edges through either data DROPs that triggers its next consumers or application DROPs
   that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
   are persistently preserved as Science Products by using an explicit persist
   consumer, which very likely will be specifically dedicated to a certain
