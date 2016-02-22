@@ -10,119 +10,132 @@ details in the DFMS prototype.
 Logical Graph
 ^^^^^^^^^^^^^
 
-A *logical graph* is a compact representation of the logical operations in a processing
+A |lg| is a compact representation of the logical operations in a processing
 pipeline without concerning underlying hardware resources. Such operations are
-referred to as **construct** in a *logical graph*. The relationship between a DROP
-and a *construct* resembles the one between "object and class" in OO
-programming languages. In other words, most constructs are DROP templates and
-multiple DROPs correspond to a single construct.
+referred to as *construct* in a |lg|. The relationship between a DROP
+and a construct resembles the one between and object and a class in Object
+Oriented programming languages. In other words, most constructs are DROP
+templates and multiple DROPs correspond to a single construct.
+
+.. _graphs.figs.scatter:
 
 .. figure:: images/scatter_example.png
 
-   Figure 2. An example of *logical graph* with data constructs (e.g. Data1 - Data5),
-   component constructs (i.e. Component 1,3,4,5), and control flow constructs
+   An example of a |lg| with data constructs (e.g. Data1 - Data5),
+   component constructs (i.e. Component1 - Component5), and control flow constructs
    (Scatter, Gather, and Group-By). This example can be viewed
    `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in the DFMS prototype.
 
 Construct properties
 """"""""""""""""""""
 Each construct has several
-associated properties that users have control over during the development of *logical graph*.
-For Component and Data construct, **Execution time** and **Data volume** are two very important
+associated properties that users have control over during the development of a
+|lg|.
+For Component and Data constructs the **Execution time** and **Data volume** are two very important
 properties. Such properties can be directly obtained from parametric models or
 `estimated <http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=546196>`_ from the profiling information (e.g. pipeline component workload characterisation) and COMP platform specification.
 
 Control flow constructs
 """""""""""""""""""""""
-Control flow constructs form the "skeleton" of the *logical graph*, and determine
-the final structure of the *physical graph* to be generated. DFMS currently supports
+Control flow constructs form the "skeleton" of the |lg|, and determine
+the final structure of the |pg| to be generated. DFMS currently supports
 the following flow constructs:
 
-* **Scatter** indicates data parallelism. Constructs inside a *Scatter*
+* **Scatter** indicates data parallelism. Constructs inside a *Scatter* construct
   represent a group of components consuming a single data partition within the enclosing
-  *Scatter*. A useful property of *Scatter* is *num_of_copies*.
-  In this nested Scatter example in Fig. 2, if the num_of_copies for *Scatter1*
-  and *Scatter2* is 5 and 4 respectively, the generated physical graph
-  will have in total 20 Data1/Component1/Data3 DROPs, but only 5 DROPs for construct "Component 5",
-  which is inside *Scatter1* Construct but outside *Scatter2*.
+  *Scatter*. A useful property of *Scatter* is ``num_of_copies``.
+  In the example in :numref:`graphs.figs.scatter`, if the ``num_of_copies`` for
+  ``Scatter1``
+  and ``Scatter2`` are 5 and 4 respectively, the generated |pg|
+  will have in total 20 ``Data1``/``Component1``/``Data3`` DROPs, but only 5 DROPs for the
+  construct ``Component 5``,
+  which is inside the ``Scatter1`` construct but outside ``Scatter2``.
 
 * **Gather** indicates data barriers. Constructs inside a *Gather* represent a group
-  of component consuming a sequence of data partitions as a whole. *Gather* has a property
-  named "num_of_inputs", which is essentially the Gather "width" stating how many
-  partitions each *Gather* instance (translated into a *BarrierAppDROP*, see
+  of components consuming a sequence of data partitions as a whole. *Gather* has a
+  ``num_of_inputs`` property,
+  which represents the *Gather* "width", stating how many
+  partitions each *Gather* instance (translated into a ``BarrierAppDROP``, see
   :ref:`drop.component.iface`)
   can handle. This in turn is used by DFMS to determine how many *Gather* instances should be
-  generated in the *physical graph*. *Gather* sometimes can be used in conjunction with
-  *Group By* (see middle-right in Fig.2), in which case, data held in a sequence of groups are processed
+  generated in the |pg|. *Gather* sometimes can be used in conjunction with
+  *Group By* (see middle-right in :numref:`graphs.figs.scatter`), in which case, data held in a sequence of groups are processed
   together by components enclosed by *Gather*.
 
 * **Group By** indicates data resorting (e.g. `corner turning <https://mnras.oxfordjournals.org/content/410/3/2075.full>`_ in radio astronomy).
-  The semantic is analogous to "Group By" used in SQL statement for relational
-  databases, but only applicable to data DROPs. Current DFMS prototype requires *Group By* used in
-  conjunction with nested *Scatter* such that data DROPs that are originally sorted
+  The semantic is analogous to the ``GROUP BY`` construct used in SQL statement for relational
+  databases, but applied to data DROPs. The current DFMS prototype requires that
+  *Group By* is used in
+  conjunction with a nested *Scatter* such that data DROPs that are originally sorted
   in the order of ``[outer_partition_id][inner_partition_id]`` are resorted as ``[inner_partition_id][outer_partition_id]``.
   In terms of parallelism, *Group By*
-  is comparable to `"static" MapReduce <http://openmymind.net/2011/1/20/Understanding-Map-Reduce/>`_,
-  where the keys used by all Reducers are known a prior.
+  is comparable to the `"static" MapReduce <http://openmymind.net/2011/1/20/Understanding-Map-Reduce/>`_,
+  where the keys used by all Reducers are known a priori.
 
 * **Loop** indicates iterations. Constructs inside a *Loop* represent a group of
   components and data that will be repeatedly executed / produced for a fixed number of
-  times. Given the basic DROP principle of "writing once, read many times", current
+  times. Given the basic DROP principle of "writing once, read many times", the current
   DFMS prototype does not support dynamic branch condition for *Loop*.
-  Instead, each *Loop* construct has a property named "num_of_iterations" that must be
-  determined during *logical graph* development. In other words, a "num_of_iterations"
+  Instead, each *Loop* construct has a property named ``num_of_iterations`` that must be
+  determined at |lg| development time, and that determines the number of
+  times the loop is "unrolled". In other words, a
+  ``num_of_iterations``
   number of DROPs for each construct inside a *Loop* will be statically generated
-  in the *physical graph*.
+  in the |pg|. An example is shown in :numref:`graphs.figs.loop`.
+
+  .. _graphs.figs.loop:
 
   .. figure:: images/loop_example.png
 
-     Figure 3. A nested-Loop (minor and major cycle) example of logical graph for
+     A nested-Loop (minor and major cycle) example of |lg| for
      a continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in the DFMS prototype.
 
 Repository
 """"""""""
-The DFMS prototype uses a Web-based *logical graph* editor as the default user interface
+The DFMS prototype uses a Web-based |lg| editor as the default user interface
 to the underlying *logical graph repository*, which currently is simply a managed
-POSIX file system directory. Each logical graph is physically stored as a
+POSIX file system directory. Each |lg| is physically stored as a
 JSON-formatted textual file, and can be accessed and modified remotely through
-the *logical graph* editor via the RESTful interface. For example, the JSON file for the continuous
-imaging pipeline as shown partially in Fig. 3. can be accessed `through HTTP GET <http://sdp-dfms.ddns.net/jsonbody?lg_name=cont_img.json>`_.
+the |lg| editor via the RESTful interface. For example, the JSON file for the continuous
+imaging pipeline as shown partially in :numref:`graphs.figs.loop` can be accessed `through HTTP GET <http://sdp-dfms.ddns.net/jsonbody?lg_name=cont_img.json>`_.
 The editor also provides a Web-based JSON editor so that users can directly change
 the graph JSON content inside the repository.
 
 
 Select template
 """""""""""""""
-While the DFMS *logical graph* editor does not differentiate between *logical graph*
-and *logical graph template*, users can create either of them using the editor. After all,
-the only differences between these two are the populated values for some parameters.
+While the DFMS |lg| editor does not differentiate between |lg|
+and *logical graph template*, users can create either of them using the editor
+(after all,
+the only differences between these two are the populated values for some
+parameters).
 Once a template is created or selected, users can simply copy and paste the JSON content into
-the new *logical graph* and fill in those parameter values (as construct properties)
-using the editor. Note that the public version of the *logical graph* editor has
+the new |lg| and fill in those parameter values (as construct properties)
+using the editor. Note that the public version of the |lg| editor has
 not yet opened its "create new logical graph" API.
 
 
 Translation
 ^^^^^^^^^^^
-While a *logical graph* provides a compact way to express complex processing logic,
+While a |lg| provides a compact way to express complex processing logic,
 it contains high level control flow specifications that are not directly usable
 by the underlying graph execution engine and DROP managers. To achieve that,
-logical graphs are translated into *physical graphs*. The translation process essentially
+logical graphs are translated into physical graphs. The translation process essentially
 creates all DROPs and is implemented in the :doc:`api/dropmake` module.
 
 Basic steps
 """""""""""
 **DropMake** in the DFMS prototype involves the following steps:
 
-* **Validity checking**. Checks whether the *logical graph* is ready to be translated.
+* **Validity checking**. Checks whether the |lg| is ready to be translated.
   This step is similar to semantic error checking used in compilers.
-  For example, DFMS currently does not allow any cycles in the logical graph. Another
+  For example, DFMS currently does not allow any cycles in the |lg|. Another
   example is that *Gather* can be placed only after a *Group By* or a *Data* construct
-  as shown in Figure 2. Any validity errors
-  will be displayed as exceptions on the *logical graph* editor.
+  as shown in :numref:`graphs.figs.scatter`. Any validity errors
+  will be displayed as exceptions on the |lg| editor.
 
-* **Construct unrolling**. Unrolls the *logical graph* by (1) creating all necessary DROPs
-  (including "artifact" DROPs that do not appear in the original *logical graph*),
+* **Construct unrolling**. Unrolls the |lg| by (1) creating all necessary DROPs
+  (including "artifact" DROPs that do not appear in the original |lg|),
   and (2) establishing directed edges amongst all newly generated DROPs. This step
   produces the **Physical Graph Template**.
 
@@ -137,7 +150,7 @@ Basic steps
 
 * **Resource mapping**. Maps each logical partition onto a given set of resources
   in certain optimal ways (load balancing, etc.). Concretely, each DROP is assigned
-  a physical resource id (such as IP address, hostname, etc.). This steps requires
+  a physical resource id (such as IP address, hostname, etc.). This step requires
   near real-time resource usage information from the COMP platform or the Local Monitor & Control (LMC).
   It also needs DROP managers to coordinate the DROP deployment.
   In some cases, this mapping step is merged with the previous *Graph partitioning* step
@@ -166,23 +179,23 @@ currently attempts to address the following translation problems:
 
 * **Minimise the total completion time** but subject to a given **degree of parallelism** (DoP)
   (e.g. number of cores per node) that each DropIsland is allowed to take advantage of.
-  In the 1st version of this problem, no information regarding resources is given.
+  In the first version of this problem, no information regarding resources is given.
   DFMS simply strives to come up with the optimal number of DropIslands such that
   (1) the total completion time of the pipeline (which depends on both execution time
   and the cost of data movement on the graph critical path) is minimised, and (2)
   the maximum degree of parallelism within each DropIsland is
-  never greater than the given level *DoP*. In the 2nd version of this problem,
+  never greater than the given *DoP*. In the second version of this problem,
   a number of resources of identical performance capability are also given in addition
   to the *DoP*. This practical problem is a natural extension of version 1,
   and is solved in DFMS by using the
   `"two-phase" method <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=580873>`_.
 
 * **Minimise the number of DropIslands** but subject to (1) a given **completion time deadline**,
-  and (2) a given **degree of parallelism** (DoP) (e.g. number of cores per node)
+  and (2) a given *DoP* (e.g. number of cores per node)
   that each DropIsland is allowed to take advantage of. In this problem, both completion
   time and resource footprint become the minimisation goals. The motivation of this problem
-  is clear. If both schedules can complete the processing pipeline
-  within 5 minutes, the schedule that consumes less resources is preferred. Since a DropIsland
+  is clear. In an scenario where two different schedules can complete the processing pipeline
+  within, say, 5 minutes, the schedule that consumes less resources is preferred. Since a DropIsland
   is mapped onto resources, and its capacity is already constrained by a given DoP,
   the number of DropIslands is proportional to the amount of resources needed.
   Consequently, schedules that require less number of DropIslands are superior.
@@ -196,9 +209,9 @@ Physical Graph
 ^^^^^^^^^^^^^^
 
 The `Translation`_ process produces the *physical graph specification*, which, once
-deployed and instantiated "live", becomes the *Physical Graph*, representing a
+deployed and instantiated "live", becomes the |pg|, a
 collection of inter-connected DROPs in a distributed
-execution plan across multiple resource units. The nodes of a physical graph are
+execution plan across multiple resource units. The nodes of a |pg| are
 DROPs representing either data or applications. The two DROP nodes connected by
 an edge always have different types from each other. This establishes a set of
 reciprocal relationships between DROPs:
@@ -212,19 +225,19 @@ reciprocal relationships between DROPs:
   which case the application is the *producer* of the data DROP.
 
 Physical graph specifications are the final (and only) graph products that will be submitted
-to the :ref:`drop.managers`. Once DROP managers accept a physical graph specification,
+to the :ref:`drop.managers`. Once DROP managers accept a |pg| specification,
 it is their responsibility to create and deploy DROP instances on their managed resources as
-prescribed in the physical graph specification such as partitioning information
+prescribed in the |pg| specification such as partitioning information
 (produced during the `Translation`_) that allows different managers to distribute
 graph partitions (i.e. DropIslands) across different nodes and Data Islands by
 setting up proper :ref:`drop.channels`. The fact that physical graphs are made
 of DROPs means that they describe exactly what an :ref:`graph.execution` consists
-of. In this sense, *physical graph* is the graph execution engine.
+of. In this sense, the |pg| is the graph execution engine.
 
 In addition to DROP managers, the DFMS prototype also includes a *Physical Graph Manager*,
 which allows users to manage all currently running and past physical graphs within
-the system. Although current *Physical Graph Manager* implementation only supports
-"add" and "get" physical graph specifications, features such as graph event monitoring
+the system. Although the current *Physical Graph Manager* implementation only supports
+to "add" and "get" |pg| specifications, features such as graph event monitoring
 (through the DROP :ref:`drop.events` subscription mechanism) and the graph statistics dashboard will
 be added in the near future.
 
@@ -233,14 +246,14 @@ be added in the near future.
 Execution
 ^^^^^^^^^
 
-A physical graph has the ability to advance its own
+A |pg| has the ability to advance its own
 execution. This is internally implemented via the DROP event mechanism as follows:
 
-* Once a data DROP moves to the COMPLETED or ERROR state it will fire an event
-  to all its consumers. Consumers will then deem if they can start their
+* Once a data DROP moves to the COMPLETED state it will fire an event
+  to all its consumers. Consumers (applications) will then deem if they can start their
   execution depending on their nature and configuration. A specific type of
   application is the ``BarrierAppDROP``, which waits until all its inputs are in
-  the **COMPLETED** to start its execution.
+  the **COMPLETED** state to start its execution.
 * On the other hand, data DROPs receive an even every time their producers
   finish their execution. Once all the producers of a DROP have finished, the
   DROP moves itself to the **COMPLETED** state, notifying its consumers, and so
@@ -250,6 +263,9 @@ Failures on applications and data DROPs are transmitted likewise automatically
 via events. Data DROPs move to **ERROR** if any of its producers move to
 **ERROR**, and application DROPs move the **ERROR** if a given input error
 threshold (defaults to 0) is passed (i.e., when more than a given percentage of
-inputs move to **ERROR**). This way whole branches of execution might fail, but
+inputs move to **ERROR**) or if their execution fails. This way whole branches of execution might fail, but
 after reaching a gathering point the execution might still resume if enough
 inputs are present.
+
+.. |lg| replace:: logical graph
+.. |pg| replace:: physical graph
