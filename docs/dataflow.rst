@@ -75,7 +75,8 @@ Concretely, we have made the following changes to the existing dataflow model:
 
 DFMS Functions
 ^^^^^^^^^^^^^^
-The DFMS prototype provides eight Graph-based functions as shown in Figure 1 below.
+The DFMS prototype provides eight Graph-based functions as shown in
+:numref:`dataflow.fig.funcs`.
 
 .. _dataflow.fig.funcs:
 
@@ -92,7 +93,7 @@ Here we briefly discuss how they work together in our data-driven framework.
   "Process Visibility Data" or "Stage Data Products".
 
 * All logical graph templates are managed by the *LogicalGraph Template
-  * Repository* (bottomleft in :numref:`dataflow.fig.funcs`).
+  Repository* (bottomleft in :numref:`dataflow.fig.funcs`).
   The logical graph template is first selected from this repository for a specific pipeline and
   is then filled with scheduling block parameters. This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
 
