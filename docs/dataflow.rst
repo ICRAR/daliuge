@@ -28,6 +28,8 @@ formalism to describe parallel computation, early efforts in developing
 had to introduce control flow operators (e.g.  switch and merge) and data
 storage mechanism in order to put dataflow models into practice.
 
+.. _dataflow.datadriven:
+
 Data-driven
 ^^^^^^^^^^^
 In developing the DFMS prototype, we have extended the "traditional" dataflow
