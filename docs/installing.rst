@@ -4,9 +4,10 @@ Installation
 Requirements
 -------------
 
-The DFMS framework requires no packages apart from those listed in its setup.py
+The DFMS framework requires no packages apart from those listed in its
+``setup.py``
 file, which are automatically retrieved when running it. The spead2 library
-(one of the dfms' requirements) however requires a number of libraries
+(one of the dfms' optional requirements) however requires a number of libraries
 installed on the system:
 
 * boost-python
@@ -17,7 +18,7 @@ installed on the system:
 Installing
 ----------
 
-dfms is based on setuptools, and thus follows the standard python installation
+dfms is based on setuptools, and thus it follows the standard python installation
 procedures. For the time being dfms is not yet in PyPI, so you will have to get
 the source code first::
 
@@ -37,4 +38,5 @@ If a virtualenv is loaded, then dfms can be installed on it by simply running::
 Docker images
 -------------
 
-Docker images can be built using the Dockerfiles under the docker directory. Please refer to the README file in the docker directory for more information.
+Docker images can be built using the Dockerfiles under the ``docker`` directory.
+Please refer to the ``README`` file in the docker directory for more information.
