@@ -53,8 +53,10 @@ following possible relationships:
 
 The difference between *normal* inputs/consumers and their *streaming*
 counterpart is their granularity. In the normal case, inputs only notify their
-consumers when they have reached the **COMPLETED** state. Streaming inputs on
-the other hand notify consumers each time data is written into them, and thus
+consumers when they have reached the **COMPLETED** state, after which the
+consumers can open the DROP and read their data. Streaming inputs on
+the other hand notify consumers each time data is written into them (alongside
+with the data itself), and thus
 allow for a continuous operation of applications as data gets written into
 their inputs. Once all the data has been written, the normal event notifying
 that the DROP has moved to the **COMPLETED** state is also fired.
@@ -64,21 +66,24 @@ that the DROP has moved to the **COMPLETED** state is also fired.
 Input/Output
 ^^^^^^^^^^^^
 
-I/O can be performed on the data that is represented by a DROP by obtaining
-a reference to its I/O object and calling the necessary POSIX like methods.
-In this case, the data is passing through the DROP instance. The application
-is free to bypass the DROP interface and perform I/O directly on the data.
-In this case, the application must ensure that the data being written, for example,
-is placed in the correct location and is in the expected format for storage or
-subsequent upstream processing by other application DROPs. The DFMS provides various
-commonly used data DROPs with their associated I/O objects.
+I/O can be performed on the data that is represented by a DROP by obtaining a
+reference to its I/O object and calling the necessary POSIX-like methods.  In
+this case, the data is passing through the DROP instance. The application is
+free to bypass the DROP interface and perform I/O directly on the data, in which
+case it uses the data DROP ``dataURL`` to find out the data location.  It is the
+responsibility of the application to ensure that the I/O is occurring in the
+correct location and using the expected format for storage or subsequent
+upstream processing by other application DROPs.
+
+The DFMS provides various commonly used data DROPs with their associated I/O
+storage classes, including in-memory, file-base and S3 storages.
 
 .. _drop.channels:
 
 DROP Channels
 ^^^^^^^^^^^^^
 
-DROPs that are connected by an edge in a physical graph that are deployed on separate nodes or islands from each other are automatically given a Pyro stub (remote method invocation interface) to allow them to communicate with each other. It's the job of the Master DROP and Island Managers to generate and exchange stubs between DROP instances before the graph is deployed to the various data islands and nodes within islands respectively. If there is no DROP separation within a physical graph partition then its implied that the DROPs are going to be executed within a single address space, as a result, basic method calls are used between DROP instances.
+DROPs that are connected by an edge in a physical graph but are deployed on separate nodes or islands from each other are automatically given a Pyro stub (remote method invocation interface) to allow them to communicate with each other. It's the job of the Master DROP and Island Managers to generate and exchange stubs between DROP instances before the graph is deployed to the various data islands and nodes within islands respectively. If there is no DROP separation within a physical graph partition then its implied that the DROPs are going to be executed within a single address space, as a result, basic method calls are used between DROP instances.
 
 
 .. _drop.component.iface:
@@ -100,4 +105,7 @@ the DROP framework. Refer to the documentation for details.
 Other applications not based on Docker containers can be written as well. Any
 application must derive at least from ``AppDROP``, but an easier-to-use base
 class is the ``BarrierAppDROP``, which simply requires a ``run`` method to be
-written by the developer (see :ref:`api.dfms.drop` for details).
+written by the developer (see :ref:`api.dfms.drop` for details). DFMS ships with
+a set of pre-existing applications to perform common operations, like a TCP
+socket listener and a bash command executor, among others. See :ref:`api.dfms.apps`
+for more examples.

@@ -21,5 +21,5 @@
 #
 """
 The dfms.manager package contains all python modules implementing the DROP
-Manager concepts, including their external interface, a web UI and a client.:!
+Manager concepts, including their external interface, a web UI and a client
 """

@@ -1,3 +1,6 @@
+
+.. _api.dfms.apps:
+
 dfms.apps
 ---------
 
@@ -21,7 +24,7 @@ dfms.apps.spead_receiver
 .. automodule:: dfms.apps.spead_receiver
         :members:
 
-dfms.apps.spead_receiver
+dfms.apps.scp
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: dfms.apps.scp
         :members:

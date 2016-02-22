@@ -9,8 +9,8 @@ DROP Managers offer a standard interface to external entities to interact with
 the runtime system, allowing users to submit physical graphs, deploy them, let
 them run and query their status.
 
-DROP Managers are organized hierarchically, mirroring the topology of their
-environment, and thus enable scalable solutions. The current design is flexible
+DROP Managers are organized hierarchically, mirroring the topology of the
+environment hosting them, and thus enabling scalable solutions. The current design is flexible
 enough to add more intermediate levels if necessary in the future. The
 hierarchy levels currently present are:
 
@@ -22,10 +22,10 @@ hierarchy levels currently present are:
 Sessions
 ^^^^^^^^
 
-The DROP Managers' work is to manage and execution physical graphs. Because one
+The DROP Managers' work is to manage and execute physical graphs. Because
 more than one physical graph can potentially be deployed in the system, DROP
-Managers support the concept of a *Session*. Sessions represent a physical graph
-execution, and are completely isolated from one another. This has two main
+Managers introduce the concept of a *Session*. Sessions represent a physical graph
+execution, which are completely isolated from one another. This has two main
 consequences:
 
 * Submitting the same physical graph to a DROP Manager will create two different
@@ -35,9 +35,9 @@ consequences:
 
 Sessions have a simple lifecycle: they are first created, then a physical graph
 is attached into them (optionally by parts, or all in one go), after which the
-graph can be deployed (i.e., the DROPs are created), which leaves the session in
-a running state. Once the graph has finished its execution the session is
-finished and can be deleted.
+graph can be deployed (i.e., the DROPs are created). This leaves the session in
+a running state until the graph has finished its execution, at which point the
+session is finished and can be deleted.
 
 
 .. _node_drop_manager:
@@ -58,7 +58,7 @@ remote method executions on them.
 Data Island DROP Manager
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-*Data Island DROP Managers* sit on top of Node DROP Managers. They follow the
+*Data Island DROP Managers* sit on top of the Node DROP Managers. They follow the
 assumed topology where a set of nodes is grouped into a logical *Data Island*.
 The Data Island DROP Manager is the public interface of the whole Data Island to
 external users, relaying messages to the individual Node DROP Managers as
@@ -66,7 +66,7 @@ needed.
 
 When receiving a physical graph, the Data Island DROP Manager will first check
 that the nodes of the graph contain all the necessary information to route them
-to the correct Node DROP Manager. At deployment time it will also make sure that
+to the correct Node DROP Managers. At deployment time it will also make sure that
 the inter-node DROP relationships (which are invisible from the Node DROP
 Managers' point of view) are satisfied by obtaining DROP Pyro proxies and
 linking them correspondingly.
@@ -115,5 +115,5 @@ Clients
 ^^^^^^^
 
 Python clients are available to ease the communication with the different
-managers. Apart from that, any other third-party tool that talks the HTTP
+managers. Apart from that, any third-party tool that talks the HTTP
 protocol can easily interact with any of the managers.
