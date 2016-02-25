@@ -1306,10 +1306,13 @@ class InputFiredAppDROP(AppDROP):
                 self.status =  DROPStates.ERROR
                 self._notifyAppIsFinished()
             else:
-                # Return immediately, but schedule the execution of this app
-                t = threading.Thread(None, lambda: self.execute())
-                t.daemon = 1
-                t.start()
+                self.async_execute()
+
+    def async_execute(self):
+        # Return immediately, but schedule the execution of this app
+        t = threading.Thread(None, lambda: self.execute())
+        t.daemon = 1
+        t.start()
 
     def execute(self):
         """
