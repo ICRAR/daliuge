@@ -43,13 +43,15 @@ DROPs are connected between them and create a graph representing an execution
 plan, where inputs and outputs are connected to applications, establishing the
 following possible relationships:
 
-* A data DROP is the *input* of an application DROP; on the other hand
-  the application is a *consumer* of the data DROP.
-* Likewise, a data DROP can be a *streaming input* of an application
+* None or many data DROP(s) can be the *input* of an application DROP; and
+  the application is the *consumer* of the data DROP(s).
+* A data DROP can be a *streaming input* of an application
   DROP in which case the application is seen as a *streaming consumer* from
   the data DROP's point of view.
-* Finally, a data DROP can be the *output* of an application DROP, in
-  which case the application is the *producer* of the data DROP.
+* None or many DROP(s) can be the *output* of an application DROP, in
+  which case the application is the *producer* of the data DROP(s).
+* An application is never a consumer or producer of another application; 
+  conversely a data DROP never produces or consumes another data DROP. 
 
 The difference between *normal* inputs/consumers and their *streaming*
 counterpart is their granularity. In the normal case, inputs only notify their
