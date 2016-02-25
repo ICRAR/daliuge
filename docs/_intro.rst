@@ -1,7 +1,7 @@
-DFMS is the Data Flow Management System prototype for SDP, which represents the Science
-Data Process element of the Square Kilometer Array (SKA) observatory. DFMS aims
-to provide a distributed data management platform and a
-scalable pipeline execution environment to support continuous, soft-real time,
+The Data Flow Management System (DFMS) prototype represents the **execution framework**
+of Science Data Process (SDP) element of the Square Kilometer Array (SKA) observatory.
+DFMS aims to provide a distributed data management platform and a
+scalable pipeline execution environment to support continuous, soft real-time,
 data-intensive processing for producing SKA science ready products. ::
 
     |   \    | __||  \/  |  / __|     / _|   ___    _ _     / __|   |   \    | _ \
