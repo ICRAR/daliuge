@@ -300,27 +300,22 @@ class CompositeManager(DROPManager):
             raise # so it gets printed
 
     def _triggerDrop(self, exceptions, (drop, uid)):
-        try:
-            if hasattr(drop, 'execute'):
-                t = threading.Thread(target=lambda:drop.execute())
-                t.daemon = True
-                t.start()
-            else:
-                drop.setCompleted()
 
-                # Eagerly release the pyro connection used by this Drop proxy
-                # If we don't do, and lots of Drops have to be initially
-                # triggered at the same time we'll arrive to a deadlock since
-                # all threads will need a connection, but connections won't be
-                # available until all threads are finished
-                #
-                # TODO: it is still to be decided how we do it with the AppDrops
-                # above, since they keep the drop reference until the .execute()
-                # call has finished. We probably should rework the
-                # InputFiredAppDrop class to expose an "asynchronous execute()"
-                # call (what we do already in app.dropCompleted), which will
-                # allow us to quickly start the execution and release the proxy
-                drop._pyroRelease()
+        # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
+        method = 'setCompleted'
+        if hasattr(drop, 'async_execute'):
+            method = 'async_execute'
+
+        try:
+            m = getattr(drop, method)
+            m()
+
+            # Eagerly release the pyro connection used by this Drop proxy
+            # If we don't do, and lots of Drops have to be initially
+            # triggered at the same time we'll arrive to a deadlock since
+            # all threads will need a connection, but connections won't be
+            # available until all threads are finished
+            drop._pyroRelease()
 
         except Exception as e:
             exceptions[drop.uid] = e
