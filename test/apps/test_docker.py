@@ -178,3 +178,30 @@ class DockerTests(unittest.TestCase):
         # Cleanup
         os.unlink(tempFile)
         shutil.rmtree(tempDir)
+
+    def test_ulimits(self):
+
+        # Set up with no ulimit values
+        a = DockerApp(
+                'a',
+                'a',
+                image='ubuntu:14.04',
+                command='ulimit -Hn ; ulimit -Sn',
+        )
+        a.execute()
+
+        # Set up the ulimit values
+        a = DockerApp(
+            'a',
+            'a',
+            image='ubuntu:14.04',
+            command='ulimit -Hn ; ulimit -Sn',
+            ulimits=[
+                {
+                    'name': 'nofile',
+                    'hard': 10000,
+                    'soft': 20000,
+                }
+            ]
+        )
+        a.execute()
