@@ -109,12 +109,6 @@ class DockerApp(BarrierAppDROP):
     creating the DockerApp. The host file/directories must exist at the moment
     of creating the DockerApp; otherwise it will fail to initialize.
 
-    ** ulimits **
-
-    Some tasks require the ulimit to be increased.
-    To increase the ulimits a list of dictionaries is passed as part of the arguments
-    ulimits=[ {'name': 'nofile', 'soft': NNNN, 'hard': NNN}, ]
-
     **Users**
 
     A docker container usually runs as root by default. One of the major
@@ -225,9 +219,6 @@ class DockerApp(BarrierAppDROP):
 
         if logger.isEnabledFor(logging.INFO):
             logger.info("%r with image '%s' and command '%s' created" % (self, self._image, self._command))
-
-        # Find any ulimit values
-        self._ulimits = self._getArg(kwargs, 'ulimits', None)
 
         # Check if we have the image; otherwise pull it.
         extra_kwargs = self._kwargs_from_env()
@@ -360,11 +351,12 @@ class DockerApp(BarrierAppDROP):
                 c.remove_container(container)
 
         # Create container
+        host_config = c.create_host_config(binds=binds)
         container = c.create_container(
                 self._image,
                 cmd,
                 volumes=vols,
-                host_config=c.create_host_config(binds=binds, ulimits=self._ulimits),
+                host_config=host_config,
                 user=user,
                 environment=env,
         )
