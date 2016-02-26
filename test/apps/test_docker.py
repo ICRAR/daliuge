@@ -28,6 +28,7 @@ import tempfile
 import unittest
 import warnings
 
+from configobj import ConfigObj
 from docker.client import AutoVersionClient
 from docker.errors import DockerException
 
@@ -38,6 +39,21 @@ from dfms.droputils import DROPWaiterCtx
 
 
 class DockerTests(unittest.TestCase):
+    _temp = None
+
+    @classmethod
+    def setUpClass(cls):
+        config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
+        if os.path.exists(config_file_name):
+            config = ConfigObj(config_file_name)
+            DockerTests._temp = config.get('OS_X_TEMP')
+
+            if not os.path.exists(DockerTests._temp):
+                os.makedirs(DockerTests._temp)
+
+        if DockerTests._temp is None:
+            DockerTests._temp = '/tmp/sdp_dfms'
+
 
     def tearDown(self):
         shutil.rmtree("/tmp/sdp_dfms", True)
@@ -164,8 +180,13 @@ class DockerTests(unittest.TestCase):
 
         # One binding specifies the target path in the container, the other doesn't
         # so it defaults to the same path
-        a = DockerApp('a', 'a', image='ubuntu:14.04', command="cp /opt/file %s" % (tempDir,), \
-                      additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)])
+        a = DockerApp(
+                'a',
+                'a',
+                image='ubuntu:14.04',
+                command="cp /opt/file %s" % (tempDir,),
+                additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)]
+        )
         a.execute()
 
         # We copied the file into the directory, but since in the container the
@@ -178,30 +199,3 @@ class DockerTests(unittest.TestCase):
         # Cleanup
         os.unlink(tempFile)
         shutil.rmtree(tempDir)
-
-    def test_ulimits(self):
-
-        # Set up with no ulimit values
-        a = DockerApp(
-                'a',
-                'a',
-                image='ubuntu:14.04',
-                command='ulimit -Hn ; ulimit -Sn',
-        )
-        a.execute()
-
-        # Set up the ulimit values
-        a = DockerApp(
-            'a',
-            'a',
-            image='ubuntu:14.04',
-            command='ulimit -Hn ; ulimit -Sn',
-            ulimits=[
-                {
-                    'name': 'nofile',
-                    'hard': 10000,
-                    'soft': 20000,
-                }
-            ]
-        )
-        a.execute()
