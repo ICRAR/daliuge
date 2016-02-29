@@ -1,5 +1,5 @@
 The Data Flow Management System (DFMS) prototype represents the **execution framework**
-of Science Data Process (SDP) element of the Square Kilometer Array (SKA) observatory.
+of the Science Data Processor (SDP) element of the Square Kilometer Array (SKA) observatory.
 DFMS aims to provide a distributed data management platform and a
 scalable pipeline execution environment to support continuous, soft real-time,
 data-intensive processing for producing SKA science ready products. ::
@@ -26,9 +26,9 @@ for data-intensive applications:
 
 * Completely data-driven, and data DROP is the graph "node" (no longer just the edge)
   that has persistent states and events
-* Integration of data-lifecycle managment within data processing framework
+* Integration of data-lifecycle management within the data processing framework
 * Separation between logical graphs and physical graphs
-* Docker-based processing component interface
+* Docker-based pipeline component interface
 
 In :doc:`overview` we give a glimpse to the main concepts present in DFMS.
-Later sections of the documentation describe more in detail how dfms works. Enjoy!
+Later sections of the documentation describe more in detail how DFMS works. Enjoy!
