@@ -448,6 +448,11 @@
     url = "/show_gantt_chart?pgt_id={{pgt_view_json_name}}"
     window.open(url)
   }
+
+  function genScheduleChart() {
+    url = "/show_schedule_mat?pgt_id={{pgt_view_json_name}}"
+    window.open(url)
+  }
 </script>
 </head>
 <body onload="init()">
@@ -506,7 +511,8 @@
   </div>
   <div>
     <button id="gantt_button" class="button" onclick="genGanttChart()">Produce Gantt Chart</button>
-  </dev>
+    <button id="schedule_button" class="button" onclick="genScheduleChart()">Produce Schedule Matrix</button>
+  </div>
 </div>
 </body>
 </html>
