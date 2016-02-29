@@ -237,16 +237,9 @@ class AbstractDROP(EventFirer):
         if kwargs.has_key('precious'):
             self._precious = bool(kwargs.pop('precious'))
 
-        try:
-            self.initialize(**kwargs)
-            self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
-        except:
-            # It doesn't make sense to set an internal status here because
-            # the creation of the object is actually raising an exception,
-            # and the object doesn't get created and assigned to any variable
-            # Still, the FAILED state could be used for other purposes, like
-            # failure during writing for example.
-            raise
+        # Sub-class initialization; mark ourselves as INITIALIZED after that
+        self.initialize(**kwargs)
+        self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
 
     def _getArg(self, kwargs, key, default):
         val = default
