@@ -25,11 +25,48 @@ https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Grap
 """
 import threading, json
 import networkx as nx
+import numpy as np
 
 from dfms.dropmake.pg_generator import GraphException
 from dfms.dropmake.scheduler import DAGUtil, SchedulerException
 
 MAX_PGT_FN_CNT = 300
+
+class PGUtil(object):
+    """
+    Helper functions dealing with Physical Graphs
+    """
+    @staticmethod
+    def vstack_mat(A, B, separator=False):
+        """
+        Vertically stack two matrices that may have different # of colums
+        A:
+            matrix A (2d numpy array)
+        B:
+            matrix B (2d numy array)
+        separator:
+            whether to add an empty row separator between the two matrices (boolean)
+        Return:
+            the vertically stacked matrix (2d numpy array)
+        """
+        sa = A.shape
+        sb = B.shape
+        if (sa[1] == sb[1]):
+            if (separator):
+                return np.vstack((A, np.zeros((1, sb[1])), B))
+            else:
+                return np.vstack((A, B))
+        s = A if sa[1] < sb[1] else B
+        l = A if sa[1] > sb[1] else B
+        gap = l.shape[1] - s.shape[1]
+        if (separator):
+            pad = np.zeros((s.shape[0] + 1, l.shape[1]))
+            pad[:-1, :(-1 * gap)] = s
+        else:
+            pad = np.zeros((s.shape[0], l.shape[1]))
+            pad[:, :(-1 * gap)] = s
+        return np.vstack((pad, l))
+
 
 class PGManager(object):
     """
@@ -101,12 +138,13 @@ class PGManager(object):
         pgt = self.get_pgt(pgt_id)
         if (pgt is None):
             raise GraphException("PGT {0} not found".format(pgt_id))
-        jsobj = []
+        jsobj = None
         for part in pgt._partitions:
             sm = part.schedule.schedule_matrix
-            if (json_str):
-                sm = sm.tolist()
-            jsobj.append(sm)
+            if (jsobj is None):
+                jsobj = sm
+            else:
+                jsobj = PGUtil.vstack_mat(jsobj, sm, separator=True)
         if (json_str):
-            jsobj = json.dumps(jsobj)
+            jsobj = json.dumps(jsobj.tolist())
         return jsobj

@@ -130,7 +130,7 @@ def show_gantt_chart():
     Restful interface to show the gantt chart
     """
     pgt_id = request.query.get('pgt_id')
-    return template('matrix_vis.html', pgt_view_json_name=pgt_id)
+    return template('matrix_vis.html', pgt_view_json_name=pgt_id, vis_action="pgt_gantt_chart")
 
 @get('/pgt_gantt_chart')
 def get_gantt_chart():
@@ -144,6 +144,14 @@ def get_gantt_chart():
     except GraphException, ge:
         response.status = 500
         return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
+
+@get('/show_schedule_mat')
+def show_schedule_mat():
+    """
+    Restful interface to show the gantt chart
+    """
+    pgt_id = request.query.get('pgt_id')
+    return template('matrix_vis.html', pgt_view_json_name=pgt_id, vis_action="pgt_schedule_mat")
 
 @get('/pgt_schedule_mat')
 def get_schedule_mat():
