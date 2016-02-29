@@ -67,7 +67,7 @@ class DockerApp(BarrierAppDROP):
     hosted by a local docker daemon. Depending on the host system, the docker
     daemon might be automatically activated when a client tries to connect to
     it via its unix socket (like with systemd) or it needs to be brought up
-    previous to any client operation (upstart). In any case, if the daemon is
+    prior to any client operation (upstart). In any case, if the daemon is
     not present, this class will raise exceptions whenever it tries to connect
     to the server to perform some operation.
 
