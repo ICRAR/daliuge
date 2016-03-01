@@ -1303,9 +1303,23 @@ class LG():
                     if (lsd != len(tdrops)):
                         raise GraphException("# of sdrops '{0}' != # of tdrops '{1}'for Loop '{2}'".format(slgn.text,
                         tlgn.text, slgn.group.text))
-                    for i, sdrop in enumerate(sdrops):
-                        if (i < lsd - 1):
-                            self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
+                    # first add the outer construct (scatter, gather, group-by) boundary
+                    # oc = slgn.group.group
+                    # if (oc is not None and (not oc.is_loop())):
+                    #     pass
+                    loop_chunk_size = slgn.group.dop
+                    for i, chunk in enumerate(self._split_list(sdrops, loop_chunk_size)):
+                        #print "{0} ** {1}".format(i, loop_chunk_size)
+                        for j, sdrop in enumerate(chunk):
+                            #print "{0} -- {1}".format(j, loop_chunk_size)
+                            if (j < loop_chunk_size - 1):
+                                self._link_drops(slgn, tlgn, sdrop, tdrops[i * loop_chunk_size + j + 1])
+                                #print "{0} --> {1}".format(i * loop_chunk_size + j, i * loop_chunk_size + j + 1)
+
+                    # for i, sdrop in enumerate(sdrops):
+                    #     if (i < lsd - 1):
+                    #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
+
                 else:
                     if (slgn.h_level >= tlgn.h_level):
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
