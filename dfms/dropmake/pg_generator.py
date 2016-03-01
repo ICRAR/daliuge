@@ -157,7 +157,7 @@ class LGNode():
         """
         Add a group member
         """
-        if (lg_node.is_group() and (not (lg_node.is_scatter())) and (not (lg_node.is_loop()))):
+        if (lg_node.is_group() and (not (lg_node.is_scatter())) and (not (lg_node.is_loop())) and (not (lg_node.is_groupby()))):
             raise GInvalidNode("Only Scatters or Loops can be nested, but {0} is not Scatter".format(lg_node.id))
         self._children.append(lg_node)
 
@@ -1321,11 +1321,18 @@ class LG():
                 if (tlgn.is_groupby()):
                     grpby_dict = defaultdict(list)
                     for gdd in sdrops:
-                        # the last bit of iid (current h id) is GrougBy key
-                        gby = gdd['iid'].split('/')[-1] # TODO could be any bit in the future
+                        # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
+                        src_ctx = gdd['iid'].split('/')
+                        gby = src_ctx[-1]
+                        if (slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0): #groupby itself is nested inside a scatter
+                        # group key consists of group context id + inner most loop context id
+                            gctx = '/'.join(src_ctx[0:-2])
+                            gby = gctx + '/' + gby
+
                         grpby_dict[gby].append(gdd)
                     grp_keys = grpby_dict.keys()
                     if (len(grp_keys) != len(tdrops)):
+                        # this happens when groupby itself is nested inside a scatter
                         raise GraphException("# of Group keys {0} != # of Group Drops {1} for LGN {2}".format(len(grp_keys),
                         len(tdrops),
                         tlgn.id))
