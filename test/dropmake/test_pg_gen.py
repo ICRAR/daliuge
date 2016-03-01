@@ -33,7 +33,7 @@ class TestPGGen(unittest.TestCase):
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
         #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
-        self.assertEquals(len(lg._done_dict.keys()), 33)
+        self.assertEquals(len(lg._done_dict.keys()), 36)
         drop_list = lg.unroll_to_tpl()
         #print json.dumps(drop_list, indent=2)
         #pprint.pprint(drop_list)
