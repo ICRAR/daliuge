@@ -20,10 +20,18 @@
 #    MA 02111-1307  USA
 #
 
+import logging
+import os
+import platform
+import time
+
+import pkg_resources
+
 import networkx as nx
 import numpy as np
-from collections import defaultdict
-import os, time, math, pkg_resources, platform
+
+
+logger = logging.getLogger(__name__)
 
 DEBUG = 0
 
@@ -65,8 +73,8 @@ class Schedule(object):
                     ww = G.node[lpn].get('weight', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
-                print "lpl: ", " -> ".join(lpl_str)
-                print "lplt = ", lpl_c
+                logger.debug("lpl: ", " -> ".join(lpl_str))
+                logger.debug("lplt = ", lpl_c)
             N = self.makespan
             M = self._max_dop
             if (N < 1):
@@ -146,7 +154,7 @@ class Partition(object):
         self._max_dop = None
         self._parent_id = None
         self._child_parts = None
-        #print "My dop = {0}".format(self._ask_max_dop)
+        logger.debug("My dop = {0}".format(self._ask_max_dop))
 
     @property
     def parent_id(self):
@@ -190,7 +198,7 @@ class Partition(object):
             fast_max = self._max_antichains
             info = "Before: {0} - slow max: {1}, fast max: {2}, u: {3}, v: {4}, unew:{5}, vnew:{6}".format(self._dag.edges(),
             slow_max, fast_max, u, v, unew, vnew)
-            print info
+            logger.debug(info)
             if (len(slow_max) != len(fast_max)):
                 raise SchedulerException("ERROR - {0}".format(info))
 
@@ -221,7 +229,7 @@ class Partition(object):
         if sequential is True, break antichains to sequential chains
         """
         # if (self.partition_id == 180):
-        #     print "u = ", u, ", v = ", v, ", partition = ", self.partition_id
+        #     logger.debug("u = ", u, ", v = ", v, ", partition = ", self.partition_id)
         unew = False if self._dag.node.has_key(u) else True
         vnew = False if self._dag.node.has_key(v) else True
         self._dag.add_node(u, weight=uw)
@@ -381,25 +389,24 @@ class Scheduler(object):
             ew = self._dag.edge[u][v]['weight']
             try:
                 G[ugid][vgid]['weight'] += ew
-            except KeyError, ke:
+            except KeyError:
                 G[ugid][vgid]['weight'] = ew
         #DAGUtil.metis_part(G, 15)
         # since METIS does not allow zero edge weight, reset them to one
         for e in G.edges(data=True):
             if (e[2]['weight'] == 0):
                 e[2]['weight'] = 1
-        #print G.nodes(data=True)
+        #logger.debug(G.nodes(data=True))
         (edgecuts, metis_parts) = metis.part_graph(G, nparts=num_partitions)
         #assert(len(metis_parts) == len(G.nodes())) #test only
-        parent_parts = []
         for i, pt in enumerate(metis_parts):
             parent_id = pt + st_gid
             child_part = self._part_dict[G.nodes()[i]]
             child_part.parent_id = parent_id
-            #print "Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id)
+            #logger.debug("Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id))
             #parent_part = Partition(parent_id, None)
             #self._parts.append(parent_part)
-        #print "Edgecuts of merged partitions: ", edgecuts
+        #logger.debug("Edgecuts of merged partitions: ", edgecuts)
         return edgecuts
 
     def map_partitions(self):
@@ -447,7 +454,7 @@ class MySarkarScheduler(Scheduler):
 
         MySarkarScheduler always returns False
         """
-        print "MySarkar time criticality is called"
+        logger.debug("MySarkar time criticality called")
         return True
 
     def partition_dag(self):
@@ -476,7 +483,7 @@ class MySarkarScheduler(Scheduler):
             G.edge[u][v]['weight'] = 0 #edge zeroing
             recover_edge = False
             new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
-            #print "{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v)
+            #logger.debug("{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v))
             if ((new_lpl <= curr_lpl) or
             (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))): #try to accept the edge zeroing
                 ugid = gu.get('gid', None)
@@ -510,7 +517,7 @@ class MySarkarScheduler(Scheduler):
                         (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
                             # sequentialisation
                             part.add(u, uw, v, vw, sequential=True, global_dag=G)
-                            #print "serialisation done for part {0}".format(part.partition_id)
+                            #logger.debug("serialisation done for part {0}".format(part.partition_id))
                             gu['gid'] = part._gid
                             gv['gid'] = part._gid
                             curr_lpl = new_lpl
@@ -518,7 +525,7 @@ class MySarkarScheduler(Scheduler):
                             try:
                                 topo_sorted = nx.topological_sort(G)
                             except Exception, exp:
-                                print G.edges()
+                                logger.debug(G.edges())
                                 raise exp
                         else:
                             recover_edge = True
@@ -712,7 +719,6 @@ class DAGUtil(object):
         Prune a list of antichains to keep those with Top-3 lengths
         """
         todo = []
-        leng_dict = defaultdict(list)
         for antichain in antichains:
             todo.append(antichain)
         return todo
@@ -781,7 +787,7 @@ class DAGUtil(object):
                 ext = 'dylib'
             else:
                 ext = 'so' # what about Microsoft??!!
-            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.dropmake', 'lib/libmetis.{0}'.format(ext))
+            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.dropmake', 'lib/libmetis.{0}'.format(ext))  # @UndefinedVariable
             import metis as mt
         return mt
 

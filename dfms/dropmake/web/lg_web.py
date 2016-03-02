@@ -21,16 +21,18 @@
 #
 #    chen.wu@icrar.org
 
-import json, decimal, urllib2, time, traceback
-import subprocess, commands
-import threading
-import os, time
 from optparse import OptionParser
+import os
+import sys
+import threading
+import traceback
+
 from bottle import route, run, request, get, static_file, template, redirect, response
 
 from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP
-from dfms.dropmake.scheduler import SchedulerException
 from dfms.dropmake.pg_manager import PGManager
+from dfms.dropmake.scheduler import SchedulerException
+
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -50,7 +52,7 @@ def server_static(filepath):
     return static_file(filepath, root='./')
 
 @route('/jsonbody', method='POST')
-def jsonbody():
+def jsonbody_post():
     """
     Post graph JSON representation to LG or PG manager
     """
@@ -75,7 +77,7 @@ def jsonbody():
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
 @get('/jsonbody')
-def jsonbody():
+def jsonbody_get():
     """
     Return JSON representation of the logical graph
     """
