@@ -40,3 +40,6 @@ References
     driven algorithm for the constrained hardware/software partitioning problem.
     In Proceedings of the 3rd international workshop on Hardware/software co-design
     (pp. 42-48). IEEE Computer Society Press.
+#.  Liou, J.C. and Palis, M.A., 1997, April. A comparison of general approaches
+    to multiprocessor scheduling. In Parallel Processing Symposium, 1997.
+    Proceedings., 11th International (pp. 152-156). IEEE.
