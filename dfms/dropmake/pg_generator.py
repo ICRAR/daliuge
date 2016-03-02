@@ -47,12 +47,18 @@ Examples of logical graph node JSON representation
   u'text': u'DD Calibration'}
 
 """
-import json, os, datetime, time, math, uuid, commands
-from dfms.drop import dropdict
+
 from collections import defaultdict
-from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
-from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler
+import json, os, datetime, time, math, commands
+import logging
+
 import networkx as nx
+
+from dfms.drop import dropdict
+from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler
+
+
+logger = logging.getLogger(__name__)
 
 class GraphException(Exception):
     pass
@@ -584,7 +590,7 @@ class PGT(object):
                         link['to'] = oup
                     links.append(link)
             for gn in add_nodes:
-                #print "added gid = {0} for new node {1}".format(gn[4], gn[0])
+                #logger.debug("added gid = {0} for new node {1}".format(gn[4], gn[0]))
                 G.add_node(gn[0], weight=gn[1], dt=gn[2], drop_spec=gn[3], gid=gn[4])
             G.remove_edges_from(remove_edges)
             G.add_edges_from(add_edges)
@@ -832,7 +838,7 @@ class MySarkarPGTP(PGT):
         jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False)
         G = self._scheduler._dag
         self._partitions = parts
-        #print "The same DAG? ", (G == self.dag)
+        #logger.debug("The same DAG? ", (G == self.dag))
         leng = len(self._drop_list)
 
         key_dict = dict() #k - gojs key, v - gojs group id
@@ -850,7 +856,7 @@ class MySarkarPGTP(PGT):
         for gid in groups:
             gn = dict()
             gn['key'] = gid
-            #print "group key = {0}".format(gid)
+            #logger.debug("group key = {0}".format(gid))
             gn['isGroup'] = True
             gn['text'] = '{1}_{0}'.format((gid - leng), self._par_label)
             node_list.append(gn)
@@ -984,7 +990,7 @@ class PyrrosPGTP(PGT):
 
             line = f.readline()
             while (len(line) > 0):
-                #print "\t", line
+                #logger.debug("\t" + line)
                 la = line.split()
                 key_dict[int(la[0])] = int(la[1])
                 groups.add(int(la[1]))
@@ -995,14 +1001,14 @@ class PyrrosPGTP(PGT):
             if (key_dict.has_key(node['key'])):
                 gid = key_dict[int(node['key'])] + start_k
                 node['group'] = gid
-                print "{0} --> {1}".format(node['key'], gid)
+                logger.debug("{0} --> {1}".format(node['key'], gid))
             else:
-                print "Node without group: {0}".format(node['key'])
+                logger.debug("Node without group: {0}".format(node['key']))
 
         for gid in groups:
             gn = dict()
             gn['key'] = start_k + gid
-            print "group key = {0}".format(start_k + gid)
+            logger.debug("group key = {0}".format(start_k + gid))
             gn['isGroup'] = True
             gn['text'] = 'Island_{0}'.format(gid)
             node_list.append(gn)
@@ -1309,12 +1315,12 @@ class LG():
                     #     pass
                     loop_chunk_size = slgn.group.dop
                     for i, chunk in enumerate(self._split_list(sdrops, loop_chunk_size)):
-                        #print "{0} ** {1}".format(i, loop_chunk_size)
+                        #logger.debug("{0} ** {1}".format(i, loop_chunk_size))
                         for j, sdrop in enumerate(chunk):
-                            #print "{0} -- {1}".format(j, loop_chunk_size)
+                            #logger.debug("{0} -- {1}".format(j, loop_chunk_size))
                             if (j < loop_chunk_size - 1):
                                 self._link_drops(slgn, tlgn, sdrop, tdrops[i * loop_chunk_size + j + 1])
-                                #print "{0} --> {1}".format(i * loop_chunk_size + j, i * loop_chunk_size + j + 1)
+                                #logger.debug("{0} --> {1}".format(i * loop_chunk_size + j, i * loop_chunk_size + j + 1))
 
                     # for i, sdrop in enumerate(sdrops):
                     #     if (i < lsd - 1):

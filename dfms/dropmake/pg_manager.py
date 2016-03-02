@@ -24,11 +24,13 @@ Refer to
 https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Graph+Manager
 """
 import threading, json
+
 import networkx as nx
 import numpy as np
 
 from dfms.dropmake.pg_generator import GraphException
 from dfms.dropmake.scheduler import DAGUtil, SchedulerException
+
 
 MAX_PGT_FN_CNT = 300
 
@@ -121,7 +123,7 @@ class PGManager(object):
             raise GraphException("PGT {0} not found".format(pgt_id))
         try:
             gcm = DAGUtil.ganttchart_matrix(pgt.dag)
-        except SchedulerException, se:
+        except SchedulerException:
             topo_sort = nx.topological_sort(pgt.dag)
             DAGUtil.label_schedule(pgt.dag, topo_sort=topo_sort)
             gcm = DAGUtil.ganttchart_matrix(pgt.dag, topo_sort=topo_sort)
