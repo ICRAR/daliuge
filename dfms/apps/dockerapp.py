@@ -23,6 +23,7 @@
 Module containing docker-related applications and functions
 '''
 
+import collections
 import logging
 import os
 import threading
@@ -32,7 +33,7 @@ from configobj import ConfigObj
 from docker import tls
 from docker.client import AutoVersionClient
 
-from dfms import utils
+from dfms import utils, droputils
 from dfms.drop import BarrierAppDROP, FileDROP, \
     DirectoryContainer
 
@@ -40,6 +41,9 @@ from dfms.drop import BarrierAppDROP, FileDROP, \
 logger = logging.getLogger(__name__)
 
 DFMS_ROOT = '/dfms_root'
+
+DockerPath = collections.namedtuple('DockerPath', ('uid', 'path'))
+
 
 class ContainerIpWaiter(object):
     """
@@ -95,7 +99,10 @@ class DockerApp(BarrierAppDROP):
     known precisely until runtime, users should use placeholders for them in the
     command-line specification. Placeholders for input locations take the form
     of "%iX", where X starts from 0 and refers to the X-th filesystem-related
-    input. Likewise, output locations are specified as "%oX".
+    input. Likewise, output locations are specified as "%oX". Alternatively,
+    inputs and outputs can be referred to by their UIDs, in which case the
+    placeholders will look like "%i[X]" and "%o[X]" respectively, where X is the
+    UID of the input/output being referenced.
 
     Data volumes are a file-specific feature. For this reason, volumes are setup
     for file-system based input/output DROPs only, namely the FileDROP and the
@@ -103,7 +110,9 @@ class DockerApp(BarrierAppDROP):
     dataURL property via the command-line by using placeholders. Placeholders
     for input DROP dataURLs take the form of "%iDataURLX", where X starts from 0
     and refers to the X-th non-filesystem related input. Likewise, output
-    dataURLs are specified as "%oDataURLX".
+    dataURLs are specified as "%oDataURLX". Alternatively users can refer to the
+    dataURL of a specific input or output as "%iDataURL[X]" and "%oDataURL[X]"
+    respectively, where X is the UID of the input/output being referenced.
 
     Additional volume bindings can be specified via the keyword arguments when
     creating the DockerApp. The host file/directories must exist at the moment
@@ -266,45 +275,33 @@ class DockerApp(BarrierAppDROP):
 
     def run(self):
 
+        # Replace any placeholder in the commandline with the proper path or
+        # dataURL, depending on the type of input/output it is
+        # In the case of fs-based i/o we replace the command-line with the path
+        # that the Drop will receive *inside* the docker container (see below)
+        def isFSBased(x):
+            return isinstance(x, (FileDROP, DirectoryContainer))
+
+        fsInputs  = [i for i in self.inputs if isFSBased(i)]
+        fsOutputs = [o for o in self.outputs if isFSBased(o)]
+        dockerInputs  = [DockerPath(i.uid, DFMS_ROOT + i.path) for i in fsInputs]
+        dockerOutputs = [DockerPath(o.uid, DFMS_ROOT + o.path) for o in fsOutputs]
+        dataURLInputs  = [i for i in self.inputs if not isFSBased(i)]
+        dataURLOutputs = [o for o in self.outputs if not isFSBased(o)]
+
+        cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
+        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+
         # We bind the inputs and outputs inside the docker under the DFMS_ROOT
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
-        fsInputs  = [i for i in self.inputs if isinstance(i, (FileDROP, DirectoryContainer))]
-        fsOutputs = [o for o in self.outputs if isinstance(o, (FileDROP, DirectoryContainer))]
-        dockerInputs  = [DFMS_ROOT + i.path for i in fsInputs]
-        dockerOutputs = [DFMS_ROOT + o.path for o in fsOutputs]
-        vols = dockerInputs + [os.path.dirname(x) for x in dockerOutputs]
-        binds  = [                i.path  + ":" +                  dockerInputs[x]  for x,i in enumerate(fsInputs)]
-        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x]) for x,o in enumerate(fsOutputs)]
+        vols = [x.path for x in dockerInputs] + [os.path.dirname(x.path) for x in dockerOutputs]
+        binds  = [                i.path  + ":" +                  dockerInputs[x].path  for x,i in enumerate(fsInputs)]
+        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x].path) for x,o in enumerate(fsOutputs)]
         binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Volume bindings: %r" % (binds))
-
-        # Replace any input/output placeholders that might be found in the
-        # command line by the real path of the inputs and outputs
-        cmd = self._command
-        for x,i in enumerate(dockerInputs):
-            cmd = cmd.replace("%%i%d" % (x), i)
-        for x,o in enumerate(dockerOutputs):
-            cmd = cmd.replace("%%o%d" % (x), o)
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Command after volume binding placeholder replacement is: %s" % (cmd))
-
-        # Inputs/outputs that are not FileDROPs or DirectoryContainers can't
-        # bind their data via volumes into the docker container. Instead they
-        # communicate their dataURL via command-line replacement
-        inputDataURLs  = [i.dataURL for i in self.inputs if not isinstance(i, (FileDROP, DirectoryContainer))]
-        outputDataURLs = [o.dataURL for o in self.outputs if not isinstance(o, (FileDROP, DirectoryContainer))]
-
-        for x,i in enumerate(inputDataURLs):
-            cmd = cmd.replace("%%iDataURL%d" % (x), i)
-        for x,o in enumerate(outputDataURLs):
-            cmd = cmd.replace("%%oDataURL%d" % (x), o)
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Command after data URL placeholder replacement is: %s" % (cmd))
 
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
@@ -329,7 +326,7 @@ class DockerApp(BarrierAppDROP):
             # Also make sure that the output will belong to that user
             uid = os.getuid()
             createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(uid)
-            for dirname in set([os.path.dirname(x) for x in dockerOutputs]):
+            for dirname in set([os.path.dirname(x.path) for x in dockerOutputs]):
                 createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
             createUserAndGo += "cd; su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, utils.escapeQuotes(cmd, doubleQuotes=False))
 
