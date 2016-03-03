@@ -28,7 +28,7 @@ import subprocess
 import time
 
 from dfms.drop import BarrierAppDROP, FileDROP, DirectoryContainer
-from dfms import utils
+from dfms import utils, droputils
 
 LOG = logging.getLogger(__name__)
 
@@ -47,33 +47,17 @@ class BashShellApp(BarrierAppDROP):
             raise Exception('No command specified, cannot create BashShellApp')
 
     def run(self):
-        inputs = [i.path for i in self.inputs if isinstance(i, (FileDROP, DirectoryContainer))]
-        outputs = [o.path for o in self.outputs if isinstance(o, (FileDROP, DirectoryContainer))]
 
-        # Replace any input/output placeholders that might be found in the
-        # command line by the real path of the inputs and outputs
-        cmd = self._command
-        for x, i in enumerate(inputs):
-            cmd = cmd.replace('%i{0}'.format(x), i)
-        for x, o in enumerate(outputs):
-            cmd = cmd.replace('%o{0}'.format(x), o)
+        def isFSBased(x):
+            return isinstance(x, (FileDROP, DirectoryContainer))
 
-        if LOG.isEnabledFor(logging.DEBUG):
-            LOG.debug("Command after binding placeholder replacement is: {0}".format(cmd))
+        fsInputs = [i for i in self.inputs if isFSBased(i)]
+        fsOutputs = [o for o in self.outputs if isFSBased(o)]
+        dataURLInputs  = [i for i in self.inputs if not isFSBased(i)]
+        dataURLOutputs = [o for o in self.outputs if not isFSBased(o)]
 
-        # Inputs/outputs that are not FileDROPs or DirectoryContainers can't
-        # bind their data via volumes into the docker container. Instead they
-        # communicate their dataURL via command-line replacement
-        input_data_urls = [i.dataURL for i in self.inputs if not isinstance(i, (FileDROP, DirectoryContainer))]
-        output_data_urls = [o.dataURL for o in self.outputs if not isinstance(o, (FileDROP, DirectoryContainer))]
-
-        for x, i in enumerate(input_data_urls):
-            cmd = cmd.replace("%iDataURL{0}".format(x), i)
-        for x, o in enumerate(output_data_urls):
-            cmd = cmd.replace("%oDataURL{0}".format(x), o)
-
-        if LOG.isEnabledFor(logging.DEBUG):
-            LOG.debug("Command after data URL placeholder replacement is: {0}".format(cmd))
+        cmd = droputils.replace_path_placeholders(self._command, fsInputs, fsOutputs)
+        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Wrap everything inside bash
         cmd = '/bin/bash -c "{0}"'.format(utils.escapeQuotes(cmd, singleQuotes=False))
