@@ -30,15 +30,18 @@ import multiprocessing
 import optparse
 import os
 import signal
+import socket
 import sys
-import threading
 
 import bottle
 import tornado.httpserver
 import tornado.ioloop
 import tornado.wsgi
+from zeroconf import ServiceStateChange
 
 import cmdline
+from dfms import utils
+from dfms.manager import constants, client
 
 
 logger = logging.getLogger(__name__)
@@ -60,21 +63,22 @@ class DfmsDaemon(object):
     and the master manager (default: no) at creation time.
     """
 
-    def __init__(self, master=False, noNM=False):
-        self._web_t = None
+    def __init__(self, master=False, noNM=False, disable_zeroconf=False):
 
         # The three processes we run
         self._nm_proc = None
         self._dim_proc = None
         self._mm_proc = None
 
-        # Automatically start those that we need
-        if master:
-            self.startMM()
-        if not noNM:
-            self.startNM()
+        # Zeroconf for NM and MM
+        self._enable_zeroconf = not disable_zeroconf
+        self._nm_zc = None
+        self._nm_info = None
+        self._mm_zc = None
+        self._mm_browser = None
 
         # Set up our REST interface
+        self._ioloop = None
         self.app = app = bottle.Bottle()
 
         # Starting managers
@@ -86,6 +90,12 @@ class DfmsDaemon(object):
         app.get('/managers/node',       callback=self.rest_getNMInfo)
         app.get('/managers/dataisland', callback=self.rest_getDIMInfo)
         app.get('/managers/master',     callback=self.rest_getMMInfo)
+
+        # Automatically start those that we need
+        if master:
+            self.startMM()
+        if not noNM:
+            self.startNM()
 
     def run(self, host=None, port=None):
         """
@@ -99,13 +109,10 @@ class DfmsDaemon(object):
 
         # Start the web server in a different thread and simply sleep until the
         # show is over
-        server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app))
+        self._ioloop = tornado.ioloop.IOLoop.instance()
+        server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app), io_loop=self._ioloop)
         server.listen(port=port,address=host)
-        self._web_t = threading.Thread(target=lambda: tornado.ioloop.IOLoop.instance().start())
-        self._web_t.start()
-
-        # Simply wait until we are signaled to stop
-        signal.pause()
+        self._ioloop.start()
 
     def stop(self):
         """
@@ -114,19 +121,18 @@ class DfmsDaemon(object):
         """
         timeout = 10
 
-        self._stop_rest_server()
+        self._stop_rest_server(timeout)
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
         logger.info('DFMS Daemon stopped')
 
-    def _stop_rest_server(self):
-        if self._web_t:
+    def _stop_rest_server(self, timeout):
+        if self._ioloop:
+            logger.info("Stopping the web server")
             self.app.close()
-            tornado.ioloop.IOLoop.instance().stop()
-            if threading.current_thread() is not self._web_t:
-                self._web_t.join()
-            self._web_t = None
+            self._ioloop.stop()
+            self._started = False
 
     def _stop_manager(self, name, timeout):
         proc = getattr(self, name)
@@ -145,17 +151,21 @@ class DfmsDaemon(object):
 
     def stopNM(self, timeout=None):
         self._stop_manager('_nm_proc', timeout)
+        if self._enable_zeroconf and self._nm_zc:
+            utils.deregister_service(self._nm_zc, self._nm_info)
 
     def stopDIM(self, timeout=None):
         self._stop_manager('_dim_proc', timeout)
 
     def stopMM(self, timeout=None):
         self._stop_manager('_mm_proc', timeout)
+        if self._enable_zeroconf and self._mm_browser:
+            self._mm_browser.cancel()
 
     # Methods to start and stop the individual managers
     def startNM(self):
         def f():
-            self._stop_rest_server()
+            self._stop_rest_server(1)
             args = ['--rest', '-i', 'nm', '--host', '0.0.0.0']
             signal.signal(signal.SIGINT, default_handler_int)
             signal.signal(signal.SIGTERM, default_handler_term)
@@ -165,9 +175,15 @@ class DfmsDaemon(object):
         self._nm_proc.start()
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
 
+        # Registering the new NodeManager via zeroconf so it gets discovered
+        # by the Master Manager
+        if self._enable_zeroconf:
+            addrs = utils.get_local_ip_addr()
+            self._nm_zc, self._nm_info = utils.register_service('NodeManager', addrs[0], 'tcp', addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+
     def startDIM(self, nodes):
         def f(nodes):
-            self._stop_rest_server()
+            self._stop_rest_server(1)
             args = ['--rest', '-i', 'dim', '--host', '0.0.0.0', '--nodes', nodes]
             signal.signal(signal.SIGINT, default_handler_int)
             signal.signal(signal.SIGTERM, default_handler_term)
@@ -179,7 +195,7 @@ class DfmsDaemon(object):
 
     def startMM(self):
         def f():
-            self._stop_rest_server()
+            self._stop_rest_server(1)
             args = ['--rest', '-i', 'mm', '--host', '0.0.0.0']
             signal.signal(signal.SIGINT, default_handler_int)
             signal.signal(signal.SIGTERM, default_handler_term)
@@ -190,6 +206,26 @@ class DfmsDaemon(object):
         self._mm_proc = multiprocessing.Process(target=f)
         self._mm_proc.start()
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
+
+        # Also subscribe to zeroconf events coming from NodeManagers and feed
+        # the Master Manager with the new hosts we find
+        if self._enable_zeroconf:
+            mm_client = client.MasterManagerClient()
+            node_managers = {}
+            def nm_callback(zeroconf, service_type, name, state_change):
+                info = zeroconf.get_service_info(service_type, name)
+                if state_change is ServiceStateChange.Added:
+                    server = socket.inet_ntoa(info.address)
+                    port = info.port
+                    node_managers[name] = (server, port)
+                    logger.info("Found a new Node Manager on %s:%d, will add it to the MM" % (server, port))
+                    mm_client.add_node(server)
+                elif state_change is ServiceStateChange.Removed:
+                    server,port = node_managers[name]
+                    logger.info("Node Manager on %s:%d disappeared, removing it from the MM" % (server, port))
+                    mm_client.remove_node(server)
+                    del node_managers[name]
+            self._mm_zc, self._mm_browser = utils.browse_service('NodeManager', 'tcp', nm_callback)
 
     # Rest interface
     def _rest_start_manager(self, proc, start_method):
@@ -237,11 +273,13 @@ def run_with_cmdline(args=sys.argv):
                       dest="master", help="Start this DFMS daemon as the master daemon", default=False)
     parser.add_option("--no-nm", action="store_true",
                       dest="noNM", help = "Don't start a NodeDropManager by default", default=False)
+    parser.add_option("--no-zeroconf", action="store_true",
+                      dest="noZC", help = "Don't enable zeroconf on this DFMS daemon", default=False)
     (opts, args) = parser.parse_args(args)
 
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    daemon = DfmsDaemon(opts.master, opts.noNM)
+    daemon = DfmsDaemon(opts.master, opts.noNM, opts.noZC)
 
     # Signal handling, which stops the daemon
     def handle_signal(signalNo, stack_frame):

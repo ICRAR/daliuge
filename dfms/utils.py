@@ -29,8 +29,6 @@ import os
 import socket
 import threading
 import time
-import netifaces
-from zeroconf import ServiceInfo, Zeroconf
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +37,7 @@ def get_local_ip_addr():
     """
     Enumerate all interfaces and return bound IP addresses (exclude localhost)
     """
+    import netifaces
     PROTO = netifaces.AF_INET
     ifaces = netifaces.interfaces()
     if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
@@ -53,6 +52,7 @@ def register_service(service_type_name, service_name, protocol, ipaddr, port):
 
     Returns ZeroConf object and ServiceInfo object
     """
+    from zeroconf import ServiceInfo, Zeroconf
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     sn = '{0} {1}'.format(service_name, stn)
     info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, {}, None)
@@ -79,10 +79,11 @@ def browse_service(service_type_name, protocol, callback):
 
     Returns ZeroConf object
     """
+    from zeroconf import Zeroconf, ServiceBrowser
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     zc = Zeroconf()
     browser = ServiceBrowser(zc, stn, handlers=[callback])
-    return zc
+    return zc, browser
 
 
 class CountDownLatch(object):
