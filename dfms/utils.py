@@ -29,8 +29,51 @@ import os
 import socket
 import threading
 import time
+import netifaces
+from zeroconf import ServiceInfo, Zeroconf
+
 
 logger = logging.getLogger(__name__)
+
+def get_local_ip_addr():
+    """
+    Enumerate all interfaces and return bound IP address (exclude localhost)
+    """
+    PROTO = netifaces.AF_INET
+    ifaces = netifaces.interfaces()
+    if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
+    if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
+    iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] \
+                    if 'addr' in s and not s['addr'].startswith('127.')]
+    return iface_addrs
+
+def register_service(service_type_name, service_name, protocol, ipaddr, port):
+    """
+    ZeroConf: Register service type, protocol, ip addr and port
+    """
+    stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
+    sn = '{0} {1}'.format(service_name, stn)
+    info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, '', '')
+    zc = Zeroconf()
+    zc.register_service(info)
+    return (zc, info)
+
+def deregister_service(zc, info):
+    """
+    ZeroConf: Deregister service
+    """
+    zc.unregister_service(info)
+    zc.close()
+
+def browse_service(service_type_name, protocol, callback):
+    """
+    ZeroConf: Browse for services based on service type and protocol
+    """
+    stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
+    zc = Zeroconf()
+    browser = ServiceBrowser(zc, stn, handlers=[callback])
+    return zc
+
 
 class CountDownLatch(object):
     """
