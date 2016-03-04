@@ -19,18 +19,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import httplib
 import threading
+import time
 import unittest
 
 from dfms import utils
 from dfms.manager import constants
 from dfms.manager.daemon import DfmsDaemon
-import httplib
-import time
-import logging
 
-
-logging.basicConfig(level=logging.DEBUG)
 
 class TestDaemon(unittest.TestCase):
 
