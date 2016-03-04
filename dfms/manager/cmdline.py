@@ -205,7 +205,7 @@ def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestPort):
     parser = optparse.OptionParser()
     addCommonOptions(parser, dmPort, dmRestPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
-                      dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default='localhost')
+                      dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default="")
     parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
                       dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
     parser.add_option("--dmCheckTimeout", action="store", type="int",
@@ -214,7 +214,7 @@ def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestPort):
 
     # Add DIM-specific options
     options.dmType = dmType
-    options.dmArgs = (options.id, options.nodes.split(','))
+    options.dmArgs = (options.id, [s for s in options.nodes.split(',') if s])
     options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmCheckTimeout': options.dmCheckTimeout}
     options.dmAcronym = acronym
     options.restType = CompositeManagerRestServer
