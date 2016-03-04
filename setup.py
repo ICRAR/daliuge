@@ -67,6 +67,7 @@ setup(
             "python-daemon",
             "scp",
             "tornado",
+            "netifaces",
             "zeroconf",
       ],
       extra_require={
