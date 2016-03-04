@@ -79,7 +79,8 @@ setup(
           'console_scripts':[
               'dfmsNM=dfms.manager.cmdline:dfmsNM',
               'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
-              'dfmsMM=dfms.manager.cmdline:dfmsMM'
+              'dfmsMM=dfms.manager.cmdline:dfmsMM',
+              'dfmsDaemon=dfms.manager.daemon:run_with_cmdline'
           ],
       }
 )
