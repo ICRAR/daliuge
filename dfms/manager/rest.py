@@ -47,7 +47,6 @@ class RestServer(object):
         # Increase maximum file sizes
         bottle.BaseRequest.MEMFILE_MAX = 1024 * 1024 * 10
 
-        super(RestServer, self).__init__()
         app = Bottle()
         self.app = app
         self.dm = dm
