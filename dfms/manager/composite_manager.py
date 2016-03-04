@@ -57,7 +57,7 @@ class CompositeManager(DROPManager):
     construction time.
     """
 
-    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, subDmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
         Creates a new CompositeManager with ID `dmId`. The sub-DMs it manages
         are to be located at `dmHosts`, and should be listening on port
@@ -467,7 +467,7 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(dmId,
                                                 NODE_DEFAULT_PORT,
                                                 NODE_DEFAULT_REST_PORT,
@@ -491,7 +491,7 @@ class MasterManager(CompositeManager):
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(dmId,
                                             ISLAND_DEFAULT_PORT,
                                             ISLAND_DEFAULT_REST_PORT,
