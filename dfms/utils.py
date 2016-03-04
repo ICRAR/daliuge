@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 def get_local_ip_addr():
     """
-    Enumerate all interfaces and return bound IP address (exclude localhost)
+    Enumerate all interfaces and return bound IP addresses (exclude localhost)
     """
     PROTO = netifaces.AF_INET
     ifaces = netifaces.interfaces()
@@ -49,7 +49,9 @@ def get_local_ip_addr():
 
 def register_service(service_type_name, service_name, protocol, ipaddr, port):
     """
-    ZeroConf: Register service type, protocol, ip addr and port
+    ZeroConf: Register service type, protocol, ipaddr and port
+
+    Returns ZeroConf object and ServiceInfo object
     """
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     sn = '{0} {1}'.format(service_name, stn)
@@ -68,6 +70,14 @@ def deregister_service(zc, info):
 def browse_service(service_type_name, protocol, callback):
     """
     ZeroConf: Browse for services based on service type and protocol
+
+    callback signature: callback(zeroconf, service_type, name, state_change)
+        zeroconf: ZeroConf object
+        service_type: zeroconf service
+        name: service name
+        state_change: ServiceStateChange type (Added, Removed)
+
+    Returns ZeroConf object
     """
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     zc = Zeroconf()
