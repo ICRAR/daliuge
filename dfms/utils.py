@@ -55,7 +55,7 @@ def register_service(service_type_name, service_name, protocol, ipaddr, port):
     """
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     sn = '{0} {1}'.format(service_name, stn)
-    info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, '', '')
+    info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, {}, None)
     zc = Zeroconf()
     zc.register_service(info)
     return (zc, info)
