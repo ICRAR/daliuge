@@ -129,8 +129,10 @@ class BaseDROPManagerClient(object):
     def _GET(self, url):
         return self._request(url, 'GET')
 
-    def _POST(self, url, content, content_type):
-        headers = {'Content-Type': content_type}
+    def _POST(self, url, content=None, content_type=None):
+        headers = {}
+        if content_type:
+            headers['Content-Type'] = content_type
         self._request(url, 'POST', content, headers)
 
     def _DELETE(self, url):
@@ -144,6 +146,9 @@ class BaseDROPManagerClient(object):
         url = '/api' + url
 
         # Do the HTTP stuff...
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Sending %s request to %s:%d%s" % (method, self.host, self.port, url))
+
         connection = httplib.HTTPConnection(self.host, self.port)
         connection.request(method, url, content, headers)
         response = connection.getresponse()
@@ -161,14 +166,25 @@ class NodeManagerClient(BaseDROPManagerClient):
     def __init__(self, host='localhost', port=constants.NODE_DEFAULT_REST_PORT):
         super(NodeManagerClient, self).__init__(host=host, port=port)
 
-class DataIslandManagerClient(BaseDROPManagerClient):
+class CompositeManagerClient(BaseDROPManagerClient):
+
+    def nodes(self):
+        return self._get_json('/nodes')
+
+    def add_node(self, node):
+        self._POST('/nodes/%s' % (node,), content=None)
+
+    def remove_node(self, node):
+        self._DELETE('/nodes/%s' % (node,))
+
+class DataIslandManagerClient(CompositeManagerClient):
     """
     A DataIslandManager REST client
     """
     def __init__(self, host='localhost', port=constants.ISLAND_DEFAULT_REST_PORT):
         super(DataIslandManagerClient, self).__init__(host=host, port=port)
 
-class MasterManagerClient(BaseDROPManagerClient):
+class MasterManagerClient(CompositeManagerClient):
     """
     A MasterManager REST client
     """
