@@ -67,6 +67,7 @@ setup(
             "python-daemon",
             "scp",
             "tornado",
+            "zeroconf",
       ],
       extra_require={
         'spead': ["spead2==0.4.0"]
