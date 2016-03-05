@@ -891,7 +891,7 @@ class MySarkarPGTP(PGT):
             # get all the edge sum
             self._edge_cuts = 0
             for e in G.edges(data=True):
-                self._edge_cuts += e[2]['weight']
+                self._edge_cuts += e[2].get('weight', 0)
 
         if (string_rep):
             return json.dumps(jsobj, indent=2)
