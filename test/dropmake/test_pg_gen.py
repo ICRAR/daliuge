@@ -19,13 +19,10 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest, os, pkg_resources, json
-import pprint
-import networkx as nx
+import unittest, pkg_resources
 
-from dfms.dropmake.pg_generator import LGNode, LG, PGT, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP
-from dfms.dropmake.scheduler import Scheduler, MySarkarScheduler, DAGUtil, Partition
-from collections import defaultdict
+from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
+
 
 class TestPGGen(unittest.TestCase):
 

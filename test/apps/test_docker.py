@@ -161,14 +161,26 @@ class DockerTests(unittest.TestCase):
         A test to check that DROPs other than FileDROPs and DirectoryContainers
         can pass their dataURLs into docker containers
         """
+        self._ngas_and_fs_io("echo -n '%iDataURL0' > %o0")
+
+    def test_refer_to_io_by_uid(self):
+        """
+        A test to check that input and output Drops can be referred to by their
+        UIDs (in addition to their position in the list of inputs or outputs)
+        in the command-line.
+        """
+        self._ngas_and_fs_io("echo -n '%iDataURL[a]' > %o[c]")
+
+    def _ngas_and_fs_io(self, command):
         a = NgasDROP('a', 'a') # not a filesystem-related DROP, we can reference its URL in the command-line
-        b = DockerApp('b', 'b', image="ubuntu:14.04", command="echo -n '%iDataURL0' > %o0")
+        b = DockerApp('b', 'b', image="ubuntu:14.04", command=command)
         c = FileDROP('c', 'c')
         b.addInput(a)
         b.addOutput(c)
         with DROPWaiterCtx(self, b, 100):
             a.setCompleted()
         self.assertEquals(a.dataURL, droputils.allDropContents(c))
+
 
     def test_additional_bindings(self):
 

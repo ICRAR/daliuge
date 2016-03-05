@@ -32,7 +32,7 @@ import types
 import Pyro4
 
 from dfms.ddap_protocol import DROPStates
-from dfms.drop import AppDROP
+from dfms.drop import AppDROP, FileDROP, DirectoryContainer
 from dfms.io import IOForURL, OpenMode
 
 
@@ -368,3 +368,54 @@ class DROPFile(object):
     def __del__(self):
         if not self._isClosed:
             self.close()
+
+def replace_path_placeholders(cmd, inputs, outputs):
+    """
+    Replaces any placeholder found in ``cmd`` with the path of the respective
+    input or output Drop from ``inputs`` or ``outputs``.
+
+    Placeholders have the different formats:
+    * ``%iN``, with N starting from 0, indicates the path of the N-th element
+      from the ``inputs`` argument; likewise for ``%oN``.
+    * ``%i[X]`` indicates the path of the input with UID ``X``; likewise for
+      ``%o[X]``.
+    """
+
+    for x,i in enumerate(inputs):
+        cmd = cmd.replace("%%i%d" % (x), i.path)
+        cmd = cmd.replace("%%i[%s]" % (i.uid), i.path)
+    for x,o in enumerate(outputs):
+        cmd = cmd.replace("%%o%d" % (x), o.path)
+        cmd = cmd.replace("%%o[%s]" % (o.uid), o.path)
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Command after path placeholder replacement is: %s" % (cmd))
+
+    return cmd
+
+def replace_dataurl_placeholders(cmd, inputs, outputs):
+    """
+    Replaces any placeholder found in ``cmd`` with the dataURL property of the
+    respective input or output Drop from ``inputs`` or ``outputs``.
+
+    Placeholders have the different formats:
+    * ``%iDataURLN``, with N starting from 0, indicates the path of the N-th
+      element from the ``inputs`` argument; likewise for ``%oDataURLN``.
+    * ``%iDataURL[X]`` indicates the path of the input with UID ``X``; likewise
+      for ``%oDataURL[X]``.
+    """
+
+    # Inputs/outputs that are not FileDROPs or DirectoryContainers can't
+    # bind their data via volumes into the docker container. Instead they
+    # communicate their dataURL via command-line replacement
+    for x,i in enumerate(inputs):
+        cmd = cmd.replace("%%iDataURL%d" % (x), i.dataURL)
+        cmd = cmd.replace("%%iDataURL[%s]" % (i.uid), i.dataURL)
+    for x,o in enumerate(outputs):
+        cmd = cmd.replace("%%oDataURL%d" % (x), o.dataURL)
+        cmd = cmd.replace("%%oDataURL[%s]" % (o.uid), o.dataURL)
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Command after data URL placeholder replacement is: %s" % (cmd))
+
+    return cmd

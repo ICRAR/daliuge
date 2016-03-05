@@ -68,6 +68,8 @@ setup(
             "python-daemon",
             "scp",
             "tornado",
+            "netifaces",
+            "zeroconf",
       ],
       extra_require={
         'spead': ["spead2==0.4.0"]
@@ -81,7 +83,8 @@ setup(
           'console_scripts':[
               'dfmsNM=dfms.manager.cmdline:dfmsNM',
               'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
-              'dfmsMM=dfms.manager.cmdline:dfmsMM'
+              'dfmsMM=dfms.manager.cmdline:dfmsMM',
+              'dfmsDaemon=dfms.manager.daemon:run_with_cmdline'
           ],
       }
 )

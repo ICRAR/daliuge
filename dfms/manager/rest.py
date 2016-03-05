@@ -47,7 +47,6 @@ class RestServer(object):
         # Increase maximum file sizes
         bottle.BaseRequest.MEMFILE_MAX = 1024 * 1024 * 10
 
-        super(RestServer, self).__init__()
         app = Bottle()
         self.app = app
         self.dm = dm
@@ -201,6 +200,9 @@ class CompositeManagerRestServer(RestServer):
 
     def initializeSpecifics(self, app):
         app.get(   '/api',                                   callback=self.getCMStatus)
+        app.get(   '/api/nodes',                             callback=self.getCMNodes)
+        app.post(  '/api/nodes/<node>',                      callback=self.addCMNode)
+        app.delete('/api/nodes/<node>',                      callback=self.removeCMNode)
 
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDIM)
@@ -208,6 +210,16 @@ class CompositeManagerRestServer(RestServer):
     def getCMStatus(self):
         response.content_type = 'application/json'
         return json.dumps({'hosts': self.dm.dmHosts, 'sessionIds': self.dm.getSessionIds()})
+
+    def getCMNodes(self):
+        response.content_type = 'application/json'
+        return json.dumps(self.dm.nodes)
+
+    def addCMNode(self, node):
+        self.dm.add_node(node)
+
+    def removeCMNode(self, node):
+        self.dm.remove_node(node)
 
     #===========================================================================
     # non-REST methods
