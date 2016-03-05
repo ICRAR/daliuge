@@ -156,6 +156,20 @@ Basic steps
   In some cases, this mapping step is merged with the previous *Graph partitioning* step
   to directly map DROPs to resources.
 
+Under the assumption of uniform resources (e.g. each node has identical capabilities),
+graph partitioning is equivalent to resource mapping since mapping involves simple
+round-robin all available resources. In this case, graph partitioning
+algorithms (e.g. METIS [5]) actually support multi-constraints
+load balancing so that both CPU load and memory usage on each node is roughly similar.
+
+For heterogeneous resources, which DFMS has not yet supported, usually the graph
+partitioning is first performed, and then resource mapping refers to the assignment
+of partitions to different resources based on demands and capabilities using
+graph / `tree-matching algorithms[16] <http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=6495451>`_ .
+However, it is also possible that the graph partitioning
+algorithm directly produces a set of unbalanced partitions “tailored” for those
+available heterogeneous resources.
+
 In the following context, we use the term **Scheduling** to refer to the combination of
 both *Graph partitioning* and *Resource mapping*.
 

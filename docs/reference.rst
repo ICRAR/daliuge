@@ -43,3 +43,6 @@ References
 #.  Liou, J.C. and Palis, M.A., 1997, April. A comparison of general approaches
     to multiprocessor scheduling. In Parallel Processing Symposium, 1997.
     Proceedings., 11th International (pp. 152-156). IEEE.
+#.  Jeannot, E., Mercier, G. and Tessier, F., 2014. Process placement in
+    multicore clusters: Algorithmic issues and practical techniques.
+    Parallel and Distributed Systems, IEEE Transactions on, 25(4), pp.993-1002.
