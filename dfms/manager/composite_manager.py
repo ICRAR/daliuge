@@ -57,7 +57,7 @@ class CompositeManager(DROPManager):
     construction time.
     """
 
-    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, subDmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
         Creates a new CompositeManager with ID `dmId`. The sub-DMs it manages
         are to be located at `dmHosts`, and should be listening on port
@@ -89,7 +89,15 @@ class CompositeManager(DROPManager):
         self._pkeyPath = pkeyPath
         self._dmRestPort = dmRestPort
         self._dmCheckTimeout = dmCheckTimeout
-        self._tp = ThreadPool(len(dmHosts*2))
+        n_threads = len(dmHosts*2) if dmHosts else 20
+        self._tp = ThreadPool(n_threads)
+
+        # The list of bottom-level nodes that are covered by this manager
+        # This list is different from the dmHosts, which are the machines that
+        # are directly managed by this manager (which in turn could manage more
+        # machines)
+        self._nodes = []
+
         self.startDMChecker()
 
     def startDMChecker(self):
@@ -125,6 +133,16 @@ class CompositeManager(DROPManager):
     @property
     def dmHosts(self):
         return self._dmHosts[:]
+
+    @property
+    def nodes(self):
+        return self._nodes[:]
+
+    def add_node(self, node):
+        self._nodes.append(node)
+
+    def remove_node(self, node):
+        self._nodes.remove(node)
 
     @property
     def dmRestPort(self):
@@ -449,7 +467,7 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(dmId,
                                                 NODE_DEFAULT_PORT,
                                                 NODE_DEFAULT_REST_PORT,
@@ -459,14 +477,21 @@ class DataIslandManager(CompositeManager):
                                                 dmHosts=dmHosts,
                                                 pkeyPath=pkeyPath,
                                                 dmCheckTimeout=dmCheckTimeout)
+
+        # In the case of the Data Island the dmHosts are the final nodes as well
+        self._nodes = dmHosts
         logger.info('Created DataIslandManager for hosts: %r' % (self._dmHosts))
+
+    def add_node(self, node):
+        CompositeManager.add_node(self, node)
+        self._dmHosts.append(node)
 
 class MasterManager(CompositeManager):
     """
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmId, dmHosts=['localhost'], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(dmId,
                                             ISLAND_DEFAULT_PORT,
                                             ISLAND_DEFAULT_REST_PORT,

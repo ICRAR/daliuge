@@ -19,10 +19,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
+import logging
 import unittest, pkg_resources
+
 from dfms.dropmake.pg_generator import LG
 from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
 Partition, MinNumPartsScheduler)
+
+
+logger = logging.getLogger(__name__)
 
 class TestScheduler(unittest.TestCase):
 
@@ -60,14 +65,13 @@ class TestScheduler(unittest.TestCase):
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
-            print "MinNumPartsScheduler Partitioning ", lgn
+            logger.info("MinNumPartsScheduler Partitioning ", lgn)
             lll = len(lgn) + len("Partitioning ") + 1
-            print "=" * lll
+            logger.info("=" * lll)
             mps = MinNumPartsScheduler(drop_list, tgt_deadline[j], max_dop=mdp, optimistic_factor=ofa)
             num_parts_done, lpl, ptime, parts = mps.partition_dag()
-            print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
-            print "-" * lll
-            print
+            logger.info("{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn))
+            logger.info("-" * lll)
 
     def test_mysarkar_scheduler(self):
         lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
@@ -79,12 +83,12 @@ class TestScheduler(unittest.TestCase):
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
-            print "MySarkarScheduler Partitioning ", lgn
+            logger.info( "MySarkarScheduler Partitioning ", lgn)
             lll = len(lgn) + len("Partitioning ") + 1
-            print "=" * lll
+            logger.info( "=" * lll)
             mys = MySarkarScheduler(drop_list, max_dop=mdp)
             num_parts_done, lpl, ptime, parts = mys.partition_dag()
-            print "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+            logger.info( "{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn))
             if (s_matrix):
                 for i, part in enumerate(parts):
                     if (part.cardinality > 0):
@@ -98,5 +102,4 @@ class TestScheduler(unittest.TestCase):
                         # print "Workload: ", part.schedule.workload
                         # print
             mys.merge_partitions(tgt_partnum[j])
-            print "-" * lll
-            print
+            logger.info( "-" * lll)

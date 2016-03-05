@@ -30,7 +30,61 @@ import socket
 import threading
 import time
 
+
 logger = logging.getLogger(__name__)
+
+def get_local_ip_addr():
+    """
+    Enumerate all interfaces and return bound IP addresses (exclude localhost)
+    """
+    import netifaces
+    PROTO = netifaces.AF_INET
+    ifaces = netifaces.interfaces()
+    if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
+    if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
+    iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] \
+                    if 'addr' in s and not s['addr'].startswith('127.')]
+    return iface_addrs
+
+def register_service(service_type_name, service_name, protocol, ipaddr, port):
+    """
+    ZeroConf: Register service type, protocol, ipaddr and port
+
+    Returns ZeroConf object and ServiceInfo object
+    """
+    from zeroconf import ServiceInfo, Zeroconf
+    stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
+    sn = '{0} {1}'.format(service_name, stn)
+    info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, {}, None)
+    zc = Zeroconf()
+    zc.register_service(info)
+    return (zc, info)
+
+def deregister_service(zc, info):
+    """
+    ZeroConf: Deregister service
+    """
+    zc.unregister_service(info)
+    zc.close()
+
+def browse_service(service_type_name, protocol, callback):
+    """
+    ZeroConf: Browse for services based on service type and protocol
+
+    callback signature: callback(zeroconf, service_type, name, state_change)
+        zeroconf: ZeroConf object
+        service_type: zeroconf service
+        name: service name
+        state_change: ServiceStateChange type (Added, Removed)
+
+    Returns ZeroConf object
+    """
+    from zeroconf import Zeroconf, ServiceBrowser
+    stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
+    zc = Zeroconf()
+    browser = ServiceBrowser(zc, stn, handlers=[callback])
+    return zc, browser
+
 
 class CountDownLatch(object):
     """
