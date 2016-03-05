@@ -815,12 +815,11 @@ class MySarkarPGTP(PGT):
         """
         if (self._merge_parts):
             part_str = "{0} outer partitions requested, ".format(self._num_parts)
-            ed_str = " - Data movement: {0}".format(self._edge_cuts)
             part_str1 = " inner "
         else:
             part_str = ""
-            ed_str = ""
             part_str1 = ""
+        ed_str = " - Data movement: {0}".format(self._edge_cuts)
         return "{6}{2}{8} partitions produced - Algorithm: {1} - Completion time: {3} - Max DoP: {5}{7}".format(self._num_parts,
         type(self).__name__, self._num_parts_done, self._lpl, self._ptime, self._max_dop, part_str, ed_str, part_str1)
 
@@ -882,6 +881,11 @@ class MySarkarPGTP(PGT):
                 if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
                     e[2]['weight'] = 0
             self._lpl = DAGUtil.get_longest_path(self.dag, show_path=False)[1]
+        else:
+            # get all the edge sum
+            self._edge_cuts = 0
+            for e in G.edges(data=True):
+                self._edge_cuts += e[2]['weight']
 
         if (string_rep):
             return json.dumps(jsobj, indent=2)
