@@ -57,6 +57,7 @@ setup(
             "configobj",
             "docker-py",
             "drive-casa==0.7",
+            #"heft",
             "lockfile",
             "luigi<2.0",
             "metis",
@@ -72,7 +73,8 @@ setup(
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
-        'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis'
+        'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
+        #'https://github.com/mrocklin/heft/archive/master.zip#egg=heft'
         ],
       test_suite="test",
       entry_points= {
