@@ -152,13 +152,13 @@ class DfmsDaemon(object):
 
             waitLoops = 0
             max_loops = timeout/0.1
-            proc.wait()
             while proc.poll() is None and waitLoops < max_loops:
                 time.sleep(0.1)
                 waitLoops += 1
+
             kill9 = waitLoops == max_loops
             if kill9:
-                logger.info('Killing %s by brute force, BANG! :-(' % (pid,))
+                logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(' % (timeout, pid,))
                 proc.kill()
             proc.wait()
 
