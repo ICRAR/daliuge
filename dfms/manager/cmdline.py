@@ -45,7 +45,8 @@ from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 def launchServer(opts):
 
-    logger = logging.getLogger(__name__)
+    # we might be called via __main__, but we want a nice logger name
+    logger = logging.getLogger('dfms.manager.cmdline')
     dmName = opts.dmType.__name__
 
     logger.info('Creating %s %s' % (dmName, opts.id))
@@ -91,10 +92,10 @@ def addCommonOptions(parser, defaultPyroPort, defaultRestPort):
                       dest="restHost", help="The host to bind the REST server on")
     parser.add_option("--restPort", action="store", type="int",
                       dest="restPort", help="The port to bind the REST server on", default=defaultRestPort)
-    parser.add_option("-v", "--verbose", action="store_true",
-                      dest="verbose", help="Be verbose, including debugging information", default=False)
-    parser.add_option("-q", "--quiet", action="store_true",
-                      dest="quiet", help="Limit output to warnings and errors", default=False)
+    parser.add_option("-v", "--verbose", action="count",
+                      dest="verbose", help="Become more verbose. The more flags, the more verbose")
+    parser.add_option("-q", "--quiet", action="count",
+                      dest="quiet", help="Be less verbose. The more flags, the quieter")
 
 def commonOptionsCheck(options, parser):
     # ID is mandatory
@@ -150,17 +151,39 @@ def setupLogging(opts):
             logging.root.removeHandler(h)
         pass
 
-    if opts.verbose and opts.quiet:
-        raise Exception
+    levels = [
+        logging.NOTSET,
+        logging.DEBUG,
+        logging.INFO,
+        logging.WARNING,
+        logging.ERROR,
+        logging.CRITICAL
+    ]
+
+    # Default is WARNING
+    lidx = 3
     if opts.verbose:
-        level = logging.DEBUG
+        lidx -= min((opts.verbose, 3))
     elif opts.quiet:
-        level = logging.WARN
-    else:
-        level = logging.INFO
+        lidx += min((opts.quiet, 2))
+    level = levels[lidx]
 
     # Let's configure logging now
-    logging.basicConfig(format="%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", stream=sys.stdout, level=level)
+    # Daemons don't output stuff to the stdout
+    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s")
+    if not opts.daemon:
+        streamHdlr = logging.StreamHandler(sys.stdout)
+        streamHdlr.setFormatter(fmt)
+        logging.root.addHandler(streamHdlr)
+
+    # This is the rotating logfile we'll use from now on
+    logfile = os.path.join(getDfmsLogsDir(True), "dfms%s_%s.log" % (opts.dmAcronym, opts.id))
+    rotatingFH = logging.handlers.RotatingFileHandler(logfile, maxBytes=10*1024*1024, backupCount=30, encoding='utf-8')
+    rotatingFH.setFormatter(fmt)
+    logging.root.addHandler(rotatingFH)
+
+    # Per-package/module specific levels
+    logging.root.setLevel(level)
     logging.getLogger("dfms").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
