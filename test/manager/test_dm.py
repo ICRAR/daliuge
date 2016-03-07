@@ -299,8 +299,9 @@ class TestREST(unittest.TestCase):
 
             # We create two final archiving nodes, but this time from a template
             # available on the server-side
-            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
-            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s' % (sessionId), restPort)
+            timeout = 10
+            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s&connect_timeout=%f&timeout=%f' % (sessionId, timeout, timeout), restPort)
+            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s&connect_timeout=%f&timeout=%f' % (sessionId, timeout, timeout), restPort)
 
             # And link them to the leaf nodes of the complex graph
             testutils.post(self, '/sessions/%s/graph/link?rhOID=archiving1&lhOID=S%s&linkType=0' % (sessionId, suffix), restPort)
