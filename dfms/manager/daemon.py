@@ -26,12 +26,13 @@ Module containing the DFMS Daemon class and command-line entry point to use it
 import functools
 import json
 import logging
-import multiprocessing
 import optparse
-import os
 import signal
 import socket
+import subprocess
 import sys
+import threading
+import time
 
 import bottle
 import tornado.httpserver
@@ -39,17 +40,11 @@ import tornado.ioloop
 import tornado.wsgi
 from zeroconf import ServiceStateChange
 
-import cmdline
 from dfms import utils
 from dfms.manager import constants, client
 
 
 logger = logging.getLogger(__name__)
-
-# Default signal handlers that are set on the children processes; otherwise
-# they inherit the signal handler from the parent which makes no sense at all
-default_handler_int  = signal.getsignal(signal.SIGINT)
-default_handler_term = signal.getsignal(signal.SIGTERM)
 
 class DfmsDaemon(object):
     """
@@ -107,11 +102,10 @@ class DfmsDaemon(object):
         if port is None:
             port = 9000
 
-        # Start the web server in a different thread and simply sleep until the
-        # show is over
+        # Start the web server and listen for requests until we're done
         self._ioloop = tornado.ioloop.IOLoop.instance()
-        server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app), io_loop=self._ioloop)
-        server.listen(port=port,address=host)
+        self._server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app), io_loop=self._ioloop)
+        self._server.listen(port=port,address=host)
         self._ioloop.start()
 
     def stop(self):
@@ -129,24 +123,45 @@ class DfmsDaemon(object):
 
     def _stop_rest_server(self, timeout):
         if self._ioloop:
-            logger.info("Stopping the web server")
+
             self.app.close()
-            self._ioloop.stop()
+
+            # Submit a callback to the IOLoop to stop itself and wait until it's
+            # done with it
+            logger.debug("Stopping the web server")
+            ioloop_stopped = threading.Event()
+            def stop_ioloop():
+                self._ioloop.stop()
+                ioloop_stopped.set()
+
+            self._ioloop.add_callback(stop_ioloop)
+            if not ioloop_stopped.wait(timeout):
+                logger.warning("Timed out while waiting for the server to stop")
+            self._server.stop()
+
             self._started = False
 
     def _stop_manager(self, name, timeout):
         proc = getattr(self, name)
         if proc:
+
+            # Terminate; if it doesn't go away kill it
             pid = proc.pid
             logger.info('Terminating %d' % (pid,))
             proc.terminate()
-            proc.join(timeout)
-            is_alive = proc.is_alive()
-            if is_alive:
-                logger.info('Killing %s by brute force' % (pid,))
-                os.kill(pid, signal.SIGKILL)
-                proc.join()
-            logger.info('%d terminated and joined' % (pid,))
+
+            waitLoops = 0
+            max_loops = timeout/0.1
+            proc.wait()
+            while proc.poll() is None and waitLoops < max_loops:
+                time.sleep(0.1)
+                waitLoops += 1
+            kill9 = waitLoops == max_loops
+            if kill9:
+                logger.info('Killing %s by brute force, BANG! :-(' % (pid,))
+                proc.kill()
+            proc.wait()
+
             setattr(self, name, None)
 
     def stopNM(self, timeout=None):
@@ -164,15 +179,11 @@ class DfmsDaemon(object):
 
     # Methods to start and stop the individual managers
     def startNM(self):
-        def f():
-            self._stop_rest_server(1)
-            args = ['--rest', '-i', 'nm', '--host', '0.0.0.0']
-            signal.signal(signal.SIGINT, default_handler_int)
-            signal.signal(signal.SIGTERM, default_handler_term)
-            cmdline.dfmsNM(args)
 
-        self._nm_proc = multiprocessing.Process(target=f)
-        self._nm_proc.start()
+        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM']
+        args += ['--rest', '-i', 'nm', '--host', '0.0.0.0']
+        logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
+        self._nm_proc = subprocess.Popen(args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
 
         # Registering the new NodeManager via zeroconf so it gets discovered
@@ -182,29 +193,20 @@ class DfmsDaemon(object):
             self._nm_zc, self._nm_info = utils.register_service('NodeManager', addrs[0], 'tcp', addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
-        def f(nodes):
-            self._stop_rest_server(1)
-            args = ['--rest', '-i', 'dim', '--host', '0.0.0.0', '--nodes', nodes]
-            signal.signal(signal.SIGINT, default_handler_int)
-            signal.signal(signal.SIGTERM, default_handler_term)
-            cmdline.dfmsDIM(args)
-
-        self._dim_proc = multiprocessing.Process(target=f)
-        self._dim_proc.start()
+        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
+        args += ['--rest', '-i', 'dim', '--host', '0.0.0.0']
+        if nodes:
+            args += ['--nodes', ",".join(nodes)]
+        logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
+        self._dim_proc = subprocess.Popen(args)
         logger.info("Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid))
 
     def startMM(self):
-        def f():
-            self._stop_rest_server(1)
-            args = ['--rest', '-i', 'mm', '--host', '0.0.0.0']
-            signal.signal(signal.SIGINT, default_handler_int)
-            signal.signal(signal.SIGTERM, default_handler_term)
-            cmdline.dfmsMM(args)
 
-        # TODO: determine how we'll pass down later the information of the nodes
-        # that make up the system
-        self._mm_proc = multiprocessing.Process(target=f)
-        self._mm_proc.start()
+        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM']
+        args += ['--rest', '-i', 'mm', '--host', '0.0.0.0']
+        logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
+        self._mm_proc = subprocess.Popen(args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
@@ -286,14 +288,16 @@ def run_with_cmdline(args=sys.argv):
         global terminating
         if terminating:
             return
+        logger.info("Received signal %d, will stop the daemon now" % (signalNo,))
         terminating = True
-        logger.info("Received signal %d" % (signalNo,))
         daemon.stop()
     signal.signal(signal.SIGINT,  handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
     # Go, go, go!
-    daemon.run()
+    t = threading.Thread(target=daemon.run)
+    t.start()
+    signal.pause()
 
 if __name__ == '__main__':
     # In case we get called directly...

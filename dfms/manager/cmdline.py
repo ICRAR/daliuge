@@ -65,8 +65,7 @@ def launchServer(opts):
         daemon.requestLoop()
     else:
         try:
-            while True:
-                time.sleep(3600)
+            signal.pause()
         except KeyboardInterrupt:
             pass
 
