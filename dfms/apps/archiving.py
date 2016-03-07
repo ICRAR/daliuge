@@ -66,8 +66,8 @@ class NgasArchivingApp(ExternalStoreApp):
         super(NgasArchivingApp, self).initialize(**kwargs)
         self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
         self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
-        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
+        self._ngasTimeout        = float(self._getArg(kwargs, 'ngasConnectTimeout', 2.))
+        self._ngasConnectTimeout = float(self._getArg(kwargs, 'ngasTimeout', 2.))
 
     def store(self, inDrop):
         if isinstance(inDrop, ContainerDROP):
@@ -76,7 +76,7 @@ class NgasArchivingApp(ExternalStoreApp):
         size = -1 if inDrop.size is None else inDrop.size
         try:
             ngasIO = NgasIO(self._ngasSrv, inDrop.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
-        except:
+        except ImportError:
             ngasIO = NgasLiteIO(self._ngasSrv, inDrop.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
 
         ngasIO.open(OpenMode.OPEN_WRITE)

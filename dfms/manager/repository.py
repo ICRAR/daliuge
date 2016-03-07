@@ -76,8 +76,8 @@ def complex_graph():
 
     return [sl_a,sl_b,sl_c,sl_d,sl_k,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t]
 
-def archiving_app(uid, host, port):
-    return [{'oid':uid, 'type':'app', 'app':'dfms.apps.archiving.NgasArchivingApp','ngasSrv':host,'ngasPort':port}]
+def archiving_app(uid, host, port, connect_timeout, timeout):
+    return [{'oid':uid, 'type':'app', 'app':'dfms.apps.archiving.NgasArchivingApp','ngasSrv':host,'ngasPort':port, 'ngasConnectTimeout':connect_timeout, 'ngasTimeout':timeout}]
 
 def pip_cont_img_pg(num_beam=1, num_time=2, num_freq=2, num_facet=2, num_grid=4, stokes=['I', 'Q', 'U', 'V']):
     """
