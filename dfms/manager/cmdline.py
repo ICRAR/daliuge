@@ -32,7 +32,6 @@ import optparse
 import os
 import signal
 import sys
-import time
 
 import Pyro4
 import daemon
@@ -161,7 +160,7 @@ def setupLogging(opts):
         level = logging.INFO
 
     # Let's configure logging now
-    logging.basicConfig(format="%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", stream=sys.stdout, level=logging.INFO)
+    logging.basicConfig(format="%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s", stream=sys.stdout, level=level)
     logging.getLogger("dfms").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
