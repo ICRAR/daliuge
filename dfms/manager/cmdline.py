@@ -19,9 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.manager.constants import NODE_DEFAULT_REST_PORT,\
-    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, NODE_DEFAULT_PORT,\
-    ISLAND_DEFAULT_PORT, MASTER_DEFAULT_PORT
 """
 Module containing command-line entry points to launch Data Manager instances
 like DMs and DIMs.
@@ -38,11 +35,15 @@ import daemon
 from lockfile.pidlockfile import PIDLockFile
 
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
+from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, NODE_DEFAULT_PORT, \
+    ISLAND_DEFAULT_PORT, MASTER_DEFAULT_PORT
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
 
 
+_terminating = False
 def launchServer(opts):
 
     # we might be called via __main__, but we want a nice logger name
@@ -61,17 +62,30 @@ def launchServer(opts):
         uri = daemon.register(dm, objectId=opts.dmAcronym.lower())
         logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
 
+    # Signal handling
+    def handle_signal(signNo, stack_frame):
+        global _terminating
+        if _terminating:
+            return
+        _terminating = True
+        logger.info("Exiting from %s %s" % (dmName, opts.id))
+
+        # Stop pyro first, cleanup the manager later
+        if daemon:
+            daemon.close()
+        if hasattr(dm, 'shutdown'):
+            dm.shutdown()
+
+        logger.info("Thanks for using our %s %s, come back again :-)" % (dmName, opts.id))
+
+    signal.signal(signal.SIGINT, handle_signal)
+    signal.signal(signal.SIGTERM, handle_signal)
+
     if not opts.noPyro:
         daemon.requestLoop()
     else:
-        try:
-            signal.pause()
-        except KeyboardInterrupt:
-            pass
+        signal.pause()
 
-    # kind of a hack, but it's sufficient for the time being
-    if hasattr(dm, 'shutdown'):
-        dm.shutdown()
 
 def addCommonOptions(parser, defaultPyroPort, defaultRestPort):
     parser.add_option("--no-pyro", action="store_true",
