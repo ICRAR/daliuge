@@ -28,7 +28,7 @@ import unittest
 from dfms import utils
 from dfms.manager import constants
 from dfms.manager.client import MasterManagerClient
-from dfms.manager.daemon import DfmsDaemon
+from dfms.manager.proc_daemon import DfmsDaemon
 
 
 _TIMEOUT = 5
