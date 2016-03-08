@@ -46,28 +46,26 @@ def get_local_ip_addr():
                     if 'addr' in s and not s['addr'].startswith('127.')]
     return iface_addrs
 
-def register_service(service_type_name, service_name, protocol, ipaddr, port):
+def register_service(zc, service_type_name, service_name, protocol, ipaddr, port):
     """
     ZeroConf: Register service type, protocol, ipaddr and port
 
     Returns ZeroConf object and ServiceInfo object
     """
-    from zeroconf import ServiceInfo, Zeroconf
+    from zeroconf import ServiceInfo
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     sn = '{0} {1}'.format(service_name, stn)
     info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, {}, None)
-    zc = Zeroconf()
     zc.register_service(info)
-    return (zc, info)
+    return info
 
 def deregister_service(zc, info):
     """
     ZeroConf: Deregister service
     """
     zc.unregister_service(info)
-    zc.close()
 
-def browse_service(service_type_name, protocol, callback):
+def browse_service(zc, service_type_name, protocol, callback):
     """
     ZeroConf: Browse for services based on service type and protocol
 
@@ -79,11 +77,10 @@ def browse_service(service_type_name, protocol, callback):
 
     Returns ZeroConf object
     """
-    from zeroconf import Zeroconf, ServiceBrowser
+    from zeroconf import ServiceBrowser
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
-    zc = Zeroconf()
     browser = ServiceBrowser(zc, stn, handlers=[callback])
-    return zc, browser
+    return browser
 
 
 class CountDownLatch(object):
