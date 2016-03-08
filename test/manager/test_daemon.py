@@ -74,9 +74,6 @@ class TestDaemon(unittest.TestCase):
 
         self.create_daemon(master=False, noNM=False, disable_zeroconf=True)
 
-        # Let the server actually start
-        time.sleep(0.5)
-
         # Check that the master starts
         self._start('master', httplib.OK)
         self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
@@ -88,7 +85,7 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(10)
+        nodes = self._get_nodes_from_master(_TIMEOUT)
         self.assertIsNotNone(nodes)
         self.assertEquals(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
 
@@ -99,7 +96,7 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(10)
+        nodes = self._get_nodes_from_master(_TIMEOUT)
         self.assertIsNotNone(nodes)
         self.assertEquals(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
 
@@ -126,4 +123,4 @@ class TestDaemon(unittest.TestCase):
             nodes = mc.nodes()
             if nodes:
                 return nodes
-            time.sleep(0.5)
+            time.sleep(0.1)

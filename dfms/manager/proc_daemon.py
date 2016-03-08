@@ -38,7 +38,7 @@ import bottle
 import tornado.httpserver
 import tornado.ioloop
 import tornado.wsgi
-from zeroconf import ServiceStateChange
+import zeroconf as zc
 
 from dfms import utils
 from dfms.manager import constants, client
@@ -66,10 +66,8 @@ class DfmsDaemon(object):
         self._mm_proc = None
 
         # Zeroconf for NM and MM
-        self._enable_zeroconf = not disable_zeroconf
-        self._nm_zc = None
+        self._zeroconf = None if disable_zeroconf else zc.Zeroconf()
         self._nm_info = None
-        self._mm_zc = None
         self._mm_browser = None
 
         # Set up our REST interface
@@ -115,11 +113,25 @@ class DfmsDaemon(object):
         """
         timeout = 10
 
+        self._stop_zeroconf()
         self._stop_rest_server(timeout)
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
         logger.info('DFMS Daemon stopped')
+
+    def _stop_zeroconf(self):
+
+        if not self._zeroconf:
+            return
+
+        # Stop the MM service browser, the NM registration, and ZC itself
+        if self._mm_browser:
+            self._mm_browser.cancel()
+            self._mm_browser.join()
+        if self._nm_info:
+            utils.deregister_service(self._zeroconf, self._nm_info)
+        self._zeroconf.close()
 
     def _stop_rest_server(self, timeout):
         if self._ioloop:
@@ -166,16 +178,12 @@ class DfmsDaemon(object):
 
     def stopNM(self, timeout=None):
         self._stop_manager('_nm_proc', timeout)
-        if self._enable_zeroconf and self._nm_zc:
-            utils.deregister_service(self._nm_zc, self._nm_info)
 
     def stopDIM(self, timeout=None):
         self._stop_manager('_dim_proc', timeout)
 
     def stopMM(self, timeout=None):
         self._stop_manager('_mm_proc', timeout)
-        if self._enable_zeroconf and self._mm_browser:
-            self._mm_browser.cancel()
 
     # Methods to start and stop the individual managers
     def startNM(self):
@@ -188,9 +196,9 @@ class DfmsDaemon(object):
 
         # Registering the new NodeManager via zeroconf so it gets discovered
         # by the Master Manager
-        if self._enable_zeroconf:
+        if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            self._nm_zc, self._nm_info = utils.register_service('NodeManager', addrs[0], 'tcp', addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', addrs[0], 'tcp', addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
@@ -211,23 +219,25 @@ class DfmsDaemon(object):
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
         # the Master Manager with the new hosts we find
-        if self._enable_zeroconf:
+        if self._zeroconf:
             mm_client = client.MasterManagerClient()
             node_managers = {}
             def nm_callback(zeroconf, service_type, name, state_change):
                 info = zeroconf.get_service_info(service_type, name)
-                if state_change is ServiceStateChange.Added:
+                if state_change is zc.ServiceStateChange.Added:
                     server = socket.inet_ntoa(info.address)
                     port = info.port
                     node_managers[name] = (server, port)
                     logger.info("Found a new Node Manager on %s:%d, will add it to the MM" % (server, port))
                     mm_client.add_node(server)
-                elif state_change is ServiceStateChange.Removed:
+                elif state_change is zc.ServiceStateChange.Removed:
                     server,port = node_managers[name]
                     logger.info("Node Manager on %s:%d disappeared, removing it from the MM" % (server, port))
-                    mm_client.remove_node(server)
-                    del node_managers[name]
-            self._mm_zc, self._mm_browser = utils.browse_service('NodeManager', 'tcp', nm_callback)
+                    try:
+                        mm_client.remove_node(server)
+                    finally:
+                        del node_managers[name]
+            self._mm_browser = utils.browse_service(self._zeroconf, 'NodeManager', 'tcp', nm_callback)
 
     # Rest interface
     def _rest_start_manager(self, proc, start_method):
