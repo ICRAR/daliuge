@@ -246,7 +246,7 @@ def startDM(restPort):
     # Make sure the graph executes quickly once triggered
     from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsNM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dmID', '-q'])
+    cmdline.dfmsNM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dmID', '-qqq'])
 
 class TestREST(unittest.TestCase):
 

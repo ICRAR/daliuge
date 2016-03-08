@@ -25,6 +25,7 @@ import logging
 import urllib
 
 from dfms.manager import constants
+from dfms import utils
 
 
 logger = logging.getLogger(__name__)
@@ -34,9 +35,10 @@ class BaseDROPManagerClient(object):
     Base class for REST clients that talk to the DROP managers.
     """
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, timeout):
         self.host = host
         self.port = port
+        self.timeout = timeout
 
     def create_session(self, sessionId):
         """
@@ -149,6 +151,9 @@ class BaseDROPManagerClient(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Sending %s request to %s:%d%s" % (method, self.host, self.port, url))
 
+        if not utils.portIsOpen(self.host, self.port, self.timeout):
+            raise Exception("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
+
         connection = httplib.HTTPConnection(self.host, self.port)
         connection.request(method, url, content, headers)
         response = connection.getresponse()
@@ -163,8 +168,8 @@ class NodeManagerClient(BaseDROPManagerClient):
     """
     A NodeManager REST client
     """
-    def __init__(self, host='localhost', port=constants.NODE_DEFAULT_REST_PORT):
-        super(NodeManagerClient, self).__init__(host=host, port=port)
+    def __init__(self, host='localhost', port=constants.NODE_DEFAULT_REST_PORT, timeout=10):
+        super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
 class CompositeManagerClient(BaseDROPManagerClient):
 
@@ -181,15 +186,15 @@ class DataIslandManagerClient(CompositeManagerClient):
     """
     A DataIslandManager REST client
     """
-    def __init__(self, host='localhost', port=constants.ISLAND_DEFAULT_REST_PORT):
-        super(DataIslandManagerClient, self).__init__(host=host, port=port)
+    def __init__(self, host='localhost', port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10):
+        super(DataIslandManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
 class MasterManagerClient(CompositeManagerClient):
     """
     A MasterManager REST client
     """
-    def __init__(self, host='localhost', port=constants.MASTER_DEFAULT_REST_PORT):
-        super(MasterManagerClient, self).__init__(host=host, port=port)
+    def __init__(self, host='localhost', port=constants.MASTER_DEFAULT_REST_PORT, timeout=10):
+        super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
 
 class SetEncoder(json.JSONEncoder):

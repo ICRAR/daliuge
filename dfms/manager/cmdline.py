@@ -57,6 +57,7 @@ def launchServer(opts):
         server = opts.restType(dm)
         server.start(opts.restHost, opts.restPort)
 
+    daemon = None
     if not opts.noPyro:
         daemon = Pyro4.Daemon(host=opts.host, port=opts.port)
         uri = daemon.register(dm, objectId=opts.dmAcronym.lower())
