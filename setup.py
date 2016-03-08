@@ -50,17 +50,17 @@ setup(
         'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html', 'lib/libmetis.*']
       },
 
-      # Keep alpha-sorted please
+      # Keep alpha-sorted PLEASE!
       install_requires=[
             "boto3",
             "bottle",
             "configobj",
             "docker-py",
             "drive-casa==0.7",
-            #"heft",
             "lockfile",
             "luigi<2.0",
             "metis",
+            "netifaces",
             "networkx",
             "paramiko",
             "psutil",
@@ -68,9 +68,10 @@ setup(
             "python-daemon",
             "scp",
             "tornado",
-            "netifaces",
             "zeroconf",
       ],
+      # Keep alpha-sorted PLEASE!
+
       extra_require={
         'spead': ["spead2==0.4.0"]
       },
@@ -84,7 +85,7 @@ setup(
               'dfmsNM=dfms.manager.cmdline:dfmsNM',
               'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
               'dfmsMM=dfms.manager.cmdline:dfmsMM',
-              'dfmsDaemon=dfms.manager.daemon:run_with_cmdline'
+              'dfmsDaemon=dfms.manager.proc_daemon:run_with_cmdline'
           ],
       }
 )
