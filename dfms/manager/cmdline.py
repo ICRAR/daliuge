@@ -57,10 +57,10 @@ def launchServer(opts):
         server = opts.restType(dm)
         server.start(opts.restHost, opts.restPort)
 
-    daemon = None
+    pyro_daemon = None
     if not opts.noPyro:
-        daemon = Pyro4.Daemon(host=opts.host, port=opts.port)
-        uri = daemon.register(dm, objectId=opts.dmAcronym.lower())
+        pyro_daemon = Pyro4.Daemon(host=opts.host, port=opts.port)
+        uri = pyro_daemon.register(dm, objectId=opts.dmAcronym.lower())
         logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
 
     # Signal handling
@@ -72,8 +72,8 @@ def launchServer(opts):
         logger.info("Exiting from %s %s" % (dmName, opts.id))
 
         # Stop pyro first, cleanup the manager later
-        if daemon:
-            daemon.close()
+        if pyro_daemon:
+            pyro_daemon.close()
         if hasattr(dm, 'shutdown'):
             dm.shutdown()
 
@@ -83,7 +83,7 @@ def launchServer(opts):
     signal.signal(signal.SIGTERM, handle_signal)
 
     if not opts.noPyro:
-        daemon.requestLoop()
+        pyro_daemon.requestLoop()
     else:
         signal.pause()
 
