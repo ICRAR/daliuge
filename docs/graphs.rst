@@ -154,7 +154,7 @@ Basic steps
   near real-time resource usage information from the COMP platform or the Local Monitor & Control (LMC).
   It also needs DROP managers to coordinate the DROP deployment.
   In some cases, this mapping step is merged with the previous *Graph partitioning* step
-  to directly map DROPs to resources.
+  to directly map DROPs to resources. This step produces the **Physical Graph**.
 
 Under the assumption of uniform resources (e.g. each node has identical capabilities),
 graph partitioning is equivalent to resource mapping since mapping involves simple
