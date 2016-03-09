@@ -35,18 +35,16 @@ import threading
 import time
 
 import bottle
-import tornado.httpserver
-import tornado.ioloop
-import tornado.wsgi
 import zeroconf as zc
 
 from dfms import utils
 from dfms.manager import constants, client
+from dfms.restutils import RestServer
 
 
 logger = logging.getLogger(__name__)
 
-class DfmsDaemon(object):
+class DfmsDaemon(RestServer):
     """
     The DFMS Daemon
 
@@ -60,6 +58,8 @@ class DfmsDaemon(object):
 
     def __init__(self, master=False, noNM=False, disable_zeroconf=False):
 
+        super(DfmsDaemon, self).__init__(jsonified_errors=[500, 409])
+
         # The three processes we run
         self._nm_proc = None
         self._dim_proc = None
@@ -70,18 +70,8 @@ class DfmsDaemon(object):
         self._nm_info = None
         self._mm_browser = None
 
-        # Set up our REST interface
-        self._ioloop = None
-        self.app = app = bottle.Bottle()
-
-        # Errors are returned verbatim in a dictionary
-        def jsonify_error(e):
-            bottle.response.content_type = 'application/json'
-            return json.dumps({'err_str': e.body})
-        app.error_handler[500] = jsonify_error
-        app.error_handler[409] = jsonify_error
-
         # Starting managers
+        app = self.app
         app.post('/managers/node',       callback=self.rest_startNM)
         app.post('/managers/dataisland', callback=self.rest_startDIM)
         app.post('/managers/master',     callback=self.rest_startMM)
@@ -97,31 +87,13 @@ class DfmsDaemon(object):
         if not noNM:
             self.startNM()
 
-    def run(self, host=None, port=None):
-        """
-        Runs the DFMS Daemon binding its REST interface to the given host and
-        port. The binding defaults to 0.0.0.0:9000
-        """
-        if host is None:
-            host = '0.0.0.0'
-        if port is None:
-            port = 9000
-
-        # Start the web server and listen for requests until we're done
-        self._ioloop = tornado.ioloop.IOLoop.instance()
-        self._server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app), io_loop=self._ioloop)
-        self._server.listen(port=port,address=host)
-        self._ioloop.start()
-
-    def stop(self):
+    def stop(self, timeout=None):
         """
         Stops this DFMS Daemon, terminating all its child processes and its REST
         server.
         """
-        timeout = 10
-
+        super(DfmsDaemon, self).stop(timeout)
         self._stop_zeroconf()
-        self._stop_rest_server(timeout)
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
@@ -306,7 +278,7 @@ def run_with_cmdline(args=sys.argv):
             return
         logger.info("Received signal %d, will stop the daemon now" % (signalNo,))
         terminating = True
-        daemon.stop()
+        daemon.stop(10)
     signal.signal(signal.SIGINT,  handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
