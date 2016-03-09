@@ -30,14 +30,12 @@ import os
 import signal
 import sys
 
-import Pyro4
 import daemon
 from lockfile.pidlockfile import PIDLockFile
 
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
-    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, NODE_DEFAULT_PORT, \
-    ISLAND_DEFAULT_PORT, MASTER_DEFAULT_PORT
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir
@@ -53,15 +51,8 @@ def launchServer(opts):
     logger.info('Creating %s %s' % (dmName, opts.id))
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
-    if opts.rest:
-        server = opts.restType(dm)
-        server.start(opts.restHost, opts.restPort)
-
-    pyro_daemon = None
-    if not opts.noPyro:
-        pyro_daemon = Pyro4.Daemon(host=opts.host, port=opts.port)
-        uri = pyro_daemon.register(dm, objectId=opts.dmAcronym.lower())
-        logger.info("Made %s available via %s" % (opts.dmAcronym, str(uri)))
+    server = opts.restType(dm)
+    server.start(opts.host, opts.port)
 
     # Signal handling
     def handle_signal(signNo, stack_frame):
@@ -72,8 +63,6 @@ def launchServer(opts):
         logger.info("Exiting from %s %s" % (dmName, opts.id))
 
         # Stop pyro first, cleanup the manager later
-        if pyro_daemon:
-            pyro_daemon.close()
         if hasattr(dm, 'shutdown'):
             dm.shutdown()
 
@@ -82,31 +71,21 @@ def launchServer(opts):
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    if not opts.noPyro:
-        pyro_daemon.requestLoop()
-    else:
-        signal.pause()
+    # Now simply wait...
+    signal.pause()
 
 
-def addCommonOptions(parser, defaultPyroPort, defaultRestPort):
-    parser.add_option("--no-pyro", action="store_true",
-                      dest="noPyro", help="Don't start a Pyro daemon to expose this instance", default=False)
+def addCommonOptions(parser, defaultPort):
     parser.add_option("-H", "--host", action="store", type="string",
                       dest="host", help = "The host to bind this instance on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
-                      dest="port", help = "The port to bind this instance on", default=defaultPyroPort)
+                      dest="port", help = "The port to bind this instance on", default=defaultPort)
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help = "The Data Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
                       dest="stop", help="Stop an instance running as daemon", default=False)
-    parser.add_option("--rest", action="store_true",
-                      dest="rest", help="Start the REST interface to receive external commands", default=False)
-    parser.add_option("--restHost", action="store",
-                      dest="restHost", help="The host to bind the REST server on")
-    parser.add_option("--restPort", action="store", type="int",
-                      dest="restPort", help="The port to bind the REST server on", default=defaultRestPort)
     parser.add_option("-v", "--verbose", action="count",
                       dest="verbose", help="Become more verbose. The more flags, the more verbose")
     parser.add_option("-q", "--quiet", action="count",
@@ -212,7 +191,7 @@ def dfmsNM(args=sys.argv):
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
-    addCommonOptions(parser, NODE_DEFAULT_PORT, NODE_DEFAULT_REST_PORT)
+    addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dfms-path", action="store", type="string",
@@ -230,7 +209,7 @@ def dfmsNM(args=sys.argv):
 
     start(options, parser)
 
-def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestPort):
+def dfmsCompositeManager(args, dmType, acronym, dmPort):
     """
     Common entry point for the dfmsDIM and dfmsMM command-line scripts. It
     starts the corresponding CompositeManager and exposes it through Pyro and a
@@ -239,7 +218,7 @@ def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestPort):
 
     # Parse command-line and check options
     parser = optparse.OptionParser()
-    addCommonOptions(parser, dmPort, dmRestPort)
+    addCommonOptions(parser, dmPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
                       dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default="")
     parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
@@ -262,14 +241,14 @@ def dfmsDIM(args=sys.argv):
     """
     Entry point for the dfmsDIM command-line script.
     """
-    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT)
+    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT)
 
 # Entry-point function for the dfmsDIM script
 def dfmsMM(args=sys.argv):
     """
     Entry point for the dfmsMM command-line script.
     """
-    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_PORT, MASTER_DEFAULT_REST_PORT)
+    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT)
 
 
 if __name__ == '__main__':

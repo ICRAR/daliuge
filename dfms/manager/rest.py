@@ -27,9 +27,11 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 import json
 import threading
 
-from bottle import Bottle, template, static_file, request, run, response
+from bottle import Bottle, template, static_file, request, response
 import bottle
 import pkg_resources
+import tornado.httpserver
+import tornado.wsgi
 
 
 class RestServer(object):
@@ -47,8 +49,15 @@ class RestServer(object):
         # Increase maximum file sizes
         bottle.BaseRequest.MEMFILE_MAX = 1024 * 1024 * 10
 
-        app = Bottle()
-        self.app = app
+        self._server = None
+        self.app = app = Bottle()
+
+        # Error are returned as strings in a dictionary
+        def jsonify_error(e):
+            bottle.response.content_type = 'application/json'
+            return json.dumps({'err_str': e.body})
+        app.error_handler[500] = jsonify_error
+
         self.dm = dm
 
         # Mappings
@@ -85,9 +94,31 @@ class RestServer(object):
         # It seems it's not trivial to stop a running bottle server, so we simply
         # start it but never end it. It will successfully end anyway when we finish
         # our process
-        t = threading.Thread(None, lambda: run(self.app, server='tornado', host=host, port=port, quiet=True))
-        t.daemon = 1
-        t.start()
+        self._ioloop = tornado.ioloop.IOLoop()
+        self._ioloop.make_current()
+        self._server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app), io_loop=self._ioloop)
+        self._server.listen(port=port,address=host)
+        self._ioloop.start()
+
+
+    def stop(self, timeout=None):
+        if self._ioloop:
+
+            self.app.close()
+
+            # Submit a callback to the IOLoop to stop itself and wait until it's
+            # done with it
+            ioloop_stopped = threading.Event()
+            def stop_ioloop():
+                self._ioloop.stop()
+                ioloop_stopped.set()
+
+            self._ioloop.add_callback(stop_ioloop)
+            if not ioloop_stopped.wait(timeout):
+                print "Timed out while waiting for the server to stop"
+            self._server.stop()
+
+
 
     def createSession(self):
         newSession = request.json
@@ -121,7 +152,8 @@ class RestServer(object):
         completedDrops = []
         if 'completed' in request.forms:
             completedDrops = request.forms['completed'].split(',')
-        self.dm.deploySession(sessionId,completedDrops=completedDrops)
+        response.content_type = 'application/json'
+        return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
 
     def getGraph(self, sessionId):
         graphDict = self.dm.getGraph(sessionId)
@@ -231,6 +263,6 @@ class CompositeManagerRestServer(RestServer):
         return template(tpl,
                         dmId=self.dm.id,
                         dmType=self.dm.__class__.__name__,
-                        dmRestPort=self.dm.dmRestPort,
+                        dmPort=self.dm.dmPort,
                         serverUrl=serverUrl,
                         hosts=json.dumps(self.dm.dmHosts))

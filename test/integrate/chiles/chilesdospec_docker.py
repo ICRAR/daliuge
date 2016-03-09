@@ -29,7 +29,7 @@ import sys
 import time
 
 from dfms.drop import dropdict
-from dfms.manager import client
+from dfms.manager.client import DataIslandManagerClient
 
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
@@ -155,7 +155,7 @@ if __name__ == '__main__':
             droplist.append(split_out)
             droplist.append(sp)
 
-        c = client.DataIslandManagerClient()
+        c = DataIslandManagerClient()
         c.create_session(sessionId)
         c.append_graph(sessionId, droplist)
         c.deploy_session(sessionId)
