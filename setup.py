@@ -64,7 +64,7 @@ setup(
             "networkx",
             "paramiko",
             "psutil",
-            "Pyro4",
+            "Pyro4>=4.38",
             "python-daemon",
             "scp",
             "tornado",
