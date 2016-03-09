@@ -242,11 +242,11 @@ class TestDM(unittest.TestCase):
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
 
-def startDM(restPort):
+def startDM(port):
     # Make sure the graph executes quickly once triggered
     from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsNM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dmID', '-qqq'])
+    cmdline.dfmsNM(['--port', str(port),'-i','dmID', '-qqq'])
 
 class TestREST(unittest.TestCase):
 

@@ -74,6 +74,13 @@ class DfmsDaemon(object):
         self._ioloop = None
         self.app = app = bottle.Bottle()
 
+        # Errors are returned verbatim in a dictionary
+        def jsonify_error(e):
+            bottle.response.content_type = 'application/json'
+            return json.dumps({'err_str': e.body})
+        app.error_handler[500] = jsonify_error
+        app.error_handler[409] = jsonify_error
+
         # Starting managers
         app.post('/managers/node',       callback=self.rest_startNM)
         app.post('/managers/dataisland', callback=self.rest_startDIM)
@@ -189,7 +196,7 @@ class DfmsDaemon(object):
     def startNM(self):
 
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM']
-        args += ['--rest', '-i', 'nm', '--host', '0.0.0.0']
+        args += ['-i', 'nm', '--host', '0.0.0.0']
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
         self._nm_proc = subprocess.Popen(args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
@@ -202,7 +209,7 @@ class DfmsDaemon(object):
 
     def startDIM(self, nodes):
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
-        args += ['--rest', '-i', 'dim', '--host', '0.0.0.0']
+        args += ['-i', 'dim', '--host', '0.0.0.0']
         if nodes:
             args += ['--nodes', ",".join(nodes)]
         logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
@@ -212,7 +219,7 @@ class DfmsDaemon(object):
     def startMM(self):
 
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM']
-        args += ['--rest', '-i', 'mm', '--host', '0.0.0.0']
+        args += ['-i', 'mm', '--host', '0.0.0.0']
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
         self._mm_proc = subprocess.Popen(args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
@@ -242,15 +249,14 @@ class DfmsDaemon(object):
     # Rest interface
     def _rest_start_manager(self, proc, start_method):
         if proc is not None:
-            bottle.response.status = 409 # Conflict
-            return
+            bottle.abort(409, 'The Drop Manager is already running') # Conflict
         start_method()
 
     def _rest_get_manager_info(self, proc):
         if proc:
             bottle.response.content_type = 'application/json'
             return json.dumps({'pid': proc.pid})
-        bottle.response.status = 404
+        bottle.abort(404, 'The Drop Manager is not running')
 
     def rest_startNM(self):
         self._rest_start_manager(self._nm_proc, self.startNM)
