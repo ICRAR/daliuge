@@ -46,3 +46,5 @@ References
 #.  Jeannot, E., Mercier, G. and Tessier, F., 2014. Process placement in
     multicore clusters: Algorithmic issues and practical techniques.
     Parallel and Distributed Systems, IEEE Transactions on, 25(4), pp.993-1002.
+#.  Bokhari, S.H., 2012. Assignment problems in parallel and distributed
+    computing (Vol. 32). Springer Science & Business Media
