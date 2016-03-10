@@ -30,7 +30,6 @@ import shutil
 import tempfile
 import time
 import unittest
-from unittest.case import TestCase
 
 from dfms.ddap_protocol import DROPStates, DROPPhases
 from dfms.drop import FileDROP, DirectoryContainer, BarrierAppDROP
@@ -38,7 +37,7 @@ from dfms.droputils import DROPWaiterCtx
 from dfms.lifecycle import dlm
 
 
-class TestDataLifecycleManager(TestCase):
+class TestDataLifecycleManager(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree("/tmp/sdp_dfms", True)

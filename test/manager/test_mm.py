@@ -20,10 +20,10 @@
 #    MA 02111-1307  USA
 #
 import json
-import multiprocessing
 import random
 import string
-from test import graphsRepository
+import subprocess
+import sys
 import threading
 import time
 import unittest
@@ -34,12 +34,14 @@ import pkg_resources
 from dfms import droputils
 from dfms import utils
 from dfms.ddap_protocol import DROPStates
+from dfms.manager import constants
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.node_manager import NodeManager
+from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
+from test import graphsRepository
 from test.manager import testutils
-from dfms.manager import constants
 
 
 dimId = 'lala'
@@ -56,29 +58,29 @@ def setUpMMTests(self):
     mmId = 'mm'
 
     self.nm = NodeManager(nmId, False)
-    self._nmDaemon = Pyro4.Daemon(host=hostname, port=constants.NODE_DEFAULT_PORT)
-    self._nmDaemon.register(self.nm, objectId=nmId)
-    threading.Thread(target=lambda: self._nmDaemon.requestLoop()).start()
+    self._nm_server = NMRestServer(self.nm)
+    self._nm_t = threading.Thread(name="lala",target=self._nm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
+    self._nm_t.start()
 
     # The DIM we're testing
     self.dim = DataIslandManager(dimId, [hostname])
-    self._dimDaemon = Pyro4.Daemon(host=hostname, port=constants.ISLAND_DEFAULT_PORT)
-    self._dimDaemon.register(self.dim, objectId=dimId)
-    threading.Thread(target=lambda: self._dimDaemon.requestLoop()).start()
+    self._dim_server = CompositeManagerRestServer(self.dim)
+    self._dim_t = threading.Thread(name="lalo",target=self._dim_server.start, args=(hostname,constants.ISLAND_DEFAULT_REST_PORT))
+    self._dim_t.start()
 
     self.mm = MasterManager(mmId, [hostname])
 
+    # Make sure the managers have started
+    self.assertTrue(portIsOpen(hostname, constants.NODE_DEFAULT_REST_PORT, 5))
+    self.assertTrue(portIsOpen(hostname, constants.ISLAND_DEFAULT_REST_PORT, 5))
+
 def tearDownMMTests(self):
-    self._nmDaemon.shutdown()
-    self._dimDaemon.shutdown()
+    self._nm_server.stop()
+    self._nm_t.join()
+    self._dim_server.stop()
+    self._dim_t.join()
     self.dim.shutdown()
     self.mm.shutdown()
-
-    # daemon.shutdown() is asynchronous, make sure it finishes
-    while portIsOpen(hostname, constants.NODE_DEFAULT_PORT):
-        time.sleep(0.01)
-    while portIsOpen(hostname, constants.ISLAND_DEFAULT_PORT):
-        time.sleep(0.01)
 
 class TestMM(unittest.TestCase):
 
@@ -238,11 +240,6 @@ class TestMM(unittest.TestCase):
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
 
 
-def startMM(restPort):
-    # Make sure the graph executes quickly once triggered
-    from dfms.manager import cmdline
-    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','mmID','-N',hostname, '-q'])
-
 class TestREST(unittest.TestCase):
 
     setUp = setUpMMTests
@@ -257,11 +254,11 @@ class TestREST(unittest.TestCase):
         sessionId = 'lala'
         restPort  = 8888
 
-        mmProcess = multiprocessing.Process(target=lambda restPort: startMM(restPort), args=[restPort])
-        mmProcess.start()
+        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM', \
+                '--port', str(restPort),'-i','mmID','-N',hostname, '-qqq']
+        mmProcess = subprocess.Popen(args)
 
         try:
-            self.assertTrue(mmProcess.is_alive())
 
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
@@ -279,7 +276,7 @@ class TestREST(unittest.TestCase):
             sessions = testutils.get(self, '/sessions', restPort)
             self.assertEquals(1, len(sessions))
             self.assertEquals(sessionId, sessions[0]['sessionId'])
-            self.assertDictEqual({hostname: SessionStates.PRISTINE}, sessions[0]['status'])
+            self.assertDictEqual({hostname: {hostname: SessionStates.PRISTINE}}, sessions[0]['status'])
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
@@ -289,12 +286,13 @@ class TestREST(unittest.TestCase):
             complexGraphSpec = json.load(pkg_resources.resource_stream('test', 'graphs/complex.js')) # @UndefinedVariable
             for dropSpec in complexGraphSpec:
                 dropSpec['node'] = hostname
+                dropSpec['island'] = hostname
             testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
-            self.assertEquals({hostname: SessionStates.BUILDING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEquals({hostname: {hostname: SessionStates.BUILDING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
             testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
-            self.assertEquals({hostname: SessionStates.RUNNING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEquals({hostname: {hostname: SessionStates.RUNNING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -304,10 +302,10 @@ class TestREST(unittest.TestCase):
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort).viewvalues():
+            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort)[hostname].viewvalues():
                 time.sleep(0.2)
 
-            self.assertEquals({hostname: SessionStates.FINISHED}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEquals({hostname: {hostname: SessionStates.FINISHED}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
             sessions = testutils.get(self, '/sessions', restPort)
             self.assertEquals(0, len(sessions))

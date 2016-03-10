@@ -20,10 +20,10 @@
 #    MA 02111-1307  USA
 #
 import json
-import multiprocessing
 import random
 import string
-from test import graphsRepository
+import subprocess
+import sys
 import threading
 import time
 import unittest
@@ -34,10 +34,13 @@ import pkg_resources
 from dfms import droputils
 from dfms import utils
 from dfms.ddap_protocol import DROPStates
+from dfms.manager import constants
 from dfms.manager.composite_manager import DataIslandManager
 from dfms.manager.node_manager import NodeManager
+from dfms.manager.rest import NMRestServer
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
+from test import graphsRepository
 from test.manager import testutils
 
 
@@ -60,19 +63,22 @@ def setUpDimTests(self):
     dimId = 'lala'
     dmId = 'nm'
     self.dm = NodeManager(dmId, False)
-    self._dmDaemon = Pyro4.Daemon(host=hostname, port=4000)
-    self._dmDaemon.register(self.dm, objectId=dmId)
-    threading.Thread(target=lambda: self._dmDaemon.requestLoop()).start()
+    self._dm_server = NMRestServer(self.dm)
+    self._dm_t = threading.Thread(target=self._dm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
+    self._dm_t.start()
 
     # The DIM we're testing
     self.dim = DataIslandManager(dimId, [hostname])
 
+    self.assertTrue(portIsOpen(hostname, constants.NODE_DEFAULT_REST_PORT, 5))
+
 def tearDownDimTests(self):
-    self._dmDaemon.shutdown()
+
+    # Stop the server and wait until it's closed
+    self._dm_server.stop()
+    self._dm_t.join()
+    self.assertFalse(self._dm_t.isAlive())
     self.dim.shutdown()
-    # shutdown() is asynchronous, make sure it finishes
-    while portIsOpen(hostname, 4000):
-        time.sleep(0.01)
 
 class TestDIM(unittest.TestCase):
 
@@ -211,11 +217,6 @@ class TestDIM(unittest.TestCase):
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
 
 
-def startDIM(restPort):
-    # Make sure the graph executes quickly once triggered
-    from dfms.manager import cmdline
-    cmdline.dfmsDIM(['--no-pyro','--rest','--restPort', str(restPort),'-i','dimID','-N',hostname, '-q'])
-
 class TestREST(unittest.TestCase):
 
     setUp = setUpDimTests
@@ -229,12 +230,11 @@ class TestREST(unittest.TestCase):
 
         sessionId = 'lala'
         restPort  = 8888
-
-        dimProcess = multiprocessing.Process(target=lambda restPort: startDIM(restPort), args=[restPort])
-        dimProcess.start()
+        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
+                '--port', str(restPort),'-i','dimID','-N',hostname, '-qqq']
+        dimProcess = subprocess.Popen(args)
 
         try:
-            self.assertTrue(dimProcess.is_alive())
 
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")

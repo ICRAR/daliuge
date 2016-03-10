@@ -19,3 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+
+# Avoid tornado calling logging.basicConfig(), which will happen if it finds
+# that no logger (root, 'tornado' and 'tornado.application') has been configured
+# with a handler
+import logging
+logging.getLogger('tornado').addHandler(logging.NullHandler())
+
+# Avoid also the 'no handlers could be found' message for the spead2 logger
+logging.getLogger('spead2').addHandler(logging.NullHandler())

@@ -24,11 +24,14 @@ import json
 import logging
 import urllib
 
-from dfms.manager import constants
 from dfms import utils
+from dfms.manager import constants
 
 
 logger = logging.getLogger(__name__)
+
+class ManagerClientException(Exception):
+    pass
 
 class BaseDROPManagerClient(object):
     """
@@ -39,6 +42,22 @@ class BaseDROPManagerClient(object):
         self.host = host
         self.port = port
         self.timeout = timeout
+        self._conn = None
+        self._resp = None
+
+    def _close(self):
+        if self._resp:
+            self._resp.close()
+        if self._conn:
+            self._conn.close()
+
+    __del__ = _close
+    def __enter__(self):
+        return self
+    def __exit__(self, typ, value, traceback):
+        self._close()
+        if typ:
+            raise value
 
     def create_session(self, sessionId):
         """
@@ -55,8 +74,9 @@ class BaseDROPManagerClient(object):
         content = None
         if completed_uids:
             content = {'completed': ','.join(completed_uids)}
-        self._post_form('/sessions/%s/deploy' % (sessionId), content)
+        ret = self._post_form('/sessions/%s/deploy' % (sessionId), content)
         logger.info('Successfully deployed session %s on %s:%s' % (sessionId, self.host, self.port))
+        return ret
 
     def append_graph(self, sessionId, graphSpec):
         """
@@ -115,18 +135,29 @@ class BaseDROPManagerClient(object):
         logger.info('Successfully read session %s status (%s) from %s:%s' % (sessionId, status, self.host, self.port))
         return status
 
+    # Offer an API similar to that exposed by Drop Managers objects
+    createSession = create_session
+    destroySession = destroy_session
+    getSessionStatus = session_status
+    addGraphSpec = append_graph
+    deploySession = deploy_session
+    getGraphStatus = graph_status
+    getGraph = graph
+
     def _get_json(self, url):
         return json.loads(self._GET(url))
 
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.urlencode(content)
-        self._POST(url, content, 'application/x-www-form-urlencoded')
+        ret = self._POST(url, content, 'application/x-www-form-urlencoded')
+        return json.loads(ret) if ret else None
 
     def _post_json(self, url, content):
         if not isinstance(content, basestring):
-            content = json.dumps(content, cls=SetEncoder)
-        self._POST(url, content, 'application/json')
+            content = json.dumps(content)
+        ret = self._POST(url, content, 'application/json')
+        return json.loads(ret) if ret else None
 
     def _GET(self, url):
         return self._request(url, 'GET')
@@ -135,7 +166,7 @@ class BaseDROPManagerClient(object):
         headers = {}
         if content_type:
             headers['Content-Type'] = content_type
-        self._request(url, 'POST', content, headers)
+        return self._request(url, 'POST', content, headers)
 
     def _DELETE(self, url):
         return self._request(url, 'DELETE')
@@ -152,17 +183,24 @@ class BaseDROPManagerClient(object):
             logger.debug("Sending %s request to %s:%d%s" % (method, self.host, self.port, url))
 
         if not utils.portIsOpen(self.host, self.port, self.timeout):
-            raise Exception("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
+            raise ManagerClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
 
-        connection = httplib.HTTPConnection(self.host, self.port)
-        connection.request(method, url, content, headers)
-        response = connection.getresponse()
-        if response.status != httplib.OK:
-            msg = 'Error while processing %s request for %s:%s%s (status %d): %s' % \
-                  (method, self.host, self.port, url, response.status, response.read())
-            raise Exception(msg)
+        self._conn = httplib.HTTPConnection(self.host, self.port)
+        self._conn.request(method, url, content, headers)
+        self._resp = self._conn.getresponse()
 
-        return response.read()
+        # Server errors are encoded in the body as json content
+        if self._resp.status == httplib.INTERNAL_SERVER_ERROR:
+            msg = json.loads(self._resp.read())['err_str']
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('Error found while requesting %s:%d%s: %s' % (self.host, self.port, url, msg))
+            raise ManagerClientException(msg)
+        elif self._resp.status != httplib.OK:
+            msg = 'Unexpected error while processing %s request for %s:%s%s (status %d): %s' % \
+                  (method, self.host, self.port, url, self._resp.status, self._resp.read())
+            raise ManagerClientException(msg)
+
+        return self._resp.read()
 
 class NodeManagerClient(BaseDROPManagerClient):
     """
@@ -195,14 +233,3 @@ class MasterManagerClient(CompositeManagerClient):
     """
     def __init__(self, host='localhost', port=constants.MASTER_DEFAULT_REST_PORT, timeout=10):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
-
-
-class SetEncoder(json.JSONEncoder):
-    """
-    The dictdrop uses a set which is not serializable into JSON, so this encoder helps
-    perform the serialization
-    """
-    def default(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        return json.JSONEncoder.default(self, obj)
