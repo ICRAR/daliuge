@@ -53,6 +53,7 @@ import json, os, datetime, time, math, commands
 import logging
 
 import networkx as nx
+import numpy as np
 
 from dfms.drop import dropdict
 from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler
@@ -278,6 +279,23 @@ class LGNode():
     def is_groupby(self):
         return (self._jd['category'] == 'GroupBy')
 
+    @property
+    def group_keys(self):
+        """
+        Return:
+            None or a list of keys (each key is an integer)
+        """
+        if (not self.is_groupby()):
+            return None
+        val = str(self.jd.get('group_key', 'None'))
+        if (val in ['None', '-1', '']):
+            return None
+        else:
+            try:
+                return [int(x) for x in val.split(',')]
+            except ValueError, ve:
+                raise GraphException("group_key must be an integer or comma-separated integers: {0}".format(ve))
+
     def is_branch(self):
         return (self._jd['category'] == 'Branch')
 
@@ -318,6 +336,68 @@ class LGNode():
             raise GraphException("Non-GroupBy LGN {0} does not have groupby_width".format(self.id))
 
     @property
+    def group_by_scatter_layers(self):
+        """
+        Return:
+            scatter layers info associated with this group by logical node
+            A tuple of three items:
+                (1) DoP
+                (2) layer indexes (list) from innser scatter to outer scatter
+                (3) layers (list)
+        """
+        if (not self.is_groupby()):
+            return None
+
+        tlgn = self.inputs[0]
+        grpks = self.group_keys
+        ret_dop = 1
+        layer_index = [] # from inner to outer
+        layers = [] # from inner to outer
+        c = 0
+        if (tlgn.group.is_groupby()):
+            #group by followed by another group by
+            if (grpks is None or len(grpks) < 1):
+                raise GInvalidNode("Must specify group_key for Group By '{0}'".format(self.text))
+            # find the "root" groupby and get all of its scatters
+            inputgrp = self
+            while ((inputgrp is not None) and inputgrp.inputs[0].group.is_groupby()):
+                inputgrp = inputgrp.inputs[0].group
+            # inputgrp now is a scatter already
+            # go thru all the scatters
+            while ((inputgrp is not None) and inputgrp.is_scatter()):
+                if (inputgrp.id in grpks):
+                    ret_dop *= inputgrp.dop
+                    layer_index.append(c)
+                    layers.append(inputgrp)
+                inputgrp = inputgrp.group
+                c += 1
+        else:
+            if (grpks is None or len(grpks) < 1):
+                ret_dop = tlgn.group.dop
+                layer_index.append(0)
+                layers.append(tlgn.group)
+            else:
+                if (len(grpks) == 1):
+                    if (grpks[0] == tlgn.group.id):
+                        ret_dop = tlgn.group.dop
+                        layer_index.append(0)
+                        layers.append(tlgn.group)
+                    else:
+                        raise GInvalidNode("Wrong single group_key for {0}".format(self.text))
+                else:
+                    inputgrp = tlgn.group
+                    # find the "groupby column list" from all layers of scatter loops
+                    while ((inputgrp is not None) and inputgrp.is_scatter()):
+                        if (inputgrp.id in grpks):
+                            ret_dop *= inputgrp.dop
+                            layer_index.append(c)
+                            layers.append(inputgrp)
+                        inputgrp = inputgrp.group
+                        c += 1
+
+        return (ret_dop, layer_index, layers)
+
+    @property
     def dop(self):
         """
         Degree of Parallelism:  integer
@@ -343,8 +423,7 @@ class LGNode():
                         tt = self.dop_diff(tlgn)
                     self._dop = int(math.ceil(tt / float(self.gather_width)))
                 elif (self.is_groupby()):
-                    tlgn = self.inputs[0]
-                    self._dop = tlgn.group.dop
+                    self._dop = self.group_by_scatter_layers[0]
                 elif (self.is_loop()):
                     self._dop = self.jd.get('num_of_iter', 1)
                 else:
@@ -355,8 +434,11 @@ class LGNode():
 
     def make_oid(self, iid=0):
         """
-        ssid_id_iid
-        iid:    instance id
+        return:
+            ssid_id_iid (string), where
+            ssid:   session id
+            id:     logical graph node key
+            iid:    instance id (for the physical graph node)
         """
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid)
 
@@ -1188,8 +1270,22 @@ class LG():
                         lk['to'] = gs.id
                         self._lg_links.append(lk)
 
+            multikey_grpby = False
+            lgk = lgn.group_keys
+            if (lgk is not None and len(lgk) > 1):
+                multikey_grpby = True
+                scatters = lgn.group_by_scatter_layers[2] # inner most scatter to outer most scatter
+                shape = [x.dop for x in scatters] # inner most is also the slowest running index
+
             for i in range(lgn.dop):
                 miid = '{0}/{1}'.format(iid, i)
+                if (multikey_grpby):
+                    #set up more refined hierarchical context for group by with multiple keys
+                    # recover multl-dimension indexes from i
+                    grp_h = np.unravel_index(i, shape)
+                    grp_h = [str(x) for x in grp_h]
+                    miid += "${0}".format('-'.join(grp_h))
+
                 if (extra_links_drops and not lgn.is_loop()): # make GroupBy and Gather drops
                     src_gdrop = lgn.make_single_drop(miid)
                     self._drop_dict[lgn.id].append(src_gdrop)
@@ -1344,15 +1440,29 @@ class LG():
             else: # slgn is not group, but tlgn is group
                 if (tlgn.is_groupby()):
                     grpby_dict = defaultdict(list)
+                    layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
-                        # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
                         src_ctx = gdd['iid'].split('/')
-                        gby = src_ctx[-1]
-                        if (slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0): #groupby itself is nested inside a scatter
-                        # group key consists of group context id + inner most loop context id
-                            gctx = '/'.join(src_ctx[0:-2])
-                            gby = gctx + '/' + gby
-
+                        if (tlgn.group_keys is None):
+                            # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
+                            gby = src_ctx[-1]
+                            if (slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0): #groupby itself is nested inside a scatter
+                            # group key consists of group context id + inner most loop context id
+                                gctx = '/'.join(src_ctx[0:-2])
+                                gby = gctx + '/' + gby
+                        else:
+                            # find the "group by" scatter level
+                            gbylist = []
+                            if (slgn.group.is_groupby()): # a chain of group bys
+                                try:
+                                    src_ctx = gdd['iid'].split('$')[1].split('-')
+                                except IndexError, ie:
+                                    raise GraphException("The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(slgn.group.text, slgn.text))
+                            else:
+                                src_ctx.reverse()
+                            for lid in layer_index:
+                                gbylist.append(src_ctx[lid])
+                            gby = '/'.join(gbylist)
                         grpby_dict[gby].append(gdd)
                     grp_keys = grpby_dict.keys()
                     if (len(grp_keys) != len(tdrops)):
