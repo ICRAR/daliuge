@@ -22,14 +22,14 @@
 import collections
 import functools
 import logging
-from multiprocessing.pool import ThreadPool
+import multiprocessing.pool
 import threading
 
 import Pyro4
 
 from dfms import remote, graph_loader, drop, utils
-from dfms.manager.constants import ISLAND_DEFAULT_PORT, ISLAND_DEFAULT_REST_PORT, \
-    NODE_DEFAULT_PORT, NODE_DEFAULT_REST_PORT
+from dfms.manager.client import BaseDROPManagerClient
+from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
 
@@ -57,16 +57,14 @@ class CompositeManager(DROPManager):
     construction time.
     """
 
-    def __init__(self, dmId, dmPort, dmRestPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmId, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
         Creates a new CompositeManager with ID `dmId`. The sub-DMs it manages
         are to be located at `dmHosts`, and should be listening on port
         `dmPort`.
 
         :param: dmId The CompositeManager ID
-        :param: dmPort The port at which the sub-DMs 
-        :param: dmRestPort The port to be used by the sub-DMs to expose
-                themselves via a REST interface.
+        :param: dmPort The port at which the sub-DMs expose themselves
         :param: partitionAttr The attribute on each dropSpec that specifies the
                 partitioning of the graph at this CompositeManager level.
         :param: dmExec The name of the executable that starts a sub-DM
@@ -87,10 +85,9 @@ class CompositeManager(DROPManager):
         self._interDMRelations = collections.defaultdict(list)
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
-        self._dmRestPort = dmRestPort
         self._dmCheckTimeout = dmCheckTimeout
         n_threads = len(dmHosts*2) if dmHosts else 20
-        self._tp = ThreadPool(n_threads)
+        self._tp = multiprocessing.pool.ThreadPool(n_threads)
 
         # The list of bottom-level nodes that are covered by this manager
         # This list is different from the dmHosts, which are the machines that
@@ -145,8 +142,8 @@ class CompositeManager(DROPManager):
         self._nodes.remove(node)
 
     @property
-    def dmRestPort(self):
-        return self._dmRestPort
+    def dmPort(self):
+        return self._dmPort
 
     def subDMCommandLine(self, host):
         cmdline = '{0} --rest -i {1} -P {2} -d --host {3}'.format(self._dmExec, self._subDmId, self._dmPort, host)
@@ -185,7 +182,7 @@ class CompositeManager(DROPManager):
             raise Exception("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
 
     def dmAt(self, host):
-        return Pyro4.Proxy("PYRO:{0}@{1}:{2}".format(self._subDmId, host, self._dmPort))
+        return BaseDROPManagerClient(host, self._dmPort, 10)
 
     def getSessionIds(self):
         return self._sessionIds;
@@ -469,7 +466,6 @@ class DataIslandManager(CompositeManager):
 
     def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(dmId,
-                                                NODE_DEFAULT_PORT,
                                                 NODE_DEFAULT_REST_PORT,
                                                 'node',
                                                 'dfmsNM',
@@ -493,7 +489,6 @@ class MasterManager(CompositeManager):
 
     def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(dmId,
-                                            ISLAND_DEFAULT_PORT,
                                             ISLAND_DEFAULT_REST_PORT,
                                             'island',
                                             'dfmsDIM',

@@ -38,6 +38,7 @@ from dfms.droputils import DROPWaiterCtx
 
 
 class TestSpeadReceiverApp(unittest.TestCase):
+
     @unittest.skipIf(USE_SPEAD is False, "skipping test")
     def test_speadApp(self):
 

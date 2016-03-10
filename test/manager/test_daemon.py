@@ -43,7 +43,7 @@ class TestDaemon(unittest.TestCase):
         if 'master' in kwargs and kwargs['master']:
             self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
 
-        self._daemon_t = threading.Thread(target=lambda: self._daemon.run('localhost', 9000))
+        self._daemon_t = threading.Thread(target=lambda: self._daemon.start('localhost', 9000))
         self._daemon_t.start()
 
         # Wait until the daemon is fully available
@@ -51,7 +51,7 @@ class TestDaemon(unittest.TestCase):
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
-        self._daemon.stop()
+        self._daemon.stop(_TIMEOUT)
         self._daemon_t.join(_TIMEOUT)
         self.assertFalse(self._daemon_t.is_alive(), "Daemon running thread should have finished by now")
         self.assertFalse(utils.portIsOpen('localhost', 9000, 0), 'DFMS Daemon REST interface should be off')
