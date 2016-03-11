@@ -44,7 +44,6 @@ from test import graphsRepository
 from test.manager import testutils
 
 
-dimId = 'lala'
 hostname = 'localhost'
 
 def setUpMMTests(self):
@@ -53,22 +52,18 @@ def setUpMMTests(self):
     graphsRepository.defaultSleepTime = 0
 
     # Start a NM and a DIM. See test_dim for more details
-    nmId = 'nm'
-    dimId = 'dim'
-    mmId = 'mm'
-
-    self.nm = NodeManager(nmId, False)
+    self.nm = NodeManager(False)
     self._nm_server = NMRestServer(self.nm)
     self._nm_t = threading.Thread(name="lala",target=self._nm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
     self._nm_t.start()
 
     # The DIM we're testing
-    self.dim = DataIslandManager(dimId, [hostname])
+    self.dim = DataIslandManager([hostname])
     self._dim_server = CompositeManagerRestServer(self.dim)
     self._dim_t = threading.Thread(name="lalo",target=self._dim_server.start, args=(hostname,constants.ISLAND_DEFAULT_REST_PORT))
     self._dim_t.start()
 
-    self.mm = MasterManager(mmId, [hostname])
+    self.mm = MasterManager([hostname])
 
     # Make sure the managers have started
     self.assertTrue(portIsOpen(hostname, constants.NODE_DEFAULT_REST_PORT, 5))
@@ -255,7 +250,7 @@ class TestREST(unittest.TestCase):
         restPort  = 8888
 
         args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM', \
-                '--port', str(restPort),'-i','mmID','-N',hostname, '-qqq']
+                '--port', str(restPort), '-N',hostname, '-qqq']
         mmProcess = subprocess.Popen(args)
 
         try:

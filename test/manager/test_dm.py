@@ -53,8 +53,8 @@ class TestDM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dm1 = NodeManager(1, useDLM=False)
-        dm2 = NodeManager(2, useDLM=False)
+        dm1 = NodeManager(useDLM=False)
+        dm2 = NodeManager(useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
@@ -101,8 +101,8 @@ class TestDM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1 = NodeManager(1, useDLM=False)
-        dm2 = NodeManager(2, useDLM=False)
+        dm1 = NodeManager(useDLM=False)
+        dm2 = NodeManager(useDLM=False)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
@@ -175,10 +175,10 @@ class TestDM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dm1 = NodeManager(1, useDLM=False)
-        dm2 = NodeManager(2, useDLM=False)
-        dm3 = NodeManager(3, useDLM=False)
-        dm4 = NodeManager(4, useDLM=False)
+        dm1 = NodeManager(useDLM=False)
+        dm2 = NodeManager(useDLM=False)
+        dm3 = NodeManager(useDLM=False)
+        dm4 = NodeManager(useDLM=False)
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
@@ -246,7 +246,7 @@ def startDM(port):
     # Make sure the graph executes quickly once triggered
     from test import graphsRepository
     graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsNM(['--port', str(port),'-i','dmID', '-qqq'])
+    cmdline.dfmsNM(['--port', str(port), '-qqq'])
 
 class TestREST(unittest.TestCase):
 

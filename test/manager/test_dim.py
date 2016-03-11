@@ -60,15 +60,13 @@ def setUpDimTests(self):
     #
     # Anyway, this is also useful because we can check that things have
     # occurred at the DM level in the test cases
-    dimId = 'lala'
-    dmId = 'nm'
-    self.dm = NodeManager(dmId, False)
+    self.dm = NodeManager(False)
     self._dm_server = NMRestServer(self.dm)
     self._dm_t = threading.Thread(target=self._dm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
     self._dm_t.start()
 
     # The DIM we're testing
-    self.dim = DataIslandManager(dimId, [hostname])
+    self.dim = DataIslandManager([hostname])
 
     self.assertTrue(portIsOpen(hostname, constants.NODE_DEFAULT_REST_PORT, 5))
 
@@ -231,7 +229,7 @@ class TestREST(unittest.TestCase):
         sessionId = 'lala'
         restPort  = 8888
         args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
-                '--port', str(restPort),'-i','dimID','-N',hostname, '-qqq']
+                '--port', str(restPort), '-N',hostname, '-qqq']
         dimProcess = subprocess.Popen(args)
 
         try:

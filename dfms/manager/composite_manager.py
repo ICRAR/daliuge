@@ -57,13 +57,11 @@ class CompositeManager(DROPManager):
     construction time.
     """
 
-    def __init__(self, dmId, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
-        Creates a new CompositeManager with ID `dmId`. The sub-DMs it manages
-        are to be located at `dmHosts`, and should be listening on port
-        `dmPort`.
+        Creates a new CompositeManager. The sub-DMs it manages are to be located
+        at `dmHosts`, and should be listening on port `dmPort`.
 
-        :param: dmId The CompositeManager ID
         :param: dmPort The port at which the sub-DMs expose themselves
         :param: partitionAttr The attribute on each dropSpec that specifies the
                 partitioning of the graph at this CompositeManager level.
@@ -76,7 +74,6 @@ class CompositeManager(DROPManager):
         :param: dmCheckTimeout The timeout used before giving up and declaring
                 a sub-DM as not-yet-present in a given host
         """
-        super(CompositeManager, self).__init__(dmId)
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._dmExec = dmExec
@@ -464,9 +461,8 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
-        super(DataIslandManager, self).__init__(dmId,
-                                                NODE_DEFAULT_REST_PORT,
+    def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+        super(DataIslandManager, self).__init__(NODE_DEFAULT_REST_PORT,
                                                 'node',
                                                 'dfmsNM',
                                                 'nm',
@@ -487,9 +483,8 @@ class MasterManager(CompositeManager):
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
-        super(MasterManager, self).__init__(dmId,
-                                            ISLAND_DEFAULT_REST_PORT,
+    def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+        super(MasterManager, self).__init__(ISLAND_DEFAULT_REST_PORT,
                                             'island',
                                             'dfmsDIM',
                                             'dim',

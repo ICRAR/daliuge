@@ -54,13 +54,6 @@ class DROPManager(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, dmId):
-        self._id = dmId
-
-    @property
-    def id(self):
-        return self._id
-
     @abc.abstractmethod
     def createSession(self, sessionId):
         """

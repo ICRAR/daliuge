@@ -74,8 +74,7 @@ class NodeManager(DROPManager):
     NodeManager is needed for each computing node, thus its name.
     """
 
-    def __init__(self, dmId, useDLM=True, dfmsPath=None, host=None):
-        super(NodeManager, self).__init__(dmId)
+    def __init__(self, useDLM=True, dfmsPath=None, host=None):
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
