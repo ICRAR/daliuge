@@ -54,7 +54,7 @@ class TestScheduler(unittest.TestCase):
         #print mys._dag.edges(data=True)
 
     def test_minnumparts_scheduler(self):
-        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         tgt_deadline = [500, 200, 300, 90, 80, 160] #250
         mdp = 8
         ofa = 0.5
@@ -71,7 +71,7 @@ class TestScheduler(unittest.TestCase):
             #logger.info("-" * lll)
 
     def test_mysarkar_scheduler(self):
-        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         #lgnames = [lgnames[1]]
         tgt_partnum = [20, 15, 15, 10, 10, 5]
         mdp = 8
