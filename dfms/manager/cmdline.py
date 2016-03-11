@@ -29,6 +29,7 @@ import optparse
 import os
 import signal
 import sys
+import threading
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
@@ -48,11 +49,10 @@ def launchServer(opts):
     logger = logging.getLogger('dfms.manager.cmdline')
     dmName = opts.dmType.__name__
 
-    logger.info('Creating %s %s' % (dmName, opts.id))
+    logger.info('Creating %s' % (dmName))
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
     server = opts.restType(dm)
-    server.start(opts.host, opts.port)
 
     # Signal handling
     def handle_signal(signNo, stack_frame):
@@ -60,17 +60,20 @@ def launchServer(opts):
         if _terminating:
             return
         _terminating = True
-        logger.info("Exiting from %s %s" % (dmName, opts.id))
+        logger.info("Exiting from %s" % (dmName))
 
         # Stop pyro first, cleanup the manager later
         if hasattr(dm, 'shutdown'):
             dm.shutdown()
 
-        logger.info("Thanks for using our %s %s, come back again :-)" % (dmName, opts.id))
+        server.stop()
+        logger.info("Thanks for using our %s, come back again :-)" % (dmName))
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
+    server_t = threading.Thread(target=server.start, args=(opts.host, opts.port))
+    server_t.start()
     # Now simply wait...
     signal.pause()
 
@@ -80,8 +83,6 @@ def addCommonOptions(parser, defaultPort):
                       dest="host", help = "The host to bind this instance on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
                       dest="port", help = "The port to bind this instance on", default=defaultPort)
-    parser.add_option("-i", "--id", action="store", type="string",
-                      dest="id", help = "The Data Manager ID")
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
@@ -92,9 +93,6 @@ def addCommonOptions(parser, defaultPort):
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
 
 def commonOptionsCheck(options, parser):
-    # ID is mandatory
-    if not options.id:
-        parser.error('Must provide a %s ID via the -i command-line flag' % (options.dmType.__name__))
     # -d and -s are exclusive
     if options.daemon and options.stop:
         parser.error('-d and -s cannot be specified together')
@@ -115,9 +113,9 @@ def start(options, parser):
 
         pidDir  = getDfmsPidDir(createIfMissing=True)
         logsDir = getDfmsLogsDir(createIfMissing=True)
-        pidfile = os.path.join(pidDir,  "dfms%s_%s.pid"    % (options.dmAcronym, options.id))
-        stdout  = os.path.join(logsDir, "dfms%s_%s_stdout" % (options.dmAcronym, options.id))
-        stderr  = os.path.join(logsDir, "dfms%s_%s_stderr" % (options.dmAcronym, options.id))
+        pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
+        stdout  = os.path.join(logsDir, "dfms%s_stdout" % (options.dmAcronym))
+        stderr  = os.path.join(logsDir, "dfms%s_stderr" % (options.dmAcronym))
         with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1),
                                   stdout=open(stdout, 'w+'),
                                   stderr=open(stderr, 'w+')):
@@ -126,7 +124,7 @@ def start(options, parser):
     # Stop daemon?
     elif options.stop:
         pidDir = getDfmsPidDir()
-        pidfile = os.path.join(pidDir,  "dfms%s_%s.pid"    % (options.dmAcronym, options.id))
+        pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
         pid = PIDLockFile(pidfile).read_pid()
         if pid is None:
             sys.stderr.write('Cannot read PID file, is there an instance running?\n')
@@ -171,7 +169,7 @@ def setupLogging(opts):
         logging.root.addHandler(streamHdlr)
 
     # This is the rotating logfile we'll use from now on
-    logfile = os.path.join(getDfmsLogsDir(True), "dfms%s_%s.log" % (opts.dmAcronym, opts.id))
+    logfile = os.path.join(getDfmsLogsDir(True), "dfms%s.log" % (opts.dmAcronym))
     rotatingFH = logging.handlers.RotatingFileHandler(logfile, maxBytes=10*1024*1024, backupCount=30, encoding='utf-8')
     rotatingFH.setFormatter(fmt)
     logging.root.addHandler(rotatingFH)
@@ -202,7 +200,7 @@ def dfmsNM(args=sys.argv):
     # Note that the host we use to expose the NodeManager itself through Pyro is
     # also used to expose the Sessions it creates
     options.dmType = NodeManager
-    options.dmArgs = (options.id,)
+    options.dmArgs = ()
     options.dmKwargs = {'useDLM': not options.noDLM, 'dfmsPath': options.dfmsPath, 'host': options.host}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
@@ -229,7 +227,7 @@ def dfmsCompositeManager(args, dmType, acronym, dmPort):
 
     # Add DIM-specific options
     options.dmType = dmType
-    options.dmArgs = (options.id, [s for s in options.nodes.split(',') if s])
+    options.dmArgs = ([s for s in options.nodes.split(',') if s],)
     options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmCheckTimeout': options.dmCheckTimeout}
     options.dmAcronym = acronym
     options.restType = CompositeManagerRestServer

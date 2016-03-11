@@ -149,7 +149,7 @@ class DfmsDaemon(RestServer):
 
             kill9 = waitLoops == max_loops
             if kill9:
-                logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(' % (timeout, pid,))
+                logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(' % (pid, timeout,))
                 proc.kill()
             proc.wait()
 
@@ -168,7 +168,7 @@ class DfmsDaemon(RestServer):
     def startNM(self):
 
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM']
-        args += ['-i', 'nm', '--host', '0.0.0.0']
+        args += ['--host', '0.0.0.0']
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
         self._nm_proc = subprocess.Popen(args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
@@ -181,7 +181,7 @@ class DfmsDaemon(RestServer):
 
     def startDIM(self, nodes):
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
-        args += ['-i', 'dim', '--host', '0.0.0.0']
+        args += ['--host', '0.0.0.0']
         if nodes:
             args += ['--nodes', ",".join(nodes)]
         logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
@@ -191,7 +191,7 @@ class DfmsDaemon(RestServer):
     def startMM(self):
 
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM']
-        args += ['-i', 'mm', '--host', '0.0.0.0']
+        args += ['--host', '0.0.0.0']
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
         self._mm_proc = subprocess.Popen(args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
@@ -283,7 +283,7 @@ def run_with_cmdline(args=sys.argv):
     signal.signal(signal.SIGTERM, handle_signal)
 
     # Go, go, go!
-    t = threading.Thread(target=daemon.run)
+    t = threading.Thread(target=daemon.start, args=('0.0.0.0', 9000))
     t.start()
     signal.pause()
 
