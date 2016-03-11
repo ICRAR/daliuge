@@ -44,9 +44,9 @@
 {"category":"Component", "text":"Assessment for \nDQA1", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-50, "loc":"-1153.6704845464596 -281.9999999999999", "group":-9},
 {"category":"Component", "text":"Assessment for \nDQA2", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-51, "loc":"-1494.67048454646 -456", "group":-8},
 {"category":"Component", "text":"Assessment for \nDQA3", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-52, "loc":"-1293.6704845464606 -28.000000000000007", "group":-20},
-{"category":"GroupBy", "text":"Group By Subband", "isGroup":true, "group_key":-8, "group_axis":"frequency", "key":-53, "loc":"-831.1869468688964 -271.5170572916667"},
+{"category":"GroupBy", "text":"Group By Subband", "isGroup":true, "group_key":-8, "group_axis":"facet", "key":-53, "loc":"-831.1869468688964 -271.5170572916667"},
 {"category":"DataGather", "text":"Gather Subband", "isGroup":true, "num_of_inputs":3, "gather_axis":"frequency", "key":-54, "loc":"-915.2514285032307 -41.178992901798836"},
-{"category":"GroupBy", "text":"Group By Subband_Facet", "isGroup":true, "group_key":"-20,-8", "group_axis":"frequency", "key":-55, "loc":"-882.7688182189004 -608.7165545145674"},
+{"category":"GroupBy", "text":"Group By Subband_Facet", "isGroup":true, "group_key":"-20,-8", "group_axis":"day", "key":-55, "loc":"-882.7688182189004 -608.7165545145674"},
 {"category":"Comment", "text":"MS data in each grp \nbelong to the same \n[subband AND facet]\nbut from all days", "key":-56, "loc":"-827.3281249999998 -612.0000000000002", "group":-55},
 {"category":"Comment", "text":"images in each grp \nhave the same \nsubband but from\n all facets", "key":-57, "loc":"-769.3281250000001 -290", "group":-53}
  ],
