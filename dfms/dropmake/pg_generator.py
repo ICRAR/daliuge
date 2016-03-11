@@ -362,7 +362,9 @@ class LGNode():
             inputgrp = self
             while ((inputgrp is not None) and inputgrp.inputs[0].group.is_groupby()):
                 inputgrp = inputgrp.inputs[0].group
-            # inputgrp now is a scatter already
+            # inputgrp now is the "root" groupby that follows Scatter immiately
+            # move it to Scatter
+            inputgrp = inputgrp.inputs[0].group
             # go thru all the scatters
             while ((inputgrp is not None) and inputgrp.is_scatter()):
                 if (inputgrp.id in grpks):

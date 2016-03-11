@@ -166,7 +166,7 @@ def get_schedule_mat():
         ret = pg_mgr.get_schedule_matrices(pgt_id)
         return ret
     except GraphException, ge:
-        response.status = 500
+        response.status = "500 {0}".format(ge)
         return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
 
 @get('/gen_pgt')
