@@ -39,8 +39,7 @@ class TestPGGen(unittest.TestCase):
         #lg.to_pg_tpl(input_dict)
 
     def test_pg_test(self):
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_cal.json')
-        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_cal.json'
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/test_grpby_gather.json')
         lg = LG(fp)
         lg.unroll_to_tpl()
         #input_dict = defaultdict(list)
@@ -55,7 +54,7 @@ class TestPGGen(unittest.TestCase):
         #print pgt.to_gojs_json()
 
     def test_metis_pgtp(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
@@ -65,7 +64,7 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_mysarkar_pgtp(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
@@ -75,7 +74,7 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_minnumparts_pgtp(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'lofar_cal.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         #tgt_partnum = [15, 15, 10, 10, 5]
         tgt_deadline = [200, 300, 90, 80, 160]
         for i, lgn in enumerate(lgnames):
