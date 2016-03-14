@@ -54,6 +54,22 @@ class S3DROP(AbstractDROP):
         self._profile_name = self._getArg(kwargs, 'profile_name', None)
 
     @property
+    def bucket(self):
+        """
+        Returns the bucket name
+        :return: the bucket name
+        """
+        return self._bucket
+
+    @property
+    def key(self):
+        """
+        Return the S3 key
+        :return: the S3 key
+        """
+        return self._key
+
+    @property
     def path(self):
         """
         Returns the path to the S3 object
