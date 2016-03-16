@@ -29,7 +29,7 @@ import pkg_resources
 
 import networkx as nx
 import numpy as np
-
+from pyswarm import pso
 
 logger = logging.getLogger(__name__)
 
@@ -606,6 +606,126 @@ class MinNumPartsScheduler(MySarkarScheduler):
         #     return (ow >= nw) # assuming "stay out of partition == parallelism"
         # else: # join the partition to minimise num_part
         #     return True
+
+class PSOScheduler(Schedule):
+    """
+    Use the Particle Swarm Optimisation to guide the Sarkar algorithm
+    https://en.wikipedia.org/wiki/Particle_swarm_optimization
+
+    The idea is to let "edgezeroing" becomes the search variable X
+    The number of dimensions of X is the number of edges in DAG
+    Possible values for each dimension is a discrete set {0, 1, 2}
+    where
+        10 - no zero (2 in base10)
+        00 - zero and no linearisation (0 in base10)
+        01 - zero with linearisation (1 in base10)
+
+    if (deadline is present):
+        the objective function sets up a partition scheme such that
+            (1) DoP constrints for each partiiton are satisfied
+                based on X[i] value, reject or linearisation
+            (2) returns num_of_partitions
+
+        constrain function:
+            1. makespan < deadline
+    else:
+        the objective function sets up a partition scheme such that
+            (1) DoP constrints for each partiiton are satisfied
+                based on X[i] value, reject or linearisation
+            (2) returns makespan
+    """
+    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None):
+        super(PSOScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
+        self._deadline = deadline
+
+    def partition_dag(self):
+        """
+        Return a tuple of
+            1. the # of partitions formed (int)
+            2. the parallel time (longest path, int)
+            3. partition time (seconds, float)
+        """
+        # trigger the PSO algorithm
+        pass
+
+    def objective_func(self, x):
+        """
+        x is a list of values, each taking one of the 3 integers: 0,1,2
+        indices of x is identical to the indices in G.edges()
+        """
+        # make a deep copy since we have multiple particles, each has multiple steps
+        # dont want to mess them up
+        G = self._dag.copy()
+        st_gid = len(self._drop_list) + 1
+        init_c = st_gid
+        el = G.edges(data=True)
+        el.sort(key=lambda ed: ed[2]['weight'] * -1)
+        #topo_sorted = nx.topological_sort(G)
+        g_dict = self._part_dict#dict() #{gid : Partition}
+        curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
+        parts = []
+        for i, e in enumerate(el):
+            pos = int(round(x[i]))
+            if (pos == 2): #10 non_zero
+                continue
+            elif (pos == 1):#01 zero with linearisation
+                linear = True
+            elif (pos == 0): #00 zero without linearisation
+                linear = False
+            else:
+                raise GraphException("PSO position out of bound: {0}".format(pos))
+
+            u = e[0]
+            gu = G.node[u]
+            v = e[1]
+            gv = G.node[v]
+            ow = G.edge[u][v]['weight']
+            G.edge[u][v]['weight'] = 0 #edge zeroing
+            recover_edge = False
+
+            ugid = gu.get('gid', None)
+            vgid = gv.get('gid', None)
+            if (ugid and (not vgid)):
+                part = g_dict[ugid]
+            elif ((not ugid) and vgid):
+                part = g_dict[vgid]
+            elif (not ugid and (not vgid)):
+                part = Partition(st_gid, self._max_dop)
+                g_dict[st_gid] = part
+                parts.append(part) # will it get rejected?
+                st_gid += 1
+            else: #elif (ugid and vgid):
+                # cannot change Partition once is in!
+                part = None
+            uw = gu['weight']
+            vw = gv['weight']
+
+            if (part is None):
+                recover_edge = True
+            else:
+                ca, unew, vnew = part.can_add(u, uw, v, vw)
+                if (ca):
+                    # ignore linear flag, add it anyway
+                    part.add(u, uw, v, vw)
+                    gu['gid'] = part._gid
+                    gv['gid'] = part._gid
+                    #curr_lpl = new_lpl
+                else:
+                    if (linear = False):
+                        recover_edge = True
+                    else:
+                        part.add(u, uw, v, vw, sequential=True, global_dag=G)
+                        gu['gid'] = part._gid
+                        gv['gid'] = part._gid
+
+            if (recover_edge):
+                G.edge[u][v]['weight'] = ow
+                self._part_edges.append(e)
+
+        new_lpl = DAGUtil.get_longest_path(G, show_path=False)[1]
+        del G
+        return new_lpl
+
 
 class DSCScheduler(Schedule):
     """
