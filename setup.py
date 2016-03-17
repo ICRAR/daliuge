@@ -65,6 +65,7 @@ setup(
             "paramiko",
             "psutil",
             "Pyro4>=4.38",
+            "pyswarm",
             "python-daemon",
             "scp",
             "tornado",

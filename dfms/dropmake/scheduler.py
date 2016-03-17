@@ -607,18 +607,18 @@ class MinNumPartsScheduler(MySarkarScheduler):
         # else: # join the partition to minimise num_part
         #     return True
 
-class PSOScheduler(Schedule):
+class PSOScheduler(Scheduler):
     """
     Use the Particle Swarm Optimisation to guide the Sarkar algorithm
     https://en.wikipedia.org/wiki/Particle_swarm_optimization
 
     The idea is to let "edgezeroing" becomes the search variable X
     The number of dimensions of X is the number of edges in DAG
-    Possible values for each dimension is a discrete set {0, 1, 2}
+    Possible values for each dimension is a discrete set {1, 2, 3}
     where
-        10 - no zero (2 in base10)
-        00 - zero and no linearisation (0 in base10)
-        01 - zero with linearisation (1 in base10)
+        10 - no zero (2 in base10) + 1
+        00 - zero w/o linearisation (0 in base10) + 1
+        01 - zero with linearisation (1 in base10) + 1
 
     if (deadline is present):
         the objective function sets up a partition scheme such that
@@ -637,6 +637,10 @@ class PSOScheduler(Schedule):
     def __init__(self, drop_list, max_dop=8, dag=None, deadline=None):
         super(PSOScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._deadline = deadline
+        #search space: key - combination of X[i] (string),
+        # val - a tuple of (critical_path (int), num_parts (int))
+        self._sspace_dict = dict()
+        self._lite_dag = DAGUtil.build_dag_from_drops(self._drop_list, embed_drop=False)
 
     def partition_dag(self):
         """
@@ -646,34 +650,55 @@ class PSOScheduler(Schedule):
             3. partition time (seconds, float)
         """
         # trigger the PSO algorithm
-        pass
 
-    def objective_func(self, x):
+        G = self._dag
+        leng = len(G.edges())
+        lb = [0.99] * leng
+        ub = [3.01] * leng
+        stt = time.time()
+        swsize = 40
+        if (self._deadline is None):
+            xopt, fopt = pso(self.objective_func, lb, ub, swarmsize=swsize)
+        else:
+            xopt, fopt = pso(self.objective_func, lb, ub, ieqcons=[self.constrain_func], swarmsize=swsize)
+
+        curr_lpl, num_parts, parts, g_dict = self._partition_G(G, xopt)
+        edt = time.time()
+        #print "PSO scheduler took {0} seconds".format(edt - stt)
+        st_gid = len(self._drop_list) + 1 + num_parts
+        for n in G.nodes(data=True):
+            if (not n[1].has_key('gid')):
+                n[1]['gid'] = st_gid
+                part = Partition(st_gid, self._max_dop)
+                part.add_node(n[0], n[1].get('weight', 1))
+                g_dict[st_gid] = part
+                parts.append(part) # will it get rejected?
+                num_parts += 1
+        self._parts = parts
+        return (num_parts, curr_lpl, edt - stt, parts)
+
+    def _partition_G(self, G, x):
         """
-        x is a list of values, each taking one of the 3 integers: 0,1,2
-        indices of x is identical to the indices in G.edges()
+        A helper function to partition G based on a given scheme x
+        subject to constraints imposed by each partition's DoP
         """
-        # make a deep copy since we have multiple particles, each has multiple steps
-        # dont want to mess them up
-        G = self._dag.copy()
         st_gid = len(self._drop_list) + 1
         init_c = st_gid
         el = G.edges(data=True)
         el.sort(key=lambda ed: ed[2]['weight'] * -1)
         #topo_sorted = nx.topological_sort(G)
         g_dict = self._part_dict#dict() #{gid : Partition}
-        curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
         parts = []
         for i, e in enumerate(el):
             pos = int(round(x[i]))
-            if (pos == 2): #10 non_zero
+            if (pos == 3): #10 non_zero + 1
                 continue
-            elif (pos == 1):#01 zero with linearisation
+            elif (pos == 2):#01 zero with linearisation + 1
                 linear = True
-            elif (pos == 0): #00 zero without linearisation
+            elif (pos == 1): #00 zero without linearisation + 1
                 linear = False
             else:
-                raise GraphException("PSO position out of bound: {0}".format(pos))
+                raise SchedulerException("PSO position out of bound: {0}".format(pos))
 
             u = e[0]
             gu = G.node[u]
@@ -709,23 +734,54 @@ class PSOScheduler(Schedule):
                     part.add(u, uw, v, vw)
                     gu['gid'] = part._gid
                     gv['gid'] = part._gid
-                    #curr_lpl = new_lpl
                 else:
-                    if (linear = False):
-                        recover_edge = True
-                    else:
+                    if (linear):
                         part.add(u, uw, v, vw, sequential=True, global_dag=G)
                         gu['gid'] = part._gid
                         gv['gid'] = part._gid
-
+                    else:
+                        recover_edge = True #outright rejection
             if (recover_edge):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
 
-        new_lpl = DAGUtil.get_longest_path(G, show_path=False)[1]
-        del G
-        return new_lpl
+        return (DAGUtil.get_longest_path(G, show_path=False)[1], len(parts), parts, g_dict)
 
+    def constrain_func(self, x):
+        """
+        Deadline - critical_path >= 0
+        """
+        if (self._deadline is None):
+            raise SchedulerException("Deadline is None, cannot apply constraints!")
+
+        sk = ''.join([str(int(round(xi))) for xi in x])
+        stuff = self._sspace_dict.get(sk, None)
+        if (stuff is None):
+            G = self._lite_dag.copy()
+            stuff = self._partition_G(G, x)
+            self._sspace_dict[sk] = stuff[0:2]
+            del G
+        return self._deadline - stuff[0]
+
+    def objective_func(self, x):
+        """
+        x is a list of values, each taking one of the 3 integers: 0,1,2 for an edge
+        indices of x is identical to the indices in G.edges().sort(key='weight')
+        """
+        # first check if the solution is already available in the search space
+        sk = ''.join([str(int(round(xi))) for xi in x])
+        stuff = self._sspace_dict.get(sk, None) #TODO is this atomic operation?
+        if (stuff is None):
+            # make a deep copy to avoid mix up multiple particles,
+            # each of which has multiple iterations
+            G = self._lite_dag.copy()
+            stuff = self._partition_G(G, x)
+            self._sspace_dict[sk] = stuff[0:2]
+            del G
+        if (self._deadline is None):
+            return stuff[0]
+        else:
+            return stuff[1]
 
 class DSCScheduler(Schedule):
     """
@@ -912,7 +968,7 @@ class DAGUtil(object):
         return mt
 
     @staticmethod
-    def build_dag_from_drops(drop_list):
+    def build_dag_from_drops(drop_list, embed_drop=True):
         """
         return a networkx Digraph (DAG)
 
@@ -940,7 +996,10 @@ class DAGUtil(object):
                 dtp = 1
             else:
                 raise SchedulerException("Drop Type '{0}' is not yet supported".format(tt))
-            G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp, drop_spec=drop)
+            if (embed_drop):
+                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp, drop_spec=drop)
+            else:
+                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp)
             if (drop.has_key(obk)):
                 for oup in drop[obk]:
                     if ('plain' == tt):
