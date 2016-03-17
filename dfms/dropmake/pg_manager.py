@@ -144,7 +144,7 @@ class PGManager(object):
         try:
             parts = pgt._partitions
         except AttributeError, ae:
-            raise GraphException("Graph '{0}'' has not yet been partitioned, so cannot produce scheduling matrix.".format(pgt_id))
+            raise GraphException("Graph '{0}' has not yet been partitioned, so cannot produce scheduling matrix.".format(pgt_id))
         for part in parts:
             sm = part.schedule.schedule_matrix
             if (jsobj is None):
