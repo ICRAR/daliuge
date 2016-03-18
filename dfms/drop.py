@@ -916,6 +916,14 @@ class FileDROP(AbstractDROP):
         hostname = os.uname()[1] # TODO: change when necessary
         return "file://" + hostname + self._fnm
 
+class ShoreDROP(AbstractDROP):
+    def initialize(self, **kwargs):
+        if ['address'] in kwargs:
+            self.address = kwargs['address']
+    def getIO(self):
+        return ShoreIO(self.address)
+
+
 class NgasDROP(AbstractDROP):
     '''
     A DROP that points to data stored in an NGAS server
