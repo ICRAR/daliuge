@@ -26,6 +26,7 @@ import os
 import urlparse
 
 from dfms import ngaslite
+from dfms import shoreClient
 
 
 logger = logging.getLogger(__name__)
@@ -248,7 +249,7 @@ class ShoreIO(DataIO):
         shoreClient.shoreZmqInit(address)
 
     def _open(self, **kwargs):
-        return
+        return None
 
     def _read(self, **kwargs):
         msg = shoreClient.shoreGet(self._doid, self._column, self._row, self._rows)
@@ -257,11 +258,11 @@ class ShoreIO(DataIO):
                 return msg['data']
 
     def _write(self, data, **kwargs):
-        msg = shoreClient.shorePut(self._doid, self._column, self._row, self._rows)
+        msg = shoreClient.shorePut(self._doid, self._column, self._row, data, self._rows)
         return len(data)
 
     def _close(self, **kwargs):
-        return
+        return None
 
     def exists(self):
         msg = shoreClient.shoreQuery(self._doid, self._column)
