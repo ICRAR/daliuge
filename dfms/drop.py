@@ -40,7 +40,7 @@ import time
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases
 from dfms.event import EventFirer
-from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
+from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
 
 from ddap_protocol import DROPStates
 
@@ -918,10 +918,16 @@ class FileDROP(AbstractDROP):
 
 class ShoreDROP(AbstractDROP):
     def initialize(self, **kwargs):
-        if ['address'] in kwargs:
-            self.address = kwargs['address']
+        self._doid = self._getArg(kwargs, 'doid', 'test_data_object')
+        self._column = self._getArg(kwargs, 'column', 'test_column')
+        self._row = self._getArg(kwargs, 'row', 0)
+        self._rows = self._getArg(kwargs, 'rows', 1)
+        self._address = self._getArg(kwargs, 'address', None)
     def getIO(self):
-        return ShoreIO(self.address)
+        return ShoreIO(self._doid, self._column, self._row, self._rows, self._address)
+    @property
+    def dataURL(self):
+        return self._address
 
 
 class NgasDROP(AbstractDROP):
