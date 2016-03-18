@@ -56,7 +56,7 @@ import networkx as nx
 import numpy as np
 
 from dfms.drop import dropdict
-from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler
+from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 
 
 logger = logging.getLogger(__name__)
@@ -997,6 +997,21 @@ class MinNumPartsPGTP(MySarkarPGTP):
     def init_scheduler(self):
         self._scheduler = MinNumPartsScheduler(self._drop_list, self._deadline, max_dop=self._max_dop, dag=self.dag, optimistic_factor=self._opf)
 
+class PSOPGTP(MySarkarPGTP):
+    def __init__(self, drop_list, par_label="Partition", max_dop=8,
+    deadline=None, topk=30, swarm_size=40):
+        """
+        PSO-based PGTP
+        """
+        self._deadline = deadline
+        self._topk = topk
+        self._swarm_size = swarm_size
+        super(PSOPGTP, self).__init__(drop_list, 0, par_label, max_dop, False)
+        self._extra_drops = None
+
+    def init_scheduler(self):
+        self._scheduler = PSOScheduler(self._drop_list, max_dop=self._max_dop,
+        deadline=self._deadline, dag=self.dag, topk=self._topk, swarm_size=self._swarm_size)
 
 class PyrrosPGTP(PGT):
     """

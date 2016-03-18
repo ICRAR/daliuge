@@ -1369,6 +1369,13 @@
     f.submit();
   }
 
+  function genPGTP05() {
+    var f = document.getElementById("pgtp_form_05");
+    var h = document.getElementById("pgtp_lg_name_05");
+    h.value = window.curr_lg_name.toString();
+    f.submit();
+  }
+
   function saveToRemote(saveEditor) {
     var jsonModel = myDiagram.model.toJson();
     if (window.curr_lg_name == null) {
@@ -1520,7 +1527,7 @@
             <a href="#tab3" onclick="setButtonStatus(this)">PNG</a></li>
           </li>
           <li>
-            <a href="#tab4" onclick="">Mapping</a></li>
+            <a href="#tab4" onclick="">Translate</a></li>
           </li>
 
           <li style="width:52px">
@@ -1559,13 +1566,14 @@
             <div align="center">
               <table style="font-size:15px">
                 <tr><td/><td/></tr>
-                <tr><td/><td/></tr>
+                <tr><td/><td>Translate the Logical Graph to either <i>Physical Graph Template </i>(<b>PGT</b>) or <i>Physical Graph Template Partition</i> (<b>PGTP</b>)</td></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr>
                 <td>
+                  Algorithm 0
                 </td>
                 <td>
                   <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
@@ -1584,7 +1592,7 @@
                 <tr><td/><td/></tr>
               <tr>
               <form action="/gen_pgt" method="get" id="pgtp_form" target="_blank">
-              <td> Method I</td><td>Minimise data movement while constrained by load balancing </td>
+              <td> Algorithm 1</td><td>Minimise data movement while subject to load balancing </td>
               </tr>
               <tr>
               <td># of partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
@@ -1606,7 +1614,7 @@
             <tr>
               <td>Load balancing</td><td><input type="number" name="max_load_imb" min="1" max="100" value="100">%</td>
             </tr>
-            <tr>
+            <!-- <tr>
               <td>
                 Partition algorithm
               </td>
@@ -1614,7 +1622,7 @@
                 <input type="radio" name="ptype" value="0" checked> <a href="http://glaros.dtc.umn.edu/gkhome/node/81" target="_blank">K-way partitioning</a>
                 <input type="radio" name="ptype" value="1"> <a href="http://glaros.dtc.umn.edu/gkhome/node/107" target="_blank">Recursive bisectioning</a>
               </td>
-            </tr>
+            </tr> -->
             <tr>
             <td>
               <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name">
@@ -1622,7 +1630,7 @@
             </td>
             <td>
               <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-              <button id="pgtButton" class="button" onclick="genPGTP()">Generate Physical Graph Template Partition (I)</button>
+              <button id="pgtButton" class="button" onclick="genPGTP()">Generate PGTP (direct graph partitioning)</button>
             </td>
             </tr>
             </form>
@@ -1640,7 +1648,7 @@
           <tr/>
           <tr>
           <form action="/gen_pgt" method="get" id="pgtp_form_02" target="_blank">
-          <td>Method II </td><td>Minimise execution time while constrained by each partition's DoP<input type="hidden" name="num_par" value="5"></td>
+          <td>Algorithm 2 </td><td>Minimise execution time while subject to each partition's DoP<input type="hidden" name="num_par" value="5"></td>
           </tr>
           <tr>
           <td>Partition label</td>
@@ -1654,14 +1662,14 @@
         <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
         </td>
       </tr>
-      <tr>
+      <!-- <tr>
         <td>
           Partition algorithm
         </td>
         <td>
           Augmented <a href="http://dl.acm.org/citation.cfm?id=534475" target="_blank">Sarkar (1989)</a> by adding DoP constraints and removing artifical linearisation
         </td>
-      </tr>
+      </tr> -->
         <tr>
         <td>
           <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_02">
@@ -1669,10 +1677,11 @@
         </td>
         <td>
           <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-          <button id="pgtButton02" class="button" onclick="genPGTP02()">Generate Physical Graph Template Partition (II)</button>
+          <button id="pgtButton02" class="button" onclick="genPGTP02()">Generate PGTP (edgezeroing) </button>
         </td>
         </tr>
         </form>
+        <!--
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
@@ -1683,7 +1692,7 @@
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
-      <tr>
+       <tr>
       <form action="/gen_pgt" method="get" id="pgtp_form_03" target="_blank">
         <td>Method III </td><td>Inner partitioning with Method II, then outer partitioning with Method I<input type="hidden" name="merge_par" value="1"></td>
       </tr>
@@ -1711,11 +1720,10 @@
       <input type="hidden" name="algo" value="mysarkar">
     </td>
     <td>
-      <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
       <button id="pgtButton03" class="button" onclick="genPGTP03()">Generate Physical Graph Template Partition (III)</button>
     </td>
     </tr>
-    </form>
+    </form> -->
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
@@ -1728,7 +1736,7 @@
     <tr><td/><td/></tr>
     <tr>
     <form action="/gen_pgt" method="get" id="pgtp_form_04" target="_blank">
-      <td>Method IV </td><td>Minimise # of Partitions while constrained by Time Deadline<input type="hidden" name="num_par" value="5"></td>
+      <td>Algorithm 3 </td><td>Minimise # of Partitions while subject to completion deadline<input type="hidden" name="num_par" value="5"></td>
     </tr>
     <tr>
       <td>Deadline (time unit)</td>
@@ -1758,10 +1766,71 @@
   </td>
   <td>
     <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-    <button id="pgtButton03" class="button" onclick="genPGTP04()">Generate Physical Graph Template Partition (IV)</button>
+    <button id="pgtButton04" class="button" onclick="genPGTP04()">Generate PGTP (edgezeroing + deadline)</button>
   </td>
   </tr>
   </form>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr><td/><td/></tr>
+  <tr>
+  <form action="/gen_pgt" method="get" id="pgtp_form_05" target="_blank">
+    <td>Algorithm 4 </td><td>Minimise # of Partitions while (optionally) subject to completion deadline<input type="hidden" name="num_par" value="5"></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>
+    WARNING - PSO is 10x slower, a larger Swarm size or Dimension makes it even slower!
+    </td>
+  </tr>
+  <tr>
+    <td>Swarm size</td>
+    <td>
+    <input type="number" name="swarm_size" value="40">
+    </td>
+  </tr>
+  <tr>
+    <td>Dimension of search space</td>
+    <td>
+    <input type="number" name="topk" value="30">
+    </td>
+  </tr>
+  <tr>
+    <td>Deadline (time unit)</td>
+    <td>
+    <input type="number" name="deadline" value="None">
+    </td>
+  </tr>
+  <tr>
+    <td>Partition label</td>
+    <td>
+    <input type="text" name="par_label" value="Partition">
+    </td>
+  </tr>
+  <tr>
+    <td>Max DoP per partition</td>
+    <td>
+    <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
+    </td>
+  </tr>
+<tr>
+<td>
+  <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_05">
+  <input type="hidden" name="algo" value="pso">
+</td>
+<td>
+  <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
+  <button id="pgtButton05" class="button" onclick="genPGTP05()">Generate PGTP (particle swarm)</button>
+</td>
+</tr>
+</form>
 
   </table>
 
@@ -1837,7 +1906,6 @@
 
   Mouse-over a Node to view its ports.
   Drag from these ports to create new Links.
-  Selecting Links allows you to re-shape and re-link them.
   Selecting a Node and then clicking its TextBlock will allow
   you to edit text (except on the Start and End Nodes). <br/>Any issues please email chen DOT wu AT icrar DOT org
 

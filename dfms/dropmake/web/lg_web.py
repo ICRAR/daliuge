@@ -29,7 +29,7 @@ import traceback
 
 from bottle import route, run, request, get, static_file, template, redirect, response
 
-from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP
+from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 from dfms.dropmake.pg_manager import PGManager
 from dfms.dropmake.scheduler import SchedulerException
 
@@ -202,6 +202,16 @@ def gen_pgt():
                     time_greedy = 1 - float(request.query.get('time_greedy')) / 100.0 # assuming between 1 to 100
                     pgt = MinNumPartsPGTP(drop_list, int(request.query.get('deadline')),
                     int(part), par_label, int(request.query.get('max_dop')), merge_parts=False, optimistic_factor=time_greedy)
+                elif ('pso' == algo):
+                    params = ['deadline', 'topk', 'swarm_size']
+                    pars = [None, 30, 40]
+                    for i, para in enumerate(params):
+                        try:
+                            pars[i] = int(request.query.get(para))
+                        except:
+                            continue
+                    pgt = PSOPGTP(drop_list, par_label, int(request.query.get('max_dop')),
+                    deadline=pars[0], topk=pars[1], swarm_size=pars[2])
                 elif ('pyrros' == algo):
                     pgt = PyrrosPGTP(drop_list, int(part))
                 else:

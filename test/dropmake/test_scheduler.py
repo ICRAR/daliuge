@@ -71,10 +71,12 @@ class TestScheduler(unittest.TestCase):
             #logger.info("-" * lll)
 
     def test_pso_scheduler(self):
-        #lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
-        lgnames = ['test_seq_gather.json']
-        #tgt_deadline = [540, 450, 60, 70, 60, 160] #250
-        tgt_deadline = [150]
+        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json',
+        'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json',
+        'test_seq_gather.json']
+        #lgnames = ['test_seq_gather.json']
+        tgt_deadline = [540, 450, 60, 70, 60, 160, 150] #250
+        #tgt_deadline = [150]
         mdp = 2
         for j, lgn in enumerate(lgnames):
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))

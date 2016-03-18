@@ -634,33 +634,37 @@ class PSOScheduler(Scheduler):
                 based on X[i] value, reject or linearisation
             (2) returns makespan
     """
-    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None):
+    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, topk=30, swarm_size=40):
         super(PSOScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._deadline = deadline
         #search space: key - combination of X[i] (string),
         # val - a tuple of (critical_path (int), num_parts (int))
         self._sspace_dict = dict()
+        self._topk = topk
+        self._swarm_size = swarm_size
         self._lite_dag = DAGUtil.build_dag_from_drops(self._drop_list, embed_drop=False)
+        self._call_counts = 0
+        leng = len(self._lite_dag.edges())
+        self._leng = leng
+        self._topk = leng if leng < self._topk else self._topk
 
     def partition_dag(self):
         """
-        Return a tuple of
+        Returns a tuple of:
             1. the # of partitions formed (int)
             2. the parallel time (longest path, int)
             3. partition time (seconds, float)
+            4. a list of partitions (Partition)
         """
         # trigger the PSO algorithm
-
         G = self._dag
-        leng = len(G.edges())
-        lb = [0.99] * leng
-        ub = [3.01] * leng
+        lb = [0.99] * self._leng
+        ub = [3.01] * self._leng
         stt = time.time()
-        swsize = 40
         if (self._deadline is None):
-            xopt, fopt = pso(self.objective_func, lb, ub, swarmsize=swsize)
+            xopt, fopt = pso(self.objective_func, lb, ub, swarmsize=self._swarm_size)
         else:
-            xopt, fopt = pso(self.objective_func, lb, ub, ieqcons=[self.constrain_func], swarmsize=swsize)
+            xopt, fopt = pso(self.objective_func, lb, ub, ieqcons=[self.constrain_func], swarmsize=self._swarm_size)
 
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, xopt)
         edt = time.time()
@@ -675,6 +679,7 @@ class PSOScheduler(Scheduler):
                 parts.append(part) # will it get rejected?
                 num_parts += 1
         self._parts = parts
+        #print "call counts ", self._call_counts
         return (num_parts, curr_lpl, edt - stt, parts)
 
     def _partition_G(self, G, x):
@@ -744,7 +749,7 @@ class PSOScheduler(Scheduler):
             if (recover_edge):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
-
+        self._call_counts += 1
         return (DAGUtil.get_longest_path(G, show_path=False)[1], len(parts), parts, g_dict)
 
     def constrain_func(self, x):
@@ -754,7 +759,7 @@ class PSOScheduler(Scheduler):
         if (self._deadline is None):
             raise SchedulerException("Deadline is None, cannot apply constraints!")
 
-        sk = ''.join([str(int(round(xi))) for xi in x])
+        sk = ''.join([str(int(round(xi))) for xi in x[0:self._topk]])
         stuff = self._sspace_dict.get(sk, None)
         if (stuff is None):
             G = self._lite_dag.copy()
@@ -769,7 +774,7 @@ class PSOScheduler(Scheduler):
         indices of x is identical to the indices in G.edges().sort(key='weight')
         """
         # first check if the solution is already available in the search space
-        sk = ''.join([str(int(round(xi))) for xi in x])
+        sk = ''.join([str(int(round(xi))) for xi in x[0:self._topk]])
         stuff = self._sspace_dict.get(sk, None) #TODO is this atomic operation?
         if (stuff is None):
             # make a deep copy to avoid mix up multiple particles,
