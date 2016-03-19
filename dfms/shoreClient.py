@@ -26,7 +26,6 @@
 #    jason.wang@icrar.org or jason.ruonan.wang@gmail.com
 
 import os
-import zmq
 import cPickle as pickle
 
 message_socket = None
@@ -43,6 +42,7 @@ def securityCheck(doid, column, row, rows):
     return True
 
 def shoreZmqInit(address = None):
+    import zmq
     global message_socket
     global transport_socket
     global isInited
