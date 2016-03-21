@@ -174,31 +174,23 @@ def getDfmsDir():
     Returns the root of the directory structure used by the DFMS framework at
     runtime.
     """
-    if 'XDG_RUNTIME_DIR' in os.environ:
-        return os.path.join(os.environ['XDG_RUNTIME_DIR'], "dfms")
     return os.path.join(os.path.expanduser("~"), ".dfms")
 
-def getDfmsPidDir(createIfMissing=False):
+def getDfmsPidDir():
     """
     Returns the location of the directory used by the DFMS framework to store
     its PIDs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    path = os.path.join(getDfmsDir(), 'pid')
-    if createIfMissing:
-        createDirIfMissing(path)
-    return path
+    return os.path.join(getDfmsDir(), 'pid')
 
-def getDfmsLogsDir(createIfMissing=False):
+def getDfmsLogsDir():
     """
     Returns the location of the directory used by the DFMS framework to store
     its logs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    path = os.path.join(getDfmsDir(), 'logs')
-    if createIfMissing:
-        createDirIfMissing(path)
-    return path
+    return os.path.join(getDfmsDir(), 'logs')
 
 def createDirIfMissing(path):
     """
