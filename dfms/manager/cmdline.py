@@ -39,7 +39,7 @@ from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
-from dfms.utils import getDfmsPidDir, getDfmsLogsDir
+from dfms.utils import getDfmsPidDir, getDfmsLogsDir, createDirIfMissing
 
 
 _terminating = False
@@ -91,6 +91,8 @@ def addCommonOptions(parser, defaultPort):
                       dest="verbose", help="Become more verbose. The more flags, the more verbose")
     parser.add_option("-q", "--quiet", action="count",
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
+    parser.add_option("--log-dir", action="store", type="string",
+                      dest="logdir", help="The directory where the logging files will be stored", default=getDfmsLogsDir())
 
 def commonOptionsCheck(options, parser):
     # -d and -s are exclusive
@@ -111,14 +113,12 @@ def start(options, parser):
     # Start daemon?
     if options.daemon:
 
-        pidDir  = getDfmsPidDir(createIfMissing=True)
-        logsDir = getDfmsLogsDir(createIfMissing=True)
+        # Make sure the PID file will be created without problems
+        pidDir  = getDfmsPidDir()
+        createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
-        stdout  = os.path.join(logsDir, "dfms%s_stdout" % (options.dmAcronym))
-        stderr  = os.path.join(logsDir, "dfms%s_stderr" % (options.dmAcronym))
-        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1),
-                                  stdout=open(stdout, 'w+'),
-                                  stderr=open(stderr, 'w+')):
+
+        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1)):
             launchServer(options)
 
     # Stop daemon?
@@ -169,7 +169,9 @@ def setupLogging(opts):
         logging.root.addHandler(streamHdlr)
 
     # This is the rotating logfile we'll use from now on
-    logfile = os.path.join(getDfmsLogsDir(True), "dfms%s.log" % (opts.dmAcronym))
+    logdir = opts.logdir
+    createDirIfMissing(logdir)
+    logfile = os.path.join(logdir, "dfms%s.log" % (opts.dmAcronym))
     rotatingFH = logging.handlers.RotatingFileHandler(logfile, maxBytes=10*1024*1024, backupCount=30, encoding='utf-8')
     rotatingFH.setFormatter(fmt)
     logging.root.addHandler(rotatingFH)
