@@ -233,9 +233,9 @@ class DfmsDaemon(RestServer):
 
     def _verbosity_as_cmdline(self):
         if self._verbosity > 0:
-            return ("-" + "v"*self._verbosity)
+            return ["-" + "v"*self._verbosity]
         elif self._verbosity < 0:
-            return ("-" + "q"*(-self._verbosity))
+            return ["-" + "q"*(-self._verbosity)]
         return ()
 
     # Rest interface
@@ -286,9 +286,9 @@ def run_with_cmdline(args=sys.argv):
     parser.add_option("--no-zeroconf", action="store_true",
                       dest="noZC", help = "Don't enable zeroconf on this DFMS daemon", default=False)
     parser.add_option("-v", "--verbose", action="count",
-                      dest="verbose", help="Become more verbose. The more flags, the more verbose")
+                      dest="verbose", help="Become more verbose. The more flags, the more verbose", default=0)
     parser.add_option("-q", "--quiet", action="count",
-                      dest="quiet", help="Be less verbose. The more flags, the quieter")
+                      dest="quiet", help="Be less verbose. The more flags, the quieter", default=0)
 
     (opts, args) = parser.parse_args(args)
 
