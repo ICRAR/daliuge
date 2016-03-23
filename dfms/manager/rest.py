@@ -137,10 +137,11 @@ class ManagerRestServer(RestServer):
 
     def visualizeSession(self):
         sessionId = bottle.request.params['sessionId']
+        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
         tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl, sessionId=sessionId, serverUrl=serverUrl)
+        return bottle.template(tpl, sessionId=sessionId, selectedNode=selectedNode, serverUrl=serverUrl)
 
 class NMRestServer(ManagerRestServer):
     """
@@ -260,12 +261,15 @@ class CompositeManagerRestServer(ManagerRestServer):
     def visualizeDIM(self):
         tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
+        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return bottle.template(tpl,
                         dmType=self.dm.__class__.__name__,
                         dmPort=self.dm.dmPort,
                         serverUrl=serverUrl,
-                        hosts=json.dumps(self.dm.dmHosts))
+                        dmHosts=json.dumps(self.dm.dmHosts),
+                        nodes=json.dumps(self.dm.nodes),
+                        selectedNode=selectedNode)
 
 class MasterManagerRestServer(CompositeManagerRestServer):
 
