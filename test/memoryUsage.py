@@ -24,12 +24,11 @@ A small module that measures the average memory consumption of different
 DROP types. It was initially developed to address PRO-234.
 """
 
+import importlib
 from optparse import OptionParser
 import sys
 
 import psutil
-
-from dfms import drop
 
 
 def measure(n, droptype):
@@ -67,7 +66,10 @@ if __name__ == '__main__':
         parser.error("Number of instances to create not specified")
 
     n = options.instances
-    droptype = getattr(drop, options.type)
+    parts = options.type.split('.')
+    modname = '.'.join(parts[:-1])
+    classname = parts[-1]
+    droptype = getattr(importlib.import_module(modname), classname)
     mem, uTime, sTime = measure(n, droptype)
     tTime = uTime + sTime
     memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in mem, uTime, sTime, tTime]
