@@ -56,9 +56,12 @@ class DfmsDaemon(RestServer):
     and the master manager (default: no) at creation time.
     """
 
-    def __init__(self, master=False, noNM=False, disable_zeroconf=False):
+    def __init__(self, master=False, noNM=False, disable_zeroconf=False, verbosity=0):
 
         super(DfmsDaemon, self).__init__(jsonified_errors=[500, 409])
+
+        self._shutting_down = False
+        self._verbosity = verbosity
 
         # The three processes we run
         self._nm_proc = None
@@ -92,6 +95,7 @@ class DfmsDaemon(RestServer):
         Stops this DFMS Daemon, terminating all its child processes and its REST
         server.
         """
+        self._shutting_down = True
         super(DfmsDaemon, self).stop(timeout)
         self._stop_zeroconf()
         self.stopNM(timeout)
@@ -169,6 +173,7 @@ class DfmsDaemon(RestServer):
 
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM']
         args += ['--host', '0.0.0.0']
+        args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
         self._nm_proc = subprocess.Popen(args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
@@ -182,6 +187,7 @@ class DfmsDaemon(RestServer):
     def startDIM(self, nodes):
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
         args += ['--host', '0.0.0.0']
+        args += self._verbosity_as_cmdline()
         if nodes:
             args += ['--nodes', ",".join(nodes)]
         logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
@@ -192,6 +198,7 @@ class DfmsDaemon(RestServer):
 
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM']
         args += ['--host', '0.0.0.0']
+        args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
         self._mm_proc = subprocess.Popen(args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
@@ -212,11 +219,24 @@ class DfmsDaemon(RestServer):
                 elif state_change is zc.ServiceStateChange.Removed:
                     server,port = node_managers[name]
                     logger.info("Node Manager on %s:%d disappeared, removing it from the MM" % (server, port))
-                    try:
-                        mm_client.remove_node(server)
-                    finally:
-                        del node_managers[name]
+
+                    # Don't bother to remove it if we're shutting down. This way
+                    # we avoid hanging in here if the MM is down already but
+                    # we are trying to remove our NM who has just disappeared
+                    if not self._shutting_down:
+                        try:
+                            mm_client.remove_node(server)
+                        finally:
+                            del node_managers[name]
+
             self._mm_browser = utils.browse_service(self._zeroconf, 'NodeManager', 'tcp', nm_callback)
+
+    def _verbosity_as_cmdline(self):
+        if self._verbosity > 0:
+            return ("-" + "v"*self._verbosity)
+        elif self._verbosity < 0:
+            return ("-" + "q"*(-self._verbosity))
+        return ()
 
     # Rest interface
     def _rest_start_manager(self, proc, start_method):
@@ -265,11 +285,20 @@ def run_with_cmdline(args=sys.argv):
                       dest="noNM", help = "Don't start a NodeDropManager by default", default=False)
     parser.add_option("--no-zeroconf", action="store_true",
                       dest="noZC", help = "Don't enable zeroconf on this DFMS daemon", default=False)
+    parser.add_option("-v", "--verbose", action="count",
+                      dest="verbose", help="Become more verbose. The more flags, the more verbose")
+    parser.add_option("-q", "--quiet", action="count",
+                      dest="quiet", help="Be less verbose. The more flags, the quieter")
+
     (opts, args) = parser.parse_args(args)
+
+    # -v and -q are exclusive
+    if opts.verbose and opts.quiet:
+        parser.error('-v and -q cannot be specified together')
 
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    daemon = DfmsDaemon(opts.master, opts.noNM, opts.noZC)
+    daemon = DfmsDaemon(opts.master, opts.noNM, opts.noZC, opts.verbose - opts.quiet)
 
     # Signal handling, which stops the daemon
     def handle_signal(signalNo, stack_frame):
