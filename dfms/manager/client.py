@@ -155,3 +155,6 @@ class MasterManagerClient(CompositeManagerClient):
     """
     def __init__(self, host='localhost', port=constants.MASTER_DEFAULT_REST_PORT, timeout=10):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
+
+    def create_island(self, island_host, nodes):
+        self._post_json('/managers/%s/dataisland' % (island_host), {'nodes': nodes})

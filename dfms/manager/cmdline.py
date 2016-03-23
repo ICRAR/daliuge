@@ -38,7 +38,8 @@ from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 from dfms.manager.node_manager import NodeManager
-from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
+from dfms.manager.rest import NMRestServer, CompositeManagerRestServer, \
+    MasterManagerRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir, createDirIfMissing
 
 
@@ -209,7 +210,7 @@ def dfmsNM(args=sys.argv):
 
     start(options, parser)
 
-def dfmsCompositeManager(args, dmType, acronym, dmPort):
+def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
     """
     Common entry point for the dfmsDIM and dfmsMM command-line scripts. It
     starts the corresponding CompositeManager and exposes it through Pyro and a
@@ -232,7 +233,7 @@ def dfmsCompositeManager(args, dmType, acronym, dmPort):
     options.dmArgs = ([s for s in options.nodes.split(',') if s],)
     options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmCheckTimeout': options.dmCheckTimeout}
     options.dmAcronym = acronym
-    options.restType = CompositeManagerRestServer
+    options.restType = dmRestServer
 
     start(options, parser)
 
@@ -241,14 +242,14 @@ def dfmsDIM(args=sys.argv):
     """
     Entry point for the dfmsDIM command-line script.
     """
-    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT)
+    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT, CompositeManagerRestServer)
 
 # Entry-point function for the dfmsDIM script
 def dfmsMM(args=sys.argv):
     """
     Entry point for the dfmsMM command-line script.
     """
-    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT)
+    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
 
 
 if __name__ == '__main__':
