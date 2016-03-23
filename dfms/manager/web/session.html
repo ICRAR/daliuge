@@ -14,8 +14,17 @@
 
 <body>
 <div class="container">
+
+	<div id="zoom-notice" class="alert alert-info">
+		<p>
+		<span class="glyphicon glyphicon-zoom-in"></span> Zooming into {{selectedNode}}
+		<a href="?sessionId={{sessionId}}">Zoom out</a>
+		</p>
+	</div>
+
 	<h1>Session {{sessionId}}</h1>
 	<h2>Status: <span id="session-status"></span></h2>
+
 	<p>Orientation: <span><input class="direction" type="radio" name="direction" value="LR" id="lr"/><label for="lr">Left to Right</label></span>
 	<span><input class="direction" type="radio" name="direction" value="TB" id="tb"/><label for="tb">Top to Bottom</label></span></p>
 </div>
@@ -24,6 +33,18 @@
 </div>
 
 <script>
+
+	var selectedNode = '{{selectedNode}}';
+	if( selectedNode == '' ) {
+		selectedNode = null;
+	}
+
+	if( !selectedNode ) {
+		d3.select('#zoom-notice').remove()
+	}
+
+	var serverUrl = '{{!serverUrl}}';
+	var sessionId = '{{sessionId}}';
 
 	// Set up zoom support
 	var svg = d3.select("svg")
@@ -56,7 +77,7 @@
 		drawGraph();
 	});
 
-	startStatusQuery(g, '{{!serverUrl}}', '{{sessionId}}', drawGraph, 1000)
+	startStatusQuery(g, serverUrl, sessionId, drawGraph, selectedNode, 1000)
 </script>
 </body>
 </html>

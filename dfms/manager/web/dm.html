@@ -42,11 +42,11 @@ var addSessionBtn = d3.select('#addSessionBtn');
 
 // Listeners for the two buttons
 addSessionBtn.on('click', function(){ promptNewSession(serverUrl, tbodyEl, refreshBtn); } );
-refreshBtn.on('click', function(){ loadSessions(serverUrl, tbodyEl, refreshBtn, false); } );
+refreshBtn.on('click', function(){ loadSessions(serverUrl, tbodyEl, refreshBtn, null); } );
 
 // Start loading the list of sessions periodically
 d3.timer(function(){
-	loadSessions(serverUrl, tbodyEl, refreshBtn, true, 5000);
+	loadSessions(serverUrl, tbodyEl, refreshBtn, null, 5000);
 	return true;
 });
 
