@@ -29,7 +29,9 @@ import json
 import bottle
 import pkg_resources
 
-from dfms.restutils import RestServer
+from dfms.manager import constants
+from dfms.manager.client import NodeManagerClient
+from dfms.restutils import RestServer, RestClient
 
 
 class ManagerRestServer(RestServer):
@@ -222,3 +224,16 @@ class CompositeManagerRestServer(ManagerRestServer):
                         dmPort=self.dm.dmPort,
                         serverUrl=serverUrl,
                         hosts=json.dumps(self.dm.dmHosts))
+
+class MasterManagerRestServer(CompositeManagerRestServer):
+
+    def initializeSpecifics(self, app):
+        CompositeManagerRestServer.initializeSpecifics(self, app)
+
+        # Query forwarding to daemons
+        app.post(  '/api/managers/<host>/dataisland', callback=self.createDataIsland)
+
+    def createDataIsland(self, host):
+        with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
+            c._post_json('/managers/dataisland', bottle.request.body.read())
+        self.dm.addDmHost(host)
