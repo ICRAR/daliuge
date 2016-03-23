@@ -162,7 +162,7 @@ def setupLogging(opts):
 
     # Let's configure logging now
     # Daemons don't output stuff to the stdout
-    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(msg)s")
+    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
     if not opts.daemon:
         streamHdlr = logging.StreamHandler(sys.stdout)
         streamHdlr.setFormatter(fmt)
