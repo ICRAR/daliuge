@@ -60,8 +60,8 @@ class FileImportAppTests(unittest.TestCase):
 
         a = FileImportApp('a', 'b', dirname = self.root, ext = ['.fits'])
         self.assertEquals(len(a.children), 2)
-        self.assertEquals(a.children[0].path, self.files[0])
-        self.assertEquals(a.children[1].path, self.files[1])
+        self.assertEquals(a.children[0].path in self.files, True)
+        self.assertEquals(a.children[1].path in self.files, True)
 
         a = FileImportApp('a', 'b', dirname = self.dirs[1], ext = ['.fits'])
         self.assertEquals(len(a.children), 0)
