@@ -877,18 +877,26 @@ class FileDROP(AbstractDROP):
         """
         FileDROP-specific initialization.
         """
-        self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
-        if (not os.path.exists(self._root)):
-            os.mkdir(self._root)
-        self._root = os.path.abspath(self._root)
-
         self._delete_parent_dir = self._getArg(kwargs, 'delete_parent_directory', False)
 
-        # TODO: Make sure the parts that make up the filename are composed
-        #       of valid filename characters; otherwise encode them
-        self._fnm = self._root + os.sep + self._oid + '___' + self.uid
-        if os.path.isfile(self._fnm):
-            logger.warn('File %s already exists, overwriting' % (self._fnm))
+        filepath = self._getArg(kwargs, 'filepath', None)
+        if filepath:
+            check = self._getArg(kwargs, 'check_filepath_exists', False)
+            if check:
+                if not os.path.isfile(filepath):
+                    raise Exception('File does not exist or is not a file: %s' % filepath)
+            self._fnm = filepath
+            self._root = os.path.dirname(filepath)
+        else:
+            self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
+            if (not os.path.exists(self._root)):
+                os.mkdir(self._root)
+            self._root = os.path.abspath(self._root)
+            # TODO: Make sure the parts that make up the filename are composed
+            #       of valid filename characters; otherwise encode them
+            self._fnm = self._root + os.sep + self._oid + '___' + self.uid
+            if os.path.isfile(self._fnm):
+                logger.warn('File %s already exists, overwriting' % (self._fnm))
 
         self._wio = None
 
