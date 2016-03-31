@@ -374,6 +374,7 @@ class CompositeManager(DROPManager):
             rhsDrop = proxies[rel.rhs]
             lhsDrop = proxies[rel.lhs]
 
+            logger.debug("Establishing link %r", rel)
             try:
                 if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
                     methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
@@ -385,6 +386,11 @@ class CompositeManager(DROPManager):
                     backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
                     setattr(rhsDrop, relPropName, lhsDrop)
                     lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+
+                # Eagerly release the pyro connection used by this Drop proxy
+                # See comment on self._triggerDrop
+                rhsDrop._pyroRelease()
+                lhsDrop._pyroRelease()
             except Exception:
                 logger.exception("Error while establishing link %r" % (rel,))
                 raise
