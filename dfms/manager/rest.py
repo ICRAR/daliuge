@@ -29,7 +29,9 @@ import json
 import bottle
 import pkg_resources
 
-from dfms.restutils import RestServer
+from dfms.manager import constants
+from dfms.manager.client import NodeManagerClient
+from dfms.restutils import RestServer, RestClient
 
 
 class ManagerRestServer(RestServer):
@@ -135,10 +137,11 @@ class ManagerRestServer(RestServer):
 
     def visualizeSession(self):
         sessionId = bottle.request.params['sessionId']
+        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
         tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl, sessionId=sessionId, serverUrl=serverUrl)
+        return bottle.template(tpl, sessionId=sessionId, selectedNode=selectedNode, serverUrl=serverUrl)
 
 class NMRestServer(ManagerRestServer):
     """
@@ -193,6 +196,13 @@ class CompositeManagerRestServer(ManagerRestServer):
         app.post(  '/api/nodes/<node>',                      callback=self.addCMNode)
         app.delete('/api/nodes/<node>',                      callback=self.removeCMNode)
 
+        # Query forwarding to sub-nodes
+        app.get(   '/api/nodes/<node>/sessions',                          callback=self.getNodeSessions)
+        app.get(   '/api/nodes/<node>/sessions/<sessionId>',              callback=self.getNodeSessionInformation)
+        app.get(   '/api/nodes/<node>/sessions/<sessionId>/status',       callback=self.getNodeSessionStatus)
+        app.get(   '/api/nodes/<node>/sessions/<sessionId>/graph',        callback=self.getNodeGraph)
+        app.get(   '/api/nodes/<node>/sessions/<sessionId>/graph/status', callback=self.getNodeGraphStatus)
+
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDIM)
 
@@ -210,15 +220,66 @@ class CompositeManagerRestServer(ManagerRestServer):
     def removeCMNode(self, node):
         self.dm.remove_node(node)
 
+    def getNodeSessions(self, node):
+        if node not in self.dm.nodes:
+            raise Exception("%s not in current list of nodes" % (node,))
+        bottle.response.content_type = 'application/json'
+        with NodeManagerClient(host=node) as dm:
+            return json.dumps(dm.sessions())
+
+    def getNodeSessionInformation(self, node, sessionId):
+        if node not in self.dm.nodes:
+            raise Exception("%s not in current list of nodes" % (node,))
+        bottle.response.content_type = 'application/json'
+        with NodeManagerClient(host=node) as dm:
+            return json.dumps(dm.session(sessionId))
+
+    def getNodeSessionStatus(self, node, sessionId):
+        if node not in self.dm.nodes:
+            raise Exception("%s not in current list of nodes" % (node,))
+        bottle.response.content_type = 'application/json'
+        with NodeManagerClient(host=node) as dm:
+            return json.dumps(dm.session_status(sessionId))
+
+    def getNodeGraph(self, node, sessionId):
+        if node not in self.dm.nodes:
+            raise Exception("%s not in current list of nodes" % (node,))
+        bottle.response.content_type = 'application/json'
+        with NodeManagerClient(host=node) as dm:
+            return json.dumps(dm.graph(sessionId))
+
+    def getNodeGraphStatus(self, node, sessionId):
+        if node not in self.dm.nodes:
+            raise Exception("%s not in current list of nodes" % (node,))
+        bottle.response.content_type = 'application/json'
+        with NodeManagerClient(host=node) as dm:
+            return json.dumps(dm.graph_status(sessionId))
+
     #===========================================================================
     # non-REST methods
     #===========================================================================
     def visualizeDIM(self):
         tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
+        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return bottle.template(tpl,
                         dmType=self.dm.__class__.__name__,
                         dmPort=self.dm.dmPort,
                         serverUrl=serverUrl,
-                        hosts=json.dumps(self.dm.dmHosts))
+                        dmHosts=json.dumps(self.dm.dmHosts),
+                        nodes=json.dumps(self.dm.nodes),
+                        selectedNode=selectedNode)
+
+class MasterManagerRestServer(CompositeManagerRestServer):
+
+    def initializeSpecifics(self, app):
+        CompositeManagerRestServer.initializeSpecifics(self, app)
+
+        # Query forwarding to daemons
+        app.post(  '/api/managers/<host>/dataisland', callback=self.createDataIsland)
+
+    def createDataIsland(self, host):
+        with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
+            c._post_json('/managers/dataisland', bottle.request.body.read())
+        self.dm.addDmHost(host)

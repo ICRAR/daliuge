@@ -108,10 +108,23 @@ function getRender() {
 	return render;
 }
 
-function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
+function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 	refreshBtn.attr('disabled');
-	d3.json(serverUrl + '/api/sessions', function (error, response){
+
+	// Support for node query forwarding
+	var url = serverUrl + '/api';
+	if( selectedNode ) {
+		url += '/nodes/' + selectedNode;
+	}
+	url += '/sessions';
+
+	var sessionLink = function(s) {
+		var url = 'session?sessionId=' + s;
+		if( selectedNode ) { url += '&node=' + selectedNode; }
+		return url;
+	};
+	d3.json(url, function (error, response){
 		if( error ) {
 			console.error(error)
 			refreshBtn.attr('disabled', null);
@@ -138,16 +151,16 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, scheduleNew, delay) {
 
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
-		    .append('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		    .append('a').attr('href', sessionLink)
 		    .append('span').classed('glyphicon glyphicon-share-alt', true)
-		statusCells.select('a').attr('href', function(s) { return 'session?sessionId=' + s; })
+		statusCells.select('a').attr('href', sessionLink)
 		statusCells.exit().remove()
 
 		refreshBtn.attr('disabled', null);
 
-		if( scheduleNew ) {
+		if( !(typeof delay === 'undefined') ) {
 			d3.timer(function(){
-				loadSessions(serverUrl, tbodyEl, refreshBtn, true, delay);
+				loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay);
 				return true;
 			}, delay);
 		}
@@ -167,7 +180,7 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 				bootbox.alert('An error occurred while creating session ' + sessionId + ': ' + error.responseText)
 				return
 			}
-			loadSessions(serverUrl, tbodyEl, refreshBtn, false)
+			loadSessions(serverUrl, tbodyEl, refreshBtn, null)
 		});
 	});
 }
@@ -187,9 +200,18 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
  * @param g The graph
  * @param doSpecs A list of DOSpecs, which are simple dictionaries
  */
-function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
+function startStatusQuery(g, serverUrl, sessionId, drawGraph, selectedNode, delay) {
+
+	// Support for node query forwarding
+	var url = serverUrl + '/api';
+	if( selectedNode ) {
+		url += '/nodes/' + selectedNode;
+	}
+	url += '/sessions/' + sessionId;
+
 	function updateGraph() {
-		d3.json(serverUrl + '/api/sessions/' + sessionId, function(error, sessionInfo) {
+
+		d3.json(url, function(error, sessionInfo) {
 
 			if (error) {
 				console.error(error);
@@ -261,7 +283,7 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, delay) {
 			// During RUNNING (or potentially FINISHED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if( status == 3 || status == 4 ) {
-				startGraphStatusUpdates(serverUrl, sessionId, delay);
+				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay);
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
@@ -337,9 +359,17 @@ function _addEdge(g, fromOid, toOid) {
  * graph from the REST server, updating the current display to show the correct
  * colors
  */
-function startGraphStatusUpdates(serverUrl, sessionId, delay) {
+function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
+
+	// Support for node query forwarding
+	url = serverUrl + '/api';
+	if( selectedNode ) {
+		url += '/nodes/' + selectedNode;
+	}
+	url += '/sessions/' + sessionId + '/graph/status';
+
 	function updateStates() {
-		d3.json(serverUrl + '/api/sessions/' + sessionId + '/graph/status', function(error, response) {
+		d3.json(url, function(error, response) {
 			if (error) {
 				console.error(error);
 				return;
