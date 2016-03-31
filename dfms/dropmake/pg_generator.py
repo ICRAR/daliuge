@@ -596,6 +596,18 @@ class PGT(object):
         return self._json_str
         # return self.to_gojs_json()
 
+    def to_pg(self, toplogy):
+        """
+        convert pgt to pg, and map that to the hardware resources
+        """
+        num_nodes = toplogy.num_nodes
+        if (self._partitions is None):
+            # but this will change to use HEFT scheduling algorithm for non-partitioned PGT
+            raise GraphException("The PGT has no partitions, but non-partitioned mapping is not yet implemented.")
+        else:
+            pass
+
+
     def to_gojs_json(self, string_rep=True):
         """
         Convert to JSON for visualisation in GOJS

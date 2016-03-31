@@ -1,3 +1,9 @@
+# This file was ported and adapted from:
+# https://github.com/perrygeo/simanneal
+# Main changes by chen.wu@icrar.org are: (1) add support for constraint
+#                                        (2) remove print statement
+# The original copyright statement is as below:
+#
 # Copyright (c) 2009, Richard J. Wagner <wagnerr@umich.edu>
 # Copyright (c) 2014, Matthew T. Perry <perrygeo@gmail.com>
 #
@@ -87,6 +93,13 @@ class Annealer(object):
     def energy(self):
         """Calculate state's energy"""
         pass
+
+    def meet_constraint(self):
+        """
+        Check if the contraint is met
+        By default, it is always met
+        """
+        return True
 
     def set_user_exit(self, signum, frame):
         """Raises the user_exit flag, further iterations are stopped
@@ -185,7 +198,8 @@ class Annealer(object):
             E = self.energy()
             dE = E - prevEnergy
             trials += 1
-            if dE > 0.0 and math.exp(-dE / T) < random.random():
+            if ((not self.meet_constraint()) or
+            (dE > 0.0 and math.exp(-dE / T) < random.random())):
                 # Restore previous state
                 self.state = self.copy_state(prevState)
                 E = prevEnergy
@@ -236,7 +250,8 @@ class Annealer(object):
                 self.move()
                 E = self.energy()
                 dE = E - prevEnergy
-                if dE > 0.0 and math.exp(-dE / T) < random.random():
+                if ((not self.meet_constraint()) or
+                (dE > 0.0 and math.exp(-dE / T) < random.random())):
                     self.state = self.copy_state(prevState)
                     E = prevEnergy
                 else:

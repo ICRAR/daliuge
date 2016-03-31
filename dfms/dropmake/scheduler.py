@@ -23,13 +23,15 @@
 import logging
 import os
 import platform
-import time
+import time, random
 
 import pkg_resources
 
 import networkx as nx
 import numpy as np
 from pyswarm import pso
+
+from dfms.dropmake.utils.anneal import Annealer
 
 logger = logging.getLogger(__name__)
 
@@ -434,6 +436,7 @@ class MySarkarScheduler(Scheduler):
     """
     def __init__(self, drop_list, max_dop=8, dag=None):
         super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
+        self._sspace = [3] * len(self._dag.edges()) # all edges are not zeroed
 
     def override_cannot_add(self):
         """
@@ -512,6 +515,7 @@ class MySarkarScheduler(Scheduler):
                         gu['gid'] = part._gid
                         gv['gid'] = part._gid
                         curr_lpl = new_lpl
+                        self._sspace[i] = 1
                     else:
                         if (self.override_cannot_add() and
                         (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
@@ -527,6 +531,7 @@ class MySarkarScheduler(Scheduler):
                             except Exception, exp:
                                 logger.debug(G.edges())
                                 raise exp
+                            self._sspace[i] = 2
                         else:
                             recover_edge = True
             if (recover_edge):
@@ -687,6 +692,7 @@ class PSOScheduler(Scheduler):
         A helper function to partition G based on a given scheme x
         subject to constraints imposed by each partition's DoP
         """
+        #print x
         st_gid = len(self._drop_list) + 1
         init_c = st_gid
         el = G.edges(data=True)
@@ -750,6 +756,7 @@ class PSOScheduler(Scheduler):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
         self._call_counts += 1
+        #print "called {0} times, len parts = {1}".format(self._call_counts, len(parts))
         return (DAGUtil.get_longest_path(G, show_path=False)[1], len(parts), parts, g_dict)
 
     def constrain_func(self, x):
@@ -787,6 +794,116 @@ class PSOScheduler(Scheduler):
             return stuff[0]
         else:
             return stuff[1]
+
+class GraphAnnealer(Annealer):
+    """
+    Use simulated annealing for a DAG/Graph scheduling problem.
+    There are two ways to inject constraints:
+
+    1. explicitly implement the meet_constraint function
+    2. add an extra penalty term in the energy function
+    """
+
+    def __init__(self, state, scheduler, deadline=None, topk=None):
+        """
+        The state is expected to be a 'light' dag (physical graph)
+        """
+        self.copy_strategy = 'slice'
+        self._scheduler = scheduler
+        self._deadline = deadline
+        self._lgl = None
+        self._moved = False
+        super(GraphAnnealer, self).__init__(state)
+        if (topk is None or topk >= len(self.state)):
+            self._leng = len(self.state)
+        else:
+            self._leng = topk
+
+    def move(self):
+        """
+        Select the neighbour, in this case
+        Swaps two edges in the DAG if they are not the same
+        and simply reduce by one for one of them if otherwise
+        """
+        if (not self._moved):
+            self._moved = True
+            return
+        a = random.randint(0, self._leng - 1)
+        b = random.randint(0, self._leng - 1)
+        if (self.state[a] != self.state[b]):
+            self.state[a], self.state[b] = self.state[b], self.state[a]
+        else:
+            self.state[a] = (self.state[a] + 1) % 3 + 1
+
+    def energy(self):
+        """Calculates the number of partitions"""
+        G = self._scheduler._lite_dag.copy()
+        stuff = self._scheduler._partition_G(G, self.state)
+        self._lgl = stuff[0]
+        num_parts = stuff[1]
+        #print "num_parts = {0}, lgl = {1}".format(num_parts, self._lgl)
+        return num_parts
+
+    def meet_constraint(self):
+        """
+        Check if the contraint is met
+        By default, it is always met
+        """
+        if (self._deadline is None):
+            return True
+        else:
+            return (self._lgl <= self._deadline)
+
+class SAScheduler(PSOScheduler):
+    """
+    Use Simulated Annealing to guide the Sarkar algorithm
+    https://en.wikipedia.org/wiki/Simulated_annealing
+    Use basic functions in PSOScheduler by inheriting it for convinence
+    """
+    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, topk=100, max_iter=3000):
+        super(SAScheduler, self).__init__(drop_list, max_dop, dag, deadline, topk, 40)
+        self._max_iter = max_iter
+
+    def partition_dag(self):
+        """
+        Trigger the SA algorithm
+        Returns a tuple of:
+            1. the # of partitions formed (int)
+            2. the parallel time (longest path, int)
+            3. partition time (seconds, float)
+            4. a list of partitions (Partition)
+        """
+        G = self._dag
+        # 1. run the Sarkar algorithm, use its result as the initial solution/state
+        mys = MySarkarScheduler(self._drop_list, max_dop=self._max_dop, dag=self._lite_dag.copy())
+        num_parts_done, lpl, ptime, parts = mys.partition_dag()
+        # print "initial num_parts = ", len(parts)
+        # 2. create the GraphAnnealer instance
+        stt = time.time()
+        ga = GraphAnnealer(mys._sspace, self, deadline=self._deadline, topk=self._topk)
+        # 3. start the annealing process
+        #auto_schedule = ga.auto(minutes=self._max_wait)
+        #ga.set_schedule(auto_schedule)
+        ga.steps = self._max_iter
+        ga.updates = 0
+        ga.save_state_on_exit = False
+        state, e = ga.anneal()
+        # 4. calculate the solution under the 'annealed' state
+        curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
+        edt = time.time()
+        print "Simulated Annealing scheduler took {0} seconds".format(edt - stt)
+        st_gid = len(self._drop_list) + 1 + num_parts
+        for n in G.nodes(data=True):
+            if (not n[1].has_key('gid')):
+                n[1]['gid'] = st_gid
+                part = Partition(st_gid, self._max_dop)
+                part.add_node(n[0], n[1].get('weight', 1))
+                g_dict[st_gid] = part
+                parts.append(part) # will it get rejected?
+                num_parts += 1
+        self._parts = parts
+        #print "call counts ", self._call_counts
+        return (num_parts, curr_lpl, edt - stt, parts)
 
 class DSCScheduler(Schedule):
     """

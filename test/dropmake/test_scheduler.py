@@ -23,7 +23,7 @@ import unittest, pkg_resources
 
 from dfms.dropmake.pg_generator import LG
 from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
-Partition, MinNumPartsScheduler, PSOScheduler)
+Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler)
 
 
 class TestScheduler(unittest.TestCase):
@@ -70,25 +70,6 @@ class TestScheduler(unittest.TestCase):
             #logger.info("{3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn))
             #logger.info("-" * lll)
 
-    def test_pso_scheduler(self):
-        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json',
-        'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json',
-        'test_seq_gather.json']
-        #lgnames = ['test_seq_gather.json']
-        tgt_deadline = [540, 450, 60, 70, 60, 160, 150] #250
-        #tgt_deadline = [150]
-        mdp = 2
-        for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
-            lg = LG(fp)
-            drop_list = lg.unroll_to_tpl()
-            psps01 = PSOScheduler(drop_list, max_dop=mdp)
-            num_parts_done, lpl, ptime, parts = psps01.partition_dag()
-            #print "PSO (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
-            psps02 = PSOScheduler(drop_list, max_dop=mdp, deadline=tgt_deadline[j])
-            num_parts_done, lpl, ptime, parts = psps02.partition_dag()
-            #print "PSO (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
-
     def test_mysarkar_scheduler(self):
         lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         #lgnames = [lgnames[1]]
@@ -119,3 +100,37 @@ class TestScheduler(unittest.TestCase):
                         # print
             mys.merge_partitions(tgt_partnum[j])
             #logger.info( "-" * lll)
+
+    def test_pso_scheduler(self):
+        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json',
+        'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json',
+        'test_seq_gather.json']
+        #lgnames = ['test_seq_gather.json']
+        tgt_deadline = [540, 450, 60, 70, 60, 160, 150] #250
+        #tgt_deadline = [150]
+        mdp = 2
+        for j, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            psps01 = PSOScheduler(drop_list, max_dop=mdp)
+            num_parts_done, lpl, ptime, parts = psps01.partition_dag()
+            #print "PSO (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+            psps02 = PSOScheduler(drop_list, max_dop=mdp, deadline=tgt_deadline[j])
+            num_parts_done, lpl, ptime, parts = psps02.partition_dag()
+            #print "PSO (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
+
+    def test_sa_scheduler(self):
+        lgnames = ['lofar_std.json']
+        tgt_deadline = [450]
+        mdp = 4
+        for j, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pssa01 = SAScheduler(drop_list, max_dop=mdp)
+            num_parts_done, lpl, ptime, parts = pssa01.partition_dag()
+            #print "SA (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+            pssa02 = SAScheduler(drop_list, max_dop=mdp, deadline=tgt_deadline[j])
+            num_parts_done, lpl, ptime, parts = pssa02.partition_dag()
+            #print "SA (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
