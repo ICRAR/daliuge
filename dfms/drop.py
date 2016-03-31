@@ -637,7 +637,7 @@ class AbstractDROP(EventFirer):
         """
         return self._consumers[:]
 
-    def addConsumer(self, consumer):
+    def addConsumer(self, consumer, back=True):
         """
         Adds a consumer to this DROP.
 
@@ -661,7 +661,7 @@ class AbstractDROP(EventFirer):
         # Add the reverse reference too automatically
         if consumer in self._consumers:
             return
-        logger.debug('Adding new consumer for DROP %s/%s: %s' %(self.oid, self.uid, consumer))
+        logger.debug('Adding new consumer %r to %r', consumer, self)
         self._consumers.append(consumer)
 
         # Subscribe the consumer to events sent when this DROP moves to
@@ -674,8 +674,9 @@ class AbstractDROP(EventFirer):
             self.subscribe(consumer, 'dropCompleted')
 
         # Automatic back-reference
-        if hasattr(consumer, 'addInput'):
-            consumer.addInput(self)
+        if back and hasattr(consumer, 'addInput'):
+            logger.debug("Adding back %r as input of %r", self, consumer)
+            consumer.addInput(self, False)
 
     @property
     def producers(self):
@@ -686,7 +687,7 @@ class AbstractDROP(EventFirer):
         """
         return self._producers[:]
 
-    def addProducer(self, producer):
+    def addProducer(self, producer, back=True):
         """
         Adds a producer to this DROP.
 
@@ -704,8 +705,8 @@ class AbstractDROP(EventFirer):
         self._producers.append(producer)
 
         # Automatic back-reference
-        if hasattr(producer, 'addOutput'):
-            producer.addOutput(self)
+        if back and hasattr(producer, 'addOutput'):
+            producer.addOutput(self, False)
 
     def handleEvent(self, e):
         """
@@ -762,7 +763,7 @@ class AbstractDROP(EventFirer):
         """
         return self._streamingConsumers[:]
 
-    def addStreamingConsumer(self, streamingConsumer):
+    def addStreamingConsumer(self, streamingConsumer, back=True):
         """
         Adds a streaming consumer to this DROP.
 
@@ -788,8 +789,8 @@ class AbstractDROP(EventFirer):
         self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
-        if hasattr(streamingConsumer, 'addStreamingInput'):
-            streamingConsumer.addStreamingInput(self)
+        if back and hasattr(streamingConsumer, 'addStreamingInput'):
+            streamingConsumer.addStreamingInput(self, False)
 
         # Subscribe the streaming consumer to events sent when this DROP moves
         # to COMPLETED. This way the streaming consumer will be notified that
@@ -876,18 +877,26 @@ class FileDROP(AbstractDROP):
         """
         FileDROP-specific initialization.
         """
-        self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
-        if (not os.path.exists(self._root)):
-            os.mkdir(self._root)
-        self._root = os.path.abspath(self._root)
-
         self._delete_parent_dir = self._getArg(kwargs, 'delete_parent_directory', False)
 
-        # TODO: Make sure the parts that make up the filename are composed
-        #       of valid filename characters; otherwise encode them
-        self._fnm = self._root + os.sep + self._oid + '___' + self.uid
-        if os.path.isfile(self._fnm):
-            logger.warn('File %s already exists, overwriting' % (self._fnm))
+        filepath = self._getArg(kwargs, 'filepath', None)
+        if filepath:
+            check = self._getArg(kwargs, 'check_filepath_exists', False)
+            if check:
+                if not os.path.isfile(filepath):
+                    raise Exception('File does not exist or is not a file: %s' % filepath)
+            self._fnm = filepath
+            self._root = os.path.dirname(filepath)
+        else:
+            self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
+            if (not os.path.exists(self._root)):
+                os.mkdir(self._root)
+            self._root = os.path.abspath(self._root)
+            # TODO: Make sure the parts that make up the filename are composed
+            #       of valid filename characters; otherwise encode them
+            self._fnm = self._root + os.sep + self._oid + '___' + self.uid
+            if os.path.isfile(self._fnm):
+                logger.warn('File %s already exists, overwriting' % (self._fnm))
 
         self._wio = None
 
@@ -1133,11 +1142,12 @@ class AppDROP(ContainerDROP):
         # execution status.
         self._execStatus = AppDROPStates.NOT_RUN
 
-    def addInput(self, inputDrop):
+    def addInput(self, inputDrop, back=True):
         if inputDrop not in self._inputs.values():
             uid = inputDrop.uid
             self._inputs[uid] = inputDrop
-            inputDrop.addConsumer(self)
+            if back:
+                inputDrop.addConsumer(self, False)
 
     @property
     def inputs(self):
@@ -1146,13 +1156,15 @@ class AppDROP(ContainerDROP):
         """
         return self._inputs.values()
 
-    def addOutput(self, outputDrop):
+    def addOutput(self, outputDrop, back=True):
         if outputDrop is self:
             raise Exception('Cannot add an AppConsumer as its own output')
         if outputDrop not in self._outputs.values():
             uid = outputDrop.uid
             self._outputs[uid] = outputDrop
-            outputDrop.addProducer(self)
+
+            if back:
+                outputDrop.addProducer(self, False)
 
             # Subscribe the output DROP to events sent by this AppDROP when it
             # finishes its execution.
@@ -1165,11 +1177,12 @@ class AppDROP(ContainerDROP):
         """
         return self._outputs.values()
 
-    def addStreamingInput(self, streamingInputDrop):
+    def addStreamingInput(self, streamingInputDrop, back=True):
         if streamingInputDrop not in self._streamingInputs.values():
             uid = streamingInputDrop.uid
             self._streamingInputs[uid] = streamingInputDrop
-            streamingInputDrop.addStreamingConsumer(self)
+            if back:
+                streamingInputDrop.addStreamingConsumer(self, False)
 
     @property
     def streamingInputs(self):
@@ -1270,7 +1283,7 @@ class InputFiredAppDROP(AppDROP):
         if self._n_tries < 1:
             raise ValueError('Invalid n_tries, must be a positive number')
 
-    def addStreamingInput(self, streamingInputDrop):
+    def addStreamingInput(self, streamingInputDrop, back=True):
         raise Exception("InputFiredAppDROPs don't accept streaming inputs")
 
     def dropCompleted(self, uid, drop_state):
@@ -1438,4 +1451,18 @@ LINKTYPE_1TON_APPEND_METHOD = {
 # method but a property
 LINKTYPE_NTO1_PROPERTY = {
     DROPLinkType.PARENT: 'parent'
+}
+
+LINKTYPE_1TON_BACK_APPEND_METHOD = {
+    DROPLinkType.CONSUMER:           'addInput',
+    DROPLinkType.STREAMING_CONSUMER: 'addStreamingInput',
+    DROPLinkType.INPUT:              'addConsumer',
+    DROPLinkType.STREAMING_INPUT:    'addStreamingConsumer',
+    DROPLinkType.OUTPUT:             'addProducer',
+    DROPLinkType.CHILD:              'setParent',
+    DROPLinkType.PRODUCER:           'addConsumer'
+}
+
+LINKTYPE_NTO1_BACK_APPEND_METHOD = {
+    DROPLinkType.PARENT: 'addChild'
 }

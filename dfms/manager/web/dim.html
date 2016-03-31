@@ -13,9 +13,18 @@
 </head>
 
 <body>
+
 <div class="container">
 <h1>{{dmType}}</h1>
 
+<div id="zoom-notice" class="alert alert-info">
+	<p>
+	<span class="glyphicon glyphicon-zoom-in"></span> Zooming into {{selectedNode}}
+	<a href="/">Zoom out</a>
+	</p>
+</div>
+
+<div id="sessions">
 <h2>Sessions</h2>
 	<table id="sessionsTable" class="table table-striped">
 		<thead>
@@ -29,8 +38,23 @@
 		</tbody>
 	</table>
 <button id="addSessionBtn"  type="button" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> Add Session</button>
-<button id="refreshListBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+<button id="refreshSessionListBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+</div>
 
+<div id="managers">
+<h2>DropManagers</h2>
+	<table id="dmHostsTable" class="table table-striped">
+		<thead>
+			<tr>
+				<th>Node</th>
+				<th>Details</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+</div>
+
+<div id="nodes">
 <h2>Nodes</h2>
 	<table id="nodesTable" class="table table-striped">
 		<thead>
@@ -39,36 +63,65 @@
 				<th>Details</th>
 			</tr>
 		</thead>
-		<tbody>
-		</tbody>
+		<tbody></tbody>
 	</table>
+<button id="refreshNodeListBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+</div>
+
 </div>
 
 <script type="text/javascript">
 
+var selectedNode = '{{selectedNode}}';
+if( selectedNode == '' ) {
+	selectedNode = null;
+}
 var serverUrl = '{{serverUrl}}';
-var nodes = {{!hosts}}
-var dmPort = {{dmPort}}
-var refreshBtn = d3.select('#refreshListBtn');
+var dmHosts = {{!dmHosts}};
+var dmPort = {{dmPort}};
+var nodes = {{!nodes}};
+var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
 var addSessionBtn = d3.select('#addSessionBtn');
-var tbodyEl = d3.select('#sessionsTable tbody')
+var sessionsTbodyEl = d3.select('#sessionsTable tbody');
 
-nodes.sort()
-rows = d3.select('#nodesTable tbody').selectAll('tr').data(nodes)
-newRow = rows.enter().append('tr')
-newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
-newRow.append('td').classed('id', true).text(String)
-newRow.append('td').classed('details', true)
-      .append('a').attr('href', function(n) { return 'http://' + n + ':' + dmPort + '/'; })
-      .append('span').classed('glyphicon glyphicon-share-alt', true)
+// Show/hide parts of the UI depending on whether we're zooming in or not
+// into a specific node
+if( selectedNode ) {
+	d3.select('#managers').remove()
+	d3.select('#nodes').remove()
+}
+else {
+	d3.select('#zoom-notice').remove()
+}
 
-// Listeners for the two buttons
-addSessionBtn.on('click', function(){ promptNewSession(serverUrl, tbodyEl, refreshBtn); } );
-refreshBtn.on('click', function(){ loadSessions(serverUrl, tbodyEl, refreshBtn, false); } );
+// Animated filling of DropManagers and Nodes table
+function fillTable(selector, data, href_function) {
+	data.sort();
+	var rows = d3.select(selector).selectAll('tr').data(data);
+	var newRow = rows.enter().append('tr');
+	newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
+	newRow.append('td').classed('id', true).text(String);
+	newRow.append('td').classed('details', true)
+	      .append('a').attr('href', href_function)
+	      .append('span').classed('glyphicon glyphicon-share-alt', true);
+}
+if( !selectedNode ) {
+	fillTable('#dmHostsTable tbody', dmHosts, function(n) { return 'http://' + n + ':' + dmPort + '/'; });
+	fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n; });
+}
+
+// Listeners for the two session-related buttons
+if( !selectedNode ) {
+	addSessionBtn.on('click', function(){ promptNewSession(serverUrl, sessionsTbodyEl, refreshSessionListBtn); } );
+}
+else {
+	addSessionBtn.remove()
+}
+refreshSessionListBtn.on('click', function(){ loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode); } );
 
 //Start loading the list of sessions periodically
 d3.timer(function(){
-	loadSessions(serverUrl, tbodyEl, refreshBtn, true, 5000);
+	loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode, 5000);
 	return true;
 });
 

@@ -312,7 +312,7 @@ def run_with_cmdline(args=sys.argv):
     signal.signal(signal.SIGTERM, handle_signal)
 
     # Go, go, go!
-    t = threading.Thread(target=daemon.start, args=('0.0.0.0', 9000))
+    t = threading.Thread(target=daemon.start, args=('0.0.0.0', constants.DAEMON_DEFAULT_REST_PORT))
     t.start()
     signal.pause()
 

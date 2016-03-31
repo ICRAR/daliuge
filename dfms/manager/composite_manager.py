@@ -128,6 +128,9 @@ class CompositeManager(DROPManager):
     def dmHosts(self):
         return self._dmHosts[:]
 
+    def addDmHost(self, host):
+        self._dmHosts.append(host)
+
     @property
     def nodes(self):
         return self._nodes[:]
@@ -292,6 +295,9 @@ class CompositeManager(DROPManager):
                 # PYRO:objID@0.0.0.0:port, and any proxy initialized with such
                 # URI will try to contact 0.0.0.0:port *locally*
                 # We thus replace any 0.0.0.0s we see by the `host`
+                # For reference see:
+                #
+                # https://pythonhosted.org/Pyro4/tipstricks.html#multiple-network-interfaces
                 for uid, origUri in uris.items():
                     if utils.isLocalhost(host) or \
                        '0.0.0.0' not in origUri:
@@ -362,17 +368,26 @@ class CompositeManager(DROPManager):
 
         # Establish the inter-DM relationships between DROPs.
         # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
+        # TODO: This could be parallelized like the rest...
         for rel in self._interDMRelations[sessionId]:
             relType = rel.rel
             rhsDrop = proxies[rel.rhs]
             lhsDrop = proxies[rel.lhs]
 
-            if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
-                methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
-                rhsDrop._pyroInvoke(methodName, (lhsDrop,), {})
-            else:
-                relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
-                setattr(rhsDrop, relPropName, lhsDrop)
+            try:
+                if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
+                    methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
+                    backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
+                    rhsDrop._pyroInvoke(methodName, (lhsDrop,False), {})
+                    lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+                else:
+                    relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
+                    backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
+                    setattr(rhsDrop, relPropName, lhsDrop)
+                    lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+            except Exception:
+                logger.exception("Error while establishing link %r" % (rel,))
+                raise
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
