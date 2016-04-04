@@ -23,7 +23,7 @@ import unittest, pkg_resources
 
 from dfms.dropmake.pg_generator import LG
 from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
-Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler)
+Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
 
 
 class TestScheduler(unittest.TestCase):
@@ -129,8 +129,24 @@ class TestScheduler(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pssa01 = SAScheduler(drop_list, max_dop=mdp)
+            #pssa01 = PSOScheduler(drop_list, max_dop=mdp)
             num_parts_done, lpl, ptime, parts = pssa01.partition_dag()
             #print "SA (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
             pssa02 = SAScheduler(drop_list, max_dop=mdp, deadline=tgt_deadline[j])
             num_parts_done, lpl, ptime, parts = pssa02.partition_dag()
             #print "SA (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
+
+    def test_mcts_scheduler(self):
+        lgnames = ['lofar_std.json']
+        tgt_deadline = [450]
+        mdp = 4
+        for j, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pssa01 = MCTSScheduler(drop_list, max_dop=mdp, max_calc_time=0.25)
+            num_parts_done, lpl, ptime, parts = pssa01.partition_dag()
+            print "MCTS (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+    #         # pssa02 = SAScheduler(drop_list, max_dop=mdp, deadline=tgt_deadline[j])
+    #         # num_parts_done, lpl, ptime, parts = pssa02.partition_dag()
+    #         #print "SA (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
