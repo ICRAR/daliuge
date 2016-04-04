@@ -146,10 +146,7 @@ class CompositeManager(DROPManager):
         return self._dmPort
 
     def subDMCommandLine(self, host):
-        cmdline = '{0} --rest -i {1} -P {2} -d --host {3}'.format(self._dmExec, self._subDmId, self._dmPort, host)
-        if self._dmRestPort:
-            cmdline += ' --restPort {0}'.format(self._dmRestPort)
-        return cmdline
+        return '{0} -i {1} -P {2} -d --host {3}'.format(self._dmExec, self._subDmId, self._dmPort, host)
 
     def startDM(self, host):
         client = remote.createClient(host, pkeyPath=self._pkeyPath)
