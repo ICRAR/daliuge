@@ -34,6 +34,10 @@ https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
 Here we treat each edge zeroing step as a "move" in the Go game
 """
 
+import time
+from random import choice
+from math import log, sqrt
+
 class DAGTree(object):
     """
     Each node represents a "state" (aka "position" in game plays)
@@ -48,13 +52,16 @@ class DAGTree(object):
         """
         self._dag = dag
         self._scheduler = scheduler
+        self._leng = len(dag.edges())
 
     def next_state(self, state, move):
         """
         Given the current state and move, return the next (child) state
         """
-        state.append(move)
-        return state
+        if (state is None):
+            return move
+        else:
+            return '{0}{1}'.format(state, move)
 
     def legal_moves(self, state_history):
         """
@@ -64,7 +71,7 @@ class DAGTree(object):
         But to support constraints in the near future, returns moves that
         comply with the constraints
         """
-        return [1, 2, 3]
+        return ['1', '2', '3']
 
     def payout(self, state_history):
         """
@@ -73,8 +80,10 @@ class DAGTree(object):
             the length of the critical path
         """
         G = self._dag.copy()
-        leng = len(G.edges())
-        x = state_history[-1][:]
+        leng = self._leng
+        # convert '98760' to [9, 8, 7, 6, 0]
+        x = [int(ii) for ii in list(state_history[-1][:])]
+        # print x
         if (len(x) < leng): #padding
             x += [3] * (leng - len(x))
 
@@ -94,39 +103,69 @@ class DAGTree(object):
         else:
             return state[0:-1]
 
+    def append_state(self, state_history, state):
+        if (type(state) == list):
+            state = ''.join([str(x) for x in state])
+        state_history.append(state)
+
+    def latest_state(self, state_history):
+        if (len(state_history) > 0):
+            return state_history[-1]
+        else:
+            return None
 
 class MCTS(object):
-    def __init__(self, dag_tree, init_state, calculation_time=30, max_moves=1000):
+    def __init__(self, dag_tree, calculation_time=30, max_moves=1000, factor=1.4):
         self._dag_tree = dag_tree
         self._calc_time = calculation_time
         self._max_moves = max_moves
-        self._states = [init_state]
+        self._states = []
+        #self._dag_tree.append_state(self._states, init_state)
         self.scores = {} # key: state, value: score
         self.plays = {} # key: state, value: count
         self.max_depth = 0
+        # Exploration constant, increase for more exploratory moves,
+        # decrease to prefer moves with known higher win rates.
+        self.C = factor
 
     def update(self, state):
-        self._states.append(state)
+        self._dag_tree.append_state(self._states, state)
+
+    def run(self):
+        m, state = self.next_move()
+        leng = self._dag_tree._leng
+        while (len(state) < leng):
+            m, state = self.next_move()
+            #print "max_depth = {0}, state: {1}".format(self.max_depth, state)
+            #print "max_depth = {0}".format(self.max_depth)
+        return [int(ii) for ii in list(state)]
 
     def next_move(self):
         """
         Returns the next move that gives the best average/overall payout
         """
         games = 0
+        scores = self.scores
+        plays = self.plays
         self.max_depth = 0
         stt = time.time()
         while time.time() - stt < self._calc_time:
             self.simulate_moves()
             games += 1
-        state = self._states[-1]
+        state = self._dag_tree.latest_state(self._states)
         legal = self._dag_tree.legal_moves(self._states[:])
         moves_states = [(p, self._dag_tree.next_state(state, p)) for p in legal]
         # Pick the move with highest overall score
-        overall_payout, num_moves, move, new_state = max(
-            (self.scores.get(S, 0) / self.plays.get(S, 1),
-             self.plays.get(S, 0), p, S)
-            for p, S in moves_states
-        )
+        overall_payout = float("-infinity")
+        for p, S in moves_states:
+            nm = plays.get(S, 1)
+            op = scores.get(S, 0) / nm
+            if (op > overall_payout):
+                overall_payout = op
+                num_moves = nm
+                move = p
+                new_state = S
+        #print overall_payout, num_moves, move, new_state
         self.update(new_state)
         return (move, new_state)
 
@@ -139,23 +178,24 @@ class MCTS(object):
         # A bit of an optimization here, so we have a local
         # variable lookup instead of an attribute access each loop.
         plays, scores = self.plays, self.scores
+        states_copy = self._states[:]
+        state = self._dag_tree.latest_state(states_copy)
+        CC = self.C
 
-        states_copy = self.states[:]
-        state = states_copy[-1]
-
-        for t in xrange(1, self.max_moves + 1):
+        for t in xrange(1, self._max_moves + 1):
             # 1. Selection
-            legal = self._dag_tree.legal_plays(states_copy)
+            legal = self._dag_tree.legal_moves(states_copy)
             moves_states = [(p, self._dag_tree.next_state(state, p)) for p in legal]
             if all(plays.get(S) for p, S in moves_states):
                 # If we have stats on all of the legal moves here, use UCB1.
-                log_total = log(
-                    sum(plays[S] for p, S in moves_states))
-                value, move, state = max(
-                    ((scores[S] / plays[S]) +
-                    self.C * sqrt(log_total / plays[S]), p, S)
-                    for p, S in moves_states
-                )
+                log_total = log(sum(plays[S] for p, S in moves_states))
+                value = float("-infinity")
+                for p, S in moves_states:
+                    v = (scores[S] / plays[S]) + CC * sqrt(log_total / plays[S])
+                    if (v > value):
+                        value = v
+                        move = p
+                        state = S
                 states_copy.append(state)
             else:
                 # Otherwise, just make an arbitrary decision. and expand it
@@ -173,11 +213,12 @@ class MCTS(object):
         # 3. Simulation
         payout = self._dag_tree.payout(states_copy)
 
-        # 4. Back propogation (this is not recursive yet!!)
+        # 4. Back propogation
         plays[state] += 1
         scores[state] += payout
         ps = self._dag_tree.parent_state(state)
         while (ps is not None):
+            #print plays
             plays[ps] += 1
             scores[ps] += payout
             ps = self._dag_tree.parent_state(ps)
