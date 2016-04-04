@@ -30,50 +30,80 @@
 """
 Monte Carlo Tree Search
 https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
+
+Here we treat each edge zeroing step as a "move" in the Go game
 """
 
 class DAGTree(object):
+    """
+    Each node represents a "state" (aka "position" in game plays)
+    Each edge represents a "move"
+    Each state is a list of integer: e.g. '123123111222'
+    """
 
-    def __init__(self, **kwargs):
+    def __init__(self, dag, scheduler):
         """
         Initialise states information
+        dag:    a "light" unpartitioned DAG
         """
-        self._true_dag = None
+        self._dag = dag
+        self._scheduler = scheduler
 
     def next_state(self, state, move):
         """
-        Given the current state and move, return the new (child) state
+        Given the current state and move, return the next (child) state
         """
-        pass
+        state.append(move)
+        return state
 
     def legal_moves(self, state_history):
         """
         Return a list of allowed moves based on the current state
+
+        Dummy implementation for now.
+        But to support constraints in the near future, returns moves that
+        comply with the constraints
         """
-        pass
+        return [1, 2, 3]
 
     def payout(self, state_history):
         """
         Play until the end of the game
-        Then calculate payout based on the objective function
+        Then calculate payout based on the objective function:
+            the length of the critical path
         """
-        pass
+        G = self._dag.copy()
+        leng = len(G.edges())
+        x = state_history[-1][:]
+        if (len(x) < leng): #padding
+            x += [3] * (leng - len(x))
+
+        stuff = self._scheduler._partition_G(G, x)
+        lgl = stuff[0]
+        num_parts = stuff[1]
+        # TODO add num_parts as the panelty score
+        return lgl * -1
 
     def parent_state(self, state):
         """
         Given the child state, returns the (only) parent state
+        Return None if the child state is the Root state
         """
-        pass
+        if (len(state) == 1):
+            return None
+        else:
+            return state[0:-1]
 
 
 class MCTS(object):
-    def __init__(self, dag_tree, calculation_time=30, max_moves=1):
+    def __init__(self, dag_tree, init_state, calculation_time=30, max_moves=1000):
         self._dag_tree = dag_tree
         self._calc_time = calculation_time
         self._max_moves = max_moves
-        self._states = []
-        self.scores = {} # key: state, value: count
+        self._states = [init_state]
+        self.scores = {} # key: state, value: score
         self.plays = {} # key: state, value: count
+        self.max_depth = 0
 
     def update(self, state):
         self._states.append(state)
@@ -83,6 +113,7 @@ class MCTS(object):
         Returns the next move that gives the best average/overall payout
         """
         games = 0
+        self.max_depth = 0
         stt = time.time()
         while time.time() - stt < self._calc_time:
             self.simulate_moves()
@@ -97,10 +128,13 @@ class MCTS(object):
             for p, S in moves_states
         )
         self.update(new_state)
+        return (move, new_state)
 
     def simulate_moves(self):
-        # Plays out a "random" game from the current position/state,
-        # then updates the statistics tables with the result.
+        """
+        Simulate a "random" play if necessary from the current state
+        then updates the statistics using backpropogation
+        """
 
         # A bit of an optimization here, so we have a local
         # variable lookup instead of an attribute access each loop.
@@ -109,34 +143,41 @@ class MCTS(object):
         states_copy = self.states[:]
         state = states_copy[-1]
 
-        legal = self._dag_tree.legal_plays(states_copy)
-        moves_states = [(p, self._dag_tree.next_state(state, p)) for p in legal]
-
-        # 1. Selection
-        if all(plays.get(S) for p, S in moves_states):
-            # If we have stats on all of the legal moves here, use UCB1.
-            log_total = log(
-                sum(plays[S] for p, S in moves_states))
-            value, move, state = max(
-                ((scores[S] / plays[S)]) +
-                 self.C * sqrt(log_total / plays[S)]), p, S)
-                for p, S in moves_states
-            )
-        else:
-            # Otherwise, just make an arbitrary decision.
-            move, state = choice(moves_states)
-
-        states_copy.append(state)
-
-        # 2. Expansion
-        # Only one node is added per simulated game.
-        if state not in self.plays:
-            self.plays[state] = 0
-            self.scores[state] = 0
+        for t in xrange(1, self.max_moves + 1):
+            # 1. Selection
+            legal = self._dag_tree.legal_plays(states_copy)
+            moves_states = [(p, self._dag_tree.next_state(state, p)) for p in legal]
+            if all(plays.get(S) for p, S in moves_states):
+                # If we have stats on all of the legal moves here, use UCB1.
+                log_total = log(
+                    sum(plays[S] for p, S in moves_states))
+                value, move, state = max(
+                    ((scores[S] / plays[S]) +
+                    self.C * sqrt(log_total / plays[S]), p, S)
+                    for p, S in moves_states
+                )
+                states_copy.append(state)
+            else:
+                # Otherwise, just make an arbitrary decision. and expand it
+                move, state = choice(moves_states)
+                states_copy.append(state)
+                # 2. Expansion
+                # Only one node is added per simulated game.
+                if state not in plays:
+                    plays[state] = 0
+                    scores[state] = 0
+                if t > self.max_depth:
+                    self.max_depth = t
+                break
 
         # 3. Simulation
         payout = self._dag_tree.payout(states_copy)
 
         # 4. Back propogation (this is not recursive yet!!)
-        self.plays[state] += 1
-        self.scores[state] += payout
+        plays[state] += 1
+        scores[state] += payout
+        ps = self._dag_tree.parent_state(state)
+        while (ps is not None):
+            plays[ps] += 1
+            scores[ps] += payout
+            ps = self._dag_tree.parent_state(ps)

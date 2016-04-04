@@ -32,6 +32,7 @@ import numpy as np
 from pyswarm import pso
 
 from dfms.dropmake.utils.anneal import Annealer
+from dfms.dropmake.utils.mcts import DAGTree, MCTS
 
 logger = logging.getLogger(__name__)
 
@@ -854,13 +855,64 @@ class GraphAnnealer(Annealer):
         else:
             return (self._lgl <= self._deadline)
 
+class MCTSScheduler(PSOScheduler):
+    """
+    Use Monte Carlo Tree Search to guide the Sarkar algorithm
+    https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
+    Use basic functions in PSOScheduler by inheriting it for convinence
+    """
+    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, max_moves=1000, max_calc_time=10):
+        super(MCTSScheduler, self).__init__(drop_list, max_dop, dag, deadline, None, 40)
+        self._max_moves = max_moves
+        self._max_calc_time = max_calc_time
+
+    def partition_dag(self):
+        """
+        Trigger the MCTS algorithm
+        Returns a tuple of:
+            1. the # of partitions formed (int)
+            2. the parallel time (longest path, int)
+            3. partition time (seconds, float)
+            4. a list of partitions (Partition)
+        """
+        stt = time.time()
+        G = self._dag
+        stree = DAGTree(self._lite_dag, self)
+        mcts = MCTS(stree, [3], calculation_time=self._max_calc_time, max_moves=self._max_moves)
+        m, state = mcts.next_move()
+        leng = len(G.edges())
+        while (len(state) < leng):
+            m, state = mcts.next_move()
+        if (DEBUG):
+            print "Each MCTS move on average took {0} seconds".formats((time.time() - stt) / leng)
+        #calculate the solution under the state found by MCTS
+        curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
+        edt = time.time()
+        if (DEBUG):
+            print "Monte Carlo Tree Search scheduler took {0} secs, lpl = {1}, num_parts = {2}".format(edt - stt, curr_lpl, num_parts)
+        st_gid = len(self._drop_list) + 1 + num_parts
+        for n in G.nodes(data=True):
+            if (not n[1].has_key('gid')):
+                n[1]['gid'] = st_gid
+                part = Partition(st_gid, self._max_dop)
+                part.add_node(n[0], n[1].get('weight', 1))
+                g_dict[st_gid] = part
+                parts.append(part)
+                num_parts += 1
+        self._parts = parts
+        return (num_parts, curr_lpl, edt - stt, parts)
+
 class SAScheduler(PSOScheduler):
     """
     Use Simulated Annealing to guide the Sarkar algorithm
     https://en.wikipedia.org/wiki/Simulated_annealing
     Use basic functions in PSOScheduler by inheriting it for convinence
     """
-    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, topk=100, max_iter=3000):
+    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, topk=None, max_iter=6000):
+        """
+        A smaller topk corresponds to a smaller range of perturbation during neighbour search,
+        which coudl result in more single-drop partitions
+        """
         super(SAScheduler, self).__init__(drop_list, max_dop, dag, deadline, topk, 40)
         self._max_iter = max_iter
 
@@ -885,13 +937,17 @@ class SAScheduler(PSOScheduler):
         #auto_schedule = ga.auto(minutes=self._max_wait)
         #ga.set_schedule(auto_schedule)
         ga.steps = self._max_iter
-        ga.updates = 0
+        if (DEBUG):
+            ga.updates = 100
+        else:
+            ga.updates = 0
         ga.save_state_on_exit = False
         state, e = ga.anneal()
         # 4. calculate the solution under the 'annealed' state
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
-        print "Simulated Annealing scheduler took {0} seconds".format(edt - stt)
+        if (DEBUG):
+            print "Simulated Annealing scheduler took {0} secs, energy = {1}, num_parts = {2}".format(edt - stt, e, num_parts)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
             if (not n[1].has_key('gid')):
@@ -899,10 +955,9 @@ class SAScheduler(PSOScheduler):
                 part = Partition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
                 g_dict[st_gid] = part
-                parts.append(part) # will it get rejected?
+                parts.append(part)
                 num_parts += 1
         self._parts = parts
-        #print "call counts ", self._call_counts
         return (num_parts, curr_lpl, edt - stt, parts)
 
 class DSCScheduler(Schedule):
