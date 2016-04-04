@@ -37,6 +37,7 @@ Here we treat each edge zeroing step as a "move" in the Go game
 import time
 from random import choice
 from math import log, sqrt
+from collections import defaultdict
 
 class DAGTree(object):
     """
@@ -121,8 +122,8 @@ class MCTS(object):
         self._max_moves = max_moves
         self._states = []
         #self._dag_tree.append_state(self._states, init_state)
-        self.scores = {} # key: state, value: score
-        self.plays = {} # key: state, value: count
+        self.scores = defaultdict(int)#{} # key: state, value: score
+        self.plays = defaultdict(int)#{} # key: state, value: count
         self.max_depth = 0
         # Exploration constant, increase for more exploratory moves,
         # decrease to prefer moves with known higher win rates.
@@ -203,9 +204,9 @@ class MCTS(object):
                 states_copy.append(state)
                 # 2. Expansion
                 # Only one node is added per simulated game.
-                if state not in plays:
-                    plays[state] = 0
-                    scores[state] = 0
+                # if state not in plays:
+                #     plays[state] = 0
+                #     scores[state] = 0
                 if t > self.max_depth:
                     self.max_depth = t
                 break
