@@ -878,11 +878,12 @@ class MCTSScheduler(PSOScheduler):
         stt = time.time()
         G = self._dag
         stree = DAGTree(self._lite_dag, self)
-        mcts = MCTS(stree, [3], calculation_time=self._max_calc_time, max_moves=self._max_moves)
-        m, state = mcts.next_move()
-        leng = len(G.edges())
-        while (len(state) < leng):
-            m, state = mcts.next_move()
+        mcts = MCTS(stree, calculation_time=self._max_calc_time, max_moves=self._max_moves)
+        # m, state = mcts.next_move()
+        # leng = len(G.edges())
+        # while (len(state) < leng):
+        #     m, state = mcts.next_move()
+        state = mcts.run()
         if (DEBUG):
             print "Each MCTS move on average took {0} seconds".formats((time.time() - stt) / leng)
         #calculate the solution under the state found by MCTS
