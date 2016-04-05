@@ -119,7 +119,7 @@ def start(options, parser):
         createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
 
-        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=fileHandler.stream):
+        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=[fileHandler.stream]):
             launchServer(options)
 
     # Stop daemon?
