@@ -174,7 +174,7 @@ def setupLogging(opts):
     createDirIfMissing(logdir)
     logfile = os.path.join(logdir, "dfms%s.log" % (opts.dmAcronym))
     # rotatingFH = logging.handlers.RotatingFileHandler(logfile, maxBytes=10*1024*1024, backupCount=30, encoding='utf-8')
-    rotatingFH = logging.handlers.FileHandler(logfile)
+    rotatingFH = logging.FileHandler(logfile)
     rotatingFH.setFormatter(fmt)
     logging.root.addHandler(rotatingFH)
 
