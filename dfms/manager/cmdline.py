@@ -109,7 +109,7 @@ def start(options, parser):
     commonOptionsCheck(options, parser)
 
     # Setup the loggers
-    setupLogging(options)
+    fileHandler = setupLogging(options)
 
     # Start daemon?
     if options.daemon:
@@ -119,7 +119,7 @@ def start(options, parser):
         createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
 
-        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1)):
+        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=fileHandler):
             launchServer(options)
 
     # Stop daemon?
@@ -173,16 +173,17 @@ def setupLogging(opts):
     logdir = opts.logdir
     createDirIfMissing(logdir)
     logfile = os.path.join(logdir, "dfms%s.log" % (opts.dmAcronym))
-    # rotatingFH = logging.handlers.RotatingFileHandler(logfile, maxBytes=10*1024*1024, backupCount=30, encoding='utf-8')
-    rotatingFH = logging.FileHandler(logfile)
-    rotatingFH.setFormatter(fmt)
-    logging.root.addHandler(rotatingFH)
+    fileHandler = logging.FileHandler(logfile)
+    fileHandler.setFormatter(fmt)
+    logging.root.addHandler(fileHandler)
 
     # Per-package/module specific levels
     logging.root.setLevel(level)
     logging.getLogger("dfms").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
+
+    return fileHandler
 
 # Entry-point function for the dfmsNM script
 def dfmsNM(args=sys.argv):
