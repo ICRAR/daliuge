@@ -119,7 +119,7 @@ def start(options, parser):
         createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
 
-        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=fileHandler):
+        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=fileHandler.stream):
             launchServer(options)
 
     # Stop daemon?
@@ -169,7 +169,7 @@ def setupLogging(opts):
         streamHdlr.setFormatter(fmt)
         logging.root.addHandler(streamHdlr)
 
-    # This is the rotating logfile we'll use from now on
+    # This is the logfile we'll use from now on
     logdir = opts.logdir
     createDirIfMissing(logdir)
     logfile = os.path.join(logdir, "dfms%s.log" % (opts.dmAcronym))
