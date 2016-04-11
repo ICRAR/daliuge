@@ -167,8 +167,8 @@ class RestClient(object):
         # Server errors are encoded in the body as json content
         if self._resp.status == httplib.INTERNAL_SERVER_ERROR:
             msg = json.loads(self._resp.read())['err_str']
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Error found while requesting %s:%d%s: %s' % (self.host, self.port, url, msg))
+            if logger.isEnabledFor(logging.WARNING):
+                logger.warning('Error found while requesting %s:%d%s: %s' % (self.host, self.port, url, msg))
             raise RestClientException(msg)
         elif self._resp.status != httplib.OK:
             msg = 'Unexpected error while processing %s request for %s:%s%s (status %d): %s' % \
