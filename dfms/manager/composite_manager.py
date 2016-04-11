@@ -246,7 +246,7 @@ class CompositeManager(DROPManager):
             raise # so it gets printed
 
     def addGraphSpec(self, sessionId, graphSpec):
-
+        logger.debug('addGraphSpec - sessionId: {0}, graphSpec: {1}'.format(sessionId, graphSpec))  # TODO: KV remove
         # The first step is to break down the graph into smaller graphs that
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
