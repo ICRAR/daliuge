@@ -150,7 +150,6 @@ class RestClient(object):
     def _DELETE(self, url):
         return self._request(url, 'DELETE')
 
-
     def _request(self, url, method, content=None, headers={}):
 
         # Do the HTTP stuff...
