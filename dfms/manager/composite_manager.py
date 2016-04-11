@@ -246,7 +246,7 @@ class CompositeManager(DROPManager):
             raise # so it gets printed
 
     def addGraphSpec(self, sessionId, graphSpec):
-        logger.debug('addGraphSpec - sessionId: {0}, graphSpec: {1}'.format(sessionId, graphSpec))  # TODO: KV remove
+        logger.debug('addGraphSpec - sessionId: {0}'.format(sessionId))  # TODO: KV remove
         # The first step is to break down the graph into smaller graphs that
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
@@ -265,6 +265,7 @@ class CompositeManager(DROPManager):
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-DM
         # relationships separately and remove them from the original graph spec
+        logger.debug('addGraphSpec - sessionId: {0}'.format(sessionId))  # TODO: KV remove
         interDMRelations = []
         for dropSpecs in perPartition.viewvalues():
             interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))

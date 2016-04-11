@@ -137,8 +137,12 @@ class ManagerRestServer(RestServer):
 
     # TODO: addGraphParts v/s addGraphSpec
     def addGraphParts(self, sessionId):
-        LOG.debug('addGraphParts: {0}'.format(sessionId))
-        self.dm.addGraphSpec(sessionId, bottle.request.json)
+        try:
+            LOG.debug('addGraphParts: {0}'.format(sessionId))
+            self.dm.addGraphSpec(sessionId, bottle.request.json)
+        except Exception as exception:
+            LOG.exception('Exception process graph')
+            raise exception
 
     #===========================================================================
     # non-REST methods
