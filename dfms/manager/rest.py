@@ -25,6 +25,7 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
 import json
+import logging
 
 import bottle
 import pkg_resources
@@ -32,6 +33,8 @@ import pkg_resources
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
 from dfms.restutils import RestServer, RestClient
+
+LOG = logging.getLogger(__name__)
 
 
 class ManagerRestServer(RestServer):
@@ -82,6 +85,7 @@ class ManagerRestServer(RestServer):
     def createSession(self):
         newSession = bottle.request.json
         sessionId = newSession['sessionId']
+        LOG.debug('createSession: {0}'.format(sessionId))
         self.dm.createSession(sessionId)
 
     def sessions(self):
@@ -91,23 +95,28 @@ class ManagerRestServer(RestServer):
         return sessions
 
     def getSessions(self):
+        LOG.debug('getSessions')
         bottle.response.content_type = 'application/json'
         return json.dumps(self.sessions())
 
     def getSessionInformation(self, sessionId):
+        LOG.debug('getSessionInformation: {0}'.format(sessionId))
         graphDict = self.dm.getGraph(sessionId)
         status = self.dm.getSessionStatus(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps({'status': status, 'graph': graphDict})
 
     def destroySession(self, sessionId):
+        LOG.debug('destroySession: {0}'.format(sessionId))
         self.dm.destroySession(sessionId)
 
     def getSessionStatus(self, sessionId):
+        LOG.debug('getSessionStatus: {0}'.format(sessionId))
         bottle.response.content_type = 'application/json'
         return json.dumps(self.dm.getSessionStatus(sessionId))
 
     def deploySession(self, sessionId):
+        LOG.debug('deploySession: {0}'.format(sessionId))
         completedDrops = []
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
@@ -115,17 +124,20 @@ class ManagerRestServer(RestServer):
         return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
 
     def getGraph(self, sessionId):
+        LOG.debug('getGraph: {0}'.format(sessionId))
         graphDict = self.dm.getGraph(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps(graphDict)
 
     def getGraphStatus(self, sessionId):
+        LOG.debug('getGraphStatus: {0}'.format(sessionId))
         graphStatusDict = self.dm.getGraphStatus(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps(graphStatusDict)
 
     # TODO: addGraphParts v/s addGraphSpec
     def addGraphParts(self, sessionId):
+        LOG.debug('addGraphParts: {0}'.format(sessionId))
         self.dm.addGraphSpec(sessionId, bottle.request.json)
 
     #===========================================================================
