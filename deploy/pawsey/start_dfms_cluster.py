@@ -31,7 +31,8 @@ Current plan (as of 12-April-2016):
 
 """
 from mpi4py import MPI
-import commands, time
+import commands, time, sys, os
+import dfms.manager.cmdline as dfms_start
 
 def get_ip():
     """
@@ -41,29 +42,35 @@ def get_ip():
     line = re[1].split('\n')[1]
     return line.split()[1].split(':')[1]
 
-def startNM():
+def startNM(log_dir):
     """
     Start node manager
     """
-    time.sleep(5)
+    dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir])
 
-def startDIM():
+def startDIM(node_list, log_dir, my_ip=None):
     """
     Start data island manager
     """
-    pass
+    if (my_ip is not None):
+        try:
+            node_list.remove(my_ip)
+        except:
+            pass
+    dfms_start.dfmsDIM(args= ['cmdline.py', '-l', log_dir, '-N', ','.join(node_list)])
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
+log_dir = "{0}/{1}".format(sys.argv[1], rank)
 
 ip_adds = get_ip()
-if (rank != 0):
-    startNM()
-else:
-    dim_ip = ip_adds
-
+origin_ip = ip_adds
 ip_adds = comm.gather(ip_adds, root=0)
-if (rank == 0):
+if (rank != 0):
+    print "Starting node manager on host {0}".format(origin_ip)
+    startNM(log_dir)
+else:
     print "A list of IP addresses are: ", ip_adds
-    startDIM()
+    print "Starting island manager on host {0}".format(origin_ip)
+    startDIM(ip_adds, log_dir, my_ip=origin_ip)
