@@ -92,7 +92,7 @@ def addCommonOptions(parser, defaultPort):
                       dest="verbose", help="Become more verbose. The more flags, the more verbose")
     parser.add_option("-q", "--quiet", action="count",
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
-    parser.add_option("--log-dir", action="store", type="string",
+    parser.add_option("-l", "--log-dir", action="store", type="string",
                       dest="logdir", help="The directory where the logging files will be stored", default=getDfmsLogsDir())
 
 def commonOptionsCheck(options, parser):
