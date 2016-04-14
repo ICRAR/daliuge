@@ -22,6 +22,18 @@
 
 """
 DFMS Proxy runs inside the Pawsey firewall
+--------------------------------------------------------------------------------
+          Pawsey Magnus / Galaxy              |     Public         |
+             Private Network                  |     Network        |
+                                              |                    |
++---------+                +----------+       |      +--------+    |
+|  DFMS   |                |  DFMS    |       |      | DFMS   |    |
+| DropMgr | <== socket ==> |  Proxy   |<== socket ==>| Monitor|<- http <- Client
++---------+                +----------+       |      +--------+    |   (Browser)
+                                              |                    |
+                                           FIREWALL             GATEWAY
+                                              |                    |
+--------------------------------------------------------------------------------
 """
 
 import socket, os
@@ -113,7 +125,7 @@ if __name__ == '__main__':
     parser.add_option("-f", "--dfms_port", action="store", type="int",
                     dest="dfms_port", help = "The port to bind dfms drop manager", default=default_dfms_port)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The port to bind monitor server", default=default_dfms_monitor_port)
+                    dest="monitor_port", help = "log directory for dfms proxy server", default=default_dfms_monitor_port)
     (options, args) = parser.parse_args()
     if (None == options.dfms_host or None == options.monitor_host):
         parser.print_help()
@@ -124,5 +136,5 @@ if __name__ == '__main__':
     try:
         server.loop()
     except KeyboardInterrupt:
-        logger.warning("Ctrl C - Stopping server")
+        logger.warning("Ctrl C - Stopping DFMS Proxy server")
         sys.exit(1)
