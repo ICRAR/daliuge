@@ -28,7 +28,7 @@ DFMS Monitor runs outside the Pawsey firewall (e.g. somewhere in ICRAR)
 import socket
 import select
 import time
-import sys
+import sys, logging
 
 BUFF_SIZE = 16384
 outstanding_conn = 20
@@ -36,6 +36,8 @@ default_dfms_monitor_port = 30000
 default_client_proxy_port = 30001
 MAX_TIME_OUT = 3
 MIN_TIME_OUT = 0.1
+
+logger = logging.getLogger('deploy.pawsey.monitor')
 
 class DFMSMonitor:
     input_list = []

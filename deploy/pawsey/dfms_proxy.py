@@ -24,16 +24,21 @@
 DFMS Proxy runs inside the Pawsey firewall
 """
 
-import socket
+import socket, os
 import select
 import time
-import sys
+import sys, logging
+from optparse import OptionParser
 
 BUFF_SIZE = 16384
-connection_retry_timeout = 15
+conn_retry_timeout = 15
+conn_retry_count = 100
 delay = 0.0001
 default_dfms_monitor_port = 30000
 default_dfms_port = 8001
+FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+
+logger = logging.getLogger('deploy.pawsey.proxy')
 
 class DFMSProxy:
     def __init__(self, dfms_host, monitor_host, dfms_port=default_dfms_port, monitor_port=default_dfms_monitor_port):
@@ -49,22 +54,22 @@ class DFMSProxy:
     def send_to_monitor_host(self, data):
         self.monitor_socket.sendall(data)
 
-
     def connect_to_host(self, server, port):
         connected = False
         the_socket = None # keep the IDE happy!
         retry_count = 0
         while not connected:
-            if retry_count >= 3:
+            if retry_count >= conn_retry_count:
                 sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
                 connected = True
-                print 'Connected to ' + server + ' on port ' + str(port)
+                logger.info('Connected to ' + server + ' on port ' + str(port))
             except Exception as e:
-                print e
+                err = str(e)
+                logger.error("Fail to connect to {0} on port {1} due to {2}".format(server, port, err))
                 # Sleep for a while before trying to connect again
-                time.sleep(connection_retry_timeout)
+                time.sleep(conn_retry_timeout)
                 retry_count += 1
         return the_socket
 
@@ -75,10 +80,10 @@ class DFMSProxy:
         self.monitor_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
 
     def loop(self):
-        print 'connecting to dfms manager'
         self.connect_manager_host()
-        print 'connecting to monitor host'
+        logger.info('connected to dfms manager')
         self.connect_monitor_host()
+        logger.info('connected to monitor host')
         while 1:
             time.sleep(delay)
             inputready, outputready, exceptready = select.select(
@@ -93,16 +98,31 @@ class DFMSProxy:
                         self.connect_monitor_host()
                 else:
                     if the_socker == self.manager_socket:
-                        #print 'received from manager_socket ' + data
                         self.send_to_monitor_host(data)
                     elif the_socker == self.monitor_socket:
-                        #print 'received from monitor_socket ' + data
                         self.send_to_manager_host(data)
 
 if __name__ == '__main__':
-    server = DFMSProxy('localhost', 'localhost')
+    parser = OptionParser()
+    parser.add_option("-d", "--dfms_host", action="store", type="string",
+                    dest="dfms_host", help="DFMS drop manager host IP (required)")
+    parser.add_option("-m", "--monitor_host", action="store", type="string",
+                    dest="monitor_host", help="Monitor host IP (required)")
+    parser.add_option("-l", "--log_dir", action="store", type="string",
+                    dest="log_dir", help="Monitor host IP (required)", default=os.path.realpath(__file__))
+    parser.add_option("-f", "--dfms_port", action="store", type="int",
+                    dest="dfms_port", help = "The port to bind dfms drop manager", default=default_dfms_port)
+    parser.add_option("-o", "--monitor_port", action="store", type="int",
+                    dest="monitor_port", help = "The port to bind monitor server", default=default_dfms_monitor_port)
+    (options, args) = parser.parse_args()
+    if (None == options.dfms_host or None == options.monitor_host):
+        parser.print_help()
+        sys.exit(1)
+    logfile = "{0}/dfms_proxy.log".format(os.path.dirname(options.log_dir))
+    logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
+    server = DFMSProxy(options.dfms_host, options.monitor_host, options.dfms_port, options.monitor_port)
     try:
         server.loop()
     except KeyboardInterrupt:
-        print "Ctrl C - Stopping server"
+        logger.warning("Ctrl C - Stopping server")
         sys.exit(1)
