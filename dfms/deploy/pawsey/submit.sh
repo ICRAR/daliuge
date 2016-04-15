@@ -3,7 +3,7 @@
 #SBATCH --nodes=5
 #SBATCH --ntasks-per-node=1
 #SBATCH --job-name=dfms_deployment
-#SBATCH --time=00:02:00
+#SBATCH --time=00:59:00
 #SBATCH --account=pawsey0129
 #SBATCH --error=err-%j.log
 

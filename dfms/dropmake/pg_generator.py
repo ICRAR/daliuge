@@ -551,6 +551,7 @@ class PGT(object):
         self._extra_drops = [] # artifacts DROPs produced during L2G mapping
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
         self._json_str = None
+        self._oid_gid_map = dict()
 
     @property
     def drops(self):
@@ -596,17 +597,30 @@ class PGT(object):
         return self._json_str
         # return self.to_gojs_json()
 
-    def to_pg(self, toplogy):
+    def to_pg_spec(self, node_list, ret_str=True):
         """
-        convert pgt to pg, and map that to the hardware resources
+        convert pgt to pg specification, and map that to the hardware resources
         """
-        num_nodes = toplogy.num_nodes
-        if (self._partitions is None):
-            # but this will change to use HEFT scheduling algorithm for non-partitioned PGT
-            raise GraphException("The PGT has no partitions, but non-partitioned mapping is not yet implemented.")
-        else:
-            pass
+        # num_nodes = toplogy.num_nodes
+        # if (self._partitions is None):
+        #     # but this will change to use HEFT scheduling algorithm for non-partitioned PGT
+        #     raise GraphException("The PGT has no partitions, but non-partitioned mapping is not yet implemented.")
+        # else:
+        #     pass
+        drop_list = self._drop_list + self._extra_drops
+        num_parts = self._num_parts
+        if (len(node_list) < num_parts):
+            raise GPGTException("The node list is too small")
+        lm = self._oid_gid_map
+        for drop in drop_list:
+            oid = drop['oid']
+            pid = lm[oid] % num_parts
+            drop['node'] = node_list[pid]
 
+        if (ret_str):
+            return json.dumps(drop_list, indent=2)
+        else:
+            return drop_list
 
     def to_gojs_json(self, string_rep=True):
         """
@@ -850,9 +864,12 @@ class MetisPGTP(PGT):
             groups.add(gid)
 
         node_list = jsobj['nodeDataArray']
+        gc = 0
         for node in node_list:
             if (key_dict.has_key(node['key'])):
-                node['group'] = key_dict[int(node['key'])] + start_k
+                gid = key_dict[int(node['key'])]
+                node['group'] = gid + start_k
+                self._oid_gid_map[node['oid']] = gid
 
         for gid in groups:
             gn = dict()
@@ -946,6 +963,7 @@ class MySarkarPGTP(PGT):
             node['group'] = gid
             key_dict[node['key']] = gid
             groups.add(gid)
+            self._oid_gid_map[node['oid']] = gid
 
         inner_parts = []
         for gid in groups:
@@ -974,6 +992,12 @@ class MySarkarPGTP(PGT):
                 gn['isGroup'] = True
                 gn['text'] = 'Out_{0}_{1}'.format(gid - lengnow, self._par_label)
                 node_list.append(gn)
+
+            for node in node_list:
+                ggid = node.get('group', None)
+                if (ggid is not None):
+                    new_ggid = in_out_part_map[ggid]
+                    self._oid_gid_map[node['oid']] = new_ggid
 
             for ip in inner_parts:
                 ip['group'] = in_out_part_map[ip['key']]

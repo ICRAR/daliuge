@@ -907,6 +907,7 @@ class SAScheduler(PSOScheduler):
     """
     Use Simulated Annealing to guide the Sarkar algorithm
     https://en.wikipedia.org/wiki/Simulated_annealing
+    http://apmonitor.com/me575/index.php/Main/SimulatedAnnealing
     Use basic functions in PSOScheduler by inheriting it for convinence
     """
     def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, topk=None, max_iter=6000):
