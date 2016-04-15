@@ -31,8 +31,28 @@ Current plan (as of 12-April-2016):
 
 """
 from mpi4py import MPI
-import commands, time, sys, os
+import commands, time, sys, os, logging
 import dfms.manager.cmdline as dfms_start
+from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
+
+DIM_WAIT_TIME = 10
+VERBOSITY = '5'
+logger = logging.getLogger('deploy.pawsey.cluster')
+
+def ping_host(url, timeout=5):
+    """
+    To check if a host is running
+    Returns:
+        0                Success
+        Otherwise        Failure
+    """
+    cmd = 'curl --connect-timeout %d %s' % (timeout, url)
+    try:
+        return commands.getstatusoutput(cmd)[0]
+    except Exception, err:
+        logger.warning("Fail to ping host {0}: {1}".format(url, str(err)))
+        return 1
 
 def get_ip():
     """
@@ -46,7 +66,8 @@ def startNM(log_dir):
     """
     Start node manager
     """
-    dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir])
+    dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
+    '-v', VERBOSITY, '-H', '0.0.0.0'])
 
 def startDIM(node_list, log_dir, my_ip=None):
     """
@@ -57,20 +78,36 @@ def startDIM(node_list, log_dir, my_ip=None):
             node_list.remove(my_ip)
         except:
             pass
-    dfms_start.dfmsDIM(args= ['cmdline.py', '-l', log_dir, '-N', ','.join(node_list)])
+    dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
+    '-N', ','.join(node_list), '-v', VERBOSITY, '-H', '0.0.0.0'])
 
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
-log_dir = "{0}/{1}".format(sys.argv[1], rank)
+if __name__ == '__main__':
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
 
-ip_adds = get_ip()
-origin_ip = ip_adds
-ip_adds = comm.gather(ip_adds, root=0)
-if (rank != 0):
-    print "Starting node manager on host {0}".format(origin_ip)
-    startNM(log_dir)
-else:
-    print "A list of IP addresses are: ", ip_adds
-    print "Starting island manager on host {0}".format(origin_ip)
-    startDIM(ip_adds, log_dir, my_ip=origin_ip)
+    log_dir = "{0}/{1}".format(sys.argv[1], rank)
+    os.makedirs(log_dir)
+    logfile = log_dir + "/start_dfms_cluster.log"
+    FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+    logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
+
+    ip_adds = get_ip()
+    origin_ip = ip_adds
+    ip_adds = comm.gather(ip_adds, root=0)
+    if (rank != 0):
+        logger.info("Starting node manager on host {0}".format(origin_ip))
+        startNM(log_dir)
+    else:
+        logger.info("A list of NM IPs: {0}".format(ip_adds))
+        logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
+        time.sleep(DIM_WAIT_TIME)
+        for ip in ip_adds:
+            if (ip == origin_ip):
+                continue
+            url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
+            if (ping_host(url) != 0):
+                logger.warning("Fail to ping host {0}".format(url))
+            else:
+                logger.info("Host {0} is running".format(url))
+        startDIM(ip_adds, log_dir, my_ip=origin_ip)
