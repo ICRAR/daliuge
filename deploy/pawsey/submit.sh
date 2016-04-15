@@ -18,4 +18,4 @@ APP_ROOT="/scratch/pawsey0129/dfms"
 SID=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_DIR=$APP_ROOT"/logs/"$SID
 mkdir $LOG_DIR # to remove potential directory creation conflicts later
-aprun -B $APP_ROOT"/pyenv/bin/python" $APP_ROOT"/cluster/start_dfms_cluster.py" $LOG_DIR
+aprun -B $APP_ROOT"/pyenv/bin/python" $APP_ROOT"/cluster/start_dfms_cluster.py" -l $LOG_DIR

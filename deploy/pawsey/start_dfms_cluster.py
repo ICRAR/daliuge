@@ -32,13 +32,16 @@ Current plan (as of 12-April-2016):
 """
 from mpi4py import MPI
 import commands, time, sys, os, logging
+from optparse import OptionParser
 import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
+import dfms.deploy.dfms_proxy as dfms_proxy
 
-DIM_WAIT_TIME = 10
+DIM_WAIT_TIME = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
+DIM_PORT = 8001
 
 def ping_host(url, timeout=5):
     """
@@ -62,14 +65,14 @@ def get_ip():
     line = re[1].split('\n')[1]
     return line.split()[1].split(':')[1]
 
-def startNM(log_dir):
+def start_node_mgr(log_dir):
     """
     Start node manager
     """
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
     '-v', VERBOSITY, '-H', '0.0.0.0'])
 
-def startDIM(node_list, log_dir, my_ip=None):
+def start_dim(node_list, log_dir, my_ip=None):
     """
     Start data island manager
     """
@@ -81,23 +84,82 @@ def startDIM(node_list, log_dir, my_ip=None):
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-v', VERBOSITY, '-H', '0.0.0.0'])
 
+def start_dfms_proxy(dfms_host, dfms_port, monitor_host, monitor_port):
+    """
+    Start the DFMS proxy server
+    """
+    server = dfms_proxy.DFMSProxy(dfms_host, monitor_host, dfms_port, monitor_port)
+    try:
+        server.loop()
+    except KeyboardInterrupt:
+        logger.warning("Ctrl C - Stopping DFMS Proxy server")
+        sys.exit(1)
+    except Exception, ex:
+        logger.error("DFMS proxy terminated unexpectedly: {0}".format(ex))
+        sys.exit(1)
+
 if __name__ == '__main__':
+    """
+    """
+    parser = OptionParser()
+    parser.add_option("-l", "--log_dir", action="store", type="string",
+                    dest="log_dir", help="Log directory (required)")
+    # if this parameter is present, it means we want to get monitored
+    parser.add_option("-m", "--monitor_host", action="store", type="string",
+                    dest="monitor_host", help="Monitor host IP (optional)")
+    parser.add_option("-o", "--monitor_port", action="store", type="int",
+                    dest="monitor_port", help = "The port to bind dfms monitor",
+                    default=dfms_proxy.default_dfms_monitor_port)
+    (options, args) = parser.parse_args()
+
+    if (None == options.log_dir):
+        parser.print_help()
+        sys.exit(1)
+
     comm = MPI.COMM_WORLD
-    size = comm.Get_size()
+    num_procs = comm.Get_size()
     rank = comm.Get_rank()
 
-    log_dir = "{0}/{1}".format(sys.argv[1], rank)
+    log_dir = "{0}/{1}".format(options.log_dir, rank)
     os.makedirs(log_dir)
     logfile = log_dir + "/start_dfms_cluster.log"
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
 
+    if (num_procs > 1 and options.monitor_host is not None):
+        logger.info("Trying to start dfms_cluster with proxy")
+        run_proxy = True
+        threshold = 2
+    else:
+        logger.info("Trying to start dfms_cluster without proxy")
+        run_proxy = False
+        threshold = 1
+
+    if (num_procs == threshold):
+        logger.warning("No MPI processes left for running Drop Managers")
+        run_node_mgr = False
+    else:
+        run_node_mgr = True
+
     ip_adds = get_ip()
     origin_ip = ip_adds
     ip_adds = comm.gather(ip_adds, root=0)
+    if (run_proxy):
+        # send island/master manager's IP address to the dfms proxy
+        if rank == 0:
+           mgr_ip = origin_ip
+           comm.send(mgr_ip, dest=1)
+        elif rank == 1:
+           mgr_ip = comm.recv(source=0)
     if (rank != 0):
-        logger.info("Starting node manager on host {0}".format(origin_ip))
-        startNM(log_dir)
+        if (run_proxy and rank == 1):
+            sltime = DIM_WAIT_TIME + 2
+            logger.info("Starting dfms proxy on host {0} in {1} seconds".format(origin_ip, sltime))
+            time.sleep(sltime)
+            start_dfms_proxy(mgr_ip, DIM_PORT, options.monitor_host, options.monitor_port)
+        elif (run_node_mgr):
+            logger.info("Starting node manager on host {0}".format(origin_ip))
+            start_node_mgr(log_dir)
     else:
         logger.info("A list of NM IPs: {0}".format(ip_adds))
         logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
@@ -110,4 +172,4 @@ if __name__ == '__main__':
                 logger.warning("Fail to ping host {0}".format(url))
             else:
                 logger.info("Host {0} is running".format(url))
-        startDIM(ip_adds, log_dir, my_ip=origin_ip)
+        start_dim(ip_adds, log_dir, my_ip=origin_ip)
