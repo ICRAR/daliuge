@@ -63,6 +63,20 @@ class TestPGGen(unittest.TestCase):
             pgtp = MetisPGTP(drop_list)
             pgtp.json
 
+    def test_metis_pgtp_gen_pg(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        tgt_partnum = [15, 15, 10, 10, 5]
+        node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
+        for i, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MetisPGTP(drop_list, 3)
+            pgtp.json
+            pg_spec = pgtp.to_pg_spec(node_list)
+            # with open('/tmp/met_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
+            #     f.write(pg_spec)
+
     def test_mysarkar_pgtp(self):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
@@ -72,6 +86,28 @@ class TestPGGen(unittest.TestCase):
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list)
             pgtp.json
+
+    def test_mysarkar_pgtp_gen_pg(self):
+        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        tgt_partnum = [15, 15, 10, 10, 5]
+        node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
+        for i, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MySarkarPGTP(drop_list, 3, merge_parts=True)
+            pgtp.json
+            pg_spec = pgtp.to_pg_spec(node_list)
+            # with open('/tmp/sar_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
+            #     f.write(pg_spec)
+            # if (i == 0):
+            #     from dfms.manager.client import DataIslandManagerClient
+            #     dmc = DataIslandManagerClient(host='sdp-dfms.ddns.net', port=8097)
+            #     ssid = 'ChenICRAR'
+            #     dmc.create_session(ssid)
+            #     dmc.append_graph(ssid, pg_spec)
+            #     ret = dmc.deploy_session(ssid)
+            #     print ret
 
     def test_minnumparts_pgtp(self):
         lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']

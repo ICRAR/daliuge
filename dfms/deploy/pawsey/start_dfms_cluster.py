@@ -72,15 +72,10 @@ def start_node_mgr(log_dir):
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
     '-v', VERBOSITY, '-H', '0.0.0.0'])
 
-def start_dim(node_list, log_dir, my_ip=None):
+def start_dim(node_list, log_dir):
     """
     Start data island manager
     """
-    if (my_ip is not None):
-        try:
-            node_list.remove(my_ip)
-        except:
-            pass
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-v', VERBOSITY, '-H', '0.0.0.0'])
 
@@ -146,11 +141,16 @@ if __name__ == '__main__':
     ip_adds = comm.gather(ip_adds, root=0)
     if (run_proxy):
         # send island/master manager's IP address to the dfms proxy
+        # also let island manager know dfms proxy's IP
         if rank == 0:
            mgr_ip = origin_ip
            comm.send(mgr_ip, dest=1)
+           proxy_ip = comm.recv(source=1)
         elif rank == 1:
            mgr_ip = comm.recv(source=0)
+           proxy_ip = origin_ip
+           comm.send(proxy_ip, dest=0)
+
     if (rank != 0):
         if (run_proxy and rank == 1):
             sltime = DIM_WAIT_TIME + 2
@@ -164,12 +164,14 @@ if __name__ == '__main__':
         logger.info("A list of NM IPs: {0}".format(ip_adds))
         logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
         time.sleep(DIM_WAIT_TIME)
+        node_mgrs = []
         for ip in ip_adds:
-            if (ip == origin_ip):
+            if (ip == origin_ip or (run_proxy and ip == proxy_ip)):
                 continue
             url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
             if (ping_host(url) != 0):
                 logger.warning("Fail to ping host {0}".format(url))
             else:
                 logger.info("Host {0} is running".format(url))
-        start_dim(ip_adds, log_dir, my_ip=origin_ip)
+                node_mgrs.append(ip)
+        start_dim(node_mgrs, log_dir)
