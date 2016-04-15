@@ -36,7 +36,7 @@ from optparse import OptionParser
 import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
-import dfms.deploy.dfms_proxy as dfms_proxy
+import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
 
 DIM_WAIT_TIME = 5
 VERBOSITY = '5'
