@@ -79,37 +79,43 @@ class DFMSMonitor:
         self.input_list.append(self.monitor_listen_socket)
         self.manager_socket = None
         self.monitor_socket = None
+        self._temp_buff = None
         while 1:
-            inputready, outputready, exceptready = select.select(self.input_list, [], [], self.select_time_out)
-            if not (inputready or outputready or exceptready):
-                if (self.monitor_socket is not None):
-                    # modern browsers use HTTP1.1 persistent connection, so
-                    # need to close the time-out connection and move onto the
-                    # next connection in the queue
-                    self.on_close(self.monitor_socket)
-            else:
-                for the_socket in inputready:
-                    if the_socket == self.manager_listen_socket or\
-                       the_socket == self.monitor_listen_socket:
-                        self.on_accept(the_socket)
+            #logger.info("enter select")
+            inputready, outputready, exceptready = select.select(self.input_list, [], [])
+            #logger.info("exit select")
+            for the_socket in inputready:
+                if the_socket == self.manager_listen_socket or\
+                   the_socket == self.monitor_listen_socket:
+                    self.on_accept(the_socket)
+                else:
+                    # if (the_socket == self.manager_socket):
+                    #     soc = "dfms_proxy"
+                    # elif (the_socket == self.monitor_socket):
+                    #     soc = "client"
+                    #
+                    # logger.info("data len = {0} from {1}".format(len(data), soc))
+                    data = the_socket.recv(BUFF_SIZE)
+                    self.data[the_socket] = data
+                    if len(data) == 0:
+                        #logger.debug("data == 0, close {0}".format(soc))
+                        self.on_close(the_socket)
                     else:
-                        data = the_socket.recv(BUFF_SIZE)
-                        self.data[the_socket] = data
-                        if len(data) == 0:
-                            self.on_close(the_socket)
-                        else:
-                            self.on_recv(the_socket)
-                for err_sock in exceptready:
-                    self.on_close(err_sock)
+                        self.on_recv(the_socket)
+            for err_sock in exceptready:
+                self.on_close(err_sock)
 
     def on_accept(self, the_socket):
         clientsock, clientaddr = the_socket.accept()
-        # When we receive a connection from master manager host
         if self.manager_listen_socket == the_socket:
-            logger.info('receiving manager_socket')
+            logger.info('receiving new socket from dfms_proxy')
             self.manager_socket = clientsock
             self.input_list.append(clientsock)
+            if (self._temp_buff is not None):
+                self.manager_socket.sendall(self._temp_buff)
+                self._temp_buff = None
             if (self.monitor_socket is None and len(self.monitor_sock_queue) > 0):
+                logger.debug("Processing outstanding client sockets")
                 self.monitor_socket = self.monitor_sock_queue[0]
                 self.monitor_sock_queue.remove(self.monitor_socket)
                 self.input_list.append(self.monitor_socket)
@@ -121,21 +127,29 @@ class DFMSMonitor:
         # AND we have a connection to the master maanger
         elif self.manager_socket is not None:
             if (self.monitor_socket is None):
+                logger.info('receiving new socket from client')
                 self.monitor_socket = clientsock
                 self.input_list.append(clientsock)
             else:
+                logger.info('receiving new socket from client, add to queue')
                 self.monitor_sock_queue.append(clientsock)
                 self.select_time_out = MIN_TIME_OUT
         # We don't have a connection to master manager yet so close the new connection
         # as we can't do anything with the data anyway!
         else:
+            logger.debug('receiving socket from client, but')
             logger.warning("Can't establish connection with master manager server.")
             logger.info("Closing connection with client side {0}".format(clientaddr))
             self.on_close(clientsock)
 
     def on_close(self, the_socket):
+        # if (the_socket == self.manager_socket):
+        #     soc = "dfms_proxy"
+        # elif (the_socket == self.monitor_socket):
+        #     soc = "client"
+        # logger.info("on_close called from {0}".format(soc))
         if (self.manager_socket == the_socket):
-            self.manager_socket.close()
+            #self.manager_socket.close()
             self.input_list.remove(self.manager_socket)
             self.manager_socket = None
         if (self.monitor_socket):
@@ -146,8 +160,9 @@ class DFMSMonitor:
         if (len(self.monitor_sock_queue) > 0):
             self.monitor_socket = self.monitor_sock_queue[0]
             self.monitor_sock_queue.remove(self.monitor_socket)
-            if (len(self.monitor_sock_queue) > 0):
-                self.select_time_out = MIN_TIME_OUT
+            # logger.debug("queue has {0} elements".format(len(self.monitor_sock_queue)))
+            # if (len(self.monitor_sock_queue) > 0):
+            #     self.select_time_out = MIN_TIME_OUT
             self.input_list.append(self.monitor_socket)
         else:
             self.select_time_out = MAX_TIME_OUT
@@ -164,6 +179,11 @@ class DFMSMonitor:
             else:
                 if (self.manager_socket):
                     self.manager_socket.sendall(data)
+                else:
+                    if (self._temp_buff is None):
+                        self._temp_buff = data
+                    else:
+                        raise Exception("temp buffer overflow!")
 
 if __name__ == '__main__':
     parser = OptionParser()

@@ -92,16 +92,35 @@ class DFMSProxy:
 
     def loop(self):
         self.connect_manager_host()
-        logger.info('connected to dfms manager')
         self.connect_monitor_host()
-        logger.info('connected to monitor host')
+        has_sent_once = False
         while 1:
             time.sleep(delay)
+            #logger.info("enter select")
             inputready, outputready, exceptready = select.select(
-                    [self.monitor_socket, self.manager_socket], [], [])
+                    [self.monitor_socket, self.manager_socket], [], [], 0.2)
+            #logger.info("exit select")
+            if not (inputready or outputready or exceptready):
+                #logger.info("select time out")
+                if (has_sent_once):
+                    if (self.manager_socket is not None):
+                        self.manager_socket.close()
+                        self.connect_manager_host()
+                    if (self.monitor_socket is not None):
+                        self.monitor_socket.close()
+                        self.connect_monitor_host()
+                    has_sent_once = False
+                continue
+
             for the_socker in inputready:
                 data = the_socker.recv(BUFF_SIZE)
+                # if the_socker == self.manager_socket:
+                #     sock = "DIM"
+                # else:
+                #     sock = "dfms_monitor"
+                # logger.info("data len = {0} from {1}".format(len(data), sock))
                 if len(data) == 0:
+                    # logger.debug("data == 0 from {0}".format(sock))
                     # Reconnect to lost host
                     if the_socker == self.manager_socket:
                         self.connect_manager_host()
@@ -110,6 +129,7 @@ class DFMSProxy:
                 else:
                     if the_socker == self.manager_socket:
                         self.send_to_monitor_host(data)
+                        has_sent_once = True
                     elif the_socker == self.monitor_socket:
                         self.send_to_manager_host(data)
 
