@@ -38,7 +38,7 @@ DFMS Monitor runs outside the Pawsey firewall
 """
 
 import socket, select
-import time, os
+import time, os, struct
 import sys, logging
 from optparse import OptionParser
 
@@ -51,12 +51,37 @@ MIN_TIME_OUT = 0.1
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
 logger = logging.getLogger('deploy.pawsey.monitor')
+delimit = '@#%!$'
+dl = len(delimit)
+
+def recvall(sock, count):
+    buf = ''
+    while count:
+        # this will block
+        newbuf = sock.recv(count)
+        if not newbuf: return None
+        buf += newbuf
+        count -= len(newbuf)
+    return buf
+
+def send_to_dfms(sock, data):
+    length = len(data)
+    sock.sendall(struct.pack('!I', length))
+    sock.sendall(data)
+
+def recv_from_dfms(sock):
+    lengthbuf = recvall(sock, 4)
+    if (lengthbuf is None):
+        return None
+    length, = struct.unpack('!I', lengthbuf)
+    return recvall(sock, length)
 
 class DFMSMonitor:
     input_list = []
     data = {}
     monitor_sock_queue = []
     select_time_out = MAX_TIME_OUT
+    cl_sock_dict = dict()
 
     def __init__(self, host='0.0.0.0', monitor_port=default_dfms_monitor_port, client_port=default_client_proxy_port):
         """
@@ -78,112 +103,69 @@ class DFMSMonitor:
         self.input_list.append(self.manager_listen_socket)
         self.input_list.append(self.monitor_listen_socket)
         self.manager_socket = None
-        self.monitor_socket = None
-        self._temp_buff = None
         while 1:
-            #logger.info("enter select")
             inputready, outputready, exceptready = select.select(self.input_list, [], [])
-            #logger.info("exit select")
             for the_socket in inputready:
                 if the_socket == self.manager_listen_socket or\
                    the_socket == self.monitor_listen_socket:
                     self.on_accept(the_socket)
                 else:
-                    # if (the_socket == self.manager_socket):
-                    #     soc = "dfms_proxy"
-                    # elif (the_socket == self.monitor_socket):
-                    #     soc = "client"
-                    #
-                    # logger.info("data len = {0} from {1}".format(len(data), soc))
-                    data = the_socket.recv(BUFF_SIZE)
-                    self.data[the_socket] = data
-                    if len(data) == 0:
-                        #logger.debug("data == 0, close {0}".format(soc))
-                        self.on_close(the_socket)
-                    else:
-                        self.on_recv(the_socket)
-            for err_sock in exceptready:
-                self.on_close(err_sock)
+                    if (the_socket == self.manager_socket):
+                        #print "receiving from dfms_proxy"
+                        data = recv_from_dfms(the_socket)
+                        if (data is None):
+                            logger.warning("Socket to dfms proxy is broken")
+                            self.input_list.remove(the_socket)
+                            if (self.manager_socket):
+                                self.manager_socket.close()
+                                self.manager_socket = None
+                            continue
+                        at = data.find(delimit)
+                        if (at == -1):
+                            logger.error('No tag id from dfms_proxy, discard the message')
+                            continue
+                        else:
+                            tag = data[0:at]
+                        client_sock = self.cl_sock_dict.get(tag, None)
+                        if (client_sock is None):
+                            logger.error('Client socket for tag {0} is gone'.format(tag))
+                        else:
+                            to_send = data[at + dl:]
+                            if (len(to_send) == 0):
+                                client_sock.close()
+                                del self.cl_sock_dict[tag]
+                                self.input_list.remove(client_sock)
+                            else:
+                                client_sock.sendall(to_send)
+                    else: # from one of the client sockets
+                        data = the_socket.recv(BUFF_SIZE)
+                        tag = str(the_socket.__hash__())
+                        send_to_dfms(self.manager_socket, delimit.join([tag, data]))
+                        if (len(data) == 0):
+                            the_socket.close() #close itself, is this necessary?
+                            del self.cl_sock_dict[tag]
+                            self.input_list.remove(the_socket)
 
     def on_accept(self, the_socket):
         clientsock, clientaddr = the_socket.accept()
         if self.manager_listen_socket == the_socket:
             logger.info('receiving new socket from dfms_proxy')
+            if (self.manager_socket is not None):
+                raise Exception("already not none!")
             self.manager_socket = clientsock
-            self.input_list.append(clientsock)
-            if (self._temp_buff is not None):
-                self.manager_socket.sendall(self._temp_buff)
-                self._temp_buff = None
-            if (self.monitor_socket is None and len(self.monitor_sock_queue) > 0):
-                logger.debug("Processing outstanding client sockets")
-                self.monitor_socket = self.monitor_sock_queue[0]
-                self.monitor_sock_queue.remove(self.monitor_socket)
-                self.input_list.append(self.monitor_socket)
-                if (len(self.monitor_sock_queue) > 0):
-                    self.select_time_out = MIN_TIME_OUT
-                else:
-                    self.select_time_out = MAX_TIME_OUT
+            self.input_list.append(self.manager_socket)
         # else when we receive a connection from a localhost
         # AND we have a connection to the master maanger
         elif self.manager_socket is not None:
-            if (self.monitor_socket is None):
-                logger.info('receiving new socket from client')
-                self.monitor_socket = clientsock
-                self.input_list.append(clientsock)
-            else:
-                logger.info('receiving new socket from client, add to queue')
-                self.monitor_sock_queue.append(clientsock)
-                self.select_time_out = MIN_TIME_OUT
-        # We don't have a connection to master manager yet so close the new connection
-        # as we can't do anything with the data anyway!
+            logger.info('receiving new socket from client')
+            tag = clientsock.__hash__()
+            self.cl_sock_dict[str(tag)] = clientsock
+            self.input_list.append(clientsock)
         else:
             logger.debug('receiving socket from client, but')
             logger.warning("Can't establish connection with master manager server.")
             logger.info("Closing connection with client side {0}".format(clientaddr))
-            self.on_close(clientsock)
-
-    def on_close(self, the_socket):
-        # if (the_socket == self.manager_socket):
-        #     soc = "dfms_proxy"
-        # elif (the_socket == self.monitor_socket):
-        #     soc = "client"
-        # logger.info("on_close called from {0}".format(soc))
-        if (self.manager_socket == the_socket):
-            #self.manager_socket.close()
-            self.input_list.remove(self.manager_socket)
-            self.manager_socket = None
-        if (self.monitor_socket):
-            self.monitor_socket.close()
-            self.input_list.remove(self.monitor_socket)
-            self.monitor_socket = None
-
-        if (len(self.monitor_sock_queue) > 0):
-            self.monitor_socket = self.monitor_sock_queue[0]
-            self.monitor_sock_queue.remove(self.monitor_socket)
-            # logger.debug("queue has {0} elements".format(len(self.monitor_sock_queue)))
-            # if (len(self.monitor_sock_queue) > 0):
-            #     self.select_time_out = MIN_TIME_OUT
-            self.input_list.append(self.monitor_socket)
-        else:
-            self.select_time_out = MAX_TIME_OUT
-
-        if self.data.has_key(the_socket):
-            del self.data[the_socket]
-
-    def on_recv(self, the_socket):
-        data = self.data.get(the_socket, None)
-        if (data is not None):
-            if the_socket == self.manager_socket:
-                if (self.monitor_socket):
-                    self.monitor_socket.sendall(data)
-            else:
-                if (self.manager_socket):
-                    self.manager_socket.sendall(data)
-                else:
-                    if (self._temp_buff is None):
-                        self._temp_buff = data
-                    else:
-                        raise Exception("temp buffer overflow!")
+            clientsock.close()
 
 if __name__ == '__main__':
     parser = OptionParser()

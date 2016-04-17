@@ -37,7 +37,7 @@ DFMS Proxy runs inside the Pawsey firewall
 """
 
 import socket, os
-import select
+import select, struct
 import time
 import sys, logging
 from optparse import OptionParser
@@ -51,6 +51,30 @@ default_dfms_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
 logger = logging.getLogger('deploy.pawsey.proxy')
+delimit = '@#%!$'
+dl = len(delimit)
+
+def recvall(sock, count):
+    buf = ''
+    while count:
+        # this will block
+        newbuf = sock.recv(count)
+        if not newbuf: return None
+        buf += newbuf
+        count -= len(newbuf)
+    return buf
+
+def send_to_monitor(sock, data):
+    length = len(data)
+    sock.sendall(struct.pack('!I', length))
+    sock.sendall(data)
+
+def recv_from_monitor(sock):
+    lengthbuf = recvall(sock, 4)
+    if (lengthbuf is None):
+        return None
+    length, = struct.unpack('!I', lengthbuf)
+    return recvall(sock, length)
 
 class DFMSProxy:
     def __init__(self, dfms_host, monitor_host, dfms_port=default_dfms_port, monitor_port=default_dfms_monitor_port):
@@ -58,12 +82,8 @@ class DFMSProxy:
         self._dfms_port = dfms_port
         self._monitor_host = monitor_host
         self._monitor_port = monitor_port
-
-    def send_to_manager_host(self, data):
-        self.manager_socket.sendall(data)
-
-    def send_to_monitor_host(self, data):
-        self.monitor_socket.sendall(data)
+        self._dfms_sock_dict = dict()
+        self._dfms_sock_tag_dict = dict()
 
     def connect_to_host(self, server, port):
         connected = False
@@ -71,6 +91,7 @@ class DFMSProxy:
         retry_count = 0
         while not connected:
             if retry_count >= conn_retry_count:
+                logger.error("Retry connecting to DFMS monitor exhausted, quit")
                 sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
@@ -84,55 +105,63 @@ class DFMSProxy:
                 retry_count += 1
         return the_socket
 
-    def connect_manager_host(self):
-        self.manager_socket = self.connect_to_host(self._dfms_host, self._dfms_port)
-
     def connect_monitor_host(self):
         self.monitor_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
 
     def loop(self):
-        self.connect_manager_host()
         self.connect_monitor_host()
-        has_sent_once = False
+        inputlist = [self.monitor_socket]
         while 1:
             time.sleep(delay)
-            #logger.info("enter select")
             inputready, outputready, exceptready = select.select(
-                    [self.monitor_socket, self.manager_socket], [], [], 0.2)
-            #logger.info("exit select")
-            if not (inputready or outputready or exceptready):
-                #logger.info("select time out")
-                if (has_sent_once):
-                    if (self.manager_socket is not None):
-                        self.manager_socket.close()
-                        self.connect_manager_host()
-                    if (self.monitor_socket is not None):
-                        self.monitor_socket.close()
+                    inputlist, [], [])
+            for the_socket in inputready:
+                if (the_socket == self.monitor_socket):
+                    data = recv_from_monitor(the_socket)
+                    if (data is None):
+                        logger.warning("Socket to dfms monitor is broken")
+                        inputlist.remove(the_socket)
+                        if (self.monitor_socket):
+                            self.monitor_socket.close()
+                            self.monitor_socket = None
+                        logger.info("Try reconnecting to dfms monitor...")
                         self.connect_monitor_host()
-                    has_sent_once = False
-                continue
+                        inputlist.append(self.monitor_socket)
+                        continue
+                    at = data.find(delimit)
+                    if (at == -1):
+                        logger.error('No tag id from dfms_monitor, discard the message')
+                        continue
+                    else:
+                        tag = data[0:at]
+                    dfms_sock = self._dfms_sock_dict.get(tag, None)
+                    if (dfms_sock is None):
+                        dfms_sock = self.connect_to_host(self._dfms_host, self._dfms_port)
+                        self._dfms_sock_dict[tag] = dfms_sock
+                        self._dfms_sock_tag_dict[dfms_sock] = tag
+                        inputlist.append(dfms_sock)
 
-            for the_socker in inputready:
-                data = the_socker.recv(BUFF_SIZE)
-                # if the_socker == self.manager_socket:
-                #     sock = "DIM"
-                # else:
-                #     sock = "dfms_monitor"
-                # logger.info("data len = {0} from {1}".format(len(data), sock))
-                if len(data) == 0:
-                    # logger.debug("data == 0 from {0}".format(sock))
-                    # Reconnect to lost host
-                    if the_socker == self.manager_socket:
-                        self.connect_manager_host()
-                    elif the_socker == self.monitor_socket:
-                        self.connect_monitor_host()
+                    to_send = data[at + dl:]
+                    if (len(to_send) == 0):
+                        dfms_sock.close()
+                        del self._dfms_sock_dict[tag]
+                        del self._dfms_sock_tag_dict[dfms_sock]
+                        inputlist.remove(dfms_sock)
+                    else:
+                        dfms_sock.sendall(to_send)
                 else:
-                    if the_socker == self.manager_socket:
-                        self.send_to_monitor_host(data)
-                        has_sent_once = True
-                    elif the_socker == self.monitor_socket:
-                        self.send_to_manager_host(data)
-
+                    # from one of the DFMS sockets
+                    data = the_socket.recv(BUFF_SIZE)
+                    tag = self._dfms_sock_tag_dict.get(the_socket, None)
+                    if (tag is None):
+                        raise Exception('Tag for dfms socket {0} is gone'.format(the_socket))
+                    else:
+                        send_to_monitor(self.monitor_socket, delimit.join([str(tag), data]))
+                        if (len(data) == 0):
+                            the_socket.close() #close itself, is this necessary?
+                            del self._dfms_sock_dict[tag]
+                            del self._dfms_sock_tag_dict[the_socket]
+                            inputlist.remove(the_socket)
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-d", "--dfms_host", action="store", type="string",
