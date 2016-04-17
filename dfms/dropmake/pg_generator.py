@@ -979,7 +979,15 @@ class MySarkarPGTP(PGT):
             in_out_part_map = dict()
             lengnow = len(node_list)
             outer_groups = set()
-            self._edge_cuts = self._scheduler.merge_partitions(self._num_parts)
+            if (self._num_parts > 1):
+                self._edge_cuts = self._scheduler.merge_partitions(self._num_parts)
+            else:
+                ppid = leng + len(groups) + 2
+                for part in parts:
+                    part.parent_id = ppid
+                self._edge_cuts = 0
+                for e in G.edges(data=True):
+                    self._edge_cuts += e[2].get('weight', 0)
 
             for part in parts:
                 gid = part.parent_id
