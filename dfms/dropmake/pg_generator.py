@@ -1202,6 +1202,7 @@ class LG():
         if (ssid is None):
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%dT%H:%M:%S')
+        self._session_id = ssid
         with open(json_path) as df:
             lg = json.load(df)
             self._done_dict = dict()
