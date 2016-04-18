@@ -70,14 +70,14 @@ def start_node_mgr(log_dir):
     Start node manager
     """
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-v', VERBOSITY, '-H', '0.0.0.0'])
+    '-vvv', '-H', '0.0.0.0'])
 
 def start_dim(node_list, log_dir):
     """
     Start data island manager
     """
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-v', VERBOSITY, '-H', '0.0.0.0'])
+    '-N', ','.join(node_list), '-vvv', '-H', '0.0.0.0'])
 
 def start_dfms_proxy(dfms_host, dfms_port, monitor_host, monitor_port):
     """
