@@ -48,16 +48,20 @@ class MonitorClient(object):
         self._sch_algo = sch_algo
 
     def get_avail_hosts(self):
+        return self._dc.nodes()
+        """
         ret = self._rc._request('/api', 'get')
         ret_dict = json.loads(ret)
         return ret_dict['hosts']
+        """
 
     def submit_single_graph(self, graph_id, algo='sarkar'):
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
-        node_list = self.get_avail_hosts()
+        #node_list = self.get_avail_hosts()
+        node_list = self._dc.nodes()
         pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
         pgtp.json
         pg_spec = pgtp.to_pg_spec(node_list)
@@ -66,12 +70,24 @@ class MonitorClient(object):
         print "session created"
         self._dc.append_graph(ssid, pg_spec)
         print "graph appended"
-        """
+
+        #ret = self._dc.deploy_session(ssid, completed_uids=[])
         ret = self._dc.deploy_session(ssid)
         print "session deployed"
         return ret
-        """
 
+    def produce_physical_graphs(self, graph_id, algo='sarkar', tgt="/tmp"):
+        lgn = lgnames[graph_id]
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+        lg = LG(fp)
+        drop_list = lg.unroll_to_tpl()
+        node_list = self._dc.nodes()
+        #node_list = ['10.128.0.11', '10.128.0.14', '10.128.0.15', '10.128.0.16']
+        pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+        pgtp.json
+        pg_spec = pgtp.to_pg_spec(node_list)
+        with open('/{1}/sar_{0}_pgspec.json'.format(lgn.split('.')[0], tgt), 'w') as f:
+            f.write(pg_spec)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -81,6 +97,7 @@ if __name__ == '__main__':
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
-    mc = MonitorClient('sdp-dfms.ddns.net', 8097)
-    #mc = MonitorClient('localhost', 8097)
-    mc.submit_single_graph(gid)
+    #mc = MonitorClient('sdp-dfms.ddns.net', 8097)
+    mc = MonitorClient('localhost', 8097)
+    #mc.submit_single_graph(gid)
+    mc.produce_physical_graphs(gid)
