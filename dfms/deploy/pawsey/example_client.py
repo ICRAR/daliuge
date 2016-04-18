@@ -72,10 +72,12 @@ class MonitorClient(object):
         print "graph appended"
 
         #ret = self._dc.deploy_session(ssid, completed_uids=[])
+        """
         ret = self._dc.deploy_session(ssid)
         print "session deployed"
         return ret
-
+        """
+        
     def produce_physical_graphs(self, graph_id, algo='sarkar', tgt="/tmp"):
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
@@ -97,7 +99,7 @@ if __name__ == '__main__':
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
-    #mc = MonitorClient('sdp-dfms.ddns.net', 8097)
-    mc = MonitorClient('localhost', 8097)
-    #mc.submit_single_graph(gid)
-    mc.produce_physical_graphs(gid)
+    mc = MonitorClient('sdp-dfms.ddns.net', 8097)
+    #mc = MonitorClient('localhost', 8097)
+    mc.submit_single_graph(gid)
+    #mc.produce_physical_graphs(gid)

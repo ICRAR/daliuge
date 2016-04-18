@@ -37,10 +37,11 @@ DFMS Monitor runs outside the Pawsey firewall
 --------------------------------------------------------------------------------
 """
 
-import socket, select
+import socket, select, time
 import time, os, struct
 import sys, logging
 from optparse import OptionParser
+from collections import defaultdict
 
 BUFF_SIZE = 16384
 outstanding_conn = 20
@@ -76,6 +77,9 @@ def recv_from_dfms(sock):
     length, = struct.unpack('!I', lengthbuf)
     return recvall(sock, length)
 
+def make_tag(sock):
+    return '{0}'.format(sock.__hash__())
+
 class DFMSMonitor:
     input_list = []
     data = {}
@@ -103,15 +107,19 @@ class DFMSMonitor:
         self.input_list.append(self.manager_listen_socket)
         self.input_list.append(self.monitor_listen_socket)
         self.manager_socket = None
+        count = 0
+        remove_dict = defaultdict(int)
         while 1:
             inputready, outputready, exceptready = select.select(self.input_list, [], [])
-            for the_socket in inputready:
+            to_be_removed = []
+            #logger.debug("len of inputready = {0}".format(len(inputready)))
+            for index, the_socket in enumerate(inputready):
+                #logger.debug("index = {0}".format(index))
                 if the_socket == self.manager_listen_socket or\
                    the_socket == self.monitor_listen_socket:
                     self.on_accept(the_socket)
                 else:
                     if (the_socket == self.manager_socket):
-                        #print "receiving from dfms_proxy"
                         data = recv_from_dfms(the_socket)
                         if (data is None):
                             logger.warning("Socket to dfms proxy is broken")
@@ -128,23 +136,29 @@ class DFMSMonitor:
                             tag = data[0:at]
                         client_sock = self.cl_sock_dict.get(tag, None)
                         if (client_sock is None):
-                            logger.error('Client socket for tag {0} is gone'.format(tag))
+                            logger.error('Client socket for tag {0} is gone: {2}/{1}'.format(tag, index, count))
                         else:
                             to_send = data[at + dl:]
                             if (len(to_send) == 0):
-                                client_sock.close()
-                                del self.cl_sock_dict[tag]
-                                self.input_list.remove(client_sock)
-                            else:
-                                client_sock.sendall(to_send)
+                                logger.debug("Length of data to be sent to client is zero: {1}/{0}".format(index, count))
+                            client_sock.sendall(to_send)
                     else: # from one of the client sockets
                         data = the_socket.recv(BUFF_SIZE)
-                        tag = str(the_socket.__hash__())
+                        tag = make_tag(the_socket)
                         send_to_dfms(self.manager_socket, delimit.join([tag, data]))
                         if (len(data) == 0):
-                            the_socket.close() #close itself, is this necessary?
-                            del self.cl_sock_dict[tag]
-                            self.input_list.remove(the_socket)
+                            remove_dict[tag] += 1
+                            logger.debug("Length of data to be sent to server is zero: {1}/{0}".format(index, count))
+                            to_be_removed.append((the_socket, tag))
+
+            for sock, tag in to_be_removed:
+                if (remove_dict[tag] > 4):
+                    sock.close()
+                    del self.cl_sock_dict[tag]
+                    self.input_list.remove(the_socket)
+                    del remove_dict[tag]
+                    logger.debug("Removed socket (tag {0}/{1}) from client socket dictionary\n".format(tag, count))
+            count += 1
 
     def on_accept(self, the_socket):
         clientsock, clientaddr = the_socket.accept()
@@ -158,8 +172,11 @@ class DFMSMonitor:
         # AND we have a connection to the master maanger
         elif self.manager_socket is not None:
             logger.info('receiving new socket from client')
-            tag = clientsock.__hash__()
+            tag = make_tag(clientsock)
+            if (self.cl_sock_dict.has_key(tag)):
+                raise Exception("duplicated tag {0}".format(tag))
             self.cl_sock_dict[str(tag)] = clientsock
+            logger.debug("Added socket (tag {0}) to client socket dictionary".format(tag))
             self.input_list.append(clientsock)
         else:
             logger.debug('receiving socket from client, but')

@@ -41,9 +41,10 @@ import select, struct
 import time
 import sys, logging
 from optparse import OptionParser
+from collections import defaultdict
 
 BUFF_SIZE = 16384
-conn_retry_timeout = 15
+conn_retry_timeout = 5
 conn_retry_count = 100
 delay = 0.0001
 default_dfms_monitor_port = 30000
@@ -111,10 +112,12 @@ class DFMSProxy:
     def loop(self):
         self.connect_monitor_host()
         inputlist = [self.monitor_socket]
+        remove_dict = defaultdict(int)
         while 1:
             time.sleep(delay)
             inputready, outputready, exceptready = select.select(
                     inputlist, [], [])
+            to_be_removed = []
             for the_socket in inputready:
                 if (the_socket == self.monitor_socket):
                     data = recv_from_monitor(the_socket)
@@ -143,12 +146,9 @@ class DFMSProxy:
 
                     to_send = data[at + dl:]
                     if (len(to_send) == 0):
-                        dfms_sock.close()
-                        del self._dfms_sock_dict[tag]
-                        del self._dfms_sock_tag_dict[dfms_sock]
-                        inputlist.remove(dfms_sock)
-                    else:
-                        dfms_sock.sendall(to_send)
+                        logger.debug("Length of data to be sent to DFMS is zero")
+
+                    dfms_sock.sendall(to_send)
                 else:
                     # from one of the DFMS sockets
                     data = the_socket.recv(BUFF_SIZE)
@@ -158,10 +158,19 @@ class DFMSProxy:
                     else:
                         send_to_monitor(self.monitor_socket, delimit.join([str(tag), data]))
                         if (len(data) == 0):
-                            the_socket.close() #close itself, is this necessary?
-                            del self._dfms_sock_dict[tag]
-                            del self._dfms_sock_tag_dict[the_socket]
-                            inputlist.remove(the_socket)
+                            remove_dict[tag] += 1
+                            logger.debug("Length of data sent to monitor is zero ")
+                            to_be_removed.append((the_socket, tag))
+
+            for sock, tag in to_be_removed:
+                if (remove_dict[tag] > 2):
+                    sock.close() #close itself, is this necessary?
+                    del self._dfms_sock_dict[tag]
+                    del self._dfms_sock_tag_dict[sock]
+                    inputlist.remove(sock)
+                    del remove_dict[tag]
+                    logger.debug("Removed socket (tag {0}) from client socket dictionary\n".format(tag))
+
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-d", "--dfms_host", action="store", type="string",
