@@ -22,13 +22,10 @@
 import httplib
 import json
 import logging
-import threading
 import urllib
 
 import bottle
-import tornado.httpserver
-import tornado.ioloop
-import tornado.wsgi
+from paste import httpserver
 
 from dfms import utils
 
@@ -42,7 +39,8 @@ class RestServer(object):
 
     def __init__(self, jsonified_errors=[500]):
 
-        self._ioloop = None
+        self._server = None
+        self._server_thr = None
         self.app = app = bottle.Bottle()
 
         # Error are returned as strings in a dictionary
@@ -62,32 +60,16 @@ class RestServer(object):
         # It seems it's not trivial to stop a running bottle server, so we use
         # tornado's IOLoop directly instead
         logger.info("Starting REST server on %s:%d" % (host, port))
-        self._ioloop = tornado.ioloop.IOLoop()
-        self._ioloop.make_current()
-        self._server = tornado.httpserver.HTTPServer(tornado.wsgi.WSGIContainer(self.app), io_loop=self._ioloop)
-        self._server.listen(port=port,address=host)
-        self._ioloop.start()
+
+        self._server = httpserver.serve(self.app, host=host, port=port, start_loop=False)
+        self._server.serve_forever()
 
     def stop(self, timeout=None):
-
-        if self._ioloop:
-
+        if self._server:
             logger.info("Stopping REST server")
-
+            self._server.server_close()
+            self._server = None
             self.app.close()
-
-            # Submit a callback to the IOLoop to stop itself and wait until it's
-            # done with it
-            ioloop_stopped = threading.Event()
-            def stop_ioloop():
-                self._ioloop.stop()
-                ioloop_stopped.set()
-
-            self._ioloop.add_callback(stop_ioloop)
-            if not ioloop_stopped.wait(timeout):
-                logger.warning("Timed out while waiting for the server to stop")
-
-            self._server.stop()
 
 class RestClientException(Exception):
     """

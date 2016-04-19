@@ -63,12 +63,12 @@ setup(
             "netifaces",
             "networkx",
             "paramiko",
+            "paste",
             "psutil",
             "Pyro4>=4.38",
             "pyswarm",
             "python-daemon",
             "scp",
-            "tornado",
             "zeroconf",
       ],
       # Keep alpha-sorted PLEASE!
