@@ -233,9 +233,7 @@ class AbstractDROP(EventFirer):
             self._expectedSize = int(kwargs.pop('expectedSize'))
 
         # All DROPs are precious unless stated otherwise; used for replication
-        self._precious = True
-        if kwargs.has_key('precious'):
-            self._precious = bool(kwargs.pop('precious'))
+        self._precious = self._getArg(kwargs, 'precious', True)
 
         # Sub-class initialization; mark ourselves as INITIALIZED after that
         self.initialize(**kwargs)
