@@ -449,12 +449,9 @@ class DataLifecycleManager(object):
         :param dfms.drop.AbstractDROP drop:
         '''
 
-        oid = drop.oid
-        uid = drop.uid
-
         # Check that the DROP is complete already
         if drop.status != DROPStates.COMPLETED:
-            raise Exception("DROP %s/%s not in COMPLETED state" % (oid, uid))
+            raise Exception("%r not in COMPLETED state" % (drop,))
 
         # Get the size of the DROP. This cannot currently be done in some of them,
         # like in the AbstractDROP
