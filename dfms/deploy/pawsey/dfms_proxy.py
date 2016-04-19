@@ -113,12 +113,17 @@ class DFMSProxy:
         self.connect_monitor_host()
         inputlist = [self.monitor_socket]
         remove_dict = defaultdict(int)
+        just_re_connected = False
         while 1:
+            if (just_re_connected):
+                just_re_connected = False
             time.sleep(delay)
             inputready, outputready, exceptready = select.select(
                     inputlist, [], [])
             to_be_removed = []
             for the_socket in inputready:
+                if (just_re_connected):
+                    continue
                 if (the_socket == self.monitor_socket):
                     data = recv_from_monitor(the_socket)
                     if (data is None):
@@ -129,6 +134,7 @@ class DFMSProxy:
                             self.monitor_socket = None
                         logger.info("Try reconnecting to dfms monitor...")
                         self.connect_monitor_host()
+                        just_re_connected = True
                         inputlist.append(self.monitor_socket)
                         continue
                     at = data.find(delimit)
