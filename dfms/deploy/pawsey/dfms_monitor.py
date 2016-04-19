@@ -110,7 +110,7 @@ class DFMSMonitor:
         count = 0
         remove_dict = defaultdict(int)
         while 1:
-            inputready, outputready, exceptready = select.select(self.input_list, [], [])
+            inputready, outputready, exceptready = select.select(self.input_list + self.cl_sock_dict.values(), [], [])
             to_be_removed = []
             #logger.debug("len of inputready = {0}".format(len(inputready)))
             for index, the_socket in enumerate(inputready):
@@ -135,11 +135,16 @@ class DFMSMonitor:
                         else:
                             tag = data[0:at]
                         client_sock = self.cl_sock_dict.get(tag, None)
+                        to_send = data[at + dl:]
+                        leng = len(to_send)
                         if (client_sock is None):
-                            logger.error('Client socket for tag {0} is gone: {2}/{1}'.format(tag, index, count))
+                            extra_err = ''
+                            if (leng > 0):
+                                extra_err = "But its data is not empty"
+                            err_msg = 'Client socket for tag {0} is gone: {2}/{1}. {3}'.format(tag, index, count, extra_err)
+                            logger.error(err_msg)
                         else:
-                            to_send = data[at + dl:]
-                            if (len(to_send) == 0):
+                            if (leng == 0):
                                 logger.debug("Length of data to be sent to client is zero: {1}/{0}".format(index, count))
                             client_sock.sendall(to_send)
                     else: # from one of the client sockets
@@ -155,7 +160,10 @@ class DFMSMonitor:
                 if (remove_dict[tag] > 4):
                     sock.close()
                     del self.cl_sock_dict[tag]
-                    self.input_list.remove(the_socket)
+                    #if (the_socket in self.input_list):
+                    #self.input_list.remove(the_socket)
+                    #else:
+                    #logger.error("Tag {0} is gone from the inputlist".format(tag))
                     del remove_dict[tag]
                     logger.debug("Removed socket (tag {0}/{1}) from client socket dictionary\n".format(tag, count))
             count += 1
@@ -177,7 +185,7 @@ class DFMSMonitor:
                 raise Exception("duplicated tag {0}".format(tag))
             self.cl_sock_dict[str(tag)] = clientsock
             logger.debug("Added socket (tag {0}) to client socket dictionary".format(tag))
-            self.input_list.append(clientsock)
+            #self.input_list.append(clientsock)
         else:
             logger.debug('receiving socket from client, but')
             logger.warning("Can't establish connection with master manager server.")
