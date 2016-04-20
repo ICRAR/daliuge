@@ -119,8 +119,7 @@ class DFMSProxy:
                 just_re_connected = False
             time.sleep(delay)
             inputready, outputready, exceptready = select.select(
-                    inputlist, [], [])
-            to_be_removed = []
+                    inputlist + self._dfms_sock_dict.values(), [], [])
             for the_socket in inputready:
                 if (just_re_connected):
                     continue
@@ -143,39 +142,36 @@ class DFMSProxy:
                         continue
                     else:
                         tag = data[0:at]
+                    logger.debug("Received {0} from Monitor".format(tag))
                     dfms_sock = self._dfms_sock_dict.get(tag, None)
-                    if (dfms_sock is None):
-                        dfms_sock = self.connect_to_host(self._dfms_host, self._dfms_port)
-                        self._dfms_sock_dict[tag] = dfms_sock
-                        self._dfms_sock_tag_dict[dfms_sock] = tag
-                        inputlist.append(dfms_sock)
-
                     to_send = data[at + dl:]
-                    if (len(to_send) == 0):
-                        logger.debug("Length of data to be sent to DFMS is zero")
-
-                    dfms_sock.sendall(to_send)
+                    if (dfms_sock is None):
+                        if (len(to_send) > 0):
+                            dfms_sock = self.connect_to_host(self._dfms_host, self._dfms_port)
+                            self._dfms_sock_dict[tag] = dfms_sock
+                            self._dfms_sock_tag_dict[dfms_sock] = tag
+                            send_to_dfms = True
+                        else:
+                            send_to_dfms = False
+                    else:
+                        send_to_dfms = True
+                    if (send_to_dfms):
+                        dfms_sock.sendall(to_send)
+                        logger.debug("Sent {0} to DFMS manager".format(tag))
                 else:
                     # from one of the DFMS sockets
                     data = the_socket.recv(BUFF_SIZE)
                     tag = self._dfms_sock_tag_dict.get(the_socket, None)
+                    logger.debug("Received {0} from DFMS manager".format(tag))
                     if (tag is None):
-                        raise Exception('Tag for dfms socket {0} is gone'.format(the_socket))
+                        logger.error('Tag for dfms socket {0} is gone'.format(the_socket))
                     else:
                         send_to_monitor(self.monitor_socket, delimit.join([str(tag), data]))
+                        logger.debug("Sent {0} to Monitor".format(tag))
                         if (len(data) == 0):
-                            remove_dict[tag] += 1
-                            logger.debug("Length of data sent to monitor is zero ")
-                            to_be_removed.append((the_socket, tag))
-
-            for sock, tag in to_be_removed:
-                if (remove_dict[tag] > 2):
-                    sock.close() #close itself, is this necessary?
-                    del self._dfms_sock_dict[tag]
-                    del self._dfms_sock_tag_dict[sock]
-                    inputlist.remove(sock)
-                    del remove_dict[tag]
-                    logger.debug("Removed socket (tag {0}) from client socket dictionary\n".format(tag))
+                            the_socket.close()
+                            del self._dfms_sock_dict[tag]
+                            del self._dfms_sock_tag_dict[the_socket]
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -189,12 +185,19 @@ if __name__ == '__main__':
                     dest="dfms_port", help = "The port to bind dfms drop manager", default=default_dfms_port)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
                     dest="monitor_port", help = "The port to bind dfms monitor", default=default_dfms_monitor_port)
+    parser.add_option("-b", "--debug",
+                  action="store_true", dest="debug", default=False,
+                  help="Whether to log debug info")
     (options, args) = parser.parse_args()
     if (None == options.dfms_host or None == options.monitor_host):
         parser.print_help()
         sys.exit(1)
+    if (options.debug):
+        ll = logging.DEBUG
+    else:
+        ll = logging.INFO
     logfile = "{0}/dfms_proxy.log".format(os.path.dirname(options.log_dir))
-    logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
+    logging.basicConfig(filename=logfile, level=ll, format=FORMAT)
     server = DFMSProxy(options.dfms_host, options.monitor_host, options.dfms_port, options.monitor_port)
     try:
         server.loop()

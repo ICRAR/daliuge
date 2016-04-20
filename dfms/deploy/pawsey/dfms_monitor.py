@@ -77,15 +77,11 @@ def recv_from_dfms(sock):
     length, = struct.unpack('!I', lengthbuf)
     return recvall(sock, length)
 
-def make_tag(sock):
-    return '{0}'.format(sock.__hash__())
-
 class DFMSMonitor:
     input_list = []
     data = {}
-    monitor_sock_queue = []
-    select_time_out = MAX_TIME_OUT
     cl_sock_dict = dict()
+    tag_dict = dict() # k - socket hash, v - socket tag
 
     def __init__(self, host='0.0.0.0', monitor_port=default_dfms_monitor_port, client_port=default_client_proxy_port):
         """
@@ -97,6 +93,15 @@ class DFMSMonitor:
         self.monitor_listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.setup_listening_socket(self.manager_listen_socket, host, monitor_port)
         self.setup_listening_socket(self.monitor_listen_socket, host, client_port)
+
+    def make_tag(self, sock, create=True):
+        hashcode = sock.__hash__()
+        if (create):
+            tag = '{0}_{1}'.format(hashcode, time.time() - 1E9)
+            self.tag_dict[hashcode] = tag
+        else:
+            tag = self.tag_dict.get(hashcode, None)
+        return tag
 
     def setup_listening_socket(self, the_socket, host, port):
         the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -111,10 +116,7 @@ class DFMSMonitor:
         remove_dict = defaultdict(int)
         while 1:
             inputready, outputready, exceptready = select.select(self.input_list + self.cl_sock_dict.values(), [], [])
-            to_be_removed = []
-            #logger.debug("len of inputready = {0}".format(len(inputready)))
             for index, the_socket in enumerate(inputready):
-                #logger.debug("index = {0}".format(index))
                 if the_socket == self.manager_listen_socket or\
                    the_socket == self.monitor_listen_socket:
                     self.on_accept(the_socket)
@@ -130,43 +132,29 @@ class DFMSMonitor:
                             continue
                         at = data.find(delimit)
                         if (at == -1):
-                            logger.error('No tag id from dfms_proxy, discard the message')
+                            logger.error('No tag id from DFMS proxy, discard the message')
                             continue
                         else:
                             tag = data[0:at]
+                        logger.debug("Received {0} from DFMS proxy".format(tag))
                         client_sock = self.cl_sock_dict.get(tag, None)
-                        to_send = data[at + dl:]
-                        leng = len(to_send)
                         if (client_sock is None):
-                            extra_err = ''
-                            if (leng > 0):
-                                extra_err = "But its data is not empty"
-                            err_msg = 'Client socket for tag {0} is gone: {2}/{1}. {3}'.format(tag, index, count, extra_err)
-                            logger.error(err_msg)
+                            pass
                         else:
-                            if (leng == 0):
-                                logger.debug("Length of data to be sent to client is zero: {1}/{0}".format(index, count))
+                            to_send = data[at + dl:]
+                            leng = len(to_send)
                             client_sock.sendall(to_send)
+                            logger.debug("Sent {0} to Client".format(tag))
                     else: # from one of the client sockets
                         data = the_socket.recv(BUFF_SIZE)
-                        tag = make_tag(the_socket)
+                        tag = self.make_tag(the_socket, create=False)
+                        logger.debug("Received {0} from Client".format(tag))
                         send_to_dfms(self.manager_socket, delimit.join([tag, data]))
+                        logger.debug("Sent {0} to DFMS proxy".format(tag))
                         if (len(data) == 0):
-                            remove_dict[tag] += 1
-                            logger.debug("Length of data to be sent to server is zero: {1}/{0}".format(index, count))
-                            to_be_removed.append((the_socket, tag))
-
-            for sock, tag in to_be_removed:
-                if (remove_dict[tag] > 4):
-                    sock.close()
-                    del self.cl_sock_dict[tag]
-                    #if (the_socket in self.input_list):
-                    #self.input_list.remove(the_socket)
-                    #else:
-                    #logger.error("Tag {0} is gone from the inputlist".format(tag))
-                    del remove_dict[tag]
-                    logger.debug("Removed socket (tag {0}/{1}) from client socket dictionary\n".format(tag, count))
-            count += 1
+                            del self.cl_sock_dict[tag]
+                            del self.tag_dict[the_socket.__hash__()]
+                            the_socket.close()
 
     def on_accept(self, the_socket):
         clientsock, clientaddr = the_socket.accept()
@@ -179,12 +167,12 @@ class DFMSMonitor:
         # else when we receive a connection from a localhost
         # AND we have a connection to the master maanger
         elif self.manager_socket is not None:
-            logger.info('receiving new socket from client')
-            tag = make_tag(clientsock)
+            tag = self.make_tag(clientsock)
+            #logger.info('receiving new socket {0} from client'.format(tag))
             if (self.cl_sock_dict.has_key(tag)):
                 raise Exception("duplicated tag {0}".format(tag))
             self.cl_sock_dict[str(tag)] = clientsock
-            logger.debug("Added socket (tag {0}) to client socket dictionary".format(tag))
+            logger.debug("Created Client socket {0}".format(tag))
             #self.input_list.append(clientsock)
         else:
             logger.debug('receiving socket from client, but')
@@ -205,9 +193,16 @@ if __name__ == '__main__':
                     default=default_client_proxy_port)
     parser.add_option("-l", "--log_dir", action="store", type="string",
                     dest="log_dir", help="log directory for dfms monitor server", default=os.path.realpath(__file__))
+    parser.add_option("-d", "--debug",
+                  action="store_true", dest="debug", default=False,
+                  help="Whether to log debug info")
     (options, args) = parser.parse_args()
     logfile = "{0}/dfms_monitor.log".format(os.path.dirname(options.log_dir))
-    logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
+    if (options.debug):
+        ll = logging.DEBUG
+    else:
+        ll = logging.INFO
+    logging.basicConfig(filename=logfile, level=ll, format=FORMAT)
     server = DFMSMonitor(options.host, options.monitor_port, options.client_port)
     try:
         server.main_loop()
