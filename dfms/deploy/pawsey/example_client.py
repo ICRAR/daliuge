@@ -55,7 +55,7 @@ class MonitorClient(object):
         return ret_dict['hosts']
         """
 
-    def submit_single_graph(self, graph_id, algo='sarkar'):
+    def submit_single_graph(self, graph_id, algo='sarkar', deploy=False):
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
         lg = LG(fp)
@@ -72,12 +72,11 @@ class MonitorClient(object):
         print "graph appended"
 
         #ret = self._dc.deploy_session(ssid, completed_uids=[])
-        """
-        ret = self._dc.deploy_session(ssid)
-        print "session deployed"
-        return ret
-        """
-        
+        if (deploy):
+            ret = self._dc.deploy_session(ssid)
+            print "session deployed"
+            return ret
+
     def produce_physical_graphs(self, graph_id, algo='sarkar', tgt="/tmp"):
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
@@ -92,14 +91,16 @@ class MonitorClient(object):
             f.write(pg_spec)
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print "Please provide graph id: (integer, 0 - 4)"
+    if len(sys.argv) < 3:
+        print "Please provide graph id: (integer, 0 - 4) and host IP"
         sys.exit(2)
     gid = int(sys.argv[1])
+    host = sys.argv[2]
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
-    mc = MonitorClient('sdp-dfms.ddns.net', 8097)
+    #mc = MonitorClient('sdp-dfms.ddns.net', 8097)
     #mc = MonitorClient('localhost', 8097)
-    mc.submit_single_graph(gid)
+    mc = MonitorClient(host, 8097)
+    mc.submit_single_graph(gid, deploy=True)
     #mc.produce_physical_graphs(gid)
