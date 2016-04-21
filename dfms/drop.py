@@ -1019,7 +1019,11 @@ class RDBMSDrop(AbstractDROP):
     def _cursor(self, conn):
         return contextlib.closing(conn.cursor())
 
-    def insert(self, vals={}):
+    def insert(self, vals):
+        """
+        Inserts the values contained in the ``vals`` dictionary into the
+        underlying table. The keys of ``vals`` are used as the column names.
+        """
         with self._connection() as c:
             with self._cursor(c) as cur:
 
@@ -1032,6 +1036,13 @@ class RDBMSDrop(AbstractDROP):
                 c.commit()
 
     def select(self, columns=None, condition=None, vals=()):
+        """
+        Returns the selected values from the table. Users can constrain the
+        result set by specifying a list of ``columns`` to be returned (otherwise
+        all table columns are returned) and a ``condition`` to be applied,
+        in which case a list of ``vals`` to be applied as query parameters can
+        also be given.
+        """
         with self._connection() as c:
             with self._cursor(c) as cur:
 
