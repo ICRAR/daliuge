@@ -552,6 +552,7 @@ class PGT(object):
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
         self._json_str = None
         self._oid_gid_map = dict()
+        self._num_parts_done = 0
 
     @property
     def drops(self):
@@ -607,10 +608,17 @@ class PGT(object):
         #     raise GraphException("The PGT has no partitions, but non-partitioned mapping is not yet implemented.")
         # else:
         #     pass
+        if (0 == self._num_parts_done):
+            raise GPGTException("The graph has not been partitioned yet")
         drop_list = self._drop_list + self._extra_drops
-        num_parts = self._num_parts
+        num_parts = self._num_parts_done
         if (len(node_list) < num_parts):
-            raise GPGTException("The node list is too small")
+            if (isinstance(self, MySarkarPGTP)):
+                self.merge_partitions(len(node_list))
+                num_parts = len(node_list)
+            else:
+                raise GPGTException("The node list {0} is smaller than {1}".format(len(node_list), num_parts))
+
         lm = self._oid_gid_map
         for drop in drop_list:
             oid = drop['oid']
@@ -870,7 +878,7 @@ class MetisPGTP(PGT):
                 gid = key_dict[int(node['key'])]
                 node['group'] = gid + start_k
                 self._oid_gid_map[node['oid']] = gid
-
+        self._num_parts_done = len(groups)
         for gid in groups:
             gn = dict()
             gn['key'] = start_k + gid
@@ -914,7 +922,6 @@ class MySarkarPGTP(PGT):
         """
         super(MySarkarPGTP, self).__init__(drop_list)
         self._num_parts = num_partitions
-        self._num_parts_done = 0
         self._max_dop = max_dop # max dop per partition
         self._par_label = par_label
         self._lpl = None # longest path
@@ -922,6 +929,7 @@ class MySarkarPGTP(PGT):
         self._merge_parts = merge_parts
         self._edge_cuts = None
         self._partitions = None
+        self._partition_merged = False
         self.init_scheduler()
 
     def init_scheduler(self):
@@ -944,6 +952,59 @@ class MySarkarPGTP(PGT):
 
     def to_partition_input(self, outf):
         pass
+
+    def merge_partitions(self, new_num_parts):
+        if (self._num_parts_done == 0):
+            raise GPGTException("Graph is not yet partitioned, cannot merge partitions")
+        if (self._num_parts_done <= new_num_parts or self._partition_merged):
+            return
+        G = self._scheduler._dag
+        node_list = self._node_list
+        inner_parts = self._inner_parts
+        parts = self._partitions
+        groups = self._groups
+        key_dict = self._grp_key_dict
+        in_out_part_map = dict()
+        lengnow = len(node_list)
+        outer_groups = set()
+        leng = len(self._drop_list)
+        if (new_num_parts > 1):
+            self._edge_cuts = self._scheduler.merge_partitions(new_num_parts)
+        else:
+            ppid = leng + len(groups) + 2
+            for part in parts:
+                part.parent_id = ppid
+            self._edge_cuts = 0
+            for e in G.edges(data=True):
+                self._edge_cuts += e[2].get('weight', 0)
+
+        for part in parts:
+            gid = part.parent_id
+            outer_groups.add(gid)
+            in_out_part_map[part.partition_id] = gid
+
+        for gid in outer_groups:
+            gn = dict()
+            gn['key'] = gid
+            gn['isGroup'] = True
+            gn['text'] = 'Out_{0}_{1}'.format(gid - lengnow, self._par_label)
+            node_list.append(gn)
+
+        for node in node_list:
+            ggid = node.get('group', None)
+            if (ggid is not None):
+                new_ggid = in_out_part_map[ggid]
+                self._oid_gid_map[node['oid']] = new_ggid
+
+        for ip in inner_parts:
+            ip['group'] = in_out_part_map[ip['key']]
+
+        for e in self.dag.edges(data=True):
+            # if u.inner_part.outer_part == v.inner_part.outer_part
+            if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
+                e[2]['weight'] = 0
+        self._lpl = DAGUtil.get_longest_path(self.dag, show_path=False)[1]
+        self._partition_merged = True
 
     def to_gojs_json(self, string_rep=True):
         self._num_parts_done, self._lpl, self._ptime, parts = self._scheduler.partition_dag()
@@ -975,51 +1036,18 @@ class MySarkarPGTP(PGT):
             node_list.append(gn)
             inner_parts.append(gn)
 
-        if (self._merge_parts):
-            in_out_part_map = dict()
-            lengnow = len(node_list)
-            outer_groups = set()
-            if (self._num_parts > 1):
-                self._edge_cuts = self._scheduler.merge_partitions(self._num_parts)
-            else:
-                ppid = leng + len(groups) + 2
-                for part in parts:
-                    part.parent_id = ppid
-                self._edge_cuts = 0
-                for e in G.edges(data=True):
-                    self._edge_cuts += e[2].get('weight', 0)
+        self._node_list = node_list
+        self._inner_parts = inner_parts
+        self._groups = groups
+        self._grp_key_dict = key_dict
 
-            for part in parts:
-                gid = part.parent_id
-                outer_groups.add(gid)
-                in_out_part_map[part.partition_id] = gid
-
-            for gid in outer_groups:
-                gn = dict()
-                gn['key'] = gid
-                gn['isGroup'] = True
-                gn['text'] = 'Out_{0}_{1}'.format(gid - lengnow, self._par_label)
-                node_list.append(gn)
-
-            for node in node_list:
-                ggid = node.get('group', None)
-                if (ggid is not None):
-                    new_ggid = in_out_part_map[ggid]
-                    self._oid_gid_map[node['oid']] = new_ggid
-
-            for ip in inner_parts:
-                ip['group'] = in_out_part_map[ip['key']]
-
-            for e in self.dag.edges(data=True):
-                # if u.inner_part.outer_part == v.inner_part.outer_part
-                if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
-                    e[2]['weight'] = 0
-            self._lpl = DAGUtil.get_longest_path(self.dag, show_path=False)[1]
-        else:
-            # get all the edge sum
-            self._edge_cuts = 0
-            for e in G.edges(data=True):
-                self._edge_cuts += e[2].get('weight', 0)
+        # if (self._merge_parts):
+        #     pass
+        # else:
+        # get all the edge sum
+        self._edge_cuts = 0
+        for e in G.edges(data=True):
+            self._edge_cuts += e[2].get('weight', 0)
 
         if (string_rep):
             return json.dumps(jsobj, indent=2)

@@ -513,6 +513,19 @@
     <button id="gantt_button" class="button" onclick="genGanttChart()">Produce Gantt Chart</button>
     <button id="schedule_button" class="button" onclick="genScheduleChart()">Produce Schedule Matrix</button>
   </div>
+    <div align="center">
+    <br/>
+    <br/>
+    <form action="/gen_pg" method="get" id="pg_form" target="_blank">
+      <!-- DFMS Manager host:<input type="text" name="dfms_mgr_host" value="sdp-dfms.ddns.net" size="40" style="font-size:16px;"> -->
+      DFMS Manager host:<input type="text" name="dfms_mgr_host" value="localhost" size="40" style="font-size:16px;">
+      <!-- DFMS Manager port:<input type="number" name="dfms_mgr_port" value="8097" style="font-size:16px;"> -->
+      DFMS Manager port:<input type="number" name="dfms_mgr_port" value="8001" style="font-size:16px;">
+      <br/>
+      <input type="submit" value="Generate &amp; Deploy Physical Graph" class="button">
+      <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
+    </form>
+  </div>
 </div>
 </body>
 </html>

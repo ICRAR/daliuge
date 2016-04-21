@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2015
+#    (c) UWA - The University of Western Australia, 2016
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -22,16 +22,18 @@
 #    chen.wu@icrar.org
 
 from optparse import OptionParser
-import os
+import os, datetime
 import sys
 import threading
 import traceback
 
-from bottle import route, run, request, get, static_file, template, redirect, response
+from bottle import route, run, request, get, static_file, template, redirect, response, HTTPResponse
 
 from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 from dfms.dropmake.pg_manager import PGManager
 from dfms.dropmake.scheduler import SchedulerException
+from dfms.manager.client import CompositeManagerClient
+from dfms.restutils import RestClientException
 
 
 #lg_dir = None
@@ -168,6 +170,51 @@ def get_schedule_mat():
     except GraphException, ge:
         response.status = "500 {0}".format(ge)
         return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
+
+@get('/gen_pg')
+def gen_pg():
+    """
+    RESTful interface to convert a PGT(P) into PG by mapping
+    PGT(P) onto a given set of available resources
+    """
+    pgt_id = request.query.get('pgt_id')
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if (pgtp is None):
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager"
+
+    mhost = request.query.get('dfms_mgr_host')
+    if (mhost is None):
+        response.status = 500
+        return "Must specify DFMS manager host"
+    try:
+        mport = int(request.query.get('dfms_mgr_port'))
+        mgr_client = CompositeManagerClient(host=mhost, port=mport, timeout=30)
+        # 1. get a list of nodes
+        node_list = mgr_client.nodes()
+        # 2. mapping PGTP to resources (node list)
+        pg_spec = pgtp.to_pg_spec(node_list)
+        dt = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f')
+        ssid = "{0}_{1}".format(pgt_id.split('.json')[0].split('_pgt')[0], dt)
+        mgr_client.create_session(ssid)
+        #print "session created"
+        mgr_client.append_graph(ssid, pg_spec)
+        #print "graph appended"
+        mgr_client.deploy_session(ssid)
+        #mgr_client.deploy_session(ssid, completed_uids=[])
+        #print "session deployed"
+        # 3. redirect to the master drop manager
+        redirect("http://{0}:{1}/session?sessionId={2}".format(mhost, mport, ssid))
+    except RestClientException, re:
+        response.status = 500
+        return "Fail to interact with DFMS Drop Manager: {0}".format(re)
+    except HTTPResponse, res:
+        raise res
+    except Exception, ex:
+        trace_msg = traceback.format_exc()
+        print trace_msg
+        response.status = 500
+        return "Fail to deploy physical graph: {0}".format(ex)
 
 @get('/gen_pgt')
 def gen_pgt():
