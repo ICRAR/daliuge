@@ -215,3 +215,47 @@ def isLocalhost(host):
     return host == 'localhost' or \
            host.startswith('127.0') or \
            host == socket.gethostname()
+
+def prepare_sql(sql, paramstyle, data=()):
+    """
+    Prepares the given SQL statement for proper execution depending on the
+    parameter style supported by the database driver. For this the SQL statement
+    must be written using the "{X}" or "{}" placeholders in place for each,
+    parameter which is a style-agnostic parameter notation.
+
+    This method returns a tuple containing the prepared SQL statement and the
+    values to be bound into the query as required by the driver.
+    """
+
+    n = len(data)
+    if not n:
+        return (sql, ())
+
+    # Depending on the different vendor, we need to write the parameters in
+    # the SQL calls using different notations. This method will produce an
+    # array containing all the parameter references in the SQL statement
+    # (and not its values!)
+    #
+    # qmark     Question mark style, e.g. ...WHERE name=?
+    # numeric   Numeric, positional style, e.g. ...WHERE name=:1
+    # named     Named style, e.g. ...WHERE name=:name
+    # format    ANSI C printf format codes, e.g. ...WHERE name=%s
+    # pyformat  Python extended format codes, e.g. ...WHERE name=%(name)s
+
+    logger.debug('Generating %d markers with paramstyle = %s', n, paramstyle)
+
+    if   paramstyle == 'qmark':    markers = ['?'             for i in xrange(n)]
+    elif paramstyle == 'numeric':  markers = [':%d'%(i)       for i in xrange(n)]
+    elif paramstyle == 'named':    markers = [':n%d'%(i)      for i in xrange(n)]
+    elif paramstyle == 'format':   markers = [':%s'           for i in xrange(n)]
+    elif paramstyle == 'pyformat': markers = [':%%(n%d)s'%(i) for i in xrange(n)]
+    else: raise Exception('Unknown paramstyle: %s' % (paramstyle))
+
+    sql = sql.format(*markers)
+
+    if paramstyle in ['format', 'pyformat']:
+        dataDict = {}
+        [dataDict.__setitem__('n%d'%(i), d) for i,d in enumerate(data)]
+        data = dataDict
+
+    return (sql, data)

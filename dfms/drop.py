@@ -26,8 +26,10 @@ Module containing the core DROP classes.
 from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
 import collections
+import contextlib
 import errno
 import heapq
+import importlib
 import logging
 import math
 import os
@@ -38,11 +40,10 @@ import threading
 import time
 
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
-    DROPLinkType, DROPPhases
+    DROPLinkType, DROPPhases, DROPStates
 from dfms.event import EventFirer
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-
-from ddap_protocol import DROPStates
+from dfms.utils import prepare_sql
 
 
 try:
@@ -984,6 +985,74 @@ class NullDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "null://"
+
+class RDBMSDrop(AbstractDROP):
+    """
+    A Drop that stores data in a table of a relational database
+    """
+
+    def initialize(self, **kwargs):
+        AbstractDROP.initialize(self, **kwargs)
+
+        if 'dbmodule' not in kwargs:
+            raise Exception('%r needs a "dbmodule" parameter' % (self,))
+        if 'dbtable' not in kwargs:
+            raise Exception('%r needs a "dbtable" parameter' % (self,))
+
+        # The DB-API 2.0 module
+        dbmodname = kwargs.pop('dbmodule')
+        self._db_drv = importlib.import_module(dbmodname)
+
+        # The table this Drop points at
+        self._db_table = kwargs.pop('dbtable')
+
+        # Optional connection parameters
+        self._db_params = self._getArg(kwargs, 'dbparams', {})
+
+    def getIO(self):
+        # This Drop cannot be accessed directly
+        return ErrorIO()
+
+    def _connection(self):
+        return contextlib.closing(self._db_drv.connect(**self._db_params))
+
+    def _cursor(self, conn):
+        return contextlib.closing(conn.cursor())
+
+    def insert(self, vals={}):
+        with self._connection() as c:
+            with self._cursor(c) as cur:
+
+                # vals is a dictionary, its keys are the column names and its
+                # values are the values to insert
+                sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
+                sql, vals = prepare_sql(sql, self._db_drv.paramstyle, vals.values())
+                logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
+                cur.execute(sql, vals)
+                c.commit()
+
+    def select(self, columns=None, condition=None, vals=()):
+        with self._connection() as c:
+            with self._cursor(c) as cur:
+
+                # Build up SQL with optional columns and conditions
+                columns = columns or ("*",)
+                sql = ["SELECT %s FROM %s" % (','.join(columns), self._db_table,)]
+                if condition:
+                    sql.append(" WHERE ")
+                    sql.append(condition)
+
+                # Go, go, go!
+                sql, vals = prepare_sql(''.join(sql), self._db_drv.paramstyle, vals)
+                logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
+                cur.execute(sql, vals)
+                if cur.description:
+                    return cur.fetchall()
+                return []
+
+    @property
+    def dataURL(self):
+        return "rdbms://%s/%s/%r" % (self._db_drv.__name__, self._db_table, self._db_params)
 
 class ContainerDROP(AbstractDROP):
     """
