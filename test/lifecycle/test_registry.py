@@ -20,9 +20,8 @@
 #    MA 02111-1307  USA
 #
 import os
+import sqlite3
 import unittest
-
-from Pyro4.naming_storage import sqlite3
 
 from dfms.drop import InMemoryDROP
 from dfms.lifecycle.registry import RDBMSRegistry
@@ -34,7 +33,7 @@ class TestRDBMSRegistry(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        conn = sqlite3.connect(DBFILE)
+        conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
         cur.execute('CREATE TABLE dfms_drop(oid varchar(64) PRIMARY KEY, phase integer)');
         cur.execute('CREATE TABLE dfms_dropinstance(uid varchar(64) PRIMARY KEY, oid varchar(64), dataRef varchar(128))');
@@ -49,7 +48,7 @@ class TestRDBMSRegistry(unittest.TestCase):
         registry = RDBMSRegistry('sqlite3', DBFILE)
         registry.addDrop(a)
 
-        conn = sqlite3.connect(DBFILE)
+        conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
         cur.execute('SELECT oid FROM dfms_drop');
         r = cur.fetchone()
@@ -77,7 +76,7 @@ class TestRDBMSRegistry(unittest.TestCase):
         self.assertEquals('a2', uids[1])
 
         # Check accessing the database separately
-        conn = sqlite3.connect(DBFILE)
+        conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
         cur.execute("SELECT uid FROM dfms_dropinstance WHERE oid = 'a'");
         rows = cur.fetchall()
