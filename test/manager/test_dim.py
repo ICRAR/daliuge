@@ -137,8 +137,13 @@ class TestDIM(unittest.TestCase):
         self.assertEquals(data, droputils.allDropContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
+        self._test_deployGraphWithCompletedDOs('lalo')
 
-        sessionId = 'lalo'
+    def test_deployGraphWithCompletedDOs_sessionIdWithSpaces(self):
+        self._test_deployGraphWithCompletedDOs('lala with spaces')
+
+    def _test_deployGraphWithCompletedDOs(self, sessionId):
+
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
