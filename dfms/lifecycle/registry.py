@@ -37,6 +37,7 @@ import logging
 import time
 
 from dfms.ddap_protocol import DROPPhases
+from dfms.utils import prepare_sql
 
 
 logger = logging.getLogger(__name__)
@@ -204,55 +205,27 @@ class RDBMSRegistry(Registry):
 
             self._conn.close()
 
-    def _paramNames(self, howMany):
-        # Depending on the different vendor, we need to write the parameters in
-        # the SQL calls using different notations. This method will produce an
-        # array containing all the parameter references in the SQL statement
-        # (and not its values!)
-        #
-        # qmark     Question mark style, e.g. ...WHERE name=?
-        # numeric   Numeric, positional style, e.g. ...WHERE name=:1
-        # named     Named style, e.g. ...WHERE name=:name
-        # format    ANSI C printf format codes, e.g. ...WHERE name=%s
-        # pyformat  Python extended format codes, e.g. ...WHERE name=%(name)s
-        #
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Generating %d parameters with paramstyle = %s' % (howMany, self._paramstyle))
-        if self._paramstyle == 'qmark':    return ['?'             for i in xrange(howMany)]
-        if self._paramstyle == 'numeric':  return [':%d'%(i)       for i in xrange(howMany)]
-        if self._paramstyle == 'named':    return [':n%d'%(i)      for i in xrange(howMany)]
-        if self._paramstyle == 'format':   return [':%s'           for i in xrange(howMany)]
-        if self._paramstyle == 'pyformat': return [':%%(n%d)s'%(i) for i in xrange(howMany)]
-        raise Exception('Unknown paramstyle: %s' % (self._paramstyle))
-
-    def _bindD(self, *data):
-        if self._paramstyle in ['format', 'pyformat']:
-            dataDict = {}
-            [dataDict.__setitem__('n%d'%(i), d) for i,d in enumerate(data)]
-            return dataDict
-        else:
-            return data
+    def execute(self, cursor, sql, values=()):
+        sql, values = prepare_sql(sql, self._paramstyle, values)
+        cursor.execute(sql, values)
 
     def addDrop(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute("INSERT INTO dfms_drop (oid, phase) VALUES ({0},{1})".format(*self._paramNames(2)),
-                        self._bindD(drop.oid, drop.phase))
+            self.execute(cur, "INSERT INTO dfms_drop (oid, phase) VALUES ({0},{1})", (drop.oid, drop.phase))
             self.addDropInstance(drop, conn)
             cur.close()
 
     def addDropInstance(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('INSERT INTO dfms_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})'.format(*self._paramNames(3)),
-                        self._bindD(drop.oid, drop.uid, drop.dataURL))
+            self.execute(cur, 'INSERT INTO dfms_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})', (drop.oid, drop.uid, drop.dataURL))
             cur.close()
 
     def getDropUids(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('SELECT uid FROM dfms_dropinstance WHERE oid = {0}'.format(*self._paramNames(1)),
-                        self._bindD(drop.oid))
+            self.execute(cur, 'SELECT uid FROM dfms_dropinstance WHERE oid = {0}', (drop.oid,))
             rows = cur.fetchall()
             cur.close()
             return [r[0] for r in rows]
@@ -260,22 +233,19 @@ class RDBMSRegistry(Registry):
     def setDropPhase(self, drop, phase, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('UPDATE dfms_drop SET phase = {0} WHERE oid = {1}'.format(*self._paramNames(2)),
-                        self._bindD(drop.oid, drop.phase))
+            self.execute(cur, 'UPDATE dfms_drop SET phase = {0} WHERE oid = {1}', (drop.oid, drop.phase))
             cur.close()
 
     def recordNewAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('INSERT INTO dfms_dropaccesstime (oid, accessTime) VALUES ({0},{1})'.format(*self._paramNames(2)),
-                        self._bindD(oid, self._dbmod.TimestampFromTicks(time.time())))
+            self.execute(cur, 'INSERT INTO dfms_dropaccesstime (oid, accessTime) VALUES ({0},{1})', (oid, self._dbmod.TimestampFromTicks(time.time())))
             cur.close()
 
     def getLastAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            cur.execute('SELECT accessTime FROM dfms_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1'.format(*self._paramNames(1)),
-                        self._bindD(oid))
+            self.execute(cur, 'SELECT accessTime FROM dfms_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1', (oid,))
             row = cur.fetchone()
             cur.close()
             if row is None:

@@ -21,16 +21,18 @@
 #
 
 from cStringIO import StringIO
+import contextlib
 import os, unittest
 import random
 import shutil
+import sqlite3
 import tempfile
 
 from dfms import droputils
+from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
-    DirectoryContainer, ContainerDROP, InputFiredAppDROP
-from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
+    DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dfms.droputils import DROPWaiterCtx
 
 
@@ -752,6 +754,28 @@ class TestDROP(unittest.TestCase):
         a.execute()
         self.assertEquals(DROPStates.COMPLETED, a.status)
         self.assertEquals(AppDROPStates.FINISHED, a.execStatus)
+
+    def test_rdbms_drop(self):
+
+        dbfile = 'test_rdbms_drop.db'
+
+        with contextlib.closing(sqlite3.connect(dbfile)) as conn:  # @UndefinedVariable
+            with contextlib.closing(conn.cursor()) as cur:
+                cur.execute('CREATE TABLE super_mega_table(a_string varchar(64) PRIMARY KEY, an_integer integer)');
+
+        try:
+            a = RDBMSDrop('a', 'a', dbmodule='sqlite3', dbtable='super_mega_table', dbparams={'database': dbfile})
+            a.insert({'a_string': 'hello', 'an_integer': 0})
+            a.insert({'a_string': 'hello1', 'an_integer': 1})
+
+            res = a.select(columns=("an_integer",))
+            self.assertEquals(2, len(res))
+
+            res = a.select(columns=("an_integer",), condition="an_integer < 1")
+            self.assertEquals(1, len(res))
+            self.assertEquals(0, res[0][0])
+        finally:
+            os.unlink(dbfile)
 
 if __name__ == '__main__':
     unittest.main()
