@@ -113,6 +113,8 @@ class CompositeManager(DROPManager):
     def _checkDM(self):
         while True:
             for host in self._dmHosts:
+                if self._dmCheckerEvt.is_set():
+                    break
                 try:
                     self.ensureDM(host, timeout=self._dmCheckTimeout)
                 except:
