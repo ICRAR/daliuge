@@ -308,7 +308,7 @@ class DataLifecycleManager(object):
             if not self._disappeared(drop):
                 continue
 
-            toRemove.append(drop)
+            toRemove.append(drop.uid)
             logger.warning('%r has disappeared', drop)
 
             # Check if it's replicated
@@ -321,13 +321,14 @@ class DataLifecycleManager(object):
                 # Replicas haven't disappeared as well, right?
                 replicas = []
                 for uid in uids:
-                    if uid == drop.uid: pass
+                    if uid == drop.uid:
+                        continue
                     siblingDrop = self._drops[uid]
                     if not self._disappeared(siblingDrop):
                         replicas.append(siblingDrop)
                     else:
                         logger.warning('%r (replicated from %r) has disappeared', siblingDrop, drop)
-                        toRemove.append(siblingDrop)
+                        toRemove.append(siblingDrop.uid)
 
                 if len(replicas) > 1:
                     logger.info("%r has still more than one replica, no action needed", drop)
@@ -343,8 +344,8 @@ class DataLifecycleManager(object):
                 self._reg.setDropPhase(drop, drop.phase)
 
         # All those objects identified as lost have to go now
-        for drop in toRemove:
-            del self._drops[drop.uid]
+        for uid in toRemove:
+            del self._drops[uid]
 
     def moveDropsAround(self):
         '''
