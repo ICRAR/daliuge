@@ -387,11 +387,11 @@ class CompositeManager(DROPManager):
                     setattr(rhsDrop, relPropName, lhsDrop)
                     lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
 
-                # Eagerly release the pyro connection used by this Drop proxy
+                # Eagerly release the pyro connection used by these Drop proxies
                 # See comment on self._triggerDrop
                 rhsDrop._pyroRelease()
                 lhsDrop._pyroRelease()
-            except Exception:
+            except:
                 logger.exception("Error while establishing link %r" % (rel,))
                 raise
 

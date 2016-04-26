@@ -31,14 +31,15 @@ import types
 
 import Pyro4
 
+from dfms import utils
 from dfms.ddap_protocol import DROPStates
-from dfms.drop import AppDROP, FileDROP, DirectoryContainer
+from dfms.drop import AppDROP
 from dfms.io import IOForURL, OpenMode
 
 
 logger = logging.getLogger(__name__)
 
-class EvtConsumer(object):
+class EvtConsumer(utils.noopctx):
     '''
     Small utility class that sets the internal flag of the given threading.Event
     object when consuming a DROP. Used throughout the tests as a barrier to wait

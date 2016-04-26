@@ -111,4 +111,5 @@ class EventFirer(object):
             setattr(e, k, v)
 
         for l in listeners:
-            l.handleEvent(e)
+            with l:
+                l.handleEvent(e)

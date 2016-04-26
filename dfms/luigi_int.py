@@ -30,14 +30,14 @@ import time
 
 import luigi
 
-from dfms import droputils
+from dfms import droputils, utils
 from dfms.ddap_protocol import ExecutionMode, DROPStates
 from dfms.drop import AbstractDROP, BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)
 
-class RunDROPTask(luigi.Task):
+class RunDROPTask(luigi.Task, utils.noopctx):
     """
     A Luigi Task that, for a given DROP, either simply monitors it or
     actually executes it.

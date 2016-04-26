@@ -43,7 +43,7 @@ from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates
 from dfms.event import EventFirer
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-from dfms.utils import prepare_sql
+from dfms.utils import prepare_sql, noopctx
 
 
 try:
@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 #===============================================================================
 
 
-class AbstractDROP(EventFirer):
+class AbstractDROP(EventFirer, noopctx):
     """
     Base class for all DROP implementations.
 
@@ -1221,11 +1221,12 @@ class AppDROP(ContainerDROP):
         self._execStatus = AppDROPStates.NOT_RUN
 
     def addInput(self, inputDrop, back=True):
-        if inputDrop not in self._inputs.values():
-            uid = inputDrop.uid
-            self._inputs[uid] = inputDrop
-            if back:
-                inputDrop.addConsumer(self, False)
+        with inputDrop:
+            if inputDrop not in self._inputs.values():
+                uid = inputDrop.uid
+                self._inputs[uid] = inputDrop
+                if back:
+                    inputDrop.addConsumer(self, False)
 
     @property
     def inputs(self):
@@ -1235,18 +1236,19 @@ class AppDROP(ContainerDROP):
         return self._inputs.values()
 
     def addOutput(self, outputDrop, back=True):
-        if outputDrop is self:
-            raise Exception('Cannot add an AppConsumer as its own output')
-        if outputDrop not in self._outputs.values():
-            uid = outputDrop.uid
-            self._outputs[uid] = outputDrop
+        with outputDrop:
+            if outputDrop is self:
+                raise Exception('Cannot add an AppConsumer as its own output')
+            if outputDrop not in self._outputs.values():
+                uid = outputDrop.uid
+                self._outputs[uid] = outputDrop
 
-            if back:
-                outputDrop.addProducer(self, False)
+                if back:
+                    outputDrop.addProducer(self, False)
 
-            # Subscribe the output DROP to events sent by this AppDROP when it
-            # finishes its execution.
-            self.subscribe(outputDrop, 'producerFinished')
+                # Subscribe the output DROP to events sent by this AppDROP when it
+                # finishes its execution.
+                self.subscribe(outputDrop, 'producerFinished')
 
     @property
     def outputs(self):
