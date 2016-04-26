@@ -5,4 +5,4 @@ dir=$(dirname $0)
 cd $dir
 
 # Go!
-docker build -t dfms/centos7:latest .
+docker build --no-cache -t dfms/centos7:latest .
