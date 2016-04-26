@@ -30,6 +30,7 @@ import os
 import signal
 import sys
 import threading
+import time
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
@@ -164,6 +165,7 @@ def setupLogging(opts):
     # Let's configure logging now
     # Daemons don't output stuff to the stdout
     fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
+    fmt.converter = time.gmtime
     if not opts.daemon:
         streamHdlr = logging.StreamHandler(sys.stdout)
         streamHdlr.setFormatter(fmt)
