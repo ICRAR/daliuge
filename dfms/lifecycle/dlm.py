@@ -149,8 +149,7 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
         dlm = self._dlm
         p = self._period
         while True:
-            ev.wait(p)
-            if ev.is_set():
+            if ev.wait(p):
                 break
             self.doTask(dlm)
 
@@ -304,43 +303,44 @@ class DataLifecycleManager(object):
 
         toRemove = []
         for drop in self._drops.values():
-            if self._disappeared(drop):
 
-                toRemove.append(drop)
-                if logger.isEnabledFor(logging.WARNING):
-                    logger.warning('DROP %s/%s has disappeared' % (drop.oid, drop.uid))
+            # We only care about disappeared drops
+            if not self._disappeared(drop):
+                continue
 
-                # Check if it's replicated
-                uids = self._reg.getDropUids(drop)
-                definitelyLost = False
-                if len(uids) <= 1:
-                    definitelyLost = True
-                else:
+            toRemove.append(drop)
+            logger.warning('%r has disappeared', drop)
 
-                    # Replicas haven't disappeared as well, right?
-                    replicas = []
-                    for uid in uids:
-                        if uid == drop.uid: pass
-                        siblingDrop = self._drops[uid]
-                        if not self._disappeared(siblingDrop):
-                            replicas.append(siblingDrop)
-                        else:
-                            if logger.isEnabledFor(logging.WARNING):
-                                logger.warning('DROP %s/%s (replicated from %s/%s) has disappeared' % (siblingDrop.oid, siblingDrop.uid, drop.oid, drop.uid))
-                            toRemove.append(siblingDrop)
+            # Check if it's replicated
+            uids = self._reg.getDropUids(drop)
+            definitelyLost = False
+            if not uids:
+                definitelyLost = True
+            else:
 
-                    if len(replicas) > 1:
-                        logger.info("DROP %s/%s has still more than one replica, no action needed")
-                    elif len(replicas) == 1:
-                        logger.info("Only one replica left for DROP %s/%s, will create a new one")
-                        self.replicateDrop(replicas[0])
+                # Replicas haven't disappeared as well, right?
+                replicas = []
+                for uid in uids:
+                    if uid == drop.uid: pass
+                    siblingDrop = self._drops[uid]
+                    if not self._disappeared(siblingDrop):
+                        replicas.append(siblingDrop)
                     else:
-                        definitelyLost = True
+                        logger.warning('%r (replicated from %r) has disappeared', siblingDrop, drop)
+                        toRemove.append(siblingDrop)
 
-                if definitelyLost:
-                    logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (drop.oid, drop.uid))
-                    drop.phase = DROPPhases.LOST
-                    self._reg.setDropPhase(drop, drop.phase)
+                if len(replicas) > 1:
+                    logger.info("%r has still more than one replica, no action needed", drop)
+                elif len(replicas) == 1:
+                    logger.info("Only one replica left for DROP %r, will create a new one", drop)
+                    self.replicateDrop(replicas[0])
+                else:
+                    definitelyLost = True
+
+            if definitelyLost:
+                logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (drop.oid, drop.uid))
+                drop.phase = DROPPhases.LOST
+                self._reg.setDropPhase(drop, drop.phase)
 
         # All those objects identified as lost have to go now
         for drop in toRemove:
