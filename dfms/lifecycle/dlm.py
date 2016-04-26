@@ -124,9 +124,9 @@ import string
 import threading
 import time
 
-from dfms import droputils
-from dfms.drop import ContainerDROP
+from dfms import droputils, utils
 from dfms.ddap_protocol import DROPStates, DROPPhases, AppDROPStates
+from dfms.drop import ContainerDROP
 import hsm.manager
 import registry
 
@@ -188,11 +188,24 @@ class DROPMover(DataLifecycleManagerBackgroundTask):
     def doTask(self, dlm):
         dlm.moveDropsAround()
 
+class DropEventListener(utils.noopctx):
+
+    def __init__(self, dlm):
+        self._dlm = dlm
+
+    def handleEvent(self, event):
+        if event.type == 'open':
+            self._dlm.handleOpenedDrop(event.oid, event.uid)
+        elif event.type == 'status' and event.status == DROPStates.COMPLETED:
+            self._dlm.handleCompletedDrop(event.uid)
+
 class DataLifecycleManager(object):
 
     def __init__(self, **kwargs):
         self._hsm = hsm.manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
+        self._listener = DropEventListener(self)
+
         # TODO: When iteration over the values of _drops we always do _drops.values()
         # instead of _drops.itervalues() to get a full, thread-safe copy of the
         # dictionary values. Maybe there's a better approach for thread-safety
@@ -402,7 +415,7 @@ class DataLifecycleManager(object):
         # Keep track of the DROP and subscribe to the events it generates
         self._drops[drop.uid] = drop
         drop.phase = DROPPhases.GAS
-        drop.subscribe(self)
+        drop.subscribe(self._listener)
         self._reg.addDrop(drop)
 
         # TODO: We currently use a background thread that scans
@@ -412,34 +425,25 @@ class DataLifecycleManager(object):
         #       perform this task, like using threading.Timers (probably not) or
         #       any other that doesn't mean looping over all DROPs
 
-    def handleEvent(self, event):
-        if event.type == 'open':
-            self.handleOpenedDrop(event.oid, event.uid)
-        elif event.type == 'status' and event.status == DROPStates.COMPLETED:
-            self.handleCompletedDrop(self._drops[event.uid])
-        else:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Received event: ' + str(event.__dict__))
-
     def handleOpenedDrop(self, oid, uid):
         drop = self._drops[uid]
         if drop.status == DROPStates.COMPLETED:
             self._reg.recordNewAccess(oid)
 
-    def handleCompletedDrop(self, drop):
+    def handleCompletedDrop(self, uid):
         '''
-        :param dfms.drop.AbstractDROP drop:
+        :param string uid:
         '''
         # Check the kind of storage used by this DROP. If it's already persisted
         # in a persistent storage media we don't need to save it again
-        oid = drop.oid
-        uid = drop.uid
+
+        drop = self._drops[uid]
         if drop.precious and self.isReplicable(drop):
-            logger.debug("Replicating DROP %s/%s because it's precious" % (oid, uid))
+            logger.debug("Replicating %r because it's precious", drop)
             try:
                 self.replicateDrop(drop)
             except:
-                logger.exception("Problem while replicating DROP %s/%s" % (oid, uid))
+                logger.exception("Problem while replicating %r", drop)
 
     def isReplicable(self, drop):
         return not isinstance(drop, ContainerDROP)
