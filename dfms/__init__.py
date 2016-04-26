@@ -28,7 +28,8 @@ import logging
 
 def _setupPyro():
     """
-    Sets up Pyro to add support for sending Event objects through.
+    Sets up Pyro to add support for sending Event objects through and to set a
+    finite default call timeout.
 
     Pyro >= 4.20 uses the 'serpent' serializer by default. In this serializer
     "most custom classes aren't dealt with automatically" [1], including our
@@ -71,6 +72,10 @@ def _setupPyro():
     # class properly: using the pickle serializer
     #Pyro4.config.SERIALIZER = 'pickle'
     #Pyro4.config.SERIALIZERS_ACCEPTED = ['pickle']
+
+    # A final thing: we use a default timeout of 60 [s], which should be more
+    # than enough
+    Pyro4.config.COMMTIMEOUT = 60
 
 _setupPyro()
 
