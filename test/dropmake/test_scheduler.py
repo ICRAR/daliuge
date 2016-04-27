@@ -19,12 +19,17 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest, pkg_resources
+import unittest
+
+import pkg_resources
+import psutil
 
 from dfms.dropmake.pg_generator import LG
 from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
 Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
 
+
+not_chen = psutil.Process().username() not in ('chen', 'cwu')
 
 class TestScheduler(unittest.TestCase):
 
@@ -101,6 +106,7 @@ class TestScheduler(unittest.TestCase):
             mys.merge_partitions(tgt_partnum[j])
             #logger.info( "-" * lll)
 
+    @unittest.skipIf(not_chen, "Skipping because they take too long. Chen to eventually shorten them")
     def test_pso_scheduler(self):
         lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json',
         'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json',
@@ -120,6 +126,7 @@ class TestScheduler(unittest.TestCase):
             num_parts_done, lpl, ptime, parts = psps02.partition_dag()
             #print "PSO (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
 
+    @unittest.skipIf(not_chen, "Skipping because they take too long. Chen to eventually shorten them")
     def test_sa_scheduler(self):
         lgnames = ['lofar_std.json']
         tgt_deadline = [450]
@@ -136,6 +143,7 @@ class TestScheduler(unittest.TestCase):
             num_parts_done, lpl, ptime, parts = pssa02.partition_dag()
             #print "SA (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
 
+    @unittest.skipIf(not_chen, "Skipping because they take too long. Chen to eventually shorten them")
     def test_mcts_scheduler(self):
         lgnames = ['lofar_std.json']
         tgt_deadline = [450]
