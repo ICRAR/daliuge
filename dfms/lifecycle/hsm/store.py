@@ -95,7 +95,7 @@ class FileSystemStore(AbstractStore):
     device fully. It creates FileDROPs that live directly in the root of
     the filesystem, and monitors the usage of the filesystem.
     """
-    def __init__(self, mountPoint):
+    def __init__(self, mountPoint, savingDir=None):
         super(FileSystemStore, self).__init__()
 
         if not mountPoint:
@@ -108,6 +108,9 @@ class FileSystemStore(AbstractStore):
             raise Exception("'" + mountPoint + "' is not a mount point")
 
         self._mountPoint = mountPoint
+        self._savingDir = savingDir or mountPoint
+        if not os.path.exists(self._savingDir):
+            os.mkdir(self._savingDir)
         self.updateSpaces()
 
     def _updateSpaces(self):
@@ -123,7 +126,7 @@ class FileSystemStore(AbstractStore):
         self._setAvailableSpace(availableSpace)
 
     def createDrop(self, oid, uid, **kwargs):
-        kwargs['dirname'] = self._mountPoint
+        kwargs['dirname'] = self._savingDir
         return FileDROP(oid, uid, **kwargs)
 
     def __str__(self):
