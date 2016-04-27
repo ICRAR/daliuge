@@ -157,7 +157,11 @@ class ManagerRestServer(RestServer):
         tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl, sessionId=sessionId, selectedNode=selectedNode, serverUrl=serverUrl)
+        return bottle.template(tpl,
+                               sessionId=sessionId,
+                               selectedNode=selectedNode,
+                               serverUrl=serverUrl,
+                               dmType=self.dm.__class__.__name__)
 
 class NMRestServer(ManagerRestServer):
     """

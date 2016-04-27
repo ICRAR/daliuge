@@ -15,15 +15,12 @@
 <body>
 <div class="container">
 
-	<div id="zoom-notice" class="alert alert-info">
-		<p>
-		<span class="glyphicon glyphicon-zoom-in"></span> Zooming into {{selectedNode}}
-		<a href="?sessionId={{sessionId}}">Zoom out</a>
-		</p>
-	</div>
-
-	<h1>Session {{sessionId}}</h1>
-	<h2>Status: <span id="session-status"></span></h2>
+	<ol class="breadcrumb">
+		<li><a href="/">{{dmType}}</a></li>
+		<li><a id="local-manager-a"></a></li>
+		<li>Session: {{sessionId}}</li>
+	</ol>
+	<h4>Status: <span id="session-status"></span></h4>
 
 	<p>Orientation: <span><input class="direction" type="radio" name="direction" value="LR" id="lr"/><label for="lr">Left to Right</label></span>
 	<span><input class="direction" type="radio" name="direction" value="TB" id="tb"/><label for="tb">Top to Bottom</label></span></p>
@@ -39,8 +36,11 @@
 		selectedNode = null;
 	}
 
-	if( !selectedNode ) {
-		d3.select('#zoom-notice').remove()
+	if( selectedNode ) {
+		d3.select('#local-manager-a').attr('href', '/?node=' + selectedNode).text("Node: " + selectedNode);
+	}
+	else {
+		d3.select('#local-manager-a').node().parentNode.remove();
 	}
 
 	var serverUrl = '{{!serverUrl}}';
