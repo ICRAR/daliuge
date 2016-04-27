@@ -29,11 +29,15 @@ create sessions, append graphs, and deploy sessions to execute the converted
 physical graph in Pawsey
 """
 
-import pkg_resources, json, sys
+import sys
 
-from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
-from dfms.restutils import RestClient
+import pkg_resources
+
+from dfms import droputils
+from dfms.dropmake.pg_generator import LG, MySarkarPGTP
 from dfms.manager.client import DataIslandManagerClient
+from dfms.restutils import RestClient
+
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
 'chiles_two_dev1.json', 'chiles_simple.json']
@@ -64,16 +68,17 @@ class MonitorClient(object):
         node_list = self._dc.nodes()
         pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
         pgtp.json
-        pg_spec = pgtp.to_pg_spec(node_list)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
+        completed_uids = [x['oid'] for x in droputils.get_roots(pg_spec)]
+
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
         self._dc.create_session(ssid)
         print "session created"
         self._dc.append_graph(ssid, pg_spec)
         print "graph appended"
 
-        #ret = self._dc.deploy_session(ssid, completed_uids=[])
         if (deploy):
-            ret = self._dc.deploy_session(ssid)
+            ret = self._dc.deploy_session(ssid, completed_uids=completed_uids)
             print "session deployed"
             return ret
 
@@ -99,8 +104,5 @@ if __name__ == '__main__':
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
-    #mc = MonitorClient('sdp-dfms.ddns.net', 8097)
-    #mc = MonitorClient('localhost', 8097)
     mc = MonitorClient(host, 8097)
     mc.submit_single_graph(gid, deploy=True)
-    #mc.produce_physical_graphs(gid)
