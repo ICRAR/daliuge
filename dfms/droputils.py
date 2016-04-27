@@ -420,3 +420,48 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
         logger.debug("Command after data URL placeholder replacement is: %s" % (cmd))
 
     return cmd
+
+def get_roots(pg_spec):
+    """
+    Returns a list with the dropspecs that are the roots of the given physical
+    graph specification.
+    """
+
+    # Find dropspecs with no links to the previous drops
+    candidates = []
+    for dropspec in pg_spec:
+        if dropspec['type'] == 'app' and \
+           (('inputs' in dropspec and dropspec['inputs']) or \
+            ('streamingInputs' in dropspec and dropspec['streamingInputs'])):
+            continue
+        elif dropspec['type'] == 'plain' and \
+           'producers' in dropspec and dropspec['producers']:
+            continue
+        candidates.append(dropspec)
+
+    # They might still be referenced by potential neighbors
+    # (e.g., an app might not reference its inputs, but they might reference it
+    # as its consumer)
+    roots = []
+    for candidate in candidates:
+        is_root = True
+        typ = candidate['type']
+        oid = candidate['oid']
+        if typ == 'plain':
+            for dropspec in pg_spec:
+                if dropspec['type'] == 'app' and \
+                  'outputs' in dropspec and oid in dropspec['outputs']:
+                    is_root = False
+                    break
+        elif typ == 'app':
+            for dropspec in pg_spec:
+                if dropspec['type'] == 'plain' and \
+                  (('consumers' in dropspec and oid in dropspec['consumers']) or \
+                   ('streamingConsumers' in dropspec and oid in dropspec['streamingConsumers'])):
+                    is_root = False
+                    break
+
+        if is_root:
+            roots.append(candidate)
+
+    return roots

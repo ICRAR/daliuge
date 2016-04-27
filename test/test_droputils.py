@@ -178,3 +178,42 @@ class DropUtilsTest(unittest.TestCase):
 
         self.assertEquals(5, len(visitedNodes))
         self.assertListEqual(visitedNodes, [a,c,e,h,j])
+
+    def test_get_roots(self):
+        """
+        Check that the get_roots method from the droputils module works as intended
+        """
+
+        """
+        A --> B
+        """
+        pg_spec = [{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]},
+                   {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
+        roots = droputils.get_roots(pg_spec)
+        self.assertEquals(1, len(roots))
+        self.assertEquals('A', roots[0]['oid'])
+
+        """
+        A --> B
+        The same, but now B references A
+        """
+        pg_spec = [{"oid":"A", "type":"plain", "storage":"memory"},
+                   {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp", "inputs": ["A"]}]
+        roots = droputils.get_roots(pg_spec)
+        self.assertEquals(1, len(roots))
+        self.assertEquals('A', roots[0]['oid'])
+
+        """
+        A --> C --> D --|
+                        |--> E --> F
+        B --------------|
+        """
+        pg_spec = [{"oid":"A", "type":"plain", "storage": "memory"},
+                   {"oid":"B", "type":"plain", "storage": "memory"},
+                   {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp", "inputs": ['A']},
+                   {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]},
+                   {"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
+                   {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
+        roots = droputils.get_roots(pg_spec)
+        self.assertEquals(2, len(roots))
+        self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
