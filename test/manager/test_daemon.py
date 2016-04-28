@@ -25,13 +25,14 @@ import threading
 import time
 import unittest
 
-from dfms import utils
+from dfms import utils, restutils
 from dfms.manager import constants
 from dfms.manager.client import MasterManagerClient
 from dfms.manager.proc_daemon import DfmsDaemon
 
 
 _TIMEOUT = 10
+
 
 class TestDaemon(unittest.TestCase):
 
@@ -46,8 +47,25 @@ class TestDaemon(unittest.TestCase):
         self._daemon_t = threading.Thread(target=lambda: self._daemon.start('localhost', 9000))
         self._daemon_t.start()
 
-        # Wait until the daemon is fully available
-        self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
+        # Wait until the daemon's server has started
+        # We can't simply check if the port is opened, because the server binds
+        # before it is returned to us. In some tests we don't interact with it,
+        # and therefore the shutdown of the daemon can occur before the server
+        # is even returned to us. This would happen because portIsOpen will
+        # succeed with a bound server, even if we haven't serve_forever()'d it
+        # yet. In these situations shutting down the daemon will not shut down
+        # the http server, and therefore the test will fail when checking that
+        # the self._daemon_t is not alive anymore
+        #
+        # To actually avoid this we need to do some actual HTTP talk, which will
+        # ensure the server is actually serving requests, and therefore already
+        # in the daemon's hand
+        #self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
+        try:
+            restutils.RestClient('localhost', 9000, 10)._GET('/anything')
+        except restutils.RestClientException:
+            # We don't care about the result
+            pass
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
