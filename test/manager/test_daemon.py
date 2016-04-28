@@ -31,7 +31,7 @@ from dfms.manager.client import MasterManagerClient
 from dfms.manager.proc_daemon import DfmsDaemon
 
 
-_TIMEOUT = 5
+_TIMEOUT = 10
 
 class TestDaemon(unittest.TestCase):
 

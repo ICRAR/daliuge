@@ -32,7 +32,6 @@ import socket
 import subprocess
 import sys
 import threading
-import time
 
 import bottle
 import zeroconf as zc
@@ -139,24 +138,7 @@ class DfmsDaemon(RestServer):
     def _stop_manager(self, name, timeout):
         proc = getattr(self, name)
         if proc:
-
-            # Terminate; if it doesn't go away kill it
-            pid = proc.pid
-            logger.info('Terminating %d' % (pid,))
-            proc.terminate()
-
-            waitLoops = 0
-            max_loops = timeout/0.1
-            while proc.poll() is None and waitLoops < max_loops:
-                time.sleep(0.1)
-                waitLoops += 1
-
-            kill9 = waitLoops == max_loops
-            if kill9:
-                logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(' % (pid, timeout,))
-                proc.kill()
-            proc.wait()
-
+            utils.terminate_or_kill(proc, timeout)
             setattr(self, name, None)
 
     def stopNM(self, timeout=None):

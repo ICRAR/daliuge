@@ -37,7 +37,11 @@ from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
 from test.manager import testutils
+import subprocess
+import sys
 
+
+hostname = 'localhost'
 
 class TestDM(unittest.TestCase):
 
@@ -242,12 +246,6 @@ class TestDM(unittest.TestCase):
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
 
-def startDM(port):
-    # Make sure the graph executes quickly once triggered
-    from test import graphsRepository
-    graphsRepository.defaultSleepTime = 0
-    cmdline.dfmsNM(['--port', str(port), '-qqq'])
-
 class TestREST(unittest.TestCase):
 
     def test_fullRound(self):
@@ -259,11 +257,11 @@ class TestREST(unittest.TestCase):
         sessionId = 'lala'
         restPort  = 8888
 
-        dmProcess = multiprocessing.Process(target=lambda restPort: startDM(restPort), args=[restPort])
-        dmProcess.start()
+        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', \
+                '--port', str(restPort), '-qqq']
+        dmProcess = subprocess.Popen(args)
 
-        try:
-            self.assertTrue(dmProcess.is_alive())
+        with testutils.terminating(dmProcess, 10):
 
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
@@ -333,6 +331,3 @@ class TestREST(unittest.TestCase):
                 self.assertEquals(msg*copies, buff, "%s's replica doesn't look correct" % (dropId))
             checkReplica('T%s' % (suffix), 9)
             checkReplica('S%s' % (suffix), 4)
-
-        finally:
-            dmProcess.terminate()
