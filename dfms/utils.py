@@ -25,6 +25,7 @@ Module containing miscellaneous utility classes and functions.
 
 import errno
 import logging
+import math
 import os
 import socket
 import threading
@@ -268,3 +269,26 @@ def prepare_sql(sql, paramstyle, data=()):
         data = dataDict
 
     return (sql, data)
+
+def terminate_or_kill(proc, timeout):
+    """
+    Terminates a process and waits until it has completed its execution within
+    the given timeout. If the process is still alive after the timeout it is
+    killed.
+    """
+
+    pid = proc.pid
+    logger.info('Terminating %d' % (pid,))
+    proc.terminate()
+
+    waitLoops = 0
+    max_loops = math.ceil(timeout/0.1)
+    while proc.poll() is None and waitLoops < max_loops:
+        time.sleep(0.1)
+        waitLoops += 1
+
+    kill9 = waitLoops == max_loops
+    if kill9:
+        logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(' % (pid, timeout,))
+        proc.kill()
+    proc.wait()

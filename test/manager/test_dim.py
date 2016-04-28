@@ -237,7 +237,7 @@ class TestREST(unittest.TestCase):
                 '--port', str(restPort), '-N',hostname, '-qqq']
         dimProcess = subprocess.Popen(args)
 
-        try:
+        with testutils.terminating(dimProcess, 10):
 
             # Wait until the REST server becomes alive
             self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
@@ -287,6 +287,3 @@ class TestREST(unittest.TestCase):
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
             sessions = testutils.get(self, '/sessions', restPort)
             self.assertEquals(0, len(sessions))
-
-        finally:
-            dimProcess.terminate()

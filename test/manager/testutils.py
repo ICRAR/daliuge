@@ -22,6 +22,8 @@
 import httplib
 import json
 
+from dfms import utils
+
 
 def get(test, url, port):
     conn = httplib.HTTPConnection('localhost', port, timeout=3)
@@ -47,3 +49,19 @@ def delete(test, url, port):
     res = conn.getresponse()
     test.assertEquals(httplib.OK, res.status)
     conn.close()
+
+class terminating(object):
+    """
+    A context manager that makes sure a process always exits.
+    """
+
+    def __init__(self, proc, timeout):
+        self.proc = proc
+        self.timeout = timeout
+
+    def __enter__(self):
+        return self.proc
+
+    def __exit__(self, typ, val, traceback):
+        utils.terminate_or_kill(self.proc, self.timeout)
+        return False
