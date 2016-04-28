@@ -152,14 +152,17 @@ class ManagerRestServer(RestServer):
         return bottle.static_file(filepath, root=staticRoot)
 
     def visualizeSession(self):
-        sessionId = bottle.request.params['sessionId']
-        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
+        params = bottle.request.params
+        sessionId = params['sessionId'] if 'sessionId' in params else ''
+        selectedNode = params['node'] if 'node' in params else ''
+        viewMode = params['view'] if 'view' in params else ''
         tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return bottle.template(tpl,
                                sessionId=sessionId,
                                selectedNode=selectedNode,
+                               viewMode=viewMode,
                                serverUrl=serverUrl,
                                dmType=self.dm.__class__.__name__)
 
