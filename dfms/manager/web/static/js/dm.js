@@ -185,22 +185,75 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 	});
 }
 
+function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
+
+	// Keep track of modifications to see if we need to re-draw
+	var modified = false;
+
+	// #1: create missing nodes in the graph
+	// Because oids is sorted, they will be created in oid order
+	var time0 = new Date().getTime();
+	for(var idx in oids) {
+		var doSpec = doSpecs[oids[idx]];
+		modified |= _addNode(g, doSpec);
+	}
+
+	var time1 = new Date().getTime();
+	console.log('Took %d [ms] to create the nodes', (time1 - time0))
+
+	// #2: establish missing relationships
+	for(var idx in oids) {
+		var doSpec = doSpecs[oids[idx]];
+		var lhOid = doSpec.oid;
+
+		// x-to-many relationships producing lh->rh edges
+		for(var relIdx in TO_MANY_LTR_RELS) {
+			var rel = TO_MANY_LTR_RELS[relIdx];
+			if( rel in doSpec ) {
+				for(var rhOid in doSpec[rel]) {
+					modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
+				}
+			}
+		}
+		// x-to-many relationships producing rh->lh edges
+		for(var relIdx in TO_MANY_RTL_RELS) {
+			var rel = TO_MANY_RTL_RELS[relIdx];
+			if( rel in doSpec ) {
+				for(var rhOid in doSpec[rel]) {
+					modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
+				}
+			}
+		}
+		// there currently are no x-to-one relationships producing rh->lh edges
+		// there currently are no x-to-one relationships producing lh->rh edges
+	}
+
+	var time2 = new Date().getTime();
+	console.log('Took %d [ms] to create the edges', (time2 - time1))
+
+	if( modified ) {
+		drawGraph();
+	}
+
+	var time3 = new Date().getTime();
+	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
+
+}
+
 /**
  * Starts a regular background task that retrieves the current graph
  * specification from the REST server until the session's status is either
  * DEPLOYING or RUNNING, in which case no more graph structure changes are
  * expected.
  *
- * Using the graph specification received from the server the graph
- * g is updated adding nodes and edges as necessary.
+ * Using the graph specification received from the server the given callback
+ * is invoked, which may use the information as necessary.
  *
- * Once the status of the session is RUNNING or DEPLOYING, this task is not
+ * Once the status of the session is RUNNING or DEPLOYING, this task should not
  * scheduled anymore, and #startGraphStatusUpdates is called instead.
  *
- * @param g The graph
- * @param doSpecs A list of DOSpecs, which are simple dictionaries
  */
-function startStatusQuery(g, serverUrl, sessionId, drawGraph, selectedNode, delay) {
+function startStatusQuery(serverUrl, sessionId, selectedNode, handler, delay) {
 
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
@@ -222,60 +275,12 @@ function startStatusQuery(g, serverUrl, sessionId, drawGraph, selectedNode, dela
 			var status  = uniqueSessionStatus(sessionInfo['status']);
 			d3.select('#session-status').text(sessionStatusToString(status));
 
-			// Get sorted oids
 			var oids = Object.keys(doSpecs);
-			oids.sort();
-
-			// Keep track of modifications to see if we need to re-draw
-			var modified = false;
-
-			// #1: create missing nodes in the graph
-			// Because oids is sorted, they will be created in oid order
-			var time0 = new Date().getTime();
-			for(var idx in oids) {
-				var doSpec = doSpecs[oids[idx]];
-				modified |= _addNode(g, doSpec);
+			if( oids.length > 0 ) {
+				// Get sorted oids
+				oids.sort();
+				handler(oids, doSpecs);
 			}
-
-			var time1 = new Date().getTime();
-			console.log('Took %d [ms] to create the nodes', (time1 - time0))
-
-			// #2: establish missing relationships
-			for(var idx in oids) {
-				var doSpec = doSpecs[oids[idx]];
-				var lhOid = doSpec.oid;
-
-				// x-to-many relationships producing lh->rh edges
-				for(var relIdx in TO_MANY_LTR_RELS) {
-					var rel = TO_MANY_LTR_RELS[relIdx];
-					if( rel in doSpec ) {
-						for(var rhOid in doSpec[rel]) {
-							modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
-						}
-					}
-				}
-				// x-to-many relationships producing rh->lh edges
-				for(var relIdx in TO_MANY_RTL_RELS) {
-					var rel = TO_MANY_RTL_RELS[relIdx];
-					if( rel in doSpec ) {
-						for(var rhOid in doSpec[rel]) {
-							modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
-						}
-					}
-				}
-				// there currently are no x-to-one relationships producing rh->lh edges
-				// there currently are no x-to-one relationships producing lh->rh edges
-			}
-
-			var time2 = new Date().getTime();
-			console.log('Took %d [ms] to create the edges', (time2 - time1))
-
-			if( modified ) {
-				drawGraph();
-			}
-
-			var time3 = new Date().getTime();
-			console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
 			// During PRISITINE and BUILDING we need to update the graph structure
 			// During DEPLOYING we call ourselves again anyway, because we need
