@@ -452,8 +452,6 @@ class LGNode():
         """
         drop_type = self.jd['category']
         if (drop_type in ['Data', 'LSM', 'Metadata', 'GSM']):
-            dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
-            kwargs['dirname'] = '/tmp'
             if (self.jd.has_key('data_volume')):
                 kwargs['dw'] = int(self.jd['data_volume']) #dw -- data weight
             else:
@@ -462,12 +460,13 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
-                'type':'app', 'app':'dfms.apps.socket_listener.SocketListenerApp', 'nm':'lstnr', 'tw':1})
+                'type':'app', 'app':'dfms.drop.BarrierAppDROP', 'nm':'lstnr', 'tw':1})
                 # tw -- task weight
                 kwargs['listener_drop'] = dropSpec_socket
                 dropSpec_socket.addOutput(dropSpec)
             else:
-                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'file'})
+                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
+                kwargs['dirname'] = '/tmp'
         elif (drop_type == 'Component'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
             if (self.jd.has_key('execution_time')):
