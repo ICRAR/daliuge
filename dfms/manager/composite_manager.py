@@ -337,7 +337,7 @@ class CompositeManager(DROPManager):
 
         except Exception as e:
             exceptions[drop.uid] = e
-            logger.error("An exception occurred while moving DROP %s to COMPLETED" % (uid))
+            logger.exception("An exception occurred while moving DROP %s to COMPLETED" % (uid))
             raise # so it gets printed
 
     def deploySession(self, sessionId, completedDrops=[]):
@@ -405,7 +405,7 @@ class CompositeManager(DROPManager):
             thrExs = {}
             self._tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
             if thrExs:
-                raise Exception("One ore more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
+                raise Exception("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
 
         return allUris
 
