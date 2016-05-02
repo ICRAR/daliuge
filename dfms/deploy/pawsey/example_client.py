@@ -20,7 +20,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
 """
 Examples on how to interact with the DFMS remote monitor (on AWS),
 which represents a DIM or MM inside the Pawsey firewall,
@@ -29,6 +28,7 @@ create sessions, append graphs, and deploy sessions to execute the converted
 physical graph in Pawsey
 """
 
+import json
 import sys
 
 import pkg_resources
@@ -44,12 +44,13 @@ lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
 
 
 class MonitorClient(object):
-    def __init__(self, mhost, mport, timeout=10, sch_algo='sarkar'):
+    def __init__(self, mhost, mport, timeout=10, sch_algo='sarkar', output=None):
         self._host = mhost
         self._port = mport
         self._rc = RestClient(mhost, mport, timeout)
         self._dc = DataIslandManagerClient(mhost, mport)
         self._sch_algo = sch_algo
+        self._output = output
 
     def get_avail_hosts(self):
         return self._dc.nodes()
@@ -69,6 +70,9 @@ class MonitorClient(object):
         pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
         pgtp.json
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
+        if self._output:
+            with open(self._output, 'w') as f:
+                json.dump(pg_spec, f, indent=2)
         completed_uids = [x['oid'] for x in droputils.get_roots(pg_spec)]
 
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
@@ -101,8 +105,9 @@ if __name__ == '__main__':
         sys.exit(2)
     gid = int(sys.argv[1])
     host = sys.argv[2]
+    filename = sys.argv[3]
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
-    mc = MonitorClient(host, 8001)
+    mc = MonitorClient(host, 8001, output=filename)
     mc.submit_single_graph(gid, deploy=True)
