@@ -121,7 +121,11 @@ class ManagerRestServer(RestServer):
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
         bottle.response.content_type = 'application/json'
-        return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
+        try:
+            return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
+        except:
+            LOG.exception('Deploy Session')
+            raise
 
     def getGraph(self, sessionId):
         LOG.debug('getGraph: {0}'.format(sessionId))
