@@ -350,7 +350,7 @@ class CompositeManager(DROPManager):
         # Deploy all individual graphs in parallel
         self._tp.map(functools.partial(self._deploySession, sessionId, allUris, thrExs), self._dmHosts)
         if thrExs:
-            raise Exception("One ore more exceptions occurred while deploying session %s" % (sessionId), thrExs)
+            raise Exception("One or more exceptions occurred while deploying session %s" % (sessionId), thrExs)
 
         # Retrieve all necessary proxies we'll need afterward
         # (i.e., those present in inter-DM relationships and in completedDrops)

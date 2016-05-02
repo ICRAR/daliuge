@@ -182,51 +182,55 @@ def createGraphFromDropSpecList(dropSpecList):
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug("Found %d DROP definitions" % (len(dropSpecList)))
 
-    # Step #1: create the actual DROPs
-    drops = collections.OrderedDict()
-    for dropSpec in dropSpecList:
+    try:
+        # Step #1: create the actual DROPs
+        drops = collections.OrderedDict()
+        for dropSpec in dropSpecList:
 
-        # 'type' is mandatory
-        dropType = dropSpec['type']
+            # 'type' is mandatory
+            dropType = dropSpec['type']
 
-        cf = __CREATION_FUNCTIONS[dropType]
-        drop = cf(dropSpec)
-        drops[drop.oid] = drop
+            cf = __CREATION_FUNCTIONS[dropType]
+            drop = cf(dropSpec)
+            drops[drop.oid] = drop
 
-    # Step #2: establish relationships
-    for dropSpec in dropSpecList:
+        # Step #2: establish relationships
+        for dropSpec in dropSpecList:
 
-        # 'oid' is mandatory
-        oid = dropSpec['oid']
-        drop = drops[oid]
+            # 'oid' is mandatory
+            oid = dropSpec['oid']
+            drop = drops[oid]
 
-        # 1-N relationships
-        for link,rel in __ONE_TO_N_RELS.viewitems():
-            if rel in dropSpec:
-                for oid in dropSpec[rel]:
-                    lhDrop = drops[oid]
-                    relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
-                    try:
-                        relFunc = getattr(drop, relFuncName)
-                    except AttributeError:
-                        logger.error('%r cannot be linked to %r due to missing method "%s"' % (drop, lhDrop, relFuncName))
-                        raise
-                    relFunc(lhDrop)
+            # 1-N relationships
+            for link,rel in __ONE_TO_N_RELS.viewitems():
+                if rel in dropSpec:
+                    for oid in dropSpec[rel]:
+                        lhDrop = drops[oid]
+                        relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
+                        try:
+                            relFunc = getattr(drop, relFuncName)
+                        except AttributeError:
+                            logger.error('%r cannot be linked to %r due to missing method "%s"' % (drop, lhDrop, relFuncName))
+                            raise
+                        relFunc(lhDrop)
 
-        # N-1 relationships
-        for link,rel in __N_TO_ONE_RELS.viewitems():
-            if rel in dropSpec:
-                lhDrop = drops[dropSpec[rel]]
-                propName = LINKTYPE_NTO1_PROPERTY[link]
-                setattr(drop, propName, lhDrop)
+            # N-1 relationships
+            for link,rel in __N_TO_ONE_RELS.viewitems():
+                if rel in dropSpec:
+                    lhDrop = drops[dropSpec[rel]]
+                    propName = LINKTYPE_NTO1_PROPERTY[link]
+                    setattr(drop, propName, lhDrop)
 
-    # We're done! Return the roots of the graph to the caller
-    roots = []
-    for drop in drops.itervalues():
-        if not droputils.getUpstreamObjects(drop):
-            roots.append(drop)
+        # We're done! Return the roots of the graph to the caller
+        roots = []
+        for drop in drops.itervalues():
+            if not droputils.getUpstreamObjects(drop):
+                roots.append(drop)
+        return roots
 
-    return roots
+    except Exception:
+        logger.exception('Exception in graph creation')
+        raise
 
 def _createPlain(dropSpec, dryRun=False):
     oid, uid = _getIds(dropSpec)
