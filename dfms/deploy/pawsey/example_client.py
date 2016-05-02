@@ -104,5 +104,5 @@ if __name__ == '__main__':
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
-    mc = MonitorClient(host, 8097)
+    mc = MonitorClient(host, 8001)
     mc.submit_single_graph(gid, deploy=True)
