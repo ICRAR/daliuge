@@ -99,9 +99,9 @@ class NodeManager(DROPManager):
                     logger.exception('Creating the error listener')
                     raise
                 error_listener = getattr(module, parts[-1])()
-                if not hasattr(error_listener, 'on_error'):
-                    raise ValueError("error_listener doesn't contain an on_error method")
-            self._error_listener = error_listener
+            if not hasattr(error_listener, 'on_error'):
+                raise ValueError("error_listener doesn't contain an on_error method")
+        self._error_listener = error_listener
 
     def createSession(self, sessionId):
         if sessionId in self._sessions:
