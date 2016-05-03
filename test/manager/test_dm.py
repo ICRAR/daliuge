@@ -20,9 +20,11 @@
 #    MA 02111-1307  USA
 #
 import json
-import multiprocessing
 import random
 import string
+import subprocess
+import sys
+import threading
 import time
 import unittest
 
@@ -32,18 +34,41 @@ import pkg_resources
 from dfms import droputils
 from dfms import ngaslite, utils
 from dfms.ddap_protocol import DROPStates
-from dfms.manager import cmdline
+from dfms.drop import BarrierAppDROP
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
 from test.manager import testutils
-import subprocess
-import sys
 
 
 hostname = 'localhost'
 
+class ErroneousApp(BarrierAppDROP):
+    def run(self):
+        raise Exception("Sorry, we always fail")
+
 class TestDM(unittest.TestCase):
+
+    def test_error_listener(self):
+
+        evt = threading.Event()
+        erroneous_drops = []
+        class listener(object):
+            def on_error(self, drop):
+                erroneous_drops.append(drop.uid)
+                if len(erroneous_drops) == 2: # both 'C' and 'B' failed already
+                    evt.set()
+
+        sessionId = 'lala'
+        dm = NodeManager(useDLM=False, error_listener=listener())
+        g = [{"oid":"A", "type":"plain", "storage": "memory"},
+             {"oid":"B", "type":"app", "app":"test.manager.test_dm.ErroneousApp", "inputs": ["A"]},
+             {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
+        dm.createSession(sessionId)
+        dm.addGraphSpec(sessionId, g)
+        dm.deploySession(sessionId, ["A"])
+
+        self.assertTrue(evt.wait(10), "Didn't receive errors on time")
 
     def test_runGraphOneDOPerDOM(self):
         """

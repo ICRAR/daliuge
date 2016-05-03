@@ -30,9 +30,9 @@ import threading
 import Pyro4
 from luigi import scheduler, worker
 
-from dfms import droputils
+from dfms import droputils, utils
 from dfms import luigi_int, graph_loader
-from dfms.ddap_protocol import DROPLinkType
+from dfms.ddap_protocol import DROPLinkType, DROPStates
 from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
 
 
@@ -58,6 +58,17 @@ class SessionStates:
     """
     PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = xrange(5)
 
+
+class ErrorStatusListener(utils.noopctx):
+
+    def __init__(self, session, event_listener):
+        self._session = session
+        self._event_listener = event_listener
+
+    def handleEvent(self, evt):
+        if evt.status == DROPStates.ERROR:
+            self._event_listener.on_error(self._session.drops[evt.uid])
+
 class Session(object):
     """
     A DROP graph execution.
@@ -76,15 +87,19 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, host=None):
+    def __init__(self, sessionId, host=None, error_listener=None):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
+        self._drops = {} # key: oid, value: actual drop object
         self._statusLock = threading.Lock()
         self._roots = []
         self._daemon = None
         self._worker = None
         self._status = SessionStates.PRISTINE
         self._host = host
+        self._error_status_listener = None
+        if error_listener:
+            self._error_status_listener = ErrorStatusListener(self, error_listener)
 
     @property
     def sessionId(self):
@@ -103,6 +118,10 @@ class Session(object):
     @property
     def roots(self):
         return self._roots
+
+    @property
+    def drops(self):
+        return self._drops
 
     def addGraphSpec(self, graphSpec):
         """
@@ -217,6 +236,14 @@ class Session(object):
                     drop.setCompleted()
         droputils.breadFirstTraverse(self._roots, triggerDrop)
 
+        # Register them with the error handler
+        # TODO: We should probably merge all these breadFirstTraverse calls into
+        # a single one to avoid so much iteration through the drops
+        if self._error_status_listener:
+            def register_error_status_listener(drop):
+                drop.subscribe(self._error_status_listener, eventType='status')
+            droputils.breadFirstTraverse(self._roots, register_error_status_listener)
+
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Starting Luigi FinishGraphExecution task for session %s" % (self._sessionId))
@@ -237,6 +264,7 @@ class Session(object):
         drop.uri = uri.asString()
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Registered %r with Pyro. URI is %s" % (drop, uri))
+        self._drops[drop.uid] = drop
 
     def _run(self, worker):
         worker.run()

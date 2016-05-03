@@ -74,7 +74,7 @@ class NodeManager(DROPManager):
     NodeManager is needed for each computing node, thus its name.
     """
 
-    def __init__(self, useDLM=True, dfmsPath=None, host=None):
+    def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None):
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
@@ -88,10 +88,21 @@ class NodeManager(DROPManager):
                     logger.info("Adding %s to the system path" % (dfmsPath))
                 sys.path.append(dfmsPath)
 
+        # Error listener used by users to deal with errors coming from specific
+        # Drops in whatever way they want
+        if error_listener:
+            if isinstance(error_listener, basestring):
+                parts   = error_listener.split('.')
+                module  = importlib.import_module('.'.join(parts[:-1]))
+                error_listener = getattr(module, parts[-1])()
+            if not hasattr(error_listener, 'on_error'):
+                raise ValueError("error_listener doesn't contain an on_error method")
+        self._error_listener = error_listener
+
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
-        self._sessions[sessionId] = Session(sessionId, self._host)
+        self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener)
         if logger.isEnabledFor(logging.INFO):
             logger.info('Created session %s' % (sessionId))
 
