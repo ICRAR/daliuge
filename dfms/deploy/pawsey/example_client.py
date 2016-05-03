@@ -105,7 +105,7 @@ if __name__ == '__main__':
         sys.exit(2)
     gid = int(sys.argv[1])
     host = sys.argv[2]
-    filename = sys.argv[3]
+    filename = sys.argv[3] if len(sys.argv) > 3 else None
     if (gid > len(lgnames) - 1):
         print "graph id is too large"
         sys.exit(1)
