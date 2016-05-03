@@ -201,6 +201,8 @@ def dfmsNM(args=sys.argv):
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dfms-path", action="store", type="string",
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/lib")
+    parser.add_option("--error-listener", action="store", type="string",
+                      dest="errorListener", help="The error listener class to be used", default=None)
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
@@ -208,7 +210,10 @@ def dfmsNM(args=sys.argv):
     # also used to expose the Sessions it creates
     options.dmType = NodeManager
     options.dmArgs = ()
-    options.dmKwargs = {'useDLM': not options.noDLM, 'dfmsPath': options.dfmsPath, 'host': options.host}
+    options.dmKwargs = {'useDLM': not options.noDLM,
+                        'dfmsPath': options.dfmsPath,
+                        'host': options.host,
+                        'error_listener': options.errorListener}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
 
