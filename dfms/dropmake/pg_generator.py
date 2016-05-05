@@ -51,6 +51,7 @@ Examples of logical graph node JSON representation
 from collections import defaultdict
 import json, os, datetime, time, math, commands
 import logging
+import random
 
 import networkx as nx
 import numpy as np
@@ -460,7 +461,7 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
-                'type':'app', 'app':'dfms.drop.BarrierAppDROP', 'nm':'lstnr', 'tw':1})
+                'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'nm':'lstnr', 'tw':1, 'sleepTime': 5})
                 # tw -- task weight
                 kwargs['listener_drop'] = dropSpec_socket
                 dropSpec_socket.addOutput(dropSpec)
@@ -468,11 +469,13 @@ class LGNode():
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 kwargs['dirname'] = '/tmp'
         elif (drop_type == 'Component'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
             if (self.jd.has_key('execution_time')):
-                kwargs['tw'] = int(self.jd['execution_time'])
+                sleepTime = int(self.jd['execution_time'])
             else:
-                kwargs['tw'] = 5
+                sleepTime = random.randint(3, 8)
+            kwargs['tw'] = sleepTime
+            kwargs['sleepTime'] = sleepTime
             # add more arguments
             for i in range(10):
                 k = "Arg%02d" % (i + 1,)
@@ -486,16 +489,17 @@ class LGNode():
                     else:
                         kwargs[k] = v
         elif (drop_type == 'GroupBy'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
             dw = int(self.inputs[0].jd['data_volume']) * self.groupby_width
             dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory',
             'nm':'grpdata', 'dw':dw})
             kwargs['grp-data_drop'] = dropSpec_grp
             kwargs['tw'] = 1 # barriar literarlly takes no time for its own computation
+            kwargs['sleepTime'] = 1
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
         elif (drop_type == 'DataGather'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
             gi = self.inputs[0]
             if (gi.is_groupby()):
                 gii = gi.inputs[0]
@@ -506,15 +510,17 @@ class LGNode():
             'type':'plain', 'storage':'memory', 'nm':'gthrdt', 'dw':dw})
             kwargs['gather-data_drop'] = dropSpec_gather
             kwargs['tw'] = 1
+            kwargs['sleepTime'] = 1
             dropSpec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
             # create an App first
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.drop.BarrierAppDROP'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
             dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain',
             'storage':'null', 'nm':'null', 'dw':0})
             kwargs['null_drop'] = dropSpec_null
             kwargs['tw'] = 0
+            kwargs['sleepTime'] = 1
             dropSpec.addOutput(dropSpec_null)
             dropSpec_null.addProducer(dropSpec)
         elif (drop_type in ['Start', 'End']):
