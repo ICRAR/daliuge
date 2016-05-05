@@ -65,6 +65,7 @@ class ManagerRestServer(RestServer):
         app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
         app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
         app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
+        app.get(   '/api/sessions/<sessionId>/graph/size',   callback=self.getGraphSize)
         app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
         app.post(  '/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
 
@@ -91,7 +92,7 @@ class ManagerRestServer(RestServer):
     def sessions(self):
         sessions = []
         for sessionId in self.dm.getSessionIds():
-            sessions.append({'sessionId':sessionId, 'status':self.dm.getSessionStatus(sessionId)})
+            sessions.append({'sessionId':sessionId, 'status':self.dm.getSessionStatus(sessionId), 'size': self.dm.getGraphSize(sessionId)})
         return sessions
 
     def getSessions(self):
@@ -132,6 +133,11 @@ class ManagerRestServer(RestServer):
         graphDict = self.dm.getGraph(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps(graphDict)
+
+    def getGraphSize(self, sessionId):
+        LOG.debug('getGraphSize: %s', sessionId)
+        bottle.response.content_type = 'application/json'
+        return json.dumps(self.dm.getGraphSize(sessionId))
 
     def getGraphStatus(self, sessionId):
         LOG.debug('getGraphStatus: {0}'.format(sessionId))

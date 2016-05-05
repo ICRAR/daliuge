@@ -153,6 +153,10 @@ class NodeManager(DROPManager):
     def getSessionIds(self):
         return self._sessions.keys()
 
+    def getGraphSize(self, sessionId):
+        session = self._sessions[sessionId]
+        return len(session._graph)
+
     def getTemplates(self):
 
         # TODO: we currently have a hardcoded list of functions, but we should

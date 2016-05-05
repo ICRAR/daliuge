@@ -116,6 +116,14 @@ class BaseDROPManagerClient(RestClient):
         logger.debug('Successfully read session %s status (%s) from %s:%s', sessionId, status, self.host, self.port)
         return status
 
+    def graph_size(self, sessionId):
+        """
+        Returns the size of the graph of session `sessionId`
+        """
+        count = self._get_json('/sessions/%s/graph/size' % (urllib.quote(sessionId)))
+        logger.debug('Successfully read session %s graph size (%d) from %s:%s', sessionId, count, self.host, self.port)
+        return count
+
     # Offer an API similar to that exposed by Drop Managers objects
     createSession = create_session
     destroySession = destroy_session
@@ -123,6 +131,7 @@ class BaseDROPManagerClient(RestClient):
     addGraphSpec = append_graph
     deploySession = deploy_session
     getGraphStatus = graph_status
+    getGraphSize = graph_size
     getGraph = graph
 
 class NodeManagerClient(BaseDROPManagerClient):

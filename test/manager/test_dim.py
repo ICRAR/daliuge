@@ -88,7 +88,9 @@ class TestDIM(unittest.TestCase):
                      {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
                      {'oid':'C', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
+        self.assertEquals(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
+        self.assertEquals(len(graphSpec), self.dim.getGraphSize(sessionId))
 
     def test_createSession(self):
         sessionId = 'lalo'
@@ -111,7 +113,9 @@ class TestDIM(unittest.TestCase):
         # OK
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
+        self.assertEquals(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
+        self.assertEquals(1, self.dim.getGraphSize(sessionId))
         graphFromDM = self.dm.getGraph(sessionId)
         self.assertEquals(1, len(graphFromDM))
         dropSpec = graphFromDM.values()[0]

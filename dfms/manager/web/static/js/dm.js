@@ -152,6 +152,11 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		statusCells.text(function(s) {return sessionStatusToString(s)})
 		statusCells.exit().remove()
 
+		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
+		sizeCells.enter().append('td').classed('size', true).text(String)
+		sizeCells.text(String)
+		sizeCells.exit().remove()
+
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
 		    .append('a').attr('href', sessionLink)
