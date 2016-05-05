@@ -29,6 +29,7 @@ physical graph in Pawsey
 """
 
 import json
+import optparse
 import sys
 
 import pkg_resources
@@ -100,14 +101,23 @@ class MonitorClient(object):
             f.write(pg_spec)
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print "Please provide graph id: (integer, 0 - 4) and host IP"
-        sys.exit(2)
-    gid = int(sys.argv[1])
-    host = sys.argv[2]
-    filename = sys.argv[3] if len(sys.argv) > 3 else None
-    if (gid > len(lgnames) - 1):
-        print "graph id is too large"
-        sys.exit(1)
-    mc = MonitorClient(host, 8001, output=filename)
-    mc.submit_single_graph(gid, deploy=True)
+
+    parser = optparse.OptionParser()
+    parser.add_option("-H", "--host", action="store",
+                      dest="host", help="The host where the graph will be deployed", default="localhost")
+    parser.add_option("-p", "--port", action="store", type="int",
+                      dest="port", help="The port we connect to to deploy the graph", default=8001)
+    parser.add_option("-g", "--graph-id", action="store", type="int",
+                      dest="graph_id", help="The graph to deploy (0 - 4)", default=None)
+    parser.add_option("-o", "--output", action="store", type="string",
+                      dest="output", help="Where to dump the general physical graph", default=None)
+
+    (opts, args) = parser.parse_args(sys.argv)
+
+    if opts.graph_id is None:
+        parser.error("Missing -g")
+    if opts.graph_id >= len(lgnames):
+        parser.error("-g must be between 0 and %d" % (len(lgnames),))
+
+    mc = MonitorClient(opts.host, opts.port, output=opts.output)
+    mc.submit_single_graph(opts.graph_id, deploy=True)
