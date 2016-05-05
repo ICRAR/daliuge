@@ -477,6 +477,26 @@ class CompositeManager(DROPManager):
         # TODO: Maybe calculate a wider session status?
         return allStatus
 
+    def _getGraphSize(self, sessionId, allCounts, exceptions, host):
+        try:
+            with self.dmAt(host) as dm:
+                allCounts.append(dm.getGraphSize(sessionId))
+        except Exception as e:
+            exceptions[host] = e
+            logger.error("An exception occurred while getting the graph size of session %s in host %s" % (sessionId, host))
+            raise # so it gets printed
+
+    def getGraphSize(self, sessionId):
+        allCounts = []
+        thrExs = {}
+
+        self._tp.map(functools.partial(self._getGraphSize, sessionId, allCounts, thrExs), self._dmHosts)
+
+        if thrExs:
+            raise Exception("One ore more exceptions occurred while getting the graph size for session %s" % (sessionId), thrExs)
+
+        return sum(allCounts)
+
 class DataIslandManager(CompositeManager):
     """
     The DataIslandManager, which manages a number of NodeManagers.
