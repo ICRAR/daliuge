@@ -63,10 +63,13 @@ function uniqueSessionStatus(status) {
 			)
 		}
 
-		// Reduce to single common value, or to -1
+		// Reduce to single common value if possible
+		// "Finished" and "Running" reduce to "Running"
+		// Otherwise we reduce to -1, which we interpret as "Indeterminate"
 		return status.reduce(
 			function(prev, v, idx, array) {
 				if( prev == -1 ) { return -1; }
+				else if( prev == 3 && v == 4 ) { return 3; }
 				return (prev == v) ? v : -1;
 			}
 		);
@@ -146,7 +149,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
 		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
-		statusCells.text(function(s) {return SESSION_STATUS[s]})
+		statusCells.text(function(s) {return sessionStatusToString(s)})
 		statusCells.exit().remove()
 
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
