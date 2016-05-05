@@ -304,4 +304,4 @@ if __name__ == "__main__":
     lg_dir = options.lg_path
     pg_mgr = PGManager(lg_dir)
     # Let's use tornado, since luigi already depends on it
-    run(host="0.0.0.0", server='tornado', port=options.lg_port, debug=False)
+    run(host="0.0.0.0", server='paste', port=options.lg_port, debug=False)
