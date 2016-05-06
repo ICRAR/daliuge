@@ -69,7 +69,7 @@ function uniqueSessionStatus(status) {
 		return status.reduce(
 			function(prev, v, idx, array) {
 				if( prev == -1 ) { return -1; }
-				else if( prev == 3 && v == 4 ) { return 3; }
+				else if( prev == 3 && v == 4 || prev == 4 && v == 3 ) { return 3; }
 				return (prev == v) ? v : -1;
 			}
 		);
