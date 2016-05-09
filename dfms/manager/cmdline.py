@@ -203,6 +203,8 @@ def dfmsNM(args=sys.argv):
                       dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/lib")
     parser.add_option("--error-listener", action="store", type="string",
                       dest="errorListener", help="The error listener class to be used", default=None)
+    parser.add_option("--luigi", action="store_true",
+                      dest="enable_luigi", help="Enable integration with Luigi. Disabled by default.", default=False)
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
@@ -213,7 +215,8 @@ def dfmsNM(args=sys.argv):
     options.dmKwargs = {'useDLM': not options.noDLM,
                         'dfmsPath': options.dfmsPath,
                         'host': options.host,
-                        'error_listener': options.errorListener}
+                        'error_listener': options.errorListener,
+                        'enable_luigi': options.enable_luigi}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
 
