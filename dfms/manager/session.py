@@ -221,6 +221,14 @@ class Session(object):
         # Register them
         droputils.breadFirstTraverse(self._roots, self._registerDrop)
 
+        # Register them with the error handler
+        # TODO: We should probably merge all these breadFirstTraverse calls into
+        # a single one to avoid so much iteration through the drops
+        if self._error_status_listener:
+            def register_error_status_listener(drop):
+                drop.subscribe(self._error_status_listener, eventType='status')
+            droputils.breadFirstTraverse(self._roots, register_error_status_listener)
+
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
         # not directly moved to COMPLETED.
@@ -235,14 +243,6 @@ class Session(object):
                 else:
                     drop.setCompleted()
         droputils.breadFirstTraverse(self._roots, triggerDrop)
-
-        # Register them with the error handler
-        # TODO: We should probably merge all these breadFirstTraverse calls into
-        # a single one to avoid so much iteration through the drops
-        if self._error_status_listener:
-            def register_error_status_listener(drop):
-                drop.subscribe(self._error_status_listener, eventType='status')
-            droputils.breadFirstTraverse(self._roots, register_error_status_listener)
 
         # Start the luigi task that will make sure the graph is executed
         if logger.isEnabledFor(logging.DEBUG):
