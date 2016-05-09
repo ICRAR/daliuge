@@ -69,6 +69,20 @@ class ErrorStatusListener(utils.noopctx):
         if evt.status == DROPStates.ERROR:
             self._event_listener.on_error(self._session.drops[evt.uid])
 
+class LeavesCompletionListener(utils.noopctx):
+
+    def __init__(self, leaves, session):
+        self._session = session
+        self._nexpected = len(leaves)
+        self._completed = 0
+
+    def handleEvent(self, evt):
+        # TODO: be thread-safe
+        self._completed += 1
+        logger.debug("%d/%d leaf drops completed on session %s", self._completed, self._nexpected, self._session.sessionId)
+        if self._completed == self._nexpected:
+            self._session.finish()
+
 class Session(object):
     """
     A DROP graph execution.
@@ -87,7 +101,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, host=None, error_listener=None):
+    def __init__(self, sessionId, host=None, error_listener=None, enable_luigi=False):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
         self._drops = {} # key: oid, value: actual drop object
@@ -98,6 +112,7 @@ class Session(object):
         self._status = SessionStates.PRISTINE
         self._host = host
         self._error_status_listener = None
+        self._enable_luigi = enable_luigi
         if error_listener:
             self._error_status_listener = ErrorStatusListener(self, error_listener)
 
@@ -245,15 +260,24 @@ class Session(object):
         droputils.breadFirstTraverse(self._roots, triggerDrop)
 
         # Start the luigi task that will make sure the graph is executed
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Starting Luigi FinishGraphExecution task for session %s" % (self._sessionId))
-        task = luigi_int.FinishGraphExecution(self._sessionId, self._roots)
-        sch = scheduler.CentralPlannerScheduler()
-        w = worker.Worker(scheduler=sch)
-        w.add(task)
-        workerT = threading.Thread(None, self._run, args=[w])
-        workerT.daemon = True
-        workerT.start()
+        # If we're not using luigi we still
+        if self._enable_luigi:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Starting Luigi FinishGraphExecution task for session %s" % (self._sessionId))
+            task = luigi_int.FinishGraphExecution(self._sessionId, self._roots)
+            sch = scheduler.CentralPlannerScheduler()
+            w = worker.Worker(scheduler=sch)
+            w.add(task)
+            workerT = threading.Thread(None, self._run, args=[w])
+            workerT.daemon = True
+            workerT.start()
+        else:
+            leaves = droputils.getLeafNodes(self._roots)
+            logger.debug("Adding completion listener to leaf drops %r", leaves)
+            listener = LeavesCompletionListener(leaves, self)
+            for leaf in leaves:
+                leaf.subscribe(listener, 'dropCompleted')
+                leaf.subscribe(listener, 'producerFinished')
 
         self.status = SessionStates.RUNNING
         if logger.isEnabledFor(logging.INFO):
@@ -269,6 +293,9 @@ class Session(object):
     def _run(self, worker):
         worker.run()
         worker.stop()
+        self.finish()
+
+    def finish(self):
         self.status = SessionStates.FINISHED
 
     def getGraphStatus(self):

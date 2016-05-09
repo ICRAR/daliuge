@@ -74,7 +74,8 @@ class NodeManager(DROPManager):
     NodeManager is needed for each computing node, thus its name.
     """
 
-    def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None):
+    def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None,
+                 enable_luigi=False):
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
@@ -103,10 +104,12 @@ class NodeManager(DROPManager):
                 raise ValueError("error_listener doesn't contain an on_error method")
         self._error_listener = error_listener
 
+        self._enable_luigi = enable_luigi
+
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
-        self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener)
+        self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener, self._enable_luigi)
         if logger.isEnabledFor(logging.INFO):
             logger.info('Created session %s' % (sessionId))
 
