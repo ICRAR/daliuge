@@ -62,7 +62,9 @@ setup(
             "metis",
             "netifaces",
             "networkx",
-            "paramiko",
+            # paramiko 2.0.0 requires cryptography>=1.1, which in turn
+            # requires development packages to be installed on the system
+            "paramiko<2.0.0",
             "paste",
             "psutil",
             "Pyro4>=4.38",
