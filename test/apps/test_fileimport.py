@@ -23,9 +23,7 @@
 Test the FileImport App
 """
 import os
-import random
 import shutil
-import string
 import unittest
 
 from dfms.apps.fileimport import FileImportApp
@@ -53,7 +51,7 @@ class FileImportAppTests(unittest.TestCase):
         shutil.rmtree(self.root)
 
     def test_import(self):
-        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = files[0], ext = ['.fits']))
+        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = self.files[0], ext = ['.fits']))
         self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = self.root, ext = []))
         self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = self.root))
         self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = '', ext = []))
