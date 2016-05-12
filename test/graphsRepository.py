@@ -86,18 +86,18 @@ class SleepAndCopyApp(BarrierAppDROP):
         self.copyAll()
 
     def copyAll(self):
-        inputs  = self._inputs.values()
-        outputs = self._outputs.values()
-        for inputDrop in inputs:
-            self.copyRecursive(inputDrop, outputs)
+        for inputDrop in self.inputs:
+            with inputDrop:
+                self.copyRecursive(inputDrop)
 
-    def copyRecursive(self, inputDrop, outputs):
+    def copyRecursive(self, inputDrop):
         if isinstance(inputDrop, ContainerDROP):
             for child in inputDrop.children:
-                self.copyRecursive(child, outputs)
+                self.copyRecursive(child)
         else:
-            for outputDrop in outputs:
-                droputils.copyDropContents(inputDrop, outputDrop)
+            for outputDrop in self.outputs:
+                with outputDrop:
+                    droputils.copyDropContents(inputDrop, outputDrop)
 
 #===============================================================================
 # Methods that create graphs follow. They must have no arguments to be
