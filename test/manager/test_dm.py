@@ -271,6 +271,60 @@ class TestDM(unittest.TestCase):
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
 
+    def test_many_relationships(self):
+        """
+        A test in which a drop is related to many other drops that live in a
+        separate DM (and thus requires many Pyro connections).
+
+        Drop A is accessed by many applications (B1, B2, .., BN), which should
+        not exhaust resources on DM #1 (in particular, the pyro thread pool).
+        We collapse all into C so we can monitor only its status to know that
+        the execution is over.
+
+        DM #1                     DM #2
+        =======    ====================
+        |     |    | |--> B1 --|      |
+        |     |    | |--> B2 --|      |
+        | A --|----|-|--> B3 --|--> C |
+        |     |    | |.........|      |
+        |     |    | |--> BN --|      |
+        =======    ====================
+        """
+        dm1 = NodeManager(useDLM=False)
+        dm2 = NodeManager(useDLM=False)
+
+        sessionId = 's1'
+        N = 100
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
+        for i in xrange(N):
+            b_oid = "B%d" % (i,)
+            # SleepAndCopyApp effectively opens the input drop
+            g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
+
+        uris1 = dm1.quickDeploy(sessionId, g1)
+        uris2 = dm2.quickDeploy(sessionId, g2)
+        self.assertEquals(1,   len(uris1))
+        self.assertEquals(1+N, len(uris2))
+
+        # We externally wire the Proxy objects to establish the inter-DM
+        # relationships. Make sure we release the proxies
+        with Pyro4.Proxy(uris1['A']) as a:
+            for i in xrange(N):
+                with Pyro4.Proxy(uris2['B%d' % (i,)]) as b:
+                    b.addInput(a, False)
+                    a.addConsumer(b, False)
+
+        # Run! The sole fact that this doesn't throw exceptions is already
+        # a good proof that everything is working as expected
+        c = Pyro4.Proxy(uris2['C'])
+        with droputils.EvtConsumerProxyCtx(self, c, 5):
+            a.write('a')
+            a.setCompleted()
+
+        dm1.destroySession(sessionId)
+        dm2.destroySession(sessionId)
+
 class TestREST(unittest.TestCase):
 
     def test_fullRound(self):

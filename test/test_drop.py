@@ -144,8 +144,8 @@ class TestDROP(unittest.TestCase):
                 self._substring = kwargs['substring']
 
             def run(self):
-                drop = self._inputs.values()[0]
-                output = self._outputs.values()[0]
+                drop = self.inputs[0]
+                output = self.outputs[0]
                 allLines = StringIO(droputils.allDropContents(drop)).readlines()
                 for line in allLines:
                     if self._substring in line:
@@ -153,8 +153,8 @@ class TestDROP(unittest.TestCase):
 
         class SortResult(BarrierAppDROP):
             def run(self):
-                drop = self._inputs.values()[0]
-                output = self._outputs.values()[0]
+                drop = self.inputs[0]
+                output = self.outputs[0]
                 sortedLines = StringIO(droputils.allDropContents(drop)).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
@@ -162,8 +162,8 @@ class TestDROP(unittest.TestCase):
 
         class RevResult(BarrierAppDROP):
             def run(self):
-                drop = self._inputs.values()[0]
-                output = self._outputs.values()[0]
+                drop = self.inputs[0]
+                output = self.outputs[0]
                 allLines = StringIO(droputils.allDropContents(drop)).readlines()
                 for line in allLines:
                     buf = ''
@@ -391,8 +391,8 @@ class TestDROP(unittest.TestCase):
         # This is used as "B"
         class NumberWriterApp(BarrierAppDROP):
             def run(self):
-                inputDrop = self._inputs.values()[0]
-                output = self._outputs.values()[0]
+                inputDrop = self.inputs[0]
+                output = self.outputs[0]
                 howMany = int(droputils.allDropContents(inputDrop))
                 for i in xrange(howMany):
                     output.write(str(i) + " ")
@@ -400,8 +400,8 @@ class TestDROP(unittest.TestCase):
         # This is used as "D"
         class OddAndEvenContainerApp(BarrierAppDROP):
             def run(self):
-                inputDrop = self._inputs.values()[0]
-                outputs = self._outputs.values()
+                inputDrop = self.inputs[0]
+                outputs = self.outputs
 
                 numbers = droputils.allDropContents(inputDrop).strip().split()
                 for n in numbers:
@@ -555,7 +555,7 @@ class TestDROP(unittest.TestCase):
                 self._lastChar = None
             def dataWritten(self, uid, data):
                 self.execStatus = AppDROPStates.RUNNING
-                outputDrop = self._outputs.values()[0]
+                outputDrop = self.outputs[0]
                 self._lastChar = data[-1]
                 outputDrop.write(self._lastChar)
             def dropCompleted(self, uid, status):
