@@ -47,12 +47,12 @@ class ManagerRestServer(RestServer):
     (i.e. those not under /api).
     """
 
-    def __init__(self, dm):
+    def __init__(self, dm, maxreqsize=10):
 
         super(ManagerRestServer, self).__init__()
 
         # Increase maximum file sizes
-        bottle.BaseRequest.MEMFILE_MAX = 1024 * 1024 * 10
+        bottle.BaseRequest.MEMFILE_MAX = maxreqsize * 1024 * 1024
 
         self.dm = dm
 
