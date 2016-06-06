@@ -191,7 +191,7 @@ class DockerApp(BarrierAppDROP):
             raise Exception('No docker image specified, cannot create DockerApp')
 
         if ":" not in self._image:
-            logger.warn("%r: Image %s is too generic since it doesn't specify a tag" % (self, self._image))
+            logger.warn("%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
@@ -226,8 +226,7 @@ class DockerApp(BarrierAppDROP):
                 raise ValueError("'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
             self._additionalBindings[host_path] = container_path
 
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("%r with image '%s' and command '%s' created" % (self, self._image, self._command))
+        logger.info("%r with image '%s' and command '%s' created", self, self._image, self._command)
 
         # Check if we have the image; otherwise pull it.
         extra_kwargs = self._kwargs_from_env()
@@ -235,16 +234,13 @@ class DockerApp(BarrierAppDROP):
         found = reduce(lambda a,b: a or self._image in b['RepoTags'], c.images(), False)
 
         if not found:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Image '%s' not found, pulling it" % (self._image))
+            logger.debug("Image '%s' not found, pulling it", self._image)
             start = time.time()
             c.pull(self._image)
             end = time.time()
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Took %.2f [s] to pull image '%s'" % ((end-start), self._image))
+            logger.debug("Took %.2f [s] to pull image '%s'", (end-start), self._image)
         else:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Image '%s' found, no need to pull it" % (self._image))
+            logger.debug("Image '%s' found, no need to pull it", self._image)
 
         self._containerIp = None
         self._containerId = None
@@ -270,8 +266,7 @@ class DockerApp(BarrierAppDROP):
         if isinstance(drop, DockerApp):
             if '%containerIp[{0}]%'.format(drop.uid) in self._command:
                 self._waiters.append(ContainerIpWaiter(drop))
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('%r: Added ContainerIpWaiter for %r' % (self, drop))
+                logger.debug('%r: Added ContainerIpWaiter for %r', self, drop)
 
     def run(self):
 
@@ -300,16 +295,14 @@ class DockerApp(BarrierAppDROP):
         binds  = [                i.path  + ":" +                  dockerInputs[x].path  for x,i in enumerate(fsInputs)]
         binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x].path) for x,o in enumerate(fsOutputs)]
         binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Volume bindings: %r" % (binds))
+        logger.debug("Volume bindings: %r", binds)
 
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
         for waiter in self._waiters:
             uid, ip = waiter.waitForIp()
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Command after IP replacement is: %s" % (cmd))
+            logger.debug("Command after IP replacement is: %s", cmd)
 
         # If a user has been given, we run the container as that user. It is
         # useful to make sure that the USER environment variable is set in those
@@ -335,8 +328,7 @@ class DockerApp(BarrierAppDROP):
         # Wrap everything inside bash
         cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Command after user creation and wrapping is: %s" % (cmd))
+        logger.debug("Command after user creation and wrapping is: %s", cmd)
 
         extra_kwargs = self._kwargs_from_env()
         c = AutoVersionClient(**extra_kwargs)
@@ -358,14 +350,12 @@ class DockerApp(BarrierAppDROP):
                 environment=env,
         )
         self._containerId = cId = container['Id']
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Created container %s for %r" % (cId, self))
+        logger.info("Created container %s for %r", cId, self)
 
         # Start it
         start = time.time()
         c.start(container)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Started container %s" % (cId))
+        logger.info("Started container %s", cId)
 
         # Figure out the container's IP and save it
         # Setting self.containerIp will trigger an event being sent to the
@@ -377,18 +367,17 @@ class DockerApp(BarrierAppDROP):
         self._exitCode = c.wait(container)
         end = time.time()
         if logger.isEnabledFor(logging.INFO):
-            logger.info("Container %s finished in %.2f [s] with exit code %d" % (cId, (end-start), self._exitCode))
+            logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            msg = "Container %s finished successfully" % (cId,)
             stdout = c.logs(container, stdout=True, stderr=False)
             stderr = c.logs(container, stdout=False, stderr=True)
-            logger.debug(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
+            logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
         elif self._exitCode != 0:
             stdout = c.logs(container, stdout=True, stderr=False)
             stderr = c.logs(container, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
-            logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
+            logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
             rm(container)
             raise Exception(msg)
 
