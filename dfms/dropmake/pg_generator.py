@@ -606,6 +606,9 @@ class PGT(object):
     def to_pg_spec(self, node_list, ret_str=True):
         """
         convert pgt to pg specification, and map that to the hardware resources
+
+        node_list:
+            A list of nodes (list) from ALL islands
         """
         # num_nodes = toplogy.num_nodes
         # if (self._partitions is None):
@@ -613,6 +616,8 @@ class PGT(object):
         #     raise GraphException("The PGT has no partitions, but non-partitioned mapping is not yet implemented.")
         # else:
         #     pass
+        if ((node_list is None) or (0 == len(node_list))):
+            raise GPGTException("Node list is empty!")
         if (0 == self._num_parts_done):
             raise GPGTException("The graph has not been partitioned yet")
         drop_list = self._drop_list + self._extra_drops
@@ -627,6 +632,9 @@ class PGT(object):
         lm = self._oid_gid_map
         for drop in drop_list:
             oid = drop['oid']
+            # For now, simply round robin, but need to consider
+            # nodes cross islands which has
+            #TODO consider distance between a pair of nodes
             pid = lm[oid] % num_parts
             drop['node'] = node_list[pid]
 
