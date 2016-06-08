@@ -41,7 +41,7 @@ from dfms.restutils import RestClient
 
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
-'chiles_two_dev1.json', 'chiles_simple.json']
+'chiles_two_dev1.json', 'chiles_simple.json','mwa_pipeline_simple.json','mwa_pipeline.json']
 
 
 class MonitorClient(object):

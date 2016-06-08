@@ -54,7 +54,7 @@ def launchServer(opts):
     logger.info('Creating %s' % (dmName))
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
-    server = opts.restType(dm)
+    server = opts.restType(dm, opts.maxreqsize)
 
     # Signal handling
     def handle_signal(signNo, stack_frame):
@@ -85,6 +85,8 @@ def addCommonOptions(parser, defaultPort):
                       dest="host", help = "The host to bind this instance on", default='localhost')
     parser.add_option("-P", "--port", action="store", type="int",
                       dest="port", help = "The port to bind this instance on", default=defaultPort)
+    parser.add_option("-m", "--max-request-size", action="store", type="int",
+                      dest="maxreqsize", help="The maximum allowed HTTP request size, in MB", default=10)
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option("-s", "--stop", action="store_true",
