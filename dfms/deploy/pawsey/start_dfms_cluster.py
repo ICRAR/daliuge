@@ -30,13 +30,20 @@ Current plan (as of 12-April-2016):
        addresses
 
 """
-from mpi4py import MPI
+
 import commands, time, sys, os, logging
+import json
 from optparse import OptionParser
+import threading
+
+from dfms import droputils
+import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
+from dfms.manager.client import DataIslandManagerClient
 import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
-    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
-import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
+
+from mpi4py import MPI
+
 
 DIM_WAIT_TIME = 5
 VERBOSITY = '5'
@@ -79,6 +86,24 @@ def start_dim(node_list, log_dir):
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-vvv', '-H', '0.0.0.0'])
 
+def submit_graph(filename):
+    """
+    Submit the graph
+    """
+    time.sleep(5)
+    dc = DataIslandManagerClient('localhost')
+    ssid = "{0}-{1}".format(os.path.basename(filename), time.time())
+
+    dc.create_session(ssid)
+    with open(filename) as f:
+        pg = json.loads(f.read())
+        completed_uids = [x['oid'] for x in droputils.get_roots(pg)]
+        dc.append_graph(ssid, pg)
+
+    ret = dc.deploy_session(ssid, completed_uids=completed_uids)
+    logger.info("session deployed")
+    return ret
+
 def start_dfms_proxy(dfms_host, dfms_port, monitor_host, monitor_port):
     """
     Start the DFMS proxy server
@@ -105,6 +130,10 @@ if __name__ == '__main__':
     parser.add_option("-o", "--monitor_port", action="store", type="int",
                     dest="monitor_port", help = "The port to bind dfms monitor",
                     default=dfms_proxy.default_dfms_monitor_port)
+    parser.add_option('-f', '--filename', action='store', type='string',
+                    dest='filename', help = 'Physical graph filename', default=None)
+    # we add command-line parameter to allow automatic graph submission from file
+
     (options, args) = parser.parse_args()
 
     if (None == options.log_dir):
@@ -174,4 +203,6 @@ if __name__ == '__main__':
             else:
                 logger.info("Host {0} is running".format(url))
                 node_mgrs.append(ip)
+        if options.filename is not None:
+            threading.Thread(target=submit_graph, args=(options.filename,)).start()
         start_dim(node_mgrs, log_dir)

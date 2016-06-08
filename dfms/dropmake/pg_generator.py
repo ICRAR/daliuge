@@ -469,25 +469,35 @@ class LGNode():
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 kwargs['dirname'] = '/tmp'
         elif (drop_type == 'Component'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.bash_shell_app.BashShellApp'})
             if (self.jd.has_key('execution_time')):
                 sleepTime = int(self.jd['execution_time'])
             else:
                 sleepTime = random.randint(3, 8)
             kwargs['tw'] = sleepTime
-            kwargs['sleepTime'] = sleepTime
+            #kwargs['sleepTime'] = sleepTime
             # add more arguments
+
+            vv=""
+            m=0            
             for i in range(10):
                 k = "Arg%02d" % (i + 1,)
                 if (not self.jd.has_key(k)):
                     continue
                 v = self.jd[k]
                 if (v is not None and len(str(v)) > 0):
+                    m=m+1
                     if (v.find("=") > -1):
                         kv = v.split("=")
-                        kwargs[kv[0]] = kv[1]
+                       # kwargs[kv[0]] = kv[1]
                     else:
-                        kwargs[k] = v
+                       # kwargs[k] = v
+                        if (m==1):
+                            vv=v
+                        else:
+                            vv=vv+" "+v
+            kwargs['command']=vv
+            dropSpec.update(kwargs) 
         elif (drop_type == 'GroupBy'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
             dw = int(self.inputs[0].jd['data_volume']) * self.groupby_width
