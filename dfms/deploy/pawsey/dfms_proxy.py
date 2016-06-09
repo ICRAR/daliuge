@@ -78,7 +78,8 @@ def recv_from_monitor(sock):
     return recvall(sock, length)
 
 class DFMSProxy:
-    def __init__(self, dfms_host, monitor_host, dfms_port=default_dfms_port, monitor_port=default_dfms_monitor_port):
+    def __init__(self, proxy_id, dfms_host, monitor_host, dfms_port=default_dfms_port, monitor_port=default_dfms_monitor_port):
+        self._proxy_id = proxy_id if len(proxy_id) <= 80 else proxy_id[:80]
         self._dfms_host = dfms_host
         self._dfms_port = dfms_port
         self._monitor_host = monitor_host
@@ -87,27 +88,32 @@ class DFMSProxy:
         self._dfms_sock_tag_dict = dict()
 
     def connect_to_host(self, server, port):
-        connected = False
-        the_socket = None # keep the IDE happy!
         retry_count = 0
-        while not connected:
+        while True:
             if retry_count >= conn_retry_count:
                 logger.error("Retry connecting to DFMS monitor exhausted, quit")
                 sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
-                connected = True
-                logger.info('Connected to ' + server + ' on port ' + str(port))
+                logger.info('Connected to %s on port %d' % (server, port))
+                return the_socket
             except Exception as e:
                 err = str(e)
                 logger.error("Fail to connect to {0} on port {1} due to {2}".format(server, port, err))
                 # Sleep for a while before trying to connect again
                 time.sleep(conn_retry_timeout)
                 retry_count += 1
-        return the_socket
 
     def connect_monitor_host(self):
-        self.monitor_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
+        # After connecting we identify ourselves using our ID with the monitor
+        the_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
+        the_socket.sendall("%-80s" % (self._proxy_id))
+        ok = int(recvall(the_socket, 1))
+        if not ok:
+            the_socket.shutdown(socket.SHUT_RDWR)
+            the_socket.close()
+            raise Exception("Monitor rejected us due to duplicated ID")
+        self.monitor_socket = the_socket
 
     def loop(self):
         self.connect_monitor_host()
@@ -188,17 +194,19 @@ if __name__ == '__main__':
     parser.add_option("-b", "--debug",
                   action="store_true", dest="debug", default=False,
                   help="Whether to log debug info")
+    parser.add_option("-i", "--id", action="store", type="string",
+                      dest="id", help="The ID of this proxy for on the monitor side (required)", default=None)
     (options, args) = parser.parse_args()
-    if (None == options.dfms_host or None == options.monitor_host):
+    if (None == options.dfms_host or None == options.monitor_host or None == options.id):
         parser.print_help()
         sys.exit(1)
     if (options.debug):
         ll = logging.DEBUG
     else:
         ll = logging.INFO
-    logfile = "{0}/dfms_proxy.log".format(os.path.dirname(options.log_dir))
+    logfile = "%s/dfms_proxy.log" % options.log_dir
     logging.basicConfig(filename=logfile, level=ll, format=FORMAT)
-    server = DFMSProxy(options.dfms_host, options.monitor_host, options.dfms_port, options.monitor_port)
+    server = DFMSProxy(options.id, options.dfms_host, options.monitor_host, options.dfms_port, options.monitor_port)
     try:
         server.loop()
     except KeyboardInterrupt:
