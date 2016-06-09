@@ -180,7 +180,7 @@ if __name__ == '__main__':
     parser.add_option("-m", "--monitor_host", action="store", type="string",
                     dest="monitor_host", help="Monitor host IP (required)")
     parser.add_option("-l", "--log_dir", action="store", type="string",
-                    dest="log_dir", help="Log directory (optional)", default=os.path.realpath(__file__))
+                    dest="log_dir", help="Log directory (optional)", default='.')
     parser.add_option("-f", "--dfms_port", action="store", type="int",
                     dest="dfms_port", help = "The port to bind dfms drop manager", default=default_dfms_port)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
