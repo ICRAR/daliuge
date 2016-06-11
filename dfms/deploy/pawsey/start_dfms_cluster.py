@@ -38,6 +38,8 @@ import threading
 
 from dfms import droputils
 import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
+from dfms.deploy.pawsey.example_client import MonitorClient
+import dfms.deploy.pawsey.example_client as exclient
 from dfms.manager.client import DataIslandManagerClient
 import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
@@ -46,6 +48,8 @@ from mpi4py import MPI
 
 
 DIM_WAIT_TIME = 5
+GRAPH_SUBMIT_WAIT_TIME = 10
+GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
 DIM_PORT = 8001
@@ -86,23 +90,51 @@ def start_dim(node_list, log_dir):
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-vvv', '-H', '0.0.0.0'])
 
-def submit_graph(filename):
+def submit_monitor_graph(graph_id, dump_status):
     """
-    Submit the graph
+    Submits a graph and then monitors the island manager
     """
-    time.sleep(5)
-    dc = DataIslandManagerClient('localhost')
-    ssid = "{0}-{1}".format(os.path.basename(filename), time.time())
+    time.sleep(GRAPH_SUBMIT_WAIT_TIME)
+    # use monitorclient to interact with island manager
+    if (graph_id is not None):
+        mc = MonitorClient('localhost', 8001)
+        logger.info("Submitting graph {0}".format(graph_id))
+        mc.submit_single_graph(graph_id, deploy=True)
+        dc = mc._dc
+    else:
+        dc = DataIslandManagerClient('localhost')
+    if (dump_status is not None):
+        fp = os.path.dirname(dump_status)
+        if (not os.path.exists(fp)):
+            return
+        gfile = "{0}_g.log".format(dump_status)
+        sfile = "{0}_s.log".format(dump_status)
+        graph_dict = dict() # k - ssid, v - graph spec json obj
+        while (True):
+            for session in dc.sessions():
+                ssid = session['id']
+                wgs = {}
+                wgs['ssid'] = ssid
+                wgs['gs'] = dc.graph_status(ssid) #TODO check error
+                time_str = '%.3f' % time.time()
+                wgs['ts'] = time_str
+                if (not graph_dict.has_key(ssid)):
+                    graph = dc.graph(ssid)
+                    graph_dict[ssid] = graph
+                    wg = {}
+                    wg['ssid'] = ssid
+                    wg['g'] = graph
+                    # append to file as a line
+                    with open(gfile, 'a') as fg:
+                        json.dump(wg, fg)
+                        fg.write(os.linesep)
+                # append to file as a line
+                with open(sfile, 'a') as fs:
+                    json.dump(wgs, fs)
+                    fs.write(os.linesep)
 
-    dc.create_session(ssid)
-    with open(filename) as f:
-        pg = json.loads(f.read())
-        completed_uids = [x['oid'] for x in droputils.get_roots(pg)]
-        dc.append_graph(ssid, pg)
+                time.sleep(GRAPH_MONITOR_INTERVAL)
 
-    ret = dc.deploy_session(ssid, completed_uids=completed_uids)
-    logger.info("session deployed")
-    return ret
 
 def start_dfms_proxy(dfms_host, dfms_port, monitor_host, monitor_port):
     """
@@ -128,17 +160,24 @@ if __name__ == '__main__':
     parser.add_option("-m", "--monitor_host", action="store", type="string",
                     dest="monitor_host", help="Monitor host IP (optional)")
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The port to bind dfms monitor",
+                    dest="monitor_port", help="The port to bind dfms monitor",
                     default=dfms_proxy.default_dfms_monitor_port)
-    parser.add_option('-f', '--filename', action='store', type='string',
-                    dest='filename', help = 'Physical graph filename', default=None)
+
     # we add command-line parameter to allow automatic graph submission from file
+    parser.add_option('-g', '--gid', action='store', type='int',
+                    dest='gid', help = 'Physical graph id', default=None)
+
+    parser.add_option('-d', '--dump', action='store_true',
+                    dest='dump', help = 'dump file base name?', default=False)
 
     (options, args) = parser.parse_args()
 
     if (None == options.log_dir):
         parser.print_help()
         sys.exit(1)
+
+    if (options.gid is not None and options.gid >= len(exclient.lgnames)):
+        options.gid = 0
 
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
@@ -203,6 +242,10 @@ if __name__ == '__main__':
             else:
                 logger.info("Host {0} is running".format(url))
                 node_mgrs.append(ip)
-        if options.filename is not None:
-            threading.Thread(target=submit_graph, args=(options.filename,)).start()
+        if ((options.gid is not None) or options.dump):
+            if (options.dump):
+                arg02 = '{0}/monitor'.format(log_dir)
+            else:
+                arg02 = None
+            threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02)).start()
         start_dim(node_mgrs, log_dir)
