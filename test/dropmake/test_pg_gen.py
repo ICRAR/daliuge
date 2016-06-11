@@ -23,6 +23,10 @@ import unittest, pkg_resources
 
 from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
 
+"""
+python -m unittest test.dropmake.test_pg_gen
+"""
+
 
 class TestPGGen(unittest.TestCase):
 
