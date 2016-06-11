@@ -42,7 +42,7 @@ from dfms.deploy.pawsey.example_client import MonitorClient
 import dfms.deploy.pawsey.example_client as exclient
 from dfms.manager.client import DataIslandManagerClient
 import dfms.manager.cmdline as dfms_start
-from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
+from dfms.manager.constants import NODE_DEFAULT_REST_PORT
 
 from mpi4py import MPI
 
@@ -74,7 +74,7 @@ def get_ip(loc='Pawsey'):
     """
     re = commands.getstatusoutput('ifconfig')
     if (loc == 'Pawsey'):
-        ln = 1 # e.g.
+        ln = 1 # e.g. 10.128.0.98
     elif (loc == 'Tianhe2'):
         ln = 18 # e.g. 12.6.2.134
     else:
@@ -100,6 +100,8 @@ def submit_monitor_graph(graph_id, dump_status):
     """
     Submits a graph and then monitors the island manager
     """
+    logger.debug("dump_status = {0}".format(dump_status))
+    logger.info("Wait for {0} seconds before submitting graph".format(GRAPH_SUBMIT_WAIT_TIME))
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
     # use monitorclient to interact with island manager
     if (graph_id is not None):
@@ -116,9 +118,15 @@ def submit_monitor_graph(graph_id, dump_status):
         gfile = "{0}_g.log".format(dump_status)
         sfile = "{0}_s.log".format(dump_status)
         graph_dict = dict() # k - ssid, v - graph spec json obj
+        logger.debug("Ready to check sessions")
         while (True):
-            for session in dc.sessions():
-                ssid = session['id']
+            logger.debug("checking sessions")
+            sessions = dc.sessions()
+            logger.debug("len(sessions) = {0}".format(len(sessions)))
+            logger.debug("session0 = {0}".format(sessions[0]))
+            for session in sessions:
+                ssid = session['sessionId']
+                logger.debug("session id = {0}".format(ssid))
                 wgs = {}
                 wgs['ssid'] = ssid
                 wgs['gs'] = dc.graph_status(ssid) #TODO check error
@@ -254,9 +262,12 @@ if __name__ == '__main__':
                 logger.info("Host {0} is running".format(url))
                 node_mgrs.append(ip)
         if ((options.gid is not None) or options.dump):
+            logger.info("Preparing submitting graph (and monitor it)")
             if (options.dump):
                 arg02 = '{0}/monitor'.format(log_dir)
+                logger.info("Local monitor path: {0}".format(arg02))
             else:
                 arg02 = None
+                logger.info("Local monitor path is not set")
             threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02)).start()
         start_dim(node_mgrs, log_dir)
