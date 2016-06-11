@@ -91,9 +91,9 @@ class DFMSProxy:
         the_socket = None # keep the IDE happy!
         retry_count = 0
         while not connected:
-            if retry_count >= conn_retry_count:
-                logger.error("Retry connecting to DFMS monitor exhausted, quit")
-                sys.exit(2)
+            # if retry_count >= conn_retry_count:
+            #     logger.error("Retry connecting to DFMS monitor exhausted, quit")
+            #     sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
                 connected = True

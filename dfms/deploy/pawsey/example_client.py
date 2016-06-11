@@ -41,25 +41,19 @@ from dfms.restutils import RestClient
 
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
-'chiles_two_dev1.json', 'chiles_simple.json','mwa_pipeline_simple.json','mwa_pipeline.json']
+'chiles_two_dev1.json', 'chiles_simple.json','mwa_gleam.json','mwa_gleam_simple.json']
 
 
 class MonitorClient(object):
     def __init__(self, mhost, mport, timeout=10, sch_algo='sarkar', output=None):
         self._host = mhost
         self._port = mport
-        self._rc = RestClient(mhost, mport, timeout)
         self._dc = DataIslandManagerClient(mhost, mport)
         self._sch_algo = sch_algo
         self._output = output
 
     def get_avail_hosts(self):
         return self._dc.nodes()
-        """
-        ret = self._rc._request('/api', 'get')
-        ret_dict = json.loads(ret)
-        return ret_dict['hosts']
-        """
 
     def submit_single_graph(self, graph_id, algo='sarkar', deploy=False):
         lgn = lgnames[graph_id]
