@@ -68,12 +68,18 @@ def ping_host(url, timeout=5):
         logger.warning("Fail to ping host {0}: {1}".format(url, str(err)))
         return 1
 
-def get_ip():
+def get_ip(loc='Pawsey'):
     """
     This is brittle, but works on Magnus/Galaxy for now
     """
     re = commands.getstatusoutput('ifconfig')
-    line = re[1].split('\n')[1]
+    if (loc == 'Pawsey'):
+        ln = 1 # e.g.
+    elif (loc == 'Tianhe2'):
+        ln = 18 # e.g. 12.6.2.134
+    else:
+        raise Exception("Unknown deploy location: {0}".format(loc))
+    line = re[1].split('\n')[ln]
     return line.split()[1].split(':')[1]
 
 def start_node_mgr(log_dir):
@@ -165,10 +171,15 @@ if __name__ == '__main__':
 
     # we add command-line parameter to allow automatic graph submission from file
     parser.add_option('-g', '--gid', action='store', type='int',
-                    dest='gid', help = 'Physical graph id', default=None)
+                    dest='gid', help = 'Physical graph id')
 
     parser.add_option('-d', '--dump', action='store_true',
                     dest='dump', help = 'dump file base name?', default=False)
+
+    parser.add_option("-c", "--loc", action="store", type="string",
+                    dest="loc", help="deployment location (e.g. 'Pawsey' or 'Tianhe2')",
+                    default="Pawsey")
+
 
     (options, args) = parser.parse_args()
 
@@ -204,7 +215,7 @@ if __name__ == '__main__':
     else:
         run_node_mgr = True
 
-    ip_adds = get_ip()
+    ip_adds = get_ip(options.loc)
     origin_ip = ip_adds
     ip_adds = comm.gather(ip_adds, root=0)
     if (run_proxy):
