@@ -468,14 +468,21 @@ class LGNode():
             else:
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 kwargs['dirname'] = '/tmp'
-        elif (drop_type == 'Component'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.bash_shell_app.BashShellApp'})
+        elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
             if (self.jd.has_key('execution_time')):
                 sleepTime = int(self.jd['execution_time'])
             else:
                 sleepTime = random.randint(3, 8)
             kwargs['tw'] = sleepTime
-            #kwargs['sleepTime'] = sleepTime
+            kwargs['sleepTime'] = sleepTime
+            dropSpec.update(kwargs)
+        elif (drop_type == 'BashShellApp'):
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.bash_shell_app.BashShellApp'})
+            if (self.jd.has_key('execution_time')):
+                kwargs['tw'] = int(self.jd['execution_time'])
+            else:
+                kwargs['tw'] = random.randint(3, 8)
             # add more arguments
             cmds = []
             for i in range(10):
