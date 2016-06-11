@@ -36,8 +36,10 @@ DFMS Monitor runs outside the Pawsey firewall
 --------------------------------------------------------------------------------
 """
 
+import BaseHTTPServer
 import collections
 import errno
+import json
 import logging
 import optparse
 import os
@@ -45,11 +47,13 @@ import select
 import socket
 import struct
 import sys
+import threading
 import time
 
 
 BUFF_SIZE = 16384
 outstanding_conn = 20
+default_publication_port = 20000
 default_proxy_port = 30000
 default_client_base_port = 30001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
@@ -80,11 +84,51 @@ def recv_from_dfms(sock):
     length, = struct.unpack('!I', lengthbuf)
     return recvall(sock, length)
 
+# HTTP support to get the list of available proxies
+class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def setup(self):
+        BaseHTTPServer.BaseHTTPRequestHandler.setup(self)
+        self.monitor = self.server.monitor
+
+    def do_GET(self):
+        if self.path not in ('/', ''):
+            self.send_error(404)
+            return
+
+        host = 'localhost'
+        if 'Host' in self.headers:
+            host = self.headers['Host']
+            host = host if ":" not in host else host.split(':')[0]
+
+        self.send_response(200)
+        if 'Accept' in self.headers and 'text/html' in self.headers['Accept']:
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            if not self.monitor.proxy_ids:
+                self.wfile.write("No proxies available yet")
+                return
+
+            aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host,proxyId,client_port) for proxyId, client_port in self.monitor.proxy_ids.items()]
+            html = "</li><li>".join(aEls)
+            html = "<ul><li>" + html + "</li></ul>"
+            self.wfile.write(html)
+            return
+
+        # Else print as JSON
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(self.monitor.proxy_ids, indent=2))
+
+class Server(BaseHTTPServer.HTTPServer):
+    def __init__(self, monitor):
+        self.monitor = monitor
+        BaseHTTPServer.HTTPServer.__init__(self, (monitor.host, monitor.publication_port), Handler)
+
 sockandaddr = collections.namedtuple('sockandaddr', 'sock addr')
 
 class DFMSMonitor:
 
-    def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port):
+    def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port, publication_port=default_publication_port):
         """
         host:             listening host (string)
         proxy_port:       port exposed to the dfms proxy  (int)
@@ -110,6 +154,10 @@ class DFMSMonitor:
         # To save the tags we attach to each client socket
         self.tag_dict = {} # k - socket hash, v - socket tag
 
+        # Proxy IDs to client ports. We publish that information in publication_port
+        self.proxy_ids = {}
+        self.publication_port = publication_port
+
         # Set up the single socket that listens for proxy connection
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -128,11 +176,34 @@ class DFMSMonitor:
         self.tag_dict[hashcode] = tag
         return tag
 
-    def ioloop(self):
-        while True:
+    def start_ioloop(self):
+        logger.info("Starting IO thread")
+        self._running = True
+        self._io_thread = threading.Thread(target=self.ioloop)
+        self._io_thread.start()
 
+    def stop_ioloop(self):
+        logger.info("Joining IO thread")
+        self._running = False
+        self._io_thread.join(5)
+        logger.info("IO thread joined correctly? %d", not self._io_thread.isAlive())
+
+    def main_loop(self):
+
+        self.start_ioloop()
+
+        http_server = Server(self)
+        try:
+            logger.info("Starting up HTTP server on %s:%d", self.host, self.publication_port)
+            http_server.serve_forever()
+        except KeyboardInterrupt:
+            self.stop_ioloop()
+            raise
+
+    def ioloop(self):
+        while self._running:
             try:
-                inputready, _, _ = select.select(self.ifds, [], [])
+                inputready, _, _ = select.select(self.ifds, [], [], 0.5)
 
                 # The self.* lists are continuously updated by the on_* methods,
                 # so we keep a reference to the initial values they have.
@@ -152,9 +223,12 @@ class DFMSMonitor:
                         self.on_client_data(sock)
                     else:
                         logger.error("Received data from unknown socket: %r", sock)
-            except KeyboardInterrupt:
-                raise
+            except (OSError, select.error) as e:
+                print e
+                if e.args[0] == errno.EINTR:
+                    break
             except Exception:
+                print e
                 logger.exception("Unexpected exception, some communications might have been lost")
 
     def add_client_listener(self):
@@ -229,6 +303,13 @@ class DFMSMonitor:
 
         self.remove_clientlistener_socket(clientport)
 
+        # Free up the ID of this proxy
+        proxyId_toDelete = None
+        for proxyId, port in self.proxy_ids.items():
+            if port == clientport:
+                proxyId_toDelete = proxyId
+        del self.proxy_ids[proxyId_toDelete]
+
         clisocksandaddr = self.client_sockets.values()
         for saa in clisocksandaddr:
             this_clientport = saa.addr[1]
@@ -250,13 +331,26 @@ class DFMSMonitor:
         proxyport = proxyaddr[1]
         self.proxy_sockets[proxyport] = sockandaddr(proxysock, proxyaddr)
         self.ifds.append(proxysock)
-        logger.info('Received new connection from dfms_proxy at %r', proxyaddr)
+        logger.info('Received new connection from dfms_proxy at %r, reading identification', proxyaddr)
+
+        # Read the proxy ID and check we don't have duplicates
+        proxy_id = recvall(proxysock, 80).strip()
+        if proxy_id in self.proxy_ids:
+            proxysock.sendall('0')
+            self.close_socket(proxysock, True)
+            return
+
+        proxysock.sendall('1')
+        logger.info('Proxy identified as %s, fine', proxy_id)
 
         client_listener_socket = self.add_client_listener()
         clientport = client_listener_socket.getsockname()[1]
         self.client_listener_sockets[clientport] = client_listener_socket
         self.client_port_to_proxy_port[clientport] = proxyport
         self.ifds.append(client_listener_socket)
+
+        # Save the client port associated to this proxy
+        self.proxy_ids[proxy_id] = clientport
 
     def on_client_connected(self, sock):
 
@@ -321,7 +415,13 @@ class DFMSMonitor:
     def on_client_data(self, sock):
 
         tag = self.tag_for_socket(sock, create=False)
-        data = sock.recv(BUFF_SIZE)
+
+        try:
+            data = sock.recv(BUFF_SIZE)
+        except socket.error:
+            logger.warning("Error while reading data from client, will close it")
+            self.remove_client_socket(sock)
+            return
 
         # The client disconnected, remove it
         if not data:
@@ -361,6 +461,8 @@ if __name__ == '__main__':
                     default=default_client_base_port)
     parser.add_option("-l", "--log_dir", action="store", type="string",
                     dest="log_dir", help="log directory for dfms monitor server", default=os.path.realpath(__file__))
+    parser.add_option("-p", "--publication_port", action="store", type="int",
+                      dest="publication_port", help="Port used to publish the list of proxies for clients to look at", default=default_publication_port)
     parser.add_option("-d", "--debug",
                   action="store_true", dest="debug", default=False,
                   help="Whether to log debug info")
@@ -375,7 +477,7 @@ if __name__ == '__main__':
 
     server = DFMSMonitor(options.host, options.monitor_port, options.client_port)
     try:
-        server.ioloop()
+        server.main_loop()
     except KeyboardInterrupt:
         logger.warning("Ctrl C - Stopping DFMS Monitor server")
         sys.exit(1)
