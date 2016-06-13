@@ -54,13 +54,15 @@ VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
 DIM_PORT = 8001
 
-def ping_host(url, timeout=5):
+def ping_host(url, timeout=5, loc='Pawsey'):
     """
     To check if a host is running
     Returns:
         0                Success
         Otherwise        Failure
     """
+    if (loc == 'Tianhe2'):
+        return 0 # Tianhe2 always return 0 (success)
     cmd = 'curl --connect-timeout %d %s' % (timeout, url)
     try:
         return commands.getstatusoutput(cmd)[0]
@@ -256,7 +258,7 @@ if __name__ == '__main__':
             if (ip == origin_ip or (run_proxy and ip == proxy_ip)):
                 continue
             url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
-            if (ping_host(url) != 0):
+            if (ping_host(url, options.loc) != 0):
                 logger.warning("Fail to ping host {0}".format(url))
             else:
                 logger.info("Host {0} is running".format(url))
