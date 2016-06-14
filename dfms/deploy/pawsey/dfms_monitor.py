@@ -227,8 +227,8 @@ class DFMSMonitor:
                 print e
                 if e.args[0] == errno.EINTR:
                     break
-            except Exception:
-                print e
+            except Exception as ex:
+                print str(ex)
                 logger.exception("Unexpected exception, some communications might have been lost")
 
     def add_client_listener(self):
@@ -475,7 +475,7 @@ if __name__ == '__main__':
         ll = logging.INFO
     logging.basicConfig(stream=sys.stdout, level=ll, format=FORMAT)
 
-    server = DFMSMonitor(options.host, options.monitor_port, options.client_port)
+    server = DFMSMonitor(options.host, options.monitor_port, options.client_port, publication_port=options.publication_port)
     try:
         server.main_loop()
     except KeyboardInterrupt:
