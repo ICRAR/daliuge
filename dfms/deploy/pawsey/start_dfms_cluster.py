@@ -152,11 +152,12 @@ def submit_monitor_graph(graph_id, dump_status):
                 time.sleep(GRAPH_MONITOR_INTERVAL)
 
 
-def start_dfms_proxy(dfms_host, dfms_port, monitor_host, monitor_port):
+def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     """
     Start the DFMS proxy server
     """
-    server = dfms_proxy.DFMSProxy(dfms_host, monitor_host, dfms_port, monitor_port)
+    proxy_id = loc + '%.3f' % time.time()
+    server = dfms_proxy.DFMSProxy(proxy_id, dfms_host, monitor_host, dfms_port, monitor_port)
     try:
         server.loop()
     except KeyboardInterrupt:
@@ -245,7 +246,7 @@ if __name__ == '__main__':
             sltime = DIM_WAIT_TIME + 2
             logger.info("Starting dfms proxy on host {0} in {1} seconds".format(origin_ip, sltime))
             time.sleep(sltime)
-            start_dfms_proxy(mgr_ip, DIM_PORT, options.monitor_host, options.monitor_port)
+            start_dfms_proxy(options.loc, mgr_ip, DIM_PORT, options.monitor_host, options.monitor_port)
         elif (run_node_mgr):
             logger.info("Starting node manager on host {0}".format(origin_ip))
             start_node_mgr(log_dir)
@@ -258,7 +259,7 @@ if __name__ == '__main__':
             if (ip == origin_ip or (run_proxy and ip == proxy_ip)):
                 continue
             url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
-            if (ping_host(url, options.loc) != 0):
+            if (ping_host(url, loc=options.loc) != 0):
                 logger.warning("Fail to ping host {0}".format(url))
             else:
                 logger.info("Host {0} is running".format(url))
