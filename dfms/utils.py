@@ -264,9 +264,7 @@ def prepare_sql(sql, paramstyle, data=()):
     sql = sql.format(*markers)
 
     if paramstyle in ['format', 'pyformat']:
-        dataDict = {}
-        [dataDict.__setitem__('n%d'%(i), d) for i,d in enumerate(data)]
-        data = dataDict
+        data = {'n%d'%(i): d for i,d in enumerate(data)}
 
     return (sql, data)
 
