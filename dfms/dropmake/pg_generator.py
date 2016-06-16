@@ -48,10 +48,16 @@ Examples of logical graph node JSON representation
 
 """
 
-from collections import defaultdict
-import json, os, datetime, time, math, commands
+import collections
+import commands
+import datetime
+import json
 import logging
+import math
+import os
 import random
+import time
+import uuid
 
 import networkx as nx
 import numpy as np
@@ -1261,8 +1267,8 @@ class LG():
         with open(json_path) as df:
             lg = json.load(df)
             self._done_dict = dict()
-            self._group_q = defaultdict(list)
-            self._output_q = defaultdict(list)
+            self._group_q = collections.defaultdict(list)
+            self._output_q = collections.defaultdict(list)
             self._start_list = []
             all_list = []
             for jd in lg['nodeDataArray']:
@@ -1288,7 +1294,7 @@ class LG():
                 tgt.add_input(src)
 
         # key - lgn id, val - a list of pgns associated with this lgn
-        self._drop_dict = defaultdict(list)
+        self._drop_dict = collections.defaultdict(list)
         del all_list
 
     def validate_link(self, src, tgt):
@@ -1548,7 +1554,7 @@ class LG():
                                 self._link_drops(slgn, tlgn, sdrops[i], tdrop)
             else: # slgn is not group, but tlgn is group
                 if (tlgn.is_groupby()):
-                    grpby_dict = defaultdict(list)
+                    grpby_dict = collections.defaultdict(list)
                     layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
                         src_ctx = gdd['iid'].split('/')
