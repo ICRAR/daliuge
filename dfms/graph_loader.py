@@ -102,8 +102,7 @@ def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
     # Step #1: Index DROP specs
-    dropSpecsDict = {}
-    [dropSpecsDict.__setitem__(dropSpec['oid'], dropSpec) for dropSpec in dropSpecList]
+    dropSpecsDict = {dropSpec['oid']: dropSpec for dropSpec in dropSpecList}
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
