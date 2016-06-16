@@ -28,6 +28,7 @@ import threading
 import Pyro4
 
 from dfms import remote, graph_loader, drop, utils
+from dfms.ddap_protocol import DROPRel
 from dfms.manager.client import BaseDROPManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
@@ -269,6 +270,38 @@ class CompositeManager(DROPManager):
         interDMRelations = []
         for dropSpecs in perPartition.viewvalues():
             interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
+
+        # TODO: Big change required to remove this hack here
+        #
+        # Values in the interDMRelations array use OIDs to identify drops.
+        # This is because so far we have told users to that OIDs are required
+        # in the physical graph description, while UIDs are optional
+        # (and copied over from the OID if not given).
+        # On the other hand, once drops are actually created in deploySession()
+        # we access the values in interDMRelations as if they had UIDs inside,
+        # which causes problems everywhere because everything else is indexed
+        # on UIDs.
+        # In order to not break the current physical graph constrains and keep
+        # things simple we'll simply replace the values of the interDMRelations
+        # array here to use the corresponding UID for the given OIDs.
+        # Because UIDs are globally unique across drop instances it makes sense
+        # to always index things by UID and not by OID. Thus, in the future we
+        # should probably change the requirement on the physical graphs sent by
+        # users to always require an UID, and optionally an OID, and then change
+        # all this code to immediately use those UIDs instead.
+        def uid_for_drop(dropSpec):
+            if 'uid' in dropSpec:
+                return dropSpec['uid']
+            return dropSpec['oid']
+        newDMRelations = []
+        graphDict = {dropSpec['oid']: dropSpec for dropSpec in graphSpec}
+        for rel in interDMRelations:
+            lhs = uid_for_drop(graphDict[rel.lhs])
+            rhs = uid_for_drop(graphDict[rel.rhs])
+            new_rel = DROPRel(lhs, rel.rel, rhs)
+            newDMRelations.append(new_rel)
+        interDMRelations[:] = newDMRelations
+        logger.debug('Removed (and sanitized) inter-dm relationships: %r', interDMRelations)
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
