@@ -370,12 +370,12 @@ class DockerApp(BarrierAppDROP):
             logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            stdout = c.logs(container, stdout=True, stderr=False)
-            stderr = c.logs(container, stdout=False, stderr=True)
+            stdout = ''.join(c.logs(container, stream=True, stdout=True, stderr=False))
+            stderr = ''.join(c.logs(container, stream=True, stdout=False, stderr=True))
             logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
         elif self._exitCode != 0:
-            stdout = c.logs(container, stdout=True, stderr=False)
-            stderr = c.logs(container, stdout=False, stderr=True)
+            stdout = ''.join(c.logs(container, stream=True, stdout=True, stderr=False))
+            stderr = ''.join(c.logs(container, stream=True, stdout=False, stderr=True))
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
             rm(container)
