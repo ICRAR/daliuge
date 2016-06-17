@@ -215,7 +215,10 @@ class NMRestServer(ManagerRestServer):
         tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl, serverUrl=serverUrl)
+        return bottle.template(tpl,
+                               serverUrl=serverUrl,
+                               dmType=self.dm.__class__.__name__,
+                               reset='false')
 
 class CompositeManagerRestServer(ManagerRestServer):
     """

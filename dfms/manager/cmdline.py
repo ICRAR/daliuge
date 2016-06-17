@@ -37,8 +37,9 @@ from lockfile.pidlockfile import PIDLockFile
 
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
-    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
 from dfms.manager.node_manager import NodeManager
+from dfms.manager.replay import ReplayManager, ReplayManagerServer
 from dfms.manager.rest import NMRestServer, CompositeManagerRestServer, \
     MasterManagerRestServer
 from dfms.utils import getDfmsPidDir, getDfmsLogsDir, createDirIfMissing
@@ -265,12 +266,39 @@ def dfmsMM(args=sys.argv):
     """
     dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
 
+def dfmsReplay(args=sys.argv):
+    """
+    Entry point for the dfmsReplay command-line script
+    """
+
+        # Parse command-line and check options
+    parser = optparse.OptionParser()
+    addCommonOptions(parser, REPLAY_DEFAULT_REST_PORT)
+    parser.add_option("-S", "--status-file", action="store",
+                      dest="status_file", help="File containing a continuous graph status dump", default=None)
+    parser.add_option("-g", "--graph-file", action="store", type="string",
+                      dest="graph_file", help="File containing a physical graph dump", default=None)
+    (options, args) = parser.parse_args(args)
+
+    if not options.graph_file:
+        parser.error("Missing mandatory graph file")
+    if not options.status_file:
+        parser.error("Missing mandatory status file")
+
+    # Add DM-specific options
+    options.dmType = ReplayManager
+    options.dmArgs = (options.graph_file, options.status_file)
+    options.dmKwargs = {}
+    options.dmAcronym = 'RP'
+    options.restType = ReplayManagerServer
+
+    start(options, parser)
 
 if __name__ == '__main__':
     # If this module is called directly, the first argument must be dfmsMM,
     # dfmsNM or dfmsDIM, the rest of the arguments are the normal ones
     if len(sys.argv) == 1:
-        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
+        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0])
         sys.exit(1)
     dm = sys.argv.pop(1)
     if dm == 'dfmsNM':
@@ -279,6 +307,8 @@ if __name__ == '__main__':
         dfmsDIM()
     elif dm == 'dfmsMM':
         dfmsMM()
+    elif dm == 'dfmsReplay':
+        dfmsReplay()
     else:
-        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM] [options]' % (sys.argv[0])
+        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0])
         sys.exit(1)
