@@ -135,8 +135,7 @@ class RestClient(object):
     def _request(self, url, method, content=None, headers={}):
 
         # Do the HTTP stuff...
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Sending %s request to %s:%d%s" % (method, self.host, self.port, url))
+        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
 
         if not utils.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
@@ -148,8 +147,7 @@ class RestClient(object):
         # Server errors are encoded in the body as json content
         if self._resp.status == httplib.INTERNAL_SERVER_ERROR:
             msg = json.loads(self._resp.read())['err_str']
-            if logger.isEnabledFor(logging.WARNING):
-                logger.warning('Error found while requesting %s:%d%s: %s' % (self.host, self.port, url, msg))
+            logger.warning('Error found while requesting %s:%d%s: %s', self.host, self.port, url, msg)
             raise RestClientException(msg)
         elif self._resp.status != httplib.OK:
             msg = 'Unexpected error while processing %s request for %s:%s%s (status %d): %s' % \

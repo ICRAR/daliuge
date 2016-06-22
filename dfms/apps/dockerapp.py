@@ -368,8 +368,7 @@ class DockerApp(BarrierAppDROP):
         # Wait until it finishes
         self._exitCode = c.wait(container)
         end = time.time()
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
+        logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
             stdout = ''.join(c.logs(container, stream=True, stdout=True, stderr=False))

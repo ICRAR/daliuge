@@ -85,8 +85,8 @@ def createClient(host, username=None, pkeyPath=None):
     return client
 
 def __scpProgress(filename, size, sent):
-    if size == sent and logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Finished scp-ing %s (%d bytes)" % (filename, sent))
+    if size == sent:
+        logger.debug("Finished scp-ing %s (%d bytes)", filename, sent)
 
 def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
     """

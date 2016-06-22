@@ -94,8 +94,7 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
     else:
         raise ValueError("Cannot handle link type %d" % (linkType))
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Successfully linked %s and %s via '%s'" % (lhOID, rhOID, rel))
+    logger.debug("Successfully linked %s and %s via '%s'", lhOID, rhOID, rel)
 
 
 def removeUnmetRelationships(dropSpecList):
@@ -143,8 +142,7 @@ def loadDropSpecs(dropSpecList):
     this method doesn't actually create the DROPs themselves.
     """
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Found %d DROP definitions" % (len(dropSpecList)))
+    logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
@@ -178,8 +176,7 @@ def loadDropSpecs(dropSpecList):
 
 def createGraphFromDropSpecList(dropSpecList):
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Found %d DROP definitions" % (len(dropSpecList)))
+    logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
@@ -208,7 +205,7 @@ def createGraphFromDropSpecList(dropSpecList):
                     try:
                         relFunc = getattr(drop, relFuncName)
                     except AttributeError:
-                        logger.error('%r cannot be linked to %r due to missing method "%s"' % (drop, lhDrop, relFuncName))
+                        logger.error('%r cannot be linked to %r due to missing method "%s"', drop, lhDrop, relFuncName)
                         raise
                     relFunc(lhDrop)
 

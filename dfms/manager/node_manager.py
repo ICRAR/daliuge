@@ -85,8 +85,7 @@ class NodeManager(DROPManager):
         if dfmsPath:
             dfmsPath = os.path.expanduser(dfmsPath)
             if os.path.isdir(dfmsPath):
-                if logger.isEnabledFor(logging.INFO):
-                    logger.info("Adding %s to the system path" % (dfmsPath))
+                logger.info("Adding %s to the system path", dfmsPath)
                 sys.path.append(dfmsPath)
 
         # Error listener used by users to deal with errors coming from specific
@@ -110,8 +109,7 @@ class NodeManager(DROPManager):
         if sessionId in self._sessions:
             raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
         self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener, self._enable_luigi)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Created session %s' % (sessionId))
+        logger.info('Created session %s', sessionId)
 
     def getSessionStatus(self, sessionId):
         return self._sessions[sessionId].status
@@ -140,8 +138,7 @@ class NodeManager(DROPManager):
 
         # We register the new DROPs with the DLM if there is one
         if self._dlm:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Registering new DROPs with the DataLifecycleManager')
+            logger.debug('Registering new DROPs with the DataLifecycleManager')
             droputils.breadFirstTraverse(roots, lambda drop: self._dlm.addDrop(drop))
 
         # Finally, we also collect the Pyro URIs of our DROPs and return them
@@ -197,5 +194,4 @@ class NodeManager(DROPManager):
         graphSpec = tplFunction(**tplParams)
         self.addGraphSpec(sessionId, graphSpec)
 
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Added graph from template %s to session %s with params: %s' % (tpl, sessionId, tplParams))
+        logger.info('Added graph from template %s to session %s with params: %s', tpl, sessionId, tplParams)

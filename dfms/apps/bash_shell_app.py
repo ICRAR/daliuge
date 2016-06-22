@@ -30,7 +30,7 @@ import time
 from dfms.drop import BarrierAppDROP, FileDROP, DirectoryContainer
 from dfms import utils, droputils
 
-LOG = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class BashShellApp(BarrierAppDROP):
@@ -62,8 +62,7 @@ class BashShellApp(BarrierAppDROP):
         # Wrap everything inside bash
         cmd = '/bin/bash -c "{0}"'.format(utils.escapeQuotes(cmd, singleQuotes=False))
 
-        if LOG.isEnabledFor(logging.DEBUG):
-            LOG.debug("Command after user creation and wrapping is: {0}".format(cmd))
+        logger.debug("Command after user creation and wrapping is: %s", cmd)
 
         start = time.time()
 
@@ -72,14 +71,13 @@ class BashShellApp(BarrierAppDROP):
         stdout, stderr = process.communicate()
         self._exit_code = process.returncode
         end = time.time()
-        if LOG.isEnabledFor(logging.INFO):
-            LOG.info("Finished in {0:.2f} [s] with exit code {1}".format(end-start, self._exit_code))
+        logger.info("Finished in %.3f [s] with exit code %d", (end-start), self._exit_code)
 
-        if self._exit_code == 0 and LOG.isEnabledFor(logging.DEBUG):
-            LOG.debug("Command finished successfully, output follows.\n==STDOUT==\n{0}==STDERR==\n{1}".format(stdout, stderr))
+        if self._exit_code == 0 and logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Command finished successfully, output follows.\n==STDOUT==\n{0}==STDERR==\n{1}".format(stdout, stderr))
         elif self._exit_code != 0:
             message = "Command didn't finish successfully (exit code {0})".format(self._exit_code)
-            LOG.error(message + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
+            logger.error(message + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s" % (stdout, stderr))
             raise Exception(message)
 
     def dataURL(self):
