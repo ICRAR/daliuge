@@ -29,6 +29,7 @@ import Pyro4
 
 from dfms import remote, graph_loader, drop, utils
 from dfms.ddap_protocol import DROPRel
+from dfms.exceptions import InvalidGraphException, DaliugeException
 from dfms.manager.client import BaseDROPManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
@@ -156,7 +157,7 @@ class CompositeManager(DROPManager):
         out, err, status = remote.execRemoteWithClient(client, self.subDMCommandLine(host))
         if status != 0:
             logger.error("Failed to start the DM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, self._dmPort, out, err))
-            raise Exception("Failed to start the DM on %s:%d" % (host, self._dmPort))
+            raise DaliugeException("Failed to start the DM on %s:%d" % (host, self._dmPort))
         logger.info("DM successfully started at %s:%d", host, self._dmPort)
 
     def ensureDM(self, host, timeout=10):
@@ -173,7 +174,7 @@ class CompositeManager(DROPManager):
 
         # Wait a bit until the DM starts; if it doesn't we fail
         if not portIsOpen(host, self._dmPort, timeout):
-            raise Exception("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
+            raise DaliugeException("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
 
     def dmAt(self, host):
         return BaseDROPManagerClient(host, self._dmPort, 10)
@@ -248,11 +249,13 @@ class CompositeManager(DROPManager):
         perPartition = collections.defaultdict(list)
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
-                raise Exception("DROP %s doesn't specify a %s attribute" % (dropSpec['oid'], self._partitionAttr))
+                msg = "DROP %s doesn't specify a %s attribute" % (dropSpec['oid'], self._partitionAttr)
+                raise InvalidGraphException(msg)
 
             partition = dropSpec[self._partitionAttr]
             if partition not in self._dmHosts:
-                raise Exception("DROP %s's %s %s does not belong to this DM" % (dropSpec['oid'], self._partitionAttr, partition))
+                msg = "DROP %s's %s %s does not belong to this DM" % (dropSpec['oid'], self._partitionAttr, partition)
+                raise InvalidGraphException(msg)
 
             perPartition[partition].append(dropSpec)
 

@@ -30,12 +30,46 @@ import logging
 import bottle
 import pkg_resources
 
+from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
+    DaliugeException, NoSessionException, SessionAlreadyExistsException
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
-from dfms.restutils import RestServer, RestClient
+from dfms.restutils import RestServer, RestClient, DALIUGE_HDR_ERR, \
+    RestClientException
+
 
 LOG = logging.getLogger(__name__)
 
+def daliuge_aware(func):
+    def fwrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            LOG.exception("Error while fulfilling request")
+            if isinstance(e, NotImplementedError):
+                bottle.response.status = 501
+            elif isinstance(e, NoSessionException):
+                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
+                bottle.abort(404, 'No such session')
+            elif isinstance(e, SessionAlreadyExistsException):
+                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
+                bottle.abort(409, 'Session already exists')
+            elif isinstance(e, InvalidGraphException):
+                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
+                bottle.abort(400, 'Invalid graph given')
+            elif isinstance(e, InvalidSessionState):
+                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
+                bottle.abort(400, 'Session not in expected state')
+            elif isinstance(e, RestClientException):
+                e = str(e)
+                bottle.response.set_header(DALIUGE_HDR_ERR, e)
+                bottle.abort(556, 'Internal Drop Manager error: %s' % (e,))
+            elif isinstance(e, DaliugeException):
+                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
+                bottle.abort(555, 'Daliuge error')
+            else:
+                raise
+    return fwrapper
 
 class ManagerRestServer(RestServer):
     """
@@ -86,7 +120,6 @@ class ManagerRestServer(RestServer):
     def createSession(self):
         newSession = bottle.request.json
         sessionId = newSession['sessionId']
-        LOG.debug('createSession: {0}'.format(sessionId))
         self.dm.createSession(sessionId)
 
     def sessions(self):
@@ -96,63 +129,49 @@ class ManagerRestServer(RestServer):
         return sessions
 
     def getSessions(self):
-        LOG.debug('getSessions')
         bottle.response.content_type = 'application/json'
         return json.dumps(self.sessions())
 
     def getSessionInformation(self, sessionId):
-        LOG.debug('getSessionInformation: {0}'.format(sessionId))
         graphDict = self.dm.getGraph(sessionId)
         status = self.dm.getSessionStatus(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps({'status': status, 'graph': graphDict})
 
     def destroySession(self, sessionId):
-        LOG.debug('destroySession: {0}'.format(sessionId))
         self.dm.destroySession(sessionId)
 
     def getSessionStatus(self, sessionId):
-        LOG.debug('getSessionStatus: {0}'.format(sessionId))
         bottle.response.content_type = 'application/json'
         return json.dumps(self.dm.getSessionStatus(sessionId))
 
     def deploySession(self, sessionId):
-        LOG.debug('deploySession: {0}'.format(sessionId))
         completedDrops = []
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
         bottle.response.content_type = 'application/json'
-        try:
-            return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
-        except:
-            LOG.exception('Deploy Session')
-            raise
+        return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
 
     def getGraph(self, sessionId):
-        LOG.debug('getGraph: {0}'.format(sessionId))
         graphDict = self.dm.getGraph(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps(graphDict)
 
     def getGraphSize(self, sessionId):
-        LOG.debug('getGraphSize: %s', sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps(self.dm.getGraphSize(sessionId))
 
     def getGraphStatus(self, sessionId):
-        LOG.debug('getGraphStatus: {0}'.format(sessionId))
         graphStatusDict = self.dm.getGraphStatus(sessionId)
         bottle.response.content_type = 'application/json'
         return json.dumps(graphStatusDict)
 
     # TODO: addGraphParts v/s addGraphSpec
     def addGraphParts(self, sessionId):
-        try:
-            LOG.debug('addGraphParts: {0}'.format(sessionId))
-            self.dm.addGraphSpec(sessionId, bottle.request.json)
-        except Exception as exception:
-            LOG.exception('Exception process graph')
-            raise exception
+        if bottle.request.content_type != 'application/json':
+            bottle.response.status = 415
+            return
+        self.dm.addGraphSpec(sessionId, bottle.request.json)
 
     #===========================================================================
     # non-REST methods
