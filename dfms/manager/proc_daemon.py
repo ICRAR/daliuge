@@ -57,7 +57,7 @@ class DfmsDaemon(RestServer):
 
     def __init__(self, master=False, noNM=False, disable_zeroconf=False, verbosity=0):
 
-        super(DfmsDaemon, self).__init__(jsonified_errors=[500, 409])
+        super(DfmsDaemon, self).__init__()
 
         self._shutting_down = False
         self._verbosity = verbosity

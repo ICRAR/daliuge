@@ -24,6 +24,7 @@ import json
 import bottle
 import pkg_resources
 
+from dfms.exceptions import NoSessionException, InvalidSessionState
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.rest import ManagerRestServer
 from dfms.manager.session import SessionStates
@@ -72,7 +73,7 @@ class ReplayManager(DROPManager):
 
     def check_session_id(self, session_id):
         if session_id != self._session_id:
-            raise ValueError("Session %s doesn't exist in this manager")
+            raise NoSessionException(session_id)
 
     def getSessionStatus(self, session_id):
 
@@ -94,7 +95,7 @@ class ReplayManager(DROPManager):
 
         self.check_session_id(session_id)
         if self._session_status_reqno < run_step:
-            raise Exception("Requesting status of graph that is not running yet")
+            raise InvalidSessionState("Requesting status of graph that is not running yet")
 
         while True:
             l = self._status_file.readline()
