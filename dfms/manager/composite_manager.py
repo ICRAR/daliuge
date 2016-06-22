@@ -182,64 +182,73 @@ class CompositeManager(DROPManager):
     def getSessionIds(self):
         return self._sessionIds;
 
-    def _createSession(self, sessionId, exceptions, host):
+    #
+    # Replication of commands to underlying drop managers
+    # If "collect" is given, then individual results are also kept in the given
+    # structure, which is either a dictionary or a list
+    # "replicate" and "_replicate" work for commands that don't need an answer
+    #
+    def _replicate(self, sessionId, exceptions, f, collect, iterable):
+
+        host = iterable
+        if isinstance(iterable, (list, tuple)):
+            host = iterable[0]
+
         try:
             self.ensureDM(host)
             with self.dmAt(host) as dm:
-                dm.createSession(sessionId)
-            logger.debug('Successfully created session %s in %s', sessionId, host)
+                res = f(dm, iterable, sessionId)
+
+            if isinstance(collect, dict):
+                collect.update(res)
+            elif isinstance(collect, list):
+                collect.append(res)
+
         except Exception as e:
-            logger.error("Failed to create a session on host %s", host)
             exceptions[host] = e
             raise # so it gets printed
+
+    def replicate_to_dms(self, sessionId, f, action, collect=None, iterable=None):
+        """
+        Replicates the given function call on each of the underlying drop managers
+        """
+        thrExs = {}
+        iterable = iterable or self._dmHosts
+        self._tp.map(functools.partial(self._replicate, sessionId, thrExs, f, collect), iterable)
+        if thrExs:
+            msg = "One or more errors occurred while %s on session %s" % (action, sessionId)
+            raise Exception(msg, thrExs)
+
+    #
+    # Commands and their per-underlying-drop-manager functions
+    #
+    def _createSession(self, dm, host, sessionId):
+        dm.createSession(sessionId)
+        logger.debug('Successfully created session %s on %s', sessionId, host)
 
     def createSession(self, sessionId):
         """
         Creates a session in all underlying DMs.
         """
-
         logger.info('Creating Session %s in all hosts', sessionId)
-
-        thrExs = {}
-        self._tp.map(functools.partial(self._createSession, sessionId, thrExs), self._dmHosts)
-        if thrExs:
-            raise Exception("One or more errors occurred while creating sessions", thrExs)
-
+        self.replicate_to_dms(sessionId, self._createSession, "creating sessions")
         self._sessionIds.append(sessionId)
 
-
-    def _destroySession(self, sessionId, exceptions, host):
-        try:
-            self.ensureDM(host)
-            with self.dmAt(host) as dm:
-                dm.destroySession(sessionId)
-            logger.debug('Successfully destroyed session %s in %s', sessionId, host)
-        except Exception as e:
-            logger.error("Failed to destroy a session on host %s", host)
-            exceptions[host] = e
-            raise # so it gets printed
+    def _destroySession(self, dm, host, sessionId):
+        dm.destroySession(sessionId)
+        logger.debug('Successfully destroyed session %s on %s', sessionId, host)
 
     def destroySession(self, sessionId):
         """
         Destroy a session in all underlying DMs.
         """
         logger.info('Destroying Session %s in all hosts', sessionId)
-        thrExs = {}
-
-        self._tp.map(functools.partial(self._destroySession, sessionId, thrExs), self._dmHosts)
-        if thrExs:
-            raise Exception("One or more errors occurred while destroying sessions", thrExs)
+        self.replicate_to_dms(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
-    def _addGraphSpec(self, sessionId, exceptions, (host, graphSpec)):
-        try:
-            with self.dmAt(host) as dm:
-                dm.addGraphSpec(sessionId, graphSpec)
-            pass
-        except Exception as e:
-            logger.error("Failed to append graphSpec for session %s on host %s", sessionId, host)
-            exceptions[host] = e
-            raise # so it gets printed
+    def _addGraphSpec(self, dm, (host, graphSpec), sessionId):
+        dm.addGraphSpec(sessionId, graphSpec)
+        logger.info("Successfully appended graph to session %s on %s", sessionId, host)
 
     def addGraphSpec(self, sessionId, graphSpec):
         # The first step is to break down the graph into smaller graphs that
@@ -302,43 +311,35 @@ class CompositeManager(DROPManager):
         # separated.
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
 
-        thrExs = {}
-        self._tp.map(functools.partial(self._addGraphSpec, sessionId, thrExs), [(host, perPartition[host]) for host in self._dmHosts])
-
-        if thrExs:
-            raise Exception("One or more errors occurred while adding the graphSpec to the individual DMs", thrExs)
+        partitions = [(host, perPartition[host]) for host in self._dmHosts]
+        self.replicate_to_dms(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=partitions)
 
         self._interDMRelations[sessionId].extend(interDMRelations)
 
-    def _deploySession(self, sessionId, allUris, exceptions, host):
-        try:
-            with self.dmAt(host) as dm:
-                uris = dm.deploySession(sessionId)
+    def _deploySession(self, dm, host, sessionId):
 
-                # Perform some URI cosmetics. If the remote host is binding the
-                # Pyro Daemons to all interfaces, the URIs will look like
-                # PYRO:objID@0.0.0.0:port, and any proxy initialized with such
-                # URI will try to contact 0.0.0.0:port *locally*
-                # We thus replace any 0.0.0.0s we see by the `host`
-                # For reference see:
-                #
-                # https://pythonhosted.org/Pyro4/tipstricks.html#multiple-network-interfaces
-                for uid, origUri in uris.items():
-                    if utils.isLocalhost(host) or \
-                       '0.0.0.0' not in origUri:
-                        continue
-                    uri = Pyro4.URI(origUri)
-                    uri.host = host
-                    uri = uri.asString()
-                    logger.debug('Sanitized Pyro uri for DROP %s: %s -> %s', uid, origUri, uri)
-                    uris[uid] = uri
+        uris = dm.deploySession(sessionId)
 
-                allUris.update(uris)
-            logger.debug('Successfully deployed session %s in %s', sessionId, host)
-        except Exception as e:
-            exceptions[host] = e
-            logger.error("An exception occurred while deploying session %s in %s", sessionId, host)
-            raise # so it gets printed
+        # Perform some URI cosmetics. If the remote host is binding the
+        # Pyro Daemons to all interfaces, the URIs will look like
+        # PYRO:objID@0.0.0.0:port, and any proxy initialized with such
+        # URI will try to contact 0.0.0.0:port *locally*
+        # We thus replace any 0.0.0.0s we see by the `host`
+        # For reference see:
+        #
+        # https://pythonhosted.org/Pyro4/tipstricks.html#multiple-network-interfaces
+        for uid, origUri in uris.items():
+            if utils.isLocalhost(host) or \
+               '0.0.0.0' not in origUri:
+                continue
+            uri = Pyro4.URI(origUri)
+            uri.host = host
+            uri = uri.asString()
+            logger.debug('Sanitized Pyro uri for DROP %s: %s -> %s', uid, origUri, uri)
+            uris[uid] = uri
+
+        logger.debug('Successfully deployed session %s on %s', sessionId, host)
+        return uris
 
     def _triggerDrop(self, exceptions, (drop, uid)):
 
@@ -368,12 +369,7 @@ class CompositeManager(DROPManager):
         logger.info('Deploying Session %s in all hosts', sessionId)
 
         allUris = {}
-        thrExs = {}
-
-        # Deploy all individual graphs in parallel
-        self._tp.map(functools.partial(self._deploySession, sessionId, allUris, thrExs), self._dmHosts)
-        if thrExs:
-            raise Exception("One or more exceptions occurred while deploying session %s" % (sessionId), thrExs)
+        self.replicate_to_dms(sessionId, self._deploySession, "deploying session", collect=allUris)
 
         # Retrieve all necessary proxies we'll need afterward
         # (i.e., those present in inter-DM relationships and in completedDrops)
@@ -431,44 +427,21 @@ class CompositeManager(DROPManager):
 
         return allUris
 
-    def _getGraphStatus(self, sessionId, allStatus, exceptions, host):
-        try:
-            with self.dmAt(host) as dm:
-                allStatus.update(dm.getGraphStatus(sessionId))
-        except Exception as e:
-            exceptions[host] = e
-            logger.error("An exception occurred while getting the graph status for session %s in host %s", sessionId, host)
-            raise # so it gets printed
+    def _getGraphStatus(self, dm, host, sessionId):
+        return dm.getGraphStatus(sessionId)
 
     def getGraphStatus(self, sessionId):
-
         allStatus = {}
-        thrExs = {}
-
-        self._tp.map(functools.partial(self._getGraphStatus, sessionId, allStatus, thrExs), self._dmHosts)
-
-        if thrExs:
-            raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
+        self.replicate_to_dms(sessionId, self._getGraphStatus, "getting graph status", collect=allStatus)
         return allStatus
 
-    def _getGraph(self, sessionId, allGraphs, exceptions, host):
-        try:
-            with self.dmAt(host) as dm:
-                allGraphs.update(dm.getGraph(sessionId))
-        except Exception as e:
-            exceptions[host] = e
-            logger.error("An exception occurred while getting the graph for session %s in host %s", sessionId, host)
-            raise # so it gets printed
+    def _getGraph(self, dm, host, sessionId):
+        return dm.getGraph(sessionId)
 
     def getGraph(self, sessionId):
 
         allGraphs = {}
-        thrExs = {}
-
-        self._tp.map(functools.partial(self._getGraph, sessionId, allGraphs, thrExs), self._dmHosts)
-
-        if thrExs:
-            raise Exception("One ore more exceptions occurred while getting the graph for session %s" % (sessionId), thrExs)
+        self.replicate_to_dms(sessionId, self._getGraph, "getting the graph", collect=allGraphs)
 
         # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
@@ -477,46 +450,20 @@ class CompositeManager(DROPManager):
 
         return allGraphs
 
-    def _getSessionStatus(self, sessionId, allStatus, exceptions, host):
-        try:
-            with self.dmAt(host) as dm:
-                allStatus[host] = dm.getSessionStatus(sessionId)
-        except Exception as e:
-            exceptions[host] = e
-            logger.error("An exception occurred while getting the status of session %s in host %s", sessionId, host)
-            raise # so it gets printed
+    def _getSessionStatus(self, dm, host, sessionId):
+        return {host: dm.getSessionStatus(sessionId)}
 
     def getSessionStatus(self, sessionId):
-
         allStatus = {}
-        thrExs = {}
-
-        self._tp.map(functools.partial(self._getSessionStatus, sessionId, allStatus, thrExs), self._dmHosts)
-
-        if thrExs:
-            raise Exception("One ore more exceptions occurred while getting the graph status for session %s" % (sessionId), thrExs)
-
-        # TODO: Maybe calculate a wider session status?
+        self.replicate_to_dms(sessionId, self._getSessionStatus, "getting the graph status", collect=allStatus)
         return allStatus
 
-    def _getGraphSize(self, sessionId, allCounts, exceptions, host):
-        try:
-            with self.dmAt(host) as dm:
-                allCounts.append(dm.getGraphSize(sessionId))
-        except Exception as e:
-            exceptions[host] = e
-            logger.error("An exception occurred while getting the graph size of session %s in host %s", sessionId, host)
-            raise # so it gets printed
+    def _getGraphSize(self, dm, host, sessionId):
+        return dm.getGraphSize(sessionId)
 
     def getGraphSize(self, sessionId):
         allCounts = []
-        thrExs = {}
-
-        self._tp.map(functools.partial(self._getGraphSize, sessionId, allCounts, thrExs), self._dmHosts)
-
-        if thrExs:
-            raise Exception("One ore more exceptions occurred while getting the graph size for session %s" % (sessionId), thrExs)
-
+        self.replicate_to_dms(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
         return sum(allCounts)
 
 class DataIslandManager(CompositeManager):
