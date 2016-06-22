@@ -63,3 +63,9 @@ class InvalidSessionState(DaliugeException):
     An exception thrown when an operation is requested on a session that is not
     in the expected state for that operation.
     """
+
+class SubManagerException(DaliugeException):
+    """
+    An exception thrown by composite drop managers when there was an error
+    invoking one of their underlying drop managers.
+    """

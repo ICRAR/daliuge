@@ -29,7 +29,8 @@ import Pyro4
 
 from dfms import remote, graph_loader, drop, utils
 from dfms.ddap_protocol import DROPRel
-from dfms.exceptions import InvalidGraphException, DaliugeException
+from dfms.exceptions import InvalidGraphException, DaliugeException, \
+    SubManagerException
 from dfms.manager.client import BaseDROPManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
@@ -217,7 +218,7 @@ class CompositeManager(DROPManager):
         self._tp.map(functools.partial(self._replicate, sessionId, thrExs, f, collect), iterable)
         if thrExs:
             msg = "One or more errors occurred while %s on session %s" % (action, sessionId)
-            raise Exception(msg, thrExs)
+            raise SubManagerException(msg, thrExs)
 
     #
     # Commands and their per-underlying-drop-manager functions
