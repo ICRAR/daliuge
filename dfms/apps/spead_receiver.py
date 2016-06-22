@@ -93,8 +93,7 @@ class SpeadReceiverApp(BarrierAppDROP):
             try:
                 self._processHeap(stream.get())
             except spead2.Stopped:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('Stream stopped, finishing listening')
+                logger.debug('Stream stopped, finishing listening')
                 stream.stop()
                 break
 

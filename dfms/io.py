@@ -431,7 +431,6 @@ def IOForURL(url):
             logger.warning('NgasIO not available, using NgasLiteIO instead')
             io = NgasLiteIO(hostname, fileId, port)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug('I/O chosen for dataURL %s: %r' % (url, io))
+    logger.debug('I/O chosen for dataURL %s: %r', url, io)
 
     return io

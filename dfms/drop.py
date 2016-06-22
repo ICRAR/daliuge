@@ -744,8 +744,7 @@ class AbstractDROP(EventFirer, noopctx):
                 finished = True
 
         if finished:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("All producers finished for DROP %r" % (self))
+            logger.debug("All producers finished for DROP %r", self)
 
             # decided that if any producer fails then fail the data drop
             if DROPStates.ERROR in self._finishedProducers:
@@ -809,8 +808,7 @@ class AbstractDROP(EventFirer, noopctx):
         if self._wio:
             self._wio.close()
 
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Moving DROP %s/%s to ERROR" % (self._oid, self._uid))
+        logger.info("Moving %r to ERROR", self)
         self.status = DROPStates.ERROR
 
         # Signal our subscribers that the show is over
@@ -824,15 +822,14 @@ class AbstractDROP(EventFirer, noopctx):
         is not known in advanced.
         '''
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("DROP %s/%s not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self._oid, self._uid, self.status))
+            raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
 
         # Close our writing IO instance.
         # If written externally, self._wio will have remained None
         if self._wio:
             self._wio.close()
 
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Moving DROP %s/%s to COMPLETED" % (self._oid, self._uid))
+        logger.info("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
 
         # Signal our subscribers that the show is over
@@ -1092,10 +1089,9 @@ class ContainerDROP(AbstractDROP):
 
         # Avoid circular dependencies between Containers
         if child == self.parent:
-            raise Exception("Circular dependency between DROPs %s/%s and %s/%s" % (self.oid, self.uid, child.oid, child.uid))
+            raise Exception("Circular dependency between %r and %r" % (self, child))
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Adding new child for ContainerDROP %s/%s: %s" % (self.oid, self.uid, child.uid))
+        logger.debug("Adding new child for %r: %r", self, child)
 
         self._children.append(child)
         child.parent = self
@@ -1394,13 +1390,11 @@ class InputFiredAppDROP(AppDROP):
             # calculate the number of errors that have already occurred
             percent_failed = math.floor((error_len/float(n_eff_inputs)) * 100)
 
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Error on inputs for %r: %d/%d" % (self, percent_failed, self._input_error_threshold))
+            logger.debug("Error on inputs for %r: %d/%d", self, percent_failed, self._input_error_threshold)
 
             # if we hit the input error threshold then ERROR the drop and move on
             if percent_failed > self._input_error_threshold:
-                if logger.isEnabledFor(logging.INFO):
-                    logger.info("Error threshold reached on %r, not executing it: %d/%d" % (self, percent_failed, self._input_error_threshold))
+                logger.info("Error threshold reached on %r, not executing it: %d/%d", self, percent_failed, self._input_error_threshold)
 
                 self.execStatus = AppDROPStates.ERROR
                 self.status =  DROPStates.ERROR

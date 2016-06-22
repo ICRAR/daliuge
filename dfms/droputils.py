@@ -408,8 +408,7 @@ def replace_path_placeholders(cmd, inputs, outputs):
         if pathRef in cmd:
             cmd = cmd.replace(pathRef, o.path)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Command after path placeholder replacement is: %s" % (cmd))
+    logger.debug("Command after path placeholder replacement is: %s", cmd)
 
     return cmd
 
@@ -447,8 +446,7 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
         if dataURLRef in cmd:
             cmd = cmd.replace(dataUrlRef, o.dataURL)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Command after data URL placeholder replacement is: %s" % (cmd))
+    logger.debug("Command after data URL placeholder replacement is: %s", cmd)
 
     return cmd
 

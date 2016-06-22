@@ -119,7 +119,7 @@ class CompositeManager(DROPManager):
                 try:
                     self.ensureDM(host, timeout=self._dmCheckTimeout)
                 except:
-                    logger.warning("Couldn't ensure a DM for host %s, will try again later" % (host))
+                    logger.warning("Couldn't ensure a DM for host %s, will try again later", host)
             if self._dmCheckerEvt.wait(60):
                 break
 
@@ -157,24 +157,18 @@ class CompositeManager(DROPManager):
         if status != 0:
             logger.error("Failed to start the DM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, self._dmPort, out, err))
             raise Exception("Failed to start the DM on %s:%d" % (host, self._dmPort))
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("DM successfully started at %s:%d" % (host, self._dmPort))
+        logger.info("DM successfully started at %s:%d", host, self._dmPort)
 
     def ensureDM(self, host, timeout=10):
 
-        # We rely on having ssh keys for this, since we're using
-        # the dfms.remote module, which authenticates using public keys
-        if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Checking DM presence at %s:%d" % (host, self._dmPort))
-
+        logger.debug("Checking DM presence at %s:%d", host, self._dmPort)
         if portIsOpen(host, self._dmPort, timeout):
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("DM already present at %s:%d" % (host, self._dmPort))
+            logger.debug("DM already present at %s:%d", host, self._dmPort)
             return
 
-        if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("DM not present at %s:%d, will start it now" % (host, self._dmPort))
-
+        # We rely on having ssh keys for this, since we're using
+        # the dfms.remote module, which authenticates using public keys
+        logger.debug("DM not present at %s:%d, will start it now", host, self._dmPort)
         self.startDM(host)
 
         # Wait a bit until the DM starts; if it doesn't we fail
@@ -192,10 +186,9 @@ class CompositeManager(DROPManager):
             self.ensureDM(host)
             with self.dmAt(host) as dm:
                 dm.createSession(sessionId)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Successfully created session %s in %s' % (sessionId, host))
+            logger.debug('Successfully created session %s in %s', sessionId, host)
         except Exception as e:
-            logger.error("Failed to create a session on host %s" % (host))
+            logger.error("Failed to create a session on host %s", host)
             exceptions[host] = e
             raise # so it gets printed
 
@@ -204,7 +197,7 @@ class CompositeManager(DROPManager):
         Creates a session in all underlying DMs.
         """
 
-        logger.info('Creating Session %s in all hosts' % (sessionId))
+        logger.info('Creating Session %s in all hosts', sessionId)
 
         thrExs = {}
         self._tp.map(functools.partial(self._createSession, sessionId, thrExs), self._dmHosts)
@@ -219,10 +212,9 @@ class CompositeManager(DROPManager):
             self.ensureDM(host)
             with self.dmAt(host) as dm:
                 dm.destroySession(sessionId)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Successfully destroyed session %s in %s' % (sessionId, host))
+            logger.debug('Successfully destroyed session %s in %s', sessionId, host)
         except Exception as e:
-            logger.error("Failed to destroy a session on host %s" % (host))
+            logger.error("Failed to destroy a session on host %s", host)
             exceptions[host] = e
             raise # so it gets printed
 
@@ -230,7 +222,7 @@ class CompositeManager(DROPManager):
         """
         Destroy a session in all underlying DMs.
         """
-        logger.info('Destroying Session %s in all hosts' % (sessionId))
+        logger.info('Destroying Session %s in all hosts', sessionId)
         thrExs = {}
 
         self._tp.map(functools.partial(self._destroySession, sessionId, thrExs), self._dmHosts)
@@ -244,7 +236,7 @@ class CompositeManager(DROPManager):
                 dm.addGraphSpec(sessionId, graphSpec)
             pass
         except Exception as e:
-            logger.error("Failed to append graphSpec for session %s on host %s" % (sessionId, host))
+            logger.error("Failed to append graphSpec for session %s on host %s", sessionId, host)
             exceptions[host] = e
             raise # so it gets printed
 
@@ -305,8 +297,7 @@ class CompositeManager(DROPManager):
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Adding individual graphSpec of session %s to each DM' % (sessionId))
+        logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
 
         thrExs = {}
         self._tp.map(functools.partial(self._addGraphSpec, sessionId, thrExs), [(host, perPartition[host]) for host in self._dmHosts])
@@ -336,16 +327,14 @@ class CompositeManager(DROPManager):
                     uri = Pyro4.URI(origUri)
                     uri.host = host
                     uri = uri.asString()
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('Sanitized Pyro uri for DROP %s: %s -> %s' % (uid, origUri, uri))
+                    logger.debug('Sanitized Pyro uri for DROP %s: %s -> %s', uid, origUri, uri)
                     uris[uid] = uri
 
                 allUris.update(uris)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Successfully deployed session %s in %s' % (sessionId, host))
+            logger.debug('Successfully deployed session %s in %s', sessionId, host)
         except Exception as e:
             exceptions[host] = e
-            logger.error("An exception occurred while deploying session %s in %s" % (sessionId, host))
+            logger.error("An exception occurred while deploying session %s in %s", sessionId, host)
             raise # so it gets printed
 
     def _triggerDrop(self, exceptions, (drop, uid)):
@@ -368,12 +357,12 @@ class CompositeManager(DROPManager):
 
         except Exception as e:
             exceptions[drop.uid] = e
-            logger.exception("An exception occurred while moving DROP %s to COMPLETED" % (uid))
+            logger.exception("An exception occurred while moving DROP %s to COMPLETED", uid)
             raise # so it gets printed
 
     def deploySession(self, sessionId, completedDrops=[]):
 
-        logger.info('Deploying Session %s in all hosts' % (sessionId))
+        logger.info('Deploying Session %s in all hosts', sessionId)
 
         allUris = {}
         thrExs = {}
@@ -423,14 +412,13 @@ class CompositeManager(DROPManager):
                 rhsDrop._pyroRelease()
                 lhsDrop._pyroRelease()
             except:
-                logger.exception("Error while establishing link %r" % (rel,))
+                logger.exception("Error while establishing link %r", rel)
                 raise
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Moving following DROPs to COMPLETED right away: %r' % (completedDrops,))
+        logger.info('Moving following DROPs to COMPLETED right away: %r', completedDrops)
 
         if completedDrops:
             thrExs = {}
@@ -446,7 +434,7 @@ class CompositeManager(DROPManager):
                 allStatus.update(dm.getGraphStatus(sessionId))
         except Exception as e:
             exceptions[host] = e
-            logger.error("An exception occurred while getting the graph status for session %s in host %s" % (sessionId, host))
+            logger.error("An exception occurred while getting the graph status for session %s in host %s", sessionId, host)
             raise # so it gets printed
 
     def getGraphStatus(self, sessionId):
@@ -466,7 +454,7 @@ class CompositeManager(DROPManager):
                 allGraphs.update(dm.getGraph(sessionId))
         except Exception as e:
             exceptions[host] = e
-            logger.error("An exception occurred while getting the graph for session %s in host %s" % (sessionId, host))
+            logger.error("An exception occurred while getting the graph for session %s in host %s", sessionId, host)
             raise # so it gets printed
 
     def getGraph(self, sessionId):
@@ -492,7 +480,7 @@ class CompositeManager(DROPManager):
                 allStatus[host] = dm.getSessionStatus(sessionId)
         except Exception as e:
             exceptions[host] = e
-            logger.error("An exception occurred while getting the status of session %s in host %s" % (sessionId, host))
+            logger.error("An exception occurred while getting the status of session %s in host %s", sessionId, host)
             raise # so it gets printed
 
     def getSessionStatus(self, sessionId):
@@ -514,7 +502,7 @@ class CompositeManager(DROPManager):
                 allCounts.append(dm.getGraphSize(sessionId))
         except Exception as e:
             exceptions[host] = e
-            logger.error("An exception occurred while getting the graph size of session %s in host %s" % (sessionId, host))
+            logger.error("An exception occurred while getting the graph size of session %s in host %s", sessionId, host)
             raise # so it gets printed
 
     def getGraphSize(self, sessionId):
@@ -544,7 +532,7 @@ class DataIslandManager(CompositeManager):
 
         # In the case of the Data Island the dmHosts are the final nodes as well
         self._nodes = dmHosts
-        logger.info('Created DataIslandManager for hosts: %r' % (self._dmHosts))
+        logger.info('Created DataIslandManager for hosts: %r', self._dmHosts)
 
     def add_node(self, node):
         CompositeManager.add_node(self, node)
@@ -563,4 +551,4 @@ class MasterManager(CompositeManager):
                                             dmHosts=dmHosts,
                                             pkeyPath=pkeyPath,
                                             dmCheckTimeout=dmCheckTimeout)
-        logger.info('Created MasterManager for hosts: %r' % (self._dmHosts))
+        logger.info('Created MasterManager for hosts: %r', self._dmHosts)

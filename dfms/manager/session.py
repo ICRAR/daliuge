@@ -172,8 +172,7 @@ class Session(object):
 
         self._graph.update(graphSpecDict)
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Added a graph definition with %d DROPs" % (len(graphSpecDict)))
+        logger.debug("Added a graph definition with %d DROPs", len(graphSpecDict))
 
     def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
         """
@@ -220,16 +219,14 @@ class Session(object):
         self.status = SessionStates.DEPLOYING
 
         # Create the Pyro daemon that will serve the DROP proxies and start it
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Starting Pyro4 Daemon for session %s" % (self._sessionId))
+        logger.debug("Starting Pyro4 Daemon for session %s", self._sessionId)
         self._daemon = Pyro4.Daemon(host=self._host)
         self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
         self._daemonT.daemon = True
         self._daemonT.start()
 
         # Create the real DROPs from the graph specs
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Creating DROPs for session %s" % (self._sessionId))
+        logger.debug("Creating DROPs for session %s", self._sessionId)
 
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
 
@@ -262,8 +259,7 @@ class Session(object):
         # Start the luigi task that will make sure the graph is executed
         # If we're not using luigi we still
         if self._enable_luigi:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Starting Luigi FinishGraphExecution task for session %s" % (self._sessionId))
+            logger.debug("Starting Luigi FinishGraphExecution task for session %s", self._sessionId)
             task = luigi_int.FinishGraphExecution(self._sessionId, self._roots)
             sch = scheduler.CentralPlannerScheduler()
             w = worker.Worker(scheduler=sch)
@@ -280,14 +276,12 @@ class Session(object):
                 leaf.subscribe(listener, 'producerFinished')
 
         self.status = SessionStates.RUNNING
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Session %s is now RUNNING" % (self._sessionId))
+        logger.info("Session %s is now RUNNING", self._sessionId)
 
     def _registerDrop(self, drop):
         uri = self._daemon.register(drop)
         drop.uri = uri.asString()
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Registered %r with Pyro. URI is %s" % (drop, uri))
+        logger.debug("Registered %r with Pyro. URI is %s", drop, uri)
         self._drops[drop.uid] = drop
 
     def _run(self, worker):
