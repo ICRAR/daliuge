@@ -626,14 +626,16 @@ class PGT(object):
             raise GPGTException("Node list is empty!")
         if (0 == self._num_parts_done):
             raise GPGTException("The graph has not been partitioned yet")
+        nodes_len = len(node_list)
         drop_list = self._drop_list + self._extra_drops
         num_parts = self._num_parts_done
-        if (len(node_list) < num_parts):
+        logger.info("Drops count: {0}, partitions count: {1}, nodes count: {2}".format(len(drop_list), num_parts, nodes_len))
+        if (nodes_len < num_parts):
             if (isinstance(self, MySarkarPGTP)):
-                self.merge_partitions(len(node_list))
-                num_parts = len(node_list)
+                self.merge_partitions(nodes_len)
+                num_parts = nodes_len
             else:
-                raise GPGTException("The node list {0} is smaller than {1}".format(len(node_list), num_parts))
+                raise GPGTException("The node list {0} is smaller than {1}".format(nodes_len, num_parts))
 
         lm = self._oid_gid_map
         for drop in drop_list:
