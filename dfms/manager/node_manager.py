@@ -147,14 +147,13 @@ class NodeManager(DROPManager):
         session.deploy(completedDrops=completedDrops)
         roots = session.roots
 
-        # We register the new DROPs with the DLM if there is one
-        if self._dlm:
-            logger.debug('Registering new DROPs with the DataLifecycleManager')
-            droputils.breadFirstTraverse(roots, lambda drop: self._dlm.addDrop(drop))
-
-        # Finally, we also collect the Pyro URIs of our DROPs and return them
+        logger.debug('Registering new Drops with the DLM and collecting their URIs')
         uris = {}
-        droputils.breadFirstTraverse(roots, lambda drop: uris.__setitem__(drop.uid, drop.uri))
+        for drop,_ in droputils.breadFirstTraverse(roots):
+            uris[drop.uid] = drop.uri
+            if self._dlm:
+                self._dlm.addDrop(drop)
+
         return uris
 
     def destroySession(self, sessionId):

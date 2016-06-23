@@ -100,10 +100,9 @@ class LuigiTests(unittest.TestCase):
         w.add(task)
 
         # Start executing the SocketListenerApps so they open their ports
-        def startSocketListeners(drop):
+        for drop,_ in droputils.breadFirstTraverse(task.roots):
             if isinstance(drop, SocketListenerApp):
                 threading.Thread(target=lambda drop: drop.execute(), args=(drop,)).start()
-        droputils.breadFirstTraverse(task.roots, startSocketListeners)
 
         # Write to the initial nodes of the graph to trigger the graph execution
         for i in xrange(socketListeners):
@@ -115,8 +114,8 @@ class LuigiTests(unittest.TestCase):
 
         # ... but at the end all the nodes of the graph should be completed
         # and should exist
-        droputils.breadFirstTraverse(task.roots,\
-                                   lambda drop: self.assertTrue(drop.isCompleted() and drop.exists(), "%s is not COMPLETED or doesn't exist" % (drop.uid)))
+        for drop,_ in droputils.breadFirstTraverse(task.roots):
+            self.assertTrue(drop.isCompleted() and drop.exists(), "%s is not COMPLETED or doesn't exist" % (drop.uid))
 
 if __name__ == '__main__':
     unittest.main()

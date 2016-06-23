@@ -67,7 +67,7 @@ setup(
             "paramiko<2.0.0",
             "paste",
             "psutil",
-            "Pyro4>=4.38",
+            "Pyro4>=4.39",
             "pyswarm",
             "python-daemon",
             "scp",
