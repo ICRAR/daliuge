@@ -469,6 +469,7 @@ class LGNode():
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
                 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'nm':'lstnr', 'tw':1, 'sleepTime': 5})
                 # tw -- task weight
+                dropSpec_socket['autostart'] = 1
                 kwargs['listener_drop'] = dropSpec_socket
                 dropSpec_socket.addOutput(dropSpec)
             else:
