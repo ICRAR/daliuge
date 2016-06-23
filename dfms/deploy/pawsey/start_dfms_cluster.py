@@ -114,7 +114,7 @@ def submit_monitor_graph(graph_id, dump_status):
     if (graph_id is not None):
         mc = MonitorClient('localhost', 8001)
         logger.info("Submitting graph {0}".format(graph_id))
-        mc.submit_single_graph(graph_id, deploy=True)
+        mc.submit_single_graph(graph_id, deploy=True, algo='metis')
         dc = mc._dc
     else:
         dc = DataIslandManagerClient('localhost')
@@ -171,6 +171,9 @@ def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     except Exception, ex:
         logger.error("DFMS proxy terminated unexpectedly: {0}".format(ex))
         sys.exit(1)
+
+def set_env(rank):
+    os.environ['PYRO_MAX_RETRIES'] = '10'
 
 if __name__ == '__main__':
     """
@@ -246,6 +249,7 @@ if __name__ == '__main__':
            proxy_ip = origin_ip
            comm.send(proxy_ip, dest=0)
 
+    set_env(rank)
     if (rank != 0):
         if (run_proxy and rank == 1):
             sltime = DIM_WAIT_TIME + 2
@@ -261,7 +265,7 @@ if __name__ == '__main__':
         time.sleep(DIM_WAIT_TIME)
         node_mgrs = []
         for ip in ip_adds:
-            if (ip == origin_ip or (run_proxy and ip == proxy_ip) or ('None' == proxy_ip)):
+            if (ip == origin_ip or (run_proxy and ip == proxy_ip) or ('None' == ip)):
                 continue
             url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
             if (ping_host(url, loc=options.loc) != 0):
