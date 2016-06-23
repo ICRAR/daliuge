@@ -81,8 +81,13 @@ def get_ip(loc='Pawsey'):
         ln = 18 # e.g. 12.6.2.134
     else:
         raise Exception("Unknown deploy location: {0}".format(loc))
-    line = re[1].split('\n')[ln]
-    return line.split()[1].split(':')[1]
+    try:
+        msg = re[1]
+        line = msg.split('\n')[ln]
+        return line.split()[1].split(':')[1]
+    except:
+        logger.warning("Fail to obtain IP address from {0}".format(msg))
+        return 'None'
 
 def start_node_mgr(log_dir):
     """
@@ -256,7 +261,7 @@ if __name__ == '__main__':
         time.sleep(DIM_WAIT_TIME)
         node_mgrs = []
         for ip in ip_adds:
-            if (ip == origin_ip or (run_proxy and ip == proxy_ip)):
+            if (ip == origin_ip or (run_proxy and ip == proxy_ip) or ('None' == proxy_ip)):
                 continue
             url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
             if (ping_host(url, loc=options.loc) != 0):
