@@ -231,31 +231,14 @@ class Session(object):
 
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
 
-        # Register them
-        droputils.breadFirstTraverse(self._roots, self._registerDrop)
+        for drop,_ in droputils.breadFirstTraverse(self._roots):
 
-        # Register them with the error handler
-        # TODO: We should probably merge all these breadFirstTraverse calls into
-        # a single one to avoid so much iteration through the drops
-        if self._error_status_listener:
-            def register_error_status_listener(drop):
+            # Register them
+            self._registerDrop(drop)
+
+            # Register them with the error handler
+            if self._error_status_listener:
                 drop.subscribe(self._error_status_listener, eventType='status')
-            droputils.breadFirstTraverse(self._roots, register_error_status_listener)
-
-        # We move to COMPLETED the DROPs that we were requested to
-        # InputFiredAppDROP are here considered as having to be executed and
-        # not directly moved to COMPLETED.
-        # TODO: We should possibly unify this initial triggering into a more
-        #       solid concept that encompasses these two and other types of DROPs
-        def triggerDrop(drop):
-            if drop.uid in completedDrops:
-                if isinstance(drop, InputFiredAppDROP):
-                    t = threading.Thread(target=lambda:drop.execute())
-                    t.daemon = True
-                    t.start()
-                else:
-                    drop.setCompleted()
-        droputils.breadFirstTraverse(self._roots, triggerDrop)
 
         # Start the luigi task that will make sure the graph is executed
         # If we're not using luigi we still
@@ -275,6 +258,19 @@ class Session(object):
             for leaf in leaves:
                 leaf.subscribe(listener, 'dropCompleted')
                 leaf.subscribe(listener, 'producerFinished')
+
+        # We move to COMPLETED the DROPs that we were requested to
+        # InputFiredAppDROP are here considered as having to be executed and
+        # not directly moved to COMPLETED.
+        #
+        # This is done in a separate iteration at the very end because all drops
+        # to make sure all event listeners are ready
+        for drop,_ in droputils.breadFirstTraverse(self._roots):
+            if drop.uid in completedDrops:
+                if isinstance(drop, InputFiredAppDROP):
+                    drop.async_execute()
+                else:
+                    drop.setCompleted()
 
         self.status = SessionStates.RUNNING
         logger.info("Session %s is now RUNNING", self._sessionId)
@@ -296,7 +292,6 @@ class Session(object):
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
             raise InvalidSessionState("The session is currently not running, cannot get graph status")
-        statusDict = collections.defaultdict(dict)
 
         # We shouldn't traverse the full graph because there might be nodes
         # attached to our DROPs that are actually part of other DM (and have been
@@ -306,13 +301,13 @@ class Session(object):
         # AbstractDROP (they are Pyro4.Proxy instances).
         #
         # The same trick is used in luigi_int.RunDROPTask.requires
-        def addToDict(drop, downStreamDrops):
+        statusDict = collections.defaultdict(dict)
+        for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
             if isinstance(drop, AppDROP):
                 statusDict[drop.oid]['execStatus'] = drop.execStatus
             statusDict[drop.oid]['status'] = drop.status
 
-        droputils.breadFirstTraverse(self._roots, addToDict)
         return statusDict
 
     def getGraph(self):

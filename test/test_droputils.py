@@ -123,22 +123,16 @@ class DropUtilsTest(unittest.TestCase):
         Checks that our DFS method is correct
         """
         a, b, c, d, e, f, g, h, i, j = self._createGraph()
-        nodesList = []
-        droputils.depthFirstTraverse(a, lambda n: nodesList.append(n))
-
-        self.assertListEqual(nodesList, [a, b, d, g, i, h, j, c, e, f])
-        pass
+        nodesList = [drop for drop,_ in droputils.depthFirstTraverse(a)]
+        self.assertListEqual([a, b, d, g, i, h, j, c, e, f], nodesList)
 
     def testBreadthFirstSearch(self):
         """
         Checks that our BFS method is correct
         """
         a, b, c, d, e, f, g, h, i, j = self._createGraph()
-        nodesList = []
-        droputils.breadFirstTraverse(a, lambda n: nodesList.append(n))
-
-        self.assertListEqual(nodesList, [a, b, c, d, e, f, g, h, i, j])
-        pass
+        nodesList = [drop for drop,_ in droputils.breadFirstTraverse(a)]
+        self.assertListEqual([a, b, c, d, e, f, g, h, i, j], nodesList)
 
     def testGetEndNodes(self):
         """
@@ -147,7 +141,6 @@ class DropUtilsTest(unittest.TestCase):
         a, _, _, _, _, f, _, _, _, j = self._createGraph()
         endNodes = droputils.getLeafNodes(a)
         self.assertSetEqual(set([j, f]), set(endNodes))
-        pass
 
     def test_DROPFile(self):
         """
@@ -171,10 +164,9 @@ class DropUtilsTest(unittest.TestCase):
         a, _, c, _, e, _, _, h, _, j = self._createGraph()
 
         visitedNodes = []
-        def filtering(drop, downStreamDrops):
+        for drop, downStreamDrops in droputils.breadFirstTraverse(a):
             downStreamDrops[:] = [x for x in downStreamDrops if x.uid not in ('b','f')]
             visitedNodes.append(drop)
-        droputils.breadFirstTraverse(a, filtering)
 
         self.assertEquals(5, len(visitedNodes))
         self.assertListEqual(visitedNodes, [a,c,e,h,j])

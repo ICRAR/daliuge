@@ -23,12 +23,10 @@
 Utility methods and classes to be used when interacting with DROPs
 '''
 
-import inspect
 import logging
 import re
 import threading
 import traceback
-import types
 
 import Pyro4
 
@@ -226,44 +224,37 @@ def getLeafNodes(nodes):
     Returns a list of all the "leaf nodes" of the graph pointed by `nodes`.
     `nodes` is either a single DROP, or a list of DROPs.
     """
-
     nodes = listify(nodes)
+    return [drop for drop,_ in breadFirstTraverse(nodes) if not getDownstreamObjects(drop)]
 
-    # To be executed when visiting each node
-    endNodes = []
-    def addLeafNode(n):
-        if not getDownstreamObjects(n):
-            endNodes.append(n)
-
-    breadFirstTraverse(nodes, addLeafNode)
-    return endNodes
-
-def depthFirstTraverse(node, func = None, visited = []):
+def depthFirstTraverse(node, visited = []):
     """
-    Depth-first traversal of a DROP graph. For each node in the graph the
-    function func, if given, is executed with the current DROP as the only
-    argument. The visited argument maintains the list of nodes already visited.
+    Depth-first iterator for a DROP graph.
+
+    This iterator yields a tuple where the first item is the node being visited,
+    and the second is a list of nodes that will be visited subsequently.
+    Callers can alter this list in order to remove certain nodes from the
+    graph traversal process.
+
     This implementation is recursive.
     """
 
-    if func:
-        func(node)
+    dependencies = getDownstreamObjects(node)
+    yield node, dependencies
     visited.append(node)
 
-    dependencies = getDownstreamObjects(node)
-    if dependencies:
-        for drop in [d for d in dependencies if d not in visited]:
-            depthFirstTraverse(drop, func, visited)
+    for drop in [d for d in dependencies if d not in visited]:
+        for x in depthFirstTraverse(drop, visited):
+            yield x
 
-def breadFirstTraverse(toVisit, func = None):
+def breadFirstTraverse(toVisit):
     """
-    Breadth-first traversal of a DROP graph.
+    Breadth-first iterator for a DROP graph.
 
-    For each node in the graph the function `func` is executed, if given. `func`
-    must accept at least one argument, the DROP being currently visited.
-    If two arguments are specified, the second argument will be a list of
-    nodes that will be visited subsequently; `func` can alter this list in order
-    to remove certain nodes from the traversal process.
+    This iterator yields a tuple where the first item is the node being visited,
+    and the second is a list of nodes that will be visited subsequently.
+    Callers can alter this list in order to remove certain nodes from the
+    graph traversal process.
 
     This implementation is non-recursive.
     """
@@ -272,23 +263,12 @@ def breadFirstTraverse(toVisit, func = None):
     found = toVisit[:]
 
     # See how many arguments we should used when calling func
-    if func:
-        nArgs = len(inspect.getargspec(func).args)
-        if type(func) == types.MethodType:
-            nArgs -= 1
-
     while toVisit:
 
         # Pay the node a visit
         node = toVisit.pop(0)
         dependencies = getDownstreamObjects(node)
-        if func:
-            if nArgs == 1:
-                func(node)
-            elif nArgs == 2:
-                func(node, dependencies)
-            else:
-                raise Exception("Unsupported number of arguments for function %r: %d. Expected 1 or 2" % (func, nArgs))
+        yield node, dependencies
 
         # Enqueue its dependencies, making sure they are enqueued only once
         nextVisits = [drop for drop in dependencies if drop not in found]
