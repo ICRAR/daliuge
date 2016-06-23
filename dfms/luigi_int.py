@@ -103,8 +103,7 @@ class RunDROPTask(luigi.Task, utils.noopctx):
         doesn't need to be rewritten by all subclasses
         """
         re = []
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Checking requirements for RunDROPTask %s/%s" %(self.data_obj.oid, self.data_obj.uid))
+        logger.debug("Checking requirements for RunDROPTask %r", self.data_obj)
 
         # The requires() method will be called not only when creating the
         # initial tree of tasks, but also at runtime. For a given graph in a
@@ -119,8 +118,7 @@ class RunDROPTask(luigi.Task, utils.noopctx):
         upObjs = filter(lambda drop: isinstance(drop, AbstractDROP), upObjs)
 
         for req in upObjs:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Added requirement %s/%s" %(req.oid, req.uid))
+            logger.debug("Added requirement %r", req)
             re.append(RunDROPTask(req, self.sessionId))
         return re
 
@@ -156,8 +154,7 @@ class FinishGraphExecution(luigi.Task):
         if self._req is None:
             self._req = []
             for drop in self._leaves:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug("Adding leaf DROP as requirement to FinishGraphExecution: %s/%s" % (drop.oid, drop.uid))
+                logger.debug("Adding leaf DROP as requirement to FinishGraphExecution: %r", drop.oid)
                 self._req.append(RunDROPTask(drop, self.sessionId))
         return self._req
 

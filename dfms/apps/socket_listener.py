@@ -81,13 +81,11 @@ class SocketListenerApp(BarrierAppDROP):
             serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         serverSocket.bind((self.host, self.port))
         serverSocket.listen(1)
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Listening for a TCP connection on %s:%d' % (self.host, self.port))
+        logger.debug('Listening for a TCP connection on %s:%d', self.host, self.port)
 
         clientSocket, address = serverSocket.accept()
         serverSocket.close()
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Accepted connection from %s:%d' % (address[0], address[1]))
+        logger.info('Accepted connection from %s:%d', address[0], address[1])
 
         # Simply write the data we receive into our outputs
         while True:

@@ -2,7 +2,7 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>DROPManager</title>
+	<title>{{dmType}}</title>
 	<script src="/static/js/d3/d3.v3.min.js"></script>
 	<script src="/static/js/dm.js"></script>
 	<script src="/static/js/jquery-1.11.3.min.js"></script>
@@ -14,7 +14,7 @@
 
 <body>
 <div class="container">
-<h1>DROPManager</h1>
+<h1>{{dmType}}</h1>
 
 <h2>Sessions</h2>
 	<table id="sessionsTable" class="table table-striped">
@@ -31,19 +31,38 @@
 	</table>
 <button id="addSessionBtn"  type="button" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> Add Session</button>
 <button id="refreshListBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+<button id="resetBtn"       type="button" class="btn btn-default"><span class="glyphicon glyphicon-off"></span> Reset</button>
 
 </div>
 
 <script type="text/javascript">
 
 var serverUrl = '{{serverUrl}}';
+var reset = {{reset}};
 var tbodyEl = d3.select("#sessionsTable tbody");
 var refreshBtn = d3.select('#refreshListBtn');
 var addSessionBtn = d3.select('#addSessionBtn');
+var resetBtn = d3.select('#resetBtn');
 
 // Listeners for the two buttons
 addSessionBtn.on('click', function(){ promptNewSession(serverUrl, tbodyEl, refreshBtn); } );
 refreshBtn.on('click', function(){ loadSessions(serverUrl, tbodyEl, refreshBtn, null); } );
+if( reset ) {
+	resetBtn.on('click', function() {
+		var xhr = d3.xhr(serverUrl + '/api/reset');
+		xhr.post('', function(error, data) {
+			if( error != null ) {
+				console.error(error);
+				bootbox.alert('An error occurred while sending the reset command: ' + error.responseText);
+				return;
+			}
+			loadSessions(serverUrl, tbodyEl, refreshBtn, null);
+		});
+	});
+}
+else {
+	resetBtn.remove();
+}
 
 // Start loading the list of sessions periodically
 d3.timer(function(){

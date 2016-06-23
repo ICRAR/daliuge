@@ -88,6 +88,7 @@ setup(
               'dfmsNM=dfms.manager.cmdline:dfmsNM',
               'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
               'dfmsMM=dfms.manager.cmdline:dfmsMM',
+              'dfmsReplay=dfms.manager.cmdline:dfmsReplay',
               'dfmsDaemon=dfms.manager.proc_daemon:run_with_cmdline'
           ],
       }

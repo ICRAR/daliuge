@@ -37,7 +37,6 @@ import pkg_resources
 from dfms import droputils
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP
 from dfms.manager.client import DataIslandManagerClient
-from dfms.restutils import RestClient
 
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
@@ -68,7 +67,12 @@ class MonitorClient(object):
         if self._output:
             with open(self._output, 'w') as f:
                 json.dump(pg_spec, f, indent=2)
-        completed_uids = [x['oid'] for x in droputils.get_roots(pg_spec)]
+
+        def uid_for_drop(dropSpec):
+            if 'uid' in dropSpec:
+                return dropSpec['uid']
+            return dropSpec['oid']
+        completed_uids = [uid_for_drop(x) for x in droputils.get_roots(pg_spec)]
 
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
         self._dc.create_session(ssid)

@@ -31,6 +31,7 @@ import os
 import sys
 
 from dfms import droputils
+from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository
 from dfms.manager.drop_manager import DROPManager
@@ -85,8 +86,7 @@ class NodeManager(DROPManager):
         if dfmsPath:
             dfmsPath = os.path.expanduser(dfmsPath)
             if os.path.isdir(dfmsPath):
-                if logger.isEnabledFor(logging.INFO):
-                    logger.info("Adding %s to the system path" % (dfmsPath))
+                logger.info("Adding %s to the system path", dfmsPath)
                 sys.path.append(dfmsPath)
 
         # Error listener used by users to deal with errors coming from specific
@@ -106,14 +106,18 @@ class NodeManager(DROPManager):
 
         self._enable_luigi = enable_luigi
 
+    def _check_session_id(self, session_id):
+        if session_id not in self._sessions:
+            raise NoSessionException(session_id)
+
     def createSession(self, sessionId):
         if sessionId in self._sessions:
-            raise Exception('A session already exists for sessionId %s' % (str(sessionId)))
+            raise SessionAlreadyExistsException(sessionId)
         self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener, self._enable_luigi)
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Created session %s' % (sessionId))
+        logger.info('Created session %s', sessionId)
 
     def getSessionStatus(self, sessionId):
+        self._check_session_id(sessionId)
         return self._sessions[sessionId].status
 
     def quickDeploy(self, sessionId, graphSpec):
@@ -122,26 +126,30 @@ class NodeManager(DROPManager):
         return self.deploySession(sessionId)
 
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
+        self._check_session_id(sessionId)
         self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
 
     def addGraphSpec(self, sessionId, graphSpec):
+        self._check_session_id(sessionId)
         self._sessions[sessionId].addGraphSpec(graphSpec)
 
     def getGraphStatus(self, sessionId):
+        self._check_session_id(sessionId)
         return self._sessions[sessionId].getGraphStatus()
 
     def getGraph(self, sessionId):
+        self._check_session_id(sessionId)
         return self._sessions[sessionId].getGraph()
 
     def deploySession(self, sessionId, completedDrops=[]):
+        self._check_session_id(sessionId)
         session = self._sessions[sessionId]
         session.deploy(completedDrops=completedDrops)
         roots = session.roots
 
         # We register the new DROPs with the DLM if there is one
         if self._dlm:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Registering new DROPs with the DataLifecycleManager')
+            logger.debug('Registering new DROPs with the DataLifecycleManager')
             droputils.breadFirstTraverse(roots, lambda drop: self._dlm.addDrop(drop))
 
         # Finally, we also collect the Pyro URIs of our DROPs and return them
@@ -150,6 +158,7 @@ class NodeManager(DROPManager):
         return uris
 
     def destroySession(self, sessionId):
+        self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
         session.destroy()
 
@@ -157,6 +166,7 @@ class NodeManager(DROPManager):
         return self._sessions.keys()
 
     def getGraphSize(self, sessionId):
+        self._check_session_id(sessionId)
         session = self._sessions[sessionId]
         return len(session._graph)
 
@@ -187,6 +197,9 @@ class NodeManager(DROPManager):
         return templates
 
     def materializeTemplate(self, tpl, sessionId, **tplParams):
+
+        self._check_session_id(sessionId)
+
         # tpl currently has the form <full.mod.path.functionName>
         parts = tpl.split('.')
         module = importlib.import_module('.'.join(parts[:-1]))
@@ -197,5 +210,4 @@ class NodeManager(DROPManager):
         graphSpec = tplFunction(**tplParams)
         self.addGraphSpec(sessionId, graphSpec)
 
-        if logger.isEnabledFor(logging.INFO):
-            logger.info('Added graph from template %s to session %s with params: %s' % (tpl, sessionId, tplParams))
+        logger.info('Added graph from template %s to session %s with params: %s', tpl, sessionId, tplParams)
