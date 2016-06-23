@@ -156,23 +156,20 @@ def writeToRemotePort(host, port, data=None, timeout=0):
             s.close()
             return True
         except socket.timeout:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]' % (host, port, thisTimeout))
+            logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]', host, port, thisTimeout)
             return False
         except socket.error as e:
             # If the connection becomes suddenly closed from the server-side.
             # We assume that it's not re-opening any time soon, so we simply
             # return False
             if e.errno == errno.ECONNRESET:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug("Connection closed by %s:%d, assuming it will stay closed" % (host, port))
+                logger.debug("Connection closed by %s:%d, assuming it will stay closed", host, port)
                 return False
             # If the port is closed we keep trying until enough time has gone by
             if e.errno == errno.ECONNREFUSED:
                 if timeout is not None:
                     if time.time() - start > timeout:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug('Refused connection to %s:%d for more than %f seconds' % (host, port, timeout))
+                        logger.debug('Refused connection to %s:%d for more than %f seconds', host, port, timeout)
                         return False
                 time.sleep(0.1)
                 continue
@@ -264,9 +261,7 @@ def prepare_sql(sql, paramstyle, data=()):
     sql = sql.format(*markers)
 
     if paramstyle in ['format', 'pyformat']:
-        dataDict = {}
-        [dataDict.__setitem__('n%d'%(i), d) for i,d in enumerate(data)]
-        data = dataDict
+        data = {'n%d'%(i): d for i,d in enumerate(data)}
 
     return (sql, data)
 
@@ -278,7 +273,7 @@ def terminate_or_kill(proc, timeout):
     """
 
     pid = proc.pid
-    logger.info('Terminating %d' % (pid,))
+    logger.info('Terminating %d', pid)
     proc.terminate()
 
     waitLoops = 0
@@ -289,6 +284,6 @@ def terminate_or_kill(proc, timeout):
 
     kill9 = waitLoops == max_loops
     if kill9:
-        logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(' % (pid, timeout,))
+        logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(', pid, timeout)
         proc.kill()
     proc.wait()

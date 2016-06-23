@@ -169,12 +169,10 @@ class NgasStore(AbstractStore):
         # Some sane defaults
         if not host:
             host = 'localhost'
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Defaulting NGAS host to %s' % (host))
+            logger.debug('Defaulting NGAS host to %s', host)
         if not port:
             port = 7777
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Defaulting NGAS port to %d' % (port))
+            logger.debug('Defaulting NGAS port to %d', port)
 
         self._host = host
         self._port = port
@@ -240,7 +238,7 @@ class DirectoryStore(AbstractStore):
         else:
             # Should be used only for testing
             size = 1024**3
-            logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING' % (sizeFile, size))
+            logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING', sizeFile, size)
             self.prepareDirectory(dirName, size)
 
         with open(sizeFile) as f:

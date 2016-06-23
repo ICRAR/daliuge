@@ -25,6 +25,7 @@ Utility methods and classes to be used when interacting with DROPs
 
 import inspect
 import logging
+import re
 import threading
 import traceback
 import types
@@ -38,6 +39,13 @@ from dfms.io import IOForURL, OpenMode
 
 
 logger = logging.getLogger(__name__)
+
+# Used to check whether a command specifies via UID reference the path or
+# data URL of an input or output
+indexed_ipath_pattern    = re.compile(r".*%i\[.+\].*")
+indexed_opath_pattern    = re.compile(r".*%o\[.+\].*")
+indexed_idataurl_pattern = re.compile(r".*%iDataURL\[.+\].*")
+indexed_odataurl_pattern = re.compile(r".*%oDataURL\[.+\].*")
 
 class EvtConsumer(utils.noopctx):
     '''
@@ -382,15 +390,25 @@ def replace_path_placeholders(cmd, inputs, outputs):
       ``%o[X]``.
     """
 
-    for x,i in enumerate(inputs):
-        cmd = cmd.replace("%%i%d" % (x), i.path)
-        cmd = cmd.replace("%%i[%s]" % (i.uid), i.path)
-    for x,o in enumerate(outputs):
-        cmd = cmd.replace("%%o%d" % (x), o.path)
-        cmd = cmd.replace("%%o[%s]" % (o.uid), o.path)
+    for x,i in enumerate(inputs.values()):
+        pathRef = "%%i%d" % (x,)
+        if pathRef in cmd:
+            cmd = cmd.replace(pathRef, i.path)
+    for x,o in enumerate(outputs.values()):
+        pathRef = "%%o%d" % (x)
+        if pathRef in cmd:
+            cmd = cmd.replace(pathRef, o.path)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Command after path placeholder replacement is: %s" % (cmd))
+    for uid, i in inputs.items():
+        pathRef = "%%i[%s]" % (uid,)
+        if pathRef in cmd:
+            cmd = cmd.replace(pathRef, i.path)
+    for uid, o in outputs.items():
+        pathRef = "%%o[%s]" % (uid,)
+        if pathRef in cmd:
+            cmd = cmd.replace(pathRef, o.path)
+
+    logger.debug("Command after path placeholder replacement is: %s", cmd)
 
     return cmd
 
@@ -409,15 +427,26 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     # Inputs/outputs that are not FileDROPs or DirectoryContainers can't
     # bind their data via volumes into the docker container. Instead they
     # communicate their dataURL via command-line replacement
-    for x,i in enumerate(inputs):
-        cmd = cmd.replace("%%iDataURL%d" % (x), i.dataURL)
-        cmd = cmd.replace("%%iDataURL[%s]" % (i.uid), i.dataURL)
-    for x,o in enumerate(outputs):
-        cmd = cmd.replace("%%oDataURL%d" % (x), o.dataURL)
-        cmd = cmd.replace("%%oDataURL[%s]" % (o.uid), o.dataURL)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("Command after data URL placeholder replacement is: %s" % (cmd))
+    for x,i in enumerate(inputs.values()):
+        dataUrlRef = "%%iDataURL%d" % (x,)
+        if dataUrlRef in cmd:
+            cmd = cmd.replace(dataUrlRef, i.dataURL)
+    for x,o in enumerate(outputs.values()):
+        dataUrlRef = "%%oDataURL%d" % (x,)
+        if dataUrlRef in cmd:
+            cmd = cmd.replace(dataUrlRef, o.dataURL)
+
+    for uid,i in inputs.items():
+        dataURLRef = "%%iDataURL[%s]" % (uid,)
+        if dataURLRef in cmd:
+            cmd = cmd.replace(dataURLRef, i.dataURL)
+    for uid,o in outputs.items():
+        dataURLRef = "%%oDataURL[%s]" % (uid,)
+        if dataURLRef in cmd:
+            cmd = cmd.replace(dataUrlRef, o.dataURL)
+
+    logger.debug("Command after data URL placeholder replacement is: %s", cmd)
 
     return cmd
 

@@ -255,8 +255,7 @@ class DataLifecycleManager(object):
 
 
     def _deleteDrop(self, drop):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Deleting DROP %s/%s" % (drop.oid, drop.uid))
+        logger.debug("Deleting DROP %r", drop)
         drop.delete()
         drop.status = DROPStates.DELETED
 
@@ -288,12 +287,11 @@ class DataLifecycleManager(object):
 
             if drop.isBeingRead():
                 logger.info("%r has expired but is currently being read, " \
-                             "will skip expiration for the time being" % (drop,))
+                             "will skip expiration for the time being", drop)
                 continue
 
             # Finally!
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('Marking %r as EXPIRED' % (drop,))
+            logger.debug('Marking %r as EXPIRED', drop)
             drop.status = DROPStates.EXPIRED
 
     def _disappeared(self, drop):
@@ -339,7 +337,7 @@ class DataLifecycleManager(object):
                     definitelyLost = True
 
             if definitelyLost:
-                logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST" % (drop.oid, drop.uid))
+                logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST", drop.oid, drop.uid)
                 drop.phase = DROPPhases.LOST
                 self._reg.setDropPhase(drop, drop.phase)
 
@@ -492,14 +490,12 @@ class DataLifecycleManager(object):
         # Dummy, but safe, new UID
         newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Creating new DROP %s/%s from %s/%s' % (drop.oid, newUid, drop.oid, drop.uid))
+        logger.debug('Creating new DROP with uid %s from %r', newUid, drop)
 
         # For the time being we manually copy the contents of the current DROP into it
         newDrop = store.createDrop(drop.oid, newUid, expectedSize=drop.size, precious=drop.precious)
         droputils.copyDropContents(drop, newDrop)
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('DROP %s/%s successfully replicated to %s/%s' % (drop.oid, newUid, drop.oid, drop.uid))
+        logger.debug('%r successfully replicated to %r', drop, newDrop)
 
         return newDrop, newUid

@@ -107,3 +107,10 @@ class DROPManager(object):
         """
         Returns the IDs of the sessions currently held by this DROPManager.
         """
+
+    @abc.abstractmethod
+    def getGraphSize(self, sessionId):
+        """
+        Returns the number of drops contained in the physical graph attached
+        to ``sessionId``.
+        """

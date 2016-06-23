@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 DFMS_ROOT = '/dfms_root'
 
-DockerPath = collections.namedtuple('DockerPath', ('uid', 'path'))
+DockerPath = collections.namedtuple('DockerPath', 'path')
 
 
 class ContainerIpWaiter(utils.noopctx):
@@ -277,12 +277,14 @@ class DockerApp(BarrierAppDROP):
         def isFSBased(x):
             return isinstance(x, (FileDROP, DirectoryContainer))
 
-        fsInputs  = [i for i in self.inputs if isFSBased(i)]
-        fsOutputs = [o for o in self.outputs if isFSBased(o)]
-        dockerInputs  = [DockerPath(i.uid, DFMS_ROOT + i.path) for i in fsInputs]
-        dockerOutputs = [DockerPath(o.uid, DFMS_ROOT + o.path) for o in fsOutputs]
-        dataURLInputs  = [i for i in self.inputs if not isFSBased(i)]
-        dataURLOutputs = [o for o in self.outputs if not isFSBased(o)]
+        iitems = self._inputs.items()
+        oitems = self._outputs.items()
+        fsInputs  = {uid: i for uid,i in iitems if isFSBased(i)}
+        fsOutputs = {uid: o for uid,o in oitems if isFSBased(o)}
+        dockerInputs  = {uid: DockerPath(DFMS_ROOT + i.path) for uid,i in fsInputs.items()}
+        dockerOutputs = {uid: DockerPath(DFMS_ROOT + o.path) for uid,o in fsOutputs.items()}
+        dataURLInputs  = {uid: i for uid,i in iitems if not isFSBased(i)}
+        dataURLOutputs = {uid: o for uid,o in oitems if not isFSBased(o)}
 
         cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
@@ -291,9 +293,9 @@ class DockerApp(BarrierAppDROP):
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
-        vols = [x.path for x in dockerInputs] + [os.path.dirname(x.path) for x in dockerOutputs]
-        binds  = [                i.path  + ":" +                  dockerInputs[x].path  for x,i in enumerate(fsInputs)]
-        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[x].path) for x,o in enumerate(fsOutputs)]
+        vols = [i.path for i in dockerInputs.values()] + [os.path.dirname(o.path) for o in dockerOutputs.values()]
+        binds  = [                i.path  + ":" +                  dockerInputs[uid].path  for uid,i in fsInputs.items()]
+        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path) for uid,o in fsOutputs.items()]
         binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
         logger.debug("Volume bindings: %r", binds)
 
@@ -319,7 +321,7 @@ class DockerApp(BarrierAppDROP):
             # Also make sure that the output will belong to that user
             uid = os.getuid()
             createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(uid)
-            for dirname in set([os.path.dirname(x.path) for x in dockerOutputs]):
+            for dirname in set([os.path.dirname(x.path) for x in dockerOutputs.values()]):
                 createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
             createUserAndGo += "cd; su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, utils.escapeQuotes(cmd, doubleQuotes=False))
 
@@ -366,16 +368,15 @@ class DockerApp(BarrierAppDROP):
         # Wait until it finishes
         self._exitCode = c.wait(container)
         end = time.time()
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
+        logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            stdout = c.logs(container, stdout=True, stderr=False)
-            stderr = c.logs(container, stdout=False, stderr=True)
+            stdout = ''.join(c.logs(container, stream=True, stdout=True, stderr=False))
+            stderr = ''.join(c.logs(container, stream=True, stdout=False, stderr=True))
             logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
         elif self._exitCode != 0:
-            stdout = c.logs(container, stdout=True, stderr=False)
-            stderr = c.logs(container, stdout=False, stderr=True)
+            stdout = ''.join(c.logs(container, stream=True, stdout=True, stderr=False))
+            stderr = ''.join(c.logs(container, stream=True, stdout=False, stderr=True))
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
             rm(container)

@@ -34,6 +34,7 @@ from dfms import droputils, utils
 from dfms import luigi_int, graph_loader
 from dfms.ddap_protocol import DROPLinkType, DROPStates
 from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
+from dfms.exceptions import InvalidSessionState, InvalidGraphException
 
 
 _LINKTYPE_TO_NREL = {
@@ -159,7 +160,7 @@ class Session(object):
 
         status = self.status
         if status not in (SessionStates.PRISTINE, SessionStates.BUILDING):
-            raise Exception("Can't add graphs to this session since it isn't in the PRISTINE or BUILDING status: %d" % (status))
+            raise InvalidSessionState("Can't add graphs to this session since it isn't in the PRISTINE or BUILDING status: %d" % (status))
 
         self.status = SessionStates.BUILDING
 
@@ -168,12 +169,11 @@ class Session(object):
 
         for oid in graphSpecDict:
             if oid in self._graph:
-                raise Exception('DROP with OID %s already exists, cannot add twice' % (oid))
+                raise InvalidGraphException('DROP with OID %s already exists, cannot add twice' % (oid))
 
         self._graph.update(graphSpecDict)
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Added a graph definition with %d DROPs" % (len(graphSpecDict)))
+        logger.debug("Added a graph definition with %d DROPs", len(graphSpecDict))
 
     def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
         """
@@ -183,7 +183,7 @@ class Session(object):
         session; otherwise an exception will be raised.
         """
         if self.status != SessionStates.BUILDING:
-            raise Exception("Can't link DROPs anymore since this session isn't in the BUILDING state")
+            raise InvalidSessionState("Can't link DROPs anymore since this session isn't in the BUILDING state")
 
         # Look for the two DROPs in all our graph parts and reporting
         # missing DROPs
@@ -194,7 +194,7 @@ class Session(object):
         if rhDropSpec is None: missingOids.append(rhOID)
         if missingOids:
             oids = 'OID' if len(missingOids) == 1 else 'OIDs'
-            raise Exception('No DROP found for %s %r' % (oids, missingOids))
+            raise InvalidGraphException('No DROP found for %s %r' % (oids, missingOids))
 
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
@@ -215,21 +215,19 @@ class Session(object):
 
         status = self.status
         if status != SessionStates.BUILDING:
-            raise Exception("Can't deploy this session in its current status: %d" % (status))
+            raise InvalidSessionState("Can't deploy this session in its current status: %d" % (status))
 
         self.status = SessionStates.DEPLOYING
 
         # Create the Pyro daemon that will serve the DROP proxies and start it
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Starting Pyro4 Daemon for session %s" % (self._sessionId))
+        logger.debug("Starting Pyro4 Daemon for session %s", self._sessionId)
         self._daemon = Pyro4.Daemon(host=self._host)
         self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
         self._daemonT.daemon = True
         self._daemonT.start()
 
         # Create the real DROPs from the graph specs
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Creating DROPs for session %s" % (self._sessionId))
+        logger.debug("Creating DROPs for session %s", self._sessionId)
 
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
 
@@ -262,8 +260,7 @@ class Session(object):
         # Start the luigi task that will make sure the graph is executed
         # If we're not using luigi we still
         if self._enable_luigi:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Starting Luigi FinishGraphExecution task for session %s" % (self._sessionId))
+            logger.debug("Starting Luigi FinishGraphExecution task for session %s", self._sessionId)
             task = luigi_int.FinishGraphExecution(self._sessionId, self._roots)
             sch = scheduler.CentralPlannerScheduler()
             w = worker.Worker(scheduler=sch)
@@ -280,14 +277,12 @@ class Session(object):
                 leaf.subscribe(listener, 'producerFinished')
 
         self.status = SessionStates.RUNNING
-        if logger.isEnabledFor(logging.INFO):
-            logger.info("Session %s is now RUNNING" % (self._sessionId))
+        logger.info("Session %s is now RUNNING", self._sessionId)
 
     def _registerDrop(self, drop):
         uri = self._daemon.register(drop)
         drop.uri = uri.asString()
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Registered %r with Pyro. URI is %s" % (drop, uri))
+        logger.debug("Registered %r with Pyro. URI is %s", drop, uri)
         self._drops[drop.uid] = drop
 
     def _run(self, worker):
@@ -300,7 +295,7 @@ class Session(object):
 
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
-            raise Exception("The session is currently not running, cannot get graph status")
+            raise InvalidSessionState("The session is currently not running, cannot get graph status")
         statusDict = collections.defaultdict(dict)
 
         # We shouldn't traverse the full graph because there might be nodes

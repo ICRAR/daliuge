@@ -28,7 +28,11 @@ import bottle
 from paste import httpserver
 
 from dfms import utils
+from dfms.exceptions import DaliugeException
 
+
+# HTTP headers used by daliuge
+DALIUGE_HDR_ERR = 'X-Daliuge-Error'
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +41,10 @@ class RestServer(object):
     The base class for our REST servers
     """
 
-    def __init__(self, jsonified_errors=[500]):
-
+    def __init__(self):
         self._server = None
         self._server_thr = None
-        self.app = app = bottle.Bottle()
-
-        # Error are returned as strings in a dictionary
-        if jsonified_errors:
-            def jsonify_error(e):
-                bottle.response.content_type = 'application/json'
-                return json.dumps({'err_str': e.body})
-            for err_code in jsonified_errors:
-                app.error_handler[err_code] = jsonify_error
+        self.app = bottle.Bottle()
 
     def start(self, host, port):
         if host is None:
@@ -71,7 +66,7 @@ class RestServer(object):
             self._server = None
             self.app.close()
 
-class RestClientException(Exception):
+class RestClientException(DaliugeException):
     """
     Exception thrown by the RestClient
     """
@@ -135,8 +130,7 @@ class RestClient(object):
     def _request(self, url, method, content=None, headers={}):
 
         # Do the HTTP stuff...
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Sending %s request to %s:%d%s" % (method, self.host, self.port, url))
+        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
 
         if not utils.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
@@ -146,14 +140,10 @@ class RestClient(object):
         self._resp = self._conn.getresponse()
 
         # Server errors are encoded in the body as json content
-        if self._resp.status == httplib.INTERNAL_SERVER_ERROR:
-            msg = json.loads(self._resp.read())['err_str']
-            if logger.isEnabledFor(logging.WARNING):
-                logger.warning('Error found while requesting %s:%d%s: %s' % (self.host, self.port, url, msg))
-            raise RestClientException(msg)
-        elif self._resp.status != httplib.OK:
+        if self._resp.status != httplib.OK:
+            err = self._resp.getheader(DALIUGE_HDR_ERR) or self._resp.reason or self._resp.msg
             msg = 'Unexpected error while processing %s request for %s:%s%s (status %d): %s' % \
-                  (method, self.host, self.port, url, self._resp.status, self._resp.read())
+                  (method, self.host, self.port, url, self._resp.status, err)
             raise RestClientException(msg)
 
         return self._resp.read()

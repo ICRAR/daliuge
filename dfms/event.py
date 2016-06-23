@@ -67,8 +67,7 @@ class EventFirer(object):
         not `None` then `listener` will only receive events of `eventType` that
         originate from this object, otherwise it will receive all events.
         """
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Adding listener to %r eventType=%s: %r' %(self, eventType, listener))
+        logger.debug('Adding listener to %r eventType=%s: %r', self, eventType, listener)
 
         eventType = eventType or EventFirer.__ALL_EVENTS
         self._listeners[eventType].append(listener)
@@ -77,8 +76,7 @@ class EventFirer(object):
         """
         Unsubscribes `listener` from events fired by this object.
         """
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Removing listener to %r eventType=%s: %r' %(self, eventType, listener))
+        logger.debug('Removing listener to %r eventType=%s: %r', self, eventType, listener)
 
         eventType = eventType or EventFirer.__ALL_EVENTS
         if listener in self._listeners[eventType]:
@@ -99,8 +97,7 @@ class EventFirer(object):
         if EventFirer.__ALL_EVENTS in self._listeners:
             listeners += self._listeners[EventFirer.__ALL_EVENTS]
         if not listeners:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('No listeners found for eventType=%s' %(eventType))
+            logger.debug('No listeners found for eventType=%s', eventType)
             return
 
         # Now that we are sure there are listeners for our event
