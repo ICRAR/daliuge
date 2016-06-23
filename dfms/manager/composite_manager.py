@@ -187,9 +187,8 @@ class CompositeManager(DROPManager):
     # Replication of commands to underlying drop managers
     # If "collect" is given, then individual results are also kept in the given
     # structure, which is either a dictionary or a list
-    # "replicate" and "_replicate" work for commands that don't need an answer
     #
-    def _replicate(self, sessionId, exceptions, f, collect, iterable):
+    def _do_in_host(self, sessionId, exceptions, f, collect, iterable):
 
         host = iterable
         if isinstance(iterable, (list, tuple)):
@@ -209,13 +208,13 @@ class CompositeManager(DROPManager):
             exceptions[host] = e
             raise # so it gets printed
 
-    def replicate_to_dms(self, sessionId, f, action, collect=None, iterable=None):
+    def replicate(self, sessionId, f, action, collect=None, iterable=None):
         """
         Replicates the given function call on each of the underlying drop managers
         """
         thrExs = {}
         iterable = iterable or self._dmHosts
-        self._tp.map(functools.partial(self._replicate, sessionId, thrExs, f, collect), iterable)
+        self._tp.map(functools.partial(self._do_in_host, sessionId, thrExs, f, collect), iterable)
         if thrExs:
             msg = "One or more errors occurred while %s on session %s" % (action, sessionId)
             raise SubManagerException(msg, thrExs)
@@ -232,7 +231,7 @@ class CompositeManager(DROPManager):
         Creates a session in all underlying DMs.
         """
         logger.info('Creating Session %s in all hosts', sessionId)
-        self.replicate_to_dms(sessionId, self._createSession, "creating sessions")
+        self.replicate(sessionId, self._createSession, "creating sessions")
         self._sessionIds.append(sessionId)
 
     def _destroySession(self, dm, host, sessionId):
@@ -244,7 +243,7 @@ class CompositeManager(DROPManager):
         Destroy a session in all underlying DMs.
         """
         logger.info('Destroying Session %s in all hosts', sessionId)
-        self.replicate_to_dms(sessionId, self._destroySession, "creating sessions")
+        self.replicate(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
     def _addGraphSpec(self, dm, (host, graphSpec), sessionId):
@@ -313,7 +312,7 @@ class CompositeManager(DROPManager):
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
 
         partitions = [(host, perPartition[host]) for host in self._dmHosts]
-        self.replicate_to_dms(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=partitions)
+        self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=partitions)
 
         self._interDMRelations[sessionId].extend(interDMRelations)
 
@@ -370,7 +369,7 @@ class CompositeManager(DROPManager):
         logger.info('Deploying Session %s in all hosts', sessionId)
 
         allUris = {}
-        self.replicate_to_dms(sessionId, self._deploySession, "deploying session", collect=allUris)
+        self.replicate(sessionId, self._deploySession, "deploying session", collect=allUris)
 
         # Retrieve all necessary proxies we'll need afterward
         # (i.e., those present in inter-DM relationships and in completedDrops)
@@ -433,7 +432,7 @@ class CompositeManager(DROPManager):
 
     def getGraphStatus(self, sessionId):
         allStatus = {}
-        self.replicate_to_dms(sessionId, self._getGraphStatus, "getting graph status", collect=allStatus)
+        self.replicate(sessionId, self._getGraphStatus, "getting graph status", collect=allStatus)
         return allStatus
 
     def _getGraph(self, dm, host, sessionId):
@@ -442,7 +441,7 @@ class CompositeManager(DROPManager):
     def getGraph(self, sessionId):
 
         allGraphs = {}
-        self.replicate_to_dms(sessionId, self._getGraph, "getting the graph", collect=allGraphs)
+        self.replicate(sessionId, self._getGraph, "getting the graph", collect=allGraphs)
 
         # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
@@ -456,7 +455,7 @@ class CompositeManager(DROPManager):
 
     def getSessionStatus(self, sessionId):
         allStatus = {}
-        self.replicate_to_dms(sessionId, self._getSessionStatus, "getting the graph status", collect=allStatus)
+        self.replicate(sessionId, self._getSessionStatus, "getting the graph status", collect=allStatus)
         return allStatus
 
     def _getGraphSize(self, dm, host, sessionId):
@@ -464,7 +463,7 @@ class CompositeManager(DROPManager):
 
     def getGraphSize(self, sessionId):
         allCounts = []
-        self.replicate_to_dms(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
+        self.replicate(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
         return sum(allCounts)
 
 class DataIslandManager(CompositeManager):
