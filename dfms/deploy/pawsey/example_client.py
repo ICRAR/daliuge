@@ -69,6 +69,7 @@ class MonitorClient(object):
             pgtp = MetisPGTP(drop_list, len(node_list))
         pgtp.json
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
+        logger.info("PG spec is calculated!")
         if self._output:
             with open(self._output, 'w') as f:
                 json.dump(pg_spec, f, indent=2)
@@ -77,8 +78,9 @@ class MonitorClient(object):
             if 'uid' in dropSpec:
                 return dropSpec['uid']
             return dropSpec['oid']
+        logger.info("About to compute roots")
         completed_uids = [uid_for_drop(x) for x in droputils.get_roots(pg_spec)]
-
+        logger.info("Len of completed_uids is {0}".format(len(completed_uids)))
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
         self._dc.create_session(ssid)
         logger.info("session {0} created".format(ssid))
