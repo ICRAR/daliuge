@@ -40,7 +40,7 @@ from dfms.manager.client import DataIslandManagerClient
 
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
-'chiles_two_dev1.json', 'chiles_simple.json','mwa_gleam.json','mwa_gleam_simple.json']
+'chiles_two_dev1.json', 'chiles_simple.json','mwa_gleam.json','mwa_gleam_simple.json','lofar_std_large.json']
 
 
 class MonitorClient(object):

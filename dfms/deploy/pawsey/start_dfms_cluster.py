@@ -115,6 +115,7 @@ def submit_monitor_graph(graph_id, dump_status):
         mc = MonitorClient('localhost', 8001)
         logger.info("Submitting graph {0}".format(graph_id))
         mc.submit_single_graph(graph_id, deploy=True, algo='metis')
+        logger.info("graph {0} is successfully submitted".format(graph_id))
         dc = mc._dc
     else:
         dc = DataIslandManagerClient('localhost')
