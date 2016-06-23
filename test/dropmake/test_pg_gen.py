@@ -124,3 +124,19 @@ class TestPGGen(unittest.TestCase):
             pgtp = MinNumPartsPGTP(drop_list, tgt_deadline[i])
             pgtp.json
         #print pgtp.to_gojs_json()
+
+    def test_large_graph_pgtp_gen_pg(self):
+        lgnames = ['lofar_std_large.json']
+        num_nodes = 500
+        tgt_partnum = [num_nodes]
+        node_list = []
+        for j in range(num_nodes):
+            ipa = '10.128.0.{0}'.format(j)
+            node_list.append(ipa)
+        for i, lgn in enumerate(lgnames):
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MetisPGTP(drop_list, num_nodes)
+            pgtp.json
+            pg_spec = pgtp.to_pg_spec(node_list)

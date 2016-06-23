@@ -35,7 +35,7 @@ import sys
 import pkg_resources
 
 from dfms import droputils
-from dfms.dropmake.pg_generator import LG, MySarkarPGTP
+from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
 from dfms.manager.client import DataIslandManagerClient
 
 
@@ -61,7 +61,11 @@ class MonitorClient(object):
         drop_list = lg.unroll_to_tpl()
         #node_list = self.get_avail_hosts()
         node_list = self._dc.nodes()
-        pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+        #pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+        if ('sarkar' == algo):
+            pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+        else:
+            pgtp = MetisPGTP(drop_list, len(node_list))
         pgtp.json
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
         if self._output:
@@ -92,7 +96,10 @@ class MonitorClient(object):
         drop_list = lg.unroll_to_tpl()
         node_list = self._dc.nodes()
         #node_list = ['10.128.0.11', '10.128.0.14', '10.128.0.15', '10.128.0.16']
-        pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+        if ('sarkar' == algo):
+            pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+        else:
+            pgtp = MetisPGTP(drop_list, len(node_list))
         pgtp.json
         pg_spec = pgtp.to_pg_spec(node_list)
         with open('/{1}/sar_{0}_pgspec.json'.format(lgn.split('.')[0], tgt), 'w') as f:
