@@ -32,12 +32,13 @@ import json
 import optparse
 import sys
 
-import pkg_resources
+import pkg_resources, logging
 
 from dfms import droputils
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
 from dfms.manager.client import DataIslandManagerClient
 
+logger = logging.getLogger(__name__)
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
 'chiles_two_dev1.json', 'chiles_simple.json','mwa_gleam.json','mwa_gleam_simple.json','lofar_std_large.json']
@@ -80,13 +81,13 @@ class MonitorClient(object):
 
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
         self._dc.create_session(ssid)
-        print "session created"
+        logger.info("session {0} created".format(ssid))
         self._dc.append_graph(ssid, pg_spec)
-        print "graph appended"
+        logger.info("graph {0} appended".format(ssid))
 
         if (deploy):
             ret = self._dc.deploy_session(ssid, completed_uids=completed_uids)
-            print "session deployed"
+            logger.info("session {0} deployed".format(ssid))
             return ret
 
     def produce_physical_graphs(self, graph_id, algo='sarkar', tgt="/tmp"):
