@@ -436,9 +436,35 @@ def get_roots(pg_spec):
     graph specification.
     """
 
-    # Find dropspecs with no links to the previous drops
-    candidates = []
+    # dictionary with a copy of the pg_spec so we don't modify the original
+    pg_spec_dict = {dropspec['oid']: dict(dropspec) for dropspec in pg_spec}
+
+    # First step: double the relationships so they are declared on both ends
+    # This will mean that the graph will use more memory (slightly at least)
+    # but makes the second step an O(N) operation instead of the previous O(N^2)
+    # implementation
+    def add_backreference(dropspec, pg_spec_dict, attr, backattr):
+        if attr not in dropspec:
+            return
+        for oid in dropspec[attr]:
+            otherdrop = pg_spec_dict[oid]
+            if backattr not in otherdrop:
+                otherdrop[backattr] = []
+            otherdrop[backattr].append(dropspec['oid'])
+
     for dropspec in pg_spec:
+        if dropspec['type'] == 'app':
+            add_backreference(dropspec, pg_spec_dict, 'inputs', 'consumers')
+            add_backreference(dropspec, pg_spec_dict, 'streamingInputs', 'streamingConsumers')
+            add_backreference(dropspec, pg_spec_dict, 'outputs', 'producers')
+        elif dropspec['type'] == 'plain':
+            add_backreference(dropspec, pg_spec_dict, 'consumers', 'inputs')
+            add_backreference(dropspec, pg_spec_dict, 'streamingConsumers', 'streamingInputs')
+            add_backreference(dropspec, pg_spec_dict, 'producers', 'outputs')
+
+    # now find dropspecs with no links to the previous drops
+    roots = []
+    for dropspec in pg_spec_dict.values():
         if dropspec['type'] == 'app' and \
            (('inputs' in dropspec and dropspec['inputs']) or \
             ('streamingInputs' in dropspec and dropspec['streamingInputs'])):
@@ -446,31 +472,6 @@ def get_roots(pg_spec):
         elif dropspec['type'] == 'plain' and \
            'producers' in dropspec and dropspec['producers']:
             continue
-        candidates.append(dropspec)
-
-    # They might still be referenced by potential neighbors
-    # (e.g., an app might not reference its inputs, but they might reference it
-    # as its consumer)
-    roots = []
-    for candidate in candidates:
-        is_root = True
-        typ = candidate['type']
-        oid = candidate['oid']
-        if typ == 'plain':
-            for dropspec in pg_spec:
-                if dropspec['type'] == 'app' and \
-                  'outputs' in dropspec and oid in dropspec['outputs']:
-                    is_root = False
-                    break
-        elif typ == 'app':
-            for dropspec in pg_spec:
-                if dropspec['type'] == 'plain' and \
-                  (('consumers' in dropspec and oid in dropspec['consumers']) or \
-                   ('streamingConsumers' in dropspec and oid in dropspec['streamingConsumers'])):
-                    is_root = False
-                    break
-
-        if is_root:
-            roots.append(candidate)
+        roots.append(dropspec)
 
     return roots
