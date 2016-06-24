@@ -94,14 +94,14 @@ def start_node_mgr(log_dir):
     Start node manager
     """
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-vvv', '-H', '0.0.0.0'])
+    '-vvv', '-H', '0.0.0.0', '-m', '40'])
 
 def start_dim(node_list, log_dir):
     """
     Start data island manager
     """
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-vvv', '-H', '0.0.0.0'])
+    '-N', ','.join(node_list), '-vvv', '-H', '0.0.0.0', '-m', '40'])
 
 def submit_monitor_graph(graph_id, dump_status):
     """
