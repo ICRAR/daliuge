@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import json
+import logging
 
 import bottle
 import pkg_resources
@@ -29,6 +30,8 @@ from dfms.manager.drop_manager import DROPManager
 from dfms.manager.rest import ManagerRestServer
 from dfms.manager.session import SessionStates
 
+
+logger = logging.getLogger(__name__)
 
 build_step = 3
 deploy_step = 6
@@ -82,6 +85,8 @@ class ReplayManager(DROPManager):
         # Move through the different steps as we are requested
         # our status
         self._session_status_reqno += 1
+        logger.info("Session status request #%d", self._session_status_reqno)
+
         if build_step <= self._session_status_reqno < deploy_step:
             self._status = SessionStates.BUILDING
         elif deploy_step <= self._session_status_reqno < run_step:
@@ -112,13 +117,18 @@ class ReplayManager(DROPManager):
 
             graph_status = content['gs']
             self._last_graph_status = graph_status
+
+            logger.info("Serving graph status")
             return graph_status
 
     def getGraph(self, session_id):
+        self.check_session_id(session_id)
+        logger.info("Serving graph")
         return self._graph
 
     def getGraphSize(self, session_id):
         self.check_session_id(session_id)
+        logger.info("Serving graph size")
         return len(self._graph)
 
     def getSessionIds(self):
