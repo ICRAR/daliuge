@@ -60,7 +60,6 @@ public class export_graph {
   Two parameters: input gexf file and ouput png/pdf file
   */
   public static void main(String[] args) {
-      //System.out.println("arg leng = " + args.length);
       if (args.length != 2) {
         System.out.println("Usage: java dfms.deploy.utils.export_graph <input_gexf> <output_png>");
         System.exit(1);
