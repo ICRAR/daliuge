@@ -23,6 +23,7 @@
 Utility methods and classes to be used when interacting with DROPs
 '''
 
+import copy
 import logging
 import re
 import threading
@@ -436,7 +437,8 @@ def get_roots(pg_spec):
     graph specification.
     """
 
-    # dictionary with a copy of the pg_spec so we don't modify the original
+    # Don't modify the originals
+    pg_spec = copy.deepcopy(pg_spec)
     pg_spec_dict = {dropspec['oid']: dict(dropspec) for dropspec in pg_spec}
 
     # First step: double the relationships so they are declared on both ends
