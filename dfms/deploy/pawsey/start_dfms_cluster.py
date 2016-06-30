@@ -128,13 +128,14 @@ def submit_monitor_graph(graph_id, dump_status):
         graph_dict = dict() # k - ssid, v - graph spec json obj
         logger.debug("Ready to check sessions")
         while (True):
-            logger.debug("checking sessions")
+            #logger.debug("checking sessions")
             sessions = dc.sessions()
-            logger.debug("len(sessions) = {0}".format(len(sessions)))
-            logger.debug("session0 = {0}".format(sessions[0]))
-            for session in sessions:
+            #logger.debug("len(sessions) = {0}".format(len(sessions)))
+            #logger.debug("session0 = {0}".format(sessions[0]))
+            for session in sessions: #TODO the interval won't work for multiple sessions
+                stt = time.time()
                 ssid = session['sessionId']
-                logger.debug("session id = {0}".format(ssid))
+                #logger.debug("session id = {0}".format(ssid))
                 wgs = {}
                 wgs['ssid'] = ssid
                 wgs['gs'] = dc.graph_status(ssid) #TODO check error
@@ -154,8 +155,12 @@ def submit_monitor_graph(graph_id, dump_status):
                 with open(sfile, 'a') as fs:
                     json.dump(wgs, fs)
                     fs.write(os.linesep)
-
-                time.sleep(GRAPH_MONITOR_INTERVAL)
+                dt = time.time() - stt
+                if (dt < GRAPH_MONITOR_INTERVAL):
+                    try:
+                        time.sleep(GRAPH_MONITOR_INTERVAL - dt)
+                    except:
+                        pass
 
 
 def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
