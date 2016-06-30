@@ -1504,7 +1504,10 @@ class dropdict(dict):
     def __setattr__(self, name, value):
         self[name] = value
     def __getattr__(self, name):
-        return self[name]
+        if ('__deepcopy__' == name):
+            return None
+        else:
+            return self[name]
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
