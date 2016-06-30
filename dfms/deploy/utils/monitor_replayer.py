@@ -39,9 +39,10 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-ORIGINAL_COLOR = (13, 0, 92)
+ORIGINAL_COLOR = (87, 87, 87)
 YELLOW_COLOR = (255, 255, 0)
-GREEN_COLOR = (102, 255, 178)
+#GREEN_COLOR = (102, 255, 178)
+GREEN_COLOR = (0, 255, 0)
 RED_COLOR = (255, 0, 0)
 BLUE_COLOR = (102, 178, 255)
 
@@ -203,7 +204,7 @@ class GraphPlayer(object):
         subgraph_dict = defaultdict(list) # k - node-ip, v - a list of graph nodes
         oid_gnid_dict = dict()
 
-        for i, oid in enumerate(pg_spec.keys()):
+        for i, oid in enumerate(self.pg_spec.keys()):
             oid_gnid_dict[oid] = str(i)
         logger.info("oid to gid mapping done")
 
@@ -271,7 +272,8 @@ if __name__ == '__main__':
 
     if (options.edgelist and options.dot_file is not None):
         logger.info("Loading networx graph from file {0}".format(options.graph_path))
-        g = get_pygraph(options.graph_path, graph_lib='networkx')
+        gp = GraphPlayer(options.graph_path, options.status_path)
+        g = gp.build_drop_fullgraphs(graph_lib='networkx')
         nx.write_edgelist(g, options.dot_file)
         sys.exit(0)
 
