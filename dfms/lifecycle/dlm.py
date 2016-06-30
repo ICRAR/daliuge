@@ -195,8 +195,10 @@ class DropEventListener(utils.noopctx):
     def handleEvent(self, event):
         if event.type == 'open':
             self._dlm.handleOpenedDrop(event.oid, event.uid)
-        elif event.type == 'status' and event.status == DROPStates.COMPLETED:
-            self._dlm.handleCompletedDrop(event.uid)
+        elif event.type == 'status':
+            logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
+            if event.status == DROPStates.COMPLETED:
+                self._dlm.handleCompletedDrop(event.uid)
 
 class DataLifecycleManager(object):
 
