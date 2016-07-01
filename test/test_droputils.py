@@ -31,7 +31,7 @@ import unittest
 
 from dfms import droputils
 from dfms.drop import InMemoryDROP, FileDROP, \
-    BarrierAppDROP
+    BarrierAppDROP, dropdict
 from dfms.droputils import DROPFile
 
 
@@ -207,5 +207,11 @@ class DropUtilsTest(unittest.TestCase):
                    {"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
                    {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
         roots = droputils.get_roots(pg_spec)
+        self.assertEquals(2, len(roots))
+        self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
+
+        # The same as before but using dropdicts
+        pg_spec_dropdicts = [dropdict(dropspec) for dropspec in pg_spec]
+        roots = droputils.get_roots(pg_spec_dropdicts)
         self.assertEquals(2, len(roots))
         self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
