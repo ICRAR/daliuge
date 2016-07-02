@@ -36,6 +36,10 @@ import pygraphviz as pgv
 import networkx as nx
 import json, os, logging, optparse, sys, commands
 from collections import defaultdict
+from datetime import datetime as dt
+from xml.etree.ElementTree import ElementTree
+import sqlite3 as dbdrv
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +51,19 @@ RED_COLOR = (255, 0, 0)
 BLUE_COLOR = (102, 178, 255)
 
 java_cmd = "java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dfms.deploy.utils.export_graph"
+
+sql_create_status = """\
+create table ac(ts integer, oid varchar(256), status integer);
+create index ac_ts_index on ac(ts);
+.separator ","
+.import {0} ac
+"""
+
+sql_query = """\
+SELECT max(ts), oid, status FROM ac
+WHERE ts >= {0} and ts < {1}
+GROUP BY oid
+"""
 
 class GraphPlayer(object):
     def __init__(self, graph_path, status_path):
@@ -70,17 +87,7 @@ class GraphPlayer(object):
             self.gnid_ip_dict[gnid] = ip
         logger.info("oid to gid mapping done")
 
-    def convert_to_gexf_status(self, oid, status, colour_dict):
-        """
-        insert gexf colour line, e.g.
-            <viz:color r="13" g="0" b="92"></viz:color>
-        into the colour_dict using gnid as the key
-        """
-        gnid = self.oid_gnid_dict[oid]
-        if ('execStatus' in status):
-            st = status['execStatus']
-        else:
-            st = status['status']
+    def status_to_colour(self, st):
         st = int(st)
         if (st == 0): #INITIALIZED or NOT_RUN
             r, g, b = ORIGINAL_COLOR
@@ -95,9 +102,23 @@ class GraphPlayer(object):
             r, g, b = RED_COLOR
         else:
             r, g, b = BLUE_COLOR
+        return (r, g, b)
+
+    def convert_to_gexf_status(self, oid, status, colour_dict):
+        """
+        insert gexf colour line, e.g.
+            <viz:color r="13" g="0" b="92"></viz:color>
+        into the colour_dict using gnid as the key
+        """
+        gnid = self.oid_gnid_dict[oid]
+        if ('execStatus' in status):
+            st = status['execStatus']
+        else:
+            st = status['status']
+        r, g, b = self.status_to_colour(st)
         colour_dict[gnid] = '<viz:color r="%d" g="%d" b="%d"></viz:color>' % (r, g, b)
 
-    def parse_status(self, gexf_file, out_dir=None):
+    def parse_status(self, gexf_file, out_dir=None, remove_gexf=False):
         """
         Parse the graph status json file and
         produce gexf file for each status line
@@ -152,6 +173,11 @@ class GraphPlayer(object):
                 if (ret[0] != 0):
                     logger.error("Fail to print png from %s to %s: %s" % (new_gexf, new_png, ret[1]))
                 del colour_dict
+                if (remove_gexf):
+                    try:
+                        os.remove(new_gexf)
+                    except:
+                        pass
 
     def get_downstream_drop_ids(self, dropspec):
         if (dropspec['type'] == 'app'):
@@ -188,6 +214,105 @@ class GraphPlayer(object):
             G.add_edge(ks[0], ks[1], weight=v)
 
         return G
+
+    def get_state_changes(self, gexf_file, grep_log_file, steps=400, out_dir=None):
+        """
+        grep -R "changed to state" --include=*.log . > statelog.txt
+        the simulation time will be evenly divided up by "steps"
+        """
+        # convert grep_log_file to csv
+        if (out_dir is None):
+            out_dir = os.path.dirname(gexf_file)
+        #grep_log_file = '{0}/statelog.txt'.format(out_dir)
+        #cmd = ""
+        csv_file = '{0}/csv_file.csv'.format(out_dir)
+        sqlite_file = '{0}/sqlite_file.sqlite'.format(out_dir)
+        if (os.path.exists(sqlite_file)):
+            os.remove(sqlite_file)
+        with open(grep_log_file, "r") as f:
+            alllines = f.readlines()
+        with open(csv_file, "w") as fo:
+            for line in alllines:
+                ts = line.split('[DEBUG]')[0].split('dfmsNM.log:')[1].strip()
+                ts = int(dt.strptime(ts,'%Y-%m-%d %H:%M:%S,%f').strftime('%s'))
+                oid = line.split('oid=')[1].split()[0]
+                state = line.split()[-1]
+                fo.write('{0},{1},{2},{3}'.format(ts, oid, state, os.linesep))
+
+        sql = sql_create_status.format(csv_file)
+        sql_file = csv_file.replace('.csv', '.sql')
+        with open(sql_file, "w") as fo:
+            fo.write(sql)
+        cmd = "sqlite3 {0} < {1}".format(sqlite_file, sql_file)
+        ret = commands.getstatusoutput(cmd)
+        if (ret[0] != 0):
+            logger.error("fail to create sqlite: {0}".format(ret[1]))
+            return
+
+        dbconn = dbdrv.connect(sqlite_file)
+        q = "SELECT min(ts) from ac"
+        cur = dbconn.cursor()
+        cur.execute(q)
+        lhs = cur.fetchall()[0][0]
+        cur.close()
+
+        q = "SELECT max(ts) from ac"
+        cur = dbconn.cursor()
+        cur.execute(q)
+        rhs = cur.fetchall()[0][0]
+        cur.close()
+
+        step_size = (rhs - lhs) / steps
+        if (step_size == 0):
+            return
+        lr = list(np.arange(lhs, rhs, step_size))
+        if (lr[-1] != rhs):
+            lr.append(rhs)
+
+        last_gexf = gexf_file
+
+        for i, el in enumerate(lr[0:-1]):
+            a = el
+            b = lr[i + 1]
+            step_name = '{0}-{1}'.format(a, b)
+            logger.debug("stepname: %s" % step_name)
+            sql = sql_query.format(a, b)
+            logger.debug(sql)
+            cur = dbconn.cursor()
+            cur.execute(sql)
+            drops = cur.fetchall()
+            cur.close()
+
+            #build a dictionary
+            drop_dict = dict() # key - gnid, value: drop status
+            for drop in drops:
+                gnid = self.oid_gnid_dict[drop[1]]
+                drop_dict[gnid] = drop[2]
+
+            tree = ElementTree()
+            tree.parse(last_gexf)
+            root = tree.getroot()
+            for node in root.iter('{http://www.gexf.net/1.3}node'):
+                gnid = node.attrib['id']
+                if (not gnid in drop_dict):
+                    continue
+                new_status = drop_dict[gnid]
+                r, g, b = self.status_to_colour(new_status)
+                colour = node[2]
+                colour.attrib['r'] = '{0}'.format(r)
+                colour.attrib['g'] = '{0}'.format(g)
+                colour.attrib['b'] = '{0}'.format(b)
+            last_gexf = '{0}/{1}.gexf'.format(out_dir, step_name)
+            tree.write(last_gexf)
+            del drop_dict
+
+            logger.info("GEXF file '{0}' is generated".format(last_gexf))
+            new_png = last_gexf.split('.gexf')[0] + '.png'
+            cmd = "{0} {1} {2}".format(java_cmd, last_gexf, new_png)
+            ret = commands.getstatusoutput(cmd)
+            if (ret[0] != 0):
+                logger.error("Fail to print png from %s to %s: %s" % (last_gexf, new_png, ret[1]))
+
 
     def build_drop_subgraphs(self, node_range='[0:20]'):
         pass
@@ -261,6 +386,9 @@ if __name__ == '__main__':
     parser.add_option('-e', '--edgelist', action='store_true',
                     dest='edgelist', help = 'store edge list instead of dot file', default=False)
 
+    parser.add_option("-r", "--grep_log_file", action="store", type="string",
+                      dest="grep_log_file", help="grep log file", default=None)
+
     (options, args) = parser.parse_args()
 
     if (None == options.log_file or None == options.graph_path):
@@ -282,7 +410,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     gp = GraphPlayer(options.graph_path, options.status_path)
-    gp.parse_status(options.gexf_file, out_dir=options.gexf_output_dir)
+    #gp.parse_status(options.gexf_file, out_dir=options.gexf_output_dir)
+    gp.get_state_changes(options.gexf_file, options.grep_log_file, out_dir=options.gexf_output_dir)
     """
     g = gp.build_node_graph()
     #g = gp.build_drop_fullgraphs(options.graph_path, do_subgraph=options.subgraph)
