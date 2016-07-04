@@ -348,13 +348,13 @@ class CompositeManager(DROPManager):
         rhsDrop = proxies[rel.rhs]
         lhsDrop = proxies[rel.lhs]
 
-        logger.debug("Establishing link %r", rel)
-
         try:
 
+            logger.debug("Connecting to proxies to establish link %r", rel)
             rhsDrop._pyroReconnect(tries=10)
             lhsDrop._pyroReconnect(tries=10)
 
+            logger.debug("Establishing link %r", rel)
             if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
                 methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
                 backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
@@ -365,15 +365,18 @@ class CompositeManager(DROPManager):
                 backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
                 setattr(rhsDrop, relPropName, lhsDrop)
                 lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+            logger.debug("Done establishing link %r", rel)
 
-            # Eagerly release the pyro connection used by these Drop proxies
-            # See comment on self._triggerDrop
-            rhsDrop._pyroRelease()
-            lhsDrop._pyroRelease()
         except Exception as e:
             exceptions[rel] = e
             logger.exception("An exception establishing link %r", rel)
             raise # so it gets printed
+
+        finally:
+            # Eagerly release the pyro connection used by these Drop proxies
+            # See comment on self._triggerDrop
+            rhsDrop._pyroRelease()
+            lhsDrop._pyroRelease()
 
     def _triggerDrop(self, exceptions, (drop, uid)):
 
