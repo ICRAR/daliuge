@@ -29,6 +29,18 @@ class DaliugeException(Exception):
     The parent of all exceptions thrown by Daliuge
     """
 
+class InvalidDropException(DaliugeException):
+    """
+    An exception thrown when a Drop is created with a set of invalid arguments.
+    """
+    def __init__(self, drop, reason):
+        self.oid = drop.oid
+        self.uid = drop.uid
+        self.reason = reason
+
+    def __repr__(self, *args, **kwargs):
+        return "InvalidDropException <Drop %s / %s>: %s" % (self.uid, self.oid, self.reason)
+
 class InvalidGraphException(DaliugeException):
     """
     An exception thrown when an invalid graph, or part of a graph, is given to

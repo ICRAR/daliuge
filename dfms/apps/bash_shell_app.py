@@ -22,13 +22,16 @@
 """
 An app to run bash commands
 """
+
 import logging
 import os
 import subprocess
 import time
 
-from dfms.drop import BarrierAppDROP, FileDROP, DirectoryContainer
 from dfms import utils, droputils
+from dfms.drop import BarrierAppDROP, FileDROP, DirectoryContainer
+from dfms.exceptions import InvalidDropException
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,7 @@ class BashShellApp(BarrierAppDROP):
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
-            raise Exception('No command specified, cannot create BashShellApp')
+            raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
     def run(self):
 
