@@ -20,8 +20,9 @@
 #    MA 02111-1307  USA
 #
 from dfms.drop import BarrierAppDROP, ContainerDROP
-from dfms.io import NgasIO, OpenMode, NgasLiteIO
 from dfms.droputils import DROPFile
+from dfms.io import NgasIO, OpenMode, NgasLiteIO
+
 
 class ExternalStoreApp(BarrierAppDROP):
     """
