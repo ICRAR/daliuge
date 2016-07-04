@@ -36,6 +36,7 @@ from docker.client import AutoVersionClient
 from dfms import utils, droputils
 from dfms.drop import BarrierAppDROP, FileDROP, \
     DirectoryContainer
+from dfms.exceptions import InvalidDropException
 
 
 logger = logging.getLogger(__name__)
@@ -188,14 +189,14 @@ class DockerApp(BarrierAppDROP):
 
         self._image = self._getArg(kwargs, 'image', None)
         if not self._image:
-            raise Exception('No docker image specified, cannot create DockerApp')
+            raise InvalidDropException(self, 'No docker image specified, cannot create DockerApp')
 
         if ":" not in self._image:
             logger.warn("%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
-            raise Exception("No command specified, cannot create DockerApp")
+            raise InvalidDropException(self, "No command specified, cannot create DockerApp")
 
         # The user used to run the process in the docker container
         # By default docker containers run as root, but we don't want to run
@@ -223,7 +224,7 @@ class DockerApp(BarrierAppDROP):
             else:
                 host_path, container_path = binding.split(':')
             if not os.path.exists(host_path):
-                raise ValueError("'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
+                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
             self._additionalBindings[host_path] = container_path
 
         logger.info("%r with image '%s' and command '%s' created", self, self._image, self._command)

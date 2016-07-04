@@ -34,6 +34,7 @@ from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dfms.droputils import DROPWaiterCtx
+from dfms.exceptions import InvalidDropException
 
 
 try:
@@ -573,8 +574,8 @@ class TestDROP(unittest.TestCase):
         c.addOutput(e)
 
         # Consumer cannot be normal and streaming at the same time
-        self.assertRaises(Exception, lambda: a.addConsumer(b))
-        self.assertRaises(Exception, lambda: a.addStreamingConsumer(c))
+        self.assertRaises(Exception, a.addConsumer, b)
+        self.assertRaises(Exception, a.addStreamingConsumer, c)
 
         # Write a little, then check the consumers
         def checkDropStates(aStatus, dStatus, eStatus, lastChar):
@@ -705,10 +706,10 @@ class TestDROP(unittest.TestCase):
         """
 
         # No n_effective_inputs given
-        self.assertRaises(ValueError, InputFiredAppDROP, 'a', 'a')
+        self.assertRaises(InvalidDropException, InputFiredAppDROP, 'a', 'a')
         # Invalid values
-        self.assertRaises(ValueError, InputFiredAppDROP, 'a', 'a', n_effective_inputs=-2)
-        self.assertRaises(ValueError, InputFiredAppDROP, 'a', 'a', n_effective_inputs=0)
+        self.assertRaises(InvalidDropException, InputFiredAppDROP, 'a', 'a', n_effective_inputs=-2)
+        self.assertRaises(InvalidDropException, InputFiredAppDROP, 'a', 'a', n_effective_inputs=0)
 
         # More effective inputs than inputs
         a = InMemoryDROP('b', 'b')
