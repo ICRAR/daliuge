@@ -305,7 +305,7 @@ class CompositeManager(DROPManager):
             new_rel = DROPRel(lhs, rel.rel, rhs)
             newDMRelations.append(new_rel)
         interDMRelations[:] = newDMRelations
-        logger.debug('Removed (and sanitized) inter-dm relationships: %r', interDMRelations)
+        logger.debug('Removed (and sanitized) %d inter-dm relationships', len(interDMRelations))
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
@@ -340,6 +340,40 @@ class CompositeManager(DROPManager):
 
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
         return uris
+
+    def _establish_link(self, proxies, exceptions, rel):
+
+        # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
+        relType = rel.rel
+        rhsDrop = proxies[rel.rhs]
+        lhsDrop = proxies[rel.lhs]
+
+        logger.debug("Establishing link %r", rel)
+
+        try:
+
+            rhsDrop._pyroReconnect(tries=10)
+            lhsDrop._pyroReconnect(tries=10)
+
+            if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
+                methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
+                backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
+                rhsDrop._pyroInvoke(methodName, (lhsDrop,False), {})
+                lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+            else:
+                relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
+                backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
+                setattr(rhsDrop, relPropName, lhsDrop)
+                lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+
+            # Eagerly release the pyro connection used by these Drop proxies
+            # See comment on self._triggerDrop
+            rhsDrop._pyroRelease()
+            lhsDrop._pyroRelease()
+        except Exception as e:
+            exceptions[rel] = e
+            logger.exception("An exception establishing link %r", rel)
+            raise # so it gets printed
 
     def _triggerDrop(self, exceptions, (drop, uid)):
 
@@ -386,33 +420,10 @@ class CompositeManager(DROPManager):
                 proxies[uid] = Pyro4.Proxy(allUris[uid])
 
         # Establish the inter-DM relationships between DROPs.
-        # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
-        # TODO: This could be parallelized like the rest...
-        for rel in self._interDMRelations[sessionId]:
-            relType = rel.rel
-            rhsDrop = proxies[rel.rhs]
-            lhsDrop = proxies[rel.lhs]
-
-            logger.debug("Establishing link %r", rel)
-            try:
-                if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
-                    methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
-                    backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
-                    rhsDrop._pyroInvoke(methodName, (lhsDrop,False), {})
-                    lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
-                else:
-                    relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
-                    backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
-                    setattr(rhsDrop, relPropName, lhsDrop)
-                    lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
-
-                # Eagerly release the pyro connection used by these Drop proxies
-                # See comment on self._triggerDrop
-                rhsDrop._pyroRelease()
-                lhsDrop._pyroRelease()
-            except:
-                logger.exception("Error while establishing link %r", rel)
-                raise
+        thrExs = {}
+        self._tp.map(functools.partial(self._establish_link, proxies, thrExs), self._interDMRelations[sessionId])
+        if thrExs:
+            raise Exception("One or more exceptions occurred while establishing links on session %s" % (sessionId,), thrExs)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
