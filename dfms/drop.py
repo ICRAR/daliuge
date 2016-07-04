@@ -40,9 +40,9 @@ import threading
 import time
 
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
-    DROPLinkType, DROPPhases, DROPStates
+    DROPLinkType, DROPPhases, DROPStates, DROPRel
 from dfms.event import EventFirer
-from dfms.exceptions import InvalidDropException
+from dfms.exceptions import InvalidDropException, InvalidRelationshipException
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
 from dfms.utils import prepare_sql, noopctx
 
@@ -655,7 +655,8 @@ class AbstractDROP(EventFirer, noopctx):
         # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
         if consumer in self._streamingConsumers:
-            raise Exception("Consumer %s is already registered as a streaming consumer" % (consumer))
+            raise InvalidRelationshipException(DROPRel(consumer, DROPLinkType.CONSUMER, self),
+                                               "Consumer already registered as a streaming consumer")
 
         # Add if not already present
         # Add the reverse reference too automatically
@@ -774,12 +775,14 @@ class AbstractDROP(EventFirer, noopctx):
         # Consumers have a "consume" method that gets invoked when
         # this DROP moves to COMPLETED
         if not hasattr(streamingConsumer, 'dropCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
-            raise Exception("The streaming consumer %r doesn't have a 'dropCompleted' and/or 'dataWritten' method" % (streamingConsumer))
+            raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
+                                               "The streaming consumer doesn't have a 'dropCompleted' and/or 'dataWritten' method")
 
         # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
         if streamingConsumer in self._consumers:
-            raise Exception("Consumer %s is already registered as a normal consumer" % (streamingConsumer))
+            raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
+                                               "Consumer is already registered as a normal consumer")
 
         # Add if not already present
         if streamingConsumer in self._streamingConsumers:
@@ -1090,7 +1093,8 @@ class ContainerDROP(AbstractDROP):
 
         # Avoid circular dependencies between Containers
         if child == self.parent:
-            raise Exception("Circular dependency between %r and %r" % (self, child))
+            raise InvalidRelationshipException(DROPRel(child, DROPLinkType.CHILD, self),
+                                               "Circular dependency found")
 
         logger.debug("Adding new child for %r: %r", self, child)
 
@@ -1150,7 +1154,8 @@ class DirectoryContainer(ContainerDROP):
         if isinstance(child, (FileDROP, DirectoryContainer)):
             path = child.path
             if os.path.dirname(path) != self.path:
-                raise Exception('Child DROP is not under %s' % (self.path))
+                raise InvalidRelationshipException(DROPRel(child, DROPLinkType.CHILD, self),
+                                                   'Child DROP is not under %s' % (self.path))
             ContainerDROP.addChild(self, child)
         else:
             raise TypeError('Child DROP is not of type FileDROP or DirectoryContainer')
@@ -1235,7 +1240,8 @@ class AppDROP(ContainerDROP):
     def addOutput(self, outputDrop, back=True):
         with outputDrop:
             if outputDrop is self:
-                raise Exception('Cannot add an AppConsumer as its own output')
+                raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
+                                                   'Cannot add an AppConsumer as its own output')
             if outputDrop not in self._outputs.values():
                 uid = outputDrop.uid
                 self._outputs[uid] = outputDrop
@@ -1361,7 +1367,8 @@ class InputFiredAppDROP(AppDROP):
             raise InvalidDropException(self, 'Invalid n_tries, must be a positive number')
 
     def addStreamingInput(self, streamingInputDrop, back=True):
-        raise Exception("InputFiredAppDROPs don't accept streaming inputs")
+        raise InvalidRelationshipException(DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
+                                           "InputFiredAppDROPs don't accept streaming inputs")
 
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)

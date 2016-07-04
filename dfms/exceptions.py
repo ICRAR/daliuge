@@ -41,6 +41,17 @@ class InvalidDropException(DaliugeException):
     def __repr__(self, *args, **kwargs):
         return "InvalidDropException <Drop %s / %s>: %s" % (self.uid, self.oid, self.reason)
 
+class InvalidRelationshipException(DaliugeException):
+    """
+    An exception thrown when a relationship between two Drops has been
+    instructed but is invalid in nature.
+    """
+    def __init__(self, rel, reason):
+        self.rel = rel
+
+    def __repr__(self, *args, **kwargs):
+        return "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
+
 class InvalidGraphException(DaliugeException):
     """
     An exception thrown when an invalid graph, or part of a graph, is given to
