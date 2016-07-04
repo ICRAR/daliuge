@@ -199,6 +199,8 @@ class DropEventListener(utils.noopctx):
             logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
             if event.status == DROPStates.COMPLETED:
                 self._dlm.handleCompletedDrop(event.uid)
+        elif event.type == 'execStatus':
+            logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
 
 class DataLifecycleManager(object):
 
