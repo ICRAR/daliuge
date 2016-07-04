@@ -32,7 +32,7 @@ import pkg_resources
 
 from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException,\
-    InvalidDropException
+    InvalidDropException, InvalidRelationshipException
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
 from dfms.restutils import RestServer, RestClient, DALIUGE_HDR_ERR, \
@@ -58,6 +58,9 @@ def daliuge_aware(func):
             elif isinstance(e, InvalidDropException):
                 bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
                 bottle.abort(409, 'Invalid drop spec found in graph')
+            elif isinstance(e, InvalidRelationshipException):
+                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
+                bottle.abort(409, 'Invalid relationship between drops fround')
             elif isinstance(e, InvalidGraphException):
                 bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
                 bottle.abort(400, 'Invalid graph given')
