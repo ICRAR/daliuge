@@ -75,7 +75,7 @@ def invoke_split(q,
         q.put(0)
 
     except Exception as e:
-        print str(e)
+        print(str(e))
         q.put(-1)
 
 
@@ -111,7 +111,7 @@ def invoke_clean(q, vis, outcube):
         q.put(0)
 
     except Exception as e:
-        print str(e)
+        print(str(e))
         q.put(-1)
       
 
@@ -157,27 +157,26 @@ def do_source_flux(imagecube):
     casaout, _ = casa.run_script(['print flux'])
     flux = float(casaout[0])
     if flux > 9E-4:
-        print 'Valid flux: %s' % flux
+        print('Valid flux: %s' % flux)
     else:
         raise Exception('invalid source flux: %s' % flux)
 
 
 if __name__ == '__main__':
     try:
-        print 'Splitting...'
+        print('Splitt(ng...')
         do_split()
-        print 'Splitting Complete!'
+        print('Splitting Complete!')
 
-        print 'Cleaning...'
+        print('Cleaning...')
         do_clean()
-        print 'Cleaning Complete!'
+        print('Cleaning Complete!')
 
-        print 'Extracting flux...'
+        print('Extracting flux...')
         do_source_flux(CUBE_OUT + CUBE_NAME + '.image')
-        print 'Extracting flux Complete!'
+        print('Extracting flux Complete!')
 
     except Exception as e:
-        print str(e)
         sys.exit(-1)
 
     sys.exit(0)

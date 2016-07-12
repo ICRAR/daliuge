@@ -28,7 +28,7 @@ still need to access NGAS from time to time.
 @author: rtobar
 '''
 
-import httplib
+import six.moves.http_client as httplib  # @UnresolvedImport
 
 
 def retrieve(host, fileId, port=7777, timeout=None):

@@ -20,13 +20,14 @@
 #    MA 02111-1307  USA
 #
 
-from cStringIO import StringIO
 import contextlib
 import os, unittest
 import random
 import shutil
 import sqlite3
 import tempfile
+
+from six import StringIO
 
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates

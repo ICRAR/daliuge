@@ -154,4 +154,4 @@ if __name__ == '__main__':
         droplist.append(scp)
         droplist.append(scpOut)
 
-    print json.dumps(droplist, indent=2)
+    print(json.dumps(droplist, indent=2))

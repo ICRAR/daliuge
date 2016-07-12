@@ -35,7 +35,7 @@ class DROPLinkType:
     """
     CONSUMER, STREAMING_CONSUMER, PRODUCER, \
     PARENT, CHILD, \
-    INPUT, STREAMING_INPUT, OUTPUT = xrange(8)
+    INPUT, STREAMING_INPUT, OUTPUT = range(8)
 
 class DROPStates:
     """
@@ -44,7 +44,7 @@ class DROPStates:
     COMPLETED. Later, they transition through EXPIRED, eventually arriving to
     DELETED.
     """
-    INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED = xrange(6)
+    INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED = range(6)
 
 class AppDROPStates:
     """
@@ -53,7 +53,7 @@ class AppDROPStates:
     are started. Depending on the execution result they eventually move to the
     FINISHED or ERROR state.
     """
-    NOT_RUN, RUNNING, FINISHED, ERROR = xrange(4)
+    NOT_RUN, RUNNING, FINISHED, ERROR = range(4)
 
 class DROPPhases:
     """
@@ -62,7 +62,7 @@ class DROPPhases:
     of replicas. Phases range from PLASMA (no replicas, volatile storage) to
     SOLID (fully backed up replica available).
     """
-    PLASMA, GAS, SOLID, LIQUID, LOST = xrange(5)
+    PLASMA, GAS, SOLID, LIQUID, LOST = range(5)
 
 # https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Standards_and_common_use
 class ChecksumTypes:
@@ -72,7 +72,7 @@ class ChecksumTypes:
     the data they represent, and therefore also know the method used to
     calculate it.
     """
-    CRC_32, CRC_32C = xrange(2)
+    CRC_32, CRC_32C = range(2)
 
 class ExecutionMode:
     """
@@ -89,7 +89,7 @@ class ExecutionMode:
     Note that if all DROPs in a graph have ExecutionMode == DROP it means that
     the graph effectively drives its own execution without external intervention.
     """
-    DROP, EXTERNAL = xrange(2)
+    DROP, EXTERNAL = range(2)
 
 # This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
 # lhs and rhs are DROP OIDs
