@@ -300,7 +300,7 @@ class LGNode():
         else:
             try:
                 return [int(x) for x in val.split(',')]
-            except ValueError, ve:
+            except ValueError as ve:
                 raise GraphException("group_key must be an integer or comma-separated integers: {0}".format(ve))
 
     def is_branch(self):
@@ -424,7 +424,7 @@ class LGNode():
                 elif (self.is_gather()):
                     try:
                         tlgn = self.inputs[0]
-                    except IndexError, ie:
+                    except IndexError:
                         raise GInvalidLink("Gather '{0}' does not have input!".format(self.id))
                     if (tlgn.is_groupby()):
                         tt = tlgn.dop
@@ -1574,7 +1574,7 @@ class LG():
                             if (slgn.group.is_groupby()): # a chain of group bys
                                 try:
                                     src_ctx = gdd['iid'].split('$')[1].split('-')
-                                except IndexError, ie:
+                                except IndexError:
                                     raise GraphException("The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(slgn.group.text, slgn.text))
                             else:
                                 src_ctx.reverse()

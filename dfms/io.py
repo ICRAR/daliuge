@@ -20,10 +20,11 @@
 #    MA 02111-1307  USA
 #
 from abc import abstractmethod, ABCMeta
-from cStringIO import StringIO
 import logging
 import os
-import urlparse
+
+from six import StringIO
+import six.moves.urllib.parse as urlparse  # @UnresolvedImport
 
 from dfms import ngaslite
 from dfms import shoreClient
@@ -32,7 +33,7 @@ from dfms import shoreClient
 logger = logging.getLogger(__name__)
 
 class OpenMode:
-    OPEN_WRITE, OPEN_READ = xrange(2)
+    OPEN_WRITE, OPEN_READ = range(2)
 
 class DataIO(object):
     """

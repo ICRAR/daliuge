@@ -19,13 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import httplib
 import json
 import logging
 import urllib
 
 import bottle
 from paste import httpserver
+import six.moves.http_client as httplib  # @UnresolvedImport
 
 from dfms import utils
 from dfms.exceptions import DaliugeException

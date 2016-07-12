@@ -127,8 +127,8 @@ import time
 from dfms import droputils, utils
 from dfms.ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from dfms.drop import ContainerDROP
-import hsm.manager
-import registry
+from dfms.lifecycle import registry
+from dfms.lifecycle.hsm import manager
 
 
 logger = logging.getLogger(__name__)
@@ -205,7 +205,7 @@ class DropEventListener(utils.noopctx):
 class DataLifecycleManager(object):
 
     def __init__(self, **kwargs):
-        self._hsm = hsm.manager.HierarchicalStorageManager()
+        self._hsm = manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
 
@@ -216,11 +216,11 @@ class DataLifecycleManager(object):
         self._drops = {}
 
         self._checkPeriod = 10
-        if kwargs.has_key('checkPeriod'):
+        if 'checkPeriod' in kwargs:
             self._checkPeriod = float(kwargs['checkPeriod'])
 
         self._cleanupPeriod = 10*self._checkPeriod
-        if kwargs.has_key('cleanupPeriod'):
+        if 'cleanupPeriod' in kwargs:
             self._cleanupPeriod = float(kwargs['cleanupPeriod'])
 
     def startup(self):

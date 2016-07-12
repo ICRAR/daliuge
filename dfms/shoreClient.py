@@ -26,7 +26,7 @@
 #    jason.wang@icrar.org or jason.ruonan.wang@gmail.com
 
 import os
-import cPickle as pickle
+import six.moves.cPickle as pickle  # @UnresolvedImport
 
 message_socket = None
 transport_socket = None

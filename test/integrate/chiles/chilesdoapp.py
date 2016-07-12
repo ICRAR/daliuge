@@ -120,7 +120,6 @@ if __name__ == '__main__':
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print str(e)
         sys.exit(-1)
 
     sys.exit(0)

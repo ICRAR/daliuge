@@ -708,6 +708,6 @@ def listGraphFunctions():
                 yield name
 
 if __name__ == '__main__':
-    print 'Functions eligible for returning graphs:'
+    print('Functions eligible for returning graphs:')
     for name in listGraphFunctions():
-        print "\t%s" % (name)
+        print("\t%s" % (name))

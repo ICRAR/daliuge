@@ -5,9 +5,12 @@ Used as a template to be wrapped by the DROP framework
 chen.wu@icrar.org
 """
 
-import sys, os, datetime, time, subprocess, re
+import sys, os, datetime, subprocess, re, logging
 from string import Template
 from optparse import OptionParser
+
+
+logger = logging.getLogger(__name__)
 
 ms_transform_tpl = """
 mstransform(vis='${infile}',
@@ -155,10 +158,10 @@ def freq_map(low_req, hi_req, *args):
             break
 
     if (if_low == -1):
-        print 'Lower bound ('+str(low_req)+') out of range'
+        logger.info('Lower bound (%f) out of range', low_req)
 
     if (if_hi == -1):
-        print 'Upper bound ('+str(hi_req)+') out of range'
+        logger.info('Upper bound (%f) out of range', hi_req)
 
     spw = "{0}~{1}".format(if_low, if_hi)
     return spw
@@ -238,7 +241,7 @@ def do_split(infile, outdir, min_freq, max_freq,
         no_chan = int(step_freq * 1000.0 / width_freq)  # MHz/kHz!!
         outfile = outdir + 'vis_' + freq_range
         outfile = "{0}/vis_{1}".format(outdir, freq_range)
-        print 'working on: ' + outfile
+        logger.info('working on: %s', outfile)
 
         casa_proc = launch_mstransform(infile, outfile, no_chan,
                                        freq1, width_freq, spw_range,

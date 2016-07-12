@@ -24,7 +24,6 @@ Module containing the core DROP classes.
 """
 
 from abc import ABCMeta, abstractmethod
-from cStringIO import StringIO
 import collections
 import contextlib
 import errno
@@ -38,6 +37,9 @@ import shutil
 import sys
 import threading
 import time
+
+import six
+from six import StringIO
 
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
@@ -231,7 +233,7 @@ class AbstractDROP(EventFirer, noopctx):
         # Expected data size, used to automatically move the DROP to COMPLETED
         # after successive calls to write()
         self._expectedSize = -1
-        if kwargs.has_key('expectedSize') and kwargs['expectedSize']:
+        if 'expectedSize' in kwargs and kwargs['expectedSize']:
             self._expectedSize = int(kwargs.pop('expectedSize'))
 
         # All DROPs are precious unless stated otherwise; used for replication
@@ -243,7 +245,7 @@ class AbstractDROP(EventFirer, noopctx):
 
     def _getArg(self, kwargs, key, default):
         val = default
-        if kwargs.has_key(key):
+        if key in kwargs:
             val = kwargs.pop(key)
         elif logger.isEnabledFor(logging.DEBUG):
             logger.debug("Defaulting %s to %s in %r" % (key, str(val), self))
@@ -357,6 +359,9 @@ class AbstractDROP(EventFirer, noopctx):
 
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
+
+        #if not isinstance(data, six.binary_type):
+        #    data = six.binary_type(data)
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
@@ -915,7 +920,7 @@ class FileDROP(AbstractDROP):
         if self._delete_parent_dir:
             try:
                 os.rmdir(self._root)
-            except OSError, e:
+            except OSError as e:
                 # Silently ignore "Directory not empty" errors
                 if e.errno != errno.ENOTEMPTY:
                     raise

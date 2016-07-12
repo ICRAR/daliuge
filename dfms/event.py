@@ -104,7 +104,7 @@ class EventFirer(object):
         # create it and send it to all of them
         e = Event()
         e.type = eventType
-        for k, v in attrs.iteritems():
+        for k, v in attrs.items():
             setattr(e, k, v)
 
         for l in listeners:

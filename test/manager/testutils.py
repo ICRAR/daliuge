@@ -19,8 +19,10 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import httplib
 import json
+import httplib
+
+import six.moves.http_client as httplib  # @UnresolvedImport
 
 from dfms import utils
 
