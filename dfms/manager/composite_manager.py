@@ -24,6 +24,7 @@ import functools
 import logging
 import multiprocessing.pool
 import threading
+import time
 
 import Pyro4
 
@@ -341,7 +342,7 @@ class CompositeManager(DROPManager):
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
         return uris
 
-    def _establish_link(self, proxies, exceptions, rel):
+    def _establish_drop_rhsrel(self, proxies, rel):
 
         # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
         relType = rel.rel
@@ -349,34 +350,74 @@ class CompositeManager(DROPManager):
         lhsDrop = proxies[rel.lhs]
 
         try:
-
-            logger.debug("Connecting to proxies to establish link %r", rel)
             rhsDrop._pyroReconnect(tries=10)
-            lhsDrop._pyroReconnect(tries=10)
-
-            logger.debug("Establishing link %r", rel)
             if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
                 methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
-                backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
                 rhsDrop._pyroInvoke(methodName, (lhsDrop,False), {})
-                lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
             else:
                 relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
-                backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
                 setattr(rhsDrop, relPropName, lhsDrop)
-                lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
-            logger.debug("Done establishing link %r", rel)
+        finally:
+            rhsDrop._pyroRelease()
 
+    def _establish_drop_lhsrel(self, proxies, rel):
+
+        # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
+        relType = rel.rel
+        rhsDrop = proxies[rel.rhs]
+        lhsDrop = proxies[rel.lhs]
+
+        try:
+            lhsDrop._pyroReconnect(tries=10)
+            if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
+                backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
+                lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+            else:
+                backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
+                lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
+        finally:
+            lhsDrop._pyroRelease()
+
+    def _establish_drop_rels(self, proxies, exceptions, uid_and_rels):
+
+        uid, rels = uid_and_rels
+
+        try:
+            for rel in rels:
+                logger.debug("Establishing link %r", rel)
+                if uid == rel.rhs:
+                    self._establish_drop_rhsrel(proxies, rel)
+                else:
+                    self._establish_drop_lhsrel(proxies, rel)
+                logger.debug("Done establishing link %r", rel)
         except Exception as e:
             exceptions[rel] = e
             logger.exception("An exception establishing link %r", rel)
             raise # so it gets printed
 
-        finally:
-            # Eagerly release the pyro connection used by these Drop proxies
-            # See comment on self._triggerDrop
-            rhsDrop._pyroRelease()
-            lhsDrop._pyroRelease()
+    def _establish_all_rels(self, sessionId, proxies):
+
+        # For each DROPRel element we establish the link both ways so both drops
+        # can see each other. This is automatically done by the add* methods
+        # of the drop classes, but we do it manually here (thus the "False"
+        # argument on the _pyroInvoke call) to have full control over the
+        # connections being opened/closed on the pyro deamons hosting the drops.
+        #
+        # Moreover, in order to be able to safely establish these links in
+        # parallel and avoid exhausting all the threads on the pyro deamons
+        # we can group together those relationships that originate in the same
+        # drop and establish them all using a single connection to the drop,
+        # and from the same thread. Opposite ends of a relationships work in
+        # exactly the same way
+        allrels = self._interDMRelations[sessionId]
+        a = {rel.lhs: [rel2 for rel2 in allrels if rel2.lhs == rel.lhs] for rel in allrels}
+        b = {rel.rhs: [rel2 for rel2 in allrels if rel2.rhs == rel.rhs] for rel in allrels}
+        allrels = {uid: a.get(uid, []) + b.get(uid, []) for uid in set(a).union(b)}
+
+        thrExs = {}
+        self._tp.map(functools.partial(self._establish_drop_rels, proxies, thrExs), allrels.items())
+        if thrExs:
+            raise Exception("One or more exceptions occurred while establishing links on session %s" % (sessionId,), thrExs)
 
     def _triggerDrop(self, exceptions, (drop, uid)):
 
@@ -423,10 +464,9 @@ class CompositeManager(DROPManager):
                 proxies[uid] = Pyro4.Proxy(allUris[uid])
 
         # Establish the inter-DM relationships between DROPs.
-        thrExs = {}
-        self._tp.map(functools.partial(self._establish_link, proxies, thrExs), self._interDMRelations[sessionId])
-        if thrExs:
-            raise Exception("One or more exceptions occurred while establishing links on session %s" % (sessionId,), thrExs)
+        now = time.time()
+        self._establish_all_rels(sessionId, proxies)
+        logger.info("Established all drop relationships (%d) in %.3f [s]", len(self._interDMRelations[sessionId]), time.time() - now)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
