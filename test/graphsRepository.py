@@ -62,13 +62,10 @@ class SimpleBarrierApp(BarrierAppDROP):
     def run(self):
         pass
 
-class SleepAndCopyApp(BarrierAppDROP):
+class SleepApp(BarrierAppDROP):
     """
     A simple application consumer that sleeps between 0 and 4 seconds (or the
-    specified amount of time) and then fully copies the contents of the
-    DROP it consumes into each of the DROPs it writes to. If there
-    are more than one DROP being consumed, the individual contents of each
-    DROPs are written into each output.
+    specified amount of time) without taking any further action.
     """
     def initialize(self, **kwargs):
         super(SleepAndCopyApp, self).initialize(**kwargs)
@@ -83,6 +80,18 @@ class SleepAndCopyApp(BarrierAppDROP):
 
     def run(self):
         time.sleep(self._sleepTime)
+
+class SleepAndCopyApp(SleepApp):
+    """
+    A simple application consumer that sleeps between 0 and 4 seconds (or the
+    specified amount of time) and then fully copies the contents of the
+    DROP it consumes into each of the DROPs it writes to. If there
+    are more than one DROP being consumed, the individual contents of each
+    DROPs are written into each output.
+    """
+
+    def run(self):
+        super(SleepAndCopyApp, self).run()
         self.copyAll()
 
     def copyAll(self):
