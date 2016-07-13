@@ -34,8 +34,10 @@ from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
+from dfms.exceptions import InvalidGraphException
 from dfms.json_drop import JsonDROP
 from dfms.s3_drop import S3DROP
+
 
 STORAGE_TYPES = {
     'memory': InMemoryDROP,
@@ -266,8 +268,11 @@ def _createApp(dropSpec, dryRun=False):
 
     appName = dropSpec['app']
     parts   = appName.split('.')
-    module  = importlib.import_module('.'.join(parts[:-1]))
-    appType = getattr(module, parts[-1])
+    try:
+        module  = importlib.import_module('.'.join(parts[:-1]))
+        appType = getattr(module, parts[-1])
+    except (ImportError, AttributeError):
+        raise InvalidGraphException("drop %s specifies non-existent application: %s" % (appName,))
 
     if dryRun:
         return
