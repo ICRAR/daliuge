@@ -471,9 +471,8 @@ class CompositeManager(DROPManager):
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
-        logger.info('Moving following DROPs to COMPLETED right away: %r', completedDrops)
-
         if completedDrops:
+            logger.debug('Moving following DROPs to COMPLETED right away: %r', completedDrops)
             thrExs = {}
             self._tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
             if thrExs:
