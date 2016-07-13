@@ -87,7 +87,7 @@ class CompositeManager(DROPManager):
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmCheckTimeout = dmCheckTimeout
-        n_threads = len(dmHosts*2) if dmHosts else 20
+        n_threads = max(1,min(len(dmHosts),20))
         self._tp = multiprocessing.pool.ThreadPool(n_threads)
 
         # The list of bottom-level nodes that are covered by this manager
