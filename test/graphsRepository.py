@@ -68,7 +68,7 @@ class SleepApp(BarrierAppDROP):
     specified amount of time) without taking any further action.
     """
     def initialize(self, **kwargs):
-        super(SleepAndCopyApp, self).initialize(**kwargs)
+        super(SleepApp, self).initialize(**kwargs)
         global defaultSleepTime
         if kwargs.has_key('sleepTime'):
             self._sleepTime = float(kwargs['sleepTime'])
