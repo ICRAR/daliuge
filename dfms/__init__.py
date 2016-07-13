@@ -73,6 +73,12 @@ def _setupPyro():
     #Pyro4.config.SERIALIZER = 'pickle'
     #Pyro4.config.SERIALIZERS_ACCEPTED = ['pickle']
 
+    # In Pyro4 >= 4.46 the default for this option changed to True, which would
+    # mean we need to decorate all our classes with Pyro-specific code.
+    # We don't want that, and thus we restore the old "everything is exposed"
+    # behavior.
+    Pyro4.config.REQUIRE_EXPOSE = False
+
     # A final thing: we use a default timeout of 60 [s], which should be more
     # than enough
     Pyro4.config.COMMTIMEOUT = 60
