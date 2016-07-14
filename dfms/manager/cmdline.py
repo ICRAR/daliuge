@@ -271,7 +271,7 @@ def dfmsReplay(args=sys.argv):
     Entry point for the dfmsReplay command-line script
     """
 
-        # Parse command-line and check options
+    # Parse command-line and check options
     parser = optparse.OptionParser()
     addCommonOptions(parser, REPLAY_DEFAULT_REST_PORT)
     parser.add_option("-S", "--status-file", action="store",
@@ -298,7 +298,7 @@ if __name__ == '__main__':
     # If this module is called directly, the first argument must be dfmsMM,
     # dfmsNM or dfmsDIM, the rest of the arguments are the normal ones
     if len(sys.argv) == 1:
-        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0])
+        print('Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0]))
         sys.exit(1)
     dm = sys.argv.pop(1)
     if dm == 'dfmsNM':
@@ -310,5 +310,5 @@ if __name__ == '__main__':
     elif dm == 'dfmsReplay':
         dfmsReplay()
     else:
-        print 'Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0])
+        print('Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0]))
         sys.exit(1)
