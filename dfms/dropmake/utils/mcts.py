@@ -183,7 +183,7 @@ class MCTS(object):
         state = self._dag_tree.latest_state(states_copy)
         CC = self.C
 
-        for t in xrange(1, self._max_moves + 1):
+        for t in range(1, self._max_moves + 1):
             # 1. Selection
             legal = self._dag_tree.legal_moves(states_copy)
             moves_states = [(p, self._dag_tree.next_state(state, p)) for p in legal]

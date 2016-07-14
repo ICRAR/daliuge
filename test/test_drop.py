@@ -396,7 +396,7 @@ class TestDROP(unittest.TestCase):
                 inputDrop = self.inputs[0]
                 output = self.outputs[0]
                 howMany = int(droputils.allDropContents(inputDrop))
-                for i in xrange(howMany):
+                for i in range(howMany):
                     output.write(str(i) + " ")
 
         # This is used as "D"
@@ -678,7 +678,7 @@ class TestDROP(unittest.TestCase):
         """
         class App(BarrierAppDROP): pass
 
-        a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in xrange(5)]
+        a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in range(5)]
         f = InMemoryDROP('F', 'F')
         for drop in a,b,c,d,e:
             drop.addOutput(f)
@@ -720,7 +720,7 @@ class TestDROP(unittest.TestCase):
 
         # 2 effective inputs, 4 outputs. Trigger 2 inputs and make sure the
         # app has run
-        a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in xrange(4)]
+        a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in range(4)]
         e = InputFiredAppDROP('e', 'e', n_effective_inputs=2)
         map(lambda x: e.addInput(x), [a,b,c,d])
 
