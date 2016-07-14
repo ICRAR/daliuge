@@ -91,7 +91,7 @@ class TestBigGraph(unittest.TestCase):
         branches = 5
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=5, drops_per_branch=drops_per_branch)
-        self.assertEquals(n_drops, len(graph))
+        self.assertEqual(n_drops, len(graph))
 
         c = client.NodeManagerClient(port=restPort)
         dimProcess = subprocess.Popen(args)

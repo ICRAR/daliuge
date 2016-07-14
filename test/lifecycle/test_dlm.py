@@ -69,15 +69,15 @@ class TestDataLifecycleManager(unittest.TestCase):
 
             # The call to close() should have turned it into a SOLID object
             # because the DLM replicated it
-            self.assertEquals(DROPPhases.SOLID, drop.phase)
-            self.assertEquals(2, len(manager.getDropUids(drop)))
+            self.assertEqual(DROPPhases.SOLID, drop.phase)
+            self.assertEqual(2, len(manager.getDropUids(drop)))
 
             # Try the same with a non-precious data object, it shouldn't be replicated
             drop = FileDROP('oid:B', 'uid:B1', expectedSize=1, precious=False)
             manager.addDrop(drop)
             self._writeAndClose(drop)
-            self.assertEquals(DROPPhases.GAS, drop.phase)
-            self.assertEquals(1, len(manager.getDropUids(drop)))
+            self.assertEqual(DROPPhases.GAS, drop.phase)
+            self.assertEqual(1, len(manager.getDropUids(drop)))
 
     def test_expiringNormalDrop(self):
 
@@ -91,7 +91,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             # Wait now, the DROP should be moved by the DLM to EXPIRED
             time.sleep(1)
 
-            self.assertEquals(DROPStates.EXPIRED, drop.status)
+            self.assertEqual(DROPStates.EXPIRED, drop.status)
 
 
     def test_lostDrop(self):
@@ -107,7 +107,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             time.sleep(1)
 
             # Check that the DROP is marked as LOST
-            self.assertEquals(DROPPhases.LOST, drop.phase)
+            self.assertEqual(DROPPhases.LOST, drop.phase)
 
     def test_cleanupExpiredDrops(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
@@ -117,17 +117,17 @@ class TestDataLifecycleManager(unittest.TestCase):
 
             # Wait 2 seconds, the DROP is still COMPLETED
             time.sleep(0.5)
-            self.assertEquals(DROPStates.COMPLETED, drop.status)
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
             self.assertTrue(drop.exists())
 
             # Wait 5 more second, now it should be expired but still there
             time.sleep(1)
-            self.assertEquals(DROPStates.EXPIRED, drop.status)
+            self.assertEqual(DROPStates.EXPIRED, drop.status)
             self.assertTrue(drop.exists())
 
             # Wait 2 more seconds, now it should have been deleted
             time.sleep(1)
-            self.assertEquals(DROPStates.DELETED, drop.status)
+            self.assertEqual(DROPStates.DELETED, drop.status)
             self.assertFalse(drop.exists())
 
     def test_expireAfterUse(self):

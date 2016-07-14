@@ -92,8 +92,8 @@ class TestMM(unittest.TestCase):
     def test_createSession(self):
         sessionId = 'lalo'
         self.mm.createSession(sessionId)
-        self.assertEquals(1, len(self.nm.getSessionIds()))
-        self.assertEquals(sessionId, self.nm.getSessionIds()[0])
+        self.assertEqual(1, len(self.nm.getSessionIds()))
+        self.assertEqual(sessionId, self.nm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
 
@@ -126,11 +126,11 @@ class TestMM(unittest.TestCase):
         self.assertDictEqual(graphFromNM, graphFromDIM)
         self.assertDictEqual(graphFromMM, graphFromDIM)
 
-        self.assertEquals(1, len(graphFromMM))
+        self.assertEqual(1, len(graphFromMM))
         dropSpec = graphFromMM.values()[0]
-        self.assertEquals('A', dropSpec['oid'])
-        self.assertEquals('plain', dropSpec['type'])
-        self.assertEquals('memory', dropSpec['storage'])
+        self.assertEqual('A', dropSpec['oid'])
+        self.assertEqual('plain', dropSpec['type'])
+        self.assertEqual('memory', dropSpec['storage'])
 
     def test_deployGraph(self):
 
@@ -147,7 +147,7 @@ class TestMM(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(c))
+        self.assertEqual(data, droputils.allDropContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
 
@@ -162,7 +162,7 @@ class TestMM(unittest.TestCase):
         with droputils.EvtConsumerProxyCtx(self, c, 2):
             pass
 
-        self.assertEquals(DROPStates.COMPLETED, c.status)
+        self.assertEqual(DROPStates.COMPLETED, c.status)
 
     def test_sessionStatus(self):
 
@@ -170,11 +170,11 @@ class TestMM(unittest.TestCase):
             sessionStatusMM  = self.mm.getSessionStatus(sessionId)
             sessionStatusDIM = self.dim.getSessionStatus(sessionId)
             sessionStatusNM  = self.nm.getSessionStatus(sessionId)
-            self.assertEquals(1, len(sessionStatusMM))
+            self.assertEqual(1, len(sessionStatusMM))
             self.assertIn(hostname, sessionStatusMM)
             self.assertDictEqual(sessionStatusDIM, sessionStatusMM[hostname])
-            self.assertEquals(sessionStatusNM, sessionStatusMM[hostname][hostname])
-            self.assertEquals(sessionStatusNM, status)
+            self.assertEqual(sessionStatusNM, sessionStatusMM[hostname][hostname])
+            self.assertEqual(sessionStatusNM, status)
 
         sessionId = 'lala'
         self.mm.createSession(sessionId)
@@ -202,7 +202,7 @@ class TestMM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
 
         graphSpecFromMM = self.mm.getGraph(sessionId)
-        self.assertEquals(3, len(graphSpecFromMM))
+        self.assertEqual(3, len(graphSpecFromMM))
         for oid in ('A','B','C'):
             self.assertIn(oid, graphSpecFromMM)
         graphSepcFromNM = self.nm.getGraph(sessionId)
@@ -219,7 +219,7 @@ class TestMM(unittest.TestCase):
             self.assertDictEqual(graphStatusByDIM, graphStatusByMM)
             self.assertDictEqual(graphStatusByDIM, graphStatusByDM)
             for dropStatus in graphStatusByMM.viewvalues():
-                self.assertEquals(expectedStatus, dropStatus['status'])
+                self.assertEqual(expectedStatus, dropStatus['status'])
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
@@ -260,17 +260,17 @@ class TestREST(unittest.TestCase):
 
             # The DIM is still empty
             sessions = testutils.get(self, '/sessions', restPort)
-            self.assertEquals(0, len(sessions))
+            self.assertEqual(0, len(sessions))
             dimStatus = testutils.get(self, '', restPort)
-            self.assertEquals(1, len(dimStatus['hosts']))
-            self.assertEquals(hostname, dimStatus['hosts'][0])
-            self.assertEquals(0, len(dimStatus['sessionIds']))
+            self.assertEqual(1, len(dimStatus['hosts']))
+            self.assertEqual(hostname, dimStatus['hosts'][0])
+            self.assertEqual(0, len(dimStatus['sessionIds']))
 
             # Create a session and check it exists
             testutils.post(self, '/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
             sessions = testutils.get(self, '/sessions', restPort)
-            self.assertEquals(1, len(sessions))
-            self.assertEquals(sessionId, sessions[0]['sessionId'])
+            self.assertEqual(1, len(sessions))
+            self.assertEqual(sessionId, sessions[0]['sessionId'])
             self.assertDictEqual({hostname: {hostname: SessionStates.PRISTINE}}, sessions[0]['status'])
 
             # Add this complex graph spec to the session
@@ -283,11 +283,11 @@ class TestREST(unittest.TestCase):
                 dropSpec['node'] = hostname
                 dropSpec['island'] = hostname
             testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
-            self.assertEquals({hostname: {hostname: SessionStates.BUILDING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: {hostname: SessionStates.BUILDING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
             testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
-            self.assertEquals({hostname: {hostname: SessionStates.RUNNING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: {hostname: SessionStates.RUNNING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -300,7 +300,7 @@ class TestREST(unittest.TestCase):
             while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort)[hostname].viewvalues():
                 time.sleep(0.2)
 
-            self.assertEquals({hostname: {hostname: SessionStates.FINISHED}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: {hostname: SessionStates.FINISHED}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
             sessions = testutils.get(self, '/sessions', restPort)
-            self.assertEquals(0, len(sessions))
+            self.assertEqual(0, len(sessions))

@@ -92,8 +92,8 @@ class TestDM(unittest.TestCase):
 
         uris1 = dm1.quickDeploy(sessionId, g1)
         uris2 = dm2.quickDeploy(sessionId, g2)
-        self.assertEquals(1, len(uris1))
-        self.assertEquals(2, len(uris2))
+        self.assertEqual(1, len(uris1))
+        self.assertEqual(2, len(uris2))
 
         # We externally wire the Proxy objects now
         a = Pyro4.Proxy(uris1['A'])
@@ -107,8 +107,8 @@ class TestDM(unittest.TestCase):
             a.setCompleted()
 
         for drop in a, b, c:
-            self.assertEquals(DROPStates.COMPLETED, drop.status)
-        self.assertEquals(a.checksum, int(droputils.allDropContents(c)))
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        self.assertEqual(a.checksum, int(droputils.allDropContents(c)))
 
         for dropProxy in a,b,c:
             dropProxy._pyroRelease()
@@ -143,8 +143,8 @@ class TestDM(unittest.TestCase):
 
         uris1 = dm1.quickDeploy(sessionId, g1)
         uris2 = dm2.quickDeploy(sessionId, g2)
-        self.assertEquals(4, len(uris1))
-        self.assertEquals(2, len(uris2))
+        self.assertEqual(4, len(uris1))
+        self.assertEqual(2, len(uris2))
 
         # We externally wire the Proxy objects to establish the inter-DM
         # relationships
@@ -155,7 +155,7 @@ class TestDM(unittest.TestCase):
         e = Pyro4.Proxy(uris2['E'])
         f = Pyro4.Proxy(uris2['F'])
         for drop,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
-            self.assertEquals(uid, drop.uid, "Proxy is not the DROP we think should be (assumed: %s/ actual: %s)" % (uid, drop.uid))
+            self.assertEqual(uid, drop.uid, "Proxy is not the DROP we think should be (assumed: %s/ actual: %s)" % (uid, drop.uid))
         e.addInput(d)
         e.addInput(b)
 
@@ -168,10 +168,10 @@ class TestDM(unittest.TestCase):
             b.setCompleted()
 
         for drop in a,b,c,d,e,f:
-            self.assertEquals(DROPStates.COMPLETED, drop.status, "DROP %s is not COMPLETED" % (drop.uid))
+            self.assertEqual(DROPStates.COMPLETED, drop.status, "DROP %s is not COMPLETED" % (drop.uid))
 
-        self.assertEquals(a.checksum, int(droputils.allDropContents(d)))
-        self.assertEquals(b.checksum + d.checksum, int(droputils.allDropContents(f)))
+        self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
+        self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
 
         for dropProxy in a,b,c,d,e,f:
             dropProxy._pyroRelease()
@@ -230,10 +230,10 @@ class TestDM(unittest.TestCase):
         uris2 = dm2.quickDeploy(sessionId, g2)
         uris3 = dm3.quickDeploy(sessionId, g3)
         uris4 = dm4.quickDeploy(sessionId, g4)
-        self.assertEquals(1, len(uris1))
-        self.assertEquals(5, len(uris2))
-        self.assertEquals(5, len(uris3))
-        self.assertEquals(4, len(uris4))
+        self.assertEqual(1, len(uris1))
+        self.assertEqual(5, len(uris2))
+        self.assertEqual(5, len(uris3))
+        self.assertEqual(4, len(uris4))
         allUris = {}
         allUris.update(uris1)
         allUris.update(uris2)
@@ -265,7 +265,7 @@ class TestDM(unittest.TestCase):
             a.write('a')
 
         for dropProxy in proxies.viewvalues():
-            self.assertEquals(DROPStates.COMPLETED, dropProxy.status, "Status of '%s' is not COMPLETED: %d" % (dropProxy.uid, dropProxy.status))
+            self.assertEqual(DROPStates.COMPLETED, dropProxy.status, "Status of '%s' is not COMPLETED: %d" % (dropProxy.uid, dropProxy.status))
             dropProxy._pyroRelease()
 
         for dm in [dm1, dm2, dm3, dm4]:
@@ -304,8 +304,8 @@ class TestDM(unittest.TestCase):
 
         uris1 = dm1.quickDeploy(sessionId, g1)
         uris2 = dm2.quickDeploy(sessionId, g2)
-        self.assertEquals(1,   len(uris1))
-        self.assertEquals(1+N, len(uris2))
+        self.assertEqual(1,   len(uris1))
+        self.assertEqual(1+N, len(uris2))
 
         # We externally wire the Proxy objects to establish the inter-DM
         # relationships. Make sure we release the proxies
@@ -347,14 +347,14 @@ class TestREST(unittest.TestCase):
 
             # The DM is still empty
             dmInfo = testutils.get(self, '', restPort)
-            self.assertEquals(0, len(dmInfo['sessions']))
+            self.assertEqual(0, len(dmInfo['sessions']))
 
             # Create a session and check it exists
             testutils.post(self, '/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
             dmInfo = testutils.get(self, '', restPort)
-            self.assertEquals(1, len(dmInfo['sessions']))
-            self.assertEquals(sessionId, dmInfo['sessions'][0]['sessionId'])
-            self.assertEquals(SessionStates.PRISTINE, dmInfo['sessions'][0]['status'])
+            self.assertEqual(1, len(dmInfo['sessions']))
+            self.assertEqual(sessionId, dmInfo['sessions'][0]['sessionId'])
+            self.assertEqual(SessionStates.PRISTINE, dmInfo['sessions'][0]['status'])
 
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
@@ -398,7 +398,7 @@ class TestREST(unittest.TestCase):
             while testutils.get(self, '/sessions/%s/status' % (sessionId), restPort) == SessionStates.RUNNING:
                 time.sleep(0.2)
 
-            self.assertEquals(SessionStates.FINISHED, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual(SessionStates.FINISHED, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
 
             # We put an NGAS archiving at the end of the chain, let's check that the DROPs were copied over there
@@ -407,6 +407,6 @@ class TestREST(unittest.TestCase):
             def checkReplica(dropId, copies):
                 response = ngaslite.retrieve('ngas.ddns.net', dropId)
                 buff = response.read()
-                self.assertEquals(msg*copies, buff, "%s's replica doesn't look correct" % (dropId))
+                self.assertEqual(msg*copies, buff, "%s's replica doesn't look correct" % (dropId))
             checkReplica('T%s' % (suffix), 9)
             checkReplica('S%s' % (suffix), 4)

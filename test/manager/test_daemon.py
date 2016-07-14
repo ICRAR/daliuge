@@ -105,7 +105,7 @@ class TestDaemon(unittest.TestCase):
         # one element
         nodes = self._get_nodes_from_master(_TIMEOUT)
         self.assertIsNotNone(nodes)
-        self.assertEquals(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
+        self.assertEqual(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
 
     def test_start_dataisland_via_rest(self):
 
@@ -116,7 +116,7 @@ class TestDaemon(unittest.TestCase):
         # one element
         nodes = self._get_nodes_from_master(_TIMEOUT)
         self.assertIsNotNone(nodes)
-        self.assertEquals(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
+        self.assertEqual(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
 
         # Check that the DataIsland starts with the given nodes
         self._start('dataisland', httplib.OK, {'nodes': nodes})
@@ -130,7 +130,7 @@ class TestDaemon(unittest.TestCase):
             headers['Content-Type'] = 'application/json'
         conn.request('POST', '/managers/%s' % (manager_name,), body=payload, headers=headers)
         response = conn.getresponse()
-        self.assertEquals(expected_code, response.status, response.read())
+        self.assertEqual(expected_code, response.status, response.read())
         response.close()
         conn.close()
 
