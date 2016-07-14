@@ -39,7 +39,7 @@ import threading
 import time
 
 import six
-from six import StringIO
+from six import BytesIO
 
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
@@ -970,7 +970,7 @@ class InMemoryDROP(AbstractDROP):
     """
 
     def initialize(self, **kwargs):
-        self._buf = StringIO()
+        self._buf = BytesIO()
 
     def getIO(self):
         return MemoryIO(self._buf)
