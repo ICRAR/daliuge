@@ -952,8 +952,8 @@ class NgasDROP(AbstractDROP):
     def initialize(self, **kwargs):
         self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
         self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
-        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
+        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasTimeout', 2))
+        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
 
     def getIO(self):
         return NgasIO(self._ngasSrv, self.uid, port=self._ngasPort,
