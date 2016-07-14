@@ -43,6 +43,10 @@ def _setupPyro():
     use the 'pickle' serializer instead, in which case the custom converter
     registration isn't needed.
 
+    In Pyro >= 4.46 the REQUIRE_EXPOSE configuration flag was defaulted to True.
+    Instead of embracing it (which would require us to change all our drop
+    classes and decorate them with @expose) we change the flag back to False.
+
     [1] https://pythonhosted.org/Pyro4/clientcode.html#serialization
     """
 
@@ -73,11 +77,19 @@ def _setupPyro():
     #Pyro4.config.SERIALIZER = 'pickle'
     #Pyro4.config.SERIALIZERS_ACCEPTED = ['pickle']
 
+    # In Pyro4 >= 4.46 the default for this option changed to True, which would
+    # mean we need to decorate all our classes with Pyro-specific code.
+    # We don't want that, and thus we restore the old "everything is exposed"
+    # behavior.
+    Pyro4.config.REQUIRE_EXPOSE = False
+
     # A final thing: we use a default timeout of 60 [s], which should be more
     # than enough
     Pyro4.config.COMMTIMEOUT = 60
 
 _setupPyro()
+del _setupPyro
 
 # To avoid 'No handlers could be found for logger' messages during testing
 logging.getLogger(__name__).addHandler(logging.NullHandler())
+del logging
