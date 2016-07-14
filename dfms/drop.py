@@ -373,7 +373,7 @@ class AbstractDROP(EventFirer, noopctx):
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
-            logger.warn('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
+            logger.warning('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
 
         # see __init__ for the initialization to None
         if self._size is None:
@@ -623,7 +623,7 @@ class AbstractDROP(EventFirer, noopctx):
     @parent.setter
     def parent(self, parent):
         if self._parent and parent:
-            logger.warn("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
+            logger.warning("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
@@ -901,7 +901,7 @@ class FileDROP(AbstractDROP):
             #       of valid filename characters; otherwise encode them
             self._fnm = self._root + os.sep + self._oid + '___' + self.uid
             if os.path.isfile(self._fnm):
-                logger.warn('File %s already exists, overwriting' % (self._fnm))
+                logger.warning('File %s already exists, overwriting' % (self._fnm))
 
         self._wio = None
 
