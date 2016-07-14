@@ -23,7 +23,7 @@ from abc import abstractmethod, ABCMeta
 import logging
 import os
 
-from six import StringIO
+from six import BytesIO
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
 
 from dfms import ngaslite
@@ -174,7 +174,7 @@ class ErrorIO(DataIO):
 
 class MemoryIO(DataIO):
     """
-    A DataIO class that reads/write from/into the StringIO object given at
+    A DataIO class that reads/write from/into the BytesIO object given at
     construction time
     """
 
@@ -185,10 +185,7 @@ class MemoryIO(DataIO):
         if self._mode == OpenMode.OPEN_WRITE:
             return self._buf
         else:
-            val = ''
-            if self._buf:
-                val = self._buf.getvalue()
-            return StringIO(val)
+            return BytesIO(self._buf.getvalue())
 
     def _write(self, data, **kwargs):
         self._desc.write(data)
