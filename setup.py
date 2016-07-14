@@ -75,7 +75,7 @@ setup(
       ],
       # Keep alpha-sorted PLEASE!
 
-      extra_require={
+      extras_require={
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
