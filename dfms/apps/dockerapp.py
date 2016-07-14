@@ -192,7 +192,7 @@ class DockerApp(BarrierAppDROP):
             raise InvalidDropException(self, 'No docker image specified, cannot create DockerApp')
 
         if ":" not in self._image:
-            logger.warn("%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
+            logger.warning("%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
