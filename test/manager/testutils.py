@@ -31,7 +31,7 @@ def get(test, url, port):
     conn = httplib.HTTPConnection('localhost', port, timeout=3)
     conn.request('GET', '/api' + url)
     res = conn.getresponse()
-    test.assertEquals(httplib.OK, res.status)
+    test.assertEqual(httplib.OK, res.status)
     jsonRes = json.load(res)
     res.close()
     conn.close()
@@ -42,14 +42,14 @@ def post(test, url, port, content=None, mimeType=None):
     headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
     conn.request('POST', '/api' + url, content, headers)
     res = conn.getresponse()
-    test.assertEquals(httplib.OK, res.status)
+    test.assertEqual(httplib.OK, res.status)
     conn.close()
 
 def delete(test, url, port):
     conn = httplib.HTTPConnection('localhost', port, timeout=3)
     conn.request('DELETE', '/api' + url)
     res = conn.getresponse()
-    test.assertEquals(httplib.OK, res.status)
+    test.assertEqual(httplib.OK, res.status)
     conn.close()
 
 class terminating(object):

@@ -88,15 +88,15 @@ class TestDIM(unittest.TestCase):
                      {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
                      {'oid':'C', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
-        self.assertEquals(0, self.dim.getGraphSize(sessionId))
+        self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
-        self.assertEquals(len(graphSpec), self.dim.getGraphSize(sessionId))
+        self.assertEqual(len(graphSpec), self.dim.getGraphSize(sessionId))
 
     def test_createSession(self):
         sessionId = 'lalo'
         self.dim.createSession(sessionId)
-        self.assertEquals(1, len(self.dm.getSessionIds()))
-        self.assertEquals(sessionId, self.dm.getSessionIds()[0])
+        self.assertEqual(1, len(self.dm.getSessionIds()))
+        self.assertEqual(sessionId, self.dm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
 
@@ -113,15 +113,15 @@ class TestDIM(unittest.TestCase):
         # OK
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
-        self.assertEquals(0, self.dim.getGraphSize(sessionId))
+        self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
-        self.assertEquals(1, self.dim.getGraphSize(sessionId))
+        self.assertEqual(1, self.dim.getGraphSize(sessionId))
         graphFromDM = self.dm.getGraph(sessionId)
-        self.assertEquals(1, len(graphFromDM))
+        self.assertEqual(1, len(graphFromDM))
         dropSpec = graphFromDM.values()[0]
-        self.assertEquals('A', dropSpec['oid'])
-        self.assertEquals('plain', dropSpec['type'])
-        self.assertEquals('memory', dropSpec['storage'])
+        self.assertEqual('A', dropSpec['oid'])
+        self.assertEqual('plain', dropSpec['type'])
+        self.assertEqual('memory', dropSpec['storage'])
 
     def test_deployGraph(self):
 
@@ -138,7 +138,7 @@ class TestDIM(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(c))
+        self.assertEqual(data, droputils.allDropContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
         self._test_deployGraphWithCompletedDOs('lalo')
@@ -158,16 +158,16 @@ class TestDIM(unittest.TestCase):
         with droputils.EvtConsumerProxyCtx(self, c, 2):
             pass
 
-        self.assertEquals(DROPStates.COMPLETED, c.status)
+        self.assertEqual(DROPStates.COMPLETED, c.status)
 
     def test_sessionStatus(self):
 
         def assertSessionStatus(sessionId, status):
             sessionStatus = self.dim.getSessionStatus(sessionId)
-            self.assertEquals(1, len(sessionStatus))
+            self.assertEqual(1, len(sessionStatus))
             self.assertIn(hostname, sessionStatus)
-            self.assertEquals(status, sessionStatus[hostname])
-            self.assertEquals(status, self.dm.getSessionStatus(sessionId))
+            self.assertEqual(status, sessionStatus[hostname])
+            self.assertEqual(status, self.dm.getSessionStatus(sessionId))
 
         sessionId = 'lala'
         self.dim.createSession(sessionId)
@@ -195,7 +195,7 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
 
         graphSpecFromDim = self.dim.getGraph(sessionId)
-        self.assertEquals(3, len(graphSpecFromDim))
+        self.assertEqual(3, len(graphSpecFromDim))
         for oid in ('A','B','C'):
             self.assertIn(oid, graphSpecFromDim)
         graphSepcFromDM = self.dm.getGraph(sessionId)
@@ -208,7 +208,7 @@ class TestDIM(unittest.TestCase):
             graphStatusByDM = self.dm.getGraphStatus(sessionId)
             self.assertDictEqual(graphStatusByDim, graphStatusByDM)
             for dropStatus in graphStatusByDim.viewvalues():
-                self.assertEquals(expectedStatus, dropStatus['status'])
+                self.assertEqual(expectedStatus, dropStatus['status'])
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
@@ -248,17 +248,17 @@ class TestREST(unittest.TestCase):
 
             # The DIM is still empty
             sessions = testutils.get(self, '/sessions', restPort)
-            self.assertEquals(0, len(sessions))
+            self.assertEqual(0, len(sessions))
             dimStatus = testutils.get(self, '', restPort)
-            self.assertEquals(1, len(dimStatus['hosts']))
-            self.assertEquals(hostname, dimStatus['hosts'][0])
-            self.assertEquals(0, len(dimStatus['sessionIds']))
+            self.assertEqual(1, len(dimStatus['hosts']))
+            self.assertEqual(hostname, dimStatus['hosts'][0])
+            self.assertEqual(0, len(dimStatus['sessionIds']))
 
             # Create a session and check it exists
             testutils.post(self, '/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
             sessions = testutils.get(self, '/sessions', restPort)
-            self.assertEquals(1, len(sessions))
-            self.assertEquals(sessionId, sessions[0]['sessionId'])
+            self.assertEqual(1, len(sessions))
+            self.assertEqual(sessionId, sessions[0]['sessionId'])
             self.assertDictEqual({hostname: SessionStates.PRISTINE}, sessions[0]['status'])
 
             # Add this complex graph spec to the session
@@ -270,11 +270,11 @@ class TestREST(unittest.TestCase):
             for dropSpec in complexGraphSpec:
                 dropSpec['node'] = hostname
             testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
-            self.assertEquals({hostname: SessionStates.BUILDING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: SessionStates.BUILDING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
             testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
-            self.assertEquals({hostname: SessionStates.RUNNING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: SessionStates.RUNNING}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
@@ -287,7 +287,7 @@ class TestREST(unittest.TestCase):
             while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort).viewvalues():
                 time.sleep(0.2)
 
-            self.assertEquals({hostname: SessionStates.FINISHED}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: SessionStates.FINISHED}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
             sessions = testutils.get(self, '/sessions', restPort)
-            self.assertEquals(0, len(sessions))
+            self.assertEqual(0, len(sessions))

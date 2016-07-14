@@ -53,11 +53,11 @@ class BashAppTests(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(c))
+        self.assertEqual(data, droputils.allDropContents(c))
 
         # We own the file, not root
         uid = os.getuid()
-        self.assertEquals(uid, os.stat(c.path).st_uid)
+        self.assertEqual(uid, os.stat(c.path).st_uid)
 
     def test_quoted_commands(self):
         """
@@ -72,7 +72,7 @@ class BashAppTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEquals(message, droputils.allDropContents(b))
+            self.assertEqual(message, droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))

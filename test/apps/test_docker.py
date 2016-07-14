@@ -89,11 +89,11 @@ class DockerTests(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(c))
+        self.assertEqual(data, droputils.allDropContents(c))
 
         # We own the file, not root
         uid = os.getuid()
-        self.assertEquals(uid, os.stat(c.path).st_uid)
+        self.assertEqual(uid, os.stat(c.path).st_uid)
 
     def test_clientServer(self):
         """
@@ -134,7 +134,7 @@ class DockerTests(unittest.TestCase):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(d))
+        self.assertEqual(data, droputils.allDropContents(d))
 
     def test_quotedCommands(self):
         """
@@ -149,7 +149,7 @@ class DockerTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEquals(msg, droputils.allDropContents(b))
+            self.assertEqual(msg, droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -179,7 +179,7 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
         with DROPWaiterCtx(self, b, 100):
             a.setCompleted()
-        self.assertEquals(a.dataURL, droputils.allDropContents(c))
+        self.assertEqual(a.dataURL, droputils.allDropContents(c))
 
 
     def test_additional_bindings(self):
@@ -203,10 +203,10 @@ class DockerTests(unittest.TestCase):
 
         # We copied the file into the directory, but since in the container the
         # file was called "file" we'll see it with that name in tempDir
-        self.assertEquals(1, len(os.listdir(tempDir)))
+        self.assertEqual(1, len(os.listdir(tempDir)))
         with open(os.path.join(tempDir, 'file')) as f:
             data = f.read()
-        self.assertEquals('data', data)
+        self.assertEqual('data', data)
 
         # Cleanup
         os.unlink(tempFile)

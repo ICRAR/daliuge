@@ -68,13 +68,13 @@ class TestSocketListener(unittest.TestCase):
             utils.writeToRemotePort(host, port, data, 1)
 
         for drop in [a,b,c,d]:
-            self.assertEquals(DROPStates.COMPLETED, drop.status)
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
 
         # Our expectations are fulfilled!
         bContents = droputils.allDropContents(b)
         dContents = int(droputils.allDropContents(d))
-        self.assertEquals(data, bContents)
-        self.assertEquals(crc32(data, 0), dContents)
+        self.assertEqual(data, bContents)
+        self.assertEqual(crc32(data, 0), dContents)
 
     def test_invalid(self):
 
@@ -86,4 +86,4 @@ class TestSocketListener(unittest.TestCase):
 
         # Shouldn't be able to open ports <= 1024
         a.execute()
-        self.assertEquals(a.status, DROPStates.ERROR)
+        self.assertEqual(a.status, DROPStates.ERROR)

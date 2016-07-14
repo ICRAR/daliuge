@@ -57,15 +57,15 @@ class FileImportAppTests(unittest.TestCase):
         self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = '', ext = []))
 
         a = FileImportApp('a', 'b', dirname = self.root, ext = ['.fits'])
-        self.assertEquals(len(a.children), 2)
-        self.assertEquals(a.children[0].path in self.files, True)
-        self.assertEquals(a.children[1].path in self.files, True)
+        self.assertEqual(len(a.children), 2)
+        self.assertEqual(a.children[0].path in self.files, True)
+        self.assertEqual(a.children[1].path in self.files, True)
 
         a = FileImportApp('a', 'b', dirname = self.dirs[1], ext = ['.fits'])
-        self.assertEquals(len(a.children), 0)
+        self.assertEqual(len(a.children), 0)
 
         a = FileImportApp('a', 'b', dirname = self.root, ext = ['.txt'])
-        self.assertEquals(len(a.children), 1)
+        self.assertEqual(len(a.children), 1)
 
         a = FileImportApp('a', 'b', dirname = self.root, ext = ['.hdf5'])
-        self.assertEquals(len(a.children), 0)
+        self.assertEqual(len(a.children), 0)

@@ -151,7 +151,7 @@ class DropUtilsTest(unittest.TestCase):
         drop = FileDROP('a', 'a', expectedSize=5)
         drop.write('abcde')
         with DROPFile(drop) as f:
-            self.assertEquals('abcde', f.read())
+            self.assertEqual('abcde', f.read())
             self.assertTrue(drop.isBeingRead())
             self.assertIsNotNone(f._io)
         self.assertFalse(drop.isBeingRead())
@@ -168,7 +168,7 @@ class DropUtilsTest(unittest.TestCase):
             downStreamDrops[:] = [x for x in downStreamDrops if x.uid not in ('b','f')]
             visitedNodes.append(drop)
 
-        self.assertEquals(5, len(visitedNodes))
+        self.assertEqual(5, len(visitedNodes))
         self.assertListEqual(visitedNodes, [a,c,e,h,j])
 
     def test_get_roots(self):
@@ -182,8 +182,8 @@ class DropUtilsTest(unittest.TestCase):
         pg_spec = [{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]},
                    {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
         roots = droputils.get_roots(pg_spec)
-        self.assertEquals(1, len(roots))
-        self.assertEquals('A', roots[0]['oid'])
+        self.assertEqual(1, len(roots))
+        self.assertEqual('A', roots[0]['oid'])
 
         """
         A --> B
@@ -192,8 +192,8 @@ class DropUtilsTest(unittest.TestCase):
         pg_spec = [{"oid":"A", "type":"plain", "storage":"memory"},
                    {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp", "inputs": ["A"]}]
         roots = droputils.get_roots(pg_spec)
-        self.assertEquals(1, len(roots))
-        self.assertEquals('A', roots[0]['oid'])
+        self.assertEqual(1, len(roots))
+        self.assertEqual('A', roots[0]['oid'])
 
         """
         A --> C --> D --|
@@ -207,11 +207,11 @@ class DropUtilsTest(unittest.TestCase):
                    {"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
                    {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
         roots = droputils.get_roots(pg_spec)
-        self.assertEquals(2, len(roots))
+        self.assertEqual(2, len(roots))
         self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
 
         # The same as before but using dropdicts
         pg_spec_dropdicts = [dropdict(dropspec) for dropspec in pg_spec]
         roots = droputils.get_roots(pg_spec_dropdicts)
-        self.assertEquals(2, len(roots))
+        self.assertEqual(2, len(roots))
         self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
