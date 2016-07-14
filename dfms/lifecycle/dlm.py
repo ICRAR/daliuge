@@ -492,7 +492,7 @@ class DataLifecycleManager(object):
     def _replicate(self, drop, store):
 
         # Dummy, but safe, new UID
-        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)])
 
         logger.debug('Creating new DROP with uid %s from %r', newUid, drop)
 
