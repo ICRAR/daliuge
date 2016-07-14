@@ -360,8 +360,8 @@ class AbstractDROP(EventFirer, noopctx):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        #if not isinstance(data, six.binary_type):
-        #    data = six.binary_type(data)
+        if isinstance(data, memoryview):
+            data = data.tobytes()
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
