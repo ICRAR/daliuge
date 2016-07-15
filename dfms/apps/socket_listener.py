@@ -27,7 +27,9 @@ incoming data in a TCP socket.
 import logging
 import socket
 
+from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import BarrierAppDROP
+from dfms.exceptions import InvalidRelationshipException
 
 
 logger = logging.getLogger(__name__)
@@ -106,6 +108,8 @@ class SocketListenerApp(BarrierAppDROP):
 
     # Avoid inputs
     def addInput(self, inputDrop, back=True):
-        raise Exception("SocketListenerApp %r should have no inputs, tried to attach %r" % (self, inputDrop))
+        raise InvalidRelationshipException(DROPRel(inputDrop, DROPLinkType.INPUT, self),
+                                           "SocketListenerApp should have no inputs")
     def addStreamingInput(self, streamingInputDrop, back=True):
-        raise Exception("SocketListenerApp %r should have no streaming inputs, tried to attach %r" % (self, streamingInputDrop))
+        raise InvalidRelationshipException(DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
+                                           "SocketListenerApp should have no inputs")

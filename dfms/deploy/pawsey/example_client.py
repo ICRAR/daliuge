@@ -21,11 +21,11 @@
 #    MA 02111-1307  USA
 #
 """
-Examples on how to interact with the DFMS remote monitor (on AWS),
-which represents a DIM or MM inside the Pawsey firewall,
-in order to convert a logical graph into a physical graph, and then
-create sessions, append graphs, and deploy sessions to execute the converted
-physical graph in Pawsey
+Examples on how to interact with the Drop Island Manager.
+
+This program first converts a logical graph into a physical graph, and then
+create a session, appends the physical graph, and deploys the session to execute
+the converted physical graph in the Drop Island.
 """
 
 import json
@@ -38,6 +38,7 @@ from dfms import droputils
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
 from dfms.manager.client import DataIslandManagerClient
 
+
 logger = logging.getLogger(__name__)
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
@@ -45,6 +46,7 @@ lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
 
 
 class MonitorClient(object):
+
     def __init__(self, mhost, mport, timeout=10, sch_algo='sarkar', output=None):
         self._host = mhost
         self._port = mport
@@ -52,24 +54,30 @@ class MonitorClient(object):
         self._sch_algo = sch_algo
         self._output = output
 
-    def get_avail_hosts(self):
-        return self._dc.nodes()
+    def get_physical_graph(self, graph_id, algo='sarkar'):
 
-    def submit_single_graph(self, graph_id, algo='sarkar', deploy=False):
         lgn = lgnames[graph_id]
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
-        #node_list = self.get_avail_hosts()
         node_list = self._dc.nodes()
-        #pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
-        if ('sarkar' == algo):
+
+        if 'sarkar' == algo:
             pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
         else:
             pgtp = MetisPGTP(drop_list, len(node_list))
-        pgtp.json
+
+        # Trigering something...
+        pgtp.to_gojs_json()
+
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
         logger.info("PG spec is calculated!")
+        return lgn, lg, pg_spec
+
+    def submit_single_graph(self, graph_id, algo='sarkar', deploy=False):
+
+        lgn, lg, pg_spec = self.get_physical_graph(graph_id, algo)
+
         if self._output:
             with open(self._output, 'w') as f:
                 json.dump(pg_spec, f, indent=2)
@@ -79,16 +87,8 @@ class MonitorClient(object):
                 return dropSpec['uid']
             return dropSpec['oid']
 
-        def get_autostart_list(pg_spec):
-            re = []
-            for dropspec in pg_spec:
-                if ('autostart' in dropspec and 1 == dropspec['autostart']):
-                    re.append(dropspec)
-            return re
-
         logger.info("About to compute roots")
         completed_uids = [uid_for_drop(x) for x in droputils.get_roots(pg_spec)]
-        #completed_uids = [uid_for_drop(x) for x in get_autostart_list(pg_spec)]
         logger.info("Len of completed_uids is {0}".format(len(completed_uids)))
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
         self._dc.create_session(ssid)
@@ -101,28 +101,14 @@ class MonitorClient(object):
             logger.info("session {0} deployed".format(ssid))
             return ret
 
-    def produce_physical_graphs(self, graph_id, algo='sarkar', tgt="/tmp", num_nodes=29):
-        lgn = lgnames[graph_id]
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        tgt_partnum = [num_nodes]
-        node_list = []
-        for j in range(num_nodes):
-            ipa = '10.128.0.{0}'.format(j)
-            node_list.append(ipa)
-        #node_list = self._dc.nodes()
-        #node_list = ['10.128.0.11', '10.128.0.14', '10.128.0.15', '10.128.0.16']
-        if ('sarkar' == algo):
-            pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
-        else:
-            pgtp = MetisPGTP(drop_list, len(node_list))
-        pgtp.json
-        pg_spec = pgtp.to_pg_spec(node_list)
+    def write_physical_graph(self, graph_id, algo='sarkar', tgt="/tmp"):
+
+        lgn, _, pg_spec = self.get_physical_graph(graph_id, algo)
+
+        tof = self._output
         if (self._output is None):
-            tof = '/{1}/sar_{0}_pgspec.json'.format(lgn.split('.')[0], tgt)
-        else:
-            tof = self._output
+            tof = '{0}/sar_{1}_pgspec.json'.format(tgt, lgn.split('.')[0])
+
         with open(tof, 'w') as f:
             f.write(pg_spec)
 
@@ -134,6 +120,8 @@ if __name__ == '__main__':
                       dest="host", help="The host where the graph will be deployed", default="localhost")
     parser.add_option("-a", "--action", action="store",
                       dest="act", help="action, either 'submit' or 'print'", default="submit")
+    parser.add_option("-A", "--algorithm", action="store",
+                      dest="algo", help="algorithm used to do the LG --> PG conversion, either 'metis' or 'sarkar'", default="sarkar")
     parser.add_option("-p", "--port", action="store", type="int",
                       dest="port", help="The port we connect to to deploy the graph", default=8001)
     parser.add_option("-g", "--graph-id", action="store", type="int",
@@ -150,8 +138,8 @@ if __name__ == '__main__':
 
     mc = MonitorClient(opts.host, opts.port, output=opts.output)
     if ('submit' == opts.act):
-        mc.submit_single_graph(opts.graph_id, deploy=True)
+        mc.submit_single_graph(opts.graph_id, algo=opts.algo, deploy=True)
     elif ('print' == opts.act):
-        mc.produce_physical_graphs(opts.graph_id, algo='metis')
+        mc.write_physical_graph(opts.graph_id, algo=opts.algo)
     else:
         raise Exception('Unknown action: {0}'.format(opts.act))
