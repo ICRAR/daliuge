@@ -40,8 +40,9 @@ import threading
 import time
 
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
-    DROPLinkType, DROPPhases, DROPStates
+    DROPLinkType, DROPPhases, DROPStates, DROPRel
 from dfms.event import EventFirer
+from dfms.exceptions import InvalidDropException, InvalidRelationshipException
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
 from dfms.utils import prepare_sql, noopctx
 
@@ -217,7 +218,7 @@ class AbstractDROP(EventFirer, noopctx):
         # the DROP.
         # Expected lifespan for this object, used by to expire them
         if 'lifespan' in kwargs and 'expireAfterUse' in kwargs:
-            raise ValueError("%r specifies both `lifespan` and `expireAfterUse`" \
+            raise InvalidDropException(self, "%r specifies both `lifespan` and `expireAfterUse`" \
                              "but they are mutually exclusive" % (self,))
 
         self._expireAfterUse = self._getArg(kwargs, 'expireAfterUse', False)
@@ -654,7 +655,8 @@ class AbstractDROP(EventFirer, noopctx):
         # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
         if consumer in self._streamingConsumers:
-            raise Exception("Consumer %s is already registered as a streaming consumer" % (consumer))
+            raise InvalidRelationshipException(DROPRel(consumer, DROPLinkType.CONSUMER, self),
+                                               "Consumer already registered as a streaming consumer")
 
         # Add if not already present
         # Add the reverse reference too automatically
@@ -773,12 +775,14 @@ class AbstractDROP(EventFirer, noopctx):
         # Consumers have a "consume" method that gets invoked when
         # this DROP moves to COMPLETED
         if not hasattr(streamingConsumer, 'dropCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
-            raise Exception("The streaming consumer %r doesn't have a 'dropCompleted' and/or 'dataWritten' method" % (streamingConsumer))
+            raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
+                                               "The streaming consumer doesn't have a 'dropCompleted' and/or 'dataWritten' method")
 
         # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
         if streamingConsumer in self._consumers:
-            raise Exception("Consumer %s is already registered as a normal consumer" % (streamingConsumer))
+            raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
+                                               "Consumer is already registered as a normal consumer")
 
         # Add if not already present
         if streamingConsumer in self._streamingConsumers:
@@ -880,7 +884,7 @@ class FileDROP(AbstractDROP):
             check = self._getArg(kwargs, 'check_filepath_exists', False)
             if check:
                 if not os.path.isfile(filepath):
-                    raise Exception('File does not exist or is not a file: %s' % filepath)
+                    raise InvalidDropException(self, 'File does not exist or is not a file: %s' % filepath)
             self._fnm = filepath
             self._root = os.path.dirname(filepath)
         else:
@@ -943,8 +947,8 @@ class NgasDROP(AbstractDROP):
     def initialize(self, **kwargs):
         self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
         self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
-        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasTimeout', 2))
+        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasTimeout', 2))
+        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
 
     def getIO(self):
         return NgasIO(self._ngasSrv, self.uid, port=self._ngasPort,
@@ -992,9 +996,9 @@ class RDBMSDrop(AbstractDROP):
         AbstractDROP.initialize(self, **kwargs)
 
         if 'dbmodule' not in kwargs:
-            raise Exception('%r needs a "dbmodule" parameter' % (self,))
+            raise InvalidDropException(self, '%r needs a "dbmodule" parameter' % (self,))
         if 'dbtable' not in kwargs:
-            raise Exception('%r needs a "dbtable" parameter' % (self,))
+            raise InvalidDropException(self, '%r needs a "dbtable" parameter' % (self,))
 
         # The DB-API 2.0 module
         dbmodname = kwargs.pop('dbmodule')
@@ -1089,7 +1093,8 @@ class ContainerDROP(AbstractDROP):
 
         # Avoid circular dependencies between Containers
         if child == self.parent:
-            raise Exception("Circular dependency between %r and %r" % (self, child))
+            raise InvalidRelationshipException(DROPRel(child, DROPLinkType.CHILD, self),
+                                               "Circular dependency found")
 
         logger.debug("Adding new child for %r: %r", self, child)
 
@@ -1134,14 +1139,14 @@ class DirectoryContainer(ContainerDROP):
         ContainerDROP.initialize(self, **kwargs)
 
         if 'dirname' not in kwargs:
-            raise Exception('DirectoryContainer needs a "dirname" parameter')
+            raise InvalidDropException(self, 'DirectoryContainer needs a "dirname" parameter')
 
         directory = kwargs['dirname']
 
         check_exists = self._getArg(kwargs, 'check_exists', True)
         if check_exists is True:
             if not os.path.isdir(directory):
-                raise Exception('%s is not a directory' % (directory))
+                raise InvalidDropException(self, '%s is not a directory' % (directory))
 
         self._path = os.path.abspath(directory)
 
@@ -1149,7 +1154,8 @@ class DirectoryContainer(ContainerDROP):
         if isinstance(child, (FileDROP, DirectoryContainer)):
             path = child.path
             if os.path.dirname(path) != self.path:
-                raise Exception('Child DROP is not under %s' % (self.path))
+                raise InvalidRelationshipException(DROPRel(child, DROPLinkType.CHILD, self),
+                                                   'Child DROP is not under %s' % (self.path))
             ContainerDROP.addChild(self, child)
         else:
             raise TypeError('Child DROP is not of type FileDROP or DirectoryContainer')
@@ -1234,7 +1240,8 @@ class AppDROP(ContainerDROP):
     def addOutput(self, outputDrop, back=True):
         with outputDrop:
             if outputDrop is self:
-                raise Exception('Cannot add an AppConsumer as its own output')
+                raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
+                                                   'Cannot add an AppConsumer as its own output')
             if outputDrop not in self._outputs.values():
                 uid = outputDrop.uid
                 self._outputs[uid] = outputDrop
@@ -1345,22 +1352,23 @@ class InputFiredAppDROP(AppDROP):
         # Error threshold must be within 0 and 100
         self._input_error_threshold = int(self._getArg(kwargs, 'input_error_threshold', 0))
         if self._input_error_threshold < 0 or self._input_error_threshold > 100:
-            raise ValueError("%r: input_error_threshold not within [0,100]" % (self,))
+            raise InvalidDropException(self, "%r: input_error_threshold not within [0,100]" % (self,))
 
         # Amount of effective inputs
         if 'n_effective_inputs' not in kwargs:
-            raise ValueError("%r: n_effective_inputs is mandatory" % (self,))
+            raise InvalidDropException(self, "%r: n_effective_inputs is mandatory" % (self,))
         self._n_effective_inputs = int(kwargs['n_effective_inputs'])
         if self._n_effective_inputs < -1 or self._n_effective_inputs == 0:
-            raise ValueError("%r: n_effective_inputs must be > 0 or equals to -1" % (self,))
+            raise InvalidDropException(self, "%r: n_effective_inputs must be > 0 or equals to -1" % (self,))
 
         # Number of tries
         self._n_tries = int(self._getArg(kwargs, 'n_tries', 1))
         if self._n_tries < 1:
-            raise ValueError('Invalid n_tries, must be a positive number')
+            raise InvalidDropException(self, 'Invalid n_tries, must be a positive number')
 
     def addStreamingInput(self, streamingInputDrop, back=True):
-        raise Exception("InputFiredAppDROPs don't accept streaming inputs")
+        raise InvalidRelationshipException(DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
+                                           "InputFiredAppDROPs don't accept streaming inputs")
 
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)

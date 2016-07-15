@@ -11,8 +11,10 @@ RUN yum -y update && yum -y install \
     openssh-server \
     openssh-clients \
     python-devel && \
+    yum clean all && \
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" && \
-    python get-pip.py
+    python get-pip.py && \
+    pip install numpy
 
 # Add the dfms user and create its private/public key pair
 # Also setup the SSH host keys
