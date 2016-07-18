@@ -25,6 +25,7 @@ import httplib
 import six.moves.http_client as httplib  # @UnresolvedImport
 
 from dfms import utils
+import codecs
 
 
 def get(test, url, port):
@@ -32,7 +33,7 @@ def get(test, url, port):
     conn.request('GET', '/api' + url)
     res = conn.getresponse()
     test.assertEqual(httplib.OK, res.status)
-    jsonRes = json.load(res)
+    jsonRes = json.load(codecs.getreader('utf-8')(res))
     res.close()
     conn.close()
     return jsonRes

@@ -29,6 +29,8 @@ Created on 20 Jul 2015
 
 import unittest
 
+import six
+
 from dfms import droputils
 from dfms.drop import InMemoryDROP, FileDROP, \
     BarrierAppDROP, dropdict
@@ -151,7 +153,7 @@ class DropUtilsTest(unittest.TestCase):
         drop = FileDROP('a', 'a', expectedSize=5)
         drop.write('abcde')
         with DROPFile(drop) as f:
-            self.assertEqual('abcde', f.read())
+            self.assertEqual(six.b('abcde'), f.read())
             self.assertTrue(drop.isBeingRead())
             self.assertIsNotNone(f._io)
         self.assertFalse(drop.isBeingRead())
