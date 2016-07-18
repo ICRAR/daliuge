@@ -92,7 +92,7 @@ class Schedule(object):
                 try:
                     stt = node['stt']
                     edt = node['edt']
-                except KeyError, ke:
+                except KeyError as ke:
                     raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
                 if (edt == stt):
                     continue
@@ -529,9 +529,9 @@ class MySarkarScheduler(Scheduler):
                             # resort G since new edges were added during sequentialisation
                             try:
                                 topo_sorted = nx.topological_sort(G)
-                            except Exception, exp:
+                            except:
                                 logger.debug(G.edges())
-                                raise exp
+                                raise
                             self._sspace[i] = 2
                         else:
                             recover_edge = True
@@ -884,13 +884,14 @@ class MCTSScheduler(PSOScheduler):
         # while (len(state) < leng):
         #     m, state = mcts.next_move()
         state = mcts.run()
-        if (DEBUG):
-            print "Each MCTS move on average took {0} seconds".formats((time.time() - stt) / leng)
+        if logger.isEnabledFor(logging.DEBUG):
+            leng = len(G.edges())
+            logger.debug("Each MCTS move on average took {0} seconds".formats((time.time() - stt) / leng))
         #calculate the solution under the state found by MCTS
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
-        if (DEBUG):
-            print "Monte Carlo Tree Search scheduler took {0} secs, lpl = {1}, num_parts = {2}".format(edt - stt, curr_lpl, num_parts)
+        logger.debug("Monte Carlo Tree Search scheduler took %f secs, lpl = %d, num_parts = %d", edt - stt, curr_lpl, num_parts)
+
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:
@@ -948,8 +949,7 @@ class SAScheduler(PSOScheduler):
         # 4. calculate the solution under the 'annealed' state
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
-        if (DEBUG):
-            print "Simulated Annealing scheduler took {0} secs, energy = {1}, num_parts = {2}".format(edt - stt, e, num_parts)
+        logger.debug("Simulated Annealing scheduler took %.f secs, energy = %f, num_parts = %d".format(edt - stt, e, num_parts))
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:
@@ -1117,7 +1117,7 @@ class DAGUtil(object):
             try:
                 stt = node['stt']
                 edt = node['edt']
-            except KeyError, ke:
+            except KeyError as ke:
                 raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
             #print i, n, stt, edt
             leng = edt - stt
@@ -1125,10 +1125,10 @@ class DAGUtil(object):
                 continue
             try:
                 ma[i, stt:edt] = np.ones((1, leng))
-            except Exception, ex:
-                print i, stt, edt, leng
-                print M, N
-                raise ex
+            except:
+                logger.error("i, stt, edt, leng = %d, %d, %d, %d", i, stt, edt, leng)
+                logger.error("N, M = %d, %d, %d, %d", M, N)
+                raise
             #print ma[i, :]
         return ma
 
@@ -1210,7 +1210,7 @@ class DAGUtil(object):
                 line.append(str(part_id_line_dict[m]))
                 a = G[m][n]['weight']
                 if (0 == a):
-                    print "G[{0}][{1}]['weight'] = {2}".format(m, n, a)
+                    logger.debug("G[%d][%d]['weight'] = %f", m, n, a)
                 line.append(str(G[m][n]['weight']))
             lines.append(" ".join(line))
 
@@ -1225,8 +1225,8 @@ if __name__ == "__main__":
     G.add_weighted_edges_from([(3,6,5), (6,7,2)])
     G.add_weighted_edges_from([(9,12,2)]) # testing independent nodes
     G.node[3]['weight'] = 65
-    print G.pred[12].items()
-    print G.node[G.predecessors(12)[0]]
+    print(G.pred[12].items())
+    print(G.node[G.predecessors(12)[0]])
 
     # print "prepre"
     # print len(G.pred[7].items())
@@ -1237,21 +1237,21 @@ if __name__ == "__main__":
     # print G.nodes(data=True)
     # print G.edges(data=True)
 
-    print "topological sort\n"
-    print nx.topological_sort(G)
+    print("topological sort\n")
+    print(nx.topological_sort(G))
     # for i, v in enumerate(nx.topological_sort(G)):
     #     print i, v
 
     lp = DAGUtil.get_longest_path(G)
-    print "The longest path is {0} with a length of {1}".format(lp[0], lp[1])
+    print("The longest path is {0} with a length of {1}".format(lp[0], lp[1]))
     mw = DAGUtil.get_max_width(G)
     dop = DAGUtil.get_max_dop(G)
-    print "The max (weighted) width = {0}, and the max degree of parallelism = {1}".format(mw, dop)
+    print("The max (weighted) width = {0}, and the max degree of parallelism = {1}".format(mw, dop))
     DAGUtil.label_schedule(G)
-    print G.nodes(data=True)
+    print(G.nodes(data=True))
     gantt_matrix = DAGUtil.ganttchart_matrix(G)
-    print gantt_matrix
-    print gantt_matrix.shape
+    print(gantt_matrix)
+    print(gantt_matrix.shape)
     # sch = Schedule(G, 5)
     # sch_mat = sch.schedule_matrix
     # print sch_mat
