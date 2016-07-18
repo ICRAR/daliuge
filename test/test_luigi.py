@@ -96,7 +96,7 @@ class LuigiTests(unittest.TestCase):
                 threading.Thread(target=lambda drop: drop.execute(), args=(drop,)).start()
 
         # Write to the initial nodes of the graph to trigger the graph execution
-        for i in xrange(socketListeners):
+        for i in range(socketListeners):
             threading.Thread(target=utils.writeToRemotePort, name='socketWriter', args=("localhost", 1111+i, test_data, 2)).start()
 
         # Run the graph! Luigi will either monitor or execute the DROPs
