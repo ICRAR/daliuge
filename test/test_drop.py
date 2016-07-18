@@ -27,7 +27,8 @@ import shutil
 import sqlite3
 import tempfile
 
-from six import StringIO
+import six
+from six import BytesIO
 
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
@@ -143,12 +144,12 @@ class TestDROP(unittest.TestCase):
         class GrepResult(BarrierAppDROP):
             def initialize(self, **kwargs):
                 super(GrepResult, self).initialize(**kwargs)
-                self._substring = kwargs['substring']
+                self._substring = six.b(kwargs['substring'])
 
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                allLines = StringIO(droputils.allDropContents(drop)).readlines()
+                allLines = BytesIO(droputils.allDropContents(drop)).readlines()
                 for line in allLines:
                     if self._substring in line:
                         output.write(line)
@@ -157,7 +158,7 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                sortedLines = StringIO(droputils.allDropContents(drop)).readlines()
+                sortedLines = BytesIO(droputils.allDropContents(drop)).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
                     output.write(line)
@@ -166,16 +167,15 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                allLines = StringIO(droputils.allDropContents(drop)).readlines()
-                for line in allLines:
-                    buf = ''
-                    for c in line:
-                        if c == ' ' or c == '\n':
-                            output.write(buf[::-1])
-                            output.write(c)
-                            buf = ''
-                        else:
-                            buf += c
+                allbytes = droputils.allDropContents(drop)
+                buf = bytearray()
+                for c in allbytes:
+                    if c == six.b(' ') or c == six.b('\n'):
+                        output.write(buf[::-1])
+                        output.write(c)
+                        buf = bytearray()
+                    else:
+                        buf.append(c)
 
         a = InMemoryDROP('oid:A', 'uid:A')
         b = GrepResult('oid:B', 'uid:B', substring="a")
@@ -407,7 +407,7 @@ class TestDROP(unittest.TestCase):
 
                 numbers = droputils.allDropContents(inputDrop).strip().split()
                 for n in numbers:
-                    outputs[int(n) % 2].write(n + " ")
+                    outputs[int(n) % 2].write(n + six.b(" "))
 
         # Create DROPs
         a =     InMemoryDROP('oid:A', 'uid:A')
@@ -432,8 +432,8 @@ class TestDROP(unittest.TestCase):
         # Check the final results are correct
         for drop in [a,b,c,d,e]:
             self.assertEqual(drop.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (drop))
-        self.assertEqual("0 2 4 6 8 10 12 14 16 18", droputils.allDropContents(e).strip())
-        self.assertEqual("1 3 5 7 9 11 13 15 17 19", droputils.allDropContents(f).strip())
+        self.assertEqual(six.b("0 2 4 6 8 10 12 14 16 18"), droputils.allDropContents(e).strip())
+        self.assertEqual(six.b("1 3 5 7 9 11 13 15 17 19"), droputils.allDropContents(f).strip())
 
 
     def test_dropWroteFromOutside(self):
@@ -454,7 +454,7 @@ class TestDROP(unittest.TestCase):
         a.setCompleted()
 
         # Read from the DROP
-        self.assertEqual(msg, droputils.allDropContents(a))
+        self.assertEqual(six.b(msg), droputils.allDropContents(a))
         self.assertIsNone(a.checksum)
         self.assertIsNone(a.size)
 
@@ -554,12 +554,12 @@ class TestDROP(unittest.TestCase):
         class LastCharWriterApp(AppDROP):
             def initialize(self, **kwargs):
                 super(LastCharWriterApp, self).initialize(**kwargs)
-                self._lastChar = None
+                self._lastByte = None
             def dataWritten(self, uid, data):
                 self.execStatus = AppDROPStates.RUNNING
                 outputDrop = self.outputs[0]
-                self._lastChar = data[-1]
-                outputDrop.write(self._lastChar)
+                self._lastByte = six.indexbytes(data, -1)
+                outputDrop.write(self._lastByte)
             def dropCompleted(self, uid, status):
                 self.execStatus = AppDROPStates.FINISHED
                 self._notifyAppIsFinished()
@@ -579,11 +579,12 @@ class TestDROP(unittest.TestCase):
         self.assertRaises(Exception, a.addStreamingConsumer, c)
 
         # Write a little, then check the consumers
-        def checkDropStates(aStatus, dStatus, eStatus, lastChar):
+        def checkDropStates(aStatus, dStatus, eStatus, lastByte):
             self.assertEqual(aStatus, a.status)
             self.assertEqual(dStatus, d.status)
             self.assertEqual(eStatus, e.status)
-            self.assertEqual(lastChar, b._lastChar)
+            if lastByte is not None:
+                self.assertEqual(six.b(lastByte), six.int2byte(b._lastByte))
 
         checkDropStates(DROPStates.INITIALIZED , DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
         a.write('abcde')
@@ -595,7 +596,7 @@ class TestDROP(unittest.TestCase):
             a.setCompleted()
         checkDropStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
 
-        self.assertEqual('ejk', droputils.allDropContents(d))
+        self.assertEqual(six.b('ejk'), droputils.allDropContents(d))
 
     def test_fileDROP_delete_parent_dir(self):
         """

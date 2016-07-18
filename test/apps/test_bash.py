@@ -27,6 +27,8 @@ import os
 import shutil
 import unittest
 
+import six
+
 from dfms import droputils
 from dfms.apps.bash_shell_app import BashShellApp
 from dfms.drop import FileDROP
@@ -71,7 +73,7 @@ class BashAppTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEqual(message, droputils.allDropContents(b))
+            self.assertEqual(six.b(message), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))

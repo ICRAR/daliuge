@@ -33,6 +33,7 @@ import unittest
 
 from luigi import scheduler, worker
 import pkg_resources
+import six
 
 from dfms import droputils
 from dfms import graph_loader, utils
@@ -93,7 +94,7 @@ class LuigiTests(unittest.TestCase):
             self._test_graph(graph_loader.createGraphFromDropSpecList(json.load(codecs.getreader('utf-8')(f))), socketListeners)
 
     def _test_graph(self, pgCreator, socketListeners=1):
-        if isinstance(pgCreator, basestring):
+        if isinstance(pgCreator, six.string_types):
             pgCreator = "test.graphsRepository.%s" % (pgCreator)
         task = FinishGraphExecution(pgCreator=pgCreator)
         sch = scheduler.CentralPlannerScheduler()

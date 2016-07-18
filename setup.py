@@ -71,6 +71,7 @@ setup(
             "pyswarm",
             "python-daemon",
             "scp",
+            'six',
             "zeroconf",
       ],
       # Keep alpha-sorted PLEASE!
@@ -80,7 +81,7 @@ setup(
       },
       dependency_links=[
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
-        #'https://github.com/mrocklin/heft/archive/master.zip#egg=heft'
+        'https://bitbucket.org/rodrigo_tobar/paste/get/tip.zip#egg=paste',
         ],
       test_suite="test",
       entry_points= {

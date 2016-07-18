@@ -29,6 +29,8 @@ import six.moves.http_client as httplib  # @UnresolvedImport
 
 from dfms import utils
 from dfms.exceptions import DaliugeException
+import six
+import codecs
 
 
 # HTTP headers used by daliuge
@@ -101,19 +103,19 @@ class RestClient(object):
 
 
     def _get_json(self, url):
-        return json.loads(self._GET(url))
+        return json.load(self._GET(url))
 
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.urlencode(content)
         ret = self._POST(url, content, 'application/x-www-form-urlencoded')
-        return json.loads(ret) if ret else None
+        return json.load(ret) if ret else None
 
     def _post_json(self, url, content):
-        if not isinstance(content, basestring):
+        if not isinstance(content, six.string_types):
             content = json.dumps(content)
         ret = self._POST(url, content, 'application/json')
-        return json.loads(ret) if ret else None
+        return json.load(ret) if ret else None
 
     def _GET(self, url):
         return self._request(url, 'GET')
@@ -146,4 +148,6 @@ class RestClient(object):
                   (method, self.host, self.port, url, self._resp.status, err)
             raise RestClientException(msg)
 
-        return self._resp.read()
+        if not self._resp.length:
+            return None
+        return codecs.getreader('utf-8')(self._resp)

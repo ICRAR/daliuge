@@ -362,6 +362,11 @@ class AbstractDROP(EventFirer, noopctx):
 
         if isinstance(data, memoryview):
             data = data.tobytes()
+        elif isinstance(data, six.integer_types):
+            data = six.int2byte(data)
+        elif isinstance(data, six.string_types):
+            data = six.b(data)
+
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
@@ -382,9 +387,8 @@ class AbstractDROP(EventFirer, noopctx):
 
         # Trigger our streaming consumers
         if self._streamingConsumers:
-            writtenData = buffer(data, 0, nbytes)
             for streamingConsumer in self._streamingConsumers:
-                streamingConsumer.dataWritten(self.uid, writtenData)
+                streamingConsumer.dataWritten(self.uid, data)
 
         # Update our internal checksum
         self._updateChecksum(data)

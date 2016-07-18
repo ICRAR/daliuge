@@ -30,6 +30,8 @@ import logging
 import os
 import sys
 
+import six
+
 from dfms import droputils
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
@@ -92,7 +94,7 @@ class NodeManager(DROPManager):
         # Error listener used by users to deal with errors coming from specific
         # Drops in whatever way they want
         if error_listener:
-            if isinstance(error_listener, basestring):
+            if isinstance(error_listener, six.string_types):
                 try:
                     parts   = error_listener.split('.')
                     module  = importlib.import_module('.'.join(parts[:-1]))

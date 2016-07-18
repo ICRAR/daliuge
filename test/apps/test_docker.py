@@ -34,6 +34,7 @@ from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
 from dfms.drop import FileDROP, NgasDROP
 from dfms.droputils import DROPWaiterCtx
+import six
 
 
 class DockerTests(unittest.TestCase):
@@ -147,7 +148,7 @@ class DockerTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEqual(msg, droputils.allDropContents(b))
+            self.assertEqual(six.b(msg), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -177,7 +178,7 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
         with DROPWaiterCtx(self, b, 100):
             a.setCompleted()
-        self.assertEqual(a.dataURL, droputils.allDropContents(c))
+        self.assertEqual(six.b(a.dataURL), droputils.allDropContents(c))
 
 
     def test_additional_bindings(self):

@@ -214,6 +214,7 @@ class FileIO(DataIO):
 
     def _open(self, **kwargs):
         flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
+        flag += 'b'
         return open(self._fnm, flag)
 
     def _read(self, count=4096, **kwargs):
