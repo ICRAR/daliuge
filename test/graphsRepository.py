@@ -48,13 +48,6 @@ from test.test_drop import SumupContainerChecksum
 
 lifespan = 1800
 
-# All the SleepAndCopyApp DROPs below are created by default with a sleeping time
-# of up to 4 seconds (randomly generated). If a specific sleeping time needs to
-# be used instead (e.g., during automatic tests) the following variable can be
-# changed. This value can still be overridden by the per-DROP specified sleepTime
-# argument which has more precedence
-defaultSleepTime = None
-
 #===============================================================================
 # Support AppDROP classes
 #===============================================================================
@@ -69,14 +62,7 @@ class SleepApp(BarrierAppDROP):
     """
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
-        global defaultSleepTime
-        if kwargs.has_key('sleepTime'):
-            self._sleepTime = float(kwargs['sleepTime'])
-        else:
-            if defaultSleepTime is not None:
-                self._sleepTime = defaultSleepTime
-            else:
-                self._sleepTime = random.SystemRandom().randint(0, 400)/100.
+        self._sleepTime = self._getArg(kwargs, 'sleepTime', 0)
 
     def run(self):
         time.sleep(self._sleepTime)
