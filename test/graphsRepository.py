@@ -604,7 +604,7 @@ def chiles_pg():
     total_bandwidth = 480
     num_obs = 8 # the same as num of data island
     subband_width = 60 # MHz
-    num_subb = total_bandwidth / subband_width
+    num_subb = total_bandwidth // subband_width
     subband_dict = collections.defaultdict(list) # for corner turning
     img_list = []
     start_freq = 940
