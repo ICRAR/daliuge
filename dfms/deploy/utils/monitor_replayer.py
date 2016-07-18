@@ -34,7 +34,7 @@ edge list that becomes input for gephi vis tool.
 """
 import pygraphviz as pgv
 import networkx as nx
-import json, os, logging, optparse, sys, commands
+import json, os, logging, optparse, sys, commands, filecmp
 from collections import defaultdict
 from datetime import datetime as dt
 from xml.etree.ElementTree import ElementTree
@@ -50,6 +50,7 @@ GREEN_COLOR = (0, 255, 0)
 RED_COLOR = (255, 0, 0)
 BLUE_COLOR = (102, 178, 255)
 
+#TODO place java class in the current dir, and include it in Git repo
 java_cmd = "java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dfms.deploy.utils.export_graph"
 
 sql_create_status = """\
@@ -227,27 +228,32 @@ class GraphPlayer(object):
         #cmd = ""
         csv_file = '{0}/csv_file.csv'.format(out_dir)
         sqlite_file = '{0}/sqlite_file.sqlite'.format(out_dir)
-        if (os.path.exists(sqlite_file)):
-            os.remove(sqlite_file)
-        with open(grep_log_file, "r") as f:
-            alllines = f.readlines()
-        with open(csv_file, "w") as fo:
-            for line in alllines:
-                ts = line.split('[DEBUG]')[0].split('dfmsNM.log:')[1].strip()
-                ts = int(dt.strptime(ts,'%Y-%m-%d %H:%M:%S,%f').strftime('%s'))
-                oid = line.split('oid=')[1].split()[0]
-                state = line.split()[-1]
-                fo.write('{0},{1},{2},{3}'.format(ts, oid, state, os.linesep))
 
-        sql = sql_create_status.format(csv_file)
-        sql_file = csv_file.replace('.csv', '.sql')
-        with open(sql_file, "w") as fo:
-            fo.write(sql)
-        cmd = "sqlite3 {0} < {1}".format(sqlite_file, sql_file)
-        ret = commands.getstatusoutput(cmd)
-        if (ret[0] != 0):
-            logger.error("fail to create sqlite: {0}".format(ret[1]))
-            return
+        if (not os.path.exists(csv_file)):
+            with open(grep_log_file, "r") as f:
+                alllines = f.readlines()
+            with open(csv_file, "w") as fo:
+                for line in alllines:
+                    ts = line.split('[DEBUG]')[0].split('dfmsNM.log:')[1].strip()
+                    ts = int(dt.strptime(ts,'%Y-%m-%d %H:%M:%S,%f').strftime('%s'))
+                    oid = line.split('oid=')[1].split()[0]
+                    state = line.split()[-1]
+                    fo.write('{0},{1},{2},{3}'.format(ts, oid, state, os.linesep))
+        else:
+            logger.info("csv file already exists: {0}".format(csv_file))
+
+        if (not os.path.exists(sqlite_file)):
+            sql = sql_create_status.format(csv_file)
+            sql_file = csv_file.replace('.csv', '.sql')
+            with open(sql_file, "w") as fo:
+                fo.write(sql)
+            cmd = "sqlite3 {0} < {1}".format(sqlite_file, sql_file)
+            ret = commands.getstatusoutput(cmd)
+            if (ret[0] != 0):
+                logger.error("fail to create sqlite: {0}".format(ret[1]))
+                return
+        else:
+            logger.info("sqlite file already exists: {0}".format(sqlite_file))
 
         dbconn = dbdrv.connect(sqlite_file)
         q = "SELECT min(ts) from ac"
@@ -270,12 +276,16 @@ class GraphPlayer(object):
             lr.append(rhs)
 
         last_gexf = gexf_file
-
         for i, el in enumerate(lr[0:-1]):
             a = el
             b = lr[i + 1]
             step_name = '{0}-{1}'.format(a, b)
             logger.debug("stepname: %s" % step_name)
+            new_gexf = '{0}/{1}.gexf'.format(out_dir, step_name)
+            if (os.path.exists(new_gexf)):
+                logger.info("{0} already exists, ignore".format(new_gexf))
+                last_gexf = new_gexf
+                continue
             sql = sql_query.format(a, b)
             logger.debug(sql)
             cur = dbconn.cursor()
@@ -302,14 +312,16 @@ class GraphPlayer(object):
                 colour.attrib['r'] = '{0}'.format(r)
                 colour.attrib['g'] = '{0}'.format(g)
                 colour.attrib['b'] = '{0}'.format(b)
-            last_gexf = '{0}/{1}.gexf'.format(out_dir, step_name)
-            tree.write(last_gexf)
+            tree.write(new_gexf)
+            logger.info("GEXF file '{0}' is generated".format(new_gexf))
             del drop_dict
-
-            logger.info("GEXF file '{0}' is generated".format(last_gexf))
-            new_png = last_gexf.split('.gexf')[0] + '.png'
-            cmd = "{0} {1} {2}".format(java_cmd, last_gexf, new_png)
-            ret = commands.getstatusoutput(cmd)
+            if (not filecmp.cmp(last_gexf, new_gexf, False)):
+                new_png = new_gexf.split('.gexf')[0] + '.png'
+                cmd = "{0} {1} {2}".format(java_cmd, new_gexf, new_png)
+                ret = commands.getstatusoutput(cmd)
+            else:
+                logger.info("Identical {0} == {1}".format(new_gexf, last_gexf))
+            last_gexf = new_gexf
             if (ret[0] != 0):
                 logger.error("Fail to print png from %s to %s: %s" % (last_gexf, new_png, ret[1]))
 
@@ -366,6 +378,19 @@ class GraphPlayer(object):
         return G
 
 if __name__ == '__main__':
+    """
+    1. create edge list from 'monitor_g.log'
+    2. run gephi manully to (1) finalise the layout, and
+                            (2) store the layout in the gexf file
+    3. alternatively, one can use existing gexf file from previous runs
+
+    e.g. python monitor_replayer.py -x /Users/Chen/Documents/FromWeb/Galaxy/2016-06-30/galaxy.gexf
+    -r /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/statelog.txt
+    -u /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/gen -o rrr -d eee
+    -l /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/vis.log
+    -g /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/0/monitor_g.log
+    -t /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/0/monitor_g.log
+    """
     parser = optparse.OptionParser()
     parser.add_option("-g", "--graph_path", action="store", type="string",
                       dest="graph_path", help="path to physical graph specification", default=None)
