@@ -56,7 +56,7 @@ setup(
             "bottle",
             "configobj",
             "docker-py <= 1.7",
-            "drive-casa==0.7",
+            "drive-casa>0.7",
             "lockfile",
             "luigi<2.0",
             "metis",
