@@ -80,8 +80,8 @@ class TestDROP(unittest.TestCase):
         """
         self._test_drop_sz = 16 # MB
         self._test_block_sz =  2 # MB
-        self._test_num_blocks = self._test_drop_sz / self._test_block_sz
-        self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))
+        self._test_num_blocks = self._test_drop_sz // self._test_block_sz
+        self._test_block = os.urandom(self._test_block_sz * ONE_MB)
 
     def tearDown(self):
         shutil.rmtree("/tmp/sdp_dfms", True)

@@ -29,6 +29,7 @@ from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
 from dfms.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
+import os
 
 
 try:
@@ -51,7 +52,7 @@ class TestSocketListener(unittest.TestCase):
 
         host = 'localhost'
         port = 9933
-        data = 'shine on you crazy diamond'
+        data = os.urandom(1025)
 
         a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port)
         b = InMemoryDROP('oid:B', 'uid:B')

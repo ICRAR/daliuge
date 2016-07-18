@@ -21,9 +21,7 @@
 #
 
 import os
-import random
 import shutil
-import string
 import tempfile
 import unittest
 import warnings
@@ -84,7 +82,7 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
 
         # Random data so we always check different contents
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with DROPWaiterCtx(self, c, 100):
             a.write(data)
             a.setCompleted()
@@ -129,7 +127,7 @@ class DockerTests(unittest.TestCase):
         # Let 'b' handle its interest in c
         b.handleInterest(c)
 
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with DROPWaiterCtx(self, d, 100):
             a.write(data)
             a.setCompleted()

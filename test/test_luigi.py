@@ -40,7 +40,7 @@ from dfms.luigi_int import FinishGraphExecution
 import graphsRepository
 
 
-test_data = str(bytearray(os.urandom(16*1024)))
+test_data = os.urandom(16*1024)
 
 class LuigiTests(unittest.TestCase):
     """

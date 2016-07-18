@@ -22,10 +22,9 @@
 """
 Test the Bash App
 """
+
 import os
-import random
 import shutil
-import string
 import unittest
 
 from dfms import droputils
@@ -48,7 +47,7 @@ class BashAppTests(unittest.TestCase):
         b.addOutput(c)
 
         # Random data so we always check different contents
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with DROPWaiterCtx(self, c, 100):
             a.write(data)
             a.setCompleted()

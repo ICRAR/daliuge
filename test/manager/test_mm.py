@@ -20,8 +20,7 @@
 #    MA 02111-1307  USA
 #
 import json
-import random
-import string
+import os
 import subprocess
 import sys
 import threading
@@ -142,7 +141,7 @@ class TestMM(unittest.TestCase):
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
 
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with droputils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
@@ -189,7 +188,7 @@ class TestMM(unittest.TestCase):
 
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with droputils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
@@ -228,7 +227,7 @@ class TestMM(unittest.TestCase):
 
         a = Pyro4.Proxy(uris['A'])
         c = Pyro4.Proxy(uris['C'])
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with droputils.EvtConsumerProxyCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
@@ -291,8 +290,8 @@ class TestREST(unittest.TestCase):
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
-            msg = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
-            for i in xrange(5):
+            msg = os.urandom(10)
+            for i in range(5):
                 self.assertTrue(utils.writeToRemotePort('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i))
 
             # Wait until the graph has finished its execution. We'll know
