@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import codecs
 import json
 import os
 import subprocess
@@ -358,7 +359,8 @@ class TestREST(unittest.TestCase):
             # Add this complex graph spec to the session
             # The UID of the two leaf nodes of this complex.js graph are T and S
             # PRO-242: use timestamps for final DROPs that get archived into the public NGAS
-            graph = json.loads(pkg_resources.resource_string('test', 'graphs/complex.js')) # @UndefinedVariable
+            with pkg_resources.resource_stream('test', 'graphs/complex.js') as f: # @UndefinedVariable
+                graph = json.load(codecs.getreader('utf-8')(f))
             suffix = '_' + str(int(time.time()))
             oidsToReplace = ('S','T')
             for dropSpec in graph:

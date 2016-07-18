@@ -242,6 +242,7 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Took %.2f [s] to pull image '%s'", (end-start), self._image)
         else:
             logger.debug("Image '%s' found, no need to pull it", self._image)
+        c.close()
 
         self._containerIp = None
         self._containerId = None
@@ -384,6 +385,7 @@ class DockerApp(BarrierAppDROP):
             raise Exception(msg)
 
         rm(container)
+        c.close()
 
     @staticmethod
     def _kwargs_from_env(ssl_version=None, assert_hostname=False):

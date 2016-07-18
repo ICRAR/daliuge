@@ -25,6 +25,7 @@ Created on 20 Jul 2015
 @author: rtobar
 '''
 
+import codecs
 import json
 import os
 import threading
@@ -88,8 +89,8 @@ class LuigiTests(unittest.TestCase):
         self._test_graphFromFile("complex.js", 5)
 
     def _test_graphFromFile(self, f, socketListeners=1):
-        f = pkg_resources.resource_stream("test", "graphs/%s" % (f))  # @UndefinedVariable
-        self._test_graph(graph_loader.createGraphFromDropSpecList(json.load(f)), socketListeners)
+        with pkg_resources.resource_stream("test", "graphs/%s" % (f)) as f:  # @UndefinedVariable
+            self._test_graph(graph_loader.createGraphFromDropSpecList(json.load(codecs.getreader('utf-8')(f))), socketListeners)
 
     def _test_graph(self, pgCreator, socketListeners=1):
         if isinstance(pgCreator, basestring):

@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import codecs
 import json
 import os
 import subprocess
@@ -277,7 +278,8 @@ class TestREST(unittest.TestCase):
             # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
-            complexGraphSpec = json.load(pkg_resources.resource_stream('test', 'graphs/complex.js')) # @UndefinedVariable
+            with pkg_resources.resource_stream('test', 'graphs/complex.js') as f: # @UndefinedVariable
+                complexGraphSpec = json.load(codecs.getreader('utf-8')(f))
             for dropSpec in complexGraphSpec:
                 dropSpec['node'] = hostname
                 dropSpec['island'] = hostname

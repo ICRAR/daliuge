@@ -69,7 +69,7 @@ class DockerTests(unittest.TestCase):
         """
 
         try:
-            AutoVersionClient()
+            AutoVersionClient().close()
         except DockerException:
             warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
             return
@@ -109,7 +109,7 @@ class DockerTests(unittest.TestCase):
         finish before proceeding.
         """
         try:
-            AutoVersionClient()
+            AutoVersionClient().close()
         except DockerException:
             warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
             return
