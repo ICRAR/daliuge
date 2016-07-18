@@ -266,9 +266,9 @@ class TestDROP(unittest.TestCase):
         dropAList = [a1,a2,a3]
         dropBList = [b1,b2,b3]
         dropCList = [c1,c2,c3]
-        for dropA,dropB in map(lambda a,b: (a,b), dropAList, dropBList):
+        for dropA,dropB in zip(dropAList, dropBList):
             dropA.addConsumer(dropB)
-        for dropB,dropC in map(lambda b,c: (b,c), dropBList, dropCList):
+        for dropB,dropC in zip(dropBList, dropCList):
             dropB.addOutput(dropC)
         for dropC in dropCList:
             dropC.addConsumer(d)
@@ -723,7 +723,8 @@ class TestDROP(unittest.TestCase):
         # app has run
         a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in range(4)]
         e = InputFiredAppDROP('e', 'e', n_effective_inputs=2)
-        map(lambda x: e.addInput(x), [a,b,c,d])
+        for x in a,b,c,d:
+            e.addInput(x)
 
         with DROPWaiterCtx(self, e, 5):
             a.setCompleted()
@@ -761,6 +762,8 @@ class TestDROP(unittest.TestCase):
     def test_rdbms_drop(self):
 
         dbfile = 'test_rdbms_drop.db'
+        if os.path.isfile(dbfile):
+            os.unlink(dbfile)
 
         with contextlib.closing(sqlite3.connect(dbfile)) as conn:  # @UndefinedVariable
             with contextlib.closing(conn.cursor()) as cur:

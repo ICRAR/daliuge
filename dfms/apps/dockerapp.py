@@ -24,6 +24,7 @@ Module containing docker-related applications and functions
 '''
 
 import collections
+import functools
 import logging
 import os
 import threading
@@ -232,7 +233,7 @@ class DockerApp(BarrierAppDROP):
         # Check if we have the image; otherwise pull it.
         extra_kwargs = self._kwargs_from_env()
         c = AutoVersionClient(**extra_kwargs)
-        found = reduce(lambda a,b: a or self._image in b['RepoTags'], c.images(), False)
+        found = functools.reduce(lambda a,b: a or self._image in b['RepoTags'], c.images(), False)
 
         if not found:
             logger.debug("Image '%s' not found, pulling it", self._image)

@@ -302,7 +302,7 @@ class AbstractDROP(EventFirer, noopctx):
 
         # Save the IO object in the dictionary and return its descriptor instead
         while True:
-            descriptor = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
+            descriptor = random.SystemRandom().randint(-six.MAXSIZE - 1, six.MAXSIZE)
             if descriptor not in self._rios:
                 break
         self._rios[descriptor] = io
@@ -631,7 +631,7 @@ class AbstractDROP(EventFirer, noopctx):
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
-            if hasattr(parent, 'addChild'):
+            if hasattr(parent, 'addChild') and self not in parent.children:
                 try:
                     parent.addChild(self)
                 except:
@@ -1518,13 +1518,6 @@ class dropdict(dict):
         self._addSomething(other, 'outputs')
     def addProducer(self, other):
         self._addSomething(other, 'producers')
-    def __setattr__(self, name, value):
-        self[name] = value
-    def __getattr__(self, name):
-        if ('__deepcopy__' == name):
-            return None
-        else:
-            return self[name]
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
