@@ -193,8 +193,8 @@ class Partition(object):
         if (len(self._dag.nodes()) == 0):
             return (True, False, False)
 
-        unew = False if self._dag.node.has_key(u) else True
-        vnew = False if self._dag.node.has_key(v) else True
+        unew = u not in self._dag.node
+        vnew = v not in self._dag.node
 
         if (DEBUG):
             slow_max = DAGUtil.get_max_antichains(self._dag)
@@ -233,8 +233,8 @@ class Partition(object):
         """
         # if (self.partition_id == 180):
         #     logger.debug("u = ", u, ", v = ", v, ", partition = ", self.partition_id)
-        unew = False if self._dag.node.has_key(u) else True
-        vnew = False if self._dag.node.has_key(v) else True
+        unew = u not in self._dag.node
+        vnew = v not in self._dag.node
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
         self._dag.add_edge(u, v)
@@ -542,7 +542,7 @@ class MySarkarScheduler(Scheduler):
         #for an unallocated node, it forms its own partition
         edt = time.time() - stt
         for n in G.nodes(data=True):
-            if (not n[1].has_key('gid')):
+            if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
                 part = Partition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
@@ -677,7 +677,7 @@ class PSOScheduler(Scheduler):
         #print "PSO scheduler took {0} seconds".format(edt - stt)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
-            if (not n[1].has_key('gid')):
+            if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
                 part = Partition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
@@ -893,7 +893,7 @@ class MCTSScheduler(PSOScheduler):
             print "Monte Carlo Tree Search scheduler took {0} secs, lpl = {1}, num_parts = {2}".format(edt - stt, curr_lpl, num_parts)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
-            if (not n[1].has_key('gid')):
+            if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
                 part = Partition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
@@ -952,7 +952,7 @@ class SAScheduler(PSOScheduler):
             print "Simulated Annealing scheduler took {0} secs, energy = {1}, num_parts = {2}".format(edt - stt, e, num_parts)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
-            if (not n[1].has_key('gid')):
+            if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
                 part = Partition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
@@ -1179,7 +1179,7 @@ class DAGUtil(object):
                 G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp, drop_spec=drop)
             else:
                 G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp)
-            if (drop.has_key(obk)):
+            if obk in drop:
                 for oup in drop[obk]:
                     if ('plain' == tt):
                         G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])

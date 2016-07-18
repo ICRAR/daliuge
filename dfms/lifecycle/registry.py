@@ -103,7 +103,7 @@ class Registry():
         """
 
     def _checkDropIsInRegistry(self, oid):
-        if not self._drops.has_key(oid):
+        if not oid in self._drops:
             raise Exception('DROP %s is not present in the registry' % (oid))
 
 class InMemoryRegistry(Registry):
@@ -128,7 +128,7 @@ class InMemoryRegistry(Registry):
         :param dfms.drop.AbstractDROP drop:
         '''
         self._checkDropIsInRegistry(drop.oid)
-        if self._drops[drop.oid].instances.has_key(drop.uid):
+        if drop.uid in self._drops[drop.oid].instances:
             raise Exception('DROP %s/%s already present in registry' % (drop.oid, drop.uid))
         self._drops[drop.oid].instances[drop.uid] = drop
 
