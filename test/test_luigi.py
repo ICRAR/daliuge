@@ -39,7 +39,6 @@ from dfms import droputils
 from dfms import graph_loader, utils
 from dfms.apps.socket_listener import SocketListenerApp
 from dfms.luigi_int import FinishGraphExecution
-import graphsRepository
 
 
 test_data = os.urandom(16*1024)
@@ -52,16 +51,6 @@ class LuigiTests(unittest.TestCase):
     I preferred to have explicit separated methods for each graph to be able to
     pinpoint failures more easily.
     """
-
-    def setUp(self):
-        super(LuigiTests, self).setUp()
-        self.prevDef = graphsRepository.defaultSleepTime
-        graphsRepository.defaultSleepTime = 0
-
-    def tearDown(self):
-        graphsRepository.defaultSleepTime = self.prevDef
-        super(LuigiTests, self).tearDown()
-
     def test_mwa_fornax_pg(self):
         self._test_graph('mwa_fornax_pg')
 
