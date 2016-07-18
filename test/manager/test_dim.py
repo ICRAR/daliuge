@@ -117,7 +117,7 @@ class TestDIM(unittest.TestCase):
         self.assertEqual(1, self.dim.getGraphSize(sessionId))
         graphFromDM = self.dm.getGraph(sessionId)
         self.assertEqual(1, len(graphFromDM))
-        dropSpec = graphFromDM.values()[0]
+        dropSpec = list(graphFromDM.values())[0]
         self.assertEqual('A', dropSpec['oid'])
         self.assertEqual('plain', dropSpec['type'])
         self.assertEqual('memory', dropSpec['storage'])
@@ -206,7 +206,7 @@ class TestDIM(unittest.TestCase):
             graphStatusByDim = self.dim.getGraphStatus(sessionId)
             graphStatusByDM = self.dm.getGraphStatus(sessionId)
             self.assertDictEqual(graphStatusByDim, graphStatusByDM)
-            for dropStatus in graphStatusByDim.viewvalues():
+            for dropStatus in graphStatusByDim.values():
                 self.assertEqual(expectedStatus, dropStatus['status'])
 
         sessionId = 'lala'
@@ -284,7 +284,7 @@ class TestREST(unittest.TestCase):
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort).viewvalues():
+            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort).values():
                 time.sleep(0.2)
 
             self.assertEqual({hostname: SessionStates.FINISHED}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))

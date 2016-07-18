@@ -274,7 +274,7 @@ class CompositeManager(DROPManager):
         # moment of submitting the graph; thus we record the inter-DM
         # relationships separately and remove them from the original graph spec
         interDMRelations = []
-        for dropSpecs in perPartition.viewvalues():
+        for dropSpecs in perPartition.values():
             interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
 
         # TODO: Big change required to remove this hack here

@@ -208,10 +208,10 @@ class DropUtilsTest(unittest.TestCase):
                    {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(2, len(roots))
-        self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
+        self.assertListEqual(['A', 'B'], sorted([x['oid'] for x in roots]))
 
         # The same as before but using dropdicts
         pg_spec_dropdicts = [dropdict(dropspec) for dropspec in pg_spec]
         roots = droputils.get_roots(pg_spec_dropdicts)
         self.assertEqual(2, len(roots))
-        self.assertListEqual(['A', 'B'], [x['oid'] for x in roots])
+        self.assertListEqual(['A', 'B'], sorted([x['oid'] for x in roots]))

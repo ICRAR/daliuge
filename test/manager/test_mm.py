@@ -127,7 +127,7 @@ class TestMM(unittest.TestCase):
         self.assertDictEqual(graphFromMM, graphFromDIM)
 
         self.assertEqual(1, len(graphFromMM))
-        dropSpec = graphFromMM.values()[0]
+        dropSpec = list(graphFromMM.values())[0]
         self.assertEqual('A', dropSpec['oid'])
         self.assertEqual('plain', dropSpec['type'])
         self.assertEqual('memory', dropSpec['storage'])
@@ -218,7 +218,7 @@ class TestMM(unittest.TestCase):
             graphStatusByMM = self.mm.getGraphStatus(sessionId)
             self.assertDictEqual(graphStatusByDIM, graphStatusByMM)
             self.assertDictEqual(graphStatusByDIM, graphStatusByDM)
-            for dropStatus in graphStatusByMM.viewvalues():
+            for dropStatus in graphStatusByMM.values():
                 self.assertEqual(expectedStatus, dropStatus['status'])
 
         sessionId = 'lala'
@@ -298,7 +298,7 @@ class TestREST(unittest.TestCase):
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort)[hostname].viewvalues():
+            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort)[hostname].values():
                 time.sleep(0.2)
 
             self.assertEqual({hostname: {hostname: SessionStates.FINISHED}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))

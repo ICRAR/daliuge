@@ -1036,7 +1036,7 @@ class RDBMSDrop(AbstractDROP):
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
                 sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
-                sql, vals = prepare_sql(sql, self._db_drv.paramstyle, vals.values())
+                sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
                 cur.execute(sql, vals)
                 c.commit()
@@ -1240,7 +1240,7 @@ class AppDROP(ContainerDROP):
         """
         The list of inputs set into this AppDROP
         """
-        return self._inputs.values()
+        return list(self._inputs.values())
 
     def addOutput(self, outputDrop, back=True):
         with outputDrop:
@@ -1263,7 +1263,7 @@ class AppDROP(ContainerDROP):
         """
         The list of outputs set into this AppDROP
         """
-        return self._outputs.values()
+        return list(self._outputs.values())
 
     def addStreamingInput(self, streamingInputDrop, back=True):
         if streamingInputDrop not in self._streamingInputs.values():
@@ -1277,7 +1277,7 @@ class AppDROP(ContainerDROP):
         """
         The list of streaming inputs set into this AppDROP
         """
-        return self._streamingInputs.values()
+        return list(self._streamingInputs.values())
 
     def handleEvent(self, e):
         """
