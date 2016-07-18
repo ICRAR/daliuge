@@ -38,8 +38,8 @@ def create_graph(branches, drops_per_branch):
     graph = []
     completed_uids = []
     final_apps = []
-    for branch in xrange(branches):
-        for i in xrange(drops_per_branch):
+    for branch in range(branches):
+        for i in range(drops_per_branch):
             data_uid = 'data_%d_branch_%d' % (i, branch)
             app_uid = 'app_%d_branch_%d' % (i, branch)
             data_drop = memory_drop(data_uid)

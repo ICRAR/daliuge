@@ -297,7 +297,7 @@ class TestDM(unittest.TestCase):
         N = 100
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
         g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
-        for i in xrange(N):
+        for i in range(N):
             b_oid = "B%d" % (i,)
             # SleepAndCopyApp effectively opens the input drop
             g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
@@ -310,7 +310,7 @@ class TestDM(unittest.TestCase):
         # We externally wire the Proxy objects to establish the inter-DM
         # relationships. Make sure we release the proxies
         with Pyro4.Proxy(uris1['A']) as a:
-            for i in xrange(N):
+            for i in range(N):
                 with Pyro4.Proxy(uris2['B%d' % (i,)]) as b:
                     b.addInput(a, False)
                     a.addConsumer(b, False)

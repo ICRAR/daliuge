@@ -140,7 +140,7 @@ def _testGraph(execMode):
 
     sl_a.addOutput(a)
     e.addProducer(d)
-    for i in xrange(random.SystemRandom().randint(10, 20)):
+    for i in range(random.SystemRandom().randint(10, 20)):
         b =    SleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), executionMode=bMode, lifespan=lifespan)
         c = InMemoryDROP('oid:C%d' % (i), 'uid:C%d' % (i), executionMode=cMode, lifespan=lifespan)
         a.addConsumer(b)
@@ -303,7 +303,7 @@ def chunks(l, n):
     http://stackoverflow.com/questions/312443/
     how-do-you-split-a-list-into-evenly-sized-chunks-in-python
     """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
 
 def lofar_standard_pip_pg():
