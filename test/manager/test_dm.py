@@ -243,7 +243,7 @@ class TestDM(unittest.TestCase):
         # We externally wire the Proxy objects to establish the inter-DM
         # relationships. Intra-DM relationships are already established
         proxies = {}
-        for uid,uri in allUris.viewitems():
+        for uid,uri in allUris.items():
             proxies[uid] = Pyro4.Proxy(uri)
 
         a = proxies['A']
@@ -264,7 +264,7 @@ class TestDM(unittest.TestCase):
         with droputils.EvtConsumerProxyCtx(self, o, 1):
             a.write('a')
 
-        for dropProxy in proxies.viewvalues():
+        for dropProxy in proxies.values():
             self.assertEqual(DROPStates.COMPLETED, dropProxy.status, "Status of '%s' is not COMPLETED: %d" % (dropProxy.uid, dropProxy.status))
             dropProxy._pyroRelease()
 

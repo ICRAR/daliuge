@@ -1588,7 +1588,7 @@ class LG():
                         raise GraphException("# of Group keys {0} != # of Group Drops {1} for LGN {2}".format(len(grp_keys),
                         len(tdrops),
                         tlgn.id))
-                    grp_keys.sort()
+                    grp_keys = sorted(grp_keys)
                     for i, gk in enumerate(grp_keys):
                         grpby_drop = tdrops[i]
                         drop_list = grpby_dict[gk]

@@ -264,7 +264,7 @@ class DataLifecycleManager(object):
         drop.status = DROPStates.DELETED
 
     def deleteExpiredDrops(self):
-        for drop in self._drops.values():
+        for drop in list(self._drops.values()):
             if drop.status == DROPStates.EXPIRED:
                 self._deleteDrop(drop)
 

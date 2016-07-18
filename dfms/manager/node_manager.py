@@ -162,7 +162,7 @@ class NodeManager(DROPManager):
         session.destroy()
 
     def getSessionIds(self):
-        return self._sessions.keys()
+        return list(self._sessions.keys())
 
     def getGraphSize(self, sessionId):
         self._check_session_id(sessionId)
