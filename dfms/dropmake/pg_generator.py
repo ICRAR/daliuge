@@ -49,15 +49,14 @@ Examples of logical graph node JSON representation
 """
 
 import collections
-import commands
 import datetime
 import json
 import logging
 import math
 import os
 import random
+import subprocess
 import time
-import uuid
 
 import networkx as nx
 import numpy as np
@@ -1233,7 +1232,7 @@ class PyrrosPGTP(PGT):
             if (os.path.exists(pyrros_in) and os.stat(pyrros_in).st_size > 0):
                 cmd = "{0} -i {1} -p {2} -x {3}".format(self._pyrros_path,
                 pyrros_in, self._num_parts, pyrros_out)
-                ret = commands.getstatusoutput(cmd)
+                ret = subprocess.call(cmd)
                 if (14848 == ret[0] and
                 os.path.exists(pyrros_out) and
                 os.stat(pyrros_out).st_size > 0):
