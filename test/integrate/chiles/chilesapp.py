@@ -19,11 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import threading
-import Queue
 import os
 import sys
+import threading
+
 import drivecasa
+from six.moves import queue as Queue  # @UnresolvedImport
+
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'

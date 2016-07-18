@@ -20,7 +20,6 @@
 #    MA 02111-1307  USA
 #
 import json
-import httplib
 
 import six.moves.http_client as httplib  # @UnresolvedImport
 

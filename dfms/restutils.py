@@ -21,11 +21,11 @@
 #
 import json
 import logging
-import urllib
 
 import bottle
 from paste import httpserver
 import six.moves.http_client as httplib  # @UnresolvedImport
+import six.moves.urllib_parse as urllib # @UnresolvedImport
 
 from dfms import utils
 from dfms.exceptions import DaliugeException
