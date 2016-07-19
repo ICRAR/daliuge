@@ -24,7 +24,6 @@ Module containing the core DROP classes.
 """
 
 from abc import ABCMeta, abstractmethod
-from cStringIO import StringIO
 import collections
 import contextlib
 import errno
@@ -38,6 +37,9 @@ import shutil
 import sys
 import threading
 import time
+
+import six
+from six import BytesIO
 
 from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
@@ -231,7 +233,7 @@ class AbstractDROP(EventFirer, noopctx):
         # Expected data size, used to automatically move the DROP to COMPLETED
         # after successive calls to write()
         self._expectedSize = -1
-        if kwargs.has_key('expectedSize') and kwargs['expectedSize']:
+        if 'expectedSize' in kwargs and kwargs['expectedSize']:
             self._expectedSize = int(kwargs.pop('expectedSize'))
 
         # All DROPs are precious unless stated otherwise; used for replication
@@ -243,7 +245,7 @@ class AbstractDROP(EventFirer, noopctx):
 
     def _getArg(self, kwargs, key, default):
         val = default
-        if kwargs.has_key(key):
+        if key in kwargs:
             val = kwargs.pop(key)
         elif logger.isEnabledFor(logging.DEBUG):
             logger.debug("Defaulting %s to %s in %r" % (key, str(val), self))
@@ -300,7 +302,7 @@ class AbstractDROP(EventFirer, noopctx):
 
         # Save the IO object in the dictionary and return its descriptor instead
         while True:
-            descriptor = random.SystemRandom().randint(-sys.maxint - 1, sys.maxint)
+            descriptor = random.SystemRandom().randint(-six.MAXSIZE - 1, six.MAXSIZE)
             if descriptor not in self._rios:
                 break
         self._rios[descriptor] = io
@@ -358,6 +360,14 @@ class AbstractDROP(EventFirer, noopctx):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
+        if isinstance(data, memoryview):
+            data = data.tobytes()
+        elif isinstance(data, six.integer_types):
+            data = six.int2byte(data)
+        elif isinstance(data, six.string_types):
+            data = six.b(data)
+
+
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
         if not self._wio:
@@ -368,7 +378,7 @@ class AbstractDROP(EventFirer, noopctx):
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
-            logger.warn('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
+            logger.warning('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
 
         # see __init__ for the initialization to None
         if self._size is None:
@@ -377,9 +387,8 @@ class AbstractDROP(EventFirer, noopctx):
 
         # Trigger our streaming consumers
         if self._streamingConsumers:
-            writtenData = buffer(data, 0, nbytes)
             for streamingConsumer in self._streamingConsumers:
-                streamingConsumer.dataWritten(self.uid, writtenData)
+                streamingConsumer.dataWritten(self.uid, data)
 
         # Update our internal checksum
         self._updateChecksum(data)
@@ -618,11 +627,11 @@ class AbstractDROP(EventFirer, noopctx):
     @parent.setter
     def parent(self, parent):
         if self._parent and parent:
-            logger.warn("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
+            logger.warning("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
-            if hasattr(parent, 'addChild'):
+            if hasattr(parent, 'addChild') and self not in parent.children:
                 try:
                     parent.addChild(self)
                 except:
@@ -896,7 +905,7 @@ class FileDROP(AbstractDROP):
             #       of valid filename characters; otherwise encode them
             self._fnm = self._root + os.sep + self._oid + '___' + self.uid
             if os.path.isfile(self._fnm):
-                logger.warn('File %s already exists, overwriting' % (self._fnm))
+                logger.warning('File %s already exists, overwriting' % (self._fnm))
 
         self._wio = None
 
@@ -915,7 +924,7 @@ class FileDROP(AbstractDROP):
         if self._delete_parent_dir:
             try:
                 os.rmdir(self._root)
-            except OSError, e:
+            except OSError as e:
                 # Silently ignore "Directory not empty" errors
                 if e.errno != errno.ENOTEMPTY:
                     raise
@@ -965,7 +974,7 @@ class InMemoryDROP(AbstractDROP):
     """
 
     def initialize(self, **kwargs):
-        self._buf = StringIO()
+        self._buf = BytesIO()
 
     def getIO(self):
         return MemoryIO(self._buf)
@@ -1031,7 +1040,7 @@ class RDBMSDrop(AbstractDROP):
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
                 sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
-                sql, vals = prepare_sql(sql, self._db_drv.paramstyle, vals.values())
+                sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
                 cur.execute(sql, vals)
                 c.commit()
@@ -1235,7 +1244,7 @@ class AppDROP(ContainerDROP):
         """
         The list of inputs set into this AppDROP
         """
-        return self._inputs.values()
+        return list(self._inputs.values())
 
     def addOutput(self, outputDrop, back=True):
         with outputDrop:
@@ -1258,7 +1267,7 @@ class AppDROP(ContainerDROP):
         """
         The list of outputs set into this AppDROP
         """
-        return self._outputs.values()
+        return list(self._outputs.values())
 
     def addStreamingInput(self, streamingInputDrop, back=True):
         if streamingInputDrop not in self._streamingInputs.values():
@@ -1272,7 +1281,7 @@ class AppDROP(ContainerDROP):
         """
         The list of streaming inputs set into this AppDROP
         """
-        return self._streamingInputs.values()
+        return list(self._streamingInputs.values())
 
     def handleEvent(self, e):
         """
@@ -1509,13 +1518,6 @@ class dropdict(dict):
         self._addSomething(other, 'outputs')
     def addProducer(self, other):
         self._addSomething(other, 'producers')
-    def __setattr__(self, name, value):
-        self[name] = value
-    def __getattr__(self, name):
-        if ('__deepcopy__' == name):
-            return None
-        else:
-            return self[name]
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods

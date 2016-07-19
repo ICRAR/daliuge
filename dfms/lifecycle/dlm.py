@@ -127,8 +127,8 @@ import time
 from dfms import droputils, utils
 from dfms.ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from dfms.drop import ContainerDROP
-import hsm.manager
-import registry
+from dfms.lifecycle import registry
+from dfms.lifecycle.hsm import manager
 
 
 logger = logging.getLogger(__name__)
@@ -205,7 +205,7 @@ class DropEventListener(utils.noopctx):
 class DataLifecycleManager(object):
 
     def __init__(self, **kwargs):
-        self._hsm = hsm.manager.HierarchicalStorageManager()
+        self._hsm = manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
 
@@ -216,11 +216,11 @@ class DataLifecycleManager(object):
         self._drops = {}
 
         self._checkPeriod = 10
-        if kwargs.has_key('checkPeriod'):
+        if 'checkPeriod' in kwargs:
             self._checkPeriod = float(kwargs['checkPeriod'])
 
         self._cleanupPeriod = 10*self._checkPeriod
-        if kwargs.has_key('cleanupPeriod'):
+        if 'cleanupPeriod' in kwargs:
             self._cleanupPeriod = float(kwargs['cleanupPeriod'])
 
     def startup(self):
@@ -264,7 +264,7 @@ class DataLifecycleManager(object):
         drop.status = DROPStates.DELETED
 
     def deleteExpiredDrops(self):
-        for drop in self._drops.values():
+        for drop in list(self._drops.values()):
             if drop.status == DROPStates.EXPIRED:
                 self._deleteDrop(drop)
 
@@ -492,7 +492,7 @@ class DataLifecycleManager(object):
     def _replicate(self, drop, store):
 
         # Dummy, but safe, new UID
-        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)])
 
         logger.debug('Creating new DROP with uid %s from %r', newUid, drop)
 

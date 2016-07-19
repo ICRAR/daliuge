@@ -44,7 +44,10 @@ logger = logging.getLogger(__name__)
 def daliuge_aware(func):
     def fwrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            res = func(*args, **kwargs)
+            if res is not None:
+                bottle.response.content_type = 'application/json'
+                return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
             if isinstance(e, NotImplementedError):
@@ -75,6 +78,8 @@ def daliuge_aware(func):
                 bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
                 bottle.abort(555, 'Daliuge error')
             else:
+                import traceback
+                traceback.print_exc()
                 raise
     return fwrapper
 
@@ -138,15 +143,13 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def getSessions(self):
-        bottle.response.content_type = 'application/json'
-        return json.dumps(self.sessions())
+        return self.sessions()
 
     @daliuge_aware
     def getSessionInformation(self, sessionId):
         graphDict = self.dm.getGraph(sessionId)
         status = self.dm.getSessionStatus(sessionId)
-        bottle.response.content_type = 'application/json'
-        return json.dumps({'status': status, 'graph': graphDict})
+        return {'status': status, 'graph': graphDict}
 
     @daliuge_aware
     def destroySession(self, sessionId):
@@ -154,33 +157,26 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def getSessionStatus(self, sessionId):
-        bottle.response.content_type = 'application/json'
-        return json.dumps(self.dm.getSessionStatus(sessionId))
+        return self.dm.getSessionStatus(sessionId)
 
     @daliuge_aware
     def deploySession(self, sessionId):
         completedDrops = []
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
-        bottle.response.content_type = 'application/json'
-        return json.dumps(self.dm.deploySession(sessionId,completedDrops=completedDrops))
+        return self.dm.deploySession(sessionId,completedDrops=completedDrops)
 
     @daliuge_aware
     def getGraph(self, sessionId):
-        graphDict = self.dm.getGraph(sessionId)
-        bottle.response.content_type = 'application/json'
-        return json.dumps(graphDict)
+        return self.dm.getGraph(sessionId)
 
     @daliuge_aware
     def getGraphSize(self, sessionId):
-        bottle.response.content_type = 'application/json'
-        return json.dumps(self.dm.getGraphSize(sessionId))
+        return self.dm.getGraphSize(sessionId)
 
     @daliuge_aware
     def getGraphStatus(self, sessionId):
-        graphStatusDict = self.dm.getGraphStatus(sessionId)
-        bottle.response.content_type = 'application/json'
-        return json.dumps(graphStatusDict)
+        return self.dm.getGraphStatus(sessionId)
 
     # TODO: addGraphParts v/s addGraphSpec
     @daliuge_aware
@@ -230,8 +226,7 @@ class NMRestServer(ManagerRestServer):
     def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
         # future
-        bottle.response.content_type = 'application/json'
-        return json.dumps({'sessions': self.sessions(), 'templates': self.dm.getTemplates()})
+        return {'sessions': self.sessions(), 'templates': self.dm.getTemplates()}
 
     @daliuge_aware
     def linkGraphParts(self, sessionId):
@@ -282,13 +277,11 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def getCMStatus(self):
-        bottle.response.content_type = 'application/json'
-        return json.dumps({'hosts': self.dm.dmHosts, 'sessionIds': self.dm.getSessionIds()})
+        return {'hosts': self.dm.dmHosts, 'sessionIds': self.dm.getSessionIds()}
 
     @daliuge_aware
     def getCMNodes(self):
-        bottle.response.content_type = 'application/json'
-        return json.dumps(self.dm.nodes)
+        return self.dm.nodes
 
     @daliuge_aware
     def addCMNode(self, node):
@@ -302,41 +295,36 @@ class CompositeManagerRestServer(ManagerRestServer):
     def getNodeSessions(self, node):
         if node not in self.dm.nodes:
             raise Exception("%s not in current list of nodes" % (node,))
-        bottle.response.content_type = 'application/json'
         with NodeManagerClient(host=node) as dm:
-            return json.dumps(dm.sessions())
+            return dm.sessions()
 
     @daliuge_aware
     def getNodeSessionInformation(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception("%s not in current list of nodes" % (node,))
-        bottle.response.content_type = 'application/json'
         with NodeManagerClient(host=node) as dm:
-            return json.dumps(dm.session(sessionId))
+            return dm.session(sessionId)
 
     @daliuge_aware
     def getNodeSessionStatus(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception("%s not in current list of nodes" % (node,))
-        bottle.response.content_type = 'application/json'
         with NodeManagerClient(host=node) as dm:
-            return json.dumps(dm.session_status(sessionId))
+            return dm.session_status(sessionId)
 
     @daliuge_aware
     def getNodeGraph(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception("%s not in current list of nodes" % (node,))
-        bottle.response.content_type = 'application/json'
         with NodeManagerClient(host=node) as dm:
-            return json.dumps(dm.graph(sessionId))
+            return dm.graph(sessionId)
 
     @daliuge_aware
     def getNodeGraphStatus(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception("%s not in current list of nodes" % (node,))
-        bottle.response.content_type = 'application/json'
         with NodeManagerClient(host=node) as dm:
-            return json.dumps(dm.graph_status(sessionId))
+            return dm.graph_status(sessionId)
 
     #===========================================================================
     # non-REST methods
@@ -360,7 +348,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         CompositeManagerRestServer.initializeSpecifics(self, app)
 
         # Query forwarding to daemons
-        app.post(  '/api/managers/<host>/dataisland', callback=self.createDataIsland)
+        app.post('/api/managers/<host>/dataisland', callback=self.createDataIsland)
 
     @daliuge_aware
     def createDataIsland(self, host):

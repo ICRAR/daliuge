@@ -56,7 +56,7 @@ setup(
             "bottle",
             "configobj",
             "docker-py <= 1.7",
-            "drive-casa==0.7",
+            "drive-casa>0.7",
             "lockfile",
             "luigi<2.0",
             "metis",
@@ -71,16 +71,17 @@ setup(
             "pyswarm",
             "python-daemon",
             "scp",
+            'six',
             "zeroconf",
       ],
       # Keep alpha-sorted PLEASE!
 
-      extra_require={
+      extras_require={
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
-        #'https://github.com/mrocklin/heft/archive/master.zip#egg=heft'
+        'https://bitbucket.org/rodrigo_tobar/paste/get/tip.zip#egg=paste',
         ],
       test_suite="test",
       entry_points= {

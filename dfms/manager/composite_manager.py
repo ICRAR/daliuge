@@ -247,7 +247,8 @@ class CompositeManager(DROPManager):
         self.replicate(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
-    def _addGraphSpec(self, dm, (host, graphSpec), sessionId):
+    def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
+        host, graphSpec = host_and_graphspec
         dm.addGraphSpec(sessionId, graphSpec)
         logger.info("Successfully appended graph to session %s on %s", sessionId, host)
 
@@ -273,7 +274,7 @@ class CompositeManager(DROPManager):
         # moment of submitting the graph; thus we record the inter-DM
         # relationships separately and remove them from the original graph spec
         interDMRelations = []
-        for dropSpecs in perPartition.viewvalues():
+        for dropSpecs in perPartition.values():
             interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
 
         # TODO: Big change required to remove this hack here
@@ -430,8 +431,9 @@ class CompositeManager(DROPManager):
         if thrExs:
             raise Exception("One or more exceptions occurred while establishing links on session %s" % (sessionId,), thrExs)
 
-    def _triggerDrop(self, exceptions, (drop, uid)):
+    def _triggerDrop(self, exceptions, drop_and_uid):
 
+        drop, uid = drop_and_uid
         # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
         method = 'setCompleted'
         if hasattr(drop, 'async_execute'):
@@ -484,7 +486,7 @@ class CompositeManager(DROPManager):
             thrExs = {}
             self._tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
             if thrExs:
-                raise Exception("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
+                raise DaliugeException("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
 
         return allUris
 

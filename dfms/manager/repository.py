@@ -64,8 +64,8 @@ def complex_graph():
     rest are plain in-memory DROPs
     """
 
-    sl_a,sl_b,sl_c,sl_d,sl_k       = [socket('sl_' + uid,port) for uid,port in ('a',1111),('b',1112),('c',1113),('d',1114),('k',1115)]
-    a,b,c,d,k       = [memory(uid) for uid in ('a'),('b'),('c'),('d'),('k')]
+    sl_a,sl_b,sl_c,sl_d,sl_k       = [socket('sl_' + uid,port) for uid,port in (('a',1111),('b',1112),('c',1113),('d',1114),('k',1115))]
+    a,b,c,d,k       = [memory(uid) for uid in (('a'),('b'),('c'),('d'),('k'))]
     e,f,i,l,m,q,r   = [sleepAndCopy(uid) for uid in ['e', 'f', 'i', 'l', 'm', 'q', 'r']]
     g,h,j,n,o,p,s,t = [memory(uid) for uid in ['g', 'h', 'j', 'n', 'o', 'p', 's', 't']]
 

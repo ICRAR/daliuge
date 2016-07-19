@@ -24,6 +24,7 @@ Module containing docker-related applications and functions
 '''
 
 import collections
+import functools
 import logging
 import os
 import threading
@@ -192,7 +193,7 @@ class DockerApp(BarrierAppDROP):
             raise InvalidDropException(self, 'No docker image specified, cannot create DockerApp')
 
         if ":" not in self._image:
-            logger.warn("%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
+            logger.warning("%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
@@ -232,7 +233,7 @@ class DockerApp(BarrierAppDROP):
         # Check if we have the image; otherwise pull it.
         extra_kwargs = self._kwargs_from_env()
         c = AutoVersionClient(**extra_kwargs)
-        found = reduce(lambda a,b: a or self._image in b['RepoTags'], c.images(), False)
+        found = functools.reduce(lambda a,b: a or self._image in b['RepoTags'], c.images(), False)
 
         if not found:
             logger.debug("Image '%s' not found, pulling it", self._image)
@@ -242,6 +243,7 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Took %.2f [s] to pull image '%s'", (end-start), self._image)
         else:
             logger.debug("Image '%s' found, no need to pull it", self._image)
+        c.close()
 
         self._containerIp = None
         self._containerId = None
@@ -384,6 +386,7 @@ class DockerApp(BarrierAppDROP):
             raise Exception(msg)
 
         rm(container)
+        c.close()
 
     @staticmethod
     def _kwargs_from_env(ssl_version=None, assert_hostname=False):

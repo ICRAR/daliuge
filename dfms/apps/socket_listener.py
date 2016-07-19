@@ -24,6 +24,7 @@ Module containing the SocketListenerApp, a simple application that listens for
 incoming data in a TCP socket.
 """
 
+import contextlib
 import logging
 import socket
 
@@ -79,24 +80,23 @@ class SocketListenerApp(BarrierAppDROP):
 
         # Accept one connection at most
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if self._reuseAddr:
-            serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        serverSocket.bind((self.host, self.port))
-        serverSocket.listen(1)
-        logger.debug('Listening for a TCP connection on %s:%d', self.host, self.port)
-
-        clientSocket, address = serverSocket.accept()
-        serverSocket.close()
-        logger.info('Accepted connection from %s:%d', address[0], address[1])
+        with contextlib.closing(serverSocket):
+            if self._reuseAddr:
+                serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            serverSocket.bind((self.host, self.port))
+            serverSocket.listen(1)
+            logger.debug('Listening for a TCP connection on %s:%d', self.host, self.port)
+            clientSocket, address = serverSocket.accept()
+            logger.info('Accepted connection from %s:%d', address[0], address[1])
 
         # Simply write the data we receive into our outputs
-        while True:
-            data = clientSocket.recv(4096)
-            if not data:
-                clientSocket.close()
-                break
-            for out in outs:
-                out.write(data)
+        with contextlib.closing(clientSocket):
+            while True:
+                data = clientSocket.recv(4096)
+                if not data:
+                    break
+                for out in outs:
+                    out.write(data)
 
     @property
     def host(self):

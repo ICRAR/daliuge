@@ -29,15 +29,15 @@ class TestSession(unittest.TestCase):
 
     def test_sessionStates(self):
         with Session('1') as s:
-            self.assertEquals(SessionStates.PRISTINE, s.status)
+            self.assertEqual(SessionStates.PRISTINE, s.status)
             self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
 
             s.addGraphSpec([{"oid":"A", "type":"container"}])
-            self.assertEquals(SessionStates.BUILDING, s.status)
+            self.assertEqual(SessionStates.BUILDING, s.status)
 
             s.deploy()
-            self.assertEquals(SessionStates.RUNNING, s.status)
+            self.assertEqual(SessionStates.RUNNING, s.status)
 
             # Now we can't do any of these
             self.assertRaises(Exception, s.deploy)
@@ -72,12 +72,12 @@ class TestSession(unittest.TestCase):
             # Deploy and check that the actual DROPs are linked together
             s.deploy()
             roots = s.roots
-            self.assertEquals(1, len(roots))
+            self.assertEqual(1, len(roots))
             a = s.roots[0]
-            self.assertEquals('A', a.oid)
-            self.assertEquals(1, len(a.consumers))
+            self.assertEqual('A', a.oid)
+            self.assertEqual(1, len(a.consumers))
             b = a.consumers[0]
-            self.assertEquals('B', b.oid)
-            self.assertEquals(1, len(b.outputs))
+            self.assertEqual('B', b.oid)
+            self.assertEqual(1, len(b.outputs))
             c = b.outputs[0]
-            self.assertEquals('C', c.oid)
+            self.assertEqual('C', c.oid)

@@ -20,13 +20,15 @@
 #    MA 02111-1307  USA
 #
 
-from cStringIO import StringIO
 import contextlib
 import os, unittest
 import random
 import shutil
 import sqlite3
 import tempfile
+
+import six
+from six import BytesIO
 
 from dfms import droputils
 from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
@@ -79,8 +81,8 @@ class TestDROP(unittest.TestCase):
         """
         self._test_drop_sz = 16 # MB
         self._test_block_sz =  2 # MB
-        self._test_num_blocks = self._test_drop_sz / self._test_block_sz
-        self._test_block = str(bytearray(os.urandom(self._test_block_sz * ONE_MB)))
+        self._test_num_blocks = self._test_drop_sz // self._test_block_sz
+        self._test_block = os.urandom(self._test_block_sz * ONE_MB)
 
     def tearDown(self):
         shutil.rmtree("/tmp/sdp_dfms", True)
@@ -126,9 +128,9 @@ class TestDROP(unittest.TestCase):
         # Read the checksum from c
         cChecksum = int(droputils.allDropContents(c))
 
-        self.assertNotEquals(a.checksum, 0)
-        self.assertEquals(a.checksum, test_crc)
-        self.assertEquals(cChecksum, test_crc)
+        self.assertNotEqual(a.checksum, 0)
+        self.assertEqual(a.checksum, test_crc)
+        self.assertEqual(cChecksum, test_crc)
 
     def test_simple_chain(self):
         '''
@@ -142,12 +144,12 @@ class TestDROP(unittest.TestCase):
         class GrepResult(BarrierAppDROP):
             def initialize(self, **kwargs):
                 super(GrepResult, self).initialize(**kwargs)
-                self._substring = kwargs['substring']
+                self._substring = six.b(kwargs['substring'])
 
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                allLines = StringIO(droputils.allDropContents(drop)).readlines()
+                allLines = BytesIO(droputils.allDropContents(drop)).readlines()
                 for line in allLines:
                     if self._substring in line:
                         output.write(line)
@@ -156,7 +158,7 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                sortedLines = StringIO(droputils.allDropContents(drop)).readlines()
+                sortedLines = BytesIO(droputils.allDropContents(drop)).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
                     output.write(line)
@@ -165,16 +167,15 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                allLines = StringIO(droputils.allDropContents(drop)).readlines()
-                for line in allLines:
-                    buf = ''
-                    for c in line:
-                        if c == ' ' or c == '\n':
-                            output.write(buf[::-1])
-                            output.write(c)
-                            buf = ''
-                        else:
-                            buf += c
+                allbytes = droputils.allDropContents(drop)
+                buf = bytearray()
+                for c in allbytes:
+                    if c == six.b(' ') or c == six.b('\n'):
+                        output.write(buf[::-1])
+                        output.write(c)
+                        buf = bytearray()
+                    else:
+                        buf.append(c)
 
         a = InMemoryDROP('oid:A', 'uid:A')
         b = GrepResult('oid:B', 'uid:B', substring="a")
@@ -205,7 +206,7 @@ class TestDROP(unittest.TestCase):
         actualRes   = []
         for i in [c, e, g]:
             actualRes.append(droputils.allDropContents(i))
-        map(lambda x, y: self.assertEquals(x, y), [cResExpected, eResExpected, gResExpected], actualRes)
+        map(lambda x, y: self.assertEqual(x, y), [cResExpected, eResExpected, gResExpected], actualRes)
 
     def test_errorState(self):
         a = InMemoryDROP('a', 'a')
@@ -214,9 +215,9 @@ class TestDROP(unittest.TestCase):
         c.addProducer(b)
         b.addInput(a)
         a.setError()
-        self.assertEquals(DROPStates.ERROR, a.status)
-        self.assertEquals(DROPStates.ERROR, b.status)
-        self.assertEquals(DROPStates.ERROR, c.status)
+        self.assertEqual(DROPStates.ERROR, a.status)
+        self.assertEqual(DROPStates.ERROR, b.status)
+        self.assertEqual(DROPStates.ERROR, c.status)
 
     def test_branch_failure(self):
         self.branch_failure(False)
@@ -265,9 +266,9 @@ class TestDROP(unittest.TestCase):
         dropAList = [a1,a2,a3]
         dropBList = [b1,b2,b3]
         dropCList = [c1,c2,c3]
-        for dropA,dropB in map(lambda a,b: (a,b), dropAList, dropBList):
+        for dropA,dropB in zip(dropAList, dropBList):
             dropA.addConsumer(dropB)
-        for dropB,dropC in map(lambda b,c: (b,c), dropBList, dropCList):
+        for dropB,dropC in zip(dropBList, dropCList):
             dropB.addOutput(dropC)
         for dropC in dropCList:
             dropC.addConsumer(d)
@@ -292,9 +293,9 @@ class TestDROP(unittest.TestCase):
             errorDrops = dropAList[2:] + dropBList[2:] + dropCList[2:]
 
         for drop in completedDrops:
-            self.assertEquals(drop.status, DROPStates.COMPLETED)
+            self.assertEqual(drop.status, DROPStates.COMPLETED)
         for drop in errorDrops:
-            self.assertEquals(drop.status, DROPStates.ERROR)
+            self.assertEqual(drop.status, DROPStates.ERROR)
 
         # The results we want to compare
         # (only in case that at least two branches executed)
@@ -302,8 +303,8 @@ class TestDROP(unittest.TestCase):
             sum_crc = c1.checksum + c2.checksum
             dropEData = int(droputils.allDropContents(e))
 
-            self.assertNotEquals(sum_crc, 0)
-            self.assertEquals(sum_crc, dropEData)
+            self.assertNotEqual(sum_crc, 0)
+            self.assertEqual(sum_crc, dropEData)
 
     def test_join(self):
         """
@@ -370,8 +371,8 @@ class TestDROP(unittest.TestCase):
         sum_crc = c1.checksum + c2.checksum + c3.checksum
         dropEData = int(droputils.allDropContents(e))
 
-        self.assertNotEquals(sum_crc, 0)
-        self.assertEquals(sum_crc, dropEData)
+        self.assertNotEqual(sum_crc, 0)
+        self.assertEqual(sum_crc, dropEData)
 
     def test_app_multiple_outputs(self):
         """
@@ -395,7 +396,7 @@ class TestDROP(unittest.TestCase):
                 inputDrop = self.inputs[0]
                 output = self.outputs[0]
                 howMany = int(droputils.allDropContents(inputDrop))
-                for i in xrange(howMany):
+                for i in range(howMany):
                     output.write(str(i) + " ")
 
         # This is used as "D"
@@ -406,7 +407,7 @@ class TestDROP(unittest.TestCase):
 
                 numbers = droputils.allDropContents(inputDrop).strip().split()
                 for n in numbers:
-                    outputs[int(n) % 2].write(n + " ")
+                    outputs[int(n) % 2].write(n + six.b(" "))
 
         # Create DROPs
         a =     InMemoryDROP('oid:A', 'uid:A')
@@ -430,9 +431,9 @@ class TestDROP(unittest.TestCase):
 
         # Check the final results are correct
         for drop in [a,b,c,d,e]:
-            self.assertEquals(drop.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (drop))
-        self.assertEquals("0 2 4 6 8 10 12 14 16 18", droputils.allDropContents(e).strip())
-        self.assertEquals("1 3 5 7 9 11 13 15 17 19", droputils.allDropContents(f).strip())
+            self.assertEqual(drop.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (drop))
+        self.assertEqual(six.b("0 2 4 6 8 10 12 14 16 18"), droputils.allDropContents(e).strip())
+        self.assertEqual(six.b("1 3 5 7 9 11 13 15 17 19"), droputils.allDropContents(f).strip())
 
 
     def test_dropWroteFromOutside(self):
@@ -453,7 +454,7 @@ class TestDROP(unittest.TestCase):
         a.setCompleted()
 
         # Read from the DROP
-        self.assertEquals(msg, droputils.allDropContents(a))
+        self.assertEqual(six.b(msg), droputils.allDropContents(a))
         self.assertIsNone(a.checksum)
         self.assertIsNone(a.size)
 
@@ -468,11 +469,11 @@ class TestDROP(unittest.TestCase):
 
         # Nice and easy
         drop = InMemoryDROP('a', 'a')
-        self.assertEquals(drop.status, DROPStates.INITIALIZED)
+        self.assertEqual(drop.status, DROPStates.INITIALIZED)
         drop.write('a')
-        self.assertEquals(drop.status, DROPStates.WRITING)
+        self.assertEqual(drop.status, DROPStates.WRITING)
         drop.setCompleted()
-        self.assertEquals(drop.status, DROPStates.COMPLETED)
+        self.assertEqual(drop.status, DROPStates.COMPLETED)
 
         # Try to overwrite the DROP's checksum and size
         self.assertRaises(Exception, lambda: setattr(drop, 'checksum', 0))
@@ -491,7 +492,7 @@ class TestDROP(unittest.TestCase):
         drop.setCompleted()
         fd = drop.open()
         otherFd = random.SystemRandom().randint(0, 1000)
-        self.assertNotEquals(fd, otherFd)
+        self.assertNotEqual(fd, otherFd)
         self.assertRaises(Exception, drop.read, otherFd)
         self.assertRaises(Exception, drop.close, otherFd)
         # but using the correct one should be OK
@@ -527,16 +528,16 @@ class TestDROP(unittest.TestCase):
 
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
-            self.assertEquals(c.status, DROPStates.INITIALIZED)
-            self.assertEquals(b.status, DROPStates.INITIALIZED)
-            self.assertEquals(b.execStatus, AppDROPStates.NOT_RUN)
+            self.assertEqual(c.status, DROPStates.INITIALIZED)
+            self.assertEqual(b.status, DROPStates.INITIALIZED)
+            self.assertEqual(b.execStatus, AppDROPStates.NOT_RUN)
             # Now let b consume a
             with DROPWaiterCtx(self, [c]):
                 b.dropCompleted('a', DROPStates.COMPLETED)
-            self.assertEquals(c.status, DROPStates.COMPLETED)
+            self.assertEqual(c.status, DROPStates.COMPLETED)
         elif mode == ExecutionMode.DROP:
             # b is already done
-            self.assertEquals(c.status, DROPStates.COMPLETED)
+            self.assertEqual(c.status, DROPStates.COMPLETED)
 
     def test_objectAsNormalAndStreamingInput(self):
         """
@@ -553,12 +554,12 @@ class TestDROP(unittest.TestCase):
         class LastCharWriterApp(AppDROP):
             def initialize(self, **kwargs):
                 super(LastCharWriterApp, self).initialize(**kwargs)
-                self._lastChar = None
+                self._lastByte = None
             def dataWritten(self, uid, data):
                 self.execStatus = AppDROPStates.RUNNING
                 outputDrop = self.outputs[0]
-                self._lastChar = data[-1]
-                outputDrop.write(self._lastChar)
+                self._lastByte = six.indexbytes(data, -1)
+                outputDrop.write(self._lastByte)
             def dropCompleted(self, uid, status):
                 self.execStatus = AppDROPStates.FINISHED
                 self._notifyAppIsFinished()
@@ -578,11 +579,12 @@ class TestDROP(unittest.TestCase):
         self.assertRaises(Exception, a.addStreamingConsumer, c)
 
         # Write a little, then check the consumers
-        def checkDropStates(aStatus, dStatus, eStatus, lastChar):
-            self.assertEquals(aStatus, a.status)
-            self.assertEquals(dStatus, d.status)
-            self.assertEquals(eStatus, e.status)
-            self.assertEquals(lastChar, b._lastChar)
+        def checkDropStates(aStatus, dStatus, eStatus, lastByte):
+            self.assertEqual(aStatus, a.status)
+            self.assertEqual(dStatus, d.status)
+            self.assertEqual(eStatus, e.status)
+            if lastByte is not None:
+                self.assertEqual(six.b(lastByte), six.int2byte(b._lastByte))
 
         checkDropStates(DROPStates.INITIALIZED , DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
         a.write('abcde')
@@ -594,7 +596,7 @@ class TestDROP(unittest.TestCase):
             a.setCompleted()
         checkDropStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
 
-        self.assertEquals('ejk', droputils.allDropContents(d))
+        self.assertEqual(six.b('ejk'), droputils.allDropContents(d))
 
     def test_fileDROP_delete_parent_dir(self):
         """
@@ -611,7 +613,7 @@ class TestDROP(unittest.TestCase):
             self.assertTrue(os.path.isdir(tempDir))
             a.delete()
             self.assertFalse(a.exists())
-            self.assertEquals(parentDirExists, os.path.isdir(tempDir))
+            self.assertEqual(parentDirExists, os.path.isdir(tempDir))
             if parentDirExists:
                 shutil.rmtree(tempDir)
 
@@ -648,8 +650,8 @@ class TestDROP(unittest.TestCase):
         cont2 = DirectoryContainer('f', 'f', dirname=dirname2)
 
         # Paths are absolutely reported
-        self.assertEquals(os.path.realpath('/tmp/.hidden'), os.path.realpath(cont1.path))
-        self.assertEquals(os.path.realpath('/tmp/.hidden/inside'), os.path.realpath(cont2.path))
+        self.assertEqual(os.path.realpath('/tmp/.hidden'), os.path.realpath(cont1.path))
+        self.assertEqual(os.path.realpath('/tmp/.hidden/inside'), os.path.realpath(cont2.path))
 
         # Certain children-to-be are rejected
         self.assertRaises(TypeError, cont1.addChild, NullDROP('g', 'g'))
@@ -677,28 +679,28 @@ class TestDROP(unittest.TestCase):
         """
         class App(BarrierAppDROP): pass
 
-        a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in xrange(5)]
+        a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in range(5)]
         f = InMemoryDROP('F', 'F')
         for drop in a,b,c,d,e:
             drop.addOutput(f)
 
-        self.assertEquals(DROPStates.INITIALIZED, f.status)
+        self.assertEqual(DROPStates.INITIALIZED, f.status)
         for drop in a,b,c,d,e:
-            self.assertEquals(AppDROPStates.NOT_RUN, drop.execStatus)
+            self.assertEqual(AppDROPStates.NOT_RUN, drop.execStatus)
 
         # Run the first 4 ones, F should still be in INITIALIZED
         for drop in a,b,c,d:
             drop.execute()
-        self.assertEquals(DROPStates.INITIALIZED, f.status)
-        self.assertEquals(AppDROPStates.NOT_RUN, e.execStatus)
+        self.assertEqual(DROPStates.INITIALIZED, f.status)
+        self.assertEqual(AppDROPStates.NOT_RUN, e.execStatus)
         for drop in a,b,c,d:
-            self.assertEquals(AppDROPStates.FINISHED, drop.execStatus)
+            self.assertEqual(AppDROPStates.FINISHED, drop.execStatus)
 
         # Run the final one, now F should be COMPLETED
         e.execute()
-        self.assertEquals(DROPStates.COMPLETED, f.status)
+        self.assertEqual(DROPStates.COMPLETED, f.status)
         for drop in a,b,c,d,e:
-            self.assertEquals(AppDROPStates.FINISHED, drop.execStatus)
+            self.assertEqual(AppDROPStates.FINISHED, drop.execStatus)
 
     def test_eager_inputFired_app(self):
         """
@@ -719,19 +721,20 @@ class TestDROP(unittest.TestCase):
 
         # 2 effective inputs, 4 outputs. Trigger 2 inputs and make sure the
         # app has run
-        a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in xrange(4)]
+        a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in range(4)]
         e = InputFiredAppDROP('e', 'e', n_effective_inputs=2)
-        map(lambda x: e.addInput(x), [a,b,c,d])
+        for x in a,b,c,d:
+            e.addInput(x)
 
         with DROPWaiterCtx(self, e, 5):
             a.setCompleted()
             b.setCompleted()
 
-        self.assertEquals(AppDROPStates.FINISHED, e.execStatus)
-        self.assertEquals(DROPStates.COMPLETED, a.status)
-        self.assertEquals(DROPStates.COMPLETED, b.status)
-        self.assertEquals(DROPStates.INITIALIZED, c.status)
-        self.assertEquals(DROPStates.INITIALIZED, d.status)
+        self.assertEqual(AppDROPStates.FINISHED, e.execStatus)
+        self.assertEqual(DROPStates.COMPLETED, a.status)
+        self.assertEqual(DROPStates.COMPLETED, b.status)
+        self.assertEqual(DROPStates.INITIALIZED, c.status)
+        self.assertEqual(DROPStates.INITIALIZED, d.status)
 
     def test_n_tries_app(self):
 
@@ -747,18 +750,20 @@ class TestDROP(unittest.TestCase):
         # Check that we have a normal failure with the default values
         a = FailOnlyTheFirstTimeApp('a', 'a')
         a.execute()
-        self.assertEquals(DROPStates.ERROR, a.status)
-        self.assertEquals(AppDROPStates.ERROR, a.execStatus)
+        self.assertEqual(DROPStates.ERROR, a.status)
+        self.assertEqual(AppDROPStates.ERROR, a.execStatus)
 
         # But it should run if we specify a bigger amount of tries
         a = FailOnlyTheFirstTimeApp('a', 'a', n_tries=2)
         a.execute()
-        self.assertEquals(DROPStates.COMPLETED, a.status)
-        self.assertEquals(AppDROPStates.FINISHED, a.execStatus)
+        self.assertEqual(DROPStates.COMPLETED, a.status)
+        self.assertEqual(AppDROPStates.FINISHED, a.execStatus)
 
     def test_rdbms_drop(self):
 
         dbfile = 'test_rdbms_drop.db'
+        if os.path.isfile(dbfile):
+            os.unlink(dbfile)
 
         with contextlib.closing(sqlite3.connect(dbfile)) as conn:  # @UndefinedVariable
             with contextlib.closing(conn.cursor()) as cur:
@@ -770,11 +775,11 @@ class TestDROP(unittest.TestCase):
             a.insert({'a_string': 'hello1', 'an_integer': 1})
 
             res = a.select(columns=("an_integer",))
-            self.assertEquals(2, len(res))
+            self.assertEqual(2, len(res))
 
             res = a.select(columns=("an_integer",), condition="an_integer < 1")
-            self.assertEquals(1, len(res))
-            self.assertEquals(0, res[0][0])
+            self.assertEqual(1, len(res))
+            self.assertEqual(0, res[0][0])
         finally:
             os.unlink(dbfile)
 

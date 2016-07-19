@@ -29,6 +29,7 @@ from dfms.drop import InMemoryDROP
 from dfms.ddap_protocol import DROPStates
 from dfms.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
+import os
 
 
 try:
@@ -51,7 +52,7 @@ class TestSocketListener(unittest.TestCase):
 
         host = 'localhost'
         port = 9933
-        data = 'shine on you crazy diamond'
+        data = os.urandom(1025)
 
         a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port)
         b = InMemoryDROP('oid:B', 'uid:B')
@@ -68,13 +69,13 @@ class TestSocketListener(unittest.TestCase):
             utils.writeToRemotePort(host, port, data, 1)
 
         for drop in [a,b,c,d]:
-            self.assertEquals(DROPStates.COMPLETED, drop.status)
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
 
         # Our expectations are fulfilled!
         bContents = droputils.allDropContents(b)
         dContents = int(droputils.allDropContents(d))
-        self.assertEquals(data, bContents)
-        self.assertEquals(crc32(data, 0), dContents)
+        self.assertEqual(data, bContents)
+        self.assertEqual(crc32(data, 0), dContents)
 
     def test_invalid(self):
 
@@ -86,4 +87,4 @@ class TestSocketListener(unittest.TestCase):
 
         # Shouldn't be able to open ports <= 1024
         a.execute()
-        self.assertEquals(a.status, DROPStates.ERROR)
+        self.assertEqual(a.status, DROPStates.ERROR)

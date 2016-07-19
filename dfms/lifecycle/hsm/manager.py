@@ -27,7 +27,9 @@ HSMs work and what they actually offer in terms of APIs.
 '''
 
 import logging
-import store
+
+from dfms.lifecycle.hsm import store
+
 
 logger = logging.getLogger(__name__)
 

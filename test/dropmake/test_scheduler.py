@@ -154,7 +154,7 @@ class TestScheduler(unittest.TestCase):
             drop_list = lg.unroll_to_tpl()
             pssa01 = MCTSScheduler(drop_list, max_dop=mdp, max_calc_time=0.25)
             num_parts_done, lpl, ptime, parts = pssa01.partition_dag()
-            print "MCTS (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn)
+            #logger.info("MCTS (no deadline): {3} partitioned: parts = {0}, lpl = {1}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn))
     #         # pssa02 = SAScheduler(drop_list, max_dop=mdp, deadline=tgt_deadline[j])
     #         # num_parts_done, lpl, ptime, parts = pssa02.partition_dag()
     #         #print "SA (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])

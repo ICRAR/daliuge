@@ -49,15 +49,14 @@ Examples of logical graph node JSON representation
 """
 
 import collections
-import commands
 import datetime
 import json
 import logging
 import math
 import os
 import random
+import subprocess
 import time
-import uuid
 
 import networkx as nx
 import numpy as np
@@ -102,16 +101,16 @@ class LGNode():
         self._dop = None
         self._gaw = None
         self._grpw = None
-        if (jd.has_key('isGroup') and jd['isGroup'] == True):
+        if 'isGroup' in jd and jd['isGroup'] == True:
             self._isgrp = True
             for wn in group_q[self.id]:
                 wn.group = self
                 self.add_child(wn)
             group_q.pop(self.id) # not thread safe
 
-        if (jd.has_key('group')):
+        if 'group' in jd:
             grp_id = jd['group']
-            if (done_dict.has_key(grp_id)):
+            if grp_id in done_dict:
                 grp_nd = done_dict[grp_id]
                 self.group = grp_nd
                 grp_nd.add_child(self)
@@ -266,10 +265,10 @@ class LGNode():
         self.jd['category'] == 'Data')
 
     def is_group_start(self):
-        return (self.has_group() and self.jd.has_key("group_start") and 1 == int(self.jd["group_start"]))
+        return (self.has_group() and "group_start" in self.jd and 1 == int(self.jd["group_start"]))
 
     def is_group_end(self):
-        return (self.has_group() and self.jd.has_key("group_end") and 1 == int(self.jd["group_end"]))
+        return (self.has_group() and "group_end" in self.jd and 1 == int(self.jd["group_end"]))
 
     def is_group(self):
         return self._isgrp
@@ -300,7 +299,7 @@ class LGNode():
         else:
             try:
                 return [int(x) for x in val.split(',')]
-            except ValueError, ve:
+            except ValueError as ve:
                 raise GraphException("group_key must be an integer or comma-separated integers: {0}".format(ve))
 
     def is_branch(self):
@@ -416,7 +415,7 @@ class LGNode():
             if (self.is_group()):
                 if (self.is_scatter()):
                     for kw in ['num_of_copies', 'num_of_splits']:
-                        if (self.jd.has_key(kw)):
+                        if kw in self.jd:
                             self._dop = int(self.jd[kw])
                             break
                     if (self._dop is None):
@@ -424,7 +423,7 @@ class LGNode():
                 elif (self.is_gather()):
                     try:
                         tlgn = self.inputs[0]
-                    except IndexError, ie:
+                    except IndexError:
                         raise GInvalidLink("Gather '{0}' does not have input!".format(self.id))
                     if (tlgn.is_groupby()):
                         tt = tlgn.dop
@@ -459,7 +458,7 @@ class LGNode():
         """
         drop_type = self.jd['category']
         if (drop_type in ['Data', 'LSM', 'Metadata', 'GSM']):
-            if (self.jd.has_key('data_volume')):
+            if 'data_volume' in self.jd:
                 kwargs['dw'] = int(self.jd['data_volume']) #dw -- data weight
             else:
                 kwargs['dw'] = 1
@@ -477,7 +476,7 @@ class LGNode():
                 kwargs['dirname'] = '/tmp'
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
-            if (self.jd.has_key('execution_time')):
+            if 'execution_time' in self.jd:
                 sleepTime = int(self.jd['execution_time'])
             else:
                 sleepTime = random.randint(3, 8)
@@ -486,7 +485,7 @@ class LGNode():
             dropSpec.update(kwargs)
         elif (drop_type == 'BashShellApp'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.bash_shell_app.BashShellApp'})
-            if (self.jd.has_key('execution_time')):
+            if 'execution_time' in self.jd:
                 kwargs['tw'] = int(self.jd['execution_time'])
             else:
                 kwargs['tw'] = random.randint(3, 8)
@@ -494,7 +493,7 @@ class LGNode():
             cmds = []
             for i in range(10):
                 k = "Arg%02d" % (i + 1,)
-                if (not self.jd.has_key(k)):
+                if not k in self.jd:
                     continue
                 v = self.jd[k]
                 if (v is not None and len(str(v)) > 0):
@@ -840,9 +839,9 @@ class MetisPGTP(PGT):
                 sz = 1
             G.add_node(myk, tw=tw, sz=sz)
             adj_drops = [] #adjacent drops (all neighbours)
-            if (drop.has_key(dst)):
+            if dst in drop:
                 adj_drops += drop[dst]
-            if (drop.has_key(ust)):
+            if ust in drop:
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
@@ -902,7 +901,7 @@ class MetisPGTP(PGT):
         node_list = jsobj['nodeDataArray']
         gc = 0
         for node in node_list:
-            if (key_dict.has_key(node['key'])):
+            if node['key'] in key_dict:
                 gid = key_dict[int(node['key'])]
                 node['group'] = gid + start_k
                 self._oid_gid_map[node['oid']] = gid
@@ -1163,7 +1162,7 @@ class PyrrosPGTP(PGT):
                     obk = 'outputs'
                     tw = drop['tw']
                 f.write("{0} {1} {2}\n".format(myk, tw, 0))
-                if (drop.has_key(obk)):
+                if obk in drop:
                     oel = []
                     for oup in drop[obk]:
                         oel.append(str(key_dict[oup]))
@@ -1201,7 +1200,7 @@ class PyrrosPGTP(PGT):
 
         node_list = jsobj['nodeDataArray']
         for node in node_list:
-            if (key_dict.has_key(node['key'])):
+            if node['key'] in key_dict:
                 gid = key_dict[int(node['key'])] + start_k
                 node['group'] = gid
                 logger.debug("{0} --> {1}".format(node['key'], gid))
@@ -1233,7 +1232,7 @@ class PyrrosPGTP(PGT):
             if (os.path.exists(pyrros_in) and os.stat(pyrros_in).st_size > 0):
                 cmd = "{0} -i {1} -p {2} -x {3}".format(self._pyrros_path,
                 pyrros_in, self._num_parts, pyrros_out)
-                ret = commands.getstatusoutput(cmd)
+                ret = subprocess.call(cmd)
                 if (14848 == ret[0] and
                 os.path.exists(pyrros_out) and
                 os.stat(pyrros_out).st_size > 0):
@@ -1427,7 +1426,7 @@ class LG():
         """
         Yield successive n-sized chunks from l.
         """
-        for i in xrange(0, len(l), n):
+        for i in range(0, len(l), n):
             yield l[i:i+n]
 
     def _unroll_gather_as_output(self, slgn, tlgn, sdrops, tdrops, chunk_size):
@@ -1503,7 +1502,7 @@ class LG():
                         if (j >= tlgn.group.dop and j % tlgn.group.dop == 0):
                             continue
                         while (j < (i + 2) * slgn.gather_width and j < tlgn.group.dop * (i + 1)):
-                            if (ga_drop.has_key('gather-data_drop')):
+                            if 'gather-data_drop' in ga_drop:
                                 gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
                                 gddrop.addConsumer(tdrops[j])
                                 tdrops[j].addInput(gddrop)
@@ -1574,7 +1573,7 @@ class LG():
                             if (slgn.group.is_groupby()): # a chain of group bys
                                 try:
                                     src_ctx = gdd['iid'].split('$')[1].split('-')
-                                except IndexError, ie:
+                                except IndexError:
                                     raise GraphException("The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(slgn.group.text, slgn.text))
                             else:
                                 src_ctx.reverse()
@@ -1588,7 +1587,7 @@ class LG():
                         raise GraphException("# of Group keys {0} != # of Group Drops {1} for LGN {2}".format(len(grp_keys),
                         len(tdrops),
                         tlgn.id))
-                    grp_keys.sort()
+                    grp_keys = sorted(grp_keys)
                     for i, gk in enumerate(grp_keys):
                         grpby_drop = tdrops[i]
                         drop_list = grpby_dict[gk]
@@ -1603,24 +1602,24 @@ class LG():
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
         #clean up extra drops
-        for lid, lgn in self._done_dict.iteritems():
-            if ((lgn.is_start_node() or lgn.is_end_node()) and self._drop_dict.has_key(lid)):
+        for lid, lgn in self._done_dict.items():
+            if ((lgn.is_start_node() or lgn.is_end_node()) and lid in self._drop_dict):
                 del self._drop_dict[lid]
             elif (lgn.is_branch()):
                 for branch_drop in self._drop_dict[lid]:
-                    if (branch_drop.has_key('null_drop')):
+                    if 'null_drop' in branch_drop:
                         del branch_drop['null_drop']
             elif (lgn.is_start_listener()):
                 for sl_drop in self._drop_dict[lid]:
-                    if (sl_drop.has_key('listener_drop')):
+                    if 'listener_drop'in sl_drop:
                         del sl_drop['listener_drop']
             elif (lgn.is_groupby()):
                 for sl_drop in self._drop_dict[lid]:
-                    if (sl_drop.has_key('grp-data_drop')):
+                    if 'grp-data_drop' in sl_drop:
                         del sl_drop['grp-data_drop']
             elif (lgn.is_gather()):
                 for sl_drop in self._drop_dict[lid]:
-                    if (sl_drop.has_key('gather-data_drop')):
+                    if 'gather-data_drop' in sl_drop:
                         del sl_drop['gather-data_drop']
 
         ret = []

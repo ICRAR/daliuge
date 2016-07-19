@@ -48,13 +48,6 @@ from test.test_drop import SumupContainerChecksum
 
 lifespan = 1800
 
-# All the SleepAndCopyApp DROPs below are created by default with a sleeping time
-# of up to 4 seconds (randomly generated). If a specific sleeping time needs to
-# be used instead (e.g., during automatic tests) the following variable can be
-# changed. This value can still be overridden by the per-DROP specified sleepTime
-# argument which has more precedence
-defaultSleepTime = None
-
 #===============================================================================
 # Support AppDROP classes
 #===============================================================================
@@ -69,14 +62,7 @@ class SleepApp(BarrierAppDROP):
     """
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
-        global defaultSleepTime
-        if kwargs.has_key('sleepTime'):
-            self._sleepTime = float(kwargs['sleepTime'])
-        else:
-            if defaultSleepTime is not None:
-                self._sleepTime = defaultSleepTime
-            else:
-                self._sleepTime = random.SystemRandom().randint(0, 400)/100.
+        self._sleepTime = self._getArg(kwargs, 'sleepTime', 0)
 
     def run(self):
         time.sleep(self._sleepTime)
@@ -154,7 +140,7 @@ def _testGraph(execMode):
 
     sl_a.addOutput(a)
     e.addProducer(d)
-    for i in xrange(random.SystemRandom().randint(10, 20)):
+    for i in range(random.SystemRandom().randint(10, 20)):
         b =    SleepAndCopyApp('oid:B%d' % (i), 'uid:B%d' % (i), executionMode=bMode, lifespan=lifespan)
         c = InMemoryDROP('oid:C%d' % (i), 'uid:C%d' % (i), executionMode=cMode, lifespan=lifespan)
         a.addConsumer(b)
@@ -317,7 +303,7 @@ def chunks(l, n):
     http://stackoverflow.com/questions/312443/
     how-do-you-split-a-list-into-evenly-sized-chunks-in-python
     """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
 
 def lofar_standard_pip_pg():
@@ -618,7 +604,7 @@ def chiles_pg():
     total_bandwidth = 480
     num_obs = 8 # the same as num of data island
     subband_width = 60 # MHz
-    num_subb = total_bandwidth / subband_width
+    num_subb = total_bandwidth // subband_width
     subband_dict = collections.defaultdict(list) # for corner turning
     img_list = []
     start_freq = 940
@@ -717,6 +703,6 @@ def listGraphFunctions():
                 yield name
 
 if __name__ == '__main__':
-    print 'Functions eligible for returning graphs:'
+    print('Functions eligible for returning graphs:')
     for name in listGraphFunctions():
-        print "\t%s" % (name)
+        print("\t%s" % (name))

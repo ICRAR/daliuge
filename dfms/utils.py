@@ -23,6 +23,7 @@
 Module containing miscellaneous utility classes and functions.
 """
 
+import contextlib
 import errno
 import logging
 import math
@@ -149,11 +150,12 @@ def writeToRemotePort(host, port, data=None, timeout=0):
             else:
                 thisTimeout = None
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(thisTimeout)
-            s.connect((host, port))
-            if data is not None:
-                s.send(data)
-            s.close()
+            with contextlib.closing(s):
+                s.settimeout(thisTimeout)
+                s.connect((host, port))
+                if data is not None:
+                    s.send(data)
+
             return True
         except socket.timeout:
             logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]', host, port, thisTimeout)
@@ -251,11 +253,11 @@ def prepare_sql(sql, paramstyle, data=()):
 
     logger.debug('Generating %d markers with paramstyle = %s', n, paramstyle)
 
-    if   paramstyle == 'qmark':    markers = ['?'             for i in xrange(n)]
-    elif paramstyle == 'numeric':  markers = [':%d'%(i)       for i in xrange(n)]
-    elif paramstyle == 'named':    markers = [':n%d'%(i)      for i in xrange(n)]
-    elif paramstyle == 'format':   markers = [':%s'           for i in xrange(n)]
-    elif paramstyle == 'pyformat': markers = [':%%(n%d)s'%(i) for i in xrange(n)]
+    if   paramstyle == 'qmark':    markers = ['?'             for i in range(n)]
+    elif paramstyle == 'numeric':  markers = [':%d'%(i)       for i in range(n)]
+    elif paramstyle == 'named':    markers = [':n%d'%(i)      for i in range(n)]
+    elif paramstyle == 'format':   markers = [':%s'           for i in range(n)]
+    elif paramstyle == 'pyformat': markers = [':%%(n%d)s'%(i) for i in range(n)]
     else: raise Exception('Unknown paramstyle: %s' % (paramstyle))
 
     sql = sql.format(*markers)

@@ -57,7 +57,7 @@ class SessionStates:
     An enumeration of the different states in which a Session can be found at
     any given point of time.
     """
-    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = xrange(5)
+    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = range(5)
 
 
 class ErrorStatusListener(utils.noopctx):

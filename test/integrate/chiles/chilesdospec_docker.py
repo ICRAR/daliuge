@@ -1,4 +1,4 @@
-#
+    #
 #    ICRAR - International Centre for Radio Astronomy Research
 #    (c) UWA - The University of Western Australia, 2015
 #    Copyright by UWA (in the framework of the ICRAR)
@@ -163,7 +163,6 @@ if __name__ == '__main__':
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print str(e)
         sys.exit(-1)
 
     sys.exit(0)
