@@ -48,16 +48,17 @@ def get_local_ip_addr():
                     if 'addr' in s and not s['addr'].startswith('127.')]
     return iface_addrs
 
-def register_service(zc, service_type_name, service_name, protocol, ipaddr, port):
+def register_service(zc, service_type_name, service_name, ipaddr, port, protocol='tcp'):
     """
     ZeroConf: Register service type, protocol, ipaddr and port
 
     Returns ZeroConf object and ServiceInfo object
     """
     from zeroconf import ServiceInfo
+    sn = service_name if len(service_name) <= 15 else service_name[:15]
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
-    sn = '{0} {1}'.format(service_name, stn)
-    info = ServiceInfo(stn, sn, socket.inet_aton(ipaddr), port, 0, 0, {}, None)
+    sn = '{0}.{1}'.format(sn, stn)
+    info = ServiceInfo(stn, sn, address=socket.inet_aton(ipaddr), port=port, properties={})
     zc.register_service(info)
     return info
 
