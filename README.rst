@@ -1,6 +1,9 @@
 Data Flow Management System
 ===========================
 
+.. image:: https://travis-ci.org/SKA-ScienceDataProcessor/dfms.svg?branch=master
+    :target: https://travis-ci.org/SKA-ScienceDataProcessor/dfms
+
 The Data Flow Management System (DFMS) prototype represents the **execution framework**
 of the Science Data Processor (SDP) element of the Square Kilometer Array (SKA) observatory.
 DFMS aims to provide a distributed data management platform and a
