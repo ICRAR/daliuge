@@ -52,8 +52,8 @@ class TestRDBMSRegistry(unittest.TestCase):
         cur = conn.cursor()
         cur.execute('SELECT oid FROM dfms_drop');
         r = cur.fetchone()
-        self.assertEquals(1, len(r))
-        self.assertEquals('a', r[0])
+        self.assertEqual(1, len(r))
+        self.assertEqual('a', r[0])
         cur.close()
         conn.close()
 
@@ -65,27 +65,27 @@ class TestRDBMSRegistry(unittest.TestCase):
         registry.addDrop(a1)
 
         uids = registry.getDropUids(a1)
-        self.assertEquals(1, len(uids))
-        self.assertEquals('a1', uids[0])
+        self.assertEqual(1, len(uids))
+        self.assertEqual('a1', uids[0])
 
         registry.addDropInstance(a2)
         uids = registry.getDropUids(a1)
         uids.sort()
-        self.assertEquals(2, len(uids))
-        self.assertEquals('a1', uids[0])
-        self.assertEquals('a2', uids[1])
+        self.assertEqual(2, len(uids))
+        self.assertEqual('a1', uids[0])
+        self.assertEqual('a2', uids[1])
 
         # Check accessing the database separately
         conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
         cur.execute("SELECT uid FROM dfms_dropinstance WHERE oid = 'a'");
         rows = cur.fetchall()
-        self.assertEquals(2, len(rows))
+        self.assertEqual(2, len(rows))
         uids = [r[0] for r in rows]
         uids.sort()
-        self.assertEquals(2, len(uids))
-        self.assertEquals('a1', uids[0])
-        self.assertEquals('a2', uids[1])
+        self.assertEqual(2, len(uids))
+        self.assertEqual('a1', uids[0])
+        self.assertEqual('a2', uids[1])
         cur.close()
         conn.close()
 
@@ -95,7 +95,7 @@ class TestRDBMSRegistry(unittest.TestCase):
         registry = RDBMSRegistry('sqlite3', DBFILE)
         registry.addDrop(a1)
 
-        self.assertEquals(-1, registry.getLastAccess('a'))
+        self.assertEqual(-1, registry.getLastAccess('a'))
         registry.recordNewAccess('a')
 
-        self.assertNotEquals(-1, registry.getLastAccess('a'))
+        self.assertNotEqual(-1, registry.getLastAccess('a'))

@@ -21,9 +21,7 @@
 #
 
 import os
-import random
 import shutil
-import string
 import tempfile
 import unittest
 import warnings
@@ -36,6 +34,7 @@ from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
 from dfms.drop import FileDROP, NgasDROP
 from dfms.droputils import DROPWaiterCtx
+import six
 
 
 class DockerTests(unittest.TestCase):
@@ -71,7 +70,7 @@ class DockerTests(unittest.TestCase):
         """
 
         try:
-            AutoVersionClient()
+            AutoVersionClient().close()
         except DockerException:
             warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
             return
@@ -84,16 +83,16 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
 
         # Random data so we always check different contents
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with DROPWaiterCtx(self, c, 100):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(c))
+        self.assertEqual(data, droputils.allDropContents(c))
 
         # We own the file, not root
         uid = os.getuid()
-        self.assertEquals(uid, os.stat(c.path).st_uid)
+        self.assertEqual(uid, os.stat(c.path).st_uid)
 
     def test_clientServer(self):
         """
@@ -111,7 +110,7 @@ class DockerTests(unittest.TestCase):
         finish before proceeding.
         """
         try:
-            AutoVersionClient()
+            AutoVersionClient().close()
         except DockerException:
             warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
             return
@@ -129,12 +128,12 @@ class DockerTests(unittest.TestCase):
         # Let 'b' handle its interest in c
         b.handleInterest(c)
 
-        data = ''.join([random.choice(string.ascii_letters + string.digits) for _ in xrange(10)])
+        data = os.urandom(10)
         with DROPWaiterCtx(self, d, 100):
             a.write(data)
             a.setCompleted()
 
-        self.assertEquals(data, droputils.allDropContents(d))
+        self.assertEqual(data, droputils.allDropContents(d))
 
     def test_quotedCommands(self):
         """
@@ -149,7 +148,7 @@ class DockerTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEquals(msg, droputils.allDropContents(b))
+            self.assertEqual(six.b(msg), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -179,7 +178,7 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
         with DROPWaiterCtx(self, b, 100):
             a.setCompleted()
-        self.assertEquals(a.dataURL, droputils.allDropContents(c))
+        self.assertEqual(six.b(a.dataURL), droputils.allDropContents(c))
 
 
     def test_additional_bindings(self):
@@ -203,10 +202,10 @@ class DockerTests(unittest.TestCase):
 
         # We copied the file into the directory, but since in the container the
         # file was called "file" we'll see it with that name in tempDir
-        self.assertEquals(1, len(os.listdir(tempDir)))
+        self.assertEqual(1, len(os.listdir(tempDir)))
         with open(os.path.join(tempDir, 'file')) as f:
             data = f.read()
-        self.assertEquals('data', data)
+        self.assertEqual('data', data)
 
         # Cleanup
         os.unlink(tempFile)

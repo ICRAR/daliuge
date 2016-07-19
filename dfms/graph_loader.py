@@ -110,7 +110,7 @@ def removeUnmetRelationships(dropSpecList):
     for dropSpec in dropSpecList:
 
         # 1-N relationships
-        for link,rel in __ONE_TO_N_RELS.viewitems():
+        for link,rel in __ONE_TO_N_RELS.items():
             if rel in dropSpec:
                 # Find missing OIDs in relationship and keep track of them
                 missingOids = [oid for oid in dropSpec[rel] if oid not in dropSpecsDict]
@@ -122,7 +122,7 @@ def removeUnmetRelationships(dropSpecList):
                 if not dropSpec[rel]: del dropSpec[rel]
 
         # N-1 relationships
-        for link,rel in __N_TO_ONE_RELS.viewitems():
+        for link,rel in __N_TO_ONE_RELS.items():
             if rel in dropSpec:
                 # Check if OID is missing
                 oid = dropSpec[rel]
@@ -161,14 +161,14 @@ def loadDropSpecs(dropSpecList):
     for dropSpec in dropSpecList:
 
         # 1-N relationships
-        for rel in __ONE_TO_N_RELS.viewvalues():
+        for rel in __ONE_TO_N_RELS.values():
             if rel in dropSpec:
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]: dropSpecs[oid]
 
         # N-1 relationships
-        for rel in __N_TO_ONE_RELS.viewvalues():
+        for rel in __N_TO_ONE_RELS.values():
             if rel in dropSpec:
                 # See comment above
                 dropSpecs[dropSpec[rel]]
@@ -199,7 +199,7 @@ def createGraphFromDropSpecList(dropSpecList):
         drop = drops[oid]
 
         # 1-N relationships
-        for link,rel in __ONE_TO_N_RELS.viewitems():
+        for link,rel in __ONE_TO_N_RELS.items():
             if rel in dropSpec:
                 for oid in dropSpec[rel]:
                     lhDrop = drops[oid]
@@ -212,7 +212,7 @@ def createGraphFromDropSpecList(dropSpecList):
                     relFunc(lhDrop)
 
         # N-1 relationships
-        for link,rel in __N_TO_ONE_RELS.viewitems():
+        for link,rel in __N_TO_ONE_RELS.items():
             if rel in dropSpec:
                 lhDrop = drops[dropSpec[rel]]
                 propName = LINKTYPE_NTO1_PROPERTY[link]
@@ -220,7 +220,7 @@ def createGraphFromDropSpecList(dropSpecList):
 
     # We're done! Return the roots of the graph to the caller
     roots = []
-    for drop in drops.itervalues():
+    for drop in drops.values():
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
     return roots
@@ -282,14 +282,14 @@ def _getIds(dropSpec):
     # uid is copied from oid if not explicitly given
     oid = dropSpec['oid']
     uid = oid
-    if dropSpec.has_key('uid'):
+    if 'uid' in dropSpec:
         uid = dropSpec['uid']
     return oid, uid
 
 def _getKwargs(dropSpec):
     kwargs = dict(dropSpec)
     del kwargs['oid']
-    if kwargs.has_key('uid'):
+    if 'uid' in kwargs:
         del kwargs['uid']
     return kwargs
 

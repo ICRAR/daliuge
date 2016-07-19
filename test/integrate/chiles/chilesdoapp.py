@@ -23,8 +23,10 @@ import os
 import sys
 import uuid
 import threading
-from chilesdo import Split, Clean, SourceFlux
+
 from dfms.drop import DirectoryContainer, InMemoryDROP
+
+from .chilesdo import Split, Clean, SourceFlux
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = '/home/jenkins/casa-release-4.4.0-el6/'
@@ -120,7 +122,6 @@ if __name__ == '__main__':
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print str(e)
         sys.exit(-1)
 
     sys.exit(0)

@@ -72,12 +72,12 @@ if __name__ == '__main__':
     droptype = getattr(importlib.import_module(modname), classname)
     mem, uTime, sTime = measure(n, droptype)
     tTime = uTime + sTime
-    memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in mem, uTime, sTime, tTime]
+    memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in (mem, uTime, sTime, tTime)]
 
     if options.csv:
-        print "%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f" % (options.type, n, mem, uTime*1e3, sTime*1e3, tTime*1e3, memAvg, uTimeAvg*1e6, sTimeAvg*1e6, tTimeAvg*1e6)
+        print("%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f" % (options.type, n, mem, uTime*1e3, sTime*1e3, tTime*1e3, memAvg, uTimeAvg*1e6, sTimeAvg*1e6, tTimeAvg*1e6))
     else:
-        print "%d bytes used by %d %ss (%.2f bytes per DROP)" % (mem, n, droptype.__name__, memAvg)
-        print "Total time:  %.2f msec (%.2f msec per DROP)" % (tTime, tTimeAvg)
-        print "User time:   %.2f msec (%.2f msec per DROP)" % (uTime, uTimeAvg)
-        print "System time: %.2f msec (%.2f msec per DROP)" % (sTime, sTimeAvg)
+        print("%d bytes used by %d %ss (%.2f bytes per DROP)" % (mem, n, droptype.__name__, memAvg))
+        print("Total time:  %.2f msec (%.2f msec per DROP)" % (tTime, tTimeAvg))
+        print("User time:   %.2f msec (%.2f msec per DROP)" % (uTime, uTimeAvg))
+        print("System time: %.2f msec (%.2f msec per DROP)" % (sTime, sTimeAvg))

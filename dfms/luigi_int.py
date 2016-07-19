@@ -29,6 +29,7 @@ import threading
 import time
 
 import luigi
+import six
 
 from dfms import droputils, utils
 from dfms.ddap_protocol import ExecutionMode, DROPStates
@@ -138,7 +139,7 @@ class FinishGraphExecution(luigi.Task):
         super(FinishGraphExecution, self).__init__(*args, **kwargs)
         self._req    = None
 
-        if isinstance(self.pgCreator, basestring):
+        if isinstance(self.pgCreator, six.string_types):
             parts = self.pgCreator.split('.')
             module = importlib.import_module('.'.join(parts[:-1]))
             pgCreatorFn = getattr(module, parts[-1])

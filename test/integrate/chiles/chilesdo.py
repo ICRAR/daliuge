@@ -19,11 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import Queue
 import logging
 import threading
 
 import drivecasa
+from six.moves import queue as Queue  # @UnresolvedImport
 
 from dfms.drop import BarrierAppDROP
 

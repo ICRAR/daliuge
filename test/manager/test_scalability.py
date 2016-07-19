@@ -38,8 +38,8 @@ def create_graph(branches, drops_per_branch):
     graph = []
     completed_uids = []
     final_apps = []
-    for branch in xrange(branches):
-        for i in xrange(drops_per_branch):
+    for branch in range(branches):
+        for i in range(drops_per_branch):
             data_uid = 'data_%d_branch_%d' % (i, branch)
             app_uid = 'app_%d_branch_%d' % (i, branch)
             data_drop = memory_drop(data_uid)
@@ -91,7 +91,7 @@ class TestBigGraph(unittest.TestCase):
         branches = 5
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=5, drops_per_branch=drops_per_branch)
-        self.assertEquals(n_drops, len(graph))
+        self.assertEqual(n_drops, len(graph))
 
         c = client.NodeManagerClient(port=restPort)
         dimProcess = subprocess.Popen(args)

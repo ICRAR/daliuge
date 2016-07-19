@@ -25,6 +25,7 @@ Created on 20 Jul 2015
 @author: rtobar
 '''
 
+import codecs
 import json
 import os
 import threading
@@ -32,15 +33,15 @@ import unittest
 
 from luigi import scheduler, worker
 import pkg_resources
+import six
 
 from dfms import droputils
 from dfms import graph_loader, utils
 from dfms.apps.socket_listener import SocketListenerApp
 from dfms.luigi_int import FinishGraphExecution
-import graphsRepository
 
 
-test_data = str(bytearray(os.urandom(16*1024)))
+test_data = os.urandom(16*1024)
 
 class LuigiTests(unittest.TestCase):
     """
@@ -50,16 +51,6 @@ class LuigiTests(unittest.TestCase):
     I preferred to have explicit separated methods for each graph to be able to
     pinpoint failures more easily.
     """
-
-    def setUp(self):
-        super(LuigiTests, self).setUp()
-        self.prevDef = graphsRepository.defaultSleepTime
-        graphsRepository.defaultSleepTime = 0
-
-    def tearDown(self):
-        graphsRepository.defaultSleepTime = self.prevDef
-        super(LuigiTests, self).tearDown()
-
     def test_mwa_fornax_pg(self):
         self._test_graph('mwa_fornax_pg')
 
@@ -88,11 +79,11 @@ class LuigiTests(unittest.TestCase):
         self._test_graphFromFile("complex.js", 5)
 
     def _test_graphFromFile(self, f, socketListeners=1):
-        f = pkg_resources.resource_stream("test", "graphs/%s" % (f))  # @UndefinedVariable
-        self._test_graph(graph_loader.createGraphFromDropSpecList(json.load(f)), socketListeners)
+        with pkg_resources.resource_stream("test", "graphs/%s" % (f)) as f:  # @UndefinedVariable
+            self._test_graph(graph_loader.createGraphFromDropSpecList(json.load(codecs.getreader('utf-8')(f))), socketListeners)
 
     def _test_graph(self, pgCreator, socketListeners=1):
-        if isinstance(pgCreator, basestring):
+        if isinstance(pgCreator, six.string_types):
             pgCreator = "test.graphsRepository.%s" % (pgCreator)
         task = FinishGraphExecution(pgCreator=pgCreator)
         sch = scheduler.CentralPlannerScheduler()
@@ -105,7 +96,7 @@ class LuigiTests(unittest.TestCase):
                 threading.Thread(target=lambda drop: drop.execute(), args=(drop,)).start()
 
         # Write to the initial nodes of the graph to trigger the graph execution
-        for i in xrange(socketListeners):
+        for i in range(socketListeners):
             threading.Thread(target=utils.writeToRemotePort, name='socketWriter', args=("localhost", 1111+i, test_data, 2)).start()
 
         # Run the graph! Luigi will either monitor or execute the DROPs

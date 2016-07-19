@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 import logging
-import urllib
+
+from six.moves import urllib_parse as urllib  # @UnresolvedImport
 
 from dfms.manager import constants
 from dfms.restutils import RestClient
