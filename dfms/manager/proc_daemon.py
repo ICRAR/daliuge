@@ -164,7 +164,7 @@ class DfmsDaemon(RestServer):
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', addrs[0], 'tcp', addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
         args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
