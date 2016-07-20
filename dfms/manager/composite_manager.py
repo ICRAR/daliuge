@@ -127,10 +127,6 @@ class CompositeManager(DROPManager):
                 break
 
     @property
-    def id(self):
-        return self._id
-
-    @property
     def dmHosts(self):
         return self._dmHosts[:]
 
