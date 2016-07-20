@@ -218,6 +218,7 @@ class NMRestServer(ManagerRestServer):
         app.get(   '/api',                                   callback=self.getNMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',   callback=self.linkGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',       callback=self.materializeTemplate)
+        app.post(  '/api/subscriptions',                     callback=self.add_node_subscriptions)
 
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDM)
@@ -236,10 +237,18 @@ class NMRestServer(ManagerRestServer):
         linkType = int(params['linkType'])
         self.dm.linkGraphParts(sessionId, lhOID, rhOID, linkType)
 
+    @daliuge_aware
     def materializeTemplate(self, tpl):
         tplParams = dict(bottle.request.params)
         sessionId = tplParams.pop('sessionId')
         self.dm.materializeTemplate(tpl, sessionId, **tplParams)
+
+    @daliuge_aware
+    def add_node_subscriptions(self):
+        if bottle.request.content_type != 'application/json':
+            bottle.response.status = 415
+            return
+        self.dm.add_node_subscriptions(bottle.request.json)
 
     #===========================================================================
     # non-REST methods

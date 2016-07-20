@@ -142,6 +142,9 @@ class NodeManagerClient(BaseDROPManagerClient):
     def __init__(self, host='localhost', port=constants.NODE_DEFAULT_REST_PORT, timeout=10):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
+    def add_node_subscriptions(self, node_subscriptions):
+        self._post_json('/subscriptions', list(node_subscriptions))
+
 class CompositeManagerClient(BaseDROPManagerClient):
 
     def nodes(self):
