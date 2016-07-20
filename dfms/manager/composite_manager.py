@@ -244,10 +244,10 @@ class CompositeManager(DROPManager):
         self.replicate(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
-    def _add_node_subscriptions(self, host_and_subscriptions):
+    def _add_node_subscriptions(self, sessionId, host_and_subscriptions):
         host, subscriptions = host_and_subscriptions
         with NodeManagerClient(host) as nm:
-            nm.add_node_subscriptions(subscriptions)
+            nm.add_node_subscriptions(sessionId, subscriptions)
 
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
@@ -472,7 +472,7 @@ class CompositeManager(DROPManager):
 
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
-        self._tp.map(self._add_node_subscriptions, self._nodes_subscriptions[sessionId].items())
+        self._tp.map(functools.partial(self._add_node_subscriptions, sessionId), self._nodes_subscriptions[sessionId].items())
         logger.debug("Delivered node subscription list to node managers")
 
         logger.info('Deploying Session %s in all hosts', sessionId)
