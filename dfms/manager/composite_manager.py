@@ -308,9 +308,7 @@ class CompositeManager(DROPManager):
         # Create the individual graphs on each DM now that they are correctly
         # separated.
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
-
-        partitions = [(host, perPartition[host]) for host in self._dmHosts]
-        self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=partitions)
+        self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=perPartition.items())
 
         self._interDMRelations[sessionId].extend(interDMRelations)
 
