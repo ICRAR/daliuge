@@ -171,6 +171,11 @@ class NodeManager(DROPManager):
         session = self._sessions[sessionId]
         return len(session._graph)
 
+    def add_node_subscriptions(self, node_subscriptions):
+        # TODO: add a subscription to these nodes
+        #       we also have to unsubscribe from them at some point
+        pass
+
     def getTemplates(self):
 
         # TODO: we currently have a hardcoded list of functions, but we should

@@ -29,10 +29,10 @@ import time
 import Pyro4
 
 from dfms import remote, graph_loader, drop, utils
-from dfms.ddap_protocol import DROPRel
+from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
-from dfms.manager.client import BaseDROPManagerClient
+from dfms.manager.client import BaseDROPManagerClient, NodeManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
@@ -84,6 +84,7 @@ class CompositeManager(DROPManager):
         self._subDmId = subDmId
         self._dmHosts = dmHosts
         self._interDMRelations = collections.defaultdict(list)
+        self._nodes_subscriptions = {}
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmCheckTimeout = dmCheckTimeout
@@ -243,6 +244,11 @@ class CompositeManager(DROPManager):
         self.replicate(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
+    def _add_node_subscriptions(self, host_and_subscriptions):
+        host, subscriptions = host_and_subscriptions
+        with NodeManagerClient(host) as nm:
+            nm.add_node_subscriptions(subscriptions)
+
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
         dm.addGraphSpec(sessionId, graphSpec)
@@ -304,6 +310,24 @@ class CompositeManager(DROPManager):
             newDMRelations.append(new_rel)
         interDMRelations[:] = newDMRelations
         logger.debug('Removed (and sanitized) %d inter-dm relationships', len(interDMRelations))
+
+        # Calculate the list of nodes to which each node has to subscribe for
+        # events. We pass this information later on to the Node Managers
+        # directly
+        graphDict = {uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec}
+        evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
+        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
+
+        node_subscriptions = collections.defaultdict(set)
+        for rel in interDMRelations:
+            rhn = graphDict[rel.rhs]['node']
+            lhn = graphDict[rel.lhs]['node']
+            if rel.rel in evt_consumer:
+                node_subscriptions[lhn].add(rhn)
+            elif rel.rel in evt_producer:
+                node_subscriptions[rhn].add(lhn)
+        self._nodes_subscriptions[sessionId] = node_subscriptions
+        logger.debug("Calculated Node Manager subscriptions: %r", node_subscriptions)
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
@@ -445,6 +469,11 @@ class CompositeManager(DROPManager):
             drop._pyroRelease()
 
     def deploySession(self, sessionId, completedDrops=[]):
+
+        # Indicate the node managers that they have to subscribe to events
+        # published by some nodes
+        self._tp.map(self._add_node_subscriptions, self._nodes_subscriptions[sessionId].items())
+        logger.debug("Delivered node subscription list to node managers")
 
         logger.info('Deploying Session %s in all hosts', sessionId)
 
