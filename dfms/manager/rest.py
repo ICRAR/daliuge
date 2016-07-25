@@ -130,10 +130,6 @@ class ManagerRestServer(RestServer):
         """
 
     @daliuge_aware
-    def shutdown_node_manager(self):
-        self.dm.shutdown()
-
-    @daliuge_aware
     def createSession(self):
         newSession = bottle.request.json
         sessionId = newSession['sessionId']
@@ -226,7 +222,19 @@ class NMRestServer(ManagerRestServer):
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDM)
         app.get(   '/api/shutdown',                            callback=self.shutdown_node_manager)
-                
+        app.post(  '/api/sessions/<sessionId>/property',       callback=self.get_drop_property)
+
+    @daliuge_aware
+    def get_drop_property(self, sessionId):
+        prop_name = bottle.request.forms['pname']
+        drop_uuid = bottle.request.forms['duuid']
+        # lookup drop and return property value
+        return [prop_name, drop_uuid]
+
+    @daliuge_aware
+    def shutdown_node_manager(self):
+        self.dm.shutdown()
+
     @daliuge_aware
     def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
