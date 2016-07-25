@@ -217,6 +217,10 @@ class NodeManager(DROPManager):
                 host, port = sub
             self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
 
+    def get_drop_property(self, sessionId, prop_name, drop_uuid):
+        self._check_session_id(sessionId)
+        return self._sessions[sessionId].get_drop_property(prop_name, drop_uuid)
+
     def getTemplates(self):
 
         # TODO: we currently have a hardcoded list of functions, but we should

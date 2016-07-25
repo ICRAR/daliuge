@@ -324,6 +324,9 @@ class Session(object):
 
     __del__ = destroy
 
+    def get_drop_property(self, prop_name, drop_uuid):
+        return getattr(self._drops[drop_uuid], prop_name)
+
     # Support for the 'with' keyword
     def __enter__(self):
         return self

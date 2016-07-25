@@ -143,8 +143,7 @@ class NodeManagerClient(BaseDROPManagerClient):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def get_drop_property(self, sessionId, prop_name, drop_uuid):
-        content = {'pname': prop_name, 'duuid': drop_uuid}
-        return self._post_form('/sessions/%s/property' % (urllib.quote(sessionId),), content)
+        return self._get_json('/sessions/%s/property?pname=%s&duuid=%s' % (urllib.quote(sessionId), urllib.quote(prop_name), urllib.quote(drop_uuid)))
 
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), list(node_subscriptions))
