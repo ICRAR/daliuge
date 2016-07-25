@@ -76,7 +76,7 @@ def tearDownMMTests(self):
     self._dim_t.join()
     self.dim.shutdown()
     self.mm.shutdown()
-    self.nm.close()
+    self.nm.shutdown()
 
 class TestMM(unittest.TestCase):
 

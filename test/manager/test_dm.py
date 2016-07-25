@@ -78,7 +78,7 @@ class TestDM(unittest.TestCase):
 
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
         
-        dm.close()
+        dm.shutdown()
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -126,8 +126,8 @@ class TestDM(unittest.TestCase):
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         
-        dm1.close()
-        dm2.close()
+        dm1.shutdown()
+        dm2.shutdown()
 
     def test_runGraphSeveralDropsPerDM(self):
         """
@@ -193,8 +193,8 @@ class TestDM(unittest.TestCase):
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         
-        dm1.close()
-        dm2.close()
+        dm1.shutdown()
+        dm2.shutdown()
 
     def test_runWithFourDMs(self):
         """
@@ -288,7 +288,7 @@ class TestDM(unittest.TestCase):
 
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
-            dm.close()
+            dm.shutdown()
 
     def test_many_relationships(self):
         """
@@ -344,8 +344,8 @@ class TestDM(unittest.TestCase):
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         
-        dm1.close()
-        dm2.close()
+        dm1.shutdown()
+        dm2.shutdown()
 
 class TestREST(unittest.TestCase):
 

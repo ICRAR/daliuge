@@ -75,7 +75,7 @@ def tearDownDimTests(self):
     # Stop the server and wait until it's closed
     self._dm_server.stop()
     self._dm_t.join()
-    self.dm.close()
+    self.dm.shutdown()
     self.assertFalse(self._dm_t.isAlive())
     self.dim.shutdown()
 
