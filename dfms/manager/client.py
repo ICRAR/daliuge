@@ -145,6 +145,9 @@ class NodeManagerClient(BaseDROPManagerClient):
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), list(node_subscriptions))
 
+    def close_node_manager(self):
+        self._GET('/close')
+
 class CompositeManagerClient(BaseDROPManagerClient):
 
     def nodes(self):

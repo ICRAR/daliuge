@@ -109,4 +109,6 @@ class TestBigGraph(unittest.TestCase):
             self.assertLessEqual(delta, 60, "It took way too much time to create %d drops" % (n_drops,))
 
         finally:
+            with client.NodeManagerClient(port=8000) as nm:
+                nm.close_node_manager()
             dimProcess.kill()

@@ -65,7 +65,6 @@ setup(
             # paramiko 2.0.0 requires cryptography>=1.1, which in turn
             # requires development packages to be installed on the system
             "paramiko<2.0.0",
-            "paste",
             "psutil",
             "Pyro4>=4.39",
             "pyswarm",
@@ -73,6 +72,7 @@ setup(
             "scp",
             'six',
             "zeroconf",
+            "pyzmq-static"
       ],
       # Keep alpha-sorted PLEASE!
 
@@ -81,7 +81,6 @@ setup(
       },
       dependency_links=[
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
-        'https://bitbucket.org/rodrigo_tobar/paste/get/tip.zip#egg=paste',
         'https://bitbucket.org/al45tair/netifaces/get/tip.zip#egg=netifaces',
         ],
       test_suite="test",
