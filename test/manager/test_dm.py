@@ -31,6 +31,8 @@ import unittest
 import Pyro4
 import pkg_resources
 
+from contextlib import closing
+
 from dfms import droputils
 from dfms import ngaslite, utils
 from dfms.ddap_protocol import DROPStates
@@ -43,12 +45,18 @@ from test.manager import testutils
 
 hostname = 'localhost'
 
+def quickDeploy(nm, sessionId, graphSpec, node_subscriptions):
+    nm.createSession(sessionId)
+    nm.addGraphSpec(sessionId, graphSpec)
+    nm.add_node_subscriptions(sessionId, node_subscriptions)
+    return nm.deploySession(sessionId)
+
 class ErroneousApp(BarrierAppDROP):
     def run(self):
         raise Exception("Sorry, we always fail")
 
 class TestDM(unittest.TestCase):
-
+    
     def test_error_listener(self):
 
         evt = threading.Event()
@@ -69,6 +77,8 @@ class TestDM(unittest.TestCase):
         dm.deploySession(sessionId, ["A"])
 
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
+        
+        dm.close()
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -82,16 +92,16 @@ class TestDM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dm1 = NodeManager(useDLM=False)
-        dm2 = NodeManager(useDLM=False)
+        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
+        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
-        uris1 = dm1.quickDeploy(sessionId, g1)
-        uris2 = dm2.quickDeploy(sessionId, g2)
+        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554)])
+        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553)])
         self.assertEqual(1, len(uris1))
         self.assertEqual(2, len(uris2))
 
@@ -115,6 +125,9 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
+        
+        dm1.close()
+        dm2.close()
 
     def test_runGraphSeveralDropsPerDM(self):
         """
@@ -130,8 +143,8 @@ class TestDM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1 = NodeManager(useDLM=False)
-        dm2 = NodeManager(useDLM=False)
+        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
+        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
@@ -141,8 +154,9 @@ class TestDM(unittest.TestCase):
         g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
                {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
-        uris1 = dm1.quickDeploy(sessionId, g1)
-        uris2 = dm2.quickDeploy(sessionId, g2)
+        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554)])
+        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553)])
+
         self.assertEqual(4, len(uris1))
         self.assertEqual(2, len(uris2))
 
@@ -178,6 +192,9 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
+        
+        dm1.close()
+        dm2.close()
 
     def test_runWithFourDMs(self):
         """
@@ -204,10 +221,10 @@ class TestDM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dm1 = NodeManager(useDLM=False)
-        dm2 = NodeManager(useDLM=False)
-        dm3 = NodeManager(useDLM=False)
-        dm4 = NodeManager(useDLM=False)
+        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
+        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
+        dm3 = NodeManager(useDLM=False, zmq_bind_port = 5555)
+        dm4 = NodeManager(useDLM=False, zmq_bind_port = 5556)
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
@@ -225,11 +242,12 @@ class TestDM(unittest.TestCase):
               memory('M'),
               sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
               memory('O')]
-
-        uris1 = dm1.quickDeploy(sessionId, g1)
-        uris2 = dm2.quickDeploy(sessionId, g2)
-        uris3 = dm3.quickDeploy(sessionId, g3)
-        uris4 = dm4.quickDeploy(sessionId, g4)
+        
+        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554), ('localhost', 5555), ('localhost', 5556)])
+        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553), ('localhost', 5555), ('localhost', 5556)])
+        uris3 = quickDeploy(dm3, sessionId, g3, [('localhost', 5553), ('localhost', 5554), ('localhost', 5556)])
+        uris4 = quickDeploy(dm4, sessionId, g4, [('localhost', 5553), ('localhost', 5554), ('localhost', 5555)]) 
+        
         self.assertEqual(1, len(uris1))
         self.assertEqual(5, len(uris2))
         self.assertEqual(5, len(uris3))
@@ -270,6 +288,7 @@ class TestDM(unittest.TestCase):
 
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
+            dm.close()
 
     def test_many_relationships(self):
         """
@@ -290,8 +309,8 @@ class TestDM(unittest.TestCase):
         |     |    | |--> BN --|      |
         =======    ====================
         """
-        dm1 = NodeManager(useDLM=False)
-        dm2 = NodeManager(useDLM=False)
+        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
+        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
 
         sessionId = 's1'
         N = 100
@@ -302,8 +321,8 @@ class TestDM(unittest.TestCase):
             # SleepAndCopyApp effectively opens the input drop
             g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
 
-        uris1 = dm1.quickDeploy(sessionId, g1)
-        uris2 = dm2.quickDeploy(sessionId, g2)
+        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554)])
+        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553)])
         self.assertEqual(1,   len(uris1))
         self.assertEqual(1+N, len(uris2))
 
@@ -324,6 +343,9 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
+        
+        dm1.close()
+        dm2.close()
 
 class TestREST(unittest.TestCase):
 

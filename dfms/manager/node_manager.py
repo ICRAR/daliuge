@@ -29,10 +29,13 @@ import inspect
 import logging
 import os
 import sys
-
+import zmq
+import time
 import six
 
-from dfms import droputils
+from threading import Thread
+
+from dfms import droputils, utils
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository
@@ -63,6 +66,16 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
+class DropEventListener(utils.noopctx):
+
+    def __init__(self, nm):
+        self._nm = nm
+
+    def handleEvent(self, event):
+        print event
+        self._nm._zmqsocketpub.send_json(event.__dict__)
+        
+
 class NodeManager(DROPManager):
     """
     A DROPManager that creates and holds references to DROPs.
@@ -78,7 +91,8 @@ class NodeManager(DROPManager):
     """
 
     def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None,
-                 enable_luigi=False):
+                 enable_luigi=False, zmq_bind_port = 5553):
+        self._event_listener = DropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
@@ -108,6 +122,33 @@ class NodeManager(DROPManager):
 
         self._enable_luigi = enable_luigi
 
+        self._zmqport = zmq_bind_port
+        self._zmqcontextpub = zmq.Context()
+        self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)
+        self._zmqsocketpub.bind("tcp://*:%s" % self._zmqport)
+        
+        self._zmqcontextsub = zmq.Context()
+        self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)
+        self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, '')
+        
+        self._zmqsubthread = Thread(target = self._zmq_sub_thread)
+        self._zmqsubthread.start()
+
+    def close(self):
+        self._zmqcontextpub.destroy()
+        self._zmqcontextsub.destroy()
+        
+    def _zmq_sub_thread(self):        
+        while True:
+            try:
+                payload = self._zmqsocketsub.recv(flags=zmq.NOBLOCK)
+                print payload
+            except zmq.Again:
+                time.sleep(0.001)
+            except Exception:
+                # Figure out what to do here
+                break
+    
     def _check_session_id(self, session_id):
         if session_id not in self._sessions:
             raise NoSessionException(session_id)
@@ -121,11 +162,6 @@ class NodeManager(DROPManager):
     def getSessionStatus(self, sessionId):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].status
-
-    def quickDeploy(self, sessionId, graphSpec):
-        self.createSession(sessionId)
-        self.addGraphSpec(sessionId, graphSpec)
-        return self.deploySession(sessionId)
 
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
@@ -148,14 +184,13 @@ class NodeManager(DROPManager):
         session = self._sessions[sessionId]
         session.deploy(completedDrops=completedDrops)
         roots = session.roots
-
         logger.debug('Registering new Drops with the DLM and collecting their URIs')
         uris = {}
         for drop,_ in droputils.breadFirstTraverse(roots):
             uris[drop.uid] = drop.uri
             if self._dlm:
                 self._dlm.addDrop(drop)
-
+            drop.subscribe(self._event_listener)
         return uris
 
     def destroySession(self, sessionId):
@@ -173,9 +208,13 @@ class NodeManager(DROPManager):
 
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._check_session_id(sessionId)
-        # TODO: add a subscription to these nodes
-        #       we also have to unsubscribe from them at some point
-        pass
+        # we also have to unsubscribe from them at some point
+        for sub in node_subscriptions:
+            port = self._zmqport
+            host = sub
+            if type(sub) is tuple:
+                host, port = sub
+            self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
 
     def getTemplates(self):
 

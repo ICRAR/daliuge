@@ -130,6 +130,10 @@ class ManagerRestServer(RestServer):
         """
 
     @daliuge_aware
+    def close_node_manager(self):
+        self.dm.close()
+
+    @daliuge_aware
     def createSession(self):
         newSession = bottle.request.json
         sessionId = newSession['sessionId']
@@ -219,10 +223,10 @@ class NMRestServer(ManagerRestServer):
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
-
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDM)
-
+        app.get(   '/api/close',                            callback=self.close_node_manager)
+                
     @daliuge_aware
     def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
