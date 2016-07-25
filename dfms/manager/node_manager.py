@@ -72,9 +72,7 @@ class DropEventListener(utils.noopctx):
         self._nm = nm
 
     def handleEvent(self, event):
-        print event
         self._nm._zmqsocketpub.send_json(event.__dict__)
-        
 
 class NodeManager(DROPManager):
     """
@@ -145,7 +143,7 @@ class NodeManager(DROPManager):
         while self._zmq_running:
             try:
                 payload = self._zmqsocketsub.recv(flags=zmq.NOBLOCK)
-                print payload
+                logger.debug("Received zmq payload: %r", payload)
             except zmq.Again:
                 time.sleep(0.001)
             except Exception:

@@ -23,7 +23,7 @@ import json
 import logging
 
 import bottle
-from wsgiref.simple_server import make_server, WSGIServer
+from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
 from SocketServer import ThreadingMixIn
 import six.moves.http_client as httplib  # @UnresolvedImport
 import six.moves.urllib_parse as urllib # @UnresolvedImport
@@ -43,13 +43,18 @@ class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
     daemon_threads = True
     allow_reuse_address = True
 
+class LoggingWSGIRequestHandler(WSGIRequestHandler):
+    def log_message(self, fmt, *args):
+        logger.debug(fmt, *args)
+
 class RestServerWSGIServer:
     def __init__(self, wsgi_app, listen = '127.0.0.1', port = 8080):
         self.wsgi_app = wsgi_app
         self.listen = listen
         self.port = port
         self.server = make_server(self.listen, self.port, self.wsgi_app,
-                                  ThreadingWSGIServer)
+                                  server_class=ThreadingWSGIServer,
+                                  handler_class=LoggingWSGIRequestHandler)
 
     def serve_forever(self):
         self.server.serve_forever()
