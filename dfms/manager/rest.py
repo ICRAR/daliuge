@@ -130,8 +130,8 @@ class ManagerRestServer(RestServer):
         """
 
     @daliuge_aware
-    def close_node_manager(self):
-        self.dm.close()
+    def shutdown_node_manager(self):
+        self.dm.shutdown()
 
     @daliuge_aware
     def createSession(self):
@@ -225,7 +225,7 @@ class NMRestServer(ManagerRestServer):
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
         # The non-REST mappings that serve HTML-related content
         app.get(  '/', callback=self.visualizeDM)
-        app.get(   '/api/close',                            callback=self.close_node_manager)
+        app.get(   '/api/shutdown',                            callback=self.shutdown_node_manager)
                 
     @daliuge_aware
     def getNMStatus(self):

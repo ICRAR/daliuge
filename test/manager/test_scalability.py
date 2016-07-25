@@ -110,5 +110,5 @@ class TestBigGraph(unittest.TestCase):
 
         finally:
             with client.NodeManagerClient(port=8000) as nm:
-                nm.close_node_manager()
+                nm.shutdown_node_manager()
             dimProcess.kill()

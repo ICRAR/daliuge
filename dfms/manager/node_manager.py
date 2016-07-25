@@ -122,6 +122,7 @@ class NodeManager(DROPManager):
 
         self._enable_luigi = enable_luigi
 
+        self._zmq_running = True
         self._zmqport = zmq_bind_port
         self._zmqcontextpub = zmq.Context()
         self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)
@@ -134,12 +135,14 @@ class NodeManager(DROPManager):
         self._zmqsubthread = Thread(target = self._zmq_sub_thread)
         self._zmqsubthread.start()
 
-    def close(self):
+    def shutdown(self):
+        self._zmq_running = False
+        self._zmqsubthread.join()
         self._zmqcontextpub.destroy()
         self._zmqcontextsub.destroy()
         
     def _zmq_sub_thread(self):        
-        while True:
+        while self._zmq_running:
             try:
                 payload = self._zmqsocketsub.recv(flags=zmq.NOBLOCK)
                 print payload
