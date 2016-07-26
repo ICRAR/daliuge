@@ -34,7 +34,8 @@ from dfms import droputils, utils
 from dfms import luigi_int, graph_loader
 from dfms.ddap_protocol import DROPLinkType, DROPStates
 from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
-from dfms.exceptions import InvalidSessionState, InvalidGraphException
+from dfms.exceptions import InvalidSessionState, InvalidGraphException,\
+    NoDropException, DaliugeException
 
 
 _LINKTYPE_TO_NREL = {
@@ -58,7 +59,6 @@ class SessionStates:
     any given point of time.
     """
     PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = range(5)
-
 
 class ErrorStatusListener(utils.noopctx):
 
@@ -324,8 +324,14 @@ class Session(object):
 
     __del__ = destroy
 
-    def get_drop_property(self, prop_name, drop_uuid):
-        return getattr(self._drops[drop_uuid], prop_name)
+    def get_drop_property(self, prop_name, uid):
+        if uid not in self._drops:
+            raise NoDropException(uid)
+        try:
+            drop = self._drops[uid]
+            return getattr(drop, prop_name)
+        except AttributeError:
+            raise DaliugeException("%r has no property called %s" % (drop, uid))
 
     # Support for the 'with' keyword
     def __enter__(self):
