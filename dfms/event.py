@@ -69,6 +69,10 @@ class EventFirer(object):
         """
         logger.debug('Adding listener to %r eventType=%s: %r', self, eventType, listener)
 
+        import Pyro4
+        if isinstance(listener, Pyro4.Proxy):
+            return
+
         eventType = eventType or EventFirer.__ALL_EVENTS
         self._listeners[eventType].append(listener)
 

@@ -31,8 +31,6 @@ import unittest
 import Pyro4
 import pkg_resources
 
-from contextlib import closing
-
 from dfms import droputils
 from dfms import ngaslite, utils
 from dfms.ddap_protocol import DROPStates
@@ -45,7 +43,7 @@ from test.manager import testutils
 
 hostname = 'localhost'
 
-def quickDeploy(nm, sessionId, graphSpec, node_subscriptions):
+def quickDeploy(nm, sessionId, graphSpec, node_subscriptions=[]):
     nm.createSession(sessionId)
     nm.addGraphSpec(sessionId, graphSpec)
     nm.add_node_subscriptions(sessionId, node_subscriptions)
@@ -77,7 +75,7 @@ class TestDM(unittest.TestCase):
         dm.deploySession(sessionId, ["A"])
 
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
-        
+
         dm.shutdown()
 
     def test_runGraphOneDOPerDOM(self):
@@ -100,8 +98,8 @@ class TestDM(unittest.TestCase):
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
-        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554)])
-        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553)])
+        uris1 = quickDeploy(dm1, sessionId, g1)
+        uris2 = quickDeploy(dm2, sessionId, g2, [{ ('localhost', 5553): {'A': ('B',)} }])
         self.assertEqual(1, len(uris1))
         self.assertEqual(2, len(uris2))
 
@@ -112,7 +110,7 @@ class TestDM(unittest.TestCase):
         a.addConsumer(b)
 
         # Run! We wait until c is completed
-        with droputils.EvtConsumerProxyCtx(self, c, 1):
+        with droputils.DROPWaiterCtx(self, dm2._sessions[sessionId].drops['C'], 1):
             a.write('a')
             a.setCompleted()
 
@@ -125,7 +123,7 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-        
+
         dm1.shutdown()
         dm2.shutdown()
 
@@ -242,12 +240,12 @@ class TestDM(unittest.TestCase):
               memory('M'),
               sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
               memory('O')]
-        
+
         uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554), ('localhost', 5555), ('localhost', 5556)])
         uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553), ('localhost', 5555), ('localhost', 5556)])
         uris3 = quickDeploy(dm3, sessionId, g3, [('localhost', 5553), ('localhost', 5554), ('localhost', 5556)])
-        uris4 = quickDeploy(dm4, sessionId, g4, [('localhost', 5553), ('localhost', 5554), ('localhost', 5555)]) 
-        
+        uris4 = quickDeploy(dm4, sessionId, g4, [('localhost', 5553), ('localhost', 5554), ('localhost', 5555)])
+
         self.assertEqual(1, len(uris1))
         self.assertEqual(5, len(uris2))
         self.assertEqual(5, len(uris3))
@@ -343,7 +341,7 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-        
+
         dm1.shutdown()
         dm2.shutdown()
 

@@ -29,11 +29,11 @@ import inspect
 import logging
 import os
 import sys
-import zmq
+import threading
 import time
-import six
 
-from threading import Thread
+import six
+import zmq
 
 from dfms import droputils, utils
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
@@ -72,7 +72,8 @@ class DropEventListener(utils.noopctx):
         self._nm = nm
 
     def handleEvent(self, event):
-        self._nm._zmqsocketpub.send_json(event.__dict__)
+        if event.type in ("dropCompleted", "producerFinished"):
+            self._nm._zmqsocketpub.send_pyobj(event)
 
 class NodeManager(DROPManager):
     """
@@ -120,36 +121,50 @@ class NodeManager(DROPManager):
 
         self._enable_luigi = enable_luigi
 
+        # Setting up zeromq for event publishing/subscription
         self._zmq_running = True
         self._zmqport = zmq_bind_port
         self._zmqcontextpub = zmq.Context()
         self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)
         self._zmqsocketpub.bind("tcp://*:%s" % self._zmqport)
-        
+
         self._zmqcontextsub = zmq.Context()
         self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)
         self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, '')
-        
-        self._zmqsubthread = Thread(target = self._zmq_sub_thread)
+
+        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
         self._zmqsubthread.start()
+
+        self._dropsubs = {}
 
     def shutdown(self):
         self._zmq_running = False
         self._zmqsubthread.join()
         self._zmqcontextpub.destroy()
         self._zmqcontextsub.destroy()
-        
-    def _zmq_sub_thread(self):        
+
+    def _zmq_sub_thread(self):
         while self._zmq_running:
             try:
-                payload = self._zmqsocketsub.recv(flags=zmq.NOBLOCK)
-                logger.debug("Received zmq payload: %r", payload)
+
+                evt = self._zmqsocketsub.recv_pyobj(flags=zmq.NOBLOCK)
+                if not evt.uid in self._dropsubs:
+                    continue
+
+                for tgt in self._dropsubs[evt.uid]:
+                    for s in self._sessions.values():
+                        if tgt in s.drops:
+                            s.drops[tgt].handleEvent(evt)
+                            break
+
             except zmq.Again:
                 time.sleep(0.001)
             except Exception:
+                import traceback
+                traceback.print_exc()
                 # Figure out what to do here
                 break
-    
+
     def _check_session_id(self, session_id):
         if session_id not in self._sessions:
             raise NoSessionException(session_id)
@@ -209,13 +224,17 @@ class NodeManager(DROPManager):
 
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._check_session_id(sessionId)
-        # we also have to unsubscribe from them at some point
-        for sub in node_subscriptions:
-            port = self._zmqport
-            host = sub
-            if type(sub) is tuple:
-                host, port = sub
-            self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
+
+        for node_subscription in node_subscriptions:
+            for nodesub, dropsubs in node_subscription.items():
+                port = self._zmqport
+                host = nodesub
+                if type(nodesub) is tuple:
+                    host, port = nodesub
+                # we also have to unsubscribe from them at some point
+                self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
+
+                self._dropsubs.update(dropsubs)
 
     def get_drop_property(self, sessionId, prop_name, drop_uuid):
         self._check_session_id(sessionId)
