@@ -324,7 +324,7 @@ class Session(object):
 
     __del__ = destroy
 
-    def get_drop_property(self, prop_name, uid):
+    def get_drop_property(self, uid, prop_name):
         if uid not in self._drops:
             raise NoDropException(uid)
         try:

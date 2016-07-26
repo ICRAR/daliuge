@@ -217,18 +217,18 @@ class NMRestServer(ManagerRestServer):
     def initializeSpecifics(self, app):
         app.get(   '/api',                                    callback=self.getNMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
+        app.get(   '/api/sessions/<sessionId>/property',      callback=self.get_drop_property)
         app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
         # The non-REST mappings that serve HTML-related content
-        app.get(  '/', callback=self.visualizeDM)
+        app.get(   '/', callback=self.visualizeDM)
         app.get(   '/api/shutdown',                            callback=self.shutdown_node_manager)
-        app.get(  '/api/sessions/<sessionId>/property',       callback=self.get_drop_property)
 
     @daliuge_aware
     def get_drop_property(self, sessionId):
+        uid = bottle.request.params['uid']
         prop_name = bottle.request.params['pname']
-        drop_uuid = bottle.request.params['duuid']
-        return self.dm.get_drop_property(sessionId, prop_name, drop_uuid)
+        return self.dm.get_drop_property(sessionId, uid, prop_name)
 
     @daliuge_aware
     def shutdown_node_manager(self):
