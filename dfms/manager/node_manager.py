@@ -236,9 +236,9 @@ class NodeManager(DROPManager):
 
                 self._dropsubs.update(dropsubs)
 
-    def get_drop_property(self, sessionId, prop_name, drop_uuid):
+    def get_drop_property(self, sessionId, uuid, prop_name):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].get_drop_property(prop_name, drop_uuid)
+        return self._sessions[sessionId].get_drop_property(uuid, prop_name)
 
     def getTemplates(self):
 
