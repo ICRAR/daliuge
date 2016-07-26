@@ -114,8 +114,8 @@ class TestDM(unittest.TestCase):
             a.write('a')
             a.setCompleted()
 
-        for drop in a, b, c:
-            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        for dm, drop in (dm1,a), (dm2,b), (dm2,c):
+            self.assertEqual(DROPStates.COMPLETED, dm.get_drop_property(sessionId, 'status', drop.uid))
         self.assertEqual(a.checksum, int(droputils.allDropContents(c)))
 
         for dropProxy in a,b,c:

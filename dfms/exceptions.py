@@ -58,6 +58,17 @@ class InvalidGraphException(DaliugeException):
     Daliuge.
     """
 
+class NoDropException(DaliugeException):
+    """
+    An exception thrown when a Drop UID is pointing to a non-existing Drop
+    """
+
+    def __init__(self, drop_uid):
+        self._drop_uid = drop_uid
+
+    def __repr__(self):
+        return "NoDropException <drop_uid: %s>" % (self._drop_uid)
+
 class NoSessionException(DaliugeException):
     """
     An exception thrown when a session ID is pointing to a non-existing session
