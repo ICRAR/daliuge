@@ -43,7 +43,7 @@ from test.manager import testutils
 
 hostname = 'localhost'
 
-def quickDeploy(nm, sessionId, graphSpec, node_subscriptions=[]):
+def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.createSession(sessionId)
     nm.addGraphSpec(sessionId, graphSpec)
     nm.add_node_subscriptions(sessionId, node_subscriptions)
@@ -99,7 +99,7 @@ class TestDM(unittest.TestCase):
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         uris1 = quickDeploy(dm1, sessionId, g1)
-        uris2 = quickDeploy(dm2, sessionId, g2, [{ ('localhost', 5553): {'A': ('B',)} }])
+        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'A': ('B',)}})
         self.assertEqual(1, len(uris1))
         self.assertEqual(2, len(uris2))
 
@@ -152,8 +152,8 @@ class TestDM(unittest.TestCase):
         g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
                {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
-        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554)])
-        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553)])
+        uris1 = quickDeploy(dm1, sessionId, g1)
+        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'D': ('E'), 'B': ('E',)}})
 
         self.assertEqual(4, len(uris1))
         self.assertEqual(2, len(uris2))
@@ -173,7 +173,7 @@ class TestDM(unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        with droputils.EvtConsumerProxyCtx(self, f, 5):
+        with droputils.DROPWaiterCtx(self, dm2._sessions[sessionId].drops['F'], 5):
             a.write('a')
             a.setCompleted()
             b.write('a')
@@ -241,10 +241,10 @@ class TestDM(unittest.TestCase):
               sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
               memory('O')]
 
-        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554), ('localhost', 5555), ('localhost', 5556)])
-        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553), ('localhost', 5555), ('localhost', 5556)])
-        uris3 = quickDeploy(dm3, sessionId, g3, [('localhost', 5553), ('localhost', 5554), ('localhost', 5556)])
-        uris4 = quickDeploy(dm4, sessionId, g4, [('localhost', 5553), ('localhost', 5554), ('localhost', 5555)])
+        uris1 = quickDeploy(dm1, sessionId, g1)
+        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'A': ('B',)}})
+        uris3 = quickDeploy(dm3, sessionId, g3, {('localhost', 5553): {'A': ('G',)}})
+        uris4 = quickDeploy(dm4, sessionId, g4, {('localhost', 5554): {'F': ('L',)}, ('localhost', 5555): {'K': ('M',)}})
 
         self.assertEqual(1, len(uris1))
         self.assertEqual(5, len(uris2))
@@ -269,7 +269,6 @@ class TestDM(unittest.TestCase):
         k = proxies['K']
         l = proxies['L']
         m = proxies['M']
-        o = proxies['O']
 
         a.addConsumer(b)
         a.addConsumer(g)
@@ -277,7 +276,7 @@ class TestDM(unittest.TestCase):
         k.addOutput(m)
 
         # Run! This should trigger the full execution of the graph
-        with droputils.EvtConsumerProxyCtx(self, o, 1):
+        with droputils.DROPWaiterCtx(self, dm4._sessions[sessionId].drops['O'], 5):
             a.write('a')
 
         for dropProxy in proxies.values():
@@ -319,8 +318,8 @@ class TestDM(unittest.TestCase):
             # SleepAndCopyApp effectively opens the input drop
             g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
 
-        uris1 = quickDeploy(dm1, sessionId, g1, [('localhost', 5554)])
-        uris2 = quickDeploy(dm2, sessionId, g2, [('localhost', 5553)])
+        uris1 = quickDeploy(dm1, sessionId, g1)
+        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'A': [x['oid'] for x in g2 if x['oid'].startswith('B')]}})
         self.assertEqual(1,   len(uris1))
         self.assertEqual(1+N, len(uris2))
 
@@ -334,8 +333,7 @@ class TestDM(unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        c = Pyro4.Proxy(uris2['C'])
-        with droputils.EvtConsumerProxyCtx(self, c, 5):
+        with droputils.DROPWaiterCtx(self, dm2._sessions[sessionId].drops['C'], 5):
             a.write('a')
             a.setCompleted()
 
