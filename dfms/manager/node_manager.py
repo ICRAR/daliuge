@@ -225,16 +225,15 @@ class NodeManager(DROPManager):
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._check_session_id(sessionId)
 
-        for node_subscription in node_subscriptions:
-            for nodesub, dropsubs in node_subscription.items():
-                port = self._zmqport
-                host = nodesub
-                if type(nodesub) is tuple:
-                    host, port = nodesub
-                # we also have to unsubscribe from them at some point
-                self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
+        for nodesub, dropsubs in node_subscriptions.items():
+            port = self._zmqport
+            host = nodesub
+            if type(nodesub) is tuple:
+                host, port = nodesub
+            # we also have to unsubscribe from them at some point
+            self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
 
-                self._dropsubs.update(dropsubs)
+            self._dropsubs.update(dropsubs)
 
     def get_drop_property(self, sessionId, uuid, prop_name):
         self._check_session_id(sessionId)
