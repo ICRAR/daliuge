@@ -72,7 +72,7 @@ setup(
             "scp",
             'six',
             "zeroconf",
-            "pyzmq-static"
+            "pyzmq"
       ],
       # Keep alpha-sorted PLEASE!
 
