@@ -225,6 +225,8 @@ class NodeManager(DROPManager):
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._check_session_id(sessionId)
 
+        logger.debug("Received subscription information: %r", node_subscriptions)
+
         for nodesub, dropsubs in node_subscriptions.items():
             port = self._zmqport
             host = nodesub
