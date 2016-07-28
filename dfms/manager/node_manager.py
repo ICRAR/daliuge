@@ -31,9 +31,11 @@ import os
 import sys
 import threading
 import time
+import Queue
 
 import six
 import zmq
+import errno
 
 from dfms import droputils, utils
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
@@ -73,7 +75,7 @@ class DropEventListener(utils.noopctx):
 
     def handleEvent(self, event):
         if event.type in ("dropCompleted", "producerFinished"):
-            self._nm._zmqsocketpub.send_pyobj(event)
+            self._nm._zmq_pub_q.put(event)
 
 class NodeManager(DROPManager):
     """
@@ -121,6 +123,9 @@ class NodeManager(DROPManager):
 
         self._enable_luigi = enable_luigi
 
+        self._zmq_sub_q = Queue.Queue()
+        self._zmq_pub_q = Queue.Queue()
+        
         # Setting up zeromq for event publishing/subscription
         self._zmq_running = True
         self._zmqport = zmq_bind_port
@@ -132,6 +137,12 @@ class NodeManager(DROPManager):
         self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)
         self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, '')
 
+        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread)
+        self._zmqpubqthread.start()
+
+        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread)
+        self._zmqsubqthread.start()
+        
         self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
         self._zmqsubthread.start()
 
@@ -139,26 +150,55 @@ class NodeManager(DROPManager):
 
     def shutdown(self):
         self._zmq_running = False
+        self._zmqsubqthread.join()
+        self._zmqpubqthread.join()
         self._zmqsubthread.join()
         self._zmqcontextpub.destroy()
         self._zmqcontextsub.destroy()
 
+    def _zmq_pub_queue_thread(self):
+        while self._zmq_running:
+            evt = None
+            try:
+                evt = self._zmq_pub_q.get_nowait()
+            except Queue.Empty:
+                time.sleep(0.01)
+                continue
+            
+            while self._zmq_running:
+                try:
+                    self._zmqsocketpub.send_pyobj(evt, flags = zmq.NOBLOCK)
+                    break
+                except zmq.error.Again:
+                    time.sleep(0.01)
+                    continue
+        
+    def _zmq_sub_queue_thread(self):
+        while self._zmq_running:
+            evt = None
+            try:
+                evt = self._zmq_sub_q.get_nowait()
+            except Queue.Empty:
+                time.sleep(0.01)
+                continue
+
+            if not evt.uid in self._dropsubs:
+                continue
+            
+            for tgt in self._dropsubs[evt.uid]:
+                for s in self._sessions.values():
+                    if tgt in s.drops:
+                        s.drops[tgt].handleEvent(evt)
+                        break
+        
     def _zmq_sub_thread(self):
         while self._zmq_running:
             try:
+                evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)
+                self._zmq_sub_q.put(evt)
 
-                evt = self._zmqsocketsub.recv_pyobj(flags=zmq.NOBLOCK)
-                if not evt.uid in self._dropsubs:
-                    continue
-
-                for tgt in self._dropsubs[evt.uid]:
-                    for s in self._sessions.values():
-                        if tgt in s.drops:
-                            s.drops[tgt].handleEvent(evt)
-                            break
-
-            except zmq.Again:
-                time.sleep(0.001)
+            except zmq.error.Again:
+                time.sleep(0.01)
             except Exception:
                 import traceback
                 traceback.print_exc()
