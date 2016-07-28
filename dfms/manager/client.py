@@ -146,7 +146,7 @@ class NodeManagerClient(BaseDROPManagerClient):
         return self._get_json('/sessions/%s/property?uid=%s&pname=%s' % (urllib.quote(sessionId), urllib.quote(uid), urllib.quote(prop_name)))
 
     def add_node_subscriptions(self, sessionId, node_subscriptions):
-        self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), list(node_subscriptions))
+        self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), node_subscriptions)
 
     def shutdown_node_manager(self):
         self._GET('/shutdown')

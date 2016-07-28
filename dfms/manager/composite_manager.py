@@ -40,6 +40,40 @@ from dfms.utils import portIsOpen
 
 logger = logging.getLogger(__name__)
 
+def uid_for_drop(dropSpec):
+    if 'uid' in dropSpec:
+        return dropSpec['uid']
+    return dropSpec['oid']
+
+def sanitize_relations(interDMRelations, graphSpec):
+
+    # TODO: Big change required to remove this hack here
+    #
+    # Values in the interDMRelations array use OIDs to identify drops.
+    # This is because so far we have told users to that OIDs are required
+    # in the physical graph description, while UIDs are optional
+    # (and copied over from the OID if not given).
+    # On the other hand, once drops are actually created in deploySession()
+    # we access the values in interDMRelations as if they had UIDs inside,
+    # which causes problems everywhere because everything else is indexed
+    # on UIDs.
+    # In order to not break the current physical graph constrains and keep
+    # things simple we'll simply replace the values of the interDMRelations
+    # array here to use the corresponding UID for the given OIDs.
+    # Because UIDs are globally unique across drop instances it makes sense
+    # to always index things by UID and not by OID. Thus, in the future we
+    # should probably change the requirement on the physical graphs sent by
+    # users to always require an UID, and optionally an OID, and then change
+    # all this code to immediately use those UIDs instead.
+    newDMRelations = []
+    graphDict = {dropSpec['oid']: dropSpec for dropSpec in graphSpec}
+    for rel in interDMRelations:
+        lhs = uid_for_drop(graphDict[rel.lhs])
+        rhs = uid_for_drop(graphDict[rel.rhs])
+        new_rel = DROPRel(lhs, rel.rel, rhs)
+        newDMRelations.append(new_rel)
+    interDMRelations[:] = newDMRelations
+
 class CompositeManager(DROPManager):
     """
     A DROPManager that in turn manages DROPManagers (sigh...).
@@ -84,7 +118,7 @@ class CompositeManager(DROPManager):
         self._subDmId = subDmId
         self._dmHosts = dmHosts
         self._interDMRelations = collections.defaultdict(list)
-        self._nodes_subscriptions = {}
+        self._drop_subscriptions = {}
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmCheckTimeout = dmCheckTimeout
@@ -278,56 +312,59 @@ class CompositeManager(DROPManager):
         interDMRelations = []
         for dropSpecs in perPartition.values():
             interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
-
-        # TODO: Big change required to remove this hack here
-        #
-        # Values in the interDMRelations array use OIDs to identify drops.
-        # This is because so far we have told users to that OIDs are required
-        # in the physical graph description, while UIDs are optional
-        # (and copied over from the OID if not given).
-        # On the other hand, once drops are actually created in deploySession()
-        # we access the values in interDMRelations as if they had UIDs inside,
-        # which causes problems everywhere because everything else is indexed
-        # on UIDs.
-        # In order to not break the current physical graph constrains and keep
-        # things simple we'll simply replace the values of the interDMRelations
-        # array here to use the corresponding UID for the given OIDs.
-        # Because UIDs are globally unique across drop instances it makes sense
-        # to always index things by UID and not by OID. Thus, in the future we
-        # should probably change the requirement on the physical graphs sent by
-        # users to always require an UID, and optionally an OID, and then change
-        # all this code to immediately use those UIDs instead.
-        def uid_for_drop(dropSpec):
-            if 'uid' in dropSpec:
-                return dropSpec['uid']
-            return dropSpec['oid']
-        newDMRelations = []
-        graphDict = {dropSpec['oid']: dropSpec for dropSpec in graphSpec}
-        for rel in interDMRelations:
-            lhs = uid_for_drop(graphDict[rel.lhs])
-            rhs = uid_for_drop(graphDict[rel.rhs])
-            new_rel = DROPRel(lhs, rel.rel, rhs)
-            newDMRelations.append(new_rel)
-        interDMRelations[:] = newDMRelations
+        sanitize_relations(interDMRelations, graphSpec)
         logger.debug('Removed (and sanitized) %d inter-dm relationships', len(interDMRelations))
 
-        # Calculate the list of nodes to which each node has to subscribe for
-        # events. We pass this information later on to the Node Managers
-        # directly
+        # We gather the information on which remote drops a given Node Manager
+        # should expect events from for event dispatching.
+        # Events will come from a number of remote hosts to which the NM needs
+        # to subscribe. Additionally each NM needs to know whether an incoming
+        # event applies to any of its local drops, and dispatch it accordingly.
+        #
+        # Thus, for a given NM that will receive events, we need to record
+        # the following information:
+        #  * A list of hosts to which it should subscribe
+        #  * For each of these hosts, a list of UIDs of drops that fire events
+        #    this NM should dispatch locally.
+        #  * A list of UIDs of local drops that should receive the event.
+        #
+        # In the following example:
+        #
+        # DM #1      DM #2
+        # =======    =============
+        # | A --|----|-> B --> C |
+        # =======    =============
+        #
+        # We would generate the following drop_subscriptions structure:
+        #
+        # {
+        #    'DM#2': {
+        #        'DM#1': {'A': ('B',)}
+        #    }
+        # }
+
         graphDict = {uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec}
         evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
         evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
 
-        node_subscriptions = collections.defaultdict(set)
+        drop_subscriptions = collections.defaultdict(functools.partial(collections.defaultdict, functools.partial(collections.defaultdict, set)))
         for rel in interDMRelations:
             rhn = graphDict[rel.rhs]['node']
             lhn = graphDict[rel.lhs]['node']
             if rel.rel in evt_consumer:
-                node_subscriptions[lhn].add(rhn)
+                drop_subscriptions[lhn][rhn][rel.rhs].add(rel.lhs)
             elif rel.rel in evt_producer:
-                node_subscriptions[rhn].add(lhn)
-        self._nodes_subscriptions[sessionId] = node_subscriptions
-        logger.debug("Calculated Node Manager subscriptions: %r", node_subscriptions)
+                drop_subscriptions[rhn][lhn][rel.lhs].add(rel.rhs)
+
+        # Replace sets by lists for JSON-based transmission
+        # TODO: this could be handled by the restutils base client
+        for x in drop_subscriptions.values():
+            for y in x.values():
+                for k in y:
+                    y[k] = list(y[k])
+
+        self._drop_subscriptions[sessionId] = drop_subscriptions
+        logger.debug("Calculated NM-level drop subscriptions: %r", drop_subscriptions)
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
@@ -472,8 +509,9 @@ class CompositeManager(DROPManager):
 
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
-        self._tp.map(functools.partial(self._add_node_subscriptions, sessionId), self._nodes_subscriptions[sessionId].items())
-        logger.debug("Delivered node subscription list to node managers")
+        if self._drop_subscriptions[sessionId]:
+            self._tp.map(functools.partial(self._add_node_subscriptions, sessionId), self._drop_subscriptions[sessionId].items())
+            logger.debug("Delivered node subscription list to node managers")
 
         logger.info('Deploying Session %s in all hosts', sessionId)
 
