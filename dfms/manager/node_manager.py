@@ -35,7 +35,6 @@ import Queue
 
 import six
 import zmq
-import errno
 
 from dfms import droputils, utils
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
@@ -170,6 +169,7 @@ class NodeManager(DROPManager):
                     self._zmqsocketpub.send_pyobj(evt, flags = zmq.NOBLOCK)
                     break
                 except zmq.error.Again:
+                    logger.debug("Got an 'Again' when publishing event")
                     time.sleep(0.01)
                     continue
         
