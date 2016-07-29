@@ -738,10 +738,6 @@ class AbstractDROP(EventFirer, noopctx):
         itself to COMPLETED.
         """
 
-        # Is the UID actually referencing a producer
-        if uid not in [p.uid for p in self._producers]:
-            raise Exception("%s is not a producer of %r" % (uid, self))
-
         finished = False
         with self._finishedProducersLock:
             self._finishedProducers.append(drop_state)
