@@ -24,6 +24,7 @@ Module containing the NodeManager, which directly manages DROP instances, and
 thus represents the bottom of the DROP management hierarchy.
 """
 
+import Queue
 import importlib
 import inspect
 import logging
@@ -31,12 +32,12 @@ import os
 import sys
 import threading
 import time
-import Queue
 
 import six
 import zmq
 
 from dfms import droputils, utils
+from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository
@@ -67,14 +68,13 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
-class DropEventListener(utils.noopctx):
+class ZMQDropEventListener(utils.noopctx):
 
     def __init__(self, nm):
         self._nm = nm
 
     def handleEvent(self, event):
-        if event.type in ("dropCompleted", "producerFinished"):
-            self._nm._zmq_pub_q.put(event)
+        self._nm._zmq_pub_q.put(event)
 
 class NodeManager(DROPManager):
     """
@@ -92,7 +92,7 @@ class NodeManager(DROPManager):
 
     def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None,
                  enable_luigi=False, zmq_bind_port = 5553):
-        self._event_listener = DropEventListener(self)
+        self._event_listener = ZMQDropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
@@ -196,7 +196,6 @@ class NodeManager(DROPManager):
             try:
                 evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)
                 self._zmq_sub_q.put(evt)
-
             except zmq.error.Again:
                 time.sleep(0.01)
             except Exception:
@@ -246,7 +245,11 @@ class NodeManager(DROPManager):
             uris[drop.uid] = drop.uri
             if self._dlm:
                 self._dlm.addDrop(drop)
-            drop.subscribe(self._event_listener)
+            if isinstance(drop, AppDROP):
+                drop.subscribe(self._event_listener, 'producerFinished')
+            else:
+                drop.subscribe(self._event_listener, 'dropCompleted')
+
         return uris
 
     def destroySession(self, sessionId):
