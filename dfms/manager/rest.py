@@ -218,6 +218,7 @@ class NMRestServer(ManagerRestServer):
         app.get(   '/api',                                    callback=self.getNMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
         app.get(   '/api/sessions/<sessionId>/property',      callback=self.get_drop_property)
+        app.post(  '/api/sessions/<sessionId>/method',        callback=self.call_remote_drop)
         app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
         # The non-REST mappings that serve HTML-related content
@@ -229,6 +230,13 @@ class NMRestServer(ManagerRestServer):
         uid = bottle.request.params['uid']
         prop_name = bottle.request.params['pname']
         return self.dm.get_drop_property(sessionId, uid, prop_name)
+
+    @daliuge_aware
+    def call_remote_drop(self, sessionId):
+        uid = bottle.request.forms['uid']
+        method = bottle.request.forms['mname']
+        args = json.loads(bottle.request.forms['args'])
+        return self.dm.call_drop(sessionId, uid, method, *args)
 
     @daliuge_aware
     def shutdown_node_manager(self):

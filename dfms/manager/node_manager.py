@@ -41,6 +41,7 @@ from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository
+from dfms.manager.client import NodeManagerClient
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import Session
 
@@ -283,6 +284,18 @@ class NodeManager(DROPManager):
     def get_drop_property(self, sessionId, uuid, prop_name):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].get_drop_property(uuid, prop_name)
+
+    def get_remote_drop_property(self, hostname, session_id, uid, name):
+        with NodeManagerClient(hostname) as c:
+            return c.get_drop_property(session_id, uid, name)
+
+    def call_drop(self, sessionId, uid, method, *args):
+        self._check_session_id(sessionId)
+        return self._sessions[sessionId].call_drop(uid, method, *args)
+
+    def call_remote_drop(self, hostname, session_id, uid, method, *args):
+        with NodeManagerClient(hostname) as c:
+            return c.call_remote_drop(session_id, uid, method, *args)
 
     def getTemplates(self):
 

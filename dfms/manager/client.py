@@ -145,6 +145,10 @@ class NodeManagerClient(BaseDROPManagerClient):
     def get_drop_property(self, sessionId, uid, prop_name):
         return self._get_json('/sessions/%s/property?uid=%s&pname=%s' % (urllib.quote(sessionId), urllib.quote(uid), urllib.quote(prop_name)))
 
+    def call_remote_drop(self, sessionId, uid, method, *args):
+        content = {'uid': urllib.quote(uid), 'mname': urllib.quote(method), 'args': args}
+        return self._post_json('/sessions/%s/method?uid=%s' % (urllib.quote(sessionId),), content)
+
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), node_subscriptions)
 
