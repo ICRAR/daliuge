@@ -331,10 +331,21 @@ class Session(object):
             drop = self._drops[uid]
             return getattr(drop, prop_name)
         except AttributeError:
-            raise DaliugeException("%r has no property called %s" % (drop, uid))
+            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
+
+    def call_drop(self, uid, method, *args):
+        if uid not in self._drops:
+            raise NoDropException(uid)
+        try:
+            drop = self._drops[uid]
+            m = getattr(drop, method)
+        except AttributeError:
+            raise DaliugeException("%r has no method called %s" % (drop, method))
+        return m(*args)
 
     # Support for the 'with' keyword
     def __enter__(self):
         return self
+
     def __exit__(self, typ, value, traceback):
         self.destroy()
