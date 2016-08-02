@@ -29,7 +29,7 @@ import time
 import Pyro4
 
 from dfms import remote, graph_loader, drop, utils
-from dfms.ddap_protocol import DROPRel, DROPLinkType
+from dfms.ddap_protocol import DROPRel
 from dfms.exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
 from dfms.manager.client import BaseDROPManagerClient, NodeManagerClient
@@ -339,29 +339,22 @@ class CompositeManager(DROPManager):
         #
         # {
         #    'DM#2': {
-        #        'DM#1': {'A': ('B',)}
+        #        'DM#1': [DROPRel('B', output, 'A')]}
+        #    },
+        #    'DM#1': {
+        #        'DM#2': [DROPRel('B', output, 'A')]}
         #    }
         # }
+        #
 
         graphDict = {uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec}
-        evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
-        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
 
-        drop_subscriptions = collections.defaultdict(functools.partial(collections.defaultdict, functools.partial(collections.defaultdict, set)))
+        drop_subscriptions = collections.defaultdict(functools.partial(collections.defaultdict, list))
         for rel in interDMRelations:
             rhn = graphDict[rel.rhs]['node']
             lhn = graphDict[rel.lhs]['node']
-            if rel.rel in evt_consumer:
-                drop_subscriptions[lhn][rhn][rel.rhs].add(rel.lhs)
-            elif rel.rel in evt_producer:
-                drop_subscriptions[rhn][lhn][rel.lhs].add(rel.rhs)
-
-        # Replace sets by lists for JSON-based transmission
-        # TODO: this could be handled by the restutils base client
-        for x in drop_subscriptions.values():
-            for y in x.values():
-                for k in y:
-                    y[k] = list(y[k])
+            drop_subscriptions[lhn][rhn].append(rel)
+            drop_subscriptions[rhn][lhn].append(rel)
 
         self._drop_subscriptions[sessionId] = drop_subscriptions
         logger.debug("Calculated NM-level drop subscriptions: %r", drop_subscriptions)
