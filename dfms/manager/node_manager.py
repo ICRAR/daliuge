@@ -158,6 +158,8 @@ class NodeManager(DROPManager):
         self._zmqcontextpub.destroy()
         self._zmqcontextsub.destroy()
 
+    __del__ = shutdown
+
     def _zmq_pub_queue_thread(self):
         while self._zmq_running:
             evt = None
@@ -240,11 +242,8 @@ class NodeManager(DROPManager):
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
-        session.deploy(completedDrops=completedDrops)
-        roots = session.roots
-        logger.debug('Registering new Drops with the DLM and collecting their URIs')
-        uris = {}
-        for drop,_ in droputils.breadFirstTraverse(roots):
+
+        def foreach(drop):
             uris[drop.uid] = drop.uri
             if self._dlm:
                 self._dlm.addDrop(drop)
@@ -252,6 +251,10 @@ class NodeManager(DROPManager):
                 drop.subscribe(self._event_listener, 'producerFinished')
             else:
                 drop.subscribe(self._event_listener, 'dropCompleted')
+
+        uris = {}
+        session.deploy(completedDrops=completedDrops, foreach=foreach)
+        logger.debug('Registering new Drops with the DLM and collecting their URIs')
 
         return uris
 
