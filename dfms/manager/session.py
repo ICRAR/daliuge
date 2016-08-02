@@ -59,6 +59,27 @@ class ErrorStatusListener(utils.noopctx):
         if evt.status == DROPStates.ERROR:
             self._event_listener.on_error(self._session.drops[evt.uid])
 
+class DropProxy(utils.noopctx):
+    """
+    A proxy to a remote drop.
+
+    It forwards attribute requests through the given Node Manager.
+    It also forwards procedure calls thorugh the Node Manager.
+    """
+
+    def __init__(self, nm, hostname, port, sessionId, uid):
+        self.nm = nm
+        self.hostname = hostname
+        self.port = port
+        self.session_id = sessionId
+        self.uid = uid
+
+    def handleEvent(self, evt):
+        pass
+
+    def __getattr__(self, name):
+        return self.nm.get_drop_attribute(self.hostname, self.port, self.session_id, self.uid, name)
+
 class LeavesCompletionListener(utils.noopctx):
 
     def __init__(self, leaves, session):
@@ -193,7 +214,7 @@ class Session(object):
             return self._graph[oid]
         return None
 
-    def deploy(self, completedDrops=[]):
+    def deploy(self, completedDrops=[], foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -261,6 +282,17 @@ class Session(object):
                     drop.async_execute()
                 else:
                     drop.setCompleted()
+
+        # Foreach
+        if foreach:
+            for drop,_ in droputils.breadFirstTraverse(self._roots):
+                foreach(drop)
+
+        # Append proxies
+        for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
+            proxy = DropProxy(nm, host, port, self._sessionId, remote_uid)
+            method = getattr(self._drops[local_uid], relname)
+            method(proxy, False)
 
         self.status = SessionStates.RUNNING
         logger.info("Session %s is now RUNNING", self._sessionId)
