@@ -1,8 +1,8 @@
 DROPs
 -----
 
-DROPs are at the center of the DFMS. DROPs are representations of data and
-applications, making them manageable by DFMS.
+DROPs are at the center of the |daliuge|. DROPs are representations of data and
+applications, making them manageable by |daliuge|.
 
 Lifecycle
 ^^^^^^^^^
@@ -13,7 +13,7 @@ once, read many times. Additionally, it also allows for data deletion.
 A DROP starts in the **INITIALIZED** state, meaning that its data is not
 present yet. From there it jumps into **COMPLETED** once its data has been
 written, optionally passing through **WRITING** if the writing occurs
-*through* DFMS (see `Input/Output`_). Once in the **COMPLETED** state the data
+*through* |daliuge| (see `Input/Output`_). Once in the **COMPLETED** state the data
 can be read as many times as needed. Eventually, the DROP will transition to
 **EXPIRED**, denying any further reads. Finally the data is deleted and the DROP
 moves to the final **DELETED** state. If any I/O error occurs the DROP will be
@@ -77,7 +77,7 @@ responsibility of the application to ensure that the I/O is occurring in the
 correct location and using the expected format for storage or subsequent
 upstream processing by other application DROPs.
 
-The DFMS provides various commonly used data DROPs with their associated I/O
+|daliuge| provides various commonly used data DROPs with their associated I/O
 storage classes, including in-memory, file-base and S3 storages.
 
 .. _drop.channels:
@@ -93,7 +93,7 @@ DROPs that are connected by an edge in a physical graph but are deployed on sepa
 DROP Component Interface
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The DFMS framework uses Docker containers as its primary interface to 3rd party applications. Docker containers have the following benefits over traditional tools management:
+The |daliuge| framework uses Docker containers as its primary interface to 3rd party applications. Docker containers have the following benefits over traditional tools management:
 
 * Portability.
 * Versioning and component reuse.
@@ -107,7 +107,7 @@ the DROP framework. Refer to the documentation for details.
 Other applications not based on Docker containers can be written as well. Any
 application must derive at least from ``AppDROP``, but an easier-to-use base
 class is the ``BarrierAppDROP``, which simply requires a ``run`` method to be
-written by the developer (see :ref:`api.dfms.drop` for details). DFMS ships with
+written by the developer (see :ref:`api.dfms.drop` for details). |daliuge| ships with
 a set of pre-existing applications to perform common operations, like a TCP
 socket listener and a bash command executor, among others. See :ref:`api.dfms.apps`
 for more examples.

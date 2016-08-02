@@ -1,11 +1,11 @@
 Graphs
 ------
 
-A processing pipeline in DFMS is described by a Directed Graph where the nodes
+A processing pipeline in |daliuge| is described by a Directed Graph where the nodes
 denote both task (application DROPs) and data (data DROPs). The edges denote
 execution dependencies between DROPs. Section :ref:`dfms_functions` has briefly
-introduced graph-based functions in DFMS. This section provides implementation
-details in the DFMS prototype.
+introduced graph-based functions in |daliuge|. This section provides implementation
+details in the |daliuge| prototype.
 
 Logical Graph
 ^^^^^^^^^^^^^
@@ -24,7 +24,7 @@ templates and multiple DROPs correspond to a single construct.
    An example of a |lg| with data constructs (e.g. Data1 - Data5),
    component constructs (i.e. Component1 - Component5), and control flow constructs
    (Scatter, Gather, and Group-By). This example can be viewed
-   `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in the DFMS prototype.
+   `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in the |daliuge| prototype.
 
 Construct properties
 """"""""""""""""""""
@@ -38,7 +38,7 @@ properties. Such properties can be directly obtained from parametric models or
 Control flow constructs
 """""""""""""""""""""""
 Control flow constructs form the "skeleton" of the |lg|, and determine
-the final structure of the |pg| to be generated. DFMS currently supports
+the final structure of the |pg| to be generated. |daliuge| currently supports
 the following flow constructs:
 
 * **Scatter** indicates data parallelism. Constructs inside a *Scatter* construct
@@ -57,14 +57,14 @@ the following flow constructs:
   which represents the *Gather* "width", stating how many
   partitions each *Gather* instance (translated into a ``BarrierAppDROP``, see
   :ref:`drop.component.iface`)
-  can handle. This in turn is used by DFMS to determine how many *Gather* instances should be
+  can handle. This in turn is used by |daliuge| to determine how many *Gather* instances should be
   generated in the |pg|. *Gather* sometimes can be used in conjunction with
   *Group By* (see middle-right in :numref:`graphs.figs.scatter`), in which case, data held in a sequence of groups are processed
   together by components enclosed by *Gather*.
 
 * **Group By** indicates data resorting (e.g. `corner turning <https://mnras.oxfordjournals.org/content/410/3/2075.full>`_ in radio astronomy).
   The semantic is analogous to the ``GROUP BY`` construct used in SQL statement for relational
-  databases, but applied to data DROPs. The current DFMS prototype requires that
+  databases, but applied to data DROPs. The current |daliuge| prototype requires that
   *Group By* is used in
   conjunction with a nested *Scatter* such that data DROPs that are originally sorted
   in the order of ``[outer_partition_id][inner_partition_id]`` are resorted as ``[inner_partition_id][outer_partition_id]``.
@@ -75,7 +75,7 @@ the following flow constructs:
 * **Loop** indicates iterations. Constructs inside a *Loop* represent a group of
   components and data that will be repeatedly executed / produced for a fixed number of
   times. Given the basic DROP principle of "writing once, read many times", the current
-  DFMS prototype does not support dynamic branch condition for *Loop*.
+  |daliuge| prototype does not support dynamic branch condition for *Loop*.
   Instead, each *Loop* construct has a property named ``num_of_iterations`` that must be
   determined at |lg| development time, and that determines the number of
   times the loop is "unrolled". In other words, a
@@ -88,11 +88,11 @@ the following flow constructs:
   .. figure:: images/loop_example.png
 
      A nested-Loop (minor and major cycle) example of |lg| for
-     a continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in the DFMS prototype.
+     a continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in the |daliuge| prototype.
 
 Repository
 """"""""""
-The DFMS prototype uses a Web-based |lg| editor as the default user interface
+The |daliuge| prototype uses a Web-based |lg| editor as the default user interface
 to the underlying *logical graph repository*, which currently is simply a managed
 POSIX file system directory. Each |lg| is physically stored as a
 JSON-formatted textual file, and can be accessed and modified remotely through
@@ -104,7 +104,7 @@ the graph JSON content inside the repository.
 
 Select template
 """""""""""""""
-While the DFMS |lg| editor does not differentiate between |lg|
+While the |daliuge| |lg| editor does not differentiate between |lg|
 and *logical graph template*, users can create either of them using the editor
 (after all,
 the only differences between these two are the populated values for some
@@ -125,11 +125,11 @@ creates all DROPs and is implemented in the :doc:`api/dropmake` module.
 
 Basic steps
 """""""""""
-**DropMake** in the DFMS prototype involves the following steps:
+**DropMake** in the |daliuge| prototype involves the following steps:
 
 * **Validity checking**. Checks whether the |lg| is ready to be translated.
   This step is similar to semantic error checking used in compilers.
-  For example, DFMS currently does not allow any cycles in the |lg|. Another
+  For example, |daliuge| currently does not allow any cycles in the |lg|. Another
   example is that *Gather* can be placed only after a *Group By* or a *Data* construct
   as shown in :numref:`graphs.figs.scatter`. Any validity errors
   will be displayed as exceptions on the |lg| editor.
@@ -162,7 +162,7 @@ round-robin all available resources. In this case, graph partitioning
 algorithms (e.g. METIS [5]) actually support multi-constraints
 load balancing so that both CPU load and memory usage on each node is roughly similar.
 
-For heterogeneous resources, which DFMS has not yet supported, usually the graph
+For heterogeneous resources, which |daliuge| has not yet supported, usually the graph
 partitioning is first performed, and then resource mapping refers to the assignment
 of partitions to different resources based on demands and capabilities using
 graph / `tree-matching algorithms[16] <http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=6495451>`_ .
@@ -177,10 +177,10 @@ Algorithms
 """"""""""
 Scheduling an Acyclic Directed Graph (DAG) that involves graph partitioning and resource mapping as stated in `Basic steps`_
 is known to be an `NP-hard problem <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=210815>`_.
-The DFMS prototype has tailored several heuristics-based algorithms from previous research on `DAG scheduling <http://dl.acm.org/citation.cfm?id=344618>`_
-and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_ to perform these two steps. These algorithms are currently configured by DFMS to utilise uniform hardware resources.
+The |daliuge| prototype has tailored several heuristics-based algorithms from previous research on `DAG scheduling <http://dl.acm.org/citation.cfm?id=344618>`_
+and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_ to perform these two steps. These algorithms are currently configured by |daliuge| to utilise uniform hardware resources.
 Support for heterogenous resources using the `List scheduling <https://en.wikipedia.org/wiki/List_scheduling>`_
-algorithm will be made available shortly. With these algorithms, the DFMS prototype
+algorithm will be made available shortly. With these algorithms, the |daliuge| prototype
 currently attempts to address the following translation problems:
 
 * **Minimise the total cost of data movement** but subject to a given **degree of load balancing**.
@@ -194,14 +194,14 @@ currently attempts to address the following translation problems:
 * **Minimise the total completion time** but subject to a given **degree of parallelism** (DoP)
   (e.g. number of cores per node) that each DropIsland is allowed to take advantage of.
   In the first version of this problem, no information regarding resources is given.
-  DFMS simply strives to come up with the optimal number of DropIslands such that
+  |daliuge| simply strives to come up with the optimal number of DropIslands such that
   (1) the total completion time of the pipeline (which depends on both execution time
   and the cost of data movement on the graph critical path) is minimised, and (2)
   the maximum degree of parallelism within each DropIsland is
   never greater than the given *DoP*. In the second version of this problem,
   a number of resources of identical performance capability are also given in addition
   to the *DoP*. This practical problem is a natural extension of version 1,
-  and is solved in DFMS by using the
+  and is solved in |daliuge| by using the
   `"two-phase" method <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=580873>`_.
 
 * **Minimise the number of DropIslands** but subject to (1) a given **completion time deadline**,
@@ -214,7 +214,7 @@ currently attempts to address the following translation problems:
   the number of DropIslands is proportional to the amount of resources needed.
   Consequently, schedules that require less number of DropIslands are superior.
   Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design,
-  DFMS uses a "look-ahead" strategy at each optimisation step to adaptively
+  |daliuge| uses a "look-ahead" strategy at each optimisation step to adaptively
   choose from two conflicting objective functions (deadline or resource) for
   local optimisation, which is more likely to lead to the global optimum than
   greedy strategies.
@@ -248,7 +248,7 @@ setting up proper :ref:`drop.channels`. The fact that physical graphs are made
 of DROPs means that they describe exactly what an :ref:`graph.execution` consists
 of. In this sense, the |pg| is the graph execution engine.
 
-In addition to DROP managers, the DFMS prototype also includes a *Physical Graph Manager*,
+In addition to DROP managers, the |daliuge| prototype also includes a *Physical Graph Manager*,
 which allows users to manage all currently running and past physical graphs within
 the system. Although the current *Physical Graph Manager* implementation only supports
 to "add" and "get" |pg| specifications, features such as graph event monitoring

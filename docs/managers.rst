@@ -4,7 +4,7 @@
 DROP Managers
 -------------
 
-The runtime environment of DFMS consists on a hierarchy of *DROP Managers*.
+The runtime environment of |daliuge| consists on a hierarchy of *DROP Managers*.
 DROP Managers offer a standard interface to external entities to interact with
 the runtime system, allowing users to submit physical graphs, deploy them, let
 them run and query their status.
