@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import codecs
+import collections
 import json
 import os
 import subprocess
@@ -28,15 +29,15 @@ import threading
 import time
 import unittest
 
-import Pyro4
 import pkg_resources
 
 from dfms import droputils
 from dfms import ngaslite, utils
-from dfms.ddap_protocol import DROPStates
+from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dfms.drop import BarrierAppDROP
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
+from dfms.manager.rest import NMRestServer
 from dfms.manager.session import SessionStates
 from test.manager import testutils
 
@@ -53,8 +54,36 @@ class ErroneousApp(BarrierAppDROP):
     def run(self):
         raise Exception("Sorry, we always fail")
 
+NMInfo = collections.namedtuple('NMInfo', 'nm server thread')
+
+def nm_conninfo(n):
+    return 'localhost', 8000 + n, 5553 + n
+
+
 class TestDM(unittest.TestCase):
-    
+
+    def __init__(self, methodName):
+        super(TestDM, self).__init__(methodName)
+        self._dms = []
+
+    def _start_dm(self):
+        host, rest_port, zmq_bind_port = nm_conninfo(len(self._dms))
+        nm = NodeManager(useDLM=False, host=host, zmq_bind_port = zmq_bind_port)
+        rest = NMRestServer(nm)
+        thread = threading.Thread(target=rest.start, args=(host, rest_port))
+        thread.start()
+        self.assertTrue(utils.portIsOpen(host, rest_port, 10))
+        self._dms.append(NMInfo(nm, rest, thread))
+        return nm
+
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+        for nminfo in self._dms:
+            nminfo.nm.shutdown()
+            nminfo.server.stop(5)
+            nminfo.thread.join(5)
+            self.assertFalse(nminfo.thread.isAlive())
+
     def test_error_listener(self):
 
         evt = threading.Event()
@@ -80,46 +109,41 @@ class TestDM(unittest.TestCase):
 
     def test_runGraphOneDOPerDOM(self):
         """
-        A test that creates three DROPs in two different DMs, wire two of
-        them together externally (i.e., using their proxies), and runs the graph.
+        A test that creates three DROPs in two different DMs and runs the graph.
         For this the graphs that are fed into the DMs must *not* express the
-        inter-DM relationships. The graph looks like:
+        inter-DM relationships, although they are still passed down
+        separately. The graph looks like:
 
         DM #1      DM #2
         =======    =============
         | A --|----|-> B --> C |
         =======    =============
         """
-        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
-        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
+        #import logging
+        #logging.basicConfig(level=logging.DEBUG)
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
-        uris1 = quickDeploy(dm1, sessionId, g1)
-        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'A': ('B',)}})
+        rels = [DROPRel('B', DROPLinkType.CONSUMER, 'A')]
+        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1, len(uris1))
         self.assertEqual(2, len(uris2))
 
-        # We externally wire the Proxy objects now
-        a = Pyro4.Proxy(uris1['A'])
-        b = Pyro4.Proxy(uris2['B'])
-        c = Pyro4.Proxy(uris2['C'])
-        a.addConsumer(b)
-
         # Run! We wait until c is completed
-        with droputils.DROPWaiterCtx(self, dm2._sessions[sessionId].drops['C'], 1):
+        a = dm1._sessions[sessionId].drops['A']
+        b,c = [dm2._sessions[sessionId].drops[x] for x in ('B', 'C')]
+        with droputils.DROPWaiterCtx(self, c, 1):
             a.write('a')
             a.setCompleted()
 
-        for dm, drop in (dm1,a), (dm2,b), (dm2,c):
-            self.assertEqual(DROPStates.COMPLETED, dm.get_drop_property(sessionId, drop.uid, 'status'))
+        for drop in a, b, c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
         self.assertEqual(a.checksum, int(droputils.allDropContents(c)))
-
-        for dropProxy in a,b,c:
-            dropProxy._pyroRelease()
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
@@ -141,39 +165,29 @@ class TestDM(unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
-        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
-               {"oid":"B", "type":"plain", "storage": "memory"},
-               {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp"},
-               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
+              {"oid":"B", "type":"plain", "storage": "memory"},
+              {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp"},
+              {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
         g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
-               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
+              {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
 
-        uris1 = quickDeploy(dm1, sessionId, g1)
-        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'D': ('E'), 'B': ('E',)}})
+        rels = [DROPRel('D', DROPLinkType.INPUT, 'E'),
+                DROPRel('B', DROPLinkType.INPUT, 'E')]
+        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 
         self.assertEqual(4, len(uris1))
         self.assertEqual(2, len(uris2))
 
-        # We externally wire the Proxy objects to establish the inter-DM
-        # relationships
-        a = Pyro4.Proxy(uris1['A'])
-        b = Pyro4.Proxy(uris1['B'])
-        c = Pyro4.Proxy(uris1['C'])
-        d = Pyro4.Proxy(uris1['D'])
-        e = Pyro4.Proxy(uris2['E'])
-        f = Pyro4.Proxy(uris2['F'])
-        for drop,uid in [(a,'A'),(b,'B'),(c,'C'),(d,'D'),(e,'E'),(f,'F')]:
-            self.assertEqual(uid, drop.uid, "Proxy is not the DROP we think should be (assumed: %s/ actual: %s)" % (uid, drop.uid))
-        e.addInput(d)
-        e.addInput(b)
-
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        with droputils.DROPWaiterCtx(self, dm2._sessions[sessionId].drops['F'], 5):
+        a,b,c,d = [dm1._sessions[sessionId].drops[x] for x in ('A', 'B', 'C', 'D')]
+        e,f = [dm2._sessions[sessionId].drops[x] for x in ('E', 'F')]
+        with droputils.DROPWaiterCtx(self, f, 5):
             a.write('a')
             a.setCompleted()
             b.write('a')
@@ -185,12 +199,9 @@ class TestDM(unittest.TestCase):
         self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
         self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
 
-        for dropProxy in a,b,c,d,e,f:
-            dropProxy._pyroRelease()
-
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-        
+
         dm1.shutdown()
         dm2.shutdown()
 
@@ -219,10 +230,7 @@ class TestDM(unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
-        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
-        dm3 = NodeManager(useDLM=False, zmq_bind_port = 5555)
-        dm4 = NodeManager(useDLM=False, zmq_bind_port = 5556)
+        dm1, dm2, dm3, dm4 = [self._start_dm() for _ in range(4)]
 
         sessionId = 's1'
         g1 = [memory('A', expectedSize=1)]
@@ -241,47 +249,32 @@ class TestDM(unittest.TestCase):
               sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
               memory('O')]
 
-        uris1 = quickDeploy(dm1, sessionId, g1)
-        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'A': ('B',)}})
-        uris3 = quickDeploy(dm3, sessionId, g3, {('localhost', 5553): {'A': ('G',)}})
-        uris4 = quickDeploy(dm4, sessionId, g4, {('localhost', 5554): {'F': ('L',)}, ('localhost', 5555): {'K': ('M',)}})
+        rels_12 = [DROPRel('A', DROPLinkType.INPUT, 'B')]
+        rels_13 = [DROPRel('A', DROPLinkType.INPUT, 'G')]
+        rels_24 = [DROPRel('F', DROPLinkType.PRODUCER, 'L')]
+        rels_34 = [DROPRel('K', DROPLinkType.PRODUCER, 'M')]
+        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13})
+        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24})
+        uris3 = quickDeploy(dm3, sessionId, g3, {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34})
+        uris4 = quickDeploy(dm4, sessionId, g4, {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34})
 
         self.assertEqual(1, len(uris1))
         self.assertEqual(5, len(uris2))
         self.assertEqual(5, len(uris3))
         self.assertEqual(4, len(uris4))
-        allUris = {}
-        allUris.update(uris1)
-        allUris.update(uris2)
-        allUris.update(uris3)
-        allUris.update(uris4)
 
-        # We externally wire the Proxy objects to establish the inter-DM
-        # relationships. Intra-DM relationships are already established
-        proxies = {}
-        for uid,uri in allUris.items():
-            proxies[uid] = Pyro4.Proxy(uri)
-
-        a = proxies['A']
-        b = proxies['B']
-        f = proxies['F']
-        g = proxies['G']
-        k = proxies['K']
-        l = proxies['L']
-        m = proxies['M']
-
-        a.addConsumer(b)
-        a.addConsumer(g)
-        f.addOutput(l)
-        k.addOutput(m)
+        a = dm1._sessions[sessionId].drops['A']
+        o = dm4._sessions[sessionId].drops['O']
+        drops = []
+        for x in (dm1, dm2, dm3, dm4):
+            drops += x._sessions[sessionId].drops.values()
 
         # Run! This should trigger the full execution of the graph
-        with droputils.DROPWaiterCtx(self, dm4._sessions[sessionId].drops['O'], 5):
+        with droputils.DROPWaiterCtx(self, o, 5):
             a.write('a')
 
-        for dropProxy in proxies.values():
-            self.assertEqual(DROPStates.COMPLETED, dropProxy.status, "Status of '%s' is not COMPLETED: %d" % (dropProxy.uid, dropProxy.status))
-            dropProxy._pyroRelease()
+        for drop in drops:
+            self.assertEqual(DROPStates.COMPLETED, drop.status, "Status of '%s' is not COMPLETED: %d" % (drop.uid, drop.status))
 
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
@@ -290,12 +283,11 @@ class TestDM(unittest.TestCase):
     def test_many_relationships(self):
         """
         A test in which a drop is related to many other drops that live in a
-        separate DM (and thus requires many Pyro connections).
+        separate DM.
 
         Drop A is accessed by many applications (B1, B2, .., BN), which should
-        not exhaust resources on DM #1 (in particular, the pyro thread pool).
-        We collapse all into C so we can monitor only its status to know that
-        the execution is over.
+        not exhaust resources on DM #1. We collapse all into C so we can monitor
+        only its status to know that the execution is over.
 
         DM #1                     DM #2
         =======    ====================
@@ -306,34 +298,30 @@ class TestDM(unittest.TestCase):
         |     |    | |--> BN --|      |
         =======    ====================
         """
-        dm1 = NodeManager(useDLM=False, zmq_bind_port = 5553)
-        dm2 = NodeManager(useDLM=False, zmq_bind_port = 5554)
+
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = 's1'
         N = 100
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
         g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
+        rels = []
         for i in range(N):
             b_oid = "B%d" % (i,)
             # SleepAndCopyApp effectively opens the input drop
             g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
+            rels.append(DROPRel('A', DROPLinkType.INPUT, b_oid))
 
-        uris1 = quickDeploy(dm1, sessionId, g1)
-        uris2 = quickDeploy(dm2, sessionId, g2, {('localhost', 5553): {'A': [x['oid'] for x in g2 if x['oid'].startswith('B')]}})
+        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1,   len(uris1))
         self.assertEqual(1+N, len(uris2))
 
-        # We externally wire the Proxy objects to establish the inter-DM
-        # relationships. Make sure we release the proxies
-        with Pyro4.Proxy(uris1['A']) as a:
-            for i in range(N):
-                with Pyro4.Proxy(uris2['B%d' % (i,)]) as b:
-                    b.addInput(a, False)
-                    a.addConsumer(b, False)
-
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        with droputils.DROPWaiterCtx(self, dm2._sessions[sessionId].drops['C'], 5):
+        a = dm1._sessions[sessionId].drops['A']
+        c = dm2._sessions[sessionId].drops['C']
+        with droputils.DROPWaiterCtx(self, c, 30):
             a.write('a')
             a.setCompleted()
 
