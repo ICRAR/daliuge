@@ -31,7 +31,7 @@ import bottle
 import pkg_resources
 
 from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
-    DaliugeException, NoSessionException, SessionAlreadyExistsException,\
+    DaliugeException, NoSessionException, SessionAlreadyExistsException, \
     InvalidDropException, InvalidRelationshipException
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
@@ -219,6 +219,7 @@ class NMRestServer(ManagerRestServer):
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
         app.get(   '/api/sessions/<sessionId>/property',      callback=self.get_drop_property)
         app.post(  '/api/sessions/<sessionId>/method',        callback=self.call_remote_drop)
+        app.get(   '/api/sessions/<sessionId>/hasmethod',     callback=self.has_method)
         app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
         # The non-REST mappings that serve HTML-related content
@@ -237,6 +238,12 @@ class NMRestServer(ManagerRestServer):
         method = bottle.request.forms['mname']
         args = json.loads(bottle.request.forms['args'])
         return self.dm.call_drop(sessionId, uid, method, *args)
+
+    @daliuge_aware
+    def has_method(self, sessionId):
+        uid = bottle.request.params['uid']
+        mname = bottle.request.params['mname']
+        return self.dm.has_method(sessionId, uid, mname)
 
     @daliuge_aware
     def shutdown_node_manager(self):

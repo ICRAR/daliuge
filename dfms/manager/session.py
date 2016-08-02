@@ -24,6 +24,7 @@ Module containing the logic of a session -- a given graph execution
 """
 
 import collections
+import inspect
 import logging
 import threading
 
@@ -37,19 +38,6 @@ from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
 from dfms.exceptions import InvalidSessionState, InvalidGraphException,\
     NoDropException, DaliugeException
 
-
-_LINKTYPE_TO_NREL = {
-    DROPLinkType.CONSUMER: 'consumers',
-    DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
-    DROPLinkType.CHILD: 'children',
-    DROPLinkType.INPUT: 'inputs',
-    DROPLinkType.STREAMING_INPUT: 'streamingInputs',
-    DROPLinkType.OUTPUT: 'outputs',
-    DROPLinkType.PRODUCER: 'producers'
-}
-_LINKTYPE_TO_REL = {
-    DROPLinkType.PARENT: 'parent',
-}
 
 logger = logging.getLogger(__name__)
 
@@ -323,6 +311,15 @@ class Session(object):
             self._daemonT.join()
 
     __del__ = destroy
+
+    def has_method(self, uid, mname):
+        if uid not in self._drops:
+            raise NoDropException(uid)
+        try:
+            drop = self._drops[uid]
+            return inspect.ismethod(getattr(drop, mname))
+        except AttributeError:
+            return False
 
     def get_drop_property(self, uid, prop_name):
         if uid not in self._drops:
