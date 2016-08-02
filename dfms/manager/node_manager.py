@@ -25,6 +25,7 @@ thus represents the bottom of the DROP management hierarchy.
 """
 
 import Queue
+import collections
 import importlib
 import inspect
 import logging
@@ -36,11 +37,12 @@ import time
 import six
 import zmq
 
-from dfms import droputils, utils
+from dfms import utils
+from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
-from dfms.manager import repository
+from dfms.manager import repository, constants
 from dfms.manager.client import NodeManagerClient
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import Session
@@ -266,20 +268,54 @@ class NodeManager(DROPManager):
         session = self._sessions[sessionId]
         return len(session._graph)
 
-    def add_node_subscriptions(self, sessionId, node_subscriptions):
+    def add_node_subscriptions(self, sessionId, relationships):
+
         self._check_session_id(sessionId)
 
-        logger.debug("Received subscription information: %r", node_subscriptions)
+        evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
+        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
 
-        for nodesub, dropsubs in node_subscriptions.items():
-            port = self._zmqport
+        logger.debug("Received subscription information: %r", relationships)
+
+        for nodesub, droprels in relationships.items():
             host = nodesub
+            zmq_port = self._zmqport
+            rest_port = constants.NODE_DEFAULT_REST_PORT
             if type(nodesub) is tuple:
-                host, port = nodesub
+                host, rest_port, zmq_port = nodesub
             # we also have to unsubscribe from them at some point
-            self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
+            self._zmqsocketsub.connect("tcp://%s:%s" % (host, zmq_port))
+
+            droprels = [DROPRel(*x) for x in droprels]
+
+            # Which events should we react to?
+            dropsubs = collections.defaultdict(list)
+            for rel in droprels:
+
+                # Look which side of the relationship is local
+                for sid, s in self._sessions.items():
+
+                    if sessionId is not sid:
+                        continue
+
+                    local_uid = None
+                    remote_uid = None
+                    if rel.rhs in s._graph:
+                        local_uid = rel.rhs
+                        remote_uid = rel.lhs
+                    elif rel.lhs in s._graph:
+                        local_uid = rel.lhs
+                        remote_uid = rel.rhs
+
+                    if (rel.rel in evt_consumer and rel.lhs is local_uid) or \
+                       (rel.rel in evt_producer and rel.rhs is local_uid):
+                        dropsubs[remote_uid].append(local_uid)
+
+                    break
 
             self._dropsubs.update(dropsubs)
+
+            self._sessions[sessionId].add_relationships(host, rest_port, droprels, self)
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)

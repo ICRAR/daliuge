@@ -33,9 +33,10 @@ from luigi import scheduler, worker
 
 from dfms import droputils, utils
 from dfms import luigi_int, graph_loader
-from dfms.ddap_protocol import DROPLinkType, DROPStates
-from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
-from dfms.exceptions import InvalidSessionState, InvalidGraphException,\
+from dfms.ddap_protocol import DROPStates
+from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
+    LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
+from dfms.exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
 
 
@@ -96,6 +97,7 @@ class Session(object):
         self._drops = {} # key: oid, value: actual drop object
         self._statusLock = threading.Lock()
         self._roots = []
+        self._proxyinfo = []
         self._daemon = None
         self._worker = None
         self._status = SessionStates.PRISTINE
@@ -339,6 +341,18 @@ class Session(object):
         except AttributeError:
             raise DaliugeException("%r has no method called %s" % (drop, method))
         return m(*args)
+
+    def add_relationships(self, host, port, relationships, nm):
+        for rel in relationships:
+            local_uid = rel.rhs
+            mname = LINKTYPE_1TON_APPEND_METHOD[rel.rel]
+            remote_uid = rel.lhs
+            if local_uid not in self._graph:
+                local_uid = rel.lhs
+                remote_uid = rel.rhs
+                mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
+
+            self._proxyinfo.append((nm, host, port, local_uid, mname, remote_uid))
 
     # Support for the 'with' keyword
     def __enter__(self):
