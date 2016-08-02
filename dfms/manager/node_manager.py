@@ -281,21 +281,27 @@ class NodeManager(DROPManager):
 
             self._dropsubs.update(dropsubs)
 
+    def has_method(self, sessionId, uid, mname):
+        self._check_session_id(sessionId)
+        return self._sessions[sessionId].has_method(uid, mname)
+
     def get_drop_property(self, sessionId, uuid, prop_name):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].get_drop_property(uuid, prop_name)
-
-    def get_remote_drop_property(self, hostname, session_id, uid, name):
-        with NodeManagerClient(hostname) as c:
-            return c.get_drop_property(session_id, uid, name)
 
     def call_drop(self, sessionId, uid, method, *args):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].call_drop(uid, method, *args)
 
-    def call_remote_drop(self, hostname, session_id, uid, method, *args):
-        with NodeManagerClient(hostname) as c:
-            return c.call_remote_drop(session_id, uid, method, *args)
+    def get_drop_attribute(self, hostname, port, session_id, uid, name):
+        class remote_method(object):
+            def __call__(self, *args, **kwargs):
+                with NodeManagerClient(hostname, port) as c:
+                    return c.call_remote_drop(session_id, uid, name, *args)
+        with NodeManagerClient(hostname, port) as c:
+            if c.has_method(session_id, uid, name):
+                return remote_method()
+            return c.get_drop_property(session_id, uid, name)
 
     def getTemplates(self):
 
