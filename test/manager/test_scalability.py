@@ -21,16 +21,17 @@
 #
 import subprocess
 import sys
+import time
 import unittest
+
+from test.manager import testutils
 
 from dfms import drop
 from dfms.manager import client
-import time
-from test.manager import testutils
+from dfms.utils import terminate_or_kill
 
 
 hostname = 'localhost'
-
 
 def memory_drop(uid):
     return drop.dropdict({'node':hostname, 'oid':uid, 'uid':uid, 'type':'plain', 'storage':'memory'})
@@ -76,7 +77,7 @@ class TestBigGraph(unittest.TestCase):
         self.dmProcess = subprocess.Popen(args)
 
     def tearDown(self):
-        self.dmProcess.kill()
+        terminate_or_kill(self.dmProcess, 5)
         unittest.TestCase.tearDown(self)
 
     def test_submit_hugegraph(self):
