@@ -94,7 +94,9 @@ class NodeManager(DROPManager):
     """
 
     def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None,
-                 enable_luigi=False, zmq_bind_port = 5553):
+                 enable_luigi=False,
+                 events_port = constants.NODE_DEFAULT_EVENTS_PORT,
+                 rpc_port = constants.NODE_DEFAULT_RPC_PORT):
         self._event_listener = ZMQDropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
@@ -130,10 +132,9 @@ class NodeManager(DROPManager):
         
         # Setting up zeromq for event publishing/subscription
         self._zmq_running = True
-        self._zmqport = zmq_bind_port
         self._zmqcontextpub = zmq.Context()
         self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)
-        self._zmqsocketpub.bind("tcp://*:%s" % self._zmqport)
+        self._zmqsocketpub.bind("tcp://*:%d" % events_port)
 
         self._zmqcontextsub = zmq.Context()
         self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)
@@ -282,12 +283,13 @@ class NodeManager(DROPManager):
 
         for nodesub, droprels in relationships.items():
             host = nodesub
-            zmq_port = self._zmqport
             rest_port = constants.NODE_DEFAULT_REST_PORT
+            events_port = constants.NODE_DEFAULT_EVENTS_PORT
+            rpc_port = constants.NODE_DEFAULT_RPC_PORT
             if type(nodesub) is tuple:
-                host, rest_port, zmq_port = nodesub
+                host, rest_port, events_port, rpc_port = nodesub
             # we also have to unsubscribe from them at some point
-            self._zmqsocketsub.connect("tcp://%s:%s" % (host, zmq_port))
+            self._zmqsocketsub.connect("tcp://%s:%s" % (host, events_port))
 
             droprels = [DROPRel(*x) for x in droprels]
 
@@ -318,7 +320,7 @@ class NodeManager(DROPManager):
 
             self._dropsubs.update(dropsubs)
 
-            self._sessions[sessionId].add_relationships(host, rest_port, droprels, self)
+            self._sessions[sessionId].add_relationships(host, rpc_port, droprels, self)
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)
