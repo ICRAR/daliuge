@@ -28,7 +28,6 @@ import threading
 import time
 import unittest
 
-import Pyro4
 import pkg_resources
 
 from dfms import droputils
@@ -131,11 +130,10 @@ class TestDIM(unittest.TestCase):
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
         uris = self.dim.deploySession(sessionId)
-        a = Pyro4.Proxy(uris['A'])
-        c = Pyro4.Proxy(uris['C'])
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
 
         data = os.urandom(10)
-        with droputils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
 
@@ -153,10 +151,10 @@ class TestDIM(unittest.TestCase):
 
         # Deploy now and get the uris. With that we get then A's and C's proxies
         uris = self.dim.deploySession(sessionId, completedDrops=['A'])
-        c = Pyro4.Proxy(uris['C'])
+        c = self.dm._sessions[sessionId].drops['C']
 
         # This should be happening before the sleepTime expires
-        with droputils.EvtConsumerProxyCtx(self, c, 2):
+        with droputils.DROPWaiterCtx(self, c, 2):
             pass
 
         self.assertEqual(DROPStates.COMPLETED, c.status)
@@ -181,10 +179,9 @@ class TestDIM(unittest.TestCase):
         uris = self.dm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
-        a = Pyro4.Proxy(uris['A'])
-        c = Pyro4.Proxy(uris['C'])
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
         data = os.urandom(10)
-        with droputils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
 
@@ -216,10 +213,9 @@ class TestDIM(unittest.TestCase):
         uris = self.dim.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
-        a = Pyro4.Proxy(uris['A'])
-        c = Pyro4.Proxy(uris['C'])
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
         data = os.urandom(10)
-        with droputils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
