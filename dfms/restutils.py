@@ -24,9 +24,9 @@ import logging
 
 import bottle
 from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
-from SocketServer import ThreadingMixIn
 import six.moves.http_client as httplib  # @UnresolvedImport
 import six.moves.urllib_parse as urllib # @UnresolvedImport
+import six.moves.socketserver as SocketServer # @UnresolvedImport
 
 from dfms import utils
 from dfms.exceptions import DaliugeException
@@ -39,7 +39,7 @@ DALIUGE_HDR_ERR = 'X-Daliuge-Error'
 
 logger = logging.getLogger(__name__)
 
-class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
+class ThreadingWSGIServer(SocketServer.ThreadingMixIn, WSGIServer):
     daemon_threads = True
     allow_reuse_address = True
 

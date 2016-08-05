@@ -24,7 +24,6 @@ Module containing the NodeManager, which directly manages DROP instances, and
 thus represents the bottom of the DROP management hierarchy.
 """
 
-import Queue
 import abc
 import collections
 import contextlib
@@ -39,6 +38,7 @@ import time
 
 import gevent
 import six
+from six.moves import queue as Queue  # @UnresolvedImport
 import zerorpc
 import zmq
 
