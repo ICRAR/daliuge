@@ -73,13 +73,13 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
-class ZMQDropEventListener(utils.noopctx):
+class NMDropEventListener(utils.noopctx):
 
     def __init__(self, nm):
         self._nm = nm
 
     def handleEvent(self, event):
-        self._nm._zmq_pub_q.put(event)
+        self._nm.publish_event(event)
 
 class NodeManager(DROPManager):
     """
@@ -99,7 +99,7 @@ class NodeManager(DROPManager):
                  enable_luigi=False,
                  events_port = constants.NODE_DEFAULT_EVENTS_PORT,
                  rpc_port = constants.NODE_DEFAULT_RPC_PORT):
-        self._event_listener = ZMQDropEventListener(self)
+        self._event_listener = NMDropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
@@ -132,7 +132,7 @@ class NodeManager(DROPManager):
 
         self._zmq_sub_q = Queue.Queue()
         self._zmq_pub_q = Queue.Queue()
-        
+
         # Setting up zeromq for event publishing/subscription
         self._zmq_running = True
         self._zmqcontextpub = zmq.Context()
@@ -148,7 +148,7 @@ class NodeManager(DROPManager):
 
         self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread)
         self._zmqsubqthread.start()
-        
+
         self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
         self._zmqsubthread.start()
 
@@ -176,6 +176,9 @@ class NodeManager(DROPManager):
         self._zrpcserverthread.join()
 
     __del__ = shutdown
+
+    def publish_event(self, evt):
+        self._zmq_pub_q.put(evt)
 
     def _zmq_pub_queue_thread(self):
         while self._zmq_running:
