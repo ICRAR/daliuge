@@ -33,7 +33,7 @@ from dfms.ddap_protocol import DROPRel
 from dfms.exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
 from dfms.manager import constants
-from dfms.manager.client import BaseDROPManagerClient
+from dfms.manager.client import NodeManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
@@ -216,7 +216,7 @@ class CompositeManager(DROPManager):
             raise DaliugeException("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
 
     def dmAt(self, host):
-        return BaseDROPManagerClient(host, self._dmPort, 10)
+        return NodeManagerClient(host, self._dmPort, 10)
 
     def getSessionIds(self):
         return self._sessionIds;
@@ -410,7 +410,7 @@ class CompositeManager(DROPManager):
 
         # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
-        rels = set(*[[x.values() for x in self._drop_rels[sessionId].values()]])
+        rels = set([z for x in self._drop_rels[sessionId].values() for y in x.values() for z in y])
         for rel in rels:
             graph_loader.addLink(rel.rel, allGraphs[rel.rhs], rel.lhs)
 
