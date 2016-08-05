@@ -317,48 +317,18 @@ class CompositeManager(DROPManager):
         self._graph.update({uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec})
 
         # At each partition the relationships between DROPs should be local at the
-        # moment of submitting the graph; thus we record the inter-DM
+        # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
-        interDMRelations = []
+        inter_partition_rels = []
         for dropSpecs in perPartition.values():
-            interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
-        sanitize_relations(interDMRelations, self._graph)
-        logger.debug('Removed (and sanitized) %d inter-dm relationships', len(interDMRelations))
+            inter_partition_rels.extend(graph_loader.removeUnmetRelationships(dropSpecs))
+        sanitize_relations(inter_partition_rels, self._graph)
+        logger.debug('Removed (and sanitized) %d inter-partition relationships', len(inter_partition_rels))
 
-        # We gather the information on which remote drops a given Node Manager
-        # should expect events from for event dispatching.
-        # Events will come from a number of remote hosts to which the NM needs
-        # to subscribe. Additionally each NM needs to know whether an incoming
-        # event applies to any of its local drops, and dispatch it accordingly.
-        #
-        # Thus, for a given NM that will receive events, we need to record
-        # the following information:
-        #  * A list of hosts to which it should subscribe
-        #  * For each of these hosts, a list of UIDs of drops that fire events
-        #    this NM should dispatch locally.
-        #  * A list of UIDs of local drops that should receive the event.
-        #
-        # In the following example:
-        #
-        # DM #1      DM #2
-        # =======    =============
-        # | A --|----|-> B --> C |
-        # =======    =============
-        #
-        # We would generate the following drop_subscriptions structure:
-        #
-        # {
-        #    'DM#2': {
-        #        'DM#1': [DROPRel('B', output, 'A')]}
-        #    },
-        #    'DM#1': {
-        #        'DM#2': [DROPRel('B', output, 'A')]}
-        #    }
-        # }
-        #
-
+        # Store the inter-partition relationships; later on they have to be
+        # communicated to the NMs so they can establish them as needed.
         drop_rels = collections.defaultdict(functools.partial(collections.defaultdict, list))
-        for rel in interDMRelations:
+        for rel in inter_partition_rels:
             rhn = self._graph[rel.rhs]['node']
             lhn = self._graph[rel.lhs]['node']
             drop_rels[lhn][rhn].append(rel)
