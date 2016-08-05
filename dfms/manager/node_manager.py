@@ -25,12 +25,14 @@ thus represents the bottom of the DROP management hierarchy.
 """
 
 import Queue
+import abc
 import collections
 import contextlib
 import importlib
 import inspect
 import logging
 import os
+import socket
 import sys
 import threading
 import time
@@ -83,7 +85,7 @@ class NMDropEventListener(utils.noopctx):
 
 class NodeManager(DROPManager):
     """
-    A DROPManager that creates and holds references to DROPs.
+    Base class for a DROPManager that creates and holds references to DROPs.
 
     A NodeManager is the ultimate responsible of handling DROPs. It does so not
     directly, but via Sessions, which represent and encapsulate separate,
@@ -95,14 +97,23 @@ class NodeManager(DROPManager):
     NodeManager is needed for each computing node, thus its name.
     """
 
-    def __init__(self, useDLM=True, dfmsPath=None, host=None, error_listener=None,
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self,
+                 useDLM=True,
+                 dfmsPath=None,
+                 host=None,
+                 error_listener=None,
                  enable_luigi=False,
                  events_port = constants.NODE_DEFAULT_EVENTS_PORT,
                  rpc_port = constants.NODE_DEFAULT_RPC_PORT):
+
         self._event_listener = NMDropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
+        self._host = host or 'localhost'
+        self._events_port = events_port
+        self._rpc_port = rpc_port
         self._sessions = {}
-        self._host = host
         self._dropsubs = {}
 
         # dfmsPath contains code added by the user with possible
@@ -130,104 +141,40 @@ class NodeManager(DROPManager):
 
         self._enable_luigi = enable_luigi
 
-        self._zmq_sub_q = Queue.Queue()
-        self._zmq_pub_q = Queue.Queue()
+        # Start the mix-ins
+        self.start()
 
-        # Setting up zeromq for event publishing/subscription
-        self._zmq_running = True
-        self._zmqcontextpub = zmq.Context()
-        self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)
-        self._zmqsocketpub.bind("tcp://*:%d" % events_port)
+    @abc.abstractmethod
+    def start(self):
+        """
+        Starts any background task required by this Node Manager
+        """
 
-        self._zmqcontextsub = zmq.Context()
-        self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)
-        self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, '')
-
-        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread)
-        self._zmqpubqthread.start()
-
-        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread)
-        self._zmqsubqthread.start()
-
-        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
-        self._zmqsubthread.start()
-
-        # Setting up the single-threaded ZeroRPC server for RPC requests
-        def run_zrpcserver():
-            def stop():
-                while self._zmq_running:
-                    gevent.sleep(0.2)
-                self._zrpcserver.close()
-            self._zrpcserver = zerorpc.Server(self)
-            self._zrpcserver.bind("tcp://*:%d" % (rpc_port,))
-            gr1 = gevent.spawn(self._zrpcserver.run)
-            gr2 = gevent.spawn(stop)
-            gevent.joinall([gr1, gr2])
-        self._zrpcserverthread = threading.Thread(target=run_zrpcserver, name="ZeroRPC server")
-        self._zrpcserverthread.start()
-
+    @abc.abstractmethod
     def shutdown(self):
-        self._zmq_running = False
-        self._zmqsubqthread.join()
-        self._zmqpubqthread.join()
-        self._zmqsubthread.join()
-        self._zmqcontextpub.destroy()
-        self._zmqcontextsub.destroy()
-        self._zrpcserverthread.join()
+        """
+        Stops any pending background task run by this Node Manager
+        """
 
-    __del__ = shutdown
+    @abc.abstractmethod
+    def subscribe(self, host, port):
+        """
+        Subscribes this Node Manager to events published in from ``host``:``port``
+        """
 
+    @abc.abstractmethod
     def publish_event(self, evt):
-        self._zmq_pub_q.put(evt)
+        """
+        Publishes the event ``evt`` for other Node Managers to receive it
+        """
 
-    def _zmq_pub_queue_thread(self):
-        while self._zmq_running:
-            evt = None
-            try:
-                evt = self._zmq_pub_q.get_nowait()
-            except Queue.Empty:
-                time.sleep(0.01)
-                continue
-            
-            while self._zmq_running:
-                try:
-                    self._zmqsocketpub.send_pyobj(evt, flags = zmq.NOBLOCK)
-                    break
-                except zmq.error.Again:
-                    logger.debug("Got an 'Again' when publishing event")
-                    time.sleep(0.01)
-                    continue
-        
-    def _zmq_sub_queue_thread(self):
-        while self._zmq_running:
-            evt = None
-            try:
-                evt = self._zmq_sub_q.get_nowait()
-            except Queue.Empty:
-                time.sleep(0.01)
-                continue
-
-            if not evt.uid in self._dropsubs:
-                continue
-            
-            for tgt in self._dropsubs[evt.uid]:
-                for s in self._sessions.values():
-                    if tgt in s.drops:
-                        s.drops[tgt].handleEvent(evt)
-                        break
-        
-    def _zmq_sub_thread(self):
-        while self._zmq_running:
-            try:
-                evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)
-                self._zmq_sub_q.put(evt)
-            except zmq.error.Again:
-                time.sleep(0.01)
-            except Exception:
-                import traceback
-                traceback.print_exc()
-                # Figure out what to do here
-                break
+    @abc.abstractmethod
+    def get_drop_attribute(self, hostname, port, session_id, uid, name):
+        """
+        Requests the attribute ``name`` of the remote drop ``uid`` on session
+        ``session_id`` living in host ``hostname``. The request is made on port
+        ``port``.
+        """
 
     def _check_session_id(self, session_id):
         if session_id not in self._sessions:
@@ -301,13 +248,15 @@ class NodeManager(DROPManager):
         logger.debug("Received subscription information: %r", relationships)
 
         for nodesub, droprels in relationships.items():
+
             host = nodesub
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
             rpc_port = constants.NODE_DEFAULT_RPC_PORT
             if type(nodesub) is tuple:
                 host, events_port, rpc_port = nodesub
-            # we also have to unsubscribe from them at some point
-            self._zmqsocketsub.connect("tcp://%s:%s" % (host, events_port))
+
+            # TODO: we also have to unsubscribe from them at some point
+            self.subscribe(host, events_port)
 
             droprels = [DROPRel(*x) for x in droprels]
 
@@ -352,6 +301,159 @@ class NodeManager(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].call_drop(uid, method, *args)
 
+    def getTemplates(self):
+
+        # TODO: we currently have a hardcoded list of functions, but we should
+        #       load these repositories in a different way (e.g., from a directory)
+
+        templates = []
+        for f in repository.complex_graph, repository.pip_cont_img_pg, repository.archiving_app:
+            templates.append(_functionAsTemplate(f))
+        return templates
+
+    def materializeTemplate(self, tpl, sessionId, **tplParams):
+
+        self._check_session_id(sessionId)
+
+        # tpl currently has the form <full.mod.path.functionName>
+        parts = tpl.split('.')
+        module = importlib.import_module('.'.join(parts[:-1]))
+        tplFunction = getattr(module, parts[-1])
+
+        # invoke the template function with the given parameters
+        # and add the new graph spec to the session
+        graphSpec = tplFunction(**tplParams)
+        self.addGraphSpec(sessionId, graphSpec)
+
+        logger.info('Added graph from template %s to session %s with params: %s', tpl, sessionId, tplParams)
+
+def zmq_safe(host_or_addr):
+    if host_or_addr == '0.0.0.0':
+        return '*'
+    return socket.gethostbyaddr(host_or_addr)[2][0]
+
+class BaseMixIn(object):
+    def start(self):
+        self._running = True
+    def shutdown(self):
+        self._running = False
+
+class ZMQPubSubMixIn(BaseMixIn):
+
+    def start(self):
+        super(ZMQPubSubMixIn, self).start()
+        self._zmq_sub_q = Queue.Queue()
+        self._zmq_pub_q = Queue.Queue()
+
+        # Setting up zeromq for event publishing/subscription
+        self._zmq_running = True
+        self._zmqcontextpub = zmq.Context()
+        self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)  # @UndefinedVariable
+        self._zmqsocketpub.bind("tcp://%s:%d" % (zmq_safe(self._host), self._events_port))
+
+        self._zmqcontextsub = zmq.Context()
+        self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)  # @UndefinedVariable
+        self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, '')  # @UndefinedVariable
+
+        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread)
+        self._zmqpubqthread.start()
+
+        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread)
+        self._zmqsubqthread.start()
+
+        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
+        self._zmqsubthread.start()
+
+    def shutdown(self):
+        super(ZMQPubSubMixIn, self).shutdown()
+        self._zmqsubqthread.join()
+        self._zmqpubqthread.join()
+        self._zmqsubthread.join()
+        self._zmqcontextpub.destroy()
+        self._zmqcontextsub.destroy()
+
+    def publish_event(self, evt):
+        self._zmq_pub_q.put(evt)
+
+    def subscribe(self, host, port):
+        self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
+
+    def _zmq_pub_queue_thread(self):
+        while self._running:
+            evt = None
+            try:
+                evt = self._zmq_pub_q.get_nowait()
+            except Queue.Empty:
+                time.sleep(0.01)
+                continue
+
+            while self._running:
+                try:
+                    self._zmqsocketpub.send_pyobj(evt, flags = zmq.NOBLOCK)  # @UndefinedVariable
+                    break
+                except zmq.error.Again:
+                    logger.debug("Got an 'Again' when publishing event")
+                    time.sleep(0.01)
+                    continue
+
+    def _zmq_sub_queue_thread(self):
+        while self._running:
+            evt = None
+            try:
+                evt = self._zmq_sub_q.get_nowait()
+            except Queue.Empty:
+                time.sleep(0.01)
+                continue
+
+            if not evt.uid in self._dropsubs:
+                continue
+
+            for tgt in self._dropsubs[evt.uid]:
+                for s in self._sessions.values():
+                    if tgt in s.drops:
+                        s.drops[tgt].handleEvent(evt)
+                        break
+
+    def _zmq_sub_thread(self):
+        while self._running:
+            try:
+                evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
+                self._zmq_sub_q.put(evt)
+            except zmq.error.Again:
+                time.sleep(0.01)
+            except Exception:
+                import traceback
+                traceback.print_exc()
+                # Figure out what to do here
+                break
+
+class ZeroRPCMixIn(BaseMixIn):
+
+    def start(self):
+        super(ZeroRPCMixIn, self).start()
+
+        # Starts the single-threaded ZeroRPC server for RPC requests
+        self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server", args=(self._host, self._rpc_port,))
+        self._zrpcserverthread.start()
+
+    def run_zrpcserver(self, host, port):
+
+        # zmq needs an address, not a hostname
+        self._zrpcserver = zerorpc.Server(self)
+        self._zrpcserver.bind("tcp://%s:%d" % (zmq_safe(host), port,))
+        gr1 = gevent.spawn(self._zrpcserver.run)
+        gr2 = gevent.spawn(self.stop_rpcserver)
+        gevent.joinall([gr1, gr2])
+
+    def stop_rpcserver(self):
+        while self._running:
+            gevent.sleep(0.2)
+        self._zrpcserver.close()
+
+    def shutdown(self):
+        super(ZeroRPCMixIn, self).shutdown()
+        self._zrpcserverthread.join()
+
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
 
         # The remote method receives the same client used to inspect the remote
@@ -375,45 +477,7 @@ class NodeManager(DROPManager):
             if closeit:
                 c.close()
 
-
-    def getTemplates(self):
-
-        # TODO: we currently have a hardcoded list of functions, but we should
-        #       load these repositories in a different way, like in this
-        #       commented code
-        #tplDir = os.path.expanduser("~/.dfms/templates")
-        #if not os.path.isdir(tplDir):
-        #    logger.warning('%s directory not found, no templates available' % (tplDir))
-        #    return []
-        #
-        #templates = []
-        #for fname in os.listdir(tplDir):
-        #    if not  os.path.isfile(fname): continue
-        #    if fname[-3:] != '.py': continue
-        #
-        #    with open(fname) as f:
-        #        m = imp.load_module(fname[-3:], f, fname)
-        #        functions = m.list_templates()
-        #        for f in functions:
-        #            templates.append(_functionAsTemplate(f))
-
-        templates = []
-        for f in repository.complex_graph, repository.pip_cont_img_pg, repository.archiving_app:
-            templates.append(_functionAsTemplate(f))
-        return templates
-
-    def materializeTemplate(self, tpl, sessionId, **tplParams):
-
-        self._check_session_id(sessionId)
-
-        # tpl currently has the form <full.mod.path.functionName>
-        parts = tpl.split('.')
-        module = importlib.import_module('.'.join(parts[:-1]))
-        tplFunction = getattr(module, parts[-1])
-
-        # invoke the template function with the given parameters
-        # and add the new graph spec to the session
-        graphSpec = tplFunction(**tplParams)
-        self.addGraphSpec(sessionId, graphSpec)
-
-        logger.info('Added graph from template %s to session %s with params: %s', tpl, sessionId, tplParams)
+class ZMQNodeManager(ZMQPubSubMixIn,
+                     ZeroRPCMixIn,
+                     NodeManager):
+    pass

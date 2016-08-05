@@ -38,7 +38,7 @@ from lockfile.pidlockfile import PIDLockFile
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
-from dfms.manager.node_manager import NodeManager
+from dfms.manager.node_manager import ZMQNodeManager
 from dfms.manager.replay import ReplayManager, ReplayManagerServer
 from dfms.manager.rest import NMRestServer, CompositeManagerRestServer, \
     MasterManagerRestServer
@@ -213,7 +213,7 @@ def dfmsNM(args=sys.argv):
     # Add DM-specific options
     # Note that the host we use to expose the NodeManager itself through Pyro is
     # also used to expose the Sessions it creates
-    options.dmType = NodeManager
+    options.dmType = ZMQNodeManager
     options.dmArgs = ()
     options.dmKwargs = {'useDLM': not options.noDLM,
                         'dfmsPath': options.dfmsPath,
