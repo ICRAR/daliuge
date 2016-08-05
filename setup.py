@@ -81,6 +81,9 @@ setup(
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
+        # while zerorpc-python doesn't push latest fixes to their master,
+        # including proper Python 3 support and logging cleanup
+        'https://github.com/rtobar/zerorpc-python/archive/master.zip#egg=zerorpc',
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
         'https://bitbucket.org/al45tair/netifaces/get/tip.zip#egg=netifaces',
         ],
