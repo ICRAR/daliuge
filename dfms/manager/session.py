@@ -63,7 +63,7 @@ class DropProxy(utils.noopctx):
     A proxy to a remote drop.
 
     It forwards attribute requests through the given Node Manager.
-    It also forwards procedure calls thorugh the Node Manager.
+    It also forwards procedure calls through the Node Manager.
     """
 
     def __init__(self, nm, hostname, port, sessionId, uid):
@@ -78,6 +78,9 @@ class DropProxy(utils.noopctx):
 
     def __getattr__(self, name):
         return self.nm.get_drop_attribute(self.hostname, self.port, self.session_id, self.uid, name)
+
+    def __repr__(self, *args, **kwargs):
+        return '<DropProxy %s, session %s @%s:%d>' % (self.uid, self.session_id, self.hostname, self.port)
 
 class LeavesCompletionListener(utils.noopctx):
 
