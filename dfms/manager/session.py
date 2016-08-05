@@ -28,7 +28,6 @@ import inspect
 import logging
 import threading
 
-import Pyro4
 from luigi import scheduler, worker
 
 from dfms import droputils, utils
@@ -119,7 +118,6 @@ class Session(object):
         self._statusLock = threading.Lock()
         self._roots = []
         self._proxyinfo = []
-        self._daemon = None
         self._worker = None
         self._status = SessionStates.PRISTINE
         self._host = host
@@ -230,13 +228,6 @@ class Session(object):
 
         self.status = SessionStates.DEPLOYING
 
-        # Create the Pyro daemon that will serve the DROP proxies and start it
-        logger.debug("Starting Pyro4 Daemon for session %s", self._sessionId)
-        self._daemon = Pyro4.Daemon(host=self._host)
-        self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
-        self._daemonT.daemon = True
-        self._daemonT.start()
-
         # Create the real DROPs from the graph specs
         logger.debug("Creating DROPs for session %s", self._sessionId)
 
@@ -298,9 +289,7 @@ class Session(object):
         logger.info("Session %s is now RUNNING", self._sessionId)
 
     def _registerDrop(self, drop):
-        uri = self._daemon.register(drop)
-        drop.uri = uri.asString()
-        logger.debug("Registered %r with Pyro. URI is %s", drop, uri)
+        drop.uri = ''
         self._drops[drop.uid] = drop
 
     def _run(self, worker):
@@ -336,13 +325,7 @@ class Session(object):
         return dict(self._graph)
 
     def destroy(self):
-        """
-        Destroys this session, shutting down the Pyro daemon if it exists.
-        """
-        if self._daemon:
-            self._daemon.shutdown()
-            self._daemon = None
-            self._daemonT.join()
+        pass
 
     __del__ = destroy
 
