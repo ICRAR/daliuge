@@ -187,6 +187,7 @@ def setupLogging(opts):
     logging.getLogger("dfms").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
+    logging.getLogger("zerorpc").setLevel(logging.WARN)
 
     return fileHandler
 
