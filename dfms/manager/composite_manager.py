@@ -20,19 +20,20 @@
 #    MA 02111-1307  USA
 #
 import collections
+import contextlib
 import functools
 import logging
 import multiprocessing.pool
 import threading
-import time
 
-import Pyro4
+import zerorpc
 
-from dfms import remote, graph_loader, drop, utils
+from dfms import remote, graph_loader
 from dfms.ddap_protocol import DROPRel
 from dfms.exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
-from dfms.manager.client import BaseDROPManagerClient, NodeManagerClient
+from dfms.manager import constants
+from dfms.manager.client import BaseDROPManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
@@ -45,7 +46,7 @@ def uid_for_drop(dropSpec):
         return dropSpec['uid']
     return dropSpec['oid']
 
-def sanitize_relations(interDMRelations, graphSpec):
+def sanitize_relations(interDMRelations, graph):
 
     # TODO: Big change required to remove this hack here
     #
@@ -66,13 +67,18 @@ def sanitize_relations(interDMRelations, graphSpec):
     # users to always require an UID, and optionally an OID, and then change
     # all this code to immediately use those UIDs instead.
     newDMRelations = []
-    graphDict = {dropSpec['oid']: dropSpec for dropSpec in graphSpec}
     for rel in interDMRelations:
-        lhs = uid_for_drop(graphDict[rel.lhs])
-        rhs = uid_for_drop(graphDict[rel.rhs])
+        lhs = uid_for_drop(graph[rel.lhs])
+        rhs = uid_for_drop(graph[rel.rhs])
         new_rel = DROPRel(lhs, rel.rel, rhs)
         newDMRelations.append(new_rel)
     interDMRelations[:] = newDMRelations
+
+def group_by_node(uids, graph):
+    uids_by_node = collections.defaultdict(list)
+    for uid in uids:
+        uids_by_node[graph[uid]['node']].append(uid)
+    return uids_by_node
 
 class CompositeManager(DROPManager):
     """
@@ -117,8 +123,8 @@ class CompositeManager(DROPManager):
         self._dmExec = dmExec
         self._subDmId = subDmId
         self._dmHosts = dmHosts
-        self._interDMRelations = collections.defaultdict(list)
-        self._drop_subscriptions = {}
+        self._graph = {}
+        self._drop_rels = {}
         self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmCheckTimeout = dmCheckTimeout
@@ -278,10 +284,10 @@ class CompositeManager(DROPManager):
         self.replicate(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
-    def _add_node_subscriptions(self, sessionId, host_and_subscriptions):
+    def _add_node_subscriptions(self, dm, host_and_subscriptions, sessionId):
         host, subscriptions = host_and_subscriptions
-        with NodeManagerClient(host) as nm:
-            nm.add_node_subscriptions(sessionId, subscriptions)
+        dm.add_node_subscriptions(sessionId, subscriptions)
+        logger.debug("Successfully added relationship info to session %s on %s", sessionId, host)
 
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
@@ -289,6 +295,7 @@ class CompositeManager(DROPManager):
         logger.info("Successfully appended graph to session %s on %s", sessionId, host)
 
     def addGraphSpec(self, sessionId, graphSpec):
+
         # The first step is to break down the graph into smaller graphs that
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
@@ -306,13 +313,16 @@ class CompositeManager(DROPManager):
 
             perPartition[partition].append(dropSpec)
 
+        # Add the drop specs to our graph
+        self._graph.update({uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec})
+
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-DM
         # relationships separately and remove them from the original graph spec
         interDMRelations = []
         for dropSpecs in perPartition.values():
             interDMRelations.extend(graph_loader.removeUnmetRelationships(dropSpecs))
-        sanitize_relations(interDMRelations, graphSpec)
+        sanitize_relations(interDMRelations, self._graph)
         logger.debug('Removed (and sanitized) %d inter-dm relationships', len(interDMRelations))
 
         # We gather the information on which remote drops a given Node Manager
@@ -347,198 +357,66 @@ class CompositeManager(DROPManager):
         # }
         #
 
-        graphDict = {uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec}
-
-        drop_subscriptions = collections.defaultdict(functools.partial(collections.defaultdict, list))
+        drop_rels = collections.defaultdict(functools.partial(collections.defaultdict, list))
         for rel in interDMRelations:
-            rhn = graphDict[rel.rhs]['node']
-            lhn = graphDict[rel.lhs]['node']
-            drop_subscriptions[lhn][rhn].append(rel)
-            drop_subscriptions[rhn][lhn].append(rel)
+            rhn = self._graph[rel.rhs]['node']
+            lhn = self._graph[rel.lhs]['node']
+            drop_rels[lhn][rhn].append(rel)
+            drop_rels[rhn][lhn].append(rel)
 
-        self._drop_subscriptions[sessionId] = drop_subscriptions
-        logger.debug("Calculated NM-level drop subscriptions: %r", drop_subscriptions)
+        self._drop_rels[sessionId] = drop_rels
+        logger.debug("Calculated NM-level drop relationships: %r", drop_rels)
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
         self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=perPartition.items())
 
-        self._interDMRelations[sessionId].extend(interDMRelations)
-
     def _deploySession(self, dm, host, sessionId):
-
         uris = dm.deploySession(sessionId)
-
-        # Perform some URI cosmetics. If the remote host is binding the
-        # Pyro Daemons to all interfaces, the URIs will look like
-        # PYRO:objID@0.0.0.0:port, and any proxy initialized with such
-        # URI will try to contact 0.0.0.0:port *locally*
-        # We thus replace any 0.0.0.0s we see by the `host`
-        # For reference see:
-        #
-        # https://pythonhosted.org/Pyro4/tipstricks.html#multiple-network-interfaces
-        for uid, origUri in uris.items():
-            if utils.isLocalhost(host) or \
-               '0.0.0.0' not in origUri:
-                continue
-            uri = Pyro4.URI(origUri)
-            uri.host = host
-            uri = uri.asString()
-            logger.debug('Sanitized Pyro uri for DROP %s: %s -> %s', uid, origUri, uri)
-            uris[uid] = uri
-
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
         return uris
 
-    def _establish_drop_rhsrel(self, proxy, allUris, rel):
-
-        # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
-        relType = rel.rel
-        rhsDrop = proxy
-        lhsDrop = Pyro4.Proxy(allUris[rel.lhs])
-
-        rhsDrop._pyroReconnect(tries=10)
-        if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
-            methodName = drop.LINKTYPE_1TON_APPEND_METHOD[relType]
-            rhsDrop._pyroInvoke(methodName, (lhsDrop,False), {})
-        else:
-            relPropName = drop.LINKTYPE_NTO1_PROPERTY[relType]
-            setattr(rhsDrop, relPropName, lhsDrop)
-
-    def _establish_drop_lhsrel(self, proxy, allUris, rel):
-
-        # DROPRel tuples are read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
-        relType = rel.rel
-        rhsDrop = Pyro4.Proxy(allUris[rel.rhs])
-        lhsDrop = proxy
-
-        if relType in drop.LINKTYPE_1TON_APPEND_METHOD:
-            backMethodName = drop.LINKTYPE_1TON_BACK_APPEND_METHOD[relType]
-            lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
-        else:
-            backMethodName = drop.LINKTYPE_NTO1_BACK_APPEND_METHOD[relType]
-            lhsDrop._pyroInvoke(backMethodName, (rhsDrop,False), {})
-
-    def _establish_drop_rels(self, allUris, exceptions, uids_rel_pairs):
-
-        # rels is a list of (uid,rel) tuples, index by uid
-        by_uid = collections.defaultdict(list)
-        for uid, rel in uids_rel_pairs:
-            by_uid[uid].append(rel)
-
-        for uid, rels in by_uid.items():
-
-            # Later on proxy will correspond either to the rhsDrop or the lhsDrop
-            # Each thread uses a fresh Proxy thus avoiding race conditions when
-            # connecting to the same remote object from different threads, but
-            # at the same time reusing a single connection from each thread.
-            proxy = Pyro4.Proxy(allUris[uid])
-
-            try:
-                proxy._pyroReconnect(tries=10)
-                for rel in rels:
-                    logger.debug("Establishing link %r", rel)
-                    if uid == rel.rhs:
-                        self._establish_drop_rhsrel(proxy, allUris, rel)
-                    else:
-                        self._establish_drop_lhsrel(proxy, allUris, rel)
-                    logger.debug("Done establishing link %r", rel)
-            except Exception as e:
-                exceptions[rel] = e
-                logger.exception("An exception establishing link %r", rel)
-                raise # so it gets printed
-            finally:
-                proxy._pyroRelease()
-
-    def _establish_all_rels(self, sessionId, allUris):
-
-        # For each DROPRel element we establish the link both ways so both drops
-        # can see each other. This is automatically done by the add* methods
-        # of the drop classes, but we do it manually here (thus the "False"
-        # argument on the _pyroInvoke call later on) to have full control over
-        # the connections being opened/closed on the pyro deamons hosting the
-        # drops.
-        #
-        # Moreover, in order to be able to safely establish these links in
-        # parallel and avoid exhausting all the threads on the pyro deamons
-        # we try to group together those relationships that originate in the
-        # same drop and establish them all from the same thread, and using a
-        # single connection. At the same time we try to work-balance all threads
-        uids_rel_pairs = []
-        for rel in self._interDMRelations[sessionId]:
-            uids_rel_pairs.append((rel.lhs,rel))
-            uids_rel_pairs.append((rel.rhs,rel))
-        uids_rel_pairs.sort(key=lambda x: x[0])
-
-        n = self._tp._processes
-        uids_rel_pairs = [uids_rel_pairs[i:i+n] for i in range(0, len(uids_rel_pairs), n)]
-
-        thrExs = {}
-        self._tp.map(functools.partial(self._establish_drop_rels, allUris, thrExs), uids_rel_pairs)
-        if thrExs:
-            raise Exception("One or more exceptions occurred while establishing links on session %s" % (sessionId,), thrExs)
-
-    def _triggerDrop(self, exceptions, drop_and_uid):
-
-        drop, uid = drop_and_uid
-        # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
+    def _triggerDrop(self, c, session_id, uid):
         method = 'setCompleted'
-        if hasattr(drop, 'async_execute'):
+        if c.has_method(session_id, uid, 'async_execute'):
             method = 'async_execute'
+        c.call_drop(session_id, uid, method)
 
-        try:
-            m = getattr(drop, method)
-            m()
+    def _triggerDrops(self, exceptions, session_id, host_and_uids):
 
-        except Exception as e:
-            exceptions[drop.uid] = e
-            logger.exception("An exception occurred while moving DROP %s to COMPLETED", uid)
-            raise # so it gets printed
-        finally:
-            drop._pyroRelease()
+        host, uids = host_and_uids
+
+        # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
+        with contextlib.closing(zerorpc.Client("tcp://%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT))) as c:
+            try:
+                for uid in uids:
+                    self._triggerDrop(c, session_id, uid)
+            except Exception as e:
+                exceptions[uid] = e
+                logger.exception("An exception occurred while moving DROP %s to COMPLETED", uid)
+                raise # so it gets printed
 
     def deploySession(self, sessionId, completedDrops=[]):
 
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
-        if self._drop_subscriptions[sessionId]:
-            self._tp.map(functools.partial(self._add_node_subscriptions, sessionId), self._drop_subscriptions[sessionId].items())
-            logger.debug("Delivered node subscription list to node managers")
-
-        logger.info('Deploying Session %s in all hosts', sessionId)
+        if self._drop_rels[sessionId]:
+            self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information", iterable=self._drop_rels[sessionId].items())
+            logger.info("Delivered node subscription list to node managers")
 
         allUris = {}
         self.replicate(sessionId, self._deploySession, "deploying session", collect=allUris)
-
-        # Retrieve all necessary proxies we'll need afterward
-        # (i.e., those present in inter-DM relationships and in completedDrops)
-        # Creating proxies beforehand and reusing them means that we won't need
-        # to establish that many TCP connections once and over again
-        proxies = {}
-        for rel in self._interDMRelations[sessionId]:
-            if rel.rhs not in proxies:
-                proxies[rel.rhs] = Pyro4.Proxy(allUris[rel.rhs])
-            if rel.lhs not in proxies:
-                proxies[rel.lhs] = Pyro4.Proxy(allUris[rel.lhs])
-        for uid in completedDrops:
-            if uid not in proxies:
-                proxies[uid] = Pyro4.Proxy(allUris[uid])
-
-        # Establish the inter-DM relationships between DROPs.
-        if self._interDMRelations[sessionId]:
-            now = time.time()
-            logger.info("Establishing %d drop relationships", len(self._interDMRelations[sessionId]))
-            self._establish_all_rels(sessionId, allUris)
-            logger.info("Established all drop relationships (%d) in %.3f [s]", len(self._interDMRelations[sessionId]), time.time() - now)
+        logger.info('Deployed Session %s in all hosts', sessionId)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
         if completedDrops:
             logger.debug('Moving following DROPs to COMPLETED right away: %r', completedDrops)
+            completed_by_host = group_by_node(completedDrops, self._graph)
             thrExs = {}
-            self._tp.map(functools.partial(self._triggerDrop, thrExs), [(proxies[uid],uid) for uid in completedDrops])
+            self._tp.map(functools.partial(self._triggerDrops, thrExs, sessionId), completed_by_host.items())
             if thrExs:
                 raise DaliugeException("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
 
@@ -562,7 +440,8 @@ class CompositeManager(DROPManager):
 
         # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
-        for rel in self._interDMRelations[sessionId]:
+        rels = set(*[[x.values() for x in self._drop_rels[sessionId].values()]])
+        for rel in rels:
             graph_loader.addLink(rel.rel, allGraphs[rel.rhs], rel.lhs)
 
         return allGraphs
