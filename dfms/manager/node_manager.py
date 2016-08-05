@@ -26,6 +26,7 @@ thus represents the bottom of the DROP management hierarchy.
 
 import Queue
 import collections
+import contextlib
 import importlib
 import inspect
 import logging
@@ -34,7 +35,9 @@ import sys
 import threading
 import time
 
+import gevent
 import six
+import zerorpc
 import zmq
 
 from dfms import utils
@@ -43,7 +46,6 @@ from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository, constants
-from dfms.manager.client import NodeManagerClient
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import Session
 
@@ -101,6 +103,7 @@ class NodeManager(DROPManager):
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
         self._host = host
+        self._dropsubs = {}
 
         # dfmsPath contains code added by the user with possible
         # DROP applications
@@ -149,7 +152,19 @@ class NodeManager(DROPManager):
         self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
         self._zmqsubthread.start()
 
-        self._dropsubs = {}
+        # Setting up the single-threaded ZeroRPC server for RPC requests
+        def run_zrpcserver():
+            def stop():
+                while self._zmq_running:
+                    gevent.sleep(0.2)
+                self._zrpcserver.close()
+            self._zrpcserver = zerorpc.Server(self)
+            self._zrpcserver.bind("tcp://*:%d" % (rpc_port,))
+            gr1 = gevent.spawn(self._zrpcserver.run)
+            gr2 = gevent.spawn(stop)
+            gevent.joinall([gr1, gr2])
+        self._zrpcserverthread = threading.Thread(target=run_zrpcserver, name="ZeroRPC server")
+        self._zrpcserverthread.start()
 
     def shutdown(self):
         self._zmq_running = False
@@ -158,6 +173,7 @@ class NodeManager(DROPManager):
         self._zmqsubthread.join()
         self._zmqcontextpub.destroy()
         self._zmqcontextsub.destroy()
+        self._zrpcserverthread.join()
 
     __del__ = shutdown
 
@@ -283,11 +299,10 @@ class NodeManager(DROPManager):
 
         for nodesub, droprels in relationships.items():
             host = nodesub
-            rest_port = constants.NODE_DEFAULT_REST_PORT
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
             rpc_port = constants.NODE_DEFAULT_RPC_PORT
             if type(nodesub) is tuple:
-                host, rest_port, events_port, rpc_port = nodesub
+                host, events_port, rpc_port = nodesub
             # we also have to unsubscribe from them at some point
             self._zmqsocketsub.connect("tcp://%s:%s" % (host, events_port))
 
@@ -335,14 +350,28 @@ class NodeManager(DROPManager):
         return self._sessions[sessionId].call_drop(uid, method, *args)
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
-        class remote_method(object):
-            def __call__(self, *args, **kwargs):
-                with NodeManagerClient(hostname, port) as c:
-                    return c.call_remote_drop(session_id, uid, name, *args)
-        with NodeManagerClient(hostname, port) as c:
+
+        # The remote method receives the same client used to inspect the remote
+        # object
+        def remote_method(c):
+            def f(*args):
+                with contextlib.closing(c):
+                    return c.call_drop(session_id, uid, name, *args)
+            return f
+
+        logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
+        c = zerorpc.Client("tcp://%s:%d" % (hostname,port))
+
+        closeit = False
+        try:
             if c.has_method(session_id, uid, name):
-                return remote_method()
+                return remote_method(c)
+            closeit = True
             return c.get_drop_property(session_id, uid, name)
+        finally:
+            if closeit:
+                c.close()
+
 
     def getTemplates(self):
 

@@ -37,7 +37,6 @@ from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dfms.drop import BarrierAppDROP
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
-from dfms.manager.rest import NMRestServer
 from dfms.manager.session import SessionStates
 from test.manager import testutils
 
@@ -54,11 +53,8 @@ class ErroneousApp(BarrierAppDROP):
     def run(self):
         raise Exception("Sorry, we always fail")
 
-NMInfo = collections.namedtuple('NMInfo', 'nm server thread')
-
 def nm_conninfo(n):
-    return 'localhost', 8000 + n, 5553 + n
-
+    return 'localhost', 5553 + n, 6666 + n
 
 class TestDM(unittest.TestCase):
 
@@ -66,23 +62,16 @@ class TestDM(unittest.TestCase):
         super(TestDM, self).__init__(methodName)
         self._dms = []
 
-    def _start_dm(self):
-        host, rest_port, zmq_bind_port = nm_conninfo(len(self._dms))
-        nm = NodeManager(useDLM=False, host=host, zmq_bind_port = zmq_bind_port)
-        rest = NMRestServer(nm)
-        thread = threading.Thread(target=rest.start, args=(host, rest_port))
-        thread.start()
-        self.assertTrue(utils.portIsOpen(host, rest_port, 10))
-        self._dms.append(NMInfo(nm, rest, thread))
+    def _start_dm(self, **kwargs):
+        host, events_port, rpc_port = nm_conninfo(len(self._dms))
+        nm = NodeManager(useDLM=False, host=host, events_port = events_port, rpc_port = rpc_port, **kwargs)
+        self._dms.append(nm)
         return nm
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
-        for nminfo in self._dms:
-            nminfo.nm.shutdown()
-            nminfo.server.stop(5)
-            nminfo.thread.join(5)
-            self.assertFalse(nminfo.thread.isAlive())
+        for nm in self._dms:
+            nm.shutdown()
 
     def test_error_listener(self):
 
@@ -95,7 +84,7 @@ class TestDM(unittest.TestCase):
                     evt.set()
 
         sessionId = 'lala'
-        dm = NodeManager(useDLM=False, error_listener=listener())
+        dm = self._start_dm(error_listener=listener())
         g = [{"oid":"A", "type":"plain", "storage": "memory"},
              {"oid":"B", "type":"app", "app":"test.manager.test_dm.ErroneousApp", "inputs": ["A"]},
              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
@@ -104,8 +93,6 @@ class TestDM(unittest.TestCase):
         dm.deploySession(sessionId, ["A"])
 
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
-
-        dm.shutdown()
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -119,8 +106,6 @@ class TestDM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        #import logging
-        #logging.basicConfig(level=logging.DEBUG)
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = 's1'
@@ -147,9 +132,6 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-
-        dm1.shutdown()
-        dm2.shutdown()
 
     def test_runGraphSeveralDropsPerDM(self):
         """
@@ -201,9 +183,6 @@ class TestDM(unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-
-        dm1.shutdown()
-        dm2.shutdown()
 
     def test_runWithFourDMs(self):
         """
@@ -278,7 +257,6 @@ class TestDM(unittest.TestCase):
 
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
-            dm.shutdown()
 
     def test_many_relationships(self):
         """
@@ -325,11 +303,11 @@ class TestDM(unittest.TestCase):
             a.write('a')
             a.setCompleted()
 
+        for i in range(N):
+            drop = dm2._sessions[sessionId].drops["B%d" % (i,)]
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-
-        dm1.shutdown()
-        dm2.shutdown()
 
 class TestREST(unittest.TestCase):
 
