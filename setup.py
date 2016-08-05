@@ -69,10 +69,11 @@ setup(
             "Pyro4>=4.39",
             "pyswarm",
             "python-daemon",
+            "pyzmq",
             "scp",
             'six',
             "zeroconf",
-            "pyzmq"
+            "zerorpc"
       ],
       # Keep alpha-sorted PLEASE!
 
