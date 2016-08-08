@@ -285,7 +285,7 @@ class NodeManager(DROPManager):
                 # Look which side of the relationship is local
                 for sid, s in self._sessions.items():
 
-                    if sessionId is not sid:
+                    if sessionId != sid:
                         continue
 
                     local_uid = None
