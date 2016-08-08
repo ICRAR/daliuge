@@ -85,16 +85,6 @@ def browse_service(zc, service_type_name, protocol, callback):
     browser = ServiceBrowser(zc, stn, handlers=[callback])
     return browser
 
-class noopctx(object):
-    """
-    Base class for objects that need to become context managers but need to
-    implement no additional behavior
-    """
-    def __enter__(self):
-        return self
-    def __exit__(self, typ, val, traceback):
-        return False
-
 class CountDownLatch(object):
     """
     An implementation that shadows Java's CountDownLatch, allowing one thread

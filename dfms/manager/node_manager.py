@@ -42,7 +42,6 @@ from six.moves import queue as Queue  # @UnresolvedImport
 import zerorpc
 import zmq
 
-from dfms import utils
 from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
@@ -75,7 +74,7 @@ def _functionAsTemplate(f):
 
     return {'name': inspect.getmodule(f).__name__ + "." + f.__name__, 'args': argsList}
 
-class NMDropEventListener(utils.noopctx):
+class NMDropEventListener(object):
 
     def __init__(self, nm):
         self._nm = nm
