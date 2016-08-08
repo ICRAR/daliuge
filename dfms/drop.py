@@ -1414,7 +1414,7 @@ class InputFiredAppDROP(AppDROP):
 
     def async_execute(self):
         # Return immediately, but schedule the execution of this app
-        t = threading.Thread(None, lambda: self.execute())
+        t = threading.Thread(target=self.execute)
         t.daemon = 1
         t.start()
 
