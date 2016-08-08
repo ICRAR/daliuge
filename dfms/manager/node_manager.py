@@ -176,6 +176,24 @@ class NodeManager(DROPManager):
         ``port``.
         """
 
+    def deliver_event(self, evt):
+        """
+        Method called by subclasses when a new event has arrived through the
+        subscription mechanism.
+        """
+
+        if not evt.uid in self._dropsubs:
+            logger.debug("No subscription found for drop %s", evt.uid)
+            return
+
+        for tgt in self._dropsubs[evt.uid]:
+            for s in self._sessions.values():
+                if tgt in s.drops:
+                    drop = s.drops[tgt]
+                    logger.debug("Passing event %r to %r", evt, drop)
+                    drop.handleEvent(evt)
+                    break
+
     def _check_session_id(self, session_id):
         if session_id not in self._sessions:
             raise NoSessionException(session_id)
@@ -401,18 +419,10 @@ class ZMQPubSubMixIn(BaseMixIn):
             evt = None
             try:
                 evt = self._zmq_sub_q.get_nowait()
+                self.deliver_event(evt)
             except Queue.Empty:
                 time.sleep(0.01)
                 continue
-
-            if not evt.uid in self._dropsubs:
-                continue
-
-            for tgt in self._dropsubs[evt.uid]:
-                for s in self._sessions.values():
-                    if tgt in s.drops:
-                        s.drops[tgt].handleEvent(evt)
-                        break
 
     def _zmq_sub_thread(self):
         while self._running:
