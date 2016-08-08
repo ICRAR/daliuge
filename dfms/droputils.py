@@ -29,8 +29,6 @@ import re
 import threading
 import traceback
 
-
-from dfms import utils
 from dfms.ddap_protocol import DROPStates
 from dfms.drop import AppDROP
 from dfms.io import IOForURL, OpenMode
@@ -45,7 +43,7 @@ indexed_opath_pattern    = re.compile(r".*%o\[.+\].*")
 indexed_idataurl_pattern = re.compile(r".*%iDataURL\[.+\].*")
 indexed_odataurl_pattern = re.compile(r".*%oDataURL\[.+\].*")
 
-class EvtConsumer(utils.noopctx):
+class EvtConsumer(object):
     '''
     Small utility class that sets the internal flag of the given threading.Event
     object when consuming a DROP. Used throughout the tests as a barrier to wait

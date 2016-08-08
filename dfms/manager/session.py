@@ -30,7 +30,7 @@ import threading
 
 from luigi import scheduler, worker
 
-from dfms import droputils, utils
+from dfms import droputils
 from dfms import luigi_int, graph_loader
 from dfms.ddap_protocol import DROPStates
 from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
@@ -48,7 +48,7 @@ class SessionStates:
     """
     PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = range(5)
 
-class ErrorStatusListener(utils.noopctx):
+class ErrorStatusListener(object):
 
     def __init__(self, session, event_listener):
         self._session = session
@@ -58,7 +58,7 @@ class ErrorStatusListener(utils.noopctx):
         if evt.status == DROPStates.ERROR:
             self._event_listener.on_error(self._session.drops[evt.uid])
 
-class DropProxy(utils.noopctx):
+class DropProxy(object):
     """
     A proxy to a remote drop.
 
@@ -82,7 +82,7 @@ class DropProxy(utils.noopctx):
     def __repr__(self, *args, **kwargs):
         return '<DropProxy %s, session %s @%s:%d>' % (self.uid, self.session_id, self.hostname, self.port)
 
-class LeavesCompletionListener(utils.noopctx):
+class LeavesCompletionListener(object):
 
     def __init__(self, leaves, session):
         self._session = session

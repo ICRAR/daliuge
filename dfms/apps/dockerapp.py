@@ -47,7 +47,7 @@ DFMS_ROOT = '/dfms_root'
 DockerPath = collections.namedtuple('DockerPath', 'path')
 
 
-class ContainerIpWaiter(utils.noopctx):
+class ContainerIpWaiter(object):
     """
     A class that remembers the target DROP's uid and containerIp properties
     when its internal event has been set, and returns them when waitForIp is

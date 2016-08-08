@@ -82,8 +82,7 @@ class SleepAndCopyApp(SleepApp):
 
     def copyAll(self):
         for inputDrop in self.inputs:
-            with inputDrop:
-                self.copyRecursive(inputDrop)
+            self.copyRecursive(inputDrop)
 
     def copyRecursive(self, inputDrop):
         if isinstance(inputDrop, ContainerDROP):
@@ -91,8 +90,7 @@ class SleepAndCopyApp(SleepApp):
                 self.copyRecursive(child)
         else:
             for outputDrop in self.outputs:
-                with outputDrop:
-                    droputils.copyDropContents(inputDrop, outputDrop)
+                droputils.copyDropContents(inputDrop, outputDrop)
 
 #===============================================================================
 # Methods that create graphs follow. They must have no arguments to be
