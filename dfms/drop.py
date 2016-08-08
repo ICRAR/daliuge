@@ -254,7 +254,7 @@ class AbstractDROP(EventFirer, noopctx):
         return hash(self._uid)
 
     def __repr__(self):
-        return "%s %s/%s" % (self.__class__.__name__, self.oid, self.uid)
+        return "<%s oid=%s, uid=%s>" % (self.__class__.__name__, self.oid, self.uid)
 
     def initialize(self, **kwargs):
         """

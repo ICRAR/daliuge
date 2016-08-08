@@ -375,13 +375,13 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)  # @UndefinedVariable
         self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, '')  # @UndefinedVariable
 
-        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread)
+        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread, name="ZMQ evtpub")
         self._zmqpubqthread.start()
 
-        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread)
+        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread, name="ZMQ evtsubq")
         self._zmqsubqthread.start()
 
-        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread)
+        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub")
         self._zmqsubthread.start()
 
     def shutdown(self):
