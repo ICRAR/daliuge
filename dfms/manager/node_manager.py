@@ -367,7 +367,9 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmq_running = True
         self._zmqcontextpub = zmq.Context()
         self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)  # @UndefinedVariable
-        self._zmqsocketpub.bind("tcp://%s:%d" % (zmq_safe(self._host), self._events_port))
+        endpoint = "tcp://%s:%d" % (zmq_safe(self._host), self._events_port)
+        self._zmqsocketpub.bind(endpoint)
+        logger.info("Listening for events on %s", endpoint)
 
         self._zmqcontextsub = zmq.Context()
         self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)  # @UndefinedVariable
@@ -394,7 +396,9 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmq_pub_q.put(evt)
 
     def subscribe(self, host, port):
-        self._zmqsocketsub.connect("tcp://%s:%s" % (host, port))
+        endpoint = "tcp://%s:%d" % (host, port)
+        self._zmqsocketsub.connect(endpoint)
+        logger.info("Subscribed for events originating from %s", endpoint)
 
     def _zmq_pub_queue_thread(self):
         while self._running:
@@ -450,7 +454,9 @@ class ZeroRPCMixIn(BaseMixIn):
 
         # zmq needs an address, not a hostname
         self._zrpcserver = zerorpc.Server(self)
-        self._zrpcserver.bind("tcp://%s:%d" % (zmq_safe(host), port,))
+        endpoint = "tcp://%s:%d" % (zmq_safe(host), port,)
+        self._zrpcserver.bind(endpoint)
+        logger.info("Listening for RPC requests on %s", endpoint)
         gr1 = gevent.spawn(self._zrpcserver.run)
         gr2 = gevent.spawn(self.stop_rpcserver)
         gevent.joinall([gr1, gr2])
