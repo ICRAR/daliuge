@@ -29,7 +29,6 @@ import re
 import threading
 import traceback
 
-import Pyro4
 
 from dfms import utils
 from dfms.ddap_protocol import DROPStates
@@ -92,70 +91,6 @@ class DROPWaiterCtx(object):
         to = self._timeout
         for evt in self._evts:
             self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
-
-
-class EvtConsumerProxyCtx(object):
-    """
-    Class used by unit tests to trigger the execution of a remote physical graph
-    and wait until the given set of nodes have reached its COMPLETED status. In
-    summary, this class is similar to DROPWaiterCtx, but works for remote objects
-    (i.e., Pyro proxies).
-
-    Since the graph is remote (i.e., it is hosted by a DM), the DROPs
-    given to this class are actually Pyro proxies to the real DROPs, and
-    therefore the consumer that is appended into them is hosted by a Pyro Daemon
-    local to this class. This class creates the daemon, starts a separate thread
-    to listen for incoming requests, waits until the DROPs have reached
-    the COMPLETED state, stops the daemon, its listening thread, and uses the
-    test class to assert basic facts.
-    """
-
-    def __init__(self, test, drops, timeout=1):
-        self._drops = listify(drops)
-        self._test = test
-        self._timeout = timeout
-        self._evts = []
-
-    def __enter__(self):
-
-        # Create the daemon and listen for requests
-        daemon = Pyro4.Daemon()
-        t = threading.Thread(None, lambda: daemon.requestLoop())
-        t.daemon = 1
-        t.start()
-
-        # Attach a (proxy) EvtConsumer to each (proxy) drop
-        for drop in self._drops:
-            evt = threading.Event()
-            consumer = EvtConsumer(evt)
-            uri = daemon.register(consumer)
-            consumerProxy = Pyro4.Proxy(uri)
-            drop.subscribe(consumerProxy, 'status')
-            self._evts.append(evt)
-
-        self.daemon = daemon
-        self.t = t
-        return self
-
-    def __exit__(self, typ, value, traceback):
-
-        to = self._timeout
-        allFine = True
-
-        # Check now that all events have been set. If everything went fine, we
-        # also check that the thread hosting the daemon is dead.
-        try:
-            for evt in self._evts:
-                self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % (to))
-        except:
-            allFine = False
-            raise
-        finally:
-            self.daemon.shutdown()
-            self.t.join(to)
-            if allFine:
-                self._test.assertFalse(self.t.isAlive())
-
 
 
 def allDropContents(drop):
