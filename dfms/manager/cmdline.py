@@ -75,7 +75,7 @@ def launchServer(opts):
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    server_t = threading.Thread(target=server.start, args=(opts.host, opts.port))
+    server_t = threading.Thread(target=server.start, args=(opts.host, opts.port), name="HTTP server")
     server_t.start()
     # Now simply wait...
     signal.pause()
