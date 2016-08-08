@@ -96,10 +96,11 @@ def allDropContents(drop):
     Returns all the data contained in a given DROP
     '''
     desc = drop.open()
-    buf = drop.read(desc)
+    read = drop.read
+    buf = read(desc)
     allContents = buf
     while buf:
-        buf = drop.read(desc)
+        buf = read(desc)
         allContents += buf
     drop.close(desc)
     return allContents
@@ -109,10 +110,11 @@ def copyDropContents(source, target, bufsize=4096):
     Manually copies data from one DROP into another, in bufsize steps
     '''
     desc = source.open()
-    buf = source.read(desc, bufsize)
+    read = source.read
+    buf = read(desc, bufsize)
     while buf:
         target.write(buf)
-        buf = source.read(desc, bufsize)
+        buf = read(desc, bufsize)
     source.close(desc)
 
 def getUpstreamObjects(drop):

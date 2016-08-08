@@ -26,7 +26,6 @@ thus represents the bottom of the DROP management hierarchy.
 
 import abc
 import collections
-import contextlib
 import importlib
 import inspect
 import logging
@@ -473,19 +472,21 @@ class ZeroRPCMixIn(BaseMixIn):
 
         # The remote method receives the same client used to inspect the remote
         # object
-        def remote_method(c):
-            def f(*args):
-                with contextlib.closing(c):
-                    return c.call_drop(session_id, uid, name, *args)
-            return f
+        class remote_method(object):
+            def __del__(self):
+                self.c.close()
+            def __call__(self, *args):
+                return c.call_drop(session_id, uid, name, *args)
 
         logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
-        c = zerorpc.Client("tcp://%s:%d" % (hostname,port))
 
+        c = zerorpc.Client("tcp://%s:%d" % (hostname,port))
         closeit = False
         try:
             if c.has_method(session_id, uid, name):
-                return remote_method(c)
+                method = remote_method()
+                method.c = c
+                return method
             closeit = True
             return c.get_drop_property(session_id, uid, name)
         finally:
