@@ -476,7 +476,7 @@ class ZeroRPCMixIn(BaseMixIn):
             def __del__(self):
                 self.c.close()
             def __call__(self, *args):
-                return c.call_drop(session_id, uid, name, *args)
+                return self.c.call_drop(session_id, uid, name, *args)
 
         logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
 
