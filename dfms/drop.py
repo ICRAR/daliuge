@@ -294,7 +294,7 @@ class AbstractDROP(EventFirer):
         getting deleted.
         """
         if self.status != DROPStates.COMPLETED:
-            raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
+            raise Exception("%r is in state %s (!=COMPLETED), cannot be opened for reading" % (self, self.status,))
 
         io = self.getIO()
         io.open(OpenMode.OPEN_READ, **kwargs)
@@ -335,7 +335,7 @@ class AbstractDROP(EventFirer):
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
-            raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
+            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self.status,))
         if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
@@ -401,7 +401,7 @@ class AbstractDROP(EventFirer):
             else:
                 if remaining < 0:
                     logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                logger.debug("Automatically moving DROP %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                logger.debug("Automatically moving %r to COMPLETED, all expected data arrived" % (self,))
                 self.setCompleted()
         else:
             self.status = DROPStates.WRITING
@@ -626,7 +626,7 @@ class AbstractDROP(EventFirer):
     @parent.setter
     def parent(self, parent):
         if self._parent and parent:
-            logger.warning("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
+            logger.warning("A parent is already set in %r, overwriting with new value" % (self,))
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
@@ -791,7 +791,7 @@ class AbstractDROP(EventFirer):
         # Add if not already present
         if streamingConsumer in self._streamingConsumers:
             return
-        logger.debug('Adding new streaming streaming consumer for DROP %s/%s: %s' %(self.oid, self.uid, streamingConsumer))
+        logger.debug('Adding new streaming streaming consumer for %r: %s' %(self, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
@@ -1319,6 +1319,7 @@ class AppDROP(ContainerDROP):
         properties are set to their correct values correctly before invoking
         this method.
         """
+        logger.info("Moving %r to %s", self, "FINISHED" if self._execStatus is AppDROPStates.FINISHED else "ERROR")
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
 class InputFiredAppDROP(AppDROP):
@@ -1430,6 +1431,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
+        logger.info("Executing %r", self)
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
