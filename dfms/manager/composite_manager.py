@@ -26,6 +26,7 @@ import logging
 import multiprocessing.pool
 import threading
 
+import Pyro4
 import zerorpc
 
 from dfms import remote, graph_loader
@@ -37,6 +38,7 @@ from dfms.manager.client import NodeManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
+import abc
 
 
 logger = logging.getLogger(__name__)
@@ -101,6 +103,8 @@ class CompositeManager(DROPManager):
     construction time.
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -138,6 +142,12 @@ class CompositeManager(DROPManager):
         self._nodes = []
 
         self.startDMChecker()
+
+    @abc.abstractmethod
+    def get_rpc_client(self, host):
+        """
+        Constructs an RPC client to contact the Node Manager on ``host``
+        """
 
     def startDMChecker(self):
         self._dmCheckerEvt = threading.Event()
@@ -358,7 +368,7 @@ class CompositeManager(DROPManager):
         host, uids = host_and_uids
 
         # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
-        with contextlib.closing(zerorpc.Client("tcp://%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT))) as c:
+        with self.get_rpc_client(host) as c:
             try:
                 for uid in uids:
                     self._triggerDrop(c, session_id, uid)
@@ -432,7 +442,19 @@ class CompositeManager(DROPManager):
         self.replicate(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
         return sum(allCounts)
 
-class DataIslandManager(CompositeManager):
+
+class ZeroRPCMixIn(object):
+    def get_rpc_client(self, host):
+        return contextlib.closing(zerorpc.Client("tcp://%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT), heartbeat=30))
+
+class PyroRPCMixIn(object):
+    def get_rpc_client(self, host):
+        return Pyro4.Proxy("PYRO:node_manager@%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT))
+
+class PyroCompositeManager(PyroRPCMixIn, CompositeManager): pass
+class ZeroRPCCompositeManager(ZeroRPCMixIn, CompositeManager): pass
+
+class DataIslandManager(PyroCompositeManager):
     """
     The DataIslandManager, which manages a number of NodeManagers.
     """
@@ -454,7 +476,7 @@ class DataIslandManager(CompositeManager):
         CompositeManager.add_node(self, node)
         self._dmHosts.append(node)
 
-class MasterManager(CompositeManager):
+class MasterManager(PyroCompositeManager):
     """
     The MasterManager, which manages a number of DataIslandManagers.
     """
