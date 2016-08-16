@@ -369,7 +369,7 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)  # @UndefinedVariable
         endpoint = "tcp://%s:%d" % (zmq_safe(self._host), self._events_port)
         self._zmqsocketpub.bind(endpoint)
-        logger.info("Listening for events on %s", endpoint)
+        logger.info("Listening for events via ZeroMQ on %s", endpoint)
 
         self._zmqcontextsub = zmq.Context()
         self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)  # @UndefinedVariable
@@ -456,7 +456,7 @@ class ZeroRPCMixIn(BaseMixIn):
         self._zrpcserver = zerorpc.Server(self)
         endpoint = "tcp://%s:%d" % (zmq_safe(host), port,)
         self._zrpcserver.bind(endpoint)
-        logger.info("Listening for RPC requests on %s", endpoint)
+        logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
         gr1 = gevent.spawn(self._zrpcserver.run)
         gr2 = gevent.spawn(self.stop_rpcserver)
         gevent.joinall([gr1, gr2])
