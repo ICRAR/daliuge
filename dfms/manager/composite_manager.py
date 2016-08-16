@@ -357,12 +357,6 @@ class CompositeManager(DROPManager):
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
         return uris
 
-    def _triggerDrop(self, c, session_id, uid):
-        method = 'setCompleted'
-        if c.has_method(session_id, uid, 'async_execute'):
-            method = 'async_execute'
-        c.call_drop(session_id, uid, method)
-
     def _triggerDrops(self, exceptions, session_id, host_and_uids):
 
         host, uids = host_and_uids
@@ -370,12 +364,10 @@ class CompositeManager(DROPManager):
         # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
         with self.get_rpc_client(host) as c:
             try:
-                for uid in uids:
-                    self._triggerDrop(c, session_id, uid)
+                c.trigger_drops(session_id, uids)
             except Exception as e:
-                exceptions[uid] = e
-                logger.exception("An exception occurred while moving DROP %s to COMPLETED", uid)
-                raise # so it gets printed
+                exceptions[host] = e
+                logger.exception("An exception occurred while moving DROPs to COMPLETED")
 
     def deploySession(self, sessionId, completedDrops=[]):
 
