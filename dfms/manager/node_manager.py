@@ -258,7 +258,10 @@ class NodeManager(DROPManager):
 
     def trigger_drops(self, sessionId, uids):
         self._check_session_id(sessionId)
-        self._sessions[sessionId].trigger_drops(uids)
+        t = threading.Thread(target=self._sessions[sessionId].trigger_drops,
+                             name="Drop trigger",
+                             args=(uids,))
+        t.start()
 
     def add_node_subscriptions(self, sessionId, relationships):
 
