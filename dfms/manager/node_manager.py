@@ -256,6 +256,10 @@ class NodeManager(DROPManager):
         session = self._sessions[sessionId]
         return len(session._graph)
 
+    def trigger_drops(self, sessionId, uids):
+        self._check_session_id(sessionId)
+        self._sessions[sessionId].trigger_drops(uids)
+
     def add_node_subscriptions(self, sessionId, relationships):
 
         self._check_session_id(sessionId)

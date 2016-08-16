@@ -270,12 +270,7 @@ class Session(object):
         #
         # This is done in a separate iteration at the very end because all drops
         # to make sure all event listeners are ready
-        for drop,_ in droputils.breadFirstTraverse(self._roots):
-            if drop.uid in completedDrops:
-                if isinstance(drop, InputFiredAppDROP):
-                    drop.async_execute()
-                else:
-                    drop.setCompleted()
+        self.trigger_drops(completedDrops)
 
         # Foreach
         if foreach:
@@ -299,6 +294,16 @@ class Session(object):
         worker.run()
         worker.stop()
         self.finish()
+
+    def trigger_drops(self, uids):
+        for drop,_ in droputils.breadFirstTraverse(self._roots):
+            if isinstance(drop, DropProxy):
+                continue
+            if drop.uid in uids:
+                if isinstance(drop, InputFiredAppDROP):
+                    drop.async_execute()
+                else:
+                    drop.setCompleted()
 
     def finish(self):
         self.status = SessionStates.FINISHED

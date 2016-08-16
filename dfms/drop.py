@@ -1376,6 +1376,8 @@ class InputFiredAppDROP(AppDROP):
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
 
+        logger.debug("Received notification from input drop: uid=%s, state=%d", uid, drop_state)
+
         # A value of -1 means all inputs
         n_inputs = len(self._inputs)
         n_eff_inputs = self._n_effective_inputs
