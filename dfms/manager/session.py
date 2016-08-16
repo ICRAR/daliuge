@@ -77,6 +77,10 @@ class DropProxy(object):
         pass
 
     def __getattr__(self, name):
+        if name == 'uid':
+            return self.uid
+        elif name in ('inputs', 'streamingInputs', 'outputs', 'consumers', 'producers'):
+            return []
         return self.nm.get_drop_attribute(self.hostname, self.port, self.session_id, self.uid, name)
 
     def __repr__(self, *args, **kwargs):
