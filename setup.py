@@ -66,7 +66,7 @@ setup(
             # requires development packages to be installed on the system
             "paramiko<2.0.0",
             "psutil",
-            "Pyro4>=4.39",
+            "Pyro4>=4.47", # 4.47 contains a fix we contributed
             "pyswarm",
             "python-daemon",
             "pyzmq",

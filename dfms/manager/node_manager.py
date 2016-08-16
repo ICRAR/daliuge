@@ -35,12 +35,14 @@ import sys
 import threading
 import time
 
+import Pyro4
 import gevent
 import six
 from six.moves import queue as Queue  # @UnresolvedImport
 import zerorpc
 import zmq
 
+from dfms import utils
 from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
@@ -493,7 +495,55 @@ class ZeroRPCMixIn(BaseMixIn):
             if closeit:
                 c.close()
 
+
+class PyroRPCMixIn(BaseMixIn):
+
+    def start(self):
+        super(PyroRPCMixIn, self).start()
+
+        # Starts the single-threaded Pyro server for RPC requests
+        logger.info("Listening for RPC requests via Pyro on %s:%d", self._host, self._rpc_port)
+        Pyro4.config.SERVERTYPE = 'multiplex'
+        self._pyrodaemon = Pyro4.Daemon(self._host, self._rpc_port)
+        self._pyrodaemon.register(self, "node_manager")
+        self._pyroserverthread = threading.Thread(target=self._pyrodaemon.requestLoop, name="PyroRPC server")
+        self._pyroserverthread.start()
+
+    def shutdown(self):
+        timeout = 5
+        super(PyroRPCMixIn, self).shutdown()
+        self._pyrodaemon.shutdown()
+        self._pyroserverthread.join(timeout)
+        if not utils.portIsClosed(self._host, self._rpc_port, timeout):
+            logger.warning("Pyro RPC port %d is still open after %d seconds", timeout)
+
+    def get_drop_attribute(self, hostname, port, session_id, uid, name):
+
+        # The remote method receives the same client used to inspect the remote
+        # object
+        class remote_method(object):
+            def __del__(self):
+                self.nm._pyroRelease()
+            def __call__(self, *args):
+                return self.nm.call_drop(session_id, uid, name, *args)
+
+        logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
+
+        uri = Pyro4.URI("PYRO:node_manager@%s:%d" % (hostname, port))
+        nm = Pyro4.Proxy(uri)
+        closeit = False
+        try:
+            if nm.has_method(session_id, uid, name):
+                method = remote_method()
+                method.nm = nm
+                return method
+            closeit = True
+            return nm.get_drop_property(session_id, uid, name)
+        finally:
+            if closeit:
+                nm._pyroRelease()
+
 class ZMQNodeManager(ZMQPubSubMixIn,
-                     ZeroRPCMixIn,
+                     PyroRPCMixIn,
                      NodeManager):
     pass
