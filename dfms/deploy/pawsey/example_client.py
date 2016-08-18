@@ -59,7 +59,10 @@ class MonitorClient(object):
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
         lg = LG(fp)
+        logger.info()
+        logger.info("Start to unroll {0}".format(lgn))
         drop_list = lg.unroll_to_tpl()
+        logger.info("Unroll completed for {0}".format(lgn))
         node_list = self._dc.nodes()
 
         if 'sarkar' == algo:
@@ -68,7 +71,9 @@ class MonitorClient(object):
             pgtp = MetisPGTP(drop_list, len(node_list))
 
         # Trigering something...
+        logger.info("Start to translate {0}".format(lgn))
         pgtp.to_gojs_json()
+        logger.info("Translation completed for {0}".format(lgn))
 
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
         logger.info("PG spec is calculated!")
