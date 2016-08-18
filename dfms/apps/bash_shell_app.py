@@ -57,7 +57,7 @@ class BashShellApp(BarrierAppDROP):
         fsInputs = {uid: i for uid,i in self._inputs.items() if isFSBased(i)}
         fsOutputs = {uid: o for uid,o in self._outputs.items() if isFSBased(o)}
         dataURLInputs = {uid: i for uid,i in self._inputs.items() if not isFSBased(i)}
-        dataURLOutputs = {uid: i for uid,o in self._outputs.items() if not isFSBased(o)}
+        dataURLOutputs = {uid: o for uid,o in self._outputs.items() if not isFSBased(o)}
 
         cmd = droputils.replace_path_placeholders(self._command, fsInputs, fsOutputs)
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
