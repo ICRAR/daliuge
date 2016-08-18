@@ -220,7 +220,7 @@ class Session(object):
         self.status = SessionStates.DEPLOYING
 
         # Create the Pyro daemon that will serve the DROP proxies and start it
-        logger.debug("Starting Pyro4 Daemon for session %s", self._sessionId)
+        logger.info("Starting Pyro4 Daemon for session %s", self._sessionId)
         self._daemon = Pyro4.Daemon(host=self._host)
         self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
         self._daemonT.daemon = True
