@@ -42,7 +42,12 @@ from dfms.manager.client import DataIslandManagerClient
 logger = logging.getLogger(__name__)
 
 lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
-'chiles_two_dev1.json', 'chiles_simple.json','mwa_gleam.json','mwa_gleam_simple.json','lofar_std_large.json']
+'chiles_two_dev1.json', 'chiles_simple.json', 'mwa_gleam.json',
+'mwa_gleam_simple.json', 'lofar_std_large.json', 'chiles_two_dev2.json',
+'lofar_test_2x4.json', 'lofar_test_4x4.json', 'lofar_test_4x8.json',
+'lofar_test_8x8.json', 'lofar_test_8x16.json', 'lofar_test_16x16.json',
+'lofar_test_16x32.json', 'lofar_test_32x32.json', 'lofar_test_32x64.json',
+'lofar_test_64x64.json', 'lofar_test_64x128.json', 'lofar_test_128x128.json']
 
 
 class MonitorClient(object):
@@ -59,10 +64,9 @@ class MonitorClient(object):
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
         lg = LG(fp)
-        logger.info()
         logger.info("Start to unroll {0}".format(lgn))
         drop_list = lg.unroll_to_tpl()
-        logger.info("Unroll completed for {0}".format(lgn))
+        logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
         node_list = self._dc.nodes()
 
         if 'sarkar' == algo:
