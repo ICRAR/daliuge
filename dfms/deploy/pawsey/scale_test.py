@@ -51,6 +51,9 @@ aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $
 
 sub_tpl = Template(sub_tpl_str)
 
+default_aws_mon_host = 'sdp-dfms.ddns.net'
+default_aws_mon_port = 8898
+
 class DefaultConfig(object):
     def __init__(self):
         self._dict = dict()
@@ -92,9 +95,6 @@ class TianHe2Config(DefaultConfig):
     pass
 
 class ConfigFactory():
-    """
-    is this really necessary?
-    """
     mapping = {'galaxy_mwa':GalaxyMWAConfig(), 'galaxy_askap':GalaxyASKAPConfig(),
     'magnus':MagnusConfig(), 'galaxy':GalaxyASKAPConfig()}
 
@@ -120,13 +120,14 @@ class PawseyClient(object):
 
     def __init__(self, log_root=None, acc=None,
                 job_dur=30,
-                mon_host='sdp-dfms.ddns.net',
-                mon_port=8098,
+                num_nodes=5,
+                mon_host=default_aws_mon_host,
+                mon_port=default_aws_mon_port,
                 facility=socket.gethostname().split('-')[0]):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
-        self._num_nodes = 5
+        self._num_nodes = num_nodes
         self._job_dur = job_dur
         self._gid = None
         self._graph_vis = False
@@ -134,7 +135,6 @@ class PawseyClient(object):
         self._mon_host = mon_host
         self._mon_port = mon_port
         self._pip_name = None
-
 
     def set_gid(self, gid):
         if (gid is None):
@@ -147,9 +147,12 @@ class PawseyClient(object):
     @property
     def num_daliuge_nodes(self):
         if (self._run_proxy):
-            return self._num_nodes - 2 # exclude the proxy node
+            ret = self._num_nodes - 2 # exclude the proxy node
         else:
-            return self._num_nodes - 1 # exclude the data island node
+            ret = self._num_nodes - 1 # exclude the data island node
+        if (ret <= 0):
+            raise Exception("Not enough nodes {0} to run DALiuGE.".format(self._num_nodes))
+        return ret
 
     def get_log_dirname(self):
         """
@@ -196,22 +199,78 @@ class PawseyClient(object):
         rc, rs = commands.getstatusoutput(cmd)
         print rs
 
+class LogParser(object):
+    """
+    Given the log dir, analyse all DIM and NMs logs, and store the resuls
+    in CSV, which has the following fields:
+    ====================================
+    1.  facility (e.g. galaxy)
+    2.  pipeline (e.g. lofar_std)
+    3.  time (e.g. 2016-08-22T11-52-11/)
+    4.  # of nodes
+    5.  # of drops
+    6.  unroll_time
+    7.  translation_time
+    8.  pg_spec_gen_time
+    9.  created_session_at_all_nodes_time
+    10. graph_separation_time
+    11. push_sub_graphs_to_all_nodes_time
+    12. created_drops_at_all_nodes_time
+    13. created_pyro_conn_at_all_nodes_time
+    14. triggered_drops_at_all_nodes_time
+
+    Detailed description of each field:
+    https://confluence.icrar.uwa.edu.au/display/DALIUGE/Scalability+test#Scalabilitytest-Datacollection
+    """
+    def __init__(self, log_dir):
+        if (not self.check_log_dir(log_dir)):
+            raise Exception("No DIM log found at: {0}".format(log_dir))
+        self._log_dir = log_dir
+
+
+    def check_log_dir(self, log_dir):
+        dim_log_f = os.path.join(log_dir, '0', 'dfmsDIM.log')
+        if (os.path.exists(dim_log_f):
+            return True
+        else:
+            return False
+
 if __name__ == '__main__':
     parser = optparse.OptionParser()
 
     parser.add_option("-a", "--action", action="store", type="int",
                       dest="action", help="1 - submit job, 2 - analyse log", default=1)
-
     parser.add_option("-l", "--log-root", action="store",
                       dest="log_root", help="The root directory of the log file", default="localhost")
-
     parser.add_option("-g", "--graph-id", action="store", type="int",
                       dest="graph_id", help="The graph to deploy (0 - %d)" % (len(lgnames) - 1), default=None)
-
     parser.add_option("-t", "--job-dur", action="store", type="int",
                       dest="job_dur", help="job duration in minutes", default=30)
+    parser.add_option("-n", "--num_nodes", action="store", type="int",
+                      dest="num_nodes", help="number of compute nodes requested", default=5)
+    parser.add_option('-i', '--graph_vis', action='store_true',
+                    dest='graph_vis', help='Whether to visualise graph (poll status)', default=False)
+    parser.add_option('-p', '--use_proxy', action='store_true',
+                    dest='use_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
+    parser.add_option("-m", "--monitor_host", action="store", type="string",
+                    dest="monitor_host", help="Monitor host IP (optional)")
+    parser.add_option("-o", "--monitor_port", action="store", type="int",
+                    dest="monitor_port", help="The port to bind dfms monitor",
+                    default=default_aws_mon_port)
 
     (opts, args) = parser.parse_args(sys.argv)
-    pc = PawseyClient(job_dur=opts.job_dur)
-    pc.set_gid(opts.graph_id)
+    pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes)
+    if (opts.graph_id is not None):
+        pc.set_gid(opts.graph_id)
+    pc._graph_vis = opts.graph_vis
+    pc._run_proxy = opts.use_proxy
+    if (opts.use_proxy):
+        if (opts.monitor_host is None):
+            print("Use default proxy host '%s'" % default_aws_mon_host)
+        else:
+            self._mon_host = opts.monitor_host
+        self._mon_port = opts.monitor_port
+    elif (opts.monitor_host is not None):
+        print("Please enable proxy by switch on the '-p' option")
+        sys.exit(1)
     pc.submit_job()
