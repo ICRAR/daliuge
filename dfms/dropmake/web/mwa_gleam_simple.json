@@ -14,7 +14,7 @@
 {"category":"Data", "text":"self_calibrate fits file ", "data_volume":5, "group_end":0, "key":-12, "loc":"-384.84968443407746 -164.81227855364716", "group":-15},
 {"category":"BashShellApp", "text":"make_metafits", "execution_time":5, "group_start":0, "Arg01":"bash /home/blao/course/bin/make_metafits.sh", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-13, "loc":"-887.1117363763565 -163.57408215472412", "group":-15},
 {"category":"Data", "text":"metafits", "data_volume":5, "group_end":0, "key":-14, "loc":"-887.4939424484373 -303.32612279543474", "group":-15},
-{"category":"SplitData", "text":"Scatter by Observation/Scan", "isGroup":true, "num_of_copies":4, "scatter_axis":"time", "key":-15, "loc":"-614.8217007908415 -211.14430029780456"},
+{"category":"SplitData", "text":"Scatter by Observation/Scan", "isGroup":true, "num_of_copies":6, "scatter_axis":"time", "key":-15, "loc":"-614.8217007908415 -234.5740821547239"},
 {"category":"Start", "text":"Start", "key":-1, "loc":"-1046.9000380390623 -422.44808461484297"}
  ],
   "linkDataArray": [ 
