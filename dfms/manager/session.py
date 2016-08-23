@@ -321,7 +321,7 @@ class Session(object):
         # wired together by the DIM after deploying each individual graph on
         # each of the DMs).
         # We recognize such nodes because they are actually not an instance of
-        # AbstractDROP (they are Pyro4.Proxy instances).
+        # AbstractDROP (they are DropProxy instances).
         #
         # The same trick is used in luigi_int.RunDROPTask.requires
         statusDict = collections.defaultdict(dict)
