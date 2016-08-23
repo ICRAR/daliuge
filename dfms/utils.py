@@ -123,7 +123,16 @@ def portIsOpen(host, port, timeout=0):
     """
     return check_port_and_write(host, port, data=None, timeout=timeout, checking_open=True)
 
-def check_port_and_write(host, port, data=None, timeout=0, checking_open=True):
+def connect_to(host, port, timeout=None):
+    """
+    Connects to ``host``:``port`` within the given timeout and return the
+    connected socket. If no connection could be established ``None`` is
+    returned.
+    """
+    sock = check_port_and_write(host, port, timeout=timeout, return_socket=True)
+    return sock or None
+
+def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, return_socket=False):
     """
     Checks that the port specified by ``host``:``port`` is either open or
     closed (depending on the value of ``checking_open``) within a given
@@ -144,25 +153,34 @@ def check_port_and_write(host, port, data=None, timeout=0, checking_open=True):
     while True:
         try:
 
+            # Calculate the timeout used during this cycle
             # If we're past the timeout we have failed already
+            thisTimeout = None
             if timeout is not None and timeout != 0:
                 thisTimeout = timeout - (time.time() - start)
                 if thisTimeout <= 0:
                     return False
-            else:
-                thisTimeout = None
 
             # Create the socket and try to connect, sending data if required
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            with contextlib.closing(s):
+
+            if return_socket:
+                ctx = contextlib.contextmanager(lambda: None)
+                ret = s
+            else:
+                ctx = contextlib.closing(s)
+                ret = True
+
+            with ctx:
                 s.settimeout(thisTimeout)
                 s.connect((host, port))
                 if checking_open and data is not None:
                     s.send(data)
+                return ret
 
             # Success if we were checking for an open port!
             if checking_open:
-                return True
+                return ret
 
             # Otherwise keep trying until we find the socket closed
             time.sleep(0.1)

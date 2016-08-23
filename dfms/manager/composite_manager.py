@@ -280,6 +280,7 @@ class CompositeManager(DROPManager):
         """
         logger.info('Creating Session %s in all hosts', sessionId)
         self.replicate(sessionId, self._createSession, "creating sessions")
+        logger.info('Successfully created session %s in all hosts', sessionId)
         self._sessionIds.append(sessionId)
 
     def _destroySession(self, dm, host, sessionId):
@@ -310,6 +311,7 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
+        logger.info('Separating graph with %d dropSpecs', len(graphSpec))
         perPartition = collections.defaultdict(list)
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
@@ -333,7 +335,7 @@ class CompositeManager(DROPManager):
         for dropSpecs in perPartition.values():
             inter_partition_rels.extend(graph_loader.removeUnmetRelationships(dropSpecs))
         sanitize_relations(inter_partition_rels, self._graph)
-        logger.debug('Removed (and sanitized) %d inter-partition relationships', len(inter_partition_rels))
+        logger.info('Removed (and sanitized) %d inter-partition relationships', len(inter_partition_rels))
 
         # Store the inter-partition relationships; later on they have to be
         # communicated to the NMs so they can establish them as needed.
@@ -351,6 +353,7 @@ class CompositeManager(DROPManager):
         # separated.
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
         self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=perPartition.items())
+        logger.info('Successfully added individual graphSpec of session %s to each DM', sessionId)
 
     def _deploySession(self, dm, host, sessionId):
         uris = dm.deploySession(sessionId)
@@ -379,18 +382,19 @@ class CompositeManager(DROPManager):
 
         allUris = {}
         self.replicate(sessionId, self._deploySession, "deploying session", collect=allUris)
-        logger.info('Deployed Session %s in all hosts', sessionId)
+        logger.info('Successfully deployed session %s in all hosts', sessionId)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
         if completedDrops:
-            logger.debug('Moving following DROPs to COMPLETED right away: %r', completedDrops)
+            logger.info('Moving following DROPs to COMPLETED right away: %r', completedDrops)
             completed_by_host = group_by_node(completedDrops, self._graph)
             thrExs = {}
             self._tp.map(functools.partial(self._triggerDrops, thrExs, sessionId), completed_by_host.items())
             if thrExs:
                 raise DaliugeException("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
+            logger.info('Successfully triggered drops')
 
         return allUris
 

@@ -4,10 +4,10 @@ Installation
 Requirements
 -------------
 
-The DFMS framework requires no packages apart from those listed in its
+The |daliuge| framework requires no packages apart from those listed in its
 ``setup.py``
 file, which are automatically retrieved when running it. The spead2 library
-(one of the dfms' optional requirements) however requires a number of libraries
+(one of the |daliuge|' optional requirements) however requires a number of libraries
 installed on the system:
 
 * boost-python
@@ -18,8 +18,8 @@ installed on the system:
 Installing
 ----------
 
-dfms is based on setuptools, and thus it follows the standard python installation
-procedures. For the time being dfms is not yet in PyPI, so you will have to get
+|daliuge| is based on setuptools, and thus it follows the standard python installation
+procedures. For the time being |daliuge| is not yet in PyPI, so you will have to get
 the source code first::
 
  git clone https://github.com/SKA-ScienceDataProcessor/dfms
@@ -31,7 +31,7 @@ commands can be issued::
  python setup.py build
  sudo python setup.py install
 
-If a virtualenv is loaded, then dfms can be installed on it by simply running::
+If a virtualenv is loaded, then |daliuge| can be installed on it by simply running::
 
  python setup.py install
 

@@ -1307,11 +1307,11 @@ class LG():
             raise GInvalidLink("Loop construct {0} or {1} cannot be linked".format(src.text, tgt.text))
 
         if (src.is_gather()):
-            if (not (tgt.jd['category'] == 'Component' and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
+            if (not (tgt.jd['category'] in ['Component', 'BashShellApp'] and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
                 raise GInvalidLink("Gather {0}'s output {1} must be a Group-Start Component inside a Group with the same H level as Gather's input".format(src.id, tgt.id))
             #raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
         elif (src.is_branch()):
-            if (tgt.jd['category'] != 'Component' and (not tgt.is_end_node())):
+            if (tgt.jd['category'] not in ['Component', 'BashShellApp'] and (not tgt.is_end_node())):
                 raise GInvalidLink("Branch {0}'s output {1} must be Component".format(src.id, tgt.id))
 
         if (tgt.is_groupby()):
@@ -1463,7 +1463,7 @@ class LG():
             sdrop = src_drop
 
         tdrop = tgt_drop
-        if (slgn.jd['category'] == 'Component'):
+        if (slgn.jd['category'] in ['Component', 'BashShellApp']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
         else:

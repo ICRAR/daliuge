@@ -1,7 +1,8 @@
 Concepts and Background
 -----------------------
 
-This section briefly introduces key concepts and motivations underpinning DFMS.
+This section briefly introduces key concepts and motivations underpinning
+|daliuge|.
 
 Dataflow
 ^^^^^^^^
@@ -32,7 +33,7 @@ storage mechanism in order to put dataflow models into practice.
 
 Data-driven
 ^^^^^^^^^^^
-In developing the DFMS prototype, we have extended the "traditional" dataflow
+In developing the |daliuge| prototype, we have extended the "traditional" dataflow
 model by integrating data lifecycle management, graph execution engine, and
 cost-optimal resource allocation into a coherent data-driven framework.
 Concretely, we have made the following changes to the existing dataflow model:
@@ -73,16 +74,16 @@ Concretely, we have made the following changes to the existing dataflow model:
 
 .. _dfms_functions:
 
-DFMS Functions
-^^^^^^^^^^^^^^
-The DFMS prototype provides eight Graph-based functions as shown in
+|daliuge| Functions
+^^^^^^^^^^^^^^^^^^^
+The |daliuge| prototype provides eight Graph-based functions as shown in
 :numref:`dataflow.fig.funcs`.
 
 .. _dataflow.fig.funcs:
 
 .. figure:: images/dfms_func_as_graphs.jpg
 
-   Graph-based Functions of the DFMS Prototype
+   Graph-based Functions of the |daliuge| Prototype
 
 The :doc:`graphs` section will go through implementation details for each function.
 Here we briefly discuss how they work together in our data-driven framework.
@@ -97,16 +98,16 @@ Here we briefly discuss how they work together in our data-driven framework.
   The logical graph template is first selected from this repository for a specific pipeline and
   is then filled with scheduling block parameters. This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
 
-* Using profiling information of pipeline components and COMP hardware resources, the DFMS prototype
+* Using profiling information of pipeline components and COMP hardware resources, the |daliuge| prototype
   then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes a manifest of ALL DROPs without specifying their physical locations.
 
 * Once the information on resource availability (e.g. compute node, storage, etc.) is presented,
-  DFMS associates each DROP in the physical graph template with an available resource unit
+  |daliuge| associates each DROP in the physical graph template with an available resource unit
   in order to meet pre-defined requirements such as performance, cost, etc.
   Doing so essentially transforms the physical graph template into a *Physical Graph*,
   consisting of inter-connected DROPs mapped onto a given set of resources.
 
-* Before an observation starts, DFMS deploys all the DROPs onto these resources as per the
+* Before an observation starts, |daliuge| deploys all the DROPs onto these resources as per the
   location information stated in the physical graph. The deployment process is
   facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
   on designated resources.
