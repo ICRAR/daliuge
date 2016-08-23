@@ -128,7 +128,16 @@ def portIsOpen(host, port, timeout=0):
     """
     return writeToRemotePort(host, port, data=None, timeout=timeout)
 
-def writeToRemotePort(host, port, data=None, timeout=0):
+def connect_to(host, port, timeout=None):
+    """
+    Connects to ``host``:``port`` within the given timeout and return the
+    connected socket. If no connection could be established ``None`` is
+    returned.
+    """
+    sock = writeToRemotePort(host, port, timeout=timeout, return_socket=True)
+    return sock or None
+
+def writeToRemotePort(host, port, data=None, timeout=0, return_socket=False):
     """
     Writes the given data into the port specified by `host`:`port`. A maximum
     waiting time of `timeout` can be specified (in seconds), in which case this
@@ -144,20 +153,30 @@ def writeToRemotePort(host, port, data=None, timeout=0):
     start = time.time()
     while True:
         try:
+
+            # Calculate the timeout used during this cycle
+            thisTimeout = None
             if timeout is not None and timeout != 0:
                 thisTimeout = timeout - (time.time() - start)
                 if thisTimeout <= 0:
                     return False
-            else:
-                thisTimeout = None
+
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            with contextlib.closing(s):
+
+            if return_socket:
+                ctx = noopctx()
+                ret = s
+            else:
+                ctx = contextlib.closing(s)
+                ret = True
+
+            with ctx:
                 s.settimeout(thisTimeout)
                 s.connect((host, port))
                 if data is not None:
                     s.send(data)
+                return ret
 
-            return True
         except socket.timeout:
             logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]', host, port, thisTimeout)
             return False
