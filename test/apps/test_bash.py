@@ -99,17 +99,15 @@ class StreamingBashAppTests(unittest.TestCase):
              |                                     |
              \-------------|named-pipe|------------/
 
-        BashApp A writes "5 4 + p" (each on a new line), which is read by dc,
-        the reverse-polish desk calculator. The result ("9") should appear on D.
+        BashApp A writes "5 4 3 2 1" (each on a new line), which is read by cat
+        and redirected to D.
         """
 
-        import logging
-        logging.basicConfig(level=logging.DEBUG, format="%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
         output_fname = tempfile.mktemp()
 
-        a = StreamingOutputBashApp('a', 'a', command=r"echo -e '5\n4\n+\np'")
+        a = StreamingOutputBashApp('a', 'a', command=r"echo -en '5\n4\n3\n2\n1'")
         b = InMemoryDROP('b', 'b')
-        c = StreamingInputBashApp('c', 'c', command="dc > %o0")
+        c = StreamingInputBashApp('c', 'c', command="cat > %o0")
         d = FileDROP('d', 'd', filepath=output_fname)
 
         a.addOutput(b)
@@ -123,7 +121,7 @@ class StreamingBashAppTests(unittest.TestCase):
         # The application executed, finished, and its output was recorded
         for drop in (a,b,c,d):
             self.assertEqual(DROPStates.COMPLETED, drop.status, "Drop %r not COMPLETED: %d" % (drop, drop.status))
-        self.assertEqual(six.b('9'), droputils.allDropContents(d).strip())
+        self.assertEqual([5,4,3,2,1], [int(x) for x in droputils.allDropContents(d).split(six.b('\n'))])
 
         # Clean up and go
         os.remove(output_fname)
@@ -141,17 +139,17 @@ class StreamingBashAppTests(unittest.TestCase):
              |                                   |  |                                  |
              \-------------|named-pipe|----------\  \-----------|named-pipe|-----------/
 
-        BashApp A writes "5 4 + p 80 - p" (each on a new line), which is read
-        by "dc" (BashApp C), the reverse-polish desk calculator. The printed
-        results ("9 -71", each on a new line) are streamed through D and read
-        by "sort" (BashApp E), which writes the output to F.
+        BashApp A writes "5 4 3 2 1" (each on a new line), which is read
+        by "cat" (BashApp C). The printed results (a copy of the original) are
+        streamed through D and read by "sort" (BashApp E), which writes the
+        output to F.
         """
 
         output_fname = tempfile.mktemp()
 
-        a = StreamingOutputBashApp('a', 'a', command=r"echo -e '5\n4\n+\np\n80\n-\np'")
+        a = StreamingOutputBashApp('a', 'a', command=r"echo -en '5\n4\n3\n2\n1'")
         b = InMemoryDROP('b', 'b')
-        c = StreamingInputOutputBashApp('c', 'c', command="dc")
+        c = StreamingInputOutputBashApp('c', 'c', command="cat")
         d = InMemoryDROP('d', 'd')
         e = StreamingInputBashApp('e', 'e', command="sort -n > %o0")
         f = FileDROP('f', 'f', filepath=output_fname)
@@ -169,7 +167,7 @@ class StreamingBashAppTests(unittest.TestCase):
         # The application executed, finished, and its output was recorded
         for drop in (a,b,c,d,e,f):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual(["-71", "9"], droputils.allDropContents(f).strip().split('\n'))
+        self.assertEqual([1,2,3,4,5], [int(x) for x in droputils.allDropContents(f).strip().split('\n')])
 
         # Clean up and go
         os.remove(output_fname)
