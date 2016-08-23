@@ -365,6 +365,7 @@ class CompositeManager(DROPManager):
         host, uids = host_and_uids
 
         # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
+        logger.info("Will trigger initial drops of session %s in host %s", session_id, host)
         with self.get_rpc_client(host) as c:
             try:
                 c.trigger_drops(session_id, uids)
