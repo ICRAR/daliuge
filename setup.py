@@ -82,7 +82,11 @@ setup(
       dependency_links=[
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
         'https://bitbucket.org/rodrigo_tobar/paste/get/tip.zip#egg=paste',
-        'https://bitbucket.org/al45tair/netifaces/get/tip.zip#egg=netifaces',
+
+        # netifaces 10.4 doesn't include proper Python 3 support, but the tip
+        # (cee54e7 as of 23/06/16) is broken. This particular commit is a nice
+        # place in between where things build properly
+        'https://bitbucket.org/al45tair/netifaces/get/b18f500.zip#egg=netifaces',
         ],
       test_suite="test",
       entry_points= {
