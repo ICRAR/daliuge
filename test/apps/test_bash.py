@@ -167,7 +167,7 @@ class StreamingBashAppTests(unittest.TestCase):
         # The application executed, finished, and its output was recorded
         for drop in (a,b,c,d,e,f):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual([1,2,3,4,5], [int(x) for x in droputils.allDropContents(f).strip().split('\n')])
+        self.assertEqual([1,2,3,4,5], [int(x) for x in droputils.allDropContents(f).strip().split(six.b('\n'))])
 
         # Clean up and go
         os.remove(output_fname)
