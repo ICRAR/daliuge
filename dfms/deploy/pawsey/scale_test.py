@@ -247,7 +247,8 @@ class LogEntryPair(object):
 
     def get_duration(self):
         if ((self._start_time is None) or (self._end_time is None)):
-            print "Cannot calc duration for '{0}' due to lack of start/end time".format(self._name)
+            print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
+            self._start_time, self._end_time)
             return None
         return (self._end_time - self._start_time)
 
@@ -322,7 +323,8 @@ class LogParser(object):
         grep_end = '\\>"'
         grep_keys = [grep_start + x.format(wildcards) + grep_end for x in key_line]
         grep_cmd = ' -e '.join(grep_keys)
-        python_keys = [x.format(wildcards) for x in key_line]
+        # python regex needs to escape brackets
+        python_keys = [x.format(wildcards).replace('(', '\(').replace(')', '\)') for x in key_line]
         return ("grep -e %s" % grep_cmd, python_keys)
 
     def parse(self, out_csv=None):
@@ -411,8 +413,26 @@ if __name__ == '__main__':
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):
         if (opts.log_dir is None):
-            print("Missing log dir for log analysis")
-            sys.exit(1)
+            # you can specify:
+            # either a single directory
+            if (opts.log_root is None):
+                facility = socket.gethostname().split('-')[0]
+                config = ConfigFactory.create_config(facility=facility)
+                log_root = config.getpar('log_root')
+            else:
+                log_root = opts.log_root
+            if (log_root is None or (not os.path.exists(log_root))):
+                parser.error("Missing or invalid log directory/facility for log analysis")
+            # or a root log directory
+            else:
+                for df in os.listdir(log_root):
+                    df = os.path.join(log_root, df)
+                    if (os.path.isdir(df)):
+                        try:
+                            lg = LogParser(df)
+                            lg.parse()
+                        except Exception, exp:
+                            print("Fail to parse {0}: {1}".format(df, exp))
         else:
             lg = LogParser(opts.log_dir)
             lg.parse()
@@ -429,8 +449,7 @@ if __name__ == '__main__':
                 self._mon_host = opts.monitor_host
             self._mon_port = opts.monitor_port
         elif (opts.monitor_host is not None):
-            print("Please enable proxy by switch on the '-p' option")
-            sys.exit(1)
+            parser.error("Please enable proxy by switch on the '-p' option")
         pc.submit_job()
     else:
-        print("Invalid action")
+        parser.error("Invalid action -a")
