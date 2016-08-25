@@ -49,7 +49,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR
+aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR
 """
 
 sub_tpl = Template(sub_tpl_str)
@@ -126,6 +126,7 @@ class PawseyClient(object):
                 num_nodes=5,
                 mon_host=default_aws_mon_host,
                 mon_port=default_aws_mon_port,
+                logv=1,
                 facility=socket.gethostname().split('-')[0]):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
@@ -138,6 +139,7 @@ class PawseyClient(object):
         self._mon_host = mon_host
         self._mon_port = mon_port
         self._pip_name = None
+        self._logv = logv
 
     def set_gid(self, gid):
         if (gid is None):
@@ -150,9 +152,9 @@ class PawseyClient(object):
     @property
     def num_daliuge_nodes(self):
         if (self._run_proxy):
-            ret = self._num_nodes - 2 # exclude the proxy node
+            ret = self._num_nodes - 1 # exclude the proxy node
         else:
-            ret = self._num_nodes - 1 # exclude the data island node
+            ret = self._num_nodes - 0 # exclude the data island node?
         if (ret <= 0):
             raise Exception("Not enough nodes {0} to run DALiuGE.".format(self._num_nodes))
         return ret
@@ -191,6 +193,7 @@ class PawseyClient(object):
         pardict['GID_PAR'] = '-g %d' % self._gid if (self._gid is not None) else ''
         pardict['PROXY_PAR'] = '-m %s -o %d' % (_mon_host, _mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
+        pardict['LOGV_PAR'] = '-v %d' % self._logv
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
@@ -233,24 +236,16 @@ class LogEntryPair(object):
             if (self._name == 'unroll'):
                 self._other['num_drops'] = int(line.split()[-1])
 
-    # def sd(self):
-    #     """
-    #     start done?
-    #     """
-    #     return self._start_time is not None
-    #
-    # def ed(self):
-    #     """
-    #     end done?
-    #     """
-    #     return self._end_time is not None
-
     def get_duration(self):
         if ((self._start_time is None) or (self._end_time is None)):
             print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
             self._start_time, self._end_time)
             return None
         return (self._end_time - self._start_time)
+
+    def reset(self):
+        self._start_time = None
+        self._end_time = None
 
 
 class LogParser(object):
@@ -278,16 +273,42 @@ class LogParser(object):
     https://confluence.icrar.uwa.edu.au/display/DALIUGE/Scalability+test#Scalabilitytest-Datacollection
     """
 
+    dim_kl = ['Start to unroll',
+    'Unroll completed for {0} with # of Drops',
+    'Start to translate',
+    'Translation completed for',
+    'PG spec is calculated',
+    'Creating Session {0} in all hosts',
+    'Successfully created session {0} in all hosts',
+    'Separating graph with {0} dropSpecs',
+    'Removed (and sanitized) {0} inter-dm relationships',
+    'Adding individual graphSpec of session {0} to each DM',
+    'Successfully added individual graphSpec of session {0} to each DM',
+    'Deploying Session {0} in all hosts',
+    'Successfully deployed session {0} in all hosts',
+    'Establishing {0} drop relationships',
+    'Established all drop relationships {0} in',
+    'Moving following DROPs to COMPLETED right away',
+    'Successfully triggered drops']
+
+    nm_kl = ['Starting Pyro4 Daemon for session',
+    'Session {0} finished']
+
+    kwords = dict()
+    kwords['dim'] = dim_kl
+    kwords['nm'] = nm_kl
+
     def __init__(self, log_dir):
         self._dim_log_f = None
         if (not self.check_log_dir(log_dir)):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._grep_cmd, self._py_pattern = self.construct_patterns()
-        self._entry_pairs = self.build_log_entry_pairs()
+        self._grep_dim_cmd, self._py_dim_pattern = self.construct_patterns(node_type='dim')
+        self._grep_nm_cmd, self._py_nm_pattern = self.construct_patterns(node_type='nm')
+        self._dim_entry_pairs, self._nm_entry_pairs = self.build_log_entry_pairs()
 
     def build_log_entry_pairs(self):
-        pp = self._py_pattern
+        pp = self._py_dim_pattern
         rl = []
         rl.append(LogEntryPair('unroll', pp[0], pp[1]))
         rl.append(LogEntryPair('translate', pp[2], pp[3]))
@@ -298,26 +319,17 @@ class LogParser(object):
         rl.append(LogEntryPair('deploy session to all', pp[11], pp[12]))
         rl.append(LogEntryPair('build drop connections', pp[13], pp[14]))
         rl.append(LogEntryPair('trigger drops', pp[15], pp[16]))
-        return rl
 
-    def construct_patterns(self):
-        key_line = ['Start to unroll',
-        'Unroll completed for {0} with # of Drops',
-        'Start to translate',
-        'Translation completed for',
-        'PG spec is calculated',
-        'Creating Session {0} in all hosts',
-        'Successfully created session {0} in all hosts',
-        'Separating graph with {0} dropSpecs',
-        'Removed (and sanitized) {0} inter-dm relationships',
-        'Adding individual graphSpec of session {0} to each DM',
-        'Successfully added individual graphSpec of session {0} to each DM',
-        'Deploying Session {0} in all hosts',
-        'Successfully deployed session {0} in all hosts',
-        'Establishing {0} drop relationships',
-        'Established all drop relationships {0} in',
-        'Moving following DROPs to COMPLETED right away',
-        'Successfully triggered drops']
+        pp = self._py_nm_pattern
+        rl_nm = []
+        rl_nm.append(LogEntryPair('completion_time', pp[0], pp[1]))
+
+        return (rl, rl_nm)
+
+    def construct_patterns(self, node_type='dim'):
+        key_line = LogParser.kwords.get(node_type)
+        if (key_line is None):
+            raise Exception('Unknown node type for log analysis')
         wildcards = '.*'
         grep_start = '"\\<'
         grep_end = '\\>"'
@@ -342,34 +354,51 @@ class LogParser(object):
         num_nodes = int(delimit.split('_')[1][1:])
         user_name = getpwuid(stat(self._dim_log_f).st_uid).pw_name
 
-        cmd = "%s %s" % (self._grep_cmd, self._dim_log_f)
+        # parse DIM log
+        cmd = "%s %s" % (self._grep_dim_cmd, self._dim_log_f)
         ret, lines = commands.getstatusoutput(cmd)
         if (0 != ret):
             raise Exception("Fail to run: %s" % (cmd))
         ll = lines.split(os.linesep)
         for line in ll:
-            for lep in self._entry_pairs:
+            for lep in self._dim_entry_pairs:
                 lep.check_start(line)
                 lep.check_end(line)
 
         num_drops = -1
-        temp = []
-        for lep in self._entry_pairs:
+        temp_dim = []
+        for lep in self._dim_entry_pairs:
             if ('unroll' == lep._name):
                 num_drops = lep._other.get('num_drops', -1)
-            temp.append(str(lep.get_duration()))
+            temp_dim.append(str(lep.get_duration()))
 
-        ret = []
-        def add_to_re(item):
-            ret.append(str(item))
+        # parse NM logs
+        max_exec_time = -1
+        for df in os.listdir(self._log_dir):
+            if (os.path.isdir(os.path.join(self._log_dir, df))):
+                nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
+                if (os.path.exists(nm_logf)):
+                    cmd_nm = "%s %s" % (self._grep_nm_cmd, nm_logf)
+                    ret, lines = commands.getstatusoutput(cmd_nm)
+                    if (0 == ret):
+                        ll = lines.split(os.linesep)
+                        for line in ll:
+                            for lep in self._nm_entry_pairs:
+                                lep.check_start(line)
+                                lep.check_end(line)
+                        for lep in self._nm_entry_pairs:
+                            if ('completion_time' == lep._name):
+                                ct = lep.get_duration()
+                                # and find the longest execution time
+                                if (ct is not None and ct > max_exec_time):
+                                    max_exec_time = ct
 
-        add_to_re(user_name)
-        add_to_re(socket.gethostname().split('-')[0])
-        add_to_re(pip_name)
-        add_to_re(do_date)
-        add_to_re(num_nodes)
-        add_to_re(num_drops)
-        add_line = ','.join(ret + temp)
+        temp_nm = [str(max_exec_time)]
+
+        ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
+        num_nodes, num_drops]
+        ret = [str(x) for x in ret]
+        add_line = ','.join(ret + temp_dim + temp_nm)
         if (out_csv is not None):
             with open(out_csv, 'a') as of:
                 of.write(add_line)
@@ -409,6 +438,11 @@ if __name__ == '__main__':
     parser.add_option("-o", "--monitor_port", action="store", type="int",
                     dest="monitor_port", help="The port to bind dfms monitor",
                     default=default_aws_mon_port)
+    parser.add_option("-v", "--verbose-level", action="store", type="int",
+                    dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
+                    default=1)
+    parser.add_option("-c", "--csvoutput", action="store",
+                      dest="csv_output", help="CSV output file to keep the log analysis result")
 
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):
@@ -430,14 +464,14 @@ if __name__ == '__main__':
                     if (os.path.isdir(df)):
                         try:
                             lg = LogParser(df)
-                            lg.parse()
+                            lg.parse(out_csv=opts.csv_output)
                         except Exception, exp:
                             print("Fail to parse {0}: {1}".format(df, exp))
         else:
             lg = LogParser(opts.log_dir)
-            lg.parse()
+            lg.parse(out_csv=opts.csv_output)
     elif (opts.action == 1):
-        pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes)
+        pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level)
         if (opts.graph_id is not None):
             pc.set_gid(opts.graph_id)
         pc._graph_vis = opts.graph_vis
