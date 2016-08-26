@@ -569,7 +569,9 @@ class PGT(object):
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
         self._json_str = None
         self._oid_gid_map = dict()
+        self._gid_island_id_map = dict()
         self._num_parts_done = 0
+        self._partition_merged = False
 
     @property
     def drops(self):
@@ -615,7 +617,7 @@ class PGT(object):
         return self._json_str
         # return self.to_gojs_json()
 
-    def to_pg_spec(self, node_list, ret_str=True):
+    def to_pg_spec(self, node_list, ret_str=True, num_isla=None):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
@@ -801,8 +803,11 @@ class MetisPGTP(PGT):
         self._par_label = par_label
         self._u_factor = ufactor
         self._metis_logs = []
+        self._G = self.to_partition_input()
+        self._metis = DAGUtil.import_metis()
+        self._group_workloads = dict() # k - gid, v - a tuple of (tw, sz)
 
-    def to_partition_input(self, outf):
+    def to_partition_input(self, outf=None):
         """
         Convert to METIS format for mapping and decomposition
         NOTE - Since METIS only supports Undirected Graph, we have to produce
@@ -814,7 +819,7 @@ class MetisPGTP(PGT):
         G = nx.Graph()
         G.graph['edge_weight_attr'] = 'weight'
         G.graph['node_weight_attr'] = 'tw'
-        G.graph['node_size_attr'] = 'dw'
+        G.graph['node_size_attr'] = 'sz'
 
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
@@ -892,11 +897,20 @@ class MetisPGTP(PGT):
 
         key_dict = dict() #k - gojs key, v - gojs group id
         groups = set()
-
+        group_weight = self._group_workloads# k - gid, v - a tuple of (tw, sz)
+        G = self._G
         start_k = len(self._drop_list) + 1
         for i, gid in enumerate(metis_out):
             key_dict[i + 1] = gid
             groups.add(gid)
+            myk = G.nodes()[i]
+            gnode = G.node[myk]
+            gnode['gid'] = gid # write back to the original bigraph
+            if (not group_weight.has_key(gid)):
+                group_weight[gid] = (0, 0)
+            tt = group_weight[gid]
+            tt[0] += gnode['tw']
+            tt[1] += gnode['sz']
 
         node_list = jsobj['nodeDataArray']
         gc = 0
@@ -921,12 +935,10 @@ class MetisPGTP(PGT):
         jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False)
         #uid = uuid.uuid1()
         uid = int(time.time() * 1000)
-        G = self.to_partition_input(None)
-        metis = DAGUtil.import_metis()
         recursive_param = False if self._ptype == 'kway' else True
         if (recursive_param and self._obj_type == 'vol'):
             raise GPGTException("Recursive partitioning does not support total volume minimisation.")
-        (edgecuts, metis_parts) = metis.part_graph(G,
+        (edgecuts, metis_parts) = self._metis.part_graph(self._G,
         nparts=self._num_parts, recursive=recursive_param,
         objtype=self._obj_type, ufactor=self._u_factor)
         self._set_metis_log(" - Data movement: {0}".format(edgecuts))
@@ -936,6 +948,39 @@ class MetisPGTP(PGT):
         else:
             return jsobj
 
+    def merge_partitions(self, new_num_parts):
+        """
+        A lightweight partition merging that does not consider GOJS JSON script
+        i.e. it works for real (large number of drops) but not for visualisation
+        """
+        # 0. parse the output and get all the partitions
+        GG = self._G
+        part_edges = defaultdict(int) #k: from_gid + to_gid, v: sum_of_weight
+        for e in GG.edges(data=True):
+            from_gid = GG.node[e[0]]['gid']
+            to_gid = GG.node[e[1]]['gid']
+            k = '{0}**{1}'.format(from_gid, to_gid)
+            part_edges[k] += e[2]['weight']
+
+        # 1. build the bi-directional graph again
+        # with each partition being a node
+        G = nx.Graph()
+        G.graph['edge_weight_attr'] = 'weight'
+        G.graph['node_weight_attr'] = 'tw'
+        G.graph['node_size_attr'] = 'sz'
+        for gid, v in self._group_workloads.iteritems():
+            G.add_node(gid, tw=v[0], sz=v[1])
+        for glinks, v in part_edges.iteritems():
+            gl = glinks.split('**')
+            G.add_edge(int(gl[0]), int(gl[1]), weight=v)
+
+        (edgecuts, metis_parts) = self._metis.part_graph(G, nparts=new_num_parts)
+        for i, island_id in metis_parts:
+            gid = G.nodes()[i]
+            self._gid_island_id_map[gid] = island_id
+
+        # TODO add GOJS groups for visualisation
+        self._partition_merged = True
 
 class MySarkarPGTP(PGT):
     """
@@ -956,7 +1001,7 @@ class MySarkarPGTP(PGT):
         self._merge_parts = merge_parts
         self._edge_cuts = None
         self._partitions = None
-        self._partition_merged = False
+
         self.init_scheduler()
 
     def init_scheduler(self):
@@ -998,6 +1043,7 @@ class MySarkarPGTP(PGT):
         if (new_num_parts > 1):
             self._edge_cuts = self._scheduler.merge_partitions(new_num_parts)
         else:
+            # all parts share the same outer group (island) when # of island == 1
             ppid = leng + len(groups) + 2
             for part in parts:
                 part.parent_id = ppid
@@ -1009,6 +1055,8 @@ class MySarkarPGTP(PGT):
             gid = part.parent_id
             outer_groups.add(gid)
             in_out_part_map[part.partition_id] = gid
+
+        self._gid_island_id_map = in_out_part_map
 
         for gid in outer_groups:
             gn = dict()
@@ -1027,7 +1075,7 @@ class MySarkarPGTP(PGT):
             ip['group'] = in_out_part_map[ip['key']]
 
         for e in self.dag.edges(data=True):
-            # if u.inner_part.outer_part == v.inner_part.outer_part
+            #zero edeges within the same partition after merging
             if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
                 e[2]['weight'] = 0
         self._lpl = DAGUtil.get_longest_path(self.dag, show_path=False)[1]
