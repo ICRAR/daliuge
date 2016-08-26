@@ -267,6 +267,8 @@ class LogEntryPair(object):
             self._end_time = self.get_timestamp(line)
             if (self._name == 'unroll'):
                 self._other['num_drops'] = int(line.split()[-1])
+            elif (self._name == 'build drop connections'):
+                self._other['num_edges'] = int(line.split()[-4])
 
     def get_duration(self):
         if ((self._start_time is None) or (self._end_time is None)):
@@ -291,15 +293,18 @@ class LogParser(object):
     3.  time (e.g. 2016-08-22T11-52-11/)
     4.  # of nodes
     5.  # of drops
-    6.  unroll_time
-    7.  translation_time
-    8.  pg_spec_gen_time
-    9.  created_session_at_all_nodes_time
-    10. graph_separation_time
-    11. push_sub_graphs_to_all_nodes_time
-    12. created_drops_at_all_nodes_time
-    13. created_pyro_conn_at_all_nodes_time
-    14. triggered_drops_at_all_nodes_time
+    6.  Git commit number
+    7.  unroll_time
+    8.  translation_time
+    9.  pg_spec_gen_time
+    10.  created_session_at_all_nodes_time
+    11. graph_separation_time
+    12. push_sub_graphs_to_all_nodes_time
+    13. created_drops_at_all_nodes_time
+    14. created_pyro_conn_at_all_nodes_time
+    15. triggered_drops_at_all_nodes_time
+    16. Total completion time
+
 
     Detailed description of each field:
     https://confluence.icrar.uwa.edu.au/display/DALIUGE/Scalability+test#Scalabilitytest-Datacollection
