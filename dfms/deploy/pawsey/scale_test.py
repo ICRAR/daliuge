@@ -27,7 +27,7 @@ parse the log result, and produce the plot
 
 """
 from datetime import datetime
-import sys, os, commands, socket, re, commands, time
+import sys, os, commands, socket, re, commands, time, getpass
 from string import Template
 import optparse
 from os import stat
@@ -63,6 +63,7 @@ class DefaultConfig(object):
         l = self.init_list()
         self.setpar('acc', l[0])
         self.setpar('log_root', l[1])
+        self.set_git_commit()
 
     def init_list(self):
         pass
@@ -72,6 +73,26 @@ class DefaultConfig(object):
 
     def getpar(self, k):
         return self._dict.get(k)
+
+    def set_git_commit(self):
+        gr = self.get_gitrepo()
+        if (gr is None):
+            ret = -1
+        else:
+            ocwd = os.getcwd()
+            os.chdir(gr)
+            ret, commit = commands.getstatusoutput("git rev-parse HEAD")
+            os.chdir(ocwd)
+        self.setpar('git_commit', commit if ret == 0 else 'None')
+
+    def get_gitrepo(self):
+        """
+        Please override this function on non-Pawsey facilities
+        """
+        if ('Y3d1\n' == getpass.getuser().encode('base64')):
+            return '/home/%s/dfms_src/dfms' % ('Y3d1\n'.decode('base64'))
+        else:
+            return '/group/pawsey0129/daliuge/src/dfms'
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
@@ -95,7 +116,14 @@ class MagnusConfig(DefaultConfig):
         return ['pawsey0129', '/group/pawsey0129/daliuge_logs']
 
 class TianHe2Config(DefaultConfig):
-    pass
+    def __init__(self):
+        super(TianHe2Config, self).__init__()
+
+    def get_gitrepo(self):
+        return None #Tian he2's firewall is excellet!
+
+    def init_list(self): #TODO please fill in
+        return ['SHAO', '/group/shao/daliuge_logs']
 
 class ConfigFactory():
     mapping = {'galaxy_mwa':GalaxyMWAConfig(), 'galaxy_askap':GalaxyASKAPConfig(),
@@ -199,6 +227,10 @@ class PawseyClient(object):
         job_file = '{0}/jobsub.sh'.format(lgdir)
         with open(job_file, 'w') as jf:
             jf.write(job_desc)
+
+        git_commit = self._config.getpar('git_commit')
+        with open(os.path.join(lgdir, 'git_commit.txt'), 'w') as gf:
+            gf.write(git_commit)
 
         os.chdir(lgdir) # so that slurm logs will be dumped here
         cmd = 'sbatch %s' % job_file
@@ -353,6 +385,12 @@ class LogParser(object):
         do_date = sp[1]
         num_nodes = int(delimit.split('_')[1][1:])
         user_name = getpwuid(stat(self._dim_log_f).st_uid).pw_name
+        gitf = os.path.join(self._log_dir, 'git_commit.txt')
+        if (os.path.exists(gitf)):
+            with open(gitf, 'r') as gf:
+                git_commit = gf.readline().strip()
+        else:
+            git_commit = 'None'
 
         # parse DIM log
         cmd = "%s %s" % (self._grep_dim_cmd, self._dim_log_f)
@@ -396,7 +434,7 @@ class LogParser(object):
         temp_nm = [str(max_exec_time)]
 
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
-        num_nodes, num_drops]
+        num_nodes, num_drops, git_commit]
         ret = [str(x) for x in ret]
         add_line = ','.join(ret + temp_dim + temp_nm)
         if (out_csv is not None):
