@@ -268,7 +268,7 @@ class LogEntryPair(object):
             if (self._name == 'unroll'):
                 self._other['num_drops'] = int(line.split()[-1])
             elif (self._name == 'build drop connections'):
-                self._other['num_edges'] = int(line.split()[-4])
+                self._other['num_edges'] = int(line.split()[-4][1:-1])
 
     def get_duration(self):
         if ((self._start_time is None) or (self._end_time is None)):
@@ -301,9 +301,10 @@ class LogParser(object):
     11. graph_separation_time
     12. push_sub_graphs_to_all_nodes_time
     13. created_drops_at_all_nodes_time
-    14. created_pyro_conn_at_all_nodes_time
-    15. triggered_drops_at_all_nodes_time
-    16. Total completion time
+    14. Num_pyro_connections_at_all_nodes
+    15. created_pyro_conn_at_all_nodes_time
+    16. triggered_drops_at_all_nodes_time
+    17. Total completion time
 
 
     Detailed description of each field:
@@ -413,6 +414,9 @@ class LogParser(object):
         for lep in self._dim_entry_pairs:
             if ('unroll' == lep._name):
                 num_drops = lep._other.get('num_drops', -1)
+            elif ('build drop connections' == lep._name):
+                num_edges = lep._other.get('num_edges', -1)
+                temp_dim.append(str(num_edges))
             temp_dim.append(str(lep.get_duration()))
 
         # parse NM logs
