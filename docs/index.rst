@@ -24,6 +24,7 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  intro
  installing
  overview
+ examples
  api-index
 
 Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
