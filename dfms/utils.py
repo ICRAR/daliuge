@@ -176,7 +176,6 @@ def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, r
                 s.connect((host, port))
                 if checking_open and data is not None:
                     s.send(data)
-                return ret
 
             # Success if we were checking for an open port!
             if checking_open:
