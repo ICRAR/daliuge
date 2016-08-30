@@ -521,7 +521,8 @@ class PyroRPCMixIn(BaseMixIn):
         super(PyroRPCMixIn, self).shutdown()
         self._pyrodaemon.shutdown()
         self._pyroserverthread.join(timeout)
-        if not utils.portIsClosed(self._host, self._rpc_port, timeout):
+        host = 'localhost' if self._host == '0.0.0.0' else self._host
+        if not utils.portIsClosed(host, self._rpc_port, timeout):
             logger.warning("Pyro RPC port %d is still open after %d seconds", timeout)
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
