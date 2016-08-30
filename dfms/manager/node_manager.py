@@ -510,7 +510,6 @@ class PyroRPCMixIn(BaseMixIn):
 
         # Starts the single-threaded Pyro server for RPC requests
         logger.info("Listening for RPC requests via Pyro on %s:%d", self._host, self._rpc_port)
-        Pyro4.config.SERVERTYPE = 'multiplex'
         self._pyrodaemon = Pyro4.Daemon(self._host, self._rpc_port)
         self._pyrodaemon.register(self, "node_manager")
         self._pyroserverthread = threading.Thread(target=self._pyrodaemon.requestLoop, name="PyroRPC server")
