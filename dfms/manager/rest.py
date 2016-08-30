@@ -227,25 +227,6 @@ class NMRestServer(ManagerRestServer):
         app.get(   '/api/shutdown',                            callback=self.shutdown_node_manager)
 
     @daliuge_aware
-    def get_drop_property(self, sessionId):
-        uid = bottle.request.params['uid']
-        prop_name = bottle.request.params['pname']
-        return self.dm.get_drop_property(sessionId, uid, prop_name)
-
-    @daliuge_aware
-    def call_remote_drop(self, sessionId):
-        uid = bottle.request.forms['uid']
-        method = bottle.request.forms['mname']
-        args = json.loads(bottle.request.forms['args'])
-        return self.dm.call_drop(sessionId, uid, method, *args)
-
-    @daliuge_aware
-    def has_method(self, sessionId):
-        uid = bottle.request.params['uid']
-        mname = bottle.request.params['mname']
-        return self.dm.has_method(sessionId, uid, mname)
-
-    @daliuge_aware
     def shutdown_node_manager(self):
         self.dm.shutdown()
 
