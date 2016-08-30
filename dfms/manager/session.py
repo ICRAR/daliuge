@@ -300,9 +300,8 @@ class Session(object):
         self.finish()
 
     def trigger_drops(self, uids):
-        for drop,_ in droputils.breadFirstTraverse(self._roots):
-            if isinstance(drop, DropProxy):
-                continue
+        for drop,downStreamDrops in droputils.breadFirstTraverse(self._roots):
+            downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
             if drop.uid in uids:
                 if isinstance(drop, InputFiredAppDROP):
                     drop.async_execute()
