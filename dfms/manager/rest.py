@@ -217,9 +217,6 @@ class NMRestServer(ManagerRestServer):
     def initializeSpecifics(self, app):
         app.get(   '/api',                                    callback=self.getNMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
-        app.get(   '/api/sessions/<sessionId>/property',      callback=self.get_drop_property)
-        app.post(  '/api/sessions/<sessionId>/method',        callback=self.call_remote_drop)
-        app.get(   '/api/sessions/<sessionId>/hasmethod',     callback=self.has_method)
         app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
         # The non-REST mappings that serve HTML-related content
