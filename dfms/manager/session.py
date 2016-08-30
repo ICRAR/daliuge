@@ -236,7 +236,7 @@ class Session(object):
         self.status = SessionStates.DEPLOYING
 
         # Create the real DROPs from the graph specs
-        logger.debug("Creating DROPs for session %s", self._sessionId)
+        logger.info("Creating DROPs for session %s", self._sessionId)
 
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
 

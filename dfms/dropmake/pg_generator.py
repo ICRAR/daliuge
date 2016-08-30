@@ -906,7 +906,7 @@ class MetisPGTP(PGT):
             myk = G.nodes()[i]
             gnode = G.node[myk]
             gnode['gid'] = gid # write back to the original bigraph
-            if (not group_weight.has_key(gid)):
+            if gid not in group_weight:
                 group_weight[gid] = [0, 0]
             tt = group_weight[gid]
             tt[0] += gnode['tw']
