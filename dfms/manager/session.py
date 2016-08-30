@@ -311,6 +311,7 @@ class Session(object):
 
     def finish(self):
         self.status = SessionStates.FINISHED
+        logger.info("Session %s finished", self._sessionId)
 
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):

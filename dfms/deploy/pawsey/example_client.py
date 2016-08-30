@@ -41,13 +41,13 @@ from dfms.manager.client import DataIslandManagerClient
 
 logger = logging.getLogger(__name__)
 
-lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json',
-'chiles_two_dev1.json', 'chiles_simple.json', 'mwa_gleam.json',
-'mwa_gleam_simple.json', 'lofar_std_large.json', 'chiles_two_dev2.json',
-'lofar_test_2x4.json', 'lofar_test_4x4.json', 'lofar_test_4x8.json',
-'lofar_test_8x8.json', 'lofar_test_8x16.json', 'lofar_test_16x16.json',
-'lofar_test_16x32.json', 'lofar_test_32x32.json', 'lofar_test_32x64.json',
-'lofar_test_64x64.json', 'lofar_test_64x128.json', 'lofar_test_128x128.json']
+lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', #2
+'chiles_two_dev1.json', 'chiles_simple.json', 'mwa_gleam.json', #5
+'mwa_gleam_simple.json', 'lofar_std_large.json', 'chiles_two_dev2.json',#8
+'lofar_test_2x4.json', 'lofar_test_4x4.json', 'lofar_test_4x8.json',#11
+'lofar_test_8x8.json', 'lofar_test_8x16.json', 'lofar_test_16x16.json',#14
+'lofar_test_16x32.json', 'lofar_test_32x32.json', 'lofar_test_32x64.json',#17
+'lofar_test_64x64.json', 'lofar_test_64x128.json', 'lofar_test_128x128.json']#20
 
 
 class MonitorClient(object):

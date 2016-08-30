@@ -89,19 +89,21 @@ def get_ip(loc='Pawsey'):
         logger.warning("Fail to obtain IP address from {0}".format(msg))
         return 'None'
 
-def start_node_mgr(log_dir):
+def start_node_mgr(log_dir, logv=1):
     """
     Start node manager
     """
+    lv = 'v' * logv
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-vvv', '-H', '0.0.0.0', '-m', '100'])
+    '-%s' % lv, '-H', '0.0.0.0', '-m', '100'])
 
-def start_dim(node_list, log_dir):
+def start_dim(node_list, log_dir, logv=1):
     """
     Start data island manager
     """
+    lv = 'v' * logv
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-vvv', '-H', '0.0.0.0', '-m', '100'])
+    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '100'])
 
 def submit_monitor_graph(graph_id, dump_status):
     """
@@ -193,6 +195,9 @@ if __name__ == '__main__':
     parser.add_option("-o", "--monitor_port", action="store", type="int",
                     dest="monitor_port", help="The port to bind dfms monitor",
                     default=dfms_proxy.default_dfms_monitor_port)
+    parser.add_option("-v", "--verbose-level", action="store", type="int",
+                    dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
+                    default=1)
 
     # we add command-line parameter to allow automatic graph submission from file
     parser.add_option('-g', '--gid', action='store', type='int',
@@ -214,6 +219,12 @@ if __name__ == '__main__':
 
     if (options.gid is not None and options.gid >= len(exclient.lgnames)):
         options.gid = 0
+
+    logv = options.verbose_level
+    if (logv < 1):
+        logv = 1
+    elif (logv > 3):
+        logv = 3
 
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
