@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import json
 import logging
 
 from six.moves import urllib_parse as urllib  # @UnresolvedImport
