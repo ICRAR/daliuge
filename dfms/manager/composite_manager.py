@@ -335,7 +335,7 @@ class CompositeManager(DROPManager):
         for dropSpecs in perPartition.values():
             inter_partition_rels.extend(graph_loader.removeUnmetRelationships(dropSpecs))
         sanitize_relations(inter_partition_rels, self._graph)
-        logger.info('Removed (and sanitized) %d inter-partition relationships', len(inter_partition_rels))
+        logger.info('Removed (and sanitized) %d inter-dm relationships', len(inter_partition_rels))
 
         # Store the inter-partition relationships; later on they have to be
         # communicated to the NMs so they can establish them as needed.
@@ -382,6 +382,7 @@ class CompositeManager(DROPManager):
             logger.info("Delivered node subscription list to node managers")
 
         allUris = {}
+        logger.info('Deploying Session %s in all hosts', sessionId)
         self.replicate(sessionId, self._deploySession, "deploying session", collect=allUris)
         logger.info('Successfully deployed session %s in all hosts', sessionId)
 
