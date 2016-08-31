@@ -330,7 +330,8 @@ class LogParser(object):
     'Successfully triggered drops']
 
     nm_kl = ['Starting Pyro4 Daemon for session',
-    'Session {0} finished']
+    'Session {0} finished',
+    'Creating DROPs for session']
 
     kwords = dict()
     kwords['dim'] = dim_kl
@@ -361,6 +362,7 @@ class LogParser(object):
         pp = self._py_nm_pattern
         rl_nm = []
         rl_nm.append(LogEntryPair('completion_time', pp[0], pp[1]))
+        rl_nm.append(LogEntryPair('completion_time_2', pp[2], pp[1]))
 
         return (rl, rl_nm)
 
@@ -434,7 +436,7 @@ class LogParser(object):
                                 lep.check_start(line)
                                 lep.check_end(line)
                         for lep in self._nm_entry_pairs:
-                            if ('completion_time' == lep._name):
+                            if (lep._name in ['completion_time', 'completion_time_2']):
                                 ct = lep.get_duration()
                                 # and find the longest execution time
                                 if (ct is not None and ct > max_exec_time):
