@@ -607,6 +607,17 @@ class PGT(object):
         """
         return self._dag
 
+    def pred_exec_time(self, app_drop_only=False, wk='weight'):
+        """
+        Predict execution time using the longest path length
+        """
+        if (app_drop_only):
+            lp = DAGUtil.get_longest_path(self.dag, show_path=True)[0]
+            G = self.dag
+            return sum(G.node[u].get(wk, 0) for u in lp)
+        else:
+            return DAGUtil.get_longest_path(self.dag, show_path=False)[1]
+
     @property
     def json(self):
         """
@@ -897,12 +908,13 @@ class MetisPGTP(PGT):
 
         key_dict = dict() #k - gojs key, v - gojs group id
         groups = set()
-        group_weight = self._group_workloads# k - gid, v - a tuple of (tw, sz)
-        G = self._G
+        #group_weight = self._group_workloads# k - gid, v - a tuple of (tw, sz)
+        #G = self._G
         start_k = len(self._drop_list) + 1
         for i, gid in enumerate(metis_out):
             key_dict[i + 1] = gid
             groups.add(gid)
+            """
             myk = G.nodes()[i]
             gnode = G.node[myk]
             gnode['gid'] = gid # write back to the original bigraph
@@ -911,6 +923,7 @@ class MetisPGTP(PGT):
             tt = group_weight[gid]
             tt[0] += gnode['tw']
             tt[1] += gnode['sz']
+            """
 
         node_list = jsobj['nodeDataArray']
         gc = 0
