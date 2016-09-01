@@ -393,13 +393,11 @@ class ZMQPubSubMixIn(BaseMixIn):
 
     def _zmq_sub_queue_thread(self):
         while self._running:
-            evt = None
             try:
                 evt = self._zmq_sub_q.get_nowait()
                 self.deliver_event(evt)
             except Queue.Empty:
                 time.sleep(0.01)
-                continue
 
     def _zmq_sub_thread(self):
         while self._running:
