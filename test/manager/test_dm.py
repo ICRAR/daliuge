@@ -298,7 +298,7 @@ class TestDM(unittest.TestCase):
         # a good proof that everything is working as expected
         a = dm1._sessions[sessionId].drops['A']
         c = dm2._sessions[sessionId].drops['C']
-        with droputils.DROPWaiterCtx(self, c, 30):
+        with droputils.DROPWaiterCtx(self, c, 10):
             a.write('a')
             a.setCompleted()
 
