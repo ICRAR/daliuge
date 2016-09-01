@@ -25,7 +25,6 @@ thus represents the bottom of the DROP management hierarchy.
 """
 
 import abc
-import collections
 import importlib
 import inspect
 import logging
@@ -44,7 +43,6 @@ import zerorpc
 import zmq
 
 from dfms import utils
-from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
 from dfms.lifecycle.dlm import DataLifecycleManager
@@ -78,10 +76,12 @@ def _functionAsTemplate(f):
 
 class NMDropEventListener(object):
 
-    def __init__(self, nm):
+    def __init__(self, nm, session_id):
         self._nm = nm
+        self._session_id = session_id
 
     def handleEvent(self, event):
+        event.session_id = self._session_id
         self._nm.publish_event(event)
 
 class NodeManager(DROPManager):
@@ -110,13 +110,11 @@ class NodeManager(DROPManager):
                  rpc_port = constants.NODE_DEFAULT_RPC_PORT,
                  max_threads = 10):
 
-        self._event_listener = NMDropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
         self._host = host or 'localhost'
         self._events_port = events_port
         self._rpc_port = rpc_port
         self._sessions = {}
-        self._dropsubs = {}
 
         # dfmsPath contains code added by the user with possible
         # DROP applications
@@ -188,18 +186,10 @@ class NodeManager(DROPManager):
         Method called by subclasses when a new event has arrived through the
         subscription mechanism.
         """
-
-        if not evt.uid in self._dropsubs:
-            logger.debug("No subscription found for drop %s", evt.uid)
+        if not evt.session_id in self._sessions:
+            logger.warning("No session %s found, event will be dropped" % (evt.session_id))
             return
-
-        for tgt in self._dropsubs[evt.uid]:
-            for s in self._sessions.values():
-                if tgt in s.drops:
-                    drop = s.drops[tgt]
-                    logger.debug("Passing event %r to %r", evt, drop)
-                    drop.handleEvent(evt)
-                    break
+        self._sessions[evt.session_id].deliver_event(evt)
 
     def _check_session_id(self, session_id):
         if session_id not in self._sessions:
@@ -240,10 +230,12 @@ class NodeManager(DROPManager):
             drop._tp = self._threadpool
             if self._dlm:
                 self._dlm.addDrop(drop)
+
+            evt_listener = NMDropEventListener(self, sessionId)
             if isinstance(drop, AppDROP):
-                drop.subscribe(self._event_listener, 'producerFinished')
+                drop.subscribe(evt_listener, 'producerFinished')
             else:
-                drop.subscribe(self._event_listener, 'dropCompleted')
+                drop.subscribe(evt_listener, 'dropCompleted')
 
         uris = {}
         session.deploy(completedDrops=completedDrops, foreach=foreach)
@@ -273,54 +265,20 @@ class NodeManager(DROPManager):
 
     def add_node_subscriptions(self, sessionId, relationships):
 
-        self._check_session_id(sessionId)
-
-        evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
-        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
-
         logger.debug("Received subscription information: %r", relationships)
+        self._check_session_id(sessionId)
+        self._sessions[sessionId].add_node_subscriptions(sessionId, relationships, self)
 
-        for nodesub, droprels in relationships.items():
+        # Set up event channels subscriptions
+        for nodesub in relationships:
 
             host = nodesub
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
-            rpc_port = constants.NODE_DEFAULT_RPC_PORT
             if type(nodesub) is tuple:
-                host, events_port, rpc_port = nodesub
+                host, events_port, _ = nodesub
 
             # TODO: we also have to unsubscribe from them at some point
             self.subscribe(host, events_port)
-
-            droprels = [DROPRel(*x) for x in droprels]
-
-            # Which events should we react to?
-            dropsubs = collections.defaultdict(list)
-            for rel in droprels:
-
-                # Look which side of the relationship is local
-                for sid, s in self._sessions.items():
-
-                    if sessionId != sid:
-                        continue
-
-                    local_uid = None
-                    remote_uid = None
-                    if rel.rhs in s._graph:
-                        local_uid = rel.rhs
-                        remote_uid = rel.lhs
-                    elif rel.lhs in s._graph:
-                        local_uid = rel.lhs
-                        remote_uid = rel.rhs
-
-                    if (rel.rel in evt_consumer and rel.lhs is local_uid) or \
-                       (rel.rel in evt_producer and rel.rhs is local_uid):
-                        dropsubs[remote_uid].append(local_uid)
-
-                    break
-
-            self._dropsubs.update(dropsubs)
-
-            self._sessions[sessionId].add_relationships(host, rpc_port, droprels, self)
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)

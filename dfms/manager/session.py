@@ -32,11 +32,12 @@ from luigi import scheduler, worker
 
 from dfms import droputils
 from dfms import luigi_int, graph_loader
-from dfms.ddap_protocol import DROPStates
+from dfms.ddap_protocol import DROPStates, DROPLinkType, DROPRel
 from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
 from dfms.exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
+from dfms.manager import constants
 
 
 logger = logging.getLogger(__name__)
@@ -130,6 +131,7 @@ class Session(object):
         self._host = host
         self._error_status_listener = None
         self._enable_luigi = enable_luigi
+        self._dropsubs = {}
         if error_listener:
             self._error_status_listener = ErrorStatusListener(self, error_listener)
 
@@ -307,6 +309,67 @@ class Session(object):
                     drop.async_execute()
                 else:
                     drop.setCompleted()
+
+    def deliver_event(self, evt):
+        """
+        Called when an event has been fired by a remote drop.
+        The event is then delivered to the interested drops of this session.
+        """
+        if not evt.uid in self._dropsubs:
+            logger.debug("No subscription found for drop %s", evt.uid)
+            return
+        for tgt in self._dropsubs[evt.uid]:
+            drop = self._drops[tgt]
+            logger.debug("Passing event %r to %r", evt, drop)
+            drop.handleEvent(evt)
+
+    def add_node_subscriptions(self, sessionId, relationships, nm):
+
+        evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
+        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
+
+        for host, droprels in relationships.items():
+
+            # Make sure we have DROPRel tuples
+            droprels = [DROPRel(*x) for x in droprels]
+
+            # Sanitize the host/rpc_port info if needed
+            rpc_port = constants.NODE_DEFAULT_RPC_PORT
+            if type(host) is tuple:
+                host, _, rpc_port = host
+
+            # Store which drops should receive events from which remote drops
+            dropsubs = collections.defaultdict(list)
+            for rel in droprels:
+
+                # Which side of the relationship is local?
+                local_uid = None
+                remote_uid = None
+                if rel.rhs in self._graph:
+                    local_uid = rel.rhs
+                    remote_uid = rel.lhs
+                elif rel.lhs in self._graph:
+                    local_uid = rel.lhs
+                    remote_uid = rel.rhs
+
+                # We are in the event receiver side
+                if (rel.rel in evt_consumer and rel.lhs is local_uid) or \
+                   (rel.rel in evt_producer and rel.rhs is local_uid):
+                    dropsubs[remote_uid].append(local_uid)
+
+            self._dropsubs.update(dropsubs)
+
+            # Store the information needed to create the proxies later
+            for rel in droprels:
+                local_uid = rel.rhs
+                mname = LINKTYPE_1TON_APPEND_METHOD[rel.rel]
+                remote_uid = rel.lhs
+                if local_uid not in self._graph:
+                    local_uid = rel.lhs
+                    remote_uid = rel.rhs
+                    mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
+
+                self._proxyinfo.append((nm, host, rpc_port, local_uid, mname, remote_uid))
 
     def finish(self):
         self.status = SessionStates.FINISHED
