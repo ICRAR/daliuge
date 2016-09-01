@@ -29,6 +29,7 @@ import collections
 import importlib
 import inspect
 import logging
+import multiprocessing.pool
 import os
 import socket
 import sys
@@ -106,7 +107,8 @@ class NodeManager(DROPManager):
                  error_listener=None,
                  enable_luigi=False,
                  events_port = constants.NODE_DEFAULT_EVENTS_PORT,
-                 rpc_port = constants.NODE_DEFAULT_RPC_PORT):
+                 rpc_port = constants.NODE_DEFAULT_RPC_PORT,
+                 max_threads = 10):
 
         self._event_listener = NMDropEventListener(self)
         self._dlm = DataLifecycleManager() if useDLM else None
@@ -140,6 +142,11 @@ class NodeManager(DROPManager):
         self._error_listener = error_listener
 
         self._enable_luigi = enable_luigi
+
+        # Start our thread pool
+        max_threads = max(min(max_threads, 200), 1)
+        logger.info("Initializing thread pool with %d threads", max_threads)
+        self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
 
         # Start the mix-ins
         self.start()
@@ -230,6 +237,7 @@ class NodeManager(DROPManager):
 
         def foreach(drop):
             uris[drop.uid] = drop.uri
+            drop._tp = self._threadpool
             if self._dlm:
                 self._dlm.addDrop(drop)
             if isinstance(drop, AppDROP):
