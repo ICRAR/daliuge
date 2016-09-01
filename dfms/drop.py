@@ -1417,9 +1417,13 @@ class InputFiredAppDROP(AppDROP):
 
     def async_execute(self):
         # Return immediately, but schedule the execution of this app
-        t = threading.Thread(target=self.execute)
-        t.daemon = 1
-        t.start()
+        # If we have been given a thread pool use that
+        if hasattr(self, '_tp'):
+            self._tp.apply_async(self.execute)
+        else:
+            t = threading.Thread(target=self.execute)
+            t.daemon = 1
+            t.start()
 
     def execute(self):
         """

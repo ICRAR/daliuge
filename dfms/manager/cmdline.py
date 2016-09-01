@@ -209,6 +209,8 @@ def dfmsNM(args=sys.argv):
                       dest="errorListener", help="The error listener class to be used", default=None)
     parser.add_option("--luigi", action="store_true",
                       dest="enable_luigi", help="Enable integration with Luigi. Disabled by default.", default=False)
+    parser.add_option("-t", "--max-threads", action="store", type="int",
+                      dest="max_threads", help="Maximum number of threads to use for executing drops. Defaults to 10.", default=10)
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
@@ -220,7 +222,8 @@ def dfmsNM(args=sys.argv):
                         'dfmsPath': options.dfmsPath,
                         'host': options.host,
                         'error_listener': options.errorListener,
-                        'enable_luigi': options.enable_luigi}
+                        'enable_luigi': options.enable_luigi,
+                        'max_threads': options.max_threads}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
 
