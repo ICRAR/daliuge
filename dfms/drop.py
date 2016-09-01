@@ -837,7 +837,7 @@ class AbstractDROP(EventFirer):
         if self._wio:
             self._wio.close()
 
-        logger.info("Moving %r to COMPLETED", self)
+        logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
 
         # Signal our subscribers that the show is over
@@ -1319,7 +1319,7 @@ class AppDROP(ContainerDROP):
         properties are set to their correct values correctly before invoking
         this method.
         """
-        logger.info("Moving %r to %s", self, "FINISHED" if self._execStatus is AppDROPStates.FINISHED else "ERROR")
+        logger.debug("Moving %r to %s", self, "FINISHED" if self._execStatus is AppDROPStates.FINISHED else "ERROR")
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
 class InputFiredAppDROP(AppDROP):
@@ -1437,7 +1437,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.info("Executing %r", self)
+        logger.debug("Executing %r", self)
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
