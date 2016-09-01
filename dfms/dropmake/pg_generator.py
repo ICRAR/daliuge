@@ -944,7 +944,7 @@ class MetisPGTP(PGT):
             if (key_dict[e[0]] == key_dict[e[1]]):
                 e[2]['weight'] = 0
 
-    def to_gojs_json(self, string_rep=True):
+    def to_gojs_json(self, string_rep=True, outdict=None):
         jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False)
         #uid = uuid.uuid1()
         uid = int(time.time() * 1000)
@@ -954,6 +954,8 @@ class MetisPGTP(PGT):
         (edgecuts, metis_parts) = self._metis.part_graph(self._G,
         nparts=self._num_parts, recursive=recursive_param,
         objtype=self._obj_type, ufactor=self._u_factor)
+        if (outdict is not None):
+            outdict['edgecuts'] = edgecuts
         self._set_metis_log(" - Data movement: {0}".format(edgecuts))
         self._parse_metis_output(metis_parts, jsobj)
         if (string_rep):
