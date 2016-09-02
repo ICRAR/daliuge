@@ -272,8 +272,8 @@ class LogEntryPair(object):
 
     def get_duration(self):
         if ((self._start_time is None) or (self._end_time is None)):
-            print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
-            self._start_time, self._end_time)
+            #print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
+            #self._start_time, self._end_time)
             return None
         return (self._end_time - self._start_time)
 
@@ -371,12 +371,12 @@ class LogParser(object):
         if (key_line is None):
             raise Exception('Unknown node type for log analysis')
         wildcards = '.*'
-        grep_start = '"\\<'
-        grep_end = '\\>"'
+        grep_start = r'"\<'
+        grep_end = r'\>"'
         grep_keys = [grep_start + x.format(wildcards) + grep_end for x in key_line]
         grep_cmd = ' -e '.join(grep_keys)
         # python regex needs to escape brackets
-        python_keys = [x.format(wildcards).replace('(', '\(').replace(')', '\)') for x in key_line]
+        python_keys = [x.format(wildcards).replace('(', r'\(').replace(')', r'\)') for x in key_line]
         return ("grep -e %s" % grep_cmd, python_keys)
 
     def parse(self, out_csv=None):
@@ -423,6 +423,9 @@ class LogParser(object):
 
         # parse NM logs
         max_exec_time = -1
+        min_exec_stt = 2966227198.0
+        max_exec_edt = 0
+        num_finished_sess = 0
         for df in os.listdir(self._log_dir):
             if (os.path.isdir(os.path.join(self._log_dir, df))):
                 nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
@@ -430,6 +433,8 @@ class LogParser(object):
                     cmd_nm = "%s %s" % (self._grep_nm_cmd, nm_logf)
                     ret, lines = commands.getstatusoutput(cmd_nm)
                     if (0 == ret):
+                        for lep in self._nm_entry_pairs:
+                            lep.reset()
                         ll = lines.split(os.linesep)
                         for line in ll:
                             for lep in self._nm_entry_pairs:
@@ -439,9 +444,20 @@ class LogParser(object):
                             if (lep._name in ['completion_time', 'completion_time_2']):
                                 ct = lep.get_duration()
                                 # and find the longest execution time
-                                if (ct is not None and ct > max_exec_time):
-                                    max_exec_time = ct
+                                # if (ct is not None and ct > max_exec_time):
+                                #     max_exec_time = ct
+                                if (ct is not None): # assum clocks are all synchronised
+                                    num_finished_sess += 1
+                                    if (lep._start_time < min_exec_stt):
+                                        min_exec_stt = lep._start_time
+                                    if (lep._end_time > max_exec_edt):
+                                        max_exec_edt = lep._end_time
 
+        if (max_exec_edt > min_exec_stt):
+            if (num_nodes - 1 == num_finished_sess):
+                max_exec_time = max_exec_edt - min_exec_stt
+            else:
+                print("Pipeline %s is not completed: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
         temp_nm = [str(max_exec_time)]
 
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
