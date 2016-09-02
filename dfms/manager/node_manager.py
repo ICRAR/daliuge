@@ -142,9 +142,12 @@ class NodeManager(DROPManager):
         self._enable_luigi = enable_luigi
 
         # Start our thread pool
-        max_threads = max(min(max_threads, 200), 1)
-        logger.info("Initializing thread pool with %d threads", max_threads)
-        self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+        if max_threads == 0:
+            self._threadpool = None
+        else:
+            max_threads = max(min(max_threads, 200), 1)
+            logger.info("Initializing thread pool with %d threads", max_threads)
+            self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
 
         # Start the mix-ins
         self.start()
@@ -227,7 +230,8 @@ class NodeManager(DROPManager):
 
         def foreach(drop):
             uris[drop.uid] = drop.uri
-            drop._tp = self._threadpool
+            if self._threadpool is not None:
+                drop._tp = self._threadpool
             if self._dlm:
                 self._dlm.addDrop(drop)
 

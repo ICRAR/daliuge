@@ -466,7 +466,7 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
-                'type':'app', 'app':'test.graphsRepository.SleepApp', 'nm':'lstnr', 'tw':1, 'sleepTime': 5})
+                'type':'app', 'app':'test.graphsRepository.SleepApp', 'nm':'lstnr', 'tw':1, 'sleepTime': 0})
                 # tw -- task weight
                 dropSpec_socket['autostart'] = 1
                 kwargs['listener_drop'] = dropSpec_socket
@@ -507,7 +507,7 @@ class LGNode():
             'nm':'grpdata', 'dw':dw})
             kwargs['grp-data_drop'] = dropSpec_grp
             kwargs['tw'] = 1 # barriar literarlly takes no time for its own computation
-            kwargs['sleepTime'] = 1
+            kwargs['sleepTime'] = 0
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
         elif (drop_type == 'DataGather'):
@@ -522,7 +522,7 @@ class LGNode():
             'type':'plain', 'storage':'memory', 'nm':'gthrdt', 'dw':dw})
             kwargs['gather-data_drop'] = dropSpec_gather
             kwargs['tw'] = 1
-            kwargs['sleepTime'] = 1
+            kwargs['sleepTime'] = 0
             dropSpec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
@@ -532,7 +532,7 @@ class LGNode():
             'storage':'null', 'nm':'null', 'dw':0})
             kwargs['null_drop'] = dropSpec_null
             kwargs['tw'] = 0
-            kwargs['sleepTime'] = 1
+            kwargs['sleepTime'] = 0
             dropSpec.addOutput(dropSpec_null)
             dropSpec_null.addProducer(dropSpec)
         elif (drop_type in ['Start', 'End']):

@@ -210,7 +210,7 @@ def dfmsNM(args=sys.argv):
     parser.add_option("--luigi", action="store_true",
                       dest="enable_luigi", help="Enable integration with Luigi. Disabled by default.", default=False)
     parser.add_option("-t", "--max-threads", action="store", type="int",
-                      dest="max_threads", help="Maximum number of threads to use for executing drops. Defaults to 10.", default=10)
+                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
