@@ -49,7 +49,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR
+aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR
 """
 
 sub_tpl = Template(sub_tpl_str)
@@ -156,7 +156,8 @@ class PawseyClient(object):
                 mon_port=default_aws_mon_port,
                 logv=1,
                 facility=socket.gethostname().split('-')[0],
-                zerorun=False):
+                zerorun=False,
+                max_threads=0):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
@@ -170,6 +171,7 @@ class PawseyClient(object):
         self._pip_name = None
         self._logv = logv
         self._zerorun = zerorun
+        self._max_threads = max_threads
 
     def set_gid(self, gid):
         if (gid is None):
@@ -221,10 +223,11 @@ class PawseyClient(object):
         pardict['PY_BIN'] = sys.executable
         pardict['LOG_DIR'] = lgdir
         pardict['GID_PAR'] = '-g %d' % self._gid if (self._gid is not None) else ''
-        pardict['PROXY_PAR'] = '-m %s -o %d' % (_mon_host, _mon_port) if self._run_proxy else ''
+        pardict['PROXY_PAR'] = '-m %s -o %d' % (self._mon_host, self._mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
         pardict['LOGV_PAR'] = '-v %d' % self._logv
         pardict['ZERORUN_PAR'] = '-z' if self._zerorun else ''
+        pardict['MAXTHREADS_PAR'] = '-t %d' % (self._max_threads)
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
@@ -513,6 +516,8 @@ if __name__ == '__main__':
                       dest="csv_output", help="CSV output file to keep the log analysis result")
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
+    parser.add_option("-T", "--max-threads", action="store", type="int",
+                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):
@@ -541,7 +546,8 @@ if __name__ == '__main__':
             lg = LogParser(opts.log_dir)
             lg.parse(out_csv=opts.csv_output)
     elif (opts.action == 1):
-        pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level, zerorun=opts.zerorun)
+        pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level,
+                          zerorun=opts.zerorun, max_threads=opts.max_threads)
         if (opts.graph_id is not None):
             pc.set_gid(opts.graph_id)
         pc._graph_vis = opts.graph_vis

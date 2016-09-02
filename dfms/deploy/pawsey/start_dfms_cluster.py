@@ -89,13 +89,13 @@ def get_ip(loc='Pawsey'):
         logger.warning("Fail to obtain IP address from {0}".format(msg))
         return 'None'
 
-def start_node_mgr(log_dir, logv=1):
+def start_node_mgr(log_dir, logv=1, max_threads=0):
     """
     Start node manager
     """
     lv = 'v' * logv
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-%s' % lv, '-H', '0.0.0.0', '-m', '100'])
+    '-%s' % lv, '-H', '0.0.0.0', '-m', '100', '-t', str(max_threads)])
 
 def start_dim(node_list, log_dir, logv=1):
     """
@@ -200,6 +200,8 @@ if __name__ == '__main__':
                     default=1)
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
+    parser.add_option("-t", "--max-threads", action="store", type="int",
+                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 
     # we add command-line parameter to allow automatic graph submission from file
     parser.add_option('-g', '--gid', action='store', type='int',
@@ -222,11 +224,7 @@ if __name__ == '__main__':
     if (options.gid is not None and options.gid >= len(exclient.lgnames)):
         options.gid = 0
 
-    logv = options.verbose_level
-    if (logv < 1):
-        logv = 1
-    elif (logv > 3):
-        logv = 3
+    logv = max(min(3, options.verbose_level), 1)
 
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
@@ -277,7 +275,7 @@ if __name__ == '__main__':
             start_dfms_proxy(options.loc, mgr_ip, DIM_PORT, options.monitor_host, options.monitor_port)
         elif (run_node_mgr):
             logger.info("Starting node manager on host {0}".format(origin_ip))
-            start_node_mgr(log_dir)
+            start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
     else:
         logger.info("A list of NM IPs: {0}".format(ip_adds))
         logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
