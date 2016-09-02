@@ -92,7 +92,7 @@ class LGNode():
         self._outs = [] # event flow target
         self._inputs = [] # event flow source
         self.group = None
-        self._id = '{0}#{1}'.format(self.text.replace('\n', '_').replace(' ', '_'), jd['key'])
+        self._id = jd['key'])
         self._ssid = ssid
         self._isgrp = False
         self._converted = False
