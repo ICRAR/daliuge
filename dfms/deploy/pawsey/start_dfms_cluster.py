@@ -105,7 +105,7 @@ def start_dim(node_list, log_dir, logv=1):
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '100'])
 
-def submit_monitor_graph(graph_id, dump_status):
+def submit_monitor_graph(graph_id, dump_status, zerorun):
     """
     Submits a graph and then monitors the island manager
     """
@@ -116,7 +116,7 @@ def submit_monitor_graph(graph_id, dump_status):
     if (graph_id is not None):
         mc = MonitorClient('localhost', 8001)
         logger.info("Submitting graph {0}".format(graph_id))
-        mc.submit_single_graph(graph_id, deploy=True, algo='metis')
+        mc.submit_single_graph(graph_id, deploy=True, algo='metis', zerorun=zerorun)
         logger.info("graph {0} is successfully submitted".format(graph_id))
         dc = mc._dc
     else:
@@ -198,6 +198,8 @@ if __name__ == '__main__':
     parser.add_option("-v", "--verbose-level", action="store", type="int",
                     dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
                     default=1)
+    parser.add_option("-z", "--zerorun", action="store_true",
+                      dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
 
     # we add command-line parameter to allow automatic graph submission from file
     parser.add_option('-g', '--gid', action='store', type='int',
@@ -298,5 +300,5 @@ if __name__ == '__main__':
             else:
                 arg02 = None
                 logger.info("Local monitor path is not set")
-            threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02)).start()
+            threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02, options.zerorun)).start()
         start_dim(node_mgrs, log_dir)
