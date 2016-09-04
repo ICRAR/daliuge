@@ -73,7 +73,7 @@ setup(
             "scp",
             'six',
             "zeroconf",
-            "zerorpc"
+            "zerorpc >= 0.6" # 0.6 brins python3 support plus other fixes
       ],
       # Keep alpha-sorted PLEASE!
 
@@ -81,9 +81,6 @@ setup(
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
-        # while zerorpc-python doesn't push latest fixes to their master,
-        # including proper Python 3 support and logging cleanup
-        'https://github.com/rtobar/zerorpc-python/archive/master.zip#egg=zerorpc',
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
         # netifaces 10.4 doesn't include proper Python 3 support, but the tip
         # (cee54e7 as of 23/06/16) is broken. This particular commit is a nice
