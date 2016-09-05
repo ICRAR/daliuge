@@ -245,7 +245,8 @@ class Session(object):
         for drop,_ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
-            self._registerDrop(drop)
+            drop.uri = ''
+            self._drops[drop.uid] = drop
 
             # Register them with the error handler
             if self._error_status_listener:
@@ -293,10 +294,6 @@ class Session(object):
 
         self.status = SessionStates.RUNNING
         logger.info("Session %s is now RUNNING", self._sessionId)
-
-    def _registerDrop(self, drop):
-        drop.uri = ''
-        self._drops[drop.uid] = drop
 
     def _run(self, worker):
         worker.run()
