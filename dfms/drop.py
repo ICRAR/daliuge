@@ -755,7 +755,7 @@ class AbstractDROP(EventFirer):
             nProd = len(self._producers)
 
             if nFinished > nProd:
-                raise Exception("More producers finished that registered in DROP %r" % (self))
+                raise Exception("More producers finished that registered in DROP %r: %d > %d" % (self, nFinished, nProd))
             elif nFinished == nProd:
                 finished = True
 

@@ -229,7 +229,8 @@ if __name__ == '__main__':
         options.gid = 0
 
     logv = max(min(3, options.verbose_level), 1)
-    os.environ['DALIUGE_TEST_SNC'] = 1 if options.sleepncopy else 0
+    if options.sleepncopy:
+        os.environ['DALIUGE_TEST_SNC'] = '1'
 
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
