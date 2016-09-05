@@ -292,7 +292,7 @@ class Session(object):
             logger.info("'foreach' invoked for each drop")
 
         # Append proxies
-        logger.info("Creating drop proxies")
+        logger.info("Creating %d drop proxies", len(self._proxyinfo))
         for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = DropProxy(nm, host, port, self._sessionId, remote_uid)
             method = getattr(self._drops[local_uid], relname)
