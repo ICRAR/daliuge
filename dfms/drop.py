@@ -130,8 +130,11 @@ class AbstractDROP(EventFirer):
 
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
+        # We keep the UIDs in a set for O(1) "x in set" operations
         self._consumers = []
         self._producers = []
+        self._consumers_uids = set()
+        self._producers_uids = set()
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -146,7 +149,10 @@ class AbstractDROP(EventFirer):
         # at the same time, although this rule is imposed simply to enforce
         # efficiency (why would a consumer want to consume the data twice?) and
         # not because it's technically impossible.
+        # See comment above in self._consumers/self._producers for separate set
+        # with uids
         self._streamingConsumers = []
+        self._streamingConsumers_uids = set()
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -662,16 +668,18 @@ class AbstractDROP(EventFirer):
 
         # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
-        if consumer in self._streamingConsumers:
+        cuid = consumer.uid
+        if cuid in self._streamingConsumers_uids:
             raise InvalidRelationshipException(DROPRel(consumer, DROPLinkType.CONSUMER, self),
                                                "Consumer already registered as a streaming consumer")
 
         # Add if not already present
         # Add the reverse reference too automatically
-        if consumer in self._consumers:
+        if cuid in self._consumers_uids:
             return
         logger.debug('Adding new consumer %r to %r', consumer, self)
         self._consumers.append(consumer)
+        self._consumers_uids.add(cuid)
 
         # Subscribe the consumer to events sent when this DROP moves to
         # COMPLETED. This way the consumer will be notified that its input has
@@ -708,10 +716,12 @@ class AbstractDROP(EventFirer):
         """
 
         # Don't add twice
-        if producer in self._producers:
+        puid = producer.uid
+        if puid in self._producers_uids:
             return
 
         self._producers.append(producer)
+        self._producers_uids.add(puid)
 
         # Automatic back-reference
         if back and hasattr(producer, 'addOutput'):
@@ -784,15 +794,17 @@ class AbstractDROP(EventFirer):
 
         # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
-        if streamingConsumer in self._consumers:
+        scuid = streamingConsumer.uid
+        if scuid in self._consumers_uids:
             raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
                                                "Consumer is already registered as a normal consumer")
 
         # Add if not already present
-        if streamingConsumer in self._streamingConsumers:
+        if scuid in self._streamingConsumers_uids:
             return
         logger.debug('Adding new streaming streaming consumer for %r: %s' %(self, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
+        self._streamingConsumers_uids.add(scuid)
 
         # Automatic back-reference
         if back and hasattr(streamingConsumer, 'addStreamingInput'):
@@ -1227,8 +1239,8 @@ class AppDROP(ContainerDROP):
         self._execStatus = AppDROPStates.NOT_RUN
 
     def addInput(self, inputDrop, back=True):
-        if inputDrop not in self._inputs.values():
-            uid = inputDrop.uid
+        uid = inputDrop.uid
+        if uid not in self._inputs:
             self._inputs[uid] = inputDrop
             if back:
                 inputDrop.addConsumer(self, False)
@@ -1244,8 +1256,8 @@ class AppDROP(ContainerDROP):
         if outputDrop is self:
             raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
                                                'Cannot add an AppConsumer as its own output')
-        if outputDrop not in self._outputs.values():
-            uid = outputDrop.uid
+        uid = outputDrop.uid
+        if uid not in self._outputs:
             self._outputs[uid] = outputDrop
 
             if back:
