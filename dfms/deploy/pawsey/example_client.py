@@ -47,7 +47,8 @@ lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', #2
 'lofar_test_2x4.json', 'lofar_test_4x4.json', 'lofar_test_4x8.json',#11
 'lofar_test_8x8.json', 'lofar_test_8x16.json', 'lofar_test_16x16.json',#14
 'lofar_test_16x32.json', 'lofar_test_32x32.json', 'lofar_test_32x64.json',#17
-'lofar_test_64x64.json', 'lofar_test_64x128.json', 'lofar_test_128x128.json']#20
+'lofar_test_64x64.json', 'lofar_test_64x128.json', 'lofar_test_128x128.json',#20
+'simple_test_500.json', 'simple_test_1000.json', 'simple_test_2000.json']#23
 
 
 class MonitorClient(object):
