@@ -198,7 +198,7 @@ def breadFirstTraverse(toVisit):
 
     toVisit_list = listify(toVisit)[:]
     toVisit = collections.deque(toVisit_list)
-    found = set(toVisit_list)
+    visited = set(toVisit_list)
 
     # See how many arguments we should used when calling func
     while toVisit:
@@ -209,9 +209,9 @@ def breadFirstTraverse(toVisit):
         yield node, dependencies
 
         # Enqueue its dependencies, making sure they are enqueued only once
-        nextVisits = [drop for drop in dependencies if drop not in found]
-        toVisit += nextVisits
-        found = found | set(nextVisits)
+        next_visits = [n for n in dependencies if n not in visited]
+        visited.update(next_visits)
+        toVisit += next_visits
 
 def listify(o):
     """
