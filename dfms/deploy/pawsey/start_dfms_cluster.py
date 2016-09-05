@@ -95,7 +95,7 @@ def start_node_mgr(log_dir, logv=1, max_threads=0):
     """
     lv = 'v' * logv
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-%s' % lv, '-H', '0.0.0.0', '-m', '100', '-t', str(max_threads)])
+    '-%s' % lv, '-H', '0.0.0.0', '-m', '100', '-t', str(max_threads), '--no-dlm'])
 
 def start_dim(node_list, log_dir, logv=1):
     """
