@@ -23,6 +23,7 @@
 Utility methods and classes to be used when interacting with DROPs
 '''
 
+import collections
 import copy
 import logging
 import re
@@ -195,21 +196,22 @@ def breadFirstTraverse(toVisit):
     This implementation is non-recursive.
     """
 
-    toVisit = listify(toVisit)[:]
-    found = toVisit[:]
+    toVisit_list = listify(toVisit)[:]
+    toVisit = collections.deque(toVisit_list)
+    found = set(toVisit_list)
 
     # See how many arguments we should used when calling func
     while toVisit:
 
         # Pay the node a visit
-        node = toVisit.pop(0)
+        node = toVisit.popleft()
         dependencies = getDownstreamObjects(node)
         yield node, dependencies
 
         # Enqueue its dependencies, making sure they are enqueued only once
         nextVisits = [drop for drop in dependencies if drop not in found]
         toVisit += nextVisits
-        found += nextVisits
+        found = found | set(nextVisits)
 
 def listify(o):
     """
