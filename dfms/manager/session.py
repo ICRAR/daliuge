@@ -267,8 +267,10 @@ class Session(object):
             logger.debug("Adding completion listener to leaf drops %r", leaves)
             listener = LeavesCompletionListener(leaves, self)
             for leaf in leaves:
-                leaf.subscribe(listener, 'dropCompleted')
-                leaf.subscribe(listener, 'producerFinished')
+                if isinstance(leaf, AppDROP):
+                    leaf.subscribe(listener, 'producerFinished')
+                else:
+                    leaf.subscribe(listener, 'dropCompleted')
 
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
