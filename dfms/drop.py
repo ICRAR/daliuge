@@ -1226,7 +1226,9 @@ class AppDROP(ContainerDROP):
         # this AppDROP as one of its consumers, while an output DROP
         # will see this AppDROP as one of its producers.
         #
-        # Input objects will
+        # Input and output objects are later referenced by their *index*
+        # (relative to the order in which they were added to this object)
+        # Therefore we use an ordered dict to keep the insertion order.
         self._inputs  = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
