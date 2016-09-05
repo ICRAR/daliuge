@@ -241,6 +241,7 @@ class Session(object):
         logger.info("Creating DROPs for session %s", self._sessionId)
 
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
+        logger.info("%d drops successfully created", len(self._graph))
 
         for drop,_ in droputils.breadFirstTraverse(self._roots):
 
@@ -251,6 +252,7 @@ class Session(object):
             # Register them with the error handler
             if self._error_status_listener:
                 drop.subscribe(self._error_status_listener, eventType='status')
+        logger.info("Stored all drops, proceeding with further customization")
 
         # Start the luigi task that will make sure the graph is executed
         # If we're not using luigi we still
@@ -265,13 +267,14 @@ class Session(object):
             workerT.start()
         else:
             leaves = droputils.getLeafNodes(self._roots)
-            logger.debug("Adding completion listener to leaf drops %r", leaves)
+            logger.info("Adding completion listener to leaf drops")
             listener = LeavesCompletionListener(leaves, self)
             for leaf in leaves:
                 if isinstance(leaf, AppDROP):
                     leaf.subscribe(listener, 'producerFinished')
                 else:
                     leaf.subscribe(listener, 'dropCompleted')
+            logger.info("Listener added to leaf drops")
 
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
@@ -283,10 +286,13 @@ class Session(object):
 
         # Foreach
         if foreach:
+            logger.info("Invoking 'foreach' on each drop")
             for drop,_ in droputils.breadFirstTraverse(self._roots):
                 foreach(drop)
+            logger.info("'foreach' invoked for each drop")
 
         # Append proxies
+        logger.info("Creating drop proxies")
         for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = DropProxy(nm, host, port, self._sessionId, remote_uid)
             method = getattr(self._drops[local_uid], relname)
