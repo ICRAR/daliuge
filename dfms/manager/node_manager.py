@@ -344,6 +344,7 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmq_running = True
         self._zmqcontextpub = zmq.Context()
         self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)  # @UndefinedVariable
+        self._zmqsocketpub.set_hwm(0) # Never drop messages that should be sent
         endpoint = "tcp://%s:%d" % (zmq_safe(self._host), self._events_port)
         self._zmqsocketpub.bind(endpoint)
         logger.info("Listening for events via ZeroMQ on %s", endpoint)
