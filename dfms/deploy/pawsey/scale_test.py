@@ -49,7 +49,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR
+aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR
 """
 
 sub_tpl = Template(sub_tpl_str)
@@ -157,7 +157,8 @@ class PawseyClient(object):
                 logv=1,
                 facility=socket.gethostname().split('-')[0],
                 zerorun=False,
-                max_threads=0):
+                max_threads=0,
+                sleepncopy=False):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
@@ -172,6 +173,7 @@ class PawseyClient(object):
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
+        self._sleepncopy = sleepncopy
 
     def set_gid(self, gid):
         if (gid is None):
@@ -228,6 +230,7 @@ class PawseyClient(object):
         pardict['LOGV_PAR'] = '-v %d' % self._logv
         pardict['ZERORUN_PAR'] = '-z' if self._zerorun else ''
         pardict['MAXTHREADS_PAR'] = '-t %d' % (self._max_threads)
+        pardict['SNC_PAR'] = '-y' if self._sleepncopy else ''
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
@@ -516,6 +519,8 @@ if __name__ == '__main__':
                       dest="csv_output", help="CSV output file to keep the log analysis result")
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
+    parser.add_option("-y", "--sleepncopy", action="store_true",
+                      dest="sleepncopy", help="Whether include COPY in the default Component drop", default=False)
     parser.add_option("-T", "--max-threads", action="store", type="int",
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 

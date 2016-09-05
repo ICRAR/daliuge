@@ -200,6 +200,10 @@ if __name__ == '__main__':
                     default=1)
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
+
+    parser.add_option("-y", "--sleepncopy", action="store_true",
+                      dest="sleepncopy", help="Whether include COPY in the default Component drop", default=False)
+
     parser.add_option("-t", "--max-threads", action="store", type="int",
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 
@@ -225,6 +229,7 @@ if __name__ == '__main__':
         options.gid = 0
 
     logv = max(min(3, options.verbose_level), 1)
+    os.environ['DALIUGE_TEST_SNC'] = 1 if options.sleepncopy else 0
 
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
