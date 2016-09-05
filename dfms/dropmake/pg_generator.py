@@ -476,7 +476,9 @@ class LGNode():
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 kwargs['dirname'] = '/tmp'
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
+            snc = os.environ.get('DALIUGE_TEST_SNC', 0)
+            cmpt = 'SleepAndCopyApp' if snc else 'SleepApp'
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.%s' % compt})
             if 'execution_time' in self.jd:
                 sleepTime = int(self.jd['execution_time'])
             else:
