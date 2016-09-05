@@ -344,7 +344,7 @@ class Session(object):
                 host, _, rpc_port = host
 
             # Store which drops should receive events from which remote drops
-            dropsubs = collections.defaultdict(list)
+            dropsubs = collections.defaultdict(set)
             for rel in droprels:
 
                 # Which side of the relationship is local?
@@ -360,7 +360,7 @@ class Session(object):
                 # We are in the event receiver side
                 if (rel.rel in evt_consumer and rel.lhs is local_uid) or \
                    (rel.rel in evt_producer and rel.rhs is local_uid):
-                    dropsubs[remote_uid].append(local_uid)
+                    dropsubs[remote_uid].add(local_uid)
 
             self._dropsubs.update(dropsubs)
 
