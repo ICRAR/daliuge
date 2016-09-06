@@ -340,6 +340,7 @@ class LogParser(object):
 
     nm_kl = ['Starting Pyro4 Daemon for session',
     'Session {0} finished',
+    'Session {0} is now RUNNING',
     'Creating DROPs for session']
 
     kwords = dict()
@@ -374,7 +375,8 @@ class LogParser(object):
         pp = self._py_nm_pattern
         rl_nm = []
         rl_nm.append(LogEntryPair('completion_time', pp[0], pp[1]))
-        rl_nm.append(LogEntryPair('completion_time_2', pp[2], pp[1]))
+        rl_nm.append(LogEntryPair('completion_time_2', pp[3], pp[1]))
+        rl_nm.append(LogEntryPair('node_deploy_time', pp[3], pp[2]))
         catchall = '|'.join(['(%s)' % (s,) for s in pp])
         catchall = ".*(%s).*" % (catchall,)
         return rl_nm, re.compile(catchall)
@@ -429,8 +431,7 @@ class LogParser(object):
 
         # parse NM logs
         max_exec_time = -1
-        min_exec_stt = 2966227198.0
-        max_exec_edt = 0
+        max_node_deploy_time = 0
         num_finished_sess = 0
         nm_log_pairs, catchall = self.build_nm_log_entry_pairs()
 
@@ -453,21 +454,20 @@ class LogParser(object):
                     for lep in nm_log_pairs:
                         if (lep._name in ['completion_time', 'completion_time_2']):
                             ct = lep.get_duration()
-                            # and find the longest execution time
-                            # if (ct is not None and ct > max_exec_time):
-                            #     max_exec_time = ct
-                            if (ct is not None): # assum clocks are all synchronised
+                            if (lep._name in ['completion_time', 'completion_time_2']):
                                 num_finished_sess += 1
-                                if (lep._start_time < min_exec_stt):
-                                    min_exec_stt = lep._start_time
-                                if (lep._end_time > max_exec_edt):
-                                    max_exec_edt = lep._end_time
+                                # and find the longest execution time
+                                if (ct is not None and ct > max_exec_time):
+                                    max_exec_time = ct
+                            elif (lep._name == 'node_deploy_time'):
+                                if (ct is not None and ct > max_node_deploy_time):
+                                    max_node_deploy_time = ct
 
-        if (max_exec_edt > min_exec_stt):
-            if (num_nodes - 1 == num_finished_sess):
-                max_exec_time = max_exec_edt - min_exec_stt
-            else:
-                print("Pipeline %s is not completed: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
+        #if (max_exec_edt > min_exec_stt):
+        if (num_nodes - 1 == num_finished_sess and max_exec_time > max_node_deploy_time):
+            max_exec_time -= max_node_deploy_time
+        else:
+            print("Pipeline %s is not completed: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
         temp_nm = [str(max_exec_time)]
 
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,

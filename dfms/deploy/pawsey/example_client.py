@@ -77,7 +77,7 @@ class MonitorClient(object):
 
         # Trigering something...
         logger.info("Start to translate {0}".format(lgn))
-        pgtp.to_gojs_json()
+        pgtp.to_gojs_json(string_rep=False)
         logger.info("Translation completed for {0}".format(lgn))
 
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
