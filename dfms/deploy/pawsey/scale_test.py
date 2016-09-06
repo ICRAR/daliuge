@@ -249,10 +249,10 @@ class PawseyClient(object):
 class LogEntryPair(object):
     """
     """
-    def __init__(self, name, start, end):
+    def __init__(self, name, gstart, gend):
         self._name = name
-        self._start = start
-        self._end = end
+        self._gstart = gstart + 2 # group 0 is the whole matching line, group 1 is the catchall
+        self._gend = gend + 2
         self._start_time = None
         self._end_time = None
         self._other = dict() # hack
@@ -267,12 +267,12 @@ class LogEntryPair(object):
         epoch = time.mktime(time.strptime(date_time, pattern))
         return datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
 
-    def check_start(self, line):
-        if ((self._start_time is None) and (re.search(self._start, line) is not None)):
+    def check_start(self, match, line):
+        if self._start_time is None and match.group(self._gstart):
             self._start_time = self.get_timestamp(line)
 
-    def check_end(self, line):
-        if ((self._end_time is None) and (re.search(self._end, line) is not None)):
+    def check_end(self, match, line):
+        if self._end_time is None and match.group(self._gend):
             self._end_time = self.get_timestamp(line)
             if (self._name == 'unroll'):
                 self._other['num_drops'] = int(line.split()[-1])
@@ -338,10 +338,12 @@ class LogParser(object):
     'Moving following DROPs to COMPLETED right away',
     'Successfully triggered drops']
 
-    nm_kl = ['Starting Pyro4 Daemon for session',
-    'Session {0} finished',
-    'Session {0} is now RUNNING',
-    'Creating DROPs for session']
+    nm_kl = [
+        'Starting Pyro4 Daemon for session', # Logged by the old master branch
+        'Creating DROPs for session',        # Drops are being created
+        'Session {0} is now RUNNING',        # All drops created and ready
+        'Session {0} finished'               # All drops executed
+    ]
 
     kwords = dict()
     kwords['dim'] = dim_kl
@@ -356,30 +358,30 @@ class LogParser(object):
         self._py_nm_pattern = self.construct_patterns(node_type='nm')
 
     def build_dim_log_entry_pairs(self):
-        pp = self._py_dim_pattern
-        rl = []
-        rl.append(LogEntryPair('unroll', pp[0], pp[1]))
-        rl.append(LogEntryPair('translate', pp[2], pp[3]))
-        rl.append(LogEntryPair('gen pg spec', pp[3], pp[4]))
-        rl.append(LogEntryPair('create session', pp[5], pp[6]))
-        rl.append(LogEntryPair('separate graph', pp[7], pp[8]))
-        rl.append(LogEntryPair('add session to all', pp[9], pp[10]))
-        rl.append(LogEntryPair('deploy session to all', pp[11], pp[12]))
-        rl.append(LogEntryPair('build drop connections', pp[13], pp[14]))
-        rl.append(LogEntryPair('trigger drops', pp[15], pp[16]))
-        catchall = '|'.join(['(%s)' % (s,) for s in pp])
+        leps = [LogEntryPair(name, g1, g2) for name, g1, g2 in (
+            ('unroll', 0, 1),
+            ('translate', 2, 3),
+            ('gen pg spec', 3, 4),
+            ('create session', 5, 6),
+            ('separate graph', 7, 8),
+            ('add session to all', 9, 10),
+            ('deploy session to all', 11, 12),
+            ('build drop connections', 13, 14),
+            ('trigger drops', 15, 16),
+        )]
+        catchall = '|'.join(['(%s)' % (s,) for s in self._py_dim_pattern])
         catchall = ".*(%s).*" % (catchall,)
-        return rl, re.compile(catchall)
+        return leps, re.compile(catchall)
 
     def build_nm_log_entry_pairs(self):
-        pp = self._py_nm_pattern
-        rl_nm = []
-        rl_nm.append(LogEntryPair('completion_time', pp[0], pp[1]))
-        rl_nm.append(LogEntryPair('completion_time_2', pp[3], pp[1]))
-        rl_nm.append(LogEntryPair('node_deploy_time', pp[3], pp[2]))
-        catchall = '|'.join(['(%s)' % (s,) for s in pp])
+        leps = [LogEntryPair(name, g1, g2) for name, g1, g2 in (
+            ('completion_time_old', 0, 3), # Old master branch
+            ('completion_time', 2, 3),
+            ('node_deploy_time', 1, 2),
+        )]
+        catchall = '|'.join(['(%s)' % (s,) for s in self._py_nm_pattern])
         catchall = ".*(%s).*" % (catchall,)
-        return rl_nm, re.compile(catchall)
+        return leps, re.compile(catchall)
 
     def construct_patterns(self, node_type='dim'):
         key_line = LogParser.kwords.get(node_type)
@@ -414,10 +416,13 @@ class LogParser(object):
         # parse DIM log
         dim_log_pairs, catchall = self.build_dim_log_entry_pairs()
         with open(self._dim_log_f, "r") as dimlog:
-            for line in filter(lambda l: catchall.match(l), dimlog):
+            for line in dimlog:
+                m = catchall.match(line)
+                if not m:
+                    continue
                 for lep in dim_log_pairs:
-                    lep.check_start(line)
-                    lep.check_end(line)
+                    lep.check_start(m, line)
+                    lep.check_end(m, line)
 
         num_drops = -1
         temp_dim = []
@@ -446,28 +451,41 @@ class LogParser(object):
 
                     # Read NM log and fill all LogPair objects
                     with open(nm_logf, "r") as nmlog:
-                        for line in filter(lambda l: catchall.match(l), nmlog):
+                        for line in nmlog:
+                            m = catchall.match(line)
+                            if not m:
+                                continue
                             for lep in nm_log_pairs:
-                                lep.check_start(line)
-                                lep.check_end(line)
+                                lep.check_start(m, line)
+                                lep.check_end(m, line)
 
+                    # Look for the greatest execution time
                     for lep in nm_log_pairs:
-                        if (lep._name in ['completion_time', 'completion_time_2']):
-                            ct = lep.get_duration()
-                            if (lep._name in ['completion_time', 'completion_time_2']):
-                                num_finished_sess += 1
-                                # and find the longest execution time
-                                if (ct is not None and ct > max_exec_time):
-                                    max_exec_time = ct
-                            elif (lep._name == 'node_deploy_time'):
-                                if (ct is not None and ct > max_node_deploy_time):
-                                    max_node_deploy_time = ct
 
-        #if (max_exec_edt > min_exec_stt):
-        if (num_nodes - 1 == num_finished_sess and max_exec_time > max_node_deploy_time):
-            max_exec_time -= max_node_deploy_time
-        else:
-            print("Pipeline %s is not completed: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
+                        # Consider only valid durations
+                        dur = lep.get_duration()
+                        if dur is None:
+                            continue
+
+                        if (lep._name in ['completion_time', 'completion_time_2']):
+                            num_finished_sess += 1
+                            if dur > max_exec_time:
+                                max_exec_time = dur
+
+                        elif lep._name == 'node_deploy_time':
+                            if dur > max_node_deploy_time:
+                                max_node_deploy_time = dur
+
+        if num_nodes - 1 != num_finished_sess:
+            print("Pipeline %s is not complete: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
+
+        # The DIM waits for all NMs to setup before triggering the first drops.
+        # This has the effect that the slowest to setup will make the others
+        # idle while already in RUNNING state, effectively increasing their
+        # "exec_time". We subtract the maximum deploy time to account for this
+        # effect
+        max_exec_time -= max_node_deploy_time
+
         temp_nm = [str(max_exec_time)]
 
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
