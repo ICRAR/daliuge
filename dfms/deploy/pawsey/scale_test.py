@@ -152,6 +152,7 @@ class PawseyClient(object):
     def __init__(self, log_root=None, acc=None,
                 job_dur=30,
                 num_nodes=5,
+                run_proxy=False,
                 mon_host=default_aws_mon_host,
                 mon_port=default_aws_mon_port,
                 logv=1,
@@ -528,10 +529,9 @@ if __name__ == '__main__':
     parser.add_option('-p', '--use_proxy', action='store_true',
                     dest='use_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
     parser.add_option("-m", "--monitor_host", action="store", type="string",
-                    dest="monitor_host", help="Monitor host IP (optional)")
+                    dest="mon_host", help="Monitor host IP (optional)", default=default_aws_mon_host)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help="The port to bind dfms monitor",
-                    default=default_aws_mon_port)
+                    dest="mon_port", help="The port to bind dfms monitor", default=default_aws_mon_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
                     dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
                     default=1)
@@ -572,19 +572,11 @@ if __name__ == '__main__':
             lg.parse(out_csv=opts.csv_output)
     elif (opts.action == 1):
         pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level,
-                          zerorun=opts.zerorun, max_threads=opts.max_threads)
+                          zerorun=opts.zerorun, max_threads=opts.max_threads,
+                          run_proxy=opts.run_proxy, mon_host=opts.mon_host, mon_port=opts.mon_port)
         if (opts.graph_id is not None):
             pc.set_gid(opts.graph_id)
         pc._graph_vis = opts.graph_vis
-        pc._run_proxy = opts.use_proxy
-        if (opts.use_proxy):
-            if (opts.monitor_host is None):
-                print("Use default proxy host '%s'" % default_aws_mon_host)
-            else:
-                self._mon_host = opts.monitor_host
-            self._mon_port = opts.monitor_port
-        elif (opts.monitor_host is not None):
-            parser.error("Please enable proxy by switch on the '-p' option")
         pc.submit_job()
     else:
         parser.error("Invalid action -a")
