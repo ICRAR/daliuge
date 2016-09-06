@@ -126,13 +126,13 @@ class TianHe2Config(DefaultConfig):
         return ['SHAO', '/group/shao/daliuge_logs']
 
 class ConfigFactory():
-    mapping = {'galaxy_mwa':GalaxyMWAConfig(), 'galaxy_askap':GalaxyASKAPConfig(),
-    'magnus':MagnusConfig(), 'galaxy':GalaxyASKAPConfig()}
+    mapping = {'galaxy_mwa':GalaxyMWAConfig, 'galaxy_askap':GalaxyASKAPConfig,
+    'magnus':MagnusConfig, 'galaxy':GalaxyASKAPConfig}
 
     @staticmethod
     def create_config(facility=None):
         facility = facility.lower() if (facility is not None) else facility
-        return ConfigFactory.mapping.get(facility)
+        return ConfigFactory.mapping.get(facility)()
 
 class PawseyClient(object):
     """
