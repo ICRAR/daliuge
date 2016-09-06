@@ -526,8 +526,8 @@ if __name__ == '__main__':
                       dest="num_nodes", help="number of compute nodes requested", default=5)
     parser.add_option('-i', '--graph_vis', action='store_true',
                     dest='graph_vis', help='Whether to visualise graph (poll status)', default=False)
-    parser.add_option('-p', '--use_proxy', action='store_true',
-                    dest='use_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
+    parser.add_option('-p', '--run_proxy', action='store_true',
+                    dest='run_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
     parser.add_option("-m", "--monitor_host", action="store", type="string",
                     dest="mon_host", help="Monitor host IP (optional)", default=default_aws_mon_host)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
