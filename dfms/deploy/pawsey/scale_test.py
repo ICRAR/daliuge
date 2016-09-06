@@ -27,7 +27,7 @@ parse the log result, and produce the plot
 
 """
 from datetime import datetime
-import sys, os, commands, socket, re, commands, time, getpass
+import sys, os, socket, re, commands, time, getpass
 from string import Template
 import optparse
 from os import stat
@@ -351,11 +351,10 @@ class LogParser(object):
         if (not self.check_log_dir(log_dir)):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._grep_dim_cmd, self._py_dim_pattern = self.construct_patterns(node_type='dim')
-        self._grep_nm_cmd, self._py_nm_pattern = self.construct_patterns(node_type='nm')
-        self._dim_entry_pairs, self._nm_entry_pairs = self.build_log_entry_pairs()
+        self._py_dim_pattern = self.construct_patterns(node_type='dim')
+        self._py_nm_pattern = self.construct_patterns(node_type='nm')
 
-    def build_log_entry_pairs(self):
+    def build_dim_log_entry_pairs(self):
         pp = self._py_dim_pattern
         rl = []
         rl.append(LogEntryPair('unroll', pp[0], pp[1]))
@@ -367,26 +366,27 @@ class LogParser(object):
         rl.append(LogEntryPair('deploy session to all', pp[11], pp[12]))
         rl.append(LogEntryPair('build drop connections', pp[13], pp[14]))
         rl.append(LogEntryPair('trigger drops', pp[15], pp[16]))
+        catchall = '|'.join(['(%s)' % (s,) for s in pp])
+        catchall = ".*(%s).*" % (catchall,)
+        return rl, re.compile(catchall)
 
+    def build_nm_log_entry_pairs(self):
         pp = self._py_nm_pattern
         rl_nm = []
         rl_nm.append(LogEntryPair('completion_time', pp[0], pp[1]))
         rl_nm.append(LogEntryPair('completion_time_2', pp[2], pp[1]))
-
-        return (rl, rl_nm)
+        catchall = '|'.join(['(%s)' % (s,) for s in pp])
+        catchall = ".*(%s).*" % (catchall,)
+        return rl_nm, re.compile(catchall)
 
     def construct_patterns(self, node_type='dim'):
         key_line = LogParser.kwords.get(node_type)
         if (key_line is None):
             raise Exception('Unknown node type for log analysis')
         wildcards = '.*'
-        grep_start = r'"\<'
-        grep_end = r'\>"'
-        grep_keys = [grep_start + x.format(wildcards) + grep_end for x in key_line]
-        grep_cmd = ' -e '.join(grep_keys)
         # python regex needs to escape brackets
         python_keys = [x.format(wildcards).replace('(', r'\(').replace(')', r'\)') for x in key_line]
-        return ("grep -e %s" % grep_cmd, python_keys)
+        return python_keys
 
     def parse(self, out_csv=None):
         """
@@ -410,19 +410,16 @@ class LogParser(object):
             git_commit = 'None'
 
         # parse DIM log
-        cmd = "%s %s" % (self._grep_dim_cmd, self._dim_log_f)
-        ret, lines = commands.getstatusoutput(cmd)
-        if (0 != ret):
-            raise Exception("Fail to run: %s" % (cmd))
-        ll = lines.split(os.linesep)
-        for line in ll:
-            for lep in self._dim_entry_pairs:
-                lep.check_start(line)
-                lep.check_end(line)
+        dim_log_pairs, catchall = self.build_dim_log_entry_pairs()
+        with open(self._dim_log_f, "r") as dimlog:
+            for line in filter(lambda l: catchall.match(l), dimlog):
+                for lep in dim_log_pairs:
+                    lep.check_start(line)
+                    lep.check_end(line)
 
         num_drops = -1
         temp_dim = []
-        for lep in self._dim_entry_pairs:
+        for lep in dim_log_pairs:
             if ('unroll' == lep._name):
                 num_drops = lep._other.get('num_drops', -1)
             elif ('build drop connections' == lep._name):
@@ -435,32 +432,36 @@ class LogParser(object):
         min_exec_stt = 2966227198.0
         max_exec_edt = 0
         num_finished_sess = 0
+        nm_log_pairs, catchall = self.build_nm_log_entry_pairs()
+
         for df in os.listdir(self._log_dir):
             if (os.path.isdir(os.path.join(self._log_dir, df))):
                 nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
                 if (os.path.exists(nm_logf)):
-                    cmd_nm = "%s %s" % (self._grep_nm_cmd, nm_logf)
-                    ret, lines = commands.getstatusoutput(cmd_nm)
-                    if (0 == ret):
-                        for lep in self._nm_entry_pairs:
-                            lep.reset()
-                        ll = lines.split(os.linesep)
-                        for line in ll:
-                            for lep in self._nm_entry_pairs:
+
+                    # Start anew every time
+                    for lp in nm_log_pairs:
+                        lp.reset()
+
+                    # Read NM log and fill all LogPair objects
+                    with open(nm_logf, "r") as nmlog:
+                        for line in filter(lambda l: catchall.match(l), nmlog):
+                            for lep in nm_log_pairs:
                                 lep.check_start(line)
                                 lep.check_end(line)
-                        for lep in self._nm_entry_pairs:
-                            if (lep._name in ['completion_time', 'completion_time_2']):
-                                ct = lep.get_duration()
-                                # and find the longest execution time
-                                # if (ct is not None and ct > max_exec_time):
-                                #     max_exec_time = ct
-                                if (ct is not None): # assum clocks are all synchronised
-                                    num_finished_sess += 1
-                                    if (lep._start_time < min_exec_stt):
-                                        min_exec_stt = lep._start_time
-                                    if (lep._end_time > max_exec_edt):
-                                        max_exec_edt = lep._end_time
+
+                    for lep in nm_log_pairs:
+                        if (lep._name in ['completion_time', 'completion_time_2']):
+                            ct = lep.get_duration()
+                            # and find the longest execution time
+                            # if (ct is not None and ct > max_exec_time):
+                            #     max_exec_time = ct
+                            if (ct is not None): # assum clocks are all synchronised
+                                num_finished_sess += 1
+                                if (lep._start_time < min_exec_stt):
+                                    min_exec_stt = lep._start_time
+                                if (lep._end_time > max_exec_edt):
+                                    max_exec_edt = lep._end_time
 
         if (max_exec_edt > min_exec_stt):
             if (num_nodes - 1 == num_finished_sess):
