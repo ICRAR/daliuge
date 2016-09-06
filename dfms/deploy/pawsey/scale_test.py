@@ -354,11 +354,11 @@ class LogParser(object):
         if (not self.check_log_dir(log_dir)):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._py_dim_pattern = self.construct_patterns(node_type='dim')
-        self._py_nm_pattern = self.construct_patterns(node_type='nm')
+        self._dim_catchall_pattern = self.construct_catchall_pattern(node_type='dim')
+        self._nm_catchall_pattern = self.construct_catchall_pattern(node_type='nm')
 
     def build_dim_log_entry_pairs(self):
-        leps = [LogEntryPair(name, g1, g2) for name, g1, g2 in (
+        return [LogEntryPair(name, g1, g2) for name, g1, g2 in (
             ('unroll', 0, 1),
             ('translate', 2, 3),
             ('gen pg spec', 3, 4),
@@ -369,28 +369,20 @@ class LogParser(object):
             ('build drop connections', 13, 14),
             ('trigger drops', 15, 16),
         )]
-        catchall = '|'.join(['(%s)' % (s,) for s in self._py_dim_pattern])
-        catchall = ".*(%s).*" % (catchall,)
-        return leps, re.compile(catchall)
 
     def build_nm_log_entry_pairs(self):
-        leps = [LogEntryPair(name, g1, g2) for name, g1, g2 in (
+        return [LogEntryPair(name, g1, g2) for name, g1, g2 in (
             ('completion_time_old', 0, 3), # Old master branch
             ('completion_time', 2, 3),
             ('node_deploy_time', 1, 2),
         )]
-        catchall = '|'.join(['(%s)' % (s,) for s in self._py_nm_pattern])
-        catchall = ".*(%s).*" % (catchall,)
-        return leps, re.compile(catchall)
 
-    def construct_patterns(self, node_type='dim'):
-        key_line = LogParser.kwords.get(node_type)
-        if (key_line is None):
-            raise Exception('Unknown node type for log analysis')
-        wildcards = '.*'
-        # python regex needs to escape brackets
-        python_keys = [x.format(wildcards).replace('(', r'\(').replace(')', r'\)') for x in key_line]
-        return python_keys
+    def construct_catchall_pattern(self, node_type):
+        pattern_strs = LogParser.kwords.get(node_type)
+        patterns = [x.format('.*').replace('(', r'\(').replace(')', r'\)') for x in pattern_strs]
+        catchall = '|'.join(['(%s)' % (s,) for s in patterns])
+        catchall = ".*(%s).*" % (catchall,)
+        return re.compile(catchall)
 
     def parse(self, out_csv=None):
         """
@@ -414,10 +406,10 @@ class LogParser(object):
             git_commit = 'None'
 
         # parse DIM log
-        dim_log_pairs, catchall = self.build_dim_log_entry_pairs()
+        dim_log_pairs = self.build_dim_log_entry_pairs()
         with open(self._dim_log_f, "r") as dimlog:
             for line in dimlog:
-                m = catchall.match(line)
+                m = self._dim_catchall_pattern.match(line)
                 if not m:
                     continue
                 for lep in dim_log_pairs:
@@ -435,56 +427,65 @@ class LogParser(object):
             temp_dim.append(str(lep.get_duration()))
 
         # parse NM logs
-        max_exec_time = -1
+        nm_logs = []
         max_node_deploy_time = 0
         num_finished_sess = 0
-        nm_log_pairs, catchall = self.build_nm_log_entry_pairs()
 
         for df in os.listdir(self._log_dir):
-            if (os.path.isdir(os.path.join(self._log_dir, df))):
-                nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
-                if (os.path.exists(nm_logf)):
 
-                    # Start anew every time
-                    for lp in nm_log_pairs:
-                        lp.reset()
+            # Check this is a dir and contains the NM log
+            if not os.path.isdir(os.path.join(self._log_dir, df)):
+                continue
+            nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
+            if not os.path.exists(nm_logf):
+                continue
 
-                    # Read NM log and fill all LogPair objects
-                    with open(nm_logf, "r") as nmlog:
-                        for line in nmlog:
-                            m = catchall.match(line)
-                            if not m:
-                                continue
-                            for lep in nm_log_pairs:
-                                lep.check_start(m, line)
-                                lep.check_end(m, line)
+            # Start anew every time
+            nm_log_pairs = self.build_nm_log_entry_pairs()
+            nm_logs.append(nm_log_pairs)
 
-                    # Look for the greatest execution time
+            # Read NM log and fill all LogPair objects
+            with open(nm_logf, "r") as nmlog:
+                for line in nmlog:
+                    m = self._nm_catchall_pattern.match(line)
+                    if not m:
+                        continue
                     for lep in nm_log_pairs:
+                        lep.check_start(m, line)
+                        lep.check_end(m, line)
 
-                        # Consider only valid durations
-                        dur = lep.get_duration()
-                        if dur is None:
-                            continue
+            # Looking for the deployment times and counting for finished sessions
+            for lep in nm_log_pairs:
 
-                        if (lep._name in ['completion_time', 'completion_time_2']):
-                            num_finished_sess += 1
-                            if dur > max_exec_time:
-                                max_exec_time = dur
+                # Consider only valid durations
+                dur = lep.get_duration()
+                if dur is None:
+                    continue
 
-                        elif lep._name == 'node_deploy_time':
-                            if dur > max_node_deploy_time:
-                                max_node_deploy_time = dur
+                if lep._name in ('completion_time', 'completion_time_old'):
+                    num_finished_sess += 1
+                elif lep._name == 'node_deploy_time':
+                    if dur > max_node_deploy_time:
+                        max_node_deploy_time = dur
 
         if num_nodes - 1 != num_finished_sess:
-            print("Pipeline %s is not complete: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
+            print("Pipeline %s is not complete: %d != %d" % (pip_name, num_nodes - 1, num_finished_sess))
+            return
 
         # The DIM waits for all NMs to setup before triggering the first drops.
         # This has the effect that the slowest to setup will make the others
         # idle while already in RUNNING state, effectively increasing their
         # "exec_time". We subtract the maximum deploy time to account for this
         # effect
-        max_exec_time -= max_node_deploy_time
+        max_exec_time = 0
+        for log_entry_pairs in nm_logs:
+
+            indexed_leps = {lep._name: lep for lep in log_entry_pairs}
+            deploy_time = indexed_leps['node_deploy_time'].get_duration()
+            exec_time = indexed_leps['completion_time'].get_duration() or indexed_leps['completion_time_old'].get_duration()
+            real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
+            if real_exec_time > max_exec_time:
+                max_exec_time = real_exec_time
 
         temp_nm = [str(max_exec_time)]
 
