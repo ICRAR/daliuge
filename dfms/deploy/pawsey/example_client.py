@@ -174,7 +174,7 @@ if __name__ == '__main__':
     if opts.graph_id >= len(lgnames):
         parser.error("-g must be between 0 and %d" % (len(lgnames),))
 
-    mc = MonitorClient(opts.host, opts.port, output=opts.output)
+    mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo, zerorun=opts.zerorun, app=opts.app)
     if ('submit' == opts.act):
         mc.submit_single_graph(opts.graph_id, deploy=True)
     elif ('print' == opts.act):
