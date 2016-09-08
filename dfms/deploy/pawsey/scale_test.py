@@ -231,7 +231,7 @@ class PawseyClient(object):
         pardict['LOGV_PAR'] = '-v %d' % self._logv
         pardict['ZERORUN_PAR'] = '-z' if self._zerorun else ''
         pardict['MAXTHREADS_PAR'] = '-t %d' % (self._max_threads)
-        pardict['SNC_PAR'] = '-y' if self._sleepncopy else ''
+        pardict['SNC_PAR'] = '--app 1' if self._sleepncopy else '--app 0'
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
