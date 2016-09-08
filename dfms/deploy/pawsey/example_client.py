@@ -108,7 +108,7 @@ class MonitorClient(object):
 
         return lgn, lg, pg_spec
 
-    def submit_single_graph(self, graph_id, deploy=False, zerorun=False):
+    def submit_single_graph(self, graph_id, deploy=False):
 
         lgn, lg, pg_spec = self.get_physical_graph(graph_id)
 
