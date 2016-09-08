@@ -36,7 +36,6 @@ import json
 from optparse import OptionParser
 import threading
 
-from dfms import droputils
 import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
 from dfms.deploy.pawsey.example_client import MonitorClient
 import dfms.deploy.pawsey.example_client as exclient
@@ -114,9 +113,9 @@ def submit_monitor_graph(graph_id, dump_status, zerorun):
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
     # use monitorclient to interact with island manager
     if (graph_id is not None):
-        mc = MonitorClient('localhost', 8001)
+        mc = MonitorClient('localhost', 8001, algo='metis', zerorun=zerorun)
         logger.info("Submitting graph {0}".format(graph_id))
-        mc.submit_single_graph(graph_id, deploy=True, algo='metis', zerorun=zerorun)
+        mc.submit_single_graph(graph_id, deploy=True)
         logger.info("graph {0} is successfully submitted".format(graph_id))
         dc = mc._dc
     else:
@@ -200,9 +199,8 @@ if __name__ == '__main__':
                     default=1)
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
-
-    parser.add_option("-y", "--sleepncopy", action="store_true",
-                      dest="sleepncopy", help="Whether include COPY in the default Component drop", default=False)
+    parser.add_option("--app", action="store", type="int",
+                      dest="app", help="The app to use in the PG. 1=SleepApp (default), 2=SleepAndCopy", default=0)
 
     parser.add_option("-t", "--max-threads", action="store", type="int",
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
@@ -229,8 +227,6 @@ if __name__ == '__main__':
         options.gid = 0
 
     logv = max(min(3, options.verbose_level), 1)
-    if options.sleepncopy:
-        os.environ['DALIUGE_TEST_SNC'] = '1'
 
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
@@ -304,5 +300,5 @@ if __name__ == '__main__':
             else:
                 arg02 = None
                 logger.info("Local monitor path is not set")
-            threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02, options.zerorun)).start()
+            threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02, options.zerorun, options.app)).start()
         start_dim(node_mgrs, log_dir)

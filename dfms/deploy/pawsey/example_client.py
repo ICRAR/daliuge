@@ -53,14 +53,27 @@ lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', #2
 
 class MonitorClient(object):
 
-    def __init__(self, mhost, mport, timeout=10, sch_algo='sarkar', output=None):
+    apps = (
+        "test.graphsRepository.SleepApp",
+        "test.graphsRepository.SleepAndCopyApp",
+    )
+
+    def __init__(self,
+                 mhost, mport, timeout=10,
+                 algo='sarkar',
+                 output=None,
+                 zerorun=False,
+                 app=None):
+
         self._host = mhost
         self._port = mport
         self._dc = DataIslandManagerClient(mhost, mport)
-        self._sch_algo = sch_algo
+        self._algo = algo
+        self._zerorun = zerorun
         self._output = output
+        self._app = MonitorClient.apps[app] if app else None
 
-    def get_physical_graph(self, graph_id, algo='sarkar', zerorun=False):
+    def get_physical_graph(self, graph_id):
 
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
@@ -70,7 +83,7 @@ class MonitorClient(object):
         logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
         node_list = self._dc.nodes()
 
-        if 'sarkar' == algo:
+        if 'sarkar' == self._algo:
             pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
         else:
             pgtp = MetisPGTP(drop_list, len(node_list))
@@ -83,16 +96,21 @@ class MonitorClient(object):
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
         logger.info("PG spec is calculated!")
 
-        if zerorun:
+        if self._zerorun:
             for dropspec in pg_spec:
                 if 'sleepTime' in dropspec:
                     dropspec['sleepTime'] = 0
+        app = self._app
+        if app:
+            for dropspec in pg_spec:
+                if 'app' in dropspec['type']:
+                    dropspec['app'] = app
 
         return lgn, lg, pg_spec
 
-    def submit_single_graph(self, graph_id, algo='sarkar', deploy=False, zerorun=False):
+    def submit_single_graph(self, graph_id, deploy=False, zerorun=False):
 
-        lgn, lg, pg_spec = self.get_physical_graph(graph_id, algo=algo, zerorun=zerorun)
+        lgn, lg, pg_spec = self.get_physical_graph(graph_id)
 
         if self._output:
             with open(self._output, 'w') as f:
@@ -117,9 +135,9 @@ class MonitorClient(object):
             logger.info("session {0} deployed".format(ssid))
             return ret
 
-    def write_physical_graph(self, graph_id, algo='sarkar', tgt="/tmp", zerorun=False):
+    def write_physical_graph(self, graph_id, tgt="/tmp"):
 
-        lgn, _, pg_spec = self.get_physical_graph(graph_id, algo=algo, zerorun=zerorun)
+        lgn, _, pg_spec = self.get_physical_graph(graph_id)
 
         tof = self._output
         if (self._output is None):
@@ -146,6 +164,8 @@ if __name__ == '__main__':
                       dest="output", help="Where to dump the general physical graph", default=None)
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
+    parser.add_option("--app", action="store", type="int",
+                      dest="app", help="The app to use in the PG. 0=SleepApp (default), 1=SleepAndCopy", default=0)
 
     (opts, args) = parser.parse_args(sys.argv)
 
@@ -156,8 +176,8 @@ if __name__ == '__main__':
 
     mc = MonitorClient(opts.host, opts.port, output=opts.output)
     if ('submit' == opts.act):
-        mc.submit_single_graph(opts.graph_id, algo=opts.algo, deploy=True, zerorun=opts.zerorun)
+        mc.submit_single_graph(opts.graph_id, deploy=True)
     elif ('print' == opts.act):
-        mc.write_physical_graph(opts.graph_id, algo=opts.algo, zerorun=opts.zerorun)
+        mc.write_physical_graph(opts.graph_id)
     else:
         raise Exception('Unknown action: {0}'.format(opts.act))
