@@ -44,7 +44,8 @@ import zmq
 
 from dfms import utils
 from dfms.drop import AppDROP
-from dfms.exceptions import NoSessionException, SessionAlreadyExistsException
+from dfms.exceptions import NoSessionException, SessionAlreadyExistsException,\
+    DaliugeException
 from dfms.lifecycle.dlm import DataLifecycleManager
 from dfms.manager import repository, constants
 from dfms.manager.drop_manager import DROPManager
@@ -84,18 +85,18 @@ class NMDropEventListener(object):
         event.session_id = self._session_id
         self._nm.publish_event(event)
 
-class NodeManager(DROPManager):
+class NodeManagerBase(DROPManager):
     """
     Base class for a DROPManager that creates and holds references to DROPs.
 
-    A NodeManager is the ultimate responsible of handling DROPs. It does so not
+    A NodeManagerBase is the ultimate responsible of handling DROPs. It does so not
     directly, but via Sessions, which represent and encapsulate separate,
     independent DROP graph executions. All DROPs created by the
     different Sessions are also given to a common DataLifecycleManager, which
     takes care of expiring them when needed and replicating them.
 
-    Since a NodeManager can handle more than one session, in principle only one
-    NodeManager is needed for each computing node, thus its name.
+    Since a NodeManagerBase can handle more than one session, in principle only one
+    NodeManagerBase is needed for each computing node, thus its name.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -519,7 +520,12 @@ class PyroRPCMixIn(BaseMixIn):
             if closeit:
                 nm._pyroRelease()
 
-class ZMQNodeManager(ZMQPubSubMixIn,
-                     PyroRPCMixIn,
-                     NodeManager):
-    pass
+
+# Check which rpc backend should be used
+rpc_lib = os.environ.get('DALIUGE_RPC', 'pyro')
+if rpc_lib == 'pyro':
+    class NodeManager(ZMQPubSubMixIn, PyroRPCMixIn, NodeManagerBase): pass
+elif rpc_lib == 'zerorpc':
+    class NodeManager(ZMQPubSubMixIn, ZeroRPCMixIn, NodeManagerBase): pass
+else:
+    raise DaliugeException("Invalid RPC lib specified, use 'zerorpc' or 'pyro'")

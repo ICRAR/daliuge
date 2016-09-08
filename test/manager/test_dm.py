@@ -34,7 +34,7 @@ from dfms import droputils
 from dfms import ngaslite, utils
 from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dfms.drop import BarrierAppDROP
-from dfms.manager.node_manager import ZMQNodeManager
+from dfms.manager.node_manager import NodeManager
 from dfms.manager.repository import memory, sleepAndCopy
 from dfms.manager.session import SessionStates
 from test.manager import testutils
@@ -63,7 +63,7 @@ class TestDM(unittest.TestCase):
 
     def _start_dm(self, **kwargs):
         host, events_port, rpc_port = nm_conninfo(len(self._dms))
-        nm = ZMQNodeManager(useDLM=False, host=host, events_port = events_port, rpc_port = rpc_port, **kwargs)
+        nm = NodeManager(useDLM=False, host=host, events_port = events_port, rpc_port = rpc_port, **kwargs)
         self._dms.append(nm)
         return nm
 

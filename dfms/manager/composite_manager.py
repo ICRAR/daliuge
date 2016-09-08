@@ -19,11 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import abc
 import collections
 import contextlib
 import functools
 import logging
 import multiprocessing.pool
+import os
 import threading
 
 import Pyro4
@@ -38,7 +40,6 @@ from dfms.manager.client import NodeManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
-import abc
 
 
 logger = logging.getLogger(__name__)
@@ -82,24 +83,24 @@ def group_by_node(uids, graph):
         uids_by_node[graph[uid]['node']].append(uid)
     return uids_by_node
 
-class CompositeManager(DROPManager):
+class CompositeManagerBase(DROPManager):
     """
     A DROPManager that in turn manages DROPManagers (sigh...).
 
     DROP Managers form a hierarchy where those at the bottom actually hold
     DROPs while those in the levels above rely commands and aggregate results,
-    making the system more manageable and scalable. The CompositeManager class
+    making the system more manageable and scalable. The CompositeManagerBase class
     implements the upper part of this hierarchy in a generic way by holding
     references to a number of sub-DROPManagers and communicating with them to
     complete each operation. The only assumption about sub-DROPManagers is that
-    they obey the DROPManager interface, and therefore this CompositeManager
+    they obey the DROPManager interface, and therefore this CompositeManagerBase
     class allows for multiple levels of hierarchy seamlessly.
 
     Having different levels of Data Management hierarchy implies that the
     physical graph that is fed into the hierarchy needs to be partitioned at
     each level (except at the bottom of the hierarchy) in order to place each
     DROP in its correct place. The attribute used by a particular
-    CompositeManager to partition the graph (from its graphSpec) is given at
+    CompositeManagerBase to partition the graph (from its graphSpec) is given at
     construction time.
     """
 
@@ -107,12 +108,12 @@ class CompositeManager(DROPManager):
 
     def __init__(self, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
-        Creates a new CompositeManager. The sub-DMs it manages are to be located
+        Creates a new CompositeManagerBase. The sub-DMs it manages are to be located
         at `dmHosts`, and should be listening on port `dmPort`.
 
         :param: dmPort The port at which the sub-DMs expose themselves
         :param: partitionAttr The attribute on each dropSpec that specifies the
-                partitioning of the graph at this CompositeManager level.
+                partitioning of the graph at this CompositeManagerBase level.
         :param: dmExec The name of the executable that starts a sub-DM
         :param: subDmId The sub-DM ID.
         :param: dmHosts The list of hosts under which the sub-DMs should be found.
@@ -449,10 +450,16 @@ class PyroRPCMixIn(object):
     def get_rpc_client(self, host):
         return Pyro4.Proxy("PYRO:node_manager@%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT))
 
-class PyroCompositeManager(PyroRPCMixIn, CompositeManager): pass
-class ZeroRPCCompositeManager(ZeroRPCMixIn, CompositeManager): pass
+# Check which rpc backend should be used
+rpc_lib = os.environ.get('DALIUGE_RPC', 'pyro')
+if rpc_lib == 'pyro':
+    class CompositeManager(PyroRPCMixIn, CompositeManagerBase): pass
+elif rpc_lib == 'zerorpc':
+    class CompositeManager(ZeroRPCMixIn, CompositeManagerBase): pass
+else:
+    raise DaliugeException("Invalid RPC lib specified, use 'zerorpc' or 'pyro'")
 
-class DataIslandManager(PyroCompositeManager):
+class DataIslandManager(CompositeManager):
     """
     The DataIslandManager, which manages a number of NodeManagers.
     """
@@ -474,7 +481,7 @@ class DataIslandManager(PyroCompositeManager):
         CompositeManager.add_node(self, node)
         self._dmHosts.append(node)
 
-class MasterManager(PyroCompositeManager):
+class MasterManager(CompositeManager):
     """
     The MasterManager, which manages a number of DataIslandManagers.
     """

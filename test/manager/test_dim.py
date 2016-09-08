@@ -35,7 +35,7 @@ from dfms import utils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import constants
 from dfms.manager.composite_manager import DataIslandManager
-from dfms.manager.node_manager import ZMQNodeManager
+from dfms.manager.node_manager import NodeManager
 from dfms.manager.rest import NMRestServer
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
@@ -59,7 +59,7 @@ def setUpDimTests(self):
     #
     # Anyway, this is also useful because we can check that things have
     # occurred at the DM level in the test cases
-    self.dm = ZMQNodeManager(False)
+    self.dm = NodeManager(False)
     self._dm_server = NMRestServer(self.dm)
     self._dm_t = threading.Thread(target=self._dm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
     self._dm_t.start()

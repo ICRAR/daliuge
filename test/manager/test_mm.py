@@ -35,7 +35,7 @@ from dfms import utils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import constants
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
-from dfms.manager.node_manager import ZMQNodeManager
+from dfms.manager.node_manager import NodeManager
 from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
 from dfms.manager.session import SessionStates
 from dfms.utils import portIsOpen
@@ -51,7 +51,7 @@ def setUpMMTests(self):
     graphsRepository.defaultSleepTime = 0
 
     # Start a NM and a DIM. See test_dim for more details
-    self.nm = ZMQNodeManager(False)
+    self.nm = NodeManager(False)
     self._nm_server = NMRestServer(self.nm)
     self._nm_t = threading.Thread(name="lala",target=self._nm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
     self._nm_t.start()
