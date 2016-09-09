@@ -103,7 +103,7 @@ class MonitorClient(object):
         app = self._app
         if app:
             for dropspec in pg_spec:
-                if 'app' in dropspec['type']:
+                if 'app' in dropspec:
                     dropspec['app'] = app
 
         return lgn, lg, pg_spec
