@@ -629,42 +629,63 @@ class PGT(object):
         return self._json_str
         # return self.to_gojs_json()
 
-    def to_pg_spec(self, node_list, ret_str=True, num_isla=None):
+    def to_pg_spec(self, node_list, ret_str=True, num_islands=0):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
         node_list:
-            A list of nodes (list) from ALL islands
+            A list of nodes (list)
+            If num_islands > 0:
+                len(node_list) == num_islands + num_node_mgrs
+            Else:
+                len(node_list) == num_node_mgrs
+
+        num_islands:
+            Positive int - Partitions are "conceptually" clustered into Islands
+            0 - Partitions MAY BE physically merged without generating islands
+                depending on the length of node_list
+
         """
-        # num_nodes = toplogy.num_nodes
-        # if (self._partitions is None):
-        #     # but this will change to use HEFT scheduling algorithm for non-partitioned PGT
-        #     raise GraphException("The PGT has no partitions, but non-partitioned mapping is not yet implemented.")
-        # else:
-        #     pass
         if ((node_list is None) or (0 == len(node_list))):
             raise GPGTException("Node list is empty!")
+        try:
+            num_islands = int(num_islands)
+        except:
+            raise GPGTException("Invalid num_islands: {0}".format(num_islands))
+        form_island = (num_islands > 0)
         if (0 == self._num_parts_done):
             raise GPGTException("The graph has not been partitioned yet")
         nodes_len = len(node_list)
-        drop_list = self._drop_list + self._extra_drops
         num_parts = self._num_parts_done
+        if (form_island and (num_islands + num_parts > nodes_len)):
+            raise GPGTException("Insufficient number of nodes")
+
+        drop_list = self._drop_list + self._extra_drops
+
         logger.info("Drops count: {0}, partitions count: {1}, nodes count: {2}".format(len(drop_list), num_parts, nodes_len))
-        if (nodes_len < num_parts):
-            if (isinstance(self, MySarkarPGTP)):
-                self.merge_partitions(nodes_len)
+
+        if (form_island):
+            self.merge_partitions(num_islands, form_island=True)
+            is_list = node_list[0:num_islands]
+            nm_list = node_list[num_islands:]
+        else:
+            nm_list = node_list
+            if (nodes_len < num_parts):
+                self.merge_partitions(nodes_len, form_island=False)
                 num_parts = nodes_len
-            else:
-                raise GPGTException("The node list {0} is smaller than {1}".format(nodes_len, num_parts))
 
         lm = self._oid_gid_map
+        lm2 = self._gid_island_id_map
         for drop in drop_list:
             oid = drop['oid']
             # For now, simply round robin, but need to consider
-            # nodes cross islands which has
+            # nodes cross COMPUTE islands which has
             #TODO consider distance between a pair of nodes
-            pid = lm[oid] % num_parts
-            drop['node'] = node_list[pid]
+            gid = lm[oid] % num_parts
+            drop['node'] = nm_list[gid]
+            if (form_island):
+                isid = lm2[gid] % num_islands
+                drop['island'] = is_list[isid]
 
         if (ret_str):
             return json.dumps(drop_list, indent=2)
@@ -800,7 +821,8 @@ class MetisPGTP(PGT):
         super(MetisPGTP, self).__init__(drop_list)
         self._metis_path = "gpmetis" # assuming it is installed at the sys path
         if (num_partitions <= 0):
-            self._num_parts = self.get_opt_num_parts()
+            #self._num_parts = self.get_opt_num_parts()
+            raise GPGTException("Invalid num_partitions {0}".format(num_partitions))
         else:
             self._num_parts = num_partitions
         if (1 == min_goal):
@@ -957,15 +979,19 @@ class MetisPGTP(PGT):
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
         """
-        # prepare METIS parameters
-        recursive_param = False if self._ptype == 'kway' else True
-        if (recursive_param and self._obj_type == 'vol'):
-            raise GPGTException("Recursive partitioning does not support total volume minimisation.")
+        if (self._num_parts == 1):
+            edgecuts = 0
+            metis_parts = [0] * len(self._G.nodes())
+        else:
+            # prepare METIS parameters
+            recursive_param = False if self._ptype == 'kway' else True
+            if (recursive_param and self._obj_type == 'vol'):
+                raise GPGTException("Recursive partitioning does not support total volume minimisation.")
 
-        # Call METIS C-lib
-        (edgecuts, metis_parts) = self._metis.part_graph(self._G,
-        nparts=self._num_parts, recursive=recursive_param,
-        objtype=self._obj_type, ufactor=self._u_factor)
+            # Call METIS C-lib
+            (edgecuts, metis_parts) = self._metis.part_graph(self._G,
+            nparts=self._num_parts, recursive=recursive_param,
+            objtype=self._obj_type, ufactor=self._u_factor)
 
         # Output some partitioning result metadata
         if (outdict is not None):
@@ -988,6 +1014,9 @@ class MetisPGTP(PGT):
         This merging is for forming islands, i.e. reference-based merging
         """
         # 0. parse the output and get all the partitions
+        if (new_num_parts <= 0):
+            raise GPGTException("Invalid new_num_parts {0}".format(new_num_parts))
+
         GG = self._G
         part_edges = defaultdict(int) #k: from_gid + to_gid, v: sum_of_weight
         for e in GG.edges(data=True):
@@ -1008,7 +1037,10 @@ class MetisPGTP(PGT):
             gl = glinks.split('**')
             G.add_edge(int(gl[0]), int(gl[1]), weight=v)
 
-        (edgecuts, metis_parts) = self._metis.part_graph(G, nparts=new_num_parts)
+        if (new_num_parts == 1):
+            (edgecuts, metis_parts) = (0, [0] * len(G.nodes()))
+        else:
+            (edgecuts, metis_parts) = self._metis.part_graph(G, nparts=new_num_parts)
         tmp_map = self._gid_island_id_map
         for i, island_id in enumerate(metis_parts):
             gid = G.nodes()[i]
