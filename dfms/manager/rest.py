@@ -164,7 +164,7 @@ class ManagerRestServer(RestServer):
         completedDrops = []
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
-        return self.dm.deploySession(sessionId,completedDrops=completedDrops)
+        self.dm.deploySession(sessionId,completedDrops=completedDrops)
 
     @daliuge_aware
     def getGraph(self, sessionId):

@@ -131,9 +131,8 @@ class MonitorClient(object):
         logger.info("graph {0} appended".format(ssid))
 
         if (deploy):
-            ret = self._dc.deploy_session(ssid, completed_uids=completed_uids)
+            self._dc.deploy_session(ssid, completed_uids=completed_uids)
             logger.info("session {0} deployed".format(ssid))
-            return ret
 
     def write_physical_graph(self, graph_id, tgt="/tmp"):
 

@@ -56,9 +56,8 @@ class BaseDROPManagerClient(RestClient):
         content = None
         if completed_uids:
             content = {'completed': ','.join(completed_uids)}
-        ret = self._post_form('/sessions/%s/deploy' % (urllib.quote(sessionId),), content)
+        self._post_form('/sessions/%s/deploy' % (urllib.quote(sessionId),), content)
         logger.debug('Successfully deployed session %s on %s:%s', sessionId, self.host, self.port)
-        return ret
 
     def append_graph(self, sessionId, graphSpec):
         """
