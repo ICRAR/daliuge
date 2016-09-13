@@ -24,6 +24,7 @@ Module containing the base interface for all DROP managers.
 """
 import abc
 
+
 class DROPManager(object):
     """
     Base class for all DROPManagers.
