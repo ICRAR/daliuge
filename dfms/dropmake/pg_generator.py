@@ -629,50 +629,58 @@ class PGT(object):
         return self._json_str
         # return self.to_gojs_json()
 
-    def to_pg_spec(self, node_list, ret_str=True, num_islands=0):
+    def to_pg_spec(self, node_list, ret_str=True, num_islands=1):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
         node_list:
-            A list of nodes (list)
-            If num_islands > 0:
-                len(node_list) == num_islands + num_node_mgrs
-            Else:
-                len(node_list) == num_node_mgrs
+            A list of nodes (list), whose length == (num_islands + num_node_mgrs)
+            MasterDropManager's node is not included the node_list
 
         num_islands:
-            Positive int - Partitions are "conceptually" clustered into Islands
-            0 - Partitions MAY BE physically merged without generating islands
+            >1  - Partitions are "conceptually" clustered into Islands
+            1   - Partitions MAY BE physically merged without generating islands
                 depending on the length of node_list
 
         """
         if ((node_list is None) or (0 == len(node_list))):
             raise GPGTException("Node list is empty!")
+
         try:
             num_islands = int(num_islands)
         except:
             raise GPGTException("Invalid num_islands: {0}".format(num_islands))
-        form_island = (num_islands > 0)
+        if (num_islands < 1):
+            num_islands = 1
+
+        form_island = (num_islands > 1)
         if (0 == self._num_parts_done):
             raise GPGTException("The graph has not been partitioned yet")
         nodes_len = len(node_list)
+        if (nodes_len < 2): # enough for at least 1 dim and 1 nm
+            raise GPGTException("Too few nodes: {0}".format(nodes_len))
         num_parts = self._num_parts_done
-        if (form_island and (num_islands + num_parts > nodes_len)):
-            raise GPGTException("Insufficient number of nodes")
-
         drop_list = self._drop_list + self._extra_drops
-
         logger.info("Drops count: {0}, partitions count: {1}, nodes count: {2}".format(len(drop_list), num_parts, nodes_len))
+
+        if (form_island and (num_islands + num_parts > nodes_len)):
+            # if form_island, each part should already be guranteed
+            # to occupy one physical node
+            # i.e. nodes_len - num_islands >= num_parts (Eq.1)
+            # otherwise
+            raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+
+        is_list = node_list[0:num_islands]
+        nm_list = node_list[num_islands:]
+        nm_len = len(nm_list)
 
         if (form_island):
             self.merge_partitions(num_islands, form_island=True)
-            is_list = node_list[0:num_islands]
-            nm_list = node_list[num_islands:]
-        else:
-            nm_list = node_list
-            if (nodes_len < num_parts):
-                self.merge_partitions(nodes_len, form_island=False)
-                num_parts = nodes_len
+            # from Eq.1 we know that num_parts <= nm_len
+            # so no need to update its value
+        elif (nm_len < num_parts):
+            self.merge_partitions(nm_len, form_island=False)
+            num_parts = nm_len
 
         lm = self._oid_gid_map
         lm2 = self._gid_island_id_map
@@ -683,9 +691,8 @@ class PGT(object):
             #TODO consider distance between a pair of nodes
             gid = lm[oid] % num_parts
             drop['node'] = nm_list[gid]
-            if (form_island):
-                isid = lm2[gid] % num_islands
-                drop['island'] = is_list[isid]
+            isid = lm2[gid] % num_islands
+            drop['island'] = is_list[isid]
 
         if (ret_str):
             return json.dumps(drop_list, indent=2)
