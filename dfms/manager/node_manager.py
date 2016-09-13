@@ -35,12 +35,8 @@ import sys
 import threading
 import time
 
-import Pyro4
-import gevent
 import six
 from six.moves import queue as Queue  # @UnresolvedImport
-import zerorpc
-import zmq
 
 from dfms import utils
 from dfms.drop import AppDROP
@@ -337,6 +333,9 @@ class BaseMixIn(object):
 class ZMQPubSubMixIn(BaseMixIn):
 
     def start(self):
+
+        import zmq
+
         super(ZMQPubSubMixIn, self).start()
         self._zmq_sub_q = Queue.Queue()
         self._zmq_pub_q = Queue.Queue()
@@ -380,6 +379,7 @@ class ZMQPubSubMixIn(BaseMixIn):
         logger.info("Subscribed for events originating from %s", endpoint)
 
     def _zmq_pub_queue_thread(self):
+        import zmq
         while self._running:
             evt = None
             try:
@@ -406,6 +406,7 @@ class ZMQPubSubMixIn(BaseMixIn):
                 time.sleep(0.01)
 
     def _zmq_sub_thread(self):
+        import zmq
         while self._running:
             try:
                 evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
@@ -429,6 +430,9 @@ class ZeroRPCMixIn(BaseMixIn):
 
     def run_zrpcserver(self, host, port):
 
+        import gevent
+        import zerorpc
+
         # zmq needs an address, not a hostname
         self._zrpcserver = zerorpc.Server(self)
         endpoint = "tcp://%s:%d" % (zmq_safe(host), port,)
@@ -439,6 +443,7 @@ class ZeroRPCMixIn(BaseMixIn):
         gevent.joinall([gr1, gr2])
 
     def stop_rpcserver(self):
+        import gevent
         while self._running:
             gevent.sleep(0.2)
         self._zrpcserver.close()
@@ -448,6 +453,8 @@ class ZeroRPCMixIn(BaseMixIn):
         self._zrpcserverthread.join()
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
+
+        import zerorpc
 
         # The remote method receives the same client used to inspect the remote
         # object
@@ -476,10 +483,14 @@ class ZeroRPCMixIn(BaseMixIn):
 class PyroRPCMixIn(BaseMixIn):
 
     def start(self):
+
+        import Pyro4
+
         super(PyroRPCMixIn, self).start()
 
         # Starts the single-threaded Pyro server for RPC requests
         logger.info("Listening for RPC requests via Pyro on %s:%d", self._host, self._rpc_port)
+        self.setup_pyro()
         self._pyrodaemon = Pyro4.Daemon(self._host, self._rpc_port)
         self._pyrodaemon.register(self, "node_manager")
         self._pyroserverthread = threading.Thread(target=self._pyrodaemon.requestLoop, name="PyroRPC server")
@@ -495,6 +506,8 @@ class PyroRPCMixIn(BaseMixIn):
             logger.warning("Pyro RPC port %d is still open after %d seconds", timeout)
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
+
+        import Pyro4
 
         # The remote method receives the same client used to inspect the remote
         # object
@@ -520,12 +533,30 @@ class PyroRPCMixIn(BaseMixIn):
             if closeit:
                 nm._pyroRelease()
 
+class MultiplexPyroRPCMixIn(PyroRPCMixIn):
+    def setup_pyro(self):
+        import Pyro4
+        Pyro4.config.SERVERTYPE = 'multiplex'
+
+class ThreadedPyroRPCMixIn(PyroRPCMixIn):
+    def setup_pyro(self):
+        import Pyro4
+        Pyro4.config.SERVERTYPE = 'thread'
+        Pyro4.config.THREADPOOL_SIZE = 16
+        Pyro4.config.THREADPOOL_ALLOW_QUEUE = False
+
+# So far we currently support ZMQ only
+EventMixIn = ZMQPubSubMixIn
 
 # Check which rpc backend should be used
-rpc_lib = os.environ.get('DALIUGE_RPC', 'pyro')
-if rpc_lib == 'pyro':
-    class NodeManager(ZMQPubSubMixIn, PyroRPCMixIn, NodeManagerBase): pass
+rpc_lib = os.environ.get('DALIUGE_RPC', 'pyro-multiplex')
+if rpc_lib in ('pyro', 'pyro-multiplex'): # "pyro" defaults to "pyro-multiplex"
+    RpcMixIn = MultiplexPyroRPCMixIn
+elif rpc_lib == 'pyro-threaded':
+    RpcMixIn = ThreadedPyroRPCMixIn
 elif rpc_lib == 'zerorpc':
-    class NodeManager(ZMQPubSubMixIn, ZeroRPCMixIn, NodeManagerBase): pass
+    RpcMixIn = ZeroRPCMixIn
 else:
-    raise DaliugeException("Invalid RPC lib specified, use 'zerorpc' or 'pyro'")
+    raise DaliugeException("Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc" % (rpc_lib,))
+
+class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase): pass
