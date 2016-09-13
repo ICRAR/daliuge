@@ -310,6 +310,7 @@ class TestDM(unittest.TestCase):
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
 
+@unittest.skip("Eventually to be removed, it depends on an external NGAS installation")
 class TestREST(unittest.TestCase):
 
     def test_fullRound(self):
