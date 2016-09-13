@@ -145,6 +145,9 @@ class NodeManagerClient(BaseDROPManagerClient):
     def add_node_subscriptions(self, sessionId, node_subscriptions):
         self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), node_subscriptions)
 
+    def trigger_drops(self, sessionId, drop_uids):
+        self._post_json('/sessions/%s/trigger' % (urllib.quote(sessionId),), drop_uids)
+
     def shutdown_node_manager(self):
         self._GET('/shutdown')
 
