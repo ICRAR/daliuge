@@ -46,7 +46,7 @@ def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.createSession(sessionId)
     nm.addGraphSpec(sessionId, graphSpec)
     nm.add_node_subscriptions(sessionId, node_subscriptions)
-    return nm.deploySession(sessionId)
+    nm.deploySession(sessionId)
 
 class ErroneousApp(BarrierAppDROP):
     def run(self):
@@ -113,10 +113,10 @@ class TestDM(unittest.TestCase):
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         rels = [DROPRel('B', DROPLinkType.CONSUMER, 'A')]
-        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
-        self.assertEqual(1, len(uris1))
-        self.assertEqual(2, len(uris2))
+        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        self.assertEqual(1, len(dm1._sessions[sessionId].drops))
+        self.assertEqual(2, len(dm2._sessions[sessionId].drops))
 
         # Run! We wait until c is completed
         a = dm1._sessions[sessionId].drops['A']
@@ -158,11 +158,11 @@ class TestDM(unittest.TestCase):
 
         rels = [DROPRel('D', DROPLinkType.INPUT, 'E'),
                 DROPRel('B', DROPLinkType.INPUT, 'E')]
-        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 
-        self.assertEqual(4, len(uris1))
-        self.assertEqual(2, len(uris2))
+        self.assertEqual(4, len(dm1._sessions[sessionId].drops))
+        self.assertEqual(2, len(dm2._sessions[sessionId].drops))
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
@@ -231,15 +231,16 @@ class TestDM(unittest.TestCase):
         rels_13 = [DROPRel('A', DROPLinkType.INPUT, 'G')]
         rels_24 = [DROPRel('F', DROPLinkType.PRODUCER, 'L')]
         rels_34 = [DROPRel('K', DROPLinkType.PRODUCER, 'M')]
-        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13})
-        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24})
-        uris3 = quickDeploy(dm3, sessionId, g3, {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34})
-        uris4 = quickDeploy(dm4, sessionId, g4, {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34})
+        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13})
+        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24})
+        quickDeploy(dm3, sessionId, g3, {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34})
+        quickDeploy(dm4, sessionId, g4, {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34})
 
-        self.assertEqual(1, len(uris1))
-        self.assertEqual(5, len(uris2))
-        self.assertEqual(5, len(uris3))
-        self.assertEqual(4, len(uris4))
+        self.assertEqual(1, len(dm1._sessions[sessionId].drops))
+        self.assertEqual(5, len(dm2._sessions[sessionId].drops))
+        self.assertEqual(5, len(dm3._sessions[sessionId].drops))
+        self.assertEqual(4, len(dm4._sessions[sessionId].drops))
+
 
         a = dm1._sessions[sessionId].drops['A']
         o = dm4._sessions[sessionId].drops['O']
@@ -289,10 +290,11 @@ class TestDM(unittest.TestCase):
             g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
             rels.append(DROPRel('A', DROPLinkType.INPUT, b_oid))
 
-        uris1 = quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        uris2 = quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
-        self.assertEqual(1,   len(uris1))
-        self.assertEqual(1+N, len(uris2))
+        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        self.assertEqual(1,   len(dm1._sessions[sessionId].drops))
+        self.assertEqual(1+N, len(dm2._sessions[sessionId].drops))
+
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected

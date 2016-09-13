@@ -128,8 +128,8 @@ class TestDIM(unittest.TestCase):
         sessionId = 'lalo'
         self.createSessionAndAddTypicalGraph(sessionId)
 
-        # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId)
+        # Deploy now and get A and C
+        self.dim.deploySession(sessionId)
         a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
 
         data = os.urandom(10)
@@ -149,8 +149,8 @@ class TestDIM(unittest.TestCase):
 
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
-        # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId, completedDrops=['A'])
+        # Deploy now and get C
+        self.dim.deploySession(sessionId, completedDrops=['A'])
         c = self.dm._sessions[sessionId].drops['C']
 
         # This should be happening before the sleepTime expires
@@ -176,7 +176,7 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
         assertSessionStatus(sessionId, SessionStates.BUILDING)
 
-        uris = self.dm.deploySession(sessionId)
+        self.dm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
         a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
@@ -210,7 +210,7 @@ class TestDIM(unittest.TestCase):
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
-        uris = self.dim.deploySession(sessionId)
+        self.dim.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
         a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]

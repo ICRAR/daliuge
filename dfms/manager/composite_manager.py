@@ -347,9 +347,8 @@ class CompositeManager(DROPManager):
         logger.info('Successfully added individual graphSpec of session %s to each DM', sessionId)
 
     def _deploySession(self, dm, host, sessionId):
-        uris = dm.deploySession(sessionId)
+        dm.deploySession(sessionId)
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
-        return uris
 
     def _triggerDrops(self, exceptions, session_id, host_and_uids):
 
@@ -372,9 +371,8 @@ class CompositeManager(DROPManager):
             self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information", iterable=self._drop_rels[sessionId].items())
             logger.info("Delivered node subscription list to node managers")
 
-        allUris = {}
         logger.info('Deploying Session %s in all hosts', sessionId)
-        self.replicate(sessionId, self._deploySession, "deploying session", collect=allUris)
+        self.replicate(sessionId, self._deploySession, "deploying session")
         logger.info('Successfully deployed session %s in all hosts', sessionId)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
@@ -388,8 +386,6 @@ class CompositeManager(DROPManager):
             if thrExs:
                 raise DaliugeException("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
             logger.info('Successfully triggered drops')
-
-        return allUris
 
     def _getGraphStatus(self, dm, host, sessionId):
         return dm.getGraphStatus(sessionId)

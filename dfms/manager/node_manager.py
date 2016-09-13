@@ -226,7 +226,6 @@ class NodeManagerBase(DROPManager):
         session = self._sessions[sessionId]
 
         def foreach(drop):
-            uris[drop.uid] = drop.uri
             if self._threadpool is not None:
                 drop._tp = self._threadpool
             if self._dlm:
@@ -238,11 +237,7 @@ class NodeManagerBase(DROPManager):
             else:
                 drop.subscribe(evt_listener, 'dropCompleted')
 
-        uris = {}
         session.deploy(completedDrops=completedDrops, foreach=foreach)
-        logger.debug('Registering new Drops with the DLM and collecting their URIs')
-
-        return uris
 
     def destroySession(self, sessionId):
         self._check_session_id(sessionId)
