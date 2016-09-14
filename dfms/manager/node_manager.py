@@ -488,6 +488,40 @@ class ZeroRPCMixIn(BaseMixIn):
             ctx.destroy()
         return client, close
 
+class RPyCMixIn(BaseMixIn):
+
+    def start(self):
+        super(RPyCMixIn, self).start()
+
+        import rpyc
+        from rpyc.utils.server import ThreadedServer
+
+        nm = self
+        class NMService(rpyc.Service):
+            def exposed_call_drop(self, session_id, uid, name, *args):
+                return nm.call_drop(session_id, uid, name, *args)
+            def exposed_get_drop_property(self, session_id, uid, name):
+                return nm.get_drop_attribute(session_id, uid, name)
+            def exposed_has_method(self, session_id, uid, name):
+                return nm.has_method(session_id, uid, name)
+
+        self._rpycserver = ThreadedServer(NMService, hostname=self._host, port=self._rpc_port) # ThreadPoolServer
+
+        # Starts the single-threaded RPyC server for RPC requests
+        self._rpycserverthread = threading.Thread(target=self._rpycserver.start, name="RPyC server")
+        self._rpycserverthread.start()
+        logger.info("Listening for RPC requests via RPyC on %s:%d", self._host, self._rpc_port)
+
+    def shutdown(self):
+        super(RPyCMixIn, self).shutdown()
+        self._rpycserver.close()
+        self._rpycserverthread.join()
+
+    def get_rpc_client(self, hostname, port):
+        import rpyc
+        client = rpyc.connect(hostname, port)
+        return client.root, client.close
+
 class PyroRPCMixIn(BaseMixIn):
 
     def start(self):
@@ -542,7 +576,9 @@ elif rpc_lib == 'pyro-threaded':
     RpcMixIn = ThreadedPyroRPCMixIn
 elif rpc_lib == 'zerorpc':
     RpcMixIn = ZeroRPCMixIn
+elif rpc_lib == 'rpyc':
+    RpcMixIn = RPyCMixIn
 else:
-    raise DaliugeException("Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc" % (rpc_lib,))
+    raise DaliugeException("Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc, rpyc" % (rpc_lib,))
 
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase): pass
