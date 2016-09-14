@@ -81,6 +81,10 @@ setup(
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
+        # The latest version of netifaces doesn't compile with old Linux kernels
+        # We have provided a patch that solves the issue and are waiting for
+        # merging into the main repository now
+        'https://bitbucket.org/rodrigo_tobar/netifaces/get/tip.zip#egg=netifaces-0.10.5',
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
       ],
       test_suite="test",
