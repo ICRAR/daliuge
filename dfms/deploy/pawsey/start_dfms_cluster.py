@@ -349,7 +349,7 @@ if __name__ == '__main__':
             dim_ip_list = ip_list[0:options.num_islands]
             logger.info("A list of DIM IPs: {0}".format(dim_ip_list))
             for dim_ip in dim_ip_list:
-                dim_ranks.append(ip_rank_dict(dim_ip))
+                dim_ranks.append(ip_rank_dict[dim_ip])
             dim_ranks = comm.bcast(dim_ranks, root=0)
 
             # 3 wait for node managers to start
