@@ -36,7 +36,7 @@ import pkg_resources, logging
 
 from dfms import droputils
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
-from dfms.manager.client import DataIslandManagerClient
+from dfms.manager.client import CompositeManagerClient
 
 
 logger = logging.getLogger(__name__)
@@ -67,13 +67,30 @@ class MonitorClient(object):
 
         self._host = mhost
         self._port = mport
-        self._dc = DataIslandManagerClient(mhost, mport)
+        self._dc = CompositeManagerClient(mhost, mport, timeout=10)
         self._algo = algo
         self._zerorun = zerorun
         self._output = output
         self._app = MonitorClient.apps[app] if app else None
 
-    def get_physical_graph(self, graph_id):
+    def get_physical_graph(self, graph_id, nodes=[]):
+        """
+        nodes:  If non-empty, is a list of node (e.g. IP addresses, string type),
+                    which shoud NOT include the MasterManager's node address
+
+        We will first try finding node list from the `nodes` parameter. If it
+        is empty, we will try the DIM or MM manager. If that is also empty,
+        we will bail out.
+        """
+        node_list = []
+        for nl in [nodes, self._dc.nodes()]: #TODO put inside the try block
+            if (len(nl) > 0):
+                node_list = nl
+                break
+        lnl = len(node_list)
+        if (lnl == 0):
+            raise Exception("Cannot find node list from either managers or external parameters")
+        logger.info("Got a node list with {0} nodes".format(lnl))
 
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
@@ -81,12 +98,11 @@ class MonitorClient(object):
         logger.info("Start to unroll {0}".format(lgn))
         drop_list = lg.unroll_to_tpl()
         logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
-        node_list = self._dc.nodes()
 
         if 'sarkar' == self._algo:
-            pgtp = MySarkarPGTP(drop_list, len(node_list), merge_parts=True)
+            pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
         else:
-            pgtp = MetisPGTP(drop_list, len(node_list))
+            pgtp = MetisPGTP(drop_list, lnl)
 
         # Trigering something...
         logger.info("Start to translate {0}".format(lgn))
