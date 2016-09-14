@@ -60,7 +60,7 @@ setup(
             "lockfile",
             "luigi<2.0",
             "metis",
-            "netifaces",
+            "netifaces>=0.10.5",
             "networkx",
             # paramiko 2.0.0 requires cryptography>=1.1, which in turn
             # requires development packages to be installed on the system
@@ -82,11 +82,7 @@ setup(
       },
       dependency_links=[
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
-        # netifaces 10.4 doesn't include proper Python 3 support, but the tip
-        # (cee54e7 as of 23/06/16) is broken. This particular commit is a nice
-        # place in between where things build properly
-        'https://bitbucket.org/al45tair/netifaces/get/b18f500.zip#egg=netifaces',
-        ],
+      ],
       test_suite="test",
       entry_points= {
           'console_scripts':[

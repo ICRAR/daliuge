@@ -137,8 +137,8 @@ class TestMM(unittest.TestCase):
         sessionId = 'lalo'
         self.createSessionAndAddTypicalGraph(sessionId)
 
-        # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.mm.deploySession(sessionId)
+        # Deploy now and get A and C
+        self.mm.deploySession(sessionId)
         a, c = [self.nm._sessions[sessionId].drops[x] for x in ('A', 'C')]
 
         data = os.urandom(10)
@@ -153,8 +153,8 @@ class TestMM(unittest.TestCase):
         sessionId = 'lalo'
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
-        # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.mm.deploySession(sessionId, completedDrops=['A'])
+        # Deploy now and get A
+        self.mm.deploySession(sessionId, completedDrops=['A'])
         c = self.nm._sessions[sessionId].drops['C']
 
         # This should be happening before the sleepTime expires
@@ -183,7 +183,7 @@ class TestMM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
         assertSessionStatus(sessionId, SessionStates.BUILDING)
 
-        uris = self.nm.deploySession(sessionId)
+        self.nm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
         a, c = [self.nm._sessions[sessionId].drops[x] for x in ('A', 'C')]
@@ -221,7 +221,7 @@ class TestMM(unittest.TestCase):
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
-        uris = self.mm.deploySession(sessionId)
+        self.mm.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
         a, c = [self.nm._sessions[sessionId].drops[x] for x in ('A', 'C')]

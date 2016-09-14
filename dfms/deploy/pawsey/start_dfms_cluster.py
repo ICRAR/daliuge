@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
     logv = max(min(3, options.verbose_level), 1)
 
-    comm = MPI.COMM_WORLD
+    comm = MPI.COMM_WORLD  # @UndefinedVariable
     num_procs = comm.Get_size()
     rank = comm.Get_rank()
 
@@ -273,13 +273,13 @@ if __name__ == '__main__':
         # send island/master manager's IP address to the dfms proxy
         # also let island manager know dfms proxy's IP
         if rank == 0:
-           mgr_ip = origin_ip
-           comm.send(mgr_ip, dest=1)
-           proxy_ip = comm.recv(source=1)
+            mgr_ip = origin_ip
+            comm.send(mgr_ip, dest=1)
+            proxy_ip = comm.recv(source=1)
         elif rank == 1:
-           mgr_ip = comm.recv(source=0)
-           proxy_ip = origin_ip
-           comm.send(proxy_ip, dest=0)
+            mgr_ip = comm.recv(source=0)
+            proxy_ip = origin_ip
+            comm.send(proxy_ip, dest=0)
 
     set_env(rank)
     if (rank != 0):
