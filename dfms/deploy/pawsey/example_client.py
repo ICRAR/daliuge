@@ -83,7 +83,7 @@ class MonitorClient(object):
         we will bail out.
         """
         if (len(nodes) > 0):
-            node_list = nl
+            node_list = nodes
         else:
             node_list = self._dc.nodes()
         # for nl in [nodes, self._dc.nodes()]: #TODO put inside the try block
