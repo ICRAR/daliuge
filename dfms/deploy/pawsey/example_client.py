@@ -124,9 +124,14 @@ class MonitorClient(object):
 
         return lgn, lg, pg_spec
 
-    def submit_single_graph(self, graph_id, deploy=False):
-
-        lgn, lg, pg_spec = self.get_physical_graph(graph_id)
+    def submit_single_graph(self, graph_id, deploy=False, pg=None):
+        """
+        pg: (if not None) a tuple of (lgn, lg, pg_spec)
+        """
+        if (pg is None):
+            lgn, lg, pg_spec = self.get_physical_graph(graph_id)
+        else:
+            lgn, lg, pg_spec = pg
 
         if self._output:
             with open(self._output, 'w') as f:
