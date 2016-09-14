@@ -383,6 +383,7 @@ if __name__ == '__main__':
             # 6 send a node list to each DIM so that it can start
             for dim_ip in dim_ip_list:
                 r = ip_rank_dict[dim_ip]
+                logger.debug("Sending node list to rank {0}".format(r))
                 comm.send(dim_rank_nodes_dict[r], dest=r)
 
             # 7. make sure all DIMs are up running
@@ -411,7 +412,9 @@ if __name__ == '__main__':
         else:
             dim_ranks = None
             dim_ranks = comm.bcast(dim_ranks, root=0)
+            logger.debug("Receiving dim_ranks = {0}, my rank is {1}".foramt(dim_ranks, rank))
             if (rank in dim_ranks):
+                logger.debug("Rank {0} is a DIM preparing for receiving")
                 # island manager
                 # get a list of nodes that are its children from rank 0 (dfmsMM)
                 nm_list = comm.recv(source=0)
