@@ -23,7 +23,6 @@
 Module containing miscellaneous utility classes and functions.
 """
 
-import contextlib
 import errno
 import logging
 import math
@@ -115,13 +114,13 @@ def portIsClosed(host, port, timeout):
     """
     Checks if a given ``host``/``port`` is closed, with a given ``timeout``.
     """
-    return check_port_and_write(host, port, timeout=timeout, checking_open=False)
+    return check_port(host, port, timeout=timeout, checking_open=False)
 
 def portIsOpen(host, port, timeout=0):
     """
     Checks if a given ``host``/``port`` is open, with a given ``timeout``.
     """
-    return check_port_and_write(host, port, data=None, timeout=timeout, checking_open=True)
+    return check_port(host, port, timeout=timeout, checking_open=True)
 
 def connect_to(host, port, timeout=None):
     """
@@ -129,10 +128,17 @@ def connect_to(host, port, timeout=None):
     connected socket. If no connection could be established ``None`` is
     returned.
     """
-    sock = check_port_and_write(host, port, timeout=timeout, return_socket=True)
-    return sock or None
+    return check_port(host, port, timeout=timeout, return_socket=True)
 
-def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, return_socket=False):
+def write_to(host, port, data, timeout=None):
+    """
+    Connects to ``host``:``port`` within the given timeout and write the given
+    piece of ``data`` into the connected socket.
+    """
+    sock = connect_to(host, port, timeout=timeout)
+    sock.send(data)
+
+def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     """
     Checks that the port specified by ``host``:``port`` is either open or
     closed (depending on the value of ``checking_open``) within a given
@@ -148,6 +154,9 @@ def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, r
     This method returns ``True`` if the port was found on the expected state
     within the time limit, and ``False`` otherwise.
     """
+
+    if not checking_open and return_socket:
+        raise ValueError("If return_socket then checking_open must be False")
 
     start = time.time()
     while True:
@@ -165,17 +174,16 @@ def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, r
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             if return_socket:
-                ctx = contextlib.contextmanager(lambda: None)
                 ret = s
             else:
-                ctx = contextlib.closing(s)
                 ret = True
 
-            with ctx:
+            try:
                 s.settimeout(thisTimeout)
                 s.connect((host, port))
-                if checking_open and data is not None:
-                    s.send(data)
+            finally:
+                if not return_socket:
+                    s.close()
 
             # Success if we were checking for an open port!
             if checking_open:
@@ -195,10 +203,12 @@ def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, r
             # We assume that it's not re-opening any time soon
             if e.errno == errno.ECONNRESET:
                 logger.debug("Connection closed by %s:%d, assuming it will stay closed", host, port)
-                return not checking_open
+                if not return_socket:
+                    return not checking_open
+                raise
 
             # The port is closed
-            if e.errno == errno.ECONNREFUSED:
+            elif e.errno == errno.ECONNREFUSED:
 
                 if not checking_open:
                     return True
@@ -207,14 +217,15 @@ def check_port_and_write(host, port, data=None, timeout=0, checking_open=True, r
                 if timeout is not None:
                     if time.time() - start > timeout:
                         logger.debug('Refused connection to %s:%d for more than %f seconds', host, port, timeout)
-                        return False
+                        if not return_socket:
+                            return False
+                        raise
+
                 time.sleep(0.1)
                 continue
 
             # Any other error should be raised
             raise
-
-writeToRemotePort = check_port_and_write
 
 def getDfmsDir():
     """

@@ -291,7 +291,7 @@ class TestREST(unittest.TestCase):
             # starting at 1111
             msg = os.urandom(10)
             for i in range(5):
-                self.assertTrue(utils.writeToRemotePort('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i))
+                utils.write_to('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i)
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session

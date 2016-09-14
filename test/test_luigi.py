@@ -97,7 +97,7 @@ class LuigiTests(unittest.TestCase):
 
         # Write to the initial nodes of the graph to trigger the graph execution
         for i in range(socketListeners):
-            threading.Thread(target=utils.writeToRemotePort, name='socketWriter', args=("localhost", 1111+i, test_data, 2)).start()
+            threading.Thread(target=utils.write_to, name='socketWriter', args=("localhost", 1111+i, test_data, 2)).start()
 
         # Run the graph! Luigi will either monitor or execute the DROPs
         w.run()
