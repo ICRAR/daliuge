@@ -41,7 +41,8 @@ from dfms.deploy.pawsey.example_client import MonitorClient
 import dfms.deploy.pawsey.example_client as exclient
 from dfms.manager.client import DataIslandManagerClient
 import dfms.manager.cmdline as dfms_start
-from dfms.manager.constants import NODE_DEFAULT_REST_PORT
+from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
+ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 
 from mpi4py import MPI
 
@@ -51,7 +52,6 @@ GRAPH_SUBMIT_WAIT_TIME = 10
 GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
-DIM_PORT = 8001
 
 def ping_host(url, timeout=5, loc='Pawsey'):
     """
@@ -101,10 +101,20 @@ def start_dim(node_list, log_dir, logv=1):
     Start data island manager
     """
     lv = 'v' * logv
-    dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir,
+    dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
     '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '100'])
 
-def submit_monitor_graph(graph_id, dump_status, zerorun):
+def start_mm(node_list, log_dir, logv=1):
+    """
+    Start master manager
+
+    node_list:  a list of node address that host DIMs
+    """
+    lv = 'v' * logv
+    dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
+    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0'])
+
+def submit_monitor_graph(graph_id, dump_status, zerorun, app):
     """
     Submits a graph and then monitors the island manager
     """
@@ -113,7 +123,7 @@ def submit_monitor_graph(graph_id, dump_status, zerorun):
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
     # use monitorclient to interact with island manager
     if (graph_id is not None):
-        mc = MonitorClient('localhost', 8001, algo='metis', zerorun=zerorun)
+        mc = MonitorClient('localhost', 8001, algo='metis', zerorun=zerorun, app=app)
         logger.info("Submitting graph {0}".format(graph_id))
         mc.submit_single_graph(graph_id, deploy=True)
         logger.info("graph {0} is successfully submitted".format(graph_id))
@@ -209,6 +219,9 @@ if __name__ == '__main__':
     parser.add_option('-g', '--gid', action='store', type='int',
                     dest='gid', help = 'Physical graph id')
 
+    parser.add_option('-s', '--num_islands', action='store', type='int',
+                    dest='num_islands', default=1, help='The number of Data Islands')
+
     parser.add_option('-d', '--dump', action='store_true',
                     dest='dump', help = 'dump file base name?', default=False)
 
@@ -274,7 +287,7 @@ if __name__ == '__main__':
             sltime = DIM_WAIT_TIME + 2
             logger.info("Starting dfms proxy on host {0} in {1} seconds".format(origin_ip, sltime))
             time.sleep(sltime)
-            start_dfms_proxy(options.loc, mgr_ip, DIM_PORT, options.monitor_host, options.monitor_port)
+            start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
         elif (run_node_mgr):
             logger.info("Starting node manager on host {0}".format(origin_ip))
             start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
