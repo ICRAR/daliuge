@@ -174,11 +174,10 @@ class NodeManagerBase(DROPManager):
         """
 
     @abc.abstractmethod
-    def get_drop_attribute(self, hostname, port, session_id, uid, name):
+    def get_rpc_client(self, hostname, port):
         """
-        Requests the attribute ``name`` of the remote drop ``uid`` on session
-        ``session_id`` living in host ``hostname``. The request is made on port
-        ``port``.
+        Creates an RPC client connected to the node manager running in
+        ``host``:``port``, and its closing method, as a 2-tuple.
         """
 
     def deliver_event(self, evt):
@@ -275,6 +274,33 @@ class NodeManagerBase(DROPManager):
 
             # TODO: we also have to unsubscribe from them at some point
             self.subscribe(host, events_port)
+
+    def get_drop_attribute(self, hostname, port, session_id, uid, name):
+
+        logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
+
+        client, closer = self.get_rpc_client(hostname, port)
+
+        # The remote method receives the same client used to inspect the remote
+        # object, and it closes it when the method is not used anymore
+        class remote_method(object):
+            def __del__(self):
+                closer()
+            def __call__(self, *args):
+                return client.call_drop(session_id, uid, name, *args)
+
+        # Shortcut to avoid extra calls
+        known_methods = ()
+        #known_methods = ('open', 'read', 'write', 'close')
+        closeit = False
+        try:
+            if name in known_methods or client.has_method(session_id, uid, name):
+                return remote_method()
+            closeit = True
+            return client.get_drop_property(session_id, uid, name)
+        finally:
+            if closeit:
+                closer()
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)
@@ -428,8 +454,11 @@ class ZeroRPCMixIn(BaseMixIn):
         import gevent
         import zerorpc
 
+        # Use a specific context; otherwise multiple servers on the same process
+        # (only during tests) share the same Context.instance() which is global
+        # to the process
+        self._zrpcserver = zerorpc.Server(self, context=zerorpc.Context())
         # zmq needs an address, not a hostname
-        self._zrpcserver = zerorpc.Server(self)
         endpoint = "tcp://%s:%d" % (zmq_safe(host), port,)
         self._zrpcserver.bind(endpoint)
         logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
@@ -447,33 +476,17 @@ class ZeroRPCMixIn(BaseMixIn):
         super(ZeroRPCMixIn, self).shutdown()
         self._zrpcserverthread.join()
 
-    def get_drop_attribute(self, hostname, port, session_id, uid, name):
-
+    def get_rpc_client(self, hostname, port):
+        # Each client uses a different Context; otherwise they all share
+        # the same Context.instance() which is global to the process,
+        # and generates the same channel IDs, confusing the server
         import zerorpc
-
-        # The remote method receives the same client used to inspect the remote
-        # object
-        class remote_method(object):
-            def __del__(self):
-                self.c.close()
-            def __call__(self, *args):
-                return self.c.call_drop(session_id, uid, name, *args)
-
-        logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
-
-        c = zerorpc.Client("tcp://%s:%d" % (hostname,port))
-        closeit = False
-        try:
-            if c.has_method(session_id, uid, name):
-                method = remote_method()
-                method.c = c
-                return method
-            closeit = True
-            return c.get_drop_property(session_id, uid, name)
-        finally:
-            if closeit:
-                c.close()
-
+        ctx = zerorpc.Context()
+        client = zerorpc.Client("tcp://%s:%d" % (hostname,port), context=ctx)
+        def close():
+            client.close()
+            ctx.destroy()
+        return client, close
 
 class PyroRPCMixIn(BaseMixIn):
 
@@ -500,33 +513,11 @@ class PyroRPCMixIn(BaseMixIn):
         if not utils.portIsClosed(host, self._rpc_port, timeout):
             logger.warning("Pyro RPC port %d is still open after %d seconds", timeout)
 
-    def get_drop_attribute(self, hostname, port, session_id, uid, name):
-
+    def get_rpc_client(self, hostname, port):
         import Pyro4
-
-        # The remote method receives the same client used to inspect the remote
-        # object
-        class remote_method(object):
-            def __del__(self):
-                self.nm._pyroRelease()
-            def __call__(self, *args):
-                return self.nm.call_drop(session_id, uid, name, *args)
-
-        logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
-
         uri = Pyro4.URI("PYRO:node_manager@%s:%d" % (hostname, port))
-        nm = Pyro4.Proxy(uri)
-        closeit = False
-        try:
-            if nm.has_method(session_id, uid, name):
-                method = remote_method()
-                method.nm = nm
-                return method
-            closeit = True
-            return nm.get_drop_property(session_id, uid, name)
-        finally:
-            if closeit:
-                nm._pyroRelease()
+        proxy = Pyro4.Proxy(uri)
+        return proxy, proxy._pyroRelease
 
 class MultiplexPyroRPCMixIn(PyroRPCMixIn):
     def setup_pyro(self):
