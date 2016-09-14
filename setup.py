@@ -70,6 +70,7 @@ setup(
             "pyswarm",
             "python-daemon",
             "pyzmq",
+            "rpyc",
             "scp",
             'six',
             "zeroconf",
