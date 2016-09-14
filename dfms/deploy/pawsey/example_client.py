@@ -91,6 +91,7 @@ class MonitorClient(object):
         #         node_list = nl
         #         break
         lnl = len(node_list)
+        lnl -= num_islands
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
         logger.info("Got a node list with {0} nodes".format(lnl))
