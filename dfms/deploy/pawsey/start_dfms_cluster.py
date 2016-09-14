@@ -48,6 +48,7 @@ from mpi4py import MPI
 
 
 DIM_WAIT_TIME = 5
+MM_WAIT_TIME = DIM_WAIT_TIME
 GRAPH_SUBMIT_WAIT_TIME = 10
 GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
@@ -119,7 +120,7 @@ def submit_monitor_graph(graph_id, dump_status, zerorun, app):
     Submits a graph and then monitors the island manager
     """
     logger.debug("dump_status = {0}".format(dump_status))
-    logger.info("Wait for {0} seconds before submitting graph".format(GRAPH_SUBMIT_WAIT_TIME))
+    logger.info("Wait for {0} seconds before submitting graph to DIM".format(GRAPH_SUBMIT_WAIT_TIME))
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
     # use monitorclient to interact with island manager
     if (graph_id is not None):
@@ -189,6 +190,11 @@ def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
         logger.error("DFMS proxy terminated unexpectedly: {0}".format(ex))
         sys.exit(1)
 
+def submit_pg(monitor_client, physical_graph):
+    logger.info("Wait for {0} seconds before submitting graph to the Master Manager".format(GRAPH_SUBMIT_WAIT_TIME))
+    time.sleep(GRAPH_SUBMIT_WAIT_TIME)
+    monitor_client.submit_single_graph(None, deploy=True, pg=physical_graph)
+
 def set_env(rank):
     os.environ['PYRO_MAX_RETRIES'] = '10'
 
@@ -239,6 +245,9 @@ if __name__ == '__main__':
     if (options.gid is not None and options.gid >= len(exclient.lgnames)):
         options.gid = 0
 
+    if (options.monitor_host is not None and options.num_islands > 1):
+        parser.error("We do not support proxy monitor multiple islands yet")
+
     logv = max(min(3, options.verbose_level), 1)
 
     comm = MPI.COMM_WORLD  # @UndefinedVariable
@@ -266,7 +275,9 @@ if __name__ == '__main__':
     else:
         run_node_mgr = True
 
-    ip_adds = get_ip(options.loc)
+    # attach rank information at the end of IP address for multi-islands
+    rank_str = '' if options.num_islands == 1 else ',%s' % rank
+    ip_adds = '{0}{1}'.format(get_ip(options.loc), rank_str)
     origin_ip = ip_adds
     ip_adds = comm.gather(ip_adds, root=0)
     if (run_proxy):
@@ -282,36 +293,129 @@ if __name__ == '__main__':
             comm.send(proxy_ip, dest=0)
 
     set_env(rank)
-    if (rank != 0):
-        if (run_proxy and rank == 1):
-            sltime = DIM_WAIT_TIME + 2
-            logger.info("Starting dfms proxy on host {0} in {1} seconds".format(origin_ip, sltime))
-            time.sleep(sltime)
-            start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
-        elif (run_node_mgr):
-            logger.info("Starting node manager on host {0}".format(origin_ip))
-            start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
-    else:
-        logger.info("A list of NM IPs: {0}".format(ip_adds))
-        logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
-        time.sleep(DIM_WAIT_TIME)
-        node_mgrs = []
-        for ip in ip_adds:
-            if (ip == origin_ip or (run_proxy and ip == proxy_ip) or ('None' == ip)):
-                continue
-            url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
-            if (ping_host(url, loc=options.loc) != 0):
-                logger.warning("Fail to ping host {0}".format(url))
+    if (options.num_islands == 1):
+        if (rank != 0):
+            if (run_proxy and rank == 1):
+                sltime = DIM_WAIT_TIME + 2
+                logger.info("Starting dfms proxy on host {0} in {1} seconds".format(origin_ip, sltime))
+                time.sleep(sltime)
+                start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+            elif (run_node_mgr):
+                logger.info("Starting node manager on host {0}".format(origin_ip))
+                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
+        else:
+            logger.info("A list of NM IPs: {0}".format(ip_adds))
+            logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
+            time.sleep(DIM_WAIT_TIME)
+            node_mgrs = []
+            for ip in ip_adds:
+                if (ip == origin_ip or (run_proxy and ip == proxy_ip) or ('None' == ip)):
+                    continue
+                url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
+                if (ping_host(url, loc=options.loc) != 0):
+                    logger.warning("Fail to ping host {0}".format(url))
+                else:
+                    logger.info("Host {0} is running".format(url))
+                    node_mgrs.append(ip)
+            if ((options.gid is not None) or options.dump):
+                logger.info("Preparing submitting graph (and monitor it)")
+                if (options.dump):
+                    arg02 = '{0}/monitor'.format(log_dir)
+                    logger.info("Local monitor path: {0}".format(arg02))
+                else:
+                    arg02 = None
+                    logger.info("Local monitor path is not set")
+                threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02, options.zerorun, options.app)).start()
+            start_dim(node_mgrs, log_dir, logv=logv)
+    elif (options.num_islands > 1):
+        if (rank == 0):
+            # master manager
+            # 1. use ip_adds to produce the physical graph
+            ip_list = []
+            ip_rank_dict = dict() # k - ip, v - MPI rank
+            for ipr in ip_adds:
+                iprs = ipr.split(',')
+                ip = iprs[0]
+                r = iprs[1]
+                if (ip == origin_ip or 'None' == ip):
+                    continue
+                ip_list.append(ip)
+                ip_rank_dict[ip] = int(r)
+
+            # 2 broadcast dim ranks to all nodes to let them know who is the DIM
+            dim_ranks = []
+            dim_ip_list = ip_list[0:options.num_islands]
+            logger.info("A list of DIM IPs: {0}".format(dim_ip_list))
+            for dim_ip in dim_ip_list:
+                dim_ranks.append(ip_rank_dict(dim_ip))
+            dim_ranks = comm.bcast(dim_ranks, root=0)
+
+            # 3 wait for node managers to start
+            logger.info("Waiting all node managers to start in {0} seconds".format(MM_WAIT_TIME))
+            time.sleep(MM_WAIT_TIME)
+            node_mgrs = []
+            for ip in ip_list[options.num_islands:]:
+                url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
+                if (ping_host(url, loc=options.loc) != 0):
+                    logger.warning("Fail to ping node manager {0}".format(url))
+                else:
+                    logger.info("Node manager {0} is running".format(url))
+                    node_mgrs.append(ip)
+
+            # 4.  produce the physical graph based on the available node managers
+            # that have alraedy been running (we have to assume island manager
+            # will run smoothly in the future)
+            logger.info("Master Manager producing the physical graph")
+            mc = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT, algo='metis', zerorun=options.zerorun, app=options.app)
+            lgn, lg, pg_spec = mc.get_physical_graph(options.gid, nodes=(dim_ip_list + node_mgrs))
+
+            # 5. parse the pg_spec to get the mapping from islands to node list
+            dim_rank_nodes_dict = defaultdict(list)
+            for drop in pg_spec:
+                dim_ip = drop['island']
+                r = ip_rank_dict[dim_ip]
+                n = drop['node']
+                dim_rank_nodes_dict[r].append(n)
+
+            # 6 send a node list to each DIM so that it can start
+            for dim_ip in dim_ip_list:
+                r = ip_rank_dict[dim_ip]
+                comm.send(dim_rank_nodes_dict[r], dest=r)
+
+            # 7. make sure all DIMs are up running
+            retry = 10
+            for dim_ip in dim_ip_list:
+                url = "http://{0}:{1}".format(ip, ISLAND_DEFAULT_REST_PORT)
+                for j in range(retry):
+                    pr = ping_host(url, loc=options.loc)
+                    if (pr == 0):
+                        logger.info("Island {0} is running".format(url))
+                        break
+                    else:
+                        logger.warning("Fail to ping island {0}".format(url))
+                        if (j < retry - 1):
+                            logger.info("Sleep {0} seconds before retry".format(MM_WAIT_TIME))
+                            time.sleep(MM_WAIT_TIME)
+                        else:
+                            logger.info("retry exausted. Give up island {0} for now".format(dim_ip))
+
+            # 8. submit the graph in a thread (wait for mm to start)
+            pg = (lgn, lg, pg_spec)
+            threading.Thread(target=submit_pg, args=(mc, pg)).start()
+
+            # 9. start dfmsMM using islands IP addresses (this will block)
+            start_mm(dim_ip_list, log_dir, logv=logv)
+        else:
+            dim_ranks = None
+            dim_ranks = comm.bcast(dim_ranks, root=0)
+            if (rank in dim_ranks):
+                # island manager
+                # get a list of nodes that are its children from rank 0 (dfmsMM)
+                nm_list = comm.recv(source=0)
+                # no need to wait for node managers since the master manager
+                # has already made sure they are up running
+                start_dim(nm_list, log_dir, logv=logv)
             else:
-                logger.info("Host {0} is running".format(url))
-                node_mgrs.append(ip)
-        if ((options.gid is not None) or options.dump):
-            logger.info("Preparing submitting graph (and monitor it)")
-            if (options.dump):
-                arg02 = '{0}/monitor'.format(log_dir)
-                logger.info("Local monitor path: {0}".format(arg02))
-            else:
-                arg02 = None
-                logger.info("Local monitor path is not set")
-            threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02, options.zerorun, options.app)).start()
-        start_dim(node_mgrs, log_dir)
+                # node manager
+                logger.info("Starting node manager on host {0}".format(origin_ip))
+                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
