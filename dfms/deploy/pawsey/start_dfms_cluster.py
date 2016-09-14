@@ -104,7 +104,7 @@ def start_dim(node_list, log_dir, logv=1):
     """
     lv = 'v' * logv
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
-    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '100'])
+    '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '100'])
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -113,7 +113,7 @@ def start_mm(node_list, log_dir, logv=1):
     node_list:  a list of node address that host DIMs
     """
     lv = 'v' * logv
-    dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
+    dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0'])
 
 def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
@@ -376,6 +376,8 @@ if __name__ == '__main__':
             dim_rank_nodes_dict = defaultdict(set)
             for drop in pg_spec:
                 dim_ip = drop['island']
+                if (not dim_ip in dim_ip_list):
+                    raise Exception("'{0}' node is not in island list {1}".format(dim_ip, dim_ip_list))
                 r = ip_rank_dict[dim_ip]
                 n = drop['node']
                 dim_rank_nodes_dict[r].add(n)
