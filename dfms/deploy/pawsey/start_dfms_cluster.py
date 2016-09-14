@@ -115,7 +115,7 @@ def start_mm(node_list, log_dir, logv=1):
     dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
     '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0'])
 
-def submit_monitor_graph(graph_id, dump_status, zerorun, app):
+def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
     """
     Submits a graph and then monitors the island manager
     """
@@ -125,10 +125,12 @@ def submit_monitor_graph(graph_id, dump_status, zerorun, app):
     # use monitorclient to interact with island manager
     if (graph_id is not None):
         mc = MonitorClient('localhost', 8001, algo='metis', zerorun=zerorun, app=app)
-        logger.info("Submitting graph {0}".format(graph_id))
-        mc.submit_single_graph(graph_id, deploy=True)
-        logger.info("graph {0} is successfully submitted".format(graph_id))
         dc = mc._dc
+        nodes = [dim_ip] + dc.nodes()
+        logger.info("Submitting graph {0}".format(graph_id))
+        lgn, lg, pg_spec = mc.get_physical_graph(graph_id, nodes=nodes)
+        mc.submit_single_graph(graph_id, deploy=True, pg=(lgn, lg, pg_spec))
+        logger.info("graph {0} is successfully submitted".format(graph_id))
     else:
         dc = DataIslandManagerClient('localhost')
     if (dump_status is not None):
@@ -325,7 +327,7 @@ if __name__ == '__main__':
                 else:
                     arg02 = None
                     logger.info("Local monitor path is not set")
-                threading.Thread(target=submit_monitor_graph, args=(options.gid, arg02, options.zerorun, options.app)).start()
+                threading.Thread(target=submit_monitor_graph, args=(origin_ip, options.gid, arg02, options.zerorun, options.app)).start()
             start_dim(node_mgrs, log_dir, logv=logv)
     elif (options.num_islands > 1):
         if (rank == 0):
