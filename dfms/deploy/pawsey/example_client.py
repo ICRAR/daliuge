@@ -73,7 +73,7 @@ class MonitorClient(object):
         self._output = output
         self._app = MonitorClient.apps[app] if app else None
 
-    def get_physical_graph(self, graph_id, nodes=[]):
+    def get_physical_graph(self, graph_id, nodes=[], num_islands=1):
         """
         nodes:  If non-empty, is a list of node (e.g. IP addresses, string type),
                     which shoud NOT include the MasterManager's node address
@@ -112,7 +112,7 @@ class MonitorClient(object):
         pgtp.to_gojs_json(string_rep=False)
         logger.info("Translation completed for {0}".format(lgn))
 
-        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False, num_islands=num_islands)
         logger.info("PG spec is calculated!")
 
         if self._zerorun:
