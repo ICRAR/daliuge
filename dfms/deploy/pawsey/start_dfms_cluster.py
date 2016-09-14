@@ -370,7 +370,7 @@ if __name__ == '__main__':
             # will run smoothly in the future)
             logger.info("Master Manager producing the physical graph")
             mc = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT, algo='metis', zerorun=options.zerorun, app=options.app)
-            lgn, lg, pg_spec = mc.get_physical_graph(options.gid, nodes=(dim_ip_list + node_mgrs))
+            lgn, lg, pg_spec = mc.get_physical_graph(options.gid, nodes=(dim_ip_list + node_mgrs), num_islands=options.num_islands)
 
             # 5. parse the pg_spec to get the mapping from islands to node list
             dim_rank_nodes_dict = defaultdict(set)
