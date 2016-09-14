@@ -164,7 +164,7 @@ class ManagerRestServer(RestServer):
         completedDrops = []
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
-        return self.dm.deploySession(sessionId,completedDrops=completedDrops)
+        self.dm.deploySession(sessionId,completedDrops=completedDrops)
 
     @daliuge_aware
     def getGraph(self, sessionId):
@@ -219,6 +219,7 @@ class NMRestServer(ManagerRestServer):
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
         app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
+        app.post(  '/api/sessions/<sessionId>/trigger',       callback=self.trigger_drops)
         # The non-REST mappings that serve HTML-related content
         app.get(   '/', callback=self.visualizeDM)
         app.get(   '/api/shutdown',                            callback=self.shutdown_node_manager)
@@ -253,6 +254,13 @@ class NMRestServer(ManagerRestServer):
             bottle.response.status = 415
             return
         self.dm.add_node_subscriptions(sessionId, bottle.request.json)
+
+    @daliuge_aware
+    def trigger_drops(self, sessionId):
+        if bottle.request.content_type != 'application/json':
+            bottle.response.status = 415
+            return
+        self.dm.trigger_drops(sessionId, bottle.request.json)
 
     #===========================================================================
     # non-REST methods

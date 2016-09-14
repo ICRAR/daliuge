@@ -246,7 +246,6 @@ class Session(object):
         for drop,_ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
-            drop.uri = ''
             self._drops[drop.uid] = drop
 
             # Register them with the error handler

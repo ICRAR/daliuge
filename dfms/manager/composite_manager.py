@@ -21,25 +21,20 @@
 #
 import abc
 import collections
-import contextlib
 import functools
 import logging
 import multiprocessing.pool
-import os
 import threading
-
-import Pyro4
-import zerorpc
 
 from dfms import remote, graph_loader
 from dfms.ddap_protocol import DROPRel
 from dfms.exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
-from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
 from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dfms.manager.drop_manager import DROPManager
 from dfms.utils import portIsOpen
+from dfms.manager import constants
 
 
 logger = logging.getLogger(__name__)
@@ -83,24 +78,24 @@ def group_by_node(uids, graph):
         uids_by_node[graph[uid]['node']].append(uid)
     return uids_by_node
 
-class CompositeManagerBase(DROPManager):
+class CompositeManager(DROPManager):
     """
     A DROPManager that in turn manages DROPManagers (sigh...).
 
     DROP Managers form a hierarchy where those at the bottom actually hold
     DROPs while those in the levels above rely commands and aggregate results,
-    making the system more manageable and scalable. The CompositeManagerBase class
+    making the system more manageable and scalable. The CompositeManager class
     implements the upper part of this hierarchy in a generic way by holding
     references to a number of sub-DROPManagers and communicating with them to
     complete each operation. The only assumption about sub-DROPManagers is that
-    they obey the DROPManager interface, and therefore this CompositeManagerBase
+    they obey the DROPManager interface, and therefore this CompositeManager
     class allows for multiple levels of hierarchy seamlessly.
 
     Having different levels of Data Management hierarchy implies that the
     physical graph that is fed into the hierarchy needs to be partitioned at
     each level (except at the bottom of the hierarchy) in order to place each
     DROP in its correct place. The attribute used by a particular
-    CompositeManagerBase to partition the graph (from its graphSpec) is given at
+    CompositeManager to partition the graph (from its graphSpec) is given at
     construction time.
     """
 
@@ -108,12 +103,12 @@ class CompositeManagerBase(DROPManager):
 
     def __init__(self, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
-        Creates a new CompositeManagerBase. The sub-DMs it manages are to be located
+        Creates a new CompositeManager. The sub-DMs it manages are to be located
         at `dmHosts`, and should be listening on port `dmPort`.
 
         :param: dmPort The port at which the sub-DMs expose themselves
         :param: partitionAttr The attribute on each dropSpec that specifies the
-                partitioning of the graph at this CompositeManagerBase level.
+                partitioning of the graph at this CompositeManager level.
         :param: dmExec The name of the executable that starts a sub-DM
         :param: subDmId The sub-DM ID.
         :param: dmHosts The list of hosts under which the sub-DMs should be found.
@@ -143,12 +138,6 @@ class CompositeManagerBase(DROPManager):
         self._nodes = []
 
         self.startDMChecker()
-
-    @abc.abstractmethod
-    def get_rpc_client(self, host):
-        """
-        Constructs an RPC client to contact the Node Manager on ``host``
-        """
 
     def startDMChecker(self):
         self._dmCheckerEvt = threading.Event()
@@ -226,8 +215,9 @@ class CompositeManagerBase(DROPManager):
         if not portIsOpen(host, self._dmPort, timeout):
             raise DaliugeException("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
 
-    def dmAt(self, host):
-        return NodeManagerClient(host, self._dmPort, 10)
+    def dmAt(self, host, port=None):
+        port = port or self._dmPort
+        return NodeManagerClient(host, port, 10)
 
     def getSessionIds(self):
         return self._sessionIds;
@@ -357,9 +347,8 @@ class CompositeManagerBase(DROPManager):
         logger.info('Successfully added individual graphSpec of session %s to each DM', sessionId)
 
     def _deploySession(self, dm, host, sessionId):
-        uris = dm.deploySession(sessionId)
+        dm.deploySession(sessionId)
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
-        return uris
 
     def _triggerDrops(self, exceptions, session_id, host_and_uids):
 
@@ -367,7 +356,7 @@ class CompositeManagerBase(DROPManager):
 
         # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
         logger.info("Will trigger initial drops of session %s in host %s", session_id, host)
-        with self.get_rpc_client(host) as c:
+        with self.dmAt(host, port=constants.NODE_DEFAULT_REST_PORT) as c:
             try:
                 c.trigger_drops(session_id, uids)
             except Exception as e:
@@ -382,9 +371,8 @@ class CompositeManagerBase(DROPManager):
             self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information", iterable=self._drop_rels[sessionId].items())
             logger.info("Delivered node subscription list to node managers")
 
-        allUris = {}
         logger.info('Deploying Session %s in all hosts', sessionId)
-        self.replicate(sessionId, self._deploySession, "deploying session", collect=allUris)
+        self.replicate(sessionId, self._deploySession, "deploying session")
         logger.info('Successfully deployed session %s in all hosts', sessionId)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
@@ -398,8 +386,6 @@ class CompositeManagerBase(DROPManager):
             if thrExs:
                 raise DaliugeException("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
             logger.info('Successfully triggered drops')
-
-        return allUris
 
     def _getGraphStatus(self, dm, host, sessionId):
         return dm.getGraphStatus(sessionId)
@@ -440,24 +426,6 @@ class CompositeManagerBase(DROPManager):
         allCounts = []
         self.replicate(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
         return sum(allCounts)
-
-
-class ZeroRPCMixIn(object):
-    def get_rpc_client(self, host):
-        return contextlib.closing(zerorpc.Client("tcp://%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT), heartbeat=30))
-
-class PyroRPCMixIn(object):
-    def get_rpc_client(self, host):
-        return Pyro4.Proxy("PYRO:node_manager@%s:%d" %(host, constants.NODE_DEFAULT_RPC_PORT))
-
-# Check which rpc backend should be used
-rpc_lib = os.environ.get('DALIUGE_RPC', 'pyro')
-if rpc_lib == 'pyro':
-    class CompositeManager(PyroRPCMixIn, CompositeManagerBase): pass
-elif rpc_lib == 'zerorpc':
-    class CompositeManager(ZeroRPCMixIn, CompositeManagerBase): pass
-else:
-    raise DaliugeException("Invalid RPC lib specified, use 'zerorpc' or 'pyro'")
 
 class DataIslandManager(CompositeManager):
     """
