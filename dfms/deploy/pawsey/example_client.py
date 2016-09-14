@@ -82,11 +82,14 @@ class MonitorClient(object):
         is empty, we will try the DIM or MM manager. If that is also empty,
         we will bail out.
         """
-        node_list = []
-        for nl in [nodes, self._dc.nodes()]: #TODO put inside the try block
-            if (len(nl) > 0):
-                node_list = nl
-                break
+        if (len(nodes) > 0):
+            node_list = nl
+        else:
+            node_list = self._dc.nodes()
+        # for nl in [nodes, self._dc.nodes()]: #TODO put inside the try block
+        #     if (len(nl) > 0):
+        #         node_list = nl
+        #         break
         lnl = len(node_list)
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
