@@ -635,7 +635,7 @@ class PGT(object):
 
         node_list:
             A list of nodes (list), whose length == (num_islands + num_node_mgrs)
-            MasterDropManager's node is not included the node_list
+            We assume that the MasterDropManager's node is NOT in the node_list
 
         num_islands:
             >1  - Partitions are "conceptually" clustered into Islands
@@ -819,7 +819,7 @@ class MetisPGTP(PGT):
     Based on METIS
     http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
     """
-    def __init__(self, drop_list, num_partitions=0, min_goal=0,
+    def __init__(self, drop_list, num_partitions=1, min_goal=0,
                 par_label="Partition", ptype=0, ufactor=10, merge_parts=False):
         """
         num_partitions:  number of partitions supplied by users (int)
