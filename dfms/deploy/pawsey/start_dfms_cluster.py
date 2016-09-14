@@ -35,6 +35,7 @@ import commands, time, sys, os, logging
 import json
 from optparse import OptionParser
 import threading
+from collections import defaultdict
 
 import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
 from dfms.deploy.pawsey.example_client import MonitorClient
