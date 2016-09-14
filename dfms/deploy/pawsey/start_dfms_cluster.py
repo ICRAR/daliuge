@@ -373,23 +373,24 @@ if __name__ == '__main__':
             lgn, lg, pg_spec = mc.get_physical_graph(options.gid, nodes=(dim_ip_list + node_mgrs))
 
             # 5. parse the pg_spec to get the mapping from islands to node list
-            dim_rank_nodes_dict = defaultdict(list)
+            dim_rank_nodes_dict = defaultdict(set)
             for drop in pg_spec:
                 dim_ip = drop['island']
                 r = ip_rank_dict[dim_ip]
                 n = drop['node']
-                dim_rank_nodes_dict[r].append(n)
+                dim_rank_nodes_dict[r].add(n)
 
             # 6 send a node list to each DIM so that it can start
             for dim_ip in dim_ip_list:
                 r = ip_rank_dict[dim_ip]
                 logger.debug("Sending node list to rank {0}".format(r))
-                comm.send(dim_rank_nodes_dict[r], dest=r)
+                #TODO this should be in a thread since it is blocking!
+                comm.send(list(dim_rank_nodes_dict[r]), dest=r)
 
             # 7. make sure all DIMs are up running
             retry = 10
             for dim_ip in dim_ip_list:
-                url = "http://{0}:{1}".format(ip, ISLAND_DEFAULT_REST_PORT)
+                url = "http://{0}:{1}".format(dim_ip, ISLAND_DEFAULT_REST_PORT)
                 for j in range(retry):
                     pr = ping_host(url, loc=options.loc)
                     if (pr == 0):
@@ -414,12 +415,13 @@ if __name__ == '__main__':
             dim_ranks = comm.bcast(dim_ranks, root=0)
             logger.debug("Receiving dim_ranks = {0}, my rank is {1}".format(dim_ranks, rank))
             if (rank in dim_ranks):
-                logger.debug("Rank {0} is a DIM preparing for receiving")
+                logger.debug("Rank {0} is a DIM preparing for receiving".format(rank))
                 # island manager
                 # get a list of nodes that are its children from rank 0 (dfmsMM)
                 nm_list = comm.recv(source=0)
                 # no need to wait for node managers since the master manager
                 # has already made sure they are up running
+                logger.debug("nm_list for DIM {0} is {1}".format(rank, nm_list))
                 start_dim(nm_list, log_dir, logv=logv)
             else:
                 # node manager
