@@ -281,7 +281,7 @@ if __name__ == '__main__':
     # attach rank information at the end of IP address for multi-islands
     rank_str = '' if options.num_islands == 1 else ',%s' % rank
     ip_adds = '{0}{1}'.format(get_ip(options.loc), rank_str)
-    origin_ip = ip_adds
+    origin_ip = ip_adds.split(',')[0]
     ip_adds = comm.gather(ip_adds, root=0)
     if (run_proxy):
         # send island/master manager's IP address to the dfms proxy
@@ -412,7 +412,7 @@ if __name__ == '__main__':
         else:
             dim_ranks = None
             dim_ranks = comm.bcast(dim_ranks, root=0)
-            logger.debug("Receiving dim_ranks = {0}, my rank is {1}".foramt(dim_ranks, rank))
+            logger.debug("Receiving dim_ranks = {0}, my rank is {1}".format(dim_ranks, rank))
             if (rank in dim_ranks):
                 logger.debug("Rank {0} is a DIM preparing for receiving")
                 # island manager
