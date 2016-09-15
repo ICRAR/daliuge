@@ -114,7 +114,7 @@ def start_mm(node_list, log_dir, logv=1):
     """
     lv = 'v' * logv
     dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0'])
+    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '200'])
 
 def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
     """

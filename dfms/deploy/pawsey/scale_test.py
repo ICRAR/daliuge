@@ -505,12 +505,15 @@ class LogParser(object):
             print add_line
 
     def check_log_dir(self, log_dir):
-        dim_log_f = os.path.join(log_dir, '0', 'dfmsDIM.log')
-        if (os.path.exists(dim_log_f)):
-            self._dim_log_f = dim_log_f
-            return True
-        else:
-            return False
+        possible_logs = [
+        os.path.join(log_dir, '0', 'dfmsDIM.log'),
+        os.path.join(log_dir, '0', 'dfmsMM.log')
+        ]
+        for dim_log_f in possible_logs:
+            if (os.path.exists(dim_log_f)):
+                self._dim_log_f = dim_log_f
+                return True
+        return False
 
 if __name__ == '__main__':
     parser = optparse.OptionParser()
