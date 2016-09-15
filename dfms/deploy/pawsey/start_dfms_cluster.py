@@ -376,8 +376,8 @@ if __name__ == '__main__':
             dim_rank_nodes_dict = defaultdict(set)
             for drop in pg_spec:
                 dim_ip = drop['island']
-                if (not dim_ip in dim_ip_list):
-                    raise Exception("'{0}' node is not in island list {1}".format(dim_ip, dim_ip_list))
+                # if (not dim_ip in dim_ip_list):
+                #     raise Exception("'{0}' node is not in island list {1}".format(dim_ip, dim_ip_list))
                 r = ip_rank_dict[dim_ip]
                 n = drop['node']
                 dim_rank_nodes_dict[r].add(n)
