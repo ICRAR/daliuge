@@ -435,13 +435,18 @@ class LogParser(object):
         max_node_deploy_time = 0
         num_finished_sess = 0
 
+        num_dims = 0
         for df in os.listdir(self._log_dir):
 
             # Check this is a dir and contains the NM log
             if not os.path.isdir(os.path.join(self._log_dir, df)):
                 continue
             nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
+            nm_dim_logf = os.path.join(self._log_dir, df, 'dfmsDIM.log')
+            nm_mm_logf = os.path.join(self._log_dir, df, 'dfmsMM.log')
             if not os.path.exists(nm_logf):
+                if (os.path.exists(nm_dim_logf) or os.path.exists(nm_mm_logf)):
+                    num_dims += 1
                 continue
 
             # Start anew every time
@@ -472,8 +477,8 @@ class LogParser(object):
                     if dur > max_node_deploy_time:
                         max_node_deploy_time = dur
 
-        if num_nodes - 1 != num_finished_sess:
-            print("Pipeline %s is not complete: %d != %d" % (pip_name, num_nodes - 1, num_finished_sess))
+        if num_nodes - num_dims != num_finished_sess:
+            print("Pipeline %s is not complete: %d != %d" % (pip_name, num_nodes - num_dims, num_finished_sess))
             return
 
         # The DIM waits for all NMs to setup before triggering the first drops.
