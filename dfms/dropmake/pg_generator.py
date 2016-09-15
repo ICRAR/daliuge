@@ -674,6 +674,7 @@ class PGT(object):
         nm_list = node_list[num_islands:]
         nm_len = len(nm_list)
 
+        no_merge = False
         if (form_island):
             self.merge_partitions(num_islands, form_island=True)
             # from Eq.1 we know that num_parts <= nm_len
@@ -681,6 +682,8 @@ class PGT(object):
         elif (nm_len < num_parts):
             self.merge_partitions(nm_len, form_island=False)
             num_parts = nm_len
+        else:
+            no_merge = True
 
         lm = self._oid_gid_map
         lm2 = self._gid_island_id_map
@@ -691,7 +694,7 @@ class PGT(object):
             #TODO consider distance between a pair of nodes
             gid = lm[oid] % num_parts
             drop['node'] = nm_list[gid]
-            isid = lm2[gid] % num_islands
+            isid = 0 if no_merge else lm2[gid] % num_islands
             drop['island'] = is_list[isid]
 
         if (ret_str):

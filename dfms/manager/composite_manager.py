@@ -363,12 +363,40 @@ class CompositeManager(DROPManager):
                 exceptions[host] = e
                 logger.exception("An exception occurred while moving DROPs to COMPLETED")
 
+    def _add_node_subscriptions_wrapper(self, exceptions, sessionId, host_and_subscriptions):
+        host = host_and_subscriptions[0]
+        with self.dmAt(host, port=constants.NODE_DEFAULT_REST_PORT) as dm:
+            try:
+                self._add_node_subscriptions(dm, host_and_subscriptions, sessionId)
+            except Exception as e:
+                exceptions[host] = e
+                logger.exception("An exception occurred while adding node subscription")
+
     def deploySession(self, sessionId, completedDrops=[]):
 
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
         if self._drop_rels[sessionId]:
-            self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information", iterable=self._drop_rels[sessionId].items())
+            # This call throws exception if "I" am MM (but not DIM)
+            #self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information", iterable=self._drop_rels[sessionId].items())
+
+            # It appears that the function ensureDM() inside the _do_in_host()
+            # cannot make "cross hiearchy level" calls, this is
+            # because the self_dmPort is hardcoded inside ensureDM() to be the
+            # port directly managed by me (i.e. MM) but not by my children DIMs.
+            # In addition, when calling dmAT, _do_in_host() does not explicitly
+            # specify a NODE port so MM cannot directly contact NM.
+            # Here we instead invoke add_node_subscription() directly for now.
+            # It appears working fine.
+            # It also appears that we are mixing this non-recursive call inside
+            # a resursive function: deploySession())
+
+            ####
+            thrExs = {}
+            self._tp.map(functools.partial(self._add_node_subscriptions_wrapper, thrExs, sessionId), self._drop_rels[sessionId].items())
+            if thrExs:
+                raise DaliugeException("One or more exceptions occurred while adding node subscription: %s" % (sessionId), thrExs)
+            ###
             logger.info("Delivered node subscription list to node managers")
 
         logger.info('Deploying Session %s in all hosts', sessionId)
