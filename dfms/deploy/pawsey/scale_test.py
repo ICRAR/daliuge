@@ -401,7 +401,7 @@ class LogParser(object):
         pip_name = sp[0]
         do_date = sp[1]
         num_nodes = int(delimit.split('_')[1][1:])
-        user_name = getpwuid(stat(self._dim_log_f).st_uid).pw_name
+        user_name = getpwuid(stat(self._dim_log_f[0]).st_uid).pw_name
         gitf = os.path.join(self._log_dir, 'git_commit.txt')
         if (os.path.exists(gitf)):
             with open(gitf, 'r') as gf:
@@ -411,14 +411,15 @@ class LogParser(object):
 
         # parse DIM log
         dim_log_pairs = self.build_dim_log_entry_pairs()
-        with open(self._dim_log_f, "r") as dimlog:
-            for line in dimlog:
-                m = self._dim_catchall_pattern.match(line)
-                if not m:
-                    continue
-                for lep in dim_log_pairs:
-                    lep.check_start(m, line)
-                    lep.check_end(m, line)
+        for lff in self._dim_log_f:
+            with open(lff, "r") as dimlog:
+                for line in dimlog:
+                    m = self._dim_catchall_pattern.match(line)
+                    if not m:
+                        continue
+                    for lep in dim_log_pairs:
+                        lep.check_start(m, line)
+                        lep.check_end(m, line)
 
         num_drops = -1
         temp_dim = []
@@ -516,7 +517,11 @@ class LogParser(object):
         ]
         for dim_log_f in possible_logs:
             if (os.path.exists(dim_log_f)):
-                self._dim_log_f = dim_log_f
+                self._dim_log_f = [dim_log_f]
+                if (dim_log_f == possible_logs[1]):
+                    cluster_log = os.path.join(log_dir, '0', 'start_dfms_cluster.log')
+                    if (os.path.exists(cluster_log)):
+                        self._dim_log_f.append(cluster_log)
                 return True
         return False
 
