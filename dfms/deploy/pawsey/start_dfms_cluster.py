@@ -104,7 +104,7 @@ def start_dim(node_list, log_dir, logv=1):
     """
     lv = 'v' * logv
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
-    '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '100'])
+    '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '1024'])
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -114,7 +114,7 @@ def start_mm(node_list, log_dir, logv=1):
     """
     lv = 'v' * logv
     dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '200'])
+    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '1024'])
 
 def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
     """
