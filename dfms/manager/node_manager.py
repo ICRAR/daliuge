@@ -81,6 +81,13 @@ class NMDropEventListener(object):
         event.session_id = self._session_id
         self._nm.publish_event(event)
 
+class LogEvtListener(object):
+    def handleEvent(self, event):
+        if event.type == 'status':
+            logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
+        elif event.type == 'execStatus':
+            logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
+
 class NodeManagerBase(DROPManager):
     """
     Base class for a DROPManager that creates and holds references to DROPs.
@@ -145,6 +152,10 @@ class NodeManagerBase(DROPManager):
             max_threads = max(min(max_threads, 200), 1)
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+
+        # Event handler that only logs status changes
+        debugging = logger.isEnabledFor(logging.DEBUG)
+        self._logging_event_listener = LogEvtListener() if debugging else None
 
         # Start the mix-ins
         self.start()
@@ -230,11 +241,19 @@ class NodeManagerBase(DROPManager):
             if self._dlm:
                 self._dlm.addDrop(drop)
 
+            # Remote event forwarding
             evt_listener = NMDropEventListener(self, sessionId)
             if isinstance(drop, AppDROP):
                 drop.subscribe(evt_listener, 'producerFinished')
             else:
                 drop.subscribe(evt_listener, 'dropCompleted')
+
+            # Purely for logging purposes
+            log_evt_listener = self._logging_event_listener
+            if log_evt_listener:
+                drop.subscribe(log_evt_listener, 'status')
+                if isinstance(drop, AppDROP):
+                    drop.subscribe(log_evt_listener, 'execStatus')
 
         session.deploy(completedDrops=completedDrops, foreach=foreach)
 
