@@ -316,8 +316,8 @@ class CompositeManager(DROPManager):
 
             perPartition[partition].append(dropSpec)
 
-        # Add the drop specs to our graph
-        self._graph.update({uid_for_drop(dropSpec): dropSpec for dropSpec in graphSpec})
+            # Add the drop specs to our graph
+            self._graph[uid_for_drop(dropSpec)] = dropSpec
 
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
@@ -407,6 +407,9 @@ class CompositeManager(DROPManager):
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
         if completedDrops:
+            not_found = set(completedDrops) - set(self._graph)
+            if not_found:
+                raise DaliugeException("UIDs for completed drops not found: %r", not_found)
             logger.info('Moving following DROPs to COMPLETED right away: %r', completedDrops)
             completed_by_host = group_by_node(completedDrops, self._graph)
             thrExs = {}
