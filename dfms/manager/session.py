@@ -185,9 +185,10 @@ class Session(object):
         # This will check the consistency of each dropSpec
         graphSpecDict = graph_loader.loadDropSpecs(graphSpec)
 
-        for oid in graphSpecDict:
-            if oid in self._graph:
-                raise InvalidGraphException('DROP with OID %s already exists, cannot add twice' % (oid))
+        # Check for duplicates
+        duplicates = set(graphSpecDict) & set(self._graph)
+        if duplicates:
+            raise InvalidGraphException('Trying to add drops with OIDs that already exist: %r' % (duplicates,))
 
         self._graph.update(graphSpecDict)
 

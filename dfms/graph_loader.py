@@ -144,8 +144,6 @@ def loadDropSpecs(dropSpecList):
     this method doesn't actually create the DROPs themselves.
     """
 
-    logger.debug("Found %d DROP definitions", len(dropSpecList))
-
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
     for dropSpec in dropSpecList:
@@ -156,6 +154,8 @@ def loadDropSpecs(dropSpecList):
         cf = __CREATION_FUNCTIONS[dropType]
         cf(dropSpec, dryRun=True)
         dropSpecs[dropSpec['oid']] = dropSpec
+
+    logger.debug("Found %d DROP definitions", len(dropSpecs))
 
     # Step #2: check relationships
     for dropSpec in dropSpecList:
