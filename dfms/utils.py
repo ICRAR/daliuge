@@ -23,6 +23,7 @@
 Module containing miscellaneous utility classes and functions.
 """
 
+import contextlib
 import errno
 import logging
 import math
@@ -136,7 +137,8 @@ def write_to(host, port, data, timeout=None):
     piece of ``data`` into the connected socket.
     """
     sock = connect_to(host, port, timeout=timeout)
-    sock.send(data)
+    with contextlib.closing(sock):
+        sock.send(data)
 
 def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     """
@@ -155,8 +157,8 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     within the time limit, and ``False`` otherwise.
     """
 
-    if not checking_open and return_socket:
-        raise ValueError("If return_socket then checking_open must be False")
+    if return_socket and not checking_open:
+        raise ValueError("If return_socket is True then checking_open must be True")
 
     start = time.time()
     while True:
