@@ -567,7 +567,7 @@ class ZeroRPCMixIn(BaseMixIn):
             try:
                 req = req_queue.get_nowait()
             except Queue.Empty:
-                gevent.sleep(0.001)
+                gevent.sleep(0.005)
             else:
                 async_result = client.__call__(req.method, *req.args, async=True)
                 res = ZeroRPCMixIn.response(async_result, req.queue)
@@ -587,7 +587,7 @@ class ZeroRPCMixIn(BaseMixIn):
                     replied.add(res)
             to_reply -= replied
 
-            gevent.sleep(0.001)
+            gevent.sleep(0.005)
 
     def get_rpc_client(self, hostname, port):
         client = self.get_client_for_endpoint(hostname, port)
