@@ -73,7 +73,7 @@ class TestBigGraph(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
 
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', '-H', '0.0.0.0', '-qq']
+        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', '-H', '0.0.0.0', '-v', '-m', '1000']
         self.dmProcess = subprocess.Popen(args)
 
     def tearDown(self):
@@ -89,8 +89,8 @@ class TestBigGraph(unittest.TestCase):
 
         # Each branch contains a data drop and an app drop
         # All branches connect to a final data drop
-        drops_per_branch=5000
-        branches = 5
+        drops_per_branch=4000
+        branches = 100
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
         self.assertEqual(n_drops, len(graph))
