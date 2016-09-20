@@ -24,6 +24,7 @@ Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
+import functools
 import json
 import logging
 import zlib
@@ -42,7 +43,14 @@ from dfms.restutils import RestServer, RestClient, DALIUGE_HDR_ERR, \
 
 logger = logging.getLogger(__name__)
 
+try:
+    import ijson.backends.yajl2_cffi as ijson
+except ImportError as e:
+    import ijson
+
 def daliuge_aware(func):
+
+    @functools.wraps(func)
     def fwrapper(*args, **kwargs):
         try:
             res = func(*args, **kwargs)
@@ -192,6 +200,7 @@ class ManagerRestServer(RestServer):
             graph_parts = bottle.json_loads(content)
         else:
             graph_parts = bottle.request.json
+        graph_parts = ijson.items(graph_parts, 'item')
         self.dm.addGraphSpec(sessionId, graph_parts)
 
     #===========================================================================
