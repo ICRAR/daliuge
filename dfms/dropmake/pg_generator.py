@@ -1041,9 +1041,9 @@ class MetisPGTP(PGT):
         G.graph['edge_weight_attr'] = 'weight'
         G.graph['node_weight_attr'] = 'tw'
         G.graph['node_size_attr'] = 'sz'
-        for gid, v in self._group_workloads.iteritems():
+        for gid, v in self._group_workloads.items():
             G.add_node(gid, tw=v[0], sz=v[1])
-        for glinks, v in part_edges.iteritems():
+        for glinks, v in part_edges.items():
             gl = glinks.split('**')
             G.add_edge(int(gl[0]), int(gl[1]), weight=v)
 
