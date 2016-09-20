@@ -156,17 +156,11 @@ class MonitorClient(object):
             self._dc.deploy_session(ssid, completed_uids=completed_uids)
             logger.info("session {0} deployed".format(ssid))
 
-    def write_physical_graph(self, graph_id, tgt="/tmp"):
-
+    def write_physical_graph(self, graph_id):
         lgn, _, pg_spec = self.get_physical_graph(graph_id)
-
-        tof = self._output
-        if (self._output is None):
-            tof = '{0}/sar_{1}_pgspec.json'.format(tgt, lgn.split('.')[0])
-
-        with open(tof, 'w') as f:
-            f.write(pg_spec)
-
+        fname = self._output or '{1}_pgspec.json'.format(lgn.split('.')[0])
+        with open(fname, 'w') as f:
+            json.dump(pg_spec, f, indent=1)
 
 if __name__ == '__main__':
 
