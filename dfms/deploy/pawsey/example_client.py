@@ -64,7 +64,9 @@ class MonitorClient(object):
                  algo='sarkar',
                  output=None,
                  zerorun=False,
-                 app=None):
+                 app=None,
+                 nodes=[],
+                 num_islands=1):
 
         self._host = mhost
         self._port = mport
@@ -73,8 +75,10 @@ class MonitorClient(object):
         self._zerorun = zerorun
         self._output = output
         self._app = MonitorClient.apps[app] if app else None
+        self._nodes = nodes
+        self._num_islands = num_islands
 
-    def get_physical_graph(self, graph_id, nodes=[], num_islands=1):
+    def get_physical_graph(self, graph_id):
         """
         nodes:  If non-empty, is a list of node (e.g. IP addresses, string type),
                     which shoud NOT include the MasterManager's node address
@@ -83,15 +87,8 @@ class MonitorClient(object):
         is empty, we will try the DIM or MM manager. If that is also empty,
         we will bail out.
         """
-        if (len(nodes) > 0):
-            node_list = nodes
-        else:
-            node_list = self._dc.nodes()
-        # for nl in [nodes, self._dc.nodes()]: #TODO put inside the try block
-        #     if (len(nl) > 0):
-        #         node_list = nl
-        #         break
-        lnl = len(node_list) - num_islands
+        node_list = self._nodes or self._dc.nodes()
+        lnl = len(node_list) - self._num_islands
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
         logger.info("Got a node list with {0} nodes".format(lnl))
@@ -113,7 +110,7 @@ class MonitorClient(object):
         pgtp.to_gojs_json(string_rep=False)
         logger.info("Translation completed for {0}".format(lgn))
 
-        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False, num_islands=num_islands)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False, num_islands=self._num_islands)
         logger.info("PG spec is calculated!")
 
         if self._zerorun:
@@ -174,8 +171,14 @@ class MonitorClient(object):
 if __name__ == '__main__':
 
     parser = optparse.OptionParser()
+    parser.add_option("-l", "--list", action="store_true",
+                      dest="list_graphs", help="List available graphs and exit", default=False)
     parser.add_option("-H", "--host", action="store",
                       dest="host", help="The host where the graph will be deployed", default="localhost")
+    parser.add_option("-N", "--nodes", action="store",
+                      dest="nodes", help="The nodes where the physical graph will be distributed, comma-separated", default="localhost")
+    parser.add_option("-i", "--islands", action="store", type="int",
+                      dest="islands", help="Number of drop islands", default=1)
     parser.add_option("-a", "--action", action="store",
                       dest="act", help="action, either 'submit' or 'print'", default="submit")
     parser.add_option("-A", "--algorithm", action="store",
@@ -193,15 +196,26 @@ if __name__ == '__main__':
 
     (opts, args) = parser.parse_args(sys.argv)
 
+    if opts.list_graphs:
+        print '\n'.join(["%2d: %s" % (i,g) for i,g in enumerate(lgnames)])
+        sys.exit(0)
+
+    fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+    logging.basicConfig(level=logging.INFO, format=fmt)
+
     if opts.graph_id is None:
         parser.error("Missing -g")
     if opts.graph_id >= len(lgnames):
         parser.error("-g must be between 0 and %d" % (len(lgnames),))
 
-    mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo, zerorun=opts.zerorun, app=opts.app)
-    if ('submit' == opts.act):
+    nodes = opts.nodes.split(',')
+    mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo,
+                       zerorun=opts.zerorun, app=opts.app, nodes=nodes,
+                       num_islands=opts.islands)
+
+    if 'submit' == opts.act:
         mc.submit_single_graph(opts.graph_id, deploy=True)
-    elif ('print' == opts.act):
+    elif 'print' == opts.act:
         mc.write_physical_graph(opts.graph_id)
     else:
         raise Exception('Unknown action: {0}'.format(opts.act))
