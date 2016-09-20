@@ -87,11 +87,11 @@ class MonitorClient(object):
         is empty, we will try the DIM or MM manager. If that is also empty,
         we will bail out.
         """
-        node_list = self._nodes or self._dc.nodes()
+        node_list = self._nodes if self._nodes else self._dc.nodes()
         lnl = len(node_list) - self._num_islands
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
-        logger.info("Got a node list with {0} nodes".format(lnl))
+        logger.info("Got a node list with %d nodes", lnl)
 
         lgn = lgnames[graph_id]
         fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     parser.add_option("-H", "--host", action="store",
                       dest="host", help="The host where the graph will be deployed", default="localhost")
     parser.add_option("-N", "--nodes", action="store",
-                      dest="nodes", help="The nodes where the physical graph will be distributed, comma-separated", default="localhost")
+                      dest="nodes", help="The nodes where the physical graph will be distributed, comma-separated", default=None)
     parser.add_option("-i", "--islands", action="store", type="int",
                       dest="islands", help="Number of drop islands", default=1)
     parser.add_option("-a", "--action", action="store",
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     if opts.graph_id >= len(lgnames):
         parser.error("-g must be between 0 and %d" % (len(lgnames),))
 
-    nodes = opts.nodes.split(',')
+    nodes = opts.nodes.split(',') if opts.nodes else []
     mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo,
                        zerorun=opts.zerorun, app=opts.app, nodes=nodes,
                        num_islands=opts.islands)
