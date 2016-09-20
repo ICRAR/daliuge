@@ -58,10 +58,11 @@ class RestServerWSGIServer:
 
     def serve_forever(self):
         self.server.serve_forever()
-    
+
     def server_close(self):
         self.server.shutdown()
-        
+        self.server.server_close()
+
 class RestServer(object):
     """
     The base class for our REST servers
