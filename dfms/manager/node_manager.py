@@ -25,6 +25,7 @@ thus represents the bottom of the DROP management hierarchy.
 """
 
 import abc
+import collections
 import importlib
 import inspect
 import logging
@@ -461,12 +462,20 @@ class ZMQPubSubMixIn(BaseMixIn):
 
 class ZeroRPCMixIn(BaseMixIn):
 
+    request = collections.namedtuple('request', 'method args queue')
+    response = collections.namedtuple('response', 'async_result queue')
+
     def start(self):
         super(ZeroRPCMixIn, self).start()
 
         # Starts the single-threaded ZeroRPC server for RPC requests
         self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server", args=(self._host, self._rpc_port,))
         self._zrpcserverthread.start()
+
+        # One per remote host
+        self._zrpcclient_acquisition_lock = threading.Lock()
+        self._zrpcclients = {}
+        self._zrpcclientthreads = []
 
     def run_zrpcserver(self, host, port):
 
@@ -476,36 +485,114 @@ class ZeroRPCMixIn(BaseMixIn):
         # Use a specific context; otherwise multiple servers on the same process
         # (only during tests) share the same Context.instance() which is global
         # to the process
-        self._zrpcserver = zerorpc.Server(self, context=zerorpc.Context())
+        ctx = zerorpc.Context()
+        self._zrpcserver = zerorpc.Server(self, context=ctx)
         # zmq needs an address, not a hostname
         endpoint = "tcp://%s:%d" % (zmq_safe(host), port,)
         self._zrpcserver.bind(endpoint)
         logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
-        gr1 = gevent.spawn(self._zrpcserver.run)
-        gr2 = gevent.spawn(self.stop_rpcserver)
-        gevent.joinall([gr1, gr2])
+        runner = gevent.spawn(self._zrpcserver.run)
+        stopper = gevent.spawn(self.stop_zrpcserver)
+        gevent.joinall([runner, stopper])
+        self._zrpcserver.close()
+        ctx.destroy()
 
-    def stop_rpcserver(self):
+    def stop_zrpcserver(self):
         import gevent
         while self._running:
-            gevent.sleep(0.2)
-        self._zrpcserver.close()
+            gevent.sleep(0.01)
+        self._zrpcserver.stop()
 
     def shutdown(self):
         super(ZeroRPCMixIn, self).shutdown()
-        self._zrpcserverthread.join()
+        for t in [self._zrpcserverthread] + self._zrpcclientthreads:
+            t.join()
 
-    def get_rpc_client(self, hostname, port):
+    def get_client_for_endpoint(self, host, port):
+
+        endpoint = (host, port)
+
+        with self._zrpcclient_acquisition_lock:
+            if endpoint in self._zrpcclients:
+                return self._zrpcclients[endpoint]
+
+            # We start the new client on its own thread so it uses gevent, etc.
+            # In this thread we create simply enqueue requests
+            req_queue = Queue.Queue()
+            tname_tpl, args = "zrpc(%s)", host
+            if port != constants.NODE_DEFAULT_RPC_PORT:
+                tname_tpl, args = "zrpc(%s:%d)", (host, port)
+            t = threading.Thread(target=self.run_zrpcclient, args=(host, port, req_queue),
+                                 name=tname_tpl % args)
+            t.start()
+
+            class QueueingClient(object):
+                def __make_call(self, method, *args):
+                    res_queue = Queue.Queue()
+                    req_queue.put(ZeroRPCMixIn.request(method, args, res_queue))
+                    return res_queue.get()
+                def call_drop(self, session_id, uid, name, *args):
+                    return self.__make_call('call_drop', session_id, uid, name, *args)
+                def get_drop_property(self, session_id, uid, name):
+                    return self.__make_call('get_drop_property', session_id, uid, name)
+                def has_method(self, session_id, uid, name):
+                    return self.__make_call('has_method', session_id, uid, name)
+
+            client = QueueingClient()
+            self._zrpcclients[endpoint] = client
+            self._zrpcclientthreads.append(t)
+            return client
+
+    def run_zrpcclient(self, host, port, req_queue):
+        import gevent
+
         # Each client uses a different Context; otherwise they all share
         # the same Context.instance() which is global to the process,
         # and generates the same channel IDs, confusing the server
         import zerorpc
         ctx = zerorpc.Context()
-        client = zerorpc.Client("tcp://%s:%d" % (hostname,port), context=ctx)
-        def close():
-            client.close()
-            ctx.destroy()
-        return client, close
+        client = zerorpc.Client("tcp://%s:%d" % (host,port), context=ctx)
+
+        to_reply = set()
+        forwarder = gevent.spawn(self.forward_requests, req_queue, client, to_reply)
+        replier = gevent.spawn(self.process_replies, to_reply)
+        gevent.joinall([forwarder, replier])
+
+        client.close()
+        client._context.destroy()
+
+    def forward_requests(self, req_queue, client, to_reply):
+        import gevent
+        while self._running:
+            try:
+                req = req_queue.get_nowait()
+            except Queue.Empty:
+                gevent.sleep(0.001)
+            else:
+                async_result = client.__call__(req.method, *req.args, async=True)
+                res = ZeroRPCMixIn.response(async_result, req.queue)
+                to_reply.add(res)
+
+    def process_replies(self, to_reply):
+        import gevent
+        while self._running:
+            replied = set()
+            for res in to_reply:
+                try:
+                    val = res.async_result.get_nowait()
+                except gevent.Timeout:
+                    continue
+                else:
+                    res.queue.put(val)
+                    replied.add(res)
+            to_reply -= replied
+
+            gevent.sleep(0.001)
+
+    def get_rpc_client(self, hostname, port):
+        client = self.get_client_for_endpoint(hostname, port)
+        # No closing function since clients are long-lived
+        return client, lambda: None
 
 class RPyCMixIn(BaseMixIn):
 
