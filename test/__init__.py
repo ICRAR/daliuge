@@ -23,8 +23,19 @@
 # Avoid tornado calling logging.basicConfig(), which will happen if it finds
 # that no logger (root, 'tornado' and 'tornado.application') has been configured
 # with a handler
-import logging
-logging.getLogger('tornado').addHandler(logging.NullHandler())
+def __setupTestLogging():
 
-# Avoid also the 'no handlers could be found' message for the spead2 logger
-logging.getLogger('spead2').addHandler(logging.NullHandler())
+    import os
+    import logging
+
+    # If we indicated a logging level for the tests we use that level
+    # for our framework (and enable logging)
+    level = os.environ.get('DALIUGE_TESTS_LOGLEVEL', None)
+    if level:
+        fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+        logging.basicConfig(format=fmt, level=level)
+    else:
+        logging.root.addHandler(logging.NullHandler())
+
+__setupTestLogging()
+del __setupTestLogging
