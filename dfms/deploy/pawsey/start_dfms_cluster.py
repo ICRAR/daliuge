@@ -125,11 +125,11 @@ def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
     # use monitorclient to interact with island manager
     if (graph_id is not None):
-        mc = MonitorClient('localhost', 8001, algo='metis', zerorun=zerorun, app=app)
         dc = mc._dc
         nodes = [dim_ip] + dc.nodes()
+        mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis', zerorun=zerorun, app=app, nodes=nodes)
         logger.info("Submitting graph {0}".format(graph_id))
-        lgn, lg, pg_spec = mc.get_physical_graph(graph_id, nodes=nodes)
+        lgn, lg, pg_spec = mc.get_physical_graph(graph_id)
         mc.submit_single_graph(graph_id, deploy=True, pg=(lgn, lg, pg_spec))
         logger.info("graph {0} is successfully submitted".format(graph_id))
     else:
@@ -369,8 +369,10 @@ if __name__ == '__main__':
             # that have alraedy been running (we have to assume island manager
             # will run smoothly in the future)
             logger.info("Master Manager producing the physical graph")
-            mc = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT, algo='metis', zerorun=options.zerorun, app=options.app)
-            lgn, lg, pg_spec = mc.get_physical_graph(options.gid, nodes=(dim_ip_list + node_mgrs), num_islands=options.num_islands)
+            mc = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT,
+                algo='metis', zerorun=options.zerorun, app=options.app,
+                nodes=(dim_ip_list + node_mgrs), num_islands=options.num_islands)
+            lgn, lg, pg_spec = mc.get_physical_graph(options.gid)
 
             # 5. parse the pg_spec to get the mapping from islands to node list
             dim_rank_nodes_dict = defaultdict(set)
