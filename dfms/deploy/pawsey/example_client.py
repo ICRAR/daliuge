@@ -87,7 +87,7 @@ class MonitorClient(object):
         is empty, we will try the DIM or MM manager. If that is also empty,
         we will bail out.
         """
-        node_list = self._nodes if self._nodes else self._dc.nodes()
+        node_list = self._nodes or self._dc.nodes()
         lnl = len(node_list) - self._num_islands
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
@@ -173,14 +173,14 @@ if __name__ == '__main__':
                       dest="nodes", help="The nodes where the physical graph will be distributed, comma-separated", default=None)
     parser.add_option("-i", "--islands", action="store", type="int",
                       dest="islands", help="Number of drop islands", default=1)
-    parser.add_option("-a", "--action", action="store",
-                      dest="act", help="action, either 'submit' or 'print'", default="submit")
-    parser.add_option("-A", "--algorithm", action="store",
-                      dest="algo", help="algorithm used to do the LG --> PG conversion, either 'metis' or 'sarkar'", default="sarkar")
+    parser.add_option("-a", "--action", action="store", type="choice", choices=['submit', 'print'],
+                      dest="act", help="The action to perform", default="submit")
+    parser.add_option("-A", "--algorithm", action="store", type="choice", choices=['metis', 'sarkar'],
+                      dest="algo", help="algorithm used to do the LG --> PG conversion", default="metis")
     parser.add_option("-p", "--port", action="store", type="int",
                       dest="port", help="The port we connect to to deploy the graph", default=8001)
     parser.add_option("-g", "--graph-id", action="store", type="int",
-                      dest="graph_id", help="The graph to deploy (0 - 7)", default=None)
+                      dest="graph_id", help="The graph to deploy, see -l for a list", default=None)
     parser.add_option("-o", "--output", action="store", type="string",
                       dest="output", help="Where to dump the general physical graph", default=None)
     parser.add_option("-z", "--zerorun", action="store_true",
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     if opts.graph_id >= len(lgnames):
         parser.error("-g must be between 0 and %d" % (len(lgnames),))
 
-    nodes = opts.nodes.split(',') if opts.nodes else []
+    nodes = [n for n in opts.nodes.split(',') if n] if opts.nodes else []
     mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo,
                        zerorun=opts.zerorun, app=opts.app, nodes=nodes,
                        num_islands=opts.islands)
