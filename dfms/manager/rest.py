@@ -30,7 +30,6 @@ import zlib
 
 import bottle
 import pkg_resources
-import six
 
 from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
@@ -189,10 +188,11 @@ class ManagerRestServer(RestServer):
         # We also accept gzipped content
         hdrs = bottle.request.headers
         if hdrs.get('Content-Encoding', None) == 'gzip':
-            content = six.BytesIO(zlib.decompress(bottle.request.body.read()))
+            content = zlib.decompress(bottle.request.body.read())
+            graph_parts = bottle.json_loads(content)
         else:
-            content = bottle.request.body
-        self.dm.addGraphSpec(sessionId, json.load(content))
+            graph_parts = bottle.request.json
+        self.dm.addGraphSpec(sessionId, graph_parts)
 
     #===========================================================================
     # non-REST methods
