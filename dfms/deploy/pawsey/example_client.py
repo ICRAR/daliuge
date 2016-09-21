@@ -191,7 +191,7 @@ if __name__ == '__main__':
     (opts, args) = parser.parse_args(sys.argv)
 
     if opts.list_graphs:
-        print '\n'.join(["%2d: %s" % (i,g) for i,g in enumerate(lgnames)])
+        print('\n'.join(["%2d: %s" % (i,g) for i,g in enumerate(lgnames)]))
         sys.exit(0)
 
     fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
