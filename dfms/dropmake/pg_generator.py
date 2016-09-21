@@ -629,7 +629,7 @@ class PGT(object):
         return self._json_str
         # return self.to_gojs_json()
 
-    def to_pg_spec(self, node_list, ret_str=True, num_islands=1):
+    def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
@@ -643,6 +643,10 @@ class PGT(object):
                 depending on the length of node_list
 
         """
+        if (tpl_nodes_len > 0): # generate pg_spec template
+            node_list = range(tpl_nodes_len) # create a fake list for now
+            #TODO proper branch
+
         if ((node_list is None) or (0 == len(node_list))):
             raise GPGTException("Node list is empty!")
 
@@ -684,6 +688,10 @@ class PGT(object):
 
         lm = self._oid_gid_map
         lm2 = self._gid_island_id_map
+        if (tpl_nodes_len):
+            nm_list = ['#%s' % x for x in range(nm_len)] # so that nm_list[i] == '#i'
+            is_list = ['#%s' % x for x in range(len(is_list))] # so that is_list[i] == '#i'
+
         for drop in drop_list:
             oid = drop['oid']
             # For now, simply round robin, but need to consider
