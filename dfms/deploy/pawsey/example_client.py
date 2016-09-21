@@ -68,7 +68,7 @@ class MonitorClient(object):
                  app=None,
                  nodes=[],
                  num_islands=1,
-                 graph_file=None):
+                 skip_tpl_check=False):
 
         self._host = mhost
         self._port = mport
@@ -79,7 +79,7 @@ class MonitorClient(object):
         self._app = MonitorClient.apps[app] if app else None
         self._nodes = nodes
         self._num_islands = num_islands
-        self._graph_file = graph_file
+        self._skip_tpl_check = skip_tpl_check
 
     def get_physical_graph(self, graph_id, tpl_nodes_len=0):
         """
@@ -129,7 +129,9 @@ class MonitorClient(object):
                 logger.error(err_info)
                 raise InvalidGraphException(err_info)
 
-            if (('node' in drop_list[0]) and drop_list[0]['node'].startswith('#')):
+            if ((not self._skip_tpl_check)
+                and ('node' in drop_list[0])
+                and drop_list[0]['node'].startswith('#')):
                 # template
                 perform_partition = False
 
@@ -159,7 +161,9 @@ class MonitorClient(object):
                     drop_spec['island'] = dim_list[iidx]
                 logger.info("Translation completed for {0}".format(graph_id))
             else:
-                logger.info("Empty node_list, cannot translate the pg_spec template!")
+                err_info = "Empty node_list, cannot translate the pg_spec template!"
+                logger.error(err_info)
+                raise DaliugeException(err_info)
             pg_spec = drop_list
 
         logger.info("PG spec is calculated!")
@@ -224,8 +228,10 @@ if __name__ == '__main__':
     grep "\"node\": \"tt\"" /tmp/pg_spec_g13_full_3.json | wc -l
     grep "\"node\": \"ee\"" /tmp/pg_spec_g13_full_3.json | wc -l
     grep "\"island\": \"qq\"" /tmp/pg_spec_g13_full_3.json | wc -l
-    """
     #TODO write test cases to assert the above (wc1 + wc2 == wc3 == 2226)
+    python -m dfms.deploy.pawsey.example_client -o /tmp/pg_spec_g13_7.tpl  -g /tmp/pg_spec_g13_full_3.tpl -t 7 -s
+    python -m dfms.deploy.pawsey.example_client -o /tmp/pg_spec_g13_7.json  -g /tmp/pg_spec_g13_full_3.tpl -s -N aa,bb,cc,dd,ee,ff,gg
+    """
 
     parser = optparse.OptionParser()
     parser.add_option("-l", "--list", action="store_true",
@@ -252,6 +258,8 @@ if __name__ == '__main__':
                       dest="app", help="The app to use in the PG. 0=SleepApp (default), 1=SleepAndCopy", default=0)
     parser.add_option("-t", "--tpl-nodes-len", action="store", type="int",
                       dest="tpl_nodes_len", help="node list length for generating pg_spec template", default=0)
+    parser.add_option("-s", "--skip-tpl-check", action="store_true",
+                      dest="skip_tpl_check", help="Whether to skip checking if a pg_spec is a template", default=False)
 
     (opts, args) = parser.parse_args(sys.argv)
 
@@ -279,7 +287,7 @@ if __name__ == '__main__':
     nodes = [n for n in opts.nodes.split(',') if n] if opts.nodes else []
     mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo,
                        zerorun=opts.zerorun, app=opts.app, nodes=nodes,
-                       num_islands=opts.islands)
+                       num_islands=opts.islands, skip_tpl_check=opts.skip_tpl_check)
 
     if (opts.output is not None):
         opts.act = 'print'
