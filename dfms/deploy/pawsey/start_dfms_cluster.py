@@ -125,9 +125,9 @@ def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
     # use monitorclient to interact with island manager
     if (graph_id is not None):
+        mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis', zerorun=zerorun, app=app, nodes=nodes)
         dc = mc._dc
         nodes = [dim_ip] + dc.nodes()
-        mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis', zerorun=zerorun, app=app, nodes=nodes)
         logger.info("Submitting graph {0}".format(graph_id))
         lgn, lg, pg_spec = mc.get_physical_graph(graph_id)
         mc.submit_single_graph(graph_id, deploy=True, pg=(lgn, lg, pg_spec))
