@@ -26,6 +26,7 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 
 import json
 import logging
+import zlib
 
 import bottle
 import pkg_resources
@@ -184,7 +185,14 @@ class ManagerRestServer(RestServer):
         if bottle.request.content_type != 'application/json':
             bottle.response.status = 415
             return
-        self.dm.addGraphSpec(sessionId, bottle.request.json)
+        # We also accept gzipped content
+        hdrs = bottle.request.headers
+        if hdrs.get('Content-Encoding', None) == 'gzip':
+            content = zlib.decompress(bottle.request.body.read())
+            graph_parts = bottle.json_loads(content)
+        else:
+            graph_parts = bottle.request.json
+        self.dm.addGraphSpec(sessionId, graph_parts)
 
     #===========================================================================
     # non-REST methods
