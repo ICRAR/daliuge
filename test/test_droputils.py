@@ -183,7 +183,7 @@ class DropUtilsTest(unittest.TestCase):
                    {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
-        self.assertEqual('A', roots[0]['oid'])
+        self.assertEqual('A', next(iter(roots)))
 
         """
         A --> B
@@ -193,7 +193,7 @@ class DropUtilsTest(unittest.TestCase):
                    {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp", "inputs": ["A"]}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
-        self.assertEqual('A', roots[0]['oid'])
+        self.assertEqual('A', next(iter(roots)))
 
         """
         A --> C --> D --|
@@ -208,10 +208,10 @@ class DropUtilsTest(unittest.TestCase):
                    {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(2, len(roots))
-        self.assertListEqual(['A', 'B'], sorted([x['oid'] for x in roots]))
+        self.assertListEqual(['A', 'B'], sorted(roots))
 
         # The same as before but using dropdicts
         pg_spec_dropdicts = [dropdict(dropspec) for dropspec in pg_spec]
         roots = droputils.get_roots(pg_spec_dropdicts)
         self.assertEqual(2, len(roots))
-        self.assertListEqual(['A', 'B'], sorted([x['oid'] for x in roots]))
+        self.assertListEqual(['A', 'B'], sorted(roots))
