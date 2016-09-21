@@ -185,7 +185,7 @@ class MonitorClient(object):
             return dropSpec['oid']
 
         logger.info("About to compute roots")
-        completed_uids = [uid_for_drop(x) for x in droputils.get_roots(pg_spec)]
+        completed_uids = droputils.get_roots(pg_spec)
         logger.info("Len of completed_uids is {0}".format(len(completed_uids)))
         ssid = "{0}-{1}".format(lgn.split('.')[0], lg._session_id)
         self._dc.create_session(ssid)

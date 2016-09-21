@@ -201,7 +201,7 @@ def gen_pg():
         #print "session created"
         mgr_client.append_graph(ssid, pg_spec)
         #print "graph appended"
-        completed_uids = [x['oid'] for x in droputils.get_roots(pg_spec)]
+        completed_uids = droputils.get_roots(pg_spec)
         mgr_client.deploy_session(ssid, completed_uids=completed_uids)
         #mgr_client.deploy_session(ssid, completed_uids=[])
         #print "session deployed"
