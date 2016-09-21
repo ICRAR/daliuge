@@ -19,20 +19,20 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import codecs
 import json
 import logging
+from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
+import zlib
 
 import bottle
-from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
+import six
 import six.moves.http_client as httplib  # @UnresolvedImport
-import six.moves.urllib_parse as urllib # @UnresolvedImport
-import six.moves.socketserver as SocketServer # @UnresolvedImport
+import six.moves.socketserver as SocketServer  # @UnresolvedImport
+import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
 from dfms import utils
 from dfms.exceptions import DaliugeException
-import six
-import codecs
-import zlib
 
 
 # HTTP headers used by daliuge
