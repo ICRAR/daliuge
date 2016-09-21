@@ -30,13 +30,14 @@ the converted physical graph in the Drop Island.
 
 import json
 import optparse
-import sys
+import sys, os
 
 import pkg_resources, logging
 
 from dfms import droputils
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
 from dfms.manager.client import CompositeManagerClient
+from dfms.exceptions import InvalidGraphException, DaliugeException
 
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,8 @@ class MonitorClient(object):
                  zerorun=False,
                  app=None,
                  nodes=[],
-                 num_islands=1):
+                 num_islands=1,
+                 graph_file=None):
 
         self._host = mhost
         self._port = mport
@@ -77,8 +79,9 @@ class MonitorClient(object):
         self._app = MonitorClient.apps[app] if app else None
         self._nodes = nodes
         self._num_islands = num_islands
+        self._graph_file = graph_file
 
-    def get_physical_graph(self, graph_id):
+    def get_physical_graph(self, graph_id, tpl_nodes_len=0):
         """
         nodes:  If non-empty, is a list of node (e.g. IP addresses, string type),
                     which shoud NOT include the MasterManager's node address
@@ -87,30 +90,68 @@ class MonitorClient(object):
         is empty, we will try the DIM or MM manager. If that is also empty,
         we will bail out.
         """
-        node_list = self._nodes or self._dc.nodes()
-        lnl = len(node_list) - self._num_islands
+        if (tpl_nodes_len > 0):
+            node_list = [] # fake list
+            lnl = tpl_nodes_len - self._num_islands
+        else:
+            node_list = self._nodes or self._dc.nodes()
+            lnl = len(node_list) - self._num_islands
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
         logger.info("Got a node list with %d nodes", lnl)
+        if (str(graph_id).isdigit()): # we assume a full file name can never be a digit
+            lgn = lgnames[graph_id]
+            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
+            lg = LG(fp)
+            logger.info("Start to unroll {0}".format(lgn))
+            drop_list = lg.unroll_to_tpl()
+            logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
 
-        lgn = lgnames[graph_id]
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
-        lg = LG(fp)
-        logger.info("Start to unroll {0}".format(lgn))
-        drop_list = lg.unroll_to_tpl()
-        logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
+            if 'sarkar' == self._algo:
+                pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
+            else:
+                pgtp = MetisPGTP(drop_list, lnl)
 
-        if 'sarkar' == self._algo:
-            pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
+            logger.info("Start to translate {0}".format(lgn))
+            pgtp.to_gojs_json(string_rep=False)
+            logger.info("Translation completed for {0}".format(lgn))
+
+            pg_spec = pgtp.to_pg_spec(node_list, ret_str=False,
+                    num_islands=self._num_islands,
+                    tpl_nodes_len=tpl_nodes_len)
         else:
-            pgtp = MetisPGTP(drop_list, lnl)
+            # load from the file
+            lgn = graph_id
+            lg = None
+            try:
+                with open(graph_id, 'r') as pgf:
+                    # use the same log info so that log parser can pick up
+                    logger.info("Start to unroll {0}".format(graph_id))
+                    pg_spec = json.load(pgf)
+                    logger.info("Unroll completed for {0} with # of Drops: {1}".format(graph_id, len(pg_spec)))
+            except Exception as exp:
+                err_info = 'Fail to load physical graph: {0}'.format(exp)
+                logger.error(err_info)
+                raise DaliugeException(err_info)
 
-        # Trigering something...
-        logger.info("Start to translate {0}".format(lgn))
-        pgtp.to_gojs_json(string_rep=False)
-        logger.info("Translation completed for {0}".format(lgn))
+            if (len(pg_spec) < 1 or (not 'node' in pg_spec[0])):
+                err_info = "Invalid pg_spec {0}".format(graph_id)
+                logger.error(err_info)
+                raise InvalidGraphException(err_info)
 
-        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False, num_islands=self._num_islands)
+            if (pg_spec[0]['node'].startswith('#')):
+                if (len(node_list) > 0):
+                    logger.info("Start to translate {0}".format(graph_id))
+                    # this is a pg_spec template, fill it with real IP addresses
+                    for drop_spec in pg_spec:
+                        nidx = int(drop_spec['node'][1:]) # skip '#'
+                        drop_spec['node'] = node_list[nidx]
+                        iidx = int(drop_spec['island'][1:]) # skip '#'
+                        drop_spec['island'] = node_list[iidx]
+                    logger.info("Translation completed for {0}".format(graph_id))
+                else:
+                    logger.info("Empty node_list, cannot translate the pg_spec template!")
+
         logger.info("PG spec is calculated!")
 
         if self._zerorun:
@@ -125,12 +166,12 @@ class MonitorClient(object):
 
         return lgn, lg, pg_spec
 
-    def submit_single_graph(self, graph_id, deploy=False, pg=None):
+    def submit_single_graph(self, graph_id, deploy=False, pg=None, tpl_nodes_len=0):
         """
         pg: (if not None) a tuple of (lgn, lg, pg_spec)
         """
         if (pg is None):
-            lgn, lg, pg_spec = self.get_physical_graph(graph_id)
+            lgn, lg, pg_spec = self.get_physical_graph(graph_id, tpl_nodes_len=tpl_nodes_len)
         else:
             lgn, lg, pg_spec = pg
 
@@ -156,8 +197,8 @@ class MonitorClient(object):
             self._dc.deploy_session(ssid, completed_uids=completed_uids)
             logger.info("session {0} deployed".format(ssid))
 
-    def write_physical_graph(self, graph_id):
-        lgn, _, pg_spec = self.get_physical_graph(graph_id)
+    def write_physical_graph(self, graph_id, tpl_nodes_len=0):
+        lgn, _, pg_spec = self.get_physical_graph(graph_id, tpl_nodes_len=tpl_nodes_len)
         fname = self._output or '{1}_pgspec.json'.format(lgn.split('.')[0])
         with open(fname, 'w') as f:
             json.dump(pg_spec, f, indent=1)
@@ -179,14 +220,16 @@ if __name__ == '__main__':
                       dest="algo", help="algorithm used to do the LG --> PG conversion", default="metis")
     parser.add_option("-p", "--port", action="store", type="int",
                       dest="port", help="The port we connect to to deploy the graph", default=8001)
-    parser.add_option("-g", "--graph-id", action="store", type="int",
-                      dest="graph_id", help="The graph to deploy, see -l for a list", default=None)
+    parser.add_option("-g", "--graph-id", action="store", type="string",
+                      dest="graph_id", help="The graph to deploy, either an integer (see -l for a list) or file name (string)", default=None)
     parser.add_option("-o", "--output", action="store", type="string",
                       dest="output", help="Where to dump the general physical graph", default=None)
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
     parser.add_option("--app", action="store", type="int",
                       dest="app", help="The app to use in the PG. 0=SleepApp (default), 1=SleepAndCopy", default=0)
+    parser.add_option("-t", "--tpl-nodes-len", action="store", type="int",
+                      dest="tpl_nodes_len", help="node list length for generating pg_spec template", default=0)
 
     (opts, args) = parser.parse_args(sys.argv)
 
@@ -199,17 +242,29 @@ if __name__ == '__main__':
 
     if opts.graph_id is None:
         parser.error("Missing -g")
-    if opts.graph_id >= len(lgnames):
-        parser.error("-g must be between 0 and %d" % (len(lgnames),))
+    gid = opts.graph_id
+    try:
+        # we assume a full file name can never be just a digit
+        gid = int(gid)
+        if gid >= len(lgnames):
+            parser.error("-g must be between 0 and %d" % (len(lgnames),))
+    except:
+        if (not os.path.exists(gid)):
+            parser.error("Cannot locate graph_id file at '{0}'".format(gid))
+        elif (opts.tpl_nodes_len > 0):
+            parser.error("Cannot generate template from file")
 
     nodes = [n for n in opts.nodes.split(',') if n] if opts.nodes else []
     mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo,
                        zerorun=opts.zerorun, app=opts.app, nodes=nodes,
                        num_islands=opts.islands)
 
+    if (opts.output is not None):
+        opts.act = 'print'
+
     if 'submit' == opts.act:
-        mc.submit_single_graph(opts.graph_id, deploy=True)
+        mc.submit_single_graph(gid, deploy=True, tpl_nodes_len=opts.tpl_nodes_len)
     elif 'print' == opts.act:
-        mc.write_physical_graph(opts.graph_id)
+        mc.write_physical_graph(gid, tpl_nodes_len=opts.tpl_nodes_len)
     else:
         raise Exception('Unknown action: {0}'.format(opts.act))
