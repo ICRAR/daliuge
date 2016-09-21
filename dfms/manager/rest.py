@@ -26,9 +26,11 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 
 import json
 import logging
+import zlib
 
 import bottle
 import pkg_resources
+import six
 
 from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
@@ -184,7 +186,13 @@ class ManagerRestServer(RestServer):
         if bottle.request.content_type != 'application/json':
             bottle.response.status = 415
             return
-        self.dm.addGraphSpec(sessionId, bottle.request.json)
+        # We also accept gzipped content
+        hdrs = bottle.request.headers
+        if hdrs.get('Content-Encoding', None) == 'gzip':
+            content = six.BytesIO(zlib.decompress(bottle.request.body.read()))
+        else:
+            content = bottle.request.body
+        self.dm.addGraphSpec(sessionId, json.load(content))
 
     #===========================================================================
     # non-REST methods
