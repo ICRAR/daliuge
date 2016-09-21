@@ -144,8 +144,6 @@ def loadDropSpecs(dropSpecList):
     this method doesn't actually create the DROPs themselves.
     """
 
-    logger.debug("Found %d DROP definitions", len(dropSpecList))
-
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
     for dropSpec in dropSpecList:
@@ -156,6 +154,8 @@ def loadDropSpecs(dropSpecList):
         cf = __CREATION_FUNCTIONS[dropType]
         cf(dropSpec, dryRun=True)
         dropSpecs[dropSpec['oid']] = dropSpec
+
+    logger.debug("Found %d DROP definitions", len(dropSpecs))
 
     # Step #2: check relationships
     for dropSpec in dropSpecList:
@@ -182,6 +182,7 @@ def createGraphFromDropSpecList(dropSpecList):
 
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
+    logger.info("Creating %d drops", len(dropSpecList))
     for dropSpec in dropSpecList:
 
         # 'type' is mandatory
@@ -192,6 +193,7 @@ def createGraphFromDropSpecList(dropSpecList):
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
+    logger.info("Establishing relationships between drops")
     for dropSpec in dropSpecList:
 
         # 'oid' is mandatory
@@ -219,10 +221,13 @@ def createGraphFromDropSpecList(dropSpecList):
                 setattr(drop, propName, lhDrop)
 
     # We're done! Return the roots of the graph to the caller
+    logger.info("Calculating graph roots")
     roots = []
     for drop in drops.values():
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
+    logger.info("%d graph roots found, bye-bye!", len(roots))
+
     return roots
 
 def _createPlain(dropSpec, dryRun=False):

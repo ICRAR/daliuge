@@ -75,7 +75,7 @@ def launchServer(opts):
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    server_t = threading.Thread(target=server.start, args=(opts.host, opts.port))
+    server_t = threading.Thread(target=server.start, args=(opts.host, opts.port), name="HTTP server")
     server_t.start()
     # Now simply wait...
     signal.pause()
@@ -187,6 +187,7 @@ def setupLogging(opts):
     logging.getLogger("dfms").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
+    logging.getLogger("zerorpc").setLevel(logging.WARN)
 
     return fileHandler
 
@@ -208,6 +209,8 @@ def dfmsNM(args=sys.argv):
                       dest="errorListener", help="The error listener class to be used", default=None)
     parser.add_option("--luigi", action="store_true",
                       dest="enable_luigi", help="Enable integration with Luigi. Disabled by default.", default=False)
+    parser.add_option("-t", "--max-threads", action="store", type="int",
+                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
@@ -219,7 +222,8 @@ def dfmsNM(args=sys.argv):
                         'dfmsPath': options.dfmsPath,
                         'host': options.host,
                         'error_listener': options.errorListener,
-                        'enable_luigi': options.enable_luigi}
+                        'enable_luigi': options.enable_luigi,
+                        'max_threads': options.max_threads}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
 

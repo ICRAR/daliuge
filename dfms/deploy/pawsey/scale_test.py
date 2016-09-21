@@ -27,7 +27,7 @@ parse the log result, and produce the plot
 
 """
 from datetime import datetime
-import sys, os, commands, socket, re, commands, time, getpass
+import sys, os, socket, re, commands, time, getpass
 from string import Template
 import optparse
 from os import stat
@@ -49,7 +49,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR
+aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR
 """
 
 sub_tpl = Template(sub_tpl_str)
@@ -126,13 +126,13 @@ class TianHe2Config(DefaultConfig):
         return ['SHAO', '/group/shao/daliuge_logs']
 
 class ConfigFactory():
-    mapping = {'galaxy_mwa':GalaxyMWAConfig(), 'galaxy_askap':GalaxyASKAPConfig(),
-    'magnus':MagnusConfig(), 'galaxy':GalaxyASKAPConfig()}
+    mapping = {'galaxy_mwa':GalaxyMWAConfig, 'galaxy_askap':GalaxyASKAPConfig,
+    'magnus':MagnusConfig, 'galaxy':GalaxyASKAPConfig}
 
     @staticmethod
     def create_config(facility=None):
         facility = facility.lower() if (facility is not None) else facility
-        return ConfigFactory.mapping.get(facility)
+        return ConfigFactory.mapping.get(facility)()
 
 class PawseyClient(object):
     """
@@ -152,10 +152,15 @@ class PawseyClient(object):
     def __init__(self, log_root=None, acc=None,
                 job_dur=30,
                 num_nodes=5,
+                run_proxy=False,
                 mon_host=default_aws_mon_host,
                 mon_port=default_aws_mon_port,
                 logv=1,
-                facility=socket.gethostname().split('-')[0]):
+                facility=socket.gethostname().split('-')[0],
+                zerorun=False,
+                max_threads=0,
+                sleepncopy=False,
+                num_islands=1):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
@@ -168,6 +173,10 @@ class PawseyClient(object):
         self._mon_port = mon_port
         self._pip_name = None
         self._logv = logv
+        self._zerorun = zerorun
+        self._max_threads = max_threads
+        self._sleepncopy = sleepncopy
+        self._num_islands = num_islands
 
     def set_gid(self, gid):
         if (gid is None):
@@ -219,9 +228,13 @@ class PawseyClient(object):
         pardict['PY_BIN'] = sys.executable
         pardict['LOG_DIR'] = lgdir
         pardict['GID_PAR'] = '-g %d' % self._gid if (self._gid is not None) else ''
-        pardict['PROXY_PAR'] = '-m %s -o %d' % (_mon_host, _mon_port) if self._run_proxy else ''
+        pardict['PROXY_PAR'] = '-m %s -o %d' % (self._mon_host, self._mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
         pardict['LOGV_PAR'] = '-v %d' % self._logv
+        pardict['ZERORUN_PAR'] = '-z' if self._zerorun else ''
+        pardict['MAXTHREADS_PAR'] = '-t %d' % (self._max_threads)
+        pardict['SNC_PAR'] = '--app 1' if self._sleepncopy else '--app 0'
+        pardict['NUM_ISLANDS_PAR'] = '-s %d' % (self._num_islands)
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
@@ -240,10 +253,10 @@ class PawseyClient(object):
 class LogEntryPair(object):
     """
     """
-    def __init__(self, name, start, end):
+    def __init__(self, name, gstart, gend):
         self._name = name
-        self._start = start
-        self._end = end
+        self._gstart = gstart + 2 # group 0 is the whole matching line, group 1 is the catchall
+        self._gend = gend + 2
         self._start_time = None
         self._end_time = None
         self._other = dict() # hack
@@ -258,12 +271,12 @@ class LogEntryPair(object):
         epoch = time.mktime(time.strptime(date_time, pattern))
         return datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
 
-    def check_start(self, line):
-        if ((self._start_time is None) and (re.search(self._start, line) is not None)):
+    def check_start(self, match, line):
+        if self._start_time is None and match.group(self._gstart):
             self._start_time = self.get_timestamp(line)
 
-    def check_end(self, line):
-        if ((self._end_time is None) and (re.search(self._end, line) is not None)):
+    def check_end(self, match, line):
+        if self._end_time is None and match.group(self._gend):
             self._end_time = self.get_timestamp(line)
             if (self._name == 'unroll'):
                 self._other['num_drops'] = int(line.split()[-1])
@@ -329,10 +342,12 @@ class LogParser(object):
     'Moving following DROPs to COMPLETED right away',
     'Successfully triggered drops']
 
-    nm_kl = ['Starting Pyro4 Daemon for session',
-    'Session {0} finished',
-    'Session {0} is now RUNNING',
-    'Creating DROPs for session']
+    nm_kl = [
+        'Starting Pyro4 Daemon for session', # Logged by the old master branch
+        'Creating DROPs for session',        # Drops are being created
+        'Session {0} is now RUNNING',        # All drops created and ready
+        'Session {0} finished'               # All drops executed
+    ]
 
     kwords = dict()
     kwords['dim'] = dim_kl
@@ -343,43 +358,35 @@ class LogParser(object):
         if (not self.check_log_dir(log_dir)):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._grep_dim_cmd, self._py_dim_pattern = self.construct_patterns(node_type='dim')
-        self._grep_nm_cmd, self._py_nm_pattern = self.construct_patterns(node_type='nm')
-        self._dim_entry_pairs, self._nm_entry_pairs = self.build_log_entry_pairs()
+        self._dim_catchall_pattern = self.construct_catchall_pattern(node_type='dim')
+        self._nm_catchall_pattern = self.construct_catchall_pattern(node_type='nm')
 
-    def build_log_entry_pairs(self):
-        pp = self._py_dim_pattern
-        rl = []
-        rl.append(LogEntryPair('unroll', pp[0], pp[1]))
-        rl.append(LogEntryPair('translate', pp[2], pp[3]))
-        rl.append(LogEntryPair('gen pg spec', pp[3], pp[4]))
-        rl.append(LogEntryPair('create session', pp[5], pp[6]))
-        rl.append(LogEntryPair('separate graph', pp[7], pp[8]))
-        rl.append(LogEntryPair('add session to all', pp[9], pp[10]))
-        rl.append(LogEntryPair('deploy session to all', pp[11], pp[12]))
-        rl.append(LogEntryPair('build drop connections', pp[13], pp[14]))
-        rl.append(LogEntryPair('trigger drops', pp[15], pp[16]))
+    def build_dim_log_entry_pairs(self):
+        return [LogEntryPair(name, g1, g2) for name, g1, g2 in (
+            ('unroll', 0, 1),
+            ('translate', 2, 3),
+            ('gen pg spec', 3, 4),
+            ('create session', 5, 6),
+            ('separate graph', 7, 8),
+            ('add session to all', 9, 10),
+            ('deploy session to all', 11, 12),
+            ('build drop connections', 13, 14),
+            ('trigger drops', 15, 16),
+        )]
 
-        pp = self._py_nm_pattern
-        rl_nm = []
-        rl_nm.append(LogEntryPair('completion_time', pp[0], pp[1]))
-        rl_nm.append(LogEntryPair('completion_time_2', pp[3], pp[1]))
-        rl_nm.append(LogEntryPair('node_deploy_time', pp[3], pp[2]))
+    def build_nm_log_entry_pairs(self):
+        return [LogEntryPair(name, g1, g2) for name, g1, g2 in (
+            ('completion_time_old', 0, 3), # Old master branch
+            ('completion_time', 2, 3),
+            ('node_deploy_time', 1, 2),
+        )]
 
-        return (rl, rl_nm)
-
-    def construct_patterns(self, node_type='dim'):
-        key_line = LogParser.kwords.get(node_type)
-        if (key_line is None):
-            raise Exception('Unknown node type for log analysis')
-        wildcards = '.*'
-        grep_start = r'"\<'
-        grep_end = r'\>"'
-        grep_keys = [grep_start + x.format(wildcards) + grep_end for x in key_line]
-        grep_cmd = ' -e '.join(grep_keys)
-        # python regex needs to escape brackets
-        python_keys = [x.format(wildcards).replace('(', r'\(').replace(')', r'\)') for x in key_line]
-        return ("grep -e %s" % grep_cmd, python_keys)
+    def construct_catchall_pattern(self, node_type):
+        pattern_strs = LogParser.kwords.get(node_type)
+        patterns = [x.format('.*').replace('(', r'\(').replace(')', r'\)') for x in pattern_strs]
+        catchall = '|'.join(['(%s)' % (s,) for s in patterns])
+        catchall = ".*(%s).*" % (catchall,)
+        return re.compile(catchall)
 
     def parse(self, out_csv=None):
         """
@@ -394,7 +401,7 @@ class LogParser(object):
         pip_name = sp[0]
         do_date = sp[1]
         num_nodes = int(delimit.split('_')[1][1:])
-        user_name = getpwuid(stat(self._dim_log_f).st_uid).pw_name
+        user_name = getpwuid(stat(self._dim_log_f[0]).st_uid).pw_name
         gitf = os.path.join(self._log_dir, 'git_commit.txt')
         if (os.path.exists(gitf)):
             with open(gitf, 'r') as gf:
@@ -403,19 +410,20 @@ class LogParser(object):
             git_commit = 'None'
 
         # parse DIM log
-        cmd = "%s %s" % (self._grep_dim_cmd, self._dim_log_f)
-        ret, lines = commands.getstatusoutput(cmd)
-        if (0 != ret):
-            raise Exception("Fail to run: %s" % (cmd))
-        ll = lines.split(os.linesep)
-        for line in ll:
-            for lep in self._dim_entry_pairs:
-                lep.check_start(line)
-                lep.check_end(line)
+        dim_log_pairs = self.build_dim_log_entry_pairs()
+        for lff in self._dim_log_f:
+            with open(lff, "r") as dimlog:
+                for line in dimlog:
+                    m = self._dim_catchall_pattern.match(line)
+                    if not m:
+                        continue
+                    for lep in dim_log_pairs:
+                        lep.check_start(m, line)
+                        lep.check_end(m, line)
 
         num_drops = -1
         temp_dim = []
-        for lep in self._dim_entry_pairs:
+        for lep in dim_log_pairs:
             if ('unroll' == lep._name):
                 num_drops = lep._other.get('num_drops', -1)
             elif ('build drop connections' == lep._name):
@@ -424,39 +432,71 @@ class LogParser(object):
             temp_dim.append(str(lep.get_duration()))
 
         # parse NM logs
-        max_exec_time = -1
+        nm_logs = []
         max_node_deploy_time = 0
         num_finished_sess = 0
-        for df in os.listdir(self._log_dir):
-            if (os.path.isdir(os.path.join(self._log_dir, df))):
-                nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
-                if (os.path.exists(nm_logf)):
-                    cmd_nm = "%s %s" % (self._grep_nm_cmd, nm_logf)
-                    ret, lines = commands.getstatusoutput(cmd_nm)
-                    if (0 == ret):
-                        for lep in self._nm_entry_pairs:
-                            lep.reset()
-                        ll = lines.split(os.linesep)
-                        for line in ll:
-                            for lep in self._nm_entry_pairs:
-                                lep.check_start(line)
-                                lep.check_end(line)
-                        for lep in self._nm_entry_pairs:
-                            ct = lep.get_duration()
-                            if (lep._name in ['completion_time', 'completion_time_2']):
-                                num_finished_sess += 1
-                                # and find the longest execution time
-                                if (ct is not None and ct > max_exec_time):
-                                    max_exec_time = ct
-                            elif (lep._name == 'node_deploy_time'):
-                                if (ct is not None and ct > max_node_deploy_time):
-                                    max_node_deploy_time = ct
 
-        #if (max_exec_edt > min_exec_stt):
-        if (num_nodes - 1 == num_finished_sess and max_exec_time > max_node_deploy_time):
-            max_exec_time -= max_node_deploy_time
-        else:
-            print("Pipeline %s is not completed: %d %d" % (pip_name, num_nodes - 1, num_finished_sess))
+        num_dims = 0
+        for df in os.listdir(self._log_dir):
+
+            # Check this is a dir and contains the NM log
+            if not os.path.isdir(os.path.join(self._log_dir, df)):
+                continue
+            nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
+            nm_dim_logf = os.path.join(self._log_dir, df, 'dfmsDIM.log')
+            nm_mm_logf = os.path.join(self._log_dir, df, 'dfmsMM.log')
+            if not os.path.exists(nm_logf):
+                if (os.path.exists(nm_dim_logf) or os.path.exists(nm_mm_logf)):
+                    num_dims += 1
+                continue
+
+            # Start anew every time
+            nm_log_pairs = self.build_nm_log_entry_pairs()
+            nm_logs.append(nm_log_pairs)
+
+            # Read NM log and fill all LogPair objects
+            with open(nm_logf, "r") as nmlog:
+                for line in nmlog:
+                    m = self._nm_catchall_pattern.match(line)
+                    if not m:
+                        continue
+                    for lep in nm_log_pairs:
+                        lep.check_start(m, line)
+                        lep.check_end(m, line)
+
+            # Looking for the deployment times and counting for finished sessions
+            for lep in nm_log_pairs:
+
+                # Consider only valid durations
+                dur = lep.get_duration()
+                if dur is None:
+                    continue
+
+                if lep._name in ('completion_time', 'completion_time_old'):
+                    num_finished_sess += 1
+                elif lep._name == 'node_deploy_time':
+                    if dur > max_node_deploy_time:
+                        max_node_deploy_time = dur
+
+        if num_nodes - num_dims != num_finished_sess:
+            print("Pipeline %s is not complete: %d != %d" % (pip_name, num_nodes - num_dims, num_finished_sess))
+            return
+
+        # The DIM waits for all NMs to setup before triggering the first drops.
+        # This has the effect that the slowest to setup will make the others
+        # idle while already in RUNNING state, effectively increasing their
+        # "exec_time". We subtract the maximum deploy time to account for this
+        # effect
+        max_exec_time = 0
+        for log_entry_pairs in nm_logs:
+
+            indexed_leps = {lep._name: lep for lep in log_entry_pairs}
+            deploy_time = indexed_leps['node_deploy_time'].get_duration()
+            exec_time = indexed_leps['completion_time'].get_duration() or indexed_leps['completion_time_old'].get_duration()
+            real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
+            if real_exec_time > max_exec_time:
+                max_exec_time = real_exec_time
+
         temp_nm = [str(max_exec_time)]
 
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
@@ -471,12 +511,19 @@ class LogParser(object):
             print add_line
 
     def check_log_dir(self, log_dir):
-        dim_log_f = os.path.join(log_dir, '0', 'dfmsDIM.log')
-        if (os.path.exists(dim_log_f)):
-            self._dim_log_f = dim_log_f
-            return True
-        else:
-            return False
+        possible_logs = [
+        os.path.join(log_dir, '0', 'dfmsDIM.log'),
+        os.path.join(log_dir, '0', 'dfmsMM.log')
+        ]
+        for dim_log_f in possible_logs:
+            if (os.path.exists(dim_log_f)):
+                self._dim_log_f = [dim_log_f]
+                if (dim_log_f == possible_logs[1]):
+                    cluster_log = os.path.join(log_dir, '0', 'start_dfms_cluster.log')
+                    if (os.path.exists(cluster_log)):
+                        self._dim_log_f.append(cluster_log)
+                return True
+        return False
 
 if __name__ == '__main__':
     parser = optparse.OptionParser()
@@ -495,18 +542,25 @@ if __name__ == '__main__':
                       dest="num_nodes", help="number of compute nodes requested", default=5)
     parser.add_option('-i', '--graph_vis', action='store_true',
                     dest='graph_vis', help='Whether to visualise graph (poll status)', default=False)
-    parser.add_option('-p', '--use_proxy', action='store_true',
-                    dest='use_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
+    parser.add_option('-p', '--run_proxy', action='store_true',
+                    dest='run_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
     parser.add_option("-m", "--monitor_host", action="store", type="string",
-                    dest="monitor_host", help="Monitor host IP (optional)")
+                    dest="mon_host", help="Monitor host IP (optional)", default=default_aws_mon_host)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help="The port to bind dfms monitor",
-                    default=default_aws_mon_port)
+                    dest="mon_port", help="The port to bind dfms monitor", default=default_aws_mon_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
                     dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
                     default=1)
     parser.add_option("-c", "--csvoutput", action="store",
                       dest="csv_output", help="CSV output file to keep the log analysis result")
+    parser.add_option("-z", "--zerorun", action="store_true",
+                      dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
+    parser.add_option("-y", "--sleepncopy", action="store_true",
+                      dest="sleepncopy", help="Whether include COPY in the default Component drop", default=False)
+    parser.add_option("-T", "--max-threads", action="store", type="int",
+                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
+    parser.add_option('-s', '--num_islands', action='store', type='int',
+                    dest='num_islands', default=1, help='The number of Data Islands')
 
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):
@@ -535,19 +589,13 @@ if __name__ == '__main__':
             lg = LogParser(opts.log_dir)
             lg.parse(out_csv=opts.csv_output)
     elif (opts.action == 1):
-        pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level)
+        pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level,
+                          zerorun=opts.zerorun, max_threads=opts.max_threads,
+                          run_proxy=opts.run_proxy, mon_host=opts.mon_host, mon_port=opts.mon_port,
+                          num_islands=opts.num_islands)
         if (opts.graph_id is not None):
             pc.set_gid(opts.graph_id)
         pc._graph_vis = opts.graph_vis
-        pc._run_proxy = opts.use_proxy
-        if (opts.use_proxy):
-            if (opts.monitor_host is None):
-                print("Use default proxy host '%s'" % default_aws_mon_host)
-            else:
-                self._mon_host = opts.monitor_host
-            self._mon_port = opts.monitor_port
-        elif (opts.monitor_host is not None):
-            parser.error("Please enable proxy by switch on the '-p' option")
         pc.submit_job()
     else:
         parser.error("Invalid action -a")

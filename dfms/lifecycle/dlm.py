@@ -124,7 +124,7 @@ import string
 import threading
 import time
 
-from dfms import droputils, utils
+from dfms import droputils
 from dfms.ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from dfms.drop import ContainerDROP
 from dfms.lifecycle import registry
@@ -187,7 +187,7 @@ class DROPMover(DataLifecycleManagerBackgroundTask):
     def doTask(self, dlm):
         dlm.moveDropsAround()
 
-class DropEventListener(utils.noopctx):
+class DropEventListener(object):
 
     def __init__(self, dlm):
         self._dlm = dlm
@@ -196,11 +196,8 @@ class DropEventListener(utils.noopctx):
         if event.type == 'open':
             self._dlm.handleOpenedDrop(event.oid, event.uid)
         elif event.type == 'status':
-            logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
             if event.status == DROPStates.COMPLETED:
                 self._dlm.handleCompletedDrop(event.uid)
-        elif event.type == 'execStatus':
-            logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
 
 class DataLifecycleManager(object):
 

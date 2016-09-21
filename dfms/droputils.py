@@ -23,15 +23,13 @@
 Utility methods and classes to be used when interacting with DROPs
 '''
 
+import collections
 import copy
 import logging
 import re
 import threading
 import traceback
 
-import Pyro4
-
-from dfms import utils
 from dfms.ddap_protocol import DROPStates
 from dfms.drop import AppDROP
 from dfms.io import IOForURL, OpenMode
@@ -46,7 +44,7 @@ indexed_opath_pattern    = re.compile(r".*%o\[.+\].*")
 indexed_idataurl_pattern = re.compile(r".*%iDataURL\[.+\].*")
 indexed_odataurl_pattern = re.compile(r".*%oDataURL\[.+\].*")
 
-class EvtConsumer(utils.noopctx):
+class EvtConsumer(object):
     '''
     Small utility class that sets the internal flag of the given threading.Event
     object when consuming a DROP. Used throughout the tests as a barrier to wait
@@ -94,79 +92,16 @@ class DROPWaiterCtx(object):
             self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
 
 
-class EvtConsumerProxyCtx(object):
-    """
-    Class used by unit tests to trigger the execution of a remote physical graph
-    and wait until the given set of nodes have reached its COMPLETED status. In
-    summary, this class is similar to DROPWaiterCtx, but works for remote objects
-    (i.e., Pyro proxies).
-
-    Since the graph is remote (i.e., it is hosted by a DM), the DROPs
-    given to this class are actually Pyro proxies to the real DROPs, and
-    therefore the consumer that is appended into them is hosted by a Pyro Daemon
-    local to this class. This class creates the daemon, starts a separate thread
-    to listen for incoming requests, waits until the DROPs have reached
-    the COMPLETED state, stops the daemon, its listening thread, and uses the
-    test class to assert basic facts.
-    """
-
-    def __init__(self, test, drops, timeout=1):
-        self._drops = listify(drops)
-        self._test = test
-        self._timeout = timeout
-        self._evts = []
-
-    def __enter__(self):
-
-        # Create the daemon and listen for requests
-        daemon = Pyro4.Daemon()
-        t = threading.Thread(None, lambda: daemon.requestLoop())
-        t.daemon = 1
-        t.start()
-
-        # Attach a (proxy) EvtConsumer to each (proxy) drop
-        for drop in self._drops:
-            evt = threading.Event()
-            consumer = EvtConsumer(evt)
-            uri = daemon.register(consumer)
-            consumerProxy = Pyro4.Proxy(uri)
-            drop.subscribe(consumerProxy, 'status')
-            self._evts.append(evt)
-
-        self.daemon = daemon
-        self.t = t
-        return self
-
-    def __exit__(self, typ, value, traceback):
-
-        to = self._timeout
-        allFine = True
-
-        # Check now that all events have been set. If everything went fine, we
-        # also check that the thread hosting the daemon is dead.
-        try:
-            for evt in self._evts:
-                self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % (to))
-        except:
-            allFine = False
-            raise
-        finally:
-            self.daemon.shutdown()
-            self.t.join(to)
-            if allFine:
-                self._test.assertFalse(self.t.isAlive())
-
-
-
 def allDropContents(drop):
     '''
     Returns all the data contained in a given DROP
     '''
     desc = drop.open()
-    buf = drop.read(desc)
+    read = drop.read
+    buf = read(desc)
     allContents = buf
     while buf:
-        buf = drop.read(desc)
+        buf = read(desc)
         allContents += buf
     drop.close(desc)
     return allContents
@@ -176,10 +111,11 @@ def copyDropContents(source, target, bufsize=4096):
     Manually copies data from one DROP into another, in bufsize steps
     '''
     desc = source.open()
-    buf = source.read(desc, bufsize)
+    read = source.read
+    buf = read(desc, bufsize)
     while buf:
         target.write(buf)
-        buf = source.read(desc, bufsize)
+        buf = read(desc, bufsize)
     source.close(desc)
 
 def getUpstreamObjects(drop):
@@ -260,21 +196,22 @@ def breadFirstTraverse(toVisit):
     This implementation is non-recursive.
     """
 
-    toVisit = listify(toVisit)[:]
-    found = toVisit[:]
+    toVisit_list = listify(toVisit)[:]
+    toVisit = collections.deque(toVisit_list)
+    visited = set(toVisit_list)
 
     # See how many arguments we should used when calling func
     while toVisit:
 
         # Pay the node a visit
-        node = toVisit.pop(0)
+        node = toVisit.popleft()
         dependencies = getDownstreamObjects(node)
         yield node, dependencies
 
         # Enqueue its dependencies, making sure they are enqueued only once
-        nextVisits = [drop for drop in dependencies if drop not in found]
-        toVisit += nextVisits
-        found += nextVisits
+        next_visits = [n for n in dependencies if n not in visited]
+        visited.update(next_visits)
+        toVisit += next_visits
 
 def listify(o):
     """

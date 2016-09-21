@@ -28,7 +28,6 @@ import threading
 import time
 import unittest
 
-import Pyro4
 import pkg_resources
 
 from dfms import droputils
@@ -75,6 +74,7 @@ def tearDownDimTests(self):
     # Stop the server and wait until it's closed
     self._dm_server.stop()
     self._dm_t.join()
+    self.dm.shutdown()
     self.assertFalse(self._dm_t.isAlive())
     self.dim.shutdown()
 
@@ -128,13 +128,12 @@ class TestDIM(unittest.TestCase):
         sessionId = 'lalo'
         self.createSessionAndAddTypicalGraph(sessionId)
 
-        # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId)
-        a = Pyro4.Proxy(uris['A'])
-        c = Pyro4.Proxy(uris['C'])
+        # Deploy now and get A and C
+        self.dim.deploySession(sessionId)
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
 
         data = os.urandom(10)
-        with droputils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
 
@@ -150,12 +149,12 @@ class TestDIM(unittest.TestCase):
 
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
-        # Deploy now and get the uris. With that we get then A's and C's proxies
-        uris = self.dim.deploySession(sessionId, completedDrops=['A'])
-        c = Pyro4.Proxy(uris['C'])
+        # Deploy now and get C
+        self.dim.deploySession(sessionId, completedDrops=['A'])
+        c = self.dm._sessions[sessionId].drops['C']
 
         # This should be happening before the sleepTime expires
-        with droputils.EvtConsumerProxyCtx(self, c, 2):
+        with droputils.DROPWaiterCtx(self, c, 2):
             pass
 
         self.assertEqual(DROPStates.COMPLETED, c.status)
@@ -177,13 +176,12 @@ class TestDIM(unittest.TestCase):
         self.createSessionAndAddTypicalGraph(sessionId)
         assertSessionStatus(sessionId, SessionStates.BUILDING)
 
-        uris = self.dm.deploySession(sessionId)
+        self.dm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
-        a = Pyro4.Proxy(uris['A'])
-        c = Pyro4.Proxy(uris['C'])
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
         data = os.urandom(10)
-        with droputils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
 
@@ -212,13 +210,12 @@ class TestDIM(unittest.TestCase):
 
         sessionId = 'lala'
         self.createSessionAndAddTypicalGraph(sessionId)
-        uris = self.dim.deploySession(sessionId)
+        self.dim.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
-        a = Pyro4.Proxy(uris['A'])
-        c = Pyro4.Proxy(uris['C'])
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
         data = os.urandom(10)
-        with droputils.EvtConsumerProxyCtx(self, c, 3):
+        with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
@@ -281,7 +278,7 @@ class TestREST(unittest.TestCase):
             # starting at 1111
             msg = os.urandom(10)
             for i in range(5):
-                self.assertTrue(utils.writeToRemotePort('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i))
+                utils.write_to('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i)
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session

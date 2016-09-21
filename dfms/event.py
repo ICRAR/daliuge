@@ -40,7 +40,7 @@ class Event(object):
         self.type = None
 
     def __repr__(self, *args, **kwargs):
-        return 'Event %r' % (self.__dict__)
+        return '<Event %r>' % (self.__dict__)
 
 class EventFirer(object):
     """
@@ -68,6 +68,10 @@ class EventFirer(object):
         originate from this object, otherwise it will receive all events.
         """
         logger.debug('Adding listener to %r eventType=%s: %r', self, eventType, listener)
+
+        import Pyro4
+        if isinstance(listener, Pyro4.Proxy):
+            return
 
         eventType = eventType or EventFirer.__ALL_EVENTS
         self._listeners[eventType].append(listener)
@@ -108,5 +112,4 @@ class EventFirer(object):
             setattr(e, k, v)
 
         for l in listeners:
-            with l:
-                l.handleEvent(e)
+            l.handleEvent(e)
