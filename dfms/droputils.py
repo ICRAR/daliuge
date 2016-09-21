@@ -24,7 +24,6 @@ Utility methods and classes to be used when interacting with DROPs
 '''
 
 import collections
-import copy
 import logging
 import re
 import threading
@@ -370,47 +369,30 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
 def get_roots(pg_spec):
     """
-    Returns a list with the dropspecs that are the roots of the given physical
+    Returns a set with the OIDs of the dropspecs that are the roots of the given physical
     graph specification.
     """
 
-    # Don't modify the originals
-    pg_spec = copy.deepcopy(pg_spec)
-    pg_spec_dict = {dropspec['oid']: dict(dropspec) for dropspec in pg_spec}
-
-    # First step: double the relationships so they are declared on both ends
-    # This will mean that the graph will use more memory (slightly at least)
-    # but makes the second step an O(N) operation instead of the previous O(N^2)
-    # implementation
-    def add_backreference(dropspec, pg_spec_dict, attr, backattr):
-        if attr not in dropspec:
-            return
-        for oid in dropspec[attr]:
-            otherdrop = pg_spec_dict[oid]
-            if backattr not in otherdrop:
-                otherdrop[backattr] = []
-            otherdrop[backattr].append(dropspec['oid'])
-
+    # We find all the nonroots first, which are easy to spot.
+    # The rest are the roots
+    all_oids = set()
+    nonroots = set()
     for dropspec in pg_spec:
+
+        oid = dropspec['oid']
+        all_oids.add(oid)
+
         if dropspec['type'] == 'app':
-            add_backreference(dropspec, pg_spec_dict, 'inputs', 'consumers')
-            add_backreference(dropspec, pg_spec_dict, 'streamingInputs', 'streamingConsumers')
-            add_backreference(dropspec, pg_spec_dict, 'outputs', 'producers')
+            if dropspec.get('inputs', None) or dropspec.get('streamingInputs', None):
+                nonroots.add(oid)
+            if dropspec.get('outputs', None):
+                nonroots |= set(dropspec['outputs'])
         elif dropspec['type'] == 'plain':
-            add_backreference(dropspec, pg_spec_dict, 'consumers', 'inputs')
-            add_backreference(dropspec, pg_spec_dict, 'streamingConsumers', 'streamingInputs')
-            add_backreference(dropspec, pg_spec_dict, 'producers', 'outputs')
+            if dropspec.get('producers', None):
+                nonroots.add(oid)
+            if dropspec.get('consumers', None):
+                nonroots |= set(dropspec['consumers'])
+            if dropspec.get('streamingConsumers', None):
+                nonroots |= set(dropspec['streamingConsumers'])
 
-    # now find dropspecs with no links to the previous drops
-    roots = []
-    for dropspec in pg_spec_dict.values():
-        if dropspec['type'] == 'app' and \
-           (('inputs' in dropspec and dropspec['inputs']) or \
-            ('streamingInputs' in dropspec and dropspec['streamingInputs'])):
-            continue
-        elif dropspec['type'] == 'plain' and \
-           'producers' in dropspec and dropspec['producers']:
-            continue
-        roots.append(dropspec)
-
-    return roots
+    return all_oids - nonroots
