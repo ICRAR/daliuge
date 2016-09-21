@@ -99,6 +99,9 @@ class MonitorClient(object):
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
         logger.info("Got a node list with %d nodes", lnl)
+        perform_partition = True
+
+        # Unroll PGT from the original logical graph or from reading an existing unrolled PGT
         if (str(graph_id).isdigit()): # we assume a full file name can never be a digit
             lgn = lgnames[graph_id]
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
@@ -106,7 +109,31 @@ class MonitorClient(object):
             logger.info("Start to unroll {0}".format(lgn))
             drop_list = lg.unroll_to_tpl()
             logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
+        else:
+            # load from the file
+            lgn = graph_id
+            lg = None
+            try:
+                with open(graph_id, 'r') as pgf:
+                    # use the same log info so that log parser can pick up
+                    logger.info("Start to unroll {0}".format(graph_id))
+                    drop_list = json.load(pgf)
+                    logger.info("Unroll completed for {0} with # of Drops: {1}".format(graph_id, len(drop_list)))
+            except Exception as exp:
+                err_info = 'Fail to load physical graph: {0}'.format(exp)
+                logger.error(err_info)
+                raise DaliugeException(err_info)
 
+            if (len(drop_list) < 1):
+                err_info = "Invalid graph_id {0}".format(graph_id)
+                logger.error(err_info)
+                raise InvalidGraphException(err_info)
+
+            if (('node' in drop_list[0]) and drop_list[0]['node'].startswith('#')):
+                # template
+                perform_partition = False
+
+        if (perform_partition):
             if 'sarkar' == self._algo:
                 pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
             else:
@@ -120,37 +147,20 @@ class MonitorClient(object):
                     num_islands=self._num_islands,
                     tpl_nodes_len=tpl_nodes_len)
         else:
-            # load from the file
-            lgn = graph_id
-            lg = None
-            try:
-                with open(graph_id, 'r') as pgf:
-                    # use the same log info so that log parser can pick up
-                    logger.info("Start to unroll {0}".format(graph_id))
-                    pg_spec = json.load(pgf)
-                    logger.info("Unroll completed for {0} with # of Drops: {1}".format(graph_id, len(pg_spec)))
-            except Exception as exp:
-                err_info = 'Fail to load physical graph: {0}'.format(exp)
-                logger.error(err_info)
-                raise DaliugeException(err_info)
-
-            if (len(pg_spec) < 1 or (not 'node' in pg_spec[0])):
-                err_info = "Invalid pg_spec {0}".format(graph_id)
-                logger.error(err_info)
-                raise InvalidGraphException(err_info)
-
-            if (pg_spec[0]['node'].startswith('#')):
-                if (len(node_list) > 0):
-                    logger.info("Start to translate {0}".format(graph_id))
-                    # this is a pg_spec template, fill it with real IP addresses
-                    for drop_spec in pg_spec:
-                        nidx = int(drop_spec['node'][1:]) # skip '#'
-                        drop_spec['node'] = node_list[nidx]
-                        iidx = int(drop_spec['island'][1:]) # skip '#'
-                        drop_spec['island'] = node_list[iidx]
-                    logger.info("Translation completed for {0}".format(graph_id))
-                else:
-                    logger.info("Empty node_list, cannot translate the pg_spec template!")
+            # pg_spec template, fill it with real IP addresses directly
+            if (len(node_list) > 0):
+                logger.info("Start to translate {0}".format(graph_id))
+                dim_list = node_list[0:self._num_islands]
+                nm_list = node_list[self._num_islands:]
+                for drop_spec in drop_list:
+                    nidx = int(drop_spec['node'][1:]) # skip '#'
+                    drop_spec['node'] = nm_list[nidx]
+                    iidx = int(drop_spec['island'][1:]) # skip '#'
+                    drop_spec['island'] = dim_list[iidx]
+                logger.info("Translation completed for {0}".format(graph_id))
+            else:
+                logger.info("Empty node_list, cannot translate the pg_spec template!")
+            pg_spec = drop_list
 
         logger.info("PG spec is calculated!")
 
@@ -204,6 +214,18 @@ class MonitorClient(object):
             json.dump(pg_spec, f, indent=1)
 
 if __name__ == '__main__':
+    """
+    Some examples on unrolling / partitioning from existing PGT (full or template):
+
+    python -m dfms.deploy.pawsey.example_client -g 13  -o /tmp/pg_spec_g13_full.json -N 1.2.3.0,1.2.3.1,1.2.3.2,1.2.3.3,1.2.3.4
+    python -m dfms.deploy.pawsey.example_client -g /tmp/pg_spec_g13_full.json -N 0.2.3.0,0.2.3.1,0.2.3.2,0.2.3.3 -o /tmp/pg_spec_g13_full_4.json
+    python -m dfms.deploy.pawsey.example_client -g /tmp/pg_spec_g13_full_4.json -t 3 -o /tmp/pg_spec_g13_full_3.tpl
+    python -m dfms.deploy.pawsey.example_client -o /tmp/pg_spec_g13_full_3.json  -g /tmp/pg_spec_g13_full_3.tpl -N qq,ee,tt
+    grep "\"node\": \"tt\"" /tmp/pg_spec_g13_full_3.json | wc -l
+    grep "\"node\": \"ee\"" /tmp/pg_spec_g13_full_3.json | wc -l
+    grep "\"island\": \"qq\"" /tmp/pg_spec_g13_full_3.json | wc -l
+    """
+    #TODO write test cases to assert the above (wc1 + wc2 == wc3 == 2226)
 
     parser = optparse.OptionParser()
     parser.add_option("-l", "--list", action="store_true",
@@ -221,7 +243,7 @@ if __name__ == '__main__':
     parser.add_option("-p", "--port", action="store", type="int",
                       dest="port", help="The port we connect to to deploy the graph", default=8001)
     parser.add_option("-g", "--graph-id", action="store", type="string",
-                      dest="graph_id", help="The graph to deploy, either an integer (see -l for a list) or file name (string)", default=None)
+                      dest="graph_id", help="The graph to deploy, either an integer (see -l for a list) or file name of a template or full PGT", default=None)
     parser.add_option("-o", "--output", action="store", type="string",
                       dest="output", help="Where to dump the general physical graph", default=None)
     parser.add_option("-z", "--zerorun", action="store_true",
@@ -251,8 +273,8 @@ if __name__ == '__main__':
     except:
         if (not os.path.exists(gid)):
             parser.error("Cannot locate graph_id file at '{0}'".format(gid))
-        elif (opts.tpl_nodes_len > 0):
-            parser.error("Cannot generate template from file")
+        # elif (opts.tpl_nodes_len > 0):
+        #     parser.error("Cannot generate template from file")
 
     nodes = [n for n in opts.nodes.split(',') if n] if opts.nodes else []
     mc = MonitorClient(opts.host, opts.port, output=opts.output, algo=opts.algo,
