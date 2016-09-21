@@ -32,6 +32,7 @@ from dfms import utils
 from dfms.exceptions import DaliugeException
 import six
 import codecs
+import zlib
 
 
 # HTTP headers used by daliuge
@@ -138,19 +139,22 @@ class RestClient(object):
         ret = self._POST(url, content, 'application/x-www-form-urlencoded')
         return json.load(ret) if ret else None
 
-    def _post_json(self, url, content):
+    def _post_json(self, url, content, compress=False):
         if not isinstance(content, six.string_types):
             content = json.dumps(content)
-        ret = self._POST(url, content, 'application/json')
+        ret = self._POST(url, content, 'application/json', compress=compress)
         return json.load(ret) if ret else None
 
     def _GET(self, url):
         return self._request(url, 'GET')
 
-    def _POST(self, url, content=None, content_type=None):
+    def _POST(self, url, content=None, content_type=None, compress=False):
         headers = {}
         if content_type:
             headers['Content-Type'] = content_type
+        if compress and content:
+            headers['Content-Encoding'] = 'gzip'
+            content = zlib.compress(six.b(content))
         return self._request(url, 'POST', content, headers)
 
     def _DELETE(self, url):
