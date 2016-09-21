@@ -675,7 +675,7 @@ class ThreadedPyroRPCMixIn(PyroRPCMixIn):
 EventMixIn = ZMQPubSubMixIn
 
 # Check which rpc backend should be used
-rpc_lib = os.environ.get('DALIUGE_RPC', 'pyro-multiplex')
+rpc_lib = os.environ.get('DALIUGE_RPC', 'zerorpc')
 if rpc_lib in ('pyro', 'pyro-multiplex'): # "pyro" defaults to "pyro-multiplex"
     RpcMixIn = MultiplexPyroRPCMixIn
 elif rpc_lib == 'pyro-threaded':
