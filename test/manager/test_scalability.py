@@ -21,15 +21,17 @@
 #
 import subprocess
 import sys
+import time
 import unittest
+
+from test.manager import testutils
 
 from dfms import drop
 from dfms.manager import client
-import time
+from dfms.utils import terminate_or_kill
 
 
 hostname = 'localhost'
-
 
 def memory_drop(uid):
     return drop.dropdict({'node':hostname, 'oid':uid, 'uid':uid, 'type':'plain', 'storage':'memory'})
@@ -75,7 +77,7 @@ class TestBigGraph(unittest.TestCase):
         self.dmProcess = subprocess.Popen(args)
 
     def tearDown(self):
-        self.dmProcess.kill()
+        terminate_or_kill(self.dmProcess, 5)
         unittest.TestCase.tearDown(self)
 
     def test_submit_hugegraph(self):
@@ -90,12 +92,13 @@ class TestBigGraph(unittest.TestCase):
         drops_per_branch=5000
         branches = 5
         n_drops = drops_per_branch * branches * 2 + 1
-        graph, completed_uids = create_graph(branches=5, drops_per_branch=drops_per_branch)
+        graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
         self.assertEqual(n_drops, len(graph))
 
         c = client.NodeManagerClient(port=restPort)
         dimProcess = subprocess.Popen(args)
-        try:
+
+        with testutils.terminating(dimProcess, 5):
             c.create_session(sessionId)
             c.append_graph(sessionId, graph)
 
@@ -107,6 +110,3 @@ class TestBigGraph(unittest.TestCase):
             # A minute is more than enough, in my PC it takes around 4 or 5 [s]
             # A minute is also way less than the ~2 [h] we observed in AWS
             self.assertLessEqual(delta, 60, "It took way too much time to create %d drops" % (n_drops,))
-
-        finally:
-            dimProcess.kill()

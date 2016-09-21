@@ -60,19 +60,21 @@ setup(
             "lockfile",
             "luigi<2.0",
             "metis",
-            "netifaces",
+            "netifaces>=0.10.5",
             "networkx",
             # paramiko 2.0.0 requires cryptography>=1.1, which in turn
             # requires development packages to be installed on the system
             "paramiko<2.0.0",
-            "paste",
             "psutil",
-            "Pyro4>=4.39",
+            "Pyro4>=4.47", # 4.47 contains a fix we contributed
             "pyswarm",
             "python-daemon",
+            "pyzmq",
+            "rpyc",
             "scp",
             'six',
             "zeroconf",
+            "zerorpc >= 0.6" # 0.6 brins python3 support plus other fixes
       ],
       # Keep alpha-sorted PLEASE!
 
@@ -80,14 +82,12 @@ setup(
         'spead': ["spead2==0.4.0"]
       },
       dependency_links=[
+        # The latest version of netifaces doesn't compile with old Linux kernels
+        # We have provided a patch that solves the issue and are waiting for
+        # merging into the main repository now
+        'https://bitbucket.org/rodrigo_tobar/netifaces/get/tip.zip#egg=netifaces-0.10.5',
         'https://bitbucket.org/kw/metis-python/get/tip.zip#egg=metis',
-        'https://bitbucket.org/rodrigo_tobar/paste/get/tip.zip#egg=paste',
-
-        # netifaces 10.4 doesn't include proper Python 3 support, but the tip
-        # (cee54e7 as of 23/06/16) is broken. This particular commit is a nice
-        # place in between where things build properly
-        'https://bitbucket.org/al45tair/netifaces/get/b18f500.zip#egg=netifaces',
-        ],
+      ],
       test_suite="test",
       entry_points= {
           'console_scripts':[

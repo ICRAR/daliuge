@@ -91,6 +91,9 @@ def _setupPyro():
     # behavior.
     Pyro4.config.REQUIRE_EXPOSE = False
 
+    # Use a multiplex server.
+    Pyro4.config.SERVERTYPE = 'multiplex'
+
     # A final thing: we use a default timeout of 60 [s], which should be more
     # than enough
     Pyro4.config.COMMTIMEOUT = 60

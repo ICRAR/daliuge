@@ -23,9 +23,10 @@ import json
 import logging
 
 import bottle
-from paste import httpserver
+from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
 import six.moves.http_client as httplib  # @UnresolvedImport
 import six.moves.urllib_parse as urllib # @UnresolvedImport
+import six.moves.socketserver as SocketServer # @UnresolvedImport
 
 from dfms import utils
 from dfms.exceptions import DaliugeException
@@ -37,6 +38,30 @@ import codecs
 DALIUGE_HDR_ERR = 'X-Daliuge-Error'
 
 logger = logging.getLogger(__name__)
+
+class ThreadingWSGIServer(SocketServer.ThreadingMixIn, WSGIServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
+class LoggingWSGIRequestHandler(WSGIRequestHandler):
+    def log_message(self, fmt, *args):
+        logger.debug(fmt, *args)
+
+class RestServerWSGIServer:
+    def __init__(self, wsgi_app, listen = '127.0.0.1', port = 8080):
+        self.wsgi_app = wsgi_app
+        self.listen = listen
+        self.port = port
+        self.server = make_server(self.listen, self.port, self.wsgi_app,
+                                  server_class=ThreadingWSGIServer,
+                                  handler_class=LoggingWSGIRequestHandler)
+
+    def serve_forever(self):
+        self.server.serve_forever()
+
+    def server_close(self):
+        self.server.shutdown()
+        self.server.server_close()
 
 class RestServer(object):
     """
@@ -58,15 +83,16 @@ class RestServer(object):
         # tornado's IOLoop directly instead
         logger.info("Starting REST server on %s:%d" % (host, port))
 
-        self._server = httpserver.serve(self.app, host=host, port=port, start_loop=False)
+        self._server = RestServerWSGIServer(self.app, host, port)
         self._server.serve_forever()
 
     def stop(self, timeout=None):
         if self._server:
             logger.info("Stopping REST server")
             self._server.server_close()
-            self._server = None
             self.app.close()
+            self._server = None
+            
 
 class RestClientException(DaliugeException):
     """
@@ -103,7 +129,8 @@ class RestClient(object):
 
 
     def _get_json(self, url):
-        return json.load(self._GET(url))
+        ret = self._GET(url)
+        return json.load(ret) if ret else None
 
     def _post_form(self, url, content=None):
         if content is not None:

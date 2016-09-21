@@ -85,16 +85,6 @@ def browse_service(zc, service_type_name, protocol, callback):
     browser = ServiceBrowser(zc, stn, handlers=[callback])
     return browser
 
-class noopctx(object):
-    """
-    Base class for objects that need to become context managers but need to
-    implement no additional behavior
-    """
-    def __enter__(self):
-        return self
-    def __exit__(self, typ, val, traceback):
-        return False
-
 class CountDownLatch(object):
     """
     An implementation that shadows Java's CountDownLatch, allowing one thread
@@ -121,12 +111,17 @@ class CountDownLatch(object):
             self.lock.wait()
         self.lock.release()
 
+def portIsClosed(host, port, timeout):
+    """
+    Checks if a given ``host``/``port`` is closed, with a given ``timeout``.
+    """
+    return check_port(host, port, timeout=timeout, checking_open=False)
+
 def portIsOpen(host, port, timeout=0):
     """
-    Checks if a given host/port is opened, with a given `connectTimeout`. The
-    check is done by simply opening a connection and then closing it.
+    Checks if a given ``host``/``port`` is open, with a given ``timeout``.
     """
-    return writeToRemotePort(host, port, data=None, timeout=timeout)
+    return check_port(host, port, timeout=timeout, checking_open=True)
 
 def connect_to(host, port, timeout=None):
     """
@@ -134,67 +129,103 @@ def connect_to(host, port, timeout=None):
     connected socket. If no connection could be established ``None`` is
     returned.
     """
-    sock = writeToRemotePort(host, port, timeout=timeout, return_socket=True)
-    return sock or None
+    return check_port(host, port, timeout=timeout, return_socket=True)
 
-def writeToRemotePort(host, port, data=None, timeout=0, return_socket=False):
+def write_to(host, port, data, timeout=None):
     """
-    Writes the given data into the port specified by `host`:`port`. A maximum
-    waiting time of `timeout` can be specified (in seconds), in which case this
-    method will try to establish a connection with the remote port for at least
-    that amount of time. A values of 0 (the default) means that no waiting is
-    performed, and a value of `None` means that an infinite timeout is used.
+    Connects to ``host``:``port`` within the given timeout and write the given
+    piece of ``data`` into the connected socket.
+    """
+    sock = connect_to(host, port, timeout=timeout)
+    with contextlib.closing(sock):
+        sock.send(data)
 
-    This method returns `True` if the connection was successfully established
-    with the given timeout, and if the data was successfully sent; `False`
-    otherwise.
+def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     """
+    Checks that the port specified by ``host``:``port`` is either open or
+    closed (depending on the value of ``checking_open``) within a given
+    ``timeout``.
+    When checking for an open port, this method will keep trying to connect to
+    it either until the given ``timeout`` has expired or until the socket is
+    found open. When checking for a closed port this method will keep trying to
+    connect to it until the connection is unsuccessful, or until the ``timeout``
+    expires.
+    Additionally, if some ``data`` is passed and the method is ``checking_open``
+    then ``data`` will be written to the socket if it connects successfully.
+
+    This method returns ``True`` if the port was found on the expected state
+    within the time limit, and ``False`` otherwise.
+    """
+
+    if return_socket and not checking_open:
+        raise ValueError("If return_socket is True then checking_open must be True")
 
     start = time.time()
     while True:
         try:
 
             # Calculate the timeout used during this cycle
+            # If we're past the timeout we have failed already
             thisTimeout = None
             if timeout is not None and timeout != 0:
                 thisTimeout = timeout - (time.time() - start)
                 if thisTimeout <= 0:
                     return False
 
+            # Create the socket and try to connect, sending data if required
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             if return_socket:
-                ctx = noopctx()
                 ret = s
             else:
-                ctx = contextlib.closing(s)
                 ret = True
 
-            with ctx:
+            try:
                 s.settimeout(thisTimeout)
                 s.connect((host, port))
-                if data is not None:
-                    s.send(data)
+            finally:
+                if not return_socket:
+                    s.close()
+
+            # Success if we were checking for an open port!
+            if checking_open:
                 return ret
+
+            # Otherwise keep trying until we find the socket closed
+            time.sleep(0.1)
+            continue
 
         except socket.timeout:
             logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]', host, port, thisTimeout)
-            return False
+            return not checking_open
+
         except socket.error as e:
+
             # If the connection becomes suddenly closed from the server-side.
-            # We assume that it's not re-opening any time soon, so we simply
-            # return False
+            # We assume that it's not re-opening any time soon
             if e.errno == errno.ECONNRESET:
                 logger.debug("Connection closed by %s:%d, assuming it will stay closed", host, port)
-                return False
-            # If the port is closed we keep trying until enough time has gone by
-            if e.errno == errno.ECONNREFUSED:
+                if not return_socket:
+                    return not checking_open
+                raise
+
+            # The port is closed
+            elif e.errno == errno.ECONNREFUSED:
+
+                if not checking_open:
+                    return True
+
+                # Keep trying because we're checking if it's open
                 if timeout is not None:
                     if time.time() - start > timeout:
                         logger.debug('Refused connection to %s:%d for more than %f seconds', host, port, timeout)
-                        return False
+                        if not return_socket:
+                            return False
+                        raise
+
                 time.sleep(0.1)
                 continue
+
             # Any other error should be raised
             raise
 
@@ -306,6 +337,6 @@ def terminate_or_kill(proc, timeout):
 
     kill9 = waitLoops == max_loops
     if kill9:
-        logger.info('Killing %s by brute force after waiting %.2f [s], BANG! :-(', pid, timeout)
+        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', pid, timeout)
         proc.kill()
     proc.wait()

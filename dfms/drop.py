@@ -45,7 +45,7 @@ from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
 from dfms.event import EventFirer
 from dfms.exceptions import InvalidDropException, InvalidRelationshipException
 from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-from dfms.utils import prepare_sql, noopctx
+from dfms.utils import prepare_sql
 
 
 try:
@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 #===============================================================================
 
 
-class AbstractDROP(EventFirer, noopctx):
+class AbstractDROP(EventFirer):
     """
     Base class for all DROP implementations.
 
@@ -130,8 +130,11 @@ class AbstractDROP(EventFirer, noopctx):
 
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
+        # We keep the UIDs in a set for O(1) "x in set" operations
         self._consumers = []
         self._producers = []
+        self._consumers_uids = set()
+        self._producers_uids = set()
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -146,7 +149,10 @@ class AbstractDROP(EventFirer, noopctx):
         # at the same time, although this rule is imposed simply to enforce
         # efficiency (why would a consumer want to consume the data twice?) and
         # not because it's technically impossible.
+        # See comment above in self._consumers/self._producers for separate set
+        # with uids
         self._streamingConsumers = []
+        self._streamingConsumers_uids = set()
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -254,7 +260,7 @@ class AbstractDROP(EventFirer, noopctx):
         return hash(self._uid)
 
     def __repr__(self):
-        return "%s %s/%s" % (self.__class__.__name__, self.oid, self.uid)
+        return "<%s oid=%s, uid=%s>" % (self.__class__.__name__, self.oid, self.uid)
 
     def initialize(self, **kwargs):
         """
@@ -294,7 +300,7 @@ class AbstractDROP(EventFirer, noopctx):
         getting deleted.
         """
         if self.status != DROPStates.COMPLETED:
-            raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be opened for reading" % (self._oid, self._uid, self.status))
+            raise Exception("%r is in state %s (!=COMPLETED), cannot be opened for reading" % (self, self.status,))
 
         io = self.getIO()
         io.open(OpenMode.OPEN_READ, **kwargs)
@@ -335,7 +341,7 @@ class AbstractDROP(EventFirer, noopctx):
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
-            raise Exception("DROP %s/%s is in state %s (!=COMPLETED), cannot be read" % (self._oid, self._uid, self.status))
+            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self.status,))
         if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
@@ -401,7 +407,7 @@ class AbstractDROP(EventFirer, noopctx):
             else:
                 if remaining < 0:
                     logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                logger.debug("Automatically moving DROP %s/%s to COMPLETED, all expected data arrived" % (self.oid, self.uid))
+                logger.debug("Automatically moving %r to COMPLETED, all expected data arrived" % (self,))
                 self.setCompleted()
         else:
             self.status = DROPStates.WRITING
@@ -626,7 +632,7 @@ class AbstractDROP(EventFirer, noopctx):
     @parent.setter
     def parent(self, parent):
         if self._parent and parent:
-            logger.warning("A parent is already set in DROP %s/%s, overwriting with new value" % (self._oid, self._uid))
+            logger.warning("A parent is already set in %r, overwriting with new value" % (self,))
         if parent:
             prevParent = self._parent
             self._parent = parent # a parent is a container
@@ -662,16 +668,18 @@ class AbstractDROP(EventFirer, noopctx):
 
         # An object cannot be a normal and streaming consumer at the same time,
         # see the comment in the __init__ method
-        if consumer in self._streamingConsumers:
+        cuid = consumer.uid
+        if cuid in self._streamingConsumers_uids:
             raise InvalidRelationshipException(DROPRel(consumer, DROPLinkType.CONSUMER, self),
                                                "Consumer already registered as a streaming consumer")
 
         # Add if not already present
         # Add the reverse reference too automatically
-        if consumer in self._consumers:
+        if cuid in self._consumers_uids:
             return
         logger.debug('Adding new consumer %r to %r', consumer, self)
         self._consumers.append(consumer)
+        self._consumers_uids.add(cuid)
 
         # Subscribe the consumer to events sent when this DROP moves to
         # COMPLETED. This way the consumer will be notified that its input has
@@ -708,10 +716,12 @@ class AbstractDROP(EventFirer, noopctx):
         """
 
         # Don't add twice
-        if producer in self._producers:
+        puid = producer.uid
+        if puid in self._producers_uids:
             return
 
         self._producers.append(producer)
+        self._producers_uids.add(puid)
 
         # Automatic back-reference
         if back and hasattr(producer, 'addOutput'):
@@ -738,10 +748,6 @@ class AbstractDROP(EventFirer, noopctx):
         itself to COMPLETED.
         """
 
-        # Is the UID actually referencing a producer
-        if uid not in [p.uid for p in self._producers]:
-            raise Exception("%s is not a producer of %r" % (uid, self))
-
         finished = False
         with self._finishedProducersLock:
             self._finishedProducers.append(drop_state)
@@ -749,7 +755,7 @@ class AbstractDROP(EventFirer, noopctx):
             nProd = len(self._producers)
 
             if nFinished > nProd:
-                raise Exception("More producers finished that registered in DROP %r" % (self))
+                raise Exception("More producers finished that registered in DROP %r: %d > %d" % (self, nFinished, nProd))
             elif nFinished == nProd:
                 finished = True
 
@@ -788,15 +794,17 @@ class AbstractDROP(EventFirer, noopctx):
 
         # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
-        if streamingConsumer in self._consumers:
+        scuid = streamingConsumer.uid
+        if scuid in self._consumers_uids:
             raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
                                                "Consumer is already registered as a normal consumer")
 
         # Add if not already present
-        if streamingConsumer in self._streamingConsumers:
+        if scuid in self._streamingConsumers_uids:
             return
-        logger.debug('Adding new streaming streaming consumer for DROP %s/%s: %s' %(self.oid, self.uid, streamingConsumer))
+        logger.debug('Adding new streaming streaming consumer for %r: %s' %(self, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
+        self._streamingConsumers_uids.add(scuid)
 
         # Automatic back-reference
         if back and hasattr(streamingConsumer, 'addStreamingInput'):
@@ -841,7 +849,7 @@ class AbstractDROP(EventFirer, noopctx):
         if self._wio:
             self._wio.close()
 
-        logger.info("Moving %r to COMPLETED", self)
+        logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
 
         # Signal our subscribers that the show is over
@@ -1218,7 +1226,9 @@ class AppDROP(ContainerDROP):
         # this AppDROP as one of its consumers, while an output DROP
         # will see this AppDROP as one of its producers.
         #
-        # Input objects will
+        # Input and output objects are later referenced by their *index*
+        # (relative to the order in which they were added to this object)
+        # Therefore we use an ordered dict to keep the insertion order.
         self._inputs  = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
@@ -1231,12 +1241,11 @@ class AppDROP(ContainerDROP):
         self._execStatus = AppDROPStates.NOT_RUN
 
     def addInput(self, inputDrop, back=True):
-        with inputDrop:
-            if inputDrop not in self._inputs.values():
-                uid = inputDrop.uid
-                self._inputs[uid] = inputDrop
-                if back:
-                    inputDrop.addConsumer(self, False)
+        uid = inputDrop.uid
+        if uid not in self._inputs:
+            self._inputs[uid] = inputDrop
+            if back:
+                inputDrop.addConsumer(self, False)
 
     @property
     def inputs(self):
@@ -1246,20 +1255,19 @@ class AppDROP(ContainerDROP):
         return list(self._inputs.values())
 
     def addOutput(self, outputDrop, back=True):
-        with outputDrop:
-            if outputDrop is self:
-                raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
-                                                   'Cannot add an AppConsumer as its own output')
-            if outputDrop not in self._outputs.values():
-                uid = outputDrop.uid
-                self._outputs[uid] = outputDrop
+        if outputDrop is self:
+            raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
+                                               'Cannot add an AppConsumer as its own output')
+        uid = outputDrop.uid
+        if uid not in self._outputs:
+            self._outputs[uid] = outputDrop
 
-                if back:
-                    outputDrop.addProducer(self, False)
+            if back:
+                outputDrop.addProducer(self, False)
 
-                # Subscribe the output DROP to events sent by this AppDROP when it
-                # finishes its execution.
-                self.subscribe(outputDrop, 'producerFinished')
+            # Subscribe the output DROP to events sent by this AppDROP when it
+            # finishes its execution.
+            self.subscribe(outputDrop, 'producerFinished')
 
     @property
     def outputs(self):
@@ -1325,6 +1333,7 @@ class AppDROP(ContainerDROP):
         properties are set to their correct values correctly before invoking
         this method.
         """
+        logger.debug("Moving %r to %s", self, "FINISHED" if self._execStatus is AppDROPStates.FINISHED else "ERROR")
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
 class InputFiredAppDROP(AppDROP):
@@ -1381,6 +1390,8 @@ class InputFiredAppDROP(AppDROP):
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
 
+        logger.debug("Received notification from input drop: uid=%s, state=%d", uid, drop_state)
+
         # A value of -1 means all inputs
         n_inputs = len(self._inputs)
         n_eff_inputs = self._n_effective_inputs
@@ -1420,9 +1431,13 @@ class InputFiredAppDROP(AppDROP):
 
     def async_execute(self):
         # Return immediately, but schedule the execution of this app
-        t = threading.Thread(None, lambda: self.execute())
-        t.daemon = 1
-        t.start()
+        # If we have been given a thread pool use that
+        if hasattr(self, '_tp'):
+            self._tp.apply_async(self.execute)
+        else:
+            t = threading.Thread(target=self.execute)
+            t.daemon = 1
+            t.start()
 
     def execute(self):
         """
@@ -1436,6 +1451,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
+        logger.debug("Executing %r", self)
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING

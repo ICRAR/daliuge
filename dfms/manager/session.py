@@ -24,31 +24,21 @@ Module containing the logic of a session -- a given graph execution
 """
 
 import collections
+import inspect
 import logging
 import threading
 
-import Pyro4
 from luigi import scheduler, worker
 
-from dfms import droputils, utils
+from dfms import droputils
 from dfms import luigi_int, graph_loader
-from dfms.ddap_protocol import DROPLinkType, DROPStates
-from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP
-from dfms.exceptions import InvalidSessionState, InvalidGraphException
+from dfms.ddap_protocol import DROPStates, DROPLinkType, DROPRel
+from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
+    LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
+from dfms.exceptions import InvalidSessionState, InvalidGraphException, \
+    NoDropException, DaliugeException
+from dfms.manager import constants
 
-
-_LINKTYPE_TO_NREL = {
-    DROPLinkType.CONSUMER: 'consumers',
-    DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
-    DROPLinkType.CHILD: 'children',
-    DROPLinkType.INPUT: 'inputs',
-    DROPLinkType.STREAMING_INPUT: 'streamingInputs',
-    DROPLinkType.OUTPUT: 'outputs',
-    DROPLinkType.PRODUCER: 'producers'
-}
-_LINKTYPE_TO_REL = {
-    DROPLinkType.PARENT: 'parent',
-}
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +49,7 @@ class SessionStates:
     """
     PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = range(5)
 
-
-class ErrorStatusListener(utils.noopctx):
+class ErrorStatusListener(object):
 
     def __init__(self, session, event_listener):
         self._session = session
@@ -70,7 +59,35 @@ class ErrorStatusListener(utils.noopctx):
         if evt.status == DROPStates.ERROR:
             self._event_listener.on_error(self._session.drops[evt.uid])
 
-class LeavesCompletionListener(utils.noopctx):
+class DropProxy(object):
+    """
+    A proxy to a remote drop.
+
+    It forwards attribute requests through the given Node Manager.
+    It also forwards procedure calls through the Node Manager.
+    """
+
+    def __init__(self, nm, hostname, port, sessionId, uid):
+        self.nm = nm
+        self.hostname = hostname
+        self.port = port
+        self.session_id = sessionId
+        self.uid = uid
+
+    def handleEvent(self, evt):
+        pass
+
+    def __getattr__(self, name):
+        if name == 'uid':
+            return self.uid
+        elif name in ('inputs', 'streamingInputs', 'outputs', 'consumers', 'producers'):
+            return []
+        return self.nm.get_drop_attribute(self.hostname, self.port, self.session_id, self.uid, name)
+
+    def __repr__(self, *args, **kwargs):
+        return '<DropProxy %s, session %s @%s:%d>' % (self.uid, self.session_id, self.hostname, self.port)
+
+class LeavesCompletionListener(object):
 
     def __init__(self, leaves, session):
         self._session = session
@@ -108,12 +125,13 @@ class Session(object):
         self._drops = {} # key: oid, value: actual drop object
         self._statusLock = threading.Lock()
         self._roots = []
-        self._daemon = None
+        self._proxyinfo = []
         self._worker = None
         self._status = SessionStates.PRISTINE
         self._host = host
         self._error_status_listener = None
         self._enable_luigi = enable_luigi
+        self._dropsubs = {}
         if error_listener:
             self._error_status_listener = ErrorStatusListener(self, error_listener)
 
@@ -167,9 +185,10 @@ class Session(object):
         # This will check the consistency of each dropSpec
         graphSpecDict = graph_loader.loadDropSpecs(graphSpec)
 
-        for oid in graphSpecDict:
-            if oid in self._graph:
-                raise InvalidGraphException('DROP with OID %s already exists, cannot add twice' % (oid))
+        # Check for duplicates
+        duplicates = set(graphSpecDict) & set(self._graph)
+        if duplicates:
+            raise InvalidGraphException('Trying to add drops with OIDs that already exist: %r' % (duplicates,))
 
         self._graph.update(graphSpecDict)
 
@@ -203,7 +222,7 @@ class Session(object):
             return self._graph[oid]
         return None
 
-    def deploy(self, completedDrops=[]):
+    def deploy(self, completedDrops=[], foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -219,26 +238,21 @@ class Session(object):
 
         self.status = SessionStates.DEPLOYING
 
-        # Create the Pyro daemon that will serve the DROP proxies and start it
-        logger.info("Starting Pyro4 Daemon for session %s", self._sessionId)
-        self._daemon = Pyro4.Daemon(host=self._host)
-        self._daemonT = threading.Thread(target = lambda: self._daemon.requestLoop(), name="Session %s Pyro Daemon" % (self._sessionId))
-        self._daemonT.daemon = True
-        self._daemonT.start()
-
         # Create the real DROPs from the graph specs
         logger.info("Creating DROPs for session %s", self._sessionId)
 
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
+        logger.info("%d drops successfully created", len(self._graph))
 
         for drop,_ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
-            self._registerDrop(drop)
+            self._drops[drop.uid] = drop
 
             # Register them with the error handler
             if self._error_status_listener:
                 drop.subscribe(self._error_status_listener, eventType='status')
+        logger.info("Stored all drops, proceeding with further customization")
 
         # Start the luigi task that will make sure the graph is executed
         # If we're not using luigi we still
@@ -253,11 +267,14 @@ class Session(object):
             workerT.start()
         else:
             leaves = droputils.getLeafNodes(self._roots)
-            logger.debug("Adding completion listener to leaf drops %r", leaves)
+            logger.info("Adding completion listener to leaf drops")
             listener = LeavesCompletionListener(leaves, self)
             for leaf in leaves:
-                leaf.subscribe(listener, 'dropCompleted')
-                leaf.subscribe(listener, 'producerFinished')
+                if isinstance(leaf, AppDROP):
+                    leaf.subscribe(listener, 'producerFinished')
+                else:
+                    leaf.subscribe(listener, 'dropCompleted')
+            logger.info("Listener added to leaf drops")
 
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
@@ -265,26 +282,99 @@ class Session(object):
         #
         # This is done in a separate iteration at the very end because all drops
         # to make sure all event listeners are ready
-        for drop,_ in droputils.breadFirstTraverse(self._roots):
-            if drop.uid in completedDrops:
-                if isinstance(drop, InputFiredAppDROP):
-                    drop.async_execute()
-                else:
-                    drop.setCompleted()
+        self.trigger_drops(completedDrops)
+
+        # Foreach
+        if foreach:
+            logger.info("Invoking 'foreach' on each drop")
+            for drop,_ in droputils.breadFirstTraverse(self._roots):
+                foreach(drop)
+            logger.info("'foreach' invoked for each drop")
+
+        # Append proxies
+        logger.info("Creating %d drop proxies", len(self._proxyinfo))
+        for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
+            proxy = DropProxy(nm, host, port, self._sessionId, remote_uid)
+            method = getattr(self._drops[local_uid], relname)
+            method(proxy, False)
 
         self.status = SessionStates.RUNNING
         logger.info("Session %s is now RUNNING", self._sessionId)
-
-    def _registerDrop(self, drop):
-        uri = self._daemon.register(drop)
-        drop.uri = uri.asString()
-        logger.debug("Registered %r with Pyro. URI is %s", drop, uri)
-        self._drops[drop.uid] = drop
 
     def _run(self, worker):
         worker.run()
         worker.stop()
         self.finish()
+
+    def trigger_drops(self, uids):
+        for drop,downStreamDrops in droputils.breadFirstTraverse(self._roots):
+            downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
+            if drop.uid in uids:
+                if isinstance(drop, InputFiredAppDROP):
+                    drop.async_execute()
+                else:
+                    drop.setCompleted()
+
+    def deliver_event(self, evt):
+        """
+        Called when an event has been fired by a remote drop.
+        The event is then delivered to the interested drops of this session.
+        """
+        if not evt.uid in self._dropsubs:
+            logger.debug("No subscription found for drop %s", evt.uid)
+            return
+        for tgt in self._dropsubs[evt.uid]:
+            drop = self._drops[tgt]
+            logger.debug("Passing event %r to %r", evt, drop)
+            drop.handleEvent(evt)
+
+    def add_node_subscriptions(self, sessionId, relationships, nm):
+
+        evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
+        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
+
+        for host, droprels in relationships.items():
+
+            # Make sure we have DROPRel tuples
+            droprels = [DROPRel(*x) for x in droprels]
+
+            # Sanitize the host/rpc_port info if needed
+            rpc_port = constants.NODE_DEFAULT_RPC_PORT
+            if type(host) is tuple:
+                host, _, rpc_port = host
+
+            # Store which drops should receive events from which remote drops
+            dropsubs = collections.defaultdict(set)
+            for rel in droprels:
+
+                # Which side of the relationship is local?
+                local_uid = None
+                remote_uid = None
+                if rel.rhs in self._graph:
+                    local_uid = rel.rhs
+                    remote_uid = rel.lhs
+                elif rel.lhs in self._graph:
+                    local_uid = rel.lhs
+                    remote_uid = rel.rhs
+
+                # We are in the event receiver side
+                if (rel.rel in evt_consumer and rel.lhs is local_uid) or \
+                   (rel.rel in evt_producer and rel.rhs is local_uid):
+                    dropsubs[remote_uid].add(local_uid)
+
+            self._dropsubs.update(dropsubs)
+
+            # Store the information needed to create the proxies later
+            for rel in droprels:
+                local_uid = rel.rhs
+                mname = LINKTYPE_1TON_APPEND_METHOD[rel.rel]
+                remote_uid = rel.lhs
+                if local_uid not in self._graph:
+                    local_uid = rel.lhs
+                    remote_uid = rel.rhs
+                    mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
+
+                self._proxyinfo.append((nm, host, rpc_port, local_uid, mname, remote_uid))
 
     def finish(self):
         self.status = SessionStates.FINISHED
@@ -299,7 +389,7 @@ class Session(object):
         # wired together by the DIM after deploying each individual graph on
         # each of the DMs).
         # We recognize such nodes because they are actually not an instance of
-        # AbstractDROP (they are Pyro4.Proxy instances).
+        # AbstractDROP (they are DropProxy instances).
         #
         # The same trick is used in luigi_int.RunDROPTask.requires
         statusDict = collections.defaultdict(dict)
@@ -315,18 +405,53 @@ class Session(object):
         return dict(self._graph)
 
     def destroy(self):
-        """
-        Destroys this session, shutting down the Pyro daemon if it exists.
-        """
-        if self._daemon:
-            self._daemon.shutdown()
-            self._daemon = None
-            self._daemonT.join()
+        pass
 
     __del__ = destroy
+
+    def has_method(self, uid, mname):
+        if uid not in self._drops:
+            raise NoDropException(uid)
+        try:
+            drop = self._drops[uid]
+            return inspect.ismethod(getattr(drop, mname))
+        except AttributeError:
+            return False
+
+    def get_drop_property(self, uid, prop_name):
+        if uid not in self._drops:
+            raise NoDropException(uid)
+        try:
+            drop = self._drops[uid]
+            return getattr(drop, prop_name)
+        except AttributeError:
+            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
+
+    def call_drop(self, uid, method, *args):
+        if uid not in self._drops:
+            raise NoDropException(uid)
+        try:
+            drop = self._drops[uid]
+            m = getattr(drop, method)
+        except AttributeError:
+            raise DaliugeException("%r has no method called %s" % (drop, method))
+        return m(*args)
+
+    def add_relationships(self, host, port, relationships, nm):
+        for rel in relationships:
+            local_uid = rel.rhs
+            mname = LINKTYPE_1TON_APPEND_METHOD[rel.rel]
+            remote_uid = rel.lhs
+            if local_uid not in self._graph:
+                local_uid = rel.lhs
+                remote_uid = rel.rhs
+                mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
+
+            self._proxyinfo.append((nm, host, port, local_uid, mname, remote_uid))
 
     # Support for the 'with' keyword
     def __enter__(self):
         return self
+
     def __exit__(self, typ, value, traceback):
         self.destroy()

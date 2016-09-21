@@ -56,9 +56,8 @@ class BaseDROPManagerClient(RestClient):
         content = None
         if completed_uids:
             content = {'completed': ','.join(completed_uids)}
-        ret = self._post_form('/sessions/%s/deploy' % (urllib.quote(sessionId),), content)
+        self._post_form('/sessions/%s/deploy' % (urllib.quote(sessionId),), content)
         logger.debug('Successfully deployed session %s on %s:%s', sessionId, self.host, self.port)
-        return ret
 
     def append_graph(self, sessionId, graphSpec):
         """
@@ -141,6 +140,15 @@ class NodeManagerClient(BaseDROPManagerClient):
     """
     def __init__(self, host='localhost', port=constants.NODE_DEFAULT_REST_PORT, timeout=10):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
+
+    def add_node_subscriptions(self, sessionId, node_subscriptions):
+        self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), node_subscriptions)
+
+    def trigger_drops(self, sessionId, drop_uids):
+        self._post_json('/sessions/%s/trigger' % (urllib.quote(sessionId),), drop_uids)
+
+    def shutdown_node_manager(self):
+        self._GET('/shutdown')
 
 class CompositeManagerClient(BaseDROPManagerClient):
 

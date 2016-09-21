@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import threading
 import unittest
 
 from dfms import utils
@@ -65,8 +64,8 @@ class TestSocketListener(unittest.TestCase):
         # Create the socket, write, and close the connection, allowing
         # A to move to COMPLETED
         with DROPWaiterCtx(self, d, 3): # That's plenty of time
-            threading.Thread(target=lambda a: a.execute(), args=(a,)).start()
-            utils.writeToRemotePort(host, port, data, 1)
+            a.async_execute()
+            utils.write_to(host, port, data, 1)
 
         for drop in [a,b,c,d]:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
