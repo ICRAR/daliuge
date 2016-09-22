@@ -564,10 +564,10 @@ class PGT(object):
     A DROP representation of Physical Graph Template
     """
 
-    def __init__(self, drop_list):
+    def __init__(self, drop_list, build_dag=True):
         self._drop_list = drop_list
         self._extra_drops = [] # artifacts DROPs produced during L2G mapping
-        self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
+        self._dag = DAGUtil.build_dag_from_drops(self._drop_list) if build_dag else None
         self._json_str = None
         self._oid_gid_map = dict()
         self._gid_island_id_map = dict()
@@ -833,7 +833,7 @@ class MetisPGTP(PGT):
         num_partitions:  number of partitions supplied by users (int)
         TODO - integrate from within PYTHON module (using C API) soon!
         """
-        super(MetisPGTP, self).__init__(drop_list)
+        super(MetisPGTP, self).__init__(drop_list, build_dag=False)
         self._metis_path = "gpmetis" # assuming it is installed at the sys path
         if (num_partitions <= 0):
             #self._num_parts = self.get_opt_num_parts()
@@ -1014,6 +1014,8 @@ class MetisPGTP(PGT):
         self._set_metis_log(" - Data movement: {0}".format(edgecuts))
 
         if (visual):
+            if (self.dag is None):
+                self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
             jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False, visual=visual)
         else:
             jsobj = None
