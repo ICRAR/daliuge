@@ -65,11 +65,9 @@ def launchServer(opts):
         _terminating = True
         logger.info("Exiting from %s" % (dmName))
 
-        # Stop pyro first, cleanup the manager later
-        if hasattr(dm, 'shutdown'):
-            dm.shutdown()
-
+        dm.shutdown()
         server.stop()
+
         logger.info("Thanks for using our %s, come back again :-)" % (dmName))
 
     signal.signal(signal.SIGINT, handle_signal)
