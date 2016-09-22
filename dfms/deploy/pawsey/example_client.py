@@ -49,8 +49,12 @@ lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', #2
 'lofar_test_8x8.json', 'lofar_test_8x16.json', 'lofar_test_16x16.json',#14
 'lofar_test_16x32.json', 'lofar_test_32x32.json', 'lofar_test_32x64.json',#17
 'lofar_test_64x64.json', 'lofar_test_64x128.json', 'lofar_test_128x128.json',#20
-'lofar_test_128x256.json', 'lofar_test_256x256.json', 'lofar_test_256x512.json',#23
-'simple_test_500.json', 'simple_test_1000.json', 'simple_test_2000.json']#26
+'lofar_test_128x256.json', 'lofar_test_256x256.json', 'lofar_test_256x512.json', #23
+# lofar no sky models (nsm)
+'lofar_nsm_2x4.json', #24
+# 2, 4, 8, 12 million Drops
+'lofar_nsm_256x512.json', 'lofar_nsm_512x512.json', 'lofar_nsm_512x1024.json', 'lofar_nsm_768x1024.json' #28
+'simple_test_500.json', 'simple_test_1000.json', 'simple_test_2000.json']#31
 
 
 class MonitorClient(object):
