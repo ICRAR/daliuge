@@ -102,34 +102,42 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
 def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
-    # Step #1: Index DROP specs
-    dropSpecsDict = {dropSpec['oid']: dropSpec for dropSpec in dropSpecList}
+    # Step #1: Get all OIDs
+    oids = {dropSpec['oid'] for dropSpec in dropSpecList}
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
     for dropSpec in dropSpecList:
 
+        this_oid = dropSpec['oid']
+
         # 1-N relationships
         for link,rel in __ONE_TO_N_RELS.items():
             if rel in dropSpec:
-                # Find missing OIDs in relationship and keep track of them
-                missingOids = [oid for oid in dropSpec[rel] if oid not in dropSpecsDict]
+
+                # Find missing OIDs in this relationship and keep track of them,
+                # removing them from the current DROP spec
+                missingOids = [oid for oid in dropSpec[rel] if oid not in oids]
                 for oid in missingOids:
-                    unmetRelationships.append(DROPRel(oid, link, dropSpec['oid']))
-                # Remove them from the current DROP spec
-                [dropSpec[rel].remove(oid) for oid in missingOids]
+                    unmetRelationships.append(DROPRel(oid, link, this_oid))
+                    dropSpec[rel].remove(oid)
+
                 # Remove the relationship list entirely if it has no elements
-                if not dropSpec[rel]: del dropSpec[rel]
+                if not dropSpec[rel]:
+                    del dropSpec[rel]
 
         # N-1 relationships
         for link,rel in __N_TO_ONE_RELS.items():
             if rel in dropSpec:
+
                 # Check if OID is missing
                 oid = dropSpec[rel]
-                if oid in dropSpecsDict:
+                if oid in oids:
                     continue
+
                 # Keep track of missing relationship
-                unmetRelationships.append(DROPRel(oid, link, dropSpec['oid']))
+                unmetRelationships.append(DROPRel(oid, link, this_oid))
+
                 # Remove relationship from current DROP spec
                 del dropSpec[rel]
 
