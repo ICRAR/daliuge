@@ -382,45 +382,56 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmq_pub_q = Queue.Queue()
 
         # Setting up zeromq for event publishing/subscription
-        self._zmq_running = True
-        self._zmqcontextpub = zmq.Context()
-        self._zmqsocketpub = self._zmqcontextpub.socket(zmq.PUB)  # @UndefinedVariable
-        self._zmqsocketpub.set_hwm(0) # Never drop messages that should be sent
-        endpoint = "tcp://%s:%d" % (zmq_safe(self._host), self._events_port)
-        self._zmqsocketpub.bind(endpoint)
-        logger.info("Listening for events via ZeroMQ on %s", endpoint)
+        # They share the same context, there's no need for two separate ones
+        self._zmqevtctx = zmq.Context()
 
-        self._zmqcontextsub = zmq.Context()
-        self._zmqsocketsub = self._zmqcontextsub.socket(zmq.SUB)  # @UndefinedVariable
-        self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
+        # We create the sockets in their respective threads to avoid
+        # multithreading issues with zmq, but still wait until they are created
+        # via these events
+        pubsock_created = threading.Event()
+        subsock_created = threading.Event()
 
-        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread, name="ZMQ evtpub")
+        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread, name="ZMQ evtpub", args=(pubsock_created,))
         self._zmqpubqthread.start()
+        if not pubsock_created.wait(5):
+            raise Exception("Failed to create PUB ZMQ socket in 5 seconds")
+
+        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub", args=(subsock_created,))
+        self._zmqsubthread.start()
+        if not subsock_created.wait(5):
+            raise Exception("Failed to create PUB ZMQ socket in 5 seconds")
 
         self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread, name="ZMQ evtsubq")
         self._zmqsubqthread.start()
-
-        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub")
-        self._zmqsubthread.start()
 
     def shutdown(self):
         super(ZMQPubSubMixIn, self).shutdown()
         self._zmqsubqthread.join()
         self._zmqpubqthread.join()
         self._zmqsubthread.join()
-        self._zmqcontextpub.destroy()
-        self._zmqcontextsub.destroy()
+        self._zmqevtctx.destroy()
+        logger.info("ZMQ context used for event pub/sub destroyed")
 
     def publish_event(self, evt):
         self._zmq_pub_q.put(evt)
 
     def subscribe(self, host, port):
+        # TODO: This might need some work in the future: we're accessing a zmq
+        # socket from a different thread without proper synchronization
         endpoint = "tcp://%s:%d" % (host, port)
         self._zmqsocketsub.connect(endpoint)
         logger.info("Subscribed for events originating from %s", endpoint)
 
-    def _zmq_pub_queue_thread(self):
+    def _zmq_pub_queue_thread(self, sock_created):
         import zmq
+
+        self._zmqsocketpub = self._zmqevtctx.socket(zmq.PUB)  # @UndefinedVariable
+        self._zmqsocketpub.set_hwm(0) # Never drop messages that should be sent
+        endpoint = "tcp://%s:%d" % (zmq_safe(self._host), self._events_port)
+        self._zmqsocketpub.bind(endpoint)
+        logger.info("Listening for events via ZeroMQ on %s", endpoint)
+        sock_created.set()
+
         while self._running:
             evt = None
             try:
@@ -446,8 +457,13 @@ class ZMQPubSubMixIn(BaseMixIn):
             except Queue.Empty:
                 time.sleep(0.01)
 
-    def _zmq_sub_thread(self):
+    def _zmq_sub_thread(self, sock_created):
         import zmq
+
+        self._zmqsocketsub = self._zmqevtctx.socket(zmq.SUB)  # @UndefinedVariable
+        self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
+        sock_created.set()
+
         while self._running:
             try:
                 evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
@@ -455,9 +471,8 @@ class ZMQPubSubMixIn(BaseMixIn):
             except zmq.error.Again:
                 time.sleep(0.01)
             except Exception:
-                import traceback
-                traceback.print_exc()
                 # Figure out what to do here
+                logger.exception("Something bad happened in %s:%d to ZMQ :'(", self._host, self._events_port)
                 break
 
 class ZeroRPCMixIn(BaseMixIn):
