@@ -1627,6 +1627,8 @@ class LG():
         for lgn in self._start_list:
             self.lgn_to_pgn(lgn)
 
+        logger.info("Unroll progress - lgn_to_pgn done {0} for session {1}".format(len(self._start_list), self._session_id))
+
         for lk in self._lg_links:
             sid = lk['from'] # source
             tid = lk['to'] # target
@@ -1746,6 +1748,9 @@ class LG():
                     self._unroll_gather_as_output(slgn, tlgn, sdrops, tdrops, chunk_size)
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
+
+        logger.info("Unroll progress - links done {0} for session {1}".format(len(self._lg_links), self._session_id))
+
         #clean up extra drops
         for lid, lgn in self._done_dict.items():
             if ((lgn.is_start_node() or lgn.is_end_node()) and lid in self._drop_dict):
@@ -1767,6 +1772,7 @@ class LG():
                     if 'gather-data_drop' in sl_drop:
                         del sl_drop['gather-data_drop']
 
+        logger.info("Unroll progress - extra drops done for session {0}".format(self._session_id))
         ret = []
         for drop_list in self._drop_dict.values():
             ret += drop_list
