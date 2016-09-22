@@ -574,7 +574,7 @@ class ZeroRPCMixIn(BaseMixIn):
         gevent.joinall([forwarder, replier])
 
         client.close()
-        client._context.destroy()
+        ctx.destroy()
 
     def forward_requests(self, req_queue, client, to_reply):
         import gevent
