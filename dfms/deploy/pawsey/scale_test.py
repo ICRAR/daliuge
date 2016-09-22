@@ -49,6 +49,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
+export PYTHON_EGG_CACHE=$EGG_CACHE_DIR
 aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR
 """
 
@@ -63,6 +64,7 @@ class DefaultConfig(object):
         l = self.init_list()
         self.setpar('acc', l[0])
         self.setpar('log_root', l[1])
+        self.setpar('egg_cache', '%s/.eggs' % l[1])
         self.set_git_commit()
 
     def init_list(self):
@@ -235,6 +237,7 @@ class PawseyClient(object):
         pardict['MAXTHREADS_PAR'] = '-t %d' % (self._max_threads)
         pardict['SNC_PAR'] = '--app 1' if self._sleepncopy else '--app 0'
         pardict['NUM_ISLANDS_PAR'] = '-s %d' % (self._num_islands)
+        pardict['EGG_CACHE_DIR'] = self._config.getpar('egg_cache')
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
