@@ -180,12 +180,15 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
             else:
                 ret = True
 
+            # socket is closed always on error, conditionally otherwise
             try:
                 s.settimeout(thisTimeout)
                 s.connect((host, port))
-            finally:
                 if not return_socket:
                     s.close()
+            except socket.error:
+                s.close()
+                raise
 
             # Success if we were checking for an open port!
             if checking_open:
