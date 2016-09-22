@@ -98,7 +98,7 @@ class MonitorClient(object):
             lnl = len(node_list) - self._num_islands
         if (lnl == 0):
             raise Exception("Cannot find node list from either managers or external parameters")
-        logger.info("Got a node list with %d nodes", lnl)
+        logger.info("Got a node list with %d node managers", lnl)
         perform_partition = True
 
         # Unroll PGT from the original logical graph or from reading an existing unrolled PGT
@@ -136,10 +136,12 @@ class MonitorClient(object):
                 perform_partition = False
 
         if (perform_partition):
+            logger.info("Initialising PGTP {0}".format(self._algo))
             if 'sarkar' == self._algo:
                 pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
             else:
                 pgtp = MetisPGTP(drop_list, lnl)
+            logger.info("PGTP initialised {0}".format(self._algo))
 
             logger.info("Start to translate {0}".format(lgn))
             pgtp.to_gojs_json(string_rep=False)
