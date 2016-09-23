@@ -107,13 +107,19 @@ def removeUnmetRelationships(dropSpecList):
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
+    rel_link_OneToN   = {link:rel for rel,link in __ONE_TO_N_RELS.items()}
+    rel_link_OneToOne = {link:rel for rel,link in __N_TO_ONE_RELS.items()}
     for dropSpec in dropSpecList:
 
         this_oid = dropSpec['oid']
+        to_delete = []
 
-        # 1-N relationships
-        for link,rel in __ONE_TO_N_RELS.items():
-            if rel in dropSpec:
+        for rel in dropSpec:
+
+            # 1-N relationships
+            if rel in rel_link_OneToN:
+
+                link = rel_link_OneToN[rel]
 
                 # Find missing OIDs in this relationship and keep track of them,
                 # removing them from the current DROP spec
@@ -124,11 +130,12 @@ def removeUnmetRelationships(dropSpecList):
 
                 # Remove the relationship list entirely if it has no elements
                 if not dropSpec[rel]:
-                    del dropSpec[rel]
+                    to_delete.append(rel)
 
-        # N-1 relationships
-        for link,rel in __N_TO_ONE_RELS.items():
-            if rel in dropSpec:
+            # N-1 relationships
+            elif rel in rel_link_OneToOne:
+
+                link = rel_link_OneToOne[rel]
 
                 # Check if OID is missing
                 oid = dropSpec[rel]
@@ -139,7 +146,10 @@ def removeUnmetRelationships(dropSpecList):
                 unmetRelationships.append(DROPRel(oid, link, this_oid))
 
                 # Remove relationship from current DROP spec
-                del dropSpec[rel]
+                to_delete.append(rel)
+
+        for rel in to_delete:
+            del dropSpec[rel]
 
     return unmetRelationships
 
