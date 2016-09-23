@@ -280,6 +280,8 @@ class LogEntryPair(object):
             self._end_time = self.get_timestamp(line)
             if (self._name == 'unroll'):
                 self._other['num_drops'] = int(line.split()[-1])
+            elif (self._name == 'node managers'):
+                self._other['num_node_mgrs'] = int(line.split('Got a node list with')[1].split()[0])
             elif (self._name == 'build drop connections'):
                 self._other['num_edges'] = int(line.split()[-4][1:-1])
 
@@ -340,7 +342,8 @@ class LogParser(object):
     'Establishing {0} drop relationships',
     'Established all drop relationships {0} in',
     'Moving following DROPs to COMPLETED right away',
-    'Successfully triggered drops']
+    'Successfully triggered drops',
+    'Got a node list with {0} node managers']
 
     nm_kl = [
         'Starting Pyro4 Daemon for session', # Logged by the old master branch
@@ -372,6 +375,7 @@ class LogParser(object):
             ('deploy session to all', 11, 12),
             ('build drop connections', 13, 14),
             ('trigger drops', 15, 16),
+            ('node managers', 17, 17),
         )]
 
     def build_nm_log_entry_pairs(self):
@@ -423,9 +427,12 @@ class LogParser(object):
 
         num_drops = -1
         temp_dim = []
+        num_node_mgrs = 0
         for lep in dim_log_pairs:
             if ('unroll' == lep._name):
                 num_drops = lep._other.get('num_drops', -1)
+            elif ('node managers' == lep._name):
+                num_node_mgrs = lep._other.get('num_node_mgrs', 0)
             elif ('build drop connections' == lep._name):
                 num_edges = lep._other.get('num_edges', -1)
                 temp_dim.append(str(num_edges))
@@ -478,9 +485,15 @@ class LogParser(object):
                     if dur > max_node_deploy_time:
                         max_node_deploy_time = dur
 
-        if num_nodes - num_dims != num_finished_sess:
-            print("Pipeline %s is not complete: %d != %d" % (pip_name, num_nodes - num_dims, num_finished_sess))
+        theory_num_nm = num_nodes - num_dims
+        actual_num_nm = num_node_mgrs or theory_num_nm
+        if actual_num_nm != num_finished_sess:
+            print("Pipeline %s is not complete: %d != %d." % (pip_name, actual_num_nm, num_finished_sess))
             return
+        else:
+            failed_nodes = theory_num_nm - actual_num_nm
+            num_nodes -= failed_nodes
+            print("Pipeline %s has %d node managers failed to start!" % (pip_name, failed_nodes))
 
         # The DIM waits for all NMs to setup before triggering the first drops.
         # This has the effect that the slowest to setup will make the others
