@@ -393,12 +393,12 @@ class ZMQPubSubMixIn(BaseMixIn):
 
         self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread, name="ZMQ evtpub", args=(pubsock_created,))
         self._zmqpubqthread.start()
-        if not pubsock_created.wait(5):
+        if not pubsock_created.wait(30):
             raise Exception("Failed to create PUB ZMQ socket in 5 seconds")
 
         self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub", args=(subsock_created,))
         self._zmqsubthread.start()
-        if not subsock_created.wait(5):
+        if not subsock_created.wait(30):
             raise Exception("Failed to create PUB ZMQ socket in 5 seconds")
 
         self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread, name="ZMQ evtsubq")
