@@ -962,11 +962,12 @@ class MetisPGTP(PGT):
 
         # house keeping after partitioning
         self._num_parts_done = len(groups)
-        for e in self.dag.edges(data=True):
-            gid0 = metis_out[e[0] - 1]
-            gid1 = metis_out[e[1] - 1]
-            if (gid0 == gid1):
-                e[2]['weight'] = 0
+        if (self.dag is not None):
+            for e in self.dag.edges(data=True):
+                gid0 = metis_out[e[0] - 1]
+                gid1 = metis_out[e[1] - 1]
+                if (gid0 == gid1):
+                    e[2]['weight'] = 0
 
         # the following is for potential partition merging into islands
         if (self._merge_parts):
