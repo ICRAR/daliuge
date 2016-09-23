@@ -58,6 +58,14 @@ except:
 
 logger = logging.getLogger(__name__)
 
+class ListAsDict(list):
+    """A list that adds drop UIDs to a set as they get appended to the list"""
+    def __init__(self, my_set):
+        self.set = my_set
+    def append(self, drop):
+        super(ListAsDict, self).append(drop)
+        self.set.add(drop.uid)
+
 #===============================================================================
 # DROP classes follow
 #===============================================================================
@@ -131,10 +139,13 @@ class AbstractDROP(EventFirer):
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
         # We keep the UIDs in a set for O(1) "x in set" operations
-        self._consumers = []
-        self._producers = []
+        # Obviously the normal way of doing this is using a dictionary, but
+        # for the time being and while testing the integration with TBU's ceda
+        # library we need to expose a list.
         self._consumers_uids = set()
+        self._consumers = ListAsDict(self._consumers_uids)
         self._producers_uids = set()
+        self._producers = ListAsDict(self._producers_uids)
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -151,8 +162,8 @@ class AbstractDROP(EventFirer):
         # not because it's technically impossible.
         # See comment above in self._consumers/self._producers for separate set
         # with uids
-        self._streamingConsumers = []
         self._streamingConsumers_uids = set()
+        self._streamingConsumers = ListAsDict(self._streamingConsumers_uids)
 
         self._refCount = 0
         self._refLock  = threading.Lock()
@@ -679,7 +690,6 @@ class AbstractDROP(EventFirer):
             return
         logger.debug('Adding new consumer %r to %r', consumer, self)
         self._consumers.append(consumer)
-        self._consumers_uids.add(cuid)
 
         # Subscribe the consumer to events sent when this DROP moves to
         # COMPLETED. This way the consumer will be notified that its input has
@@ -721,7 +731,6 @@ class AbstractDROP(EventFirer):
             return
 
         self._producers.append(producer)
-        self._producers_uids.add(puid)
 
         # Automatic back-reference
         if back and hasattr(producer, 'addOutput'):
@@ -804,7 +813,6 @@ class AbstractDROP(EventFirer):
             return
         logger.debug('Adding new streaming streaming consumer for %r: %s' %(self, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
-        self._streamingConsumers_uids.add(scuid)
 
         # Automatic back-reference
         if back and hasattr(streamingConsumer, 'addStreamingInput'):
