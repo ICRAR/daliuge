@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import logging
 import subprocess
 import sys
 import time
@@ -31,6 +32,7 @@ from dfms.manager import client
 from dfms.utils import terminate_or_kill
 
 
+logger = logging.getLogger(__name__)
 hostname = 'localhost'
 
 def memory_drop(uid):
@@ -82,11 +84,6 @@ class TestBigGraph(unittest.TestCase):
 
     def test_submit_hugegraph(self):
 
-        sessionId = 'lala'
-        restPort  = 8888
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
-                '--port', str(restPort), '-N',hostname, '-qq']
-
         # Each branch contains a data drop and an app drop
         # All branches connect to a final data drop
         drops_per_branch=4000
@@ -94,12 +91,21 @@ class TestBigGraph(unittest.TestCase):
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
         self.assertEqual(n_drops, len(graph))
+        self._run_graph(graph, completed_uids, 5)
+
+    def _run_graph(self, graph, completed_uids, timeout):
+
+        sessionId = 'lala'
+        restPort  = 8888
+        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
+                '--port', str(restPort), '-N',hostname, '-v', '-m', '1000']
 
         c = client.NodeManagerClient(port=restPort)
         dimProcess = subprocess.Popen(args)
 
-        with testutils.terminating(dimProcess, 5):
+        with testutils.terminating(dimProcess, timeout):
             c.create_session(sessionId)
+            logger.info("Appending graph")
             c.append_graph(sessionId, graph)
 
             # What we are actually trying to measure with all this stuff
@@ -109,4 +115,4 @@ class TestBigGraph(unittest.TestCase):
 
             # A minute is more than enough, in my PC it takes around 4 or 5 [s]
             # A minute is also way less than the ~2 [h] we observed in AWS
-            self.assertLessEqual(delta, 60, "It took way too much time to create %d drops" % (n_drops,))
+            self.assertLessEqual(delta, 60, "It took way too much time to create all drops")
