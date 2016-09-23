@@ -493,7 +493,7 @@ class LogParser(object):
         else:
             failed_nodes = theory_num_nm - actual_num_nm
             num_nodes -= failed_nodes
-            print("Pipeline %s has %d node managers failed to start!" % (pip_name, failed_nodes))
+            print("Pipeline %s has %d node managers that failed to start!" % (pip_name, failed_nodes))
 
         # The DIM waits for all NMs to setup before triggering the first drops.
         # This has the effect that the slowest to setup will make the others
@@ -505,6 +505,8 @@ class LogParser(object):
 
             indexed_leps = {lep._name: lep for lep in log_entry_pairs}
             deploy_time = indexed_leps['node_deploy_time'].get_duration()
+            if (deploy_time is None): # since some node managers failed to start
+                continue
             exec_time = indexed_leps['completion_time'].get_duration() or indexed_leps['completion_time_old'].get_duration()
             real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
             if real_exec_time > max_exec_time:
