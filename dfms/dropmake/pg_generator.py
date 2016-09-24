@@ -467,7 +467,7 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
                 dropSpec_socket = dropdict({'oid':"{0}-sock_lstnr".format(oid),
-                'type':'app', 'app':'test.graphsRepository.SleepApp', 'nm':'lstnr', 'tw':1, 'sleepTime': 5})
+                'type':'app', 'app':'test.graphsRepository.SleepApp', 'nm':'lstnr', 'tw':5, 'sleepTime': 5})
                 # tw -- task weight
                 dropSpec_socket['autostart'] = 1
                 kwargs['listener_drop'] = dropSpec_socket
@@ -595,7 +595,9 @@ class PGT(object):
         return int(math.ceil(leng / 10.0))
 
     def get_partition_info(self):
-        return "No partitioning. - Completion time: {0}".format(DAGUtil.get_longest_path(self.dag, show_path=False)[1])
+        return "No partitioning. - Completion time: {0} - Min exec time: {1}"\
+        .format(DAGUtil.get_longest_path(self.dag, show_path=False)[1],
+        self.pred_exec_time(app_drop_only=True))
 
     @property
     def dag(self):
@@ -876,6 +878,9 @@ class MetisPGTP(PGT):
             oid = drop['oid']
             key_dict[oid] = i + 1 #METIS index starts from 1
             drop_dict[oid] = drop
+
+        logger.info("Metis partition input progress - dropdict is built")
+
         for i, drop in enumerate(self._drop_list):
             #line = []
             oid = drop['oid']
@@ -910,9 +915,9 @@ class MetisPGTP(PGT):
                 if (lw <= 0):
                     lw = 1
                 G.add_edge(myk, key_dict[inp], weight=lw)
-        for e in G.edges(data=True):
-            if (e[2]['weight'] == 0):
-                e[2]['weight'] = 1
+        # for e in G.edges(data=True):
+        #     if (e[2]['weight'] == 0):
+        #         e[2]['weight'] = 1
         return G
 
     def _set_metis_log(self, logtext):
@@ -932,8 +937,11 @@ class MetisPGTP(PGT):
         else:
             pa = "Recursive bisect"
         ret = []
-        pparam = "{0} partitions (asked) - Algorithm: {2} - Completion time: {4} - Min objective: {1} - Load balancing: {3}%".format(self._num_parts, min_g, pa, 101 - self._u_factor, DAGUtil.get_longest_path(self.dag, show_path=False)[1])
-        #pparam = "{0} partitions (asked) - Algorithm: {2} - Min objective: {1} - Load balancing: {3}%".format(self._num_parts, min_g, pa, 101 - self._u_factor)
+        pparam = "{0} partitions - Algo: {2} - Completion time: {4}"\
+        " - Min objective: {1} - Load balancing: {3}% - Min exec time: {5}"\
+        .format(self._num_parts, min_g, pa, 101 - self._u_factor,
+        DAGUtil.get_longest_path(self.dag, show_path=False)[1],
+        self.pred_exec_time(app_drop_only=True))
         ret.append(pparam)
         for l in self._metis_logs:
             for ek in entry_key:
@@ -1116,8 +1124,10 @@ class MySarkarPGTP(PGT):
             part_str = ""
             part_str1 = ""
         ed_str = " - Data movement: {0}".format(self._edge_cuts)
-        return "{6}{2}{8} partitions produced - Algorithm: {1} - Completion time: {3} - Max DoP: {5}{7}".format(self._num_parts,
-        type(self).__name__, self._num_parts_done, self._lpl, self._ptime, self._max_dop, part_str, ed_str, part_str1)
+        return "{6}{2}{8} partitions - Algo: {1} - Completion time: {3}"\
+        " - Max DoP: {5}{7} - Min exec time: {9}".format(self._num_parts,
+        type(self).__name__, self._num_parts_done, self._lpl, self._ptime,
+        self._max_dop, part_str, ed_str, part_str1, self.pred_exec_time(app_drop_only=True))
 
     def to_partition_input(self, outf):
         pass
