@@ -1,7 +1,7 @@
 { "class": "go.GraphLinksModel",
   "linkFromPortIdProperty": "fromPort",
   "linkToPortIdProperty": "toPort",
-  "nodeDataArray": [ 
+  "nodeDataArray": [
 {"category":"Comment", "loc":"471.00000000000017 -377.0000000000003", "text":"LOFAR Standard", "key":-13},
 {"category":"Start", "text":"Start", "key":-1, "loc":"-273.21875 -445"},
 {"category":"Variables", "text":"Global Variables", "columnDefinitions":[ {"attr":"name", "text":"Var name", "column":0},{"attr":"value", "text":"Value", "column":1},{"attr":"unit", "text":"Unit", "column":2} ], "var_list":[ {"columns":[ {"attr":"name", "text":"num_sub_band"},{"attr":"value", "text":"80"},{"attr":"unit", "text":""} ]},{"columns":[ {"attr":"name", "text":"num_beam"},{"attr":"value", "text":"2"},{"attr":"unit", "text":""} ]},{"columns":[ {"attr":"name", "text":"num_time_slice"},{"attr":"value", "text":"9"},{"attr":"unit", "text":""} ]},{"columns":[ {"attr":"name", "text":"num_subb_per_img"},{"attr":"value", "text":"10"},{"attr":"unit", "text":""} ]} ], "key":-54, "loc":"79.67187499999966 -474.99999999999994"},
@@ -29,13 +29,13 @@
 {"category":"Component", "text":"DD Calibration", "execution_time":20, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-56, "loc":"505.6718750000001 236.00000000000045", "group":-15},
 {"category":"Branch", "text":"DD Cal \nDone?", "key":-6, "loc":"404.6718750000004 128.99999999999997", "group":-15},
 {"category":"Component", "text":"AWImager", "execution_time":50, "group_start":1, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-40, "loc":"518.6718750000003 38.999999999999986", "group":-15},
-{"category":"Loop", "text":"Loop", "isGroup":true, "num_of_iter":3, "key":-15, "loc":"465.5623029067058 105.00000000000011", "group":-41},
+{"category":"Loop", "text":"Loop", "isGroup":true, "num_of_iter":5, "key":-15, "loc":"465.5623029067058 105.00000000000011", "group":-41},
 {"category":"End", "text":"End", "key":-9, "loc":"266.7812500000001 221.9999999999999"},
 {"category":"Data", "text":"DD \nGain Tables", "data_volume":5, "group_end":1, "key":-50, "loc":"517.671875 128", "group":-15},
 {"category":"Component", "text":"Combine", "execution_time":5, "group_start":1, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-37, "loc":"398.671875 -101", "group":-41},
 {"category":"Data", "text":"Combined", "data_volume":5, "group_end":0, "key":-58, "loc":"521.671875 -103", "group":-41}
  ],
-  "linkDataArray": [ 
+  "linkDataArray": [
 {"from":-39, "to":-53, "fromPort":"B", "toPort":"T", "points":[-379.828125,209.42226359049462,-379.828125,219.42226359049462,-379.828125,230.4845392862954,-380.8281249999998,230.4845392862954,-380.8281249999998,241.54681498209618,-380.8281249999998,251.54681498209618]},
 {"from":-53, "to":-55, "fromPort":"R", "toPort":"L", "points":[-323.4866657257077,267.9845392862954,-313.4866657257077,267.9845392862954,-281.92707157135,267.9845392862954,-281.92707157135,184.9845392862954,-250.36747741699222,184.9845392862954,-240.36747741699222,184.9845392862954]},
 {"from":-63, "to":-45, "fromPort":"B", "toPort":"T", "points":[-376.3309879302979,-93.14001210530625,-376.3309879302979,-83.14001210530625,-376.8309879302979,-83.14001210530625,-376.8309879302979,-83.82863362630238,-377.3309879302979,-83.82863362630238,-377.3309879302979,-73.82863362630238]},
