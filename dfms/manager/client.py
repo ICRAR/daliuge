@@ -64,7 +64,7 @@ class BaseDROPManagerClient(RestClient):
         Appends a graph to session `sessionId`, without creating its DROPs yet,
         but checking that the graph looks correct
         """
-        self._post_json('/sessions/%s/graph/append' % (urllib.quote(sessionId),), graphSpec)
+        self._post_json('/sessions/%s/graph/append' % (urllib.quote(sessionId),), graphSpec, compress=True)
         logger.debug('Successfully appended graph to session %s on %s:%s', sessionId, self.host, self.port)
 
     def destroy_session(self, sessionId):
