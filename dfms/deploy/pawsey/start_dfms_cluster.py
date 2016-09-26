@@ -90,13 +90,14 @@ def get_ip(loc='Pawsey'):
         logger.warning("Fail to obtain IP address from {0}".format(msg))
         return 'None'
 
-def start_node_mgr(log_dir, logv=1, max_threads=0):
+def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     """
     Start node manager
     """
+    host = host or '0.0.0.0'
     lv = 'v' * logv
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-%s' % lv, '-H', '0.0.0.0', '-m', '100', '-t', str(max_threads), '--no-dlm'])
+    '-%s' % lv, '-H', host, '-m', '100', '-t', str(max_threads), '--no-dlm'])
 
 def start_dim(node_list, log_dir, logv=1):
     """
@@ -280,7 +281,8 @@ if __name__ == '__main__':
 
     # attach rank information at the end of IP address for multi-islands
     rank_str = '' if options.num_islands == 1 else ',%s' % rank
-    ip_adds = '{0}{1}'.format(get_ip(options.loc), rank_str)
+    public_ip = get_ip(options.loc)
+    ip_adds = '{0}{1}'.format(public_ip, rank_str)
     origin_ip = ip_adds.split(',')[0]
     ip_adds = comm.gather(ip_adds, root=0)
     if (run_proxy):
@@ -305,7 +307,7 @@ if __name__ == '__main__':
                 start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
             elif (run_node_mgr):
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
+                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=public_ip)
         else:
             logger.info("A list of NM IPs: {0}".format(ip_adds))
             logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
@@ -430,4 +432,4 @@ if __name__ == '__main__':
             else:
                 # node manager
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads)
+                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=public_ip)
