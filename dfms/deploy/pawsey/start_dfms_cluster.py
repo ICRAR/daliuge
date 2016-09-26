@@ -307,7 +307,7 @@ if __name__ == '__main__':
                 start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
             elif (run_node_mgr):
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=public_ip)
+                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=origin_ip)
         else:
             logger.info("A list of NM IPs: {0}".format(ip_adds))
             logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
@@ -432,4 +432,4 @@ if __name__ == '__main__':
             else:
                 # node manager
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=public_ip)
+                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=origin_ip)
