@@ -324,7 +324,7 @@ class CompositeManager(DROPManager):
         # relationships separately and remove them from the original graph spec
         inter_partition_rels = []
         for dropSpecs in perPartition.values():
-            inter_partition_rels.extend(graph_loader.removeUnmetRelationships(dropSpecs))
+            inter_partition_rels += graph_loader.removeUnmetRelationships(dropSpecs)
         sanitize_relations(inter_partition_rels, self._graph)
         logger.info('Removed (and sanitized) %d inter-dm relationships', len(inter_partition_rels))
 
