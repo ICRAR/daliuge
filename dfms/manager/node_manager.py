@@ -484,15 +484,18 @@ class ZeroRPCMixIn(BaseMixIn):
         super(ZeroRPCMixIn, self).start()
 
         # Starts the single-threaded ZeroRPC server for RPC requests
-        self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server", args=(self._host, self._rpc_port,))
+        server_started = threading.Event()
+        self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server", args=(self._host, self._rpc_port, server_started))
         self._zrpcserverthread.start()
+        if not server_started.wait(5):
+            raise Exception("Server didn't start within 5 seconds")
 
         # One per remote host
         self._zrpcclient_acquisition_lock = threading.Lock()
         self._zrpcclients = {}
         self._zrpcclientthreads = []
 
-    def run_zrpcserver(self, host, port):
+    def run_zrpcserver(self, host, port, server_started):
 
         import gevent
         import zerorpc
@@ -506,6 +509,8 @@ class ZeroRPCMixIn(BaseMixIn):
         endpoint = "tcp://%s:%d" % (zmq_safe(host), port,)
         self._zrpcserver.bind(endpoint)
         logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
+        server_started.set()
+
         runner = gevent.spawn(self._zrpcserver.run)
         stopper = gevent.spawn(self.stop_zrpcserver)
         gevent.joinall([runner, stopper])
