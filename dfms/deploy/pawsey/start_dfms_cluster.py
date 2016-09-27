@@ -96,7 +96,7 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     host = host or '0.0.0.0'
     lv = 'v' * logv
     dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-%s' % lv, '-H', host, '-m', '100', '-t', str(max_threads), '--no-dlm'])
+    '-%s' % lv, '-H', host, '-m', '1024', '-t', str(max_threads), '--no-dlm'])
 
 def start_dim(node_list, log_dir, logv=1):
     """
@@ -104,7 +104,7 @@ def start_dim(node_list, log_dir, logv=1):
     """
     lv = 'v' * logv
     dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
-    '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '1024'])
+    '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '2048'])
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -114,7 +114,7 @@ def start_mm(node_list, log_dir, logv=1):
     """
     lv = 'v' * logv
     dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '1024'])
+    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '2048'])
 
 def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app):
     """
