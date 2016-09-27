@@ -181,10 +181,16 @@ class PawseyClient(object):
     def set_gid(self, gid):
         if (gid is None):
             return
-        if (int(gid) >= len(lgnames)):
-            raise Exception("Invalid graph id '{0}'".format(gid))
+        if (str(gid).isdigit()):
+            if (int(gid) >= len(lgnames)):
+                raise Exception("Invalid graph id '{0}'".format(gid))
+            self._pip_name = lgnames[gid].split('.')[0]
+        else:
+            if (not os.path.exists(gid)):
+                raise Exception("Cannot locate PGT/Template {0}".format(gid))
+            self._pip_name = os.path.basename(gid).split(".")[0] + "_instance"
         self._gid = gid
-        self._pip_name = lgnames[gid].split('.')[0]
+
 
     @property
     def num_daliuge_nodes(self):
@@ -227,7 +233,7 @@ class PawseyClient(object):
         pardict['ACCOUNT'] = self._acc
         pardict['PY_BIN'] = sys.executable
         pardict['LOG_DIR'] = lgdir
-        pardict['GID_PAR'] = '-g %d' % self._gid if (self._gid is not None) else ''
+        pardict['GID_PAR'] = '-g {0}'.format(self._gid) if (self._gid is not None) else ''
         pardict['PROXY_PAR'] = '-m %s -o %d' % (self._mon_host, self._mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
         pardict['LOGV_PAR'] = '-v %d' % self._logv
@@ -549,8 +555,11 @@ if __name__ == '__main__':
                       dest="log_root", help="The root directory of the log file")
     parser.add_option("-d", "--log-dir", action="store",
                       dest="log_dir", help="The directory of the log file for parsing")
-    parser.add_option("-g", "--graph-id", action="store", type="int",
-                      dest="graph_id", help="The graph to deploy (0 - %d)" % (len(lgnames) - 1), default=None)
+    parser.add_option("-g", "--graph-id", action="store", type="string",
+                      dest="graph_id",
+                      help="The graph to deploy, either an integer (0 - %d), or \
+                      file name of a template or full PGT" % (len(lgnames) - 1),
+                      default=None)
     parser.add_option("-t", "--job-dur", action="store", type="int",
                       dest="job_dur", help="job duration in minutes", default=30)
     parser.add_option("-n", "--num_nodes", action="store", type="int",
