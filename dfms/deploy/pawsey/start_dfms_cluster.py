@@ -224,9 +224,8 @@ if __name__ == '__main__':
     parser.add_option("-t", "--max-threads", action="store", type="int",
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 
-    # we add command-line parameter to allow automatic graph submission from file
-    parser.add_option('-g', '--gid', action='store', type='int',
-                    dest='gid', help = 'Physical graph id')
+    parser.add_option('-g', '--gid', action='store', type='string',
+                    dest='gid', help = 'Physical graph id or template PGT file name')
 
     parser.add_option('-s', '--num_islands', action='store', type='int',
                     dest='num_islands', default=1, help='The number of Data Islands')
@@ -244,9 +243,6 @@ if __name__ == '__main__':
     if (None == options.log_dir):
         parser.print_help()
         sys.exit(1)
-
-    if (options.gid is not None and options.gid >= len(exclient.lgnames)):
-        options.gid = 0
 
     if (options.monitor_host is not None and options.num_islands > 1):
         parser.error("We do not support proxy monitor multiple islands yet")
