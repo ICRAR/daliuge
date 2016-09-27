@@ -113,7 +113,7 @@ class NodeManagerBase(DROPManager):
                  enable_luigi=False,
                  events_port = constants.NODE_DEFAULT_EVENTS_PORT,
                  rpc_port = constants.NODE_DEFAULT_RPC_PORT,
-                 max_threads = 10):
+                 max_threads = 0):
 
         self._dlm = DataLifecycleManager() if useDLM else None
         self._host = host or 'localhost'
