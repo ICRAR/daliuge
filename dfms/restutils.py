@@ -101,6 +101,23 @@ class RestClientException(DaliugeException):
     """
     pass
 
+class chunked(object):
+    """
+    A reader that returns chunked HTTP content
+    """
+    def __init__(self, content):
+        self.content = content
+        if hasattr(content, 'mode'):
+            self.mode = content.mode
+        self.finished = False
+    def read(self, n):
+        if self.finished:
+            return ''
+        data = self.content.read(n)
+        if not data:
+            self.finished = True
+            return "0\r\n\r\n"
+        return "%x\r\n%s\r\n" % (len(data), data)
 
 class RestClient(object):
     """
@@ -167,6 +184,10 @@ class RestClient(object):
 
         if not utils.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
+
+        if content and hasattr(content, 'read'):
+            headers['Transfer-Encoding'] = 'chunked'
+            content = chunked(content)
 
         self._conn = httplib.HTTPConnection(self.host, self.port)
         self._conn.request(method, url, content, headers)
