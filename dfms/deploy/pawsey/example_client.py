@@ -208,6 +208,7 @@ class MonitorClient(object):
         completed_uids = droputils.get_roots(pg_spec)
         logger.info("Len of completed_uids is {0}".format(len(completed_uids)))
         ssid = "{0}-{1}".format(lgn.split('.')[0], '' if (lg is None) else lg._session_id)
+        ssid = ssid.replace('/', '-') # slash is not allowed in graph session id
         self._dc.create_session(ssid)
         logger.info("session {0} created".format(ssid))
         self._dc.append_graph(ssid, pg_spec)
