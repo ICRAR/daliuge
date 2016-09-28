@@ -109,7 +109,7 @@ class MonitorClient(object):
         if (str(graph_id).isdigit()): # we assume a full file name can never be a digit
             lgn = lgnames[graph_id]
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
-            lg = LG(fp)
+            lg = LG(fp, ssid='1')#TODO make a more meaningful session id
             logger.info("Start to unroll {0}".format(lgn))
             drop_list = lg.unroll_to_tpl()
             logger.info("Unroll completed for {0} with # of Drops: {1}".format(lgn, len(drop_list)))
