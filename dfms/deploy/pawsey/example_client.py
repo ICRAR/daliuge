@@ -208,11 +208,16 @@ class MonitorClient(object):
         logger.info("About to compute roots")
         completed_uids = droputils.get_roots(pg_spec)
         logger.info("Len of completed_uids is {0}".format(len(completed_uids)))
+
+        # forget about the objects in memory and work with a json dump form now on
+        pg_asjson = json.dumps(pg_spec)
+        del pg_spec
+
         ssid = "{0}-{1}".format(lgn.split('.')[0], '' if (lg is None) else lg._session_id)
         ssid = ssid.replace('/', '-') # slash is not allowed in graph session id
         self._dc.create_session(ssid)
         logger.info("session {0} created".format(ssid))
-        self._dc.append_graph(ssid, pg_spec)
+        self._dc.append_graph(ssid, pg_asjson)
         logger.info("graph {0} appended".format(ssid))
 
         if (deploy):
