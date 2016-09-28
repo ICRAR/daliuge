@@ -182,7 +182,8 @@ class PawseyClient(object):
         if (gid is None):
             return
         if (str(gid).isdigit()):
-            if (int(gid) >= len(lgnames)):
+            gid = int(gid)
+            if (gid >= len(lgnames)):
                 raise Exception("Invalid graph id '{0}'".format(gid))
             self._pip_name = lgnames[gid].split('.')[0]
         else:
