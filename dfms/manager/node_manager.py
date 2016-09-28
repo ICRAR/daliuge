@@ -388,18 +388,19 @@ class ZMQPubSubMixIn(BaseMixIn):
         # We create the sockets in their respective threads to avoid
         # multithreading issues with zmq, but still wait until they are created
         # via these events
+        timeout = 30
         pubsock_created = threading.Event()
         subsock_created = threading.Event()
 
         self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread, name="ZMQ evtpub", args=(pubsock_created,))
         self._zmqpubqthread.start()
-        if not pubsock_created.wait(30):
-            raise Exception("Failed to create PUB ZMQ socket in 5 seconds")
+        if not pubsock_created.wait(timeout):
+            raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
 
         self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub", args=(subsock_created,))
         self._zmqsubthread.start()
-        if not subsock_created.wait(30):
-            raise Exception("Failed to create PUB ZMQ socket in 5 seconds")
+        if not subsock_created.wait(timeout):
+            raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
 
         self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread, name="ZMQ evtsubq")
         self._zmqsubqthread.start()
@@ -484,11 +485,12 @@ class ZeroRPCMixIn(BaseMixIn):
         super(ZeroRPCMixIn, self).start()
 
         # Starts the single-threaded ZeroRPC server for RPC requests
+        timeout = 30
         server_started = threading.Event()
         self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server", args=(self._host, self._rpc_port, server_started))
         self._zrpcserverthread.start()
-        if not server_started.wait(5):
-            raise Exception("Server didn't start within 5 seconds")
+        if not server_started.wait(timeout):
+            raise Exception("ZeroRPC server didn't start within %d seconds" % (timeout,))
 
         # One per remote host
         self._zrpcclient_acquisition_lock = threading.Lock()
