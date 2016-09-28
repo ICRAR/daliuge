@@ -100,6 +100,13 @@ class RestClientException(DaliugeException):
     """
     pass
 
+def hexdigits(n):
+    digits = 0
+    while n:
+        digits += 1
+        n //= 16
+    return digits
+
 class chunked(object):
     """
     A reader that returns chunked HTTP content
@@ -110,6 +117,7 @@ class chunked(object):
     def read(self, n):
         if self.finished:
             return b''
+        n = n - hexdigits(n) - 4
         data = self.content.read(n)
         if not data:
             self.finished = True
