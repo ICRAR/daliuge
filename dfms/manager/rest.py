@@ -24,13 +24,14 @@ Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
+import functools
 import json
 import logging
-import zlib
 
 import bottle
 import pkg_resources
 
+from dfms import utils
 from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
     InvalidDropException, InvalidRelationshipException
@@ -43,6 +44,8 @@ from dfms.restutils import RestServer, RestClient, DALIUGE_HDR_ERR, \
 logger = logging.getLogger(__name__)
 
 def daliuge_aware(func):
+
+    @functools.wraps(func)
     def fwrapper(*args, **kwargs):
         try:
             res = func(*args, **kwargs)
@@ -185,13 +188,15 @@ class ManagerRestServer(RestServer):
         if bottle.request.content_type != 'application/json':
             bottle.response.status = 415
             return
+
         # We also accept gzipped content
         hdrs = bottle.request.headers
         if hdrs.get('Content-Encoding', None) == 'gzip':
-            content = zlib.decompress(bottle.request.body.read())
-            graph_parts = bottle.json_loads(content)
+            json_content = utils.ZlibUncompressedStream(bottle.request.body)
         else:
-            graph_parts = bottle.request.json
+            json_content = bottle.request.body
+
+        graph_parts = bottle.json_loads(json_content.read())
         self.dm.addGraphSpec(sessionId, graph_parts)
 
     #===========================================================================
