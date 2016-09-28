@@ -107,6 +107,7 @@ class MonitorClient(object):
 
         # Unroll PGT from the original logical graph or from reading an existing unrolled PGT
         if (str(graph_id).isdigit()): # we assume a full file name can never be a digit
+            graph_id = int(graph_id)
             lgn = lgnames[graph_id]
             fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))  # @UndefinedVariable
             lg = LG(fp, ssid='1')#TODO make a more meaningful session id
