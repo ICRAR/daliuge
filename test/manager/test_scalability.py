@@ -25,11 +25,10 @@ import sys
 import time
 import unittest
 
-from test.manager import testutils
-
 from dfms import drop
 from dfms.manager import client
 from dfms.utils import terminate_or_kill
+from test.manager import testutils
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +74,7 @@ class TestBigGraph(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
 
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', '-H', '0.0.0.0', '-v', '-m', '1000']
+        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', '-H', hostname, '-qq']
         self.dmProcess = subprocess.Popen(args)
 
     def tearDown(self):
@@ -86,8 +85,8 @@ class TestBigGraph(unittest.TestCase):
 
         # Each branch contains a data drop and an app drop
         # All branches connect to a final data drop
-        drops_per_branch=4000
-        branches = 100
+        drops_per_branch=5000
+        branches = 5
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
         self.assertEqual(n_drops, len(graph))
@@ -98,7 +97,7 @@ class TestBigGraph(unittest.TestCase):
         sessionId = 'lala'
         restPort  = 8888
         args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
-                '--port', str(restPort), '-N',hostname, '-v', '-m', '1000']
+                '--port', str(restPort), '-N', hostname, '-qq']
 
         c = client.NodeManagerClient(port=restPort)
         dimProcess = subprocess.Popen(args)

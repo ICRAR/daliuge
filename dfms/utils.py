@@ -25,15 +25,27 @@ Module containing miscellaneous utility classes and functions.
 
 import contextlib
 import errno
+import json
 import logging
 import math
 import os
 import socket
 import threading
 import time
+import types
+import zlib
+
+import six
 
 
 logger = logging.getLogger(__name__)
+
+def import_ijson():
+    try:
+        import ijson.backends.yajl2_cffi as ijson
+    except ImportError:
+        import ijson
+    return ijson
 
 def get_local_ip_addr():
     """
@@ -343,3 +355,267 @@ def terminate_or_kill(proc, timeout):
         logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', pid, timeout)
         proc.kill()
     proc.wait()
+
+class ZlibCompressedStream(object):
+    """
+    An object that takes a input of uncompressed stream and returns a compressed version of its
+    contents when .read() is read.
+    """
+
+    def __init__(self, content):
+        self.content = content
+        self.compressor = zlib.compressobj()
+        self.buf = []
+        self.buflen = 0
+        self.exhausted = False
+
+    def readall(self):
+
+        if not self.compressor:
+            return b''
+
+        content = self.content
+        response = []
+        compressor = self.compressor
+
+        blocksize = 8192
+        uncompressed = content.read(blocksize)
+        while True:
+            if not uncompressed:
+                break
+            compressed = compressor.compress(uncompressed)
+            response.append(compressed)
+            uncompressed = content.read(blocksize)
+
+        response.append(compressor.flush())
+        self.compressor = None
+        return b''.join(response)
+
+    def read(self, n=-1):
+
+        if n <= 0:
+            return self.readall()
+
+        if self.buflen >= n:
+            data = b''.join(self.buf)
+            self.buf = [data[n:]]
+            self.buflen -= n;
+            return data[:n]
+
+        # Dump contents of previous buffer
+        response = []
+        written = 0
+        if self.buflen:
+            written += self.buflen
+            data = b''.join(self.buf)
+            response.append(data)
+            self.buf = []
+            self.buflen = 0
+
+        compressor = self.compressor
+        if not compressor:
+            return b''.join(response)
+
+        while True:
+
+            decompressed = self.content.read(n)
+            if not decompressed:
+                compressed = compressor.flush()
+                compressor = self.compressor = None
+            else:
+                compressed = compressor.compress(decompressed)
+
+            if compressed:
+                size = len(compressed)
+
+                # If we have more compressed bytes than we need we write only
+                # those needed to get us to n.
+                to_write = min(n - written, size)
+                if to_write:
+                    response.append(compressed[:to_write])
+                    written += to_write
+
+                # The rest of the unwritten compressed bytes go into our internal
+                # buffer
+                if written == n:
+                    self.buf.append(compressed[to_write:])
+                    self.buflen += size - to_write
+
+            if written == n or not compressor:
+                break
+
+        return b''.join(response)
+
+class ZlibUncompressedStream(object):
+    """
+    A class that reads gzip-compressed content and returns uncompressed content
+    each time its read() method is called.
+    """
+
+    def __init__(self, content):
+        self.content = content
+        self.decompressor = zlib.decompressobj()
+        self.buf = []
+        self.buflen = 0
+
+    def readall(self):
+
+        if not self.decompressor:
+            return b''
+
+        content = self.content
+        response = six.BytesIO()
+        decompressor = self.decompressor
+
+        blocksize = 8192
+        compressed = content.read(blocksize)
+        to_decompress = decompressor.unconsumed_tail + compressed
+
+        while True:
+            decompressed = decompressor.decompress(to_decompress)
+            if not decompressed:
+                break
+            response.write(decompressed)
+            to_decompress = decompressor.unconsumed_tail + content.read(blocksize)
+
+        response.write(decompressor.flush())
+        self.decompressor = None
+        return response.getvalue()
+
+    def read(self, n=-1):
+
+        if n == -1:
+            return self.readall()
+
+        # The buffer has still enough data
+        if self.buflen >= n:
+            data = b''.join(self.buf)
+            self.buf = [data[n:]]
+            self.buflen -= n;
+            return data[:n]
+
+        response = []
+
+        # Dump contents of previous buffer
+        written = 0
+        if self.buflen:
+            data = b''.join(self.buf)
+            written += self.buflen
+            response.append(data)
+            self.buf = []
+            self.buflen = 0
+
+        decompressor = self.decompressor
+        if not decompressor:
+            return b''.join(response)
+
+        while True:
+
+            # We hope that reading n compressed bytes will yield n uncompressed
+            # bytes at least; we loop anyway until we read n uncompressed bytes
+            compressed = self.content.read(n)
+            to_decompress = decompressor.unconsumed_tail + compressed
+            decompressed = decompressor.decompress(to_decompress)
+
+            # we've exhausted both, there's nothing else to read/decompress
+            if not compressed and not decompressed:
+                decompressed = decompressor.flush()
+                decompressor = self.decompressor = None
+
+            if decompressed:
+                size = len(decompressed)
+
+                # If we have more decompressed bytes than we need we write only
+                # those needed to get us to n.
+                to_write = min(n - written, size)
+                if to_write:
+                    response.append(decompressed[:to_write])
+                    written += to_write
+
+                # The rest of the unwritten decompressed bytes go into our internal
+                # buffer
+                if written == n:
+                    self.buf.append(decompressed[to_write:])
+                    self.buflen += size - to_write
+
+            if written == n or decompressor is None:
+                break
+
+        return b''.join(response)
+
+class JSONStream(object):
+
+    def __init__(self, objects):
+        if isinstance(objects, (list, tuple, types.GeneratorType)):
+            self.objects = enumerate(objects)
+            self.isiter = True
+        else:
+            self.objects = objects
+            self.isiter = False
+
+        self.buf = []
+        self.buflen = 0
+        self.nreads = 0
+
+    def read(self, n=-1):
+
+        if n == -1:
+            raise ValueError("n must be positive")
+
+        if self.buflen >= n:
+            self.buflen -= n;
+            data = b''.join(self.buf)
+            self.buf = [data[n:]]
+            return data[:n]
+
+        written = 0
+        response = []
+
+        # Dump contents of previous buffer
+        if self.buflen:
+            data = b''.join(self.buf)
+            written += self.buflen
+            response.append(data)
+            self.buf = []
+            self.buflen = 0
+
+        if self.nreads and not self.isiter:
+            return b''.join(response)
+        self.nreads += 1
+
+        while True:
+
+            if self.isiter:
+                try:
+                    i,obj = next(self.objects)
+                    json_out = b'[' if i == 0 else b','
+                    json_out += json.dumps(obj).encode('latin1')
+                except StopIteration:
+                    json_out = b']'
+                    self.isiter = False # not nice, but prevents more reads
+            else:
+                json_out = json.dumps(self.objects).encode('latin1')
+
+            if json_out:
+                size = len(json_out)
+
+                # If we have more decompressed bytes than we need we write only
+                # those needed to get us to n.
+                to_write = min(n - written, size)
+                if to_write:
+                    response.append(json_out[0:to_write])
+                    written += to_write
+
+                # The rest of the unwritten decompressed bytes go into our internal
+                # buffer
+                if written == n:
+                    self.buf.append(json_out[to_write:])
+                    self.buflen += size - to_write
+
+            if written == n:
+                break
+
+            if not self.isiter:
+                break
+
+        return b''.join(response)
