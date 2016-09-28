@@ -107,6 +107,9 @@ def hexdigits(n):
         n //= 16
     return digits
 
+def chunk(data):
+    return ("%x" % len(data)).encode('ascii') + b'\r\n' + data + b'\r\n'
+
 class chunked(object):
     """
     A reader that returns chunked HTTP content
@@ -122,7 +125,7 @@ class chunked(object):
         if not data:
             self.finished = True
             return b"0\r\n\r\n"
-        return b"%x\r\n%s\r\n" % (len(data), data)
+        return chunk(data)
 
 class RestClient(object):
     """
