@@ -514,14 +514,14 @@ class ZeroRPCMixIn(BaseMixIn):
         runner = gevent.spawn(self._zrpcserver.run)
         stopper = gevent.spawn(self.stop_zrpcserver)
         gevent.joinall([runner, stopper])
-        self._zrpcserver.close()
         ctx.destroy()
 
     def stop_zrpcserver(self):
         import gevent
         while self._running:
             gevent.sleep(0.01)
-        self._zrpcserver.stop()
+        logger.info("Closing ZeroRPC server on tcp://%s:%d", zmq_safe(self._host), self._rpc_port)
+        self._zrpcserver.close()
 
     def shutdown(self):
         super(ZeroRPCMixIn, self).shutdown()
@@ -573,41 +573,25 @@ class ZeroRPCMixIn(BaseMixIn):
         ctx = zerorpc.Context()
         client = zerorpc.Client("tcp://%s:%d" % (host,port), context=ctx)
 
-        to_reply = set()
-        forwarder = gevent.spawn(self.forward_requests, req_queue, client, to_reply)
-        replier = gevent.spawn(self.process_replies, to_reply)
-        gevent.joinall([forwarder, replier])
+        forwarder = gevent.spawn(self.forward_requests, req_queue, client)
+        gevent.joinall([forwarder])
 
+        logger.info("Closing %s:%d ZeroRPC client", host, port)
         client.close()
         ctx.destroy()
 
-    def forward_requests(self, req_queue, client, to_reply):
+    def forward_requests(self, req_queue, client):
         import gevent
         while self._running:
             try:
                 req = req_queue.get_nowait()
+                gevent.spawn(self.queue_request, client, req)
             except Queue.Empty:
                 gevent.sleep(0.005)
-            else:
-                async_result = client.__call__(req.method, *req.args, async=True)
-                res = ZeroRPCMixIn.response(async_result, req.queue)
-                to_reply.add(res)
 
-    def process_replies(self, to_reply):
-        import gevent
-        while self._running:
-            replied = set()
-            for res in to_reply:
-                try:
-                    val = res.async_result.get_nowait()
-                except gevent.Timeout:
-                    continue
-                else:
-                    res.queue.put(val)
-                    replied.add(res)
-            to_reply -= replied
-
-            gevent.sleep(0.005)
+    def queue_request(self, client, req):
+        async_result = client.__call__(req.method, *req.args, async=True)
+        async_result.rawlink(lambda x: req.queue.put(x.value))
 
     def get_rpc_client(self, hostname, port):
         client = self.get_client_for_endpoint(hostname, port)

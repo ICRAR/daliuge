@@ -23,7 +23,6 @@ import codecs
 import json
 import logging
 from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
-import zlib
 
 import bottle
 import six
@@ -101,6 +100,21 @@ class RestClientException(DaliugeException):
     """
     pass
 
+class chunked(object):
+    """
+    A reader that returns chunked HTTP content
+    """
+    def __init__(self, content):
+        self.content = content
+        self.finished = False
+    def read(self, n):
+        if self.finished:
+            return b''
+        data = self.content.read(n)
+        if not data:
+            self.finished = True
+            return b"0\r\n\r\n"
+        return b"%x\r\n%s\r\n" % (len(data), data)
 
 class RestClient(object):
     """
@@ -140,8 +154,8 @@ class RestClient(object):
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
-        if not isinstance(content, six.string_types):
-            content = json.dumps(content)
+        if not isinstance(content, (six.text_type, six.binary_type)):
+            content = utils.JSONStream(content)
         ret = self._POST(url, content, 'application/json', compress=compress)
         return json.load(ret) if ret else None
 
@@ -154,7 +168,11 @@ class RestClient(object):
             headers['Content-Type'] = content_type
         if compress and content:
             headers['Content-Encoding'] = 'gzip'
-            content = zlib.compress(six.b(content))
+            if isinstance(content, six.text_type):
+                content = codecs.getencoder('utf8')(content)[0]
+            if not hasattr(content, 'read'):
+                content = six.BytesIO(content)
+            content = utils.ZlibCompressedStream(content)
         return self._request(url, 'POST', content, headers)
 
     def _DELETE(self, url):
@@ -167,6 +185,10 @@ class RestClient(object):
 
         if not utils.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
+
+        if content and hasattr(content, 'read'):
+            headers['Transfer-Encoding'] = 'chunked'
+            content = chunked(content)
 
         self._conn = httplib.HTTPConnection(self.host, self.port)
         self._conn.request(method, url, content, headers)

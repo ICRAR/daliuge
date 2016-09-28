@@ -57,6 +57,7 @@ setup(
             "configobj",
             "docker-py <= 1.7",
             "drive-casa>0.7",
+            "ijson",
             "lockfile",
             "luigi<2.0",
             "metis",
