@@ -382,12 +382,12 @@ class ZMQPubSubMixIn(BaseMixIn):
         import zmq
 
         super(ZMQPubSubMixIn, self).start()
-        self._zmq_sub_q = Queue.Queue()
-        self._zmq_pub_q = Queue.Queue()
+        self._pubevts = Queue.Queue()
+        self._recvevts = Queue.Queue()
 
         # Setting up zeromq for event publishing/subscription
         # They share the same context, there's no need for two separate ones
-        self._zmqevtctx = zmq.Context()
+        self._zmqctx = zmq.Context()
 
         # We create the sockets in their respective threads to avoid
         # multithreading issues with zmq, but still wait until they are created
@@ -396,8 +396,8 @@ class ZMQPubSubMixIn(BaseMixIn):
         pubsock_created = threading.Event()
         subsock_created = threading.Event()
 
-        self._zmqpubqthread = threading.Thread(target = self._zmq_pub_queue_thread, name="ZMQ evtpub", args=(pubsock_created,))
-        self._zmqpubqthread.start()
+        self._zmqpubthread = threading.Thread(target = self._zmq_pub_thread, name="ZMQ evtpub", args=(pubsock_created,))
+        self._zmqpubthread.start()
         if not pubsock_created.wait(timeout):
             raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
 
@@ -412,13 +412,13 @@ class ZMQPubSubMixIn(BaseMixIn):
     def shutdown(self):
         super(ZMQPubSubMixIn, self).shutdown()
         self._zmqsubqthread.join()
-        self._zmqpubqthread.join()
+        self._zmqpubthread.join()
         self._zmqsubthread.join()
-        self._zmqevtctx.destroy()
+        self._zmqctx.destroy()
         logger.info("ZMQ context used for event pub/sub destroyed")
 
     def publish_event(self, evt):
-        self._zmq_pub_q.put(evt)
+        self._pubevts.put(evt)
 
     def subscribe(self, host, port):
         # TODO: This might need some work in the future: we're accessing a zmq
@@ -427,27 +427,27 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._zmqsocketsub.connect(endpoint)
         logger.info("Subscribed for events originating from %s", endpoint)
 
-    def _zmq_pub_queue_thread(self, sock_created):
+    def _zmq_pub_thread(self, sock_created):
         import zmq
 
-        self._zmqsocketpub = self._zmqevtctx.socket(zmq.PUB)  # @UndefinedVariable
-        self._zmqsocketpub.set_hwm(0) # Never drop messages that should be sent
+        pub = self._zmqctx.socket(zmq.PUB)  # @UndefinedVariable
+        pub.set_hwm(0) # Never drop messages that should be sent
         endpoint = "tcp://%s:%d" % (zmq_safe(self._host), self._events_port)
-        self._zmqsocketpub.bind(endpoint)
+        pub.bind(endpoint)
         logger.info("Listening for events via ZeroMQ on %s", endpoint)
         sock_created.set()
 
         while self._running:
             evt = None
             try:
-                evt = self._zmq_pub_q.get_nowait()
+                obj = self._pubevts.get_nowait()
             except Queue.Empty:
                 time.sleep(0.01)
                 continue
 
             while self._running:
                 try:
-                    self._zmqsocketpub.send_pyobj(evt, flags = zmq.NOBLOCK)  # @UndefinedVariable
+                    pub.send_pyobj(obj, flags = zmq.NOBLOCK)  # @UndefinedVariable
                     break
                 except zmq.error.Again:
                     logger.debug("Got an 'Again' when publishing event")
@@ -457,7 +457,7 @@ class ZMQPubSubMixIn(BaseMixIn):
     def _zmq_sub_queue_thread(self):
         while self._running:
             try:
-                evt = self._zmq_sub_q.get_nowait()
+                evt = self._recvevts.get_nowait()
                 self.deliver_event(evt)
             except Queue.Empty:
                 time.sleep(0.01)
@@ -471,8 +471,8 @@ class ZMQPubSubMixIn(BaseMixIn):
 
         while self._running:
             try:
-                evt = self._zmqsocketsub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
-                self._zmq_sub_q.put(evt)
+                evt = sub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
+                self._recvevts.put(evt)
             except zmq.error.Again:
                 time.sleep(0.01)
             except Exception:
