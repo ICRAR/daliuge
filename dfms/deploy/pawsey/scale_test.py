@@ -80,18 +80,20 @@ class DefaultConfig(object):
         return self._dict.get(k)
 
     def set_git_commit(self):
+
         gr = self.get_gitrepo()
-        if (gr is None):
-            ret = -1
-        else:
-            ocwd = os.getcwd()
-            os.chdir(gr)
-            try:
-                commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-            except subprocess.CalledProcessError:
-                commit = 'None'
-            os.chdir(ocwd)
-        self.setpar('git_commit', commit if ret == 0 else 'None')
+        if not gr:
+            self.setpar('git_commit', 'None')
+            return
+
+        ocwd = os.getcwd()
+        os.chdir(gr)
+        try:
+            commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+        except subprocess.CalledProcessError:
+            commit = 'None'
+        os.chdir(ocwd)
+        self.setpar('git_commit', commit)
 
     def get_gitrepo(self):
         """
@@ -128,7 +130,7 @@ class TianHe2Config(DefaultConfig):
         super(TianHe2Config, self).__init__()
 
     def get_gitrepo(self):
-        return None #Tian he2's firewall is excellet!
+        return None #Tian he2's firewall is excellent!
 
     def init_list(self): #TODO please fill in
         return ['SHAO', '/group/shao/daliuge_logs']
