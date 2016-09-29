@@ -321,7 +321,9 @@ def main():
     ip_adds = '{0}{1}'.format(public_ip, rank_str)
     origin_ip = ip_adds.split(',')[0]
     ip_adds = comm.gather(ip_adds, root=0)
-    if (run_proxy):
+
+    proxy_ip = None
+    if run_proxy:
         # send island/master manager's IP address to the dfms proxy
         # also let island manager know dfms proxy's IP
         if rank == 0:
@@ -348,10 +350,15 @@ def main():
                 host=None if options.all_nics else origin_ip)
         else:
 
+            # These are not NMs
+            no_nms = [origin_ip, 'None']
+            if proxy_ip:
+                no_nms += [proxy_ip]
+
             logger.info("A list of NM IPs: {0}".format(ip_adds))
             logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
-            ips_to_check = [ip for ip in ip_adds if (ip == origin_ip) or (run_proxy and ip == proxy_ip) or ('None' == ip)]
-            node_mgrs = check_hosts(ips_to_check, NODE_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME)
+            nm_ips = [ip for ip in ip_adds if ip not in no_nms]
+            node_mgrs = check_hosts(nm_ips, NODE_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME)
 
             if ((options.gid is not None) or options.dump):
                 logger.info("Preparing submitting graph (and monitor it)")
