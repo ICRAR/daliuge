@@ -232,8 +232,7 @@ def set_env(rank):
     os.environ['PYRO_MAX_RETRIES'] = '10'
 
 def main():
-    """
-    """
+
     parser = optparse.OptionParser()
     parser.add_option("-l", "--log_dir", action="store", type="string",
                     dest="log_dir", help="Log directory (required)")
