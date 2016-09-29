@@ -377,6 +377,8 @@ class BaseMixIn(object):
 
 class ZMQPubSubMixIn(BaseMixIn):
 
+    subscription = collections.namedtuple('subscription', 'endpoint finished_evt')
+
     def start(self):
 
         import zmq
@@ -384,6 +386,7 @@ class ZMQPubSubMixIn(BaseMixIn):
         super(ZMQPubSubMixIn, self).start()
         self._pubevts = Queue.Queue()
         self._recvevts = Queue.Queue()
+        self._subscriptions = Queue.Queue()
 
         # Setting up zeromq for event publishing/subscription
         # They share the same context, there's no need for two separate ones
@@ -421,10 +424,12 @@ class ZMQPubSubMixIn(BaseMixIn):
         self._pubevts.put(evt)
 
     def subscribe(self, host, port):
-        # TODO: This might need some work in the future: we're accessing a zmq
-        # socket from a different thread without proper synchronization
+        timeout = 5
+        finished_evt = threading.Event()
         endpoint = "tcp://%s:%d" % (host, port)
-        self._zmqsocketsub.connect(endpoint)
+        self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
+        if not finished_evt.wait(timeout):
+            raise DaliugeException("ZMQ subscription not achieved within %d seconds" % (timeout,))
         logger.info("Subscribed for events originating from %s", endpoint)
 
     def _zmq_pub_thread(self, sock_created):
@@ -438,7 +443,7 @@ class ZMQPubSubMixIn(BaseMixIn):
         sock_created.set()
 
         while self._running:
-            evt = None
+
             try:
                 obj = self._pubevts.get_nowait()
             except Queue.Empty:
@@ -465,11 +470,20 @@ class ZMQPubSubMixIn(BaseMixIn):
     def _zmq_sub_thread(self, sock_created):
         import zmq
 
-        self._zmqsocketsub = self._zmqevtctx.socket(zmq.SUB)  # @UndefinedVariable
-        self._zmqsocketsub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
+        sub = self._zmqctx.socket(zmq.SUB)  # @UndefinedVariable
+        sub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
         sock_created.set()
 
         while self._running:
+
+            # A new subscription has been requested
+            try:
+                subscription = self._subscriptions.get_nowait()
+                sub.connect(subscription.endpoint)
+                subscription.finished_evt.set()
+            except Queue.Empty:
+                pass
+
             try:
                 evt = sub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
                 self._recvevts.put(evt)
