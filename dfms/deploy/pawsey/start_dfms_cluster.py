@@ -38,6 +38,7 @@ import threading
 from collections import defaultdict
 
 import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
+from dfms import utils
 from dfms.deploy.pawsey.example_client import MonitorClient
 import dfms.deploy.pawsey.example_client as exclient
 from dfms.manager.client import DataIslandManagerClient
@@ -45,8 +46,6 @@ import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 from dfms.utils import portIsOpen
-
-from mpi4py import MPI
 
 DIM_WAIT_TIME = 60
 MM_WAIT_TIME = DIM_WAIT_TIME
@@ -241,8 +240,15 @@ if __name__ == '__main__':
     parser.add_option("-u", "--all_nics", action="store_true",
                       dest="all_nics", help="Listen on all NICs for a node manager", default=False)
 
+    parser.add_option('--check-interfaces', action='store_true',
+                      dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
 
     (options, args) = parser.parse_args()
+
+    if options.check_interfaces:
+        print("From netifaces: %s" % utils.get_local_ip_addr())
+        print("From ifconfig: %s" % get_ip())
+        sys.exit(0)
 
     if (None == options.log_dir):
         parser.print_help()
@@ -253,6 +259,7 @@ if __name__ == '__main__':
 
     logv = max(min(3, options.verbose_level), 1)
 
+    from mpi4py import MPI
     comm = MPI.COMM_WORLD  # @UndefinedVariable
     num_procs = comm.Get_size()
     rank = comm.Get_rank()
@@ -306,7 +313,9 @@ if __name__ == '__main__':
                 start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
             elif (run_node_mgr):
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=origin_ip)
+                start_node_mgr(log_dir, logv=logv,
+                max_threads=options.max_threads,
+                host=None if options.all_nics else origin_ip)
         else:
             logger.info("A list of NM IPs: {0}".format(ip_adds))
             logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
@@ -431,4 +440,6 @@ if __name__ == '__main__':
             else:
                 # node manager
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv, max_threads=options.max_threads, host=origin_ip)
+                start_node_mgr(log_dir, logv=logv,
+                max_threads=options.max_threads,
+                host=None if options.all_nics else origin_ip)
