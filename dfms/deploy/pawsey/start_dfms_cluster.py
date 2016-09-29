@@ -45,8 +45,6 @@ import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 
-from mpi4py import MPI
-
 DIM_WAIT_TIME = 60
 MM_WAIT_TIME = DIM_WAIT_TIME
 GRAPH_SUBMIT_WAIT_TIME = 10
@@ -249,6 +247,7 @@ if __name__ == '__main__':
 
     logv = max(min(3, options.verbose_level), 1)
 
+    from mpi4py import MPI
     comm = MPI.COMM_WORLD  # @UndefinedVariable
     num_procs = comm.Get_size()
     rank = comm.Get_rank()
