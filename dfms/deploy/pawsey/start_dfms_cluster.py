@@ -38,6 +38,7 @@ import threading
 from collections import defaultdict
 
 import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
+from dfms import utils
 from dfms.deploy.pawsey.example_client import MonitorClient
 import dfms.deploy.pawsey.example_client as exclient
 from dfms.manager.client import DataIslandManagerClient
@@ -235,8 +236,16 @@ if __name__ == '__main__':
                     dest="loc", help="deployment location (e.g. 'Pawsey' or 'Tianhe2')",
                     default="Pawsey")
 
+    parser.add_option('--check-interfaces', action='store_true',
+                      dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
+
 
     (options, args) = parser.parse_args()
+
+    if options.check_interfaces:
+        print("From netifaces: %s" % utils.get_local_ip_addr())
+        print("From ifconfig: %s" % get_ip())
+        sys.exit(0)
 
     if (None == options.log_dir):
         parser.print_help()
