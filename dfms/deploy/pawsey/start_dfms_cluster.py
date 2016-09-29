@@ -44,6 +44,7 @@ from dfms.manager.client import DataIslandManagerClient
 import dfms.manager.cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
+from dfms.utils import portIsOpen
 
 from mpi4py import MPI
 
@@ -236,6 +237,9 @@ if __name__ == '__main__':
     parser.add_option("-c", "--loc", action="store", type="string",
                     dest="loc", help="deployment location (e.g. 'Pawsey' or 'Tianhe2')",
                     default="Pawsey")
+
+    parser.add_option("-u", "--all_nics", action="store_true",
+                      dest="all_nics", help="Listen on all NICs for a node manager", default=False)
 
 
     (options, args) = parser.parse_args()
