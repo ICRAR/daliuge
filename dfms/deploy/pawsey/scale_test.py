@@ -49,7 +49,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR
+aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS
 """
 
 sub_tpl = Template(sub_tpl_str)
@@ -160,7 +160,8 @@ class PawseyClient(object):
                 zerorun=False,
                 max_threads=0,
                 sleepncopy=False,
-                num_islands=1):
+                num_islands=1,
+                all_nics=False):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
@@ -177,6 +178,7 @@ class PawseyClient(object):
         self._max_threads = max_threads
         self._sleepncopy = sleepncopy
         self._num_islands = num_islands
+        self._all_nics = nics
 
     def set_gid(self, gid):
         if (gid is None):
@@ -242,6 +244,7 @@ class PawseyClient(object):
         pardict['MAXTHREADS_PAR'] = '-t %d' % (self._max_threads)
         pardict['SNC_PAR'] = '--app 1' if self._sleepncopy else '--app 0'
         pardict['NUM_ISLANDS_PAR'] = '-s %d' % (self._num_islands)
+        pardict['ALL_NICS'] = '-u' if self._all_nics else ''
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
@@ -586,6 +589,8 @@ if __name__ == '__main__':
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
     parser.add_option('-s', '--num_islands', action='store', type='int',
                     dest='num_islands', default=1, help='The number of Data Islands')
+    parser.add_option("-u", "--all_nics", action="store_true",
+                      dest="all_nics", help="Listen on all NICs for a node manager", default=False)
 
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):
@@ -617,7 +622,7 @@ if __name__ == '__main__':
         pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level,
                           zerorun=opts.zerorun, max_threads=opts.max_threads,
                           run_proxy=opts.run_proxy, mon_host=opts.mon_host, mon_port=opts.mon_port,
-                          num_islands=opts.num_islands)
+                          num_islands=opts.num_islands, all_nics=opts.all_nics)
         if (opts.graph_id is not None):
             pc.set_gid(opts.graph_id)
         pc._graph_vis = opts.graph_vis
