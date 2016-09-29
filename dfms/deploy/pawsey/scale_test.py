@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #
 #    ICRAR - International Centre for Radio Astronomy Research
 #    (c) UWA - The University of Western Australia, 2016
@@ -26,15 +25,21 @@ Generate the SLURM script, and submit it to the queue based on various paramters
 parse the log result, and produce the plot
 
 """
-from datetime import datetime
-import sys, os, socket, re, commands, time, getpass
-from string import Template
-import optparse
-from os import stat
-from pwd import getpwuid
 
+import datetime
+import getpass
+import optparse
+import os
+import pwd
+import re
+import socket
+import string
+import subprocess
+import sys
+import time
 
 from dfms.deploy.pawsey.example_client import lgnames
+
 
 sub_tpl_str = """#!/bin/bash --login
 
@@ -52,7 +57,7 @@ module load mpi4py
 aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS
 """
 
-sub_tpl = Template(sub_tpl_str)
+sub_tpl = string.Template(sub_tpl_str)
 
 default_aws_mon_host = 'sdp-dfms.ddns.net'
 default_aws_mon_port = 8898
@@ -81,7 +86,10 @@ class DefaultConfig(object):
         else:
             ocwd = os.getcwd()
             os.chdir(gr)
-            ret, commit = commands.getstatusoutput("git rev-parse HEAD")
+            try:
+                commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+            except subprocess.CalledProcessError:
+                commit = 'None'
             os.chdir(ocwd)
         self.setpar('git_commit', commit if ret == 0 else 'None')
 
@@ -209,7 +217,7 @@ class PawseyClient(object):
         """
         (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
         """
-        dtstr = datetime.now().strftime("%Y-%m-%dT%H-%M-%S") #.%f
+        dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S") #.%f
         if (self._pip_name is None):
             return "N{0}_{1}".format(self.num_daliuge_nodes, dtstr)
         else:
@@ -256,9 +264,7 @@ class PawseyClient(object):
             gf.write(git_commit)
 
         os.chdir(lgdir) # so that slurm logs will be dumped here
-        cmd = 'sbatch %s' % job_file
-        rc, rs = commands.getstatusoutput(cmd)
-        print rs
+        print(subprocess.check_output(['sbatch', job_file]))
 
 class LogEntryPair(object):
     """
@@ -279,7 +285,7 @@ class LogEntryPair(object):
         date_time = '{0}T{1}'.format(sp[0], sp[1])
         pattern = '%Y-%m-%dT%H:%M:%S,%f'
         epoch = time.mktime(time.strptime(date_time, pattern))
-        return datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
+        return datetime.datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
 
     def check_start(self, match, line):
         if self._start_time is None and match.group(self._gstart):
@@ -415,7 +421,7 @@ class LogParser(object):
         pip_name = sp[0]
         do_date = sp[1]
         num_nodes = int(delimit.split('_')[1][1:])
-        user_name = getpwuid(stat(self._dim_log_f[0]).st_uid).pw_name
+        user_name = pwd.getpwuid(os.stat(self._dim_log_f[0]).st_uid).pw_name
         gitf = os.path.join(self._log_dir, 'git_commit.txt')
         if (os.path.exists(gitf)):
             with open(gitf, 'r') as gf:
