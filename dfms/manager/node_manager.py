@@ -381,7 +381,10 @@ class ZMQPubSubMixIn(BaseMixIn):
 
     def start(self):
 
+        # temporarily timing import statements to check FS times on HPC environs
+        start = time.time()
         import zmq
+        logger.info("Importing of zmq took %.3f seconds", time.time() - start)
 
         super(ZMQPubSubMixIn, self).start()
         self._pubevts = Queue.Queue()
@@ -517,8 +520,11 @@ class ZeroRPCMixIn(BaseMixIn):
 
     def run_zrpcserver(self, host, port, server_started):
 
+        # temporarily timing import statements to check FS times on HPC environs
+        start = time.time()
         import gevent
         import zerorpc
+        logger.info("Importing of gevent and zerorpc took %.3f seconds", time.time() - start)
 
         # Use a specific context; otherwise multiple servers on the same process
         # (only during tests) share the same Context.instance() which is global
