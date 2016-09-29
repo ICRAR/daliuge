@@ -31,21 +31,25 @@ Current plan (as of 12-April-2016):
 
 """
 
-import commands, time, sys, os, logging
+import collections
 import json
-from optparse import OptionParser
+import logging
+import optparse
+import os
+import subprocess
+import sys
 import threading
-from collections import defaultdict
+import time
 
-import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
 from dfms import utils
+from dfms.deploy.pawsey import dfms_proxy
 from dfms.deploy.pawsey.example_client import MonitorClient
-import dfms.deploy.pawsey.example_client as exclient
 from dfms.manager.client import DataIslandManagerClient
-import dfms.manager.cmdline as dfms_start
+from dfms.manager import cmdline as dfms_start
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 from dfms.utils import portIsOpen
+
 
 DIM_WAIT_TIME = 60
 MM_WAIT_TIME = DIM_WAIT_TIME
@@ -65,7 +69,7 @@ def ping_host(url, timeout=5, loc='Pawsey'):
         return 0 # Tianhe2 always return 0 (success)
     cmd = 'curl --connect-timeout %d %s' % (timeout, url)
     try:
-        return commands.getstatusoutput(cmd)[0]
+        return subprocess.getstatusoutput(cmd)[0]
     except Exception, err:
         logger.warning("Fail to ping host {0}: {1}".format(url, str(err)))
         return 1
@@ -74,7 +78,7 @@ def get_ip(loc='Pawsey'):
     """
     This is brittle, but works on Magnus/Galaxy for now
     """
-    re = commands.getstatusoutput('ifconfig')
+    re = subprocess.check_output('ifconfig')
     if (loc == 'Pawsey'):
         ln = 1 # e.g. 10.128.0.98
     elif (loc == 'Tianhe2'):
@@ -204,7 +208,7 @@ def set_env(rank):
 if __name__ == '__main__':
     """
     """
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.add_option("-l", "--log_dir", action="store", type="string",
                     dest="log_dir", help="Log directory (required)")
     # if this parameter is present, it means we want to get monitored
@@ -259,7 +263,7 @@ if __name__ == '__main__':
 
     logv = max(min(3, options.verbose_level), 1)
 
-    from mpi4py import MPI
+    from mpi4py import MPI  # @UnresolvedImport
     comm = MPI.COMM_WORLD  # @UndefinedVariable
     num_procs = comm.Get_size()
     rank = comm.Get_rank()
@@ -385,7 +389,7 @@ if __name__ == '__main__':
             lgn, lg, pg_spec = mc.get_physical_graph(options.gid)
 
             # 5. parse the pg_spec to get the mapping from islands to node list
-            dim_rank_nodes_dict = defaultdict(set)
+            dim_rank_nodes_dict = collections.defaultdict(set)
             for drop in pg_spec:
                 dim_ip = drop['island']
                 # if (not dim_ip in dim_ip_list):
