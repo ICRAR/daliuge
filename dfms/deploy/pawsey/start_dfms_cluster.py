@@ -58,14 +58,14 @@ GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
 
-def check_host(host, port, timeout=5, check_with_session_creation=False):
+def check_host(host, port, timeout=5, check_with_session=False):
     """
     Checks if a given host/port is up and running (i.e., it is open).
-    If ``check_with_session_creation`` is ``True`` then it is assumed that the
+    If ``check_with_session`` is ``True`` then it is assumed that the
     host/port combination corresponds to a Node Manager and the check is
     performed by attempting to create and delete a session.
     """
-    if not check_with_session_creation:
+    if not check_with_session:
         return utils.portIsOpen(host, port, timeout)
 
     try:
@@ -77,7 +77,7 @@ def check_host(host, port, timeout=5, check_with_session_creation=False):
     except:
         return False
 
-def check_hosts(ips, port, timeout=None, check_with_session_creation=False, retry=1):
+def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
     """
     Check that the given list of IPs are all up in the given port within the
     given timeout, and returns the list of IPs that were found to be up.
@@ -86,7 +86,7 @@ def check_hosts(ips, port, timeout=None, check_with_session_creation=False, retr
     def check_and_add(ip):
         ntries = retry
         while ntries:
-            if check_host(ip, NODE_DEFAULT_REST_PORT, timeout=timeout, check_with_session_creation=check_with_session_creation):
+            if check_host(ip, NODE_DEFAULT_REST_PORT, timeout=timeout, check_with_session=check_with_session):
                 logger.info("Host %s:%d is running", ip, port)
                 return ip
             logger.warning("Failed to contact host %s:%d", ip, port)
@@ -271,6 +271,8 @@ def main():
 
     parser.add_option('--check-interfaces', action='store_true',
                       dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
+    parser.add_option("-S", "--check_with_session", action="store_true",
+                      dest="check_with_session", help="Check for node managers' availability by creating/destroy a session", default=False)
 
     (options, _) = parser.parse_args()
 
@@ -357,7 +359,9 @@ def main():
             logger.info("A list of NM IPs: {0}".format(ip_adds))
             logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
             nm_ips = [ip for ip in ip_adds if ip not in no_nms]
-            node_mgrs = check_hosts(nm_ips, NODE_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME)
+            node_mgrs = check_hosts(nm_ips, NODE_DEFAULT_REST_PORT,
+                                    check_with_session=options.check_with_session,
+                                    timeout=MM_WAIT_TIME)
 
             if ((options.gid is not None) or options.dump):
                 logger.info("Preparing submitting graph (and monitor it)")
@@ -394,7 +398,9 @@ def main():
 
             # 3 wait for node managers to start
             logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
-            node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME)
+            node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT,
+                                    check_with_session=options.check_with_session,
+                                    timeout=MM_WAIT_TIME)
 
             # 4.  produce the physical graph based on the available node managers
             # that have alraedy been running (we have to assume island manager

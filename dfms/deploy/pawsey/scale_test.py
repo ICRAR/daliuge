@@ -54,7 +54,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS
+aprun -B $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
 """
 
 sub_tpl = string.Template(sub_tpl_str)
@@ -169,7 +169,8 @@ class PawseyClient(object):
                 max_threads=0,
                 sleepncopy=False,
                 num_islands=1,
-                all_nics=False):
+                all_nics=False,
+                check_with_session=False):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
@@ -187,6 +188,7 @@ class PawseyClient(object):
         self._sleepncopy = sleepncopy
         self._num_islands = num_islands
         self._all_nics = all_nics
+        self._check_with_session = check_with_session
 
     def set_gid(self, gid):
         if (gid is None):
@@ -253,6 +255,7 @@ class PawseyClient(object):
         pardict['SNC_PAR'] = '--app 1' if self._sleepncopy else '--app 0'
         pardict['NUM_ISLANDS_PAR'] = '-s %d' % (self._num_islands)
         pardict['ALL_NICS'] = '-u' if self._all_nics else ''
+        pardict['CHECK_WITH_SESSION'] = '-S' if self._check_with_session else ''
 
         job_desc = sub_tpl.safe_substitute(pardict)
         job_file = '{0}/jobsub.sh'.format(lgdir)
@@ -597,6 +600,8 @@ if __name__ == '__main__':
                     dest='num_islands', default=1, help='The number of Data Islands')
     parser.add_option("-u", "--all_nics", action="store_true",
                       dest="all_nics", help="Listen on all NICs for a node manager", default=False)
+    parser.add_option("-S", "--check_with_session", action="store_true",
+                      dest="check_with_session", help="Check for node managers' availability by creating/destroy a session", default=False)
 
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):
@@ -628,7 +633,8 @@ if __name__ == '__main__':
         pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level,
                           zerorun=opts.zerorun, max_threads=opts.max_threads,
                           run_proxy=opts.run_proxy, mon_host=opts.mon_host, mon_port=opts.mon_port,
-                          num_islands=opts.num_islands, all_nics=opts.all_nics)
+                          num_islands=opts.num_islands, all_nics=opts.all_nics,
+                          check_with_session=opts.check_with_session)
         if (opts.graph_id is not None):
             pc.set_gid(opts.graph_id)
         pc._graph_vis = opts.graph_vis
