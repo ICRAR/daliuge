@@ -178,7 +178,7 @@ class PawseyClient(object):
         self._max_threads = max_threads
         self._sleepncopy = sleepncopy
         self._num_islands = num_islands
-        self._all_nics = nics
+        self._all_nics = all_nics
 
     def set_gid(self, gid):
         if (gid is None):
