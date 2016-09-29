@@ -28,27 +28,27 @@ Current plan (as of 12-April-2016):
        MPI process
     3. Launch the Island Manager (IM) on the Rank 0 MPI process using those IP
        addresses
-
 """
 
 import collections
 import json
 import logging
+import multiprocessing
 import optparse
 import os
 import subprocess
 import sys
 import threading
 import time
+import uuid
 
 from dfms import utils
 from dfms.deploy.pawsey import dfms_proxy
 from dfms.deploy.pawsey.example_client import MonitorClient
-from dfms.manager.client import DataIslandManagerClient
 from dfms.manager import cmdline as dfms_start
+from dfms.manager.client import DataIslandManagerClient, NodeManagerClient
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
-from dfms.utils import portIsOpen
 
 
 DIM_WAIT_TIME = 60
@@ -58,21 +58,48 @@ GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
 
-def ping_host(url, timeout=5, loc='Pawsey'):
+def check_host(host, port, timeout=5, check_with_session_creation=False):
     """
-    To check if a host is running
-    Returns:
-        0                Success
-        Otherwise        Failure
+    Checks if a given host/port is up and running (i.e., it is open).
+    If ``check_with_session_creation`` is ``True`` then it is assumed that the
+    host/port combination corresponds to a Node Manager and the check is
+    performed by attempting to create and delete a session.
     """
-    if (loc == 'Tianhe2'):
-        return 0 # Tianhe2 always return 0 (success)
-    cmd = 'curl --connect-timeout %d %s' % (timeout, url)
+    if not check_with_session_creation:
+        return utils.portIsOpen(host, port, timeout)
+
     try:
-        return subprocess.getstatusoutput(cmd)[0]
-    except Exception, err:
-        logger.warning("Fail to ping host {0}: {1}".format(url, str(err)))
-        return 1
+        session_id = str(uuid.uuid4())
+        with NodeManagerClient(host, port, timeout=timeout) as c:
+            c.create_session(session_id)
+            c.destroy_session(session_id)
+        return True
+    except:
+        return False
+
+def check_hosts(ips, port, timeout=None, check_with_session_creation=False, retry=1):
+    """
+    Check that the given list of IPs are all up in the given port within the
+    given timeout, and returns the list of IPs that were found to be up.
+    """
+
+    def check_and_add(ip):
+        ntries = retry
+        while ntries:
+            if check_host(ip, NODE_DEFAULT_REST_PORT, timeout=timeout, check_with_session_creation=check_with_session_creation):
+                logger.info("Host %s:%d is running", ip, port)
+                return ip
+            logger.warning("Failed to contact host %s:%d", ip, port)
+            ntries -= 0
+        return None
+
+    # Don't return None values
+    tp = multiprocessing.pool.ThreadPool(min(50, len(ips)))
+    up = tp.map(check_and_add, ips)
+    tp.close()
+    tp.join()
+
+    return [ip for ip in up if ip]
 
 def get_ip(loc='Pawsey'):
     """
@@ -193,7 +220,7 @@ def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     except KeyboardInterrupt:
         logger.warning("Ctrl C - Stopping DFMS Proxy server")
         sys.exit(1)
-    except Exception, ex:
+    except Exception as ex:
         logger.error("DFMS proxy terminated unexpectedly: {0}".format(ex))
         sys.exit(1)
 
@@ -205,7 +232,7 @@ def submit_pg(monitor_client, physical_graph):
 def set_env(rank):
     os.environ['PYRO_MAX_RETRIES'] = '10'
 
-if __name__ == '__main__':
+def main():
     """
     """
     parser = optparse.OptionParser()
@@ -247,7 +274,7 @@ if __name__ == '__main__':
     parser.add_option('--check-interfaces', action='store_true',
                       dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
 
-    (options, args) = parser.parse_args()
+    (options, _) = parser.parse_args()
 
     if options.check_interfaces:
         print("From netifaces: %s" % utils.get_local_ip_addr())
@@ -321,19 +348,12 @@ if __name__ == '__main__':
                 max_threads=options.max_threads,
                 host=None if options.all_nics else origin_ip)
         else:
+
             logger.info("A list of NM IPs: {0}".format(ip_adds))
             logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
-            time.sleep(DIM_WAIT_TIME)
-            node_mgrs = []
-            for ip in ip_adds:
-                if (ip == origin_ip or (run_proxy and ip == proxy_ip) or ('None' == ip)):
-                    continue
-                url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
-                if (ping_host(url, loc=options.loc) != 0):
-                    logger.warning("Fail to ping host {0}".format(url))
-                else:
-                    logger.info("Host {0} is running".format(url))
-                    node_mgrs.append(ip)
+            ips_to_check = [ip for ip in ip_adds if (ip == origin_ip) or (run_proxy and ip == proxy_ip) or ('None' == ip)]
+            node_mgrs = check_hosts(ips_to_check, NODE_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME)
+
             if ((options.gid is not None) or options.dump):
                 logger.info("Preparing submitting graph (and monitor it)")
                 if (options.dump):
@@ -368,16 +388,8 @@ if __name__ == '__main__':
             dim_ranks = comm.bcast(dim_ranks, root=0)
 
             # 3 wait for node managers to start
-            logger.info("Waiting all node managers to start in {0} seconds".format(MM_WAIT_TIME))
-            time.sleep(MM_WAIT_TIME)
-            node_mgrs = []
-            for ip in ip_list[options.num_islands:]:
-                url = "http://{0}:{1}".format(ip, NODE_DEFAULT_REST_PORT)
-                if (ping_host(url, loc=options.loc) != 0):
-                    logger.warning("Fail to ping node manager {0}".format(url))
-                else:
-                    logger.info("Node manager {0} is running".format(url))
-                    node_mgrs.append(ip)
+            logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
+            node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME)
 
             # 4.  produce the physical graph based on the available node managers
             # that have alraedy been running (we have to assume island manager
@@ -406,21 +418,9 @@ if __name__ == '__main__':
                 comm.send(list(dim_rank_nodes_dict[r]), dest=r)
 
             # 7. make sure all DIMs are up running
-            retry = 10
-            for dim_ip in dim_ip_list:
-                url = "http://{0}:{1}".format(dim_ip, ISLAND_DEFAULT_REST_PORT)
-                for j in range(retry):
-                    pr = ping_host(url, loc=options.loc)
-                    if (pr == 0):
-                        logger.info("Island {0} is running".format(url))
-                        break
-                    else:
-                        logger.warning("Fail to ping island {0}".format(url))
-                        if (j < retry - 1):
-                            logger.info("Sleep {0} seconds before retry".format(MM_WAIT_TIME))
-                            time.sleep(MM_WAIT_TIME)
-                        else:
-                            logger.info("retry exausted. Give up island {0} for now".format(dim_ip))
+            dim_ips_up = check_hosts(dim_ip_list, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10)
+            if len(dim_ips_up) < len(dim_ip_list):
+                logger.warning("Not all DIMs were up and running: %d/%d", len(dim_ips_up), len(dim_ip_list))
 
             # 8. submit the graph in a thread (wait for mm to start)
             pg = (lgn, lg, pg_spec)
@@ -447,3 +447,6 @@ if __name__ == '__main__':
                 start_node_mgr(log_dir, logv=logv,
                 max_threads=options.max_threads,
                 host=None if options.all_nics else origin_ip)
+
+if __name__ == '__main__':
+    main()
