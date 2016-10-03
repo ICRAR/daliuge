@@ -206,8 +206,8 @@ class Session(object):
 
         # Look for the two DROPs in all our graph parts and reporting
         # missing DROPs
-        lhDropSpec = self.findByOidInParts(lhOID)
-        rhDropSpec = self.findByOidInParts(rhOID)
+        lhDropSpec = self._graph.get(lhOID, None)
+        rhDropSpec = self._graph.get(rhOID, None)
         missingOids = []
         if lhDropSpec is None: missingOids.append(lhOID)
         if rhDropSpec is None: missingOids.append(rhOID)
@@ -216,11 +216,6 @@ class Session(object):
             raise InvalidGraphException('No DROP found for %s %r' % (oids, missingOids))
 
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
-
-    def findByOidInParts(self, oid):
-        if oid in self._graph:
-            return self._graph[oid]
-        return None
 
     def deploy(self, completedDrops=[], foreach=None):
         """
@@ -436,18 +431,6 @@ class Session(object):
         except AttributeError:
             raise DaliugeException("%r has no method called %s" % (drop, method))
         return m(*args)
-
-    def add_relationships(self, host, port, relationships, nm):
-        for rel in relationships:
-            local_uid = rel.rhs
-            mname = LINKTYPE_1TON_APPEND_METHOD[rel.rel]
-            remote_uid = rel.lhs
-            if local_uid not in self._graph:
-                local_uid = rel.lhs
-                remote_uid = rel.rhs
-                mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
-
-            self._proxyinfo.append((nm, host, port, local_uid, mname, remote_uid))
 
     # Support for the 'with' keyword
     def __enter__(self):
