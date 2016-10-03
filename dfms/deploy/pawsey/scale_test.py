@@ -27,7 +27,6 @@ parse the log result, and produce the plot
 """
 
 import datetime
-import getpass
 import optparse
 import os
 import pwd
@@ -38,6 +37,7 @@ import subprocess
 import sys
 import time
 
+from dfms import __git_version__ as git_commit
 from dfms.deploy.pawsey.example_client import lgnames
 
 
@@ -68,7 +68,6 @@ class DefaultConfig(object):
         l = self.init_list()
         self.setpar('acc', l[0])
         self.setpar('log_root', l[1])
-        self.set_git_commit()
 
     def init_list(self):
         pass
@@ -78,31 +77,6 @@ class DefaultConfig(object):
 
     def getpar(self, k):
         return self._dict.get(k)
-
-    def set_git_commit(self):
-
-        gr = self.get_gitrepo()
-        if not gr:
-            self.setpar('git_commit', 'None')
-            return
-
-        ocwd = os.getcwd()
-        os.chdir(gr)
-        try:
-            commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-        except subprocess.CalledProcessError:
-            commit = 'None'
-        os.chdir(ocwd)
-        self.setpar('git_commit', commit)
-
-    def get_gitrepo(self):
-        """
-        Please override this function on non-Pawsey facilities
-        """
-        if ('Y3d1\n' == getpass.getuser().encode('base64')):
-            return '/home/%s/dfms_src/dfms' % ('Y3d1\n'.decode('base64'))
-        else:
-            return '/group/pawsey0129/daliuge/src/dfms'
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
@@ -128,9 +102,6 @@ class MagnusConfig(DefaultConfig):
 class TianHe2Config(DefaultConfig):
     def __init__(self):
         super(TianHe2Config, self).__init__()
-
-    def get_gitrepo(self):
-        return None #Tian he2's firewall is excellent!
 
     def init_list(self): #TODO please fill in
         return ['SHAO', '/group/shao/daliuge_logs']
@@ -264,7 +235,6 @@ class PawseyClient(object):
         with open(job_file, 'w') as jf:
             jf.write(job_desc)
 
-        git_commit = self._config.getpar('git_commit')
         with open(os.path.join(lgdir, 'git_commit.txt'), 'w') as gf:
             gf.write(git_commit)
 
