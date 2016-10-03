@@ -1,5 +1,5 @@
 #
-# Travis CI configuration file
+# Coverage configuration file
 #
 # ICRAR - International Centre for Radio Astronomy Research
 # (c) UWA - The University of Western Australia, 2016
@@ -22,38 +22,8 @@
 # MA 02111-1307  USA
 #
 
-# To use docker later...
-sudo: required
-
-# let's go!
-language: python
-python:
- - "2.7"
- - "3.3"
- - "3.4"
- - "3.5"
-
-# We want to use docker during the tests
-services:
- - docker
-
-# Support for coveralls
-before_install:
- - pip install coveralls pytest pytest-cov
-
-# install dependencies (and daliuge itself)
-install:
- - pip install -U setuptools
- - python setup.py install
-
-# run the tests
-script: py.test --cov
-
-# Publish to coveralls (only once per commit, so only using one environment)
-after_success:
- - coveralls
-
-# safelist
-branches:
- only:
-  - master
+# We currently exclude the deploy directory because it's not
+# part of the core software
+[run]
+source = dfms/
+omit = dfms/deploy/*

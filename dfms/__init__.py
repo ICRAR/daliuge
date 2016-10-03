@@ -24,6 +24,9 @@ The dfms package contains the modules implementing the core functionality of
 the system.
 """
 
+from .version import git_version as __git_version__
+from .version import version as __version__
+
 import logging
 
 def _setupPyro():

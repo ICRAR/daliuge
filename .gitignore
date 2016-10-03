@@ -5,3 +5,7 @@
 **/*.egg-info
 .project
 .pydevproject
+.coverage
+.cache
+.settings/
+dfms/version.py

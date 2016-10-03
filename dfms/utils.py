@@ -30,7 +30,6 @@ import logging
 import math
 import os
 import socket
-import threading
 import time
 import types
 import zlib
@@ -39,13 +38,6 @@ import six
 
 
 logger = logging.getLogger(__name__)
-
-def import_ijson():
-    try:
-        import ijson.backends.yajl2_cffi as ijson
-    except ImportError:
-        import ijson
-    return ijson
 
 def get_local_ip_addr():
     """
@@ -96,32 +88,6 @@ def browse_service(zc, service_type_name, protocol, callback):
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     browser = ServiceBrowser(zc, stn, handlers=[callback])
     return browser
-
-class CountDownLatch(object):
-    """
-    An implementation that shadows Java's CountDownLatch, allowing one thread
-    to wait for others to finish.
-
-    Code taken from:
-    http://stackoverflow.com/questions/10236947/does-python-have-a-similar-control-mechanism-to-javas-countdownlatch
-    """
-
-    def __init__(self, count):
-        self.count = count
-        self.lock = threading.Condition()
-
-    def countDown(self):
-        self.lock.acquire()
-        self.count -= 1
-        if self.count <= 0:
-            self.lock.notifyAll()
-        self.lock.release()
-
-    def await(self):
-        self.lock.acquire()
-        while self.count > 0:
-            self.lock.wait()
-        self.lock.release()
 
 def portIsClosed(host, port, timeout):
     """
@@ -271,9 +237,11 @@ def createDirIfMissing(path):
     """
     Creates the given directory if it doesn't exist
     """
-    if os.path.exists(path):
-        return
-    os.makedirs(path)
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
@@ -285,11 +253,6 @@ def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     if doubleQuotes:
         s = s.replace('"','\\"')
     return s
-
-def isLocalhost(host):
-    return host == 'localhost' or \
-           host.startswith('127.0') or \
-           host == socket.gethostname()
 
 def prepare_sql(sql, paramstyle, data=()):
     """
