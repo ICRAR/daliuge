@@ -59,10 +59,12 @@ except subprocess.CalledProcessError:
 setup(
       name='dfms',
       version='0.1',
-      description='Data Flow Management System',
-      author='',
-      author_email='',
-      url='',
+      description=u'Data Activated \uF9CA (flow) Graph Engine - DALiuGE',
+      long_description = "The SKA-SDK prototype for the Execution Framework component",
+      author='ICRAR DIA Group',
+      author_email='dfms_prototype@googlegroups.com',
+      url='https://github.com/SKA-ScienceDataProcessor/dfms',
+      license="LGPLv2+",
       packages=find_packages(),
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
