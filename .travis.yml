@@ -27,7 +27,7 @@ script: "py.test --cov"
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
- - if [[ $ENV == "python=2.7*" ]]; then coveralls; fi
+ - coveralls
 
 # safelist
 branches:
