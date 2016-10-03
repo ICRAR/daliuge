@@ -19,28 +19,26 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import codecs
-import json
-import os
-import subprocess
-import sys
 import threading
-import time
 import unittest
 
-import pkg_resources
-
 from dfms import droputils
-from dfms import ngaslite, utils
 from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dfms.drop import BarrierAppDROP
+from dfms.drop import BarrierAppDROP, dropdict
 from dfms.manager.node_manager import NodeManager
-from dfms.manager.repository import memory, sleepAndCopy
-from dfms.manager.session import SessionStates
-from test.manager import testutils
 
 
 hostname = 'localhost'
+
+def memory(uid, **kwargs):
+    dropSpec = dropdict({'oid':uid, 'type':'plain', 'storage':'memory'})
+    dropSpec.update(kwargs)
+    return dropSpec
+
+def sleepAndCopy(uid, **kwargs):
+    dropSpec = dropdict({'oid':uid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
+    dropSpec.update(kwargs)
+    return dropSpec
 
 def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.createSession(sessionId)
@@ -309,91 +307,3 @@ class TestDM(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-
-@unittest.skip("Eventually to be removed, it depends on an external NGAS installation")
-class TestREST(unittest.TestCase):
-
-    def test_fullRound(self):
-        """
-        A test that exercises most of the REST interface exposed on top of the
-        NodeManager
-        """
-
-        sessionId = 'lala'
-        restPort  = 8888
-
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', \
-                '--port', str(restPort), '-qqq']
-        dmProcess = subprocess.Popen(args)
-
-        with testutils.terminating(dmProcess, 10):
-
-            # Wait until the REST server becomes alive
-            self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
-
-            # The DM is still empty
-            dmInfo = testutils.get(self, '', restPort)
-            self.assertEqual(0, len(dmInfo['sessions']))
-
-            # Create a session and check it exists
-            testutils.post(self, '/sessions', restPort, '{"sessionId":"%s"}' % (sessionId))
-            dmInfo = testutils.get(self, '', restPort)
-            self.assertEqual(1, len(dmInfo['sessions']))
-            self.assertEqual(sessionId, dmInfo['sessions'][0]['sessionId'])
-            self.assertEqual(SessionStates.PRISTINE, dmInfo['sessions'][0]['status'])
-
-            # Add this complex graph spec to the session
-            # The UID of the two leaf nodes of this complex.js graph are T and S
-            # PRO-242: use timestamps for final DROPs that get archived into the public NGAS
-            with pkg_resources.resource_stream('test', 'graphs/complex.js') as f: # @UndefinedVariable
-                graph = json.load(codecs.getreader('utf-8')(f))
-            suffix = '_' + str(int(time.time()))
-            oidsToReplace = ('S','T')
-            for dropSpec in graph:
-                if dropSpec['oid'] in oidsToReplace:
-                    dropSpec['oid'] += suffix
-                for rel in ('inputs','outputs'):
-                    if rel in dropSpec:
-                        for oid in dropSpec[rel][:]:
-                            if oid in oidsToReplace:
-                                dropSpec[rel].remove(oid)
-                                dropSpec[rel].append(oid + suffix)
-
-            testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(graph))
-
-            # We create two final archiving nodes, but this time from a template
-            # available on the server-side
-            timeout = 10
-            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving1&host=ngas.ddns.net&port=7777&sessionId=%s&connect_timeout=%f&timeout=%f' % (sessionId, timeout, timeout), restPort)
-            testutils.post(self, '/templates/dfms.manager.repository.archiving_app/materialize?uid=archiving2&host=ngas.ddns.net&port=7777&sessionId=%s&connect_timeout=%f&timeout=%f' % (sessionId, timeout, timeout), restPort)
-
-            # And link them to the leaf nodes of the complex graph
-            testutils.post(self, '/sessions/%s/graph/link?rhOID=archiving1&lhOID=S%s&linkType=0' % (sessionId, suffix), restPort)
-            testutils.post(self, '/sessions/%s/graph/link?rhOID=archiving2&lhOID=T%s&linkType=0' % (sessionId, suffix), restPort)
-
-            # Now we deploy the graph...
-            testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, 'completed=SL_A,SL_B,SL_C,SL_D,SL_K', mimeType='application/x-www-form-urlencoded')
-
-            # ...and write to all 5 root nodes that are listening in ports
-            # starting at 1111
-            msg = os.urandom(10)
-            for i in range(5):
-                utils.write_to('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i)
-
-            # Wait until the graph has finished its execution. We'll know
-            # it finished by polling the status of the session
-            while testutils.get(self, '/sessions/%s/status' % (sessionId), restPort) == SessionStates.RUNNING:
-                time.sleep(0.2)
-
-            self.assertEqual(SessionStates.FINISHED, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
-            testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
-
-            # We put an NGAS archiving at the end of the chain, let's check that the DROPs were copied over there
-            # Since the graph consists on several SleepAndCopy apps, T should contain the message repeated
-            # 9 times, and S should have it 4 times
-            def checkReplica(dropId, copies):
-                response = ngaslite.retrieve('ngas.ddns.net', dropId)
-                buff = response.read()
-                self.assertEqual(msg*copies, buff, "%s's replica doesn't look correct" % (dropId))
-            checkReplica('T%s' % (suffix), 9)
-            checkReplica('S%s' % (suffix), 4)
