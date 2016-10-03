@@ -274,9 +274,8 @@ def createDirIfMissing(path):
     try:
         os.makedirs(path)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
-        raise
+        if e.errno != errno.EEXIST:
+            raise
 
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
