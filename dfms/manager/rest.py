@@ -230,7 +230,6 @@ class NMRestServer(ManagerRestServer):
     def initializeSpecifics(self, app):
         app.get(   '/api',                                    callback=self.getNMStatus)
         app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
-        app.post(  '/api/templates/<tpl>/materialize',        callback=self.materializeTemplate)
         app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
         app.post(  '/api/sessions/<sessionId>/trigger',       callback=self.trigger_drops)
         # The non-REST mappings that serve HTML-related content
@@ -245,7 +244,7 @@ class NMRestServer(ManagerRestServer):
     def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
         # future
-        return {'sessions': self.sessions(), 'templates': self.dm.getTemplates()}
+        return {'sessions': self.sessions()}
 
     @daliuge_aware
     def linkGraphParts(self, sessionId):
@@ -254,12 +253,6 @@ class NMRestServer(ManagerRestServer):
         rhOID = params['rhOID']
         linkType = int(params['linkType'])
         self.dm.linkGraphParts(sessionId, lhOID, rhOID, linkType)
-
-    @daliuge_aware
-    def materializeTemplate(self, tpl):
-        tplParams = dict(bottle.request.params)
-        sessionId = tplParams.pop('sessionId')
-        self.dm.materializeTemplate(tpl, sessionId, **tplParams)
 
     @daliuge_aware
     def add_node_subscriptions(self, sessionId):
