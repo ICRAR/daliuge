@@ -38,7 +38,7 @@ def import_node_mgr():
     from dfms.exceptions import NoSessionException, SessionAlreadyExistsException,\
         DaliugeException
     from dfms.lifecycle.dlm import DataLifecycleManager
-    from dfms.manager import repository, constants
+    from dfms.manager import constants
     from dfms.manager.drop_manager import DROPManager
     from dfms.manager.session import Session
 

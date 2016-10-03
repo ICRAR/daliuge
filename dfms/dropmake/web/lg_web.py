@@ -70,7 +70,7 @@ def jsonbody_post():
             # print "writing to {0}".format(lg_path)
             with open(lg_path, "w") as f:
                 f.write(lg_content)
-        except Exception, excmd2:
+        except Exception as excmd2:
             response.status = 500
             return "Fail to save logical graph {0}:{1}".format(lg_name, str(excmd2))
         finally:
@@ -146,7 +146,7 @@ def get_gantt_chart():
     try:
         ret = pg_mgr.get_gantt_chart(pgt_id)
         return ret
-    except GraphException, ge:
+    except GraphException as ge:
         response.status = 500
         return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
 
@@ -168,7 +168,7 @@ def get_schedule_mat():
     try:
         ret = pg_mgr.get_schedule_matrices(pgt_id)
         return ret
-    except GraphException, ge:
+    except GraphException as ge:
         response.status = "500 {0}".format(ge)
         return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
 
@@ -207,14 +207,14 @@ def gen_pg():
         #print "session deployed"
         # 3. redirect to the master drop manager
         redirect("http://{0}:{1}/session?sessionId={2}".format(mhost, mport, ssid))
-    except RestClientException, re:
+    except RestClientException as re:
         response.status = 500
         return "Fail to interact with DFMS Drop Manager: {0}".format(re)
-    except HTTPResponse, res:
-        raise res
-    except Exception, ex:
+    except HTTPResponse:
+        raise
+    except Exception as ex:
         trace_msg = traceback.format_exc()
-        print trace_msg
+        print(trace_msg)
         response.status = 500
         return "Fail to deploy physical graph: {0}".format(ex)
 
@@ -269,16 +269,16 @@ def gen_pgt():
             pgt_id = pg_mgr.add_pgt(pgt, lg_name)
             part_info = pgt.get_partition_info()
             return template('pg_viewer.html', pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
-        except GraphException, ge:
+        except GraphException as ge:
             response.status = 500
             return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
-        except SchedulerException, se:
+        except SchedulerException as se:
             response.status = 500
             return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
-        except Exception, exp:
+        except Exception as exp:
             response.status = 500
             trace_msg = traceback.format_exc()
-            print trace_msg
+            print(trace_msg)
             return "Graph partition exception {1}: {0}".format(str(exp), lg_name)
     else:
         response.status = 404

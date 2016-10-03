@@ -44,7 +44,7 @@ from dfms.drop import AppDROP
 from dfms.exceptions import NoSessionException, SessionAlreadyExistsException,\
     DaliugeException
 from dfms.lifecycle.dlm import DataLifecycleManager
-from dfms.manager import repository, constants
+from dfms.manager import constants
 from dfms.manager.drop_manager import DROPManager
 from dfms.manager.session import Session
 
@@ -333,32 +333,6 @@ class NodeManagerBase(DROPManager):
     def call_drop(self, sessionId, uid, method, *args):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].call_drop(uid, method, *args)
-
-    def getTemplates(self):
-
-        # TODO: we currently have a hardcoded list of functions, but we should
-        #       load these repositories in a different way (e.g., from a directory)
-
-        templates = []
-        for f in repository.complex_graph, repository.pip_cont_img_pg, repository.archiving_app:
-            templates.append(_functionAsTemplate(f))
-        return templates
-
-    def materializeTemplate(self, tpl, sessionId, **tplParams):
-
-        self._check_session_id(sessionId)
-
-        # tpl currently has the form <full.mod.path.functionName>
-        parts = tpl.split('.')
-        module = importlib.import_module('.'.join(parts[:-1]))
-        tplFunction = getattr(module, parts[-1])
-
-        # invoke the template function with the given parameters
-        # and add the new graph spec to the session
-        graphSpec = tplFunction(**tplParams)
-        self.addGraphSpec(sessionId, graphSpec)
-
-        logger.info('Added graph from template %s to session %s with params: %s', tpl, sessionId, tplParams)
 
 def zmq_safe(host_or_addr):
 

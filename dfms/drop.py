@@ -879,19 +879,6 @@ class AbstractDROP(EventFirer):
     def dataIsland(self):
         return self._dataIsland
 
-    @property
-    def uri(self):
-        """
-        An attribute indicating the URI of this DROP. The meaning of this
-        URI is not formal, and it's currently used to hold the Pyro URI of
-        DROPs that are activated via a Pyro Daemon.
-        """
-        return self._uri
-
-    @uri.setter
-    def uri(self, uri):
-        self._uri = uri
-
 class FileDROP(AbstractDROP):
     """
     A DROP that points to data stored in a mounted filesystem.
