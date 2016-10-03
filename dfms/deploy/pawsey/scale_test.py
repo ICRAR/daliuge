@@ -354,7 +354,7 @@ class LogParser(object):
     'PG spec is calculated',
     'Creating Session {0} in all hosts',
     'Successfully created session {0} in all hosts',
-    'Separating graph with {0} dropSpecs',
+    'Separating graph',
     'Removed (and sanitized) {0} inter-dm relationships',
     'Adding individual graphSpec of session {0} to each DM',
     'Successfully added individual graphSpec of session {0} to each DM',
@@ -450,14 +450,17 @@ class LogParser(object):
         temp_dim = []
         num_node_mgrs = 0
         for lep in dim_log_pairs:
+            add_dur = True
             if ('unroll' == lep._name):
                 num_drops = lep._other.get('num_drops', -1)
             elif ('node managers' == lep._name):
                 num_node_mgrs = lep._other.get('num_node_mgrs', 0)
+                add_dur = False
             elif ('build drop connections' == lep._name):
                 num_edges = lep._other.get('num_edges', -1)
                 temp_dim.append(str(num_edges))
-            temp_dim.append(str(lep.get_duration()))
+            if (add_dur):
+                temp_dim.append(str(lep.get_duration()))
 
         # parse NM logs
         nm_logs = []
@@ -514,7 +517,8 @@ class LogParser(object):
         else:
             failed_nodes = theory_num_nm - actual_num_nm
             num_nodes -= failed_nodes
-            print("Pipeline %s has %d node managers that failed to start!" % (pip_name, failed_nodes))
+            if (failed_nodes > 0):
+                print("Pipeline %s has %d node managers that failed to start!" % (pip_name, failed_nodes))
 
         # The DIM waits for all NMs to setup before triggering the first drops.
         # This has the effect that the slowest to setup will make the others
@@ -538,7 +542,8 @@ class LogParser(object):
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
         num_nodes, num_drops, git_commit]
         ret = [str(x) for x in ret]
-        add_line = ','.join(ret + temp_dim + temp_nm)
+        num_dims = num_dims if num_dims == 1 else num_dims - 1 #exclude master manager
+        add_line = ','.join(ret + temp_dim + temp_nm + [str(int(num_dims))])
         if (out_csv is not None):
             with open(out_csv, 'a') as of:
                 of.write(add_line)
