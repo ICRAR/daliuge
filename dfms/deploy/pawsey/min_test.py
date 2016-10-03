@@ -24,15 +24,13 @@
 Pre-test the platform compatibility for deploying the DALiuGE cluster
 """
 
-import commands, time, sys, os, logging
-import json
-from optparse import OptionParser
-import threading
-from collections import defaultdict
+import logging
+import optparse
+import subprocess
+import sys
 
-from mpi4py import MPI
 
-logger = logging.getLogger('deploy.pawsey.min_test')
+logger = logging.getLogger(__name__)
 
 def import_node_mgr():
     from dfms import utils
@@ -94,7 +92,7 @@ def get_ip(loc='Pawsey'):
     """
     This is brittle, but works on Magnus/Galaxy for now
     """
-    re = commands.getstatusoutput('ifconfig')
+    out = subprocess.check_output('ifconfig')
     if (loc == 'Pawsey'):
         ln = 1 # e.g. 10.128.0.98
     elif (loc == 'Tianhe2'):
@@ -102,17 +100,16 @@ def get_ip(loc='Pawsey'):
     else:
         raise Exception("Unknown deploy location: {0}".format(loc))
     try:
-        msg = re[1]
-        line = msg.split('\n')[ln]
+        line = out.split('\n')[ln]
         return line.split()[1].split(':')[1]
     except:
-        logger.warning("Fail to obtain IP address from {0}".format(msg))
+        logger.warning("Failed to obtain IP address from {0}".format(out))
         return 'None'
 
 if __name__ == '__main__':
     """
     """
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.add_option("-i", "--import_dfms", action="store_true",
                       dest="import_dfms", help="Whether to import DFMS libraries", default=False)
 
@@ -121,6 +118,7 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
+    from mpi4py import MPI
     comm = MPI.COMM_WORLD
     num_procs = comm.Get_size()
     rank = comm.Get_rank()
