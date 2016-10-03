@@ -13,13 +13,21 @@ python:
 services:
  - docker
 
+# Support for coveralls
+before_install:
+ - pip install coveralls pytest pytest-cov
+
 # install dependencies (and daliuge itself)
 install:
  - pip install -U setuptools
  - python setup.py install
 
 # run the tests
-script: "python setup.py test"
+script: "py.test --cov"
+
+# Publish to coveralls (only once per commit, so only using one environment)
+after_success:
+ - coveralls
 
 # safelist
 branches:
