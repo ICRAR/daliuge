@@ -86,7 +86,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
     def check_and_add(ip):
         ntries = retry
         while ntries:
-            if check_host(ip, NODE_DEFAULT_REST_PORT, timeout=timeout, check_with_session=check_with_session):
+            if check_host(ip, port, timeout=timeout, check_with_session=check_with_session):
                 logger.info("Host %s:%d is running", ip, port)
                 return ip
             logger.warning("Failed to contact host %s:%d", ip, port)
