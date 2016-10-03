@@ -100,7 +100,7 @@ class PGManager(object):
             with open(pgt_path, "w") as f:
                 f.write(pgt_content)
             self._pgt_dict[pgt_id] = pgt
-        except Exception, exp:
+        except Exception as exp:
             raise GraphException("Fail to save PGT {0}:{1}".format(pgt_path, str(exp)))
         finally:
             self._gen_pgt_sem.release()
@@ -143,7 +143,7 @@ class PGManager(object):
         jsobj = None
         try:
             parts = pgt._partitions
-        except AttributeError, ae:
+        except AttributeError:
             raise GraphException("Graph '{0}' has not yet been partitioned, so cannot produce scheduling matrix.".format(pgt_id))
         for part in parts:
             sm = part.schedule.schedule_matrix
