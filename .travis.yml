@@ -47,7 +47,7 @@ install:
  - python setup.py install
 
 # run the tests
-script: "py.test --cov=dfms/"
+script: py.test --cov
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
