@@ -544,7 +544,7 @@ class LogParser(object):
                 of.write(add_line)
                 of.write(os.linesep)
         else:
-            print add_line
+            print(add_line)
 
     def check_log_dir(self, log_dir):
         possible_logs = [
@@ -626,7 +626,7 @@ if __name__ == '__main__':
                         try:
                             lg = LogParser(df)
                             lg.parse(out_csv=opts.csv_output)
-                        except Exception, exp:
+                        except Exception as exp:
                             print("Fail to parse {0}: {1}".format(df, exp))
         else:
             lg = LogParser(opts.log_dir)
