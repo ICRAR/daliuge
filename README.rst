@@ -4,6 +4,9 @@ Data Flow Management System
 .. image:: https://travis-ci.org/SKA-ScienceDataProcessor/dfms.svg?branch=master
     :target: https://travis-ci.org/SKA-ScienceDataProcessor/dfms
 
+.. image:: https://coveralls.io/repos/github/SKA-ScienceDataProcessor/dfms/badge.svg?branch=master
+    :target: https://coveralls.io/github/SKA-ScienceDataProcessor/dfms?branch=master
+
 .. image:: https://readthedocs.org/projects/dfms/badge/?version=latest
     :target: http://dfms.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
