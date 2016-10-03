@@ -271,9 +271,12 @@ def createDirIfMissing(path):
     """
     Creates the given directory if it doesn't exist
     """
-    if os.path.exists(path):
-        return
-    os.makedirs(path)
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            pass
+        raise
 
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
