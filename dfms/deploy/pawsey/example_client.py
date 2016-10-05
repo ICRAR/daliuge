@@ -54,7 +54,9 @@ lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', #2
 'lofar_nsm_2x4.json', #24
 # 2, 4, 8, 12 million Drops
 'lofar_nsm_256x512.json', 'lofar_nsm_512x512.json', 'lofar_nsm_512x1024.json', 'lofar_nsm_768x1024.json', #28
-'simple_test_500.json', 'simple_test_1000.json', 'simple_test_2000.json']#31
+# 16, 32, 64, 128 million Drops
+'lofar_nsm_1024x1024.json', 'lofar_nsm_1024x2048.json', 'lofar_nsm_2048x2048.json', 'lofar_nsm_2048x5120.json', #32
+'simple_test_500.json', 'simple_test_1000.json', 'simple_test_2000.json']#35
 
 
 class MonitorClient(object):
