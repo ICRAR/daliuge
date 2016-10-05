@@ -394,6 +394,9 @@ def main():
                 ip_list.append(ip)
                 ip_rank_dict[ip] = int(r)
 
+            if (len(ip_list) <= options.num_islands):
+                raise Exception("Insufficient nodes available for node managers")
+
             # 2 broadcast dim ranks to all nodes to let them know who is the DIM
             dim_ranks = []
             dim_ip_list = ip_list[0:options.num_islands]
