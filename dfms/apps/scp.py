@@ -51,7 +51,7 @@ class ScpApp(BarrierAppDROP):
             # The current only way to check if we are handling a FileDROP
             # or a DirectoryContainer is by checking if they have a `path`
             # attribute. Calling `isinstance(i, (FileDROP, DirectoryContainer))`
-            # doesn't work because the input/output might be a Pyro4.Proxy object
+            # doesn't work because the input/output might be a proxy object
             # that fails the test
             if not hasattr(i, 'path'):
                 raise Exception("%r is not supported by the ScpApp" % (i))

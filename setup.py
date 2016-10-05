@@ -122,7 +122,8 @@ setup(
       package_data = {
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
         'dfms.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map',
-        'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html', 'lib/libmetis.*']
+                          'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html',
+                          'lib/libmetis.*']
       },
 
       # Keep alpha-sorted PLEASE!
@@ -132,7 +133,6 @@ setup(
             "configobj",
             "docker-py <= 1.7",
             "drive-casa>0.7",
-            "ijson",
             "lockfile",
             "luigi<2.0",
             "metis",
@@ -142,21 +142,26 @@ setup(
             # requires development packages to be installed on the system
             "paramiko<2.0.0",
             "psutil",
-            "Pyro4>=4.47", # 4.47 contains a fix we contributed
             "pyswarm",
             "python-daemon",
             "pyzmq",
-            "rpyc",
             "scp",
             'six',
             "zeroconf",
-            "zerorpc >= 0.6" # 0.6 brins python3 support plus other fixes
+            "zerorpc >= 0.6" # 0.6 brings python3 support plus other fixes
       ],
       # Keep alpha-sorted PLEASE!
 
       extras_require={
-        'spead': ["spead2==0.4.0"]
+        # spead is required only for a specific app and its test, which we
+        # skip anyway if spead is not found
+        'spead': ["spead2==0.4.0"],
+        # Pyro4 and RPyC are semi-supported RPC alternatives
+        # (while zerorpc is the default)
+        'pyro': ['Pyro4>=4.47'], # 4.47 contains a fix we contributed
+        'rpyc': ['rpyc']
       },
+
       dependency_links=[
         # The latest version of netifaces doesn't compile with old Linux kernels
         # We have provided a patch that solves the issue and are waiting for
