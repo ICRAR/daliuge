@@ -161,6 +161,8 @@ def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app, mc=None, u
         mc._nodes = [dim_ip] + dc.nodes()
         logger.info("Submitting graph {0}".format(graph_id))
         lgn, lg, pg_spec = mc.get_physical_graph(graph_id, unrolled=unrolled)
+        if (unrolled is not None):
+            del unrolled
         mc.submit_single_graph(graph_id, deploy=True, pg=(lgn, lg, pg_spec))
         logger.info("graph {0} is successfully submitted".format(graph_id))
     else:
@@ -422,6 +424,7 @@ def main():
                 algo='metis', zerorun=options.zerorun, app=options.app,
                 nodes=(dim_ip_list + node_mgrs), num_islands=options.num_islands)
             lgn, lg, pg_spec = mc.get_physical_graph(options.gid, unrolled=unrolled)
+            del unrolled
 
             # 5. parse the pg_spec to get the mapping from islands to node list
             dim_rank_nodes_dict = collections.defaultdict(set)

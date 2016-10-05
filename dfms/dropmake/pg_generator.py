@@ -566,6 +566,7 @@ class PGT(object):
 
     def __init__(self, drop_list, build_dag=True):
         self._drop_list = drop_list
+        self._drop_list_len = len(drop_list)
         self._extra_drops = [] # artifacts DROPs produced during L2G mapping
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list) if build_dag else None
         self._json_str = None
@@ -874,16 +875,25 @@ class MetisPGTP(PGT):
         G.graph['node_weight_attr'] = 'tw'
         G.graph['node_size_attr'] = 'sz'
 
+        oids = []
         for i, drop in enumerate(self._drop_list):
             oid = drop['oid']
             key_dict[oid] = i + 1 #METIS index starts from 1
             drop_dict[oid] = drop
+            oids.append(oid)
 
         logger.info("Metis partition input progress - dropdict is built")
 
-        for i, drop in enumerate(self._drop_list):
+        if (self._drop_list_len > 10000000):
+            # this for sure is not for visualisation
+            # so safe to release it!
+            del self._drop_list # hopefully it gets garbage collected
+
+        #for i, drop in enumerate(self._drop_list):
+        for i, oid in enumerate(oids):
             #line = []
-            oid = drop['oid']
+            drop = drop_dict[oid]
+            #oid = drop['oid']
             #myk = key_dict[oid]
             myk = i + 1
             # if (myk != i + 1):
@@ -959,7 +969,8 @@ class MetisPGTP(PGT):
         ogm = self._oid_gid_map
         group_weight = self._group_workloads# k - gid, v - a tuple of (tw, sz)
         G = self._G
-        start_k = len(self._drop_list) + 1
+        #start_k = len(self._drop_list) + 1
+        start_k = self._drop_list_len + 1
         gnodes = G.nodes(data=True)
         stt = time.time()
         for i, gid in enumerate(metis_out):
