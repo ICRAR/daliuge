@@ -146,6 +146,7 @@ class MonitorClient(object):
             lgn, lg, drop_list = self.unroll_physical_graph(graph_id)
         else:
             lgn, lg, drop_list = unrolled
+            del unrolled # get ready for garbage collection
 
         if ((not str(graph_id).isdigit())
             and (not self._skip_tpl_check)
@@ -160,6 +161,7 @@ class MonitorClient(object):
                 pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
             else:
                 pgtp = MetisPGTP(drop_list, lnl)
+            del drop_list
             logger.info("PGTP initialised {0}".format(self._algo))
 
             logger.info("Start to translate {0}".format(lgn))
