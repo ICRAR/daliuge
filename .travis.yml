@@ -37,6 +37,9 @@ python:
 services:
  - docker
 
+# Try to speed up builds by caching our dependencies
+cache: pip
+
 # Support for coveralls
 before_install:
  - pip install coveralls pytest pytest-cov
