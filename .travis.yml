@@ -45,9 +45,13 @@ before_install:
  - pip install coveralls pytest pytest-cov
  - pip install -U setuptools
 
-# install daliuge (using pip to make use of the cache)
+# install daliuge
+# We use pip first to make use of the cache
+# and later run with the setuptools approach
+# to make sure we generate our version file
 install:
  - pip install .
+ - python setup.py install
 
 # run the tests
 script: py.test --cov
