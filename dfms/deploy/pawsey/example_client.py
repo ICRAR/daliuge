@@ -85,27 +85,11 @@ class MonitorClient(object):
         self._num_islands = num_islands
         self._skip_tpl_check = skip_tpl_check
 
-    def get_physical_graph(self, graph_id, tpl_nodes_len=0):
+    def unroll_physical_graph(self, graph_id):
         """
-        nodes:  If non-empty, is a list of node (e.g. IP addresses, string type),
-                    which shoud NOT include the MasterManager's node address
-
-        We will first try finding node list from the `nodes` parameter. If it
-        is empty, we will try the DIM or MM manager. If that is also empty,
-        we will bail out.
+        Unroll the PGT from the original logical graph or
+        from reading an existing unrolled PGT
         """
-        if (tpl_nodes_len > 0):
-            node_list = [] # fake list
-            lnl = tpl_nodes_len - self._num_islands
-        else:
-            node_list = self._nodes or self._dc.nodes()
-            lnl = len(node_list) - self._num_islands
-        if (lnl == 0):
-            raise Exception("Cannot find node list from either managers or external parameters")
-        logger.info("Got a node list with %d node managers", lnl)
-        perform_partition = True
-
-        # Unroll PGT from the original logical graph or from reading an existing unrolled PGT
         if (str(graph_id).isdigit()): # we assume a full file name can never be a digit
             graph_id = int(graph_id)
             lgn = lgnames[graph_id]
@@ -134,11 +118,39 @@ class MonitorClient(object):
                 logger.error(err_info)
                 raise InvalidGraphException(err_info)
 
-            if ((not self._skip_tpl_check)
-                and ('node' in drop_list[0])
-                and drop_list[0]['node'].startswith('#')):
-                # template
-                perform_partition = False
+        return lgn, lg, drop_list
+
+    def get_physical_graph(self, graph_id, tpl_nodes_len=0, unrolled=None):
+        """
+        nodes:  If non-empty, is a list of node (e.g. IP addresses, string type),
+                    which shoud NOT include the MasterManager's node address
+
+        We will first try finding node list from the `nodes` parameter. If it
+        is empty, we will try the DIM or MM manager. If that is also empty,
+        we will bail out.
+        """
+        if (tpl_nodes_len > 0):
+            node_list = [] # fake list
+            lnl = tpl_nodes_len - self._num_islands
+        else:
+            node_list = self._nodes or self._dc.nodes()
+            lnl = len(node_list) - self._num_islands
+        if (lnl == 0):
+            raise Exception("Cannot find node list from either managers or external parameters")
+        logger.info("Got a node list with %d node managers", lnl)
+        perform_partition = True
+
+        if (unrolled is None):
+            lgn, lg, drop_list = self.unroll_physical_graph(graph_id)
+        else:
+            lgn, lg, drop_list = unrolled
+
+        if ((not str(graph_id).isdigit())
+            and (not self._skip_tpl_check)
+            and ('node' in drop_list[0])
+            and drop_list[0]['node'].startswith('#')):
+            # template
+            perform_partition = False
 
         if (perform_partition):
             logger.info("Initialising PGTP {0}".format(self._algo))
