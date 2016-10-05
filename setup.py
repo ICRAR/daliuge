@@ -145,7 +145,7 @@ setup(
             "python-daemon",
             "pyzmq",
             "scp",
-            'six',
+            'six>=1.10',
             "zeroconf",
             "zerorpc >= 0.6" # 0.6 brings python3 support plus other fixes
       ],
