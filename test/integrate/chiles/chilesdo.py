@@ -22,7 +22,6 @@
 import logging
 import threading
 
-import drivecasa
 from six.moves import queue as Queue  # @UnresolvedImport
 
 from dfms.drop import BarrierAppDROP
@@ -47,6 +46,7 @@ class SourceFlux(BarrierAppDROP):
         if logger.isEnabledFor(logging.INFO):
             logger.info('Calculating source flux on %s.image' % (inp.path))
 
+        import drivecasa
         casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
         casa.run_script(['ia.open("'"%s"'")' % (inp.path + '.image')])
         casa.run_script(['flux = ia.pixelvalue([128,128,0,179])["'"value"'"]["'"value"'"]'])
@@ -85,6 +85,7 @@ class Clean(BarrierAppDROP):
 
     def invoke_clean(self, q, vis, outcube):
 
+        import drivecasa
         try:
             script = []
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)
@@ -151,6 +152,7 @@ class Split(BarrierAppDROP):
 
     def invoke_split(self, q, infile, outdir):
 
+        import drivecasa
         try:
             script = []
             casa = drivecasa.Casapy(casa_dir = self.casapy_path, timeout = self.timeout)

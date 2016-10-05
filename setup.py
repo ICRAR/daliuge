@@ -132,7 +132,6 @@ setup(
             "bottle",
             "configobj",
             "docker-py <= 1.7",
-            "drive-casa>0.7",
             "lockfile",
             "luigi<2.0",
             "metis",
@@ -146,20 +145,25 @@ setup(
             "python-daemon",
             "pyzmq",
             "scp",
-            'six',
+            'six>=1.10',
             "zeroconf",
             "zerorpc >= 0.6" # 0.6 brings python3 support plus other fixes
       ],
       # Keep alpha-sorted PLEASE!
 
       extras_require={
+
         # spead is required only for a specific app and its test, which we
         # skip anyway if spead is not found
         'spead': ["spead2==0.4.0"],
+
         # Pyro4 and RPyC are semi-supported RPC alternatives
         # (while zerorpc is the default)
         'pyro': ['Pyro4>=4.47'], # 4.47 contains a fix we contributed
-        'rpyc': ['rpyc']
+        'rpyc': ['rpyc'],
+
+        # drive-casa is used by some manual tests under test/integrate
+        'drive-casa': ["drive-casa>0.7"],
       },
 
       dependency_links=[

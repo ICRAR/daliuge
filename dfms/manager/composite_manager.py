@@ -199,21 +199,23 @@ class CompositeManager(DROPManager):
             raise DaliugeException("Failed to start the DM on %s:%d" % (host, self._dmPort))
         logger.info("DM successfully started at %s:%d", host, self._dmPort)
 
-    def ensureDM(self, host, timeout=10):
+    def ensureDM(self, host, port=None, timeout=10):
 
-        logger.debug("Checking DM presence at %s:%d", host, self._dmPort)
-        if portIsOpen(host, self._dmPort, timeout):
-            logger.debug("DM already present at %s:%d", host, self._dmPort)
+        port = port or self._dmPort
+
+        logger.debug("Checking DM presence at %s:%d", host, port)
+        if portIsOpen(host, port, timeout):
+            logger.debug("DM already present at %s:%d", host, port)
             return
 
         # We rely on having ssh keys for this, since we're using
         # the dfms.remote module, which authenticates using public keys
-        logger.debug("DM not present at %s:%d, will start it now", host, self._dmPort)
+        logger.debug("DM not present at %s:%d, will start it now", host, port)
         self.startDM(host)
 
         # Wait a bit until the DM starts; if it doesn't we fail
-        if not portIsOpen(host, self._dmPort, timeout):
-            raise DaliugeException("DM started at %s:%d, but couldn't connect to it" % (host, self._dmPort))
+        if not portIsOpen(host, port, timeout):
+            raise DaliugeException("DM started at %s:%d, but couldn't connect to it" % (host, port))
 
     def dmAt(self, host, port=None):
         port = port or self._dmPort
@@ -227,15 +229,15 @@ class CompositeManager(DROPManager):
     # If "collect" is given, then individual results are also kept in the given
     # structure, which is either a dictionary or a list
     #
-    def _do_in_host(self, sessionId, exceptions, f, collect, iterable):
+    def _do_in_host(self, sessionId, exceptions, f, collect, port, iterable):
 
         host = iterable
         if isinstance(iterable, (list, tuple)):
             host = iterable[0]
 
         try:
-            self.ensureDM(host)
-            with self.dmAt(host) as dm:
+            self.ensureDM(host, port)
+            with self.dmAt(host, port) as dm:
                 res = f(dm, iterable, sessionId)
 
             if isinstance(collect, dict):
@@ -247,13 +249,14 @@ class CompositeManager(DROPManager):
             exceptions[host] = e
             raise # so it gets printed
 
-    def replicate(self, sessionId, f, action, collect=None, iterable=None):
+    def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
         """
         Replicates the given function call on each of the underlying drop managers
         """
         thrExs = {}
         iterable = iterable or self._dmHosts
-        self._tp.map(functools.partial(self._do_in_host, sessionId, thrExs, f, collect), iterable)
+        port = port or self._dmPort
+        self._tp.map(functools.partial(self._do_in_host, sessionId, thrExs, f, collect, port), iterable)
         if thrExs:
             msg = "One or more errors occurred while %s on session %s" % (action, sessionId)
             raise SubManagerException(msg, thrExs)
@@ -350,53 +353,19 @@ class CompositeManager(DROPManager):
         dm.deploySession(sessionId)
         logger.debug('Successfully deployed session %s on %s', sessionId, host)
 
-    def _triggerDrops(self, exceptions, session_id, host_and_uids):
-
+    def _triggerDrops(self, dm, host_and_uids, sessionId):
         host, uids = host_and_uids
-
-        # Call "async_execute" for InputFiredAppDROPs, "setCompleted" otherwise
-        logger.info("Will trigger initial drops of session %s in host %s", session_id, host)
-        with self.dmAt(host, port=constants.NODE_DEFAULT_REST_PORT) as c:
-            try:
-                c.trigger_drops(session_id, uids)
-            except Exception as e:
-                exceptions[host] = e
-                logger.exception("An exception occurred while moving DROPs to COMPLETED")
-
-    def _add_node_subscriptions_wrapper(self, exceptions, sessionId, host_and_subscriptions):
-        host = host_and_subscriptions[0]
-        with self.dmAt(host, port=constants.NODE_DEFAULT_REST_PORT) as dm:
-            try:
-                self._add_node_subscriptions(dm, host_and_subscriptions, sessionId)
-            except Exception as e:
-                exceptions[host] = e
-                logger.exception("An exception occurred while adding node subscription")
+        dm.trigger_drops(sessionId, uids)
+        logger.info("Successfully triggered drops for session %s on %s", sessionId, host)
 
     def deploySession(self, sessionId, completedDrops=[]):
 
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
-        if self._drop_rels[sessionId]:
-            # This call throws exception if "I" am MM (but not DIM)
-            #self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information", iterable=self._drop_rels[sessionId].items())
-
-            # It appears that the function ensureDM() inside the _do_in_host()
-            # cannot make "cross hiearchy level" calls, this is
-            # because the self_dmPort is hardcoded inside ensureDM() to be the
-            # port directly managed by me (i.e. MM) but not by my children DIMs.
-            # In addition, when calling dmAT, _do_in_host() does not explicitly
-            # specify a NODE port so MM cannot directly contact NM.
-            # Here we instead invoke add_node_subscription() directly for now.
-            # It appears working fine.
-            # It also appears that we are mixing this non-recursive call inside
-            # a resursive function: deploySession())
-
-            ####
-            thrExs = {}
-            self._tp.map(functools.partial(self._add_node_subscriptions_wrapper, thrExs, sessionId), self._drop_rels[sessionId].items())
-            if thrExs:
-                raise DaliugeException("One or more exceptions occurred while adding node subscription: %s" % (sessionId), thrExs)
-            ###
+        if self._drop_rels.get(sessionId, None):
+            self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information",
+                           port=constants.NODE_DEFAULT_REST_PORT,
+                           iterable=self._drop_rels[sessionId].items())
             logger.info("Delivered node subscription list to node managers")
 
         logger.info('Deploying Session %s in all hosts', sessionId)
@@ -410,12 +379,11 @@ class CompositeManager(DROPManager):
             not_found = set(completedDrops) - set(self._graph)
             if not_found:
                 raise DaliugeException("UIDs for completed drops not found: %r", not_found)
-            logger.info('Moving following DROPs to COMPLETED right away: %r', completedDrops)
+            logger.info('Moving DROPs to COMPLETED right away: %r', completedDrops)
             completed_by_host = group_by_node(completedDrops, self._graph)
-            thrExs = {}
-            self._tp.map(functools.partial(self._triggerDrops, thrExs, sessionId), completed_by_host.items())
-            if thrExs:
-                raise DaliugeException("One or more exceptions occurred while moving DROPs to COMPLETED: %s" % (sessionId), thrExs)
+            self.replicate(sessionId, self._triggerDrops, "triggering drops",
+                           port=constants.NODE_DEFAULT_REST_PORT,
+                           iterable=completed_by_host.items())
             logger.info('Successfully triggered drops')
 
     def _getGraphStatus(self, dm, host, sessionId):
