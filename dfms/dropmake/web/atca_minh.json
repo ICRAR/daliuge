@@ -1,0 +1,20 @@
+{ "class": "go.GraphLinksModel",
+  "linkFromPortIdProperty": "fromPort",
+  "linkToPortIdProperty": "toPort",
+  "nodeDataArray": [ 
+{"category":"SplitData", "text":"Day", "isGroup":true, "num_of_copies":5, "scatter_axis":"time", "key":-13, "loc":"-839.328125 -559.5"},
+{"category":"Data", "text":"Data", "data_volume":5, "group_end":0, "key":-4, "loc":"-838.328125 -586", "group":-13},
+{"category":"Component", "text":"Calibrate", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-2, "loc":"-839.328125 -533", "group":-13},
+{"category":"Data", "text":"Data", "data_volume":5, "group_end":0, "key":-6, "loc":"-837.3281249999998 -285.0000000000002"},
+{"category":"SplitData", "text":"Scatter", "isGroup":true, "num_of_copies":4, "scatter_axis":"time", "key":-5, "loc":"-838.328125 -167"},
+{"category":"Component", "text":"Make pointings", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-7, "loc":"-838.328125 -194", "group":-5},
+{"category":"Data", "text":"Data", "data_volume":5, "group_end":0, "key":-8, "loc":"-842.328125 -140", "group":-5},
+{"category":"Component", "text":"linmos", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-9, "loc":"-837.328125 -72"}
+ ],
+  "linkDataArray": [ 
+{"from":-4, "to":-2, "fromPort":"B", "toPort":"T", "points":[-838.328125,-569.5622756958008,-838.328125,-559.5622756958008,-838.328125,-559.5,-839.328125,-559.5,-839.328125,-559.4377243041993,-839.328125,-549.4377243041993]},
+{"from":-2, "to":-6, "fromPort":"B", "toPort":"T", "points":[-839.328125,-516.5622756958008,-839.328125,-506.56227569580085,-837.3281249999998,-506.56227569580085,-837.3281249999998,-506.56227569580085,-837.3281249999998,-311.43772430419943,-837.3281249999998,-301.43772430419943]},
+{"from":-6, "to":-7, "fromPort":"B", "toPort":"T", "points":[-837.3281249999998,-268.562275695801,-837.3281249999998,-258.562275695801,-837.3281249999998,-239.5000000000001,-838.328125,-239.5000000000001,-838.328125,-220.4377243041992,-838.328125,-210.4377243041992]},
+{"from":-7, "to":-8, "fromPort":"B", "toPort":"T", "points":[-838.328125,-177.56227569580076,-838.328125,-167.56227569580076,-838.328125,-167,-842.328125,-167,-842.328125,-166.4377243041992,-842.328125,-156.4377243041992]},
+{"from":-8, "to":-9, "fromPort":"B", "toPort":"T", "points":[-842.328125,-123.56227569580076,-842.328125,-113.56227569580076,-842.328125,-106,-837.328125,-106,-837.328125,-98.43772430419922,-837.328125,-88.43772430419922]}
+ ]}
