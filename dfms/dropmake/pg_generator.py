@@ -887,7 +887,10 @@ class MetisPGTP(PGT):
         if (self._drop_list_len > 10000000):
             # this for sure is not for visualisation
             # so safe to release it!
+            logger.info("Deleting self._drop_list")
+            del self._drop_list[:]
             del self._drop_list # hopefully it gets garbage collected
+            logger.info("Deleted self._drop_list")
 
         #for i, drop in enumerate(self._drop_list):
         for i, oid in enumerate(oids):
