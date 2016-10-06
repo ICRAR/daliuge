@@ -50,20 +50,24 @@ STORAGE_TYPES = {
 
 # Dictionary for the key used to store 1-to-N relationships between DROPs
 # in the the DROP specification format
-__ONE_TO_N_RELS = {
+__TOMANY = {
     DROPLinkType.CONSUMER:           'consumers',
     DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
     DROPLinkType.INPUT:              'inputs',
     DROPLinkType.STREAMING_INPUT:    'streamingInputs',
     DROPLinkType.OUTPUT:             'outputs',
     DROPLinkType.CHILD:              'children',
-    DROPLinkType.PRODUCER:           'producers'
+    DROPLinkType.PRODUCER:           'producers',
 }
 
 # Same for above, but for n-to-1 relationships
-__N_TO_ONE_RELS = {
+__TOONE = {
     DROPLinkType.PARENT: 'parent'
 }
+
+# Both also contain the reverse mapping
+__TOMANY.update({v:k for k,v in __TOMANY.items()})
+__TOONE.update({v:k for k,v in __TOONE.items()})
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +80,8 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
     lhOID = lhDropSpec['oid']
 
     # 1-N relationship
-    if linkType in __ONE_TO_N_RELS:
-        rel = __ONE_TO_N_RELS[linkType]
+    if linkType in __TOMANY:
+        rel = __TOMANY[linkType]
         if not rel in lhDropSpec:
             relList = []
             lhDropSpec[rel] = relList
@@ -88,8 +92,8 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
         else:
             raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
     # N-1 relationship, overwrite existing relationship only if `force` is specified
-    elif linkType in __N_TO_ONE_RELS:
-        rel = __N_TO_ONE_RELS[linkType]
+    elif linkType in __TOONE:
+        rel = __TOONE[linkType]
         if rel and not force:
             raise Exception("DROP %s already has a '%s', use 'force' to override" % (lhOID, rel))
         lhDropSpec[rel] = rhOID
@@ -107,8 +111,6 @@ def removeUnmetRelationships(dropSpecList):
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
-    rel_link_OneToN   = {link:rel for rel,link in __ONE_TO_N_RELS.items()}
-    rel_link_OneToOne = {link:rel for rel,link in __N_TO_ONE_RELS.items()}
     for dropSpec in dropSpecList:
 
         this_oid = dropSpec['oid']
@@ -117,9 +119,9 @@ def removeUnmetRelationships(dropSpecList):
         for rel in dropSpec:
 
             # 1-N relationships
-            if rel in rel_link_OneToN:
+            if rel in __TOMANY:
 
-                link = rel_link_OneToN[rel]
+                link = __TOMANY[rel]
 
                 # Find missing OIDs in this relationship and keep track of them,
                 # removing them from the current DROP spec
@@ -133,9 +135,9 @@ def removeUnmetRelationships(dropSpecList):
                     to_delete.append(rel)
 
             # N-1 relationships
-            elif rel in rel_link_OneToOne:
+            elif rel in __TOONE:
 
-                link = rel_link_OneToOne[rel]
+                link = __TOONE[rel]
 
                 # Check if OID is missing
                 oid = dropSpec[rel]
@@ -179,15 +181,15 @@ def loadDropSpecs(dropSpecList):
     for dropSpec in dropSpecList:
 
         # 1-N relationships
-        for rel in __ONE_TO_N_RELS.values():
-            if rel in dropSpec:
+        for rel in dropSpec:
+            if rel in __TOMANY:
+
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]: dropSpecs[oid]
 
         # N-1 relationships
-        for rel in __N_TO_ONE_RELS.values():
-            if rel in dropSpec:
+            elif rel in __TOONE:
                 # See comment above
                 dropSpecs[dropSpec[rel]]
 
@@ -218,9 +220,10 @@ def createGraphFromDropSpecList(dropSpecList):
         oid = dropSpec['oid']
         drop = drops[oid]
 
-        # 1-N relationships
-        for link,rel in __ONE_TO_N_RELS.items():
-            if rel in dropSpec:
+        for rel in dropSpec:
+            # 1-N relationships
+            if rel in __TOMANY:
+                link = __TOMANY[rel]
                 for oid in dropSpec[rel]:
                     lhDrop = drops[oid]
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
@@ -231,9 +234,9 @@ def createGraphFromDropSpecList(dropSpecList):
                         raise
                     relFunc(lhDrop)
 
-        # N-1 relationships
-        for link,rel in __N_TO_ONE_RELS.items():
-            if rel in dropSpec:
+            # N-1 relationships
+            elif rel in __TOONE:
+                link = __TOONE[rel]
                 lhDrop = drops[dropSpec[rel]]
                 propName = LINKTYPE_NTO1_PROPERTY[link]
                 setattr(drop, propName, lhDrop)
