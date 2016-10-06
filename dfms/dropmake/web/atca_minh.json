@@ -9,7 +9,8 @@
 {"category":"SplitData", "text":"Scatter", "isGroup":true, "num_of_copies":4, "scatter_axis":"time", "key":-5, "loc":"-838.328125 -167"},
 {"category":"Component", "text":"Make pointings", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-7, "loc":"-838.328125 -194", "group":-5},
 {"category":"Data", "text":"Data", "data_volume":5, "group_end":0, "key":-8, "loc":"-842.328125 -140", "group":-5},
-{"category":"Component", "text":"linmos", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-9, "loc":"-837.328125 -72"}
+{"category":"Component", "text":"linmos", "execution_time":5, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-9, "loc":"-837.328125 -72"},
+{"category":"Comment", "text":"Minh's ATCA Pipeline", "key":-18, "loc":"-1189.328125 -617"}
  ],
   "linkDataArray": [ 
 {"from":-4, "to":-2, "fromPort":"B", "toPort":"T", "points":[-838.328125,-569.5622756958008,-838.328125,-559.5622756958008,-838.328125,-559.5,-839.328125,-559.5,-839.328125,-559.4377243041993,-839.328125,-549.4377243041993]},
