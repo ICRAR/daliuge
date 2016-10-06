@@ -868,39 +868,27 @@ class MetisPGTP(PGT):
         both upstream and downstream nodes to fit its input format
         """
         key_dict = dict() # key - oid, value - GOJS key
-        drop_dict = dict() # key - oid, value - drop
+        droplist = self._drop_list
 
         G = nx.Graph()
         G.graph['edge_weight_attr'] = 'weight'
         G.graph['node_weight_attr'] = 'tw'
         G.graph['node_size_attr'] = 'sz'
 
-        oids = []
-        for i, drop in enumerate(self._drop_list):
+        for i, drop in enumerate(droplist):
             oid = drop['oid']
             key_dict[oid] = i + 1 #METIS index starts from 1
-            drop_dict[oid] = drop
-            oids.append(oid)
 
         logger.info("Metis partition input progress - dropdict is built")
 
-        if (self._drop_list_len > 10000000):
-            # this for sure is not for visualisation
-            # so safe to release it!
-            logger.info("Deleting self._drop_list")
-            del self._drop_list[:]
-            del self._drop_list # hopefully it gets garbage collected
-            logger.info("Deleted self._drop_list")
+        if (self._drop_list_len > 1e7):
+            import resource
+            logger.info("self._drop_list, max RSS: %.2f GB"\
+            %(resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2))
 
-        #for i, drop in enumerate(self._drop_list):
-        for i, oid in enumerate(oids):
-            #line = []
-            drop = drop_dict[oid]
-            #oid = drop['oid']
-            #myk = key_dict[oid]
+        for i, drop in enumerate(droplist):
+            oid = drop['oid']
             myk = i + 1
-            # if (myk != i + 1):
-            #     raise GPGTException("GOJS key {0} is not ordered: {1}!".format(myk, i + 1))
             tt = drop['type']
             if ('plain' == tt):
                 dst = 'consumers' # outbound keyword
@@ -920,17 +908,21 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                #line.append(str(key_dict[inp]))
                 if ('plain' == tt):
                     lw = drop['dw']
                 elif ('app' == tt):
-                    lw = drop_dict[inp].get('dw', 1)
+                    #lw = drop_dict[inp].get('dw', 1)
+                    lw = droplist[key_dict[inp] - 1].get('dw', 1)
                 if (lw <= 0):
                     lw = 1
                 G.add_edge(myk, key_dict[inp], weight=lw)
         # for e in G.edges(data=True):
         #     if (e[2]['weight'] == 0):
         #         e[2]['weight'] = 1
+        if (self._drop_list_len > 1e7):
+            import resource, gc
+            logger.info("Max RSS after creating the Graph: %.2f GB"\
+            %(resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2))
         return G
 
     def _set_metis_log(self, logtext):
@@ -1025,6 +1017,11 @@ class MetisPGTP(PGT):
             recursive_param = False if self._ptype == 'kway' else True
             if (recursive_param and self._obj_type == 'vol'):
                 raise GPGTException("Recursive partitioning does not support total volume minimisation.")
+
+            if (self._drop_list_len > 1e7):
+                import resource, gc
+                logger.info("RSS before METIS partitioning: %.2f GB"\
+                %(resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2))
 
             # Call METIS C-lib
             (edgecuts, metis_parts) = self._metis.part_graph(self._G,
