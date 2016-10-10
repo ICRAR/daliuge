@@ -34,12 +34,16 @@ class InvalidDropException(DaliugeException):
     An exception thrown when a Drop is created with a set of invalid arguments.
     """
     def __init__(self, drop, reason):
-        self.oid = drop.oid
-        self.uid = drop.uid
+        if isinstance(drop, (list, tuple)):
+            self.oid, self.uid = drop
+        else:
+            self.oid = drop.oid
+            self.uid = drop.uid
         self.reason = reason
+        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (self.uid, self.oid, self.reason)
 
-    def __repr__(self, *args, **kwargs):
-        return "InvalidDropException <Drop %s / %s>: %s" % (self.uid, self.oid, self.reason)
+    def __str__(self, *args, **kwargs):
+        return self.msg
 
 class InvalidRelationshipException(DaliugeException):
     """
@@ -48,9 +52,11 @@ class InvalidRelationshipException(DaliugeException):
     """
     def __init__(self, rel, reason):
         self.rel = rel
+        self.reason = reason
+        self.msg = "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
 
-    def __repr__(self, *args, **kwargs):
-        return "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
+    def __str__(self, *args, **kwargs):
+        return self.msg
 
 class InvalidGraphException(DaliugeException):
     """
@@ -63,22 +69,30 @@ class NoDropException(DaliugeException):
     An exception thrown when a Drop UID is pointing to a non-existing Drop
     """
 
-    def __init__(self, drop_uid):
+    def __init__(self, drop_uid, reason=None):
         self._drop_uid = drop_uid
+        self._reason = reason
 
-    def __repr__(self):
-        return "NoDropException <drop_uid: %s>" % (self._drop_uid)
+    def __str__(self):
+        ret = "NoDropException <drop_uid: %s>" % (self._drop_uid)
+        if self._reason:
+            ret += ". Reason: %s" % (self._reason)
+        return ret
 
 class NoSessionException(DaliugeException):
     """
     An exception thrown when a session ID is pointing to a non-existing session
     """
 
-    def __init__(self, session_id):
+    def __init__(self, session_id, reason=None):
         self._session_id = session_id
+        self._reason = reason
 
-    def __repr__(self):
-        return "NoSessionException <session_id: %s>" % (self._session_id)
+    def __str__(self):
+        ret = "NoSessionException <session_id: %s>" % (self._session_id)
+        if self._reason:
+            ret += ". Reason: %s" % (self._reason)
+        return ret
 
 class SessionAlreadyExistsException(DaliugeException):
     """
@@ -86,11 +100,15 @@ class SessionAlreadyExistsException(DaliugeException):
     but is meant to be used as the ID of a new session.
     """
 
-    def __init__(self, session_id):
+    def __init__(self, session_id, reason=None):
         self._session_id = session_id
+        self._reason = reason
 
-    def __repr__(self):
-        return "SessionAlreadyExistsException <session_id: %s>" % (self._session_id)
+    def __str__(self):
+        ret = "SessionAlreadyExistsException <session_id: %s>" % (self._session_id)
+        if self._reason:
+            ret += ". Reason: %s" % (self._reason)
+        return ret
 
 class InvalidSessionState(DaliugeException):
     """

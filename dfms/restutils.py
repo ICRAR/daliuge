@@ -30,12 +30,10 @@ import six.moves.http_client as httplib  # @UnresolvedImport
 import six.moves.socketserver as SocketServer  # @UnresolvedImport
 import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
+from dfms import exceptions
 from dfms import utils
 from dfms.exceptions import DaliugeException
 
-
-# HTTP headers used by daliuge
-DALIUGE_HDR_ERR = 'X-Daliuge-Error'
 
 logger = logging.getLogger(__name__)
 
@@ -207,10 +205,21 @@ class RestClient(object):
 
         # Server errors are encoded in the body as json content
         if self._resp.status != httplib.OK:
-            err = self._resp.getheader(DALIUGE_HDR_ERR) or self._resp.reason or self._resp.msg
-            msg = 'Unexpected error while processing %s request for %s:%s%s (status %d): %s' % \
-                  (method, self.host, self.port, url, self._resp.status, err)
-            raise RestClientException(msg)
+
+            msg = 'Error on remote %s@%s:%s%s (status %d): ' % \
+                  (method, self.host, self.port, url, self._resp.status)
+
+            try:
+                error = json.loads(self._resp.read().decode('utf-8'))
+                etype = getattr(exceptions, error['type'])
+                eargs = error['args']
+                ex = etype(*eargs)
+                if hasattr(ex, 'msg'):
+                    ex.msg = msg + ex.msg
+            except Exception:
+                ex = RestClientException(msg + "Unknown")
+
+            raise ex
 
         if not self._resp.length:
             return None
