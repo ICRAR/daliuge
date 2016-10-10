@@ -37,8 +37,7 @@ from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
     InvalidDropException, InvalidRelationshipException
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
-from dfms.restutils import RestServer, RestClient, DALIUGE_HDR_ERR, \
-    RestClientException
+from dfms.restutils import RestServer, RestClient, RestClientException
 
 
 logger = logging.getLogger(__name__)
@@ -54,37 +53,33 @@ def daliuge_aware(func):
                 return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
+
+            status, eargs = 500, ()
             if isinstance(e, NotImplementedError):
-                bottle.response.status = 501
+                status, eargs = 501, e.args
             elif isinstance(e, NoSessionException):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(404, 'No such session')
+                status, eargs = 404, (e._session_id,)
             elif isinstance(e, SessionAlreadyExistsException):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(409, 'Session already exists')
+                status, eargs = 409, (e._session_id,)
             elif isinstance(e, InvalidDropException):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(409, 'Invalid drop spec found in graph')
+                status, eargs = 409, ((e.oid, e.uid), e.reason)
             elif isinstance(e, InvalidRelationshipException):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(409, 'Invalid relationship between drops fround')
+                status, eargs = 409, (e.rel, e.reason)
             elif isinstance(e, InvalidGraphException):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(400, 'Invalid graph given')
+                status, eargs = 400, e.args
             elif isinstance(e, InvalidSessionState):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(400, 'Session not in expected state')
+                status, eargs = 400, e.args
             elif isinstance(e, RestClientException):
-                e = str(e)
-                bottle.response.set_header(DALIUGE_HDR_ERR, e)
-                bottle.abort(556, 'Internal Drop Manager error: %s' % (e,))
+                status, eargs = 556, e.args
             elif isinstance(e, DaliugeException):
-                bottle.response.set_header(DALIUGE_HDR_ERR, str(e))
-                bottle.abort(555, 'Daliuge error')
+                status, eargs = 555, e.args
             else:
-                import traceback
-                traceback.print_exc()
                 raise
+
+            error = {'type': e.__class__.__name__, 'args': eargs}
+            bottle.response.status = status
+            return json.dumps(error)
+
     return fwrapper
 
 class ManagerRestServer(RestServer):
