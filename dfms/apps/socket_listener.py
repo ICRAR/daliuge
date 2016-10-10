@@ -108,8 +108,8 @@ class SocketListenerApp(BarrierAppDROP):
 
     # Avoid inputs
     def addInput(self, inputDrop, back=True):
-        raise InvalidRelationshipException(DROPRel(inputDrop, DROPLinkType.INPUT, self),
+        raise InvalidRelationshipException(DROPRel(inputDrop.uid, DROPLinkType.INPUT, self.uid),
                                            "SocketListenerApp should have no inputs")
     def addStreamingInput(self, streamingInputDrop, back=True):
-        raise InvalidRelationshipException(DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
+        raise InvalidRelationshipException(DROPRel(streamingInputDrop.uid, DROPLinkType.STREAMING_INPUT, self.uid),
                                            "SocketListenerApp should have no inputs")
