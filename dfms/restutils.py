@@ -72,10 +72,8 @@ class RestServer(object):
         self.app = bottle.Bottle()
 
     def start(self, host, port):
-        if host is None:
-            host = 'localhost'
-        if port is None:
-            port = 8080
+        host = host or 'localhost'
+        port = port or 8080
 
         # It seems it's not trivial to stop a running bottle server, so we use
         # tornado's IOLoop directly instead
@@ -90,13 +88,11 @@ class RestServer(object):
             self._server.server_close()
             self.app.close()
             self._server = None
-            
 
 class RestClientException(DaliugeException):
     """
     Exception thrown by the RestClient
     """
-    pass
 
 def hexdigits(n):
     digits = 0
