@@ -156,6 +156,11 @@ class TestUtils(unittest.TestCase):
                 for x in range(10):
                     self.assertEqual(0, len(uncompressed_stream.read(100)))
 
+    def test_json_stream_simple_sequence(self):
+        for s in ([0], [{}], ['a'], [{'oid':'A', 'type': 'plain'}]):
+            stream = utils.JSONStream(s)
+            self.assertEqual(s, json.loads(stream.read(100).decode('utf8')));
+
     def test_json_stream_sequences(self):
 
         ref = [1,2,3]
