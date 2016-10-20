@@ -1,8 +1,0 @@
-{ "class": "go.GraphLinksModel",
-  "linkFromPortIdProperty": "fromPort",
-  "linkToPortIdProperty": "toPort",
-  "nodeDataArray": [ 
-{"category":"Comment", "text":"Lofar Calibration. Coming soon", "key":-17, "loc":"-1063.328125 -714"},
-{"category":"Start", "text":"Start", "key":-1, "loc":"-771.328125 -713"}
- ],
-  "linkDataArray": []}
