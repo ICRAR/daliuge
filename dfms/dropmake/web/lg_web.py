@@ -319,7 +319,7 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-d", "--lgdir", action="store", type="string", dest="lg_path",
                           help="logical graph path (input)")
-    parser.add_option("-d", "--pgtdir", action="store", type="string", dest="pgt_path",
+    parser.add_option("-t", "--pgtdir", action="store", type="string", dest="pgt_path",
                           help="physical graph template path (output)")
     parser.add_option("-p", "--port", action="store", type="int", dest="lg_port", default=8084,
                       help="logical graph editor port (8084 by default)")
