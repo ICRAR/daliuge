@@ -31,6 +31,9 @@ Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
 
 not_chen = psutil.Process().username() not in ('chen', 'cwu')
 
+def get_lg_fname(lg_name):
+    return pkg_resources.resource_filename(__name__, 'logical_graphs/{0}'.format(lg_name))  # @UndefinedVariable
+
 class TestScheduler(unittest.TestCase):
 
     def test_incremental_antichain(self):
@@ -52,19 +55,19 @@ class TestScheduler(unittest.TestCase):
         assert l == r, "l = {0}, r = {1}".format(l, r)
 
     def test_basic_scheduler(self):
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
+        fp = get_lg_fname('lofar_std.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         mys = Scheduler(drop_list)
         #print mys._dag.edges(data=True)
 
     def test_minnumparts_scheduler(self):
-        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['cont_img.json', 'lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_deadline = [500, 200, 300, 90, 80, 160] #250
         mdp = 8
         ofa = 0.5
         for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             #logger.info("MinNumPartsScheduler Partitioning ", lgn)
@@ -76,13 +79,13 @@ class TestScheduler(unittest.TestCase):
             #logger.info("-" * lll)
 
     def test_mysarkar_scheduler(self):
-        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['cont_img.json', 'lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         #lgnames = [lgnames[1]]
         tgt_partnum = [20, 15, 15, 10, 10, 5]
         mdp = 8
         s_matrix = True
         for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             #logger.info( "MySarkarScheduler Partitioning ", lgn)
@@ -116,7 +119,7 @@ class TestScheduler(unittest.TestCase):
         #tgt_deadline = [150]
         mdp = 2
         for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             psps01 = PSOScheduler(drop_list, max_dop=mdp)
@@ -132,7 +135,7 @@ class TestScheduler(unittest.TestCase):
         tgt_deadline = [450]
         mdp = 4
         for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pssa01 = SAScheduler(drop_list, max_dop=mdp)
@@ -149,7 +152,7 @@ class TestScheduler(unittest.TestCase):
         tgt_deadline = [450]
         mdp = 4
         for j, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pssa01 = MCTSScheduler(drop_list, max_dop=mdp, max_calc_time=0.25)

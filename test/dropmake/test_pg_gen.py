@@ -27,11 +27,13 @@ from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, MinNumP
 python -m unittest test.dropmake.test_pg_gen
 """
 
+def get_lg_fname(lg_name):
+    return pkg_resources.resource_filename(__name__, 'logical_graphs/{0}'.format(lg_name))  # @UndefinedVariable
 
 class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
+        fp = get_lg_fname('lofar_std.json')
         #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
         self.assertEqual(len(lg._done_dict.keys()), 36)
@@ -43,7 +45,7 @@ class TestPGGen(unittest.TestCase):
         #lg.to_pg_tpl(input_dict)
 
     def test_pg_test(self):
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/test_grpby_gather.json')
+        fp = get_lg_fname('test_grpby_gather.json')
         lg = LG(fp)
         lg.unroll_to_tpl()
         #input_dict = defaultdict(list)
@@ -51,28 +53,28 @@ class TestPGGen(unittest.TestCase):
         #pprint.pprint(dict(lg._drop_dict))
 
     def test_pgt_to_json(self):
-        fp = pkg_resources.resource_filename('dfms.dropmake', 'web/lofar_std.json')
+        fp = get_lg_fname('lofar_std.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
         #print pgt.to_gojs_json()
 
     def test_metis_pgtp(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list)
             pgtp.json
 
     def test_metis_pgtp_gen_pg(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, 3)
@@ -82,21 +84,21 @@ class TestPGGen(unittest.TestCase):
             #     f.write(pg_spec)
 
     def test_mysarkar_pgtp(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list)
             pgtp.json
 
     def test_mysarkar_pgtp_gen_pg(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list, 3, merge_parts=True)
@@ -114,29 +116,12 @@ class TestPGGen(unittest.TestCase):
             #     print ret
 
     def test_minnumparts_pgtp(self):
-        lgnames = ['lofar_std.json', 'chiles_two.json', 'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json']
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         #tgt_partnum = [15, 15, 10, 10, 5]
         tgt_deadline = [200, 300, 90, 80, 160]
         for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
+            fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MinNumPartsPGTP(drop_list, tgt_deadline[i])
             pgtp.json
-        #print pgtp.to_gojs_json()
-
-    def test_large_graph_pgtp_gen_pg(self):
-        lgnames = ['lofar_std_large.json']
-        num_nodes = 500
-        tgt_partnum = [num_nodes]
-        node_list = []
-        for j in range(num_nodes):
-            ipa = '10.128.0.{0}'.format(j)
-            node_list.append(ipa)
-        for i, lgn in enumerate(lgnames):
-            fp = pkg_resources.resource_filename('dfms.dropmake', 'web/{0}'.format(lgn))
-            lg = LG(fp)
-            drop_list = lg.unroll_to_tpl()
-            pgtp = MetisPGTP(drop_list, num_nodes)
-            pgtp.json
-            pg_spec = pgtp.to_pg_spec(node_list)
