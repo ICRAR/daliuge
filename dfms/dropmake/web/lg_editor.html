@@ -241,7 +241,7 @@
         //document.getElementById("DisplayInfo").innerHTML = "Clicked " + node.innerHTML;
         //alert(node.innerHTML);
         var id = node.getAttribute("id");
-        if (id != null) {
+        if (id != null && id != 'lg_tree') {
             if (id.indexOf("Folder") > -1) {
               if (node.innerHTML == "-") {
               node.innerHTML = "+";
@@ -1874,52 +1874,8 @@
 
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:16%">
       <div class="panel"><br/>Logical Graphs <br/><br/></div>
-      <div id="myTree" style="border: solid 1px gray; height: 450px">
-      <ul onmouseover="resolveSrcMouseover(event);" onmouseout="resolveSrcMouseout(event);" onclick="takeAction(event);">
-        <li><div id="Folder1" class="ExpandCollapse">-</div><div class="Folder">SDP Pipelines</div></li>
-        <ul id="ExpandCollapseFolder1">
-          <li><div id="ingest.json">Ingest</div></li>
-          <li><div id="cont_img.json">Continuum Imaging</div></li>
-          <li><div id="fast_cont_img.json">Fast Continuum Imaging (RD)</div></li>
-          <li><div id="spec_img.json">Spectral Line Imaging</div></li>
-          <li><div id="facet_img.json">Facet Imaging</div></li>
-        </ul>
-        <li><div id="Folder2" class="ExpandCollapse">-</div><div class="Folder">LOFAR Pipelines</div></li>
-        <ul id="ExpandCollapseFolder2">
-          <li><div id="lofar_std.json">Standard</div></li>
-          <li><div id="lofar_cal.json">Calibration</div></li>
-        </ul>
-        <li><div id="Folder2" class="ExpandCollapse">-</div><div class="Folder">ATCA Pipelines</div></li>
-        <ul id="ExpandCollapseFolder2">
-          <li><div id="atca_attila.json">Attila</div></li>
-          <li><div id="atca_minh.json">Minh</div></li>
-        </ul>
-        <li><div id="Folder3" class="ExpandCollapse">-</div><div class="Folder">CHILES Pipelines</div></li>
-        <ul id="ExpandCollapseFolder3">
-          <li><div id="chiles_simple.json">Simple</div></li>
-          <li><div id="chiles_two.json">CHILES Phase 2</div></li>
-          <li><div id="chiles_two_dev1.json">CHILES Phase 2 Dev1</div></li>
-          <li><div id="chiles_two_dev2.json">CHILES Phase 2 Dev2</div></li>
-          <li><div id="chiles_imaging.json">ICRAR Imaging</div></li>
-        </ul>
-        <li><div id="Folder5" class="ExpandCollapse">-</div><div class="Folder">ASKAP Pipelines</div></li>
-        <ul id="ExpandCollapseFolder5">
-          <li><div id="askap_dingo.json">DINGO</div></li>
-          <li><div id="askap_dingo_expanded.json">DINGO Expanded</div></li>
-        </ul>
-        <li><div id="Folder6" class="ExpandCollapse">-</div><div class="Folder">MWA Pipelines</div></li>
-        <ul id="ExpandCollapseFolder6">
-          <li><div id="mwa_gleam_simple.json">GLEAM Simple</div></li>
-          <li><div id="mwa_gleam.json">GLEAM</div></li>
-        </ul>
-        <li><div id="Folder4" class="ExpandCollapse">-</div><div class="Folder">Tests</div></li>
-        <ul id="ExpandCollapseFolder4">
-          <li><div id="test_grpby_gather.json">Group By and Gather</div></li>
-          <li><div id="test_mk_grpby.json">Multi-key Group Bys</div></li>
-          <li><div id="test_grpby_in_scatter.json">GroupBy in Scatter</div></li>
-          <li><div id="test_seq_gather.json">Mini-batch Gather</div></li>
-        </ul>
-      </ul>
+      <div id="myTree" style="border: solid 1px gray; height: 450px; overflow: auto">
+      <ul id="lg_tree" onmouseover="resolveSrcMouseover(event);" onmouseout="resolveSrcMouseout(event);" onclick="takeAction(event);"></ul>
       </div>
       <div id="myInspector" class = "inspector-container">
       </div>
@@ -1964,4 +1920,25 @@
   <!-- <div id="SVGArea"></div> -->
 </div>
 </body>
+
+<script type="text/javascript">
+var all_lgs = {{!all_lgs}};
+var folders = Object.keys(all_lgs);
+folders.sort();
+
+var lg_tree_div = $('#lg_tree');
+for(var folder_idx in folders) {
+	var folder = folders[folder_idx];
+	content = '<li><div id="Folder' + folder_idx + '" class="ExpandCollapse">-</div><div class="Folder">' + folder + '</div></li>';
+	content += '<li><ul id="ExpandCollapseFolder' + folder_idx + '">';
+	for(var lg_idx in all_lgs[folder]) {
+		var lg = all_lgs[folder][lg_idx];
+		content += '<li><div id="' + folder + '/' + lg + '">' + lg + '</div></li>';
+	}
+	content += '</ul></li>';
+	lg_tree_div.append(content);
+}
+
+</script>
+
 </html>
