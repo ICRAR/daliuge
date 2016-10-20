@@ -29,13 +29,21 @@ import traceback
 
 from bottle import route, run, request, get, static_file, template, redirect, response, HTTPResponse
 
-from dfms import droputils
+from dfms import droputils, restutils
 from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 from dfms.dropmake.pg_manager import PGManager
 from dfms.dropmake.scheduler import SchedulerException
 from dfms.manager.client import CompositeManagerClient
 from dfms.restutils import RestClientException
+import pkg_resources
 
+
+py   = sys.version_info
+py3k = py >= (3, 0, 0)
+if( py3k ):
+    b2s = lambda b: b.decode('utf-8')
+else:
+    b2s = lambda s: s
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -52,7 +60,8 @@ def lg_exists(lg_name):
 
 @route('/static/<filepath:path>')
 def server_static(filepath):
-    return static_file(filepath, root='./')
+    staticRoot = pkg_resources.resource_filename(__name__, resource_name=".")  # @UndefinedVariable
+    return static_file(filepath, root=staticRoot)
 
 @route('/jsonbody', method='POST')
 def jsonbody_post():
@@ -109,7 +118,8 @@ def load_lg_editor():
         redirect('/lg_editor?lg_name={0}'.format(DEFAULT_LG_NAME))
 
     if (lg_exists(lg_name)):
-        return template('lg_editor.html', lg_json_name=lg_name)
+        tpl = b2s(pkg_resources.resource_string(__name__, 'lg_editor.html')) # @UndefinedVariable
+        return template(tpl, lg_json_name=lg_name)
     else:
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
@@ -306,4 +316,5 @@ if __name__ == "__main__":
     lg_dir = options.lg_path
     pg_mgr = PGManager(lg_dir)
     # Let's use tornado, since luigi already depends on it
-    run(host="0.0.0.0", server='paste', port=options.lg_port, debug=False)
+    run(host="0.0.0.0", server='wsgiref', port=options.lg_port, debug=False,
+        server_class=restutils.ThreadingWSGIServer, handler_class=restutils.LoggingWSGIRequestHandler)
