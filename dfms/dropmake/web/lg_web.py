@@ -56,8 +56,11 @@ DEFAULT_PGT_VIEW_NAME = "lofar_pgt-view.json"
 MAX_PGT_FN_CNT= 300
 pgt_fn_count = 0
 
+def lg_path(lg_name):
+    return "{0}/{1}".format(lg_dir, lg_name)
+
 def lg_exists(lg_name):
-    return os.path.exists("{0}/{1}".format(lg_dir, lg_name))
+    return os.path.exists(lg_path(lg_name))
 
 def lg_repo_contents():
     # We currently allow only one depth level
@@ -106,8 +109,8 @@ def jsonbody_get():
         redirect('/jsonbody?lg_name={0}'.format(DEFAULT_LG_NAME))
     if (lg_exists(lg_name)):
         #print "Loading {0}".format(lg_name)
-        lg_path = "{0}/{1}".format(lg_dir, lg_name)
-        with open(lg_path, "r") as f:
+        lgp = lg_path(lg_name)
+        with open(lgp, "r") as f:
             data = f.read()
         return data
     else:
@@ -145,7 +148,8 @@ def load_pg_viewer():
         redirect('/pg_viewer?pgt_view_name={0}'.format(DEFAULT_PGT_VIEW_NAME))
 
     if (lg_exists(pgt_name)):
-        return template('pg_viewer.html', pgt_view_json_name=pgt_name)
+        tpl = b2s(pkg_resources.resource_string(__name__, 'pg_viewer.html')) # @UndefinedVariable
+        return template(tpl, pgt_view_json_name=pgt_name)
     else:
         response.status = 404
         return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
@@ -156,7 +160,8 @@ def show_gantt_chart():
     Restful interface to show the gantt chart
     """
     pgt_id = request.query.get('pgt_id')
-    return template('matrix_vis.html', pgt_view_json_name=pgt_id, vis_action="pgt_gantt_chart")
+    tpl = b2s(pkg_resources.resource_string(__name__, 'matrix_vis.html')) # @UndefinedVariable
+    return template(tpl, pgt_view_json_name=pgt_id, vis_action="pgt_gantt_chart")
 
 @get('/pgt_gantt_chart')
 def get_gantt_chart():
@@ -177,7 +182,8 @@ def show_schedule_mat():
     Restful interface to show the gantt chart
     """
     pgt_id = request.query.get('pgt_id')
-    return template('matrix_vis.html', pgt_view_json_name=pgt_id, vis_action="pgt_schedule_mat")
+    tpl = b2s(pkg_resources.resource_string(__name__, 'matrix_vis.html')) # @UndefinedVariable
+    return template(tpl, pgt_view_json_name=pgt_id, vis_action="pgt_schedule_mat")
 
 @get('/pgt_schedule_mat')
 def get_schedule_mat():
@@ -247,7 +253,7 @@ def gen_pgt():
     lg_name = request.query.get('lg_name')
     if (lg_exists(lg_name)):
         try:
-            lg = LG(lg_name)
+            lg = LG(lg_path(lg_name))
             drop_list = lg.unroll_to_tpl()
             part = request.query.get('num_par')
             if (part is None):
@@ -289,7 +295,8 @@ def gen_pgt():
 
             pgt_id = pg_mgr.add_pgt(pgt, lg_name)
             part_info = pgt.get_partition_info()
-            return template('pg_viewer.html', pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
+            tpl = b2s(pkg_resources.resource_string(__name__, 'pg_viewer.html')) # @UndefinedVariable
+            return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
         except GraphException as ge:
             response.status = 500
             return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
