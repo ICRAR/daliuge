@@ -62,6 +62,12 @@ def lg_path(lg_name):
 def lg_exists(lg_name):
     return os.path.exists(lg_path(lg_name))
 
+def pgt_path(pgt_name):
+    return "{0}/{1}".format(pgt_dir, pgt_name)
+
+def pgt_exists(pgt_name):
+    return os.path.exists(pgt_path(pgt_name))
+
 def lg_repo_contents():
     # We currently allow only one depth level
     b = os.path.basename
@@ -116,6 +122,23 @@ def jsonbody_get():
     else:
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, lg_name)
+
+@get('/pgt_jsonbody')
+def pgtjsonbody_get():
+    """
+    Return JSON representation of the logical graph
+    """
+    #print "get jsonbody is called"
+    pgt_name = request.query.get('pgt_name')
+    if (pgt_exists(pgt_name)):
+        #print "Loading {0}".format(lg_name)
+        pgt = pgt_path(pgt_name)
+        with open(pgt, "r") as f:
+            data = f.read()
+        return data
+    else:
+        response.status = 404
+        return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
 @get('/lg_editor')
 def load_lg_editor():
@@ -337,9 +360,9 @@ if __name__ == "__main__":
     except:
         pass
 
-    global lg_dir, pg_mgr
     lg_dir = options.lg_path
-    pg_mgr = PGManager(options.pgt_path)
+    pgt_dir = options.pgt_path
+    pg_mgr = PGManager(pgt_dir)
     # Let's use tornado, since luigi already depends on it
     run(host="0.0.0.0", server='wsgiref', port=options.lg_port, debug=False,
         server_class=restutils.ThreadingWSGIServer, handler_class=restutils.LoggingWSGIRequestHandler)

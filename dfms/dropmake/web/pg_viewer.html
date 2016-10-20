@@ -280,7 +280,7 @@
     //alert("Previous lg name = " + window.curr_lg_name);
     //alert("Requesting " + pgtName.toString());
     $.ajax({
-      url: "/jsonbody?lg_name={{pgt_view_json_name}}",
+      url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
       type: 'get',
       error: function(XMLHttpRequest, textStatus, errorThrown) {
           if (404 == XMLHttpRequest.status) {
