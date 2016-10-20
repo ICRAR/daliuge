@@ -319,20 +319,27 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-d", "--lgdir", action="store", type="string", dest="lg_path",
                           help="logical graph path (input)")
+    parser.add_option("-d", "--pgtdir", action="store", type="string", dest="pgt_path",
+                          help="physical graph template path (output)")
     parser.add_option("-p", "--port", action="store", type="int", dest="lg_port", default=8084,
                       help="logical graph editor port (8084 by default)")
 
     (options, args) = parser.parse_args()
-    if (None == options.lg_path):
+    if options.lg_path is None or options.pgt_path is None:
         parser.print_help()
         sys.exit(1)
-    elif (not os.path.exists(options.lg_path)):
+    elif not os.path.exists(options.lg_path):
         print("{0} does not exist.".format(options.lg_path))
         sys.exit(1)
 
+    try:
+        os.makedirs(options.pgt_path)
+    except:
+        pass
+
     global lg_dir, pg_mgr
     lg_dir = options.lg_path
-    pg_mgr = PGManager(lg_dir)
+    pg_mgr = PGManager(options.pgt_path)
     # Let's use tornado, since luigi already depends on it
     run(host="0.0.0.0", server='wsgiref', port=options.lg_port, debug=False,
         server_class=restutils.ThreadingWSGIServer, handler_class=restutils.LoggingWSGIRequestHandler)
