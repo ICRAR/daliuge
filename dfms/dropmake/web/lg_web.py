@@ -36,6 +36,7 @@ from dfms.dropmake.scheduler import SchedulerException
 from dfms.manager.client import CompositeManagerClient
 from dfms.restutils import RestClientException
 import pkg_resources
+import json
 
 
 py   = sys.version_info
@@ -57,6 +58,12 @@ pgt_fn_count = 0
 
 def lg_exists(lg_name):
     return os.path.exists("{0}/{1}".format(lg_dir, lg_name))
+
+def lg_repo_contents():
+    # We currently allow only one depth level
+    b = os.path.basename
+    lgs = {b(dirpath):fnames for dirpath,_,fnames in os.walk(lg_dir) if dirpath != lg_dir}
+    return lgs
 
 @route('/static/<filepath:path>')
 def server_static(filepath):
@@ -115,11 +122,15 @@ def load_lg_editor():
     lg_name = request.query.get('lg_name')
     if (lg_name is None or len(lg_name) == 0):
         #lg_name = DEFAULT_LG_NAME
-        redirect('/lg_editor?lg_name={0}'.format(DEFAULT_LG_NAME))
+        all_lgs = lg_repo_contents()
+        first_dir = next(iter(all_lgs))
+        first_lg = first_dir + '/' + all_lgs[first_dir][0]
+        redirect('/lg_editor?lg_name={0}'.format(first_lg))
 
     if (lg_exists(lg_name)):
         tpl = b2s(pkg_resources.resource_string(__name__, 'lg_editor.html')) # @UndefinedVariable
-        return template(tpl, lg_json_name=lg_name)
+        all_lgs = lg_repo_contents();
+        return template(tpl, lg_json_name=lg_name, all_lgs=json.dumps(all_lgs))
     else:
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
