@@ -1,4 +1,3 @@
-
 #    ICRAR - International Centre for Radio Astronomy Research
 #    (c) UWA - The University of Western Australia, 2015
 #    Copyright by UWA (in the framework of the ICRAR)
@@ -23,6 +22,7 @@
 Refer to
 https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Graph+Manager
 """
+import os
 import threading, json
 
 import networkx as nx
@@ -96,6 +96,14 @@ class PGManager(object):
         pgt_path = "{0}/{1}".format(self._root_dir, pgt_id)
         pgt_content = pgt.json
         try:
+            # if the pgt name has a group with / then let's create a subdirectory
+            # for it
+            if '/' in lg_name:
+                lg_dir = os.path.dirname(lg_name)
+                try:
+                    os.makedirs(os.path.join(self._root_dir, lg_dir))
+                except OSError:
+                    pass
             # overwrite file on disks
             with open(pgt_path, "w") as f:
                 f.write(pgt_content)
