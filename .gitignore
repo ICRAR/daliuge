@@ -1,8 +1,8 @@
 # Stuff left by python modules compilation/installation
-**/*.pyc
-**/build
-**/dist
-**/*.egg-info
+*.pyc
+build
+dist
+*.egg-info
 .project
 .pydevproject
 .coverage
