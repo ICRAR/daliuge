@@ -38,6 +38,7 @@ import sys
 import time
 
 from dfms import __git_version__ as git_commit
+from dfms.deploy.pawsey.example_client import fname_to_lgname
 
 
 sub_tpl_str = """#!/bin/bash --login
@@ -155,7 +156,7 @@ class PawseyClient(object):
         self._run_proxy = False
         self._mon_host = mon_host
         self._mon_port = mon_port
-        self._pip_name = None
+        self._pip_name = fname_to_lgname(lg or pg)
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
@@ -179,10 +180,7 @@ class PawseyClient(object):
         (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
         """
         dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S") #.%f
-        if (self._pip_name is None):
-            return "N{0}_{1}".format(self.num_daliuge_nodes, dtstr)
-        else:
-            return "{0}_N{1}_{2}".format(self._pip_name, self.num_daliuge_nodes, dtstr)
+        return "{0}_N{1}_{2}".format(self._pip_name, self.num_daliuge_nodes, dtstr)
 
     def label_job_dur(self):
         """
@@ -205,7 +203,7 @@ class PawseyClient(object):
         pardict['ACCOUNT'] = self._acc
         pardict['PY_BIN'] = sys.executable
         pardict['LOG_DIR'] = lgdir
-        pardict['GRAPH_PAR'] = '-L {0}'.format(self._lg) if self._lg else '-P {0}'.format(self._pg) if self._pg else ''
+        pardict['GRAPH_PAR'] = '-L "{0}"'.format(self._lg) if self._lg else '-P "{0}"'.format(self._pg) if self._pg else ''
         pardict['PROXY_PAR'] = '-m %s -o %d' % (self._mon_host, self._mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
         pardict['LOGV_PAR'] = '-v %d' % self._logv
