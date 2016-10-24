@@ -46,7 +46,7 @@ from dfms import utils
 from dfms.deploy.pawsey import dfms_proxy
 from dfms.deploy.pawsey.example_client import MonitorClient
 from dfms.manager import cmdline as dfms_start
-from dfms.manager.client import DataIslandManagerClient, NodeManagerClient
+from dfms.manager.client import NodeManagerClient
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 
@@ -146,27 +146,24 @@ def start_mm(node_list, log_dir, logv=1):
     dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
     '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '2048'])
 
-def submit_monitor_graph(dim_ip, graph_id, dump_status, zerorun, app, mc=None, unrolled=None):
+def submit_monitor_graph(dim_ip, lg_path, pg_path, dump_status, zerorun, app, mc, unrolled):
     """
     Submits a graph and then monitors the island manager
     """
     logger.debug("dump_status = {0}".format(dump_status))
     logger.info("Wait for {0} seconds before submitting graph to DIM".format(GRAPH_SUBMIT_WAIT_TIME))
     time.sleep(GRAPH_SUBMIT_WAIT_TIME)
+
     # use monitorclient to interact with island manager
-    if (graph_id is not None):
-        if (mc is None):
-            mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis', zerorun=zerorun, app=app)
-        dc = mc._dc
-        mc._nodes = [dim_ip] + dc.nodes()
-        logger.info("Submitting graph {0}".format(graph_id))
-        lgn, lg, pg_spec = mc.get_physical_graph(graph_id, unrolled=unrolled)
-        if (unrolled is not None):
-            del unrolled
-        mc.submit_single_graph(graph_id, deploy=True, pg=(lgn, lg, pg_spec))
-        logger.info("graph {0} is successfully submitted".format(graph_id))
-    else:
-        dc = DataIslandManagerClient('localhost')
+    dc = mc._dc
+    mc._nodes = [dim_ip] + dc.nodes()
+    lgn, lg, pg_spec = mc.get_physical_graph(lg_path, pg_path, unrolled=unrolled)
+    logger.info("Submitting graph {0}".format(lgn))
+    del unrolled
+
+    mc.submit_single_graph(lg_path, pg_path, deploy=True, pg=(lgn, lg, pg_spec))
+    logger.info("graph {0} is successfully submitted".format(lgn))
+
     if (dump_status is not None):
         fp = os.path.dirname(dump_status)
         if (not os.path.exists(fp)):
@@ -256,8 +253,10 @@ def main():
     parser.add_option("-t", "--max-threads", action="store", type="int",
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 
-    parser.add_option('-g', '--gid', action='store', type='string',
-                    dest='gid', help = 'Physical graph id or template PGT file name')
+    parser.add_option("-L", "--logical-graph", action="store", type="string",
+                      dest="logical_graph", help="The filename of the logical graph to deploy", default=None)
+    parser.add_option("-P", "--physical-graph", action="store", type="string",
+                      dest="physical_graph", help="The filename of the physical graph (template) to deploy", default=None)
 
     parser.add_option('-s', '--num_islands', action='store', type='int',
                     dest='num_islands', default=1, help='The number of Data Islands')
@@ -284,9 +283,13 @@ def main():
         print("From ifconfig: %s" % get_ip())
         sys.exit(0)
 
-    if (None == options.log_dir):
-        parser.print_help()
-        sys.exit(1)
+    if not options.logical_graph and not options.physical_graph:
+        parser.error("Missing logical graph or physical graph template filename")
+    if options.logical_graph and options.physical_graph:
+        parser.error("Either a logical graph or physical graph filename must be specified")
+    for p in (options.logical_graph, options.physical_graph):
+        if p and not os.path.exists(p):
+            parser.error("Cannot locate graph file at '{0}'".format(p))
 
     if (options.monitor_host is not None and options.num_islands > 1):
         parser.error("We do not support proxy monitor multiple islands yet")
@@ -356,7 +359,7 @@ def main():
             # unroll the graph first while starting node managers on other nodes
             mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis',
                                 zerorun=options.zerorun, app=options.app)
-            unrolled = mc.unroll_physical_graph(options.gid)
+            unrolled = mc.unroll_physical_graph(options.logical_graph, options.physical_graph)
 
             # These are not NMs
             no_nms = [origin_ip, 'None']
@@ -370,16 +373,13 @@ def main():
                                     check_with_session=options.check_with_session,
                                     timeout=MM_WAIT_TIME)
 
-            if ((options.gid is not None) or options.dump):
-                logger.info("Preparing submitting graph (and monitor it)")
-                if (options.dump):
-                    arg02 = '{0}/monitor'.format(log_dir)
-                    logger.info("Local monitor path: {0}".format(arg02))
-                else:
-                    arg02 = None
-                    logger.info("Local monitor path is not set")
-                threading.Thread(target=submit_monitor_graph,
-                                args=(origin_ip, options.gid, arg02, options.zerorun, options.app, mc, unrolled)).start()
+            if options.dump:
+                arg02 = '{0}/monitor'.format(log_dir)
+                logger.info("Local monitor path: {0}".format(arg02))
+            else:
+                arg02 = None
+            threading.Thread(target=submit_monitor_graph,
+                            args=(origin_ip, options.logical_graph, options.physical_graph, arg02, options.zerorun, options.app, mc, unrolled)).start()
             start_dim(node_mgrs, log_dir, logv=logv)
     elif (options.num_islands > 1):
         if (rank == 0):
@@ -410,7 +410,7 @@ def main():
             # 3 unroll the graph while waiting for node managers to start
             mc_unroll = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT,
                 algo='metis', zerorun=options.zerorun, app=options.app)
-            unrolled = mc_unroll.unroll_physical_graph(options.gid)
+            unrolled = mc_unroll.unroll_physical_graph(options.logical_graph, options.physical_graph)
             #logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
             node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT,
                                     check_with_session=options.check_with_session,
@@ -423,7 +423,7 @@ def main():
             mc = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT,
                 algo='metis', zerorun=options.zerorun, app=options.app,
                 nodes=(dim_ip_list + node_mgrs), num_islands=options.num_islands)
-            lgn, lg, pg_spec = mc.get_physical_graph(options.gid, unrolled=unrolled)
+            lgn, lg, pg_spec = mc.get_physical_graph(options.logical_graph, options.physical_graph, unrolled=unrolled)
             del unrolled
 
             # 5. parse the pg_spec to get the mapping from islands to node list
