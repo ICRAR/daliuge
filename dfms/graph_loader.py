@@ -305,7 +305,7 @@ def _createApp(dropSpec, dryRun=False):
         module  = importlib.import_module('.'.join(parts[:-1]))
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError):
-        raise InvalidGraphException("drop %s specifies non-existent application: %s" % (appName,))
+        raise InvalidGraphException("drop %s specifies non-existent application: %s" % (oid, appName,))
 
     if dryRun:
         return
