@@ -64,6 +64,9 @@ class TestRest(unittest.TestCase):
         # invalid dropspec, it has no oid/type (is completely empty actually)
         self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{}])
 
+        # invalid dropspec, app doesn't exist
+        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{'oid': 'a', 'type': 'app', 'app': 'doesnt.exist'}])
+
         # invalid state, the graph status is only queried when the session is running
         self.assertRaises(exceptions.InvalidSessionState, c.getGraphStatus, sid)
 
