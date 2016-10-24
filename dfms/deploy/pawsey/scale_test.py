@@ -38,7 +38,6 @@ import sys
 import time
 
 from dfms import __git_version__ as git_commit
-from dfms.deploy.pawsey.example_client import lgnames
 
 
 sub_tpl_str = """#!/bin/bash --login
@@ -54,7 +53,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 
-aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GID_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
+aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dfms.deploy.pawsey.start_dfms_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
 """
 
 sub_tpl = string.Template(sub_tpl_str)
@@ -120,7 +119,7 @@ class PawseyClient(object):
     parameters we can control:
 
     1. Pawsey group / account name (Required)
-    2. whether to submit a graph, and if so provide graph id (gid)
+    2. whether to submit a graph, and if so provide graph path
     3. # of nodes (of Drop Managers)
     4. how long to run
     5. whether to produce offline graph vis
@@ -131,25 +130,27 @@ class PawseyClient(object):
     """
 
     def __init__(self, log_root=None, acc=None,
-                job_dur=30,
-                num_nodes=5,
-                run_proxy=False,
-                mon_host=default_aws_mon_host,
-                mon_port=default_aws_mon_port,
-                logv=1,
-                facility=socket.gethostname().split('-')[0],
-                zerorun=False,
-                max_threads=0,
-                sleepncopy=False,
-                num_islands=1,
-                all_nics=False,
-                check_with_session=False):
+                 pg=None, lg=None,
+                 job_dur=30,
+                 num_nodes=5,
+                 run_proxy=False,
+                 mon_host=default_aws_mon_host,
+                 mon_port=default_aws_mon_port,
+                 logv=1,
+                 facility=socket.gethostname().split('-')[0],
+                 zerorun=False,
+                 max_threads=0,
+                 sleepncopy=False,
+                 num_islands=1,
+                 all_nics=False,
+                 check_with_session=False):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar('acc') if (acc is None) else acc
         self._log_root = self._config.getpar('log_root') if (log_root is None) else log_root
         self._num_nodes = num_nodes
         self._job_dur = job_dur
-        self._gid = None
+        self._lg = lg
+        self._pg = pg
         self._graph_vis = False
         self._run_proxy = False
         self._mon_host = mon_host
@@ -162,21 +163,6 @@ class PawseyClient(object):
         self._num_islands = num_islands
         self._all_nics = all_nics
         self._check_with_session = check_with_session
-
-    def set_gid(self, gid):
-        if (gid is None):
-            return
-        if (str(gid).isdigit()):
-            gid = int(gid)
-            if (gid >= len(lgnames)):
-                raise Exception("Invalid graph id '{0}'".format(gid))
-            self._pip_name = lgnames[gid].split('.')[0]
-        else:
-            if (not os.path.exists(gid)):
-                raise Exception("Cannot locate PGT/Template {0}".format(gid))
-            self._pip_name = os.path.basename(gid).split(".")[0] + "_instance"
-        self._gid = gid
-
 
     @property
     def num_daliuge_nodes(self):
@@ -219,7 +205,7 @@ class PawseyClient(object):
         pardict['ACCOUNT'] = self._acc
         pardict['PY_BIN'] = sys.executable
         pardict['LOG_DIR'] = lgdir
-        pardict['GID_PAR'] = '-g {0}'.format(self._gid) if (self._gid is not None) else ''
+        pardict['GRAPH_PAR'] = '-L {0}'.format(self._lg) if self._lg else '-P {0}'.format(self._pg) if self._pg else ''
         pardict['PROXY_PAR'] = '-m %s -o %d' % (self._mon_host, self._mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
         pardict['LOGV_PAR'] = '-v %d' % self._logv
@@ -545,11 +531,10 @@ if __name__ == '__main__':
                       dest="log_root", help="The root directory of the log file")
     parser.add_option("-d", "--log-dir", action="store",
                       dest="log_dir", help="The directory of the log file for parsing")
-    parser.add_option("-g", "--graph-id", action="store", type="string",
-                      dest="graph_id",
-                      help="The graph to deploy, either an integer (0 - %d), or \
-                      file name of a template or full PGT" % (len(lgnames) - 1),
-                      default=None)
+    parser.add_option("-L", "--logical-graph", action="store", type="string",
+                      dest="logical_graph", help="The filename of the logical graph to deploy", default=None)
+    parser.add_option("-P", "--physical-graph", action="store", type="string",
+                      dest="physical_graph", help="The filename of the physical graph (template) to deploy", default=None)
     parser.add_option("-t", "--job-dur", action="store", type="int",
                       dest="job_dur", help="job duration in minutes", default=30)
     parser.add_option("-n", "--num_nodes", action="store", type="int",
@@ -607,13 +592,21 @@ if __name__ == '__main__':
             lg = LogParser(opts.log_dir)
             lg.parse(out_csv=opts.csv_output)
     elif (opts.action == 1):
+
+        if not opts.logical_graph and not opts.physical_graph:
+            parser.error("Missing logical graph or physical graph template filename")
+        if opts.logical_graph and opts.physical_graph:
+            parser.error("Either a logical graph or physical graph filename must be specified")
+        for p in (opts.logical_graph, opts.physical_graph):
+            if p and not os.path.exists(p):
+                parser.error("Cannot locate graph file at '{0}'".format(p))
+
         pc = PawseyClient(job_dur=opts.job_dur, num_nodes=opts.num_nodes, logv=opts.verbose_level,
                           zerorun=opts.zerorun, max_threads=opts.max_threads,
                           run_proxy=opts.run_proxy, mon_host=opts.mon_host, mon_port=opts.mon_port,
                           num_islands=opts.num_islands, all_nics=opts.all_nics,
-                          check_with_session=opts.check_with_session)
-        if (opts.graph_id is not None):
-            pc.set_gid(opts.graph_id)
+                          check_with_session=opts.check_with_session,
+                          lg=opts.logical_graph, pg=opts.physical_graph)
         pc._graph_vis = opts.graph_vis
         pc.submit_job()
     else:
