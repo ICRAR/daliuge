@@ -125,7 +125,7 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     """
     host = host or '0.0.0.0'
     lv = 'v' * logv
-    dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
+    dfms_start.dlgNM(args=['dlgNM', '-l', log_dir,
     '-%s' % lv, '-H', host, '-m', '1024', '-t', str(max_threads), '--no-dlm'])
 
 def start_dim(node_list, log_dir, logv=1):
@@ -133,7 +133,7 @@ def start_dim(node_list, log_dir, logv=1):
     Start data island manager
     """
     lv = 'v' * logv
-    dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
+    dfms_start.dlgDIM(args=['dlgDIM', '-l', log_dir, '-%s' % lv,
     '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '2048'])
 
 def start_mm(node_list, log_dir, logv=1):
@@ -143,7 +143,7 @@ def start_mm(node_list, log_dir, logv=1):
     node_list:  a list of node address that host DIMs
     """
     lv = 'v' * logv
-    dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
+    dfms_start.dlgMM(args=['dlgMM', '-l', log_dir,
     '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '2048'])
 
 def submit_monitor_graph(dim_ip, lg_path, pg_path, dump_status, zerorun, app, mc, unrolled):
@@ -457,7 +457,7 @@ def main():
             pg = (lgn, lg, pg_spec)
             threading.Thread(target=submit_pg, args=(mc, pg)).start()
 
-            # 9. start dfmsMM using islands IP addresses (this will block)
+            # 9. start dlgMM using islands IP addresses (this will block)
             start_mm(dim_ip_list, log_dir, logv=logv)
         else:
             dim_ranks = None
@@ -466,7 +466,7 @@ def main():
             if (rank in dim_ranks):
                 logger.debug("Rank {0} is a DIM preparing for receiving".format(rank))
                 # island manager
-                # get a list of nodes that are its children from rank 0 (dfmsMM)
+                # get a list of nodes that are its children from rank 0 (MM)
                 nm_list = comm.recv(source=0)
                 # no need to wait for node managers since the master manager
                 # has already made sure they are up running
