@@ -156,14 +156,18 @@ def submit_monitor_graph(dim_ip, lg_path, pg_path, dump_status, zerorun, app, mc
 
     # use monitorclient to interact with island manager
     dc = mc._dc
-    mc._nodes = [dim_ip] + dc.nodes()
-    lgn, lg, pg_spec = mc.get_physical_graph(lg_path, pg_path, unrolled=unrolled)
-    logger.info("Submitting graph {0}".format(lgn))
-    del unrolled
 
-    mc.submit_single_graph(lg_path, pg_path, deploy=True, pg=(lgn, lg, pg_spec))
-    logger.info("graph {0} is successfully submitted".format(lgn))
+    # We are submitting a graph
+    if lg_path or pg_path:
+        mc._nodes = [dim_ip] + dc.nodes()
+        lgn, lg, pg_spec = mc.get_physical_graph(lg_path, pg_path, unrolled=unrolled)
+        logger.info("Submitting graph {0}".format(lgn))
+        del unrolled
 
+        mc.submit_single_graph(lg_path, pg_path, deploy=True, pg=(lgn, lg, pg_spec))
+        logger.info("graph {0} is successfully submitted".format(lgn))
+
+    # We want to monitor the status of the execution
     if (dump_status is not None):
         fp = os.path.dirname(dump_status)
         if (not os.path.exists(fp)):
@@ -283,8 +287,6 @@ def main():
         print("From ifconfig: %s" % get_ip())
         sys.exit(0)
 
-    if not options.logical_graph and not options.physical_graph:
-        parser.error("Missing logical graph or physical graph template filename")
     if options.logical_graph and options.physical_graph:
         parser.error("Either a logical graph or physical graph filename must be specified")
     for p in (options.logical_graph, options.physical_graph):

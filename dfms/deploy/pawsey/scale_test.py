@@ -156,7 +156,7 @@ class PawseyClient(object):
         self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
-        self._pip_name = fname_to_lgname(lg or pg)
+        self._pip_name = fname_to_lgname(lg or pg) if lg or pg else 'None'
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
@@ -591,8 +591,6 @@ if __name__ == '__main__':
             lg.parse(out_csv=opts.csv_output)
     elif (opts.action == 1):
 
-        if not opts.logical_graph and not opts.physical_graph:
-            parser.error("Missing logical graph or physical graph template filename")
         if opts.logical_graph and opts.physical_graph:
             parser.error("Either a logical graph or physical graph filename must be specified")
         for p in (opts.logical_graph, opts.physical_graph):
