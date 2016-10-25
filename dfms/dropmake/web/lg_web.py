@@ -263,8 +263,7 @@ def gen_pg():
     except HTTPResponse:
         raise
     except Exception as ex:
-        trace_msg = traceback.format_exc()
-        print(trace_msg)
+        traceback.print_exc()
         response.status = 500
         return "Fail to deploy physical graph: {0}".format(ex)
 
