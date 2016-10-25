@@ -232,7 +232,7 @@ def gen_pg():
     pgtp = pg_mgr.get_pgt(pgt_id)
     if (pgtp is None):
         response.status = 404
-        return "PGT(P) with id {0} not found in the Physical Graph Manager"
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(pgt_id)
 
     mhost = request.query.get('dfms_mgr_host')
     if (mhost is None):
