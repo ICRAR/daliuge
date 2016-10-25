@@ -176,11 +176,16 @@ setup(
       test_suite="test",
       entry_points= {
           'console_scripts':[
-              'dfmsNM=dfms.manager.cmdline:dfmsNM',
-              'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
-              'dfmsMM=dfms.manager.cmdline:dfmsMM',
-              'dfmsReplay=dfms.manager.cmdline:dfmsReplay',
+              'dfmsNM=dfms.manager.cmdline:dlgNM',
+              'dfmsDIM=dfms.manager.cmdline:dlgDIM',
+              'dfmsMM=dfms.manager.cmdline:dlgMM',
+              'dfmsReplay=dfms.manager.cmdline:dlgReplay',
               'dfmsDaemon=dfms.manager.proc_daemon:run_with_cmdline'
+              'dlgNM=dfms.manager.cmdline:dlgNM',
+              'dlgDIM=dfms.manager.cmdline:dlgDIM',
+              'dlgMM=dfms.manager.cmdline:dlgMM',
+              'dlgReplay=dfms.manager.cmdline:dlgReplay',
+              'dlgDaemon=dfms.manager.proc_daemon:run_with_cmdline'
           ],
       }
 )
