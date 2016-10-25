@@ -246,7 +246,7 @@ def gen_pg():
         # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
         dt = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S.%f')
-        ssid = "{0}_{1}".format(pgt_id.split('.json')[0].split('_pgt')[0], dt)
+        ssid = "{0}_{1}".format(pgt_id.split('.json')[0].split('_pgt')[0].split('/')[-1], dt)
         mgr_client.create_session(ssid)
         #print "session created"
         mgr_client.append_graph(ssid, pg_spec)
