@@ -153,7 +153,7 @@ class PawseyClient(object):
         self._lg = lg
         self._pg = pg
         self._graph_vis = False
-        self._run_proxy = False
+        self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
         self._pip_name = fname_to_lgname(lg or pg)
