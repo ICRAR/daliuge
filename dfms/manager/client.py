@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import logging
+import os
 
 from six.moves import urllib_parse as urllib  # @UnresolvedImport
 
@@ -28,6 +29,7 @@ from dfms.restutils import RestClient
 
 
 logger = logging.getLogger(__name__)
+compress = os.environ.get('DALIUGE_COMPRESSED_JSON', True)
 
 class BaseDROPManagerClient(RestClient):
     """
@@ -64,7 +66,7 @@ class BaseDROPManagerClient(RestClient):
         Appends a graph to session `sessionId`, without creating its DROPs yet,
         but checking that the graph looks correct
         """
-        self._post_json('/sessions/%s/graph/append' % (urllib.quote(sessionId),), graphSpec, compress=True)
+        self._post_json('/sessions/%s/graph/append' % (urllib.quote(sessionId),), graphSpec, compress=compress)
         logger.debug('Successfully appended graph to session %s on %s:%s', sessionId, self.host, self.port)
 
     def destroy_session(self, sessionId):
