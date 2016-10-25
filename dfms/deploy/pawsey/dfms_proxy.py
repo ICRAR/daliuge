@@ -36,12 +36,13 @@ DFMS Proxy runs inside the Pawsey firewall
 --------------------------------------------------------------------------------
 """
 
-import socket, os
-import select, struct
-import time
+import optparse
+import select
+import socket
+import struct
 import sys, logging
-from optparse import OptionParser
-from collections import defaultdict
+import time
+
 
 BUFF_SIZE = 16384
 conn_retry_timeout = 5
@@ -51,7 +52,7 @@ default_dfms_monitor_port = 30000
 default_dfms_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
-logger = logging.getLogger('deploy.pawsey.proxy')
+logger = logging.getLogger(__name__)
 delimit = '@#%!$'
 dl = len(delimit)
 
@@ -115,17 +116,23 @@ class DFMSProxy:
             raise Exception("Monitor rejected us due to duplicated ID")
         self.monitor_socket = the_socket
 
+    def close_dfms_socket(self, sock, tag):
+        try:
+            sock.close()
+        except socket.error:
+            pass
+        del self._dfms_sock_dict[tag]
+        del self._dfms_sock_tag_dict[sock]
+
     def loop(self):
         self.connect_monitor_host()
         inputlist = [self.monitor_socket]
-        remove_dict = defaultdict(int)
         just_re_connected = False
         while 1:
             if (just_re_connected):
                 just_re_connected = False
-            time.sleep(delay)
-            inputready, outputready, exceptready = select.select(
-                    inputlist + self._dfms_sock_dict.values(), [], [])
+            inputready, _, _ = select.select(
+                    inputlist + self._dfms_sock_dict.values(), [], [], timeout=delay)
             for the_socket in inputready:
                 if (just_re_connected):
                     continue
@@ -162,8 +169,11 @@ class DFMSProxy:
                     else:
                         send_to_dfms = True
                     if (send_to_dfms):
-                        dfms_sock.sendall(to_send)
-                        logger.debug("Sent {0} to DFMS manager".format(tag))
+                        try:
+                            dfms_sock.sendall(to_send)
+                            logger.debug("Sent {0} to DFMS manager".format(tag))
+                        except socket.error:
+                            self.close_dfms_socket(dfms_sock, tag)
                 else:
                     # from one of the DFMS sockets
                     data = the_socket.recv(BUFF_SIZE)
@@ -175,12 +185,10 @@ class DFMSProxy:
                         send_to_monitor(self.monitor_socket, delimit.join([str(tag), data]))
                         logger.debug("Sent {0} to Monitor".format(tag))
                         if (len(data) == 0):
-                            the_socket.close()
-                            del self._dfms_sock_dict[tag]
-                            del self._dfms_sock_tag_dict[the_socket]
+                            self.close_dfms_socket(the_socket, tag)
 
 if __name__ == '__main__':
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.add_option("-d", "--dfms_host", action="store", type="string",
                     dest="dfms_host", help="DFMS drop manager host IP (required)")
     parser.add_option("-m", "--monitor_host", action="store", type="string",
