@@ -348,10 +348,11 @@ def main():
     if (options.num_islands == 1):
         if (rank != 0):
             if (run_proxy and rank == 1):
-                sltime = DIM_WAIT_TIME + 2
-                logger.info("Starting dfms proxy on host {0} in {1} seconds".format(origin_ip, sltime))
-                time.sleep(sltime)
-                start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+                # Wait until the Island Manager is open
+                if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
+                    start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+                else:
+                    logger.warning("Couldn't connect to the main drop manager, proxy not started")
             elif (run_node_mgr):
                 logger.info("Starting node manager on host {0}".format(origin_ip))
                 start_node_mgr(log_dir, logv=logv,
@@ -361,7 +362,9 @@ def main():
             # unroll the graph first while starting node managers on other nodes
             mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis',
                                 zerorun=options.zerorun, app=options.app)
-            unrolled = mc.unroll_physical_graph(options.logical_graph, options.physical_graph)
+            unrolled = None
+            if options.logical_graph or options.physical_graph:
+                unrolled = mc.unroll_physical_graph(options.logical_graph, options.physical_graph)
 
             # These are not NMs
             no_nms = [origin_ip, 'None']
