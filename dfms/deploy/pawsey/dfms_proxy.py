@@ -132,7 +132,7 @@ class DFMSProxy:
             if (just_re_connected):
                 just_re_connected = False
             inputready, _, _ = select.select(
-                    inputlist + self._dfms_sock_dict.values(), [], [], timeout=delay)
+                    inputlist + self._dfms_sock_dict.values(), [], [], delay)
             for the_socket in inputready:
                 if (just_re_connected):
                     continue
