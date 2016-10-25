@@ -224,11 +224,10 @@ class DFMSMonitor:
                     else:
                         logger.error("Received data from unknown socket: %r", sock)
             except (OSError, select.error) as e:
-                print e
-                if e.args[0] == errno.EINTR:
+                if e.args and e.args[0] == errno.EINTR:
                     break
-            except Exception as ex:
-                print str(ex)
+                raise
+            except Exception:
                 logger.exception("Unexpected exception, some communications might have been lost")
 
     def add_client_listener(self):
