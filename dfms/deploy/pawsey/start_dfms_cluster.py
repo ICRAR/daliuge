@@ -223,8 +223,8 @@ def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     except KeyboardInterrupt:
         logger.warning("Ctrl C - Stopping DFMS Proxy server")
         sys.exit(1)
-    except Exception as ex:
-        logger.error("DFMS proxy terminated unexpectedly: {0}".format(ex))
+    except Exception:
+        logger.exception("DFMS proxy terminated unexpectedly")
         sys.exit(1)
 
 def submit_pg(monitor_client, physical_graph):
