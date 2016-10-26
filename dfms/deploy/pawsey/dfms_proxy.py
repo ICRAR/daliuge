@@ -96,6 +96,7 @@ class DFMSProxy:
                 #sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
+                the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                 logger.info('Connected to %s on port %d' % (server, port))
                 return the_socket
             except Exception as e:
