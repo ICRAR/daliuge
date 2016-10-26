@@ -234,7 +234,7 @@ class TestREST(unittest.TestCase):
 
         sessionId = 'lala'
         restPort  = 8888
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
+        args = [sys.executable, '-m', 'dfms.tool', 'dim', \
                 '--port', str(restPort), '-N',hostname, '-qqq']
         dimProcess = subprocess.Popen(args)
 
