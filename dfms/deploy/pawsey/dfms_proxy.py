@@ -109,6 +109,7 @@ class DFMSProxy:
         # After connecting we identify ourselves using our ID with the monitor
         the_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
         the_socket.sendall("%-80s" % (self._proxy_id))
+        logger.info('Identified as %s with monitor', self._proxy_id)
         ok = int(recvall(the_socket, 1))
         if not ok:
             the_socket.shutdown(socket.SHUT_RDWR)
