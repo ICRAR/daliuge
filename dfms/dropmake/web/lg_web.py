@@ -338,7 +338,20 @@ if __name__ == "__main__":
     """
     e.g. python lg_web -d /tmp/
     """
-    parser = OptionParser()
+    epilog = \
+"""
+If you have no Logical Graphs yet and want to see some you can grab a copy
+of those maintained at
+
+https://github.com/ICRAR/daliuge-logical-graphs
+
+"""
+
+    class NoFormattedEpilogParser(OptionParser):
+        def format_epilog(self, formatter):
+            return self.epilog
+
+    parser = NoFormattedEpilogParser(description="A Web server for the Logical Graph Editor", epilog=epilog)
     parser.add_option("-d", "--lgdir", action="store", type="string", dest="lg_path",
                           help="logical graph path (input)")
     parser.add_option("-t", "--pgtdir", action="store", type="string", dest="pgt_path",
