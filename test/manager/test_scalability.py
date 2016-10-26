@@ -74,7 +74,7 @@ class TestBigGraph(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
 
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', '-H', hostname, '-qq']
+        args = [sys.executable, '-m', 'dfms.tool', 'nm', '-H', hostname, '-qq']
         self.dmProcess = subprocess.Popen(args)
 
     def tearDown(self):
@@ -96,7 +96,7 @@ class TestBigGraph(unittest.TestCase):
 
         sessionId = 'lala'
         restPort  = 8888
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
+        args = [sys.executable, '-m', 'dfms.tool', 'dim', \
                 '--port', str(restPort), '-N', hostname, '-qq']
 
         c = client.NodeManagerClient(port=restPort)

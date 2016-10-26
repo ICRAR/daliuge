@@ -105,12 +105,6 @@ def commonOptionsCheck(options, parser):
     if options.verbose and options.quiet:
         parser.error('-v and -q cannot be specified together')
 
-def warn_if_dfms(cmdline):
-    if cmdline.startswith('dfms'):
-        print("WARNING: The dfms* commands are discouraged and will be removed soon, " + \
-              "use the dlg* alternatives instead")
-        return 'dlg' + cmdline[4:]
-
 def start(options, parser):
 
     # Perform common option checks
@@ -203,7 +197,6 @@ def dlgNM(args=sys.argv):
     """
 
     # Parse command-line and check options
-    warn_if_dfms(args[0])
     parser = optparse.OptionParser()
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
@@ -242,7 +235,6 @@ def dlgCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
     """
 
     # Parse command-line and check options
-    warn_if_dfms(args[0])
     parser = optparse.OptionParser()
     addCommonOptions(parser, dmPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
@@ -303,23 +295,3 @@ def dlgReplay(args=sys.argv):
     options.restType = ReplayManagerServer
 
     start(options, parser)
-
-if __name__ == '__main__':
-    # If this module is called directly, the first argument must be one of the
-    # dlg*M commands, the rest of the arguments are the normal ones
-    if len(sys.argv) == 1:
-        print('Usage: %s [dlgNM|dlgDIM|dlgMM|dlgReplay] [options]' % (sys.argv[0]))
-        sys.exit(1)
-    dm = sys.argv[1]
-    args = sys.argv[1:]
-    if dm == 'dlgNM':
-        dlgNM(args)
-    elif dm == 'dlgDIM':
-        dlgDIM(args)
-    elif dm == 'dlgMM':
-        dlgMM(args)
-    elif dm == 'dlgReplay':
-        dlgReplay(args)
-    else:
-        print('Usage: %s [dlgNM|dlgDIM|dlgMM|dlgReplay] [options]' % (sys.argv[0]))
-        sys.exit(1)

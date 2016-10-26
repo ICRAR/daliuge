@@ -153,7 +153,7 @@ class DfmsDaemon(RestServer):
     # Methods to start and stop the individual managers
     def startNM(self):
 
-        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM']
+        args  = [sys.executable, '-m', 'dfms.tool', 'nm']
         args += ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
@@ -167,7 +167,7 @@ class DfmsDaemon(RestServer):
             self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
-        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
+        args  = [sys.executable, '-m', 'dfms.tool', 'dim']
         args += ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         if nodes:
@@ -178,7 +178,7 @@ class DfmsDaemon(RestServer):
 
     def startMM(self):
 
-        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM']
+        args  = [sys.executable, '-m', 'dfms.tool', 'mm']
         args += ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
