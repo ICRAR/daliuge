@@ -29,14 +29,13 @@ import logging
 import optparse
 import signal
 import socket
-import subprocess
 import sys
 import threading
 
 import bottle
 import zeroconf as zc
 
-from dfms import utils
+from dfms import utils, tool
 from dfms.manager import constants, client
 from dfms.restutils import RestServer
 
@@ -153,11 +152,10 @@ class DfmsDaemon(RestServer):
     # Methods to start and stop the individual managers
     def startNM(self):
 
-        args  = [sys.executable, '-m', 'dfms.tool', 'nm']
-        args += ['--host', '0.0.0.0']
+        args = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
-        self._nm_proc = subprocess.Popen(args)
+        self._nm_proc = tool.start_process('nm', args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
 
         # Registering the new NodeManager via zeroconf so it gets discovered
@@ -167,22 +165,20 @@ class DfmsDaemon(RestServer):
             self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
-        args  = [sys.executable, '-m', 'dfms.tool', 'dim']
-        args += ['--host', '0.0.0.0']
+        args  = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         if nodes:
             args += ['--nodes', ",".join(nodes)]
         logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
-        self._dim_proc = subprocess.Popen(args)
+        self._dim_proc = tool.start_process('dim', args)
         logger.info("Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid))
 
     def startMM(self):
 
-        args  = [sys.executable, '-m', 'dfms.tool', 'mm']
-        args += ['--host', '0.0.0.0']
+        args  = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
-        self._mm_proc = subprocess.Popen(args)
+        self._mm_proc = tool.start_process('mm', args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed

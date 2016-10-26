@@ -24,14 +24,16 @@ import json
 import logging
 import optparse
 import os
+import subprocess
 import sys
 import time
 
 from dfms import droputils
+from dfms.deploy.pawsey import dfms_proxy
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
+from dfms.exceptions import DaliugeException
 from dfms.manager import constants, proc_daemon, cmdline
 from dfms.manager.client import CompositeManagerClient
-from dfms.deploy.pawsey import dfms_proxy
 
 
 logger = logging.getLogger(__name__)
@@ -257,6 +259,20 @@ def run(args=sys.argv):
         sys.exit(1)
 
     commands[cmd](sys.argv[1:])
+
+def start_process(cmd, args, **subproc_args):
+    """
+    Start 'dlg cmd <args>' in a different process.
+    If `cmd` is not a known command an exception is raised.
+    `subproc_args` are passed down to the process creation via `Popen`.
+
+    This method returns the new process.
+    """
+    if cmd not in commands:
+        raise DaliugeException("Unknown command: %s" % (cmd,))
+
+    cmdline = [sys.executable, '-m', __name__, cmd] + args
+    return subprocess.Popen(cmdline, **subproc_args)
 
 # We can also be executed as a module
 if __name__ == '__main__':

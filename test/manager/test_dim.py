@@ -22,15 +22,13 @@
 import codecs
 import json
 import os
-import subprocess
-import sys
 import threading
 import time
 import unittest
 
 import pkg_resources
 
-from dfms import droputils
+from dfms import droputils, tool
 from dfms import utils
 from dfms.ddap_protocol import DROPStates
 from dfms.manager import constants
@@ -234,9 +232,8 @@ class TestREST(unittest.TestCase):
 
         sessionId = 'lala'
         restPort  = 8888
-        args = [sys.executable, '-m', 'dfms.tool', 'dim', \
-                '--port', str(restPort), '-N',hostname, '-qqq']
-        dimProcess = subprocess.Popen(args)
+        args = ['--port', str(restPort), '-N',hostname, '-qqq']
+        dimProcess = tool.start_process('dim', args)
 
         with testutils.terminating(dimProcess, 10):
 
