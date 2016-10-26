@@ -31,6 +31,7 @@ from dfms import droputils
 from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
 from dfms.manager import constants, proc_daemon, cmdline
 from dfms.manager.client import CompositeManagerClient
+from dfms.deploy.pawsey import dfms_proxy
 
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,7 @@ cmdwrap('dim')(cmdline.dlgDIM)
 cmdwrap('mm')(cmdline.dlgMM)
 cmdwrap('replay')(cmdline.dlgReplay)
 cmdwrap('daemon')(proc_daemon.run_with_cmdline)
+cmdwrap('proxy')(dfms_proxy.run)
 
 @cmdwrap('unroll')
 def dlgUnroll(args):
