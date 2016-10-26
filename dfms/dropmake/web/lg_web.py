@@ -71,8 +71,14 @@ def pgt_exists(pgt_name):
 def lg_repo_contents():
     # We currently allow only one depth level
     b = os.path.basename
-    lgs = {b(dirpath):fnames for dirpath,_,fnames in os.walk(lg_dir) if dirpath != lg_dir}
-    return lgs
+    contents = {}
+    for dirpath,dirnames,fnames in os.walk(lg_dir):
+        if '.git' in dirnames:
+            dirnames.remove('.git')
+        if dirpath == lg_dir:
+            continue
+        contents[b(dirpath)] = fnames
+    return contents
 
 @route('/static/<filepath:path>')
 def server_static(filepath):
