@@ -27,6 +27,7 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 import functools
 import json
 import logging
+import sys
 
 import bottle
 import pkg_resources
@@ -41,6 +42,12 @@ from dfms.restutils import RestServer, RestClient, RestClientException
 
 
 logger = logging.getLogger(__name__)
+
+def file_as_string(fname, enc='utf8'):
+    s = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
+    if sys.version_info[0] > 2:
+        return s.decode(enc)
+    return s
 
 def daliuge_aware(func):
 
@@ -206,7 +213,7 @@ class ManagerRestServer(RestServer):
         sessionId = params['sessionId'] if 'sessionId' in params else ''
         selectedNode = params['node'] if 'node' in params else ''
         viewMode = params['view'] if 'view' in params else ''
-        tpl = pkg_resources.resource_string(__name__, 'web/session.html')  # @UndefinedVariable
+        tpl = file_as_string('web/session.html')
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return bottle.template(tpl,
@@ -267,7 +274,7 @@ class NMRestServer(ManagerRestServer):
     # non-REST methods
     #===========================================================================
     def visualizeDM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
+        tpl = file_as_string('web/dm.html')
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return bottle.template(tpl,
@@ -352,7 +359,7 @@ class CompositeManagerRestServer(ManagerRestServer):
     # non-REST methods
     #===========================================================================
     def visualizeDIM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/dim.html')  # @UndefinedVariable
+        tpl = file_as_string('web/dim.html')
         urlparts = bottle.request.urlparts
         selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
         serverUrl = urlparts.scheme + '://' + urlparts.netloc

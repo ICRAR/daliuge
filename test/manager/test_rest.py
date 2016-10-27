@@ -19,16 +19,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import tempfile
 import threading
 import unittest
 
+from dfms import exceptions
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
 from dfms.manager.node_manager import NodeManager
 from dfms.manager.rest import NMRestServer
-from dfms import exceptions
-import tempfile
-from docutils.nodes import sidebar
+from dfms.restutils import RestClient
 
 
 hostname = 'localhost'
@@ -48,6 +48,12 @@ class TestRest(unittest.TestCase):
         self._dm_t.join()
         self.dm.shutdown()
         self.assertFalse(self._dm_t.isAlive())
+
+    def test_index(self):
+        # Just check that the HTML pages load properly
+        with RestClient(hostname, constants.NODE_DEFAULT_REST_PORT, 10) as c:
+            c._GET('/')
+            c._GET('/session')
 
     def test_errtype(self):
 
