@@ -229,7 +229,7 @@ class CompositeManager(DROPManager):
     # If "collect" is given, then individual results are also kept in the given
     # structure, which is either a dictionary or a list
     #
-    def _do_in_host(self, sessionId, exceptions, f, collect, port, iterable):
+    def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
 
         host = iterable
         if isinstance(iterable, (list, tuple)):
@@ -247,7 +247,7 @@ class CompositeManager(DROPManager):
 
         except Exception as e:
             exceptions[host] = e
-            raise # so it gets printed
+            logger.exception("Error while %s on host %s, session %s", action, host, sessionId)
 
     def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
         """
@@ -256,9 +256,9 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
-        self._tp.map(functools.partial(self._do_in_host, sessionId, thrExs, f, collect, port), iterable)
+        self._tp.map(functools.partial(self._do_in_host, action, sessionId, thrExs, f, collect, port), iterable)
         if thrExs:
-            msg = "One or more errors occurred while %s on session %s" % (action, sessionId)
+            msg = "More than one error occurred while %s on session %s" % (action, sessionId)
             raise SubManagerException(msg, thrExs)
 
     #

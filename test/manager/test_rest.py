@@ -25,10 +25,12 @@ import unittest
 
 from dfms import exceptions
 from dfms.manager import constants
-from dfms.manager.client import NodeManagerClient
+from dfms.manager.client import NodeManagerClient, DataIslandManagerClient
 from dfms.manager.node_manager import NodeManager
-from dfms.manager.rest import NMRestServer
+from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
 from dfms.restutils import RestClient
+from dfms.manager.composite_manager import DataIslandManager
+from dfms.exceptions import InvalidGraphException
 
 
 hostname = 'localhost'
@@ -42,12 +44,22 @@ class TestRest(unittest.TestCase):
         self._dm_t = threading.Thread(target=self._dm_server.start, args=(hostname, constants.NODE_DEFAULT_REST_PORT))
         self._dm_t.start()
 
+        self.dim = DataIslandManager(dmHosts=[hostname])
+        self._dim_server = CompositeManagerRestServer(self.dim)
+        self._dim_t = threading.Thread(target=self._dim_server.start, args=(hostname, constants.ISLAND_DEFAULT_REST_PORT))
+        self._dim_t.start()
+
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         self._dm_server.stop()
         self._dm_t.join()
         self.dm.shutdown()
         self.assertFalse(self._dm_t.isAlive())
+
+        self._dim_server.stop()
+        self._dim_t.join()
+        self.dim.shutdown()
+        self.assertFalse(self._dim_t.isAlive())
 
     def test_index(self):
         # Just check that the HTML pages load properly
@@ -86,3 +98,18 @@ class TestRest(unittest.TestCase):
         fname = tempfile.mktemp()
         c.addGraphSpec(sid, [{'type': 'plain', 'storage': 'file', 'oid': 'a', 'filepath': fname, 'check_filepath_exists': True}])
         self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
+
+    def test_recursive(self):
+
+        sid = 'lala'
+        c = DataIslandManagerClient(hostname)
+        c.createSession(sid)
+
+        # invalid dropspec, app doesn't exist
+        # This is not checked at the DIM level but only at the NM level
+        # The exception should still pass through though
+        with self.assertRaises(exceptions.SubManagerException) as cm:
+            c.addGraphSpec(sid, [{'oid': 'a', 'type': 'app', 'app': 'doesnt.exist', 'node': hostname}])
+        ex = cm.exception
+        self.assertTrue(hostname in ex.args[0])
+        self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))
