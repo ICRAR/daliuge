@@ -32,7 +32,8 @@ import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
 from dfms import exceptions
 from dfms import utils
-from dfms.exceptions import DaliugeException
+from dfms.exceptions import DaliugeException, SubManagerException
+import traceback
 
 
 logger = logging.getLogger(__name__)
@@ -209,7 +210,15 @@ class RestClient(object):
                 error = json.loads(self._resp.read().decode('utf-8'))
                 etype = getattr(exceptions, error['type'])
                 eargs = error['args']
-                ex = etype(*eargs)
+
+                if etype == SubManagerException:
+                    for host,args in eargs.items():
+                        subetype = getattr(exceptions, args['type'])
+                        subargs = args['args']
+                        eargs[host] = subetype(*subargs)
+                    ex = etype(eargs)
+                else:
+                    ex = etype(*eargs)
                 if hasattr(ex, 'msg'):
                     ex.msg = msg + ex.msg
             except Exception:

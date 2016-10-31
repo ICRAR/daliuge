@@ -35,7 +35,7 @@ import pkg_resources
 from dfms import utils
 from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
-    InvalidDropException, InvalidRelationshipException
+    InvalidDropException, InvalidRelationshipException, SubManagerException
 from dfms.manager import constants
 from dfms.manager.client import NodeManagerClient
 from dfms.restutils import RestServer, RestClient, RestClientException
@@ -78,6 +78,12 @@ def daliuge_aware(func):
                 status, eargs = 400, e.args
             elif isinstance(e, RestClientException):
                 status, eargs = 556, e.args
+            elif isinstance(e, SubManagerException):
+                status = 555
+                eargs = {}
+                # args[1] is a dictionary of host:exception
+                for host,subex in e.args[1].items():
+                    eargs[host] = {'type': subex.__class__.__name__, 'args': subex.args}
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args
             else:
