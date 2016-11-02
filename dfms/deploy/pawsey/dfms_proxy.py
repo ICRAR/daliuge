@@ -36,7 +36,6 @@ DFMS Proxy runs inside the Pawsey firewall
 --------------------------------------------------------------------------------
 """
 
-import optparse
 import select
 import socket
 import struct
