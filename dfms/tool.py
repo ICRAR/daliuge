@@ -77,7 +77,7 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
 
     return drop_list
 
-def partition(pgt, pip_name, num_partitions, algo='metis'):
+def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
     '''
     Partitions the Physical Graph Template `pgt` with the algorithm `algo`
     using `num_partitions` partitions.
@@ -92,7 +92,10 @@ def partition(pgt, pip_name, num_partitions, algo='metis'):
     logger.info("PGTP initialised %s", algo)
 
     logger.info("Starting to partition %s", pip_name)
-    pgt = pgtp.to_gojs_json(string_rep=False)
+    pgtp.to_gojs_json(string_rep=False, visual=True)
+    pgt = pgtp.to_pg_spec([], ret_str=False,
+                          num_islands=num_islands,
+                          tpl_nodes_len=num_partitions+num_islands)
     logger.info("Partitioning completed for %s", pip_name)
 
     return pgt
@@ -192,6 +195,8 @@ def dlg_unroll(parser, args):
 def _add_partition_options(parser):
     parser.add_option("-N", "--partitions", action="store", type="int",
                       dest="partitions", help="Number of partitions to generate", default=1)
+    parser.add_option("-i", "--islands", action="store", type="int",
+                      dest="islands", help="Number of islands to use during the partitioning", default=1)
     parser.add_option("-A", "--algorithm", action="store", type="choice", choices=['metis', 'sarkar'],
                       dest="algo", help="algorithm used to do the partitioning", default="metis")
 
@@ -207,11 +212,11 @@ def dlg_partition(parser, args):
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
 
-    with _open_i(opts.pgt_path) as f:
-        pgt = json.load(f)
-        pip_name = _fname_to_pipname(opts.pgt_path)
-        with _open_o(opts.output) as f:
-            json.dump(partition(pgt, pip_name, opts.partitions, opts.algo), f)
+    pip_name = _fname_to_pipname(opts.pgt_path)
+    with _open_i(opts.pgt_path) as fi:
+        pgt = json.load(fi)
+    with _open_o(opts.output) as fo:
+        json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), fo)
 
 
 
