@@ -100,6 +100,20 @@ def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
 
     return pgt
 
+def submit(host, port, pg,
+           skip_deploy=False, session_id=None, completed_uids=None):
+
+    session_id = session_id or "%f" % (time.time())
+    completed_uids = completed_uids or droputils.get_roots(pg)
+
+    with CompositeManagerClient(host, port, timeout=10) as client:
+        client.create_session(session_id)
+        logger.info("Session %s created", session_id)
+        client.append_graph(session_id, pg)
+        logger.info("Graph for session %s appended", session_id)
+        if not skip_deploy:
+            client.deploy_session(session_id, completed_uids=completed_uids)
+            logger.info("Session %s deployed", session_id)
 
 def _add_logging_options(parser):
     parser.add_option("-v", "--verbose", action="count",
@@ -289,31 +303,9 @@ def dlg_submit(parser, args):
                       help='Skip the deployment step (default: False)', default=False)
     (opts, args) = parser.parse_args(args)
 
-    client = CompositeManagerClient(opts.host, opts.port, timeout=10)
-
     with _open_i(opts.pg_path) as f:
-        pg_spec = json.load(f)
-
-    logger.info("About to compute roots")
-    completed_uids = droputils.get_roots(pg_spec)
-    logger.info("Len of completed_uids is {0}".format(len(completed_uids)))
-
-    # forget about the objects in memory and work with a json dump form now on
-    pg_asjson = json.dumps(pg_spec)
-    del pg_spec
-
-    session_id = opts.session_id
-    if session_id is None:
-        session_id = "{0}_%f".format(_fname_to_pipname(opts.pg_path) if opts.pg_path != '-' else 'unknown', time.time())
-
-    client.create_session(session_id)
-    logger.info("Session %s created", session_id)
-    client.append_graph(session_id, pg_asjson)
-    logger.info("Graph for session %s appended", session_id)
-
-    if not opts.skip_deploy:
-        client.deploy_session(session_id, completed_uids=completed_uids)
-        logger.info("Session %s deployed", session_id)
+        submit(opts.host, opts.port, json.load(f),
+               skip_deploy=opts.skip_deploy, session_id=opts.session_id)
 
 
 def print_usage(prgname):
