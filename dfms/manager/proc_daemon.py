@@ -35,12 +35,19 @@ import threading
 import bottle
 import zeroconf as zc
 
-from dfms import utils, tool
+from dfms import utils
 from dfms.manager import constants, client
 from dfms.restutils import RestServer
 
 
 logger = logging.getLogger(__name__)
+
+def get_tool():
+    # This import is performed at runtime to avoid a circular dependency
+    # at import time with the tool module, which imports this module
+    # to make it available as a 'dlg' command
+    from dfms import tool
+    return tool
 
 class DfmsDaemon(RestServer):
     """
@@ -151,7 +158,7 @@ class DfmsDaemon(RestServer):
 
     # Methods to start and stop the individual managers
     def startNM(self):
-
+        tool = get_tool()
         args = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
@@ -165,6 +172,7 @@ class DfmsDaemon(RestServer):
             self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
+        tool = get_tool()
         args  = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         if nodes:
@@ -174,7 +182,7 @@ class DfmsDaemon(RestServer):
         logger.info("Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid))
 
     def startMM(self):
-
+        tool = get_tool()
         args  = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
