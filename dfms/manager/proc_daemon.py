@@ -262,9 +262,7 @@ class DfmsDaemon(RestServer):
 
 
 terminating = False
-def run_with_cmdline(args=sys.argv):
-
-    parser = optparse.OptionParser()
+def run_with_cmdline(parser, args):
     parser.add_option('-m', '--master', action='store_true',
                       dest="master", help="Start this DFMS daemon as the master daemon", default=False)
     parser.add_option("--no-nm", action="store_true",
@@ -301,7 +299,3 @@ def run_with_cmdline(args=sys.argv):
     t = threading.Thread(target=daemon.start, args=('0.0.0.0', constants.DAEMON_DEFAULT_REST_PORT))
     t.start()
     signal.pause()
-
-if __name__ == '__main__':
-    # In case we get called directly...
-    run_with_cmdline(sys.argv)
