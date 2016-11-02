@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import functools
+import importlib
 import json
 import logging
 import optparse
@@ -27,13 +28,6 @@ import os
 import subprocess
 import sys
 import time
-
-from dfms import droputils
-from dfms.deploy.pawsey import dfms_proxy
-from dfms.dropmake.pg_generator import LG, MySarkarPGTP, MetisPGTP
-from dfms.exceptions import DaliugeException
-from dfms.manager import constants, proc_daemon, cmdline
-from dfms.manager.client import CompositeManagerClient
 
 
 logger = logging.getLogger(__name__)
@@ -60,6 +54,8 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     and return the latter.
     This method prepends `oid_prefix` to all generated Drop OIDs.
     '''
+
+    from dfms.dropmake.pg_generator import LG
     lg = LG(_open_i(lg_path), ssid=oid_prefix)
     logger.info("Start to unroll %s", lg_path)
     drop_list = lg.unroll_to_tpl()
@@ -83,6 +79,8 @@ def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
     using `num_partitions` partitions.
     '''
 
+    from dfms.dropmake.pg_generator import MySarkarPGTP, MetisPGTP
+
     logger.info("Initialising PGTP %s", algo)
     if algo == 'sarkar':
         pgtp = MySarkarPGTP(pgt, num_partitions, merge_parts=True)
@@ -102,6 +100,9 @@ def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
 
 def submit(host, port, pg,
            skip_deploy=False, session_id=None, completed_uids=None):
+
+    from dfms import droputils
+    from dfms.manager.client import CompositeManagerClient
 
     session_id = session_id or "%f" % (time.time())
     completed_uids = completed_uids or droputils.get_roots(pg)
@@ -156,6 +157,13 @@ def _setup_logging(opts):
 commands = {}
 def cmdwrap(cmdname, desc):
     def decorated(f):
+
+        # We assume it's a string
+        if not callable(f):
+            modname, fname = f.split(':')
+            module = importlib.import_module(modname)
+            f = getattr(module, fname)
+
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
             parser = optparse.OptionParser(description=desc)
@@ -165,12 +173,12 @@ def cmdwrap(cmdname, desc):
     return decorated
 
 # Commands existing in other modules
-cmdwrap('nm', 'Starts a Node Manager')(cmdline.dlgNM)
-cmdwrap('dim', 'Starts a Drop Island Manager')(cmdline.dlgDIM)
-cmdwrap('mm', 'Starts a Master Manager')(cmdline.dlgMM)
-cmdwrap('replay', 'Starts a Replay Manager')(cmdline.dlgReplay)
-cmdwrap('daemon', 'Starts a DALiuGE Daemon process')(proc_daemon.run_with_cmdline)
-cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')(dfms_proxy.run)
+cmdwrap('nm', 'Starts a Node Manager')('dfms.manager.cmdline:dlgNM')
+cmdwrap('dim', 'Starts a Drop Island Manager')('dfms.manager.cmdline:dlgDIM')
+cmdwrap('mm', 'Starts a Master Manager')('dfms.manager.cmdline:dlgMM')
+cmdwrap('replay', 'Starts a Replay Manager')('dfms.manager.cmdline:dlgReplay')
+cmdwrap('daemon', 'Starts a DALiuGE Daemon process')('dfms.manager.proc_daemon:run_with_cmdline')
+cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')('dfms.deploy.pawsey.dfms_proxy:run')
 
 def _add_unroll_options(parser):
     parser.add_option('-L', '--logical-graph', action="store", dest='lg_path', type="string",
@@ -249,6 +257,8 @@ def dlg_unroll_and_partition(parser, args):
 @cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
 
+    from dfms.manager import constants
+
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
@@ -269,6 +279,8 @@ def dlg_map(parser, args):
                       dest="app", help="Force an app to be used in the Physical Graph. 0=SleepApp, 1=SleepAndCopy", default=None)
     (opts, args) = parser.parse_args(args)
 
+    from dfms.manager.client import CompositeManagerClient
+
     if opts.nodes:
         node_list = [n for n in opts.nodes.split(',') if n]
     else:
@@ -288,6 +300,8 @@ def dlg_map(parser, args):
 
 @cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')
 def dlg_submit(parser, args):
+
+    from dfms.manager import constants
 
     # Submit Physical Graph
     parser.add_option('-H', '--host', action='store',
@@ -346,6 +360,8 @@ def start_process(cmd, args, **subproc_args):
 
     This method returns the new process.
     """
+
+    from dfms.exceptions import DaliugeException
     if cmd not in commands:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
