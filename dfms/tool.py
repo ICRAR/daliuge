@@ -246,8 +246,7 @@ def dlg_unroll_and_partition(parser, args):
         pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
         json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), f)
 
-
-@cmdwrap('map', 'Translates a Logical Graph or Physical Graph Template into a Physical Graph')
+@cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
 
     parser.add_option('-H', '--host', action='store',
