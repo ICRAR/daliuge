@@ -134,13 +134,7 @@ def _setup_logging(opts):
     streamHdlr = logging.StreamHandler(sys.stderr)
     streamHdlr.setFormatter(fmt)
     logging.root.addHandler(streamHdlr)
-
-    # Per-package/module specific levels
     logging.root.setLevel(level)
-    logging.getLogger("dfms").setLevel(level)
-    logging.getLogger("tornado").setLevel(logging.WARN)
-    logging.getLogger("luigi-interface").setLevel(logging.WARN)
-    logging.getLogger("zerorpc").setLevel(logging.WARN)
 
 
 
@@ -218,7 +212,25 @@ def dlg_partition(parser, args):
     with _open_o(opts.output) as fo:
         json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), fo)
 
+@cmdwrap('unroll-and-partition', 'unroll + partition')
+def dlg_unroll_and_partition(parser, args):
 
+    _add_logging_options(parser)
+    _add_unroll_options(parser)
+    _add_partition_options(parser)
+    parser.add_option('-o', '--output', action="store", dest='output', type="string",
+                      help='Where the partitioned Physical Graph Template should be written to (default: stdout)', default='-')
+    (opts, args) = parser.parse_args(args)
+    _setup_logging(opts)
+
+    apps = (
+        "test.graphsRepository.SleepApp",
+        "test.graphsRepository.SleepAndCopyApp",
+    )
+    with _open_o(opts.output) as f:
+        pip_name = _fname_to_pipname(opts.lg_path)
+        pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
+        json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), f)
 
 
 @cmdwrap('map', 'Translates a Logical Graph or Physical Graph Template into a Physical Graph')
