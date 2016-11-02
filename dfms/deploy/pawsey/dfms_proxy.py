@@ -188,9 +188,10 @@ class DFMSProxy:
                         if (len(data) == 0):
                             self.close_dfms_socket(the_socket, tag)
 
-def run(args):
-    desc = "A reverse proxy to be used in restricted environments to contact the Drop Managers"
-    parser = optparse.OptionParser(description=desc)
+def run(parser, args):
+    '''
+    Entry point for the dlg proxy command
+    '''
     parser.add_option("-d", "--dfms_host", action="store", type="string",
                     dest="dfms_host", help="DFMS drop manager host IP (required)")
     parser.add_option("-m", "--monitor_host", action="store", type="string",

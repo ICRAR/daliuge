@@ -25,7 +25,6 @@ like DMs and DIMs.
 """
 
 import logging
-import optparse
 import os
 import signal
 import sys
@@ -189,15 +188,12 @@ def setupLogging(opts):
 
     return fileHandler
 
-# Entry-point function for the dlgNM script
-def dlgNM(args=sys.argv):
+def dlgNM(parser, args):
     """
-    Entry point for the dlgNM command-line script, which starts a
-    NodeManager and exposes it through Pyro and a REST interface.
+    Entry point for the dlg nm command
     """
 
     # Parse command-line and check options
-    parser = optparse.OptionParser()
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
@@ -227,7 +223,7 @@ def dlgNM(args=sys.argv):
 
     start(options, parser)
 
-def dlgCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
+def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
     """
     Common entry point for the dlgDIM and dlgMM command-line scripts. It
     starts the corresponding CompositeManager and exposes it through a
@@ -235,7 +231,6 @@ def dlgCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
     """
 
     # Parse command-line and check options
-    parser = optparse.OptionParser()
     addCommonOptions(parser, dmPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
                       dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default="")
@@ -254,27 +249,24 @@ def dlgCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
 
     start(options, parser)
 
-# Entry-point function for the dlgDIM script
-def dlgDIM(args=sys.argv):
+def dlgDIM(parser, args):
     """
-    Entry point for the dlgDIM command-line script.
+    Entry point for the dlg dim command
     """
-    dlgCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT, CompositeManagerRestServer)
+    dlgCompositeManager(parser, args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT, CompositeManagerRestServer)
 
-# Entry-point function for the dlgMM script
-def dlgMM(args=sys.argv):
+def dlgMM(parser, args):
     """
-    Entry point for the dlgMM command-line script.
+    Entry point for the dlg mm command
     """
-    dlgCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
+    dlgCompositeManager(parser, args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
 
-def dlgReplay(args=sys.argv):
+def dlgReplay(parser, args):
     """
-    Entry point for the dlgReplay command-line script
+    Entry point for the dlg replay command
     """
 
     # Parse command-line and check options
-    parser = optparse.OptionParser()
     addCommonOptions(parser, REPLAY_DEFAULT_REST_PORT)
     parser.add_option("-S", "--status-file", action="store",
                       dest="status_file", help="File containing a continuous graph status dump", default=None)
