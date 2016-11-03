@@ -158,11 +158,16 @@ commands = {}
 def cmdwrap(cmdname, desc):
     def decorated(f):
 
-        # We assume it's a string
+        # If it's not a callable we assume it's a string
+        # in which case we lazy-load the module:function when it gets called
         if not callable(f):
-            modname, fname = f.split(':')
-            module = importlib.import_module(modname)
-            f = getattr(module, fname)
+            orig_f = f
+            class importer(object):
+                def __call__(self, *args, **kwargs):
+                    modname, fname = orig_f.split(':')
+                    module = importlib.import_module(modname)
+                    return getattr(module, fname)(*args, **kwargs)
+            f = importer()
 
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
