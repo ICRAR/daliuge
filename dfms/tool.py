@@ -94,6 +94,27 @@ def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
 
     return pgt
 
+def resource_map(pgt, nodes, pip_name, num_islands):
+    '''
+    Maps a Physical Graph Template `pgt` to `nodes`
+    '''
+
+    if not nodes:
+        err_info = "Empty node_list, cannot map the PG template"
+        raise ValueError(err_info)
+
+    logger.info("Start to translate {0}".format(pip_name))
+    dim_list = nodes[0:num_islands]
+    nm_list = nodes[num_islands:]
+    for drop_spec in pgt:
+        nidx = int(drop_spec['node'][1:]) # skip '#'
+        drop_spec['node'] = nm_list[nidx]
+        iidx = int(drop_spec['island'][1:]) # skip '#'
+        drop_spec['island'] = dim_list[iidx]
+    logger.info("Translation completed for {0}".format(pip_name))
+
+    return pgt # now it's a PG
+
 def submit(host, port, pg,
            skip_deploy=False, session_id=None, completed_uids=None):
 
@@ -260,6 +281,7 @@ def dlg_map(parser, args):
 
     from dfms.manager import constants
 
+    _add_logging_options(parser)
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
@@ -271,32 +293,27 @@ def dlg_map(parser, args):
     parser.add_option("-N", "--nodes", action="store",
                       dest="nodes", help="The nodes where the Physical Graph will be distributed, comma-separated", default=None)
     parser.add_option("-i", "--islands", action="store", type="int",
-                      dest="islands", help="Number of drop islands", default=1)
-    parser.add_option("-A", "--algorithm", action="store", type="choice", choices=['metis', 'sarkar'],
-                      dest="algo", help="algorithm used to do the LG --> PG conversion", default="metis")
-    parser.add_option("-z", "--zerorun", action="store_true",
-                      dest="zerorun", help="Generate a Physical Graph that takes no time to run", default=False)
-    parser.add_option("--app", action="store", type="int",
-                      dest="app", help="Force an app to be used in the Physical Graph. 0=SleepApp, 1=SleepAndCopy", default=None)
+                      dest="islands", help="Number of islands to use during the partitioning", default=1)
     (opts, args) = parser.parse_args(args)
 
     from dfms.manager.client import CompositeManagerClient
 
     if opts.nodes:
-        node_list = [n for n in opts.nodes.split(',') if n]
+        nodes = [n for n in opts.nodes.split(',') if n]
     else:
         client = CompositeManagerClient(opts.host, opts.port, timeout=10)
-        node_list = client.nodes()
+        nodes = client.nodes()
 
-    n_nodes = len(node_list)
+    n_nodes = len(nodes)
     if n_nodes <= opts.islands:
         raise Exception("#nodes (%d) should be bigger than number of islands (%d)" % (n_nodes, opts.islands))
-    lnl = n_nodes - opts.islands
 
     with _open_i(opts.pgt_path) as f:
-        drop_list = json.load(f)
-    pip_name = utils.fname_to_pipname(opts.pgt_path)
+        pgt = json.load(f)
 
+    pip_name = utils.fname_to_pipname(opts.pgt_path)
+    with _open_o(opts.output) as f:
+        json.dump(resource_map(pgt, nodes, pip_name, opts.islands), f)
 
 
 @cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')
@@ -305,6 +322,7 @@ def dlg_submit(parser, args):
     from dfms.manager import constants
 
     # Submit Physical Graph
+    _add_logging_options(parser)
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
