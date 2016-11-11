@@ -357,7 +357,7 @@ def main():
                 pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
                 if options.logical_graph:
                     unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
-                    pgt = tool.partition(unrolled, pip_name, len(node_mgrs) - 1, options.num_islands, 'metis')
+                    pgt = tool.partition(unrolled, pip_name, len(node_mgrs), options.num_islands, 'metis')
                     del unrolled
                 else:
                     pgt = json.loads(options.physical_graph)
@@ -415,7 +415,7 @@ def main():
             pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
             if options.logical_graph:
                 unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
-                pgt = tool.partition(unrolled, pip_name, len(ip_list) - options.num_islands - 1, options.num_islands, 'metis')
+                pgt = tool.partition(unrolled, pip_name, len(ip_list) - 1, options.num_islands, 'metis')
                 del unrolled
             else:
                 pgt = json.loads(options.physical_graph)
