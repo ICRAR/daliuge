@@ -19,15 +19,18 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import os
 import unittest
-from dfms import tool
-import subprocess
+
+from dfms import tool, utils
+
 
 class TestTool(unittest.TestCase):
 
     def test_cmdhelp(self):
 
         for cmd in tool.commands:
-            p = tool.start_process(cmd, ['-h'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            p.wait(timeout=10)
-            self.assertEqual(0, p.returncode)
+            with open(os.devnull, 'wb') as devnull:
+                p = tool.start_process(cmd, ['-h'], stdout=devnull, stderr=devnull)
+                utils.wait_or_kill(p, timeout=10)
+                self.assertEqual(0, p.returncode)
