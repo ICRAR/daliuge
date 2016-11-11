@@ -243,6 +243,16 @@ def createDirIfMissing(path):
         if e.errno != errno.EEXIST:
             raise
 
+def fname_to_pipname(fname):
+    """
+    Converts a graph filename (assuming it's a .json file) to its "pipeline"
+    name (the basename without the extension).
+    """
+    fname = fname.split('/')[-1]
+    if fname.endswith('.json'):
+        fname = fname[:-5]
+    return fname
+
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
     Escapes single and double quotes in a string. Useful to include commands
