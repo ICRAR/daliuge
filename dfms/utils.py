@@ -312,11 +312,13 @@ def terminate_or_kill(proc, timeout):
     the given timeout. If the process is still alive after the timeout it is
     killed.
     """
-
-    pid = proc.pid
-    logger.info('Terminating %d', pid)
+    if proc.poll() is not None:
+        return
+    logger.info('Terminating %d', proc.pid)
     proc.terminate()
+    wait_or_kill(proc, timeout)
 
+def wait_or_kill(proc, timeout):
     waitLoops = 0
     max_loops = math.ceil(timeout/0.1)
     while proc.poll() is None and waitLoops < max_loops:
@@ -325,7 +327,7 @@ def terminate_or_kill(proc, timeout):
 
     kill9 = waitLoops == max_loops
     if kill9:
-        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', pid, timeout)
+        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
         proc.kill()
     proc.wait()
 
