@@ -186,7 +186,6 @@ def cmdwrap(cmdname, desc):
                     return getattr(module, fname)(*args, **kwargs)
             f = importer()
 
-        @functools.wraps(f)
         def wrapped(*args, **kwargs):
             parser = optparse.OptionParser(description=desc)
             f(parser, *args, **kwargs)
