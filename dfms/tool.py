@@ -29,6 +29,8 @@ import subprocess
 import sys
 import time
 
+from dfms import utils
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +43,6 @@ def _open_o(path, flags=None):
     if path == '-':
         return sys.stdout
     return open(os.path.expanduser(path), flags or 'w')
-
-def _fname_to_pipname(fname):
-    fname = fname.split('/')[-1]
-    if fname.endswith('.json'):
-        fname = fname[:-5]
-    return fname
 
 def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     '''
@@ -233,7 +229,7 @@ def dlg_partition(parser, args):
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
 
-    pip_name = _fname_to_pipname(opts.pgt_path)
+    pip_name = utils.fname_to_pipname(opts.pgt_path)
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
     with _open_o(opts.output) as fo:
@@ -255,7 +251,7 @@ def dlg_unroll_and_partition(parser, args):
         "test.graphsRepository.SleepAndCopyApp",
     )
     with _open_o(opts.output) as f:
-        pip_name = _fname_to_pipname(opts.lg_path)
+        pip_name = utils.fname_to_pipname(opts.lg_path)
         pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
         json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), f)
 
@@ -299,7 +295,7 @@ def dlg_map(parser, args):
 
     with _open_i(opts.pgt_path) as f:
         drop_list = json.load(f)
-    pip_name = _fname_to_pipname(opts.pgt_path)
+    pip_name = utils.fname_to_pipname(opts.pgt_path)
 
 
 
