@@ -353,6 +353,7 @@ def main():
             node_mgrs = [ip for ip in ip_adds if ip not in no_nms]
 
             # unroll the graph first (if any) while starting node managers on other nodes
+            pgt = None
             if options.logical_graph or options.physical_graph:
                 pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
                 if options.logical_graph:
