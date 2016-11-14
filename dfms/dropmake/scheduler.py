@@ -366,22 +366,29 @@ class Scheduler(object):
     def partition_dag(self):
         raise SchedulerException("Not implemented. Try subclass instead")
 
-    def merge_partitions(self, num_partitions):
+    def merge_partitions(self, num_partitions, bal_cond=0):
         """
         Merge M partitions into N partitions where N < M
             implemented using METIS for now
+
+        bal_cond:  load balance condition (integer):
+                    0 - workload, 1 - count
         """
         # 1. build the bi-directional graph (each partition is a node)
         metis = DAGUtil.import_metis()
         G = nx.Graph()
         G.graph['edge_weight_attr'] = 'weight'
-        G.graph['node_weight_attr'] = ['wkl', 'eff']
-
         st_gid = len(self._drop_list) + len(self._parts) + 1
-
-        for part in self._parts:
-            sc = part.schedule
-            G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
+        if (bal_cond == 0):
+            G.graph['node_weight_attr'] = ['wkl', 'eff']
+            for part in self._parts:
+                sc = part.schedule
+                G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
+        else:
+            G.graph['node_weight_attr'] = 'cc'
+            for part in self._parts:
+                sc = part.schedule
+                G.add_node(part.partition_id, cc=1)
 
         for e in self._part_edges:
             u = e[0]
