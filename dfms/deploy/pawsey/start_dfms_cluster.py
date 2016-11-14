@@ -454,7 +454,7 @@ def main():
                 logger.warning("Not all DIMs were up and running: %d/%d", len(dim_ips_up), len(dim_ip_list))
 
             # 8. submit the graph in a thread (wait for mm to start)
-            def submit(host, port, pg):
+            def submit():
                 if not check_host('localhost', MASTER_DEFAULT_REST_PORT, timeout=GRAPH_SUBMIT_WAIT_TIME):
                     logger.warning("Master Manager didn't come up in %d seconds", GRAPH_SUBMIT_WAIT_TIME)
                 tool.submit('localhost', MASTER_DEFAULT_REST_PORT, pg)
