@@ -33,7 +33,6 @@ import six.moves.urllib_parse as urllib  # @UnresolvedImport
 from dfms import exceptions
 from dfms import utils
 from dfms.exceptions import DaliugeException, SubManagerException
-import traceback
 
 
 logger = logging.getLogger(__name__)
