@@ -284,6 +284,8 @@ def gen_pgt():
             lg = LG(lg_path(lg_name))
             drop_list = lg.unroll_to_tpl()
             part = request.query.get('num_par')
+            mp = request.query.get('merge_par')
+            mpp = True if '1' == mp else False
             if (part is None):
                 is_part = ''
                 pgt = PGT(drop_list)
@@ -299,8 +301,6 @@ def gen_pgt():
                         ufactor = 1
                     pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
                 elif ('mysarkar' == algo):
-                    mp = request.query.get('merge_par')
-                    mpp = True if '1' == mp else False
                     pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
                 elif ('min_num_parts' == algo):
                     time_greedy = 1 - float(request.query.get('time_greedy')) / 100.0 # assuming between 1 to 100
@@ -320,8 +320,10 @@ def gen_pgt():
                     pgt = PyrrosPGTP(drop_list, int(part))
                 else:
                     raise GraphException("Unknown partition algorithm: {0}".format(algo))
-
-            pgt_id = pg_mgr.add_pgt(pgt, lg_name)
+            if (mpp and 'mysarkar' == algo):
+                pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=int(part))
+            else:
+                pgt_id = pg_mgr.add_pgt(pgt, lg_name)
             part_info = pgt.get_partition_info()
             tpl = b2s(pkg_resources.resource_string(__name__, 'pg_viewer.html')) # @UndefinedVariable
             return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)

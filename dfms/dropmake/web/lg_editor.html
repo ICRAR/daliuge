@@ -1711,7 +1711,7 @@
         </td>
         </tr>
         </form>
-        <!--
+
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
@@ -1724,10 +1724,10 @@
         <tr><td/><td/></tr>
        <tr>
       <form action="/gen_pgt" method="get" id="pgtp_form_03" target="_blank">
-        <td>Method III </td><td>Inner partitioning with Method II, then outer partitioning with Method I<input type="hidden" name="merge_par" value="1"></td>
+        <td>Island Algorithm</td><td>Nodes inside, Islands outside<input type="hidden" name="merge_par" value="1"></td>
       </tr>
       <tr>
-        <td># of outer partitions</td>
+        <td># of Islands</td>
         <td>
         <input type="number" name="num_par" min="2" value="5">
         </td>
@@ -1735,7 +1735,7 @@
       <tr>
         <td>Partition label</td>
         <td>
-        <input type="text" name="par_label" value="Partition">
+        <input type="text" name="par_label" value="Node">
         </td>
       </tr>
       <tr>
@@ -1750,10 +1750,10 @@
       <input type="hidden" name="algo" value="mysarkar">
     </td>
     <td>
-      <button id="pgtButton03" class="button" onclick="genPGTP03()">Generate Physical Graph Template Partition (III)</button>
+      <button id="pgtButton03" class="button" onclick="genPGTP03()">Generate PGTP with Islands</button>
     </td>
     </tr>
-    </form> -->
+    </form>
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
@@ -1766,7 +1766,7 @@
     <tr><td/><td/></tr>
     <tr>
     <form action="/gen_pgt" method="get" id="pgtp_form_04" target="_blank">
-      <td>Algorithm 3 </td><td>Minimise # of Partitions while subject to completion deadline<input type="hidden" name="num_par" value="5"></td>
+      <td>Lookahead Algorithm </td><td>Minimise # of Partitions while subject to completion deadline<input type="hidden" name="num_par" value="5"></td>
     </tr>
     <tr>
       <td>Deadline (time unit)</td>

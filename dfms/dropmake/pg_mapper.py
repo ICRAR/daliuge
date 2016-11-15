@@ -48,7 +48,7 @@ workflows onto distributed systems." Scientific Programming 13.3 (2005): 219-237
 
 In addition, for there is a more practical issue associated with the most
 popular METIS algorithm --- cannot minimise completion time, does not really
-support DAG
+support DAG, and cannot impose the DoP constraint on each partition
 
 The mapping algorithm will be based on the HEFT algorithm
 http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=993206

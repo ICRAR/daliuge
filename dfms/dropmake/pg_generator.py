@@ -573,9 +573,27 @@ class PGT(object):
         self._oid_gid_map = dict()
         self._gid_island_id_map = dict()
         self._num_parts_done = 0
-        self._partition_merged = False
+        self._partition_merged = 0
+        self._inner_parts = [] # a list of inner partitions (e.g. nodes)
+                               # for visualisation only
         self._bw_ratio = 10.0 # bandwidth ratio between instra-comp_island
                               # and inter-comp_island
+        self._merge_parts = False
+        self._island_labels = ['Data', 'Compute']
+
+    def _can_merge(self, new_num_parts):
+        if (new_num_parts <= 0):
+            raise GPGTException("Invalid new_num_parts {0}".format(new_num_parts))
+        if (not self._merge_parts):
+            raise GPGTException("This {0} PGTP is not made for merging"\
+                    .format(self.__class__.__name__))
+        if (self._num_parts_done <= new_num_parts):
+            raise GPGTException("No need to merge this {0} PGTP"\
+                    .format(self.__class__.__name__))
+        if (self._partition_merged == new_num_parts):
+            return False
+        else:
+            return True
 
     @property
     def drops(self):
@@ -628,6 +646,7 @@ class PGT(object):
     def json(self):
         """
             Return the JSON string representation of the PGT
+            for visualisation
         """
         if (self._json_str is None):
             self._json_str = self.to_gojs_json(visual=True)
@@ -1003,12 +1022,16 @@ class MetisPGTP(PGT):
                 gid = metis_out[nid - 1]
                 node['group'] = gid + start_k
 
+            inner_parts = []
             for gid in groups:
                 gn = dict()
                 gn['key'] = start_k + gid
                 gn['isGroup'] = True
                 gn['text'] = '{1}_{0}'.format(gid, self._par_label)
                 node_list.append(gn)
+                inner_parts.append(gn)
+
+            self._inner_parts = inner_parts
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
@@ -1052,17 +1075,16 @@ class MetisPGTP(PGT):
             return jsobj
 
     def merge_partitions(self, new_num_parts, form_island=False,
-                        island_type=0):
+                        island_type=0, visual=False):
         """
-        This merge paritioning is different from MySarkarPGTP's partion merging
-        This merging is for forming islands, i.e. reference-based merging
+        This merging can form islands, i.e. reference-based merging
 
         island_type:    integer, 0 - data island, 1 - compute island
 
         """
         # 0. parse the output and get all the partitions
-        if (new_num_parts <= 0):
-            raise GPGTException("Invalid new_num_parts {0}".format(new_num_parts))
+        if (not self._can_merge(new_num_parts)):
+            return
 
         GG = self._G
         part_edges = defaultdict(int) #k: from_gid + to_gid, v: sum_of_weight
@@ -1105,19 +1127,36 @@ class MetisPGTP(PGT):
                 new_gid = tmp_map[old_gid]
                 ogm[oid] = new_gid
                 gnode['gid'] = new_gid
-        elif (island_type == 1 and
-              (self.dag is not None) and
-              (self._metis_out is not None)):
-            # update intra-comp_island edge weight given it has a different
-            # bandwith compared to inter-comp_island
-            metis_out = self._metis_out
-            for e in self.dag.edges(data=True):
-                gid0 = metis_out[e[0] - 1]
-                gid1 = metis_out[e[1] - 1]
-                if (tmp_map[gid0] == tmp_map[gid1]):
-                    e[2]['weight'] /= self._bw_ratio
-        # TODO add GOJS groups for visualisation
-        self._partition_merged = True
+            self._num_parts_done = new_num_parts
+        else:
+            if (island_type == 1 and
+                  (self.dag is not None) and
+                  (self._metis_out is not None)):
+                # update intra-comp_island edge weight given it has a different
+                # bandwith compared to inter-comp_island
+                metis_out = self._metis_out
+                for e in self.dag.edges(data=True):
+                    gid0 = metis_out[e[0] - 1]
+                    gid1 = metis_out[e[1] - 1]
+                    if (tmp_map[gid0] == tmp_map[gid1]):
+                        e[2]['weight'] /= self._bw_ratio
+            # add GOJS groups for visualisation
+            self._partition_merged = new_num_parts
+            if (visual):
+                island_label = '%s_Island'\
+                 % (self._island_labels[island_type % len(self._island_labels)])
+                start_k = self._drop_list_len + 1
+                node_list = self._node_list
+                lengnow = len(node_list)
+                for gid in metis_parts:
+                    gn = dict()
+                    gn['key'] = gid + lengnow
+                    gn['isGroup'] = True
+                    gn['text'] = '{1}_{0}'.format(gid, island_label)
+                    node_list.append(gn)
+                inner_parts = self._inner_parts
+                for ip in inner_parts:
+                    ip['group'] = tmp_map[ip['key'] - start_k] + lengnow
 
 class MySarkarPGTP(PGT):
     """
@@ -1169,14 +1208,13 @@ class MySarkarPGTP(PGT):
         pass
 
     def merge_partitions(self, new_num_parts, form_island=False,
-                        island_type=0):
+                        island_type=0, visual=False):
         """
         island_type:    integer, 0 - data island, 1 - compute island
         """
-        if (self._num_parts_done == 0):
-            raise GPGTException("Graph is not yet partitioned, cannot merge partitions")
-        if (self._num_parts_done <= new_num_parts or self._partition_merged):
+        if (not self._can_merge(new_num_parts)):
             return
+
         G = self._scheduler._dag
         node_list = self._node_list
         inner_parts = self._inner_parts
@@ -1199,19 +1237,12 @@ class MySarkarPGTP(PGT):
             for e in G.edges(data=True):
                 self._edge_cuts += e[2].get('weight', 0)
 
+        start_k = self._drop_list_len + 1
+
         for part in parts:
-            gid = part.parent_id
+            gid = part.parent_id - lengnow
             outer_groups.add(gid)
-            in_out_part_map[part.partition_id] = gid
-
-        self._gid_island_id_map = in_out_part_map
-
-        for gid in outer_groups:
-            gn = dict()
-            gn['key'] = gid
-            gn['isGroup'] = True
-            gn['text'] = 'Out_{0}_{1}'.format(gid - lengnow, self._par_label)
-            node_list.append(gn)
+            in_out_part_map[part.partition_id - start_k] = gid
 
         self._gid_island_id_map = in_out_part_map
         if (not form_island):
@@ -1221,18 +1252,29 @@ class MySarkarPGTP(PGT):
                 if (ggid is not None):
                     new_ggid = in_out_part_map[ggid]
                     self._oid_gid_map[node['oid']] = new_ggid
+            self._num_parts_done = new_num_parts
+        else:
+            self._partition_merged = new_num_parts
+            if (island_type == 1):
+                for e in self.dag.edges(data=True):
+                    #update edege weights within the same compute island
+                    if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
+                        e[2]['weight'] /= self._bw_ratio
+            if (visual):
+                island_label = '%s_Island'\
+                 % (self._island_labels[island_type % len(self._island_labels)])
+                for gid in outer_groups:
+                    gn = dict()
+                    gn['key'] = gid + lengnow
+                    gn['isGroup'] = True
+                    gn['text'] = '{1}_{0}'.format(gid, island_label)
+                    node_list.append(gn)
 
-        for ip in inner_parts:
-            ip['group'] = in_out_part_map[ip['key']]
 
-        if (island_type == 1):
-            for e in self.dag.edges(data=True):
-                #update edege weights within the same compute island
-                if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
-                    e[2]['weight'] /= self._bw_ratio
-        #self._lpl = DAGUtil.get_longest_path(self.dag, show_path=False)[1]
+                for ip in inner_parts:
+                    ip['group'] = in_out_part_map[ip['key'] - start_k] + lengnow
+
         self._lpl = self.pred_exec_time()
-        self._partition_merged = True
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         self._num_parts_done, self._lpl, self._ptime, parts = self._scheduler.partition_dag()

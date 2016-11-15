@@ -146,7 +146,7 @@ class MonitorClient(object):
             if 'sarkar' == self._algo:
                 pgtp = MySarkarPGTP(drop_list, lnl, merge_parts=True)
             else:
-                pgtp = MetisPGTP(drop_list, lnl)
+                pgtp = MetisPGTP(drop_list, lnl, merge_parts=True)
             del drop_list
             logger.info("PGTP initialised {0}".format(self._algo))
 
