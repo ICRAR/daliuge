@@ -36,7 +36,6 @@ DFMS Monitor runs outside the Pawsey firewall
 --------------------------------------------------------------------------------
 """
 
-import BaseHTTPServer
 import collections
 import errno
 import json
@@ -50,6 +49,8 @@ import sys
 import threading
 import time
 
+import six.moves.BaseHTTPServer as BaseHTTPServer  # @UnresolvedImport
+
 
 BUFF_SIZE = 16384
 outstanding_conn = 20
@@ -59,7 +60,7 @@ default_client_base_port = 30001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
 logger = logging.getLogger('deploy.pawsey.monitor')
-delimit = '@#%!$'
+delimit = b'@#%!$'
 dl = len(delimit)
 
 def recvall(sock, count):
@@ -172,7 +173,7 @@ class DFMSMonitor:
         if not create:
             return self.tag_dict[hashcode]
 
-        tag = '{0}_{1}'.format(hashcode, time.time() - 1E9)
+        tag = b'{0}_{1}'.format(hashcode, time.time() - 1E9)
         self.tag_dict[hashcode] = tag
         return tag
 
@@ -333,13 +334,17 @@ class DFMSMonitor:
         logger.info('Received new connection from dfms_proxy at %r, reading identification', proxyaddr)
 
         # Read the proxy ID and check we don't have duplicates
+        # We've been receiving HTTP requests on this socket from time to time,
+        # so we quickly quick then out
         proxy_id = recvall(proxysock, 80).strip()
-        if proxy_id in self.proxy_ids:
-            proxysock.sendall('0')
+        if proxy_id in self.proxy_ids or \
+           proxy_id.startswith(b'GET ') or proxy_id.startswith(b'POST '):
+            logger.info('Proxy identified as %s, rejecting', proxy_id)
+            proxysock.sendall(b'0')
             self.close_socket(proxysock, True)
             return
 
-        proxysock.sendall('1')
+        proxysock.sendall(b'1')
         logger.info('Proxy identified as %s, fine', proxy_id)
 
         client_listener_socket = self.add_client_listener()
