@@ -77,7 +77,7 @@ class TestPGGen(unittest.TestCase):
             fp = get_lg_fname(lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
-            pgtp = MetisPGTP(drop_list, 3)
+            pgtp = MetisPGTP(drop_list, 3, merge_parts=True)
             pgtp.json
             pg_spec = pgtp.to_pg_spec(node_list)
             # with open('/tmp/met_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
