@@ -30,6 +30,7 @@ import logging
 import math
 import os
 import socket
+import sys
 import time
 import types
 import zlib
@@ -38,6 +39,14 @@ import six
 
 
 logger = logging.getLogger(__name__)
+
+if sys.version_info[0] > 2:
+    def b2s(b, enc='utf8'):
+        return b.decode(enc)
+else:
+    def b2s(b, enc='utf8'):
+        return b
+b2s.__doc__ = "Converts bytes into a string"
 
 def get_local_ip_addr():
     """
