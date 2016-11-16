@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
 """
 DFMS Proxy runs inside the Pawsey firewall
 --------------------------------------------------------------------------------
@@ -36,13 +35,15 @@ DFMS Proxy runs inside the Pawsey firewall
 --------------------------------------------------------------------------------
 """
 
-import optparse
 import select
 import socket
 import struct
 import sys, logging
 import time
 
+import six
+
+from dfms.utils import b2s as b2s
 
 BUFF_SIZE = 16384
 conn_retry_timeout = 5
@@ -53,11 +54,11 @@ default_dfms_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
 logger = logging.getLogger(__name__)
-delimit = '@#%!$'
+delimit = b'@#%!$'
 dl = len(delimit)
 
 def recvall(sock, count):
-    buf = ''
+    buf = b''
     while count:
         # this will block
         newbuf = sock.recv(count)
@@ -99,9 +100,8 @@ class DFMSProxy:
                 the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                 logger.info('Connected to %s on port %d' % (server, port))
                 return the_socket
-            except Exception as e:
-                err = str(e)
-                logger.error("Fail to connect to {0} on port {1} due to {2}".format(server, port, err))
+            except Exception:
+                logger.exception("Failed to connect to %s:%d", server, port)
                 # Sleep for a while before trying to connect again
                 time.sleep(conn_retry_timeout)
                 retry_count += 1
@@ -109,13 +109,14 @@ class DFMSProxy:
     def connect_monitor_host(self):
         # After connecting we identify ourselves using our ID with the monitor
         the_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
-        the_socket.sendall("%-80s" % (self._proxy_id))
-        logger.info('Identified as %s with monitor', self._proxy_id)
+        the_socket.sendall(b"%-80s" % six.b(self._proxy_id))
+        logger.info('Identifying ourselves as %s with monitor', self._proxy_id)
         ok = int(recvall(the_socket, 1))
         if not ok:
             the_socket.shutdown(socket.SHUT_RDWR)
             the_socket.close()
             raise Exception("Monitor rejected us due to duplicated ID")
+        logger.info('Identification successful!')
         self.monitor_socket = the_socket
 
     def close_dfms_socket(self, sock, tag):
@@ -134,7 +135,7 @@ class DFMSProxy:
             if (just_re_connected):
                 just_re_connected = False
             inputready, _, _ = select.select(
-                    inputlist + self._dfms_sock_dict.values(), [], [], delay)
+                    inputlist + list(self._dfms_sock_dict.values()), [], [], delay)
             for the_socket in inputready:
                 if (just_re_connected):
                     continue
@@ -180,17 +181,19 @@ class DFMSProxy:
                     # from one of the DFMS sockets
                     data = the_socket.recv(BUFF_SIZE)
                     tag = self._dfms_sock_tag_dict.get(the_socket, None)
-                    logger.debug("Received {0} from DFMS manager".format(tag))
+                    logger.debug("Received {0} from DFMS manager".format(b2s(tag)))
                     if (tag is None):
                         logger.error('Tag for dfms socket {0} is gone'.format(the_socket))
                     else:
-                        send_to_monitor(self.monitor_socket, delimit.join([str(tag), data]))
-                        logger.debug("Sent {0} to Monitor".format(tag))
+                        send_to_monitor(self.monitor_socket, delimit.join([tag, data]))
+                        logger.debug("Sent {0} to Monitor".format(b2s(tag)))
                         if (len(data) == 0):
                             self.close_dfms_socket(the_socket, tag)
 
-if __name__ == '__main__':
-    parser = optparse.OptionParser()
+def run(parser, args):
+    '''
+    Entry point for the dlg proxy command
+    '''
     parser.add_option("-d", "--dfms_host", action="store", type="string",
                     dest="dfms_host", help="DFMS drop manager host IP (required)")
     parser.add_option("-m", "--monitor_host", action="store", type="string",
@@ -206,7 +209,7 @@ if __name__ == '__main__':
                   help="Whether to log debug info")
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help="The ID of this proxy for on the monitor side (required)", default=None)
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args)
     if (None == options.dfms_host or None == options.monitor_host or None == options.id):
         parser.print_help()
         sys.exit(1)
@@ -222,3 +225,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logger.warning("Ctrl C - Stopping DFMS Proxy server")
         sys.exit(1)
+
+if __name__ == '__main__':
+    run(sys.argv)

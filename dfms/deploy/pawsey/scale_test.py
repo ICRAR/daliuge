@@ -37,8 +37,7 @@ import subprocess
 import sys
 import time
 
-from dfms import __git_version__ as git_commit
-from dfms.deploy.pawsey.example_client import fname_to_lgname
+from dfms import __git_version__ as git_commit, utils
 
 
 sub_tpl_str = """#!/bin/bash --login
@@ -156,7 +155,7 @@ class PawseyClient(object):
         self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
-        self._pip_name = fname_to_lgname(lg or pg) if lg or pg else 'None'
+        self._pip_name = utils.fname_to_pipname(lg or pg) if lg or pg else 'None'
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads

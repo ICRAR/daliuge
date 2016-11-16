@@ -25,7 +25,6 @@ like DMs and DIMs.
 """
 
 import logging
-import optparse
 import os
 import signal
 import sys
@@ -49,7 +48,7 @@ _terminating = False
 def launchServer(opts):
 
     # we might be called via __main__, but we want a nice logger name
-    logger = logging.getLogger('dfms.manager.cmdline')
+    logger = logging.getLogger(__name__)
     dmName = opts.dmType.__name__
 
     logger.info('Creating %s' % (dmName))
@@ -189,15 +188,12 @@ def setupLogging(opts):
 
     return fileHandler
 
-# Entry-point function for the dfmsNM script
-def dfmsNM(args=sys.argv):
+def dlgNM(parser, args):
     """
-    Entry point for the dfmsNM command-line script, which starts a
-    NodeManager and exposes it through Pyro and a REST interface.
+    Entry point for the dlg nm command
     """
 
     # Parse command-line and check options
-    parser = optparse.OptionParser()
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
@@ -227,15 +223,14 @@ def dfmsNM(args=sys.argv):
 
     start(options, parser)
 
-def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
+def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
     """
-    Common entry point for the dfmsDIM and dfmsMM command-line scripts. It
-    starts the corresponding CompositeManager and exposes it through Pyro and a
+    Common entry point for the dlgDIM and dlgMM command-line scripts. It
+    starts the corresponding CompositeManager and exposes it through a
     REST interface.
     """
 
     # Parse command-line and check options
-    parser = optparse.OptionParser()
     addCommonOptions(parser, dmPort)
     parser.add_option("-N", "--nodes", action="store", type="string",
                       dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default="")
@@ -254,27 +249,24 @@ def dfmsCompositeManager(args, dmType, acronym, dmPort, dmRestServer):
 
     start(options, parser)
 
-# Entry-point function for the dfmsDIM script
-def dfmsDIM(args=sys.argv):
+def dlgDIM(parser, args):
     """
-    Entry point for the dfmsDIM command-line script.
+    Entry point for the dlg dim command
     """
-    dfmsCompositeManager(args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT, CompositeManagerRestServer)
+    dlgCompositeManager(parser, args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT, CompositeManagerRestServer)
 
-# Entry-point function for the dfmsDIM script
-def dfmsMM(args=sys.argv):
+def dlgMM(parser, args):
     """
-    Entry point for the dfmsMM command-line script.
+    Entry point for the dlg mm command
     """
-    dfmsCompositeManager(args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
+    dlgCompositeManager(parser, args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
 
-def dfmsReplay(args=sys.argv):
+def dlgReplay(parser, args):
     """
-    Entry point for the dfmsReplay command-line script
+    Entry point for the dlg replay command
     """
 
     # Parse command-line and check options
-    parser = optparse.OptionParser()
     addCommonOptions(parser, REPLAY_DEFAULT_REST_PORT)
     parser.add_option("-S", "--status-file", action="store",
                       dest="status_file", help="File containing a continuous graph status dump", default=None)
@@ -295,22 +287,3 @@ def dfmsReplay(args=sys.argv):
     options.restType = ReplayManagerServer
 
     start(options, parser)
-
-if __name__ == '__main__':
-    # If this module is called directly, the first argument must be dfmsMM,
-    # dfmsNM or dfmsDIM, the rest of the arguments are the normal ones
-    if len(sys.argv) == 1:
-        print('Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0]))
-        sys.exit(1)
-    dm = sys.argv.pop(1)
-    if dm == 'dfmsNM':
-        dfmsNM()
-    elif dm == 'dfmsDIM':
-        dfmsDIM()
-    elif dm == 'dfmsMM':
-        dfmsMM()
-    elif dm == 'dfmsReplay':
-        dfmsReplay()
-    else:
-        print('Usage: %s [dfmsNM|dfmsDIM|dfmsMM|dfmsReplay] [options]' % (sys.argv[0]))
-        sys.exit(1)

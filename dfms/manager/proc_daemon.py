@@ -29,7 +29,6 @@ import logging
 import optparse
 import signal
 import socket
-import subprocess
 import sys
 import threading
 
@@ -42,6 +41,13 @@ from dfms.restutils import RestServer
 
 
 logger = logging.getLogger(__name__)
+
+def get_tool():
+    # This import is performed at runtime to avoid a circular dependency
+    # at import time with the tool module, which imports this module
+    # to make it available as a 'dlg' command
+    from dfms import tool
+    return tool
 
 class DfmsDaemon(RestServer):
     """
@@ -152,12 +158,11 @@ class DfmsDaemon(RestServer):
 
     # Methods to start and stop the individual managers
     def startNM(self):
-
-        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM']
-        args += ['--host', '0.0.0.0']
+        tool = get_tool()
+        args = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
-        self._nm_proc = subprocess.Popen(args)
+        self._nm_proc = tool.start_process('nm', args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
 
         # Registering the new NodeManager via zeroconf so it gets discovered
@@ -167,22 +172,21 @@ class DfmsDaemon(RestServer):
             self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
-        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM']
-        args += ['--host', '0.0.0.0']
+        tool = get_tool()
+        args  = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         if nodes:
             args += ['--nodes', ",".join(nodes)]
         logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
-        self._dim_proc = subprocess.Popen(args)
+        self._dim_proc = tool.start_process('dim', args)
         logger.info("Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid))
 
     def startMM(self):
-
-        args  = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsMM']
-        args += ['--host', '0.0.0.0']
+        tool = get_tool()
+        args  = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
-        self._mm_proc = subprocess.Popen(args)
+        self._mm_proc = tool.start_process('mm', args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
@@ -258,9 +262,7 @@ class DfmsDaemon(RestServer):
 
 
 terminating = False
-def run_with_cmdline(args=sys.argv):
-
-    parser = optparse.OptionParser()
+def run_with_cmdline(parser, args):
     parser.add_option('-m', '--master', action='store_true',
                       dest="master", help="Start this DFMS daemon as the master daemon", default=False)
     parser.add_option("--no-nm", action="store_true",
@@ -297,7 +299,3 @@ def run_with_cmdline(args=sys.argv):
     t = threading.Thread(target=daemon.start, args=('0.0.0.0', constants.DAEMON_DEFAULT_REST_PORT))
     t.start()
     signal.pause()
-
-if __name__ == '__main__':
-    # In case we get called directly...
-    run_with_cmdline(sys.argv)
