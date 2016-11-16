@@ -36,7 +36,7 @@ import os
 MAJOR   = 0
 MINOR   = 2
 PATCH   = 0
-RELEASE = False
+RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
 VERSION_FILE = 'dfms/version.py'
 
