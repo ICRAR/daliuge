@@ -27,4 +27,3 @@
 [run]
 source = dfms/
 omit = dfms/deploy/*
-parallel = True
