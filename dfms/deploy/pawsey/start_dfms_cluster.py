@@ -42,11 +42,10 @@ import threading
 import time
 import uuid
 
-from dfms import utils
+from dfms import utils, tool
 from dfms.deploy.pawsey import dfms_proxy
-from dfms.deploy.pawsey.example_client import MonitorClient
 from dfms.manager import cmdline as dfms_start
-from dfms.manager.client import NodeManagerClient
+from dfms.manager.client import NodeManagerClient, DataIslandManagerClient
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 
@@ -57,6 +56,10 @@ GRAPH_SUBMIT_WAIT_TIME = 10
 GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
+apps = (
+    "test.graphsRepository.SleepApp",
+    "test.graphsRepository.SleepAndCopyApp",
+)
 
 def check_host(host, port, timeout=5, check_with_session=False):
     """
@@ -125,16 +128,20 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     """
     host = host or '0.0.0.0'
     lv = 'v' * logv
-    dfms_start.dfmsNM(args=['cmdline.py', '-l', log_dir,
-    '-%s' % lv, '-H', host, '-m', '1024', '-t', str(max_threads), '--no-dlm'])
+    parser = optparse.OptionParser()
+    args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
+            str(max_threads), '--no-dlm']
+    dfms_start.dlgNM(parser, args)
 
 def start_dim(node_list, log_dir, logv=1):
     """
     Start data island manager
     """
     lv = 'v' * logv
-    dfms_start.dfmsDIM(args=['cmdline.py', '-l', log_dir, '-%s' % lv,
-    '-N', ','.join(node_list), '-H', '0.0.0.0', '-m', '2048'])
+    parser = optparse.OptionParser()
+    args = ['-l', log_dir, '-%s' % lv, '-N', ','.join(node_list),
+            '-H', '0.0.0.0', '-m', '2048']
+    dfms_start.dlgDIM(parser, args)
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -143,74 +150,58 @@ def start_mm(node_list, log_dir, logv=1):
     node_list:  a list of node address that host DIMs
     """
     lv = 'v' * logv
-    dfms_start.dfmsMM(args=['cmdline.py', '-l', log_dir,
-    '-N', ','.join(node_list), '-%s' % lv, '-H', '0.0.0.0', '-m', '2048'])
+    parser = optparse.OptionParser()
+    args = ['-l', log_dir, '-N', ','.join(node_list), '-%s' % lv,
+            '-H', '0.0.0.0', '-m', '2048']
+    dfms_start.dlgMM(parser, args)
 
-def submit_monitor_graph(dim_ip, lg_path, pg_path, dump_status, zerorun, app, mc, unrolled):
+def monitor_graph(host, port, dump_path):
     """
-    Submits a graph and then monitors the island manager
+    monitors the execution status of a graph by polling host/port
     """
-    logger.debug("dump_status = {0}".format(dump_status))
-    logger.info("Wait for {0} seconds before submitting graph to DIM".format(GRAPH_SUBMIT_WAIT_TIME))
-    time.sleep(GRAPH_SUBMIT_WAIT_TIME)
 
     # use monitorclient to interact with island manager
-    dc = mc._dc
-
-    # We are submitting a graph
-    if lg_path or pg_path:
-        mc._nodes = [dim_ip] + dc.nodes()
-        lgn, lg, pg_spec = mc.get_physical_graph(lg_path, pg_path, unrolled=unrolled)
-        logger.info("Submitting graph {0}".format(lgn))
-        del unrolled
-
-        mc.submit_single_graph(lg_path, pg_path, deploy=True, pg=(lgn, lg, pg_spec))
-        logger.info("graph {0} is successfully submitted".format(lgn))
+    dc = DataIslandManagerClient(host=host, port=port, timeout=MM_WAIT_TIME)
 
     # We want to monitor the status of the execution
-    if (dump_status is not None):
-        fp = os.path.dirname(dump_status)
-        if (not os.path.exists(fp)):
-            return
-        gfile = "{0}_g.log".format(dump_status)
-        sfile = "{0}_s.log".format(dump_status)
-        graph_dict = dict() # k - ssid, v - graph spec json obj
-        logger.debug("Ready to check sessions")
-        while (True):
-            #logger.debug("checking sessions")
-            sessions = dc.sessions()
-            #logger.debug("len(sessions) = {0}".format(len(sessions)))
-            #logger.debug("session0 = {0}".format(sessions[0]))
-            for session in sessions: #TODO the interval won't work for multiple sessions
-                stt = time.time()
-                ssid = session['sessionId']
-                #logger.debug("session id = {0}".format(ssid))
-                wgs = {}
-                wgs['ssid'] = ssid
-                wgs['gs'] = dc.graph_status(ssid) #TODO check error
-                time_str = '%.3f' % time.time()
-                wgs['ts'] = time_str
-                if (not graph_dict.has_key(ssid)):
-                    graph = dc.graph(ssid)
-                    graph_dict[ssid] = graph
-                    wg = {}
-                    wg['ssid'] = ssid
-                    wg['g'] = graph
-                    # append to file as a line
-                    with open(gfile, 'a') as fg:
-                        json.dump(wg, fg)
-                        fg.write(os.linesep)
-                # append to file as a line
-                with open(sfile, 'a') as fs:
-                    json.dump(wgs, fs)
-                    fs.write(os.linesep)
-                dt = time.time() - stt
-                if (dt < GRAPH_MONITOR_INTERVAL):
-                    try:
-                        time.sleep(GRAPH_MONITOR_INTERVAL - dt)
-                    except:
-                        pass
+    fp = os.path.dirname(dump_path)
+    if (not os.path.exists(fp)):
+        return
+    gfile = "{0}_g.log".format(dump_path)
+    sfile = "{0}_s.log".format(dump_path)
+    graph_dict = dict() # k - ssid, v - graph spec json obj
+    logger.debug("Ready to check sessions")
 
+    while True:
+
+        for session in dc.sessions(): #TODO the interval won't work for multiple sessions
+            stt = time.time()
+            ssid = session['sessionId']
+            wgs = {}
+            wgs['ssid'] = ssid
+            wgs['gs'] = dc.graph_status(ssid) #TODO check error
+            time_str = '%.3f' % time.time()
+            wgs['ts'] = time_str
+
+            if (not graph_dict.has_key(ssid)):
+                graph = dc.graph(ssid)
+                graph_dict[ssid] = graph
+                wg = {}
+                wg['ssid'] = ssid
+                wg['g'] = graph
+                # append to file as a line
+                with open(gfile, 'a') as fg:
+                    json.dump(wg, fg)
+                    fg.write(os.linesep)
+
+            # append to file as a line
+            with open(sfile, 'a') as fs:
+                json.dump(wgs, fs)
+                fs.write(os.linesep)
+
+            dt = time.time() - stt
+            if (dt < GRAPH_MONITOR_INTERVAL):
+                time.sleep(GRAPH_MONITOR_INTERVAL - dt)
 
 def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     """
@@ -226,11 +217,6 @@ def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     except Exception:
         logger.exception("DFMS proxy terminated unexpectedly")
         sys.exit(1)
-
-def submit_pg(monitor_client, physical_graph):
-    logger.info("Wait for {0} seconds before submitting graph to the Master Manager".format(GRAPH_SUBMIT_WAIT_TIME))
-    time.sleep(GRAPH_SUBMIT_WAIT_TIME)
-    monitor_client.submit_single_graph(None, deploy=True, pg=physical_graph)
 
 def set_env(rank):
     os.environ['PYRO_MAX_RETRIES'] = '10'
@@ -359,33 +345,47 @@ def main():
                 max_threads=options.max_threads,
                 host=None if options.all_nics else origin_ip)
         else:
-            # unroll the graph first while starting node managers on other nodes
-            mc = MonitorClient('localhost', ISLAND_DEFAULT_REST_PORT, algo='metis',
-                                zerorun=options.zerorun, app=options.app)
-            unrolled = None
-            if options.logical_graph or options.physical_graph:
-                unrolled = mc.unroll_physical_graph(options.logical_graph, options.physical_graph)
 
-            # These are not NMs
+            # 'no_nms' are known not to be NMs
             no_nms = [origin_ip, 'None']
             if proxy_ip:
                 no_nms += [proxy_ip]
+            node_mgrs = [ip for ip in ip_adds if ip not in no_nms]
 
-            logger.info("A list of NM IPs: {0}".format(ip_adds))
-            logger.info("Starting island manager on host {0} in {1} seconds".format(origin_ip, DIM_WAIT_TIME))
-            nm_ips = [ip for ip in ip_adds if ip not in no_nms]
-            node_mgrs = check_hosts(nm_ips, NODE_DEFAULT_REST_PORT,
+            # unroll the graph first (if any) while starting node managers on other nodes
+            pgt = None
+            if options.logical_graph or options.physical_graph:
+                pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
+                if options.logical_graph:
+                    unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
+                    pgt = tool.partition(unrolled, pip_name, len(node_mgrs), options.num_islands, 'metis')
+                    del unrolled
+                else:
+                    pgt = json.loads(options.physical_graph)
+
+            # Check that which NMs are up and use only those form now on
+            node_mgrs = check_hosts(node_mgrs, NODE_DEFAULT_REST_PORT,
                                     check_with_session=options.check_with_session,
                                     timeout=MM_WAIT_TIME)
 
-            if options.dump:
-                arg02 = '{0}/monitor'.format(log_dir)
-                logger.info("Local monitor path: {0}".format(arg02))
-            else:
-                arg02 = None
-            threading.Thread(target=submit_monitor_graph,
-                            args=(origin_ip, options.logical_graph, options.physical_graph, arg02, options.zerorun, options.app, mc, unrolled)).start()
+            # We have a PGT, let's map it and submit it
+            if pgt:
+                pg = tool.resource_map(pgt, [origin_ip] + node_mgrs, pip_name, options.num_islands)
+                del pgt
+
+                def submit_and_monitor():
+                    host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
+                    tool.submit(host, port, pg)
+                    if options.dump:
+                        dump_path = '{0}/monitor'.format(log_dir)
+                        monitor_graph(host, port, dump_path)
+
+                threading.Thread(target=submit_and_monitor).start()
+
+            # Start the DIM
+            logger.info("Starting island manager on host %s", origin_ip)
             start_dim(node_mgrs, log_dir, logv=logv)
+
     elif (options.num_islands > 1):
         if (rank == 0):
             # master manager
@@ -413,27 +413,28 @@ def main():
             dim_ranks = comm.bcast(dim_ranks, root=0)
 
             # 3 unroll the graph while waiting for node managers to start
-            mc_unroll = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT,
-                algo='metis', zerorun=options.zerorun, app=options.app)
-            unrolled = mc_unroll.unroll_physical_graph(options.logical_graph, options.physical_graph)
+            pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
+            if options.logical_graph:
+                unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
+                pgt = tool.partition(unrolled, pip_name, len(ip_list) - 1, options.num_islands, 'metis')
+                del unrolled
+            else:
+                pgt = json.loads(options.physical_graph)
+
             #logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
             node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT,
                                     check_with_session=options.check_with_session,
                                     timeout=MM_WAIT_TIME)
 
             # 4.  produce the physical graph based on the available node managers
-            # that have alraedy been running (we have to assume island manager
+            # that have already been running (we have to assume island manager
             # will run smoothly in the future)
             logger.info("Master Manager producing the physical graph")
-            mc = MonitorClient('localhost', MASTER_DEFAULT_REST_PORT,
-                algo='metis', zerorun=options.zerorun, app=options.app,
-                nodes=(dim_ip_list + node_mgrs), num_islands=options.num_islands)
-            lgn, lg, pg_spec = mc.get_physical_graph(options.logical_graph, options.physical_graph, unrolled=unrolled)
-            del unrolled
+            pg = tool.resource_map(pgt, dim_ip_list + node_mgrs, pip_name, options.num_islands)
 
             # 5. parse the pg_spec to get the mapping from islands to node list
             dim_rank_nodes_dict = collections.defaultdict(set)
-            for drop in pg_spec:
+            for drop in pg:
                 dim_ip = drop['island']
                 # if (not dim_ip in dim_ip_list):
                 #     raise Exception("'{0}' node is not in island list {1}".format(dim_ip, dim_ip_list))
@@ -454,11 +455,15 @@ def main():
                 logger.warning("Not all DIMs were up and running: %d/%d", len(dim_ips_up), len(dim_ip_list))
 
             # 8. submit the graph in a thread (wait for mm to start)
-            pg = (lgn, lg, pg_spec)
-            threading.Thread(target=submit_pg, args=(mc, pg)).start()
+            def submit():
+                if not check_host('localhost', MASTER_DEFAULT_REST_PORT, timeout=GRAPH_SUBMIT_WAIT_TIME):
+                    logger.warning("Master Manager didn't come up in %d seconds", GRAPH_SUBMIT_WAIT_TIME)
+                tool.submit('localhost', MASTER_DEFAULT_REST_PORT, pg)
+            threading.Thread(target=submit).start()
 
-            # 9. start dfmsMM using islands IP addresses (this will block)
+            # 9. start dlgMM using islands IP addresses (this will block)
             start_mm(dim_ip_list, log_dir, logv=logv)
+
         else:
             dim_ranks = None
             dim_ranks = comm.bcast(dim_ranks, root=0)
@@ -466,7 +471,7 @@ def main():
             if (rank in dim_ranks):
                 logger.debug("Rank {0} is a DIM preparing for receiving".format(rank))
                 # island manager
-                # get a list of nodes that are its children from rank 0 (dfmsMM)
+                # get a list of nodes that are its children from rank 0 (MM)
                 nm_list = comm.recv(source=0)
                 # no need to wait for node managers since the master manager
                 # has already made sure they are up running

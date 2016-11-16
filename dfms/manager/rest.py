@@ -27,7 +27,6 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 import functools
 import json
 import logging
-import sys
 
 import bottle
 import pkg_resources
@@ -44,10 +43,8 @@ from dfms.restutils import RestServer, RestClient, RestClientException
 logger = logging.getLogger(__name__)
 
 def file_as_string(fname, enc='utf8'):
-    s = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
-    if sys.version_info[0] > 2:
-        return s.decode(enc)
-    return s
+    b = pkg_resources.resource_string(__name__, fname) # @UndefinedVariable
+    return utils.b2s(b, enc)
 
 def daliuge_aware(func):
 

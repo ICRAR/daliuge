@@ -21,30 +21,27 @@
 #
 #    chen.wu@icrar.org
 
-from optparse import OptionParser
-import os, datetime
-import sys
+import datetime
+import json
+import optparse
+import os
 import threading
 import traceback
 
 from bottle import route, run, request, get, static_file, template, redirect, response, HTTPResponse
+import pkg_resources
 
-from dfms import droputils, restutils
+from dfms import droputils, restutils, utils
 from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, PyrrosPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 from dfms.dropmake.pg_manager import PGManager
 from dfms.dropmake.scheduler import SchedulerException
 from dfms.manager.client import CompositeManagerClient
 from dfms.restutils import RestClientException
-import pkg_resources
-import json
 
 
-py   = sys.version_info
-py3k = py >= (3, 0, 0)
-if( py3k ):
-    b2s = lambda b: b.decode('utf-8')
-else:
-    b2s = lambda s: s
+def file_as_string(fname, enc='utf8'):
+    b = pkg_resources.resource_string(__name__, fname) # @UndefinedVariable
+    return utils.b2s(b, enc)
 
 #lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -160,7 +157,7 @@ def load_lg_editor():
         redirect('/lg_editor?lg_name={0}'.format(first_lg))
 
     if (lg_exists(lg_name)):
-        tpl = b2s(pkg_resources.resource_string(__name__, 'lg_editor.html')) # @UndefinedVariable
+        tpl = file_as_string('lg_editor.html')
         all_lgs = lg_repo_contents();
         return template(tpl, lg_json_name=lg_name, all_lgs=json.dumps(all_lgs))
     else:
@@ -177,7 +174,7 @@ def load_pg_viewer():
         redirect('/pg_viewer?pgt_view_name={0}'.format(DEFAULT_PGT_VIEW_NAME))
 
     if (lg_exists(pgt_name)):
-        tpl = b2s(pkg_resources.resource_string(__name__, 'pg_viewer.html')) # @UndefinedVariable
+        tpl = file_as_string('pg_viewer.html')
         return template(tpl, pgt_view_json_name=pgt_name)
     else:
         response.status = 404
@@ -189,7 +186,7 @@ def show_gantt_chart():
     Restful interface to show the gantt chart
     """
     pgt_id = request.query.get('pgt_id')
-    tpl = b2s(pkg_resources.resource_string(__name__, 'matrix_vis.html')) # @UndefinedVariable
+    tpl = file_as_string('matrix_vis.html')
     return template(tpl, pgt_view_json_name=pgt_id, vis_action="pgt_gantt_chart")
 
 @get('/pgt_gantt_chart')
@@ -211,7 +208,7 @@ def show_schedule_mat():
     Restful interface to show the gantt chart
     """
     pgt_id = request.query.get('pgt_id')
-    tpl = b2s(pkg_resources.resource_string(__name__, 'matrix_vis.html')) # @UndefinedVariable
+    tpl = file_as_string('matrix_vis.html')
     return template(tpl, pgt_view_json_name=pgt_id, vis_action="pgt_schedule_mat")
 
 @get('/pgt_schedule_mat')
@@ -323,7 +320,7 @@ def gen_pgt():
 
             pgt_id = pg_mgr.add_pgt(pgt, lg_name)
             part_info = pgt.get_partition_info()
-            tpl = b2s(pkg_resources.resource_string(__name__, 'pg_viewer.html')) # @UndefinedVariable
+            tpl = file_as_string('pg_viewer.html')
             return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
         except GraphException as ge:
             response.status = 500
@@ -353,7 +350,7 @@ https://github.com/ICRAR/daliuge-logical-graphs
 
 """
 
-    class NoFormattedEpilogParser(OptionParser):
+    class NoFormattedEpilogParser(optparse.OptionParser):
         def format_epilog(self, formatter):
             return self.epilog
 
@@ -368,10 +365,9 @@ https://github.com/ICRAR/daliuge-logical-graphs
     (options, args) = parser.parse_args()
     if options.lg_path is None or options.pgt_path is None:
         parser.print_help()
-        sys.exit(1)
+        parser.exit(status=1)
     elif not os.path.exists(options.lg_path):
-        print("{0} does not exist.".format(options.lg_path))
-        sys.exit(1)
+        parser.error("{0} does not exist.".format(options.lg_path))
 
     try:
         os.makedirs(options.pgt_path)

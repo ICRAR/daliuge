@@ -44,7 +44,6 @@ def import_node_mgr():
 
 def import_start_cluster():
     import dfms.deploy.pawsey.dfms_proxy as dfms_proxy
-    from dfms.deploy.pawsey.example_client import MonitorClient
     import dfms.deploy.pawsey.example_client as exclient
     from dfms.manager.client import DataIslandManagerClient
     import dfms.manager.cmdline as dfms_start

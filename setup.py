@@ -176,11 +176,7 @@ setup(
       test_suite="test",
       entry_points= {
           'console_scripts':[
-              'dfmsNM=dfms.manager.cmdline:dfmsNM',
-              'dfmsDIM=dfms.manager.cmdline:dfmsDIM',
-              'dfmsMM=dfms.manager.cmdline:dfmsMM',
-              'dfmsReplay=dfms.manager.cmdline:dfmsReplay',
-              'dfmsDaemon=dfms.manager.proc_daemon:run_with_cmdline'
+              'dlg=dfms.tool:run', # One tool to rule them all
           ],
       }
 )
