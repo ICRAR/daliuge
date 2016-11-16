@@ -40,8 +40,6 @@ import collections
 import errno
 import json
 import logging
-import optparse
-import os
 import select
 import socket
 import struct
@@ -446,14 +444,14 @@ class DFMSMonitor:
 
         try:
             send_to_dfms(proxy_socket, delimit.join([tag, data]))
-            logger.debug("Sent data from client %s to proxy", tag)
+            logger.debug("Sent data from client %s to proxy", tag_str)
         except socket.error:
             logger.warning("Error while sending data to proxy, closing proxy connection")
             self.close_socket(proxy_socket)
 
-if __name__ == '__main__':
 
-    parser = optparse.OptionParser()
+def run(parser, args):
+
     parser.add_option("-H", "--host", action="store", type="string",
                     dest="host", help="The network interface the monitor is bind",
                     default='0.0.0.0')
@@ -463,16 +461,13 @@ if __name__ == '__main__':
     parser.add_option("-c", "--client_port", action="store", type="int",
                     dest="client_port", help = "The proxy port exposed to the client",
                     default=default_client_base_port)
-    parser.add_option("-l", "--log_dir", action="store", type="string",
-                    dest="log_dir", help="log directory for dfms monitor server", default=os.path.realpath(__file__))
     parser.add_option("-p", "--publication_port", action="store", type="int",
                       dest="publication_port", help="Port used to publish the list of proxies for clients to look at", default=default_publication_port)
     parser.add_option("-d", "--debug",
                   action="store_true", dest="debug", default=False,
                   help="Whether to log debug info")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args)
 
-    logfile = "{0}/dfms_monitor.log".format(os.path.dirname(options.log_dir))
     if (options.debug):
         ll = logging.DEBUG
     else:
@@ -485,3 +480,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logger.warning("Ctrl C - Stopping DFMS Monitor server")
         sys.exit(1)
+
+if __name__ == '__main__':
+    run(sys.argv)
