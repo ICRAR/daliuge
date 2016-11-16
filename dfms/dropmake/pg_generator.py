@@ -580,6 +580,7 @@ class PGT(object):
                               # and inter-comp_island
         self._merge_parts = False
         self._island_labels = ['Data', 'Compute']
+        self._data_movement = None
 
     def _can_merge(self, new_num_parts):
         if (new_num_parts <= 0):
@@ -616,9 +617,27 @@ class PGT(object):
         return int(math.ceil(leng / 10.0))
 
     def get_partition_info(self):
-        return "No partitioning. - Completion time: {0} - Min exec time: {1}"\
-        .format(DAGUtil.get_longest_path(self.dag, show_path=False)[1],
-        self.pred_exec_time(app_drop_only=True))
+        # return "No partitioning. - Completion time: {0} - "\
+        # "Data movement: {2} - Min exec time: {1}"\
+        # .format(self.pred_exec_time(),
+        # self.pred_exec_time(app_drop_only=True),
+        # 0)
+        return "Raw_unrolling"
+
+    @property
+    def result(self):
+        ret = {}
+        ret['algo'] = self.get_partition_info()
+        ret['min_exec_time'] = self.pred_exec_time(app_drop_only=True)
+        ret['total_data_movement'] = self.data_movement
+        ret['exec_time'] = self.pred_exec_time()
+        if (self._merge_parts and self._partition_merged > 0):
+            ret['num_islands'] = self._partition_merged
+        self._extra_result(ret)
+        return ret
+
+    def _extra_result(self, ret):
+        pass
 
     @property
     def dag(self):
@@ -630,6 +649,15 @@ class PGT(object):
         if both u and v is allocated to the same DropIsland
         """
         return self._dag
+
+    @property
+    def data_movement(self):
+        if (self._data_movement is not None):
+            return self._data_movement
+        elif (self.dag is not None):
+            G = self.dag
+            self._data_movement = sum(e[2].get('weight', 0) for e in G.edges(data=True))
+        return self._data_movement
 
     def pred_exec_time(self, app_drop_only=False, wk='weight'):
         """
@@ -950,32 +978,36 @@ class MetisPGTP(PGT):
     def _set_metis_log(self, logtext):
         self._metis_logs = logtext.split("\n")
 
-    def get_partition_info(self, entry_key=[' - Data movement:']):
+    def get_partition_info(self):
         """
         partition parameter and log entry
         return a string
         """
-        if (self._obj_type == 'vol'):
-            min_g = "Total comm. volume"
-        else:
-            min_g = "Edge cut"
-        if (self._ptype == 'kway'):
-            pa = "K-way"
-        else:
-            pa = "Recursive bisect"
-        ret = []
-        pparam = "{0} partitions - Algo: {2} - Completion time: {4}"\
-        " - Min objective: {1} - Load balancing: {3}% - Min exec time: {5}"\
-        .format(self._num_parts, min_g, pa, 101 - self._u_factor,
-        self.pred_exec_time(),
-        #DAGUtil.get_longest_path(self.dag, show_path=False)[1],
-        self.pred_exec_time(app_drop_only=True))
-        ret.append(pparam)
-        for l in self._metis_logs:
-            for ek in entry_key:
-                if (l.startswith(ek)):
-                    ret.append(l)
-        return " ".join(ret)
+        # if (self._obj_type == 'vol'):
+        #     min_g = "Total comm. volume"
+        # else:
+        #     min_g = "Edge cut"
+        # if (self._ptype == 'kway'):
+        #     pa = "K-way"
+        # else:
+        #     pa = "Recursive bisect"
+        # ret = []
+        # pparam = "{0} partitions - Algo: {2} - Completion time: {4}"\
+        # " - Min objective: {1} - Load balancing: {3}% - Min exec time: {5}"\
+        # .format(self._num_parts, min_g, pa, 101 - self._u_factor,
+        # self.pred_exec_time(),
+        # #DAGUtil.get_longest_path(self.dag, show_path=False)[1],
+        # self.pred_exec_time(app_drop_only=True))
+        # ret.append(pparam)
+        # for l in self._metis_logs:
+        #     for ek in entry_key:
+        #         if (l.startswith(ek)):
+        #             ret.append(l)
+        # return " ".join(ret)
+        return "METIS_LB{0}".format(101 - self._u_factor)
+
+    def _extra_result(self, ret):
+        ret['num_parts'] = self._num_parts
 
     def _parse_metis_output(self, metis_out, jsobj):
         """
@@ -1027,7 +1059,7 @@ class MetisPGTP(PGT):
                 gn = dict()
                 gn['key'] = start_k + gid
                 gn['isGroup'] = True
-                gn['text'] = '{1}_{0}'.format(gid, self._par_label)
+                gn['text'] = '{1}_{0}'.format(gid + 1, self._par_label)
                 node_list.append(gn)
                 inner_parts.append(gn)
 
@@ -1035,6 +1067,8 @@ class MetisPGTP(PGT):
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
+        See METIS usage:
+            http://metis.readthedocs.io/en/latest/index.html
         """
         if (self._num_parts == 1):
             edgecuts = 0
@@ -1059,7 +1093,8 @@ class MetisPGTP(PGT):
         # Output some partitioning result metadata
         if (outdict is not None):
             outdict['edgecuts'] = edgecuts
-        self._set_metis_log(" - Data movement: {0}".format(edgecuts))
+        #self._set_metis_log(" - Data movement: {0}".format(edgecuts))
+        self._data_movement = edgecuts
 
         if (visual):
             if (self.dag is None):
@@ -1112,7 +1147,9 @@ class MetisPGTP(PGT):
         if (new_num_parts == 1):
             (edgecuts, metis_parts) = (0, [0] * len(G.nodes()))
         else:
-            (edgecuts, metis_parts) = self._metis.part_graph(G, nparts=new_num_parts)
+            (edgecuts, metis_parts) = self._metis.part_graph(G,
+                                            nparts=new_num_parts,
+                                            ufactor=1)
         tmp_map = self._gid_island_id_map
         for i, island_id in enumerate(metis_parts):
             gid = G.nodes()[i]
@@ -1140,6 +1177,7 @@ class MetisPGTP(PGT):
                     gid1 = metis_out[e[1] - 1]
                     if (tmp_map[gid0] == tmp_map[gid1]):
                         e[2]['weight'] /= self._bw_ratio
+                self._data_movement = None # force to refresh data_movment
             # add GOJS groups for visualisation
             self._partition_merged = new_num_parts
             if (visual):
@@ -1147,16 +1185,16 @@ class MetisPGTP(PGT):
                  % (self._island_labels[island_type % len(self._island_labels)])
                 start_k = self._drop_list_len + 1
                 node_list = self._node_list
-                lengnow = len(node_list)
-                for gid in metis_parts:
+                start_i = len(node_list) + 1
+                for island_id in metis_parts:
                     gn = dict()
-                    gn['key'] = gid + lengnow
+                    gn['key'] = island_id + start_i
                     gn['isGroup'] = True
-                    gn['text'] = '{1}_{0}'.format(gid, island_label)
+                    gn['text'] = '{1}_{0}'.format(island_id + 1, island_label)
                     node_list.append(gn)
                 inner_parts = self._inner_parts
                 for ip in inner_parts:
-                    ip['group'] = tmp_map[ip['key'] - start_k] + lengnow
+                    ip['group'] = tmp_map[ip['key'] - start_k] + start_i
 
 class MySarkarPGTP(PGT):
     """
@@ -1176,10 +1214,10 @@ class MySarkarPGTP(PGT):
         self._num_parts = num_partitions
         self._max_dop = max_dop # max dop per partition
         self._par_label = par_label
-        self._lpl = None # longest path
+        #self._lpl = None # longest path
         self._ptime = None # partition time
         self._merge_parts = merge_parts
-        self._edge_cuts = None
+        #self._edge_cuts = None
         self._partitions = None
 
         self.init_scheduler()
@@ -1187,25 +1225,29 @@ class MySarkarPGTP(PGT):
     def init_scheduler(self):
         self._scheduler = MySarkarScheduler(self._drop_list, self._max_dop, dag=self.dag)
 
-    def get_partition_info(self, entry_key=None):
+    def get_partition_info(self):
         """
         partition parameter and log entry
         return a string
         """
-        if (self._merge_parts):
-            part_str = "{0} outer partitions requested, ".format(self._num_parts)
-            part_str1 = " inner "
-        else:
-            part_str = ""
-            part_str1 = ""
-        ed_str = " - Data movement: {0}".format(self._edge_cuts)
-        return "{6}{2}{8} partitions - Algo: {1} - Completion time: {3}"\
-        " - Max DoP: {5}{7} - Min exec time: {9}".format(self._num_parts,
-        type(self).__name__, self._num_parts_done, self._lpl, self._ptime,
-        self._max_dop, part_str, ed_str, part_str1, self.pred_exec_time(app_drop_only=True))
+        # if (self._merge_parts):
+        #     part_str = "{0} outer partitions requested, ".format(self._num_parts)
+        #     part_str1 = " inner "
+        # else:
+        #     part_str = ""
+        #     part_str1 = ""
+        # ed_str = " - Data movement: {0}".format(self._edge_cuts)
+        # return "{6}{2}{8} partitions - Algo: {1} - Completion time: {3}"\
+        # " - Max DoP: {5}{7} - Min exec time: {9}".format(self._num_parts,
+        # type(self).__name__, self._num_parts_done, self._lpl, self._ptime,
+        # self._max_dop, part_str, ed_str, part_str1, self.pred_exec_time(app_drop_only=True))
+        return "Edge Zero"
 
     def to_partition_input(self, outf):
         pass
+
+    def _extra_result(self, ret):
+        ret['num_parts'] = self._num_parts_done
 
     def merge_partitions(self, new_num_parts, form_island=False,
                         island_type=0, visual=False):
@@ -1222,27 +1264,26 @@ class MySarkarPGTP(PGT):
         groups = self._groups
         key_dict = self._grp_key_dict
         in_out_part_map = dict()
-        lengnow = len(node_list)
         outer_groups = set()
-        leng = len(self._drop_list)
         if (new_num_parts > 1):
-            self._edge_cuts = self._scheduler.merge_partitions(new_num_parts,
+            self._scheduler.merge_partitions(new_num_parts,
                                 bal_cond=island_type)
         else:
             # all parts share the same outer group (island) when # of island == 1
-            ppid = leng + len(groups) + 2
+            ppid = self._drop_list_len + len(groups) + 1
             for part in parts:
                 part.parent_id = ppid
-            self._edge_cuts = 0
-            for e in G.edges(data=True):
-                self._edge_cuts += e[2].get('weight', 0)
 
         start_k = self._drop_list_len + 1
+        start_i = len(node_list) + 1
 
         for part in parts:
-            gid = part.parent_id - lengnow
-            outer_groups.add(gid)
-            in_out_part_map[part.partition_id - start_k] = gid
+            # parent_id starts from
+            # len(self._drop_list) + len(self._parts) + 1, which is the same as
+            # start_i
+            island_id = part.parent_id - start_i # make sure island_id starts from 0
+            outer_groups.add(island_id)
+            in_out_part_map[part.partition_id - start_k] = island_id
 
         self._gid_island_id_map = in_out_part_map
         if (not form_island):
@@ -1250,7 +1291,7 @@ class MySarkarPGTP(PGT):
             for node in node_list:
                 ggid = node.get('group', None)
                 if (ggid is not None):
-                    new_ggid = in_out_part_map[ggid]
+                    new_ggid = in_out_part_map[ggid - start_k]
                     self._oid_gid_map[node['oid']] = new_ggid
             self._num_parts_done = new_num_parts
         else:
@@ -1258,43 +1299,52 @@ class MySarkarPGTP(PGT):
             if (island_type == 1):
                 for e in self.dag.edges(data=True):
                     #update edege weights within the same compute island
-                    if (in_out_part_map.get(key_dict[e[0]], -0.1) == in_out_part_map.get(key_dict[e[1]], -0.2)):
+                    if (in_out_part_map.get(key_dict[e[0]] - start_k, -0.1)\
+                     == in_out_part_map.get(key_dict[e[1]] - start_k, -0.2)):
+                        #print("e[2]['weight'] =", e[2]['weight'])
                         e[2]['weight'] /= self._bw_ratio
             if (visual):
                 island_label = '%s_Island'\
                  % (self._island_labels[island_type % len(self._island_labels)])
-                for gid in outer_groups:
+                for island_id in outer_groups:
                     gn = dict()
-                    gn['key'] = gid + lengnow
+                    gn['key'] = island_id + start_i
                     gn['isGroup'] = True
-                    gn['text'] = '{1}_{0}'.format(gid, island_label)
+                    gn['text'] = '{1}_{0}'.format(island_id + 1, island_label)
                     node_list.append(gn)
 
-
                 for ip in inner_parts:
-                    ip['group'] = in_out_part_map[ip['key'] - start_k] + lengnow
+                    ip['group'] = in_out_part_map[ip['key'] - start_k] + start_i
 
-        self._lpl = self.pred_exec_time()
+
+        # self_edge_cuts = 0
+        # for e in G.edges(data=True):
+        #     self_edge_cuts += e[2].get('weight', 0)
+        # self._edge_cuts = int(self_edge_cuts)
+        #self._lpl = self.pred_exec_time()
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
-        self._num_parts_done, self._lpl, self._ptime, parts = self._scheduler.partition_dag()
-        jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False, visual=visual)
+        self._num_parts_done, _, self._ptime, parts = self._scheduler.partition_dag()
+        jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False,
+                                                        visual=visual)
         G = self._scheduler._dag
         self._partitions = parts
         #logger.debug("The same DAG? ", (G == self.dag))
-        leng = len(self._drop_list)
+        leng = self._drop_list_len
+        start_k = leng + 1 # starting gojs group_id
 
-        key_dict = dict() #k - gojs key, v - gojs group id
+        key_dict = dict() #k - gojs key, v - gojs group_id
         groups = set()
         node_list = jsobj['nodeDataArray']
         for node in node_list:
-            gid = G.node[node['key']]['gid']
+            gid = G.node[node['key']]['gid'] # gojs group_id
             if (gid is None):
-                raise GPGTException("Node {0} does not have a Partition".format(node['key']))
+                raise GPGTException("Node {0} does not have a Partition"\
+                                    .format(node['key']))
             node['group'] = gid
             key_dict[node['key']] = gid
             groups.add(gid)
-            self._oid_gid_map[node['oid']] = gid
+            self._oid_gid_map[node['oid']] = gid - start_k # real gid starts from 0
 
         inner_parts = []
         for gid in groups:
@@ -1302,6 +1352,8 @@ class MySarkarPGTP(PGT):
             gn['key'] = gid
             #logger.debug("group key = {0}".format(gid))
             gn['isGroup'] = True
+            # gojs group_id label starts from 1
+            # so "gid - leng" instead of "gid - start_k"
             gn['text'] = '{1}_{0}'.format((gid - leng), self._par_label)
             node_list.append(gn)
             inner_parts.append(gn)
@@ -1325,7 +1377,9 @@ class MySarkarPGTP(PGT):
             return jsobj
 
 class MinNumPartsPGTP(MySarkarPGTP):
-    def __init__(self, drop_list, deadline, num_partitions=0, par_label="Partition", max_dop=8, merge_parts=False, optimistic_factor=0.5):
+    def __init__(self, drop_list, deadline, num_partitions=0,
+                    par_label="Partition", max_dop=8, merge_parts=False,
+                    optimistic_factor=0.5):
         """
         num_partitions: 0 - only do the initial logical partition
                         >1 - does logical partition, partition mergeing and
@@ -1333,11 +1387,19 @@ class MinNumPartsPGTP(MySarkarPGTP):
         """
         self._deadline = deadline
         self._opf = optimistic_factor
-        super(MinNumPartsPGTP, self).__init__(drop_list, num_partitions, par_label, max_dop, merge_parts)
-        self._extra_drops = None # force it to re-calculate the extra drops due to extra links during linearisation
+        super(MinNumPartsPGTP, self).__init__(drop_list, num_partitions,
+                                        par_label, max_dop, merge_parts)
+        # force it to re-calculate the extra drops due to extra links
+        # during linearisation
+        self._extra_drops = None
+
+    def get_partition_info(self):
+        return "Lookahead"
 
     def init_scheduler(self):
-        self._scheduler = MinNumPartsScheduler(self._drop_list, self._deadline, max_dop=self._max_dop, dag=self.dag, optimistic_factor=self._opf)
+        self._scheduler = MinNumPartsScheduler(self._drop_list, self._deadline,
+                            max_dop=self._max_dop, dag=self.dag,
+                            optimistic_factor=self._opf)
 
 class PSOPGTP(MySarkarPGTP):
     def __init__(self, drop_list, par_label="Partition", max_dop=8,
@@ -1350,6 +1412,9 @@ class PSOPGTP(MySarkarPGTP):
         self._swarm_size = swarm_size
         super(PSOPGTP, self).__init__(drop_list, 0, par_label, max_dop, False)
         self._extra_drops = None
+
+    def get_partition_info(self):
+        return "Particle Swarm"
 
     def init_scheduler(self):
         self._scheduler = PSOScheduler(self._drop_list, max_dop=self._max_dop,

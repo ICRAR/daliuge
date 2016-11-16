@@ -324,7 +324,8 @@ def gen_pgt():
                 pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=int(part))
             else:
                 pgt_id = pg_mgr.add_pgt(pgt, lg_name)
-            part_info = pgt.get_partition_info()
+            #part_info = pgt.get_partition_info()
+            part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result.items()])
             tpl = b2s(pkg_resources.resource_string(__name__, 'pg_viewer.html')) # @UndefinedVariable
             return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
         except GraphException as ge:

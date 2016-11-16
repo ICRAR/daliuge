@@ -407,9 +407,11 @@ class Scheduler(object):
             if (e[2]['weight'] == 0):
                 e[2]['weight'] = 1
         #logger.debug(G.nodes(data=True))
-        (edgecuts, metis_parts) = metis.part_graph(G, nparts=num_partitions)
+        (edgecuts, metis_parts) = metis.part_graph(G,
+                                                   nparts=num_partitions,
+                                                   ufactor=1)
         #assert(len(metis_parts) == len(G.nodes())) #test only
-        for i, pt in enumerate(metis_parts):
+        for i, pt in enumerate(metis_parts): # note min(pt) == 0
             parent_id = pt + st_gid
             child_part = self._part_dict[G.nodes()[i]]
             child_part.parent_id = parent_id
