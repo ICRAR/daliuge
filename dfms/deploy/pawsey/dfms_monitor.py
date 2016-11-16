@@ -47,8 +47,10 @@ import sys
 import threading
 import time
 
+import six
 import six.moves.BaseHTTPServer as BaseHTTPServer  # @UnresolvedImport
 
+from dfms.utils import b2s as b2s
 
 BUFF_SIZE = 16384
 outstanding_conn = 20
@@ -62,7 +64,7 @@ delimit = b'@#%!$'
 dl = len(delimit)
 
 def recvall(sock, count):
-    buf = ''
+    buf = b''
     while count:
         # this will block
         newbuf = sock.recv(count)
@@ -104,13 +106,13 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
             if not self.monitor.proxy_ids:
-                self.wfile.write("No proxies available yet")
+                self.wfile.write(b"No proxies available yet")
                 return
 
-            aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host,proxyId,client_port) for proxyId, client_port in self.monitor.proxy_ids.items()]
-            html = "</li><li>".join(aEls)
-            html = "<ul><li>" + html + "</li></ul>"
-            self.wfile.write(html)
+            aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host,b2s(proxyId),client_port) for proxyId, client_port in self.monitor.proxy_ids.items()]
+            html = '</li><li>'.join(aEls)
+            html = '<ul><li>' + html + '</li></ul>'
+            self.wfile.write(six.b(html))
             return
 
         # Else print as JSON
@@ -171,7 +173,7 @@ class DFMSMonitor:
         if not create:
             return self.tag_dict[hashcode]
 
-        tag = b'{0}_{1}'.format(hashcode, time.time() - 1E9)
+        tag = b'%d_%f' % (hashcode, time.time() - 1E9)
         self.tag_dict[hashcode] = tag
         return tag
 
@@ -274,7 +276,7 @@ class DFMSMonitor:
     def remove_client_socket(self, sock):
         tag = self.tag_for_socket(sock, create=False)
         client_sockandaddr = self.client_sockets[tag]
-        logger.info("Closing client socket %r (%s)", client_sockandaddr.addr, tag)
+        logger.info("Closing client socket %r (%s)", client_sockandaddr.addr, b2s(tag))
         self.close_socket(sock, False)
         del self.client_sockets[tag]
         del self.tag_dict[hash(sock)]
@@ -334,16 +336,23 @@ class DFMSMonitor:
         # Read the proxy ID and check we don't have duplicates
         # We've been receiving HTTP requests on this socket from time to time,
         # so we quickly quick then out
-        proxy_id = recvall(proxysock, 80).strip()
+        proxy_id = recvall(proxysock, 80)
+        if proxy_id is None:
+            logger.info("Proxy disconnected quickly, forgetting about it")
+            self.close_socket(proxysock, True)
+            return
+
+        proxy_id = proxy_id.strip()
+        proxy_id_str = b2s(proxy_id)
         if proxy_id in self.proxy_ids or \
            proxy_id.startswith(b'GET ') or proxy_id.startswith(b'POST '):
-            logger.info('Proxy identified as %s, rejecting', proxy_id)
+            logger.info('Proxy identified as %s, rejecting', proxy_id_str)
             proxysock.sendall(b'0')
             self.close_socket(proxysock, True)
             return
 
         proxysock.sendall(b'1')
-        logger.info('Proxy identified as %s, fine', proxy_id)
+        logger.info('Proxy identified as %s, fine', proxy_id_str)
 
         client_listener_socket = self.add_client_listener()
         clientport = client_listener_socket.getsockname()[1]
@@ -368,12 +377,12 @@ class DFMSMonitor:
         # Unique per-client-connection tag
         tag = self.tag_for_socket(clientsock)
         if tag in self.client_sockets:
-            raise Exception("Duplicated tag {0}".format(tag))
+            raise Exception("Duplicated tag {0}".format(b2s(tag)))
         self.client_sockets[tag] = sockandaddr(clientsock, sock.getsockname())
 
         # Check for incoming data
         self.ifds.append(clientsock)
-        logger.info('Received new client connection %r -> %s (%s)', clientaddr, sock.getsockname(), tag)
+        logger.info('Received new client connection %r -> %s (%s)', clientaddr, sock.getsockname(), b2s(tag))
 
     def on_proxy_data(self, sock):
 
@@ -395,28 +404,30 @@ class DFMSMonitor:
             return
 
         tag = data[0:at]
+        tag_str = b2s(tag)
         logger.debug("Received %s from DFMS proxy", tag)
 
         if tag not in self.client_sockets:
-            logger.warning("Client %s has already disconnected, discarding data from proxy", tag)
+            logger.warning("Client %s has already disconnected, discarding data from proxy", tag_str)
             return
 
         client_sockandaddr = self.client_sockets[tag]
         if client_sockandaddr is None:
-            logger.warning("Couldn't find client for tag '%s' of proxy %r", tag, sock.getsockname())
+            logger.warning("Couldn't find client for tag '%s' of proxy %r", tag_str, sock.getsockname())
             return
         client_sock = client_sockandaddr.sock
 
         to_send = data[at + dl:]
         try:
             client_sock.sendall(to_send)
-            logger.debug("Sent data to client %s", tag)
+            logger.debug("Sent data to client %s", tag_str)
         except socket.error:
             logger.warning("Error while writing to client %r, we'll probably detect it later", client_sockandaddr.addr)
 
     def on_client_data(self, sock):
 
         tag = self.tag_for_socket(sock, create=False)
+        tag_str = b2s(tag)
 
         try:
             data = sock.recv(BUFF_SIZE)
@@ -427,11 +438,11 @@ class DFMSMonitor:
 
         # The client disconnected, remove it
         if not data:
-            logger.info("Client %s disconnected", tag)
+            logger.info("Client %s disconnected", tag_str)
             self.remove_client_socket(sock)
             return
 
-        logger.debug("Received data from client %s", tag)
+        logger.debug("Received data from client %s", tag_str)
         proxy_port = self.client_port_to_proxy_port[sock.getsockname()[1]]
         proxy_socket = None
         for port,proxy_sock in self.proxy_sockets.items():

@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
 """
 DFMS Proxy runs inside the Pawsey firewall
 --------------------------------------------------------------------------------
@@ -42,6 +41,9 @@ import struct
 import sys, logging
 import time
 
+import six
+
+from dfms.utils import b2s as b2s
 
 BUFF_SIZE = 16384
 conn_retry_timeout = 5
@@ -52,11 +54,11 @@ default_dfms_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
 logger = logging.getLogger(__name__)
-delimit = '@#%!$'
+delimit = b'@#%!$'
 dl = len(delimit)
 
 def recvall(sock, count):
-    buf = ''
+    buf = b''
     while count:
         # this will block
         newbuf = sock.recv(count)
@@ -107,7 +109,7 @@ class DFMSProxy:
     def connect_monitor_host(self):
         # After connecting we identify ourselves using our ID with the monitor
         the_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
-        the_socket.sendall("%-80s" % (self._proxy_id))
+        the_socket.sendall(b"%-80s" % six.b(self._proxy_id))
         logger.info('Identifying ourselves as %s with monitor', self._proxy_id)
         ok = int(recvall(the_socket, 1))
         if not ok:
@@ -133,7 +135,7 @@ class DFMSProxy:
             if (just_re_connected):
                 just_re_connected = False
             inputready, _, _ = select.select(
-                    inputlist + self._dfms_sock_dict.values(), [], [], delay)
+                    inputlist + list(self._dfms_sock_dict.values()), [], [], delay)
             for the_socket in inputready:
                 if (just_re_connected):
                     continue
@@ -179,12 +181,12 @@ class DFMSProxy:
                     # from one of the DFMS sockets
                     data = the_socket.recv(BUFF_SIZE)
                     tag = self._dfms_sock_tag_dict.get(the_socket, None)
-                    logger.debug("Received {0} from DFMS manager".format(tag))
+                    logger.debug("Received {0} from DFMS manager".format(b2s(tag)))
                     if (tag is None):
                         logger.error('Tag for dfms socket {0} is gone'.format(the_socket))
                     else:
-                        send_to_monitor(self.monitor_socket, delimit.join([str(tag), data]))
-                        logger.debug("Sent {0} to Monitor".format(tag))
+                        send_to_monitor(self.monitor_socket, delimit.join([tag, data]))
+                        logger.debug("Sent {0} to Monitor".format(b2s(tag)))
                         if (len(data) == 0):
                             self.close_dfms_socket(the_socket, tag)
 
