@@ -1427,14 +1427,14 @@ class MinNumPartsPGTP(MySarkarPGTP):
 
 class PSOPGTP(MySarkarPGTP):
     def __init__(self, drop_list, par_label="Partition", max_dop=8,
-    deadline=None, topk=30, swarm_size=40):
+    deadline=None, topk=30, swarm_size=40, merge_parts=False):
         """
         PSO-based PGTP
         """
         self._deadline = deadline
         self._topk = topk
         self._swarm_size = swarm_size
-        super(PSOPGTP, self).__init__(drop_list, 0, par_label, max_dop, False)
+        super(PSOPGTP, self).__init__(drop_list, 0, par_label, max_dop, merge_parts)
         self._extra_drops = None
 
     def get_partition_info(self):
