@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 
+import os
 import shutil
 import tempfile
 import unittest
@@ -28,7 +29,6 @@ import pkg_resources
 
 from dfms import tool, utils
 from dfms.restutils import RestClient, RestClientException
-import os
 
 
 lg_dir = pkg_resources.resource_filename(__name__, '.')  # @UndefinedVariable
