@@ -309,12 +309,12 @@ class CompositeManager(DROPManager):
         perPartition = collections.defaultdict(list)
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
-                msg = "DROP %s doesn't specify a %s attribute" % (dropSpec['oid'], self._partitionAttr)
+                msg = "Drop %s doesn't specify a %s attribute" % (dropSpec['oid'], self._partitionAttr)
                 raise InvalidGraphException(msg)
 
             partition = dropSpec[self._partitionAttr]
             if partition not in self._dmHosts:
-                msg = "DROP %s's %s %s does not belong to this DM" % (dropSpec['oid'], self._partitionAttr, partition)
+                msg = "Drop %s's %s %s does not belong to this DM" % (dropSpec['oid'], self._partitionAttr, partition)
                 raise InvalidGraphException(msg)
 
             perPartition[partition].append(dropSpec)
@@ -379,7 +379,7 @@ class CompositeManager(DROPManager):
             not_found = set(completedDrops) - set(self._graph)
             if not_found:
                 raise DaliugeException("UIDs for completed drops not found: %r", not_found)
-            logger.info('Moving DROPs to COMPLETED right away: %r', completedDrops)
+            logger.info('Moving Drops to COMPLETED right away: %r', completedDrops)
             completed_by_host = group_by_node(completedDrops, self._graph)
             self.replicate(sessionId, self._triggerDrops, "triggering drops",
                            port=constants.NODE_DEFAULT_REST_PORT,

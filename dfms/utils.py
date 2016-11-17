@@ -30,6 +30,7 @@ import logging
 import math
 import os
 import socket
+import sys
 import time
 import types
 import zlib
@@ -38,6 +39,14 @@ import six
 
 
 logger = logging.getLogger(__name__)
+
+if sys.version_info[0] > 2:
+    def b2s(b, enc='utf8'):
+        return b.decode(enc)
+else:
+    def b2s(b, enc='utf8'):
+        return b
+b2s.__doc__ = "Converts bytes into a string"
 
 def get_local_ip_addr():
     """
@@ -243,6 +252,16 @@ def createDirIfMissing(path):
         if e.errno != errno.EEXIST:
             raise
 
+def fname_to_pipname(fname):
+    """
+    Converts a graph filename (assuming it's a .json file) to its "pipeline"
+    name (the basename without the extension).
+    """
+    fname = fname.split('/')[-1]
+    if fname.endswith('.json'):
+        fname = fname[:-5]
+    return fname
+
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
     Escapes single and double quotes in a string. Useful to include commands
@@ -302,11 +321,13 @@ def terminate_or_kill(proc, timeout):
     the given timeout. If the process is still alive after the timeout it is
     killed.
     """
-
-    pid = proc.pid
-    logger.info('Terminating %d', pid)
+    if proc.poll() is not None:
+        return
+    logger.info('Terminating %d', proc.pid)
     proc.terminate()
+    wait_or_kill(proc, timeout)
 
+def wait_or_kill(proc, timeout):
     waitLoops = 0
     max_loops = math.ceil(timeout/0.1)
     while proc.poll() is None and waitLoops < max_loops:
@@ -315,7 +336,7 @@ def terminate_or_kill(proc, timeout):
 
     kill9 = waitLoops == max_loops
     if kill9:
-        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', pid, timeout)
+        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
         proc.kill()
     proc.wait()
 
