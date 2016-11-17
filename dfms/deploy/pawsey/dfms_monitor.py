@@ -491,6 +491,3 @@ def run(parser, args):
     except KeyboardInterrupt:
         logger.warning("Ctrl C - Stopping DFMS Monitor server")
         sys.exit(1)
-
-if __name__ == '__main__':
-    run(sys.argv)
