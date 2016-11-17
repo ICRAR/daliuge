@@ -53,8 +53,11 @@ install:
  - pip install .
  - python setup.py install
 
-# run the tests
-script: py.test --cov
+# run the tests, making sure subprocesses generate coverage information
+script:
+ - mkdir tmp
+ - echo -e "import coverage\ncoverage.process_startup()" > tmp/sitecustomize.py
+ - PYTHONPATH=$PWD/tmp py.test --cov
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
