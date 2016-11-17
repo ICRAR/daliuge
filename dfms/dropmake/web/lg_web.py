@@ -25,6 +25,7 @@ import datetime
 import json
 import optparse
 import os
+import signal
 import threading
 import traceback
 
@@ -404,6 +405,9 @@ https://github.com/ICRAR/daliuge-logical-graphs
     pgt_dir = options.pgt_path
     global pg_mgr
     pg_mgr = PGManager(pgt_dir)
+
+    # catch SIGTERM as SIGINT
+    signal.signal(signal.SIGTERM, lambda x,y: os.kill(os.getpid(), signal.SIGINT))
 
     bottle.run(host=options.host, server='wsgiref', port=options.port, debug=False,
         server_class=restutils.ThreadingWSGIServer, handler_class=restutils.LoggingWSGIRequestHandler)
