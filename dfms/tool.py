@@ -200,6 +200,7 @@ cmdwrap('replay', 'Starts a Replay Manager')('dfms.manager.cmdline:dlgReplay')
 cmdwrap('daemon', 'Starts a DALiuGE Daemon process')('dfms.manager.proc_daemon:run_with_cmdline')
 cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')('dfms.deploy.pawsey.dfms_proxy:run')
 cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dfms.deploy.pawsey.dfms_monitor:run')
+cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dfms.dropmake.web.lg_web:run')
 
 def _add_unroll_options(parser):
     parser.add_option('-L', '--logical-graph', action="store", dest='lg_path', type="string",
