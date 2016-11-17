@@ -78,10 +78,28 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, 3, merge_parts=True)
-            pgtp.json
+            #pgtp.json
+            pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
             # with open('/tmp/met_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
             #     f.write(pg_spec)
+
+    def test_metis_pgtp_gen_pg_island(self):
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        tgt_partnum = [15, 15, 10, 10, 5]
+        node_list = ['10.128.0.11', '10.128.0.12',
+                     '10.128.0.13', '10.128.0.14',
+                     '10.128.0.15', '10.128.0.16']
+        nb_islands = 2
+        nb_nodes = len(node_list) - nb_islands
+        for i, lgn in enumerate(lgnames):
+            fp = get_lg_fname(lgn)
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MetisPGTP(drop_list, nb_nodes, merge_parts=True)
+            pgtp.to_gojs_json(visual=False)
+            pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
+            pgtp.result(lazy=False)
 
     def test_mysarkar_pgtp(self):
         lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
@@ -102,7 +120,8 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list, 3, merge_parts=True)
-            pgtp.json
+            #pgtp.json
+            pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
             # with open('/tmp/sar_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
             #     f.write(pg_spec)
@@ -114,6 +133,22 @@ class TestPGGen(unittest.TestCase):
             #     dmc.append_graph(ssid, pg_spec)
             #     ret = dmc.deploy_session(ssid)
             #     print ret
+
+    def test_mysarkar_pgtp_gen_pg_island(self):
+        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        node_list = ['10.128.0.11', '10.128.0.12',
+                     '10.128.0.13', '10.128.0.14',
+                     '10.128.0.15', '10.128.0.16']
+        for i, lgn in enumerate(lgnames):
+            fp = get_lg_fname(lgn)
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MySarkarPGTP(drop_list, None, merge_parts=True)
+            pgtp.to_gojs_json(visual=False)
+            nb_islands = 2
+            pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
+            pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
+            pgtp.result()
 
     def test_minnumparts_pgtp(self):
         lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']

@@ -624,13 +624,13 @@ class PGT(object):
         # 0)
         return "Raw_unrolling"
 
-    @property
-    def result(self):
+    def result(self, lazy=True):
         ret = {}
         ret['algo'] = self.get_partition_info()
-        ret['min_exec_time'] = self.pred_exec_time(app_drop_only=True)
+        ret['min_exec_time'] = self.pred_exec_time(app_drop_only=True,
+                                                   force_answer=(not lazy))
         ret['total_data_movement'] = self.data_movement
-        ret['exec_time'] = self.pred_exec_time()
+        ret['exec_time'] = self.pred_exec_time(force_answer=(not lazy))
         if (self._merge_parts and self._partition_merged > 0):
             ret['num_islands'] = self._partition_merged
         self._extra_result(ret)
@@ -652,6 +652,9 @@ class PGT(object):
 
     @property
     def data_movement(self):
+        """
+        Return the TOTAL data movement
+        """
         if (self._data_movement is not None):
             return self._data_movement
         elif (self.dag is not None):
@@ -659,13 +662,19 @@ class PGT(object):
             self._data_movement = sum(e[2].get('weight', 0) for e in G.edges(data=True))
         return self._data_movement
 
-    def pred_exec_time(self, app_drop_only=False, wk='weight'):
+    def pred_exec_time(self, app_drop_only=False, wk='weight', force_answer=False):
         """
         Predict execution time using the longest path length
         """
         G = self.dag
+        if (G is None):
+            if (force_answer):
+                self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
+                G = self.dag
+            else:
+                return None
         if (app_drop_only):
-            lp = DAGUtil.get_longest_path(self.dag, show_path=True)[0]
+            lp = DAGUtil.get_longest_path(G, show_path=True)[0]
             return sum(G.node[u].get(wk, 0) for u in lp)
         else:
             return DAGUtil.get_longest_path(G, show_path=False)[1]
@@ -1064,6 +1073,7 @@ class MetisPGTP(PGT):
                 inner_parts.append(gn)
 
             self._inner_parts = inner_parts
+            self._node_list = node_list
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
@@ -1184,8 +1194,9 @@ class MetisPGTP(PGT):
                 island_label = '%s_Island'\
                  % (self._island_labels[island_type % len(self._island_labels)])
                 start_k = self._drop_list_len + 1
+                #start_i = len(node_list) + 1
+                start_i = start_k + self._num_parts_done
                 node_list = self._node_list
-                start_i = len(node_list) + 1
                 for island_id in metis_parts:
                     gn = dict()
                     gn['key'] = island_id + start_i
@@ -1257,8 +1268,8 @@ class MySarkarPGTP(PGT):
         if (not self._can_merge(new_num_parts)):
             return
 
-        G = self._scheduler._dag
-        node_list = self._node_list
+        #G = self._scheduler._dag
+        G = self.dag
         inner_parts = self._inner_parts
         parts = self._partitions
         groups = self._groups
@@ -1275,7 +1286,7 @@ class MySarkarPGTP(PGT):
                 part.parent_id = ppid
 
         start_k = self._drop_list_len + 1
-        start_i = len(node_list) + 1
+        start_i = start_k + self._num_parts_done
 
         for part in parts:
             # parent_id starts from
@@ -1288,11 +1299,18 @@ class MySarkarPGTP(PGT):
         self._gid_island_id_map = in_out_part_map
         if (not form_island):
             # update to new gid
-            for node in node_list:
-                ggid = node.get('group', None)
-                if (ggid is not None):
-                    new_ggid = in_out_part_map[ggid - start_k]
-                    self._oid_gid_map[node['oid']] = new_ggid
+            self_oid_gid_map = self._oid_gid_map
+            for gnode_g in G.nodes(data=True):
+                gnode = gnode_g[1]
+                oid = gnode['drop_spec']['oid']
+                ggid = gnode['gid'] - start_k
+                new_ggid = in_out_part_map[ggid]
+                self_oid_gid_map[oid] = new_ggid
+            # for node in node_list:
+            #     ggid = node.get('group', None)
+            #     if (ggid is not None):
+            #         new_ggid = in_out_part_map[ggid - start_k]
+            #         self._oid_gid_map[node['oid']] = new_ggid
             self._num_parts_done = new_num_parts
         else:
             self._partition_merged = new_num_parts
@@ -1306,6 +1324,7 @@ class MySarkarPGTP(PGT):
             if (visual):
                 island_label = '%s_Island'\
                  % (self._island_labels[island_type % len(self._island_labels)])
+                node_list = self._node_list
                 for island_id in outer_groups:
                     gn = dict()
                     gn['key'] = island_id + start_i
@@ -1324,57 +1343,58 @@ class MySarkarPGTP(PGT):
         #self._lpl = self.pred_exec_time()
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
-        self._num_parts_done, _, self._ptime, parts = self._scheduler.partition_dag()
-        jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False,
-                                                        visual=visual)
-        G = self._scheduler._dag
-        self._partitions = parts
+        self._num_parts_done, _, self._ptime, self._partitions = self._scheduler.partition_dag()
+        #G = self._scheduler._dag
+        G = self.dag
         #logger.debug("The same DAG? ", (G == self.dag))
-        leng = self._drop_list_len
-        start_k = leng + 1 # starting gojs group_id
-
-        key_dict = dict() #k - gojs key, v - gojs group_id
+        start_k = self._drop_list_len + 1 # starting gojs group_id
+        self_oid_gid_map = self._oid_gid_map
         groups = set()
-        node_list = jsobj['nodeDataArray']
-        for node in node_list:
-            gid = G.node[node['key']]['gid'] # gojs group_id
-            if (gid is None):
-                raise GPGTException("Node {0} does not have a Partition"\
-                                    .format(node['key']))
-            node['group'] = gid
-            key_dict[node['key']] = gid
+        key_dict = dict() #k - gojs key, v - gojs group_id
+        for gnode_g in G.nodes(data=True):
+            gnode = gnode_g[1]
+            oid = gnode['drop_spec']['oid']
+            gid = gnode['gid']
+            key_dict[gnode_g[0]] = gid
+            self_oid_gid_map[oid] = gid - start_k
             groups.add(gid)
-            self._oid_gid_map[node['oid']] = gid - start_k # real gid starts from 0
-
-        inner_parts = []
-        for gid in groups:
-            gn = dict()
-            gn['key'] = gid
-            #logger.debug("group key = {0}".format(gid))
-            gn['isGroup'] = True
-            # gojs group_id label starts from 1
-            # so "gid - leng" instead of "gid - start_k"
-            gn['text'] = '{1}_{0}'.format((gid - leng), self._par_label)
-            node_list.append(gn)
-            inner_parts.append(gn)
-
-        self._node_list = node_list
-        self._inner_parts = inner_parts
         self._groups = groups
         self._grp_key_dict = key_dict
 
-        # if (self._merge_parts):
-        #     pass
-        # else:
-        # get all the edge sum
-        self._edge_cuts = 0
-        for e in G.edges(data=True):
-            self._edge_cuts += e[2].get('weight', 0)
+        if (visual):
+            jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False,
+                                                            visual=visual)
 
-        if (string_rep):
-            return json.dumps(jsobj, indent=2)
+            node_list = jsobj['nodeDataArray']
+            for node in node_list:
+                gid = G.node[node['key']]['gid'] # gojs group_id
+                if (gid is None):
+                    raise GPGTException("Node {0} does not have a Partition"\
+                                        .format(node['key']))
+                node['group'] = gid
+                #key_dict[node['key']] = gid
+                #self._oid_gid_map[node['oid']] = gid - start_k # real gid starts from 0
+            inner_parts = []
+            for gid in groups:
+                gn = dict()
+                gn['key'] = gid
+                #logger.debug("group key = {0}".format(gid))
+                gn['isGroup'] = True
+                # gojs group_id label starts from 1
+                # so "gid - leng" instead of "gid - start_k"
+                gn['text'] = '{1}_{0}'.format((gid - start_k + 1), self._par_label)
+                node_list.append(gn)
+                inner_parts.append(gn)
+
+            self._node_list = node_list
+            self._inner_parts = inner_parts
+
+            if (string_rep and jsobj is not None):
+                return json.dumps(jsobj, indent=2)
+            else:
+                return jsobj
         else:
-            return jsobj
+            return None
 
 class MinNumPartsPGTP(MySarkarPGTP):
     def __init__(self, drop_list, deadline, num_partitions=0,
@@ -1419,144 +1439,6 @@ class PSOPGTP(MySarkarPGTP):
     def init_scheduler(self):
         self._scheduler = PSOScheduler(self._drop_list, max_dop=self._max_dop,
         deadline=self._deadline, dag=self.dag, topk=self._topk, swarm_size=self._swarm_size)
-
-class PyrrosPGTP(PGT):
-    """
-    DROP and GOJS representations of Physical Graph Template with Partitions
-    Based on PYRROS
-    http://www.cs.ucsb.edu/~tyang/papers/PYRROScode.html
-    """
-
-    def __init__(self, drop_list, num_partitions=1):
-        """
-        num_partitions:  number of partitions supplied by users (int)
-        """
-        super(PyrrosPGTP, self).__init__(drop_list)
-        self._pyrros_path = "pysched1"
-        if (num_partitions == 1):
-            self._num_parts = self.get_opt_num_parts()
-        else:
-            self._num_parts = num_partitions
-
-    def get_partition_info(self, entry_key=[' - Edgecut:']):
-        """
-        partition parameter and log entry
-        return a string
-        """
-        return "{0} partitions (asked) - Algorithm: {1}".format(self._num_parts, "Pyrros")
-
-    def to_partition_input(self, outf):
-        """
-        Convert to PYRROS format for mapping and decomposition
-        """
-        key_dict = dict() # key - oid, value - GOJS key
-        links_dict = dict()
-        drop_dict = dict() # key - oid, value - drop
-        for i, drop in enumerate(self._drop_list):
-            oid = drop['oid']
-            key_dict[oid] = i
-            drop_dict[oid] = drop
-
-        with open(outf, "w") as f:
-            f.write("{0}\n".format(len(self._drop_list)))
-            for i, drop in enumerate(self._drop_list):
-                oid = drop['oid']
-                myk = key_dict[oid]
-                tt = drop['type']
-                if ('plain' == tt):
-                    obk = 'consumers' # outbound keyword
-                    tw = 1
-                elif ('app' == tt):
-                    obk = 'outputs'
-                    tw = drop['tw']
-                f.write("{0} {1} {2}\n".format(myk, tw, 0))
-                if obk in drop:
-                    oel = []
-                    for oup in drop[obk]:
-                        oel.append(str(key_dict[oup]))
-                        if ('plain' == tt):
-                            oel.append(str(drop['dw']))
-                        elif ('app' == tt):
-                            oel.append(str(drop_dict[oup]['dw']))
-                    oel.append('-1')
-                    f.write("{0}\n".format(" ".join(oel)))
-            f.write("-1\n")
-
-    def _parse_pyrros_output(self, pyrros_out, jsobj):
-        """
-        parse pyrros result, and add group node into the GOJS json
-        """
-
-        key_dict = dict() #k - gojs key, v - gojs group id
-        groups = set()
-
-        start_k = len(self._drop_list) + 1
-        with open(pyrros_out, "r") as f:
-            num_pts = int(f.readline())
-            if (num_pts != self._num_parts):
-                #self._num_parts = num_pts
-                raise GPGTException("Inconsistent number of partitions: {0} != {1}".format(num_pts,
-                self._num_parts))
-
-            line = f.readline()
-            while (len(line) > 0):
-                #logger.debug("\t" + line)
-                la = line.split()
-                key_dict[int(la[0])] = int(la[1])
-                groups.add(int(la[1]))
-                line = f.readline()
-
-        node_list = jsobj['nodeDataArray']
-        for node in node_list:
-            if node['key'] in key_dict:
-                gid = key_dict[int(node['key'])] + start_k
-                node['group'] = gid
-                logger.debug("{0} --> {1}".format(node['key'], gid))
-            else:
-                logger.debug("Node without group: {0}".format(node['key']))
-
-        for gid in groups:
-            gn = dict()
-            gn['key'] = start_k + gid
-            logger.debug("group key = {0}".format(start_k + gid))
-            gn['isGroup'] = True
-            gn['text'] = 'Island_{0}'.format(gid)
-            node_list.append(gn)
-
-
-    def to_gojs_json(self, string_rep=True):
-        jsobj = super(PyrrosPGTP, self).to_gojs_json(string_rep=False)
-        #uid = uuid.uuid1()
-        uid = "pgtp"
-
-        pyrros_in = "/tmp/{0}_pyrros.in".format(uid)
-        pyrros_out = "/tmp/{0}_pyrros.out".format(uid)
-        remove_list = [pyrros_in, pyrros_out]
-        for f in remove_list:
-            if (os.path.exists(f)):
-                os.remove(f)
-        try:
-            self.to_partition_input(pyrros_in)
-            if (os.path.exists(pyrros_in) and os.stat(pyrros_in).st_size > 0):
-                cmd = "{0} -i {1} -p {2} -x {3}".format(self._pyrros_path,
-                pyrros_in, self._num_parts, pyrros_out)
-                ret = subprocess.call(cmd)
-                if (14848 == ret[0] and
-                os.path.exists(pyrros_out) and
-                os.stat(pyrros_out).st_size > 0):
-                    self._parse_pyrros_output(pyrros_out, jsobj)
-                    if (string_rep):
-                        return json.dumps(jsobj, indent=2)
-                    else:
-                        return jsobj
-                else:
-                    err_msg = "PYRROS Schedule failed:\n'{2}': {0}/\n{1}".format(ret[0], ret[1], cmd)
-                    raise GPGTException(err_msg)
-        finally:
-            for f in remove_list:
-                if (os.path.exists(f)):
-                    pass
-                    #os.remove(f)
 
 class LG():
     """
