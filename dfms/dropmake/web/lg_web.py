@@ -282,11 +282,13 @@ def gen_pgt():
             drop_list = lg.unroll_to_tpl()
             part = request.query.get('num_par')
             mp = request.query.get('merge_par')
-            mpp = True if '1' == mp else False
+            #mpp = True if '1' == mp else False
             try:
-                metis_num_islands = int(request.query.get('metis_num_islands'))
+                #print('num_islands', request.query.get('num_islands'))
+                num_islands = int(request.query.get('num_islands'))
             except:
-                metis_num_islands = 0
+                num_islands = 0
+            mpp = num_islands > 0
             if (part is None):
                 is_part = ''
                 pgt = PGT(drop_list)
@@ -300,14 +302,14 @@ def gen_pgt():
                     ufactor = 100 - int(request.query.get('max_load_imb')) + 1
                     if (ufactor <= 0):
                         ufactor = 1
-                    mpp = metis_num_islands > 0
                     pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor, merge_parts=mpp)
                 elif ('mysarkar' == algo):
                     pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
                 elif ('min_num_parts' == algo):
                     time_greedy = 1 - float(request.query.get('time_greedy')) / 100.0 # assuming between 1 to 100
                     pgt = MinNumPartsPGTP(drop_list, int(request.query.get('deadline')),
-                    int(part), par_label, int(request.query.get('max_dop')), merge_parts=False, optimistic_factor=time_greedy)
+                    int(part), par_label, int(request.query.get('max_dop')),
+                    merge_parts=mpp, optimistic_factor=time_greedy)
                 elif ('pso' == algo):
                     params = ['deadline', 'topk', 'swarm_size']
                     pars = [None, 30, 40]
@@ -317,16 +319,16 @@ def gen_pgt():
                         except:
                             continue
                     pgt = PSOPGTP(drop_list, par_label, int(request.query.get('max_dop')),
-                    deadline=pars[0], topk=pars[1], swarm_size=pars[2])
-                elif ('pyrros' == algo):
-                    pgt = PyrrosPGTP(drop_list, int(part))
+                    deadline=pars[0], topk=pars[1], swarm_size=pars[2], merge_parts=mpp)
                 else:
                     raise GraphException("Unknown partition algorithm: {0}".format(algo))
             if (mpp):
+                pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=num_islands)
+                """
                 if ('mysarkar' == algo):
                     pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=int(part))
                 elif ('metis' == algo):
-                    pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=metis_num_islands)
+                """
             else:
                 pgt_id = pg_mgr.add_pgt(pgt, lg_name)
             part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])

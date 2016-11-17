@@ -1356,6 +1356,21 @@
     window.json_editor_user = true;
   }
 
+  function copy_value(el_src, el_tgt) {
+    var nbsrc = document.getElementsByName(el_src);
+    var nbtgt = document.getElementsByName(el_tgt);
+    nbtgt[0].value = nbsrc[0].value;
+  }
+
+  function addHidden(theForm, key, value) {
+    // Create a hidden input element, and append it to the form:
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;'name-as-seen-at-the-server';
+    input.value = value;
+    theForm.appendChild(input);
+  }
+
   function genPGT() {
     var button = document.getElementById("SaveButton");
     if (button && button.disabled == false) {
@@ -1370,17 +1385,22 @@
     }
   }
 
-  function genPGTP() {
+  function genPGTP_metis() {
     var f = document.getElementById("pgtp_form");
     var h = document.getElementById("pgtp_lg_name");
     h.value = window.curr_lg_name.toString();
+    //copy_value("num_islands", "num_islands_metis");
+    //alert(document.getElementsByName("num_islands_metis")[0].value);
+    addHidden(f, "num_islands", document.getElementById("num_islands").value);
     f.submit();
   }
 
-  function genPGTP02() {
+  function genPGTP_edgezero() {
     var f = document.getElementById("pgtp_form_02");
     var h = document.getElementById("pgtp_lg_name_02");
     h.value = window.curr_lg_name.toString();
+    //copy_value("num_islands", "num_islands_edgezero");
+    addHidden(f, "num_islands", document.getElementById("num_islands").value);
     f.submit();
   }
 
@@ -1391,17 +1411,21 @@
     f.submit();
   }
 
-  function genPGTP04() {
+  function genPGTP_lookahead() {
     var f = document.getElementById("pgtp_form_04");
     var h = document.getElementById("pgtp_lg_name_04");
     h.value = window.curr_lg_name.toString();
+    //copy_value("num_islands", "num_islands_lookahead");
+    addHidden(f, "num_islands", document.getElementById("num_islands").value);
     f.submit();
   }
 
-  function genPGTP05() {
+  function genPGTP_pso() {
     var f = document.getElementById("pgtp_form_05");
     var h = document.getElementById("pgtp_lg_name_05");
     h.value = window.curr_lg_name.toString();
+    //copy_value("num_islands", "num_islands_pso");
+    addHidden(f, "num_islands", document.getElementById("num_islands").value);
     f.submit();
   }
 
@@ -1613,6 +1637,13 @@
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
+                <tr><td>
+                  # of Islands
+                </td><td><input type="number" name="num_islands" min="0" value="0" id="num_islands"></td></tr>
+                <tr><td/><td/></tr>
+                <tr><td/><td/></tr>
+                <tr><td/><td/></tr>
+                <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
@@ -1633,13 +1664,17 @@
               </td>
             </tr>
 
-            <tr><td>
+            <tr>
+            <!--
+            <td>
               # of islands
             </td>
+            -->
 
             <input type="hidden" name="min_goal" value="0">
-            <td><input type="number" name="metis_num_islands" min="0" value="0"></td>
-            <!--
+            <input type="hidden" name="num_islands_metis" value="0" id="num_islands_metis">
+            <!--<td><input type="number" name="metis_num_islands" min="0" value="0"></td>
+
             <td>
               <input type="radio" name="min_goal" value="0" checked> Edge cut
               <input type="radio" name="min_goal" value="1"> Total Communication Volume
@@ -1668,7 +1703,7 @@
             </td>
             <td>
               <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-              <button id="pgtButton" class="button" onclick="genPGTP()">Generate PGTP (direct graph partitioning)</button>
+              <button id="pgtButton" class="button" onclick="genPGTP_metis()">Generate PGTP (direct graph partitioning)</button>
             </td>
             </tr>
             </form>
@@ -1715,11 +1750,12 @@
         </td>
         <td>
           <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-          <button id="pgtButton02" class="button" onclick="genPGTP02()">Generate PGTP (edgezeroing) </button>
+          <button id="pgtButton02" class="button" onclick="genPGTP_edgezero()">Generate PGTP (edgezeroing) </button>
+          <input type="hidden" name="num_islands_edgezero" value="0">
         </td>
         </tr>
         </form>
-
+        <!--
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
         <tr><td/><td/></tr>
@@ -1762,6 +1798,7 @@
     </td>
     </tr>
     </form>
+    -->
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
@@ -1804,7 +1841,8 @@
   </td>
   <td>
     <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-    <button id="pgtButton04" class="button" onclick="genPGTP04()">Generate PGTP (Lookahead)</button>
+    <button id="pgtButton04" class="button" onclick="genPGTP_lookahead()">Generate PGTP (Lookahead)</button>
+    <input type="hidden" name="num_islands_lookahead" value="0">
   </td>
   </tr>
   </form>
@@ -1843,7 +1881,7 @@
   <tr>
     <td>Deadline (time unit)</td>
     <td>
-    <input type="number" name="deadline" value="None">
+    <input type="number" name="deadline" value="">
     </td>
   </tr>
   <tr>
@@ -1865,7 +1903,8 @@
 </td>
 <td>
   <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-  <button id="pgtButton05" class="button" onclick="genPGTP05()">Generate PGTP (particle swarm)</button>
+  <button id="pgtButton05" class="button" onclick="genPGTP_pso()">Generate PGTP (particle swarm)</button>
+  <input type="hidden" name="num_islands_pso" value="0">
 </td>
 </tr>
 </form>
