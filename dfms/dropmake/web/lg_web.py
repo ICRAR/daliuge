@@ -75,7 +75,13 @@ def lg_repo_contents():
             dirnames.remove('.git')
         if dirpath == lg_dir:
             continue
-        contents[b(dirpath)] = fnames
+
+        # Not great yet -- we should do a full second step pruning branches
+        # of the tree that are empty
+        files = [f for f in fnames if f.endswith('.json')]
+        if files:
+            contents[b(dirpath)] = files
+
     return contents
 
 @route('/static/<filepath:path>')
@@ -89,9 +95,9 @@ def jsonbody_post():
     Post graph JSON representation to LG or PG manager
     """
     # see the table in http://bottlepy.org/docs/dev/tutorial.html#html-form-handling
-    lg_name = request.POST['lg_name']
+    lg_name = request.forms['lg_name']
     if (lg_exists(lg_name)):
-        lg_content = request.POST['lg_content']
+        lg_content = request.forms['lg_content']
         lg_path = "{0}/{1}".format(lg_dir, lg_name)
         post_sem.acquire()
         try:
@@ -116,7 +122,11 @@ def jsonbody_get():
     #print "get jsonbody is called"
     lg_name = request.query.get('lg_name')
     if (lg_name is None or len(lg_name) == 0):
-        redirect('/jsonbody?lg_name={0}'.format(DEFAULT_LG_NAME))
+        all_lgs = lg_repo_contents()
+        first_dir = next(iter(all_lgs))
+        first_lg = first_dir + '/' + all_lgs[first_dir][0]
+        lg_name = first_lg
+
     if (lg_exists(lg_name)):
         #print "Loading {0}".format(lg_name)
         lgp = lg_path(lg_name)
@@ -151,7 +161,6 @@ def load_lg_editor():
     """
     lg_name = request.query.get('lg_name')
     if (lg_name is None or len(lg_name) == 0):
-        #lg_name = DEFAULT_LG_NAME
         all_lgs = lg_repo_contents()
         first_dir = next(iter(all_lgs))
         first_lg = first_dir + '/' + all_lgs[first_dir][0]
