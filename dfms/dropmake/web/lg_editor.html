@@ -1624,22 +1624,30 @@
               <td> Algorithm 1</td><td>Minimise data movement while subject to load balancing </td>
               </tr>
               <tr>
-              <td># of partitions </td><td><input type="number" name="num_par" min="2" value="5"></td>
+              <td># of nodes </td><td><input type="number" name="num_par" min="2" value="5"></td>
               </tr>
               <tr>
               <td>Partition label</td>
               <td>
-              <input type="text" name="par_label" value="Partition">
+              <input type="text" name="par_label" value="Node">
               </td>
             </tr>
+
             <tr><td>
-              Minimise
+              # of islands
             </td>
+
+            <input type="hidden" name="min_goal" value="0">
+            <td><input type="number" name="metis_num_islands" min="0" value="0"></td>
+            <!--
             <td>
               <input type="radio" name="min_goal" value="0" checked> Edge cut
               <input type="radio" name="min_goal" value="1"> Total Communication Volume
             </td>
+            -->
+
             </tr>
+
             <tr>
               <td>Load balancing</td><td><input type="number" name="max_load_imb" min="1" max="100" value="100">%</td>
             </tr>

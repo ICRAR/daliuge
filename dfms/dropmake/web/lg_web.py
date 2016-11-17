@@ -283,6 +283,10 @@ def gen_pgt():
             part = request.query.get('num_par')
             mp = request.query.get('merge_par')
             mpp = True if '1' == mp else False
+            try:
+                metis_num_islands = int(request.query.get('metis_num_islands'))
+            except:
+                metis_num_islands = 0
             if (part is None):
                 is_part = ''
                 pgt = PGT(drop_list)
@@ -296,7 +300,8 @@ def gen_pgt():
                     ufactor = 100 - int(request.query.get('max_load_imb')) + 1
                     if (ufactor <= 0):
                         ufactor = 1
-                    pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor)
+                    mpp = metis_num_islands > 0
+                    pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor, merge_parts=mpp)
                 elif ('mysarkar' == algo):
                     pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
                 elif ('min_num_parts' == algo):
@@ -317,11 +322,13 @@ def gen_pgt():
                     pgt = PyrrosPGTP(drop_list, int(part))
                 else:
                     raise GraphException("Unknown partition algorithm: {0}".format(algo))
-            if (mpp and 'mysarkar' == algo):
-                pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=int(part))
+            if (mpp):
+                if ('mysarkar' == algo):
+                    pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=int(part))
+                elif ('metis' == algo):
+                    pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=metis_num_islands)
             else:
                 pgt_id = pg_mgr.add_pgt(pgt, lg_name)
-            #part_info = pgt.get_partition_info()
             part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])
             tpl = file_as_string('pg_viewer.html')
             return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)

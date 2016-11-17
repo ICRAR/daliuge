@@ -1162,9 +1162,11 @@ class MetisPGTP(PGT):
                                             nparts=new_num_parts,
                                             ufactor=1)
         tmp_map = self._gid_island_id_map
+        islands = set()
         for i, island_id in enumerate(metis_parts):
             gid = G.nodes()[i]
             tmp_map[gid] = island_id
+            islands.add(island_id)
         if (not form_island):
             ogm = self._oid_gid_map
             gnodes = GG.nodes(data=True)
@@ -1198,7 +1200,8 @@ class MetisPGTP(PGT):
                 #start_i = len(node_list) + 1
                 start_i = start_k + self._num_parts_done
                 node_list = self._node_list
-                for island_id in metis_parts:
+                for island_id in islands:
+                    #print('island_id = ', island_id)
                     gn = dict()
                     gn['key'] = island_id + start_i
                     gn['isGroup'] = True
