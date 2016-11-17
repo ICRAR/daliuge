@@ -69,7 +69,6 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient('localhost', lgweb_port, 10)
 
         # new graphs cannot currently be added
-        
         form_data = {'lg_name': 'new.json', 'lg_content': '{"id": 1, "name": "example"}'}
         self.assertRaises(RestClientException, c._post_form, '/jsonbody', form_data)
 
