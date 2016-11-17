@@ -20,12 +20,10 @@
 #    MA 02111-1307  USA
 #
 import logging
-import subprocess
-import sys
 import time
 import unittest
 
-from dfms import drop
+from dfms import drop, tool
 from dfms.manager import client
 from dfms.utils import terminate_or_kill
 from test.manager import testutils
@@ -74,8 +72,8 @@ class TestBigGraph(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
 
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsNM', '-H', hostname, '-qq']
-        self.dmProcess = subprocess.Popen(args)
+        args = ['-H', hostname, '-qq']
+        self.dmProcess = tool.start_process('nm', args)
 
     def tearDown(self):
         terminate_or_kill(self.dmProcess, 5)
@@ -96,11 +94,10 @@ class TestBigGraph(unittest.TestCase):
 
         sessionId = 'lala'
         restPort  = 8888
-        args = [sys.executable, '-m', 'dfms.manager.cmdline', 'dfmsDIM', \
-                '--port', str(restPort), '-N', hostname, '-qq']
+        args = ['--port', str(restPort), '-N', hostname, '-qq']
 
         c = client.NodeManagerClient(port=restPort)
-        dimProcess = subprocess.Popen(args)
+        dimProcess = tool.start_process('dim', args)
 
         with testutils.terminating(dimProcess, timeout):
             c.create_session(sessionId)

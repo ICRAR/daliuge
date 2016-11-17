@@ -48,6 +48,7 @@ Examples of logical graph node JSON representation
 
 """
 
+from collections import defaultdict
 import collections
 import datetime
 import json
@@ -57,10 +58,10 @@ import os
 import random
 import subprocess
 import time
-from collections import defaultdict
 
 import networkx as nx
 import numpy as np
+import six
 
 from dfms.drop import dropdict
 from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
@@ -979,7 +980,7 @@ class MetisPGTP(PGT):
         #     if (e[2]['weight'] == 0):
         #         e[2]['weight'] = 1
         if (self._drop_list_len > 1e7):
-            import resource, gc
+            import resource
             logger.info("Max RSS after creating the Graph: %.2f GB"\
             %(resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2))
         return G
@@ -1091,7 +1092,7 @@ class MetisPGTP(PGT):
                  total volume minimisation.")
 
             if (self._drop_list_len > 1e7):
-                import resource, gc
+                import resource
                 logger.info("RSS before METIS partitioning: %.2f GB"\
                 %(resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2))
 
@@ -1445,19 +1446,22 @@ class LG():
     An object representation of Logical Graph
     """
 
-    def __init__(self, json_path, ssid=None):
+    def __init__(self, f, ssid=None):
         """
         parse JSON into LG object graph first
         """
         self._g_var = []
-        if (not os.path.exists(json_path)):
-            raise GraphException("Logical graph {0} not found".format(json_path))
+        if isinstance(f, six.string_types):
+            if (not os.path.exists(f)):
+                raise GraphException("Logical graph {0} not found".format(f))
+            f = open(f)
         if (ssid is None):
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%dT%H:%M:%S')
         self._session_id = ssid
-        with open(json_path) as df:
-            lg = json.load(df)
+
+        with f:
+            lg = json.load(f)
             self._done_dict = dict()
             self._group_q = collections.defaultdict(list)
             self._output_q = collections.defaultdict(list)
