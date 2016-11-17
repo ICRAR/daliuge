@@ -385,6 +385,7 @@ def start_process(cmd, args, **subproc_args):
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
     cmdline = [sys.executable, '-m', __name__, cmd] + args
+    logger.debug("Launching %s", cmdline)
     return subprocess.Popen(cmdline, **subproc_args)
 
 # We can also be executed as a module
