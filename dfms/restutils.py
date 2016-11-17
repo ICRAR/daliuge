@@ -155,13 +155,13 @@ class RestClient(object):
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.urlencode(content)
-        ret = self._POST(url, content, 'application/x-www-form-urlencoded')
+        ret = self._POST(url, content, content_type='application/x-www-form-urlencoded')
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
         if not isinstance(content, (six.text_type, six.binary_type)):
             content = utils.JSONStream(content)
-        ret = self._POST(url, content, 'application/json', compress=compress)
+        ret = self._POST(url, content, content_type='application/json', compress=compress)
         return json.load(ret) if ret else None
 
     def _GET(self, url):

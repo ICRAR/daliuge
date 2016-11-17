@@ -759,7 +759,7 @@ class PGT(object):
             # For now, simply round robin, but need to consider
             # nodes cross COMPUTE islands which has
             #TODO consider distance between a pair of nodes
-            gid = lm[oid] % num_parts
+            gid = lm[oid]
             drop['node'] = nm_list[gid]
             isid = lm2[gid] % num_islands if form_island else 0
             drop['island'] = is_list[isid]
