@@ -28,7 +28,8 @@ import os
 import threading
 import traceback
 
-from bottle import route, run, request, get, static_file, template, redirect, response, HTTPResponse
+import bottle
+from bottle import route, request, get, static_file, template, redirect, response, HTTPResponse
 import pkg_resources
 
 from dfms import droputils, restutils, utils
@@ -347,14 +348,12 @@ def gen_pgt():
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
-if __name__ == "__main__":
-    """
-    e.g. python lg_web -d /tmp/
-    """
+def run(parser, args):
+
     epilog = \
 """
 If you have no Logical Graphs yet and want to see some you can grab a copy
-of those maintained at
+of those maintained at:
 
 https://github.com/ICRAR/daliuge-logical-graphs
 
@@ -364,18 +363,22 @@ https://github.com/ICRAR/daliuge-logical-graphs
         def format_epilog(self, formatter):
             return self.epilog
 
+    # Ignore the previous parser, it's only passed down for convenience
+    # and to avoid duplicate descriptions (which in this case we'll have)
     parser = NoFormattedEpilogParser(description="A Web server for the Logical Graph Editor", epilog=epilog)
     parser.add_option("-d", "--lgdir", action="store", type="string", dest="lg_path",
                           help="logical graph path (input)")
     parser.add_option("-t", "--pgtdir", action="store", type="string", dest="pgt_path",
                           help="physical graph template path (output)")
-    parser.add_option("-p", "--port", action="store", type="int", dest="lg_port", default=8084,
+    parser.add_option("-H", "--host", action="store", type="string", dest="host", default='0.0.0.0',
+                      help="logical graph editor host (all by default)")
+    parser.add_option("-p", "--port", action="store", type="int", dest="port", default=8084,
                       help="logical graph editor port (8084 by default)")
 
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args)
+
     if options.lg_path is None or options.pgt_path is None:
-        parser.print_help()
-        parser.exit(status=1)
+        parser.error("Graph paths missing (-d/-t)")
     elif not os.path.exists(options.lg_path):
         parser.error("{0} does not exist.".format(options.lg_path))
 
@@ -384,9 +387,12 @@ https://github.com/ICRAR/daliuge-logical-graphs
     except:
         pass
 
+    global lg_dir
     lg_dir = options.lg_path
+    global pgt_dir
     pgt_dir = options.pgt_path
+    global pg_mgr
     pg_mgr = PGManager(pgt_dir)
-    # Let's use tornado, since luigi already depends on it
-    run(host="0.0.0.0", server='wsgiref', port=options.lg_port, debug=False,
+
+    bottle.run(host=options.host, server='wsgiref', port=options.port, debug=False,
         server_class=restutils.ThreadingWSGIServer, handler_class=restutils.LoggingWSGIRequestHandler)
