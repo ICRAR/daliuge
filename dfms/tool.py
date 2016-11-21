@@ -138,6 +138,12 @@ def _add_logging_options(parser):
     parser.add_option("-q", "--quiet", action="count",
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
 
+def _add_output_options(parser):
+    parser.add_option('-o', '--output', action="store", dest='output', type="string",
+                      help='Where the output should be written to (default: stdout)', default='-')
+    parser.add_option('-f', '--format', action="store_true",
+                      dest='format', help="Format JSON output (newline, 2-space indent)")
+
 def _setup_logging(opts):
 
     levels = [
@@ -168,6 +174,11 @@ def _setup_logging(opts):
     logging.root.setLevel(level)
 
 
+def _setup_output(opts):
+    def dump(obj):
+        with _open_o(opts.output) as f:
+            json.dump(obj, f, indent=None if opts.format is None else 2)
+    return dump
 
 
 commands = {}
@@ -223,18 +234,17 @@ def dlg_unroll(parser, args):
 
     # Unroll Logical Graph
     _add_logging_options(parser)
+    _add_output_options(parser)
     _add_unroll_options(parser)
-    parser.add_option('-o', '--output', action="store", dest='output', type="string",
-                      help='Where the Physical Graph Template should be written to (default: stdout)', default='-')
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
+    dump = _setup_output(opts)
 
     apps = (
         "test.graphsRepository.SleepApp",
         "test.graphsRepository.SleepAndCopyApp",
     )
-    with _open_o(opts.output) as f:
-        json.dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]), f)
+    dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
 
 def _add_partition_options(parser):
     parser.add_option("-N", "--partitions", action="store", type="int",
@@ -248,39 +258,37 @@ def _add_partition_options(parser):
 def dlg_partition(parser, args):
 
     _add_logging_options(parser)
+    _add_output_options(parser)
     _add_partition_options(parser)
     parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
                       help='Path to the Physical Graph Template (default: stdin)', default='-')
-    parser.add_option('-o', '--output', action="store", dest='output', type="string",
-                      help='Where the partitioned Physical Graph Template should be written to (default: stdout)', default='-')
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
+    dump = _setup_output(opts)
 
     pip_name = utils.fname_to_pipname(opts.pgt_path)
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
-    with _open_o(opts.output) as fo:
-        json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), fo)
+    dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo))
 
 @cmdwrap('unroll-and-partition', 'unroll + partition')
 def dlg_unroll_and_partition(parser, args):
 
     _add_logging_options(parser)
+    _add_output_options(parser)
     _add_unroll_options(parser)
     _add_partition_options(parser)
-    parser.add_option('-o', '--output', action="store", dest='output', type="string",
-                      help='Where the partitioned Physical Graph Template should be written to (default: stdout)', default='-')
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
+    dump = _setup_output(opts)
 
     apps = (
         "test.graphsRepository.SleepApp",
         "test.graphsRepository.SleepAndCopyApp",
     )
-    with _open_o(opts.output) as f:
-        pip_name = utils.fname_to_pipname(opts.lg_path)
-        pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
-        json.dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo), f)
+    pip_name = utils.fname_to_pipname(opts.lg_path)
+    pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
+    dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo))
 
 @cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
@@ -288,19 +296,20 @@ def dlg_map(parser, args):
     from dfms.manager import constants
 
     _add_logging_options(parser)
+    _add_output_options(parser)
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
                       dest='port', help='The port we connect to to deploy the graph', default=constants.ISLAND_DEFAULT_REST_PORT)
     parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
                       help='Path to the Physical Graph to submit (default: stdin)', default='-')
-    parser.add_option('-o', '--output', action="store", dest='output', type="string",
-                      help='Where the Physical Graph should be written to (default: stdout)', default='-')
     parser.add_option("-N", "--nodes", action="store",
                       dest="nodes", help="The nodes where the Physical Graph will be distributed, comma-separated", default=None)
     parser.add_option("-i", "--islands", action="store", type="int",
                       dest="islands", help="Number of islands to use during the partitioning", default=1)
     (opts, args) = parser.parse_args(args)
+    _setup_logging(opts)
+    dump = _setup_output(opts)
 
     from dfms.manager.client import CompositeManagerClient
 
@@ -318,8 +327,7 @@ def dlg_map(parser, args):
         pgt = json.load(f)
 
     pip_name = utils.fname_to_pipname(opts.pgt_path)
-    with _open_o(opts.output) as f:
-        json.dump(resource_map(pgt, nodes, pip_name, opts.islands), f)
+    dump(resource_map(pgt, nodes, pip_name, opts.islands))
 
 
 @cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')
