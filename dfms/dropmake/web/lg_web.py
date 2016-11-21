@@ -50,7 +50,6 @@ post_sem = threading.Semaphore(1)
 gen_pgt_sem = threading.Semaphore(1)
 
 err_prefix = "[Error]"
-DEFAULT_LG_NAME = "cont_img.json"
 DEFAULT_PGT_VIEW_NAME = "lofar_pgt-view.json"
 MAX_PGT_FN_CNT= 300
 pgt_fn_count = 0
