@@ -202,6 +202,12 @@ cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to conta
 cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dfms.deploy.pawsey.dfms_monitor:run')
 cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dfms.dropmake.web.lg_web:run')
 
+@cmdwrap('version', 'Reports the DALiuGE version and exits')
+def version(parser, args):
+    from dfms import __version__, __git_version__
+    print("Version: %s" % __version__)
+    print("Git version: %s" % __git_version__)
+
 def _add_unroll_options(parser):
     parser.add_option('-L', '--logical-graph', action="store", dest='lg_path', type="string",
                       help='Path to the Logical Graph (default: stdin)', default='-')
