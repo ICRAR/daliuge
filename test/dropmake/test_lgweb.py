@@ -49,7 +49,7 @@ class TestLGWeb(unittest.TestCase):
         utils.terminate_or_kill(self.web_proc, 10)
         unittest.TestCase.tearDown(self)
 
-    def test_getjson(self):
+    def test_get_lgjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
 
@@ -64,7 +64,7 @@ class TestLGWeb(unittest.TestCase):
         # doesn't exist
         self.assertRaises(RestClientException, c._get_json, '/jsonbody?lg_name=doesnt_exist.json')
 
-    def test_postjson(self):
+    def test_post_lgjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
 
@@ -89,3 +89,26 @@ class TestLGWeb(unittest.TestCase):
             self.assertEqual('example', new['name'])
         finally:
             shutil.move(copy_fname, original_fname)
+
+    def test_gen_pgt(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+
+        # doesn't exist!
+        self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        # unknown algorithm
+        self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=noidea')
+
+        # this should work now
+        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+
+    def test_get_pgtjson(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+
+        # doesn't exist
+        self.assertRaises(RestClientException, c._get_json, '/pgt_jsonbody?pgt_name=unknown.json')
+
+        # good!
+        c._get_json('/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.json')
