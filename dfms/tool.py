@@ -227,7 +227,13 @@ def _add_unroll_options(parser):
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a Physical Graph Template that takes no time to run", default=False)
     parser.add_option("--app", action="store", type="int",
-                      dest="app", help="Force an app to be used in the Physical Graph. 0=SleepApp, 1=SleepAndCopy", default=0)
+                      dest="app", help="Force an app to be used in the Physical Graph. 0=Don't force, 1=SleepApp, 2=SleepAndCopy", default=0)
+    apps = (
+        None,
+        'test.graphsRepository.SleepApp',
+        'test.graphsRepository.SleepAndCopyApp'
+    )
+    return apps
 
 @cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template')
 def dlg_unroll(parser, args):
@@ -235,15 +241,11 @@ def dlg_unroll(parser, args):
     # Unroll Logical Graph
     _add_logging_options(parser)
     _add_output_options(parser)
-    _add_unroll_options(parser)
+    apps = _add_unroll_options(parser)
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
     dump = _setup_output(opts)
 
-    apps = (
-        "test.graphsRepository.SleepApp",
-        "test.graphsRepository.SleepAndCopyApp",
-    )
     dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
 
 def _add_partition_options(parser):
@@ -276,16 +278,12 @@ def dlg_unroll_and_partition(parser, args):
 
     _add_logging_options(parser)
     _add_output_options(parser)
-    _add_unroll_options(parser)
+    apps = _add_unroll_options(parser)
     _add_partition_options(parser)
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
     dump = _setup_output(opts)
 
-    apps = (
-        "test.graphsRepository.SleepApp",
-        "test.graphsRepository.SleepAndCopyApp",
-    )
     pip_name = utils.fname_to_pipname(opts.lg_path)
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
     dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo))
