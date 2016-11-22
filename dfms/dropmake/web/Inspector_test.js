@@ -85,7 +85,7 @@ function Inspector(divid, diagram, options) {
     for (var i = 0; i < graphObjects.length; i++) {
       var option = document.createElement('option');
       option.value = i;
-      option.text = graphObjects[i] instanceof go.GraphObject ? graphObjects[i].toString() : 'data';
+      option.text = graphObjects[i] instanceof go.GraphObject ? graphObjects[i].toString() : 'Drop';
       chooser.appendChild(option);
     }
 

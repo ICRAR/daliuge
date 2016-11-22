@@ -494,7 +494,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-      myDiagram.nodeTemplateMap.add("Data",  // the Component category
+      myDiagram.nodeTemplateMap.add("memory",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -520,11 +520,11 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("GSM",  // the Component category
+    myDiagram.nodeTemplateMap.add("null",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
-          $(go.Shape, "Cylinder4",
+          $(go.Shape, "Junction",
             { fill: "#004080", stroke: "#ffffff", width: "8" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
@@ -545,11 +545,11 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("LSM",  // the Component category
+    myDiagram.nodeTemplateMap.add("ngas",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
-          $(go.Shape, "Cylinder4",
+          $(go.Shape, "Cylinder1",
             { fill: "#004080", stroke: "#ece437" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
@@ -570,7 +570,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("Parameter",  // the Component category
+    myDiagram.nodeTemplateMap.add("json",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -595,7 +595,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("TM",  // the default category
+    myDiagram.nodeTemplateMap.add("s3",  // the default category
       $(go.Node, "Spot", nodeStyle(),
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -620,11 +620,11 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("Metadata",  // the default category
+    myDiagram.nodeTemplateMap.add("file",  // the default category
       $(go.Node, "Spot", nodeStyle(),
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
-          $(go.Shape, "Card",
+          $(go.Shape, "Document",
             { fill: "#004080", stroke: "#ffffff" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
@@ -1273,31 +1273,33 @@
       });
     });
 
+//check_filepath_exists: "1", filepath: "", dirname: ""
     // initialize the Palette that is on the left side of the page
     var paletteModel =  $(go.GraphLinksModel,{
                         copiesArrays: true,
                         copiesArrayObjects: true,
                         nodeDataArray:[// specify the contents of the Palette
                         { category: "Start", text: "Start" },
+                        { category: "End", text: "End" },
                         { category: "Component", text: "Component", execution_time: 5, group_start: 0,
                         Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
                         Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
                         { category: "BashShellApp", text: "ShellApp", execution_time: 5, group_start: 0,
                         Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
                         Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
-                        { category: "Data", text: "Data", data_volume: 5, group_end: 0},
-                        { category: "TM", text: "TM" },
-                        { category: "GSM", text: "GSM" },
-                        { category: "Branch", text: "Branch\nCondition" },
-                        { category: "LoopCondition", text: "Loop\nCondition" },
-                        { category: "Metadata", text: "Metadata" },
-                        { category: "End", text: "End" },
-                        { category: "LSM", text: "LSM" },
-                        { category: "Parameter", text: "Parameter" },
+                        { category: "memory", text: "InMemory\nDrop", data_volume: 5, group_end: 0},
+                        { category: "file", text: "FileDrop", data_volume: 5, group_end: 0,
+                        check_filepath_exists: "1", filepath: "", dirname: ""},
+                        { category: "s3", text: "S3Drop", data_volume: 5, group_end: 0},
+                        { category: "ngas", text: "NGAS\nDrop", data_volume: 5, group_end: 0},
+                        { category: "json", text: "JsonDrop", data_volume: 5, group_end: 0},
+                        { category: "null", text: "NullDrop", group_end: 0},
                         { category: "SplitData", text: "Scatter", isGroup: true, num_of_copies: 4, scatter_axis: "time"},
                         { category: "DataGather", text: "Gather", isGroup: true, num_of_inputs: 2, gather_axis: "frequency"},
-                        { category: "GroupBy", text: "Group By", isGroup: true, group_key: "None", group_axis: "frequency"},
+                        { category: "GroupBy", text: "GroupBy", isGroup: true, group_key: "None", group_axis: "frequency"},
                         { category: "Loop", text: "Loop", isGroup: true, num_of_iter: 5},
+                        { category: "Branch", text: "Branch\nCondition" },
+                        { category: "LoopCondition", text: "Loop\nCondition" },
                         { category: "Variables", text: "Global Variables",
                           columnDefinitions: [
                               // each column definition needs to specify the column used
@@ -1311,10 +1313,11 @@
                           ]},
                         { category: "Comment", text: "Comment"}
 
-                        ],
-                        linkDataArray:[
-                        { category:"scatterGatherLink", points: new go.List(go.Point).addAll([new go.Point(0, 0), new go.Point(30, 0), new go.Point(30, 40), new go.Point(60, 40)]) }
                         ]});
+
+                        //linkDataArray:[
+                        //{ category:"scatterGatherLink", points: new go.List(go.Point).addAll([new go.Point(0, 0), new go.Point(30, 0), new go.Point(30, 40), new go.Point(60, 40)]) }
+                        //]
     myPalette =
       $(go.Palette, "myPalette",  // must name or refer to the DIV HTML element
         {
@@ -1324,6 +1327,8 @@
           linkTemplateMap: myDiagram.linkTemplateMap,
           model: paletteModel
         });
+
+    myPalette.layout.sorting = go.GridLayout.Forward;
 
   makeInspector();
 
