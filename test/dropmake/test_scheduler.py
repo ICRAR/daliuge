@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
+import os
 import unittest
 
 import pkg_resources
@@ -29,7 +30,10 @@ from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
 Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
 
 
-not_chen = psutil.Process().username() not in ('chen', 'cwu')
+if 'DALIUGE_TESTS_RUNLONGTESTS' in os.environ:
+    skip_long_tests = not bool(os.environ['DALIUGE_TESTS_RUNLONGTESTS'])
+else:
+    skip_long_tests = psutil.Process().username().lower() not in ('chen', 'cwu')
 
 def get_lg_fname(lg_name):
     return pkg_resources.resource_filename(__name__, 'logical_graphs/{0}'.format(lg_name))  # @UndefinedVariable
@@ -109,11 +113,9 @@ class TestScheduler(unittest.TestCase):
             mys.merge_partitions(tgt_partnum[j])
             #logger.info( "-" * lll)
 
-    @unittest.skipIf(not_chen, "Skipping because they take too long. Chen to eventually shorten them")
+    @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
     def test_pso_scheduler(self):
-        lgnames = ['cont_img.json', 'lofar_std.json', 'chiles_two.json',
-        'test_grpby_gather.json', 'chiles_two_dev1.json', 'chiles_simple.json',
-        'test_seq_gather.json']
+        lgnames = ['cont_img.json', 'lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
         #lgnames = ['test_seq_gather.json']
         tgt_deadline = [540, 450, 60, 70, 60, 160, 150] #250
         #tgt_deadline = [150]
@@ -129,7 +131,7 @@ class TestScheduler(unittest.TestCase):
             num_parts_done, lpl, ptime, parts = psps02.partition_dag()
             #print "PSO (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
 
-    @unittest.skipIf(not_chen, "Skipping because they take too long. Chen to eventually shorten them")
+    @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
     def test_sa_scheduler(self):
         lgnames = ['lofar_std.json']
         tgt_deadline = [450]
@@ -146,7 +148,7 @@ class TestScheduler(unittest.TestCase):
             num_parts_done, lpl, ptime, parts = pssa02.partition_dag()
             #print "SA (deadline): {3} partitioned: parts = {0}, lpl = {1}, deadline = {4}, ptime = {2:.2f}".format(num_parts_done, lpl, ptime, lgn, tgt_deadline[j])
 
-    @unittest.skipIf(not_chen, "Skipping because they take too long. Chen to eventually shorten them")
+    @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
     def test_mcts_scheduler(self):
         lgnames = ['lofar_std.json']
         tgt_deadline = [450]
