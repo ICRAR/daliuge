@@ -28,7 +28,7 @@ which will then be deployed and monitored by the Physical Graph Manager
 
 Examples of logical graph node JSON representation
 
-{ u'category': u'Data',
+{ u'category': u'memory',
   u'data_volume': 25,
   u'group': -58,
   u'key': -59,
@@ -65,7 +65,7 @@ import six
 
 from dfms.drop import dropdict
 from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-
+from dfms.graph_loader import STORAGE_TYPES
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +264,7 @@ class LGNode():
 
     def is_start_listener(self):
         return (len(self.inputs) == 1 and self.inputs[0].jd['category'] == 'Start' and
-        self.jd['category'] == 'Data')
+        self.jd['category'] in STORAGE_TYPES)
 
     def is_group_start(self):
         return (self.has_group() and "group_start" in self.jd and 1 == int(self.jd["group_start"]))
@@ -459,14 +459,14 @@ class LGNode():
         should be replaced by LGNode class specific methods
         """
         drop_type = self.jd['category']
-        if (drop_type in ['Data', 'LSM', 'Metadata', 'GSM']):
+        if (drop_type in STORAGE_TYPES):
             if 'data_volume' in self.jd:
                 kwargs['dw'] = int(self.jd['data_volume']) #dw -- data weight
             else:
                 kwargs['dw'] = 1
             if (self.is_start_listener()):
                 #create socket listener DROP first
-                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
+                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':drop_type})
                 dropSpec_socket = dropdict({'oid':"{0}-s".format(oid),
                 'type':'app', 'app':'test.graphsRepository.SleepApp', 'nm':'lstnr', 'tw':5, 'sleepTime': 5})
                 # tw -- task weight
@@ -474,8 +474,18 @@ class LGNode():
                 kwargs['listener_drop'] = dropSpec_socket
                 dropSpec_socket.addOutput(dropSpec)
             else:
-                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':'memory'})
-                kwargs['dirname'] = '/tmp'
+                dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':drop_type})
+            if (drop_type == 'file'):
+                dn = self.jd.get('dirname', None)
+                if (dn):
+                    kwargs['dirname'] = dn
+                cfe = str(self.jd.get('check_filepath_exists', '0'))
+                cfeb = True if cfe in ['1', 'true', 'yes'] else False
+                kwargs['check_filepath_exists'] = cfeb
+                fp = self.jd.get('filepath', None)
+                if (fp):
+                    kwargs['filepath'] = fp
+
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
             if 'execution_time' in self.jd:
@@ -1519,10 +1529,10 @@ class LG():
             elif (src.gid == 0):
                 raise GInvalidLink("GroupBy {0} requires at least one Scatter around input {1}".format(tgt.id, src.id))
         elif (tgt.is_gather()):
-            if (src.jd['category'] != 'Data' and (not src.is_groupby())):
+            if ((not src.jd['category'] in STORAGE_TYPES) and (not src.is_groupby())):
                 raise GInvalidLink("Gather {0}'s input {1} should be either a GroupBy or Data".format(tgt.id, src.id))
         elif (tgt.is_branch()):
-            if (src.jd['category'] != 'Data'):
+            if (not src.jd['category'] in STORAGE_TYPES):
                 raise GInvalidLink("Branch {0}'s input {1} should be Data".format(tgt.id, src.id))
 
         if (src.is_groupby() and not (tgt.is_gather())):
