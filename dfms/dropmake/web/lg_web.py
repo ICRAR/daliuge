@@ -27,7 +27,6 @@ import optparse
 import os
 import signal
 import threading
-import traceback
 
 import bottle
 from bottle import route, request, get, static_file, template, redirect, response, HTTPResponse
@@ -50,7 +49,6 @@ post_sem = threading.Semaphore(1)
 gen_pgt_sem = threading.Semaphore(1)
 
 err_prefix = "[Error]"
-DEFAULT_PGT_VIEW_NAME = "lofar_pgt-view.json"
 MAX_PGT_FN_CNT= 300
 pgt_fn_count = 0
 
@@ -67,13 +65,19 @@ def pgt_exists(pgt_name):
     return os.path.exists(pgt_path(pgt_name))
 
 def lg_repo_contents():
+    return _repo_contents(lg_dir)
+
+def pgt_repo_contents():
+    return _repo_contents(pgt_dir)
+
+def _repo_contents(root_dir):
     # We currently allow only one depth level
     b = os.path.basename
     contents = {}
-    for dirpath,dirnames,fnames in os.walk(lg_dir):
+    for dirpath,dirnames,fnames in os.walk(root_dir):
         if '.git' in dirnames:
             dirnames.remove('.git')
-        if dirpath == lg_dir:
+        if dirpath == root_dir:
             continue
 
         # Not great yet -- we should do a full second step pruning branches
@@ -163,8 +167,7 @@ def load_lg_editor():
     if (lg_name is None or len(lg_name) == 0):
         all_lgs = lg_repo_contents()
         first_dir = next(iter(all_lgs))
-        first_lg = first_dir + '/' + all_lgs[first_dir][0]
-        redirect('/lg_editor?lg_name={0}'.format(first_lg))
+        lg_name = first_dir + '/' + all_lgs[first_dir][0]
 
     if (lg_exists(lg_name)):
         tpl = file_as_string('lg_editor.html')
@@ -181,11 +184,14 @@ def load_pg_viewer():
     """
     pgt_name = request.query.get('pgt_view_name')
     if (pgt_name is None or len(pgt_name) == 0):
-        redirect('/pg_viewer?pgt_view_name={0}'.format(DEFAULT_PGT_VIEW_NAME))
+        all_pgts = pgt_repo_contents()
+        print(all_pgts)
+        first_dir = next(iter(all_pgts))
+        pgt_name = first_dir + '/' + all_pgts[first_dir][0]
 
-    if (lg_exists(pgt_name)):
+    if pgt_exists(pgt_name):
         tpl = file_as_string('pg_viewer.html')
-        return template(tpl, pgt_view_json_name=pgt_name)
+        return template(tpl, pgt_view_json_name=pgt_name, is_partition_page='', partition_info='')
     else:
         response.status = 404
         return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
@@ -234,6 +240,8 @@ def get_schedule_mat():
     except GraphException as ge:
         response.status = "500 {0}".format(ge)
         return "Failt to get Gantt chart for {0}: {1}".format(pgt_id, ge)
+    except Exception:
+        response.status = "500 {0}".format(ge)
 
 @get('/gen_pg')
 def gen_pg():
@@ -276,7 +284,6 @@ def gen_pg():
     except HTTPResponse:
         raise
     except Exception as ex:
-        traceback.print_exc()
         response.status = 500
         return "Fail to deploy physical graph: {0}".format(ex)
 
@@ -291,8 +298,6 @@ def gen_pgt():
             lg = LG(lg_path(lg_name))
             drop_list = lg.unroll_to_tpl()
             part = request.query.get('num_par')
-            mp = request.query.get('merge_par')
-            #mpp = True if '1' == mp else False
             try:
                 #print('num_islands', request.query.get('num_islands'))
                 num_islands = int(request.query.get('num_islands'))
@@ -352,8 +357,6 @@ def gen_pgt():
             return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
         except Exception as exp:
             response.status = 500
-            trace_msg = traceback.format_exc()
-            print(trace_msg)
             return "Graph partition exception {1}: {0}".format(str(exp), lg_name)
     else:
         response.status = 404
