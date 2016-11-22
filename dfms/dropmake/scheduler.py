@@ -661,7 +661,7 @@ class PSOScheduler(Scheduler):
         self._call_counts = 0
         leng = len(self._lite_dag.edges())
         self._leng = leng
-        self._topk = leng if leng < self._topk else self._topk
+        self._topk = leng if self._topk is None or leng < self._topk else self._topk
 
     def partition_dag(self):
         """
