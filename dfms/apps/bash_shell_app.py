@@ -51,15 +51,15 @@ logger = logging.getLogger(__name__)
 def isFSBased(x):
     return isinstance(x, (FileDROP, DirectoryContainer))
 
-def mesage_stdouts(prefix, stdout, stderr):
+def mesage_stdouts(prefix, stdout, stderr, enc='utf8'):
     msg = prefix
     if not stdout and not stderr:
         return msg
     msg += ", output follows:"
     if stdout:
-        msg += "\n==STDOUT==\n" + stdout
+        msg += "\n==STDOUT==\n" + utils.b2s(stdout, enc)
     if stderr:
-        msg += "\n==STDERR==\n" + stderr
+        msg += "\n==STDERR==\n" + utils.b2s(stderr, enc)
     return msg
 
 def run_bash(cmd, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
