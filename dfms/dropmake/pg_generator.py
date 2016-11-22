@@ -56,7 +56,7 @@ import logging
 import math
 import os
 import random
-import subprocess
+import re
 import time
 
 import networkx as nx
@@ -1828,16 +1828,21 @@ class LG():
         ret = []
         for drop_list in self._drop_dict.values():
             ret += drop_list
+
+        # rtobar, Nov 22nd 2016:
+        # TODO: I'm putting this here because I'm not sure what's the best place
+        # to do it actually. Please feel free to move it around as required
+        inp_regex = re.compile('%i\[(-[0-9]+)\]')
+        out_regex = re.compile('%o\[(-[0-9]+)\]')
+        for drop in ret:
+            if drop['type'] == 'app' and drop['app'].endswith('BashShellApp'):
+                cmd = drop['command']
+                for m in inp_regex.finditer(cmd):
+                    lgn_id = int(m.group(1))
+                    cmd = cmd.replace(m.group(0), '%i[' + self._drop_dict[lgn_id][0]['oid'] + ']')
+                for m in out_regex.finditer(cmd):
+                    lgn_id = int(m.group(1))
+                    cmd = cmd.replace(m.group(0), '%o[' + self._drop_dict[lgn_id][0]['oid'] + ']')
+                drop['command'] = cmd
+
         return ret
-
-def l2g(lg, num_procs):
-    """
-    A simple implementation to do the mapping with the following features:
-
-    1. parallelise lg into lg_para
-    2. convert lg_para into pyrros input matrix and pg (without partitions)
-    3. run pyrros
-    4. convert pyrros output matrix into pgp directly (physical graph partition)
-    5. see chilesdospec.py examples for producing the final PG specification
-    """
-    pass
