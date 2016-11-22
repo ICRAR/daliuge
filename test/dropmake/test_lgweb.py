@@ -49,6 +49,9 @@ class TestLGWeb(unittest.TestCase):
         utils.terminate_or_kill(self.web_proc, 10)
         unittest.TestCase.tearDown(self)
 
+    def _generate_pgt(self, c):
+        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+
     def test_get_lgjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
@@ -98,9 +101,8 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
         # unknown algorithm
         self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=noidea')
-
         # this should work now
-        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        self._generate_pgt(c)
 
     def test_get_pgtjson(self):
 
@@ -109,6 +111,52 @@ class TestLGWeb(unittest.TestCase):
 
         # doesn't exist
         self.assertRaises(RestClientException, c._get_json, '/pgt_jsonbody?pgt_name=unknown.json')
-
         # good!
         c._get_json('/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.json')
+
+    def test_load_lgeditor(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+
+        # doesn't exist
+        self.assertRaises(RestClientException, c._get_json, '/lg_editor?lg_name=unknown.json')
+        # Defaults to first LG
+        c._GET('/lg_editor')
+        # also fine, LG exists
+        c._GET('/lg_editor?lg_name=logical_graphs/chiles_simple.json')
+
+    def test_pg_viewer(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+        self._generate_pgt(c)
+
+        # doesn't exist
+        self.assertRaises(RestClientException, c._GET, '/pg_viewer?pgt_view_name=unknown.json')
+        # Defaults to first PGT
+        c._GET('/pg_viewer')
+        # also fine, PGT exists
+        c._GET('/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.json')
+
+
+    def _test_pgt_action(self, path, unknown_fails):
+
+        c = RestClient('localhost', lgweb_port, 10)
+        self._generate_pgt(c)
+
+        # doesn't exist
+        if unknown_fails:
+            self.assertRaises(RestClientException, c._GET, '/' + path + '?pgt_id=unknown.json')
+        else:
+            c._GET('/' + path + '?pgt_id=unknown.json')
+
+        # exists
+        c._GET('/' + path + '?pgt_id=logical_graphs/chiles_simple1_pgt.json')
+
+    def test_show_gantt_chart(self):
+        self._test_pgt_action('show_gantt_chart', False)
+
+    def test_show_schedule_mat(self):
+        self._test_pgt_action('show_schedule_mat', False)
+
+    def test_get_gantt_chart(self):
+        self._test_pgt_action('pgt_gantt_chart', True)
