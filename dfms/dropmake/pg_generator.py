@@ -1844,15 +1844,18 @@ class LG():
         # to do it actually. Please feel free to move it around as required
         inp_regex = re.compile('%i\[(-[0-9]+)\]')
         out_regex = re.compile('%o\[(-[0-9]+)\]')
+        self_drop_dict = self._drop_dict
         for drop in ret:
             if drop['type'] == 'app' and drop['app'].endswith('BashShellApp'):
                 cmd = drop['command']
                 for m in inp_regex.finditer(cmd):
                     lgn_id = int(m.group(1))
-                    cmd = cmd.replace(m.group(0), '%i[' + self._drop_dict[lgn_id][0]['oid'] + ']')
+                    if (lgn_id in self_drop_dict):
+                        cmd = cmd.replace(m.group(0), '%i[' + self_drop_dict[lgn_id][0]['oid'] + ']')
                 for m in out_regex.finditer(cmd):
                     lgn_id = int(m.group(1))
-                    cmd = cmd.replace(m.group(0), '%o[' + self._drop_dict[lgn_id][0]['oid'] + ']')
+                    if (lgn_id in self_drop_dict):
+                        cmd = cmd.replace(m.group(0), '%o[' + self_drop_dict[lgn_id][0]['oid'] + ']')
                 drop['command'] = cmd
 
         return ret
