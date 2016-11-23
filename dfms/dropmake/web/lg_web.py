@@ -24,16 +24,18 @@
 import datetime
 import json
 import optparse
-import os
+import os, traceback
 import signal
 import threading
 
 import bottle
-from bottle import route, request, get, static_file, template, redirect, response, HTTPResponse
+from bottle import route, request, get, static_file, template, redirect,\
+ response, HTTPResponse
 import pkg_resources
 
 from dfms import droputils, restutils, utils
-from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
+from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP,\
+ MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 from dfms.dropmake.pg_manager import PGManager
 from dfms.dropmake.scheduler import SchedulerException
 from dfms.manager.client import CompositeManagerClient
@@ -357,7 +359,8 @@ def gen_pgt():
             return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
         except Exception as exp:
             response.status = 500
-            return "Graph partition exception {1}: {0}".format(str(exp), lg_name)
+            trace_msg = traceback.format_exc()
+            return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
     else:
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
