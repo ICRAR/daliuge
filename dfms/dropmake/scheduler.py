@@ -521,6 +521,8 @@ class MySarkarScheduler(Scheduler):
                 else:
                     ca, unew, vnew = part.can_add(u, uw, v, vw)
                     if (ca):
+                        #TODO should merge can_add and add in non-linerisation case
+                        # becasue the add will re-probe the max_dop again!
                         part.add(u, uw, v, vw)
                         gu['gid'] = part._gid
                         gv['gid'] = part._gid
@@ -682,6 +684,8 @@ class PSOScheduler(Scheduler):
             xopt, fopt = pso(self.objective_func, lb, ub, ieqcons=[self.constrain_func], swarmsize=self._swarm_size)
 
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, xopt)
+        #curr_lpl, num_parts, parts, g_dict = self.objective_func(xopt)
+        self._part_dict = g_dict
         edt = time.time()
         #print "PSO scheduler took {0} seconds".format(edt - stt)
         st_gid = len(self._drop_list) + 1 + num_parts
@@ -708,7 +712,8 @@ class PSOScheduler(Scheduler):
         el = G.edges(data=True)
         el.sort(key=lambda ed: ed[2]['weight'] * -1)
         #topo_sorted = nx.topological_sort(G)
-        g_dict = self._part_dict#dict() #{gid : Partition}
+        #g_dict = self._part_dict#dict() #{gid : Partition}
+        g_dict = dict()
         parts = []
         for i, e in enumerate(el):
             pos = int(round(x[i]))
