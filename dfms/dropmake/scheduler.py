@@ -106,7 +106,8 @@ class Schedule(object):
                             break
                     if (found is None):
                         raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
-                        DAGUtil.get_max_dop(G), G.nodes(data=True)))
+                        'DAGUtil.get_max_dop(G)', G.nodes(data=True)))
+                        #DAGUtil.get_max_dop(G), G.nodes(data=True)))
                     curr_pid = found
                 ma[curr_pid, stt:edt] = np.ones((1, edt - stt)) * n
                 pr[curr_pid] = edt
@@ -157,6 +158,8 @@ class Partition(object):
         self._max_dop = None
         self._parent_id = None
         self._child_parts = None
+        self._tmp_merge_dag = None
+        self._tmp_new_ac = None
         logger.debug("My dop = {0}".format(self._ask_max_dop))
 
     @property
@@ -183,6 +186,29 @@ class Partition(object):
     def recompute_schedule(self):
         self._schedule = None
         return self.schedule
+
+    def can_merge(self, that):
+        if (self._max_dop + that._max_dop <= self._ask_max_dop):
+            return True
+        else:
+            return False
+
+        #TODO re-implement this performance hog!
+        #self._tmp_merge_dag = nx.compose(self._dag, that._dag)
+        #return DAGUtil.get_max_dop(self._tmp_merge_dag) <= self._ask_max_dop
+
+    def merge(self, that):
+        if (self._tmp_merge_dag is not None):
+            self._dag = self._tmp_merge_dag
+            self._tmp_merge_dag = None
+        else:
+            self._dag = nx.compose(self._dag, that._dag)
+
+        #self._max_dop
+
+        #TODO add this performance hog!
+        #self._max_antichains = None
+
 
     def can_add(self, u, uw, v, vw):
         """
@@ -302,6 +328,11 @@ class Partition(object):
             else:
                 return len(new_ac[0])
         else:
+            if (update and self._tmp_new_ac is not None):
+                self._max_antichains, md = self._tmp_new_ac
+                self._tmp_new_ac = None
+                return md
+
             if (unew):
                 ups = nx.descendants(self._dag, u)
                 new_node = u
@@ -329,6 +360,7 @@ class Partition(object):
                     md = len(ma)
                 new_ac.append(ma) # carry over, then prune it
             if (len(new_ac) > 0):
+                self._tmp_new_ac = (new_ac, md)
                 if (update):
                     self._max_antichains = new_ac
                 return md
@@ -379,16 +411,16 @@ class Scheduler(object):
         G = nx.Graph()
         G.graph['edge_weight_attr'] = 'weight'
         st_gid = len(self._drop_list) + len(self._parts) + 1
-        if (bal_cond == 0):
-            G.graph['node_weight_attr'] = ['wkl', 'eff']
-            for part in self._parts:
-                sc = part.schedule
-                G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
-        else:
-            G.graph['node_weight_attr'] = 'cc'
-            for part in self._parts:
-                sc = part.schedule
-                G.add_node(part.partition_id, cc=1)
+        # if (bal_cond == 0):
+        #     G.graph['node_weight_attr'] = ['wkl', 'eff']
+        #     for part in self._parts:
+        #         sc = part.schedule
+        #         G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
+        # else:
+        G.graph['node_weight_attr'] = 'cc'
+        for part in self._parts:
+            #sc = part.schedule
+            G.add_node(part.partition_id, cc=1)
 
         for e in self._part_edges:
             u = e[0]
@@ -456,7 +488,7 @@ class MySarkarScheduler(Scheduler):
 
     def is_time_critical(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
         """
-        This is called ONLY IF can_add on partition has returned "False"
+        This is called ONLY IF override_cannot_add has returned "True"
         Parameters:
             u - node u, v - node v, uw - weight of node u, vw - weight of node v
             curr_lpl - current longest path length, ow - current edge weight
@@ -469,6 +501,52 @@ class MySarkarScheduler(Scheduler):
         """
         logger.debug("MySarkar time criticality called")
         return True
+
+    def _merge_two_parts(self, ugid, vgid,
+                         u, v, gu, gv, g_dict, parts, G):
+        """
+        Merge two parts associated with u and v respectively
+
+        Return: None if these two parts cannot be merged
+                due to reasons such as DoP overflow
+                A ``Part`` instance
+        """
+        # get the new part should we go ahead
+        # the new part should be one  of partu or partv
+        #print("\nMerging ugid %d and vgid %d, u %d and v %d" % (ugid, vgid, u, v))
+        l_gid = min(ugid, vgid)
+        r_gid = max(ugid, vgid)
+        part_new = g_dict[l_gid]
+        part_removed = g_dict[r_gid]
+
+        if (not part_new.can_merge(part_removed)):
+            return None
+
+        part_new.merge(part_removed)
+
+        # Get hold of all gnodes that belong to "part_removed"
+        # and re-assign them to the new partitions
+        for n in part_removed._dag.nodes():
+            G.node[n]['gid'] = l_gid
+
+        index = None
+        for i, part in enumerate(parts):
+            p_gid = part._gid
+            if (p_gid > r_gid):
+                g_dict[p_gid - 1] = part
+                part._gid -= 1
+                for n in part._dag.nodes():
+                    G.node[n]['gid'] = part._gid
+            elif (p_gid == r_gid):
+                #index = len(parts) - i - 1
+                index = i
+                del g_dict[p_gid]
+
+        if (index is None):
+            raise SchedulerException("Failed to find r_gid")
+        parts[:] = parts[0:index] + parts[index + 1:]
+
+        return part_new
 
     def partition_dag(self):
         """
@@ -495,6 +573,7 @@ class MySarkarScheduler(Scheduler):
             ow = G.edge[u][v]['weight']
             G.edge[u][v]['weight'] = 0 #edge zeroing
             recover_edge = False
+            merge_two_parts = False
             new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
             #logger.debug("{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v))
             if ((new_lpl <= curr_lpl) or
@@ -510,8 +589,13 @@ class MySarkarScheduler(Scheduler):
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
                     st_gid += 1
-                else: #elif (ugid and vgid):
-                    # cannot change Partition once is in!
+                elif (ugid and vgid and ugid != vgid): # merge existing parts
+                    part = self._merge_two_parts(ugid, vgid,
+                                                 u, v, gu, gv, g_dict, parts, G)
+                    if (part is not None):
+                        merge_two_parts = True
+                        st_gid -= 1
+                else:
                     part = None
                 uw = gu['weight']
                 vw = gv['weight']
@@ -519,13 +603,17 @@ class MySarkarScheduler(Scheduler):
                 if (part is None):
                     recover_edge = True
                 else:
-                    ca, unew, vnew = part.can_add(u, uw, v, vw)
+                    if (merge_two_parts): # merging two partitions
+                        ca = True
+                    else:
+                        ca, unew, vnew = part.can_add(u, uw, v, vw)
                     if (ca):
-                        #TODO should merge can_add and add in non-linerisation case
-                        # becasue the add will re-probe the max_dop again!
-                        part.add(u, uw, v, vw)
-                        gu['gid'] = part._gid
-                        gv['gid'] = part._gid
+                        if (not merge_two_parts):
+                            #TODO should merge can_add and add in non-linerisation case
+                            # becasue the add will re-probe the max_dop again!
+                            part.add(u, uw, v, vw)
+                            gu['gid'] = part._gid
+                            gv['gid'] = part._gid
                         curr_lpl = new_lpl
                         self._sspace[i] = 1
                     else:
@@ -1068,28 +1156,33 @@ class DAGUtil(object):
         Get the maximum degree of parallelism of this DAG
         return : int
         """
+        return max([len(antichain) for antichain in nx.antichains(G)])
+        """
         max_dop = 0
         for antichain in nx.antichains(G):
             leng = len(antichain)
             if (leng > max_dop):
                 max_dop = leng
         return max_dop
+        """
 
     @staticmethod
     def get_max_antichains(G):
         """
-        return a list of antichains with Top-3 lengths
+        return a list of antichains with Top-2 lengths
         """
         return DAGUtil.prune_antichains(nx.antichains(G))
 
     @staticmethod
     def prune_antichains(antichains):
         """
-        Prune a list of antichains to keep those with Top-3 lengths
+        Prune a list of antichains to keep those with Top-2 lengths
+        antichains is a Generator (not a list!)
         """
         todo = []
         for antichain in antichains:
             todo.append(antichain)
+        todo.sort(key=lambda x : len(x), reverse=True)
         return todo
 
     @staticmethod
