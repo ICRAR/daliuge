@@ -576,7 +576,7 @@ class ZeroRPCMixIn(BaseMixIn):
         # No closing function since clients are long-lived
         return client, lambda: None
 
-class RPyCMixIn(BaseMixIn):
+class RPyCMixIn(BaseMixIn): # pragma: no cover
 
     def start(self):
         super(RPyCMixIn, self).start()
@@ -610,7 +610,7 @@ class RPyCMixIn(BaseMixIn):
         client = rpyc.connect(hostname, port)
         return client.root, client.close
 
-class PyroRPCMixIn(BaseMixIn):
+class PyroRPCMixIn(BaseMixIn): # pragma: no cover
 
     def start(self):
 
@@ -709,13 +709,13 @@ class PyroRPCMixIn(BaseMixIn):
         # than enough
         Pyro4.config.COMMTIMEOUT = 60
 
-class MultiplexPyroRPCMixIn(PyroRPCMixIn):
+class MultiplexPyroRPCMixIn(PyroRPCMixIn): # pragma: no cover
     def setup_pyro(self):
         super(MultiplexPyroRPCMixIn, self).setup_pyro()
         import Pyro4
         Pyro4.config.SERVERTYPE = 'multiplex'
 
-class ThreadedPyroRPCMixIn(PyroRPCMixIn):
+class ThreadedPyroRPCMixIn(PyroRPCMixIn): # pragma: no cover
     def setup_pyro(self):
         super(MultiplexPyroRPCMixIn, self).setup_pyro()
         import Pyro4
@@ -728,15 +728,15 @@ EventMixIn = ZMQPubSubMixIn
 
 # Check which rpc backend should be used
 rpc_lib = os.environ.get('DALIUGE_RPC', 'zerorpc')
-if rpc_lib in ('pyro', 'pyro-multiplex'): # "pyro" defaults to "pyro-multiplex"
+if rpc_lib in ('pyro', 'pyro-multiplex'): # pragma: no cover
     RpcMixIn = MultiplexPyroRPCMixIn
-elif rpc_lib == 'pyro-threaded':
+elif rpc_lib == 'pyro-threaded': # pragma: no cover
     RpcMixIn = ThreadedPyroRPCMixIn
 elif rpc_lib == 'zerorpc':
     RpcMixIn = ZeroRPCMixIn
-elif rpc_lib == 'rpyc':
+elif rpc_lib == 'rpyc': # pragma: no cover
     RpcMixIn = RPyCMixIn
-else:
+else: # pragma: no cover
     raise DaliugeException("Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc, rpyc" % (rpc_lib,))
 
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase): pass
