@@ -405,6 +405,12 @@ class DilworthPartition(Partition):
         unew = u not in dag.node
         vnew = v not in dag.node
 
+        if (unew):
+            dag.add_node(u, weight=uw)
+        if (vnew):
+            dag.add_node(v, weight=vw)
+        dag.add_edge(u, v)
+
         # add u and/or v to the tmp bipartite graph
         for el, elnew in [(u, unew), (v, vnew)]:
             if (elnew):
@@ -416,8 +422,6 @@ class DilworthPartition(Partition):
                     self_bpg.add_edge(ln, '{0}_r'.format(udown))
                 for uup in dag.predecessors(el):
                     self_bpg.add_edge('{0}_l'.format(uup), rn)
-        if (unew and vnew):
-            self_bpg.add_edge('{0}_l'.format(u), '{0}_r'.format(v))
         mat = nx.bipartite.hopcroft_karp_matching(self_bpg)
         mydop = len(self_bpg.node) / 2 - len(mat) / 2
         canadd = False if mydop > self._ask_max_dop else True
@@ -429,17 +433,21 @@ class DilworthPartition(Partition):
                     self_bpg.remove_node(ln)
                     self_bpg.remove_node(rn)
             self._tmp_max_dop = self._max_dop
+            if (unew):
+                self.remove(u)
+            if (vnew):
+                self.remove(v)
         else:
             self._tmp_max_dop = mydop
         return (canadd, unew, vnew)
 
     def add(self, u, uw, v, vw, sequential=False, global_dag=None):
-        if (sequential):
-            raise GraphException("sequentialisation not supported"\
-             " in DilworthPartition")
-        self._dag.add_node(u, weight=uw)
-        self._dag.add_node(v, weight=vw)
-        self._dag.add_edge(u, v)
+        # if (sequential):
+        #     raise GraphException("sequentialisation not supported"\
+        #      " in DilworthPartition")
+        # self._dag.add_node(u, weight=uw)
+        # self._dag.add_node(v, weight=vw)
+        # self._dag.add_edge(u, v)
         if (self._tmp_max_dop is not None):
             self._max_dop = self._tmp_max_dop
         else:
@@ -447,8 +455,10 @@ class DilworthPartition(Partition):
             raise GraphException("can_add was not probed before add()")
 
     def can_merge(self, that):
+        """
         if (self._max_dop + that._max_dop <= self._ask_max_dop):
             return True
+        """
         self._tmp_merge_dag = nx.compose(self._dag, that._dag)
         dag = self._tmp_merge_dag
         self_bpg = self._bpg
@@ -475,6 +485,7 @@ class DilworthPartition(Partition):
             self._tmp_max_dop = self._max_dop
         else:
             self._tmp_max_dop = mydop
+        return canmerge
 
     def merge(self, that):
         super(DilworthPartition, self).merge(that)
@@ -699,7 +710,7 @@ class MySarkarScheduler(Scheduler):
                 elif ((not ugid) and vgid):
                     part = g_dict[vgid]
                 elif (not ugid and (not vgid)):
-                    part = Partition(st_gid, self._max_dop)
+                    part = DilworthPartition(st_gid, self._max_dop)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
                     st_gid += 1
@@ -757,7 +768,7 @@ class MySarkarScheduler(Scheduler):
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
-                part = Partition(st_gid, self._max_dop)
+                part = DilworthPartition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
                 g_dict[st_gid] = part
                 parts.append(part) # will it get rejected?
