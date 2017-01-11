@@ -81,6 +81,9 @@ class GInvalidNode(GraphException):
 class GPGTException(GraphException):
     pass
 
+class GPGTNoNeedMergeException(GraphException):
+    pass
+
 class LGNode():
     def __init__(self, jd, group_q, done_dict, ssid):
         """
@@ -600,8 +603,8 @@ class PGT(object):
             raise GPGTException("This {0} PGTP is not made for merging"\
                     .format(self.__class__.__name__))
         if (self._num_parts_done <= new_num_parts):
-            raise GPGTException("No need to merge this {0} PGTP"\
-                    .format(self.__class__.__name__))
+            raise GPGTNoNeedMergeException("No need to merge this {0} PGTP: {1} <= {2}"\
+                    .format(self.__class__.__name__, self._num_parts_done, new_num_parts))
         if (self._partition_merged == new_num_parts):
             return False
         else:

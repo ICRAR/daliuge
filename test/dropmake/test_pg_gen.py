@@ -21,7 +21,8 @@
 
 import unittest, pkg_resources
 
-from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
+from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP,\
+ MinNumPartsPGTP, GPGTNoNeedMergeException
 
 """
 python -m unittest test.dropmake.test_pg_gen
@@ -146,7 +147,11 @@ class TestPGGen(unittest.TestCase):
             pgtp = MySarkarPGTP(drop_list, None, merge_parts=True)
             pgtp.to_gojs_json(visual=False)
             nb_islands = 2
-            pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
+            #print(lgn)
+            try:
+                pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
+            except GPGTNoNeedMergeException as ge:
+                continue
             pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
             pgtp.result()
 
