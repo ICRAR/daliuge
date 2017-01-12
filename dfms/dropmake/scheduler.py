@@ -495,6 +495,109 @@ class DilworthPartition(Partition):
             # we could recalcuate it again, but we are lazy!
             raise GraphException("can_merge was not probed before add()")
 
+class WeightedDilworthPartition(DilworthPartition):
+    """
+    The extensions on DilworthPartition
+
+    Support "weights" for each Drop's DoP
+        (e.g. `CLEAN` AppDrop uses 8 cores)
+    This requires a "weighted" maximal antichain. The solution is to
+    create a weighted version of the bipartite graph without changing
+    the original partition DAG. This allows us to use the same max matching
+    algorithm to find the max antichain
+
+    See also:
+    http://fmdb.cs.ucla.edu/Treports/930014.pdf
+    """
+    def __init__(self, gid, max_dop):
+        super(WeightedDilworthPartition, self).__init__(gid, max_dop)
+
+    def can_add(self, u, uw, v, vw, ucpu=1, vcpu=1):
+        dag = self._dag
+        self_bpg = self._bpg
+
+        unew = u not in dag.node
+        vnew = v not in dag.node
+
+        if (unew):
+            dag.add_node(u, weight=uw)
+        if (vnew):
+            dag.add_node(v, weight=vw)
+        dag.add_edge(u, v)
+
+        # add u and/or v to the tmp bipartite graph
+        tmp_added = []
+        for el, elnew, elcpu in [(u, unew, ucpu), (v, vnew, vcpu)]:
+            if (elnew):
+                el_des = nx.descendants(dag, el)
+                el_pred = dag.predecessors(el)
+                ln = '{0}_l'.format(el)
+                rn = '{0}_r'.format(el)
+                for i in range(elcpu):
+                    #TODO do not use ln or rn, directly use el as child name!
+                    rn_child_r = '%s%d_r' % (rn, i)
+                    self_bpg.add_node(rn_child_r, bipartite=1)
+                    tmp_added.append(rn_child_r)
+                    for uup in el_pred:
+                        #TODO cartesian product!
+                        self_bpg.add_edge('{0}_l'.format(uup), rn_child_r)
+
+                    rn_child_l = '%s%d_l' % (rn, i)
+                    self_bpg.add_node(rn_child_l, bipartite=0)
+                    tmp_added.append(rn_child_l)
+                    for udown in el_des:
+                        #TODO cartesian product!
+                        self_bpg.add_edge(rn_child_l, '{0}_r'.format(udown))
+
+        mat = nx.bipartite.hopcroft_karp_matching(self_bpg)
+        mydop = len(self_bpg.node) / 2 - len(mat) / 2
+        canadd = False if mydop > self._ask_max_dop else True
+        if (not canadd):
+            for tbd in tmp_added:
+                self_bpg.remove_node(tbd)
+            self._tmp_max_dop = self._max_dop
+            if (unew):
+                self.remove(u)
+            if (vnew):
+                self.remove(v)
+        else:
+            self._tmp_max_dop = mydop
+        return (canadd, unew, vnew)
+
+    def can_merge(self, that):
+        """
+        Need to merge split graph as well to speed up!
+        """
+        self._tmp_merge_dag = nx.compose(self._dag, that._dag)
+        dag = self._tmp_merge_dag
+        self._bpg = nx.compose(self._bpg, that._bpg)
+        self_bpg = self._bpg
+        #TODO add more edges in self_bpg based on the new self._tmp_merge_dag
+        that_dag = that._dag
+        that = set(that_dag.nodes())
+        this_dag = self._dag
+        this = set(this_dag.nodes())
+
+        #TODO write an inline function here!
+        # cross over this_left with that_right and that_left with this_right
+        for el in this:
+            ln = '{0}_l'.format(el)
+            for udown in nx.descendants(dag, el):
+                if udown in that:
+                    # M x N cartesian product
+                    rn = '{0}_r'.format(udown)
+                    for i in range(this_dag.node[el]['nb_cpus']):
+                        for j in range(that_dag.node[udown]['nb_cpus']):
+                            self_bpg.add_edge(ln, '{0}_r'.format(udown))
+
+
+        for el in that:
+            ln = '{0}_l'.format(el)
+            for udown in nx.descendants(dag, el):
+                if udown in this:
+                    self_bpg.add_edge(ln, '{0}_r'.format(udown))
+                    #TODO add edges to all udown related
+
 class Scheduler(object):
     """
     Static Scheduling consists of three steps:
