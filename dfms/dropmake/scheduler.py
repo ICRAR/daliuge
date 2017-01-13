@@ -512,9 +512,14 @@ class WeightedDilworthPartition(DilworthPartition):
     def __init__(self, gid, max_dop):
         super(WeightedDilworthPartition, self).__init__(gid, max_dop)
 
-    def can_add(self, u, uw, v, vw, ucpu=1, vcpu=1):
+    def can_add(self, u, uw, v, vw):
+        """
+        """
         dag = self._dag
         self_bpg = self._bpg
+
+        def get_nb_cpus(node_id):
+            return int(dag.node[uup].get('nb_cpus', 1))
 
         unew = u not in dag.node
         vnew = v not in dag.node
@@ -531,23 +536,22 @@ class WeightedDilworthPartition(DilworthPartition):
             if (elnew):
                 el_des = nx.descendants(dag, el)
                 el_pred = dag.predecessors(el)
-                ln = '{0}_l'.format(el)
-                rn = '{0}_r'.format(el)
                 for i in range(elcpu):
-                    #TODO do not use ln or rn, directly use el as child name!
-                    rn_child_r = '%s%d_r' % (rn, i)
-                    self_bpg.add_node(rn_child_r, bipartite=1)
-                    tmp_added.append(rn_child_r)
+                    child_r = '{0}{1}_r'.format(el, i)
+                    self_bpg.add_node(child_r, bipartite=1)
+                    tmp_added.append(child_r)
                     for uup in el_pred:
-                        #TODO cartesian product!
-                        self_bpg.add_edge('{0}_l'.format(uup), rn_child_r)
+                        for j in range(get_nb_cpus(uup)):
+                            self_bpg.add_edge('{0}{1}_l'.\
+                            format(uup, j), child_r)
 
-                    rn_child_l = '%s%d_l' % (rn, i)
-                    self_bpg.add_node(rn_child_l, bipartite=0)
-                    tmp_added.append(rn_child_l)
+                    child_l = '{0}{1}_l'.format(el, i)
+                    self_bpg.add_node(child_l, bipartite=0)
+                    tmp_added.append(child_l)
                     for udown in el_des:
-                        #TODO cartesian product!
-                        self_bpg.add_edge(rn_child_l, '{0}_r'.format(udown))
+                        for k in range(get_nb_cpus(udown)):
+                            self_bpg.add_edge(child_l, '{0}{1}_r'.\
+                            format(udown, k))
 
         mat = nx.bipartite.hopcroft_karp_matching(self_bpg)
         mydop = len(self_bpg.node) / 2 - len(mat) / 2
@@ -568,35 +572,44 @@ class WeightedDilworthPartition(DilworthPartition):
         """
         Need to merge split graph as well to speed up!
         """
+
+        def get_nb_cpus(mdag, node_id):
+            return int(mdag.node[uup].get('nb_cpus', 1))
+
         self._tmp_merge_dag = nx.compose(self._dag, that._dag)
         dag = self._tmp_merge_dag
-        self._bpg = nx.compose(self._bpg, that._bpg)
-        self_bpg = self._bpg
-        #TODO add more edges in self_bpg based on the new self._tmp_merge_dag
+        self_bpg = nx.compose(self._bpg, that._bpg)
         that_dag = that._dag
         that = set(that_dag.nodes())
         this_dag = self._dag
         this = set(this_dag.nodes())
 
-        #TODO write an inline function here!
-        # cross over this_left with that_right and that_left with this_right
-        for el in this:
-            ln = '{0}_l'.format(el)
-            for udown in nx.descendants(dag, el):
-                if udown in that:
-                    # M x N cartesian product
-                    rn = '{0}_r'.format(udown)
-                    for i in range(this_dag.node[el]['nb_cpus']):
-                        for j in range(that_dag.node[udown]['nb_cpus']):
-                            self_bpg.add_edge(ln, '{0}_r'.format(udown))
+        def cross_over(one, one_dag, two, two_dag):
+            for el in one:
+                for udown in nx.descendants(dag, el):
+                    if udown in two:
+                        # M x N cartesian product
+                        for i in range(get_nb_cpus(one_dag, el)):
+                            for j in range(get_nb_cpus(two_dag, udown)):
+                                self_bpg.add_edge('{0}{1}_l'.format(el, i),
+                                '{0}{1}_r'.format(udown, j))
 
+        # match this_left with that_right
+        cross_over(this, this_dag, that, that_dag)
+        # match that_left with this_right
+        cross_over(that, that_dag, this, this_dag)
 
-        for el in that:
-            ln = '{0}_l'.format(el)
-            for udown in nx.descendants(dag, el):
-                if udown in this:
-                    self_bpg.add_edge(ln, '{0}_r'.format(udown))
-                    #TODO add edges to all udown related
+        mat = nx.bipartite.hopcroft_karp_matching(self_bpg)
+        mydop = len(self_bpg.node) / 2 - len(mat) / 2
+        canmerge = False if mydop > self._ask_max_dop else True
+        if (not canmerge):
+            self._tmp_merge_dag = None
+            del self_bpg
+            self._tmp_max_dop = self._max_dop
+        else:
+            self._bpg = self_bpg
+            self._tmp_max_dop = mydop
+        return canmerge
 
 class Scheduler(object):
     """
