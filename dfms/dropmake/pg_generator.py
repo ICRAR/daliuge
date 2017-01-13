@@ -497,6 +497,7 @@ class LGNode():
                 sleepTime = random.randint(3, 8)
             kwargs['tw'] = sleepTime
             kwargs['sleepTime'] = sleepTime
+            kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
         elif (drop_type == 'BashShellApp'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.bash_shell_app.BashShellApp'})
@@ -514,6 +515,7 @@ class LGNode():
                 if (v is not None and len(str(v)) > 0):
                     cmds.append(str(v))
             kwargs['command'] = ' '.join(cmds)
+            kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
         elif (drop_type == 'GroupBy'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
