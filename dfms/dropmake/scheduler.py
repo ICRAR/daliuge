@@ -210,12 +210,14 @@ class Partition(object):
         #self._max_antichains = None
 
 
-    def can_add(self, u, uw, v, vw):
+    def can_add(self, u, v, gu, gv):
         """
         Check if nodes u and/or v can join this partition
         A node may be rejected due to reasons such as: DoP overflow or
         completion time deadline overdue, etc.
         """
+        uw = gu['weight']
+        vw = gv['weight']
         if (len(self._dag.nodes()) == 0):
             return (True, False, False)
 
@@ -252,17 +254,19 @@ class Partition(object):
             self.remove(v)
         return (ret, unew, vnew)
 
-    def add(self, u, uw, v, vw, sequential=False, global_dag=None):
+    def add(self, u, v, gu, gv, sequential=False, global_dag=None):
         """
         Add nodes u and/or v to the partition
         if sequential is True, break antichains to sequential chains
         """
         # if (self.partition_id == 180):
         #     logger.debug("u = ", u, ", v = ", v, ", partition = ", self.partition_id)
+        uw = gu['weight']
+        vw = gv['weight']
         unew = u not in self._dag.node
         vnew = v not in self._dag.node
-        self._dag.add_node(u, weight=uw)
-        self._dag.add_node(v, weight=vw)
+        self._dag.add_node(u, weight=uw, num_cpus=gu['num_cpus'])
+        self._dag.add_node(v, weight=vw, num_cpus=gv['num_cpus'])
         self._dag.add_edge(u, v)
 
         if (unew and vnew): # we know this is fast
@@ -398,7 +402,9 @@ class DilworthPartition(Partition):
         self._bpg = nx.Graph()
         self._tmp_max_dop = None
 
-    def can_add(self, u, uw, v, vw):
+    def can_add(self, u, v, gu, gv):
+        uw = gu['weight']
+        vw = gv['weight']
         dag = self._dag
         self_bpg = self._bpg
 
@@ -406,9 +412,9 @@ class DilworthPartition(Partition):
         vnew = v not in dag.node
 
         if (unew):
-            dag.add_node(u, weight=uw)
+            dag.add_node(u, weight=uw, num_cpus=gu['num_cpus'])
         if (vnew):
-            dag.add_node(v, weight=vw)
+            dag.add_node(v, weight=vw, num_cpus=gu['num_cpus'])
         dag.add_edge(u, v)
 
         # add u and/or v to the tmp bipartite graph
@@ -441,7 +447,7 @@ class DilworthPartition(Partition):
             self._tmp_max_dop = mydop
         return (canadd, unew, vnew)
 
-    def add(self, u, uw, v, vw, sequential=False, global_dag=None):
+    def add(self, u, v, gu, gv, sequential=False, global_dag=None):
         # if (sequential):
         #     raise GraphException("sequentialisation not supported"\
         #      " in DilworthPartition")
@@ -511,28 +517,37 @@ class WeightedDilworthPartition(DilworthPartition):
     """
     def __init__(self, gid, max_dop):
         super(WeightedDilworthPartition, self).__init__(gid, max_dop)
+        #print("WeightedDilworthPartition")
 
-    def can_add(self, u, uw, v, vw):
+    def can_add(self, u, v, gu, gv):
         """
         """
+        uw = gu['weight']
+        vw = gv['weight']
+        ucpus = gu['num_cpus']
+        vcpus = gv['num_cpus']
         dag = self._dag
         self_bpg = self._bpg
 
         def get_nb_cpus(node_id):
-            return int(dag.node[uup].get('nb_cpus', 1))
+            return dag.node[node_id]['num_cpus']
 
         unew = u not in dag.node
         vnew = v not in dag.node
 
         if (unew):
-            dag.add_node(u, weight=uw)
+            dag.add_node(u, weight=uw, num_cpus=ucpus,
+            text=gu['text'])
+
         if (vnew):
-            dag.add_node(v, weight=vw)
+            dag.add_node(v, weight=vw, num_cpus=vcpus,
+            text=gv['text'])
+
         dag.add_edge(u, v)
 
         # add u and/or v to the tmp bipartite graph
         tmp_added = []
-        for el, elnew, elcpu in [(u, unew, ucpu), (v, vnew, vcpu)]:
+        for el, elnew, elcpu in [(u, unew, ucpus), (v, vnew, vcpus)]:
             if (elnew):
                 el_des = nx.descendants(dag, el)
                 el_pred = dag.predecessors(el)
@@ -574,11 +589,11 @@ class WeightedDilworthPartition(DilworthPartition):
         """
 
         def get_nb_cpus(mdag, node_id):
-            return int(mdag.node[uup].get('nb_cpus', 1))
+            return mdag.node[node_id]['num_cpus']
 
         self._tmp_merge_dag = nx.compose(self._dag, that._dag)
         dag = self._tmp_merge_dag
-        self_bpg = nx.compose(self._bpg, that._bpg)
+        self_bpg_tmp = nx.compose(self._bpg, that._bpg)
         that_dag = that._dag
         that = set(that_dag.nodes())
         this_dag = self._dag
@@ -591,7 +606,7 @@ class WeightedDilworthPartition(DilworthPartition):
                         # M x N cartesian product
                         for i in range(get_nb_cpus(one_dag, el)):
                             for j in range(get_nb_cpus(two_dag, udown)):
-                                self_bpg.add_edge('{0}{1}_l'.format(el, i),
+                                self_bpg_tmp.add_edge('{0}{1}_l'.format(el, i),
                                 '{0}{1}_r'.format(udown, j))
 
         # match this_left with that_right
@@ -599,15 +614,15 @@ class WeightedDilworthPartition(DilworthPartition):
         # match that_left with this_right
         cross_over(that, that_dag, this, this_dag)
 
-        mat = nx.bipartite.hopcroft_karp_matching(self_bpg)
-        mydop = len(self_bpg.node) / 2 - len(mat) / 2
+        mat = nx.bipartite.hopcroft_karp_matching(self_bpg_tmp)
+        mydop = len(self_bpg_tmp.node) / 2 - len(mat) / 2
         canmerge = False if mydop > self._ask_max_dop else True
         if (not canmerge):
             self._tmp_merge_dag = None
-            del self_bpg
+            self_bpg_tmp = None
             self._tmp_max_dop = self._max_dop
         else:
-            self._bpg = self_bpg
+            self._bpg = self_bpg_tmp
             self._tmp_max_dop = mydop
         return canmerge
 
@@ -826,7 +841,8 @@ class MySarkarScheduler(Scheduler):
                 elif ((not ugid) and vgid):
                     part = g_dict[vgid]
                 elif (not ugid and (not vgid)):
-                    part = DilworthPartition(st_gid, self._max_dop)
+                    #part = DilworthPartition(st_gid, self._max_dop)
+                    part = WeightedDilworthPartition(st_gid, self._max_dop)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
                     st_gid += 1
@@ -847,12 +863,12 @@ class MySarkarScheduler(Scheduler):
                     if (merge_two_parts): # merging two partitions
                         ca = True
                     else:
-                        ca, unew, vnew = part.can_add(u, uw, v, vw)
+                        ca, unew, vnew = part.can_add(u, v, gu, gv)
                     if (ca):
                         if (not merge_two_parts):
                             #TODO should merge can_add and add in non-linerisation case
                             # becasue the add will re-probe the max_dop again!
-                            part.add(u, uw, v, vw)
+                            part.add(u, v, gu, gv)
                             gu['gid'] = part._gid
                             gv['gid'] = part._gid
                         curr_lpl = new_lpl
@@ -861,7 +877,7 @@ class MySarkarScheduler(Scheduler):
                         if (self.override_cannot_add() and
                         (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
                             # sequentialisation
-                            part.add(u, uw, v, vw, sequential=True, global_dag=G)
+                            part.add(u, v, gu, gv, sequential=True, global_dag=G)
                             #logger.debug("serialisation done for part {0}".format(part.partition_id))
                             gu['gid'] = part._gid
                             gv['gid'] = part._gid
@@ -884,7 +900,8 @@ class MySarkarScheduler(Scheduler):
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
-                part = DilworthPartition(st_gid, self._max_dop)
+                #part = DilworthPartition(st_gid, self._max_dop)
+                part = WeightedDilworthPartition(st_gid, self._max_dop)
                 part.add_node(n[0], n[1].get('weight', 1))
                 g_dict[st_gid] = part
                 parts.append(part) # will it get rejected?
@@ -1083,15 +1100,15 @@ class PSOScheduler(Scheduler):
             if (part is None):
                 recover_edge = True
             else:
-                ca, unew, vnew = part.can_add(u, uw, v, vw)
+                ca, unew, vnew = part.can_add(u, v, gu, gv)
                 if (ca):
                     # ignore linear flag, add it anyway
-                    part.add(u, uw, v, vw)
+                    part.add(u, v, gu, gv)
                     gu['gid'] = part._gid
                     gv['gid'] = part._gid
                 else:
                     if (linear):
-                        part.add(u, uw, v, vw, sequential=True, global_dag=G)
+                        part.add(u, v, gu, gv, sequential=True, global_dag=G)
                         gu['gid'] = part._gid
                         gv['gid'] = part._gid
                     else:
@@ -1522,11 +1539,15 @@ class DAGUtil(object):
                 tw = int(drop['tw'])
                 dtp = 1
             else:
-                raise SchedulerException("Drop Type '{0}' is not yet supported".format(tt))
+                raise SchedulerException("Drop Type '{0}' not supported".\
+                format(tt))
+            num_cpus = drop.get('num_cpus', 1)
             if (embed_drop):
-                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp, drop_spec=drop)
+                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp,
+                drop_spec=drop, num_cpus=num_cpus)
             else:
-                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp)
+                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp,
+                num_cpus=num_cpus)
             if obk in drop:
                 for oup in drop[obk]:
                     if ('plain' == tt):
