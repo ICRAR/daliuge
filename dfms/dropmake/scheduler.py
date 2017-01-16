@@ -414,7 +414,7 @@ class DilworthPartition(Partition):
         if (unew):
             dag.add_node(u, weight=uw, num_cpus=gu['num_cpus'])
         if (vnew):
-            dag.add_node(v, weight=vw, num_cpus=gu['num_cpus'])
+            dag.add_node(v, weight=vw, num_cpus=gv['num_cpus'])
         dag.add_edge(u, v)
 
         # add u and/or v to the tmp bipartite graph
@@ -514,43 +514,76 @@ class WeightedDilworthPartition(DilworthPartition):
 
     See also:
     http://fmdb.cs.ucla.edu/Treports/930014.pdf
+
+    It now has an option (`global_dag`) to deal with global path reachability,
+    which can be
+    ignored by the local partition-specific DAG. Such ignorance will result in
+    inflated DoP values, which lead to more rejected partition merge
+    requests, which in turn creates more partitions. Based on our experiment,
+    without turning on this option, scheduling the "chiles_two_dev2" pipeline
+    will create 45 partitions (i.e. 45 compute nodes, each has 8 cores).
+    Turning on this option bring that number down to 24, although the same
+    execution time.
+
+    Off - exec_time:92 - min_exec_time:67 - total_data_movement:510 -
+    algo:Edge Zero - num_parts:45
+
+    On - exec_time:92 - min_exec_time:67 - total_data_movement:482 -
+    algo:Edge Zero - num_parts:24
+
+    The downside is that this option does slow down the partitioning process by
+    at least a factor of 3 in the case of the CHILES2 pipeline
     """
-    def __init__(self, gid, max_dop):
+    def __init__(self, gid, max_dop, global_dag=None):
         super(WeightedDilworthPartition, self).__init__(gid, max_dop)
-        #print("WeightedDilworthPartition")
+        self._global_dag = global_dag
+        self._check_global_dag = global_dag is not None
 
     def can_add(self, u, v, gu, gv):
-        """
-        """
-        uw = gu['weight']
-        vw = gv['weight']
+        self_bpg = self._bpg
+        global_dag = self._global_dag
+        dag = self._dag
         ucpus = gu['num_cpus']
         vcpus = gv['num_cpus']
-        dag = self._dag
-        self_bpg = self._bpg
 
         def get_nb_cpus(node_id):
-            return dag.node[node_id]['num_cpus']
+            try:
+                return dag.node[node_id]['num_cpus']
+            except:
+                return global_dag.node[node_id]['num_cpus']
+
+        part_node_set = set(dag.node) # node set
 
         unew = u not in dag.node
         vnew = v not in dag.node
 
         if (unew):
-            dag.add_node(u, weight=uw, num_cpus=ucpus,
-            text=gu['text'])
-
+            dag.add_node(u, attr_dict=gu)
         if (vnew):
-            dag.add_node(v, weight=vw, num_cpus=vcpus,
-            text=gv['text'])
-
+            dag.add_node(v, attr_dict=gv)
         dag.add_edge(u, v)
 
         # add u and/or v to the tmp bipartite graph
         tmp_added = []
         for el, elnew, elcpu in [(u, unew, ucpus), (v, vnew, vcpus)]:
             if (elnew):
-                el_des = nx.descendants(dag, el)
-                el_pred = dag.predecessors(el)
+                self_set = set([el])
+                el_des = nx.descendants(dag, el) # already a set
+                el_pred = set(dag.predecessors(el))
+                if (self._check_global_dag):
+                    rem = part_node_set - el_des - self_set
+                    for rel in rem:
+                        #check path on the global dag
+                        if (nx.has_path(global_dag, el, rel)):
+                            el_des.add(rel)
+                            #print("caught missing global edge 0")
+
+                    rem = part_node_set - el_pred - self_set
+                    for rel in rem:
+                        #check path on the global dag
+                        if (nx.has_path(global_dag, rel, el)):
+                            el_pred.add(rel)
+                            #print("caught missing global edge 1")
                 for i in range(elcpu):
                     child_r = '{0}{1}_r'.format(el, i)
                     self_bpg.add_node(child_r, bipartite=1)
@@ -587,9 +620,13 @@ class WeightedDilworthPartition(DilworthPartition):
         """
         Need to merge split graph as well to speed up!
         """
+        global_dag = self._global_dag
 
         def get_nb_cpus(mdag, node_id):
-            return mdag.node[node_id]['num_cpus']
+            try:
+                return mdag.node[node_id]['num_cpus']
+            except:
+                return global_dag.node[node_id]['num_cpus']
 
         self._tmp_merge_dag = nx.compose(self._dag, that._dag)
         dag = self._tmp_merge_dag
@@ -598,10 +635,20 @@ class WeightedDilworthPartition(DilworthPartition):
         that = set(that_dag.nodes())
         this_dag = self._dag
         this = set(this_dag.nodes())
+        part_node_set = set(this_dag.node) # node set
 
         def cross_over(one, one_dag, two, two_dag):
             for el in one:
-                for udown in nx.descendants(dag, el):
+                self_set = set([el])
+                el_des = nx.descendants(dag, el)
+                if (self._check_global_dag):
+                    rem = part_node_set - el_des - self_set
+                    for rel in rem:
+                        #check path on the global dag
+                        if (nx.has_path(global_dag, el, rel)):
+                            el_des.add(rel)
+                            #print("caught missing global edge 2")
+                for udown in el_des:
                     if udown in two:
                         # M x N cartesian product
                         for i in range(get_nb_cpus(one_dag, el)):
@@ -843,6 +890,7 @@ class MySarkarScheduler(Scheduler):
                 elif (not ugid and (not vgid)):
                     #part = DilworthPartition(st_gid, self._max_dop)
                     part = WeightedDilworthPartition(st_gid, self._max_dop)
+                    #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
                     st_gid += 1
@@ -902,6 +950,7 @@ class MySarkarScheduler(Scheduler):
                 n[1]['gid'] = st_gid
                 #part = DilworthPartition(st_gid, self._max_dop)
                 part = WeightedDilworthPartition(st_gid, self._max_dop)
+                #part = StrictDilworthPartition(st_gid, self._max_dop, G)
                 part.add_node(n[0], n[1].get('weight', 1))
                 g_dict[st_gid] = part
                 parts.append(part) # will it get rejected?
@@ -1483,7 +1532,8 @@ class DAGUtil(object):
                 stt = node['stt']
                 edt = node['edt']
             except KeyError as ke:
-                raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
+                raise SchedulerException("No schedule labels found: {0}".\
+                format(str(ke)))
             #print i, n, stt, edt
             leng = edt - stt
             if (edt == stt):
