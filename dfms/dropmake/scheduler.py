@@ -21,7 +21,7 @@
 #
 
 import logging
-import os
+import os, sys
 import platform
 import time, random
 
@@ -678,6 +678,12 @@ class KFamilyPartition(Partition):
     The potential 'pai' of a node 'Xi' is the length of the shortest path in
     the residual graph from the source 's' to 'Xi'
 
+    Replace each arc (i,j) in E by two arcs (i,j), (j,i): the arc (i,j) has
+    cost cij and (residual) capacity rij = uij – xij, and the arc (j,i) has
+    cost -cij and (residual) capacity rji=xij.
+    Then we construct the set Ex from the new edges with a positive residual
+    capacity.
+
     """
     def __init__(self, gid, max_dop, w_attr='num_cpus', global_dag=None):
         super(KFamilyPartition, self).__init__(gid, max_dop)
@@ -740,19 +746,37 @@ class KFamilyPartition(Partition):
                     self_bpg.add_edge('{0}_x'.format(uup), yi, weight=0)
 
         # 2. get an optimal solution for max-flow_min-cost
-        optimal_G = nx.min_cost_flow(self_bpg)
+        opt_sol = nx.min_cost_flow(self_bpg) # returns a dict
 
-        # 3. convert it into the residual networks
+        # 3. convert original network into a residual network
         R = nx.DiGraph()
-        R.add_nodes_from(optimal_G)
+        R.add_nodes_from(self_bpg)
+        for ed in self_bpg.edges(data=True):
+            Xij = opt_sol[ed[0]]][ed[1]]
+            Uij = ed[2].get('capacity', sys.maxint)
+            Cij = ed[2]['weight']
+            if (Uij - Xij) > 0:
+                R.add_edge(ed[0], ed[1], weight=Cij)
+            if (Xij > 0):
+                R.add_edge(ed[1], ed[0], weight=-1 * Cij)
 
         # 4. get the shortest path for each node on the residual graph
+        pai = dict()
+        for nd in self_bpg.nodes():
+            pai[nd] = nx.shortest_path_length(self_bpg,
+            source='s', target=nd, weight='weight')
 
-        # 5 go through residual graph nodes and apply Theorem 3.1
+        # 5 go through split graph nodes and apply Theorem 3.1
         # to find the antichain
-
-
-
+        w_antichain_len = 0 #weighted antichain length
+        for nd in self_bpg.nodes():
+            if (nd.endswith('_x')):
+                y_nd = nd.split('_x')[0] + '_y'
+                for h in range(2):
+                    if ((1 - pai[nd] == h) and (pai[y_nd] - pai[nd] == 1)):
+                        w_antichain_len += self_bpg.edge['s'][nd]['capacity']
+        canadd = False if w_antichain_len > self._ask_max_dop else True
+        return canadd
 
 class Scheduler(object):
     """
