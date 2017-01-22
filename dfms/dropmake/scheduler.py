@@ -30,6 +30,7 @@ import pkg_resources
 import networkx as nx
 import numpy as np
 from pyswarm import pso
+from collections import defaultdict
 
 from dfms.dropmake.utils.anneal import Annealer
 from dfms.dropmake.utils.mcts import DAGTree, MCTS
@@ -669,42 +670,103 @@ class WeightedDilworthPartition(DilworthPartition):
             self._tmp_max_dop = mydop
         return canmerge
 
-class KFamilyPartition(Partition):
+class MultiWeightPartition(Partition):
     """
-    A special case (K = 1) of the Maximum Weighted K-families based on
-    the Theorem 3.1 in
-    http://fmdb.cs.ucla.edu/Treports/930014.pdf
-
-    The potential 'pai' of a node 'Xi' is the length of the shortest path in
-    the residual graph from the source 's' to 'Xi'
-
-    Replace each arc (i,j) in E by two arcs (i,j), (j,i): the arc (i,j) has
-    cost cij and (residual) capacity rij = uij – xij, and the arc (j,i) has
-    cost -cij and (residual) capacity rji=xij.
-    Then we construct the set Ex from the new edges with a positive residual
-    capacity.
-
     """
-    def __init__(self, gid, max_dop, w_attr='num_cpus', global_dag=None):
-        super(KFamilyPartition, self).__init__(gid, max_dop)
-        self._bpg = nx.DiGraph()
+    def __init__(self, gid, max_dops, w_attrs=['num_cpus'],
+                 global_dag=None):
+        if (type(max_dops) == int):
+            max_dops = [max_dops]
+        if (len(max_dops) != len(w_attrs)):
+            raise Exception("len(max_dops) != len(w_attrs)")
+        super(MultiWeightPartition, self).__init__(gid, 0)
+        self._ask_max_dops = max_dops
+        self._tmp_max_dops = None
         self._global_dag = global_dag
         self._check_global_dag = global_dag is not None
-        self._w_attr = w_attr
+        self._tc = defaultdict(set) #transitive closure
+        self._w_attrs = w_attrs
+        self._tc_time = 0.0
+        self._antichain_time = 0.0
+
+    def _add_to_tc(self, tc, el, dag, tmp_dag_list):
+        """
+        edges in tmp_dag_list will ALWAYS be removed from
+        the dag after the topological sort is done
+        """
+        stt = time.time()
+        el_des = nx.descendants(dag, el) # already a set
+        el_pred = set(dag.predecessors(el))
+
+        if (self._check_global_dag):
+            part_node_set = set(dag.node) - set([el]) # node set
+            rem = part_node_set - el_des
+            global_dag = self._global_dag
+            for rel in rem:
+                if ((not rel in tc[el]) and
+                    nx.has_path(global_dag, el, rel)):
+
+                    el_des.add(rel)
+                    tmp_dag_list.append((el, rel))
+                    dag.add_edge(el, rel)
+
+            rem = part_node_set - el_pred
+            for rel in rem:
+                if ((not el in tc[rel]) and
+                    nx.has_path(global_dag, rel, el)):
+
+                    el_pred.add(rel)
+                    tmp_dag_list.append((rel, el))
+                    dag.add_edge(rel, el)
+
+            for udown in el_des:
+                tc[el].add(udown)
+
+            for uup in el_pred:
+                tc[uup].add(el)
+        self._tc_time += time.time() - stt
+
+    def _get_w_antichain_len(self, tc, dag):
+        """
+        Get maximul weighted antichain length for each w_attr
+
+        """
+        stt = time.time()
+        def antichains():
+            """
+            adapted from
+            https://networkx.github.io/documentation/networkx-1.10/\
+            _modules/networkx/algorithms/dag.html
+            """
+            antichains_stacks = [([], nx.topological_sort(dag, reverse=True))]
+            while antichains_stacks:
+                (antichain, stack) = antichains_stacks.pop()
+                # Invariant:
+                #  - the elements of antichain are independent
+                #  - the elements of stack are independent from those of antichain
+                yield antichain
+                while stack:
+                    x = stack.pop()
+                    new_antichain = antichain + [x]
+                    new_stack = [
+                        t for t in stack if not ((t in tc[x]) or (x in tc[t]))]
+                    antichains_stacks.append((new_antichain, new_stack))
+
+        self_w_attrs = self._w_attrs
+        leng = len(self_w_attrs)
+        max_width = [0] * leng
+        for antichain in antichains():
+            for i in range(leng):
+                attr = self_w_attrs[i]
+                s = sum([dag.node[n].get(attr, 1) for n in antichain])
+                if (s > max_width[i]):
+                    max_width[i] = s
+        self._antichain_time += time.time() - stt
+        return max_width
 
     def can_add(self, u, v, gu, gv):
-        self_bpg = self._bpg
-        global_dag = self._global_dag
         dag = self._dag
-        w_attr = self._w_attr
-        u_aw = gu[w_attr] # antichain weight in the split graph
-        v_aw = gv[w_attr]
-
-        def get_attribute(node_id):
-            try:
-                return dag.node[node_id][w_attr]
-            except:
-                return global_dag.node[node_id][w_attr]
+        tc = self._tc
 
         unew = u not in dag.node
         vnew = v not in dag.node
@@ -713,70 +775,70 @@ class KFamilyPartition(Partition):
         if (vnew):
             dag.add_node(v, attr_dict=gv)
         dag.add_edge(u, v)
-
         tmp_added = []
-        # 1. construct the split graph
-        for el, elnew, elweight in [(u, unew, u_aw), (v, vnew, v_aw)]:
+
+        for el, elnew in [(u, unew), (v, vnew)]:
             if (elnew):
-                xi = '{0}_x'.format(el)
-                yi = '{0}_y'.format(el)
-                self_bpg.add_edge('s', xi, capacity=elweight, weight=0)
-                self_bpg.add_edge(xi, yi, weight=1)
-                self_bpg.add_edge('yi', 't', capacity=elweight, weight=0)
-                # build transitive closure
-                el_des = nx.descendants(dag, el) # already a set
-                el_pred = set(dag.predecessors(el))
+                self._add_to_tc(tc, el, dag, tmp_added)
 
-                #check path on the global dag
-                if (self._check_global_dag):
-                    part_node_set = set(dag.node) - set([el]) # node set
-                    rem = part_node_set - el_des
-                    for rel in rem:
-                        if (nx.has_path(global_dag, el, rel)):
-                            el_des.add(rel)
+        my_dops = self._get_w_antichain_len(tc, dag)
+        canadd = True
+        for i, ask_dop in enumerate(self._ask_max_dops):
+            if (my_dops[i] > ask_dop):
+                canadd = False
+                break
+        if (not canadd):
+            for tbd in tmp_added:
+                dag.remove_edge(tbd[0], tbd[1])
+            self._tmp_max_dops = self._max_dop
+            if (unew):
+                self.remove(u)
+            if (vnew):
+                self.remove(v)
+        else:
+            self._tmp_max_dops = my_dops
 
-                    rem = part_node_set - el_pred
-                    for rel in rem:
-                        if (nx.has_path(global_dag, rel, el)):
-                            el_pred.add(rel)
+        return (canadd, unew, vnew)
 
-                for udown in el_des:
-                    self_bpg.add_edge(xi, '{0}_y'.format(udown), weight=0)
-                for uup in el_pred:
-                    self_bpg.add_edge('{0}_x'.format(uup), yi, weight=0)
+    def add(self, u, v, gu, gv, sequential=False, global_dag=None):
+        if (self._tmp_max_dops is not None):
+            self._max_dop = self._tmp_max_dops
+        else:
+            # we could recalcuate it again, but we are lazy!
+            raise GraphException("can_add was not probed before add()")
 
-        # 2. get an optimal solution for max-flow_min-cost
-        opt_sol = nx.min_cost_flow(self_bpg) # returns a dict
+    def can_merge(self, that):
+        """
+        """
+        self._tmp_merge_dag = nx.compose(self._dag, that._dag)
+        dag = self._tmp_merge_dag
+        tc = self._tc
+        tmp_added = []
+        for el in that._dag.nodes():
+            self._add_to_tc(tc, el, dag, tmp_added)
+        my_dops = self._get_w_antichain_len(tc, dag)
 
-        # 3. convert original network into a residual network
-        R = nx.DiGraph()
-        R.add_nodes_from(self_bpg)
-        for ed in self_bpg.edges(data=True):
-            Xij = opt_sol[ed[0]]][ed[1]]
-            Uij = ed[2].get('capacity', sys.maxint)
-            Cij = ed[2]['weight']
-            if (Uij - Xij) > 0:
-                R.add_edge(ed[0], ed[1], weight=Cij)
-            if (Xij > 0):
-                R.add_edge(ed[1], ed[0], weight=-1 * Cij)
+        canmerge = True
+        for i, ask_dop in enumerate(self._ask_max_dops):
+            if (my_dops[i] > ask_dop):
+                canmerge = False
+                break
 
-        # 4. get the shortest path for each node on the residual graph
-        pai = dict()
-        for nd in self_bpg.nodes():
-            pai[nd] = nx.shortest_path_length(self_bpg,
-            source='s', target=nd, weight='weight')
+        if (not canmerge):
+            self._tmp_max_dops = self._max_dop
+            self._tmp_merge_dag = None
+        else:
+            self._tmp_max_dops = my_dops
+        return canmerge
 
-        # 5 go through split graph nodes and apply Theorem 3.1
-        # to find the antichain
-        w_antichain_len = 0 #weighted antichain length
-        for nd in self_bpg.nodes():
-            if (nd.endswith('_x')):
-                y_nd = nd.split('_x')[0] + '_y'
-                for h in range(2):
-                    if ((1 - pai[nd] == h) and (pai[y_nd] - pai[nd] == 1)):
-                        w_antichain_len += self_bpg.edge['s'][nd]['capacity']
-        canadd = False if w_antichain_len > self._ask_max_dop else True
-        return canadd
+    def merge(self, that):
+        super(MultiWeightPartition, self).merge(that)
+        if (self._tmp_max_dops is not None):
+            self._max_dop = self._tmp_max_dops
+        else:
+            # we could recalcuate it again, but we are lazy!
+            raise GraphException("can_merge was not probed before add()")
+
 
 class Scheduler(object):
     """
@@ -994,8 +1056,9 @@ class MySarkarScheduler(Scheduler):
                     part = g_dict[vgid]
                 elif (not ugid and (not vgid)):
                     #part = DilworthPartition(st_gid, self._max_dop)
-                    part = WeightedDilworthPartition(st_gid, self._max_dop)
+                    #part = WeightedDilworthPartition(st_gid, self._max_dop)
                     #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
+                    part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
                     st_gid += 1
@@ -1054,13 +1117,21 @@ class MySarkarScheduler(Scheduler):
             if not 'gid' in n[1]:
                 n[1]['gid'] = st_gid
                 #part = DilworthPartition(st_gid, self._max_dop)
-                part = WeightedDilworthPartition(st_gid, self._max_dop)
+                #part = WeightedDilworthPartition(st_gid, self._max_dop)
                 #part = StrictDilworthPartition(st_gid, self._max_dop, G)
+                part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
                 part.add_node(n[0], n[1].get('weight', 1))
                 g_dict[st_gid] = part
                 parts.append(part) # will it get rejected?
                 st_gid += 1
         self._parts = parts
+        for part in parts:
+            print("Partition {0} has {1} drops, DoP = {2}"\
+            .format(part._gid, len(part._dag.nodes()), part._max_dop))
+        if isinstance(part, MultiWeightPartition):
+            for part in parts:
+                print("Partition {0}, tc time: {1}, antichain time: {2}"\
+                .format(part._gid, part._tc_time, part._antichain_time))
         return ((st_gid - init_c), curr_lpl, edt, parts)
 
 class MinNumPartsScheduler(MySarkarScheduler):
