@@ -687,7 +687,11 @@ class MultiWeightPartition(Partition):
         self._tc = defaultdict(set) #transitive closure
         self._w_attrs = w_attrs
         self._tc_time = 0.0
-        self._antichain_time = 0.0
+        self._ac_sort_time = 0.0
+        self._ac_mem_time = 0.0
+        self._ac_calc_time = 0.0
+        self._matrix_time1 = 0.0
+        self._matrix_time2 = 0.0
 
     def _add_to_tc(self, tc, el, dag, tmp_dag_list):
         """
@@ -731,14 +735,24 @@ class MultiWeightPartition(Partition):
         Get maximul weighted antichain length for each w_attr
 
         """
+        self_w_attrs = self._w_attrs
+        leng = len(self_w_attrs)
+        max_width = [0] * leng
         stt = time.time()
+        dag_node = dag.node
+        N = list(dag)
+        num_nodes = len(N)                        # nodes
+        I = {u: i for i, u in enumerate(N)}        # node indices
+
         def antichains():
             """
             adapted from
             https://networkx.github.io/documentation/networkx-1.10/\
             _modules/networkx/algorithms/dag.html
             """
+            stt = time.time()
             antichains_stacks = [([], nx.topological_sort(dag, reverse=True))]
+            self._ac_sort_time += time.time() - stt
             while antichains_stacks:
                 (antichain, stack) = antichains_stacks.pop()
                 # Invariant:
@@ -748,21 +762,68 @@ class MultiWeightPartition(Partition):
                 while stack:
                     x = stack.pop()
                     new_antichain = antichain + [x]
+                    #stt = time.time()
                     new_stack = [
                         t for t in stack if not ((t in tc[x]) or (x in tc[t]))]
+                    #self._ac_mem_time += time.time() - stt
                     antichains_stacks.append((new_antichain, new_stack))
 
-        self_w_attrs = self._w_attrs
-        leng = len(self_w_attrs)
-        max_width = [0] * leng
-        for antichain in antichains():
+        stt = time.time()
+        weight_matrix = np.zeros((num_nodes, leng))
+        for i, n in enumerate(N):
+            for j in range(leng):
+                weight_matrix[i][j] = dag_node[n][self_w_attrs[j]]
+        self._matrix_time1 += time.time() - stt
+
+        MAX_LEN = 10000
+        all_antichains = []
+        delta_t = 0
+
+        def process_antichain_matrix():
+            if (len(all_antichains) == 0):
+                return
+            antichain_matrix = np.zeros((len(all_antichains), num_nodes))
+            if (self._gid in [194]):
+                print(antichain_matrix.shape, delta_t)
+
+            stt = time.time()
+            for i, antichain in enumerate(all_antichains):
+                for el in antichain:
+                    antichain_matrix[i][I[el]] = 1
+            self._matrix_time2 += time.time() - stt
+
+            sttt = time.time()
+            ret = list(np.max(np.dot(antichain_matrix, weight_matrix), axis=0))
+            self._ac_calc_time += time.time() - sttt
             for i in range(leng):
-                attr = self_w_attrs[i]
-                s = sum([dag.node[n].get(attr, 1) for n in antichain])
-                if (s > max_width[i]):
-                    max_width[i] = s
-        self._antichain_time += time.time() - stt
+                if ret[i] > max_width[i]:
+                    max_width[i] = ret[i]
+
+        stt = time.time()
+        for ac in antichains():
+            if (ac == []):
+                continue
+            all_antichains.append(ac)
+            if (len(all_antichains) == MAX_LEN):
+                delta_t = time.time() - stt
+                self._ac_mem_time += delta_t
+                process_antichain_matrix()
+                del all_antichains[:]
+                stt = time.time()
+
+        process_antichain_matrix()
         return max_width
+
+        # cache = {}
+        # for antichain in antichains():
+        #     for i in range(leng):
+        #         attr = self_w_attrs[i]
+        #         s = sum([dag_node[n][attr] for n in antichain])
+        #         if (s > max_width[i]):
+        #             max_width[i] = s
+        # self._ac_calc_time += time.time() - stt
+        # del cache
+        # return max_width
 
     def can_add(self, u, v, gu, gv):
         dag = self._dag
@@ -1130,8 +1191,11 @@ class MySarkarScheduler(Scheduler):
             .format(part._gid, len(part._dag.nodes()), part._max_dop))
         if isinstance(part, MultiWeightPartition):
             for part in parts:
-                print("Partition {0}, tc time: {1}, antichain time: {2}"\
-                .format(part._gid, part._tc_time, part._antichain_time))
+                print("Partition {0}, tc: {1}, sort: {2}, antichain: {3},"\
+                " matrix1: {4}, matrix2: {5}, calc: {6}"\
+                .format(part._gid, part._tc_time,
+                part._ac_sort_time, part._ac_mem_time,
+                part._matrix_time1, part._matrix_time2, part._ac_calc_time))
         return ((st_gid - init_c), curr_lpl, edt, parts)
 
 class MinNumPartsScheduler(MySarkarScheduler):
