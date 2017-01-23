@@ -783,8 +783,8 @@ class MultiWeightPartition(Partition):
             if (len(all_antichains) == 0):
                 return
             antichain_matrix = np.zeros((len(all_antichains), num_nodes))
-            if (self._gid in [194]):
-                print(antichain_matrix.shape, delta_t)
+            # if (self._gid in [194]):
+            #     print(antichain_matrix.shape, delta_t)
 
             stt = time.time()
             for i, antichain in enumerate(all_antichains):
@@ -1118,8 +1118,8 @@ class MySarkarScheduler(Scheduler):
                 elif (not ugid and (not vgid)):
                     #part = DilworthPartition(st_gid, self._max_dop)
                     #part = WeightedDilworthPartition(st_gid, self._max_dop)
-                    #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
-                    part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
+                    part = WeightedDilworthPartition(st_gid, self._max_dop, G)
+                    #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
                     g_dict[st_gid] = part
                     parts.append(part) # will it get rejected?
                     st_gid += 1
@@ -1179,23 +1179,23 @@ class MySarkarScheduler(Scheduler):
                 n[1]['gid'] = st_gid
                 #part = DilworthPartition(st_gid, self._max_dop)
                 #part = WeightedDilworthPartition(st_gid, self._max_dop)
-                #part = StrictDilworthPartition(st_gid, self._max_dop, G)
-                part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
+                part = WeightedDilworthPartition(st_gid, self._max_dop, G)
+                #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
                 part.add_node(n[0], n[1].get('weight', 1))
                 g_dict[st_gid] = part
                 parts.append(part) # will it get rejected?
                 st_gid += 1
         self._parts = parts
-        for part in parts:
-            print("Partition {0} has {1} drops, DoP = {2}"\
-            .format(part._gid, len(part._dag.nodes()), part._max_dop))
-        if isinstance(part, MultiWeightPartition):
-            for part in parts:
-                print("Partition {0}, tc: {1}, sort: {2}, antichain: {3},"\
-                " matrix1: {4}, matrix2: {5}, calc: {6}"\
-                .format(part._gid, part._tc_time,
-                part._ac_sort_time, part._ac_mem_time,
-                part._matrix_time1, part._matrix_time2, part._ac_calc_time))
+        # for part in parts:
+        #     print("Partition {0} has {1} drops, DoP = {2}"\
+        #     .format(part._gid, len(part._dag.nodes()), part._max_dop))
+        # if isinstance(part, MultiWeightPartition):
+        #     for part in parts:
+        #         print("Partition {0}, tc: {1}, sort: {2}, antichain: {3},"\
+        #         " matrix1: {4}, matrix2: {5}, calc: {6}"\
+        #         .format(part._gid, part._tc_time,
+        #         part._ac_sort_time, part._ac_mem_time,
+        #         part._matrix_time1, part._matrix_time2, part._ac_calc_time))
         return ((st_gid - init_c), curr_lpl, edt, parts)
 
 class MinNumPartsScheduler(MySarkarScheduler):
