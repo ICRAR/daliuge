@@ -926,7 +926,7 @@ class KFamilyPartition(Partition):
         # if (ed_capacity > 1):
         #     print("some >1 capacity: {0} for {1}".format(ed_capacity, el))
         split_graph.add_edge('s', xi, capacity=ed_capacity, weight=0)
-        split_graph.add_edge(xi, yi, capacity=sys.maxint, weight=1)
+        split_graph.add_edge(xi, yi, capacity=sys.maxsize, weight=1)
         split_graph.add_edge(yi, 't', capacity=ed_capacity, weight=0)
         tmp_list.append(xi)
         tmp_list.append(yi)
@@ -957,10 +957,10 @@ class KFamilyPartition(Partition):
 
         for udown in el_des:
             split_graph.add_edge(xi, '{0}_y'.format(udown),
-            capacity=sys.maxint, weight=0)
+            capacity=sys.maxsize, weight=0)
         for uup in el_pred:
             split_graph.add_edge('{0}_x'.format(uup), yi,
-            capacity=sys.maxint, weight=0)
+            capacity=sys.maxsize, weight=0)
 
     def _get_pi_solution(self, split_graph):
         """
@@ -979,7 +979,7 @@ class KFamilyPartition(Partition):
         H = nx.DiGraph()
         H.add_nodes_from(split_graph)
         for ed in split_graph.edges(data=True):
-            Cxy = ed[2].get('capacity', sys.maxint)
+            Cxy = ed[2].get('capacity', sys.maxsize)
             Axy = ed[2]['weight']
             if (Axy == 0 and Cxy > 0):
                 H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
@@ -992,7 +992,7 @@ class KFamilyPartition(Partition):
         R.add_nodes_from(H)
         for ed in H.edges(data=True):
             Xij = flow_dict[ed[0]][ed[1]]
-            Uij = ed[2].get('capacity', sys.maxint)
+            Uij = ed[2].get('capacity', sys.maxsize)
             Cij = ed[2]['weight']
             if (Uij - Xij) > 0:
                 R.add_edge(ed[0], ed[1], weight=Cij)
