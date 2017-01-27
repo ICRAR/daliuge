@@ -519,7 +519,10 @@ class LGNode():
             dropSpec.update(kwargs)
         elif (drop_type == 'GroupBy'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
-            dw = int(self.inputs[0].jd['data_volume']) * self.groupby_width
+            sij = self.inputs[0].jd
+            if (not 'data_volume' in sij):
+                raise GInvalidNode("GroupBy construct follows a DataDrop, not '%s'" % sij['category'])
+            dw = int(sij['data_volume']) * self.groupby_width
             dropSpec_grp = dropdict({'oid':"{0}-grp-data".format(oid), 'type':'plain', 'storage':'memory',
             'nm':'grpdata', 'dw':dw})
             kwargs['grp-data_drop'] = dropSpec_grp
