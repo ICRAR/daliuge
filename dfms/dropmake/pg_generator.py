@@ -265,6 +265,20 @@ class LGNode():
     def is_start(self):
         return (not self.has_group())
 
+    def is_dag_root(self):
+        leng = len(self.inputs)
+        if (leng > 1):
+            return False
+        elif (leng == 0):
+            if (self.is_start_node()):
+                return False
+            else:
+                return True
+        elif (self.inputs[0].jd['category'] == 'Start'):
+            return True
+        else:
+            return False
+
     def is_start_listener(self):
         return (len(self.inputs) == 1 and self.inputs[0].jd['category'] == 'Start' and
         self.jd['category'] in STORAGE_TYPES)
@@ -1512,7 +1526,7 @@ class LG():
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
-        del all_list
+        self._lgn_list = all_list
 
     def validate_link(self, src, tgt):
         if (src.is_scatter() or tgt.is_scatter()):
