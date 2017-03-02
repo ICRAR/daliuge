@@ -10,10 +10,10 @@ Welcome to the Data Activated 流 [#f1]_ Graph Engine (|daliuge|).
 
 |daliuge|
 is an on-going prototyping activity that is part of the `SDP Consortium
-<https://www.skatelescope.org/sdp/>`_. It aims to prototype the main risk items
-of the proposed SDP architecture to confirm the design choices and the
-different product selection. At the same time, |daliuge| is written in such a way
-that it can be reused by any other project needing its functionality.
+<https://www.skatelescope.org/sdp/>`_. It aims to prototype the execution framework
+of the proposed SDP architecture. Furthermore, |daliuge| has already been used
+for `processing large astronomical datasets <https://arxiv.org/abs/1702.07617>`_
+in existing radio astronomy projects.
 
 .. figure:: images/DALiuGE_naming_rationale.png
 
