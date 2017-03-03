@@ -58,6 +58,7 @@ import os
 import random
 import re
 import time
+from itertools import product
 
 import networkx as nx
 import numpy as np
@@ -221,6 +222,7 @@ class LGNode():
         """
         # if (self.is_group() or that_lgn.is_group()):
         #     raise GraphException("Cannot compute dop diff between groups.")
+        # don't check h_related for efficiency since it should have been checked
         #if (self.h_related(that_lgn)):
         il = self.h_level
         al = that_lgn.h_level
@@ -1574,6 +1576,8 @@ class LG():
             if (ll.is_loop() and rl.is_loop()):
                 valid_loop_link = True
                 while (True):
+                    if (ll is None or rl is None):
+                        break
                     if (ll.is_loop() and rl.is_loop()):
                         if (ll.dop != rl.dop):
                             valid_loop_link = False
@@ -1803,12 +1807,12 @@ class LG():
                     # for i, sdrop in enumerate(sdrops):
                     #     if (i < lsd - 1):
                     #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
-                elif (slgn.group.is_loop() and tlgn.group.is_loop()):
+                elif (slgn.group is not None and slgn.group.is_loop() and
+                tlgn.group is not None and tlgn.group.is_loop()):
                     # stepwise locking for links between two Loops
-                    for sdrop in sdrops:
-                        for tdrop in tdrops:
-                            if (sdrop['loop_cxt'] == tdrop['loop_cxt']):
-                                self._link_drops(slgn, tlgn, sdrop, tdrop)
+                    for sdrop, tdrop in product(sdrops, tdrops):
+                        if (sdrop['loop_cxt'] == tdrop['loop_cxt']):
+                            self._link_drops(slgn, tlgn, sdrop, tdrop)
                 else:
                     if (slgn.h_level >= tlgn.h_level):
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
