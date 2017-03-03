@@ -221,25 +221,26 @@ class LGNode():
         """
         # if (self.is_group() or that_lgn.is_group()):
         #     raise GraphException("Cannot compute dop diff between groups.")
-        if (self.h_related(that_lgn)):
-            il = self.h_level
-            al = that_lgn.h_level
-            if (il == al):
-                return 1
-            elif (il > al):
-                oln = that_lgn
-                iln = self
-            else:
-                iln = that_lgn
-                oln = self
-            re_dop = 1
-            cg = iln
-            while(cg.gid != oln.gid and cg.has_group()):
-                re_dop *= cg.group.dop
-                cg = cg.group
-            return re_dop
+        #if (self.h_related(that_lgn)):
+        il = self.h_level
+        al = that_lgn.h_level
+        if (il == al):
+            return 1
+        elif (il > al):
+            oln = that_lgn
+            iln = self
         else:
-            raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
+            iln = that_lgn
+            oln = self
+        re_dop = 1
+        cg = iln
+        while(cg.gid != oln.gid and cg.has_group()):
+            re_dop *= cg.group.dop
+            cg = cg.group
+        return re_dop
+        # else:
+        #     pass
+            #raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
 
     def h_related(self, that_lgn):
         that_gh = that_lgn.group_hierarchy
@@ -1568,16 +1569,36 @@ class LG():
                 raise GInvalidLink("Branch {0} must have two outputs, but it has {1} now".format(src.id, len(o)))
 
         if (not src.h_related(tgt)):
-            raise GInvalidLink("{0} and {1} are not hierarchically related: {2} and {3}".format(src.id, tgt.id,
-            src.group_hierarchy,
-            tgt.group_hierarchy))
+            ll = src.group
+            rl = tgt.group
+            if (ll.is_loop() and rl.is_loop()):
+                valid_loop_link = True
+                while (True):
+                    if (ll.is_loop() and rl.is_loop()):
+                        if (ll.dop != rl.dop):
+                            valid_loop_link = False
+                            break
+                        else:
+                            ll = ll.group
+                            rl = rl.group
+                    else:
+                        break
+                if (not valid_loop_link):
+                    raise GInvalidLink("{0} and {1} are not loop synchronised: {2} <> {3}".format(ll.id, rl.id,
+                    ll.dop,
+                    rl.dop))
+            else:
+                raise GInvalidLink("{0} and {1} are not hierarchically related: {2} and {3}".format(src.id, tgt.id,
+                src.group_hierarchy,
+                tgt.group_hierarchy))
 
-    def lgn_to_pgn(self, lgn, iid='0'):
+    def lgn_to_pgn(self, lgn, iid='0', lpcxt=None):
         """
         convert logical graph node to physical graph node
         without considering pg links
 
         iid:    instance id (string)
+        lpcxt:  Loop context
         """
         if (lgn.is_group()):
             extra_links_drops = (not lgn.is_scatter())
@@ -1623,6 +1644,16 @@ class LG():
                 scatters = lgn.group_by_scatter_layers[2] # inner most scatter to outer most scatter
                 shape = [x.dop for x in scatters] # inner most is also the slowest running index
 
+            lgn_is_loop = lgn.is_loop()
+            def get_child_lp_ctx(idx):
+                if (lgn_is_loop):
+                    if (lpcxt is None):
+                        return '{0}'.format(idx)
+                    else:
+                        return '{0}/{1}'.format(lpcxt, idx)
+                else:
+                    return None
+
             for i in range(lgn.dop):
                 miid = '{0}/{1}'.format(iid, i)
                 if (multikey_grpby):
@@ -1639,12 +1670,11 @@ class LG():
                         self._drop_dict['new_added'].append(src_gdrop['grp-data_drop'])
                     elif (lgn.is_gather()):
                         self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
-
                 for child in lgn.children:
-                    self.lgn_to_pgn(child, miid)
+                    self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
         else:
             #TODO !!
-            src_drop = lgn.make_single_drop(iid)
+            src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
             if (lgn.is_branch()):
                 self._drop_dict['new_added'].append(src_drop['null_drop'])
@@ -1773,7 +1803,12 @@ class LG():
                     # for i, sdrop in enumerate(sdrops):
                     #     if (i < lsd - 1):
                     #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
-
+                elif (slgn.group.is_loop() and tlgn.group.is_loop()):
+                    # stepwise locking for links between two Loops
+                    for sdrop in sdrops:
+                        for tdrop in tdrops:
+                            if (sdrop['loop_cxt'] == tdrop['loop_cxt']):
+                                self._link_drops(slgn, tlgn, sdrop, tdrop)
                 else:
                     if (slgn.h_level >= tlgn.h_level):
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
