@@ -1808,7 +1808,7 @@ class LG():
                     #     if (i < lsd - 1):
                     #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 elif (slgn.group is not None and slgn.group.is_loop() and
-                tlgn.group is not None and tlgn.group.is_loop()):
+                tlgn.group is not None and tlgn.group.is_loop() and (not slgn.h_related(tlgn))):
                     # stepwise locking for links between two Loops
                     for sdrop, tdrop in product(sdrops, tdrops):
                         if (sdrop['loop_cxt'] == tdrop['loop_cxt']):
