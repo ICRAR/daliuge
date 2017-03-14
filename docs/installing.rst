@@ -35,6 +35,14 @@ If a virtualenv is loaded, then |daliuge| can be installed on it by simply runni
 
  python setup.py install
 
+14/03/17 If issues occur during the installation try installing a few things by hand first::
+
+  pip install python-daemon
+  pip install -U pip
+  pip install numpy
+  python setup.py install
+
+
 Docker images
 -------------
 
