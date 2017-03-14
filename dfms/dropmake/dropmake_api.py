@@ -31,7 +31,6 @@ from optparse import OptionParser
 from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP,\
  MySarkarPGTP
 
-from dfms.dropmake.pg_manager import PGManager
 from dfms.dropmake.scheduler import SchedulerException
 
 def gen_mysarkar_pgtp(lgfname, pgt_dir, num_islands=2,
@@ -42,7 +41,6 @@ def gen_mysarkar_pgtp(lgfname, pgt_dir, num_islands=2,
 
     No real resource mapping is involved
     """
-    pg_mgr = PGManager(pgt_dir)
     par_label = 'p'
     stt = time.time()
     lg = LG(lgfname)
@@ -68,10 +66,10 @@ if __name__ == '__main__':
     """
     example usage:
 
-    $ python ~/proj/dfms/dfms/dropmake/dropmake_api.py -l /Users/Chen/proj/daliuge-logical-graphs/SDP\ Pipelines/dist_sagecal.json -p /tmp -r -i 1
+    $ python -m dfms.dropmake.dropmake_api -l /Users/Chen/proj/daliuge-logical-graphs/SDP\ Pipelines/dist_sagecal.json -p /tmp -r -i 1
     exec_time:146.5 - unroll_time:0.006 - total_data_movement:30.0 - schedule_time:3.569 - algo:Edge Zero - num_parts:2 - min_exec_time:135 - num_islands:1
 
-    $ python ~/proj/dfms/dfms/dropmake/dropmake_api.py -l /Users/Chen/proj/daliuge-logical-graphs/SDP\ Pipelines/dist_sagecal.json -p /tmp -r -c 1
+    $ python -m dfms.dropmake.dropmake_api -l /Users/Chen/proj/daliuge-logical-graphs/SDP\ Pipelines/dist_sagecal.json -p /tmp -r -c 1
     exec_time:220.0 - unroll_time:0.008 - total_data_movement:116.0 - schedule_time:2.073 - algo:Edge Zero - num_parts:3 - min_exec_time:135 - num_islands:2
     """
     parser = OptionParser()
