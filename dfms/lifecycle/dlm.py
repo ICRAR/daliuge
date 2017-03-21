@@ -460,6 +460,8 @@ class DataLifecycleManager(object):
         # Get the size of the DROP. This cannot currently be done in some of them,
         # like in the AbstractDROP
         size = drop.size
+        if size is None:
+            return
 
         # Check which layer of the hsm should host the replicated copy
         store = self._hsm.getSlowestStore()
