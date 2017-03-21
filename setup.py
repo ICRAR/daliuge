@@ -165,6 +165,9 @@ setup(
 
         # drive-casa is used by some manual tests under test/integrate
         'drive-casa': ["drive-casa>0.7"],
+
+        # MPI support (MPIApp drops and HPC experiemnts) requires mpi4py
+        'MPI': ['mpi4py']
       },
 
       dependency_links=[
