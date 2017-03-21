@@ -97,7 +97,7 @@ def module_as_main():
     # and barrier on the parent communicator so the MPIApp drop
     # knows when all children have finished
     try:
-        proc = subprocess.Popen(sys.argv[1:])
+        proc = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = proc.communicate()
         code = proc.returncode
     except Exception as e:
