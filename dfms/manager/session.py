@@ -227,9 +227,23 @@ class Session(object):
         belonging to this session
         """
 
+        # It could happen that this local session was created by a high-level
+        # entity (like the DIM) but ended up receiving no Drops.
+        # In those cases we still want to be able to "deploy" this session
+        # to keep a consistent state across all NM sessions, even though
+        # in reality this particular session is managing nothing
         status = self.status
-        if status != SessionStates.BUILDING:
+        if (self._graph and status != SessionStates.BUILDING) or \
+           (not self._graph and status != SessionStates.PRISTINE):
             raise InvalidSessionState("Can't deploy this session in its current status: %d" % (status))
+
+        if not self._graph and completedDrops:
+            raise InvalidGraphException("Drops are requested for immediate completion but none will be created")
+
+        # Shortchut
+        if not self._graph:
+            self.finish()
+            return
 
         self.status = SessionStates.DEPLOYING
 

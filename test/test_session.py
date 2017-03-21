@@ -23,6 +23,7 @@ import unittest
 
 from dfms.ddap_protocol import DROPLinkType
 from dfms.manager.session import Session, SessionStates
+from dfms.exceptions import InvalidGraphException
 
 
 class TestSession(unittest.TestCase):
@@ -30,7 +31,6 @@ class TestSession(unittest.TestCase):
     def test_sessionStates(self):
         with Session('1') as s:
             self.assertEqual(SessionStates.PRISTINE, s.status)
-            self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
 
             s.addGraphSpec([{"oid":"A", "type":"container"}])
@@ -43,6 +43,16 @@ class TestSession(unittest.TestCase):
             self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.addGraphSpec, '')
             self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
+
+    def test_sessionStates_noDrops(self):
+        # No drops created, we can deploy right away
+        with Session('1') as s:
+            self.assertEqual(SessionStates.PRISTINE, s.status)
+            s.deploy()
+            self.assertEqual(SessionStates.FINISHED, s.status)
+
+        with Session('2') as s:
+            self.assertRaises(InvalidGraphException, s.deploy, completedDrops=['a'])
 
     def test_addGraphSpec(self):
         with Session('1') as s:
