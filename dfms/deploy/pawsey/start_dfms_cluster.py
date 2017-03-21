@@ -104,7 +104,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
 
     return [ip for ip in up if ip]
 
-def get_ip(loc='Pawsey'):
+def get_ip_via_ifconfig(loc='Pawsey'):
     """
     This is brittle, but works on Magnus/Galaxy for now
     """
@@ -121,6 +121,9 @@ def get_ip(loc='Pawsey'):
     except:
         logger.warning("Fail to obtain IP address from {0}".format(out))
         return 'None'
+
+def get_ip_via_netifaces(loc=''):
+    return utils.get_local_ip_addr()[0][0]
 
 def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     """
@@ -263,14 +266,16 @@ def main():
 
     parser.add_option('--check-interfaces', action='store_true',
                       dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
+    parser.add_option('--use-ifconfig', action='store_true',
+                      dest='use_ifconfig', help='Use ifconfig to find a suitable external interface/address for each host', default=False)
     parser.add_option("-S", "--check_with_session", action="store_true",
                       dest="check_with_session", help="Check for node managers' availability by creating/destroy a session", default=False)
 
     (options, _) = parser.parse_args()
 
     if options.check_interfaces:
-        print("From netifaces: %s" % utils.get_local_ip_addr())
-        print("From ifconfig: %s" % get_ip())
+        print("From netifaces: %s" % get_ip_via_netifaces())
+        print("From ifconfig: %s" % get_ip_via_ifconfig())
         sys.exit(0)
 
     if options.logical_graph and options.physical_graph:
@@ -312,7 +317,8 @@ def main():
 
     # attach rank information at the end of IP address for multi-islands
     rank_str = '' if options.num_islands == 1 else ',%s' % rank
-    public_ip = get_ip(options.loc)
+    find_ip = get_ip_via_ifconfig if options.use_ifconfig else get_ip_via_netifaces
+    public_ip = find_ip(options.loc)
     ip_adds = '{0}{1}'.format(public_ip, rank_str)
     origin_ip = ip_adds.split(',')[0]
     ip_adds = comm.gather(ip_adds, root=0)
