@@ -65,16 +65,23 @@ class MPIApp(BarrierAppDROP):
         args = ['-m', __name__, self._command] + self._args
 
         # Spawn the new MPI communicator and wait until it finishes
-        # (it sends the exit codes of the program)
+        # (it sends the stdout, stderr and exit codes of the programs)
         logger.info("Executing MPIApp %r in a new communicator", self)
         comm_self = MPI.COMM_SELF  # @UndefinedVariable
         comm_children = comm_self.Spawn(sys.executable, args=args, maxprocs=self._maxprocs)
-        logger.info("MPI children apps spawned, gathering exit codes")
-        exit_codes = comm_children.gather(0, root=MPI.ROOT)  # @UndefinedVariable
+        logger.info("MPI children apps spawned, gathering exit data")
+        children_data = comm_children.gather((0, '','', 0), root=MPI.ROOT)  # @UndefinedVariable
+        exit_codes = [x[3] for x in children_data]
         logger.debug("Exit codes gathered from children processes: %r", exit_codes)
-        comm_children.Disconnect()
 
-        if any(exit_codes):
+        any_failed = False
+        for rank, stdout, stderr, code in children_data:
+            if code == 0:
+                continue
+            any_failed = True
+            logger.error("stdout/stderr follow for rank %d:\nSTDOUT\n======\n%s\n\nSTDERR\n======\n%s", rank, stdout, stderr)
+
+        if any_failed:
             raise Exception("One or more MPI children didn't exit cleanly")
 
 
@@ -83,6 +90,7 @@ def module_as_main():
 
     # Get the parent communicator
     from mpi4py import MPI
+    r = MPI.COMM_WORLD.Get_rank()  # @UndefinedVariable
     parent_comm = MPI.Comm.Get_parent()  # @UndefinedVariable
 
     # Now spawn the actual process, wait until it finishes,
@@ -90,15 +98,12 @@ def module_as_main():
     # knows when all children have finished
     try:
         proc = subprocess.Popen(sys.argv[1:])
-        proc.wait()
+        stdout, stderr = proc.communicate()
         code = proc.returncode
-        print("Exit code is %d" % code)
-    except:
-        code = 1
+    except Exception as e:
+        stdout, stderr, code = '', str(e), -1
     finally:
-        print("Gathering codes on parent communicator")
-        parent_comm.gather(code, root=0)
-        print("Done, bye bye!")
+        parent_comm.gather((r, stdout, stderr, code), root=0)
 
 if __name__ == '__main__':
     module_as_main()
