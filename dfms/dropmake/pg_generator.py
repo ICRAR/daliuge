@@ -200,6 +200,8 @@ class LGNode():
             while(cg.has_group()):
                 cg = cg.group
                 l += 1
+            if (self.is_mpi()):
+                l += 1
             self._h_level = l
         return self._h_level
 
@@ -236,9 +238,17 @@ class LGNode():
             oln = self
         re_dop = 1
         cg = iln
-        while(cg.gid != oln.gid and cg.has_group()):
-            re_dop *= cg.group.dop
+        init_cond = (cg.gid != oln.gid and cg.has_group())
+        while(init_cond or cg.is_mpi()):
+            if (cg.is_mpi()):
+                re_dop *= cg.dop
+            #else:
+            if (init_cond):
+                re_dop *= cg.group.dop
             cg = cg.group
+            if (cg is None):
+                break
+            init_cond = (cg.gid != oln.gid and cg.has_group())
         return re_dop
         # else:
         #     pass
@@ -306,6 +316,9 @@ class LGNode():
 
     def is_groupby(self):
         return (self._jd['category'] == 'GroupBy')
+
+    def is_mpi(self):
+        return (self._jd['category'] == 'mpi')
 
     @property
     def group_keys(self):
@@ -458,6 +471,8 @@ class LGNode():
                     self._dop = self.jd.get('num_of_iter', 1)
                 else:
                     raise GInvalidNode("Unrecognised (Group) Logical Graph Node: '{0}'".format(self._jd['category']))
+            elif (self.is_mpi()):
+                self._dop = int(self.jd['num_of_procs'])
             else:
                 self._dop = 1
         return self._dop
@@ -516,8 +531,13 @@ class LGNode():
             kwargs['sleepTime'] = sleepTime
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
-        elif (drop_type == 'BashShellApp'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.bash_shell_app.BashShellApp'})
+        elif (drop_type in ['BashShellApp', 'mpi']):
+            if (drop_type == 'mpi'):
+                app_str = 'dfms.apps.mpi.MPIApp'
+                kwargs['maxprocs'] = int(self.jd.get('num_of_procs', 4))
+            else:
+                app_str = 'dfms.apps.bash_shell_app.BashShellApp'
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':app_str})
             if 'execution_time' in self.jd:
                 kwargs['tw'] = int(self.jd['execution_time'])
             else:
@@ -1676,6 +1696,11 @@ class LG():
                         self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
                 for child in lgn.children:
                     self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
+        elif (lgn.is_mpi()):
+            for i in range(lgn.dop):
+                miid = '{0}/{1}'.format(iid, i)
+                src_drop = lgn.make_single_drop(miid, loop_cxt=lpcxt, proc_index=i)
+                self._drop_dict[lgn.id].append(src_drop)
         else:
             #TODO !!
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
@@ -1726,7 +1751,7 @@ class LG():
             sdrop = src_drop
 
         tdrop = tgt_drop
-        if (slgn.jd['category'] in ['Component', 'BashShellApp']):
+        if (slgn.jd['category'] in ['Component', 'BashShellApp', 'mpi']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
         else:

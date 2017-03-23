@@ -520,12 +520,12 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("null",  // the Component category
+    myDiagram.nodeTemplateMap.add("mpi",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
-          $(go.Shape, "Junction",
-            { fill: "#004080", stroke: "#ffffff", width: "8" },
+          $(go.Shape, "Octagon",
+            { fill: "#0066cc", stroke: "#ffffff", width: "8" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
             {
@@ -534,6 +534,7 @@
               margin: 8,
               maxSize: new go.Size(200, NaN),
               wrap: go.TextBlock.WrapFit,
+              textAlign: "center",
               editable: true
             },
             new go.Binding("text").makeTwoWay())
@@ -559,6 +560,7 @@
               margin: 8,
               maxSize: new go.Size(160, NaN),
               wrap: go.TextBlock.WrapFit,
+              textAlign: "center",
               editable: true
             },
             new go.Binding("text").makeTwoWay())
@@ -1295,7 +1297,10 @@
                         { category: "s3", text: "S3Drop", data_volume: 5, group_end: 0},
                         { category: "ngas", text: "NGAS\nDrop", data_volume: 5, group_end: 0},
                         { category: "json", text: "JsonDrop", data_volume: 5, group_end: 0},
-                        { category: "null", text: "NullDrop", group_end: 0},
+                        { category: "mpi", text: "MPI\nDrop", group_end: 0, execution_time: 5,
+                        num_cpus: 1, num_of_procs: 4,
+                        Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
+                        Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
                         { category: "SplitData", text: "Scatter", isGroup: true, num_of_copies: 4, scatter_axis: "time"},
                         { category: "DataGather", text: "Gather", isGroup: true, num_of_inputs: 2, gather_axis: "frequency"},
                         { category: "GroupBy", text: "GroupBy", isGroup: true, group_key: "None", group_axis: "frequency"},
