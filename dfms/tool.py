@@ -315,7 +315,7 @@ def dlg_map(parser, args):
         nodes = [n for n in opts.nodes.split(',') if n]
     else:
         client = CompositeManagerClient(opts.host, opts.port, timeout=10)
-        nodes = client.nodes()
+        nodes = [opts.host] + client.nodes()
 
     n_nodes = len(nodes)
     if n_nodes <= opts.islands:
