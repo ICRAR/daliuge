@@ -525,14 +525,14 @@
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
           $(go.Shape, "Octagon",
-            { fill: "#0066cc", stroke: "#ffffff", width: "8" },
+            { fill: "#0066cc", stroke: "#ffffff", width: "12" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
             {
               font: "bold 11pt Helvetica, Arial, sans-serif",
               stroke: lightText,
               margin: 8,
-              maxSize: new go.Size(200, NaN),
+              maxSize: new go.Size(250, NaN),
               wrap: go.TextBlock.WrapFit,
               textAlign: "center",
               editable: true

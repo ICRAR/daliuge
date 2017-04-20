@@ -287,6 +287,7 @@ def gen_pg():
         raise
     except Exception as ex:
         response.status = 500
+        print(traceback.format_exc())
         return "Fail to deploy physical graph: {0}".format(ex)
 
 @get('/gen_pgt')
