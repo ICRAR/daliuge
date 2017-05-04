@@ -31,12 +31,13 @@ class BashCommand(object):
         """
         create the logical form of the bash command line
 
-        cmds: a list such that cmds.split() == space-separated string, e.g.
+        cmds: a list such that ' '.join(cmds) looks something like:
                  'python /home/dfms/myclean.py -d %i[-21] -f %i[-3] %o[-2] -v'
         """
         self._input_map = dict() # key: logical drop id, value: a list of physical oids
         self._output_map = dict()
-        cmd = cmds.split()
+        self._cmds = cmds
+        cmd = ' '.join(cmds)
         for m in inp_regex.finditer(cmd):
             self._input_map[int(m.group(1))] = set()
         for m in out_regex.finditer(cmd):
@@ -53,6 +54,7 @@ class BashCommand(object):
             self._output_map[lgn_id].add(oid)
 
     def to_real_command(self):
+        cmds = self._cmds
         for k in range(len(cmds)):
             d = cmds[k]
             if (d.startswith('%i[')):
