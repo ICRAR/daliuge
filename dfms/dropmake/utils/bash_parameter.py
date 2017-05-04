@@ -36,8 +36,9 @@ class BashCommand(object):
         """
         self._input_map = dict() # key: logical drop id, value: a list of physical oids
         self._output_map = dict()
-        self._cmds = cmds
         cmd = ' '.join(cmds)
+        self._cmds = cmd.split() # re-split just in case  hidden space
+
         for m in inp_regex.finditer(cmd):
             self._input_map[int(m.group(1))] = set()
         for m in out_regex.finditer(cmd):

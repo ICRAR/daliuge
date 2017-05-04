@@ -1761,13 +1761,13 @@ class LG():
             tdrop.addProducer(sdrop)
             if ('BashShellApp' == s_type):
                 bc = src_drop['command']
-                bc.add_output_param(tlgn, tgt_drop['oid'])
+                bc.add_output_param(tlgn.id, tgt_drop['oid'])
         else:
             sdrop.addConsumer(tdrop)
             tdrop.addInput(sdrop)
             if ('BashShellApp' == t_type):
                 bc = tgt_drop['command']
-                bc.add_input_param(slgn, src_drop['oid'])
+                bc.add_input_param(slgn.id, src_drop['oid'])
 
     def unroll_to_tpl(self):
         """
