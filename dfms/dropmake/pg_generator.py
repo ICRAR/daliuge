@@ -64,6 +64,7 @@ import networkx as nx
 import numpy as np
 import six
 
+from dfms.dropmake.utils.bash_parameter import BashCommand
 from dfms.drop import dropdict
 from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 from dfms.graph_loader import STORAGE_TYPES
@@ -551,7 +552,8 @@ class LGNode():
                 v = self.jd[k]
                 if (v is not None and len(str(v)) > 0):
                     cmds.append(str(v))
-            kwargs['command'] = ' '.join(cmds)
+            #kwargs['command'] = ' '.join(cmds)
+            kwargs['command'] = BashCommand(cmds)
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
         elif (drop_type == 'GroupBy'):
@@ -1751,12 +1753,21 @@ class LG():
             sdrop = src_drop
 
         tdrop = tgt_drop
-        if (slgn.jd['category'] in ['Component', 'BashShellApp', 'mpi']):
+        s_type = slgn.jd['category']
+        t_type = tlgn.jd['category']
+
+        if (s_type in ['Component', 'BashShellApp', 'mpi']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
+            if ('BashShellApp' == s_type):
+                bc = src_drop['command']
+                bc.add_output_param(tlgn, tgt_drop['oid'])
         else:
             sdrop.addConsumer(tdrop)
             tdrop.addInput(sdrop)
+            if ('BashShellApp' == t_type):
+                bc = tgt_drop['command']
+                bc.add_input_param(slgn, src_drop['oid'])
 
     def unroll_to_tpl(self):
         """
@@ -1925,23 +1936,9 @@ class LG():
         for drop_list in self._drop_dict.values():
             ret += drop_list
 
-        # rtobar, Nov 22nd 2016:
-        # TODO: I'm putting this here because I'm not sure what's the best place
-        # to do it actually. Please feel free to move it around as required
-        inp_regex = re.compile('%i\[(-[0-9]+)\]')
-        out_regex = re.compile('%o\[(-[0-9]+)\]')
-        self_drop_dict = self._drop_dict
         for drop in ret:
             if drop['type'] == 'app' and drop['app'].endswith('BashShellApp'):
-                cmd = drop['command']
-                for m in inp_regex.finditer(cmd):
-                    lgn_id = int(m.group(1))
-                    if (lgn_id in self_drop_dict):
-                        cmd = cmd.replace(m.group(0), '%i[' + self_drop_dict[lgn_id][0]['oid'] + ']')
-                for m in out_regex.finditer(cmd):
-                    lgn_id = int(m.group(1))
-                    if (lgn_id in self_drop_dict):
-                        cmd = cmd.replace(m.group(0), '%o[' + self_drop_dict[lgn_id][0]['oid'] + ']')
-                drop['command'] = cmd
+                bc = drop['command']
+                drop['command'] = bc.to_real_command()
 
         return ret
