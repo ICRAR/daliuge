@@ -147,7 +147,8 @@ setup(
             "pyzmq",
             "scp",
             'six>=1.10',
-            "zeroconf",
+            # 0.19 requires netifaces < 0.10.5, exactly the opposite of what *we* need
+            "zeroconf <= 0.18",
             "zerorpc >= 0.6" # 0.6 brings python3 support plus other fixes
       ],
       # Keep alpha-sorted PLEASE!
