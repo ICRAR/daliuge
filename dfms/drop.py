@@ -908,7 +908,7 @@ class FileDROP(AbstractDROP):
             #       of valid filename characters; otherwise encode them
             self._fnm = self._root + os.sep + re.sub(':|%s' % os.sep, '_', self.uid)
             #(self._oid + '___' + self.uid).replace(os.sep, '_')
-            logger.info('*** %s' % self._fnm)
+            # logger.info('*** %s' % self._fnm)
             if os.path.isfile(self._fnm):
                 logger.warning('File %s already exists, overwriting' % (self._fnm))
 
