@@ -40,7 +40,7 @@ from dfms.lifecycle import dlm
 class TestDataLifecycleManager(unittest.TestCase):
 
     def tearDown(self):
-        shutil.rmtree("/tmp/sdp_dfms", True)
+        shutil.rmtree("/tmp/daliuge_tfiles", True)
         shutil.rmtree("/tmp/sdp-hsm", True)
 
     def _writeAndClose(self, drop):

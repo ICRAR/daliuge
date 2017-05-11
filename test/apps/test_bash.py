@@ -41,7 +41,7 @@ from dfms.droputils import DROPWaiterCtx
 class BashAppTests(unittest.TestCase):
 
     def tearDown(self):
-        shutil.rmtree("/tmp/sdp_dfms", True)
+        shutil.rmtree("/tmp/daliuge_tfiles", True)
 
     def test_echo(self):
         a = FileDROP('a', 'a')

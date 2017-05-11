@@ -27,7 +27,7 @@ import unittest
 
 from dfms.json_drop import JsonDROP
 
-DIR = '/tmp/sdp_dfms'
+DIR = '/tmp/daliuge_tfiles'
 FILE_TEXT = '''
 {
   "Observed from": "20-Jan-2014/04:20:12.0",

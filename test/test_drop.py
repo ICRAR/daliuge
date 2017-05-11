@@ -85,7 +85,7 @@ class TestDROP(unittest.TestCase):
         self._test_block = os.urandom(self._test_block_sz * ONE_MB)
 
     def tearDown(self):
-        shutil.rmtree("/tmp/sdp_dfms", True)
+        shutil.rmtree("/tmp/daliuge_tfiles", True)
 
     def test_NullDROP(self):
         """

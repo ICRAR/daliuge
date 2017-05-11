@@ -51,11 +51,11 @@ class DockerTests(unittest.TestCase):
                 os.makedirs(DockerTests._temp)
 
         if DockerTests._temp is None:
-            DockerTests._temp = '/tmp/sdp_dfms'
+            DockerTests._temp = '/tmp/daliuge_tfiles'
 
 
     def tearDown(self):
-        shutil.rmtree("/tmp/sdp_dfms", True)
+        shutil.rmtree("/tmp/daliuge_tfiles", True)
 
     def test_simpleCopy(self):
         """

@@ -36,6 +36,7 @@ import random
 import shutil
 import threading
 import time
+import re
 
 import six
 from six import BytesIO
@@ -899,14 +900,15 @@ class FileDROP(AbstractDROP):
             self._fnm = filepath
             self._root = os.path.dirname(filepath)
         else:
-            self._root = self._getArg(kwargs, 'dirname', '/tmp/sdp_dfms')
+            self._root = self._getArg(kwargs, 'dirname', '/tmp/daliuge_tfiles')
             if (not os.path.exists(self._root)):
                 os.mkdir(self._root)
             self._root = os.path.abspath(self._root)
             # TODO: Make sure the parts that make up the filename are composed
             #       of valid filename characters; otherwise encode them
-            self._fnm = self._root + os.sep + \
-            (self._oid + '___' + self.uid).replace(os.sep, '_')
+            self._fnm = self._root + os.sep + re.sub(':|%s' % os.sep, '_', self.uid)
+            #(self._oid + '___' + self.uid).replace(os.sep, '_')
+            # logger.info('*** %s' % self._fnm)
             if os.path.isfile(self._fnm):
                 logger.warning('File %s already exists, overwriting' % (self._fnm))
 
