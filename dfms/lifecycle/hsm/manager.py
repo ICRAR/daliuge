@@ -38,7 +38,7 @@ class HierarchicalStorageManager(object):
     def __init__(self):
         self._stores = []
         self.addStore(store.MemoryStore())
-        self.addStore(store.FileSystemStore('/', '/tmp/sdp_dfms'))
+        self.addStore(store.FileSystemStore('/', '/tmp/daliuge_tfiles'))
 
     def addStore(self, newStore):
         '''
