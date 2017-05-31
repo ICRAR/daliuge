@@ -1302,6 +1302,7 @@ class MySarkarScheduler(Scheduler):
         g_dict = self._part_dict#dict() #{gid : Partition}
         curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
         parts = []
+        plots_data = []
         for i, e in enumerate(el):
             u = e[0]
             gu = G.node[u]
@@ -1379,6 +1380,10 @@ class MySarkarScheduler(Scheduler):
                 G.edge[u][v]['weight'] = ow
                 self._part_edges.append(e)
 
+            aa = sum([pp.cardinality for pp in parts])
+            bb = float(sum([pp._tmp_max_dop if pp._tmp_max_dop is not None else 1 for pp in parts])) / len(parts)
+            plots_data.append('%d,%d,%.1f' % (curr_lpl, len(parts) + init_c -  1 - aa, bb))
+
         #for an unallocated node, it forms its own partition
         edt = time.time() - stt
         for n in G.nodes(data=True):
@@ -1401,9 +1406,12 @@ class MySarkarScheduler(Scheduler):
         #     for part in parts:
         #         print("Partition {0}, tc: {1}, sort: {2}, antichain: {3},"\
         #         " matrix1: {4}, matrix2: {5}, calc: {6}"\
-        #         .format(part._gid, part._tc_time,
+        #         .format(part._gid, part._tc_time,``
         #         part._ac_sort_time, part._ac_mem_time,
         #         part._matrix_time1, part._matrix_time2, part._ac_calc_time))
+        if (plots_data):
+            with open('/tmp/%.3f_lpl_parts.csv' % time.time(), 'w') as of:
+                of.writelines(os.linesep.join(plots_data))
         return ((st_gid - init_c), curr_lpl, edt, parts)
 
 class MinNumPartsScheduler(MySarkarScheduler):
