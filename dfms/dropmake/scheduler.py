@@ -1313,13 +1313,12 @@ class MySarkarScheduler(Scheduler):
         stt = time.time()
         topo_sorted = nx.topological_sort(G)
         g_dict = self._part_dict#dict() #{gid : Partition}
-        curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
+        curr_lpl = None
         parts = []
         plots_data = []
         dump_progress = self._dump_progress
 
         for n in G.nodes(data=True):
-            #if not 'gid' in n[1]:
             n[1]['gid'] = st_gid
             #part = DilworthPartition(st_gid, self._max_dop)
             #part = WeightedDilworthPartition(st_gid, self._max_dop)
@@ -1338,104 +1337,31 @@ class MySarkarScheduler(Scheduler):
             gv = G.node[v]
             ow = G.edge[u][v]['weight']
             G.edge[u][v]['weight'] = 0 #edge zeroing
-            #recover_edge = False
-            #merge_two_parts = False
-            new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
-            #logger.debug("{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v))
-            if (new_lpl <= curr_lpl): #or
-            #(not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))): #try to accept the edge zeroing
-                ugid = gu.get('gid', None)
-                vgid = gv.get('gid', None)
-                # if (ugid and (not vgid)):
-                #     part = g_dict[ugid]
-                # elif ((not ugid) and vgid):
-                #     part = g_dict[vgid]
-                # elif (not ugid and (not vgid)):
-                #     #part = DilworthPartition(st_gid, self._max_dop)
-                #     #part = WeightedDilworthPartition(st_gid, self._max_dop)
-                #     #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
-                #     #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
-                #     part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
-                #     g_dict[st_gid] = part
-                #     parts.append(part) # will it get rejected?
-                #     st_gid += 1
-                if (ugid != vgid): # merge existing parts
-                    part = self._merge_two_parts(ugid, vgid,
-                                                 u, v, gu, gv, g_dict, parts, G)
-                    if (part is not None):
-                        #merge_two_parts = True
-                        st_gid -= 1
-                        curr_lpl = new_lpl
-                        self._sspace[i] = 1
-                    else:
-                        G.edge[u][v]['weight'] = ow
-                        self._part_edges.append(e)
-            #     else:
-            #         part = None
-            #     uw = gu['weight']
-            #     vw = gv['weight']
-            #
-            #     if (part is None):
-            #         recover_edge = True
-            #     else:
-            #         if (merge_two_parts): # merging two partitions
-            #             ca = True
-            #         else:
-            #             ca, unew, vnew = part.can_add(u, v, gu, gv)
-            #         if (ca):
-            #             if (not merge_two_parts):
-            #                 #TODO should merge can_add and add in non-linerisation case
-            #                 # becasue the add will re-probe the max_dop again!
-            #                 part.add(u, v, gu, gv)
-            #                 gu['gid'] = part._gid
-            #                 gv['gid'] = part._gid
-            #             curr_lpl = new_lpl
-            #             self._sspace[i] = 1
-            #         else:
-            #             if (self.override_cannot_add() and
-            #             (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
-            #                 # sequentialisation
-            #                 part.add(u, v, gu, gv, sequential=True, global_dag=G)
-            #                 #logger.debug("serialisation done for part {0}".format(part.partition_id))
-            #                 gu['gid'] = part._gid
-            #                 gv['gid'] = part._gid
-            #                 curr_lpl = new_lpl
-            #                 # resort G since new edges were added during sequentialisation
-            #                 try:
-            #                     topo_sorted = nx.topological_sort(G)
-            #                 except:
-            #                     logger.debug(G.edges())
-            #                     raise
-            #                 self._sspace[i] = 2
-            #             else:
-            #                 recover_edge = True
-            # if (recover_edge):
-            #     G.edge[u][v]['weight'] = ow
-            #     self._part_edges.append(e)
-
-            #aa = sum([pp.cardinality for pp in parts])
-            #bb = float(sum([pp._tmp_max_dop if pp._tmp_max_dop is not None else 1 for pp in parts])) / len(parts)
+            ugid = gu.get('gid', None)
+            vgid = gv.get('gid', None)
+            if (ugid != vgid): # merge existing parts
+                part = self._merge_two_parts(ugid, vgid,
+                                             u, v, gu, gv, g_dict, parts, G)
+                if (part is not None):
+                    st_gid -= 1
+                    self._sspace[i] = 1
+                else:
+                    G.edge[u][v]['weight'] = ow
+                    self._part_edges.append(e)
             if (dump_progress):
                 bb = np.median([pp._tmp_max_dop for pp in parts])
-                plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))# + init_c -  1 - aa, bb))
+                curr_lpl = DAGUtil.get_longest_path(G, show_path=False,
+                topo_sort=topo_sorted)[1]
+                plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))
 
-        #for an unallocated node, it forms its own partition
         edt = time.time() - stt
-
         self._parts = parts
-        # for part in parts:
-        #     print("Partition {0} has {1} drops, DoP = {2}"\
-        #     .format(part._gid, len(part._dag.nodes()), part._max_dop))
-        # if isinstance(part, MultiWeightPartition):
-        #     for part in parts:
-        #         print("Partition {0}, tc: {1}, sort: {2}, antichain: {3},"\
-        #         " matrix1: {4}, matrix2: {5}, calc: {6}"\
-        #         .format(part._gid, part._tc_time,``
-        #         part._ac_sort_time, part._ac_mem_time,
-        #         part._matrix_time1, part._matrix_time2, part._ac_calc_time))
         if (dump_progress):
             with open('/tmp/%.3f_lpl_parts.csv' % time.time(), 'w') as of:
                 of.writelines(os.linesep.join(plots_data))
+        if (curr_lpl is None):
+            curr_lpl = DAGUtil.get_longest_path(G, show_path=False,
+            topo_sort=topo_sorted)[1]
         return ((st_gid - init_c), curr_lpl, edt, parts)
 
 class MinNumPartsScheduler(MySarkarScheduler):
