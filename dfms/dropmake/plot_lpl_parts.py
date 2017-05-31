@@ -19,7 +19,7 @@ def plot_lpl_parts(folder, prefix='lpl_parts', suffix='.csv'):
     marker = itertools.cycle(('o', 'x', '+', '*', '.'))
     linestyle = itertools.cycle(('-', '--', '-.', ':'))
     ax2 = ax.twinx()
-    ax2.set_ylabel("Average Degree of Parallelism per Partition", fontsize=16)
+    ax2.set_ylabel("Median Degree of Parallelism per Partition", fontsize=16)
 
     for fn in os.listdir(folder):
         if (fn.startswith(prefix) and fn.endswith(suffix)):
@@ -39,18 +39,18 @@ def plot_lpl_parts(folder, prefix='lpl_parts', suffix='.csv'):
             print(lbl)
             lsn = linestyle.next()
             lineobj = ax.plot(x, y, label=lbl, linestyle=lsn, linewidth=3)#, marker=marker.next(), markerfacecolor='white')
-            ax2.plot(x, z, label='%s_DoP' % (lbl), linestyle='', linewidth=3,
+            ax2.plot(x, z, label='%s Median DoP' % (lbl), linestyle='', linewidth=3,
             marker=marker.next(), markerfacecolor='None', markersize=7,
             markeredgecolor=lineobj[0].get_color())
     #fig.gca().invert_xaxis()
-    legend = ax.legend(loc="upper left", shadow=False, prop={'size':14})
-    legend = ax2.legend(loc="upper right", shadow=False, prop={'size':14})
+    legend = ax.legend(loc="upper left", shadow=False, prop={'size':15})
+    legend = ax2.legend(loc="center left", shadow=False, prop={'size':15})
     ax.set_xlim([max_x + 10, min_x - 10])
     ax.set_ylim([min_y - 10, max_y + 10])
     ax2.set_ylim([min_z - 1, max_z + 1])
     ax.xaxis.set_ticks(list(reversed(np.arange(max(min_x - 10, 0), max_x + 10, 50))))
     ax.yaxis.set_ticks(np.arange(min(min_y - 10, 0), max_y + 10, 100))
-    ax2.yaxis.set_ticks(np.arange(min(min_z - 1, 0), max_z + 1, 0.5))
+    ax2.yaxis.set_ticks(np.arange(min(min_z - 1, 0), max_z + 1, 1))
     ax.tick_params(axis='x', labelsize=14)
     ax.tick_params(axis='y', labelsize=14)
     ax2.tick_params(axis='y', labelsize=14)

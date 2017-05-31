@@ -1029,6 +1029,18 @@ class KFamilyPartition(Partition):
         #     print(antichain_names)
         return w_antichain_len
 
+    def add_node(self, u, weight):
+        """
+        Add a single node u to the partition
+        """
+        super(KFamilyPartition, self).add_node(u, weight)
+        #self._dag.add_node(u, weight=weight)
+        #self._max_dop = 1
+        u_aw = self._global_dag.node[u].get(self._w_attr, 1)
+        self._tmp_max_dop = u_aw
+        self._max_dop = u_aw
+        self._add_to_split_graph(self._bpg, u, u_aw, self._dag, [])
+
     def can_add(self, u, v, gu, gv):
         self_bpg = self._bpg
         global_dag = self._global_dag
@@ -1083,7 +1095,7 @@ class KFamilyPartition(Partition):
         self_w_attr = self._w_attr
         for node in that._dag.node.items():
             el = node[0]
-            elweight = node[1][self_w_attr]
+            elweight = node[1].get(self_w_attr, 1)
             self._add_to_split_graph(self_bpg, el, elweight, dag, tmp_added)
         #opt_sol = nx.max_flow_min_cost(self_bpg, 's', 't') # returns a dict
         opt_sol = self._get_pi_solution(self_bpg)
@@ -1303,6 +1315,20 @@ class MySarkarScheduler(Scheduler):
         curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
         parts = []
         plots_data = []
+
+        for n in G.nodes(data=True):
+            #if not 'gid' in n[1]:
+            n[1]['gid'] = st_gid
+            #part = DilworthPartition(st_gid, self._max_dop)
+            #part = WeightedDilworthPartition(st_gid, self._max_dop)
+            #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
+            #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
+            part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
+            part.add_node(n[0], n[1].get('weight', 1))
+            g_dict[st_gid] = part
+            parts.append(part) # will it get rejected?
+            st_gid += 1
+
         for i, e in enumerate(el):
             u = e[0]
             gu = G.node[u]
@@ -1310,94 +1336,89 @@ class MySarkarScheduler(Scheduler):
             gv = G.node[v]
             ow = G.edge[u][v]['weight']
             G.edge[u][v]['weight'] = 0 #edge zeroing
-            recover_edge = False
-            merge_two_parts = False
+            #recover_edge = False
+            #merge_two_parts = False
             new_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
             #logger.debug("{2} --> {3}, curr lpl = {0}, new lpl = {1}".format(curr_lpl, new_lpl, u, v))
-            if ((new_lpl <= curr_lpl) or
-            (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))): #try to accept the edge zeroing
+            if (new_lpl <= curr_lpl): #or
+            #(not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))): #try to accept the edge zeroing
                 ugid = gu.get('gid', None)
                 vgid = gv.get('gid', None)
-                if (ugid and (not vgid)):
-                    part = g_dict[ugid]
-                elif ((not ugid) and vgid):
-                    part = g_dict[vgid]
-                elif (not ugid and (not vgid)):
-                    #part = DilworthPartition(st_gid, self._max_dop)
-                    #part = WeightedDilworthPartition(st_gid, self._max_dop)
-                    #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
-                    #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
-                    part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
-                    g_dict[st_gid] = part
-                    parts.append(part) # will it get rejected?
-                    st_gid += 1
-                elif (ugid and vgid and ugid != vgid): # merge existing parts
+                # if (ugid and (not vgid)):
+                #     part = g_dict[ugid]
+                # elif ((not ugid) and vgid):
+                #     part = g_dict[vgid]
+                # elif (not ugid and (not vgid)):
+                #     #part = DilworthPartition(st_gid, self._max_dop)
+                #     #part = WeightedDilworthPartition(st_gid, self._max_dop)
+                #     #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
+                #     #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
+                #     part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
+                #     g_dict[st_gid] = part
+                #     parts.append(part) # will it get rejected?
+                #     st_gid += 1
+                if (ugid != vgid): # merge existing parts
                     part = self._merge_two_parts(ugid, vgid,
                                                  u, v, gu, gv, g_dict, parts, G)
                     if (part is not None):
-                        merge_two_parts = True
+                        #merge_two_parts = True
                         st_gid -= 1
-                else:
-                    part = None
-                uw = gu['weight']
-                vw = gv['weight']
-
-                if (part is None):
-                    recover_edge = True
-                else:
-                    if (merge_two_parts): # merging two partitions
-                        ca = True
-                    else:
-                        ca, unew, vnew = part.can_add(u, v, gu, gv)
-                    if (ca):
-                        if (not merge_two_parts):
-                            #TODO should merge can_add and add in non-linerisation case
-                            # becasue the add will re-probe the max_dop again!
-                            part.add(u, v, gu, gv)
-                            gu['gid'] = part._gid
-                            gv['gid'] = part._gid
                         curr_lpl = new_lpl
                         self._sspace[i] = 1
                     else:
-                        if (self.override_cannot_add() and
-                        (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
-                            # sequentialisation
-                            part.add(u, v, gu, gv, sequential=True, global_dag=G)
-                            #logger.debug("serialisation done for part {0}".format(part.partition_id))
-                            gu['gid'] = part._gid
-                            gv['gid'] = part._gid
-                            curr_lpl = new_lpl
-                            # resort G since new edges were added during sequentialisation
-                            try:
-                                topo_sorted = nx.topological_sort(G)
-                            except:
-                                logger.debug(G.edges())
-                                raise
-                            self._sspace[i] = 2
-                        else:
-                            recover_edge = True
-            if (recover_edge):
-                G.edge[u][v]['weight'] = ow
-                self._part_edges.append(e)
+                        G.edge[u][v]['weight'] = ow
+                        self._part_edges.append(e)
+            #     else:
+            #         part = None
+            #     uw = gu['weight']
+            #     vw = gv['weight']
+            #
+            #     if (part is None):
+            #         recover_edge = True
+            #     else:
+            #         if (merge_two_parts): # merging two partitions
+            #             ca = True
+            #         else:
+            #             ca, unew, vnew = part.can_add(u, v, gu, gv)
+            #         if (ca):
+            #             if (not merge_two_parts):
+            #                 #TODO should merge can_add and add in non-linerisation case
+            #                 # becasue the add will re-probe the max_dop again!
+            #                 part.add(u, v, gu, gv)
+            #                 gu['gid'] = part._gid
+            #                 gv['gid'] = part._gid
+            #             curr_lpl = new_lpl
+            #             self._sspace[i] = 1
+            #         else:
+            #             if (self.override_cannot_add() and
+            #             (not self.is_time_critical(u, uw, unew, v, vw, vnew, curr_lpl, ow, el[(i + 1):]))):
+            #                 # sequentialisation
+            #                 part.add(u, v, gu, gv, sequential=True, global_dag=G)
+            #                 #logger.debug("serialisation done for part {0}".format(part.partition_id))
+            #                 gu['gid'] = part._gid
+            #                 gv['gid'] = part._gid
+            #                 curr_lpl = new_lpl
+            #                 # resort G since new edges were added during sequentialisation
+            #                 try:
+            #                     topo_sorted = nx.topological_sort(G)
+            #                 except:
+            #                     logger.debug(G.edges())
+            #                     raise
+            #                 self._sspace[i] = 2
+            #             else:
+            #                 recover_edge = True
+            # if (recover_edge):
+            #     G.edge[u][v]['weight'] = ow
+            #     self._part_edges.append(e)
 
-            aa = sum([pp.cardinality for pp in parts])
-            bb = float(sum([pp._tmp_max_dop if pp._tmp_max_dop is not None else 1 for pp in parts])) / len(parts)
-            plots_data.append('%d,%d,%.1f' % (curr_lpl, len(parts) + init_c -  1 - aa, bb))
+            #aa = sum([pp.cardinality for pp in parts])
+            #bb = float(sum([pp._tmp_max_dop if pp._tmp_max_dop is not None else 1 for pp in parts])) / len(parts)
+            bb = np.median([pp._tmp_max_dop for pp in parts])
+            plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))# + init_c -  1 - aa, bb))
 
         #for an unallocated node, it forms its own partition
         edt = time.time() - stt
-        for n in G.nodes(data=True):
-            if not 'gid' in n[1]:
-                n[1]['gid'] = st_gid
-                #part = DilworthPartition(st_gid, self._max_dop)
-                #part = WeightedDilworthPartition(st_gid, self._max_dop)
-                #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
-                #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
-                part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
-                part.add_node(n[0], n[1].get('weight', 1))
-                g_dict[st_gid] = part
-                parts.append(part) # will it get rejected?
-                st_gid += 1
+
         self._parts = parts
         # for part in parts:
         #     print("Partition {0} has {1} drops, DoP = {2}"\
