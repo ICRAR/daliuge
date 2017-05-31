@@ -1225,9 +1225,10 @@ class MySarkarScheduler(Scheduler):
     Similar ideas:
     http://stackoverflow.com/questions/3974731
     """
-    def __init__(self, drop_list, max_dop=8, dag=None):
+    def __init__(self, drop_list, max_dop=8, dag=None, dump_progress=False):
         super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._sspace = [3] * len(self._dag.edges()) # all edges are not zeroed
+        self._dump_progress = dump_progress
 
     def override_cannot_add(self):
         """
@@ -1315,6 +1316,7 @@ class MySarkarScheduler(Scheduler):
         curr_lpl = DAGUtil.get_longest_path(G, show_path=False, topo_sort=topo_sorted)[1]
         parts = []
         plots_data = []
+        dump_progress = self._dump_progress
 
         for n in G.nodes(data=True):
             #if not 'gid' in n[1]:
@@ -1413,8 +1415,9 @@ class MySarkarScheduler(Scheduler):
 
             #aa = sum([pp.cardinality for pp in parts])
             #bb = float(sum([pp._tmp_max_dop if pp._tmp_max_dop is not None else 1 for pp in parts])) / len(parts)
-            bb = np.median([pp._tmp_max_dop for pp in parts])
-            plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))# + init_c -  1 - aa, bb))
+            if (dump_progress):
+                bb = np.median([pp._tmp_max_dop for pp in parts])
+                plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))# + init_c -  1 - aa, bb))
 
         #for an unallocated node, it forms its own partition
         edt = time.time() - stt
@@ -1430,7 +1433,7 @@ class MySarkarScheduler(Scheduler):
         #         .format(part._gid, part._tc_time,``
         #         part._ac_sort_time, part._ac_mem_time,
         #         part._matrix_time1, part._matrix_time2, part._ac_calc_time))
-        if (plots_data):
+        if (dump_progress):
             with open('/tmp/%.3f_lpl_parts.csv' % time.time(), 'w') as of:
                 of.writelines(os.linesep.join(plots_data))
         return ((st_gid - init_c), curr_lpl, edt, parts)
