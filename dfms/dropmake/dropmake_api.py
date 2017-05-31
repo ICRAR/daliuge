@@ -34,7 +34,8 @@ from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP,\
 from dfms.dropmake.scheduler import SchedulerException
 
 def gen_mysarkar_pgtp(lgfname, pgt_dir, num_islands=2,
-                      cores_per_node=2, print_result=False):
+                      cores_per_node=2, print_result=False,
+                      dump_progress=False):
     """
     Generate Physical Graph Template (Partition) using
     MySarkar - A "somewhat greedy" scheudling algoritm
@@ -49,6 +50,8 @@ def gen_mysarkar_pgtp(lgfname, pgt_dir, num_islands=2,
     mpp = num_islands > 0
     pgt = MySarkarPGTP(drop_list, 1, par_label, cores_per_node,
                        merge_parts=mpp)
+    if (dump_progress):
+        pgt._scheduler._dump_progress = True
     if (mpp):
         pgt.to_gojs_json(string_rep=False, visual=False)
         pgt.merge_partitions(num_islands, form_island=True,
@@ -85,6 +88,8 @@ if __name__ == '__main__':
                         help="number of cores per compute node")
     parser.add_option("-r", "--print", action="store_true", dest="print_result",
                         default=False, help="Print result on screen")
+    parser.add_option("-d", "--dump_progress", action="store_true", dest="dump_progress",
+                        default=False, help="Dump progress during scheduling")
 
     (options, args) = parser.parse_args()
     if (None == options.lgfname or None == options.pgt_dir):
@@ -100,4 +105,5 @@ if __name__ == '__main__':
         sys.exit(1)
 
     gen_mysarkar_pgtp(options.lgfname, options.pgt_dir, options.num_islands,
-                      options.cores_per_node, options.print_result)
+                      options.cores_per_node, options.print_result,
+                      options.dump_progress)
