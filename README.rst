@@ -1,21 +1,28 @@
-Data Flow Management System
-===========================
+Data Activated 流 [#f1]_ Graph Engine
+=====================================
 
-.. image:: https://travis-ci.org/SKA-ScienceDataProcessor/dfms.svg?branch=master
-    :target: https://travis-ci.org/SKA-ScienceDataProcessor/dfms
+.. image:: https://travis-ci.org/ICRAR/daliuge.svg?branch=master
+    :target: https://travis-ci.org/ICRAR/daliuge
 
-.. image:: https://coveralls.io/repos/github/SKA-ScienceDataProcessor/dfms/badge.svg?branch=master
-    :target: https://coveralls.io/github/SKA-ScienceDataProcessor/dfms?branch=master
+.. image:: https://coveralls.io/repos/github/ICRAR/daliuge/badge.svg?branch=master
+    :target: https://coveralls.io/github/ICRAR/daliuge?branch=master
 
-.. image:: https://readthedocs.org/projects/dfms/badge/?version=latest
-    :target: https://dfms.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/daliuge/badge/?version=latest
+    :target: https://daliuge.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-The Data Flow Management System (DFMS) prototype represents the **execution framework**
-of the Science Data Processor (SDP) element of the Square Kilometer Array (SKA) observatory.
-DFMS aims to provide a distributed data management platform and a
-scalable pipeline execution environment to support continuous, soft real-time,
-data-intensive processing for producing SKA science ready products.
+|daliuge|
+is an on-going prototyping activity that is part of the `SDP Consortium
+<https://www.skatelescope.org/sdp/>`_. It aims to prototype the execution framework
+of the proposed SDP architecture. Furthermore, |daliuge| has already been used
+for `processing large astronomical datasets <https://arxiv.org/abs/1702.07617>`_
+in existing radio astronomy projects.
+
+Development and maintenance of |daliuge| is currently hosted at ICRAR_
+and is performed by the `DIA team <http://www.icrar.org/our-research/data-intensive-astronomy/>`_.
 
 See the ``docs/`` directory for more information, or visit `our online
-documentation <https://dfms.readthedocs.io/>`_
+documentation <https://daliuge.readthedocs.io/>`_
+
+.. _ICRAR: http://www.icrar.org
+.. [#f1] 流 (pronounced Liu) is the Chinese character for "flow".
