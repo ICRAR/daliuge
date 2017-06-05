@@ -1,5 +1,5 @@
-Data Activated 流 [#f1]_ Graph Engine
-=====================================
+Data Activated 流 Graph Engine
+==============================
 
 .. image:: https://travis-ci.org/ICRAR/daliuge.svg?branch=master
     :target: https://travis-ci.org/ICRAR/daliuge
@@ -24,5 +24,6 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
 See the ``docs/`` directory for more information, or visit `our online
 documentation <https://daliuge.readthedocs.io/>`_
 
+.. |daliuge| replace:: DALiuGE
 .. _ICRAR: http://www.icrar.org
 .. [#f1] 流 (pronounced Liu) is the Chinese character for "flow".
