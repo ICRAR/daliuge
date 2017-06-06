@@ -116,7 +116,7 @@ setup(
       long_description = "The SKA-SDK prototype for the Execution Framework component",
       author='ICRAR DIA Group',
       author_email='dfms_prototype@googlegroups.com',
-      url='https://github.com/SKA-ScienceDataProcessor/dfms',
+      url='https://github.com/ICRAR/daliuge',
       license="LGPLv2+",
       packages=find_packages(),
       package_data = {
