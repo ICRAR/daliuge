@@ -167,7 +167,7 @@ class DockerTests(unittest.TestCase):
         c = FileDROP('c', 'c')
         b.addInput(a)
         b.addOutput(c)
-        with DROPWaiterCtx(self, b, 100):
+        with DROPWaiterCtx(self, c, 100):
             a.setCompleted()
         self.assertEqual(six.b(a.dataURL), droputils.allDropContents(c))
 
