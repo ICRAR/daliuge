@@ -24,35 +24,41 @@ import os
 import shutil
 import tempfile
 import unittest
-import warnings
 
-from configobj import ConfigObj
-from docker.client import AutoVersionClient
-from docker.errors import DockerException
+import configobj
+import docker
+import six
 
 from dfms import droputils
 from dfms.apps.dockerapp import DockerApp
 from dfms.drop import FileDROP, NgasDROP
 from dfms.droputils import DROPWaiterCtx
-import six
 
+docker_unavailable = True
+try:
+    docker.from_env().ping()
+    docker_unavailable = False
+except:
+    pass
 
+@unittest.skipIf(docker_unavailable, "Docker daemon not available")
 class DockerTests(unittest.TestCase):
+
     _temp = None
+    _docker_available = False
 
     @classmethod
     def setUpClass(cls):
         config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
         if os.path.exists(config_file_name):
-            config = ConfigObj(config_file_name)
-            DockerTests._temp = config.get('OS_X_TEMP')
+            config = configobj.ConfigObj(config_file_name)
+            cls._temp = config.get('OS_X_TEMP')
 
             if not os.path.exists(DockerTests._temp):
                 os.makedirs(DockerTests._temp)
 
-        if DockerTests._temp is None:
-            DockerTests._temp = '/tmp/daliuge_tfiles'
-
+        if cls._temp is None:
+            cls._temp = '/tmp/daliuge_tfiles'
 
     def tearDown(self):
         shutil.rmtree("/tmp/daliuge_tfiles", True)
@@ -63,17 +69,7 @@ class DockerTests(unittest.TestCase):
         file into another via the command-line cp utility. It then checks that
         the contents of the target DROP are correct, and that the target file is
         actually owned by our process.
-
-        The test will not run if a docker daemon cannot be contacted though;
-        this is to avoid failures in machines that don't have a docker service
-        running.
         """
-
-        try:
-            AutoVersionClient().close()
-        except DockerException:
-            warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
-            return
 
         a = FileDROP('a', 'a')
         b = DockerApp('b', 'b', image='ubuntu:14.04', command='cp %i0 %o0')
@@ -109,11 +105,6 @@ class DockerTests(unittest.TestCase):
         treated as a publisher of D. This way D waits for both applications to
         finish before proceeding.
         """
-        try:
-            AutoVersionClient().close()
-        except DockerException:
-            warnings.warn("Cannot contact the Docker daemon, skipping docker tests")
-            return
 
         a = FileDROP('a', 'a')
         b = DockerApp('b', 'b', image='ubuntu:14.04', command='cat %i0 > /dev/tcp/%containerIp[c]%/8000')

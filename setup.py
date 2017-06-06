@@ -132,7 +132,7 @@ setup(
             "boto3",
             "bottle",
             "configobj",
-            "docker-py <= 1.7",
+            "docker",
             "lockfile",
             "luigi<2.0",
             "metis",
