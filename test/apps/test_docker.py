@@ -36,7 +36,7 @@ from dfms.droputils import DROPWaiterCtx
 
 docker_unavailable = True
 try:
-    docker.from_env().ping()
+    docker.from_env(version='auto').ping()
     docker_unavailable = False
 except:
     pass
