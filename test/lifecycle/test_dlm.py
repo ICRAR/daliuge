@@ -47,7 +47,7 @@ class TestDataLifecycleManager(unittest.TestCase):
         '''
         :param dfms.drop.AbstractDROP drop:
         '''
-        drop.write(' ')
+        drop.write(b' ')
         # all DROPs submitted to this method have expectedSize=1, so this
         # will trigger the change to COMPLETED
 

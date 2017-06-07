@@ -29,6 +29,8 @@ import re
 import threading
 import traceback
 
+import six
+
 from dfms.ddap_protocol import DROPStates
 from dfms.drop import AppDROP
 from dfms.io import IOForURL, OpenMode
@@ -95,15 +97,17 @@ def allDropContents(drop):
     '''
     Returns all the data contained in a given DROP
     '''
+    buf = six.BytesIO()
     desc = drop.open()
     read = drop.read
-    buf = read(desc)
-    allContents = buf
-    while buf:
-        buf = read(desc)
-        allContents += buf
+
+    while True:
+        data = read(desc)
+        if not data:
+            break
+        buf.write(data)
     drop.close(desc)
-    return allContents
+    return buf.getvalue()
 
 def copyDropContents(source, target, bufsize=4096):
     '''

@@ -103,7 +103,7 @@ def run_bash(cmd, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
 
     pstdout, pstderr = process.communicate()
     if stdout != subprocess.PIPE:
-        pstdout = "<piped-out>"
+        pstdout = b"<piped-out>"
     pcode = process.returncode
 
     end = time.time()
@@ -143,7 +143,7 @@ def prepare_output_channel(this_node, out_drop):
         # the pipe needs to be opened after the data is sent to the other
         # application because open() blocks until the other end is also
         # opened
-        data = "pipe://%s" % (pipe_name,)
+        data = b"pipe://%s" % (six.b(pipe_name),)
         out_drop.write(data)
         return open(pipe_name, 'wb')
 
@@ -157,7 +157,7 @@ def prepare_output_channel(this_node, out_drop):
 
         # to get a connection from the other side we have to write the data
         # into the output drop first so the other side connects to us
-        out_drop.write("tcp://%s:%d" % (host, port))
+        out_drop.write(b"tcp://%s:%d" % (host, port))
         with contextlib.closing(sock):
             csock, csockaddr = sock.accept()
             csock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 1000))
@@ -172,7 +172,7 @@ def prepare_input_channel(data):
     """
 
     # We don't even look at "data", we simply set up a communication channel
-    if data.startswith(six.b('pipe://')):
+    if data.startswith(b'pipe://'):
         pipe_name = data[7:]
         pipe = open(pipe_name, 'rb')
         logger.debug("Opened pipe %s for reading", pipe_name)
@@ -185,8 +185,8 @@ def prepare_input_channel(data):
         chan.close = types.MethodType(lambda s: close_and_remove(pipe, pipe_name), chan)
         return chan
 
-    elif data.startswith(six.b('tcp://')):
-        host, port = data[6:].split(six.b(':'))
+    elif data.startswith(b'tcp://'):
+        host, port = data[6:].split(b':')
         host = host.decode('utf-8')
         port = int(port)
         sock = utils.connect_to(host, port, 10)
