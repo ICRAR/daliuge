@@ -143,7 +143,7 @@ def prepare_output_channel(this_node, out_drop):
         # the pipe needs to be opened after the data is sent to the other
         # application because open() blocks until the other end is also
         # opened
-        data = b"pipe://%s" % (six.b(pipe_name),)
+        data = six.b("pipe://%s" % (pipe_name,))
         out_drop.write(data)
         return open(pipe_name, 'wb')
 
@@ -157,7 +157,7 @@ def prepare_output_channel(this_node, out_drop):
 
         # to get a connection from the other side we have to write the data
         # into the output drop first so the other side connects to us
-        out_drop.write(b"tcp://%s:%d" % (host, port))
+        out_drop.write(six.b("tcp://%s:%d" % (host, port)))
         with contextlib.closing(sock):
             csock, csockaddr = sock.accept()
             csock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 1000))
