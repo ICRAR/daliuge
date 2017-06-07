@@ -132,6 +132,7 @@ setup(
             "boto3",
             "bottle",
             "configobj",
+            "crc32c",
             "docker",
             "lockfile",
             "luigi<2.0",
