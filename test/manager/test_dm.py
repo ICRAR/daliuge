@@ -120,7 +120,7 @@ class TestDM(unittest.TestCase):
         a = dm1._sessions[sessionId].drops['A']
         b,c = [dm2._sessions[sessionId].drops[x] for x in ('B', 'C')]
         with droputils.DROPWaiterCtx(self, c, 1):
-            a.write('a')
+            a.write(b'a')
             a.setCompleted()
 
         for drop in a, b, c:
@@ -167,9 +167,9 @@ class TestDM(unittest.TestCase):
         a,b,c,d = [dm1._sessions[sessionId].drops[x] for x in ('A', 'B', 'C', 'D')]
         e,f = [dm2._sessions[sessionId].drops[x] for x in ('E', 'F')]
         with droputils.DROPWaiterCtx(self, f, 5):
-            a.write('a')
+            a.write(b'a')
             a.setCompleted()
-            b.write('a')
+            b.write(b'a')
             b.setCompleted()
 
         for drop in a,b,c,d,e,f:
@@ -248,7 +248,7 @@ class TestDM(unittest.TestCase):
 
         # Run! This should trigger the full execution of the graph
         with droputils.DROPWaiterCtx(self, o, 5):
-            a.write('a')
+            a.write(b'a')
 
         for drop in drops:
             self.assertEqual(DROPStates.COMPLETED, drop.status, "Status of '%s' is not COMPLETED: %d" % (drop.uid, drop.status))
@@ -299,7 +299,7 @@ class TestDM(unittest.TestCase):
         a = dm1._sessions[sessionId].drops['A']
         c = dm2._sessions[sessionId].drops['C']
         with droputils.DROPWaiterCtx(self, c, 10):
-            a.write('a')
+            a.write(b'a')
             a.setCompleted()
 
         for i in range(N):

@@ -23,6 +23,8 @@
 Module containing an example application that calculates a CRC value
 """
 
+import six
+
 from dfms.drop import BarrierAppDROP
 
 
@@ -59,4 +61,4 @@ class CRCApp(BarrierAppDROP):
 
         # Rely on whatever implementation we decide to use
         # for storing our data
-        outputDrop.write(str(crc))
+        outputDrop.write(six.b(str(crc)))

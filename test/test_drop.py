@@ -71,7 +71,7 @@ class SumupContainerChecksum(BarrierAppDROP):
             if inputDrop.status == DROPStates.COMPLETED:
                 crcSum += inputDrop.checksum
         outputDrop = self.outputs[0]
-        outputDrop.write(str(crcSum))
+        outputDrop.write(six.b(str(crcSum)))
 
 class TestDROP(unittest.TestCase):
 
@@ -92,8 +92,8 @@ class TestDROP(unittest.TestCase):
         Check that the NullDROP is usable for testing
         """
         a = NullDROP('A', 'A', expectedSize=5)
-        a.write("1234")
-        a.write("5")
+        a.write(b"1234")
+        a.write(b"5")
         allContents = droputils.allDropContents(a)
         self.assertFalse(allContents)
 
@@ -144,7 +144,7 @@ class TestDROP(unittest.TestCase):
         class GrepResult(BarrierAppDROP):
             def initialize(self, **kwargs):
                 super(GrepResult, self).initialize(**kwargs)
-                self._substring = six.b(kwargs['substring'])
+                self._substring = kwargs['substring']
 
             def run(self):
                 drop = self.inputs[0]
@@ -168,17 +168,17 @@ class TestDROP(unittest.TestCase):
                 drop = self.inputs[0]
                 output = self.outputs[0]
                 allbytes = droputils.allDropContents(drop)
-                buf = bytearray()
-                for c in allbytes:
-                    if c == six.b(' ') or c == six.b('\n'):
-                        output.write(buf[::-1])
-                        output.write(c)
-                        buf = bytearray()
+                buf = BytesIO()
+                for c in six.iterbytes(allbytes):
+                    if c == six.byte2int(b' ') or c == six.byte2int(b'\n'):
+                        output.write(buf.getvalue()[::-1])
+                        output.write(six.int2byte(c))
+                        buf = BytesIO()
                     else:
-                        buf.append(c)
+                        buf.write(six.int2byte(c))
 
         a = InMemoryDROP('oid:A', 'uid:A')
-        b = GrepResult('oid:B', 'uid:B', substring="a")
+        b = GrepResult('oid:B', 'uid:B', substring=b"a")
         c = InMemoryDROP('oid:C', 'uid:C')
         d = SortResult('oid:D', 'uid:D')
         e = InMemoryDROP('oid:E', 'uid:E')
@@ -193,10 +193,10 @@ class TestDROP(unittest.TestCase):
         f.addOutput(g)
 
         # Initial write
-        contents = "first line\nwe have an a here\nand another one\nnoone knows me"
-        cResExpected = "we have an a here\nand another one\n"
-        eResExpected = "and another one\nwe have an a here\n"
-        gResExpected = "dna rehtona eno\new evah na a ereh\n"
+        contents = b"first line\nwe have an a here\nand another one\nnoone knows me"
+        cResExpected = b"we have an a here\nand another one\n"
+        eResExpected = b"and another one\nwe have an a here\n"
+        gResExpected = b"dna rehtona eno\new evah na a ereh\n"
 
         with DROPWaiterCtx(self, g):
             a.write(contents)
@@ -278,11 +278,11 @@ class TestDROP(unittest.TestCase):
         # the whole chain explained above
         with DROPWaiterCtx(self, e):
             #for dropA in dropAList: # this should be parallel for
-            a1.write(' '); a1.setCompleted()
+            a1.write(b' '); a1.setCompleted()
             if tooManyFailures:
                 a2.setError()
             else:
-                a2.write(' '); a2.setCompleted()
+                a2.write(b' '); a2.setCompleted()
             a3.setError()
 
         if tooManyFailures:
@@ -397,7 +397,7 @@ class TestDROP(unittest.TestCase):
                 output = self.outputs[0]
                 howMany = int(droputils.allDropContents(inputDrop))
                 for i in range(howMany):
-                    output.write(str(i) + " ")
+                    output.write(six.b(str(i)) + b" ")
 
         # This is used as "D"
         class OddAndEvenContainerApp(BarrierAppDROP):
@@ -407,7 +407,7 @@ class TestDROP(unittest.TestCase):
 
                 numbers = droputils.allDropContents(inputDrop).strip().split()
                 for n in numbers:
-                    outputs[int(n) % 2].write(n + six.b(" "))
+                    outputs[int(n) % 2].write(n + b" ")
 
         # Create DROPs
         a =     InMemoryDROP('oid:A', 'uid:A')
@@ -426,14 +426,14 @@ class TestDROP(unittest.TestCase):
 
         # Start the execution
         with DROPWaiterCtx(self, [e,f]):
-            a.write('20')
+            a.write(b'20')
             a.setCompleted()
 
         # Check the final results are correct
         for drop in [a,b,c,d,e]:
             self.assertEqual(drop.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (drop))
-        self.assertEqual(six.b("0 2 4 6 8 10 12 14 16 18"), droputils.allDropContents(e).strip())
-        self.assertEqual(six.b("1 3 5 7 9 11 13 15 17 19"), droputils.allDropContents(f).strip())
+        self.assertEqual(b"0 2 4 6 8 10 12 14 16 18", droputils.allDropContents(e).strip())
+        self.assertEqual(b"1 3 5 7 9 11 13 15 17 19", droputils.allDropContents(f).strip())
 
 
     def test_dropWroteFromOutside(self):
@@ -448,13 +448,13 @@ class TestDROP(unittest.TestCase):
         # Write, but not through the DROP
         a = FileDROP('A', 'A')
         filename = a.path
-        msg = 'a message'
-        with open(filename, 'w') as f:
+        msg = b'a message'
+        with open(filename, 'wb') as f:
             f.write(msg)
         a.setCompleted()
 
         # Read from the DROP
-        self.assertEqual(six.b(msg), droputils.allDropContents(a))
+        self.assertEqual(msg, droputils.allDropContents(a))
         self.assertIsNone(a.checksum)
         self.assertIsNone(a.size)
 
@@ -470,7 +470,7 @@ class TestDROP(unittest.TestCase):
         # Nice and easy
         drop = InMemoryDROP('a', 'a')
         self.assertEqual(drop.status, DROPStates.INITIALIZED)
-        drop.write('a')
+        drop.write(b'a')
         self.assertEqual(drop.status, DROPStates.WRITING)
         drop.setCompleted()
         self.assertEqual(drop.status, DROPStates.COMPLETED)
@@ -524,7 +524,7 @@ class TestDROP(unittest.TestCase):
         # Write and check
         dropsToWaitFor = [] if mode == ExecutionMode.EXTERNAL else [c]
         with DROPWaiterCtx(self, dropsToWaitFor):
-            a.write('1')
+            a.write(b'1')
 
         if mode == ExecutionMode.EXTERNAL:
             # b hasn't been triggered
@@ -558,7 +558,7 @@ class TestDROP(unittest.TestCase):
             def dataWritten(self, uid, data):
                 self.execStatus = AppDROPStates.RUNNING
                 outputDrop = self.outputs[0]
-                self._lastByte = six.indexbytes(data, -1)
+                self._lastByte = data[-1:]
                 outputDrop.write(self._lastByte)
             def dropCompleted(self, uid, status):
                 self.execStatus = AppDROPStates.FINISHED
@@ -584,19 +584,19 @@ class TestDROP(unittest.TestCase):
             self.assertEqual(dStatus, d.status)
             self.assertEqual(eStatus, e.status)
             if lastByte is not None:
-                self.assertEqual(six.b(lastByte), six.int2byte(b._lastByte))
+                self.assertEqual(lastByte, b._lastByte)
 
         checkDropStates(DROPStates.INITIALIZED , DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
-        a.write('abcde')
-        checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, 'e')
-        a.write('fghij')
-        checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, 'j')
-        a.write('k')
+        a.write(b'abcde')
+        checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b'e')
+        a.write(b'fghij')
+        checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b'j')
+        a.write(b'k')
         with DROPWaiterCtx(self, [d,e]):
             a.setCompleted()
-        checkDropStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, 'k')
+        checkDropStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, b'k')
 
-        self.assertEqual(six.b('ejk'), droputils.allDropContents(d))
+        self.assertEqual(b'ejk', droputils.allDropContents(d))
 
     def test_fileDROP_delete_parent_dir(self):
         """
@@ -607,7 +607,7 @@ class TestDROP(unittest.TestCase):
         def assertFiles(delete_parent_directory, parentDirExists, tempDir=None):
             tempDir = tempDir or tempfile.mkdtemp()
             a = FileDROP('a', 'a', dirname=tempDir, delete_parent_directory=delete_parent_directory)
-            a.write(' ')
+            a.write(b' ')
             a.setCompleted()
             self.assertTrue(a.exists())
             self.assertTrue(os.path.isdir(tempDir))
@@ -623,8 +623,8 @@ class TestDROP(unittest.TestCase):
         assertFiles(True, False)
         # Test 3: deletion commanded, directory not empty, delete still works
         tempDir = tempfile.mkdtemp()
-        with open(os.path.join(tempDir, 'b'), 'w') as f:
-            f.write(' ')
+        with open(os.path.join(tempDir, 'b'), 'wb') as f:
+            f.write(b' ')
         assertFiles(True, True, tempDir=tempDir)
 
     def test_directoryContainer(self):

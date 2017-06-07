@@ -377,13 +377,8 @@ class AbstractDROP(EventFirer):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if isinstance(data, memoryview):
-            data = data.tobytes()
-        elif isinstance(data, six.integer_types):
-            data = six.int2byte(data)
-        elif isinstance(data, six.string_types):
-            data = six.b(data)
-
+        if not isinstance(data, six.binary_type):
+            raise Exception("Data type not of binary type: %s", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP

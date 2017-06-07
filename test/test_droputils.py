@@ -149,9 +149,9 @@ class DropUtilsTest(unittest.TestCase):
         directly or through the DROP
         """
         drop = FileDROP('a', 'a', expectedSize=5)
-        drop.write('abcde')
+        drop.write(b'abcde')
         with DROPFile(drop) as f:
-            self.assertEqual(six.b('abcde'), f.read())
+            self.assertEqual(b'abcde', f.read())
             self.assertTrue(drop.isBeingRead())
             self.assertIsNotNone(f._io)
         self.assertFalse(drop.isBeingRead())
