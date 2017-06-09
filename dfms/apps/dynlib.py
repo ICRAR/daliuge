@@ -25,7 +25,8 @@ import functools
 
 import six
 
-from ..drop import BarrierAppDROP
+from ..ddap_protocol import AppDROPStates
+from ..drop import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
 
 
@@ -37,29 +38,42 @@ _write_cb_type = ctypes.CFUNCTYPE(ctypes.c_size_t,
                                   ctypes.POINTER(ctypes.c_char),
                                   ctypes.c_size_t)
 
-class CDlgInputInfo(ctypes.Structure):
+_app_running_cb_type = ctypes.CFUNCTYPE(None)
+
+_app_done_cb_type = ctypes.CFUNCTYPE(None, ctypes.c_int)
+
+class CDlgInput(ctypes.Structure):
     _fields_ = [('uid', ctypes.c_char_p),
                 ('oid', ctypes.c_char_p),
+                ('status', ctypes.c_int),
                 ('read', _read_cb_type)]
 
-class CDlgOutputInfo(ctypes.Structure):
+class CDlgStreamingInput(ctypes.Structure):
+    _fields_ = [('uid', ctypes.c_char_p),
+                ('oid', ctypes.c_char_p)]
+
+class CDlgOutput(ctypes.Structure):
     _fields_ = [('uid', ctypes.c_char_p),
                 ('oid', ctypes.c_char_p),
                 ('write', _write_cb_type)]
 
-class CDlgAppInfo(ctypes.Structure):
+class CDlgApp(ctypes.Structure):
     _fields_ = [('uid', ctypes.c_char_p),
                 ('oid', ctypes.c_char_p),
-                ('inputs', ctypes.POINTER(CDlgInputInfo)),
+                ('inputs', ctypes.POINTER(CDlgInput)),
                 ('n_inputs', ctypes.c_uint),
-                ('outputs', ctypes.POINTER(CDlgOutputInfo)),
+                ('streaming_inputs', ctypes.POINTER(CDlgStreamingInput)),
+                ('n_streaming_inputs', ctypes.c_uint),
+                ('outputs', ctypes.POINTER(CDlgOutput)),
                 ('n_outputs', ctypes.c_uint),
+                ('running', _app_running_cb_type),
+                ('done', _app_done_cb_type),
                 ('data', ctypes.c_void_p),]
 
-class DynlibApp(BarrierAppDROP):
+class DynlibAppBase(object):
 
     def initialize(self, **kwargs):
-        super(DynlibApp, self).initialize(**kwargs)
+        super(DynlibAppBase, self).initialize(**kwargs)
 
         if 'lib' not in kwargs:
             raise InvalidDropException("library not specified")
@@ -72,17 +86,83 @@ class DynlibApp(BarrierAppDROP):
         self.lib = ctypes.cdll.LoadLibrary(lib)
         expected_functions = ('init_app_drop', 'run')
         for fname in expected_functions:
-            if not hasattr(self.lib, fname):
-                raise InvalidDropException("%s doesn't have function %s" % (lib, fname))
+            if hasattr(self.lib, fname):
+                continue
+            raise InvalidDropException("%s doesn't have function %s" % (lib, fname))
 
-        # Create the initial contents of the dlg_app_info structure
-        self._uid_b = six.b(self.uid)
-        self._oid_b = six.b(self.oid)
-        self._c_app_info = CDlgAppInfo(self._uid_b, self._oid_b, None, 0, None, 0, None)
+        # Create the initial contents of the C dlg_app_info structure
+        # We pass no inputs because we don't know them (and don't need them)
+        # at this point yet.
+        # The running and done callbacks are also NULLs
+        self._c_app = CDlgApp(six.b(self.uid), six.b(self.oid),
+                                   None, 0, None, 0, None, 0,
+                                   ctypes.cast(None, _app_running_cb_type),
+                                   ctypes.cast(None, _app_done_cb_type),
+                                   None)
 
         # Let the shared library initialize this app
-        if self.lib.init_app_drop(ctypes.pointer(self._c_app_info)):
-            raise RuntimeError("Application could not be initialized")
+        if self.lib.init_app_drop(ctypes.pointer(self._c_app)):
+            raise InvalidDropException("%s app failed during initialization" % (lib,))
+
+    def addOutput(self, outputDrop, back=True):
+        super(DynlibAppBase, self).addOutput(outputDrop, back)
+
+        # Update the list of outputs on our app structure
+        app = self._c_app
+
+        output = self._to_c_output(outputDrop)
+        print("New output: %r" % output)
+        outputs = [output]
+        if app.n_outputs:
+            prev_outputs = (CDlgOutput * app.n_outputs).from_address(ctypes.addressof(app.outputs))
+            print("Previous outputs: %r" % (prev_outputs[:],))
+            outputs = prev_outputs[:] + outputs
+        print("Outputs: %r" % (outputs,))
+        app.outputs = (CDlgOutput * (app.n_outputs + 1))(*outputs)
+        app.n_outputs += 1
+
+    def _to_c_output(self, o):
+        w = _write_cb_type(functools.partial(self._write_to_output, o.write))
+        return CDlgOutput(six.b(o.uid), six.b(o.oid), w)
+
+    def _write_to_output(self, output_write, buf, n):
+        return output_write(buf[:n])
+
+
+class DynlibStreamApp(DynlibAppBase, AppDROP):
+
+    def initialize(self, **kwargs):
+        super(DynlibStreamApp, self).initialize(**kwargs)
+
+        # Set up callbacks for the library to signal they the application
+        # is running, and that it has ended
+        def _running():
+            self.execStatus = AppDROPStates.RUNNING
+        def _done(status):
+            self.execStatus = status
+            self._notifyAppIsFinished()
+
+        self._c_app.running = _app_running_cb_type(_running)
+        self._c_app.done = _app_done_cb_type(_done)
+
+    def dataWritten(self, uid, data):
+        app_p = ctypes.pointer(self._c_app)
+        self.lib.data_written(app_p, six.b(uid), data, len(data))
+
+    def dropCompleted(self, uid, drop_state):
+        app_p = ctypes.pointer(self._c_app)
+        self.lib.drop_completed(app_p, six.b(uid), drop_state)
+
+    def addInput(self, inputDrop, back=True):
+        super(DynlibStreamApp, self).addInput(inputDrop, back)
+        self._c_app.n_inputs += 1
+
+    def addStreamingInput(self, streamingInputDrop, back=True):
+        super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
+        self._c_app.n_streaming_inputs += 1
+
+
+class DynlibApp(DynlibAppBase, BarrierAppDROP):
 
     def run(self):
 
@@ -92,29 +172,19 @@ class DynlibApp(BarrierAppDROP):
             ctypes.memmove(ctypes.addressof(buf.contents), x, len(x))
             return len(x)
 
-        def _write(output_write, buf, n):
-            return output_write(buf[:n])
-
-        # Update our dlg_app_info structure to include input/output information
-        input_infos = []
+        # Update our C structure to include inputs, which we open for reading
+        inputs = []
         opened_info = []
-        for uid, i in self._inputs.items():
+        for i in self.inputs:
             desc = i.open()
             opened_info.append((i, desc))
             r = _read_cb_type(functools.partial(_read, i.read, desc))
-            input_infos.append(CDlgInputInfo(six.b(i.uid), six.b(i.oid), r))
-        self._c_app_info.inputs = (CDlgInputInfo * len(input_infos))(*input_infos)
-        self._c_app_info.n_inputs = len(input_infos)
-
-        output_infos = []
-        for uid, o in self._outputs.items():
-            w = _write_cb_type(functools.partial(_write, self._outputs[uid].write))
-            output_infos.append(CDlgOutputInfo(six.b(o.uid), six.b(o.oid), w))
-        self._c_app_info.outputs = (CDlgOutputInfo * len(output_infos))(*output_infos)
-        self._c_app_info.n_outputs = len(output_infos)
+            inputs.append(CDlgInput(six.b(i.uid), six.b(i.oid), i.status, r))
+        self._c_app.inputs = (CDlgInput * len(inputs))(*inputs)
+        self._c_app.n_inputs = len(inputs)
 
         try:
-            self.lib.run(ctypes.pointer(self._c_app_info))
+            self.lib.run(ctypes.pointer(self._c_app))
         finally:
             for x, desc  in opened_info:
                 x.close(desc);
