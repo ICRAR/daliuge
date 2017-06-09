@@ -104,21 +104,21 @@ class DynlibAppBase(object):
         if self.lib.init_app_drop(ctypes.pointer(self._c_app)):
             raise InvalidDropException("%s app failed during initialization" % (lib,))
 
+        self._c_outputs = []
+
     def addOutput(self, outputDrop, back=True):
         super(DynlibAppBase, self).addOutput(outputDrop, back)
 
         # Update the list of outputs on our app structure
-        app = self._c_app
-
         output = self._to_c_output(outputDrop)
-        print("New output: %r" % output)
-        outputs = [output]
-        if app.n_outputs:
-            prev_outputs = (CDlgOutput * app.n_outputs).from_address(ctypes.addressof(app.outputs))
-            print("Previous outputs: %r" % (prev_outputs[:],))
-            outputs = prev_outputs[:] + outputs
-        print("Outputs: %r" % (outputs,))
-        app.outputs = (CDlgOutput * (app.n_outputs + 1))(*outputs)
+        app = self._c_app
+        if not app.n_outputs:
+            outputs = (CDlgOutput * 1)(output)
+        else:
+            outputs = (CDlgOutput * (app.n_outputs + 1))(*self._c_outputs)
+            outputs[-1] = output
+        self._c_outputs = outputs
+        app.outputs = outputs
         app.n_outputs += 1
 
     def _to_c_output(self, o):

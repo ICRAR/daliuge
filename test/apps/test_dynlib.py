@@ -33,39 +33,15 @@ import os
 class DynlibAppTest(unittest.TestCase):
 
     def test_simple_batch_copy(self):
-        """
-        A ----> B --> C
-           \--> D --> E
-
-        Both B and D use the same dynamically loaded library and work with their
-        input A in batch mode; that is, only when A is completed B and D are
-        launched and executed (via their run method).
-        """
-
-        a = InMemoryDROP('a', 'a')
-        b = DynlibApp('b', 'b', lib='libdynlib_example.so')
-        c = InMemoryDROP('c', 'c')
-        d = DynlibApp('d', 'd', lib='libdynlib_example.so')
-        e = InMemoryDROP('e', 'e')
-        b.addInput(a)
-        b.addOutput(c)
-        d.addInput(a)
-        d.addOutput(e)
-
-        # ~100 MBs of random data should be copied over from a to c via b
-        # We only get 1MB of random data and they replicate it; otherwise,
-        # depending on your system, it might take a while to get that much
-        # random data
-        data = os.urandom(1024 * 1024) * 100
-        with droputils.DROPWaiterCtx(self, (c, e), 10):
-            a.write(data)
-            a.setCompleted()
-
-        self.assertEqual(data, droputils.allDropContents(c))
-        self.assertEqual(data, droputils.allDropContents(e))
+        self._test_simple_copy(False)
 
     def test_simple_stream_copy(self):
+        self._test_simple_copy(True)
+
+    def _test_simple_copy(self, streaming):
         """
+        Checks that the following graph works, both in streaming and batch mode:
+
         A ----> B ----> C
            |       \--> D
            |
@@ -73,30 +49,32 @@ class DynlibAppTest(unittest.TestCase):
                    \--> G
 
         Both B and E use the same dynamically loaded library and work with their
-        input A in streaming mode to copy the inputs into their outputs;
-        that is, as data is written into A, B and E copy it to C, D, F and G
+        input A to copy the inputs into their outputs.
         """
-        a = NullDROP('a', 'a')
-        b, e = (DynlibStreamApp(x, x, lib='libdynlib_example.so') for x in ('b', 'e'))
-        c, d, f, g, h, i = (InMemoryDROP(x, x) for x in ('c', 'd', 'f', 'g', 'h', 'i'))
 
-        b.addStreamingInput(a)
-        b.addOutput(c)
-        b.addOutput(d)
-        e.addStreamingInput(a)
-        e.addOutput(f)
-        e.addOutput(g)
+        # Build the graph
+        a = (NullDROP if streaming else InMemoryDROP)('a', 'a')
+        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib='libdynlib_example.so') for x in ('b', 'e'))
+        c, d, f, g = (InMemoryDROP(x, x) for x in ('c', 'd', 'f', 'g'))
+        for app, outputs in (b, (c, d)), (e, (f, g)):
+            (app.addStreamingInput if streaming else app.addInput)(a)
+            for o in outputs:
+                app.addOutput(o)
 
-        # ~100 MBs of data should be copied over from a to c via b
+        # ~100 MBs of data should be copied over from a to c and d via b, etc
         data = os.urandom(1024 * 1024) * 100
         reader = six.BytesIO(data)
         with droputils.DROPWaiterCtx(self, (c, d, f, g), 10):
-            # Write the data in chunks so we actually exercise multiple calls
-            # to the data_written library call
-            for d in iter(functools.partial(reader.read, 1024*1024), b''):
-                a.write(d)
+            if streaming:
+                # Write the data in chunks so we actually exercise multiple calls
+                # to the data_written library call
+                for datum in iter(functools.partial(reader.read, 1024*1024), b''):
+                    a.write(datum)
+            else:
+                a.write(data)
             a.setCompleted()
 
         for drop in (c, d, f, g):
-            self.assertEqual(len(data), len(droputils.allDropContents(drop)))
-            self.assertEqual(data, droputils.allDropContents(c))
+            drop_data = droputils.allDropContents(drop)
+            self.assertEqual(len(data), len(drop_data), 'Data from %r is not what we wanted :(' % (drop,))
+            self.assertEqual(data, drop_data)
