@@ -135,22 +135,25 @@ setup(
             "crc32c",
             "docker",
             "lockfile",
+            # We haven't ported the code yet to luigi 2, and probably will stop using it anyway
             "luigi<2.0",
             "metis",
+            # 0.10.6 builds correctly with old (<=3.10) Linux kernels
             "netifaces>=0.10.6",
             "networkx",
-            # paramiko 2.0.0 requires cryptography>=1.1, which in turn
-            # requires development packages to be installed on the system
+            # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
             "paramiko<2.0.0",
             "psutil",
             "pyswarm",
             "python-daemon",
             "pyzmq",
             "scp",
+            # 1.10 contains an important race-condition fix on lazy-loaded modules
             'six>=1.10',
-            # 0.19 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-            "zeroconf <= 0.18",
-            "zerorpc >= 0.6" # 0.6 brings python3 support plus other fixes
+            # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
+            "zeroconf >= 0.19.1",
+            # 0.6 brings python3 support plus other fixes
+            "zerorpc >= 0.6"
       ],
       # Keep alpha-sorted PLEASE!
 
