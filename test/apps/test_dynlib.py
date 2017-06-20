@@ -31,7 +31,7 @@ from dfms.drop import InMemoryDROP, NullDROP
 
 _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
-_libpath = os.path.join(os.path.dirname(__file__), _libfname())
+_libpath = os.path.join(os.path.dirname(__file__), _libfname)
 
 # Try to compile the library, if possible. If it's there already we're cool
 def _try_library():
