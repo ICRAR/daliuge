@@ -32,6 +32,7 @@ from dfms.drop import InMemoryDROP, NullDROP
 _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
 _libpath = os.path.join(os.path.dirname(__file__), _libfname)
+print_stats = 0
 
 # Try to compile the library, if possible. If it's there already we're cool
 def _try_library():
@@ -84,7 +85,7 @@ class DynlibAppTest(unittest.TestCase):
 
         # Build the graph
         a = (NullDROP if streaming else InMemoryDROP)('a', 'a')
-        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib=_libpath) for x in ('b', 'e'))
+        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib=_libpath, print_stats=print_stats) for x in ('b', 'e'))
         c, d, f, g = (InMemoryDROP(x, x) for x in ('c', 'd', 'f', 'g'))
         for app, outputs in (b, (c, d)), (e, (f, g)):
             (app.addStreamingInput if streaming else app.addInput)(a)

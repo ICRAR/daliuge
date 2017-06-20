@@ -84,7 +84,7 @@ class DynlibAppBase(object):
         lib = find_library(libname) or libname
 
         self.lib = ctypes.cdll.LoadLibrary(lib)
-        expected_functions = ('init_app_drop', 'run')
+        expected_functions = ('init', 'run')
         for fname in expected_functions:
             if hasattr(self.lib, fname):
                 continue
@@ -100,8 +100,20 @@ class DynlibAppBase(object):
                                    ctypes.cast(None, _app_done_cb_type),
                                    None)
 
+        # Collect the rest of the parameters to pass them down to the library
+        # We need to keep them in a local variable so when we expose them to
+        # the app later on via pointers we still have their contents
+        local_params = [(six.b(str(k)), six.b(str(v))) for k, v in kwargs.items()]
+
+        # Wrap in ctypes
+        str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
+        two_str_type = (ctypes.c_char_p * 2)
+        app_params = [two_str_type(k, v) for k, v in local_params]
+        app_params.append(None)
+        params = (str_ptr_type * len(app_params))(*app_params)
+
         # Let the shared library initialize this app
-        if self.lib.init_app_drop(ctypes.pointer(self._c_app)):
+        if self.lib.init(ctypes.pointer(self._c_app), params):
             raise InvalidDropException("%s app failed during initialization" % (lib,))
 
         self._c_outputs = []
