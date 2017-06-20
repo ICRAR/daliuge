@@ -56,7 +56,7 @@ int init(dlg_app_info *app, const char ***params)
 	while (1) {
 
 		// Sentinel
-		if (param == NULL) {
+		if (*param == NULL) {
 			break;
 		}
 
