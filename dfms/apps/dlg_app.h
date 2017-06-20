@@ -23,6 +23,10 @@
 // MA 02111-1307  USA
 //
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The different status a data drop can be found at.
  */
@@ -139,3 +143,7 @@ void data_written(dlg_app_info *app, const char *uid, const char *data, size_t n
  * @param status The final status in which the streaming input was found.
  */
 void drop_completed(dlg_app_info *app, const char *uid, drop_status status);
+
+#ifdef __cplusplus
+}
+#endif
