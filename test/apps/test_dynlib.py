@@ -37,21 +37,25 @@ print_stats = 0
 # Try to compile the library, if possible. If it's there already we're cool
 def _try_library():
 
-    if os.path.isfile(_libpath):
-        return True
-
     prev_path = os.getcwd()
     os.chdir(os.path.dirname(__file__))
-    try:
-        import distutils.ccompiler
 
+    try:
+
+        # No need to rebuild
+        srcname = _libname + '.c'
+        if (os.path.isfile(_libpath) and
+            os.stat(srcname).st_ctime <= os.stat(_libpath).st_ctime):
+                return True
+
+        import distutils.ccompiler
         from dfms import get_include_dir
 
         comp = distutils.ccompiler.new_compiler()
         distutils.sysconfig.customize_compiler(comp)
 
         comp.add_include_dir(get_include_dir())
-        objs = comp.compile([_libname + '.c'])
+        objs = comp.compile([srcname])
         comp.link_shared_lib(objs, output_libname=_libname)
 
         return True
