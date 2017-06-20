@@ -76,7 +76,7 @@ class DynlibAppBase(object):
         super(DynlibAppBase, self).initialize(**kwargs)
 
         if 'lib' not in kwargs:
-            raise InvalidDropException("library not specified")
+            raise InvalidDropException(self, "library not specified")
 
         # Try with a simple name, or as full path
         from ctypes.util import find_library
@@ -88,7 +88,7 @@ class DynlibAppBase(object):
         for fname in expected_functions:
             if hasattr(self.lib, fname):
                 continue
-            raise InvalidDropException("%s doesn't have function %s" % (lib, fname))
+            raise InvalidDropException(self, "%s doesn't have function %s" % (lib, fname))
 
         # Create the initial contents of the C dlg_app_info structure
         # We pass no inputs because we don't know them (and don't need them)
@@ -114,7 +114,7 @@ class DynlibAppBase(object):
 
         # Let the shared library initialize this app
         if self.lib.init(ctypes.pointer(self._c_app), params):
-            raise InvalidDropException("%s app failed during initialization" % (lib,))
+            raise InvalidDropException(self, "%s app failed during initialization" % (lib,))
 
         self._c_outputs = []
 
