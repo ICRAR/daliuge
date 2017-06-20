@@ -21,7 +21,6 @@
 #
 import functools
 import os
-import platform
 import unittest
 
 import six
@@ -31,12 +30,7 @@ from dfms.apps.dynlib import DynlibApp, DynlibStreamApp
 from dfms.drop import InMemoryDROP, NullDROP
 
 _libname = 'dynlib_example'
-
-def _libfname():
-    plat = platform.platform()
-    ext = '.dylib' if plat.startswith('Darwin') else '.so'
-    return 'lib' + _libname + ext
-
+_libfname = 'libdynlib_example.so'
 _libpath = os.path.join(os.path.dirname(__file__), _libfname())
 
 # Try to compile the library, if possible. If it's there already we're cool
