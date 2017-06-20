@@ -521,7 +521,6 @@ class LGNode():
                 fp = self.jd.get('filepath', None)
                 if (fp):
                     kwargs['filepath'] = fp
-
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
             if 'execution_time' in self.jd:
@@ -531,6 +530,24 @@ class LGNode():
             kwargs['tw'] = sleepTime
             kwargs['sleepTime'] = sleepTime
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
+            dropSpec.update(kwargs)
+        elif (drop_type == 'DynlibApp'):
+            if ('libpath' not in self.jd or len(self.jd['libpath']) == 0):
+                raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.dynlib.DynlibApp'})
+            kwargs['lib'] = self.jd['libpath']
+            kwargs['tw'] = int(self.jd['execution_time'])
+            for i in range(10):
+                k = "Arg%02d" % (i + 1,)
+                if not k in self.jd:
+                    continue
+                v = self.jd[k]
+                if (v is not None and len(str(v)) > 0):
+                    for kv in v.split(","): # comma separated k-v pairs
+                        k_v = kv.replace(' ', '').split("=")
+                        if (len(k_v) > 1):
+                            kwargs[k_v[0]] = k_v[1]
+
             dropSpec.update(kwargs)
         elif (drop_type in ['BashShellApp', 'mpi']):
             if (drop_type == 'mpi'):
@@ -1756,7 +1773,7 @@ class LG():
         s_type = slgn.jd['category']
         t_type = tlgn.jd['category']
 
-        if (s_type in ['Component', 'BashShellApp', 'mpi']):
+        if (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
             if ('BashShellApp' == s_type):
