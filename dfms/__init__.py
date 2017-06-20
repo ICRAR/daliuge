@@ -26,6 +26,7 @@ the system.
 
 from .version import git_version as __git_version__
 from .version import version as __version__
+from .apps import get_include_dir
 
 import logging
 
