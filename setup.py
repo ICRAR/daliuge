@@ -120,11 +120,13 @@ setup(
       license="LGPLv2+",
       packages=find_packages(),
       package_data = {
+        'dfms.apps' : ['dlg_app.h'],
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
         'dfms.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map',
                           'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html',
                           'lib/libmetis.*'],
-        'test.dropmake': ['logical_graphs/*.json']
+        'test.dropmake': ['logical_graphs/*.json'],
+        'test.apps' : ['dynlib_example.c']
       },
 
       # Keep alpha-sorted PLEASE!
