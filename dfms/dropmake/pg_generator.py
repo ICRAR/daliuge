@@ -488,6 +488,18 @@ class LGNode():
         """
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid)
 
+    def _update_key_value_attributes(self, kwargs):
+        for i in range(10):
+            k = "Arg%02d" % (i + 1,)
+            if not k in self.jd:
+                continue
+            v = self.jd[k]
+            if (v is not None and len(str(v)) > 0):
+                for kv in v.split(","): # comma separated k-v pairs
+                    k_v = kv.replace(' ', '').split("=")
+                    if (len(k_v) > 1):
+                        kwargs[k_v[0]] = k_v[1]
+
     def _create_test_drop_spec(self, oid, kwargs):
         """
         TODO
@@ -522,14 +534,19 @@ class LGNode():
                 if (fp):
                     kwargs['filepath'] = fp
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
             if 'execution_time' in self.jd:
                 sleepTime = int(self.jd['execution_time'])
             else:
                 sleepTime = random.randint(3, 8)
             kwargs['tw'] = sleepTime
-            kwargs['sleepTime'] = sleepTime
+            if ('appclass' not in self.jd or len(self.jd['appclass']) == 0):
+                app_class = 'test.graphsRepository.SleepApp'
+                kwargs['sleepTime'] = sleepTime
+            else:
+                app_class = self.jd['appclass']
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':app_class})
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
+            self._update_key_value_attributes(kwargs)
             dropSpec.update(kwargs)
         elif (drop_type == 'DynlibApp'):
             if ('libpath' not in self.jd or len(self.jd['libpath']) == 0):
@@ -537,16 +554,7 @@ class LGNode():
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.dynlib.DynlibApp'})
             kwargs['lib'] = self.jd['libpath']
             kwargs['tw'] = int(self.jd['execution_time'])
-            for i in range(10):
-                k = "Arg%02d" % (i + 1,)
-                if not k in self.jd:
-                    continue
-                v = self.jd[k]
-                if (v is not None and len(str(v)) > 0):
-                    for kv in v.split(","): # comma separated k-v pairs
-                        k_v = kv.replace(' ', '').split("=")
-                        if (len(k_v) > 1):
-                            kwargs[k_v[0]] = k_v[1]
+            self._update_key_value_attributes(kwargs)
 
             dropSpec.update(kwargs)
         elif (drop_type in ['BashShellApp', 'mpi']):
