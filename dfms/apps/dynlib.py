@@ -22,6 +22,7 @@
 
 import ctypes
 import functools
+import logging
 
 import six
 
@@ -29,6 +30,8 @@ from ..ddap_protocol import AppDROPStates
 from ..drop import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
 
+
+logger = logging.getLogger(__name__)
 
 _read_cb_type = ctypes.CFUNCTYPE(ctypes.c_size_t,
                                  ctypes.POINTER(ctypes.c_char),
@@ -104,6 +107,7 @@ class DynlibAppBase(object):
         # We need to keep them in a local variable so when we expose them to
         # the app later on via pointers we still have their contents
         local_params = [(six.b(str(k)), six.b(str(v))) for k, v in kwargs.items()]
+        logger.debug("Extra parameters passed to application: %r", local_params)
 
         # Wrap in ctypes
         str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
