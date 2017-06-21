@@ -56,6 +56,10 @@ class BashCommand(object):
             self._output_map[lgn_id].add(oid)
 
     def to_real_command(self):
+
+        def _get_delimit(matchobj):
+            return ' ' if matchobj.start() == 0 else ','
+
         cmds = self._cmds
         for k in range(len(cmds)):
             d = cmds[k]
@@ -64,10 +68,12 @@ class BashCommand(object):
             if (imatch is not None):
                 lgn_id = int(imatch.group(1))
                 cmds[k] = d.replace(imatch.group(0),
-                ' '.join(['%i[{0}]'.format(x) for x in self._input_map[lgn_id]]))
+                _get_delimit(imatch).\
+                join(['%i[{0}]'.format(x) for x in self._input_map[lgn_id]]))
             elif (omatch is not None):
                 lgn_id = int(omatch.group(1))
                 cmds[k] = d.replace(omatch.group(0),
-                ' '.join(['%o[{0}]'.format(x) for x in self._output_map[lgn_id]]))
+                _get_delimit(omatch).\
+                join(['%o[{0}]'.format(x) for x in self._output_map[lgn_id]]))
 
         return ' '.join(cmds)
