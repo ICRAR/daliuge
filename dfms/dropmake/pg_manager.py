@@ -88,7 +88,7 @@ class PGManager(object):
         Return:
             A unique PGT id (handle)
         """
-        self._gen_pgt_sem.acquire()
+        #self._gen_pgt_sem.acquire()
         self._pgt_fn_count += 1
         if (self._pgt_fn_count == MAX_PGT_FN_CNT + 1):
             self._pgt_fn_count = 0
@@ -117,7 +117,8 @@ class PGManager(object):
         except Exception as exp:
             raise GraphException("Fail to save PGT {0}:{1}".format(pgt_path, str(exp)))
         finally:
-            self._gen_pgt_sem.release()
+            pass
+            #self._gen_pgt_sem.release()
         return pgt_id
 
     def get_pgt(self, pgt_id):
