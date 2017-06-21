@@ -494,6 +494,32 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
+      myDiagram.nodeTemplateMap.add("DynlibApp",  // the Component category
+      $(go.Node, "Spot", nodeStyle(),
+        // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "YinYang",
+            { fill: "#00A9C9", stroke: "#00A9C9" },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: "black",
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              textAlign: "center",
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, true, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, true)
+      ));
+
       myDiagram.nodeTemplateMap.add("memory",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
@@ -1291,6 +1317,10 @@
                         num_cpus: 1, group_start: 0,
                         Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
                         Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
+                        { category: "DynlibApp", text: "DynLib", execution_time: 5,
+                        num_cpus: 1, group_start: 0, libpath: "",
+                        Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
+                        Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
                         { category: "memory", text: "InMemory\nDrop", data_volume: 5, group_end: 0},
                         { category: "file", text: "FileDrop", data_volume: 5, group_end: 0,
                         check_filepath_exists: "1", filepath: "", dirname: ""},
@@ -1667,7 +1697,7 @@
               <td> Algorithm 1</td><td>Minimise data movement while subject to load balancing </td>
               </tr>
               <tr>
-              <td># of nodes </td><td><input type="number" name="num_par" min="2" value="5"></td>
+              <td># of nodes </td><td><input type="number" name="num_par" min="1" value="1"></td>
               </tr>
               <tr>
               <td>Partition label</td>

@@ -366,6 +366,10 @@ def gen_pgt():
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
+@get('/')
+def root():
+    redirect('/lg_editor')
+
 def run(parser, args):
 
     epilog = \

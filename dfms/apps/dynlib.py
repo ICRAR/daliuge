@@ -76,7 +76,7 @@ class DynlibAppBase(object):
         super(DynlibAppBase, self).initialize(**kwargs)
 
         if 'lib' not in kwargs:
-            raise InvalidDropException("library not specified")
+            raise InvalidDropException(self, "library not specified")
 
         # Try with a simple name, or as full path
         from ctypes.util import find_library
@@ -84,11 +84,11 @@ class DynlibAppBase(object):
         lib = find_library(libname) or libname
 
         self.lib = ctypes.cdll.LoadLibrary(lib)
-        expected_functions = ('init_app_drop', 'run')
+        expected_functions = ('init', 'run')
         for fname in expected_functions:
             if hasattr(self.lib, fname):
                 continue
-            raise InvalidDropException("%s doesn't have function %s" % (lib, fname))
+            raise InvalidDropException(self, "%s doesn't have function %s" % (lib, fname))
 
         # Create the initial contents of the C dlg_app_info structure
         # We pass no inputs because we don't know them (and don't need them)
@@ -100,9 +100,21 @@ class DynlibAppBase(object):
                                    ctypes.cast(None, _app_done_cb_type),
                                    None)
 
+        # Collect the rest of the parameters to pass them down to the library
+        # We need to keep them in a local variable so when we expose them to
+        # the app later on via pointers we still have their contents
+        local_params = [(six.b(str(k)), six.b(str(v))) for k, v in kwargs.items()]
+
+        # Wrap in ctypes
+        str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
+        two_str_type = (ctypes.c_char_p * 2)
+        app_params = [two_str_type(k, v) for k, v in local_params]
+        app_params.append(None)
+        params = (str_ptr_type * len(app_params))(*app_params)
+
         # Let the shared library initialize this app
-        if self.lib.init_app_drop(ctypes.pointer(self._c_app)):
-            raise InvalidDropException("%s app failed during initialization" % (lib,))
+        if self.lib.init(ctypes.pointer(self._c_app), params):
+            raise InvalidDropException(self, "%s app failed during initialization" % (lib,))
 
         self._c_outputs = []
 

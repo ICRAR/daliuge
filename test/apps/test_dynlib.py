@@ -32,25 +32,30 @@ from dfms.drop import InMemoryDROP, NullDROP
 _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
 _libpath = os.path.join(os.path.dirname(__file__), _libfname)
+print_stats = 0
 
 # Try to compile the library, if possible. If it's there already we're cool
 def _try_library():
 
-    if os.path.isfile(_libpath):
-        return True
-
     prev_path = os.getcwd()
     os.chdir(os.path.dirname(__file__))
-    try:
-        import distutils.ccompiler
 
+    try:
+
+        # No need to rebuild
+        srcname = _libname + '.c'
+        if (os.path.isfile(_libpath) and
+            os.stat(srcname).st_ctime <= os.stat(_libpath).st_ctime):
+                return True
+
+        import distutils.ccompiler
         from dfms import get_include_dir
 
         comp = distutils.ccompiler.new_compiler()
         distutils.sysconfig.customize_compiler(comp)
 
         comp.add_include_dir(get_include_dir())
-        objs = comp.compile([_libname + '.c'])
+        objs = comp.compile([srcname])
         comp.link_shared_lib(objs, output_libname=_libname)
 
         return True
@@ -84,7 +89,7 @@ class DynlibAppTest(unittest.TestCase):
 
         # Build the graph
         a = (NullDROP if streaming else InMemoryDROP)('a', 'a')
-        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib=_libpath) for x in ('b', 'e'))
+        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib=_libpath, print_stats=print_stats) for x in ('b', 'e'))
         c, d, f, g = (InMemoryDROP(x, x) for x in ('c', 'd', 'f', 'g'))
         for app, outputs in (b, (c, d)), (e, (f, g)):
             (app.addStreamingInput if streaming else app.addInput)(a)

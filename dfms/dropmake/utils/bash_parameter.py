@@ -41,7 +41,7 @@ class BashCommand(object):
         #self._cmds = re.split(';| *', cmd) # resplit for * as well as spaces
 
         for m in inp_regex.finditer(cmd):
-            self._input_map[int(m.group(1))] = set()
+            self._input_map[int(m.group(1))] = set() #TODO - check if sequence needs to be reserved!
         for m in out_regex.finditer(cmd):
             self._output_map[int(m.group(1))] = set()
 
@@ -59,10 +59,15 @@ class BashCommand(object):
         cmds = self._cmds
         for k in range(len(cmds)):
             d = cmds[k]
-            if (d.startswith('%i[')):
-                lgn_id = int(d[3:-1])
-                cmds[k] = ' '.join(['%i[{0}]'.format(x) for x in self._input_map[lgn_id]])
-            elif (d.startswith('%o[')):
-                lgn_id = int(d[3:-1])
-                cmds[k] = ' '.join(['%o[{0}]'.format(x) for x in self._output_map[lgn_id]])
+            imatch = inp_regex.search(d)
+            omatch = out_regex.search(d)
+            if (imatch is not None):
+                lgn_id = int(imatch.group(1))
+                cmds[k] = d.replace(imatch.group(0),
+                ' '.join(['%i[{0}]'.format(x) for x in self._input_map[lgn_id]]))
+            elif (omatch is not None):
+                lgn_id = int(omatch.group(1))
+                cmds[k] = d.replace(omatch.group(0),
+                ' '.join(['%o[{0}]'.format(x) for x in self._output_map[lgn_id]]))
+
         return ' '.join(cmds)
