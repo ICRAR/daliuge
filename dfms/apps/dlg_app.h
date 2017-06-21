@@ -23,6 +23,10 @@
 // MA 02111-1307  USA
 //
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The different status a data drop can be found at.
  */
@@ -106,9 +110,14 @@ typedef struct _dlg_app_info {
  * oriented applications.
  *
  * @param app The new application instance
+ * @param params An array of 2-element string arrays containing initialization
+ *               parameters. The last item of the array is a NULL sentinel.
+ *               The rest of the items contains a parameter name in the first
+ *               position and its corresponding value in the second. Both the
+ *               name and the value are NULL terminated.
  * @return Whether the initialization was successful (0) or not (any other value).
  */
-int init_app_drop(dlg_app_info *app);
+int init(dlg_app_info *app, const char ***params);
 
 /**
  * Provides a simple entry point to execute batch-oriented applications.
@@ -139,3 +148,7 @@ void data_written(dlg_app_info *app, const char *uid, const char *data, size_t n
  * @param status The final status in which the streaming input was found.
  */
 void drop_completed(dlg_app_info *app, const char *uid, drop_status status);
+
+#ifdef __cplusplus
+}
+#endif

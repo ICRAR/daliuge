@@ -31,6 +31,7 @@
 #include "dlg_app.h"
 
 struct app_data {
+	short print_stats;
 	unsigned long total;
 	unsigned long write_duration;
 };
@@ -47,12 +48,32 @@ unsigned long usecs(struct timeval *start, struct timeval *end)
 	return (end->tv_sec - start->tv_sec) * 1000000 + (end->tv_usec - start->tv_usec);
 }
 
-int init_app_drop(dlg_app_info *app)
+int init(dlg_app_info *app, const char ***params)
 {
+	short print_stats = 0;
+
+	const char **param = params[0];
+	while (1) {
+
+		// Sentinel
+		if (*param == NULL) {
+			break;
+		}
+
+		if (strcmp(param[0], "print_stats") == 0) {
+			print_stats = strcmp(param[1], "1") == 0 ||
+			              strcmp(param[1], "true") == 0;
+			break;
+		}
+
+		param++;
+	}
+
 	app->data = malloc(sizeof(struct app_data));
 	if (!app->data) {
 		return 1;
 	}
+	to_app_data(app)->print_stats = print_stats;
 	to_app_data(app)->total = 0;
 	to_app_data(app)->write_duration = 0;
 	return 0;
@@ -78,10 +99,12 @@ void drop_completed(dlg_app_info *app, const char *uid, drop_status status)
 {
 	/* We only have one output so we're finished */
 	double total_mb = (to_app_data(app)->total / 1024. / 1024.);
-	printf("Wrote %.3f [MB] of data to %u outputs in %.3f [ms] at %.3f [MB/s]\n",
-	       total_mb, app->n_outputs,
-	       to_app_data(app)->write_duration / 1000.,
-	       total_mb / (to_app_data(app)->write_duration / 1000000.));
+	if (to_app_data(app)->print_stats) {
+		printf("Wrote %.3f [MB] of data to %u outputs in %.3f [ms] at %.3f [MB/s]\n",
+		       total_mb, app->n_outputs,
+		       to_app_data(app)->write_duration / 1000.,
+		       total_mb / (to_app_data(app)->write_duration / 1000000.));
+	}
 	app->done(APP_FINISHED);
 	free(app->data);
 }
@@ -93,7 +116,9 @@ int run(dlg_app_info *app)
 	unsigned long read_duration = 0, write_duration = 0;
 	struct timeval start, end;
 
-	printf("running / done methods addresses are %p / %p\n", app->running, app->done);
+	if (to_app_data(app)->print_stats) {
+		printf("running / done methods addresses are %p / %p\n", app->running, app->done);
+	}
 
 	while (1) {
 
@@ -116,9 +141,12 @@ int run(dlg_app_info *app)
 
 	double duration = (read_duration + write_duration) / 1000000.;
 	double total_mb = total / 1024. / 1024.;
-	printf("Read %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (read_duration / 1000000.));
-	printf("Wrote %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (write_duration / 1000000.));
-	printf("Copied %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / duration);
+
+	if (to_app_data(app)->print_stats) {
+		printf("Read %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (read_duration / 1000000.));
+		printf("Wrote %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (write_duration / 1000000.));
+		printf("Copied %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / duration);
+	}
 
 	return 0;
 }
