@@ -57,7 +57,7 @@ install:
 script:
  - mkdir tmp
  - echo -e "import coverage\ncoverage.process_startup()" > tmp/sitecustomize.py
- - PYTHONPATH=$PWD/tmp DALIUGE_TESTS_RUNLONGTESTS=True py.test --cov
+ - PYTHONPATH=$PWD/tmp DALIUGE_TESTS_RUNLONGTESTS=False py.test --cov
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
