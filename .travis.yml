@@ -52,6 +52,7 @@ before_install:
 # to make sure we generate our version file
 install:
  - pip install .
+ - python setup.py install
 
 # run the tests, making sure subprocesses generate coverage information
 script:
