@@ -32,6 +32,7 @@ python:
  - "3.3"
  - "3.4"
  - "3.5"
+ - "3.6"
 
 # We want to use docker during the tests
 services:
@@ -51,7 +52,6 @@ before_install:
 # to make sure we generate our version file
 install:
  - pip install .
- - python setup.py install
 
 # run the tests, making sure subprocesses generate coverage information
 script:
