@@ -61,7 +61,8 @@ class CDlgOutput(ctypes.Structure):
                 ('write', _write_cb_type)]
 
 class CDlgApp(ctypes.Structure):
-    _fields_ = [('uid', ctypes.c_char_p),
+    _fields_ = [('appname', ctypes.c_char_p),
+                ('uid', ctypes.c_char_p),
                 ('oid', ctypes.c_char_p),
                 ('inputs', ctypes.POINTER(CDlgInput)),
                 ('n_inputs', ctypes.c_uint),
@@ -97,7 +98,7 @@ class DynlibAppBase(object):
         # We pass no inputs because we don't know them (and don't need them)
         # at this point yet.
         # The running and done callbacks are also NULLs
-        self._c_app = CDlgApp(six.b(self.uid), six.b(self.oid),
+        self._c_app = CDlgApp(None,six.b(self.uid), six.b(self.oid),
                                    None, 0, None, 0, None, 0,
                                    ctypes.cast(None, _app_running_cb_type),
                                    ctypes.cast(None, _app_done_cb_type),
