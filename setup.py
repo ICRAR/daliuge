@@ -118,7 +118,7 @@ setup(
       author_email='dfms_prototype@googlegroups.com',
       url='https://github.com/ICRAR/daliuge',
       license="LGPLv2+",
-      packages=find_packages(),
+      packages=find_packages(exclude=('test', 'test.*')),
       package_data = {
         'dfms.apps' : ['dlg_app.h'],
         'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],

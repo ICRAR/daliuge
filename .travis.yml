@@ -45,19 +45,16 @@ before_install:
  - pip install coveralls pytest pytest-cov
  - pip install -U setuptools
 
-# install daliuge
-# We use pip first to make use of the cache
-# and later run with the setuptools approach
-# to make sure we generate our version file
-install:
- - pip install .
- - python setup.py install
+# install daliuge in editable mode
+# This will ensure both that our dependencies are installed
+# and that our version file is generated here.
+ - pip install -e .
 
 # run the tests, making sure subprocesses generate coverage information
 script:
  - mkdir tmp
  - echo -e "import coverage\ncoverage.process_startup()" > tmp/sitecustomize.py
- - PYTHONPATH=$PWD/tmp DALIUGE_TESTS_RUNLONGTESTS=True py.test --cov
+ - PYTHONPATH=$PWD/tmp DALIUGE_TESTS_RUNLONGTESTS=False py.test --cov
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:

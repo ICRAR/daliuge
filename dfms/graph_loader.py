@@ -213,7 +213,7 @@ def createGraphFromDropSpecList(dropSpecList):
     for n,dropSpec in enumerate(dropSpecList):
 
         check_dropspec(n, dropSpec)
-        dropType = dropSpec['type']
+        dropType = dropSpec.pop('type')
 
         cf = __CREATION_FUNCTIONS[dropType]
         drop = cf(dropSpec)
