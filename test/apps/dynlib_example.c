@@ -51,12 +51,14 @@ unsigned long usecs(struct timeval *start, struct timeval *end)
 int init(dlg_app_info *app, const char ***params)
 {
 	short print_stats = 0;
+	const char **param;
 
-	const char **param = params[0];
 	while (1) {
 
+		param = *params;
+
 		// Sentinel
-		if (*param == NULL) {
+		if (param == NULL) {
 			break;
 		}
 
@@ -66,7 +68,7 @@ int init(dlg_app_info *app, const char ***params)
 			break;
 		}
 
-		param++;
+		params++;
 	}
 
 	app->data = malloc(sizeof(struct app_data));
