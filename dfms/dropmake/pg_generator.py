@@ -534,16 +534,25 @@ class LGNode():
                 if (fp):
                     kwargs['filepath'] = fp
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
-            if 'execution_time' in self.jd:
-                sleepTime = int(self.jd['execution_time'])
-            else:
-                sleepTime = random.randint(3, 8)
-            kwargs['tw'] = sleepTime
             if ('appclass' not in self.jd or len(self.jd['appclass']) == 0):
                 app_class = 'test.graphsRepository.SleepApp'
-                kwargs['sleepTime'] = sleepTime
             else:
                 app_class = self.jd['appclass']
+
+            if 'execution_time' in self.jd:
+                execTime = int(self.jd['execution_time'])
+                if (execTime < 0):
+                    raise GraphException("Execution_time must be greater"\
+                    " than 0 for Construct '%s'" % self.text)
+            elif app_class != 'test.graphsRepository.SleepApp':
+                raise GraphException("Missing execution_time for Construct '%s'" % self.text)
+            else:
+                execTime = random.randint(3, 8)
+
+            if (app_class == 'test.graphsRepository.SleepApp'):
+                kwargs['sleepTime'] = execTime
+
+            kwargs['tw'] = execTime
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':app_class})
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             self._update_key_value_attributes(kwargs)
@@ -567,7 +576,8 @@ class LGNode():
             if 'execution_time' in self.jd:
                 kwargs['tw'] = int(self.jd['execution_time'])
             else:
-                kwargs['tw'] = random.randint(3, 8)
+                #kwargs['tw'] = random.randint(3, 8)
+                raise GraphException("Missing execution_time for Construct '%s'" % self.text)
             # add more arguments
             cmds = []
             for i in range(10):
