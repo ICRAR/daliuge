@@ -57,6 +57,7 @@ GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = '5'
 logger = logging.getLogger('deploy.pawsey.cluster')
 apps = (
+    None,
     "test.graphsRepository.SleepApp",
     "test.graphsRepository.SleepAndCopyApp",
 )
