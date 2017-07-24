@@ -311,6 +311,9 @@ def replace_path_placeholders(cmd, inputs, outputs):
       ``%o[X]``.
     """
 
+    logger.debug('Replacing cmd %s with placeholders with I/O uids: %r, %r',
+                 cmd, inputs.keys(), outputs.keys())
+
     for x,i in enumerate(inputs.values()):
         pathRef = "%%i%d" % (x,)
         if pathRef in cmd:
