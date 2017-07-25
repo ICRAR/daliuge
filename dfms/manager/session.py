@@ -340,7 +340,7 @@ class Session(object):
             logger.debug("Passing event %r to %r", evt, drop)
             drop.handleEvent(evt)
 
-    def add_node_subscriptions(self, sessionId, relationships, nm):
+    def add_node_subscriptions(self, relationships, nm):
 
         evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
         evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
