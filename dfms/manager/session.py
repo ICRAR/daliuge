@@ -73,6 +73,7 @@ class DropProxy(object):
         self.port = port
         self.session_id = sessionId
         self.uid = uid
+        logger.debug("Created %r", self)
 
     def handleEvent(self, evt):
         pass
@@ -301,9 +302,11 @@ class Session(object):
             logger.info("'foreach' invoked for each drop")
 
         # Append proxies
-        logger.info("Creating %d drop proxies", len(self._proxyinfo))
+        logger.info("Creating %d drop proxies: %r", len(self._proxyinfo), self._proxyinfo)
         for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = DropProxy(nm, host, port, self._sessionId, remote_uid)
+            logger.debug("Attaching proxy to local %r via %s(proxy, False)",
+                         self._drops[local_uid], relname)
             method = getattr(self._drops[local_uid], relname)
             method(proxy, False)
 
