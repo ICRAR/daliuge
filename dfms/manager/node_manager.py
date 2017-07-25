@@ -260,7 +260,7 @@ class NodeManagerBase(DROPManager):
 
         logger.debug("Received subscription information: %r", relationships)
         self._check_session_id(sessionId)
-        self._sessions[sessionId].add_node_subscriptions(sessionId, relationships, self)
+        self._sessions[sessionId].add_node_subscriptions(relationships, self)
 
         # Set up event channels subscriptions
         for nodesub in relationships:
