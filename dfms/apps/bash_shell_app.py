@@ -42,14 +42,11 @@ import six
 
 from dfms import droputils, utils
 from dfms.ddap_protocol import AppDROPStates, DROPStates
-from dfms.drop import BarrierAppDROP, FileDROP, DirectoryContainer, AppDROP
+from dfms.drop import BarrierAppDROP, AppDROP
 from dfms.exceptions import InvalidDropException
 
 
 logger = logging.getLogger(__name__)
-
-def isFSBased(x):
-    return isinstance(x, (FileDROP, DirectoryContainer))
 
 def mesage_stdouts(prefix, stdout, stderr, enc='utf8'):
     msg = prefix
@@ -77,12 +74,12 @@ def run_bash(cmd, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
     """
 
     # Replace inputs/outputs in command line with paths or data URLs
-    fsInputs = {uid: i for uid,i in inputs.items() if isFSBased(i)}
-    fsOutputs = {uid: o for uid,o in outputs.items() if isFSBased(o)}
+    fsInputs = {uid: i for uid,i in inputs.items() if droputils.has_path(i)}
+    fsOutputs = {uid: o for uid,o in outputs.items() if droputils.has_path(o)}
     cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-    dataURLInputs = {uid: i for uid,i in inputs.items() if not isFSBased(i)}
-    dataURLOutputs = {uid: o for uid,o in outputs.items() if not isFSBased(o)}
+    dataURLInputs = {uid: i for uid,i in inputs.items() if not droputils.has_path(i)}
+    dataURLOutputs = {uid: o for uid,o in outputs.items() if not droputils.has_path(o)}
     cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
     # Wrap everything inside bash

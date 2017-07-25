@@ -299,6 +299,14 @@ class DROPFile(object):
         if not self._isClosed:
             self.close()
 
+def has_path(x):
+    """Returns `True` if `x` has a `path` attribute"""
+    try:
+        getattr(x, 'path')
+        return True
+    except:
+        return False
+
 def replace_path_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the path of the respective

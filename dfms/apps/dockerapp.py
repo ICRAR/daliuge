@@ -274,17 +274,15 @@ class DockerApp(BarrierAppDROP):
         # dataURL, depending on the type of input/output it is
         # In the case of fs-based i/o we replace the command-line with the path
         # that the Drop will receive *inside* the docker container (see below)
-        def isFSBased(x):
-            return isinstance(x, (FileDROP, DirectoryContainer))
 
         iitems = self._inputs.items()
         oitems = self._outputs.items()
-        fsInputs  = {uid: i for uid,i in iitems if isFSBased(i)}
-        fsOutputs = {uid: o for uid,o in oitems if isFSBased(o)}
+        fsInputs  = {uid: i for uid,i in iitems if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid,o in oitems if droputils.has_path(o)}
         dockerInputs  = {uid: DockerPath(DFMS_ROOT + i.path) for uid,i in fsInputs.items()}
         dockerOutputs = {uid: DockerPath(DFMS_ROOT + o.path) for uid,o in fsOutputs.items()}
-        dataURLInputs  = {uid: i for uid,i in iitems if not isFSBased(i)}
-        dataURLOutputs = {uid: o for uid,o in oitems if not isFSBased(o)}
+        dataURLInputs  = {uid: i for uid,i in iitems if not droputils.has_path(i)}
+        dataURLOutputs = {uid: o for uid,o in oitems if not droputils.has_path(o)}
 
         cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
