@@ -186,7 +186,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         # read / write callbacks
         def _read(input_read, desc, buf, n):
             x = input_read(desc, n)
-            ctypes.memmove(ctypes.addressof(buf.contents), x, len(x))
+            ctypes.memmove(buf, x, len(x))
             return len(x)
 
         # Update our C structure to include inputs, which we open for reading
