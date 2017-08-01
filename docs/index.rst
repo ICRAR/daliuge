@@ -15,6 +15,9 @@ of the proposed SDP architecture. Furthermore, |daliuge| has already been used
 for `processing large astronomical datasets <https://arxiv.org/abs/1702.07617>`_
 in existing radio astronomy projects.
 
+For a complete tour of |daliuge| please read
+our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_.
+
 .. figure:: images/DALiuGE_naming_rationale.png
 
 Development and maintenance of |daliuge| is currently hosted at ICRAR_
