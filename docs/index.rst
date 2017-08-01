@@ -34,5 +34,14 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
 
 Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
 
+Citations
+---------
+As you use |daliuge| for your exciting projects, please cite the following paper:
+
+`Wu, C., Tobar, R., Vinsen, K., Wicenec, A., Pallot, D., Lao, B., Wang, R.,
+An, T., Boulton, M., Cooper, I. and Dodson, R., 2017.
+DALiuGE: A Graph Execution Framework for Harnessing the Astronomical Data Deluge.
+Astronomy and Computing, 20, pp.1-15. (2017) <https://arxiv.org/pdf/1702.07617.pdf>`_
+
 .. _ICRAR: http://www.icrar.org
 .. [#f1] 流 (pronounced Liu) is the Chinese character for "flow".
