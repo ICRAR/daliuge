@@ -286,7 +286,7 @@ class LogParser(object):
     7.  unroll_time
     8.  translation_time
     9.  pg_spec_gen_time
-    10.  created_session_at_all_nodes_time
+    10. created_session_at_all_nodes_time
     11. graph_separation_time
     12. push_sub_graphs_to_all_nodes_time
     13. created_drops_at_all_nodes_time

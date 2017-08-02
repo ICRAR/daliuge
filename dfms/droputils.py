@@ -299,6 +299,14 @@ class DROPFile(object):
         if not self._isClosed:
             self.close()
 
+def has_path(x):
+    """Returns `True` if `x` has a `path` attribute"""
+    try:
+        getattr(x, 'path')
+        return True
+    except:
+        return False
+
 def replace_path_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the path of the respective
@@ -310,6 +318,9 @@ def replace_path_placeholders(cmd, inputs, outputs):
     * ``%i[X]`` indicates the path of the input with UID ``X``; likewise for
       ``%o[X]``.
     """
+
+    logger.debug('Replacing cmd %s with placeholders with I/O uids: %r, %r',
+                 cmd, inputs.keys(), outputs.keys())
 
     for x,i in enumerate(inputs.values()):
         pathRef = "%%i%d" % (x,)

@@ -64,7 +64,7 @@ def _try_library():
     finally:
         os.chdir(prev_path)
 
-@unittest.skipUnless(_try_library(), "Dynamic library not available")
+@unittest.skipUnless(_try_library(), "Example dynamic library not available")
 class DynlibAppTest(unittest.TestCase):
 
     def test_simple_batch_copy(self):
