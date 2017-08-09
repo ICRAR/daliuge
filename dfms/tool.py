@@ -230,8 +230,8 @@ def _add_unroll_options(parser):
                       dest="app", help="Force an app to be used in the Physical Graph. 0=Don't force, 1=SleepApp, 2=SleepAndCopy", default=0)
     apps = (
         None,
-        'test.graphsRepository.SleepApp',
-        'test.graphsRepository.SleepAndCopyApp'
+        'dfms.apps.simple.SleepApp',
+        'dfms.apps.simple.SleepAndCopyApp'
     )
     return apps
 
