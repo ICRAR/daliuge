@@ -142,7 +142,7 @@ setup(
             "metis",
             # 0.10.6 builds correctly with old (<=3.10) Linux kernels
             "netifaces>=0.10.6",
-            "networkx",
+            "networkx<=1.11", # networkx2.0 appears not inverse compatible
             # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
             "paramiko<2.0.0",
             "psutil",
