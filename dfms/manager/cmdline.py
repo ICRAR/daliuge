@@ -34,6 +34,7 @@ import time
 import daemon
 from lockfile.pidlockfile import PIDLockFile
 
+from dfms import version
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
@@ -51,6 +52,7 @@ def launchServer(opts):
     logger = logging.getLogger(__name__)
     dmName = opts.dmType.__name__
 
+    logger.info('DALiuGE version %s running at %s', version.full_version, os.getcwd())
     logger.info('Creating %s' % (dmName))
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
