@@ -24,6 +24,7 @@ Module containing command-line entry points to launch Data Manager instances
 like DMs and DIMs.
 """
 
+import errno
 import logging
 import os
 import signal
@@ -133,7 +134,14 @@ def start(options, parser):
         if pid is None:
             sys.stderr.write('Cannot read PID file, is there an instance running?\n')
         else:
-            os.kill(pid, signal.SIGTERM)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError as e:
+                # Process is gone and file was left dangling,
+                # let's clean it up ourselves
+                if e.errno == errno.ESRCH:
+                    sys.stderr.write('Process %d does not exist, removing PID file')
+                    os.unlink(pidfile)
 
     # Start directly
     else:
