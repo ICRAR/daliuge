@@ -24,6 +24,7 @@ Module containing command-line entry points to launch Data Manager instances
 like DMs and DIMs.
 """
 
+import errno
 import logging
 import os
 import signal
@@ -34,6 +35,7 @@ import time
 import daemon
 from lockfile.pidlockfile import PIDLockFile
 
+from dfms import version
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
@@ -51,6 +53,7 @@ def launchServer(opts):
     logger = logging.getLogger(__name__)
     dmName = opts.dmType.__name__
 
+    logger.info('DALiuGE version %s running at %s', version.full_version, os.getcwd())
     logger.info('Creating %s' % (dmName))
     dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
 
@@ -87,6 +90,8 @@ def addCommonOptions(parser, defaultPort):
                       dest="maxreqsize", help="The maximum allowed HTTP request size, in MB", default=10)
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
+    parser.add_option(      "--cwd", action="store_true",
+                      dest="cwd", help="Stay in the current working directory (when used with -d)", default=False)
     parser.add_option("-s", "--stop", action="store_true",
                       dest="stop", help="Stop an instance running as daemon", default=False)
     parser.add_option("-v", "--verbose", action="count",
@@ -120,7 +125,9 @@ def start(options, parser):
         createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
 
-        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=[fileHandler.stream]):
+        working_dir = '.' if options.cwd else '/'
+        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=[fileHandler.stream],
+                                  working_directory=working_dir):
             launchServer(options)
 
     # Stop daemon?
@@ -131,7 +138,14 @@ def start(options, parser):
         if pid is None:
             sys.stderr.write('Cannot read PID file, is there an instance running?\n')
         else:
-            os.kill(pid, signal.SIGTERM)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError as e:
+                # Process is gone and file was left dangling,
+                # let's clean it up ourselves
+                if e.errno == errno.ESRCH:
+                    sys.stderr.write('Process %d does not exist, removing PID file')
+                    os.unlink(pidfile)
 
     # Start directly
     else:

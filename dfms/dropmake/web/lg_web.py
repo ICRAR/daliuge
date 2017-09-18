@@ -389,7 +389,7 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # and to avoid duplicate descriptions (which in this case we'll have)
     parser = NoFormattedEpilogParser(description="A Web server for the Logical Graph Editor", epilog=epilog)
     parser.add_option("-d", "--lgdir", action="store", type="string", dest="lg_path",
-                          help="logical graph path (input)")
+                          help="A path that contains at least one sub-directory, which contains logical graph files")
     parser.add_option("-t", "--pgtdir", action="store", type="string", dest="pgt_path",
                           help="physical graph template path (output)")
     parser.add_option("-H", "--host", action="store", type="string", dest="host", default='0.0.0.0',
