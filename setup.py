@@ -34,9 +34,9 @@ import os
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR   = 0
-MINOR   = 2
+MINOR   = 3
 PATCH   = 0
-RELEASE = False
+RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
 VERSION_FILE = 'dfms/version.py'
 
