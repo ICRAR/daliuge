@@ -4,6 +4,7 @@ if [ $# -gt 0 ]; then
     TOPDIR=$1
 else
     TOPDIR=daliuge
+    ENVDIR=daliuge_env
 fi
 #
 # first we need to build daliuge
@@ -14,11 +15,11 @@ if [[ $(hostname -s) = galaxy-? ]]; then
     module load virtualenv
 fi
 
-mkdir ${WORKSPACE}/daliuge_env
-virtualenv daliuge_env
-cd ${WORKSPACE}/daligue_env/bin
+mkdir ${WORKSPACE}/${ENVDIR}
+virtualenv ${ENVDIR}
+cd ${WORKSPACE}/${ENVDIR}/bin
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to chdir to  ${WORKSPACE}/daliuge_env/bin"
+    echo "Error: Failed to chdir to  ${WORKSPACE}/${ENVDIR}/bin"
     exit 1
 fi
 
@@ -41,6 +42,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cd $WORKSPACE/daliuge_env/bin
+cd ${WORKSPACE}/${ENVDIR}/bin
 deactivate
 
