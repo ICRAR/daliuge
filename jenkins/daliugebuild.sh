@@ -14,9 +14,14 @@ if [[ $(hostname -s) = galaxy-? ]]; then
     module load virtualenv
 fi
 
-mkdir daliuge_env
+mkdir ${WORKSPACE}/daliuge_env
 virtualenv daliuge_env
-cd daligue_env/bin
+cd ${WORKSPACE}/daligue_env/bin
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to chdir to  ${WORKSPACE}/daliuge_env/bin"
+    exit 1
+fi
+
 source activate
 
 cd $WORKSPACE/${TOPDIR}
