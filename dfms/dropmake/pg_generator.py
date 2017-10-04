@@ -516,7 +516,7 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':drop_type})
                 dropSpec_socket = dropdict({'oid':"{0}-s".format(oid),
-                'type':'app', 'app':'test.graphsRepository.SleepApp', 'nm':'lstnr', 'tw':5, 'sleepTime': 5})
+                'type':'app', 'app':'dfms.apps.simple.SleepApp', 'nm':'lstnr', 'tw':5, 'sleepTime': 5})
                 # tw -- task weight
                 dropSpec_socket['autostart'] = 1
                 kwargs['listener_drop'] = dropSpec_socket
@@ -535,7 +535,7 @@ class LGNode():
                     kwargs['filepath'] = fp
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
             if ('appclass' not in self.jd or len(self.jd['appclass']) == 0):
-                app_class = 'test.graphsRepository.SleepApp'
+                app_class = 'dfms.apps.simple.SleepApp'
             else:
                 app_class = self.jd['appclass']
 
@@ -592,7 +592,7 @@ class LGNode():
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
         elif (drop_type == 'GroupBy'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.simple.SleepApp'})
             sij = self.inputs[0].jd
             if (not 'data_volume' in sij):
                 raise GInvalidNode("GroupBy construct follows a DataDrop, not '%s'" % sij['category'])
@@ -605,7 +605,7 @@ class LGNode():
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
         elif (drop_type == 'DataGather'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.simple.SleepApp'})
             gi = self.inputs[0]
             if (gi.is_groupby()):
                 gii = gi.inputs[0]
@@ -621,7 +621,7 @@ class LGNode():
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
             # create an App first
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'test.graphsRepository.SleepApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.simple.SleepApp'})
             dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain',
             'storage':'null', 'nm':'null', 'dw':0})
             kwargs['null_drop'] = dropSpec_null
