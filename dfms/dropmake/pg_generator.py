@@ -544,12 +544,12 @@ class LGNode():
                 if (execTime < 0):
                     raise GraphException("Execution_time must be greater"\
                     " than 0 for Construct '%s'" % self.text)
-            elif app_class != 'test.graphsRepository.SleepApp':
+            elif app_class != 'dfms.apps.simple.SleepApp':
                 raise GraphException("Missing execution_time for Construct '%s'" % self.text)
             else:
                 execTime = random.randint(3, 8)
 
-            if (app_class == 'test.graphsRepository.SleepApp'):
+            if (app_class == 'dfms.apps.simple.SleepApp'):
                 kwargs['sleepTime'] = execTime
 
             kwargs['tw'] = execTime
