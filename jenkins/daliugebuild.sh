@@ -16,14 +16,16 @@ if [[ $(hostname -s) = galaxy-? ]]; then
 fi
 
 mkdir ${WORKSPACE}/${ENVDIR}
-virtualenv ${ENVDIR}
+virtualenv -p python2.7 ${ENVDIR}
 cd ${WORKSPACE}/${ENVDIR}/bin
 if [ $? -ne 0 ]; then
     echo "Error: Failed to chdir to  ${WORKSPACE}/${ENVDIR}/bin"
     exit 1
 fi
 
-source activate
+source ./activate
+pip install --trusted-host pypi.python.org python-daemon
+
 
 cd $WORKSPACE/${TOPDIR}
 if [ $? -ne 0 ]; then
@@ -36,7 +38,8 @@ fi
 #
 #
 #
-python setup.py install
+pip install --trusted-host pypi.python.org .
+
 if [ $? -ne 0 ]; then
     echo "Error: installation failed"
     exit 1
