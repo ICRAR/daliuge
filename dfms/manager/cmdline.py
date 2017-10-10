@@ -35,7 +35,7 @@ import time
 import daemon
 from lockfile.pidlockfile import PIDLockFile
 
-from dfms import version
+from dfms import version, utils
 from dfms.manager.composite_manager import DataIslandManager, MasterManager
 from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
@@ -94,6 +94,10 @@ def addCommonOptions(parser, defaultPort):
                       dest="cwd", help="Stay in the current working directory (when used with -d)", default=False)
     parser.add_option("-s", "--stop", action="store_true",
                       dest="stop", help="Stop an instance running as daemon", default=False)
+    parser.add_option(      "--status", action="store_true",
+                      dest="status", help="Checks if there is daemon process actively running", default=False)
+    parser.add_option("-T", "--timeout", action="store",
+                      dest="timeout", type="float", help="Timeout used when checking for the daemon process", default=10)
     parser.add_option("-v", "--verbose", action="count",
                       dest="verbose", help="Become more verbose. The more flags, the more verbose")
     parser.add_option("-q", "--quiet", action="count",
@@ -102,9 +106,13 @@ def addCommonOptions(parser, defaultPort):
                       dest="logdir", help="The directory where the logging files will be stored", default=getDfmsLogsDir())
 
 def commonOptionsCheck(options, parser):
-    # -d and -s are exclusive
+    # These are all exclusive
     if options.daemon and options.stop:
         parser.error('-d and -s cannot be specified together')
+    if options.daemon and options.status:
+        parser.error('-d and --status cannot be specified together')
+    if options.stop and options.status:
+        parser.error('-s and --status cannot be specified together')
     # -v and -q are exclusive
     if options.verbose and options.quiet:
         parser.error('-v and -q cannot be specified together')
@@ -146,6 +154,11 @@ def start(options, parser):
                 if e.errno == errno.ESRCH:
                     sys.stderr.write('Process %d does not exist, removing PID file')
                     os.unlink(pidfile)
+
+    # Check status
+    elif options.status:
+        socket_is_listening = utils.check_port(options.host, options.port, options.timeout)
+        sys.exit(socket_is_listening is False)
 
     # Start directly
     else:
