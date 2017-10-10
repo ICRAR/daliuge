@@ -34,6 +34,7 @@ class InvalidDropException(DaliugeException):
     An exception thrown when a Drop is created with a set of invalid arguments.
     """
     def __init__(self, drop, reason):
+        DaliugeException.__init__(self, drop, reason)
         if isinstance(drop, (list, tuple)):
             self.oid, self.uid = drop
         else:
@@ -51,6 +52,7 @@ class InvalidRelationshipException(DaliugeException):
     instructed but is invalid in nature.
     """
     def __init__(self, rel, reason):
+        DaliugeException.__init__(self, rel, reason)
         self.rel = rel
         self.reason = reason
         self.msg = "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
@@ -70,6 +72,7 @@ class NoDropException(DaliugeException):
     """
 
     def __init__(self, drop_uid, reason=None):
+        DaliugeException.__init__(self, drop_uid, reason)
         self._drop_uid = drop_uid
         self._reason = reason
 
@@ -85,6 +88,7 @@ class NoSessionException(DaliugeException):
     """
 
     def __init__(self, session_id, reason=None):
+        DaliugeException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
@@ -101,6 +105,7 @@ class SessionAlreadyExistsException(DaliugeException):
     """
 
     def __init__(self, session_id, reason=None):
+        DaliugeException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
