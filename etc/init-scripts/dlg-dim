@@ -1,0 +1,92 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:        dlg-dim
+# Required-Start:  $all
+# Required-Stop:   $local_fs $network
+# Default-Start:   2 3 4 5
+# Default-Stop:    0 1 6
+# Short-Description: DALiuGE Data Island Manager daemon
+### END INIT INFO
+#
+#
+# chkconfig: 2345 99 70
+# description: Starts and stops the DALiuGE Data Island Manager as a daemon
+
+# RH, Centos, Fedora configuration style
+if [ -r /etc/sysconfig/dlg ]; then
+	. /etc/sysconfig/dlg
+# Debian, Ubuntu configuration style
+elif [ -r /etc/default/dlg ]; then
+	. /etc/default/dlg
+else
+	echo "Missing configuration file, cannot start DALiuGE" > /dev/stderr
+	exit 1
+fi
+
+OPTS=""
+if [ -n "${DIM_HOST}" ]; then
+	OPTS="$OPTS --host ${DIM_HOST}"
+fi
+if [ -n "${DIM_PORT}" ]; then
+	OPTS="$OPTS --port ${DIM_PORT}"
+fi
+if [ -n "${DIM_LOGLEVEL}" ]; then
+	case "${DIM_LOGLEVEL}" in
+		INFO)
+			OPTS="$OPTS -v"
+			;;
+		DEBUG)
+			OPTS="$OPTS -vv"
+			;;
+		*)
+			echo "Unknown DIM_LOGLEVEL value"
+			exit 1
+	esac
+fi
+
+
+# See how we were called.
+RETVAL=0
+case "$1" in
+	start)
+
+		# Prepare command-line options based on options file
+		if [ -n "${DIM_NODES}" ]; then
+			OPTS="$OPTS -N ${DIM_NODES}"
+		fi
+
+		# Launch the server and check right away if it started correctly
+		su $USER -c "$DLG dim -d $OPTS"
+		RETVAL=$?
+		if [ $RETVAL -eq 0 ]; then
+			echo "Successfully started the DALiuGE Data Island Manager, checking it started correctly"
+			$0 status
+			RETVAL=$?
+			if [ $RETVAL -ne 0 ]; then
+				echo "DALiuGE Data Island Manager didn't come up in time, shutting it down"
+				$0 stop
+			fi
+		fi
+		;;
+	stop)
+		echo "Shutting down DALiuGE Data Island Manager server"
+		su $USER -c "$DLG dim -s"
+		RETVAL=$?
+		;;
+	status)
+		echo "Checking DALiuGE Data Island Manager status"
+		su $USER -c "$DLG dim --status"
+		RETVAL=$?
+		;;
+	restart)
+		echo -n "Restarting DALiuGE Data Island Manager"
+		$0 stop
+		$0 start
+		RETVAL=$?
+		;;
+	*)
+		echo "Usage: $0 {start|stop|status|restart}"
+		RETVAL=1
+esac
+
+exit $RETVAL

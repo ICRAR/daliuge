@@ -1,0 +1,54 @@
+# Options configuration for the dlg-nm and dlg-dim scripts
+#
+# This file defines the configuration options for the DALiuGE daemons
+# started by the init system
+#
+
+#
+# The user used to run DALiuGE
+#
+USER=dlg
+
+#
+# DALiuGE process to invoke
+#
+DLG=dlg
+
+#
+# Hosts to bind the Managers to.
+# An empty value means that Managers will bind to 127.0.0.1
+# 0.0.0.0 means all interfaces
+#
+NM_HOST=
+DIM_HOST=
+
+#
+# Ports used to expose the Managers.
+# An empty value means that Managers will use their default ports
+# (8000/8001 for Node/DataIsland Manager, respectively)
+#
+NM_PORT=
+DIM_PORT=
+
+#
+# Logging level used by the DALiuGE Managers
+# Allowed values are INFO and DEBUG.
+#
+NM_LOGLEVEL=INFO
+DIM_LOGLEVEL=INFO
+
+#
+# Don't start the Data Lifecycle Manager on the Node Manager
+#
+NO_DLM=YES
+
+#
+# The directory where the DALiuGE Managers should run in
+# An empty value means that the Managers will run under /
+#
+CWD=
+
+#
+# Comma-separated list of nodes that the Data Island Manager should manage
+#
+DIM_NODES=
