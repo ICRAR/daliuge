@@ -57,6 +57,7 @@ typedef enum _app_status {
 typedef struct _dlg_input_info {
 	char *uid;
 	char *oid;
+	char *name;
 	drop_status status;
 	size_t (*read)(char *buf, size_t n);
 } dlg_input_info;
@@ -70,6 +71,7 @@ typedef struct _dlg_input_info {
 typedef struct _dlg_streaming_input_info {
 	char *uid;
 	char *oid;
+	char *name;
 } dlg_streaming_input_info;
 
 /**
@@ -79,6 +81,7 @@ typedef struct _dlg_streaming_input_info {
 typedef struct _dlg_output_info {
 	char *uid;
 	char *oid;
+	char *name;
 	size_t (*write)(const char *buf, size_t n);
 } dlg_output_info;
 

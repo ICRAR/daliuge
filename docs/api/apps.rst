@@ -9,6 +9,16 @@ dfms.apps
 
 .. _api.dfms.apps.dockerapp:
 
+dfms.apps.bash_shell_app
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dfms.apps.bash_shell_app
+        :members:
+
+dfms.apps.dynlib
+^^^^^^^^^^^^^^^^
+.. automodule:: dfms.apps.dynlib
+        :members:
+
 dfms.apps.dockerapp
 ^^^^^^^^^^^^^^^^^^^
 .. automodule:: dfms.apps.dockerapp

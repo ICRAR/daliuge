@@ -48,16 +48,19 @@ _app_done_cb_type = ctypes.CFUNCTYPE(None, ctypes.c_int)
 class CDlgInput(ctypes.Structure):
     _fields_ = [('uid', ctypes.c_char_p),
                 ('oid', ctypes.c_char_p),
+                ('name', ctypes.c_char_p),
                 ('status', ctypes.c_int),
                 ('read', _read_cb_type)]
 
 class CDlgStreamingInput(ctypes.Structure):
     _fields_ = [('uid', ctypes.c_char_p),
-                ('oid', ctypes.c_char_p)]
+                ('oid', ctypes.c_char_p),
+                ('name', ctypes.c_char_p)]
 
 class CDlgOutput(ctypes.Structure):
     _fields_ = [('uid', ctypes.c_char_p),
                 ('oid', ctypes.c_char_p),
+                ('name', ctypes.c_char_p),
                 ('write', _write_cb_type)]
 
 class CDlgApp(ctypes.Structure):
@@ -140,7 +143,7 @@ class DynlibAppBase(object):
 
     def _to_c_output(self, o):
         w = _write_cb_type(functools.partial(self._write_to_output, o.write))
-        return CDlgOutput(six.b(o.uid), six.b(o.oid), w)
+        return CDlgOutput(six.b(o.uid), six.b(o.oid), six.b(o.name), w)
 
     def _write_to_output(self, output_write, buf, n):
         return output_write(buf[:n])
@@ -196,7 +199,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
             desc = i.open()
             opened_info.append((i, desc))
             r = _read_cb_type(functools.partial(_read, i.read, desc))
-            inputs.append(CDlgInput(six.b(i.uid), six.b(i.oid), i.status, r))
+            inputs.append(CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r))
         self._c_app.inputs = (CDlgInput * len(inputs))(*inputs)
         self._c_app.n_inputs = len(inputs)
 
