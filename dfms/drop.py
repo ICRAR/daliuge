@@ -137,6 +137,11 @@ class AbstractDROP(EventFirer):
         self._oid = str(oid)
         self._uid = str(uid)
 
+        # A simple name that the Drop might receive
+        # This is usually set in the Logical Graph Editor,
+        # but is not necessarily always there
+        self.name = self._getArg(kwargs, 'nm', "")
+
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
         # We keep the UIDs in a set for O(1) "x in set" operations
