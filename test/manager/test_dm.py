@@ -26,6 +26,13 @@ from dfms import droputils
 from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dfms.drop import BarrierAppDROP, dropdict
 from dfms.manager.node_manager import NodeManager
+import os
+import six
+
+try:
+    from crc32c import crc32  # @UnusedImport
+except:
+    from binascii import crc32  # @Reimport
 
 
 hostname = 'localhost'
@@ -53,10 +60,10 @@ class ErroneousApp(BarrierAppDROP):
 def nm_conninfo(n):
     return 'localhost', 5553 + n, 6666 + n
 
-class TestDM(unittest.TestCase):
+class NMTestsMixIn(object):
 
-    def __init__(self, methodName):
-        super(TestDM, self).__init__(methodName)
+    def __init__(self, *args, **kwargs):
+        super(NMTestsMixIn, self).__init__(*args, **kwargs)
         self._dms = []
 
     def _start_dm(self, **kwargs):
@@ -66,9 +73,39 @@ class TestDM(unittest.TestCase):
         return nm
 
     def tearDown(self):
-        unittest.TestCase.tearDown(self)
+        super(NMTestsMixIn, self).tearDown()
         for nm in self._dms:
             nm.shutdown()
+
+    def _test_runGraphInTwoNMs(self, g1, g2, rels, a_data, c_data):
+        """Utility to run a graph in two Node Managers"""
+
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
+
+        sessionId = 's1'
+        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
+        self.assertEqual(len(g2), len(dm2._sessions[sessionId].drops))
+
+        # Run! We wait until c is completed
+        drops = {}
+        drops.update(dm1._sessions[sessionId].drops)
+        drops.update(dm2._sessions[sessionId].drops)
+
+        a, b, c = [drops[x] for x in ('A', 'B', 'C')]
+        with droputils.DROPWaiterCtx(self, c, 1):
+            a.write(a_data)
+            a.setCompleted()
+
+        for drop in a, b, c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        self.assertEqual(c_data, droputils.allDropContents(c))
+
+        dm1.destroySession(sessionId)
+        dm2.destroySession(sessionId)
+
+class TestDM(NMTestsMixIn, unittest.TestCase):
 
     def test_error_listener(self):
 
@@ -103,32 +140,15 @@ class TestDM(unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
-
         rels = [DROPRel('B', DROPLinkType.CONSUMER, 'A')]
-        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
-        self.assertEqual(1, len(dm1._sessions[sessionId].drops))
-        self.assertEqual(2, len(dm2._sessions[sessionId].drops))
+        a_data = os.urandom(32)
+        c_data = six.b(str(crc32(a_data, 0)))
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, c_data)
 
-        # Run! We wait until c is completed
-        a = dm1._sessions[sessionId].drops['A']
-        b,c = [dm2._sessions[sessionId].drops[x] for x in ('B', 'C')]
-        with droputils.DROPWaiterCtx(self, c, 1):
-            a.write(b'a')
-            a.setCompleted()
-
-        for drop in a, b, c:
-            self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual(a.checksum, int(droputils.allDropContents(c)))
-
-        dm1.destroySession(sessionId)
-        dm2.destroySession(sessionId)
 
     def test_runGraphSeveralDropsPerDM(self):
         """
