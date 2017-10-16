@@ -27,7 +27,10 @@ import six
 
 from dfms import droputils
 from dfms.apps.dynlib import DynlibApp, DynlibStreamApp
+from dfms.ddap_protocol import DROPRel, DROPLinkType
 from dfms.drop import InMemoryDROP, NullDROP
+from ..manager import test_dm
+
 
 _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
@@ -113,3 +116,41 @@ class DynlibAppTest(unittest.TestCase):
             drop_data = droputils.allDropContents(drop)
             self.assertEqual(len(data), len(drop_data), 'Data from %r is not what we wanted :(' % (drop,))
             self.assertEqual(data, drop_data)
+
+@unittest.skipUnless(_try_library(), "Example dynamic library not available")
+class DynlibAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
+
+    def test_input_in_remote_nm(self):
+        """
+        A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
+        application B is a DynlibApp. This makes sure that DynlibApps work fine
+        across Node Managers.
+
+        NM #1      NM #2
+        =======    =============
+        | A --|----|-> B --> C |
+        =======    =============
+        """
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.dynlib.DynlibApp", "lib": _libpath, "print_stats": print_stats},
+              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
+        rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
+        a_data = os.urandom(32)
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
+
+    def test_output_in_remote_nm(self):
+        """
+        Like the above, but with this graph. In this case the output (instead of
+        the input) is in a remote Node Manager.
+
+        NM #1            NM #2
+        =============    =======
+        | A --> B --|----|-> C |
+        =============    =======
+        """
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers": ['B']},
+              {"oid":"B", "type":"app", "app":"dfms.apps.dynlib.DynlibApp", "lib": _libpath, "print_stats": print_stats}]
+        g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
+        rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
+        a_data = os.urandom(32)
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
