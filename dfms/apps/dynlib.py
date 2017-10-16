@@ -142,11 +142,11 @@ class DynlibAppBase(object):
         app.n_outputs += 1
 
     def _to_c_output(self, o):
-        w = _write_cb_type(functools.partial(self._write_to_output, o.write))
+        w = _write_cb_type(functools.partial(self._write_to_output, o))
         return CDlgOutput(six.b(o.uid), six.b(o.oid), six.b(o.name), w)
 
-    def _write_to_output(self, output_write, buf, n):
-        return output_write(buf[:n])
+    def _write_to_output(self, o, buf, n):
+        return o.write(buf[:n])
 
 
 class DynlibStreamApp(DynlibAppBase, AppDROP):
@@ -187,8 +187,8 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
     def run(self):
 
         # read / write callbacks
-        def _read(input_read, desc, buf, n):
-            x = input_read(desc, n)
+        def _read(i, desc, buf, n):
+            x = i.read(desc, n)
             ctypes.memmove(buf, x, len(x))
             return len(x)
 
@@ -198,7 +198,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         for i in self.inputs:
             desc = i.open()
             opened_info.append((i, desc))
-            r = _read_cb_type(functools.partial(_read, i.read, desc))
+            r = _read_cb_type(functools.partial(_read, i, desc))
             inputs.append(CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r))
         self._c_app.inputs = (CDlgInput * len(inputs))(*inputs)
         self._c_app.n_inputs = len(inputs)
