@@ -429,7 +429,7 @@ class AbstractDROP(EventFirer):
     @abstractmethod
     def getIO(self):
         """
-        Returns an instance of one of the `dfms.io.DataIO` instances that
+        Returns an instance of one of the `dlg.io.DataIO` instances that
         handles the data contents of this DROP.
         """
 

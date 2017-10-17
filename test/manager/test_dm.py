@@ -107,7 +107,7 @@ class TestDM(unittest.TestCase):
 
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
+        g2 = [{"oid":"B", "type":"app", "app":"dlg.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
 
         rels = [DROPRel('B', DROPLinkType.CONSUMER, 'A')]
@@ -149,7 +149,7 @@ class TestDM(unittest.TestCase):
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
               {"oid":"B", "type":"plain", "storage": "memory"},
-              {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp"},
+              {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp"},
               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
         g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]

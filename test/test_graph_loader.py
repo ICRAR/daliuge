@@ -54,7 +54,7 @@ class TestGraphLoader(unittest.TestCase):
 
         # A directory container
         dropSpecList = [{"oid":"A", "type":"plain", "storage":"file", "dirname":"."},
-                        {"oid":"B", "type":"container", "container":"dfms.drop.DirectoryContainer", "children":["A"], "dirname":"."}]
+                        {"oid":"B", "type":"container", "container":"dlg.drop.DirectoryContainer", "children":["A"], "dirname":"."}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         b = a.parent
         self.assertIsInstance(b, DirectoryContainer)

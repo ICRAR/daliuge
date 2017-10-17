@@ -51,7 +51,7 @@ RED_COLOR = (255, 0, 0)
 BLUE_COLOR = (102, 178, 255)
 
 #TODO place java class in the current dir, and include it in Git repo
-java_cmd = "java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dfms.deploy.utils.export_graph"
+java_cmd = "java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dlg.deploy.utils.export_graph"
 
 sql_create_status = """\
 create table ac(ts integer, oid varchar(256), status integer);

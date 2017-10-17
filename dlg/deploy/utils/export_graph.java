@@ -29,11 +29,11 @@ https://gephi.org/toolkit/
 
 cd /Users/Chen/proj/dfms/dfms/deploy/utils
 javac -cp /Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar -d /tmp/classes export_graph.java
-java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dfms.deploy.utils.export_graph /Users/Chen/proj/dfms/dfms/deploy/utils/data/test/tianhe_graph.gexf /tmp/my.png
+java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dlg.deploy.utils.export_graph /Users/Chen/proj/dfms/dfms/deploy/utils/data/test/tianhe_graph.gexf /tmp/my.png
 
 */
 
-package dfms.deploy.utils;
+package dlg.deploy.utils;
 
 import java.io.IOException;
 import java.io.File;
@@ -61,7 +61,7 @@ public class export_graph {
   */
   public static void main(String[] args) {
       if (args.length != 2) {
-        System.out.println("Usage: java dfms.deploy.utils.export_graph <input_gexf> <output_png>");
+        System.out.println("Usage: java dlg.deploy.utils.export_graph <input_gexf> <output_png>");
         System.exit(1);
       }
       String input_gexf = args[0];

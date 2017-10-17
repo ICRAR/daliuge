@@ -124,16 +124,6 @@ class TestPGGen(unittest.TestCase):
             #pgtp.json
             pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
-            # with open('/tmp/sar_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
-            #     f.write(pg_spec)
-            # if (i == 0):
-            #     from dfms.manager.client import DataIslandManagerClient
-            #     dmc = DataIslandManagerClient(host='sdp-dfms.ddns.net', port=8097)
-            #     ssid = 'ChenICRAR'
-            #     dmc.create_session(ssid)
-            #     dmc.append_graph(ssid, pg_spec)
-            #     ret = dmc.deploy_session(ssid)
-            #     print ret
 
     def test_mysarkar_pgtp_gen_pg_island(self):
         lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']

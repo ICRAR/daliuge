@@ -60,7 +60,7 @@ default_proxy_port = 30000
 default_client_base_port = 30001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
-logger = logging.getLogger('deploy.pawsey.monitor')
+logger = logging.getLogger(__name__)
 delimit = b'@#%!$'
 dl = len(delimit)
 

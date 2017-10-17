@@ -516,7 +516,7 @@ class LGNode():
                 #create socket listener DROP first
                 dropSpec = dropdict({'oid':oid, 'type':'plain', 'storage':drop_type})
                 dropSpec_socket = dropdict({'oid':"{0}-s".format(oid),
-                'type':'app', 'app':'dfms.apps.simple.SleepApp', 'nm':'lstnr', 'tw':5, 'sleepTime': 5})
+                'type':'app', 'app':'dlg.apps.simple.SleepApp', 'nm':'lstnr', 'tw':5, 'sleepTime': 5})
                 # tw -- task weight
                 dropSpec_socket['autostart'] = 1
                 kwargs['listener_drop'] = dropSpec_socket
@@ -535,7 +535,7 @@ class LGNode():
                     kwargs['filepath'] = fp
         elif (drop_type == 'Component'): # default generic component becomes "sleep and copy"
             if ('appclass' not in self.jd or len(self.jd['appclass']) == 0):
-                app_class = 'dfms.apps.simple.SleepApp'
+                app_class = 'dlg.apps.simple.SleepApp'
             else:
                 app_class = self.jd['appclass']
 
@@ -544,12 +544,12 @@ class LGNode():
                 if (execTime < 0):
                     raise GraphException("Execution_time must be greater"\
                     " than 0 for Construct '%s'" % self.text)
-            elif app_class != 'dfms.apps.simple.SleepApp':
+            elif app_class != 'dlg.apps.simple.SleepApp':
                 raise GraphException("Missing execution_time for Construct '%s'" % self.text)
             else:
                 execTime = random.randint(3, 8)
 
-            if (app_class == 'dfms.apps.simple.SleepApp'):
+            if (app_class == 'dlg.apps.simple.SleepApp'):
                 kwargs['sleepTime'] = execTime
 
             kwargs['tw'] = execTime
@@ -560,7 +560,7 @@ class LGNode():
         elif (drop_type == 'DynlibApp'):
             if ('libpath' not in self.jd or len(self.jd['libpath']) == 0):
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.dynlib.DynlibApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.dynlib.DynlibApp'})
             kwargs['lib'] = self.jd['libpath']
             kwargs['tw'] = int(self.jd['execution_time'])
             self._update_key_value_attributes(kwargs)
@@ -568,10 +568,10 @@ class LGNode():
             dropSpec.update(kwargs)
         elif (drop_type in ['BashShellApp', 'mpi']):
             if (drop_type == 'mpi'):
-                app_str = 'dfms.apps.mpi.MPIApp'
+                app_str = 'dlg.apps.mpi.MPIApp'
                 kwargs['maxprocs'] = int(self.jd.get('num_of_procs', 4))
             else:
-                app_str = 'dfms.apps.bash_shell_app.BashShellApp'
+                app_str = 'dlg.apps.bash_shell_app.BashShellApp'
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':app_str})
             if 'execution_time' in self.jd:
                 kwargs['tw'] = int(self.jd['execution_time'])
@@ -592,7 +592,7 @@ class LGNode():
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
         elif (drop_type == 'GroupBy'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.simple.SleepApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.simple.SleepApp'})
             sij = self.inputs[0].jd
             if (not 'data_volume' in sij):
                 raise GInvalidNode("GroupBy construct follows a DataDrop, not '%s'" % sij['category'])
@@ -605,7 +605,7 @@ class LGNode():
             dropSpec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(dropSpec)
         elif (drop_type == 'DataGather'):
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.simple.SleepApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.simple.SleepApp'})
             gi = self.inputs[0]
             if (gi.is_groupby()):
                 gii = gi.inputs[0]
@@ -621,7 +621,7 @@ class LGNode():
             dropSpec_gather.addProducer(dropSpec)
         elif (drop_type == 'Branch'):
             # create an App first
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dfms.apps.simple.SleepApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.simple.SleepApp'})
             dropSpec_null = dropdict({'oid':"{0}-null_drop".format(oid), 'type':'plain',
             'storage':'null', 'nm':'null', 'dw':0})
             kwargs['null_drop'] = dropSpec_null
@@ -905,7 +905,7 @@ class PGT(object):
                             # add an extra app DROP
                             extra_oid = "{0}_TransApp_{1}".format(oid, i)
                             dropSpec = dropdict({'oid':extra_oid, 'type':'app',
-                            'app':'dfms.drop.BarrierAppDROP', 'nm':'go_app', 'tw':1})
+                            'app':'dlg.drop.BarrierAppDROP', 'nm':'go_app', 'tw':1})
                             # create links
                             drop.addConsumer(dropSpec)
                             dropSpec.addInput(drop)

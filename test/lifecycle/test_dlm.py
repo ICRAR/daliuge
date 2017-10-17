@@ -44,9 +44,6 @@ class TestDataLifecycleManager(unittest.TestCase):
         shutil.rmtree("/tmp/sdp-hsm", True)
 
     def _writeAndClose(self, drop):
-        '''
-        :param dfms.drop.AbstractDROP drop:
-        '''
         drop.write(b' ')
         # all DROPs submitted to this method have expectedSize=1, so this
         # will trigger the change to COMPLETED

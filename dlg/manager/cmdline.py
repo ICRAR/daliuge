@@ -207,7 +207,7 @@ def setupLogging(opts):
 
     # Per-package/module specific levels
     logging.root.setLevel(level)
-    logging.getLogger("dfms").setLevel(level)
+    logging.getLogger("dlg").setLevel(level)
     logging.getLogger("tornado").setLevel(logging.WARN)
     logging.getLogger("luigi-interface").setLevel(logging.WARN)
     logging.getLogger("zerorpc").setLevel(logging.WARN)

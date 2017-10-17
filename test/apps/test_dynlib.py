@@ -49,7 +49,7 @@ def _try_library():
                 return True
 
         import distutils.ccompiler
-        from dfms import get_include_dir
+        from dlg import get_include_dir
 
         comp = distutils.ccompiler.new_compiler()
         distutils.sysconfig.customize_compiler(comp)

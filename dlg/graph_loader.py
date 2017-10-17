@@ -276,6 +276,11 @@ def _createContainer(dropSpec, dryRun=False):
     if 'container' in dropSpec:
         containerTypeName = dropSpec['container']
         parts = containerTypeName.split('.')
+
+        # Support old "dfms..." package names (pre-Oct2017)
+        if parts[0] == 'dfms':
+            parts[0] = 'dlg'
+
         module  = importlib.import_module('.'.join(parts[:-1]))
         containerType = getattr(module, parts[-1])
     else:
@@ -301,6 +306,11 @@ def _createApp(dropSpec, dryRun=False):
 
     appName = dropSpec['app']
     parts   = appName.split('.')
+
+    # Support old "dfms..." package names (pre-Oct2017)
+    if parts[0] == 'dfms':
+        parts[0] = 'dlg'
+
     try:
         module  = importlib.import_module('.'.join(parts[:-1]))
         appType = getattr(module, parts[-1])

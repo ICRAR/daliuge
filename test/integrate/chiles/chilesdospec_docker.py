@@ -53,13 +53,13 @@ def fileDropSpec(uid, **kwargs):
     return dropSpec
 
 def directorySpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer', 'node': 'localhost', 'island': 'localhost'})
+    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dlg.drop.DirectoryContainer', 'node': 'localhost', 'island': 'localhost'})
     dropSpec.update(kwargs)
     return dropSpec
 
 def casapyDockerAppSpec(uid, script):
     cmd = 'cd; ' + os.path.join(CASAPY, 'casapy') + ' --colors=NoColor --nologger --nogui -c "%s"' % (script)
-    return dropdict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.dockerapp.DockerApp',
+    return dropdict({'oid':str(uid), 'type':'app', 'app':'dlg.apps.dockerapp.DockerApp',
                    'image':'dfms/casapy_centos7_dfms:0.1',
                    'command':cmd, 'user': 'dfms',
                    'node': 'localhost', 'island': 'localhost'})
