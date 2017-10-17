@@ -26,10 +26,10 @@ import unittest
 
 from six.moves import http_client as httplib  # @UnresolvedImport
 
-from dfms import utils, restutils
-from dfms.manager import constants
-from dfms.manager.client import MasterManagerClient
-from dfms.manager.proc_daemon import DfmsDaemon
+from dlg import utils, restutils
+from dlg.manager import constants
+from dlg.manager.client import MasterManagerClient
+from dlg.manager.proc_daemon import DfmsDaemon
 
 
 _TIMEOUT = 10

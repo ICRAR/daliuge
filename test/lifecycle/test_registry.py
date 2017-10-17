@@ -23,8 +23,8 @@ import os
 import sqlite3
 import unittest
 
-from dfms.drop import InMemoryDROP
-from dfms.lifecycle.registry import RDBMSRegistry
+from dlg.drop import InMemoryDROP
+from dlg.lifecycle.registry import RDBMSRegistry
 
 
 DBFILE = 'testing_dlm.db'

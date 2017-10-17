@@ -22,10 +22,10 @@
 import threading
 import unittest
 
-from dfms import droputils
-from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dfms.drop import BarrierAppDROP, dropdict
-from dfms.manager.node_manager import NodeManager
+from dlg import droputils
+from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
+from dlg.drop import BarrierAppDROP, dropdict
+from dlg.manager.node_manager import NodeManager
 
 
 hostname = 'localhost'

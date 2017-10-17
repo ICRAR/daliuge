@@ -29,10 +29,10 @@ import configobj
 import docker
 import six
 
-from dfms import droputils
-from dfms.apps.dockerapp import DockerApp
-from dfms.drop import FileDROP, NgasDROP
-from dfms.droputils import DROPWaiterCtx
+from dlg import droputils
+from dlg.apps.dockerapp import DockerApp
+from dlg.drop import FileDROP, NgasDROP
+from dlg.droputils import DROPWaiterCtx
 
 docker_unavailable = True
 try:

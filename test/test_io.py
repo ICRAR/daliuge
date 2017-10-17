@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 import unittest
-from dfms.io import NullIO, OpenMode
+from dlg.io import NullIO, OpenMode
 
 class TestIO(unittest.TestCase):
 

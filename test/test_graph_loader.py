@@ -21,9 +21,9 @@
 #
 import unittest
 
-from dfms import graph_loader
-from dfms.ddap_protocol import DROPLinkType, DROPRel
-from dfms.drop import InMemoryDROP, ContainerDROP, \
+from dlg import graph_loader
+from dlg.ddap_protocol import DROPLinkType, DROPRel
+from dlg.drop import InMemoryDROP, ContainerDROP, \
     AppDROP, DirectoryContainer
 
 
