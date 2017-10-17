@@ -25,13 +25,14 @@ Dropmake API examples based on
     test_scheduler
     lg_web
 """
-import os, time, sys
+import os
+import sys
+import time
+
 from optparse import OptionParser
 
-from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP,\
- MySarkarPGTP
+from .pg_generator import LG, MySarkarPGTP
 
-from dfms.dropmake.scheduler import SchedulerException
 
 def gen_mysarkar_pgtp(lgfname, pgt_dir, num_islands=2,
                       cores_per_node=2, print_result=False,

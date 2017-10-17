@@ -29,8 +29,8 @@ try:
     import spead2.recv
 except:
     pass
-    
-from dfms.drop import BarrierAppDROP
+
+from ..drop import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)

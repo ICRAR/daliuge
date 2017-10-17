@@ -30,14 +30,14 @@ import threading
 
 from luigi import scheduler, worker
 
-from dfms import droputils
-from dfms import luigi_int, graph_loader
-from dfms.ddap_protocol import DROPStates, DROPLinkType, DROPRel
-from dfms.drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
+from . import constants
+from .. import droputils
+from .. import luigi_int, graph_loader
+from ..ddap_protocol import DROPStates, DROPLinkType, DROPRel
+from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
-from dfms.exceptions import InvalidSessionState, InvalidGraphException, \
+from ..exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
-from dfms.manager import constants
 
 
 logger = logging.getLogger(__name__)

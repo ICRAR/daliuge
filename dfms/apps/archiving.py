@@ -19,9 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from dfms.drop import BarrierAppDROP, ContainerDROP
-from dfms.droputils import DROPFile
-from dfms.io import NgasIO, OpenMode, NgasLiteIO
+from ..drop import BarrierAppDROP, ContainerDROP
+from ..droputils import DROPFile
+from ..io import NgasIO, OpenMode, NgasLiteIO
 
 
 class ExternalStoreApp(BarrierAppDROP):

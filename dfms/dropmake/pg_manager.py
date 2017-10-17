@@ -28,8 +28,8 @@ import threading, json
 import networkx as nx
 import numpy as np
 
-from dfms.dropmake.pg_generator import GraphException
-from dfms.dropmake.scheduler import DAGUtil, SchedulerException
+from .pg_generator import GraphException
+from .scheduler import DAGUtil, SchedulerException
 
 
 MAX_PGT_FN_CNT = 300

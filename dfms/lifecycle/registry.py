@@ -36,8 +36,8 @@ import importlib
 import logging
 import time
 
-from dfms.ddap_protocol import DROPPhases
-from dfms.utils import prepare_sql
+from ..ddap_protocol import DROPPhases
+from ..utils import prepare_sql
 
 
 logger = logging.getLogger(__name__)

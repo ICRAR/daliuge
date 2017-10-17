@@ -25,10 +25,10 @@ import logging
 import bottle
 import pkg_resources
 
-from dfms.exceptions import NoSessionException, InvalidSessionState
-from dfms.manager.drop_manager import DROPManager
-from dfms.manager.rest import ManagerRestServer
-from dfms.manager.session import SessionStates
+from .drop_manager import DROPManager
+from .rest import ManagerRestServer
+from .session import SessionStates
+from ..exceptions import NoSessionException, InvalidSessionState
 
 
 logger = logging.getLogger(__name__)

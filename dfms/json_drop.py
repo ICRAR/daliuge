@@ -25,7 +25,7 @@ A DROP for a JSON file
 import json
 import logging
 
-from dfms.drop import FileDROP
+from .drop import FileDROP
 
 LOG = logging.getLogger(__name__)
 

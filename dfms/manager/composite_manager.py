@@ -26,15 +26,15 @@ import logging
 import multiprocessing.pool
 import threading
 
-from dfms import remote, graph_loader
-from dfms.ddap_protocol import DROPRel
-from dfms.exceptions import InvalidGraphException, DaliugeException, \
+from . import constants
+from .client import NodeManagerClient
+from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
+from .drop_manager import DROPManager
+from .. import remote, graph_loader
+from ..ddap_protocol import DROPRel
+from ..exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
-from dfms.manager.client import NodeManagerClient
-from dfms.manager.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
-from dfms.manager.drop_manager import DROPManager
-from dfms.utils import portIsOpen
-from dfms.manager import constants
+from ..utils import portIsOpen
 
 
 logger = logging.getLogger(__name__)

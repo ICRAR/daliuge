@@ -21,9 +21,11 @@
 #
 
 import logging
-import os, sys
+import os
 import platform
-import time, random
+import random
+import sys
+import time
 
 import pkg_resources
 
@@ -32,8 +34,9 @@ import numpy as np
 from pyswarm import pso
 from collections import defaultdict
 
-from dfms.dropmake.utils.anneal import Annealer
-from dfms.dropmake.utils.mcts import DAGTree, MCTS
+from .utils.anneal import Annealer
+from .utils.mcts import DAGTree, MCTS
+
 
 logger = logging.getLogger(__name__)
 

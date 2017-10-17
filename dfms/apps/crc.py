@@ -25,7 +25,7 @@ Module containing an example application that calculates a CRC value
 
 import six
 
-from dfms.drop import BarrierAppDROP
+from ..drop import BarrierAppDROP
 
 
 try:

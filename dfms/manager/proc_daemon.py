@@ -26,7 +26,6 @@ Module containing the DFMS Daemon class and command-line entry point to use it
 import functools
 import json
 import logging
-import optparse
 import signal
 import socket
 import sys
@@ -35,9 +34,9 @@ import threading
 import bottle
 import zeroconf as zc
 
-from dfms import utils
-from dfms.manager import constants, client
-from dfms.restutils import RestServer
+from . import constants, client
+from .. import utils
+from ..restutils import RestServer
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ def get_tool():
     # This import is performed at runtime to avoid a circular dependency
     # at import time with the tool module, which imports this module
     # to make it available as a 'dlg' command
-    from dfms import tool
+    from .. import tool
     return tool
 
 class DfmsDaemon(RestServer):

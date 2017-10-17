@@ -31,13 +31,13 @@ import logging
 import bottle
 import pkg_resources
 
-from dfms import utils
-from dfms.exceptions import InvalidGraphException, InvalidSessionState, \
+from . import constants
+from .client import NodeManagerClient
+from .. import utils
+from ..exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
     InvalidDropException, InvalidRelationshipException, SubManagerException
-from dfms.manager import constants
-from dfms.manager.client import NodeManagerClient
-from dfms.restutils import RestServer, RestClient, RestClientException
+from ..restutils import RestServer, RestClient, RestClientException
 
 
 logger = logging.getLogger(__name__)

@@ -42,11 +42,11 @@ import threading
 import time
 import uuid
 
-from dfms import utils, tool
-from dfms.deploy.pawsey import dfms_proxy
-from dfms.manager import cmdline as dfms_start
-from dfms.manager.client import NodeManagerClient, DataIslandManagerClient
-from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
+from . import dfms_proxy
+from ... import utils, tool
+from ...manager import cmdline as dfms_start
+from ...manager.client import NodeManagerClient, DataIslandManagerClient
+from ...manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 
 

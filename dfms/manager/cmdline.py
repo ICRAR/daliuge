@@ -35,15 +35,14 @@ import time
 import daemon
 from lockfile.pidlockfile import PIDLockFile
 
-from dfms import version, utils
-from dfms.manager.composite_manager import DataIslandManager, MasterManager
-from dfms.manager.constants import NODE_DEFAULT_REST_PORT, \
+from .composite_manager import DataIslandManager, MasterManager
+from .constants import NODE_DEFAULT_REST_PORT, \
     ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
-from dfms.manager.node_manager import NodeManager
-from dfms.manager.replay import ReplayManager, ReplayManagerServer
-from dfms.manager.rest import NMRestServer, CompositeManagerRestServer, \
+from .node_manager import NodeManager
+from .replay import ReplayManager, ReplayManagerServer
+from .rest import NMRestServer, CompositeManagerRestServer, \
     MasterManagerRestServer
-from dfms.utils import getDfmsPidDir, getDfmsLogsDir, createDirIfMissing
+from .. import version, utils
 
 
 _terminating = False
@@ -103,7 +102,7 @@ def addCommonOptions(parser, defaultPort):
     parser.add_option("-q", "--quiet", action="count",
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
     parser.add_option("-l", "--log-dir", action="store", type="string",
-                      dest="logdir", help="The directory where the logging files will be stored", default=getDfmsLogsDir())
+                      dest="logdir", help="The directory where the logging files will be stored", default=utils.getDfmsLogsDir())
 
 def commonOptionsCheck(options, parser):
     # These are all exclusive
@@ -129,8 +128,8 @@ def start(options, parser):
     if options.daemon:
 
         # Make sure the PID file will be created without problems
-        pidDir  = getDfmsPidDir()
-        createDirIfMissing(pidDir)
+        pidDir  = utils.getDfmsPidDir()
+        utils.createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
 
         working_dir = '.' if options.cwd else '/'
@@ -140,7 +139,7 @@ def start(options, parser):
 
     # Stop daemon?
     elif options.stop:
-        pidDir = getDfmsPidDir()
+        pidDir = utils.getDfmsPidDir()
         pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
         pid = PIDLockFile(pidfile).read_pid()
         if pid is None:
@@ -200,7 +199,7 @@ def setupLogging(opts):
 
     # This is the logfile we'll use from now on
     logdir = opts.logdir
-    createDirIfMissing(logdir)
+    utils.createDirIfMissing(logdir)
     logfile = os.path.join(logdir, "dfms%s.log" % (opts.dmAcronym))
     fileHandler = logging.FileHandler(logfile)
     fileHandler.setFormatter(fmt)

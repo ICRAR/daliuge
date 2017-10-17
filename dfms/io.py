@@ -26,8 +26,8 @@ import os
 from six import BytesIO
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
 
-from dfms import ngaslite
-from dfms import shoreClient
+from . import ngaslite
+from . import shoreClient
 
 
 logger = logging.getLogger(__name__)

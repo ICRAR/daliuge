@@ -34,7 +34,7 @@ import os
 
 import psutil
 
-from dfms.drop import FileDROP, InMemoryDROP, NgasDROP
+from ...drop import FileDROP, InMemoryDROP, NgasDROP
 
 
 logger = logging.getLogger(__name__)

@@ -41,12 +41,12 @@ import re
 import six
 from six import BytesIO
 
-from dfms.ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
+from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
-from dfms.event import EventFirer
-from dfms.exceptions import InvalidDropException, InvalidRelationshipException
-from dfms.io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-from dfms.utils import prepare_sql
+from .event import EventFirer
+from .exceptions import InvalidDropException, InvalidRelationshipException
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
+from .utils import prepare_sql
 
 
 try:

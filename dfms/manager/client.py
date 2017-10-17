@@ -24,8 +24,8 @@ import os
 
 from six.moves import urllib_parse as urllib  # @UnresolvedImport
 
-from dfms.manager import constants
-from dfms.restutils import RestClient
+from . import constants
+from ..restutils import RestClient
 
 
 logger = logging.getLogger(__name__)
