@@ -28,15 +28,15 @@ import unittest
 
 import pkg_resources
 
-from dfms import droputils, tool
-from dfms import utils
-from dfms.ddap_protocol import DROPStates
-from dfms.manager import constants
-from dfms.manager.composite_manager import DataIslandManager
-from dfms.manager.node_manager import NodeManager
-from dfms.manager.rest import NMRestServer
-from dfms.manager.session import SessionStates
-from dfms.utils import portIsOpen
+from dlg import droputils, tool
+from dlg import utils
+from dlg.ddap_protocol import DROPStates
+from dlg.manager import constants
+from dlg.manager.composite_manager import DataIslandManager
+from dlg.manager.node_manager import NodeManager
+from dlg.manager.rest import NMRestServer
+from dlg.manager.session import SessionStates
+from dlg.utils import portIsOpen
 from test import graphsRepository
 from test.manager import testutils
 

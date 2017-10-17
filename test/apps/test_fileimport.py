@@ -26,7 +26,7 @@ import os
 import shutil
 import unittest
 
-from dfms.apps.fileimport import FileImportApp
+from dlg.apps.fileimport import FileImportApp
 
 
 class FileImportAppTests(unittest.TestCase):

@@ -28,8 +28,8 @@ import os
 import sys
 import time
 
-from dfms.drop import dropdict
-from dfms.manager.client import DataIslandManagerClient
+from dlg.drop import dropdict
+from dlg.manager.client import DataIslandManagerClient
 
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))

@@ -21,7 +21,7 @@
 
 import unittest, pkg_resources
 
-from dfms.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP,\
+from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP,\
  MinNumPartsPGTP, GPGTNoNeedMergeException
 
 """

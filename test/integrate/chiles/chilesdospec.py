@@ -22,7 +22,7 @@
 import json
 import os
 
-from dfms.drop import dropdict
+from dlg.drop import dropdict
 
 
 # Directories and paths

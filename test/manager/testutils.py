@@ -23,7 +23,7 @@ import json
 
 import six.moves.http_client as httplib  # @UnresolvedImport
 
-from dfms import utils
+from dlg import utils
 import codecs
 
 

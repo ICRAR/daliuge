@@ -21,9 +21,9 @@
 #
 import unittest
 
-from dfms.ddap_protocol import DROPLinkType
-from dfms.manager.session import Session, SessionStates
-from dfms.exceptions import InvalidGraphException
+from dlg.ddap_protocol import DROPLinkType
+from dlg.manager.session import Session, SessionStates
+from dlg.exceptions import InvalidGraphException
 
 
 class TestSession(unittest.TestCase):

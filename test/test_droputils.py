@@ -29,10 +29,10 @@ import unittest
 
 import six
 
-from dfms import droputils
-from dfms.drop import InMemoryDROP, FileDROP, \
+from dlg import droputils
+from dlg.drop import InMemoryDROP, FileDROP, \
     BarrierAppDROP, dropdict
-from dfms.droputils import DROPFile
+from dlg.droputils import DROPFile
 
 
 class DropUtilsTest(unittest.TestCase):

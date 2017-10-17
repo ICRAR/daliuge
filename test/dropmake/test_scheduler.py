@@ -25,8 +25,8 @@ import unittest
 import pkg_resources
 import psutil
 
-from dfms.dropmake.pg_generator import LG
-from dfms.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
+from dlg.dropmake.pg_generator import LG
+from dlg.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
 Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
 
 

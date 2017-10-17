@@ -31,10 +31,10 @@ import tempfile
 import time
 import unittest
 
-from dfms.ddap_protocol import DROPStates, DROPPhases
-from dfms.drop import FileDROP, DirectoryContainer, BarrierAppDROP
-from dfms.droputils import DROPWaiterCtx
-from dfms.lifecycle import dlm
+from dlg.ddap_protocol import DROPStates, DROPPhases
+from dlg.drop import FileDROP, DirectoryContainer, BarrierAppDROP
+from dlg.droputils import DROPWaiterCtx
+from dlg.lifecycle import dlm
 
 
 class TestDataLifecycleManager(unittest.TestCase):

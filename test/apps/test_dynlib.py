@@ -25,9 +25,9 @@ import unittest
 
 import six
 
-from dfms import droputils
-from dfms.apps.dynlib import DynlibApp, DynlibStreamApp
-from dfms.drop import InMemoryDROP, NullDROP
+from dlg import droputils
+from dlg.apps.dynlib import DynlibApp, DynlibStreamApp
+from dlg.drop import InMemoryDROP, NullDROP
 
 _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
