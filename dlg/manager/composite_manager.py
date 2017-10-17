@@ -209,7 +209,7 @@ class CompositeManager(DROPManager):
             return
 
         # We rely on having ssh keys for this, since we're using
-        # the dfms.remote module, which authenticates using public keys
+        # the dlg.remote module, which authenticates using public keys
         logger.debug("DM not present at %s:%d, will start it now", host, port)
         self.startDM(host)
 

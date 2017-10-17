@@ -146,7 +146,7 @@ class Partition(object):
     Logical partition, multiple (1 ~ N) of these can be placed onto a single
     physical resource unit
 
-    Logical partition can be nested, and it somewhat resembles the `dfms.manager.drop_manager`
+    Logical partition can be nested, and it somewhat resembles the `dlg.manager.drop_manager`
     """
     def __init__(self, gid, max_dop):
         """
@@ -1966,7 +1966,7 @@ class DAGUtil(object):
                 ext = 'dylib'
             else:
                 ext = 'so' # what about Microsoft??!!
-            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dfms.dropmake', 'lib/libmetis.{0}'.format(ext))  # @UndefinedVariable
+            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dlg.dropmake', 'lib/libmetis.{0}'.format(ext))  # @UndefinedVariable
             import metis as mt
         return mt
 

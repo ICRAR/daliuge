@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """
-The dfms package contains the modules implementing the core functionality of
+This package contains the modules implementing the core functionality of
 the system.
 """
 

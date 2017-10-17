@@ -114,7 +114,7 @@ class InMemoryRegistry(Registry):
 
     def addDrop(self, drop):
         '''
-        :param dfms.drop.AbstractDROP drop:
+        :param dlg.drop.AbstractDROP drop:
         '''
         # Check that the DROP is not in the registry
         dropRow = DROP()
@@ -125,7 +125,7 @@ class InMemoryRegistry(Registry):
 
     def addDropInstance(self, drop):
         '''
-        :param dfms.drop.AbstractDROP drop:
+        :param dlg.drop.AbstractDROP drop:
         '''
         self._checkDropIsInRegistry(drop.oid)
         if drop.uid in self._drops[drop.oid].instances:

@@ -8,6 +8,6 @@ dist
 .coverage
 .cache
 .settings/
-dfms/version.py
+dlg/version.py
 test/apps/libdynlib_example.so
 test/apps/dynlib_example.o

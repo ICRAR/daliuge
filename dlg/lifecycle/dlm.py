@@ -450,7 +450,7 @@ class DataLifecycleManager(object):
 
     def replicateDrop(self, drop):
         '''
-        :param dfms.drop.AbstractDROP drop:
+        :param dlg.drop.AbstractDROP drop:
         '''
 
         # Check that the DROP is complete already

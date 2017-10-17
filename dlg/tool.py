@@ -204,14 +204,14 @@ def cmdwrap(cmdname, desc):
     return decorated
 
 # Commands existing in other modules
-cmdwrap('nm', 'Starts a Node Manager')('dfms.manager.cmdline:dlgNM')
-cmdwrap('dim', 'Starts a Drop Island Manager')('dfms.manager.cmdline:dlgDIM')
-cmdwrap('mm', 'Starts a Master Manager')('dfms.manager.cmdline:dlgMM')
-cmdwrap('replay', 'Starts a Replay Manager')('dfms.manager.cmdline:dlgReplay')
-cmdwrap('daemon', 'Starts a DALiuGE Daemon process')('dfms.manager.proc_daemon:run_with_cmdline')
-cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')('dfms.deploy.pawsey.dfms_proxy:run')
-cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dfms.deploy.pawsey.dfms_monitor:run')
-cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dfms.dropmake.web.lg_web:run')
+cmdwrap('nm', 'Starts a Node Manager')('dlg.manager.cmdline:dlgNM')
+cmdwrap('dim', 'Starts a Drop Island Manager')('dlg.manager.cmdline:dlgDIM')
+cmdwrap('mm', 'Starts a Master Manager')('dlg.manager.cmdline:dlgMM')
+cmdwrap('replay', 'Starts a Replay Manager')('dlg.manager.cmdline:dlgReplay')
+cmdwrap('daemon', 'Starts a DALiuGE Daemon process')('dlg.manager.proc_daemon:run_with_cmdline')
+cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')('dlg.deploy.pawsey.dfms_proxy:run')
+cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dlg.deploy.pawsey.dfms_monitor:run')
+cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dlg.dropmake.web.lg_web:run')
 
 @cmdwrap('version', 'Reports the DALiuGE version and exits')
 def version(parser, args):
@@ -230,8 +230,8 @@ def _add_unroll_options(parser):
                       dest="app", help="Force an app to be used in the Physical Graph. 0=Don't force, 1=SleepApp, 2=SleepAndCopy", default=0)
     apps = (
         None,
-        'dfms.apps.simple.SleepApp',
-        'dfms.apps.simple.SleepAndCopyApp'
+        'dlg.apps.simple.SleepApp',
+        'dlg.apps.simple.SleepAndCopyApp'
     )
     return apps
 
