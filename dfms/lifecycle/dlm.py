@@ -124,11 +124,11 @@ import string
 import threading
 import time
 
-from dfms import droputils
-from dfms.ddap_protocol import DROPStates, DROPPhases, AppDROPStates
-from dfms.drop import ContainerDROP
-from dfms.lifecycle import registry
-from dfms.lifecycle.hsm import manager
+from . import registry
+from .hsm import manager
+from .. import droputils
+from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
+from ..drop import ContainerDROP
 
 
 logger = logging.getLogger(__name__)

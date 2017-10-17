@@ -22,13 +22,12 @@
 """Module containing MPI application wrapping support"""
 
 import logging
-import os
 import signal
 import subprocess
 import sys
 
-from dfms.drop import BarrierAppDROP
-from dfms.exceptions import InvalidDropException
+from ..drop import BarrierAppDROP
+from ..exceptions import InvalidDropException
 
 
 logger = logging.getLogger(__name__)

@@ -22,8 +22,9 @@
 
 import os
 import uuid
-from dfms.drop import ContainerDROP
-from dfms.drop import FileDROP
+
+from ..drop import ContainerDROP
+from ..drop import FileDROP
 
 
 class FileImportApp(ContainerDROP):

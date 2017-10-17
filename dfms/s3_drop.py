@@ -25,8 +25,8 @@ Drops that interact with AWS S3
 import boto3
 import botocore
 
-from dfms.drop import AbstractDROP
-from dfms.io import ErrorIO
+from .drop import AbstractDROP
+from .io import ErrorIO
 
 
 class S3DROP(AbstractDROP):

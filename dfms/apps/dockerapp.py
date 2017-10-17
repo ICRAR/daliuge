@@ -32,10 +32,9 @@ import time
 from configobj import ConfigObj
 import docker
 
-from dfms import utils, droputils
-from dfms.drop import BarrierAppDROP, FileDROP, \
-    DirectoryContainer
-from dfms.exceptions import InvalidDropException
+from .. import utils, droputils
+from ..drop import BarrierAppDROP
+from ..exceptions import InvalidDropException
 
 
 logger = logging.getLogger(__name__)

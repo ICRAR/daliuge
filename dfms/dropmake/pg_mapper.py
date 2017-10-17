@@ -59,7 +59,7 @@ But with the following modifications:
     processor
 3   The definition of "idling" for a processor is no longer binary
 """
-from dfms.dropmake.pg_generator import PGT, GraphException
+from .pg_generator import GraphException
 
 class ResourceCapability(object):
     """

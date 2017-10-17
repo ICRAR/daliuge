@@ -28,9 +28,9 @@ import contextlib
 import logging
 import socket
 
-from dfms.ddap_protocol import DROPRel, DROPLinkType
-from dfms.drop import BarrierAppDROP
-from dfms.exceptions import InvalidRelationshipException
+from ..ddap_protocol import DROPRel, DROPLinkType
+from ..drop import BarrierAppDROP
+from ..exceptions import InvalidRelationshipException
 
 
 logger = logging.getLogger(__name__)

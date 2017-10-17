@@ -40,10 +40,10 @@ import types
 
 import six
 
-from dfms import droputils, utils
-from dfms.ddap_protocol import AppDROPStates, DROPStates
-from dfms.drop import BarrierAppDROP, AppDROP
-from dfms.exceptions import InvalidDropException
+from .. import droputils, utils
+from ..ddap_protocol import AppDROPStates, DROPStates
+from ..drop import BarrierAppDROP, AppDROP
+from ..exceptions import InvalidDropException
 
 
 logger = logging.getLogger(__name__)

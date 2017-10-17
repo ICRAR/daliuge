@@ -28,7 +28,7 @@ import subprocess
 import sys
 import time
 
-from dfms import utils
+from . import utils
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     This method prepends `oid_prefix` to all generated Drop OIDs.
     '''
 
-    from dfms.dropmake.pg_generator import LG
+    from .dropmake.pg_generator import LG
     lg = LG(_open_i(lg_path), ssid=oid_prefix)
     logger.info("Start to unroll %s", lg_path)
     drop_list = lg.unroll_to_tpl()
@@ -74,7 +74,7 @@ def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
     using `num_partitions` partitions.
     '''
 
-    from dfms.dropmake.pg_generator import MySarkarPGTP, MetisPGTP
+    from .dropmake.pg_generator import MySarkarPGTP, MetisPGTP
 
     logger.info("Initialising PGTP %s", algo)
     if algo == 'sarkar':
@@ -117,8 +117,8 @@ def resource_map(pgt, nodes, pip_name, num_islands):
 def submit(host, port, pg,
            skip_deploy=False, session_id=None, completed_uids=None):
 
-    from dfms import droputils
-    from dfms.manager.client import CompositeManagerClient
+    from . import droputils
+    from .manager.client import CompositeManagerClient
 
     session_id = session_id or "%f" % (time.time())
     completed_uids = completed_uids or droputils.get_roots(pg)
@@ -215,7 +215,7 @@ cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dfms.dropmake.web
 
 @cmdwrap('version', 'Reports the DALiuGE version and exits')
 def version(parser, args):
-    from dfms import __version__, __git_version__
+    from . import __version__, __git_version__
     print("Version: %s" % __version__)
     print("Git version: %s" % __git_version__)
 
@@ -291,7 +291,7 @@ def dlg_unroll_and_partition(parser, args):
 @cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
 
-    from dfms.manager import constants
+    from .manager import constants
 
     _add_logging_options(parser)
     _add_output_options(parser)
@@ -309,7 +309,7 @@ def dlg_map(parser, args):
     _setup_logging(opts)
     dump = _setup_output(opts)
 
-    from dfms.manager.client import CompositeManagerClient
+    from .manager.client import CompositeManagerClient
 
     if opts.nodes:
         nodes = [n for n in opts.nodes.split(',') if n]
@@ -331,7 +331,7 @@ def dlg_map(parser, args):
 @cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')
 def dlg_submit(parser, args):
 
-    from dfms.manager import constants
+    from .manager import constants
 
     # Submit Physical Graph
     _add_logging_options(parser)
@@ -392,7 +392,7 @@ def start_process(cmd, args, **subproc_args):
     This method returns the new process.
     """
 
-    from dfms.exceptions import DaliugeException
+    from .exceptions import DaliugeException
     if cmd not in commands:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 

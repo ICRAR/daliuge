@@ -50,7 +50,8 @@ import time
 import six
 import six.moves.BaseHTTPServer as BaseHTTPServer  # @UnresolvedImport
 
-from dfms.utils import b2s as b2s
+from ...utils import b2s
+
 
 BUFF_SIZE = 16384
 outstanding_conn = 20

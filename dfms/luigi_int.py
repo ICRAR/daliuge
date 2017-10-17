@@ -31,9 +31,9 @@ import time
 import luigi
 import six
 
-from dfms import droputils
-from dfms.ddap_protocol import ExecutionMode, DROPStates
-from dfms.drop import AbstractDROP, BarrierAppDROP
+from . import droputils
+from .ddap_protocol import ExecutionMode, DROPStates
+from .drop import AbstractDROP, BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)

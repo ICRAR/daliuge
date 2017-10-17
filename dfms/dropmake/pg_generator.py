@@ -56,7 +56,6 @@ import logging
 import math
 import os
 import random
-import re
 import time
 from itertools import product
 
@@ -64,10 +63,11 @@ import networkx as nx
 import numpy as np
 import six
 
-from dfms.dropmake.utils.bash_parameter import BashCommand
-from dfms.drop import dropdict
-from dfms.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-from dfms.graph_loader import STORAGE_TYPES
+from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from .utils.bash_parameter import BashCommand
+from ..drop import dropdict
+from ..graph_loader import STORAGE_TYPES
+
 
 logger = logging.getLogger(__name__)
 

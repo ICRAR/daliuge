@@ -30,9 +30,9 @@ import six.moves.http_client as httplib  # @UnresolvedImport
 import six.moves.socketserver as SocketServer  # @UnresolvedImport
 import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
-from dfms import exceptions
-from dfms import utils
-from dfms.exceptions import DaliugeException, SubManagerException
+from . import exceptions
+from . import utils
+from .exceptions import DaliugeException, SubManagerException
 
 
 logger = logging.getLogger(__name__)

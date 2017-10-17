@@ -31,9 +31,9 @@ import traceback
 
 import six
 
-from dfms.ddap_protocol import DROPStates
-from dfms.drop import AppDROP
-from dfms.io import IOForURL, OpenMode
+from .ddap_protocol import DROPStates
+from .drop import AppDROP
+from .io import IOForURL, OpenMode
 
 
 logger = logging.getLogger(__name__)

@@ -38,14 +38,14 @@ import time
 import six
 from six.moves import queue as Queue  # @UnresolvedImport
 
-from dfms import utils
-from dfms.drop import AppDROP
-from dfms.exceptions import NoSessionException, SessionAlreadyExistsException,\
+from . import constants
+from .drop_manager import DROPManager
+from .session import Session
+from .. import utils
+from ..drop import AppDROP
+from ..exceptions import NoSessionException, SessionAlreadyExistsException,\
     DaliugeException
-from dfms.lifecycle.dlm import DataLifecycleManager
-from dfms.manager import constants
-from dfms.manager.drop_manager import DROPManager
-from dfms.manager.session import Session
+from ..lifecycle.dlm import DataLifecycleManager
 
 
 logger = logging.getLogger(__name__)
@@ -671,7 +671,7 @@ class PyroRPCMixIn(BaseMixIn): # pragma: no cover
 
         def setup_serpent():
 
-            from dfms.event import Event
+            from ..event import Event
 
             def __pyro4_class_to_dict(o):
                 d = {'__class__' : o.__class__.__name__, '__module__': o.__class__.__module__}

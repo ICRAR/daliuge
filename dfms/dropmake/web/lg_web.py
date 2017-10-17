@@ -33,13 +33,13 @@ from bottle import route, request, get, static_file, template, redirect,\
  response, HTTPResponse
 import pkg_resources
 
-from dfms import droputils, restutils, utils
-from dfms.dropmake.pg_generator import LG, PGT, GraphException, MetisPGTP,\
+from ..pg_generator import LG, PGT, GraphException, MetisPGTP,\
  MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
-from dfms.dropmake.pg_manager import PGManager
-from dfms.dropmake.scheduler import SchedulerException
-from dfms.manager.client import CompositeManagerClient
-from dfms.restutils import RestClientException
+from ..pg_manager import PGManager
+from ..scheduler import SchedulerException
+from ... import droputils, restutils, utils
+from ...manager.client import CompositeManagerClient
+from ...restutils import RestClientException
 
 
 def file_as_string(fname, enc='utf8'):

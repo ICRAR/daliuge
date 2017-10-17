@@ -28,15 +28,15 @@ import collections
 import importlib
 import logging
 
-from dfms import droputils
-from dfms.apps.socket_listener import SocketListenerApp
-from dfms.ddap_protocol import DROPRel, DROPLinkType
-from dfms.drop import ContainerDROP, InMemoryDROP, \
+from . import droputils
+from .apps.socket_listener import SocketListenerApp
+from .ddap_protocol import DROPRel, DROPLinkType
+from .drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
-from dfms.exceptions import InvalidGraphException
-from dfms.json_drop import JsonDROP
-from dfms.s3_drop import S3DROP
+from .exceptions import InvalidGraphException
+from .json_drop import JsonDROP
+from .s3_drop import S3DROP
 
 
 STORAGE_TYPES = {
