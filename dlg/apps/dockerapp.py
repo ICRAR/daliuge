@@ -39,7 +39,7 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-DFMS_ROOT = '/dfms_root'
+DFMS_ROOT = '/dlg_root'
 
 DockerPath = collections.namedtuple('DockerPath', 'path')
 
@@ -89,7 +89,7 @@ class DockerApp(BarrierAppDROP):
     by mapping host directories and files as "data volumes". Inputs are bound
     using their full path, but outputs are bound only up to their dirnames,
     because otherwise they would be created at container creation time by
-    Docker. For example, the output /a/b/c will produce a binding to /dfms/a/b
+    Docker. For example, the output /a/b/c will produce a binding to /dlg/a/b
     inside the docker container, where c will have to be written by the process
     running in the container.
 
@@ -391,7 +391,7 @@ class DockerApp(BarrierAppDROP):
         :param assert_hostname: perform hostname checking
         :return:
         """
-        config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
+        config_file_name = os.path.join(utils.getDfmsDir(), 'dlg.settings')
         if os.path.exists(config_file_name):
             return ConfigObj(config_file_name)
         return {}

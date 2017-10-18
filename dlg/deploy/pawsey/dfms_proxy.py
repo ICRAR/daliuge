@@ -218,7 +218,7 @@ def run(parser, args):
         ll = logging.DEBUG
     else:
         ll = logging.INFO
-    logfile = "%s/dfms_proxy.log" % options.log_dir
+    logfile = "%s/dlg_proxy.log" % options.log_dir
     logging.basicConfig(filename=logfile, level=ll, format=FORMAT)
     server = DFMSProxy(options.id, options.dlg_host, options.monitor_host, options.dlg_port, options.monitor_port)
     try:

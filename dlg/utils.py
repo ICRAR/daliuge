@@ -224,7 +224,7 @@ def getDfmsDir():
     Returns the root of the directory structure used by the DALiuGE framework at
     runtime.
     """
-    return os.path.join(os.path.expanduser("~"), ".dfms")
+    return os.path.join(os.path.expanduser("~"), ".dlg")
 
 def getDfmsPidDir():
     """

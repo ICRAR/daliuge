@@ -234,7 +234,7 @@ class GraphPlayer(object):
                 alllines = f.readlines()
             with open(csv_file, "w") as fo:
                 for line in alllines:
-                    ts = line.split('[DEBUG]')[0].split('dfmsNM.log:')[1].strip()
+                    ts = line.split('[DEBUG]')[0].split('dlgNM.log:')[1].strip()
                     ts = int(dt.strptime(ts,'%Y-%m-%d %H:%M:%S,%f').strftime('%s'))
                     oid = line.split('oid=')[1].split()[0]
                     state = line.split()[-1]

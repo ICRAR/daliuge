@@ -297,7 +297,7 @@ def main():
 
     log_dir = "{0}/{1}".format(options.log_dir, rank)
     os.makedirs(log_dir)
-    logfile = log_dir + "/start_dfms_cluster.log"
+    logfile = log_dir + "/start_dlg_cluster.log"
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
 

@@ -130,7 +130,7 @@ def start(options, parser):
         # Make sure the PID file will be created without problems
         pidDir  = utils.getDfmsPidDir()
         utils.createDirIfMissing(pidDir)
-        pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
+        pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
 
         working_dir = '.' if options.cwd else '/'
         with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=[fileHandler.stream],
@@ -140,7 +140,7 @@ def start(options, parser):
     # Stop daemon?
     elif options.stop:
         pidDir = utils.getDfmsPidDir()
-        pidfile = os.path.join(pidDir,  "dfms%s.pid"    % (options.dmAcronym))
+        pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
         pid = PIDLockFile(pidfile).read_pid()
         if pid is None:
             sys.stderr.write('Cannot read PID file, is there an instance running?\n')
@@ -200,7 +200,7 @@ def setupLogging(opts):
     # This is the logfile we'll use from now on
     logdir = opts.logdir
     utils.createDirIfMissing(logdir)
-    logfile = os.path.join(logdir, "dfms%s.log" % (opts.dmAcronym))
+    logfile = os.path.join(logdir, "dlg%s.log" % (opts.dmAcronym))
     fileHandler = logging.FileHandler(logfile)
     fileHandler.setFormatter(fmt)
     logging.root.addHandler(fileHandler)
@@ -224,7 +224,7 @@ def dlgNM(parser, args):
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dlg-path", action="store", type="string",
-                      dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default="~/.dfms/lib")
+                      dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default="~/.dlg/lib")
     parser.add_option("--error-listener", action="store", type="string",
                       dest="errorListener", help="The error listener class to be used", default=None)
     parser.add_option("--luigi", action="store_true",

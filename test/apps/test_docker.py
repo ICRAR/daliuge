@@ -29,7 +29,7 @@ import configobj
 import docker
 import six
 
-from dlg import droputils
+from dlg import droputils, utils
 from dlg.apps.dockerapp import DockerApp
 from dlg.drop import FileDROP, NgasDROP
 from dlg.droputils import DROPWaiterCtx
@@ -49,7 +49,7 @@ class DockerTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
+        config_file_name = os.path.join(utils.getDfmsDir(), 'dlg.settings')
         if os.path.exists(config_file_name):
             config = configobj.ConfigObj(config_file_name)
             cls._temp = config.get('OS_X_TEMP')

@@ -426,9 +426,9 @@ class LogParser(object):
             # Check this is a dir and contains the NM log
             if not os.path.isdir(os.path.join(self._log_dir, df)):
                 continue
-            nm_logf = os.path.join(self._log_dir, df, 'dfmsNM.log')
-            nm_dim_logf = os.path.join(self._log_dir, df, 'dfmsDIM.log')
-            nm_mm_logf = os.path.join(self._log_dir, df, 'dfmsMM.log')
+            nm_logf = os.path.join(self._log_dir, df, 'dlgNM.log')
+            nm_dim_logf = os.path.join(self._log_dir, df, 'dlgDIM.log')
+            nm_mm_logf = os.path.join(self._log_dir, df, 'dlgMM.log')
             if not os.path.exists(nm_logf):
                 if (os.path.exists(nm_dim_logf) or os.path.exists(nm_mm_logf)):
                     num_dims += 1
@@ -506,14 +506,14 @@ class LogParser(object):
 
     def check_log_dir(self, log_dir):
         possible_logs = [
-        os.path.join(log_dir, '0', 'dfmsDIM.log'),
-        os.path.join(log_dir, '0', 'dfmsMM.log')
+        os.path.join(log_dir, '0', 'dlgDIM.log'),
+        os.path.join(log_dir, '0', 'dlgMM.log')
         ]
         for dim_log_f in possible_logs:
             if (os.path.exists(dim_log_f)):
                 self._dim_log_f = [dim_log_f]
                 if (dim_log_f == possible_logs[1]):
-                    cluster_log = os.path.join(log_dir, '0', 'start_dfms_cluster.log')
+                    cluster_log = os.path.join(log_dir, '0', 'start_dlg_cluster.log')
                     if (os.path.exists(cluster_log)):
                         self._dim_log_f.append(cluster_log)
                 return True
