@@ -72,7 +72,7 @@ Concretely, we have made the following changes to the existing dataflow model:
   hardware resources in order to meet performance requirements at minimum cost
   (e.g. power consumption).
 
-.. _dfms_functions:
+.. _dlg_functions:
 
 |daliuge| Functions
 ^^^^^^^^^^^^^^^^^^^

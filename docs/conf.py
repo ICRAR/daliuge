@@ -64,7 +64,7 @@ author = u'ICRAR'
 # The full version, including alpha/beta/rc tags.
 # release = version
 try:
-    from dfms import version, full_version as release
+    from dlg import version, full_version as release
 except ImportError:
     version = '0.2.0'
     release = version

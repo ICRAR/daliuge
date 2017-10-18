@@ -101,13 +101,13 @@ The |daliuge| framework uses Docker containers as its primary interface to 3rd p
 * Simple maintenance.
 
 The application programmer can make use of the :ref:`DockerApp
-<api.dfms.apps.dockerapp>` which is the interface between a Docker container and
+<api.dlg.apps.dockerapp>` which is the interface between a Docker container and
 the DROP framework. Refer to the documentation for details.
 
 Other applications not based on Docker containers can be written as well. Any
 application must derive at least from ``AppDROP``, but an easier-to-use base
 class is the ``BarrierAppDROP``, which simply requires a ``run`` method to be
-written by the developer (see :ref:`api.dfms.drop` for details). |daliuge| ships with
+written by the developer (see :ref:`api.dlg.drop` for details). |daliuge| ships with
 a set of pre-existing applications to perform common operations, like a TCP
-socket listener and a bash command executor, among others. See :ref:`api.dfms.apps`
+socket listener and a bash command executor, among others. See :ref:`api.dlg.apps`
 for more examples.
