@@ -1,50 +1,50 @@
 
-.. _api.dfms.apps:
+.. _api.dlg.apps:
 
-dfms.apps
----------
+dlg.apps
+--------
 
-.. automodule:: dfms.apps
+.. automodule:: dlg.apps
 .. contents::
 
-.. _api.dfms.apps.dockerapp:
+.. _api.dlg.apps.dockerapp:
 
-dfms.apps.bash_shell_app
+dlg.apps.bash_shell_app
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.apps.bash_shell_app
+        :members:
+
+dlg.apps.dynlib
+^^^^^^^^^^^^^^^
+.. automodule:: dlg.apps.dynlib
+        :members:
+
+dlg.apps.dockerapp
+^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.apps.dockerapp
+        :members:
+
+dlg.apps.socket_listener
 ^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.bash_shell_app
+.. automodule:: dlg.apps.socket_listener
         :members:
 
-dfms.apps.dynlib
-^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.dynlib
+dlg.apps.spead_receiver
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.apps.spead_receiver
         :members:
 
-dfms.apps.dockerapp
-^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.dockerapp
+dlg.apps.scp
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.apps.scp
         :members:
 
-dfms.apps.socket_listener
-^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.socket_listener
+dlg.apps.archiving
+^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.apps.archiving
         :members:
 
-dfms.apps.spead_receiver
-^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.spead_receiver
-        :members:
-
-dfms.apps.scp
-^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.scp
-        :members:
-
-dfms.apps.archiving
-^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.apps.archiving
-        :members:
-
-dfms.apps.crc
-^^^^^^^^^^^^^
-.. automodule:: dfms.apps.crc
+dlg.apps.crc
+^^^^^^^^^^^^
+.. automodule:: dlg.apps.crc
         :members:

@@ -3,7 +3,7 @@ Graphs
 
 A processing pipeline in |daliuge| is described by a Directed Graph where the nodes
 denote both task (application DROPs) and data (data DROPs). The edges denote
-execution dependencies between DROPs. Section :ref:`dfms_functions` has briefly
+execution dependencies between DROPs. Section :ref:`dlg_functions` has briefly
 introduced graph-based functions in |daliuge|. This section provides implementation
 details in the |daliuge| prototype.
 
