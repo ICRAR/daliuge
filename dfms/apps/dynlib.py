@@ -23,6 +23,7 @@
 import ctypes
 import functools
 import logging
+import threading
 
 import six
 
@@ -77,6 +78,33 @@ class CDlgApp(ctypes.Structure):
                 ('done', _app_done_cb_type),
                 ('data', ctypes.c_void_p),]
 
+def _to_c_input(i):
+    """
+    Convert an input drop into its corresponding C structure
+    """
+
+    def _read(_i, desc, buf, n):
+        x = _i.read(desc, n)
+        ctypes.memmove(buf, x, len(x))
+        return len(x)
+
+    desc = i.open()
+    r = _read_cb_type(functools.partial(_read, i, desc))
+    c_input = CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r)
+    return desc, c_input
+
+def _to_c_output(o):
+    """
+    Convert an output drop into its corresponding C structure
+    """
+
+    def _write(_o, buf, n):
+        return _o.write(buf[:n])
+
+    w = _write_cb_type(functools.partial(_write, o))
+    return CDlgOutput(six.b(o.uid), six.b(o.oid), six.b(o.name), w)
+
+
 class DynlibAppBase(object):
 
     def initialize(self, **kwargs):
@@ -102,10 +130,10 @@ class DynlibAppBase(object):
         # at this point yet.
         # The running and done callbacks are also NULLs
         self._c_app = CDlgApp(None,six.b(self.uid), six.b(self.oid),
-                                   None, 0, None, 0, None, 0,
-                                   ctypes.cast(None, _app_running_cb_type),
-                                   ctypes.cast(None, _app_done_cb_type),
-                                   None)
+                              None, 0, None, 0, None, 0,
+                              ctypes.cast(None, _app_running_cb_type),
+                              ctypes.cast(None, _app_done_cb_type),
+                              None)
 
         # Collect the rest of the parameters to pass them down to the library
         # We need to keep them in a local variable so when we expose them to
@@ -124,30 +152,19 @@ class DynlibAppBase(object):
         if self.lib.init(ctypes.pointer(self._c_app), params):
             raise InvalidDropException(self, "%s app failed during initialization" % (lib,))
 
-        self._c_outputs = []
+        # Have we properly set the outputs in the C application structure yet?
+        self._c_outputs_set = False
+        self._c_outputs_setting_lock = threading.Lock()
 
-    def addOutput(self, outputDrop, back=True):
-        super(DynlibAppBase, self).addOutput(outputDrop, back)
+    def _ensure_c_outputs_are_set(self):
 
-        # Update the list of outputs on our app structure
-        output = self._to_c_output(outputDrop)
-        app = self._c_app
-        if not app.n_outputs:
-            outputs = (CDlgOutput * 1)(output)
-        else:
-            outputs = (CDlgOutput * (app.n_outputs + 1))(*self._c_outputs)
-            outputs[-1] = output
-        self._c_outputs = outputs
-        app.outputs = outputs
-        app.n_outputs += 1
+        with self._c_outputs_setting_lock:
+            if self._c_outputs_set:
+                return
 
-    def _to_c_output(self, o):
-        w = _write_cb_type(functools.partial(self._write_to_output, o))
-        return CDlgOutput(six.b(o.uid), six.b(o.oid), six.b(o.name), w)
-
-    def _write_to_output(self, o, buf, n):
-        return o.write(buf[:n])
-
+            outputs = [_to_c_output(o) for o in self.outputs]
+            self._c_app.outputs = (CDlgOutput * len(outputs))(*outputs)
+            self._c_app.n_outputs = len(outputs)
 
 class DynlibStreamApp(DynlibAppBase, AppDROP):
 
@@ -166,10 +183,12 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         self._c_app.done = _app_done_cb_type(_done)
 
     def dataWritten(self, uid, data):
+        self._ensure_c_outputs_are_set()
         app_p = ctypes.pointer(self._c_app)
         self.lib.data_written(app_p, six.b(uid), data, len(data))
 
     def dropCompleted(self, uid, drop_state):
+        self._ensure_c_outputs_are_set()
         app_p = ctypes.pointer(self._c_app)
         self.lib.drop_completed(app_p, six.b(uid), drop_state)
 
@@ -186,22 +205,16 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
 
     def run(self):
 
-        # read / write callbacks
-        def _read(i, desc, buf, n):
-            x = i.read(desc, n)
-            ctypes.memmove(buf, x, len(x))
-            return len(x)
-
         # Update our C structure to include inputs, which we open for reading
         inputs = []
         opened_info = []
         for i in self.inputs:
-            desc = i.open()
+            desc, c_input = _to_c_input(i)
             opened_info.append((i, desc))
-            r = _read_cb_type(functools.partial(_read, i, desc))
-            inputs.append(CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r))
+            inputs.append(c_input)
         self._c_app.inputs = (CDlgInput * len(inputs))(*inputs)
         self._c_app.n_inputs = len(inputs)
+        self._ensure_c_outputs_are_set()
 
         try:
             self.lib.run(ctypes.pointer(self._c_app))
