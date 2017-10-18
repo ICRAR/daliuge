@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """
-Module containing the DFMS Daemon class and command-line entry point to use it
+Module containing the DALiuGE Daemon class and command-line entry point to use it
 """
 
 import functools
@@ -50,9 +50,9 @@ def get_tool():
 
 class DfmsDaemon(RestServer):
     """
-    The DFMS Daemon
+    The DALiuGE Daemon
 
-    The DFMS Daemon is the long-running process that we assume is always
+    The DALiuGE Daemon is the long-running process that we assume is always
     available for contacting, and that acts as the bootstrapping of the whole
     system. It exposes a REST API through which users can start the different
     Drop Managers (node, dataisland and master) and query their status.
@@ -96,7 +96,7 @@ class DfmsDaemon(RestServer):
 
     def stop(self, timeout=None):
         """
-        Stops this DFMS Daemon, terminating all its child processes and its REST
+        Stops this DALiuGE Daemon, terminating all its child processes and its REST
         server.
         """
         self._shutting_down = True
@@ -105,7 +105,7 @@ class DfmsDaemon(RestServer):
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
-        logger.info('DFMS Daemon stopped')
+        logger.info('DALiuGE Daemon stopped')
 
     def _stop_zeroconf(self):
 
@@ -263,11 +263,11 @@ class DfmsDaemon(RestServer):
 terminating = False
 def run_with_cmdline(parser, args):
     parser.add_option('-m', '--master', action='store_true',
-                      dest="master", help="Start this DFMS daemon as the master daemon", default=False)
+                      dest="master", help="Start this DALiuGE daemon as the master daemon", default=False)
     parser.add_option("--no-nm", action="store_true",
                       dest="noNM", help = "Don't start a NodeDropManager by default", default=False)
     parser.add_option("--no-zeroconf", action="store_true",
-                      dest="noZC", help = "Don't enable zeroconf on this DFMS daemon", default=False)
+                      dest="noZC", help = "Don't enable zeroconf on this DALiuGE daemon", default=False)
     parser.add_option("-v", "--verbose", action="count",
                       dest="verbose", help="Become more verbose. The more flags, the more verbose", default=0)
     parser.add_option("-q", "--quiet", action="count",

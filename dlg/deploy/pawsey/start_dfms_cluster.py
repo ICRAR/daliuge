@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """
-Start the DFMS cluster on Magnus / Galaxy at Pawsey
+Start the DALiuGE cluster on Magnus / Galaxy at Pawsey
 
 Current plan (as of 12-April-2016):
     1. Launch a number of Node Managers (NM) using MPI processes
@@ -209,17 +209,17 @@ def monitor_graph(host, port, dump_path):
 
 def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
     """
-    Start the DFMS proxy server
+    Start the DALiuGE proxy server
     """
     proxy_id = loc + '%.3f' % time.time()
     server = dfms_proxy.DFMSProxy(proxy_id, dfms_host, monitor_host, dfms_port, monitor_port)
     try:
         server.loop()
     except KeyboardInterrupt:
-        logger.warning("Ctrl C - Stopping DFMS Proxy server")
+        logger.warning("Ctrl C - Stopping DALiuGE Proxy server")
         sys.exit(1)
     except Exception:
-        logger.exception("DFMS proxy terminated unexpectedly")
+        logger.exception("DALiuGE proxy terminated unexpectedly")
         sys.exit(1)
 
 def set_env(rank):
@@ -234,7 +234,7 @@ def main():
     parser.add_option("-m", "--monitor_host", action="store", type="string",
                     dest="monitor_host", help="Monitor host IP (optional)")
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help="The port to bind dfms monitor",
+                    dest="monitor_port", help="Monitor port",
                     default=dfms_proxy.default_dfms_monitor_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
                     dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
@@ -302,11 +302,11 @@ def main():
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
 
     if (num_procs > 1 and options.monitor_host is not None):
-        logger.info("Trying to start dfms_cluster with proxy")
+        logger.info("Trying to start DALiuGE cluster with proxy")
         run_proxy = True
         threshold = 2
     else:
-        logger.info("Trying to start dfms_cluster without proxy")
+        logger.info("Trying to start DALiuGE cluster without proxy")
         run_proxy = False
         threshold = 1
 
@@ -326,8 +326,8 @@ def main():
 
     proxy_ip = None
     if run_proxy:
-        # send island/master manager's IP address to the dfms proxy
-        # also let island manager know dfms proxy's IP
+        # send island/master manager's IP address to the DALiuGE proxy
+        # also let island manager know the DALiuGE proxy's IP
         if rank == 0:
             mgr_ip = origin_ip
             comm.send(mgr_ip, dest=1)

@@ -28,7 +28,7 @@ class ExternalStoreApp(BarrierAppDROP):
     """
     An application that takes its input DROP (which must be one, and only
     one) and creates a copy of it in a completely external store, from the point
-    of view of the DFMS framework.
+    of view of the DALiuGE framework.
 
     Because this application copies the data to an external location, it also
     shouldn't contain any output, making it a leaf node of the physical graph

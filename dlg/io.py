@@ -354,7 +354,7 @@ class NgasIO(DataIO):
 class NgasLiteIO(DataIO):
     '''
     An IO class whose data is finally stored into NGAS. It uses the ngaslite
-    module of dfms instead of the full client-side libraries provided by NGAS
+    module of DALiuGE instead of the full client-side libraries provided by NGAS
     itself, since they might not be installed everywhere.
 
     The `ngaslite` module doesn't support the STATUS command yet, and because of
