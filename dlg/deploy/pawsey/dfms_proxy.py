@@ -195,14 +195,14 @@ def run(parser, args):
     '''
     Entry point for the dlg proxy command
     '''
-    parser.add_option("-d", "--dfms_host", action="store", type="string",
-                    dest="dfms_host", help="DFMS drop manager host IP (required)")
+    parser.add_option("-d", "--dlg_host", action="store", type="string",
+                    dest="dlg_host", help="DALiuGE Node Manager host IP (required)")
     parser.add_option("-m", "--monitor_host", action="store", type="string",
                     dest="monitor_host", help="Monitor host IP (required)")
     parser.add_option("-l", "--log_dir", action="store", type="string",
                     dest="log_dir", help="Log directory (optional)", default='.')
-    parser.add_option("-f", "--dfms_port", action="store", type="int",
-                    dest="dfms_port", help = "The port to bind dfms drop manager", default=default_dfms_port)
+    parser.add_option("-f", "--dlg_port", action="store", type="int",
+                    dest="dlg_port", help = "The port the DALiuGE Node Manager is running on", default=default_dfms_port)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
                     dest="monitor_port", help = "The port the DALiuGE monitor is running on", default=default_dfms_monitor_port)
     parser.add_option("-b", "--debug",
@@ -211,7 +211,7 @@ def run(parser, args):
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help="The ID of this proxy for on the monitor side (required)", default=None)
     (options, args) = parser.parse_args(args)
-    if (None == options.dfms_host or None == options.monitor_host or None == options.id):
+    if (None == options.dlg_host or None == options.monitor_host or None == options.id):
         parser.print_help()
         sys.exit(1)
     if (options.debug):
@@ -220,7 +220,7 @@ def run(parser, args):
         ll = logging.INFO
     logfile = "%s/dfms_proxy.log" % options.log_dir
     logging.basicConfig(filename=logfile, level=ll, format=FORMAT)
-    server = DFMSProxy(options.id, options.dfms_host, options.monitor_host, options.dfms_port, options.monitor_port)
+    server = DFMSProxy(options.id, options.dlg_host, options.monitor_host, options.dlg_port, options.monitor_port)
     try:
         server.loop()
     except KeyboardInterrupt:
