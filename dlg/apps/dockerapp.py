@@ -39,7 +39,7 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-DFMS_ROOT = '/dlg_root'
+DLG_ROOT = '/dlg_root'
 
 DockerPath = collections.namedtuple('DockerPath', 'path')
 
@@ -278,15 +278,15 @@ class DockerApp(BarrierAppDROP):
         oitems = self._outputs.items()
         fsInputs  = {uid: i for uid,i in iitems if droputils.has_path(i)}
         fsOutputs = {uid: o for uid,o in oitems if droputils.has_path(o)}
-        dockerInputs  = {uid: DockerPath(DFMS_ROOT + i.path) for uid,i in fsInputs.items()}
-        dockerOutputs = {uid: DockerPath(DFMS_ROOT + o.path) for uid,o in fsOutputs.items()}
+        dockerInputs  = {uid: DockerPath(DLG_ROOT + i.path) for uid,i in fsInputs.items()}
+        dockerOutputs = {uid: DockerPath(DLG_ROOT + o.path) for uid,o in fsOutputs.items()}
         dataURLInputs  = {uid: i for uid,i in iitems if not droputils.has_path(i)}
         dataURLOutputs = {uid: o for uid,o in oitems if not droputils.has_path(o)}
 
         cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
-        # We bind the inputs and outputs inside the docker under the DFMS_ROOT
+        # We bind the inputs and outputs inside the docker under the DLG_ROOT
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
@@ -391,7 +391,7 @@ class DockerApp(BarrierAppDROP):
         :param assert_hostname: perform hostname checking
         :return:
         """
-        config_file_name = os.path.join(utils.getDfmsDir(), 'dlg.settings')
+        config_file_name = os.path.join(utils.getDlgDir(), 'dlg.settings')
         if os.path.exists(config_file_name):
             return ConfigObj(config_file_name)
         return {}

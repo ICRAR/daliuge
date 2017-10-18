@@ -102,7 +102,7 @@ def addCommonOptions(parser, defaultPort):
     parser.add_option("-q", "--quiet", action="count",
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
     parser.add_option("-l", "--log-dir", action="store", type="string",
-                      dest="logdir", help="The directory where the logging files will be stored", default=utils.getDfmsLogsDir())
+                      dest="logdir", help="The directory where the logging files will be stored", default=utils.getDlgLogsDir())
 
 def commonOptionsCheck(options, parser):
     # These are all exclusive
@@ -128,7 +128,7 @@ def start(options, parser):
     if options.daemon:
 
         # Make sure the PID file will be created without problems
-        pidDir  = utils.getDfmsPidDir()
+        pidDir  = utils.getDlgPidDir()
         utils.createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
 
@@ -139,7 +139,7 @@ def start(options, parser):
 
     # Stop daemon?
     elif options.stop:
-        pidDir = utils.getDfmsPidDir()
+        pidDir = utils.getDlgPidDir()
         pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
         pid = PIDLockFile(pidfile).read_pid()
         if pid is None:
@@ -239,7 +239,7 @@ def dlgNM(parser, args):
     options.dmType = NodeManager
     options.dmArgs = ()
     options.dmKwargs = {'useDLM': not options.noDLM,
-                        'dfmsPath': options.dlgPath,
+                        'dlgPath': options.dlgPath,
                         'host': options.host,
                         'error_listener': options.errorListener,
                         'enable_luigi': options.enable_luigi,

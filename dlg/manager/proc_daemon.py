@@ -48,7 +48,7 @@ def get_tool():
     from .. import tool
     return tool
 
-class DfmsDaemon(RestServer):
+class DlgDaemon(RestServer):
     """
     The DALiuGE Daemon
 
@@ -62,7 +62,7 @@ class DfmsDaemon(RestServer):
 
     def __init__(self, master=False, noNM=False, disable_zeroconf=False, verbosity=0):
 
-        super(DfmsDaemon, self).__init__()
+        super(DlgDaemon, self).__init__()
 
         self._shutting_down = False
         self._verbosity = verbosity
@@ -100,7 +100,7 @@ class DfmsDaemon(RestServer):
         server.
         """
         self._shutting_down = True
-        super(DfmsDaemon, self).stop(timeout)
+        super(DlgDaemon, self).stop(timeout)
         self._stop_zeroconf()
         self.stopNM(timeout)
         self.stopDIM(timeout)
@@ -281,7 +281,7 @@ def run_with_cmdline(parser, args):
 
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    daemon = DfmsDaemon(opts.master, opts.noNM, opts.noZC, opts.verbose - opts.quiet)
+    daemon = DlgDaemon(opts.master, opts.noNM, opts.noZC, opts.verbose - opts.quiet)
 
     # Signal handling, which stops the daemon
     def handle_signal(signalNo, stack_frame):

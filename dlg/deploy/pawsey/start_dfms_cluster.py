@@ -44,7 +44,7 @@ import uuid
 
 from . import dfms_proxy
 from ... import utils, tool
-from ...manager import cmdline as dfms_start
+from ...manager import cmdline
 from ...manager.client import NodeManagerClient, DataIslandManagerClient
 from ...manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
@@ -135,7 +135,7 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     parser = optparse.OptionParser()
     args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
             str(max_threads), '--no-dlm']
-    dfms_start.dlgNM(parser, args)
+    cmdline.dlgNM(parser, args)
 
 def start_dim(node_list, log_dir, logv=1):
     """
@@ -145,7 +145,7 @@ def start_dim(node_list, log_dir, logv=1):
     parser = optparse.OptionParser()
     args = ['-l', log_dir, '-%s' % lv, '-N', ','.join(node_list),
             '-H', '0.0.0.0', '-m', '2048']
-    dfms_start.dlgDIM(parser, args)
+    cmdline.dlgDIM(parser, args)
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -157,7 +157,7 @@ def start_mm(node_list, log_dir, logv=1):
     parser = optparse.OptionParser()
     args = ['-l', log_dir, '-N', ','.join(node_list), '-%s' % lv,
             '-H', '0.0.0.0', '-m', '2048']
-    dfms_start.dlgMM(parser, args)
+    cmdline.dlgMM(parser, args)
 
 def monitor_graph(host, port, dump_path):
     """
@@ -207,12 +207,12 @@ def monitor_graph(host, port, dump_path):
             if (dt < GRAPH_MONITOR_INTERVAL):
                 time.sleep(GRAPH_MONITOR_INTERVAL - dt)
 
-def start_dfms_proxy(loc, dfms_host, dfms_port, monitor_host, monitor_port):
+def start_proxy(loc, dlg_host, dlg_port, monitor_host, monitor_port):
     """
     Start the DALiuGE proxy server
     """
     proxy_id = loc + '%.3f' % time.time()
-    server = dfms_proxy.DFMSProxy(proxy_id, dfms_host, monitor_host, dfms_port, monitor_port)
+    server = dfms_proxy.ProxyServer(proxy_id, dlg_host, monitor_host, dlg_port, monitor_port)
     try:
         server.loop()
     except KeyboardInterrupt:
@@ -235,7 +235,7 @@ def main():
                     dest="monitor_host", help="Monitor host IP (optional)")
     parser.add_option("-o", "--monitor_port", action="store", type="int",
                     dest="monitor_port", help="Monitor port",
-                    default=dfms_proxy.default_dfms_monitor_port)
+                    default=dfms_proxy.default_dlg_monitor_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
                     dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
                     default=1)
@@ -343,7 +343,7 @@ def main():
             if (run_proxy and rank == 1):
                 # Wait until the Island Manager is open
                 if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
-                    start_dfms_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+                    start_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
                 else:
                     logger.warning("Couldn't connect to the main drop manager, proxy not started")
             elif (run_node_mgr):

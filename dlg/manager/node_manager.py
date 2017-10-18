@@ -85,7 +85,7 @@ class NodeManagerBase(DROPManager):
 
     def __init__(self,
                  useDLM=True,
-                 dfmsPath=None,
+                 dlgPath=None,
                  host=None,
                  error_listener=None,
                  enable_luigi=False,
@@ -99,13 +99,13 @@ class NodeManagerBase(DROPManager):
         self._rpc_port = rpc_port
         self._sessions = {}
 
-        # dfmsPath contains code added by the user with possible
+        # dlgPath contains code added by the user with possible
         # DROP applications
-        if dfmsPath:
-            dfmsPath = os.path.expanduser(dfmsPath)
-            if os.path.isdir(dfmsPath):
-                logger.info("Adding %s to the system path", dfmsPath)
-                sys.path.append(dfmsPath)
+        if dlgPath:
+            dlgPath = os.path.expanduser(dlgPath)
+            if os.path.isdir(dlgPath):
+                logger.info("Adding %s to the system path", dlgPath)
+                sys.path.append(dlgPath)
 
         # Error listener used by users to deal with errors coming from specific
         # Drops in whatever way they want

@@ -49,7 +49,7 @@ class DockerTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        config_file_name = os.path.join(utils.getDfmsDir(), 'dlg.settings')
+        config_file_name = os.path.join(utils.getDlgDir(), 'dlg.settings')
         if os.path.exists(config_file_name):
             config = configobj.ConfigObj(config_file_name)
             cls._temp = config.get('OS_X_TEMP')

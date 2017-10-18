@@ -219,28 +219,28 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
             # Any other error should be raised
             raise
 
-def getDfmsDir():
+def getDlgDir():
     """
     Returns the root of the directory structure used by the DALiuGE framework at
     runtime.
     """
     return os.path.join(os.path.expanduser("~"), ".dlg")
 
-def getDfmsPidDir():
+def getDlgPidDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
     its PIDs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    return os.path.join(getDfmsDir(), 'pid')
+    return os.path.join(getDlgDir(), 'pid')
 
-def getDfmsLogsDir():
+def getDlgLogsDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
     its logs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    return os.path.join(getDfmsDir(), 'logs')
+    return os.path.join(getDlgDir(), 'logs')
 
 def createDirIfMissing(path):
     """

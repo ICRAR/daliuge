@@ -75,12 +75,12 @@ def recvall(sock, count):
         count -= len(newbuf)
     return buf
 
-def send_to_dfms(sock, data):
+def send_to_proxy(sock, data):
     length = len(data)
     sock.sendall(struct.pack('!I', length))
     sock.sendall(data)
 
-def recv_from_dfms(sock):
+def recv_from_proxy(sock):
     lengthbuf = recvall(sock, 4)
     if (lengthbuf is None):
         return None
@@ -129,7 +129,7 @@ class Server(BaseHTTPServer.HTTPServer):
 
 sockandaddr = collections.namedtuple('sockandaddr', 'sock addr')
 
-class DFMSMonitor:
+class Monitor:
 
     def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port, publication_port=default_publication_port):
         """
@@ -389,7 +389,7 @@ class DFMSMonitor:
     def on_proxy_data(self, sock):
 
         try:
-            data = recv_from_dfms(sock)
+            data = recv_from_proxy(sock)
         except socket.error:
             logger.warning("Error while reading data from proxy, will close it")
             self.remove_proxy_socket(sock)
@@ -456,7 +456,7 @@ class DFMSMonitor:
             raise Exception("shouldn't happen, right?")
 
         try:
-            send_to_dfms(proxy_socket, delimit.join([tag, data]))
+            send_to_proxy(proxy_socket, delimit.join([tag, data]))
             logger.debug("Sent data from client %s to proxy", tag_str)
         except socket.error:
             logger.warning("Error while sending data to proxy, closing proxy connection")
@@ -487,7 +487,7 @@ def run(parser, args):
         ll = logging.INFO
     logging.basicConfig(stream=sys.stdout, level=ll, format=FORMAT)
 
-    server = DFMSMonitor(options.host, options.monitor_port, options.client_port, publication_port=options.publication_port)
+    server = Monitor(options.host, options.monitor_port, options.client_port, publication_port=options.publication_port)
     try:
         server.main_loop()
     except KeyboardInterrupt:

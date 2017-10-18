@@ -7,8 +7,8 @@
 
 source /HOME/ac_shao_tan_1/lbq/bashrc
 
-DFMS_MON_HOST="sdp-dfms.ddns.net"
-DFMS_MON_PORT="8098"
+DLG_MON_HOST="sdp-dfms.ddns.net"
+DLG_MON_PORT="8098"
 APP_ROOT="/HOME/ac_shao_tan_1/lbq/dfms/dfms/deploy/tianhe"
 SID=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_DIR=$APP_ROOT"/logs/"$SID
@@ -16,7 +16,7 @@ mkdir $LOG_DIR # to remove potential directory creation conflicts later
 #FILENAME="/HOME/ac_shao_tan_1/lbq/dfms/dfms/deploy/tianhe/th_test.json"
 GRAPH_ID="0"
 CLUSTER="Tianhe2"
-#mpirun -np 3 /HOME/ac_shao_tan_1/lbq/lib/python/bin/python $APP_ROOT"/start_dfms_th.py" -l $LOG_DIR -m $DFMS_MON_HOST -o $DFMS_MON_PORT -f $FILENAM
+#mpirun -np 3 /HOME/ac_shao_tan_1/lbq/lib/python/bin/python $APP_ROOT"/start_dfms_th.py" -l $LOG_DIR -m $DLG_MON_HOST -o $DLG_MON_PORT -f $FILENAM
 #mpirun -np 1 /HOME/ac_shao_tan_1/lbq/lib/python/bin/python $APP_ROOT"/start_dfms_th.py" -l $LOG_DIR -g $GRAPH_ID 
 
 mpirun -n 10 -N 1 /HOME/ac_shao_tan_1/lbq/lib/python/bin/python $APP_ROOT"/start_dfms_cluster.py" -l $LOG_DIR -g $GRAPH_ID -d -c $CLUSTER
