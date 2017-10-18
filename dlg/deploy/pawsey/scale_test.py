@@ -124,8 +124,8 @@ class PawseyClient(object):
     4. how long to run
     5. whether to produce offline graph vis
     6. whether to attach proxy for remote monitoring, and if so provide
-        DFMS_MON_HOST
-        DFMS_MON_PORT
+        DLG_MON_HOST
+        DLG_MON_PORT
     7. Root directory of the Log files (Required)
     """
 

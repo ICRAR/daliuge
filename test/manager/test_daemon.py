@@ -29,7 +29,7 @@ from six.moves import http_client as httplib  # @UnresolvedImport
 from dlg import utils, restutils
 from dlg.manager import constants
 from dlg.manager.client import MasterManagerClient
-from dlg.manager.proc_daemon import DfmsDaemon
+from dlg.manager.proc_daemon import DlgDaemon
 
 
 _TIMEOUT = 10
@@ -38,7 +38,7 @@ _TIMEOUT = 10
 class TestDaemon(unittest.TestCase):
 
     def create_daemon(self, *args, **kwargs):
-        self._daemon = DfmsDaemon(*args, **kwargs)
+        self._daemon = DlgDaemon(*args, **kwargs)
 
         if 'noNM' not in kwargs or not kwargs['noNM']:
             self.assertTrue(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT), 'The NM did not start successfully')

@@ -257,12 +257,12 @@ def gen_pg():
         response.status = 404
         return "PGT(P) with id {0} not found in the Physical Graph Manager".format(pgt_id)
 
-    mhost = request.query.get('dfms_mgr_host')
+    mhost = request.query.get('dlg_mgr_host')
     if (mhost is None):
         response.status = 500
         return "Must specify DALiUGE manager host"
     try:
-        mport = int(request.query.get('dfms_mgr_port'))
+        mport = int(request.query.get('dlg_mgr_port'))
         mgr_client = CompositeManagerClient(host=mhost, port=mport, timeout=30)
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
