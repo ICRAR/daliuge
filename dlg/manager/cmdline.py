@@ -223,8 +223,8 @@ def dlgNM(parser, args):
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
-    parser.add_option("--dfms-path", action="store", type="string",
-                      dest="dfmsPath", help="Path where more dfms-related libraries can be found", default="~/.dfms/lib")
+    parser.add_option("--dlg-path", action="store", type="string",
+                      dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default="~/.dfms/lib")
     parser.add_option("--error-listener", action="store", type="string",
                       dest="errorListener", help="The error listener class to be used", default=None)
     parser.add_option("--luigi", action="store_true",
@@ -239,7 +239,7 @@ def dlgNM(parser, args):
     options.dmType = NodeManager
     options.dmArgs = ()
     options.dmKwargs = {'useDLM': not options.noDLM,
-                        'dfmsPath': options.dfmsPath,
+                        'dfmsPath': options.dlgPath,
                         'host': options.host,
                         'error_listener': options.errorListener,
                         'enable_luigi': options.enable_luigi,
