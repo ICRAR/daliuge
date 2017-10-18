@@ -2,7 +2,7 @@ Overview
 ========
 
 The following sections give an overview of the different modules present in
-DFMS.
+DALiuGE.
 
 .. toctree::
  :maxdepth: 3

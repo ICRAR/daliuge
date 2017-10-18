@@ -1,36 +1,36 @@
-dfms.manager
-------------
+dlg.manager
+-----------
 
-.. automodule:: dfms.manager
+.. automodule:: dlg.manager
 
 .. contents::
 
-dfms.manager.session
-^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.manager.session
-
-dfms.manager.drop_manager
-^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.manager.drop_manager
-       :members:
-
-dfms.manager.node_manager
-^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.manager.node_manager
-       :members:
-
-dfms.manager.composite_manager
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.manager.composite_manager
-       :members:
-
-dfms.manager.rest
-^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.manager.rest
-       :members:
-
-dfms.manager.client
+dlg.manager.session
 ^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.manager.client
+.. automodule:: dlg.manager.session
+
+dlg.manager.drop_manager
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.manager.drop_manager
+       :members:
+
+dlg.manager.node_manager
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.manager.node_manager
+       :members:
+
+dlg.manager.composite_manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.manager.composite_manager
+       :members:
+
+dlg.manager.rest
+^^^^^^^^^^^^^^^^
+.. automodule:: dlg.manager.rest
+       :members:
+
+dlg.manager.client
+^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.manager.client
        :members:
 

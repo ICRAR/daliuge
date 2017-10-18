@@ -23,9 +23,9 @@ import logging
 import time
 import unittest
 
-from dfms import drop, tool
-from dfms.manager import client
-from dfms.utils import terminate_or_kill
+from dlg import drop, tool
+from dlg.manager import client
+from dlg.utils import terminate_or_kill
 from test.manager import testutils
 
 

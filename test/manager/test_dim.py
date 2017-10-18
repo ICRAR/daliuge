@@ -28,15 +28,15 @@ import unittest
 
 import pkg_resources
 
-from dfms import droputils, tool
-from dfms import utils
-from dfms.ddap_protocol import DROPStates
-from dfms.manager import constants
-from dfms.manager.composite_manager import DataIslandManager
-from dfms.manager.node_manager import NodeManager
-from dfms.manager.rest import NMRestServer
-from dfms.manager.session import SessionStates
-from dfms.utils import portIsOpen
+from dlg import droputils, tool
+from dlg import utils
+from dlg.ddap_protocol import DROPStates
+from dlg.manager import constants
+from dlg.manager.composite_manager import DataIslandManager
+from dlg.manager.node_manager import NodeManager
+from dlg.manager.rest import NMRestServer
+from dlg.manager.session import SessionStates
+from dlg.utils import portIsOpen
 from test import graphsRepository
 from test.manager import testutils
 
@@ -51,7 +51,7 @@ def setUpDimTests(self):
     # Start a DM. This is the DM which the DIM connects to.
     #
     # We start it here to avoid the DIM connecting via SSH to the localhost
-    # and spawning a dfmsDM process; both things need proper setup which we
+    # and spawning a dlgNM process; both things need proper setup which we
     # cannot do here (ssh publick key installation, ssh service up, proper
     # environment available, etc)
     #

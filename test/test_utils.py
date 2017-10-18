@@ -28,7 +28,7 @@ import zlib
 
 import six
 
-from dfms import utils
+from dlg import utils
 
 
 class TestUtils(unittest.TestCase):

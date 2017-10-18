@@ -24,7 +24,7 @@ import sys
 import uuid
 import threading
 
-from dfms.drop import DirectoryContainer, InMemoryDROP
+from dlg.drop import DirectoryContainer, InMemoryDROP
 
 from .chilesdo import Split, Clean, SourceFlux
 

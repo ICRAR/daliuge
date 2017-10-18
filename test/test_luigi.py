@@ -35,10 +35,10 @@ from luigi import scheduler, worker
 import pkg_resources
 import six
 
-from dfms import droputils
-from dfms import graph_loader, utils
-from dfms.apps.socket_listener import SocketListenerApp
-from dfms.luigi_int import FinishGraphExecution
+from dlg import droputils
+from dlg import graph_loader, utils
+from dlg.apps.socket_listener import SocketListenerApp
+from dlg.luigi_int import FinishGraphExecution
 
 
 test_data = os.urandom(16*1024)
