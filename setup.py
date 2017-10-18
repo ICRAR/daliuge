@@ -34,8 +34,8 @@ import os
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR   = 0
-MINOR   = 3
-PATCH   = 2
+MINOR   = 4
+PATCH   = 0
 RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
 VERSION_FILE = 'dlg/version.py'
@@ -110,7 +110,7 @@ except subprocess.CalledProcessError:
 
 # The rest is pretty standard thankfully
 setup(
-      name='dfms',
+      name='dlg',
       version=get_version_info()[0],
       description=u'Data Activated \uF9CA (flow) Graph Engine - DALiuGE',
       long_description = "The SKA-SDK prototype for the Execution Framework component",
