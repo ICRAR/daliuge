@@ -25,5 +25,5 @@
 # We currently exclude the deploy directory because it's not
 # part of the core software
 [run]
-source = dfms/
-omit = dfms/deploy/*
+source = dlg/
+omit = dlg/deploy/*
