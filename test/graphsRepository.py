@@ -39,10 +39,10 @@ import inspect
 import random
 import time
 
-from dfms import droputils
-from dfms.apps.socket_listener import SocketListenerApp
-from dfms.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
-from dfms.ddap_protocol import ExecutionMode
+from dlg import droputils
+from dlg.apps.socket_listener import SocketListenerApp
+from dlg.drop import InMemoryDROP, BarrierAppDROP, ContainerDROP
+from dlg.ddap_protocol import ExecutionMode
 from test.test_drop import SumupContainerChecksum
 
 

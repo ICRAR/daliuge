@@ -19,15 +19,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import os
 import threading
 import unittest
 
-from dfms import droputils
-from dfms.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dfms.drop import BarrierAppDROP, dropdict
-from dfms.manager.node_manager import NodeManager
-import os
 import six
+
+from dlg import droputils
+from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
+from dlg.drop import BarrierAppDROP, dropdict
+from dlg.manager.node_manager import NodeManager
 
 try:
     from crc32c import crc32  # @UnusedImport
@@ -142,7 +143,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """
 
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.crc.CRCApp"},
+        g2 = [{"oid":"B", "type":"app", "app":"dlg.apps.crc.CRCApp"},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
         rels = [DROPRel('B', DROPLinkType.CONSUMER, 'A')]
         a_data = os.urandom(32)
@@ -169,7 +170,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         sessionId = 's1'
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
               {"oid":"B", "type":"plain", "storage": "memory"},
-              {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp"},
+              {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp"},
               {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
         g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
               {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]

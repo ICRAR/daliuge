@@ -22,7 +22,7 @@
 import json
 import os
 
-from dfms.drop import dropdict
+from dlg.drop import dropdict
 
 
 # Directories and paths
@@ -55,7 +55,7 @@ def fileSpec(uid, **kwargs):
 
 
 def directorySpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dfms.drop.DirectoryContainer'})
+    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dlg.drop.DirectoryContainer'})
     dropSpec.update(kwargs)
     return dropSpec 
 
@@ -73,7 +73,7 @@ def splitSpec(uid, **kwargs):
 
 
 def scpSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'dfms.apps.scp.ScpApp'})
+    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'dlg.apps.scp.ScpApp'})
     dropSpec.update(kwargs)
     return dropSpec
 

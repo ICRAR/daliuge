@@ -29,7 +29,7 @@ Test the S3 Drop
 import unittest
 
 import boto3
-from dfms.s3_drop import S3DROP
+from dlg.s3_drop import S3DROP
 
 
 PROFILE = 'aws-chiles02'

@@ -22,26 +22,30 @@ Installing
 procedures. For the time being |daliuge| is not yet in PyPI, so you will have to get
 the source code first::
 
- git clone https://github.com/SKA-ScienceDataProcessor/dfms
- cd dfms
+ git clone https://github.com/ICRAR/daliuge
+ cd daliuge
 
 If a system-wide installation is required, then the following
 commands can be issued::
+
+ sudo pip install .
+
+If ``pip`` is not available, you can also use a different approach with::
 
  python setup.py build
  sudo python setup.py install
 
 If a virtualenv is loaded, then |daliuge| can be installed on it by simply running::
 
+ pip install .
+
+Again, if ``pip`` is not available, you can use the simpler form::
+
  python setup.py install
 
-14/03/17 If issues occur during the installation try installing a few things by hand first::
-
-  pip install python-daemon
-  pip install -U pip
-  pip install numpy
-  python setup.py install
-
+There is a known issue in some systems
+when installing the ``python-daemon`` dependency,
+which **needs** to be installed via ``pip``.
 
 Docker images
 -------------

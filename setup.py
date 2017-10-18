@@ -30,7 +30,7 @@ import os
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
 # here. If we find the git commit (either via "git" command execution or in a
-# dfms/version.py file) we append it to the VERSION later.
+# dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR   = 0
@@ -38,7 +38,7 @@ MINOR   = 3
 PATCH   = 2
 RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
-VERSION_FILE = 'dfms/version.py'
+VERSION_FILE = 'dlg/version.py'
 
 def get_git_version():
     out = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
@@ -120,9 +120,9 @@ setup(
       license="LGPLv2+",
       packages=find_packages(exclude=('test', 'test.*')),
       package_data = {
-        'dfms.apps' : ['dlg_app.h'],
-        'dfms.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
-        'dfms.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map',
+        'dlg.apps' : ['dlg_app.h'],
+        'dlg.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
+        'dlg.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map',
                           'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html',
                           'lib/libmetis.*'],
         'test.dropmake': ['logical_graphs/*.json'],
@@ -180,7 +180,7 @@ setup(
       test_suite="test",
       entry_points= {
           'console_scripts':[
-              'dlg=dfms.tool:run', # One tool to rule them all
+              'dlg=dlg.tool:run', # One tool to rule them all
           ],
       }
 )

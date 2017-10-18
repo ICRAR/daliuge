@@ -30,11 +30,11 @@ try:
 except:
     USE_SPEAD = False
 
-from dfms import droputils
-from dfms.apps.spead_receiver import SpeadReceiverApp
-from dfms.drop import InMemoryDROP
-from dfms.ddap_protocol import DROPStates
-from dfms.droputils import DROPWaiterCtx
+from dlg import droputils
+from dlg.apps.spead_receiver import SpeadReceiverApp
+from dlg.drop import InMemoryDROP
+from dlg.ddap_protocol import DROPStates
+from dlg.droputils import DROPWaiterCtx
 
 
 class TestSpeadReceiverApp(unittest.TestCase):

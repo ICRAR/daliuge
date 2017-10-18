@@ -25,12 +25,11 @@ import unittest
 
 import six
 
-from dfms import droputils
-from dfms.apps.dynlib import DynlibApp, DynlibStreamApp
-from dfms.ddap_protocol import DROPRel, DROPLinkType
-from dfms.drop import InMemoryDROP, NullDROP
 from ..manager import test_dm
-
+from dlg import droputils
+from dlg.apps.dynlib import DynlibApp, DynlibStreamApp
+from dlg.ddap_protocol import DROPRel, DROPLinkType
+from dlg.drop import InMemoryDROP, NullDROP
 
 _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
@@ -52,7 +51,7 @@ def _try_library():
                 return True
 
         import distutils.ccompiler
-        from dfms import get_include_dir
+        from dlg import get_include_dir
 
         comp = distutils.ccompiler.new_compiler()
         distutils.sysconfig.customize_compiler(comp)

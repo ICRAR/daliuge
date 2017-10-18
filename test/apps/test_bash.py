@@ -30,12 +30,12 @@ import unittest
 
 import six
 
-from dfms import droputils
-from dfms.apps.bash_shell_app import BashShellApp, StreamingInputBashApp,\
+from dlg import droputils
+from dlg.apps.bash_shell_app import BashShellApp, StreamingInputBashApp,\
     StreamingOutputBashApp, StreamingInputOutputBashApp
-from dfms.ddap_protocol import DROPStates
-from dfms.drop import FileDROP, InMemoryDROP
-from dfms.droputils import DROPWaiterCtx
+from dlg.ddap_protocol import DROPStates
+from dlg.drop import FileDROP, InMemoryDROP
+from dlg.droputils import DROPWaiterCtx
 
 
 class BashAppTests(unittest.TestCase):

@@ -22,10 +22,10 @@
 import os
 import unittest
 
-from dfms import droputils
-from dfms.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
-from dfms.ddap_protocol import DROPStates
-from dfms.drop import NullDROP, InMemoryDROP
+from dlg import droputils
+from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
+from dlg.ddap_protocol import DROPStates
+from dlg.drop import NullDROP, InMemoryDROP
 
 
 class TestSimpleApps(unittest.TestCase):

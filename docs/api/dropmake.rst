@@ -1,25 +1,25 @@
-dfms.dropmake
--------------
+dlg.dropmake
+------------
 
-.. automodule:: dfms.dropmake
+.. automodule:: dlg.dropmake
 .. contents::
 
-dfms.dropmake.web.lg_web
-^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.dropmake.web.lg_web
-        :members:
-
-dfms.dropmake.pg_generator
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.dropmake.pg_generator
-        :members:
-
-dfms.dropmake.scheduler
+dlg.dropmake.web.lg_web
 ^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.dropmake.scheduler
+.. automodule:: dlg.dropmake.web.lg_web
         :members:
 
-dfms.dropmake.pg_manager
-^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dfms.dropmake.pg_manager
+dlg.dropmake.pg_generator
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.dropmake.pg_generator
+        :members:
+
+dlg.dropmake.scheduler
+^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.dropmake.scheduler
+        :members:
+
+dlg.dropmake.pg_manager
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.dropmake.pg_manager
         :members:

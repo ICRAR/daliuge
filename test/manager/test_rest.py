@@ -23,14 +23,14 @@ import tempfile
 import threading
 import unittest
 
-from dfms import exceptions
-from dfms.manager import constants
-from dfms.manager.client import NodeManagerClient, DataIslandManagerClient
-from dfms.manager.node_manager import NodeManager
-from dfms.manager.rest import NMRestServer, CompositeManagerRestServer
-from dfms.restutils import RestClient
-from dfms.manager.composite_manager import DataIslandManager
-from dfms.exceptions import InvalidGraphException
+from dlg import exceptions
+from dlg.manager import constants
+from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
+from dlg.manager.node_manager import NodeManager
+from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
+from dlg.restutils import RestClient
+from dlg.manager.composite_manager import DataIslandManager
+from dlg.exceptions import InvalidGraphException
 
 
 hostname = 'localhost'

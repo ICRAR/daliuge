@@ -29,10 +29,10 @@ import unittest
 
 import six
 
-from dfms import droputils
-from dfms.drop import InMemoryDROP, FileDROP, \
+from dlg import droputils
+from dlg.drop import InMemoryDROP, FileDROP, \
     BarrierAppDROP, dropdict
-from dfms.droputils import DROPFile
+from dlg.droputils import DROPFile
 
 
 class DropUtilsTest(unittest.TestCase):
@@ -202,7 +202,7 @@ class DropUtilsTest(unittest.TestCase):
         """
         pg_spec = [{"oid":"A", "type":"plain", "storage": "memory"},
                    {"oid":"B", "type":"plain", "storage": "memory"},
-                   {"oid":"C", "type":"app", "app":"dfms.apps.crc.CRCApp", "inputs": ['A']},
+                   {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp", "inputs": ['A']},
                    {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]},
                    {"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
                    {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]

@@ -21,12 +21,12 @@
 #
 import unittest
 
-from dfms import utils
-from dfms import droputils
-from dfms.apps.socket_listener import SocketListenerApp
-from dfms.drop import InMemoryDROP
-from dfms.ddap_protocol import DROPStates
-from dfms.droputils import DROPWaiterCtx
+from dlg import utils
+from dlg import droputils
+from dlg.apps.socket_listener import SocketListenerApp
+from dlg.drop import InMemoryDROP
+from dlg.ddap_protocol import DROPStates
+from dlg.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
 import os
 

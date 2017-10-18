@@ -27,8 +27,8 @@ import unittest
 
 import pkg_resources
 
-from dfms import tool, utils
-from dfms.restutils import RestClient, RestClientException
+from dlg import tool, utils
+from dlg.restutils import RestClient, RestClientException
 
 
 lg_dir = pkg_resources.resource_filename(__name__, '.')  # @UndefinedVariable

@@ -31,10 +31,10 @@ import tempfile
 import time
 import unittest
 
-from dfms.ddap_protocol import DROPStates, DROPPhases
-from dfms.drop import FileDROP, DirectoryContainer, BarrierAppDROP
-from dfms.droputils import DROPWaiterCtx
-from dfms.lifecycle import dlm
+from dlg.ddap_protocol import DROPStates, DROPPhases
+from dlg.drop import FileDROP, DirectoryContainer, BarrierAppDROP
+from dlg.droputils import DROPWaiterCtx
+from dlg.lifecycle import dlm
 
 
 class TestDataLifecycleManager(unittest.TestCase):
@@ -44,9 +44,6 @@ class TestDataLifecycleManager(unittest.TestCase):
         shutil.rmtree("/tmp/sdp-hsm", True)
 
     def _writeAndClose(self, drop):
-        '''
-        :param dfms.drop.AbstractDROP drop:
-        '''
         drop.write(b' ')
         # all DROPs submitted to this method have expectedSize=1, so this
         # will trigger the change to COMPLETED

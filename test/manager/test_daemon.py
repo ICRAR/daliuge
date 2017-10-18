@@ -26,10 +26,10 @@ import unittest
 
 from six.moves import http_client as httplib  # @UnresolvedImport
 
-from dfms import utils, restutils
-from dfms.manager import constants
-from dfms.manager.client import MasterManagerClient
-from dfms.manager.proc_daemon import DfmsDaemon
+from dlg import utils, restutils
+from dlg.manager import constants
+from dlg.manager.client import MasterManagerClient
+from dlg.manager.proc_daemon import DlgDaemon
 
 
 _TIMEOUT = 10
@@ -38,7 +38,7 @@ _TIMEOUT = 10
 class TestDaemon(unittest.TestCase):
 
     def create_daemon(self, *args, **kwargs):
-        self._daemon = DfmsDaemon(*args, **kwargs)
+        self._daemon = DlgDaemon(*args, **kwargs)
 
         if 'noNM' not in kwargs or not kwargs['noNM']:
             self.assertTrue(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT), 'The NM did not start successfully')
@@ -73,7 +73,7 @@ class TestDaemon(unittest.TestCase):
         self._daemon.stop(_TIMEOUT)
         self._daemon_t.join(_TIMEOUT)
         self.assertFalse(self._daemon_t.is_alive(), "Daemon running thread should have finished by now")
-        self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DFMS Daemon REST interface should be off')
+        self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DALiuGE Daemon REST interface should be off')
 
     def test_nm_starts(self):
         # Simplest case...

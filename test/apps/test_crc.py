@@ -28,10 +28,10 @@ import unittest
 
 import six
 
-from dfms import droputils
-from dfms.apps.crc import CRCApp, crc32
-from dfms.apps.dynlib import DynlibApp
-from dfms.drop import FileDROP, InMemoryDROP
+from dlg import droputils
+from dlg.apps.crc import CRCApp, crc32
+from dlg.apps.dynlib import DynlibApp
+from dlg.drop import FileDROP, InMemoryDROP
 
 from . import test_dynlib
 

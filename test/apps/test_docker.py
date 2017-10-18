@@ -29,10 +29,10 @@ import configobj
 import docker
 import six
 
-from dfms import droputils
-from dfms.apps.dockerapp import DockerApp
-from dfms.drop import FileDROP, NgasDROP
-from dfms.droputils import DROPWaiterCtx
+from dlg import droputils, utils
+from dlg.apps.dockerapp import DockerApp
+from dlg.drop import FileDROP, NgasDROP
+from dlg.droputils import DROPWaiterCtx
 
 docker_unavailable = True
 try:
@@ -49,7 +49,7 @@ class DockerTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        config_file_name = os.path.join(os.path.expanduser('~'), '.dfms/dfms.settings')
+        config_file_name = os.path.join(utils.getDlgDir(), 'dlg.settings')
         if os.path.exists(config_file_name):
             config = configobj.ConfigObj(config_file_name)
             cls._temp = config.get('OS_X_TEMP')

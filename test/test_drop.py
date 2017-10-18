@@ -30,13 +30,13 @@ import tempfile
 import six
 from six import BytesIO
 
-from dfms import droputils
-from dfms.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
-from dfms.drop import FileDROP, AppDROP, InMemoryDROP, \
+from dlg import droputils
+from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
+from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
     NullDROP, BarrierAppDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
-from dfms.droputils import DROPWaiterCtx
-from dfms.exceptions import InvalidDropException
+from dlg.droputils import DROPWaiterCtx
+from dlg.exceptions import InvalidDropException
 
 
 try:

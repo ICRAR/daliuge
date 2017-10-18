@@ -22,7 +22,7 @@
 import os
 import unittest
 
-from dfms import tool, utils
+from dlg import tool, utils
 
 
 class TestTool(unittest.TestCase):
