@@ -434,7 +434,7 @@ class DataIslandManager(CompositeManager):
     def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(NODE_DEFAULT_REST_PORT,
                                                 'node',
-                                                'dfmsNM',
+                                                'dlgNM',
                                                 'nm',
                                                 dmHosts=dmHosts,
                                                 pkeyPath=pkeyPath,
@@ -456,7 +456,7 @@ class MasterManager(CompositeManager):
     def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(ISLAND_DEFAULT_REST_PORT,
                                             'island',
-                                            'dfmsDIM',
+                                            'dlgDIM',
                                             'dim',
                                             dmHosts=dmHosts,
                                             pkeyPath=pkeyPath,

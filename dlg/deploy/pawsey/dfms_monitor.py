@@ -21,14 +21,15 @@
 #    MA 02111-1307  USA
 #
 """
-DFMS Monitor runs outside the Pawsey firewall
+DALiuGE Monitor that runs in a public network.
+
 --------------------------------------------------------------------------------
-          Pawsey Magnus / Galaxy              |     Public         |
-             Private Network                  |     Network        |
+                  Private                     |     Public         |
+                  Network                     |     Network        |
                                               |                    |
 +---------+                +----------+       |      +--------+    |
-|  DFMS   |                |  DFMS    |       |      | DFMS   |    |
-| DropMgr | <== socket ==> |  Proxy   |<== socket ==>| Monitor|<- http <- Client
+| DLG     |                |  DLG     |       |      | DLG    |    |
+| Manager | <== socket ==> |  Proxy   |<== socket ==>| Monitor|<- http <- Client
 +---------+                +----------+       |      +--------+    |   (Browser)
                                               |                    |
                                            FIREWALL             GATEWAY
@@ -133,7 +134,7 @@ class DFMSMonitor:
     def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port, publication_port=default_publication_port):
         """
         host:             listening host (string)
-        proxy_port:       port exposed to the dfms proxy  (int)
+        proxy_port:       port exposed to the DALiuGE proxy  (int)
         client_base_port: base port exposed to the client (e.g. Firefox) (int)
         """
         self.host = host
@@ -332,7 +333,7 @@ class DFMSMonitor:
         proxyport = proxyaddr[1]
         self.proxy_sockets[proxyport] = sockandaddr(proxysock, proxyaddr)
         self.ifds.append(proxysock)
-        logger.info('Received new connection from dfms_proxy at %r, reading identification', proxyaddr)
+        logger.info('Received new connection from DALiuGE_proxy at %r, reading identification', proxyaddr)
 
         # Read the proxy ID and check we don't have duplicates
         # We've been receiving HTTP requests on this socket from time to time,
@@ -401,12 +402,12 @@ class DFMSMonitor:
 
         at = data.find(delimit)
         if at == -1:
-            logger.error('No tag id from DFMS proxy, discard the message')
+            logger.error('No tag id from DALiuGE proxy, discard the message')
             return
 
         tag = data[0:at]
         tag_str = b2s(tag)
-        logger.debug("Received %s from DFMS proxy", tag)
+        logger.debug("Received %s from DALiuGE proxy", tag)
 
         if tag not in self.client_sockets:
             logger.warning("Client %s has already disconnected, discarding data from proxy", tag_str)
@@ -468,7 +469,7 @@ def run(parser, args):
                     dest="host", help="The network interface the monitor is bind",
                     default='0.0.0.0')
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The monitor port exposed to the dfms proxy",
+                    dest="monitor_port", help = "The monitor port exposed to the DALiuGE proxy",
                     default=default_proxy_port)
     parser.add_option("-c", "--client_port", action="store", type="int",
                     dest="client_port", help = "The proxy port exposed to the client",
@@ -490,5 +491,5 @@ def run(parser, args):
     try:
         server.main_loop()
     except KeyboardInterrupt:
-        logger.warning("Ctrl C - Stopping DFMS Monitor server")
+        logger.warning("Ctrl C - Stopping DALiuGE Monitor server")
         sys.exit(1)

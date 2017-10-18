@@ -51,7 +51,7 @@ def setUpDimTests(self):
     # Start a DM. This is the DM which the DIM connects to.
     #
     # We start it here to avoid the DIM connecting via SSH to the localhost
-    # and spawning a dfmsDM process; both things need proper setup which we
+    # and spawning a dlgNM process; both things need proper setup which we
     # cannot do here (ssh publick key installation, ssh service up, proper
     # environment available, etc)
     #

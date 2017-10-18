@@ -20,14 +20,15 @@
 #    MA 02111-1307  USA
 #
 """
-DFMS Proxy runs inside the Pawsey firewall
+DALiuGE proxy that runs inside a firewall
+
 --------------------------------------------------------------------------------
-          Pawsey Magnus / Galaxy              |     Public         |
-             Private Network                  |     Network        |
+                  Private                     |     Public         |
+                  Network                     |     Network        |
                                               |                    |
 +---------+                +----------+       |      +--------+    |
-|  DFMS   |                |  DFMS    |       |      | DFMS   |    |
-| DropMgr | <== socket ==> |  Proxy   |<== socket ==>| Monitor|<- http <- Client
+| DLG     |                |  DLG     |       |      | DLG    |    |
+| Manager | <== socket ==> |  Proxy   |<== socket ==>| Monitor|<- http <- Client
 +---------+                +----------+       |      +--------+    |   (Browser)
                                               |                    |
                                            FIREWALL             GATEWAY
@@ -93,7 +94,7 @@ class DFMSProxy:
         retry_count = 0
         while True:
             if retry_count >= conn_retry_count:
-                logger.error("Retry connecting to DFMS monitor exhausted, quit")
+                logger.error("Retry connecting to DALiuGE monitor exhausted, quit")
                 #sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
@@ -142,19 +143,19 @@ class DFMSProxy:
                 if (the_socket == self.monitor_socket):
                     data = recv_from_monitor(the_socket)
                     if (data is None):
-                        logger.warning("Socket to dfms monitor is broken")
+                        logger.warning("Socket to DALiuGE monitor is broken")
                         inputlist.remove(the_socket)
                         if (self.monitor_socket):
                             self.monitor_socket.close()
                             self.monitor_socket = None
-                        logger.info("Try reconnecting to dfms monitor...")
+                        logger.info("Try reconnecting to DALiuGE monitor...")
                         self.connect_monitor_host()
                         just_re_connected = True
                         inputlist.append(self.monitor_socket)
                         continue
                     at = data.find(delimit)
                     if (at == -1):
-                        logger.error('No tag id from dfms_monitor, discard the message')
+                        logger.error('No tag id from DALiuGE monitor, discard the message')
                         continue
                     else:
                         tag = data[0:at]
@@ -174,16 +175,16 @@ class DFMSProxy:
                     if (send_to_dfms):
                         try:
                             dfms_sock.sendall(to_send)
-                            logger.debug("Sent {0} to DFMS manager".format(tag))
+                            logger.debug("Sent {0} to DALiuGE manager".format(tag))
                         except socket.error:
                             self.close_dfms_socket(dfms_sock, tag)
                 else:
-                    # from one of the DFMS sockets
+                    # from one of the DALiuGE sockets
                     data = the_socket.recv(BUFF_SIZE)
                     tag = self._dfms_sock_tag_dict.get(the_socket, None)
-                    logger.debug("Received {0} from DFMS manager".format(b2s(tag)))
+                    logger.debug("Received {0} from DALiuGE manager".format(b2s(tag)))
                     if (tag is None):
-                        logger.error('Tag for dfms socket {0} is gone'.format(the_socket))
+                        logger.error('Tag for DALiuGE socket {0} is gone'.format(the_socket))
                     else:
                         send_to_monitor(self.monitor_socket, delimit.join([tag, data]))
                         logger.debug("Sent {0} to Monitor".format(b2s(tag)))
@@ -203,7 +204,7 @@ def run(parser, args):
     parser.add_option("-f", "--dfms_port", action="store", type="int",
                     dest="dfms_port", help = "The port to bind dfms drop manager", default=default_dfms_port)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The port to bind dfms monitor", default=default_dfms_monitor_port)
+                    dest="monitor_port", help = "The port the DALiuGE monitor is running on", default=default_dfms_monitor_port)
     parser.add_option("-b", "--debug",
                   action="store_true", dest="debug", default=False,
                   help="Whether to log debug info")
@@ -223,5 +224,5 @@ def run(parser, args):
     try:
         server.loop()
     except KeyboardInterrupt:
-        logger.warning("Ctrl C - Stopping DFMS Proxy server")
+        logger.warning("Ctrl C - Stopping DALiuGE Proxy server")
         sys.exit(1)

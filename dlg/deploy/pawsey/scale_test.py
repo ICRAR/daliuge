@@ -543,7 +543,7 @@ if __name__ == '__main__':
     parser.add_option("-m", "--monitor_host", action="store", type="string",
                     dest="mon_host", help="Monitor host IP (optional)", default=default_aws_mon_host)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="mon_port", help="The port to bind dfms monitor", default=default_aws_mon_port)
+                    dest="mon_port", help="The port to bind DALiuGE monitor", default=default_aws_mon_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
                     dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
                     default=1)

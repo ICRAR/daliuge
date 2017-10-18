@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class Event(object):
     """
-    An event sent through the dfms framework.
+    An event sent through the DALiuGE framework.
 
     Events have at least a field describing the type of event they are (instead
     of having subclasses of the `Event` class), and therefore this class makes

@@ -260,7 +260,7 @@ def gen_pg():
     mhost = request.query.get('dfms_mgr_host')
     if (mhost is None):
         response.status = 500
-        return "Must specify DFMS manager host"
+        return "Must specify DALiUGE manager host"
     try:
         mport = int(request.query.get('dfms_mgr_port'))
         mgr_client = CompositeManagerClient(host=mhost, port=mport, timeout=30)
@@ -282,7 +282,7 @@ def gen_pg():
         redirect("http://{0}:{1}/session?sessionId={2}".format(mhost, mport, ssid))
     except RestClientException as re:
         response.status = 500
-        return "Fail to interact with DFMS Drop Manager: {0}".format(re)
+        return "Fail to interact with DALiUGE Drop Manager: {0}".format(re)
     except HTTPResponse:
         raise
     except Exception as ex:

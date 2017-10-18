@@ -22,7 +22,7 @@
 '''
 A small, httplib-only dependent flavor of the NGAS "read" and "write" methods.
 Installing the NGAS client libraries is still a not-so-trivial exercise, and
-while not all dfms installations have the NGAS client libraries available we
+while not all DALiuGE installations have the NGAS client libraries available we
 still need to access NGAS from time to time.
 
 @author: rtobar

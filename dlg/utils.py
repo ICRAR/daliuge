@@ -221,14 +221,14 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
 
 def getDfmsDir():
     """
-    Returns the root of the directory structure used by the DFMS framework at
+    Returns the root of the directory structure used by the DALiuGE framework at
     runtime.
     """
     return os.path.join(os.path.expanduser("~"), ".dfms")
 
 def getDfmsPidDir():
     """
-    Returns the location of the directory used by the DFMS framework to store
+    Returns the location of the directory used by the DALiuGE framework to store
     its PIDs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
@@ -236,7 +236,7 @@ def getDfmsPidDir():
 
 def getDfmsLogsDir():
     """
-    Returns the location of the directory used by the DFMS framework to store
+    Returns the location of the directory used by the DALiuGE framework to store
     its logs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """

@@ -73,7 +73,7 @@ class TestDaemon(unittest.TestCase):
         self._daemon.stop(_TIMEOUT)
         self._daemon_t.join(_TIMEOUT)
         self.assertFalse(self._daemon_t.is_alive(), "Daemon running thread should have finished by now")
-        self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DFMS Daemon REST interface should be off')
+        self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DALiuGE Daemon REST interface should be off')
 
     def test_nm_starts(self):
         # Simplest case...
