@@ -1560,7 +1560,7 @@ LINKTYPE_1TON_BACK_APPEND_METHOD = {
     DROPLinkType.STREAMING_INPUT:    'addStreamingConsumer',
     DROPLinkType.OUTPUT:             'addProducer',
     DROPLinkType.CHILD:              'setParent',
-    DROPLinkType.PRODUCER:           'addConsumer'
+    DROPLinkType.PRODUCER:           'addOutput'
 }
 
 LINKTYPE_NTO1_BACK_APPEND_METHOD = {
