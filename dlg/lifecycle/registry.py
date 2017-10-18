@@ -166,16 +166,16 @@ class RDBMSRegistry(Registry):
 
     # The following tables should be defined in the database we're pointing at
     #
-    # dfms_drop:
+    # dlg_drop:
     #   oid   (PK)
     #   phase (int)
     #
-    # dfms_dropinstance:
+    # dlg_dropinstance:
     #   uid     (PK)
     #   oid     (FK)
     #   dataRef ()
     #
-    # dfms_dropaccesstime:
+    # dlg_dropaccesstime:
     #   oid (FK, PK)
     #   accessTime (PK)
 
@@ -212,20 +212,20 @@ class RDBMSRegistry(Registry):
     def addDrop(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, "INSERT INTO dfms_drop (oid, phase) VALUES ({0},{1})", (drop.oid, drop.phase))
+            self.execute(cur, "INSERT INTO dlg_drop (oid, phase) VALUES ({0},{1})", (drop.oid, drop.phase))
             self.addDropInstance(drop, conn)
             cur.close()
 
     def addDropInstance(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'INSERT INTO dfms_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})', (drop.oid, drop.uid, drop.dataURL))
+            self.execute(cur, 'INSERT INTO dlg_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})', (drop.oid, drop.uid, drop.dataURL))
             cur.close()
 
     def getDropUids(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'SELECT uid FROM dfms_dropinstance WHERE oid = {0}', (drop.oid,))
+            self.execute(cur, 'SELECT uid FROM dlg_dropinstance WHERE oid = {0}', (drop.oid,))
             rows = cur.fetchall()
             cur.close()
             return [r[0] for r in rows]
@@ -233,19 +233,19 @@ class RDBMSRegistry(Registry):
     def setDropPhase(self, drop, phase, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'UPDATE dfms_drop SET phase = {0} WHERE oid = {1}', (drop.oid, drop.phase))
+            self.execute(cur, 'UPDATE dlg_drop SET phase = {0} WHERE oid = {1}', (drop.oid, drop.phase))
             cur.close()
 
     def recordNewAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'INSERT INTO dfms_dropaccesstime (oid, accessTime) VALUES ({0},{1})', (oid, self._dbmod.TimestampFromTicks(time.time())))
+            self.execute(cur, 'INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})', (oid, self._dbmod.TimestampFromTicks(time.time())))
             cur.close()
 
     def getLastAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'SELECT accessTime FROM dfms_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1', (oid,))
+            self.execute(cur, 'SELECT accessTime FROM dlg_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1', (oid,))
             row = cur.fetchone()
             cur.close()
             if row is None:

@@ -35,9 +35,9 @@ class TestRDBMSRegistry(unittest.TestCase):
         unittest.TestCase.setUp(self)
         conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
-        cur.execute('CREATE TABLE dfms_drop(oid varchar(64) PRIMARY KEY, phase integer)');
-        cur.execute('CREATE TABLE dfms_dropinstance(uid varchar(64) PRIMARY KEY, oid varchar(64), dataRef varchar(128))');
-        cur.execute('CREATE TABLE dfms_dropaccesstime(oid varchar(64), accessTime TIMESTAMP, PRIMARY KEY (oid, accessTime))');
+        cur.execute('CREATE TABLE dlg_drop(oid varchar(64) PRIMARY KEY, phase integer)');
+        cur.execute('CREATE TABLE dlg_dropinstance(uid varchar(64) PRIMARY KEY, oid varchar(64), dataRef varchar(128))');
+        cur.execute('CREATE TABLE dlg_dropaccesstime(oid varchar(64), accessTime TIMESTAMP, PRIMARY KEY (oid, accessTime))');
         conn.close()
 
     def tearDown(self):
@@ -50,7 +50,7 @@ class TestRDBMSRegistry(unittest.TestCase):
 
         conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
-        cur.execute('SELECT oid FROM dfms_drop');
+        cur.execute('SELECT oid FROM dlg_drop');
         r = cur.fetchone()
         self.assertEqual(1, len(r))
         self.assertEqual('a', r[0])
@@ -78,7 +78,7 @@ class TestRDBMSRegistry(unittest.TestCase):
         # Check accessing the database separately
         conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
-        cur.execute("SELECT uid FROM dfms_dropinstance WHERE oid = 'a'");
+        cur.execute("SELECT uid FROM dlg_dropinstance WHERE oid = 'a'");
         rows = cur.fetchall()
         self.assertEqual(2, len(rows))
         uids = [r[0] for r in rows]
