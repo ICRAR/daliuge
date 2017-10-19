@@ -140,7 +140,7 @@ setup(
             "metis",
             # 0.10.6 builds correctly with old (<=3.10) Linux kernels
             "netifaces>=0.10.6",
-            "networkx<=1.11", # networkx2.0 appears not inverse compatible
+            "networkx",
             # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
             "paramiko<2.0.0",
             "psutil",
@@ -156,6 +156,13 @@ setup(
             "zerorpc >= 0.6"
       ],
       # Keep alpha-sorted PLEASE!
+
+      # Packages that need to be installed from somewhere different than PyPI
+      dependency_links = [
+          # metis-python doesn't include compatibility with networkx 2.X yet
+          # Support has been provided by us but not merged upstream yet
+          'https://github.com/rtobar/metis-python/archive/master.zip#egg=metis'
+      ],
 
       extras_require={
 
