@@ -24,6 +24,18 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
 See the ``docs/`` directory for more information, or visit `our online
 documentation <https://daliuge.readthedocs.io/>`_
 
+
+Installation
+------------
+
+To get the latest stable version::
+
+ pip install daliuge
+
+Otherwise close this repository, go inside,
+and run either ``pip install .`` (preferred)
+or ``python setup.py install``.
+
 .. |daliuge| replace:: DALiuGE
 .. _ICRAR: http://www.icrar.org
 .. [#f1] 流 (pronounced Liu) is the Chinese character for "flow".

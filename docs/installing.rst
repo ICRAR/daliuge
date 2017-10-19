@@ -19,8 +19,13 @@ Installing
 ----------
 
 |daliuge| is based on setuptools, and thus it follows the standard python installation
-procedures. For the time being |daliuge| is not yet in PyPI, so you will have to get
-the source code first::
+procedures.
+The preferred way of installing the latest stable version of |daliuge|
+is by using ``pip``::
+
+ pip install daliuge
+
+If you want to build from the latest sources you can get them from here::
 
  git clone https://github.com/ICRAR/daliuge
  cd daliuge
