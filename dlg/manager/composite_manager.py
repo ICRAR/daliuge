@@ -101,7 +101,7 @@ class CompositeManager(DROPManager):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, dmPort, partitionAttr, dmExec, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmPort, partitionAttr, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
         at `dmHosts`, and should be listening on port `dmPort`.
@@ -109,7 +109,6 @@ class CompositeManager(DROPManager):
         :param: dmPort The port at which the sub-DMs expose themselves
         :param: partitionAttr The attribute on each dropSpec that specifies the
                 partitioning of the graph at this CompositeManager level.
-        :param: dmExec The name of the executable that starts a sub-DM
         :param: subDmId The sub-DM ID.
         :param: dmHosts The list of hosts under which the sub-DMs should be found.
         :param: pkeyPath The path to the SSH private key to be used when connecting
@@ -120,7 +119,6 @@ class CompositeManager(DROPManager):
         """
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
-        self._dmExec = dmExec
         self._subDmId = subDmId
         self._dmHosts = dmHosts
         self._graph = {}
@@ -160,10 +158,8 @@ class CompositeManager(DROPManager):
             for host in self._dmHosts:
                 if self._dmCheckerEvt.is_set():
                     break
-                try:
-                    self.ensureDM(host, timeout=self._dmCheckTimeout)
-                except:
-                    logger.warning("Couldn't ensure a DM for host %s, will try again later", host)
+                if not self.check_dm(host, timeout=self._dmCheckTimeout):
+                    logger.error("Couldn't contact manager for host %s, will try again later", host)
             if self._dmCheckerEvt.wait(60):
                 break
 
@@ -188,36 +184,17 @@ class CompositeManager(DROPManager):
     def dmPort(self):
         return self._dmPort
 
-    def subDMCommandLine(self, host):
-        return '{0} -i {1} -P {2} -d --host {3}'.format(self._dmExec, self._subDmId, self._dmPort, host)
-
-    def startDM(self, host):
-        client = remote.createClient(host, pkeyPath=self._pkeyPath)
-        out, err, status = remote.execRemoteWithClient(client, self.subDMCommandLine(host))
-        if status != 0:
-            logger.error("Failed to start the DM on %s:%d, stdout/stderr follow:\n==STDOUT==\n%s\n==STDERR==\n%s" % (host, self._dmPort, out, err))
-            raise DaliugeException("Failed to start the DM on %s:%d" % (host, self._dmPort))
-        logger.info("DM successfully started at %s:%d", host, self._dmPort)
-
-    def ensureDM(self, host, port=None, timeout=10):
-
+    def check_dm(self, host, port=None, timeout=10):
         port = port or self._dmPort
-
         logger.debug("Checking DM presence at %s:%d", host, port)
-        if portIsOpen(host, port, timeout):
-            logger.debug("DM already present at %s:%d", host, port)
-            return
-
-        # We rely on having ssh keys for this, since we're using
-        # the dlg.remote module, which authenticates using public keys
-        logger.debug("DM not present at %s:%d, will start it now", host, port)
-        self.startDM(host)
-
-        # Wait a bit until the DM starts; if it doesn't we fail
-        if not portIsOpen(host, port, timeout):
-            raise DaliugeException("DM started at %s:%d, but couldn't connect to it" % (host, port))
+        dm_is_there = portIsOpen(host, port, timeout)
+        return dm_is_there
 
     def dmAt(self, host, port=None):
+
+        if not self.check_dm(host, port):
+            raise SubManagerException('Manager expected but not running in %s:%d' % (host, port))
+
         port = port or self._dmPort
         return NodeManagerClient(host, port, 10)
 
@@ -236,7 +213,6 @@ class CompositeManager(DROPManager):
             host = iterable[0]
 
         try:
-            self.ensureDM(host, port)
             with self.dmAt(host, port) as dm:
                 res = f(dm, iterable, sessionId)
 
@@ -434,7 +410,6 @@ class DataIslandManager(CompositeManager):
     def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(NODE_DEFAULT_REST_PORT,
                                                 'node',
-                                                'dlgNM',
                                                 'nm',
                                                 dmHosts=dmHosts,
                                                 pkeyPath=pkeyPath,
@@ -456,7 +431,6 @@ class MasterManager(CompositeManager):
     def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(ISLAND_DEFAULT_REST_PORT,
                                             'island',
-                                            'dlgDIM',
                                             'dim',
                                             dmHosts=dmHosts,
                                             pkeyPath=pkeyPath,
