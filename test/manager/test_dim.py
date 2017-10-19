@@ -37,16 +37,12 @@ from dlg.manager.node_manager import NodeManager
 from dlg.manager.rest import NMRestServer
 from dlg.manager.session import SessionStates
 from dlg.utils import portIsOpen
-from test import graphsRepository
 from test.manager import testutils
 
 
 hostname = 'localhost'
 
 def setUpDimTests(self):
-
-    # SleepAndCopyApps don't take time to execute
-    graphsRepository.defaultSleepTime = 0
 
     # Start a DM. This is the DM which the DIM connects to.
     #
@@ -83,7 +79,7 @@ class TestDIM(unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
+                     {'oid':'B', 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
                      {'oid':'C', 'type':'plain', 'storage':'memory', 'node':hostname}]
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))

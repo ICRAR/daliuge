@@ -44,7 +44,7 @@ def memory(uid, **kwargs):
     return dropSpec
 
 def sleepAndCopy(uid, **kwargs):
-    dropSpec = dropdict({'oid':uid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp'})
+    dropSpec = dropdict({'oid':uid, 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp'})
     dropSpec.update(kwargs)
     return dropSpec
 
@@ -306,7 +306,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         for i in range(N):
             b_oid = "B%d" % (i,)
             # SleepAndCopyApp effectively opens the input drop
-            g2.append({"oid":b_oid, "type":"app", "app":"test.graphsRepository.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
+            g2.append({"oid":b_oid, "type":"app", "app":"dlg.apps.simple.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
             rels.append(DROPRel('A', DROPLinkType.INPUT, b_oid))
 
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})

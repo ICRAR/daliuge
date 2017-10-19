@@ -20,9 +20,6 @@
 #    MA 02111-1307  USA
 #
 
-# Avoid tornado calling logging.basicConfig(), which will happen if it finds
-# that no logger (root, 'tornado' and 'tornado.application') has been configured
-# with a handler
 def __setupTestLogging():
 
     import os

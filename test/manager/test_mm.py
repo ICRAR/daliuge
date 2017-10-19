@@ -37,16 +37,12 @@ from dlg.manager.node_manager import NodeManager
 from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 from dlg.manager.session import SessionStates
 from dlg.utils import portIsOpen
-from test import graphsRepository
 from test.manager import testutils
 
 
 hostname = 'localhost'
 
 def setUpMMTests(self):
-
-    # SleepAndCopyApps don't take time to execute
-    graphsRepository.defaultSleepTime = 0
 
     # Start a NM and a DIM. See test_dim for more details
     self.nm = NodeManager(False)
@@ -82,7 +78,7 @@ class TestMM(unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname, 'island':hostname},
+                     {'oid':'B', 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname, 'island':hostname},
                      {'oid':'C', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname}]
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
