@@ -54,13 +54,13 @@
 	{
 		"oid":       "E",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["G"]
 	},
 	{
 		"oid":       "F",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["H"]
 	},
 	{
@@ -78,7 +78,7 @@
 	{
 		"oid":       "I",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["J"]
 	},
 	{
@@ -103,13 +103,13 @@
 	{
 		"oid":       "L",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["N", "O"]
 	},
 	{
 		"oid":       "M",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["P"]
 	},
 	{
@@ -133,13 +133,13 @@
 	{
 		"oid":       "Q",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["S"]
 	},
 	{
 		"oid":       "R",
 		"type":      "app",
-		"app":       "test.graphsRepository.SleepAndCopyApp",
+		"app":       "dlg.apps.simple.SleepAndCopyApp",
 		"outputs":   ["T"]
 	},
 	{

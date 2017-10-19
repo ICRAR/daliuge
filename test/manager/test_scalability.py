@@ -44,7 +44,7 @@ def create_graph(branches, drops_per_branch):
             data_uid = 'data_%d_branch_%d' % (i, branch)
             app_uid = 'app_%d_branch_%d' % (i, branch)
             data_drop = memory_drop(data_uid)
-            app_drop = drop.dropdict({'node':hostname, 'oid':app_uid, 'uid':app_uid, 'type':'app', 'app':'test.graphsRepository.SleepAndCopyApp', 'sleepTime':0})
+            app_drop = drop.dropdict({'node':hostname, 'oid':app_uid, 'uid':app_uid, 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':0})
             data_drop.addConsumer(app_drop)
             graph.append(data_drop)
             graph.append(app_drop)

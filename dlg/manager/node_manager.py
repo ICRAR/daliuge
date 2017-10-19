@@ -88,7 +88,6 @@ class NodeManagerBase(DROPManager):
                  dlgPath=None,
                  host=None,
                  error_listener=None,
-                 enable_luigi=False,
                  events_port = constants.NODE_DEFAULT_EVENTS_PORT,
                  rpc_port = constants.NODE_DEFAULT_RPC_PORT,
                  max_threads = 0):
@@ -121,8 +120,6 @@ class NodeManagerBase(DROPManager):
             if not hasattr(error_listener, 'on_error'):
                 raise ValueError("error_listener doesn't contain an on_error method")
         self._error_listener = error_listener
-
-        self._enable_luigi = enable_luigi
 
         # Start our thread pool
         if max_threads == 0:
@@ -187,7 +184,7 @@ class NodeManagerBase(DROPManager):
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise SessionAlreadyExistsException(sessionId)
-        self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener, self._enable_luigi)
+        self._sessions[sessionId] = Session(sessionId, self._host, self._error_listener)
         logger.info('Created session %s', sessionId)
 
     def getSessionStatus(self, sessionId):

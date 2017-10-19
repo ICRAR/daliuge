@@ -75,8 +75,6 @@ class RestServer(object):
         host = host or 'localhost'
         port = port or 8080
 
-        # It seems it's not trivial to stop a running bottle server, so we use
-        # tornado's IOLoop directly instead
         logger.info("Starting REST server on %s:%d" % (host, port))
 
         self._server = RestServerWSGIServer(self.app, host, port)

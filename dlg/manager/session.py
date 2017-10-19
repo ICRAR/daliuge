@@ -28,11 +28,9 @@ import inspect
 import logging
 import threading
 
-from luigi import scheduler, worker
-
 from . import constants
 from .. import droputils
-from .. import luigi_int, graph_loader
+from .. import graph_loader
 from ..ddap_protocol import DROPStates, DROPLinkType, DROPRel
 from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
@@ -120,7 +118,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, host=None, error_listener=None, enable_luigi=False):
+    def __init__(self, sessionId, host=None, error_listener=None):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
         self._drops = {} # key: oid, value: actual drop object
@@ -131,7 +129,6 @@ class Session(object):
         self._status = SessionStates.PRISTINE
         self._host = host
         self._error_status_listener = None
-        self._enable_luigi = enable_luigi
         self._dropsubs = {}
         if error_listener:
             self._error_status_listener = ErrorStatusListener(self, error_listener)
@@ -264,27 +261,16 @@ class Session(object):
                 drop.subscribe(self._error_status_listener, eventType='status')
         logger.info("Stored all drops, proceeding with further customization")
 
-        # Start the luigi task that will make sure the graph is executed
-        # If we're not using luigi we still
-        if self._enable_luigi:
-            logger.debug("Starting Luigi FinishGraphExecution task for session %s", self._sessionId)
-            task = luigi_int.FinishGraphExecution(self._sessionId, self._roots)
-            sch = scheduler.CentralPlannerScheduler()
-            w = worker.Worker(scheduler=sch)
-            w.add(task)
-            workerT = threading.Thread(None, self._run, args=[w])
-            workerT.daemon = True
-            workerT.start()
-        else:
-            leaves = droputils.getLeafNodes(self._roots)
-            logger.info("Adding completion listener to leaf drops")
-            listener = LeavesCompletionListener(leaves, self)
-            for leaf in leaves:
-                if isinstance(leaf, AppDROP):
-                    leaf.subscribe(listener, 'producerFinished')
-                else:
-                    leaf.subscribe(listener, 'dropCompleted')
-            logger.info("Listener added to leaf drops")
+        # Add listeners that will move the session to FINISHED state
+        leaves = droputils.getLeafNodes(self._roots)
+        logger.info("Adding completion listener to leaf drops")
+        listener = LeavesCompletionListener(leaves, self)
+        for leaf in leaves:
+            if isinstance(leaf, AppDROP):
+                leaf.subscribe(listener, 'producerFinished')
+            else:
+                leaf.subscribe(listener, 'dropCompleted')
+        logger.info("Listener added to leaf drops")
 
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
@@ -402,8 +388,6 @@ class Session(object):
         # each of the DMs).
         # We recognize such nodes because they are actually not an instance of
         # AbstractDROP (they are DropProxy instances).
-        #
-        # The same trick is used in luigi_int.RunDROPTask.requires
         statusDict = collections.defaultdict(dict)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]

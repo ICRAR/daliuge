@@ -137,8 +137,6 @@ setup(
             "crc32c",
             "docker",
             "lockfile",
-            # We haven't ported the code yet to luigi 2, and probably will stop using it anyway
-            "luigi<2.0",
             "metis",
             # 0.10.6 builds correctly with old (<=3.10) Linux kernels
             "netifaces>=0.10.6",
