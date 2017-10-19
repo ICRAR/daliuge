@@ -110,7 +110,7 @@ except subprocess.CalledProcessError:
 
 # The rest is pretty standard thankfully
 setup(
-      name='dlg',
+      name='daliuge',
       version=get_version_info()[0],
       description=u'Data Activated \uF9CA (flow) Graph Engine - DALiuGE',
       long_description = "The SKA-SDK prototype for the Execution Framework component",
