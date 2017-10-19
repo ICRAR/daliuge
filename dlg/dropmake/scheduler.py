@@ -284,7 +284,7 @@ class Partition(object):
                     for vup in v_ups:
                         if (u == vup):
                             continue
-                        if (len(self._dag.predecessors(vup)) == 0):
+                        if (len(list(self._dag.predecessors(vup))) == 0):
                             # link u to "root" parent of v to break antichain
                             self._dag.add_edge(u, vup)
                             # change the original global graph
@@ -296,7 +296,7 @@ class Partition(object):
                     for udo in u_downs:
                         if (udo == v):
                             continue
-                        if (len(self._dag.successors(udo)) == 0):
+                        if (len(list(self._dag.successors(udo))) == 0):
                             # link "leaf" children of u to v to break antichain
                             self._dag.add_edge(udo, v)
                             # change the original global graph
@@ -1024,7 +1024,7 @@ class KFamilyPartition(Partition):
                     y_nd = nd.split('_x')[0] + '_y'
                     if ((1 - pai[nd] + pai['s'] == h) and
                     (pai[y_nd] - pai[nd] == 1)):
-                        w_antichain_len += split_graph.edge['s'][nd]['capacity']
+                        w_antichain_len += split_graph.adj['s'][nd]['capacity']
                         #print(' *** %d' % split_graph.edge['s'][nd]['capacity'])
                         antichain_names.append(nd)
         #print("weighted antichain len = %d" % w_antichain_len)
@@ -1180,7 +1180,7 @@ class Scheduler(object):
             ugid = self._dag.node[u].get('gid', None)
             vgid = self._dag.node[v].get('gid', None)
             G.add_edge(ugid, vgid) # repeating is fine
-            ew = self._dag.edge[u][v]['weight']
+            ew = self._dag.adj[u][v]['weight']
             try:
                 G[ugid][vgid]['weight'] += ew
             except KeyError:
@@ -1194,10 +1194,10 @@ class Scheduler(object):
         (edgecuts, metis_parts) = metis.part_graph(G,
                                                    nparts=num_partitions,
                                                    ufactor=1)
-        #assert(len(metis_parts) == len(G.nodes())) #test only
-        for i, pt in enumerate(metis_parts): # note min(pt) == 0
+
+        for node, pt in zip(G.nodes(), metis_parts): # note min(pt) == 0
             parent_id = pt + st_gid
-            child_part = self._part_dict[G.nodes()[i]]
+            child_part = self._part_dict[node]
             child_part.parent_id = parent_id
             #logger.debug("Part {0} --> Cluster {1}".format(child_part.partition_id, parent_id))
             #parent_part = Partition(parent_id, None)
@@ -1311,8 +1311,7 @@ class MySarkarScheduler(Scheduler):
         G = self._dag
         st_gid = len(self._drop_list) + 1
         init_c = st_gid
-        el = G.edges(data=True)
-        el.sort(key=lambda ed: ed[2]['weight'] * -1)
+        el = sorted(G.edges(data=True), key=lambda ed: ed[2]['weight'] * -1)
         stt = time.time()
         topo_sorted = nx.topological_sort(G)
         g_dict = self._part_dict#dict() #{gid : Partition}
@@ -1338,8 +1337,8 @@ class MySarkarScheduler(Scheduler):
             gu = G.node[u]
             v = e[1]
             gv = G.node[v]
-            ow = G.edge[u][v]['weight']
-            G.edge[u][v]['weight'] = 0 #edge zeroing
+            ow = G.adj[u][v]['weight']
+            G.adj[u][v]['weight'] = 0 #edge zeroing
             ugid = gu.get('gid', None)
             vgid = gv.get('gid', None)
             if (ugid != vgid): # merge existing parts
@@ -1349,7 +1348,7 @@ class MySarkarScheduler(Scheduler):
                     st_gid -= 1
                     self._sspace[i] = 1
                 else:
-                    G.edge[u][v]['weight'] = ow
+                    G.adj[u][v]['weight'] = ow
                     self._part_edges.append(e)
             if (dump_progress):
                 bb = np.median([pp._tmp_max_dop for pp in parts])
@@ -1513,8 +1512,7 @@ class PSOScheduler(Scheduler):
         #print x
         st_gid = len(self._drop_list) + 1
         init_c = st_gid
-        el = G.edges(data=True)
-        el.sort(key=lambda ed: ed[2]['weight'] * -1)
+        el = sorted(G.edges(data=True), key=lambda ed: ed[2]['weight'] * -1)
         #topo_sorted = nx.topological_sort(G)
         #g_dict = self._part_dict#dict() #{gid : Partition}
         g_dict = dict()
@@ -1534,8 +1532,8 @@ class PSOScheduler(Scheduler):
             gu = G.node[u]
             v = e[1]
             gv = G.node[v]
-            ow = G.edge[u][v]['weight']
-            G.edge[u][v]['weight'] = 0 #edge zeroing
+            ow = G.adj[u][v]['weight']
+            G.adj[u][v]['weight'] = 0 #edge zeroing
             recover_edge = False
 
             ugid = gu.get('gid', None)
@@ -1572,7 +1570,7 @@ class PSOScheduler(Scheduler):
                     else:
                         recover_edge = True #outright rejection
             if (recover_edge):
-                G.edge[u][v]['weight'] = ow
+                G.adj[u][v]['weight'] = ow
                 self._part_edges.append(e)
         self._call_counts += 1
         #print "called {0} times, len parts = {1}".format(self._call_counts, len(parts))
@@ -1830,7 +1828,7 @@ class DAGUtil(object):
             (dist[u][0] + #accumulate
             data.get(weight, default_weight) + #edge weight
             G.node[u].get(weight, 0) + # u node weight
-            (G.node[v].get(weight, 0) if len(G.successors(v)) == 0 else 0), # v node weight if no successor
+            (G.node[v].get(weight, 0) if len(list(G.successors(v))) == 0 else 0), # v node weight if no successor
             u)
                 for u, data in G.pred[v].items()]
             # Use the best predecessor if there is one and its distance is non-negative, otherwise terminate.
@@ -1910,14 +1908,14 @@ class DAGUtil(object):
             topo_sort = nx.topological_sort(G)
         for v in topo_sort:
             gv = G.node[v]
-            parents = G.predecessors(v)
+            parents = list(G.predecessors(v))
             if (len(parents) == 0):
                 gv['stt'] = 0
             else:
                 # get the latest end time of one of its parents
                 ledt = -1
                 for parent in parents:
-                    pedt = G.node[parent]['edt'] + G.edge[parent][v].get(weight, 0)
+                    pedt = G.node[parent]['edt'] + G.adj[parent][v].get(weight, 0)
                     if (pedt > ledt):
                         ledt = pedt
                 gv['stt'] = ledt
@@ -1931,7 +1929,7 @@ class DAGUtil(object):
         lpl = DAGUtil.get_longest_path(G, show_path=True)
         #N = lpl[1] - (len(lpl[0]) - 1)
         N = lpl[1]
-        M = len(G.nodes())
+        M = G.number_of_nodes()
         ma = np.zeros((M, N), dtype=np.int)
         if (topo_sort is None):
             topo_sort = nx.topological_sort(G)
