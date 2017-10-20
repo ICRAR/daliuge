@@ -217,7 +217,8 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         self._ensure_c_outputs_are_set()
 
         try:
-            self.lib.run(ctypes.pointer(self._c_app))
+            if self.lib.run(ctypes.pointer(self._c_app)):
+                raise Exception("Invocation of %r:run returned with status != 0" % self.lib)
         finally:
             for x, desc  in opened_info:
                 x.close(desc);
