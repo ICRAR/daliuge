@@ -119,6 +119,7 @@ class DynlibAppBase(object):
         lib = find_library(libname) or libname
 
         self.lib = ctypes.cdll.LoadLibrary(lib)
+        logger.info("Loaded %s as %r", lib, self.lib)
         expected_functions = ('init', 'run')
         for fname in expected_functions:
             if hasattr(self.lib, fname):
