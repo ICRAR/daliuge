@@ -138,8 +138,9 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "function": __name__ + '.func1'},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
-        a_data = pickle.dumps(os.urandom(32))
-        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
+        a_data = os.urandom(32)
+        c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), c_data=None)
+        self.assertEqual(a_data, pickle.loads(c_data))
 
     def test_output_in_remote_nm(self):
         """
@@ -155,5 +156,6 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
               {"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "function": __name__ + '.func1'}]
         g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
-        a_data = pickle.dumps(os.urandom(32))
-        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
+        a_data = os.urandom(32)
+        c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), c_data=None)
+        self.assertEqual(a_data, pickle.loads(c_data))
