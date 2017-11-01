@@ -1958,7 +1958,7 @@ class DAGUtil(object):
     def import_metis():
         try:
             import metis as mt
-        except ImportError:
+        except:
             pl = platform.platform()
             if (pl.startswith('Darwin')): # a clumsy way
                 ext = 'dylib'
