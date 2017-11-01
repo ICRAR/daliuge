@@ -1123,11 +1123,10 @@ class MetisPGTP(PGT):
         G = self._G
         #start_k = len(self._drop_list) + 1
         start_k = self._drop_list_len + 1
-        gnodes = G.nodes(data=True)
         stt = time.time()
-        for i, gid in enumerate(metis_out):
+        for gnode, gid in zip(G.nodes(data=True), metis_out):
             groups.add(gid)
-            gnode = gnodes[i][1]
+            gnode = gnode[1]
             ogm[gnode['oid']] = gid
             gnode['gid'] = gid
 
@@ -1144,7 +1143,7 @@ class MetisPGTP(PGT):
         if (self._merge_parts):
             for gid in groups:
                 group_weight[gid] = [0, 0]
-            for gnode in gnodes:
+            for gnode in G.nodes(data=True):
                 tt = group_weight[gnode[1]['gid']]
                 tt[0] += gnode[1]['tw']
                 tt[1] += gnode[1]['sz']
@@ -1255,8 +1254,7 @@ class MetisPGTP(PGT):
                                             ufactor=1)
         tmp_map = self._gid_island_id_map
         islands = set()
-        for i, island_id in enumerate(metis_parts):
-            gid = G.nodes()[i]
+        for gid, island_id in zip(G.nodes(), metis_parts):
             tmp_map[gid] = island_id
             islands.add(island_id)
         if (not form_island):
