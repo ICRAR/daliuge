@@ -117,7 +117,7 @@ install_requires = [
     "crc32c",
     "docker",
     "lockfile",
-    "metis",
+    "metis>=0.2a3",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
     # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
@@ -146,7 +146,7 @@ else:
 dependency_links = [
     # metis-python doesn't include compatibility with networkx 2.X yet
     # Support has been provided by us but not merged upstream yet
-    'https://github.com/rtobar/metis-python/archive/master.zip#egg=metis'
+    'https://github.com/rtobar/metis-python/archive/master.zip#egg=metis-0.2a3'
 ]
 
 # Extra requirements that are not needed by your every day daliuge installation

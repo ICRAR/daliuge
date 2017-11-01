@@ -49,7 +49,7 @@ before_install:
 # install daliuge in editable mode
 # This will ensure both that our dependencies are installed
 # and that our version file is generated here.
- - pip install -e .
+ - pip install --process-dependency-links -e .
 
 # run the tests, making sure subprocesses generate coverage information
 script:

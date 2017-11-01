@@ -30,7 +30,7 @@ Installation
 
 To get the latest stable version::
 
- pip install daliuge
+ pip install --process-dependency-links daliuge
 
 Otherwise close this repository, go inside,
 and run either ``pip install .`` (preferred)
