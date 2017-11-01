@@ -121,7 +121,6 @@ install_requires = [
     "metis",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
-    "networkx",
     # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
     "paramiko<2.0.0",
     "psutil",
@@ -137,6 +136,12 @@ install_requires = [
     "zerorpc >= 0.6"
 ]
 # Keep alpha-sorted PLEASE!
+
+# Python 3.6 is only supported in NetworkX 2 and above
+if sys.version >= (3, 6, 0):
+    install_requires.append("networkx>=2.0")
+else:
+    install_requires.append("networkx")
 
 # Packages that need to be installed from somewhere different than PyPI
 dependency_links = [
