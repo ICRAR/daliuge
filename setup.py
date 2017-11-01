@@ -20,11 +20,12 @@
 #    MA 02111-1307  USA
 #
 
+import os
 import subprocess
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
-import os
 
 
 # Version information
@@ -108,7 +109,60 @@ except subprocess.CalledProcessError:
     except subprocess.CalledProcessError:
         raise Exception("Couldn't install numpy manually, sorry :(")
 
-# The rest is pretty standard thankfully
+# Core requirements of DALiuGE
+# Keep alpha-sorted PLEASE!
+install_requires = [
+    "boto3",
+    "bottle",
+    "configobj",
+    "crc32c",
+    "docker",
+    "lockfile",
+    "metis",
+    # 0.10.6 builds correctly with old (<=3.10) Linux kernels
+    "netifaces>=0.10.6",
+    "networkx",
+    # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
+    "paramiko<2.0.0",
+    "psutil",
+    "pyswarm",
+    "python-daemon",
+    "pyzmq",
+    "scp",
+    # 1.10 contains an important race-condition fix on lazy-loaded modules
+    'six>=1.10',
+    # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
+    "zeroconf >= 0.19.1",
+    # 0.6 brings python3 support plus other fixes
+    "zerorpc >= 0.6"
+]
+# Keep alpha-sorted PLEASE!
+
+# Packages that need to be installed from somewhere different than PyPI
+dependency_links = [
+    # metis-python doesn't include compatibility with networkx 2.X yet
+    # Support has been provided by us but not merged upstream yet
+    'https://github.com/rtobar/metis-python/archive/master.zip#egg=metis'
+]
+
+# Extra requirements that are not needed by your every day daliuge installation
+extra_requires = {
+    # spead is required only for a specific app and its test, which we
+    # skip anyway if spead is not found
+    'spead': ["spead2==0.4.0"],
+
+    # Pyro4 and RPyC are semi-supported RPC alternatives
+    # (while zerorpc is the default)
+    'pyro': ['Pyro4>=4.47'], # 4.47 contains a fix we contributed
+    'rpyc': ['rpyc'],
+
+    # drive-casa is used by some manual tests under test/integrate
+    'drive-casa': ["drive-casa>0.7"],
+
+    # MPI support (MPIApp drops and HPC experiments) requires mpi4py
+    'MPI': ['mpi4py']
+}
+
 setup(
       name='daliuge',
       version=get_version_info()[0],
@@ -128,60 +182,9 @@ setup(
         'test.dropmake': ['logical_graphs/*.json'],
         'test.apps' : ['dynlib_example.c']
       },
-
-      # Keep alpha-sorted PLEASE!
-      install_requires=[
-            "boto3",
-            "bottle",
-            "configobj",
-            "crc32c",
-            "docker",
-            "lockfile",
-            "metis",
-            # 0.10.6 builds correctly with old (<=3.10) Linux kernels
-            "netifaces>=0.10.6",
-            "networkx",
-            # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
-            "paramiko<2.0.0",
-            "psutil",
-            "pyswarm",
-            "python-daemon",
-            "pyzmq",
-            "scp",
-            # 1.10 contains an important race-condition fix on lazy-loaded modules
-            'six>=1.10',
-            # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-            "zeroconf >= 0.19.1",
-            # 0.6 brings python3 support plus other fixes
-            "zerorpc >= 0.6"
-      ],
-      # Keep alpha-sorted PLEASE!
-
-      # Packages that need to be installed from somewhere different than PyPI
-      dependency_links = [
-          # metis-python doesn't include compatibility with networkx 2.X yet
-          # Support has been provided by us but not merged upstream yet
-          'https://github.com/rtobar/metis-python/archive/master.zip#egg=metis'
-      ],
-
-      extras_require={
-
-        # spead is required only for a specific app and its test, which we
-        # skip anyway if spead is not found
-        'spead': ["spead2==0.4.0"],
-
-        # Pyro4 and RPyC are semi-supported RPC alternatives
-        # (while zerorpc is the default)
-        'pyro': ['Pyro4>=4.47'], # 4.47 contains a fix we contributed
-        'rpyc': ['rpyc'],
-
-        # drive-casa is used by some manual tests under test/integrate
-        'drive-casa': ["drive-casa>0.7"],
-
-        # MPI support (MPIApp drops and HPC experiemnts) requires mpi4py
-        'MPI': ['mpi4py']
-      },
-
+      install_requires=install_requires,
+      dependency_links=dependency_links,
+      extras_require=extra_requires,
       test_suite="test",
       entry_points= {
           'console_scripts':[
