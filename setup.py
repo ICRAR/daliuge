@@ -137,7 +137,7 @@ install_requires = [
 # Keep alpha-sorted PLEASE!
 
 # Python 3.6 is only supported in NetworkX 2 and above
-if sys.version >= (3, 6, 0):
+if sys.version_info >= (3, 6, 0):
     install_requires.append("networkx>=2.0")
 else:
     install_requires.append("networkx")
