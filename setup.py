@@ -74,9 +74,8 @@ if not is_release:
                       'is_release': RELEASE}
         f.write(info.strip())
 
-write_version_info()
-
 # Every time we overwrite the version file
+write_version_info()
 
 # HACK - HACK - HACK - HACK
 #
