@@ -101,10 +101,14 @@ class NMTestsMixIn(object):
 
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual(c_data, droputils.allDropContents(c))
+        c_drop_data = droputils.allDropContents(c)
+        if c_data is not None:
+            self.assertEqual(len(c_data), len(c_drop_data))
+            self.assertEqual(c_data, c_drop_data)
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
+        return c_drop_data
 
 class TestDM(NMTestsMixIn, unittest.TestCase):
 
