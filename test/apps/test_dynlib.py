@@ -116,8 +116,10 @@ class DynlibAppTest(unittest.TestCase):
             self.assertEqual(len(data), len(drop_data), 'Data from %r is not what we wanted :(' % (drop,))
             self.assertEqual(data, drop_data)
 
-@unittest.skipUnless(_try_library(), "Example dynamic library not available")
-class DynlibAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
+class IntraNMMixIng(test_dm.NMTestsMixIn):
+
+    # Indicate which particular application should the test use
+    app = None
 
     def test_input_in_remote_nm(self):
         """
@@ -131,7 +133,7 @@ class DynlibAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         =======    =============
         """
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.dynlib.DynlibApp", "lib": _libpath, "print_stats": print_stats},
+        g2 = [{"oid":"B", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
         a_data = os.urandom(32)
@@ -148,8 +150,16 @@ class DynlibAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         =============    =======
         """
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers": ['B']},
-              {"oid":"B", "type":"app", "app":"dfms.apps.dynlib.DynlibApp", "lib": _libpath, "print_stats": print_stats}]
+              {"oid":"B", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats}]
         g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
         a_data = os.urandom(32)
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
+
+@unittest.skipUnless(_try_library(), "Example dynamic library not available")
+class IntraNMDynlibAppTest(IntraNMMixIng, unittest.TestCase):
+    app = "dfms.apps.dynlib.DynlibApp"
+
+@unittest.skipUnless(_try_library(), "Example dynamic library not available")
+class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
+    app = "dfms.apps.dynlib.DynlibProcApp"
