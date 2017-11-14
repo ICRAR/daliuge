@@ -98,6 +98,16 @@ def browse_service(zc, service_type_name, protocol, callback):
     browser = ServiceBrowser(zc, stn, handlers=[callback])
     return browser
 
+def zmq_safe(host_or_addr):
+    """Converts `host_or_addr` to a format that is safe for ZMQ to use"""
+
+    # The catch-all IP address, ZMQ needs a *
+    if host_or_addr == '0.0.0.0':
+        return '*'
+
+    # Return otherwise always an IP address
+    return socket.gethostbyname(host_or_addr)
+
 def portIsClosed(host, port, timeout):
     """
     Checks if a given ``host``/``port`` is closed, with a given ``timeout``.

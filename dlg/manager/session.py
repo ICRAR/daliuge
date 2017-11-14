@@ -31,6 +31,7 @@ import threading
 from . import constants
 from .. import droputils
 from .. import graph_loader
+from .. import rpc
 from ..ddap_protocol import DROPStates, DROPLinkType, DROPRel
 from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
@@ -56,35 +57,6 @@ class ErrorStatusListener(object):
     def handleEvent(self, evt):
         if evt.status == DROPStates.ERROR:
             self._event_listener.on_error(self._session.drops[evt.uid])
-
-class DropProxy(object):
-    """
-    A proxy to a remote drop.
-
-    It forwards attribute requests through the given Node Manager.
-    It also forwards procedure calls through the Node Manager.
-    """
-
-    def __init__(self, nm, hostname, port, sessionId, uid):
-        self.nm = nm
-        self.hostname = hostname
-        self.port = port
-        self.session_id = sessionId
-        self.uid = uid
-        logger.debug("Created %r", self)
-
-    def handleEvent(self, evt):
-        pass
-
-    def __getattr__(self, name):
-        if name == 'uid':
-            return self.uid
-        elif name in ('inputs', 'streamingInputs', 'outputs', 'consumers', 'producers'):
-            return []
-        return self.nm.get_drop_attribute(self.hostname, self.port, self.session_id, self.uid, name)
-
-    def __repr__(self, *args, **kwargs):
-        return '<DropProxy %s, session %s @%s:%d>' % (self.uid, self.session_id, self.hostname, self.port)
 
 class LeavesCompletionListener(object):
 
@@ -118,7 +90,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, host=None, error_listener=None):
+    def __init__(self, sessionId, error_listener=None):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
         self._drops = {} # key: oid, value: actual drop object
@@ -127,7 +99,6 @@ class Session(object):
         self._proxyinfo = []
         self._worker = None
         self._status = SessionStates.PRISTINE
-        self._host = host
         self._error_status_listener = None
         self._dropsubs = {}
         if error_listener:
@@ -290,7 +261,7 @@ class Session(object):
         # Append proxies
         logger.info("Creating %d drop proxies: %r", len(self._proxyinfo), self._proxyinfo)
         for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
-            proxy = DropProxy(nm, host, port, self._sessionId, remote_uid)
+            proxy = rpc.DropProxy(nm, host, port, self._sessionId, remote_uid)
             logger.debug("Attaching proxy to local %r via %s(proxy, False)",
                          self._drops[local_uid], relname)
             method = getattr(self._drops[local_uid], relname)
