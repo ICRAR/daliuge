@@ -177,7 +177,7 @@ class NodeManagerBase(DROPManager):
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise SessionAlreadyExistsException(sessionId)
-        self._sessions[sessionId] = Session(sessionId, self._error_listener)
+        self._sessions[sessionId] = Session(sessionId, self._error_listener, nm=self)
         logger.info('Created session %s', sessionId)
 
     def getSessionStatus(self, sessionId):
@@ -250,7 +250,7 @@ class NodeManagerBase(DROPManager):
 
         logger.debug("Received subscription information: %r", relationships)
         self._check_session_id(sessionId)
-        self._sessions[sessionId].add_node_subscriptions(relationships, self)
+        self._sessions[sessionId].add_node_subscriptions(relationships)
 
         # Set up event channels subscriptions
         for nodesub in relationships:

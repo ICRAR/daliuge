@@ -23,10 +23,12 @@
 import ctypes
 import functools
 import logging
+import multiprocessing
 import threading
 
 import six
 
+from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
 from ..drop import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
@@ -257,3 +259,92 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         opened_info = prepare_c_inputs(self._c_app, self.inputs)
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, opened_info)
+
+def _run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
+
+    # Step 1: initialise the library and return if there is an error
+    try:
+        lib, c_app = load_and_init(libname, oid, uid, params)
+        queue.put(None)
+    except Exception as e:
+        # The other end will read this
+        queue.put(e)
+        return
+
+    client = rpc.RPCClient()
+    try:
+        client.start()
+
+        # Step 2: setup DropProxy objects for both inputs and outputs
+        try:
+            to_drop_proxy = lambda x: rpc.DropProxy(client, x[0], x[1], x[2], x[3])
+            inputs = [to_drop_proxy(i) for i in inputs]
+            outputs = [to_drop_proxy(o) for o in outputs]
+            queue.put(None)
+        except Exception as e:
+            queue.put(e)
+            return
+
+        # Step 3: Finish initializing the C structure and run the application
+        try:
+            opened_info = prepare_c_inputs(c_app, inputs)
+            prepare_c_outputs(c_app, outputs)
+            run(lib, c_app, opened_info)
+            queue.put(None)
+        except Exception as e:
+            queue.put(e)
+    finally:
+        client.shutdown()
+
+class DynlibProcApp(BarrierAppDROP):
+    """Loads a dynamic library in a different process and runs it"""
+
+    def initialize(self, **kwargs):
+        super(DynlibProcApp, self).initialize(**kwargs)
+
+        if 'lib' not in kwargs:
+            raise InvalidDropException(self, "library not specified")
+        self.libname = kwargs.pop('lib')
+        self.timeout = self._getArg(kwargs, 'timeout', 600) # 10 minutes
+        self.app_params = kwargs
+
+    def run(self):
+
+        if not hasattr(self, '_rpc_server'):
+            raise Exception('DynlibProcApp can only run within an RPC server')
+
+        # On the sub-process we create DropProxy objects, so we need to extract
+        # from our inputs/outputs their contact point (RPC-wise) information.
+        # If one of our inputs/outputs is a DropProxy we already have this
+        # information; otherwise we must figure it out.
+        inputs = [self._get_proxy_info(i) for i in self.inputs]
+        outputs = [self._get_proxy_info(o) for o in self.outputs]
+
+        queue = multiprocessing.Queue()
+        args = (queue, self.libname, self.oid, self.uid, self.app_params, inputs, outputs)
+        proc = multiprocessing.Process(target=_run_in_proc, args=args)
+        proc.start()
+
+        try:
+            steps = ('loading and initialising library',
+                     'creating DropProxy instances',
+                     'running the application')
+            for step in steps:
+                error = queue.get()
+                if error is not None:
+                    logger.error("Error in sub-process when " + step)
+                    raise error
+        finally:
+            proc.join(self.timeout)
+
+    def _get_proxy_info(self, x):
+        if isinstance(x, rpc.DropProxy):
+            return (x.hostname, x.port, x.session_id, x.uid)
+
+        # TODO: we can't use the NodeManager's host directly here, as that
+        #       indicates the address the different servers *bind* to
+        #       (and, for example, can be 0.0.0.0)
+        rpc_server = x._rpc_server
+        host, port = rpc_server._rpc_host, rpc_server._rpc_port
+        host = utils.to_externally_contactable_host(host, prefer_local=True)
+        return (host, port, x._dlg_session_id, x.uid)

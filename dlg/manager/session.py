@@ -90,7 +90,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, error_listener=None):
+    def __init__(self, sessionId, error_listener=None, nm=None):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
         self._drops = {} # key: oid, value: actual drop object
@@ -100,6 +100,7 @@ class Session(object):
         self._worker = None
         self._status = SessionStates.PRISTINE
         self._error_status_listener = None
+        self._nm = nm
         self._dropsubs = {}
         if error_listener:
             self._error_status_listener = ErrorStatusListener(self, error_listener)
@@ -227,6 +228,13 @@ class Session(object):
             # Register them
             self._drops[drop.uid] = drop
 
+            # Add a reference to the RPC server that exposes this drop,
+            # which is our containing Node Manager.
+            # This information is usually not necessary, but there are cases in
+            # which we actually need it (like in the DynlibProcApp)
+            drop._rpc_server = self._nm
+            drop._dlg_session_id = self._sessionId
+
             # Register them with the error handler
             if self._error_status_listener:
                 drop.subscribe(self._error_status_listener, eventType='status')
@@ -260,8 +268,8 @@ class Session(object):
 
         # Append proxies
         logger.info("Creating %d drop proxies: %r", len(self._proxyinfo), self._proxyinfo)
-        for nm, host, port, local_uid, relname, remote_uid in self._proxyinfo:
-            proxy = rpc.DropProxy(nm, host, port, self._sessionId, remote_uid)
+        for host, port, local_uid, relname, remote_uid in self._proxyinfo:
+            proxy = rpc.DropProxy(self._nm, host, port, self._sessionId, remote_uid)
             logger.debug("Attaching proxy to local %r via %s(proxy, False)",
                          self._drops[local_uid], relname)
             method = getattr(self._drops[local_uid], relname)
@@ -297,7 +305,7 @@ class Session(object):
             logger.debug("Passing event %r to %r", evt, drop)
             drop.handleEvent(evt)
 
-    def add_node_subscriptions(self, relationships, nm):
+    def add_node_subscriptions(self, relationships):
 
         evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
         evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
@@ -343,7 +351,7 @@ class Session(object):
                     remote_uid = rel.rhs
                     mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
 
-                self._proxyinfo.append((nm, host, rpc_port, local_uid, mname, remote_uid))
+                self._proxyinfo.append((host, rpc_port, local_uid, mname, remote_uid))
 
     def finish(self):
         self.status = SessionStates.FINISHED
