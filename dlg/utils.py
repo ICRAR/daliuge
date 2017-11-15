@@ -35,6 +35,7 @@ import time
 import types
 import zlib
 
+import netifaces
 import six
 
 
@@ -52,7 +53,6 @@ def get_local_ip_addr():
     """
     Enumerate all interfaces and return bound IP addresses (exclude localhost)
     """
-    import netifaces
     PROTO = netifaces.AF_INET
     ifaces = netifaces.interfaces()
     if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
@@ -60,6 +60,15 @@ def get_local_ip_addr():
     iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] \
                     if 'addr' in s and not s['addr'].startswith('127.')]
     return iface_addrs
+
+def get_all_ipv4_addresses():
+    """Get a list of all IPv4 interfaces found in this computer"""
+    proto = netifaces.AF_INET
+    return [addr['addr']
+        for iface in netifaces.interfaces()
+        for iface_proto, addrs in netifaces.ifaddresses(iface).items() if proto == iface_proto
+        for addr in addrs if 'addr' in addr
+    ]
 
 def register_service(zc, service_type_name, service_name, ipaddr, port, protocol='tcp'):
     """
@@ -107,6 +116,34 @@ def zmq_safe(host_or_addr):
 
     # Return otherwise always an IP address
     return socket.gethostbyname(host_or_addr)
+
+def to_externally_contactable_host(host, prefer_local=False):
+    """
+    Turns `host`, which is an address used to bind a local service,
+    into a host that can be used to externally contact that service.
+
+    This should be used when there is no other way to find out how a client
+    to that service is going to connect to it.
+    """
+
+    # A specific address was used for binding, use that
+    # (regardless of the user preference), making sure we return an IP
+    if host != '0.0.0.0':
+        return socket.gethostbyname(host)
+
+    # host was "all interfaces", select one based on preference
+    # if only one interface is found we assume it's a loopback interface
+    addresses = get_all_ipv4_addresses()
+    if prefer_local or len(addresses) == 1:
+        return '127.0.0.1'
+
+    # Choose the first non-127.0.0.1 one
+    for a in addresses:
+        if not a.startswith('127.'):
+            return a
+
+    # All addresses were loopbacks! let's return the last one
+    raise a
 
 def portIsClosed(host, port, timeout):
     """
