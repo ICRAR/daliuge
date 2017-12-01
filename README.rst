@@ -33,7 +33,7 @@ To get the latest stable version::
  pip install --process-dependency-links daliuge
 
 Otherwise clone this repository, go inside,
-and run either ``pip install .`` (preferred)
+and run either ``pip install --process-dependency-links .`` (preferred)
 or ``python setup.py install``.
 
 .. |daliuge| replace:: DALiuGE
