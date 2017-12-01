@@ -32,7 +32,7 @@ To get the latest stable version::
 
  pip install --process-dependency-links daliuge
 
-Otherwise close this repository, go inside,
+Otherwise clone this repository, go inside,
 and run either ``pip install .`` (preferred)
 or ``python setup.py install``.
 
