@@ -23,7 +23,7 @@ procedures.
 The preferred way of installing the latest stable version of |daliuge|
 is by using ``pip``::
 
- pip install daliuge
+ pip install --process-dependency-links daliuge
 
 If you want to build from the latest sources you can get them from here::
 
@@ -33,7 +33,7 @@ If you want to build from the latest sources you can get them from here::
 If a system-wide installation is required, then the following
 commands can be issued::
 
- sudo pip install .
+ sudo pip --process-dependency-links install .
 
 If ``pip`` is not available, you can also use a different approach with::
 
@@ -42,7 +42,7 @@ If ``pip`` is not available, you can also use a different approach with::
 
 If a virtualenv is loaded, then |daliuge| can be installed on it by simply running::
 
- pip install .
+ pip install --process-dependency-links .
 
 Again, if ``pip`` is not available, you can use the simpler form::
 
