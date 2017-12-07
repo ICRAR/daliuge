@@ -40,7 +40,7 @@ class PyFuncApp(BarrierAppDROP):
     calling the function is treated as an iterable, with each individual object
     being written to its corresponding output.
 
-    Users indicate the function to be wrapped via the ``function`` parameter,
+    Users indicate the function to be wrapped via the ``func_name`` parameter,
     which is of course mandatory.
 
     Both inputs and outputs are serialized using the pickle protocol.
@@ -49,7 +49,7 @@ class PyFuncApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
 
-        fname = self._getArg(kwargs, 'function', None)
+        fname = self._getArg(kwargs, 'func_name', None)
         if not fname:
             raise InvalidDropException(self, 'No function specified')
 

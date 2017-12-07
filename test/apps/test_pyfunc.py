@@ -44,7 +44,7 @@ def func3():
     return ['b', 'c', 'd']
 
 def _PyFuncApp(oid, uid, f):
-    return PyFuncApp(oid, uid, function=__name__ + '.' + f)
+    return PyFuncApp(oid, uid, func_name=__name__ + '.' + f)
 
 class TestPyFuncApp(unittest.TestCase):
 
@@ -53,15 +53,15 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_invalid_function_param(self):
         # The function doesn't have a module
-        self.assertRaises(InvalidDropException, PyFuncApp, 'a', 'a', function='func1')
+        self.assertRaises(InvalidDropException, PyFuncApp, 'a', 'a', func_name='func1')
 
     def test_function_invalid_module(self):
         # The function lives in an unknown module/package
-        self.assertRaises(InvalidDropException, PyFuncApp, 'a', 'a', function='doesnt_exist.func1')
+        self.assertRaises(InvalidDropException, PyFuncApp, 'a', 'a', func_name='doesnt_exist.func1')
 
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
-        self.assertRaises(InvalidDropException, PyFuncApp, 'a', 'a', function='test.apps.test_pyfunc.doesnt_exist')
+        self.assertRaises(InvalidDropException, PyFuncApp, 'a', 'a', func_name='test.apps.test_pyfunc.doesnt_exist')
 
     def test_valid_creation(self):
         _PyFuncApp('a', 'a', 'func1')
@@ -135,7 +135,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         =======    =============
         """
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "function": __name__ + '.func1'},
+        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
         a_data = os.urandom(32)
@@ -153,7 +153,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         =============    =======
         """
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers": ['B']},
-              {"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "function": __name__ + '.func1'}]
+              {"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'}]
         g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
         a_data = os.urandom(32)
