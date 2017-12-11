@@ -396,6 +396,8 @@ https://github.com/ICRAR/daliuge-logical-graphs
                       help="logical graph editor host (all by default)")
     parser.add_option("-p", "--port", action="store", type="int", dest="port", default=8084,
                       help="logical graph editor port (8084 by default)")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
+                      help="Enable more logging")
 
     (options, args) = parser.parse_args(args)
 
@@ -403,6 +405,15 @@ https://github.com/ICRAR/daliuge-logical-graphs
         parser.error("Graph paths missing (-d/-t)")
     elif not os.path.exists(options.lg_path):
         parser.error("{0} does not exist.".format(options.lg_path))
+
+    if options.verbose:
+        fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
+        fmt.converter = time.gmtime
+        streamHdlr = logging.StreamHandler(sys.stdout)
+        streamHdlr.setFormatter(fmt)
+        logging.root.addHandler(streamHdlr)
+        logging.root.setLevel(logging.DEBUG)
+
 
     try:
         os.makedirs(options.pgt_path)
@@ -419,5 +430,5 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # catch SIGTERM as SIGINT
     signal.signal(signal.SIGTERM, lambda x,y: os.kill(os.getpid(), signal.SIGINT))
 
-    bottle.run(host=options.host, server='wsgiref', port=options.port, debug=False,
+    bottle.run(host=options.host, server='wsgiref', port=options.port, debug=options.verbose,
         server_class=restutils.ThreadingWSGIServer, handler_class=restutils.LoggingWSGIRequestHandler)
