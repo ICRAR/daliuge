@@ -1975,3 +1975,92 @@ class LG():
                 drop['command'] = bc.to_real_command()
 
         return ret
+
+def unroll(lg, oid_prefix=None):
+    """Unrolls a logical graph"""
+    start = time.time()
+    lg = LG(lg, ssid=oid_prefix)
+    drop_list = lg.unroll_to_tpl()
+    logger.info("Logical Graph unroll completed in %.3f [s]. # of Drops: %d", (time.time() - start), len(drop_list))
+    return drop_list
+
+
+ALGO_NONE = 0
+ALGO_METIS = 1
+ALGO_MY_SARKAR = 2
+ALGO_MIN_NUM_PARTS = 3
+ALGO_PSO = 4
+
+_known_algos = {
+    'none':               ALGO_NONE,
+    'metis':              ALGO_METIS,
+    'mysarkar':           ALGO_MY_SARKAR,
+    'min_num_parts':      ALGO_MIN_NUM_PARTS,
+    'pso':                ALGO_PSO,
+    ALGO_NONE: 'none',
+    ALGO_METIS:           'metis',
+    ALGO_MY_SARKAR:       'mysarkar',
+    ALGO_MIN_NUM_PARTS:   'min_num_parts',
+    ALGO_PSO:             'pso',
+}
+
+def known_algorithms():
+    return [x for x in _known_algos.keys() if isinstance(x, six.string_types)]
+
+def partition(pgt, algo, num_partitions=1, num_islands=1,
+              partition_label='partition', **algo_params):
+    """Partitions a Physical Graph Template"""
+
+    if isinstance(algo, six.string_types):
+        if algo not in _known_algos:
+            raise ValueError('Unknown partitioning algorithm: %s. Known algorithms are: %r' % (algo, _known_algos.keys()))
+        algo = _known_algos[algo]
+
+    if algo not in _known_algos:
+        raise GraphException("Unknown partition algorithm: %d. Known algorithm are: %r" % (algo, _known_algos.keys()))
+
+    logger.info("Running partitioning with algorithm=%s, %d partitions, "
+                "%d islands, and parameters=%r", _known_algos[algo],
+                num_partitions, num_islands, algo_params)
+
+    # Read all possible values with defaults
+    # Not all algorithms use them, but makes the coding easier
+    do_merge = num_islands > 1
+    min_goal = algo_params.get('min_goal', 0)
+    ptype = algo_params.get('ptype', 0)
+    max_load_imb = algo_params.get('max_load_imb', 90)
+    max_dop = algo_params.get('max_dop', 8)
+    time_greedy = algo_params.get('time_greedy', 50)
+    deadline = algo_params.get('deadline', None)
+    topk = algo_params.get('topk', 30)
+    swarm_size = algo_params.get('swarm_size', 40)
+
+    if algo == ALGO_NONE:
+        pgt = PGT(pgt)
+
+    elif algo == ALGO_METIS:
+        ufactor = 100 - max_load_imb + 1
+        if (ufactor <= 0):
+            ufactor = 1
+        pgt = MetisPGTP(pgt, num_partitions, min_goal, partition_label, ptype,
+                         ufactor, merge_parts=do_merge)
+
+    elif algo == ALGO_MY_SARKAR:
+        pgt = MySarkarPGTP(pgt, num_partitions, partition_label, max_dop,
+                            merge_parts=do_merge)
+
+    elif algo == ALGO_MIN_NUM_PARTS:
+        time_greedy = 1 - time_greedy / 100.0 # assuming between 1 to 100
+        pgt =  MinNumPartsPGTP(pgt, deadline, num_partitions, partition_label, max_dop, merge_parts=do_merge, optimistic_factor=time_greedy)
+
+    elif algo == ALGO_PSO:
+        pgt = PSOPGTP(pgt, partition_label, max_dop, deadline=deadline, topk=topk, swarm_size=swarm_size, merge_parts=do_merge)
+
+    else:
+        raise GraphException("Unknown partition algorithm: {0}".format(algo))
+
+    pgt.to_gojs_json(string_rep=False, visual=True)
+    if do_merge:
+        pgt.merge_partitions(num_islands, form_island=True, island_type=1, visual=True)
+
+    return pgt
