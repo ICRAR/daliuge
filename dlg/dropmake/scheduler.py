@@ -1966,6 +1966,16 @@ class DAGUtil(object):
                 ext = 'so' # what about Microsoft??!!
             os.environ["METIS_DLL"] = pkg_resources.resource_filename('dlg.dropmake', 'lib/libmetis.{0}'.format(ext))  # @UndefinedVariable
             import metis as mt
+        if not hasattr(mt, '_dlg_patched'):
+            mt._part_graph = mt.part_graph
+            def logged_part_graph(*args, **kwargs):
+                logger.info('Starting metis partitioning')
+                start = time.time()
+                ret = mt._part_graph(*args, **kwargs)  # @UndefinedVariable
+                logger.info('Finished metis partitioning in %.3f [s]', time.time() - start)
+                return ret
+            mt.part_graph = logged_part_graph
+            mt._dlg_patched = True
         return mt
 
     @staticmethod
