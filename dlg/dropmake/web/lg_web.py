@@ -23,23 +23,25 @@
 
 import datetime
 import json
+import logging
 import optparse
 import os, traceback
 import signal
+import sys
 import threading
+import time
 
-import bottle
-from bottle import route, request, get, static_file, template, redirect,\
+from bottle import route, request, get, static_file, template, redirect, \
  response, HTTPResponse
+import bottle
 import pkg_resources
 
-from ..pg_generator import LG, PGT, GraphException, MetisPGTP,\
- MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
-from ..pg_manager import PGManager
-from ..scheduler import SchedulerException
 from ... import droputils, restutils, utils
 from ...manager.client import CompositeManagerClient
 from ...restutils import RestClientException
+from ..pg_generator import unroll, partition, GraphException
+from ..pg_manager import PGManager
+from ..scheduler import SchedulerException
 
 
 def file_as_string(fname, enc='utf8'):
@@ -193,7 +195,7 @@ def load_pg_viewer():
 
     if pgt_exists(pgt_name):
         tpl = file_as_string('pg_viewer.html')
-        return template(tpl, pgt_view_json_name=pgt_name, is_partition_page='', partition_info='')
+        return template(tpl, pgt_view_json_name=pgt_name, title='Physical Graph Template', partition_info='')
     else:
         response.status = 404
         return "{0}: physical graph template (view) {1} not found\n".format(err_prefix, pgt_name)
@@ -295,76 +297,49 @@ def gen_pgt():
     """
     RESTful interface for translating Logical Graphs to Physical Graphs
     """
-    lg_name = request.query.get('lg_name')
-    if (lg_exists(lg_name)):
-        try:
-            lg = LG(lg_path(lg_name))
-            drop_list = lg.unroll_to_tpl()
-            part = request.query.get('num_par')
-            try:
-                #print('num_islands', request.query.get('num_islands'))
-                num_islands = int(request.query.get('num_islands'))
-            except:
-                num_islands = 0
-            mpp = num_islands > 0
-            if (part is None):
-                is_part = ''
-                pgt = PGT(drop_list)
-            else:
-                is_part = 'Partition'
-                par_label = request.query.get('par_label')
-                algo = request.query.get('algo')
-                if ('metis' == algo):
-                    min_goal = int(request.query.get('min_goal'))
-                    ptype = int(request.query.get('ptype'))
-                    ufactor = 100 - int(request.query.get('max_load_imb')) + 1
-                    if (ufactor <= 0):
-                        ufactor = 1
-                    pgt = MetisPGTP(drop_list, int(part), min_goal, par_label, ptype, ufactor, merge_parts=mpp)
-                elif ('mysarkar' == algo):
-                    pgt = MySarkarPGTP(drop_list, int(part), par_label, int(request.query.get('max_dop')), merge_parts=mpp)
-                elif ('min_num_parts' == algo):
-                    time_greedy = 1 - float(request.query.get('time_greedy')) / 100.0 # assuming between 1 to 100
-                    pgt = MinNumPartsPGTP(drop_list, int(request.query.get('deadline')),
-                    int(part), par_label, int(request.query.get('max_dop')),
-                    merge_parts=mpp, optimistic_factor=time_greedy)
-                elif ('pso' == algo):
-                    params = ['deadline', 'topk', 'swarm_size']
-                    pars = [None, 30, 40]
-                    for i, para in enumerate(params):
-                        try:
-                            pars[i] = int(request.query.get(para))
-                        except:
-                            continue
-                    pgt = PSOPGTP(drop_list, par_label, int(request.query.get('max_dop')),
-                    deadline=pars[0], topk=pars[1], swarm_size=pars[2], merge_parts=mpp)
-                else:
-                    raise GraphException("Unknown partition algorithm: {0}".format(algo))
-            if (mpp):
-                pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=num_islands)
-                """
-                if ('mysarkar' == algo):
-                    pgt_id = pg_mgr.add_pgt(pgt, lg_name, num_islands=int(part))
-                elif ('metis' == algo):
-                """
-            else:
-                pgt_id = pg_mgr.add_pgt(pgt, lg_name)
-            part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])
-            tpl = file_as_string('pg_viewer.html')
-            return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, is_partition_page=is_part)
-        except GraphException as ge:
-            response.status = 500
-            return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
-        except SchedulerException as se:
-            response.status = 500
-            return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
-        except Exception as exp:
-            response.status = 500
-            trace_msg = traceback.format_exc()
-            return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
-    else:
+
+    query = request.query
+    lg_name = query.get('lg_name')
+    if not lg_exists(lg_name):
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
+
+    try:
+
+        # LG -> PGT
+        pgt = unroll(lg_path(lg_name))
+
+        # Read parameters from request
+        algo = query.get('algo', 'none')
+        num_partitions = query.get('num_par', default=1, type=int)
+        num_islands = query.get('num_islands', default=0, type=int)
+        par_label = query.get('par_label', 'Partition')
+        algo_params = {}
+        for name, typ in zip(('min_goal', 'ptype', 'max_laod_imb', 'max_dop', 'time_greedy', 'deadline', 'topk', 'swarm_size'),
+                            (int, int, int, int, float, int, int, int)):
+            if name in query:
+                algo_params[name] = query.get(name, type=typ)
+
+        # Partition the PGT
+        pgt = partition(pgt, algo=algo, num_partitions=num_partitions,
+                        num_islands=num_islands, partition_label=par_label,
+                        **algo_params)
+
+        pgt_id = pg_mgr.add_pgt(pgt, lg_name)
+
+        part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])
+        tpl = file_as_string('pg_viewer.html')
+        return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, title="Physical Graph Template%s" % ('' if num_partitions == 0 else 'Partitioning'))
+    except GraphException as ge:
+        response.status = 500
+        return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
+    except SchedulerException as se:
+        response.status = 500
+        return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
+    except Exception:
+        response.status = 500
+        trace_msg = traceback.format_exc()
+        return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 @get('/')
 def root():

@@ -80,7 +80,7 @@ class PGManager(object):
         self._gen_pgt_sem = threading.Semaphore(1)
         self._root_dir = root_dir
 
-    def add_pgt(self, pgt, lg_name, num_islands=None):
+    def add_pgt(self, pgt, lg_name):
         """
         Dummy impl. using file system for now (thread safe)
         TODO - use proper graph databases to manage all PGTs
@@ -94,13 +94,7 @@ class PGManager(object):
             self._pgt_fn_count = 0
         pgt_id = lg_name.replace(".json", "{0}_pgt.json".format(self._pgt_fn_count))
         pgt_path = "{0}/{1}".format(self._root_dir, pgt_id)
-        if (num_islands is None):
-            pgt_content = pgt.json
-        else:
-            pgt_obj = pgt.to_gojs_json(string_rep=False, visual=True)
-            pgt.merge_partitions(num_islands, form_island=True,
-                                island_type=1, visual=True)
-            pgt_content = json.dumps(pgt_obj, indent=2)
+
         try:
             # if the pgt name has a group with / then let's create a subdirectory
             # for it
@@ -112,7 +106,7 @@ class PGManager(object):
                     pass
             # overwrite file on disks
             with open(pgt_path, "w") as f:
-                f.write(pgt_content)
+                json.dump(pgt.to_gojs_json(string_rep=False, visual=True), f)
             self._pgt_dict[pgt_id] = pgt
         except Exception as exp:
             raise GraphException("Fail to save PGT {0}:{1}".format(pgt_path, str(exp)))
