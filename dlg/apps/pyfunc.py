@@ -21,7 +21,10 @@
 #
 """Module implementing the PyFuncApp class"""
 
+import base64
 import importlib
+import marshal
+import types
 
 import six.moves.cPickle as pickle  # @UnresolvedImport
 
@@ -29,6 +32,26 @@ from .. import droputils
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
+
+def import_using_name(app, fname):
+    # The name has the form pack1.pack2.mod.func
+    parts = fname.split('.')
+    if len(parts) < 2:
+        msg = '%s does not contain a module name' % fname
+        raise InvalidDropException(app, msg)
+
+    modname, fname = '.'.join(parts[:-1]), parts[-1]
+    try:
+        mod = importlib.import_module(modname, __name__)
+        return getattr(mod, fname)
+    except ImportError as e:
+        raise InvalidDropException(app, 'Error when loading module %s: %s' % (modname, str(e)))
+    except AttributeError:
+        raise InvalidDropException(app, 'Module %s has no member %s' % (modname, fname))
+
+def import_using_code(name, code):
+    fcode = marshal.loads(base64.b64decode(code))
+    return types.FunctionType(fcode, {}, name=name)
 
 class PyFuncApp(BarrierAppDROP):
     """
@@ -40,8 +63,10 @@ class PyFuncApp(BarrierAppDROP):
     calling the function is treated as an iterable, with each individual object
     being written to its corresponding output.
 
-    Users indicate the function to be wrapped via the ``func_name`` parameter,
-    which is of course mandatory.
+    Users indicate the function to be wrapped via the ``func_name`` parameter.
+    Otherwise, users can also *send* over the python code using the ``func_code``
+    parameter. The code needs to be base64-encoded and produced with the marshal
+    module of the same Python version used to run DALiuGE.
 
     Both inputs and outputs are serialized using the pickle protocol.
     """
@@ -50,23 +75,14 @@ class PyFuncApp(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
         fname = self._getArg(kwargs, 'func_name', None)
-        if not fname:
-            raise InvalidDropException(self, 'No function specified')
+        fcode = self._getArg(kwargs, 'func_code', None)
+        if not fname and not fcode:
+            raise InvalidDropException(self, 'No function specified (either via name or code)')
 
-        # The name has the form pack1.pack2.mod.func
-        parts = fname.split('.')
-        if len(parts) < 2:
-            msg = '%s does not contain a module name' % fname
-            raise InvalidDropException(self, msg)
-
-        modname, fname = '.'.join(parts[:-1]), parts[-1]
-        try:
-            mod = importlib.import_module(modname, __name__)
-            self.f = getattr(mod, fname)
-        except ImportError as e:
-            raise InvalidDropException(self, 'Error when loading module %s: %s' % (modname, str(e)))
-        except AttributeError:
-            raise InvalidDropException(self, 'Module %s has no member %s' % (modname, fname))
+        if not fcode:
+            self.f = import_using_name(self, fname)
+        else:
+            self.f = import_using_code(fname, fcode)
 
     def run(self):
 

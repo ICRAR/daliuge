@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import base64
+import marshal
 import os
 import random
 import unittest
@@ -44,6 +46,9 @@ def func3():
     return ['b', 'c', 'd']
 
 def _PyFuncApp(oid, uid, f):
+    if callable(f):
+        fcode = base64.b64encode(marshal.dumps(f.__code__))
+        return PyFuncApp(oid, uid, func_name=f.__name__, func_code=fcode)
     return PyFuncApp(oid, uid, func_name=__name__ + '.' + f)
 
 class TestPyFuncApp(unittest.TestCase):
@@ -66,7 +71,14 @@ class TestPyFuncApp(unittest.TestCase):
     def test_valid_creation(self):
         _PyFuncApp('a', 'a', 'func1')
 
-    def _test_func1_and_2(self, f, input_data, output_data):
+    def test_creation_with_code(self):
+
+        def inner_function(x, y):
+            return x + y
+
+        _PyFuncApp('a', 'a', inner_function)
+
+    def _test_simple_functions(self, f, input_data, output_data):
 
         a, c = [InMemoryDROP(x, x) for x in ('a', 'c')]
         b = _PyFuncApp('b', 'b', f)
@@ -84,12 +96,22 @@ class TestPyFuncApp(unittest.TestCase):
     def test_func1(self):
         """Checks that func1 in this module works when wrapped"""
         data = os.urandom(64)
-        self._test_func1_and_2('func1', data, data)
+        self._test_simple_functions('func1', data, data)
 
     def test_func2(self):
         """Checks that func2 in this module works when wrapped"""
         n = random.randint(0, 1e6)
-        self._test_func1_and_2('func2', n, 2 * n)
+        self._test_simple_functions('func2', n, 2 * n)
+
+    def test_inner_func(self):
+        n = random.randint(0, 1e6)
+        def f(x):
+            return x + 2
+        self._test_simple_functions(f, n, n + 2)
+
+    def test_lambda(self):
+        n = random.randint(0, 1e6)
+        self._test_simple_functions(lambda x: x / 2, n, n / 2)
 
     def _test_func3(self, output_drops, expected_outputs):
 
