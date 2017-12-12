@@ -378,7 +378,8 @@ class ThreadedPyroRPCServer(PyroRPCServer): # pragma: no cover
         import Pyro4
         Pyro4.config.SERVERTYPE = 'thread'
         Pyro4.config.THREADPOOL_SIZE = 16
-        Pyro4.config.THREADPOOL_ALLOW_QUEUE = False
+        if hasattr(Pyro4.config, 'THREADPOOL_ALLOW_QUEUE'):
+            Pyro4.config.THREADPOOL_ALLOW_QUEUE = False
 
 # Check which rpc backend should be exposed
 rpc_lib = os.environ.get('DALIUGE_RPC', 'zerorpc')
