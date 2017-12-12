@@ -50,11 +50,9 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     This method prepends `oid_prefix` to all generated Drop OIDs.
     '''
 
-    from .dropmake.pg_generator import LG
-    lg = LG(_open_i(lg_path), ssid=oid_prefix)
+    from .dropmake.pg_generator import unroll
     logger.info("Start to unroll %s", lg_path)
-    drop_list = lg.unroll_to_tpl()
-    logger.info("Unroll completed for %s with # of Drops: %d", lg_path, len(drop_list))
+    drop_list = unroll(_open_i(lg_path), oid_prefix=oid_prefix)
 
     # Optionally set sleepTimes to 0 and apps to a specific type
     if zerorun:
@@ -68,30 +66,31 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
 
     return drop_list
 
-def partition(pgt, pip_name, num_partitions, num_islands, algo='metis'):
-    '''
-    Partitions the Physical Graph Template `pgt` with the algorithm `algo`
-    using `num_partitions` partitions.
-    '''
+def partition(pgt, opts):
 
-    from .dropmake.pg_generator import MySarkarPGTP, MetisPGTP
+    from .dropmake import pg_generator
 
-    logger.info("Initialising PGTP %s", algo)
-    if algo == 'sarkar':
-        pgtp = MySarkarPGTP(pgt, num_partitions, merge_parts=True)
-    else:
-        pgtp = MetisPGTP(pgt, num_partitions, merge_parts=True)
-    del pgt
-    logger.info("PGTP initialised %s", algo)
+    algo_params = opts.algo_params or []
+    param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
+                   'max_dop': int, 'time_greedy': float, 'deadline': int,
+                   'topk': int, 'swarm_size': int}
 
-    logger.info("Starting to partition %s", pip_name)
-    pgtp.to_gojs_json(string_rep=False, visual=True)
-    pgt = pgtp.to_pg_spec([], ret_str=False,
-                          num_islands=num_islands,
-                          tpl_nodes_len=num_partitions+num_islands)
-    logger.info("Partitioning completed for %s", pip_name)
+    # Double-check that -A command-line flags are of shape name=value
+    for p in algo_params:
+        if len(list(filter(None, p.split('=')))) != 2:
+            raise optparse.OptionValueError('Algorithm parameter has no form of name=value: %s' % (p,))
 
-    return pgt
+    # Extract algorithm parameters and convert to proper type
+    algo_params = {n: param_types[n](v)
+                   for n, v in map(lambda p: p.split('='), algo_params)
+                   if n in param_types}
+
+    pgt = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
+                                 num_islands=opts.islands, partition_label='partition',
+                                 **algo_params)
+    return pgt.to_pg_spec([], ret_str=False, num_islands=opts.islands,
+                          tpl_nodes_len=opts.partitions + opts.islands)
+
 
 def resource_map(pgt, nodes, pip_name, num_islands):
     '''
@@ -249,12 +248,16 @@ def dlg_unroll(parser, args):
     dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
 
 def _add_partition_options(parser):
+
+    from .dropmake import pg_generator
     parser.add_option("-N", "--partitions", action="store", type="int",
                       dest="partitions", help="Number of partitions to generate", default=1)
     parser.add_option("-i", "--islands", action="store", type="int",
                       dest="islands", help="Number of islands to use during the partitioning", default=1)
-    parser.add_option("-A", "--algorithm", action="store", type="choice", choices=['metis', 'sarkar'],
+    parser.add_option("-a", "--algorithm", action="store", type="choice", choices=pg_generator.known_algorithms(),
                       dest="algo", help="algorithm used to do the partitioning", default="metis")
+    parser.add_option("-A", "--algorithm-param", action="append", dest="algo_params",
+                      help="Extra name=value parameters used by the algorithms (algorithm-specific)")
 
 @cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions')
 def dlg_partition(parser, args):
@@ -268,10 +271,10 @@ def dlg_partition(parser, args):
     _setup_logging(opts)
     dump = _setup_output(opts)
 
-    pip_name = utils.fname_to_pipname(opts.pgt_path)
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
-    dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo))
+
+    dump(partition(pgt, opts))
 
 @cmdwrap('unroll-and-partition', 'unroll + partition')
 def dlg_unroll_and_partition(parser, args):
@@ -284,9 +287,8 @@ def dlg_unroll_and_partition(parser, args):
     _setup_logging(opts)
     dump = _setup_output(opts)
 
-    pip_name = utils.fname_to_pipname(opts.lg_path)
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
-    dump(partition(pgt, pip_name, opts.partitions, opts.islands, opts.algo))
+    dump(partition(pgt, opts))
 
 @cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
