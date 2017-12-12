@@ -24,6 +24,7 @@ Module containing the core DROP classes.
 """
 
 from abc import ABCMeta, abstractmethod
+import base64
 import collections
 import contextlib
 import errno
@@ -979,7 +980,10 @@ class InMemoryDROP(AbstractDROP):
     """
 
     def initialize(self, **kwargs):
-        self._buf = BytesIO()
+        args = []
+        if 'pydata' in kwargs:
+            args.append(base64.b64decode(six.b(kwargs.pop('pydata'))))
+        self._buf = BytesIO(*args)
 
     def getIO(self):
         return MemoryIO(self._buf)
