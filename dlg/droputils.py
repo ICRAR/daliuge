@@ -93,7 +93,7 @@ class DROPWaiterCtx(object):
             self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
 
 
-def allDropContents(drop):
+def allDropContents(drop, bufsize=4096):
     '''
     Returns all the data contained in a given DROP
     '''
@@ -102,7 +102,7 @@ def allDropContents(drop):
     read = drop.read
 
     while True:
-        data = read(desc)
+        data = read(desc, bufsize)
         if not data:
             break
         buf.write(data)
