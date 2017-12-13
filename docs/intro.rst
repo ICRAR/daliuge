@@ -4,15 +4,17 @@
 Introduction
 ============
 
-The Data Activated 流 (Liu) Graph Engine (|daliuge|) prototype represents the **execution framework**
-of the Science Data Processor (SDP) element of the Square Kilometer Array (SKA) observatory.
+The Data Activated 流 (Liu) Graph Engine (|daliuge|) is a workflow graph execution framework, 
+specifically designed to support very large scale processing graphs for the reduction of 
+interferometric radio astronomy data sets.
 |daliuge| aims to provide a distributed data management platform and a
 scalable pipeline execution environment to support continuous, soft real-time,
-data-intensive processing for producing SKA science ready products.
+data-intensive processing for producing radio astronomy data products.
 
-The development of |daliuge| is largely based on SDP requirements, functions and the
-overall architecture. Although specifically designed for SDP and SKA,
-|daliuge| has adopted a generic, data-driven framework potentially applicable to
+|daliuge| originated from a prototyping activity as part of the SKA SDP Consortium called Data Flow Management System (DFMS).
+
+The development of |daliuge| is largely based on radio astronomy processing requirements.
+However, |daliuge| has adopted a generic, data-driven framework architecture potentially applicable to
 many other data-intensive applications.
 
 |daliuge| stands on shoulders of many previous studies on dataflow, data
@@ -27,8 +29,8 @@ for data-intensive applications:
 * Completely data-driven, and data DROP is the graph "node" (no longer just the edge)
   that has persistent states and events
 * Integration of data-lifecycle management within the data processing framework
-* Separation between logical graphs and physical graphs
-* Docker-based pipeline component interface
+* Separation of concerns between logical graphs (high level workflows) and physical graphs (execution recipes)
+* Flexible pipeline component interface, including Docker containers.
 
 In :doc:`overview` we give a glimpse to the main concepts present in |daliuge|.
 Later sections of the documentation describe more in detail how |daliuge| works. Enjoy!
