@@ -411,3 +411,33 @@ def get_roots(pg_spec):
                 nonroots |= set(dropspec['streamingConsumers'])
 
     return all_oids - nonroots
+
+def get_leaves(pg_spec):
+    """
+    Returns a set with the OIDs of the dropspecs that are the leaves of the given physical
+    graph specification.
+    """
+
+    # We find all the nonleaves first, which are easy to spot.
+    # The rest are the leaves
+    all_oids = set()
+    nonleaves = set()
+    for dropspec in pg_spec:
+
+        oid = dropspec['oid']
+        all_oids.add(oid)
+
+        if dropspec['type'] == 'app':
+            if dropspec.get('outputs', None):
+                nonleaves.add(oid)
+            if dropspec.get('streamingInputs', None):
+                nonleaves |= set(dropspec['streamingInputs'])
+            if dropspec.get('inputs', None):
+                nonleaves |= set(dropspec['inputs'])
+        elif dropspec['type'] == 'plain':
+            if dropspec.get('producers', None):
+                nonleaves |= set(dropspec['producers'])
+            if dropspec.get('consumers', None) or dropspec.get('streamingConsumers', None):
+                nonleaves.add(oid)
+
+    return all_oids - nonleaves
