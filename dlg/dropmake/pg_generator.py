@@ -591,6 +591,30 @@ class LGNode():
             kwargs['command'] = BashCommand(cmds)
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             dropSpec.update(kwargs)
+
+        elif (drop_type == 'docker'):
+        # Docker application.
+            app_class = 'dlg.apps.dockerapp.DockerApp'
+            typ = 'app'
+            dropSpec = dropdict({'oid':oid, 'type':typ, 'app':app_class})
+            
+            image = str(self.jd.get('image'))
+            if (image == ''):
+                raise GraphException("Missing image for Construct '%s'" % self.text)
+            
+            command = str(self.jd.get('command'))
+            if (command == ''):
+                raise GraphException("Missing command for Construct '%s'" % self.text)
+            
+            kwargs['tw'] = int(self.jd.get('execution_time', '5'))
+            kwargs['image'] = image
+            kwargs['command'] = command
+            kwargs['user'] = str(self.jd.get('user', ''))
+            kwargs['ensureUserAndSwitch'] = self.str_to_bool(str(self.jd.get('ensureUserAndSwitch', '0')))
+            kwargs['removeContainer'] = self.str_to_bool(str(self.jd.get('removeContainer', '1')))
+            kwargs['additionalBindings'] = str(self.jd.get('additionalBindings', ''))
+            dropSpec.update(kwargs)
+
         elif (drop_type == 'GroupBy'):
             dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.simple.SleepApp'})
             sij = self.inputs[0].jd
@@ -651,6 +675,11 @@ class LGNode():
         kwargs['nm'] = self.text
         dropSpec.update(kwargs)
         return dropSpec
+    
+    @staticmethod
+    def str_to_bool(value, default_value = False):
+        res = True if value in ['1', 'true', 'yes'] else default_value
+        return res
 
 class PGT(object):
     """
