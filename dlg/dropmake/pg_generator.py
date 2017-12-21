@@ -469,7 +469,7 @@ class LGNode():
                 elif (self.is_groupby()):
                     self._dop = self.group_by_scatter_layers[0]
                 elif (self.is_loop()):
-                    self._dop = self.jd.get('num_of_iter', 1)
+                    self._dop = int(self.jd.get('num_of_iter', 1))
                 else:
                     raise GInvalidNode("Unrecognised (Group) Logical Graph Node: '{0}'".format(self._jd['category']))
             elif (self.is_mpi()):
