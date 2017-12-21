@@ -1818,7 +1818,7 @@ class LG():
         s_type = slgn.jd['category']
         t_type = tlgn.jd['category']
 
-        if (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp']):
+        if (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
             if ('BashShellApp' == s_type):
