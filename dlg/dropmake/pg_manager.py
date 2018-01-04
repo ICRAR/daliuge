@@ -25,7 +25,6 @@ https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Grap
 import os
 import threading, json
 
-import networkx as nx
 import numpy as np
 
 from .pg_generator import GraphException
@@ -133,9 +132,8 @@ class PGManager(object):
         try:
             gcm = DAGUtil.ganttchart_matrix(pgt.dag)
         except SchedulerException:
-            topo_sort = nx.topological_sort(pgt.dag)
-            DAGUtil.label_schedule(pgt.dag, topo_sort=topo_sort)
-            gcm = DAGUtil.ganttchart_matrix(pgt.dag, topo_sort=topo_sort)
+            DAGUtil.label_schedule(pgt.dag)
+            gcm = DAGUtil.ganttchart_matrix(pgt.dag)
 
         if (json_str):
             gcm = json.dumps(gcm.tolist())
