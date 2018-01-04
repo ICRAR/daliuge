@@ -52,8 +52,7 @@ class Schedule(object):
     def __init__(self, dag, max_dop):
         self._dag = dag
         self._max_dop = max_dop
-        self._topo_sort = nx.topological_sort(self._dag)
-        DAGUtil.label_schedule(self._dag, topo_sort=self._topo_sort)
+        DAGUtil.label_schedule(self._dag)
         self._lpl = None
         self._wkl = None
         self._sma = None
@@ -91,7 +90,9 @@ class Schedule(object):
             pr = np.zeros((M), dtype=int)
             last_pid = -1
             prev_n = None
-            for n in self._topo_sort:
+            
+            topo_sort = nx.topological_sort(self._dag)
+            for n in topo_sort:
                 node = G.node[n]
                 try:
                     stt = node['stt']
@@ -109,11 +110,11 @@ class Schedule(object):
                             found = i
                             break
                     if (found is None):
-                        raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
+                        raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M, 
                         'DAGUtil.get_max_dop(G)', G.nodes(data=True)))
                         #DAGUtil.get_max_dop(G), G.nodes(data=True)))
                     curr_pid = found
-                ma[curr_pid, stt:edt] = np.ones((1, edt - stt)) * n
+                ma[curr_pid, stt:edt] = n
                 pr[curr_pid] = edt
                 last_pid = curr_pid
                 prev_n = n
