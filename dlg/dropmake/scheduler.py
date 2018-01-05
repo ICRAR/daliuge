@@ -91,7 +91,7 @@ class Schedule(object):
             last_pid = -1
             prev_n = None
             
-            topo_sort = nx.topological_sort(self._dag)
+            topo_sort = nx.topological_sort(G)
             for n in topo_sort:
                 node = G.node[n]
                 try:
