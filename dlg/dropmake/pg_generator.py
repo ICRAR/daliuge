@@ -1590,13 +1590,13 @@ class LG():
             self._start_list = []
             all_list = []
             for jd in lg['nodeDataArray']:
-                if (jd['category'] == 'Comment'):
+                if (jd['categoryType'] == 'Other'):
                     continue
                 lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
                 all_list.append(lgn)
 
             for lgn in all_list:
-                if (lgn.is_start() and lgn.jd["category"] != "Comment"):
+                if (lgn.is_start() and lgn.jd["categoryType"] != "Other"):
                     if (lgn.jd["category"] == "Variables"):
                         self._g_var.append(lgn)
                     else:
