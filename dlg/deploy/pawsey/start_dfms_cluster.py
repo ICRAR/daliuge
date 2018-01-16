@@ -44,6 +44,7 @@ import uuid
 
 from . import dfms_proxy
 from ... import utils, tool
+from ...dropmake import pg_generator
 from ...manager import cmdline
 from ...manager.client import NodeManagerClient, DataIslandManagerClient
 from ...manager.constants import NODE_DEFAULT_REST_PORT, \
@@ -365,7 +366,8 @@ def main():
                 pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
                 if options.logical_graph:
                     unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
-                    pgt = tool.partition(unrolled, pip_name, len(node_mgrs), options.num_islands, 'metis')
+                    pgt = pg_generator.partition(unrolled, 'metis', num_partitions=len(node_mgrs))
+                    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=1, tpl_nodes_len=len(node_mgrs) + 1)
                     del unrolled
                 else:
                     pgt = json.loads(options.physical_graph)
@@ -423,7 +425,9 @@ def main():
             pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
             if options.logical_graph:
                 unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
-                pgt = tool.partition(unrolled, pip_name, len(ip_list) - 1, options.num_islands, 'metis')
+                pgt = pg_generator.partition(unrolled, 'metis', num_partitions=len(ip_list) - 1, num_islands=options.num_islands)
+                pgt = pgt.to_pg_spec([], ret_str=False, num_islands=options.num_islands,
+                                     tpl_nodes_len=len(ip_list) - 1 + options.num_islands)
                 del unrolled
             else:
                 pgt = json.loads(options.physical_graph)
