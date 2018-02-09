@@ -315,7 +315,7 @@ class LogParser(object):
     'Successfully deployed session {0} in all hosts',
     'Establishing {0} drop relationships',
     'Established all drop relationships {0} in',
-    'Moving following DROPs to COMPLETED right away',
+    'Moving Drops to COMPLETED right away',
     'Successfully triggered drops',
     'Got a node list with {0} node managers']
 
