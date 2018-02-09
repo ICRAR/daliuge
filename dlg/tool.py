@@ -88,8 +88,10 @@ def partition(pgt, opts):
     pgt = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
                                  num_islands=opts.islands, partition_label='partition',
                                  **algo_params)
-    return pgt.to_pg_spec([], ret_str=False, num_islands=opts.islands,
+    pg_spec = pgt.to_pg_spec([], ret_str=False, num_islands=opts.islands,
                           tpl_nodes_len=opts.partitions + opts.islands)
+    logger.info("PG spec is calculated!")
+    return pg_spec
 
 
 def resource_map(pgt, nodes, pip_name, num_islands):
