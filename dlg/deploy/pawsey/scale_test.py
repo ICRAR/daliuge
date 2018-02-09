@@ -512,7 +512,7 @@ class LogParser(object):
         for dim_log_f in possible_logs:
             if (os.path.exists(dim_log_f)):
                 self._dim_log_f = [dim_log_f]
-                if (dim_log_f == possible_logs[1]):
+                if (dim_log_f == possible_logs[0]):
                     cluster_log = os.path.join(log_dir, '0', 'start_dlg_cluster.log')
                     if (os.path.exists(cluster_log)):
                         self._dim_log_f.append(cluster_log)
