@@ -360,7 +360,14 @@ class DockerApp(BarrierAppDROP):
         self.containerIp = inspection['NetworkSettings']['IPAddress']
 
         # Wait until it finishes
-        self._exitCode = container.wait()
+        # In docker-py < 3 the .wait() method returns the exit code directly
+        # In docker-py >= 3 the .wait() method returns a dictionary with the API response
+        x = container.wait()
+        if isinstance(x, dict) and 'StatusCode' in x:
+            self._exitCode = x['StatusCode']
+        else:
+            self._exitCode = x
+
         end = time.time()
         logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
