@@ -144,9 +144,7 @@ else:
 
 # Packages that need to be installed from somewhere different than PyPI
 dependency_links = [
-    # metis-python doesn't include compatibility with networkx 2.X yet
-    # Support has been provided by us but not merged upstream yet
-    'https://github.com/rtobar/metis-python/archive/master.zip#egg=metis-0.2a3'
+    # None at the moment
 ]
 
 # Extra requirements that are not needed by your every day daliuge installation
