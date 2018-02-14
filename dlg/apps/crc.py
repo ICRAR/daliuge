@@ -25,7 +25,8 @@ Module containing an example application that calculates a CRC value
 
 import six
 
-from ..drop import BarrierAppDROP
+from ..drop import BarrierAppDROP, AppDROP
+from dlg.ddap_protocol import AppDROPStates
 
 
 try:
@@ -62,3 +63,22 @@ class CRCApp(BarrierAppDROP):
         # Rely on whatever implementation we decide to use
         # for storing our data
         outputDrop.write(six.b(str(crc)))
+
+class CRCStreamApp(AppDROP):
+    """
+    Calculate CRC in the streaming mode
+    i.e. A "streamingConsumer" of its predecessor in the graph
+    """
+    def initialize(self, **kwargs):
+        super(CRCStreamApp, self).initialize(**kwargs)
+        self._crc = 0
+
+    def dataWritten(self, uid, data):
+        self.execStatus = AppDROPStates.RUNNING
+        self._crc = crc32(data, self._crc)
+
+    def dropCompleted(self, uid, status):
+        outputDrop = self.outputs[0]
+        outputDrop.write(six.b(str(self._crc)))
+        self.execStatus = AppDROPStates.FINISHED
+        self._notifyAppIsFinished()
