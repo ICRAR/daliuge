@@ -90,7 +90,7 @@ class Schedule(object):
             pr = np.zeros((M), dtype=int)
             last_pid = -1
             prev_n = None
-            
+
             topo_sort = nx.topological_sort(G)
             for n in topo_sort:
                 node = G.node[n]
@@ -110,7 +110,7 @@ class Schedule(object):
                             found = i
                             break
                     if (found is None):
-                        raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M, 
+                        raise SchedulerException("Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
                         'DAGUtil.get_max_dop(G)', G.nodes(data=True)))
                         #DAGUtil.get_max_dop(G), G.nodes(data=True)))
                     curr_pid = found
@@ -1999,7 +1999,10 @@ class DAGUtil(object):
             myk = i + 1
             tt = drop['type']
             if ('plain' == tt):
-                obk = 'consumers' # outbound keyword
+                if (drop['nm'] == 'StreamNull'):
+                    obk = 'streamingConsumers'
+                else:
+                    obk = 'consumers' # outbound keyword
                 tw = 0
                 dtp = 0
             elif ('app' == tt):
