@@ -178,7 +178,7 @@ class LGNode():
         Add a group member
         """
         if (lg_node.is_group() and (not (lg_node.is_scatter())) and (not (lg_node.is_loop())) and (not (lg_node.is_groupby()))):
-            raise GInvalidNode("Only Scatters or Loops can be nested, but {0} is not Scatter".format(lg_node.id))
+            raise GInvalidNode("Only Scatters or Loops can be nested, but {0} is neither".format(lg_node.id))
         self._children.append(lg_node)
 
     @property
@@ -597,15 +597,15 @@ class LGNode():
             app_class = 'dlg.apps.dockerapp.DockerApp'
             typ = 'app'
             dropSpec = dropdict({'oid':oid, 'type':typ, 'app':app_class})
-            
+
             image = str(self.jd.get('image'))
             if (image == ''):
                 raise GraphException("Missing image for Construct '%s'" % self.text)
-            
+
             command = str(self.jd.get('command'))
             if (command == ''):
                 raise GraphException("Missing command for Construct '%s'" % self.text)
-            
+
             kwargs['tw'] = int(self.jd.get('execution_time', '5'))
             kwargs['image'] = image
             kwargs['command'] = command
@@ -675,7 +675,7 @@ class LGNode():
         kwargs['nm'] = self.text
         dropSpec.update(kwargs)
         return dropSpec
-    
+
     @staticmethod
     def str_to_bool(value, default_value = False):
         res = True if value in ['1', 'true', 'yes'] else default_value
@@ -1802,6 +1802,9 @@ class LG():
             ret = s.dop_diff(t)
         return ret
 
+    def _is_stream_link(self, s_type, t_type):
+        return ((s_type in ['Component', 'DynlibApp']) and (t_type in ['Component', 'DynlibApp']))
+
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop):
         """
         """
@@ -1818,7 +1821,21 @@ class LG():
         s_type = slgn.jd['category']
         t_type = tlgn.jd['category']
 
-        if (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker']):
+        if (self._is_stream_link(s_type, t_type)):
+            """
+            1. create a null_drop in the middle
+            2. link sdrop to null_drop
+            3. link tdrop to null_drop as a streamingConsumer
+            """
+            dropSpec_null = dropdict({'oid':"{0}-{1}-stream".\
+            format(sdrop['oid'], tdrop['oid'].replace(self._session_id, '')),
+            'type':'plain', 'storage':'null', 'nm':'StreamNull', 'dw':0})
+            sdrop.addOutput(dropSpec_null)
+            dropSpec_null.addProducer(sdrop)
+            dropSpec_null.addStreamingConsumer(tdrop)
+            tdrop.addStreamingInput(dropSpec_null)
+            self._drop_dict['new_added'].append(dropSpec_null)
+        elif (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
             if ('BashShellApp' == s_type):
