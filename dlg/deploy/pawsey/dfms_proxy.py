@@ -50,7 +50,7 @@ BUFF_SIZE = 16384
 conn_retry_timeout = 5
 conn_retry_count = 100
 delay = 0.0001
-default_dlg_monitor_port = 30000
+default_dlg_monitor_port = 8081
 default_dlg_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
