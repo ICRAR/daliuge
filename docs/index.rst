@@ -24,6 +24,7 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  intro
  installing
  overview
+ writing_an_application
  examples
  api-index
 
