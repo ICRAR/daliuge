@@ -120,8 +120,7 @@ install_requires = [
     "metis>=0.2a3",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
-    # >=2.0.0 requires cryptography>=1.1, which in turn needs more system packages to be installed
-    "paramiko<2.0.0",
+    "paramiko",
     "psutil",
     "pyswarm",
     "python-daemon",
