@@ -101,7 +101,9 @@ class ZeroRPCClient(RPCClientBase):
     def shutdown(self):
         super(ZeroRPCClient, self).shutdown()
         for t in self._zrpcclientthreads:
-            t.join()
+            t.join(10)
+            if t.is_alive():
+                logger.warning("ZeroRPC client thread %s is still alive", t.name)
 
     def get_client_for_endpoint(self, host, port):
 
