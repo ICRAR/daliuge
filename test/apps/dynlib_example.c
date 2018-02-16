@@ -34,6 +34,7 @@ struct app_data {
 	short print_stats;
 	unsigned long total;
 	unsigned long write_duration;
+	unsigned int bufsize;
 };
 
 static inline
@@ -52,6 +53,7 @@ int init(dlg_app_info *app, const char ***params)
 {
 	short print_stats = 0;
 	const char **param;
+	unsigned int bufsize = 64 * 1024;
 
 	while (1) {
 
@@ -65,7 +67,10 @@ int init(dlg_app_info *app, const char ***params)
 		if (strcmp(param[0], "print_stats") == 0) {
 			print_stats = strcmp(param[1], "1") == 0 ||
 			              strcmp(param[1], "true") == 0;
-			break;
+		}
+
+		else if (strcmp(param[0], "bufsize") == 0) {
+			bufsize = (unsigned int)atoi(param[1]);
 		}
 
 		params++;
@@ -78,6 +83,7 @@ int init(dlg_app_info *app, const char ***params)
 	to_app_data(app)->print_stats = print_stats;
 	to_app_data(app)->total = 0;
 	to_app_data(app)->write_duration = 0;
+	to_app_data(app)->bufsize = bufsize;
 	return 0;
 }
 
@@ -113,7 +119,8 @@ void drop_completed(dlg_app_info *app, const char *uid, drop_status status)
 
 int run(dlg_app_info *app)
 {
-	char buf[64*1024];
+	char *buf;
+	unsigned int bufsize;
 	unsigned int total = 0, i;
 	unsigned long read_duration = 0, write_duration = 0;
 	struct timeval start, end;
@@ -122,10 +129,17 @@ int run(dlg_app_info *app)
 		printf("running / done methods addresses are %p / %p\n", app->running, app->done);
 	}
 
+	bufsize = to_app_data(app)->bufsize;
+	buf = (char *)malloc(bufsize);
+	if (!buf) {
+		fprintf(stderr, "Couldn't allocate memory for read/write buffer\n");
+		return 1;
+	}
+
 	while (1) {
 
 		gettimeofday(&start, NULL);
-		size_t n_read = app->inputs[0].read(buf, 64*1024);
+		size_t n_read = app->inputs[0].read(buf, bufsize);
 		gettimeofday(&end, NULL);
 		read_duration += usecs(&start, &end);
 		if (!n_read) {
@@ -141,10 +155,13 @@ int run(dlg_app_info *app)
 		total += n_read;
 	}
 
+	free(buf);
+
 	double duration = (read_duration + write_duration) / 1000000.;
 	double total_mb = total / 1024. / 1024.;
 
 	if (to_app_data(app)->print_stats) {
+		printf("Buffer size used by the application: %u\n", to_app_data(app)->bufsize);
 		printf("Read %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (read_duration / 1000000.));
 		printf("Wrote %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (write_duration / 1000000.));
 		printf("Copied %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / duration);
