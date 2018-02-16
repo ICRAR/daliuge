@@ -115,6 +115,7 @@ install_requires = [
     "bottle",
     "configobj",
     "crc32c",
+    "dill",
     "docker",
     "lockfile",
     "metis>=0.2a3",
