@@ -35,6 +35,7 @@ _libname = 'dynlib_example'
 _libfname = 'libdynlib_example.so'
 _libpath = os.path.join(os.path.dirname(__file__), _libfname)
 print_stats = 0
+bufsize = 20 * 1024 * 1024
 
 # Try to compile the library, if possible. If it's there already we're cool
 def _try_library():
@@ -91,7 +92,7 @@ class DynlibAppTest(unittest.TestCase):
 
         # Build the graph
         a = (NullDROP if streaming else InMemoryDROP)('a', 'a')
-        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib=_libpath, print_stats=print_stats) for x in ('b', 'e'))
+        b, e = ((DynlibStreamApp if streaming else DynlibApp)(x, x, lib=_libpath, print_stats=print_stats, bufsize=bufsize) for x in ('b', 'e'))
         c, d, f, g = (InMemoryDROP(x, x) for x in ('c', 'd', 'f', 'g'))
         for app, outputs in (b, (c, d)), (e, (f, g)):
             (app.addStreamingInput if streaming else app.addInput)(a)
@@ -133,7 +134,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =======    =============
         """
         g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats},
+        g2 = [{"oid":"B", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats, "bufsize": bufsize},
               {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
         a_data = os.urandom(32)
@@ -150,7 +151,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =============    =======
         """
         g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers": ['B']},
-              {"oid":"B", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats}]
+              {"oid":"B", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats, "bufsize": bufsize}]
         g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
         a_data = os.urandom(32)
