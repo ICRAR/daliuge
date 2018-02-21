@@ -387,7 +387,7 @@ def run(args=sys.argv):
 
     commands[cmd][1](sys.argv[1:])
 
-def start_process(cmd, args, **subproc_args):
+def start_process(cmd, args=(), **subproc_args):
     """
     Start 'dlg cmd <args>' in a different process.
     If `cmd` is not a known command an exception is raised.
@@ -400,7 +400,9 @@ def start_process(cmd, args, **subproc_args):
     if cmd not in commands:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
-    cmdline = [sys.executable, '-m', __name__, cmd] + args
+    cmdline = [sys.executable, '-m', __name__, cmd]
+    if args:
+        cmdline.extend(args)
     logger.debug("Launching %s", cmdline)
     return subprocess.Popen(cmdline, **subproc_args)
 
