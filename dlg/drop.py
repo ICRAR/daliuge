@@ -982,7 +982,10 @@ class InMemoryDROP(AbstractDROP):
     def initialize(self, **kwargs):
         args = []
         if 'pydata' in kwargs:
-            args.append(base64.b64decode(six.b(kwargs.pop('pydata'))))
+            pydata = kwargs.pop('pydata')
+            if isinstance(pydata, six.string_types):
+                pydata = six.b(pydata)
+            args.append(base64.b64decode(pydata))
         self._buf = BytesIO(*args)
 
     def getIO(self):
