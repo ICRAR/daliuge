@@ -128,8 +128,6 @@ install_requires = [
     "scp",
     # 1.10 contains an important race-condition fix on lazy-loaded modules
     'six>=1.10',
-    # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-    "zeroconf >= 0.19.1",
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6"
 ]
@@ -140,6 +138,13 @@ if sys.version_info >= (3, 6, 0):
     install_requires.append("networkx>=2.0")
 else:
     install_requires.append("networkx")
+
+# Python 2 support has been dropped in zeroconf 0.20.
+# Also, 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
+if sys.version_info[:2] == (2, 7):
+    install_requires.append("zeroconf == 0.19.1")
+else:
+    install_requires.append("zeroconf >= 0.19.1")
 
 # Packages that need to be installed from somewhere different than PyPI
 dependency_links = [
