@@ -115,6 +115,8 @@ using the editor. Note that the public version of the |lg| editor has
 not yet opened its "create new logical graph" API.
 
 
+.. _graphs.translation:
+
 Translation
 ^^^^^^^^^^^
 While a |lg| provides a compact way to express complex processing logic,
