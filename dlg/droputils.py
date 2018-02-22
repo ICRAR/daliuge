@@ -126,6 +126,7 @@ def getUpstreamObjects(drop):
     Returns a list of all direct "upstream" DROPs for the given
     DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
+
     * A is a producer of B (therefore A is an AppDROP)
     * A is a normal or streaming input of B (and B is therefore an AppDROP)
 
@@ -311,8 +312,8 @@ def replace_path_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the path of the respective
     input or output Drop from ``inputs`` or ``outputs``.
-
     Placeholders have the different formats:
+
     * ``%iN``, with N starting from 0, indicates the path of the N-th element
       from the ``inputs`` argument; likewise for ``%oN``.
     * ``%i[X]`` indicates the path of the input with UID ``X``; likewise for
@@ -348,8 +349,8 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the dataURL property of the
     respective input or output Drop from ``inputs`` or ``outputs``.
-
     Placeholders have the different formats:
+
     * ``%iDataURLN``, with N starting from 0, indicates the path of the N-th
       element from the ``inputs`` argument; likewise for ``%oDataURLN``.
     * ``%iDataURL[X]`` indicates the path of the input with UID ``X``; likewise
