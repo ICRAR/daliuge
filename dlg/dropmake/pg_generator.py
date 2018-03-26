@@ -890,9 +890,12 @@ class PGT(object):
         else:
             return drop_list
 
-    def to_gojs_json(self, string_rep=True, visual=False):
+    def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
-        Convert to JSON for visualisation in GOJS
+        Convert PGT (without any partitions) to JSON for visualisation in GOJS
+
+        Sub-class PGTPs will override this function, and replace this with
+        actual partitioning, and the visulisation becomes an option
         """
         G = self.dag
         ret = dict()
@@ -1114,27 +1117,6 @@ class MetisPGTP(PGT):
         partition parameter and log entry
         return a string
         """
-        # if (self._obj_type == 'vol'):
-        #     min_g = "Total comm. volume"
-        # else:
-        #     min_g = "Edge cut"
-        # if (self._ptype == 'kway'):
-        #     pa = "K-way"
-        # else:
-        #     pa = "Recursive bisect"
-        # ret = []
-        # pparam = "{0} partitions - Algo: {2} - Completion time: {4}"\
-        # " - Min objective: {1} - Load balancing: {3}% - Min exec time: {5}"\
-        # .format(self._num_parts, min_g, pa, 101 - self._u_factor,
-        # self.pred_exec_time(),
-        # #DAGUtil.get_longest_path(self.dag, show_path=False)[1],
-        # self.pred_exec_time(app_drop_only=True))
-        # ret.append(pparam)
-        # for l in self._metis_logs:
-        #     for ek in entry_key:
-        #         if (l.startswith(ek)):
-        #             ret.append(l)
-        # return " ".join(ret)
         return "METIS_LB{0}".format(101 - self._u_factor)
 
     def _extra_result(self, ret):
@@ -1198,6 +1180,9 @@ class MetisPGTP(PGT):
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
+        Partition the PGT into a real "PGT with Partitions", thus PGTP, using
+        METIS built-in functions
+
         See METIS usage:
             http://metis.readthedocs.io/en/latest/index.html
         """
@@ -1243,7 +1228,16 @@ class MetisPGTP(PGT):
     def merge_partitions(self, new_num_parts, form_island=False,
                         island_type=0, visual=False):
         """
-        This merging can form islands, i.e. reference-based merging
+        This is called during resource mapping - deploying partitioned PGT to
+        a list of nodes
+
+        form_island:    If True, the merging will form `new_num_parts` logical
+                        islands on top of existing partitions (i.e. nodes). this
+                        is also known as "reference-based merging"
+
+                        If False, the merging will physically merge current
+                        partitions into `new_num_parts` new partitions (i.e. nodes)
+                        Thus, there will be no node-island 'hierarchies' created
 
         island_type:    integer, 0 - data island, 1 - compute island
 
@@ -1364,17 +1358,6 @@ class MySarkarPGTP(PGT):
         partition parameter and log entry
         return a string
         """
-        # if (self._merge_parts):
-        #     part_str = "{0} outer partitions requested, ".format(self._num_parts)
-        #     part_str1 = " inner "
-        # else:
-        #     part_str = ""
-        #     part_str1 = ""
-        # ed_str = " - Data movement: {0}".format(self._edge_cuts)
-        # return "{6}{2}{8} partitions - Algo: {1} - Completion time: {3}"\
-        # " - Max DoP: {5}{7} - Min exec time: {9}".format(self._num_parts,
-        # type(self).__name__, self._num_parts_done, self._lpl, self._ptime,
-        # self._max_dop, part_str, ed_str, part_str1, self.pred_exec_time(app_drop_only=True))
         return "Edge Zero"
 
     def to_partition_input(self, outf):
@@ -1386,6 +1369,16 @@ class MySarkarPGTP(PGT):
     def merge_partitions(self, new_num_parts, form_island=False,
                         island_type=0, visual=False):
         """
+        This is called during resource mapping - deploying partitioned PGT to
+        a list of nodes
+
+        form_island:    If True, the merging will form `new_num_parts` logical
+                        islands on top of existing partitions (i.e. nodes)
+
+                        If False, the merging will physically merge current
+                        partitions into `new_num_parts` new partitions (i.e. nodes)
+                        Thus, there will be no node-island 'hierarchies' created
+
         island_type:    integer, 0 - data island, 1 - compute island
         """
         if (not self._can_merge(new_num_parts)):
@@ -1458,14 +1451,10 @@ class MySarkarPGTP(PGT):
                 for ip in inner_parts:
                     ip['group'] = in_out_part_map[ip['key'] - start_k] + start_i
 
-
-        # self_edge_cuts = 0
-        # for e in G.edges(data=True):
-        #     self_edge_cuts += e[2].get('weight', 0)
-        # self._edge_cuts = int(self_edge_cuts)
-        #self._lpl = self.pred_exec_time()
-
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
+        """
+        Partition the PGT into a real "PGT with Partitions", thus PGTP
+        """
         self._num_parts_done, _, self._ptime, self._partitions = self._scheduler.partition_dag()
         #G = self._scheduler._dag
         G = self.dag
