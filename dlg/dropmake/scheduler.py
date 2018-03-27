@@ -37,6 +37,9 @@ from collections import defaultdict
 from .utils.anneal import Annealer
 from .utils.mcts import DAGTree, MCTS
 
+from .. import droputils
+from ..drop import dropdict
+
 
 logger = logging.getLogger(__name__)
 
@@ -1980,9 +1983,12 @@ class DAGUtil(object):
         return mt
 
     @staticmethod
-    def build_dag_from_drops(drop_list, embed_drop=True):
+    def build_dag_from_drops(drop_list, embed_drop=True, fake_super_root=False):
         """
         return a networkx Digraph (DAG)
+        fake_super_root:    whether to create a fake super root node in the DAG
+                            If set to True, it enables edge zero-based
+                            scheduling agorithms to make more aggressive merging
 
         tw - task weight
         dw - data weight / volume
@@ -2025,6 +2031,15 @@ class DAGUtil(object):
                         G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
                     elif ('app' == tt):
                         G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
+
+        if (fake_super_root):
+            super_root = dropdict({'oid':'-92', 'type':'plain', 'storage':'null'})
+            super_k = len(drop_list) + 1
+            G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root, num_cpus=0)
+
+            for oup in droputils.get_roots(drop_list):
+                G.add_weighted_edges_from([(super_k, key_dict[oup], 1)])
+
         return G
 
     @staticmethod
