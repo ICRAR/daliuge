@@ -1338,7 +1338,8 @@ class MySarkarPGTP(PGT):
                 To control the number of partitions, please call
                 def merge_partitions(self, new_num_parts, form_island=False)
         """
-        super(MySarkarPGTP, self).__init__(drop_list)
+        super(MySarkarPGTP, self).__init__(drop_list, build_dag=False)
+        self._dag = DAGUtil.build_dag_from_drops(self._drop_list, fake_super_root=True)
         self._num_parts = num_partitions
         self._max_dop = max_dop # max dop per partition
         self._par_label = par_label
@@ -1455,7 +1456,13 @@ class MySarkarPGTP(PGT):
         """
         Partition the PGT into a real "PGT with Partitions", thus PGTP
         """
-        self._num_parts_done, _, self._ptime, self._partitions = self._scheduler.partition_dag()
+        # import inspect
+        # print("gojs_json called within MyKarkarPGTP from {0}".format(inspect.stack()[1][3]))
+
+        if (self._num_parts_done == 0 and self._partitions is None):
+            self._num_parts_done, _, self._ptime, self._partitions = self._scheduler.partition_dag()
+            #print("%s: _num_parts_done = %d" % (self.__class__.__name__, self._num_parts_done))
+            #print("len(self._partitions) = %d" % (len(self._partitions)))
         #G = self._scheduler._dag
         G = self.dag
         #logger.debug("The same DAG? ", (G == self.dag))
@@ -1463,15 +1470,31 @@ class MySarkarPGTP(PGT):
         self_oid_gid_map = self._oid_gid_map
         groups = set()
         key_dict = dict() #k - gojs key, v - gojs group_id
+        root_gid = None
         for gnode_g in G.nodes(data=True):
             gnode = gnode_g[1]
             oid = gnode['drop_spec']['oid']
+            if ('-92' == oid):
+                root_gid = gnode['gid']
+                #print("hit fake super root, gid = {0}".format(root_gid))
+                continue # super_fake_root, so skip it
             gid = gnode['gid']
             key_dict[gnode_g[0]] = gid
             self_oid_gid_map[oid] = gid - start_k
             groups.add(gid)
+        if (root_gid not in groups):
+            # the super root has its own partition, which has no other Drops
+            # so ditch this extra partition!
+            new_partitions = []
+            for part in self._partitions:
+                if (part._gid != root_gid):
+                    new_partitions.append(part)
+            self._partitions = new_partitions
+            self._num_parts_done = len(new_partitions)
         self._groups = groups
         self._grp_key_dict = key_dict
+        #print("group length = %d" % len(groups))
+        #print('groups', groups)
 
         if (visual):
             jsobj = super(MySarkarPGTP, self).to_gojs_json(string_rep=False,
@@ -2094,7 +2117,7 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
     else:
         raise GraphException("Unknown partition algorithm: {0}".format(algo))
 
-    pgt.to_gojs_json(string_rep=False, visual=True)
+    pgt.to_gojs_json(string_rep=False, visual=False)
     if do_merge:
         pgt.merge_partitions(num_islands, form_island=True, island_type=1, visual=True)
 
