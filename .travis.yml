@@ -59,8 +59,3 @@ script:
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
  - coveralls
-
-# safelist
-branches:
- only:
-  - master
