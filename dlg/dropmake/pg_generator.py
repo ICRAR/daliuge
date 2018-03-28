@@ -1463,7 +1463,9 @@ class MySarkarPGTP(PGT):
             self._num_parts_done, _, self._ptime, self._partitions = self._scheduler.partition_dag()
             #print("%s: _num_parts_done = %d" % (self.__class__.__name__, self._num_parts_done))
             #print("len(self._partitions) = %d" % (len(self._partitions)))
-        #G = self._scheduler._dag
+            # for part in self._partitions:
+            #     print('Partition: {0}, Actual DoP = {1}, Required DoP = {2}'.\
+            #                 format(part._gid, part._max_dop, part._ask_max_dop))
         G = self.dag
         #logger.debug("The same DAG? ", (G == self.dag))
         start_k = self._drop_list_len + 1 # starting gojs group_id
