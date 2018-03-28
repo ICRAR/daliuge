@@ -36,6 +36,7 @@ from collections import defaultdict
 
 from .utils.anneal import Annealer
 from .utils.mcts import DAGTree, MCTS
+from .utils.antichains import get_max_weighted_antichain
 
 from .. import droputils
 from ..drop import dropdict
@@ -921,207 +922,35 @@ class KFamilyPartition(Partition):
         self._w_attr = w_attr
         self._tc = defaultdict(set)
 
-    def _add_to_split_graph(self, split_graph, el, ed_capacity,
-    dag, tmp_list):
-        """
-        el: node element in the DAG
-        ed_capacity:    edge capacity in the new split graph
-                        usually it comes from the weight of the DAG node
-        """
-        xi = '{0}_x'.format(el)
-        yi = '{0}_y'.format(el)
-        # if (ed_capacity > 1):
-        #     print("some >1 capacity: {0} for {1}".format(ed_capacity, el))
-        split_graph.add_edge('s', xi, capacity=ed_capacity, weight=0)
-        split_graph.add_edge(xi, yi, capacity=sys.maxsize, weight=1)
-        split_graph.add_edge(yi, 't', capacity=ed_capacity, weight=0)
-        tmp_list.append(xi)
-        tmp_list.append(yi)
-        # build transitive closure
-        el_des = nx.descendants(dag, el) # already a set
-        el_pred = set(dag.predecessors(el))
-
-        #check path on the global dag
-        if (self._check_global_dag):
-            tc = self._tc
-            part_node_set = set(dag.node) - set([el]) # node set
-            rem = part_node_set - el_des
-            global_dag = self._global_dag
-            for rel in rem:
-                if (rel in tc[el]):
-                    el_des.add(rel)
-                elif (nx.has_path(global_dag, el, rel)):
-                    tc[el].add(rel)
-                    el_des.add(rel)
-
-            rem = part_node_set - el_pred
-            for rel in rem:
-                if (el in tc[rel]):
-                    el_pred.add(rel)
-                elif (nx.has_path(global_dag, rel, el)):
-                    tc[rel].add(el)
-                    el_pred.add(rel)
-
-        for udown in el_des:
-            split_graph.add_edge(xi, '{0}_y'.format(udown),
-            capacity=sys.maxsize, weight=0)
-        for uup in el_pred:
-            split_graph.add_edge('{0}_x'.format(uup), yi,
-            capacity=sys.maxsize, weight=0)
-
-    def _get_pi_solution(self, split_graph):
-        """
-        1. create H (admissable graph) based on Section 3
-        http://fmdb.cs.ucla.edu/Treports/930014.pdf
-
-        2. calculate the max flow f' on H using networkx
-
-        3. construct Residual graph from f' on H based on
-        https://www.topcoder.com/community/data-science/\
-        data-science-tutorials/minimum-cost-flow-part-two-algorithms/
-
-        4. calculate Pi based on Section 3 again
-        """
-        # Step 1
-        H = nx.DiGraph()
-        H.add_nodes_from(split_graph)
-        for ed in split_graph.edges(data=True):
-            Cxy = ed[2].get('capacity', sys.maxsize)
-            Axy = ed[2]['weight']
-            if (Axy == 0 and Cxy > 0):
-                H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
-
-        # Step 2
-        flow_value, flow_dict = nx.maximum_flow(H, 's', 't')
-
-        # Step 3
-        R = nx.DiGraph()
-        R.add_nodes_from(H)
-        for ed in H.edges(data=True):
-            Xij = flow_dict[ed[0]][ed[1]]
-            Uij = ed[2].get('capacity', sys.maxsize)
-            Cij = ed[2]['weight']
-            if (Uij - Xij) > 0:
-                R.add_edge(ed[0], ed[1], weight=Cij)
-            if (Xij > 0):
-                R.add_edge(ed[1], ed[0], weight=-1 * Cij)
-
-        # Step 4
-        pai = dict()
-        for n in R.nodes():
-            if (nx.has_path(R, 's', n)):
-                pai[n] = 0
-            else:
-                pai[n] = 1
-        return pai
-
-    def _get_w_antichain_len(self, split_graph, pi_solution):
-        """
-        Get the length of the maximum weighted antichain
-        """
-        pai = pi_solution
-        w_antichain_len = 0 #weighted antichain length
-        antichain_names = []
-        for h in range(2):
-            for nd in split_graph.nodes():
-                if (nd.endswith('_x')):
-                    y_nd = nd.split('_x')[0] + '_y'
-                    if ((1 - pai[nd] + pai['s'] == h) and
-                    (pai[y_nd] - pai[nd] == 1)):
-                        w_antichain_len += split_graph.adj['s'][nd]['capacity']
-                        #print(' *** %d' % split_graph.edge['s'][nd]['capacity'])
-                        antichain_names.append(nd)
-        #print("weighted antichain len = %d" % w_antichain_len)
-        # if (w_antichain_len > 1):
-        #     print(antichain_names)
-        return w_antichain_len
-
     def add_node(self, u, weight):
         """
         Add a single node u to the partition
         """
-        super(KFamilyPartition, self).add_node(u, weight)
-        #self._dag.add_node(u, weight=weight)
-        #self._max_dop = 1
         u_aw = self._global_dag.node[u].get(self._w_attr, 1)
-        self._tmp_max_dop = u_aw
-        self._max_dop = u_aw
-        self._add_to_split_graph(self._bpg, u, u_aw, self._dag, [])
+        super(KFamilyPartition, self).add_node(u, u_aw)
+        self._tmp_max_dop = get_max_weighted_antichain(self._dag)[0]
+        self._max_dop = self._tmp_max_dop
 
-    def can_add(self, u, v, gu, gv):
-        self_bpg = self._bpg
-        global_dag = self._global_dag
-        dag = self._dag
-        w_attr = self._w_attr
-        u_aw = gu[w_attr] # antichain weight in the split graph
-        v_aw = gv[w_attr]
-        unew = u not in dag.node
-        vnew = v not in dag.node
-        if (unew):
-            dag.add_node(u, attr_dict=gu)
-        if (vnew):
-            dag.add_node(v, attr_dict=gv)
+    def can_merge(self, that, u, v):
+        """
+        """
+        dag = nx.compose(self._dag, that._dag)
         dag.add_edge(u, v)
+        mydop = get_max_weighted_antichain(dag)[0]
 
-        tmp_added = []
-        # 1. construct the split graph
-        for el, elnew, elweight in [(u, unew, u_aw), (v, vnew, v_aw)]:
-            if (elnew):
-                self._add_to_split_graph(self_bpg, el, elweight, dag, tmp_added)
-
-        opt_sol = self._get_pi_solution(self_bpg)
-        mydop = self._get_w_antichain_len(self_bpg, opt_sol)
-        canadd = False if mydop > self._ask_max_dop else True
-        if (not canadd):
-            #print("add rejected: %d > %d" %(mydop, self._ask_max_dop))
-            for tbd in tmp_added:
-                self_bpg.remove_node(tbd)
-            self._tmp_max_dop = self._max_dop
-            if (unew):
-                self.remove(u)
-            if (vnew):
-                self.remove(v)
-        else:
-            self._tmp_max_dop = mydop
-        return (canadd, unew, vnew)
-
-    def add(self, u, v, gu, gv, sequential=False, global_dag=None):
-        if (self._tmp_max_dop is not None):
-            self._max_dop = self._tmp_max_dop
-        else:
-            # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_add was not probed before add()")
-
-    def can_merge(self, that):
-        """
-        """
-        self._tmp_merge_dag = nx.compose(self._dag, that._dag)
-        dag = self._tmp_merge_dag
-        self_bpg = self._bpg
-        tmp_added = []
-        self_w_attr = self._w_attr
-        for node in that._dag.node.items():
-            el = node[0]
-            elweight = node[1].get(self_w_attr, 1)
-            self._add_to_split_graph(self_bpg, el, elweight, dag, tmp_added)
-        #opt_sol = nx.max_flow_min_cost(self_bpg, 's', 't') # returns a dict
-        opt_sol = self._get_pi_solution(self_bpg)
-        mydop = self._get_w_antichain_len(self_bpg, opt_sol)
         canmerge = False if mydop > self._ask_max_dop else True
         if (not canmerge):
-            #print("merge rejected: %d > %d" %(mydop, self._ask_max_dop))
-            for tbd in tmp_added:
-                self_bpg.remove_node(tbd)
-            self._tmp_max_dop = self._max_dop
-            self._tmp_merge_dag = None
+            pass
         else:
             self._tmp_max_dop = mydop
         return canmerge
 
-    def merge(self, that):
-        super(KFamilyPartition, self).merge(that)
+    def merge(self, that, u, v):
+        self._dag = nx.compose(self._dag, that._dag)
+        self._dag.add_edge(u, v)
         if (self._tmp_max_dop is not None):
             self._max_dop = self._tmp_max_dop
+            #print("Gid %d just merged with DoP %d" % (self._gid, self._tmp_max_dop))
         else:
             # we could recalcuate it again, but we are lazy!
             raise GraphException("can_merge was not probed before add()")
@@ -1276,10 +1105,10 @@ class MySarkarScheduler(Scheduler):
         part_new = g_dict[l_gid]
         part_removed = g_dict[r_gid]
 
-        if (not part_new.can_merge(part_removed)):
+        if (not part_new.can_merge(part_removed, u, v)):
             return None
 
-        part_new.merge(part_removed)
+        part_new.merge(part_removed, u, v)
 
         # Get hold of all gnodes that belong to "part_removed"
         # and re-assign them to the new partitions
