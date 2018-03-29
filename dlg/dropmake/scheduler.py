@@ -938,12 +938,13 @@ class KFamilyPartition(Partition):
         dag.add_edge(u, v)
         mydop = get_max_weighted_antichain(dag)[0]
 
-        canmerge = False if mydop > self._ask_max_dop else True
-        if (not canmerge):
-            pass
+        if (mydop <= max(self._max_dop, that._max_dop)):
+            return True # if you don't increase DoP, we accept that immediately
+        elif (mydop > self._ask_max_dop):
+            return False
         else:
             self._tmp_max_dop = mydop
-        return canmerge
+            return True
 
     def merge(self, that, u, v):
         self._dag = nx.compose(self._dag, that._dag)
