@@ -927,18 +927,22 @@ class KFamilyPartition(Partition):
         Add a single node u to the partition
         """
         u_aw = self._global_dag.node[u].get(self._w_attr, 1)
-        super(KFamilyPartition, self).add_node(u, u_aw)
-        self._tmp_max_dop = get_max_weighted_antichain(self._dag)[0]
+        kwargs = {self._w_attr: u_aw}
+        self._dag.add_node(u, **kwargs)
+        self._tmp_max_dop = get_max_weighted_antichain(self._dag, w_attr=self._w_attr)[0]
         self._max_dop = self._tmp_max_dop
+        #print('init max_dop', self._global_dag.node[u]['text'], self._max_dop)
 
     def can_merge(self, that, u, v):
         """
         """
         dag = nx.compose(self._dag, that._dag)
         dag.add_edge(u, v)
-        mydop = get_max_weighted_antichain(dag)[0]
+        mydop = get_max_weighted_antichain(dag, w_attr=self._w_attr)[0]
 
-        if (mydop <= max(self._max_dop, that._max_dop)):
+        curr_max = max(self._max_dop, that._max_dop)
+        if (mydop <= curr_max):
+            self._tmp_max_dop = curr_max
             return True # if you don't increase DoP, we accept that immediately
         elif (mydop > self._ask_max_dop):
             return False
@@ -1865,7 +1869,8 @@ class DAGUtil(object):
         if (fake_super_root):
             super_root = dropdict({'oid':'-92', 'type':'plain', 'storage':'null'})
             super_k = len(drop_list) + 1
-            G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root, num_cpus=0)
+            G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root,
+                       num_cpus=0, text='fake_super_root')
 
             for oup in droputils.get_roots(drop_list):
                 G.add_weighted_edges_from([(super_k, key_dict[oup], 1)])
