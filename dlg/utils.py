@@ -271,6 +271,8 @@ def getDlgDir():
     Returns the root of the directory structure used by the DALiuGE framework at
     runtime.
     """
+    if 'DLG_ROOT' in os.environ:
+        return os.environ['DLG_ROOT']
     return os.path.join(os.path.expanduser("~"), ".dlg")
 
 def getDlgPidDir():
