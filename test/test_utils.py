@@ -181,3 +181,15 @@ class TestUtils(unittest.TestCase):
             stream = utils.JSONStream(obj)
             self.assertEqual(obj, json.loads(stream.read(100).decode('latin1')))
             self.assertEqual(0, len(stream.read(100).decode('latin1')))
+
+    def test_get_dlg_root(self):
+
+        # It should obey the DLG_ROOT environment variable
+        old = os.environ.get('DLG_ROOT', None)
+        os.environ['DLG_ROOT'] = tempfile.mkdtemp()
+        self.assertEqual(utils.getDlgDir(), os.environ['DLG_ROOT'])
+        os.rmdir(os.environ['DLG_ROOT'])
+        if old:
+            os.environ['DLG_ROOT'] = old
+        else:
+            del os.environ['DLG_ROOT']
