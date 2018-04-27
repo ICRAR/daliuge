@@ -90,7 +90,9 @@ def addCommonOptions(parser, defaultPort):
     parser.add_option("-d", "--daemon", action="store_true",
                       dest="daemon", help="Run as daemon", default=False)
     parser.add_option(      "--cwd", action="store_true",
-                      dest="cwd", help="Stay in the current working directory (when used with -d)", default=False)
+                      dest="cwd", help="Short for '-w .'", default=False)
+    parser.add_option("-w", "--work-dir",
+                      help="Working directory, defaults to '/' in daemon mode, '.' in interactive mode", default=None)
     parser.add_option("-s", "--stop", action="store_true",
                       dest="stop", help="Stop an instance running as daemon", default=False)
     parser.add_option(      "--status", action="store_true",
@@ -115,6 +117,8 @@ def commonOptionsCheck(options, parser):
     # -v and -q are exclusive
     if options.verbose and options.quiet:
         parser.error('-v and -q cannot be specified together')
+    if options.cwd and options.work_dir:
+        parser.error("--cwd and -w/--work-dir cannot be specified together. Prefer -w")
 
 def start(options, parser):
 
@@ -132,7 +136,13 @@ def start(options, parser):
         utils.createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
 
-        working_dir = '.' if options.cwd else '/'
+        working_dir = options.work_dir
+        if not working_dir:
+            if options.cwd:
+                print('The --cwd option is deprecated, prefer -w/--work-dir, continuing anyway')
+                working_dir = '.'
+            else:
+                working_dir = '/'
         with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=[fileHandler.stream],
                                   working_directory=working_dir):
             launchServer(options)
@@ -161,6 +171,8 @@ def start(options, parser):
 
     # Start directly
     else:
+        working_dir = options.work_dir or '.'
+        os.chdir(working_dir)
         launchServer(options)
 
 def setupLogging(opts):
