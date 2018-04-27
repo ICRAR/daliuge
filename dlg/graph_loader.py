@@ -203,7 +203,7 @@ def loadDropSpecs(dropSpecList):
     # Done!
     return dropSpecs
 
-def createGraphFromDropSpecList(dropSpecList):
+def createGraphFromDropSpecList(dropSpecList, session=None):
 
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
@@ -216,7 +216,7 @@ def createGraphFromDropSpecList(dropSpecList):
         dropType = dropSpec.pop('type')
 
         cf = __CREATION_FUNCTIONS[dropType]
-        drop = cf(dropSpec)
+        drop = cf(dropSpec, session=session)
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
@@ -258,7 +258,7 @@ def createGraphFromDropSpecList(dropSpecList):
 
     return roots
 
-def _createPlain(dropSpec, dryRun=False):
+def _createPlain(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs   = _getKwargs(dropSpec)
 
@@ -266,9 +266,9 @@ def _createPlain(dropSpec, dryRun=False):
     storageType = STORAGE_TYPES[dropSpec['storage']]
     if dryRun:
         return
-    return storageType(oid, uid, **kwargs)
+    return storageType(oid, uid, dlg_session=session, **kwargs)
 
-def _createContainer(dropSpec, dryRun=False):
+def _createContainer(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs   = _getKwargs(dropSpec)
 
@@ -289,17 +289,17 @@ def _createContainer(dropSpec, dryRun=False):
     if dryRun:
         return
 
-    return containerType(oid, uid, **kwargs)
+    return containerType(oid, uid, dlg_session=session, **kwargs)
 
-def _createSocket(dropSpec, dryRun=False):
+def _createSocket(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs   = _getKwargs(dropSpec)
 
     if dryRun:
         return
-    return SocketListenerApp(oid, uid, **kwargs)
+    return SocketListenerApp(oid, uid, dlg_session=session, **kwargs)
 
-def _createApp(dropSpec, dryRun=False):
+def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs   = _getKwargs(dropSpec)
     del kwargs['app']
@@ -319,7 +319,7 @@ def _createApp(dropSpec, dryRun=False):
 
     if dryRun:
         return
-    return appType(oid, uid, **kwargs)
+    return appType(oid, uid, dlg_session=session, **kwargs)
 
 def _getIds(dropSpec):
     # uid is copied from oid if not explicitly given

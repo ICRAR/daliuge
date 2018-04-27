@@ -138,6 +138,12 @@ class AbstractDROP(EventFirer):
         self._oid = str(oid)
         self._uid = str(uid)
 
+        # The Session owning this drop, if any
+        # In most real-world situations this attribute will be set, but in
+        # general it cannot be assumed it will (e.g., unit tests create drops
+        # directly outside the context of a session).
+        self._dlg_session = self._getArg(kwargs, 'dlg_session', None)
+
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
