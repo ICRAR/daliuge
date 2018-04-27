@@ -220,7 +220,7 @@ class Session(object):
         # Create the real DROPs from the graph specs
         logger.info("Creating DROPs for session %s", self._sessionId)
 
-        self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values())
+        self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values(), session=self)
         logger.info("%d drops successfully created", len(self._graph))
 
         for drop,_ in droputils.breadFirstTraverse(self._roots):
@@ -233,7 +233,6 @@ class Session(object):
             # This information is usually not necessary, but there are cases in
             # which we actually need it (like in the DynlibProcApp)
             drop._rpc_server = self._nm
-            drop._dlg_session_id = self._sessionId
 
             # Register them with the error handler
             if self._error_status_listener:
