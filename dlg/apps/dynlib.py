@@ -347,4 +347,4 @@ class DynlibProcApp(BarrierAppDROP):
         rpc_server = x._rpc_server
         host, port = rpc_server._rpc_host, rpc_server._rpc_port
         host = utils.to_externally_contactable_host(host, prefer_local=True)
-        return (host, port, x._dlg_session_id, x.uid)
+        return (host, port, x._dlg_session.sessionId, x.uid)
