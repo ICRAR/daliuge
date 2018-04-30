@@ -636,8 +636,8 @@ class TestDROP(unittest.TestCase):
         # Prepare our playground
         cwd = os.getcwd()
         os.chdir('/tmp')
-        dirname  = ".hidden"
-        dirname2 = ".hidden/inside"
+        dirname  = "/tmp/.hidden"
+        dirname2 = "/tmp/.hidden/inside"
         if not os.path.exists(dirname2):
             os.makedirs(dirname2)
 
