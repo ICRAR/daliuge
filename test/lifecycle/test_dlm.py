@@ -98,7 +98,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self._writeAndClose(drop)
 
             # "externally" remove the file, its contents now don't exist
-            os.unlink(drop._fnm)
+            os.unlink(drop.path)
 
             # Let the DLM do its work
             time.sleep(1)

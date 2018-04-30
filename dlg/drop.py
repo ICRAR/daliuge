@@ -47,7 +47,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-from .utils import prepare_sql
+from .utils import prepare_sql, createDirIfMissing, isabs
 
 
 try:
@@ -887,49 +887,103 @@ class AbstractDROP(EventFirer):
     def dataIsland(self):
         return self._dataIsland
 
-class FileDROP(AbstractDROP):
+class PathBasedDrop(object):
+    """Base class for data drops that handle paths (i.e., file and directory drops)"""
+
+    def initialize(self, **kwargs):
+        self._path = None
+        PathBasedDrop.initialize(self, **kwargs)
+
+    def get_dir(self, dirname):
+
+        if isabs(dirname):
+            return dirname
+
+        # dirname will be based on the current working directory
+        # If we have a session, it goes into the path as well
+        # (most times we should have a session BTW, we should expect *not* to
+        # have one only during testing)
+        parts = []
+        if self._dlg_session:
+            parts.append('.')
+            parts.append(self._dlg_session.sessionId)
+        else:
+            parts.append('/tmp/daliuge_tfiles')
+        if dirname:
+            parts.append(dirname)
+
+        the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+        createDirIfMissing(the_dir)
+        return the_dir
+
+    @property
+    def path(self):
+        return self._path
+
+class FileDROP(AbstractDROP, PathBasedDrop):
     """
     A DROP that points to data stored in a mounted filesystem.
     """
 
+    def sanitize_paths(self, filepath, dirname):
+
+        # No filepath has been given, there's nothing to sanitize
+        if not filepath:
+            return filepath, dirname
+
+        # All is good, return unchanged
+        filepath_b = os.path.basename(filepath)
+        if filepath_b == filepath:
+            return filepath, dirname
+
+        # Extract the dirname from filepath and append it to dirname
+        filepath_d = os.path.dirname(filepath)
+        if dirname:
+            filepath_d = os.path.join(dirname, filepath_d)
+        return filepath_b, filepath_d
+
+    non_fname_chars = re.compile(r':|%s' % os.sep)
     def initialize(self, **kwargs):
         """
         FileDROP-specific initialization.
         """
         self._delete_parent_dir = self._getArg(kwargs, 'delete_parent_directory', False)
 
+        # The two pieces of information we offer users to tweak
+        # These are very intermingled but are not exactly the same, see below
         filepath = self._getArg(kwargs, 'filepath', None)
-        if filepath:
+        dirname = self._getArg(kwargs, 'dirname', None)
+
+        # Duh!
+        if isabs(filepath) and dirname:
+            raise InvalidDropException(self, 'An absolute filepath does not allow a dirname to be specified')
+
+        # Sanitize filepath/dirname into proper directories-only and
+        # filename-only components (e.g., dirname='lala' and filename='1/2'
+        # results in dirname='lala/1' and filename='2'
+        filepath, dirname = self.sanitize_paths(filepath, dirname)
+
+        # We later check if the file exists, but only if the user has specified
+        # an absolute dirname/filepath (otherwise it doesn't make sense, since
+        # we create our own filenames/dirnames dynamically as necessary
+        check = False
+        if (isabs(dirname) and filepath):
             check = self._getArg(kwargs, 'check_filepath_exists', False)
-            if check:
-                if not os.path.isfile(filepath):
-                    raise InvalidDropException(self, 'File does not exist or is not a file: %s' % filepath)
-            self._fnm = filepath
-            self._root = os.path.dirname(filepath)
-        else:
-            self._root = self._getArg(kwargs, 'dirname', '/tmp/daliuge_tfiles')
-            if (not os.path.exists(self._root)):
-                os.mkdir(self._root)
-            self._root = os.path.abspath(self._root)
-            # TODO: Make sure the parts that make up the filename are composed
-            #       of valid filename characters; otherwise encode them
-            self._fnm = self._root + os.sep + re.sub(':|%s' % os.sep, '_', self.uid)
-            #(self._oid + '___' + self.uid).replace(os.sep, '_')
-            # logger.info('*** %s' % self._fnm)
-            if os.path.isfile(self._fnm):
-                logger.warning('File %s already exists, overwriting' % (self._fnm))
+
+        # Default filepath to drop UID and dirname to per-session directory
+        if not filepath:
+            filepath = self.non_fname_chars.sub('_', self.uid)
+        dirname = self.get_dir(dirname)
+
+        self._root = dirname
+        self._path = os.path.join(dirname, filepath)
+        if check and not os.path.isfile(self._path):
+            raise InvalidDropException(self, 'File does not exist or is not a file: %s' % self._path)
 
         self._wio = None
 
     def getIO(self):
-        return FileIO(self._fnm)
-
-    @property
-    def path(self):
-        """
-        Returns the absolute path of the file pointed by this DROP.
-        """
-        return self._fnm
+        return FileIO(self._path)
 
     def delete(self):
         AbstractDROP.delete(self)
@@ -944,7 +998,7 @@ class FileDROP(AbstractDROP):
     @property
     def dataURL(self):
         hostname = os.uname()[1] # TODO: change when necessary
-        return "file://" + hostname + self._fnm
+        return "file://" + hostname + self._path
 
 class ShoreDROP(AbstractDROP):
     def initialize(self, **kwargs):
@@ -1151,7 +1205,7 @@ class ContainerDROP(AbstractDROP):
             return any([c.exists() for c in  self._children])
         return True
 
-class DirectoryContainer(ContainerDROP):
+class DirectoryContainer(PathBasedDrop, ContainerDROP):
     """
     A ContainerDROP that represents a filesystem directory. It only allows
     FileDROPs and DirectoryContainers to be added as children. Children
@@ -1172,7 +1226,7 @@ class DirectoryContainer(ContainerDROP):
             if not os.path.isdir(directory):
                 raise InvalidDropException(self, '%s is not a directory' % (directory))
 
-        self._path = os.path.abspath(directory)
+        self._path = self.get_dir(directory)
 
     def addChild(self, child):
         if isinstance(child, (FileDROP, DirectoryContainer)):
@@ -1183,10 +1237,6 @@ class DirectoryContainer(ContainerDROP):
             ContainerDROP.addChild(self, child)
         else:
             raise TypeError('Child DROP is not of type FileDROP or DirectoryContainer')
-
-    @property
-    def path(self):
-        return self._path
 
     def delete(self):
         shutil.rmtree(self._path)
