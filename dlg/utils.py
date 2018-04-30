@@ -301,6 +301,10 @@ def createDirIfMissing(path):
         if e.errno != errno.EEXIST:
             raise
 
+def isabs(path):
+    """Like os.path.isabs, but handles None"""
+    return path and os.path.isabs(path)
+
 def fname_to_pipname(fname):
     """
     Converts a graph filename (assuming it's a .json file) to its "pipeline"
