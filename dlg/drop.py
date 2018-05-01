@@ -923,6 +923,38 @@ class PathBasedDrop(object):
 class FileDROP(AbstractDROP, PathBasedDrop):
     """
     A DROP that points to data stored in a mounted filesystem.
+
+    Users can (but usually don't need to) specify both a `filepath` and a
+    `dirname` parameter for each FileDrop. The combination of these two parameters
+    will determine the final location of the file backed up by this drop on the
+    underlying filesystem. When no ``filepath`` is provided, the drop's UID will be
+    used as a filename. When a relative filepath is provided, it is relative to
+    ``dirname``. When an absolute ``filepath`` is given, it is used as-is.
+    When a relative ``dirname`` is provided, it is relative to the base directory
+    of the currently running session (i.e., a directory with the session ID as a
+    name, placed within the currently working directory of the Node Manager
+    hosting that session). If ``dirname`` is absolute, it is used as-is.
+
+    In some cases drops are created **outside** the context of a session, most
+    notably during unit tests. In these cases the base directory is a fixed
+    location under ``/tmp``.
+
+    The following table summarizes the calculation of the final path used by
+    the ``FileDrop`` class depending on its parameters:
+
+    ============ ===================== ===================== ==========
+         .                               filepath
+    ------------ ------------------------------------------------------
+    dirname      empty                 relative              absolute
+    ============ ===================== ===================== ==========
+    **empty**    /``$B``/``$u``        /``$B``/``$f``        /``$f``
+    **relative** /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` **ERROR**
+    **absolute** /``$d``/``$u``        /``$d``/``$f``        **ERROR**
+    ============ ===================== ===================== ==========
+
+    In the table, ``$f`` is the value of ``filepath``, ``$d`` is the value of
+    ``dirname``, ``$u`` is the drop's UID and ``$B`` is the base directory for
+    this drop's session, namelly ``/the/cwd/$session_id``.
     """
 
     def sanitize_paths(self, filepath, dirname):
