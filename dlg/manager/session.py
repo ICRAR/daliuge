@@ -32,6 +32,7 @@ from . import constants
 from .. import droputils
 from .. import graph_loader
 from .. import rpc
+from .. import utils
 from ..ddap_protocol import DROPStates, DROPLinkType, DROPRel
 from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
@@ -71,6 +72,9 @@ class LeavesCompletionListener(object):
         logger.debug("%d/%d leaf drops completed on session %s", self._completed, self._nexpected, self._session.sessionId)
         if self._completed == self._nexpected:
             self._session.finish()
+
+
+track_current_session = utils.object_tracking('session')
 
 class Session(object):
     """
@@ -127,6 +131,7 @@ class Session(object):
     def drops(self):
         return self._drops
 
+    @track_current_session
     def addGraphSpec(self, graphSpec):
         """
         Adds the graph specification given in `graphSpec` to the
@@ -164,6 +169,7 @@ class Session(object):
 
         logger.debug("Added a graph definition with %d DROPs", len(graphSpecDict))
 
+    @track_current_session
     def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
         """
         Links together two DROP specifications (i.e., those pointed by
@@ -187,6 +193,7 @@ class Session(object):
 
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
+    @track_current_session
     def deploy(self, completedDrops=[], foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
@@ -291,6 +298,7 @@ class Session(object):
                 else:
                     drop.setCompleted()
 
+    @track_current_session
     def deliver_event(self, evt):
         """
         Called when an event has been fired by a remote drop.
@@ -352,6 +360,7 @@ class Session(object):
 
                 self._proxyinfo.append((host, rpc_port, local_uid, mname, remote_uid))
 
+    @track_current_session
     def finish(self):
         self.status = SessionStates.FINISHED
         logger.info("Session %s finished", self._sessionId)
