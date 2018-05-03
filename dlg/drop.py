@@ -47,7 +47,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-from .utils import prepare_sql, createDirIfMissing, isabs
+from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 
 
 try:
@@ -67,6 +67,9 @@ class ListAsDict(list):
     def append(self, drop):
         super(ListAsDict, self).append(drop)
         self.set.add(drop.uid)
+
+
+track_current_drop = object_tracking('drop')
 
 #===============================================================================
 # DROP classes follow
@@ -115,6 +118,7 @@ class AbstractDROP(EventFirer):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
+    @track_current_drop
     def __init__(self, oid, uid, **kwargs):
         """
         Creates a DROP. The only mandatory argument are the Object ID
@@ -313,6 +317,7 @@ class AbstractDROP(EventFirer):
         with self._refLock:
             self._refCount -= 1
 
+    @track_current_drop
     def open(self, **kwargs):
         """
         Opens the DROP for reading, and returns a "DROP descriptor"
@@ -342,6 +347,7 @@ class AbstractDROP(EventFirer):
 
         return descriptor
 
+    @track_current_drop
     def close(self, descriptor, **kwargs):
         """
         Closes the given DROP descriptor, decreasing the DROP's
@@ -377,6 +383,7 @@ class AbstractDROP(EventFirer):
         with self._refLock:
             return self._refCount > 0
 
+    @track_current_drop
     def write(self, data, **kwargs):
         '''
         Writes the given `data` into this DROP. This method is only meant
@@ -649,6 +656,7 @@ class AbstractDROP(EventFirer):
         return self._parent
 
     @parent.setter
+    @track_current_drop
     def parent(self, parent):
         if self._parent and parent:
             logger.warning("A parent is already set in %r, overwriting with new value" % (self,))
@@ -670,6 +678,7 @@ class AbstractDROP(EventFirer):
         """
         return self._consumers[:]
 
+    @track_current_drop
     def addConsumer(self, consumer, back=True):
         """
         Adds a consumer to this DROP.
@@ -722,6 +731,7 @@ class AbstractDROP(EventFirer):
         """
         return self._producers[:]
 
+    @track_current_drop
     def addProducer(self, producer, back=True):
         """
         Adds a producer to this DROP.
@@ -744,6 +754,7 @@ class AbstractDROP(EventFirer):
         if back and hasattr(producer, 'addOutput'):
             producer.addOutput(self, False)
 
+    @track_current_drop
     def handleEvent(self, e):
         """
         Handles the arrival of a new event. Events are delivered from those
@@ -752,6 +763,7 @@ class AbstractDROP(EventFirer):
         if e.type == 'producerFinished':
             self.producerFinished(e.uid, e.status)
 
+    @track_current_drop
     def producerFinished(self, uid, drop_state):
         """
         Method called each time one of the producers of this DROP finishes
@@ -794,6 +806,7 @@ class AbstractDROP(EventFirer):
         """
         return self._streamingConsumers[:]
 
+    @track_current_drop
     def addStreamingConsumer(self, streamingConsumer, back=True):
         """
         Adds a streaming consumer to this DROP.
@@ -835,6 +848,7 @@ class AbstractDROP(EventFirer):
         if self.executionMode == ExecutionMode.DROP:
             self.subscribe(streamingConsumer, 'dropCompleted')
 
+    @track_current_drop
     def setError(self):
         '''
         Moves this DROP to the ERROR state.
@@ -850,6 +864,7 @@ class AbstractDROP(EventFirer):
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.ERROR)
 
+    @track_current_drop
     def setCompleted(self):
         '''
         Moves this DROP to the COMPLETED state. This can be used when not all the
@@ -1330,6 +1345,7 @@ class AppDROP(ContainerDROP):
         # execution status.
         self._execStatus = AppDROPStates.NOT_RUN
 
+    @track_current_drop
     def addInput(self, inputDrop, back=True):
         uid = inputDrop.uid
         if uid not in self._inputs:
@@ -1344,6 +1360,7 @@ class AppDROP(ContainerDROP):
         """
         return list(self._inputs.values())
 
+    @track_current_drop
     def addOutput(self, outputDrop, back=True):
         if outputDrop is self:
             raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
@@ -1529,6 +1546,7 @@ class InputFiredAppDROP(AppDROP):
             t.daemon = 1
             t.start()
 
+    @track_current_drop
     def execute(self):
         """
         Manually trigger the execution of this application.

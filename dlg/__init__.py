@@ -32,4 +32,36 @@ import logging
 
 # To avoid 'No handlers could be found for logger' messages during testing
 logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+# Use our own logger class, which knows about the currently executing app
+class _DlgLogger(logging.Logger):
+    def makeRecord(self, *args, **kwargs):
+        record = super(_DlgLogger, self).makeRecord(*args, **kwargs)
+
+        from . import drop
+        from .manager import session
+
+        # Try to get the UID of the drop ultimately in charge of sending this
+        # log record, if any
+        try:
+            drop = drop.track_current_drop.tlocal.drop
+        except AttributeError:
+            drop = None
+        drop_uid = drop.uid if drop else ''
+
+        # Do the same with the session_id, which can be found via the drop (if any)
+        # or checking if there is a session currently executing something
+        session_id = ''
+        if drop and hasattr(drop, '_dlg_session') and drop._dlg_session:
+            session_id = drop._dlg_session.sessionId
+        else:
+            try:
+                session_id = session.track_current_session.tlocal.session.sessionId
+            except AttributeError:
+                pass
+        record.drop_uid = drop_uid
+        record.session_id = session_id
+        return record
+
+logging.setLoggerClass(_DlgLogger)
 del logging
