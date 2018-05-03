@@ -25,12 +25,14 @@ Module containing miscellaneous utility classes and functions.
 
 import contextlib
 import errno
+import functools
 import json
 import logging
 import math
 import os
 import socket
 import sys
+import threading
 import time
 import types
 import zlib
@@ -392,6 +394,33 @@ def wait_or_kill(proc, timeout):
         logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
         proc.kill()
     proc.wait()
+
+def object_tracking(name):
+    """
+    Returns a decorator that helps classes track which object is currently under
+    execution. This is done via a thread local object, which can be accessed via
+    the 'tlocal' attribute of the returned decorator.
+    """
+
+    current_object = threading.local()
+    def track_current_drop(f):
+
+        @functools.wraps(f)
+        def _wrapper(*args, **kwargs):
+            try:
+                previous = getattr(current_object, name)
+            except AttributeError:
+                previous = None
+
+            setattr(current_object, name, args[0])
+            try:
+                return f(*args, **kwargs)
+            finally:
+                setattr(current_object, name, previous)
+        return _wrapper
+
+    track_current_drop.tlocal = current_object
+    return track_current_drop
 
 class ZlibCompressedStream(object):
     """
