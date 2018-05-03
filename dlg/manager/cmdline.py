@@ -200,10 +200,19 @@ def setupLogging(opts):
         lidx += min((opts.quiet, 2))
     level = levels[lidx]
 
+    # Output to files/stdout uses a command format, which can or not contain
+    # optionally a session_id and drop_uid to indicate what is currently being
+    # executed. This only applies to the NodeManager logs though, for which a
+    # 'no_log_ids' option exists (but can be set to True).
+    fmt = '%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] '
+    if opts.dmType == NodeManager and not opts.no_log_ids:
+        fmt += '[%(session_id)10.10s] [%(drop_uid)10.10s] '
+    fmt += '%(name)s#%(funcName)s:%(lineno)s %(message)s'
+    fmt = logging.Formatter(fmt)
+    fmt.converter = time.gmtime
+
     # Let's configure logging now
     # Daemons don't output stuff to the stdout
-    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
-    fmt.converter = time.gmtime
     if not opts.daemon:
         streamHdlr = logging.StreamHandler(sys.stdout)
         streamHdlr.setFormatter(fmt)
@@ -231,6 +240,8 @@ def dlgNM(parser, args):
 
     # Parse command-line and check options
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
+    parser.add_option("-I", "--no-log-ids", action="store_true",
+                  dest="no_log_ids", help="Do not add associated session IDs and Drop UIDs to log statements", default=False)
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dlg-path", action="store", type="string",
