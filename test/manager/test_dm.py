@@ -112,6 +112,16 @@ class NMTestsMixIn(object):
 
 class TestDM(NMTestsMixIn, unittest.TestCase):
 
+    def _deploy_error_graph(self, **kwargs):
+        sessionId = 'lala'
+        g = [{"oid":"A", "type":"plain", "storage": "memory"},
+             {"oid":"B", "type":"app", "app":"test.manager.test_dm.ErroneousApp", "inputs": ["A"]},
+             {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
+        dm = self._start_dm(**kwargs)
+        dm.createSession(sessionId)
+        dm.addGraphSpec(sessionId, g)
+        dm.deploySession(sessionId, ["A"])
+
     def test_error_listener(self):
 
         evt = threading.Event()
@@ -121,17 +131,22 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 erroneous_drops.append(drop.uid)
                 if len(erroneous_drops) == 2: # both 'C' and 'B' failed already
                     evt.set()
-
-        sessionId = 'lala'
-        dm = self._start_dm(error_listener=listener())
-        g = [{"oid":"A", "type":"plain", "storage": "memory"},
-             {"oid":"B", "type":"app", "app":"test.manager.test_dm.ErroneousApp", "inputs": ["A"]},
-             {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
-        dm.createSession(sessionId)
-        dm.addGraphSpec(sessionId, g)
-        dm.deploySession(sessionId, ["A"])
-
+        self._deploy_error_graph(error_listener=listener())
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
+
+    def test_event_listener(self):
+        """Tests that user-provided event listeners work"""
+
+        evt = threading.Event()
+        class listener(object):
+            def __init__(self):
+                self.recv = 0
+            def handleEvent(self, _evt):
+                self.recv += 1
+                if self.recv == 3:
+                    evt.set()
+        self._deploy_error_graph(event_listeners=[listener()])
+        self.assertTrue(evt.wait(10), "Didn't receive events on time")
 
     def test_runGraphOneDOPerDOM(self):
         """
