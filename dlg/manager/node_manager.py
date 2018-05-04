@@ -41,6 +41,7 @@ from . import constants
 from .drop_manager import DROPManager
 from .session import Session
 from .. import rpc, utils
+from ..ddap_protocol import DROPStates
 from ..drop import AppDROP
 from ..exceptions import NoSessionException, SessionAlreadyExistsException,\
     DaliugeException
@@ -66,6 +67,36 @@ class LogEvtListener(object):
         elif event.type == 'execStatus':
             logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
 
+class ErrorStatusListener(object):
+    """An event listener that passes down the erroneous drop to an error handler"""
+
+    def __init__(self, session, error_listener):
+        self._session = session
+        self._error_listener = error_listener
+
+    def handleEvent(self, evt):
+        if evt.status == DROPStates.ERROR:
+            self._error_listener.on_error(self._session.drops[evt.uid])
+
+
+def _load(obj, callable_attr):
+    """
+    Returns object (a python object or a string denoting a class within a
+    python module only if it has the indicated attribute and it is callable.
+    """
+    if isinstance(obj, six.string_types):
+        try:
+            parts = obj.split('.')
+            module = importlib.import_module('.'.join(parts[:-1]))
+        except:
+            logger.exception('Creating the error listener')
+            raise
+        obj = getattr(module, parts[-1])()
+    if not hasattr(obj, callable_attr) or not callable(getattr(obj, callable_attr)):
+        raise ValueError("%r doesn't contain an %s attribute that can be called" % (obj, callable_attr))
+    return obj
+
+
 class NodeManagerBase(DROPManager):
     """
     Base class for a DROPManager that creates and holds references to DROPs.
@@ -86,6 +117,7 @@ class NodeManagerBase(DROPManager):
                  useDLM=True,
                  dlgPath=None,
                  error_listener=None,
+                 event_listeners=[],
                  max_threads = 0):
 
         self._dlm = DataLifecycleManager() if useDLM else None
@@ -100,19 +132,11 @@ class NodeManagerBase(DROPManager):
                 sys.path.append(dlgPath)
 
         # Error listener used by users to deal with errors coming from specific
-        # Drops in whatever way they want
-        if error_listener:
-            if isinstance(error_listener, six.string_types):
-                try:
-                    parts   = error_listener.split('.')
-                    module  = importlib.import_module('.'.join(parts[:-1]))
-                except:
-                    logger.exception('Creating the error listener')
-                    raise
-                error_listener = getattr(module, parts[-1])()
-            if not hasattr(error_listener, 'on_error'):
-                raise ValueError("error_listener doesn't contain an on_error method")
-        self._error_listener = error_listener
+        # Drops in whatever way they want. This is a specific case of an event
+        # listener, so we add it together with the rest of the user-supplied
+        # event listeners
+        self._error_listener = _load(error_listener, 'on_error') if error_listener else None
+        self._event_listeners = [_load(l, 'handleEvent') for l in event_listeners]
 
         # Start our thread pool
         if max_threads == 0:
@@ -177,7 +201,7 @@ class NodeManagerBase(DROPManager):
     def createSession(self, sessionId):
         if sessionId in self._sessions:
             raise SessionAlreadyExistsException(sessionId)
-        self._sessions[sessionId] = Session(sessionId, self._error_listener, nm=self)
+        self._sessions[sessionId] = Session(sessionId, nm=self)
         logger.info('Created session %s', sessionId)
 
     def getSessionStatus(self, sessionId):
@@ -224,7 +248,12 @@ class NodeManagerBase(DROPManager):
                 if isinstance(drop, AppDROP):
                     drop.subscribe(log_evt_listener, 'execStatus')
 
-        session.deploy(completedDrops=completedDrops, foreach=foreach)
+        # Add user-supplied listeners
+        listeners = self._event_listeners[:]
+        if self._error_listener:
+            listeners.append(ErrorStatusListener(session, self._error_listener))
+
+        session.deploy(completedDrops=completedDrops, event_listeners=listeners, foreach=foreach)
 
     def destroySession(self, sessionId):
         self._check_session_id(sessionId)
@@ -413,10 +442,10 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer): pass
 # Final NodeManager class
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
 
-    def __init__(self, useDLM=True, dlgPath=None, error_listener=None, max_threads=0,
+    def __init__(self, useDLM=True, dlgPath=None, error_listener=None, event_listeners=[], max_threads=0,
                  host=None, rpc_port=constants.NODE_DEFAULT_RPC_PORT,
                  events_port=constants.NODE_DEFAULT_EVENTS_PORT):
         host = host or '127.0.0.1'
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
-        NodeManagerBase.__init__(self, useDLM, dlgPath, error_listener, max_threads)
+        NodeManagerBase.__init__(self, useDLM, dlgPath, error_listener, event_listeners, max_threads)
