@@ -257,14 +257,6 @@ class Session(object):
                 leaf.subscribe(listener, 'dropCompleted')
         logger.info("Listener added to leaf drops")
 
-        # We move to COMPLETED the DROPs that we were requested to
-        # InputFiredAppDROP are here considered as having to be executed and
-        # not directly moved to COMPLETED.
-        #
-        # This is done in a separate iteration at the very end because all drops
-        # to make sure all event listeners are ready
-        self.trigger_drops(completedDrops)
-
         # Foreach
         if foreach:
             logger.info("Invoking 'foreach' on each drop")
@@ -280,6 +272,14 @@ class Session(object):
                          self._drops[local_uid], relname)
             method = getattr(self._drops[local_uid], relname)
             method(proxy, False)
+
+        # We move to COMPLETED the DROPs that we were requested to
+        # InputFiredAppDROP are here considered as having to be executed and
+        # not directly moved to COMPLETED.
+        #
+        # This is done in a separate iteration at the very end because all drops
+        # to make sure all event listeners are ready
+        self.trigger_drops(completedDrops)
 
         self.status = SessionStates.RUNNING
         logger.info("Session %s is now RUNNING", self._sessionId)
