@@ -248,6 +248,8 @@ def dlgNM(parser, args):
                       dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default="~/.dlg/lib")
     parser.add_option("--error-listener", action="store", type="string",
                       dest="errorListener", help="The error listener class to be used", default=None)
+    parser.add_option("--event-listeners", action="store", type="string",
+                      dest="event_listeners", help="A colon-separated list of event listener classes to be used", default='')
     parser.add_option("-t", "--max-threads", action="store", type="int",
                       dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
     (options, args) = parser.parse_args(args)
@@ -261,6 +263,7 @@ def dlgNM(parser, args):
                         'dlgPath': options.dlgPath,
                         'host': options.host,
                         'error_listener': options.errorListener,
+                        'event_listeners': list(filter(None, options.event_listeners.split(":"))),
                         'max_threads': options.max_threads}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
