@@ -397,7 +397,7 @@ def get_roots(pg_spec):
         oid = dropspec['oid']
         all_oids.add(oid)
 
-        if dropspec['type'] == 'app':
+        if dropspec['type'] in ('app', 'socket'):
             if dropspec.get('inputs', None) or dropspec.get('streamingInputs', None):
                 nonroots.add(oid)
             if dropspec.get('outputs', None):
