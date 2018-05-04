@@ -49,16 +49,6 @@ class SessionStates:
     """
     PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = range(5)
 
-class ErrorStatusListener(object):
-
-    def __init__(self, session, event_listener):
-        self._session = session
-        self._event_listener = event_listener
-
-    def handleEvent(self, evt):
-        if evt.status == DROPStates.ERROR:
-            self._event_listener.on_error(self._session.drops[evt.uid])
-
 class LeavesCompletionListener(object):
 
     def __init__(self, leaves, session):
@@ -94,7 +84,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, error_listener=None, nm=None):
+    def __init__(self, sessionId, nm=None):
         self._sessionId = sessionId
         self._graph = {} # key: oid, value: dropSpec dictionary
         self._drops = {} # key: oid, value: actual drop object
@@ -106,8 +96,6 @@ class Session(object):
         self._error_status_listener = None
         self._nm = nm
         self._dropsubs = {}
-        if error_listener:
-            self._error_status_listener = ErrorStatusListener(self, error_listener)
 
     @property
     def sessionId(self):
@@ -194,7 +182,7 @@ class Session(object):
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     @track_current_session
-    def deploy(self, completedDrops=[], foreach=None):
+    def deploy(self, completedDrops=[], event_listeners=[], foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -242,8 +230,8 @@ class Session(object):
             drop._rpc_server = self._nm
 
             # Register them with the error handler
-            if self._error_status_listener:
-                drop.subscribe(self._error_status_listener, eventType='status')
+            for l in event_listeners:
+                drop.subscribe(l, eventType='status')
         logger.info("Stored all drops, proceeding with further customization")
 
         # Add listeners that will move the session to FINISHED state
