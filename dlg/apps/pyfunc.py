@@ -22,15 +22,34 @@
 """Module implementing the PyFuncApp class"""
 
 import base64
+import collections
 import importlib
-import marshal
-import types
+import inspect
+import logging
 
+import dill
+import six
 import six.moves.cPickle as pickle  # @UnresolvedImport
 
 from .. import droputils
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
+
+
+logger = logging.getLogger(__name__)
+
+def serialize_func(f):
+
+    if isinstance(f, six.string_types):
+        parts = f.split('.')
+        f = getattr(importlib.import_module('.'.join(parts[:-1])), parts[-1])
+
+    fser = dill.dumps(f)
+    fdefaults = {}
+    a = inspect.getargspec(f)
+    if a.defaults:
+        fdefaults = dict(zip(a.args[-len(a.defaults):], a.defaults))
+    return fser, fdefaults
 
 
 def import_using_name(app, fname):
@@ -49,9 +68,8 @@ def import_using_name(app, fname):
     except AttributeError:
         raise InvalidDropException(app, 'Module %s has no member %s' % (modname, fname))
 
-def import_using_code(name, code):
-    fcode = marshal.loads(base64.b64decode(code))
-    return types.FunctionType(fcode, {}, name=name)
+def import_using_code(code):
+    return dill.loads(code)
 
 class PyFuncApp(BarrierAppDROP):
     """
@@ -74,7 +92,7 @@ class PyFuncApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
 
-        fname = self._getArg(kwargs, 'func_name', None)
+        self.fname = fname = self._getArg(kwargs, 'func_name', None)
         fcode = self._getArg(kwargs, 'func_code', None)
         if not fname and not fcode:
             raise InvalidDropException(self, 'No function specified (either via name or code)')
@@ -82,13 +100,39 @@ class PyFuncApp(BarrierAppDROP):
         if not fcode:
             self.f = import_using_name(self, fname)
         else:
-            self.f = import_using_code(fname, fcode)
+            if not isinstance(fcode, six.binary_type):
+                fcode = base64.b64decode(six.b(fcode))
+            self.f = import_using_code(fcode)
+
+        # Mapping from argname to default value. Should match only the last part
+        # of the argnames list
+        self.fdefaults = self._getArg(kwargs, 'func_defaults', {}) or {}
+        logger.debug("Default values for function: %r", self.fdefaults)
+
+        # Mapping between argument name and input drop uids
+        self.func_arg_mapping = self._getArg(kwargs, 'func_arg_mapping', {})
+        logger.debug("Input mapping: %r", self.func_arg_mapping)
 
     def run(self):
 
         # Inputs are un-pickled and treated as the arguments of the function
-        args = map(lambda x: pickle.loads(droputils.allDropContents(x)), self.inputs)  # @UndefinedVariable
-        result = self.f(*args)
+        # Their order must be preserved, so we use an OrderedDict
+        all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+        inputs = collections.OrderedDict()
+        for uid, i in self._inputs.items():
+            inputs[uid] = all_contents(i)
+
+        # Keyword arguments are made up by the default values plus the inputs
+        # that match one of the keyword argument names
+        kwargs = {name: inputs.pop(uid)
+                  for name, uid in self.func_arg_mapping.items()
+                  if name in self.fdefaults}
+
+        # The rest of the inputs are the positional arguments
+        args = list(inputs.values())
+
+        logger.debug("Running %s with args=%r, kwargs=%r", self.fname, args, kwargs)
+        result = self.f(*args, **kwargs)
 
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
