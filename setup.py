@@ -35,7 +35,7 @@ from setuptools import setup
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR   = 0
-MINOR   = 4
+MINOR   = 5
 PATCH   = 0
 RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
