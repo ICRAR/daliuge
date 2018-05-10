@@ -126,6 +126,7 @@ def getUpstreamObjects(drop):
     Returns a list of all direct "upstream" DROPs for the given
     DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
+
     * A is a producer of B (therefore A is an AppDROP)
     * A is a normal or streaming input of B (and B is therefore an AppDROP)
 
@@ -311,8 +312,8 @@ def replace_path_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the path of the respective
     input or output Drop from ``inputs`` or ``outputs``.
-
     Placeholders have the different formats:
+
     * ``%iN``, with N starting from 0, indicates the path of the N-th element
       from the ``inputs`` argument; likewise for ``%oN``.
     * ``%i[X]`` indicates the path of the input with UID ``X``; likewise for
@@ -348,8 +349,8 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the dataURL property of the
     respective input or output Drop from ``inputs`` or ``outputs``.
-
     Placeholders have the different formats:
+
     * ``%iDataURLN``, with N starting from 0, indicates the path of the N-th
       element from the ``inputs`` argument; likewise for ``%oDataURLN``.
     * ``%iDataURL[X]`` indicates the path of the input with UID ``X``; likewise
@@ -411,3 +412,33 @@ def get_roots(pg_spec):
                 nonroots |= set(dropspec['streamingConsumers'])
 
     return all_oids - nonroots
+
+def get_leaves(pg_spec):
+    """
+    Returns a set with the OIDs of the dropspecs that are the leaves of the given physical
+    graph specification.
+    """
+
+    # We find all the nonleaves first, which are easy to spot.
+    # The rest are the leaves
+    all_oids = set()
+    nonleaves = set()
+    for dropspec in pg_spec:
+
+        oid = dropspec['oid']
+        all_oids.add(oid)
+
+        if dropspec['type'] == 'app':
+            if dropspec.get('outputs', None):
+                nonleaves.add(oid)
+            if dropspec.get('streamingInputs', None):
+                nonleaves |= set(dropspec['streamingInputs'])
+            if dropspec.get('inputs', None):
+                nonleaves |= set(dropspec['inputs'])
+        elif dropspec['type'] == 'plain':
+            if dropspec.get('producers', None):
+                nonleaves |= set(dropspec['producers'])
+            if dropspec.get('consumers', None) or dropspec.get('streamingConsumers', None):
+                nonleaves.add(oid)
+
+    return all_oids - nonleaves

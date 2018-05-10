@@ -157,7 +157,7 @@ def removeUnmetRelationships(dropSpecList):
 
 def check_dropspec(n, dropSpec):
     if 'oid' not in dropSpec:
-        raise InvalidGraphException("Drop #%d is missing its 'oid' argument" % (n,))
+        raise InvalidGraphException("Drop #%d is missing its 'oid' argument: %r" % (n, dropSpec))
     if 'type' not in dropSpec:
         raise InvalidGraphException("Drop %s is missing its 'type' argument" % (dropSpec['oid']))
 

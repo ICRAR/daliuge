@@ -40,3 +40,7 @@ dlg.graph_loader
 ^^^^^^^^^^^^^^^^
 .. automodule:: dlg.graph_loader
    :members:
+
+dlg.delayed
+^^^^^^^^^^^
+.. autofunction:: dlg.delayed
