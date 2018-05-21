@@ -90,13 +90,16 @@ class SocketListenerApp(BarrierAppDROP):
             logger.info('Accepted connection from %s:%d', address[0], address[1])
 
         # Simply write the data we receive into our outputs
+        n = 0
         with contextlib.closing(clientSocket):
             while True:
                 data = clientSocket.recv(4096)
                 if not data:
                     break
+                n += len(data)
                 for out in outs:
                     out.write(data)
+        logger.info('TCP receiver received %d bytes of data', n)
 
     @property
     def host(self):
