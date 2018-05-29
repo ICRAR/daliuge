@@ -50,6 +50,8 @@ from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 
 
+# Opt into using per-drop checksum calculation
+checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
 try:
     from crc32c import crc32  # @UnusedImport
     _checksumType = ChecksumTypes.CRC_32C
@@ -422,7 +424,8 @@ class AbstractDROP(EventFirer):
                 streamingConsumer.dataWritten(self.uid, data)
 
         # Update our internal checksum
-        self._updateChecksum(data)
+        if not checksum_disabled:
+            self._updateChecksum(data)
 
         # If we know how much data we'll receive, keep track of it and
         # automatically switch to COMPLETED
