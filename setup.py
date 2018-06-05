@@ -23,10 +23,11 @@
 import os
 import subprocess
 import sys
+import sysconfig
 
 from setuptools import find_packages
 from setuptools import setup
-
+from setuptools.command.install import install
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
@@ -40,6 +41,7 @@ PATCH   = 0
 RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
 VERSION_FILE = 'dlg/version.py'
+PTH_FILE = 'lib64_dist.pth'
 
 def get_git_version():
     out = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
@@ -53,6 +55,7 @@ def get_version_info():
     if not RELEASE:
         full_version = '%s.dev0+%s' % (VERSION, git_version[:7])
     return full_version, git_version
+
 
 def write_version_info():
     tpl = """
@@ -76,6 +79,35 @@ if not is_release:
 
 # Every time we overwrite the version file
 write_version_info()
+
+
+# HACK - HACK - HACK - HACK
+class lib64_path(install):
+    def write_pth_file(self):
+        """
+        This is a hack to get around some distributions installing stuff into
+        lib64/python-x.x/dist-packages
+        """
+        lp = os.path.abspath(os.path.curdir)
+        with open(PTH_FILE, 'w') as f:
+            f.write(lp.replace('/lib/', '/lib64/'))
+
+    def initialize_options(self):
+        install.initialize_options(self)
+        self.build_scripts = None
+
+    def finalize_options(self):
+        install.finalize_options(self)
+        self.set_undefined_options('build', ('build_scripts', 'build_scripts'))
+
+    def run(self):
+        install.run(self)
+        lp = sysconfig.get_path('stdlib')
+        with open(PTH_FILE, 'w') as f:
+            f.write('{0}/dist-packages'.format(lp))
+        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib,
+                                                       PTH_FILE))
+
 
 # HACK - HACK - HACK - HACK
 #
@@ -101,10 +133,10 @@ write_version_info()
 #
 # HACK - HACK - HACK - HACK
 try:
-    subprocess.check_call(['pip','install','numpy'])
+    subprocess.check_call(['pip', 'install', 'numpy'])
 except subprocess.CalledProcessError:
     try:
-        subprocess.check_call(['easy_install','numpy'])
+        subprocess.check_call(['easy_install', 'numpy'])
     except subprocess.CalledProcessError:
         raise Exception("Couldn't install numpy manually, sorry :(")
 
@@ -160,7 +192,7 @@ extra_requires = {
 
     # Pyro4 and RPyC are semi-supported RPC alternatives
     # (while zerorpc is the default)
-    'pyro': ['Pyro4>=4.47'], # 4.47 contains a fix we contributed
+    'pyro': ['Pyro4>=4.47'],  # 4.47 contains a fix we contributed
     'rpyc': ['rpyc'],
 
     # drive-casa is used by some manual tests under test/integrate
@@ -170,32 +202,40 @@ extra_requires = {
     'MPI': ['mpi4py']
 }
 
+
 setup(
       name='daliuge',
       version=get_version_info()[0],
       description=u'Data Activated \uF9CA (flow) Graph Engine - DALiuGE',
-      long_description = "The SKA-SDK prototype for the Execution Framework component",
+      long_description="The SKA-SDK prototype for the Execution Framework component",
       author='ICRAR DIA Group',
       author_email='dfms_prototype@googlegroups.com',
       url='https://github.com/ICRAR/daliuge',
       license="LGPLv2+",
       packages=find_packages(exclude=('test', 'test.*')),
-      package_data = {
-        'dlg.apps' : ['dlg_app.h'],
-        'dlg.manager' : ['web/*.html', 'web/static/css/*.css', 'web/static/fonts/*', 'web/static/js/*.js', 'web/static/js/d3/*'],
-        'dlg.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js', 'web/*.json', 'web/*.map',
-                          'web/img/jsoneditor-icons.png', 'web/pg_viewer.html', 'web/matrix_vis.html',
-                          'lib/libmetis.*'],
+      package_data={
+        'dlg.apps': ['dlg_app.h'],
+        'dlg.manager': ['web/*.html', 'web/static/css/*.css',
+                        'web/static/fonts/*', 'web/static/js/*.js',
+                        'web/static/js/d3/*'],
+        'dlg.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js',
+                         'web/*.json', 'web/*.map',
+                         'web/img/jsoneditor-icons.png', 'web/pg_viewer.html',
+                         'web/matrix_vis.html',
+                         'lib/libmetis.*'],
         'test.dropmake': ['logical_graphs/*.json'],
-        'test.apps' : ['dynlib_example.c']
+        'test.apps': ['dynlib_example.c']
       },
       install_requires=install_requires,
       dependency_links=dependency_links,
       extras_require=extra_requires,
       test_suite="test",
-      entry_points= {
-          'console_scripts':[
-              'dlg=dlg.tool:run', # One tool to rule them all
+      entry_points={
+          'console_scripts': [
+              'dlg=dlg.tool:run',  # One tool to rule them all
           ],
-      }
+      },
+      cmdclass={
+            'install': lib64_path
+            },
 )
