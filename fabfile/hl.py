@@ -31,7 +31,8 @@ from fabric.operations import local
 from fabric.state import env
 from fabric.tasks import execute
 
-from aws import create_aws_instances
+from config import APP
+from aws import create_aws_instances, list_instances
 from dockerContainer import setup_container, create_final_image
 from utils import repo_root, check_ssh, append_desc
 from system import check_sudo
@@ -74,6 +75,7 @@ def aws_deploy():
     # and then calls execute(prepare_install_and_check) which will be parallel
     create_aws_instances()
     execute(prepare_install_and_check)
+    list_instances(APP)
 
 
 @task
