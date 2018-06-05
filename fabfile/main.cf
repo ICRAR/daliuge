@@ -1,0 +1,17 @@
+#
+# This is a postfix main configuration file, which is copied as part of
+# the postfix setup when installing an NGAS instance with postfix support.
+# The sasl_passwd file it references is generated at the same time this file
+# is copied over to the NGAS host, and therefore their contents should be
+# consistent
+#
+relayhost = [smtp.gmail.com]:587
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+smtp_tls_CAfile = /etc/postfix/cacert.pem
+smtp_use_tls = yes
+
+# smtp_generic_maps
+smtp_generic_maps = hash:/etc/postfix/generic
+default_destination_concurrency_limit = 1
