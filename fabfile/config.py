@@ -25,6 +25,7 @@ env.pkgs = {
                      'openssl-devel',
                      'gcc',
                      'docker',
+                     'git',
                      ],
             'APT_PACKAGES': [
                     'python-dev',
@@ -33,6 +34,7 @@ env.pkgs = {
                     'wget',
                     'gcc',
                     'docker',
+                    'git',
                     ],
             'SLES_PACKAGES': [
                     'python-devel',
