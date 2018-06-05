@@ -1,0 +1,15 @@
+# Options configuration for the ngas-server script
+#
+# This file defines the configuration options for the NGAS server daemon
+# started by the init system
+#
+
+#
+# The user used to run NGAS
+#
+USER=eagle
+
+#
+# Process to be executed to start the NGAS daemon
+#
+DAEMON=eagleDaemon
