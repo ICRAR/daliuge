@@ -212,7 +212,7 @@ setup(
       author_email='dfms_prototype@googlegroups.com',
       url='https://github.com/ICRAR/daliuge',
       license="LGPLv2+",
-      packages=find_packages(exclude=('test', 'test.*')),
+      packages=find_packages(exclude=('test', 'test.*', 'fabfile')),
       package_data={
         'dlg.apps': ['dlg_app.h'],
         'dlg.manager': ['web/*.html', 'web/static/css/*.css',
