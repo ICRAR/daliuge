@@ -283,7 +283,7 @@ def main():
         print("From ifconfig: %s" % get_ip_via_ifconfig())
         sys.exit(0)
 
-    if options.logical_graph and options.physical_graph:
+    if bool(options.logical_graph) == bool(options.physical_graph):
         parser.error("Either a logical graph or physical graph filename must be specified")
     for p in (options.logical_graph, options.physical_graph):
         if p and not os.path.exists(p):
