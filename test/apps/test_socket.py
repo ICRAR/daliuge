@@ -38,7 +38,7 @@ except:
 
 class TestSocketListener(unittest.TestCase):
 
-    def test_socket_listener(self):
+    def _test_socket_listener(self, **kwargs):
         '''
         A simple test to check that SocketListenerApps are indeed working as
         expected; that is, they write the data they receive into their output,
@@ -53,7 +53,7 @@ class TestSocketListener(unittest.TestCase):
         port = 9933
         data = os.urandom(1025)
 
-        a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port)
+        a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port, **kwargs)
         b = InMemoryDROP('oid:B', 'uid:B')
         c = SumupContainerChecksum('oid:C', 'uid:C')
         d = InMemoryDROP('oid:D', 'uid:D')
@@ -75,6 +75,13 @@ class TestSocketListener(unittest.TestCase):
         dContents = int(droputils.allDropContents(d))
         self.assertEqual(data, bContents)
         self.assertEqual(crc32(data, 0), dContents)
+
+    def test_socket_listener(self):
+        self._test_socket_listener()
+
+    def test_socket_listener_integer_with_bufsize(self):
+        for bufsize in (4096, '4096'):
+            self._test_socket_listener(bufsize=bufsize)
 
     def test_invalid(self):
 

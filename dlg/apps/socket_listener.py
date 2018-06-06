@@ -65,7 +65,7 @@ class SocketListenerApp(BarrierAppDROP):
 
         self._host = host
         self._port = port
-        self._bufsize = self._getArg(kwargs, 'bufsize', 4096)
+        self._bufsize = int(self._getArg(kwargs, 'bufsize', 4096))
         self._reuseAddr = self._getArg(kwargs, 'reuseAddr', False)
 
     def run(self):
