@@ -112,14 +112,14 @@ def prepare_c_inputs(c_app, inputs):
     """
 
     c_inputs = []
-    opened_info = []
+    input_closers = []
     for i in inputs:
         desc, c_input = _to_c_input(i)
-        opened_info.append((i, desc))
+        input_closers.append(lambda: i.close(desc))
         c_inputs.append(c_input)
     c_app.inputs = (CDlgInput * len(c_inputs))(*c_inputs)
     c_app.n_inputs = len(c_inputs)
-    return opened_info
+    return input_closers
 
 def prepare_c_outputs(c_app, outputs):
     """
@@ -130,7 +130,7 @@ def prepare_c_outputs(c_app, outputs):
     c_app.outputs = (CDlgOutput * len(c_outputs))(*c_outputs)
     c_app.n_outputs = len(c_outputs)
 
-def run(lib, c_app, opened_info):
+def run(lib, c_app, input_closers):
     """
     Invokes the `run` method on `lib` with the given `c_app`. After completion,
     all opened file descriptors are closed.
@@ -139,8 +139,8 @@ def run(lib, c_app, opened_info):
         if lib.run(ctypes.pointer(c_app)):
             raise Exception("Invocation of %r:run returned with status != 0" % lib)
     finally:
-        for x, desc  in opened_info:
-            x.close(desc);
+        for closer in input_closers:
+            closer()
 
 class InvalidLibrary(Exception):
     pass
@@ -256,9 +256,9 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
 
     def run(self):
-        opened_info = prepare_c_inputs(self._c_app, self.inputs)
+        input_closers = prepare_c_inputs(self._c_app, self.inputs)
         self._ensure_c_outputs_are_set()
-        run(self.lib, self._c_app, opened_info)
+        run(self.lib, self._c_app, input_closers)
 
 def _run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
 
@@ -287,9 +287,9 @@ def _run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
 
         # Step 3: Finish initializing the C structure and run the application
         try:
-            opened_info = prepare_c_inputs(c_app, inputs)
+            input_closers = prepare_c_inputs(c_app, inputs)
             prepare_c_outputs(c_app, outputs)
-            run(lib, c_app, opened_info)
+            run(lib, c_app, input_closers)
             queue.put(None)
         except Exception as e:
             queue.put(e)
