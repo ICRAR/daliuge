@@ -36,6 +36,8 @@ from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
 
+_getargsspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
+
 logger = logging.getLogger(__name__)
 
 def serialize_func(f):
@@ -46,7 +48,7 @@ def serialize_func(f):
 
     fser = dill.dumps(f)
     fdefaults = {}
-    a = inspect.getargspec(f)
+    a = _getargsspec(f)
     if a.defaults:
         fdefaults = dict(zip(a.args[-len(a.defaults):], a.defaults))
     return fser, fdefaults
