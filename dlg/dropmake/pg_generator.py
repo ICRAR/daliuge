@@ -1595,6 +1595,7 @@ class LG():
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%dT%H:%M:%S')
         self._session_id = ssid
+        self._loop_aware_set = set()
 
         with f:
             lg = json.load(f)
@@ -1624,6 +1625,8 @@ class LG():
                 self.validate_link(src, tgt)
                 src.add_output(tgt)
                 tgt.add_input(src)
+                if ('1' == lk.get('loop_aware', '0')):
+                    self._loop_aware_set.add('%s-%s' % (lk['from'], lk['to']))
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
@@ -1875,7 +1878,7 @@ class LG():
             self.lgn_to_pgn(lgn)
 
         logger.info("Unroll progress - lgn_to_pgn done {0} for session {1}".format(len(self._start_list), self._session_id))
-
+        self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
             sid = lk['from'] # source
             tid = lk['to'] # target
@@ -1943,7 +1946,23 @@ class LG():
                         if (sdrop['loop_cxt'] == tdrop['loop_cxt']):
                             self._link_drops(slgn, tlgn, sdrop, tdrop)
                 else:
-                    if (slgn.h_level >= tlgn.h_level):
+                    lpaw = ('%s-%s' % (sid, tid)) in self_loop_aware_set
+                    if (slgn.group is not None and slgn.group.is_loop() and
+                            lpaw and slgn.h_level > tlgn.h_level):
+                        for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
+                            # only connect from drops in the last iteration to drops
+                            # outside the current loop
+                            sdrop = chunk[-1]
+                            self._link_drops(slgn, tlgn, sdrop, tdrops[i])
+                    elif (tlgn.group is not None and tlgn.group.is_loop() and
+                            lpaw and slgn.h_level < tlgn.h_level):
+                        for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
+                            # only connect from drops in the first iteration from drops
+                            # outside the current loop
+                            tdrop = chunk[0]
+                            self._link_drops(slgn, tlgn, sdrops[i], tdrop)
+
+                    elif (slgn.h_level >= tlgn.h_level):
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
                             # distribute slgn evenly to tlgn
                             for sdrop in chunk:
