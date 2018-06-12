@@ -28,6 +28,14 @@ the system.
 # we load daliuge up. Most modules in daliuge that have a logger create it at
 # import time, so we need to perform this setup before doing any other imports
 def setup_logger_class():
+
+    # Doc building is failing due with "ValueError: Empty module name" in
+    # "from . import drop" further below, which I can't easily explain.
+    # Just skip this setup in RTD for the time being
+    import os
+    if os.environ.get('READTHEDOCS', None) == 'True':
+        return
+
     import logging
 
     # To avoid 'No handlers could be found for logger' messages during testing
