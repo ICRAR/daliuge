@@ -155,8 +155,6 @@ class _DelayedDrop(object):
     def _to_physical_graph(self, visited, full_graph):
 
         self._append_to_graph(visited, full_graph)
-        my_dd = self.dropdict
-        oid = my_dd['oid']
 
         dependencies = list(self.inputs)
         if self.producer:
@@ -165,20 +163,22 @@ class _DelayedDrop(object):
             if isinstance(d, list):
                 d = tuple(d)
             if d in visited:
-                self._link(d, my_dd, full_graph[visited[d]])
+                self._add_upstream(d)
                 continue
 
-            d_oid = d._to_physical_graph(visited, full_graph)
-            self._link(d, my_dd, full_graph[d_oid])
+            d._to_physical_graph(visited, full_graph)
+            self._add_upstream(d)
 
-        return oid
-
-    def _link(self, dep, my_dd, d_dd):
-        # The dependency was either a producer or one of the inputs
-        if dep == self.producer:
-            my_dd.addProducer(d_dd)
-        elif dep in self.inputs:
-            my_dd.addInput(d_dd)
+    def _add_upstream(self, upstream_drop):
+        """Link the given drop as either a producer or input of this drop"""
+        self_dd = self.dropdict
+        up_dd = upstream_drop.dropdict
+        if isinstance(self, _DataDrop):
+            self_dd.addProducer(up_dd)
+            logger.debug("Set %r/%s as producer of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
+        else:
+            self_dd.addInput(up_dd)
+            logger.debug("Set %r/%s as input of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
 
 
 class _DelayedDrops(_DelayedDrop):
@@ -235,11 +235,12 @@ class _AppDrop(_DelayedDrop):
             my_dropdict['func_defaults'] = self.fdefaults
         return my_dropdict
 
-    def _link(self, dep, my_dd, d_dd):
-        _DelayedDrop._link(self, dep, my_dd, d_dd)
-        name = self.kwarg_names.pop()
-        if name:
-            my_dd['func_arg_mapping'][name] = d_dd['oid']
+    def _add_upstream(self, dep):
+        _DelayedDrop._add_upstream(self, dep)
+        if self.kwarg_names:
+            name = self.kwarg_names.pop()
+            if name:
+                self.dropdict['func_arg_mapping'][name] = dep.dropdict['oid']
 
     def _to_delayed_arg(self, arg):
 
