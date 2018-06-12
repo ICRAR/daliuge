@@ -1949,18 +1949,20 @@ class LG():
                     lpaw = ('%s-%s' % (sid, tid)) in self_loop_aware_set
                     if (slgn.group is not None and slgn.group.is_loop() and
                             lpaw and slgn.h_level > tlgn.h_level):
+                        loop_iter = slgn.group.dop
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
-                            # only connect from drops in the last iteration to drops
-                            # outside the current loop
-                            sdrop = chunk[-1]
-                            self._link_drops(slgn, tlgn, sdrop, tdrops[i])
+                            for j, sdrop in enumerate(chunk):
+                                # only link drops in the last loop iteration
+                                if (j % loop_iter == loop_iter - 1):
+                                    self._link_drops(slgn, tlgn, sdrop, tdrops[i])
                     elif (tlgn.group is not None and tlgn.group.is_loop() and
                             lpaw and slgn.h_level < tlgn.h_level):
+                        loop_iter = tlgn.group.dop
                         for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
-                            # only connect from drops in the first iteration from drops
-                            # outside the current loop
-                            tdrop = chunk[0]
-                            self._link_drops(slgn, tlgn, sdrops[i], tdrop)
+                            for j, tdrop in enumerate(chunk):
+                                # only link drops in the first loop iteration
+                                if (j % loop_iter == 0):
+                                    self._link_drops(slgn, tlgn, sdrops[i], tdrop)
 
                     elif (slgn.h_level >= tlgn.h_level):
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
