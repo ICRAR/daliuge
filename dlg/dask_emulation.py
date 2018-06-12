@@ -222,18 +222,12 @@ class _DelayedDrops(_DelayedDrop):
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
 
-
 class _AppDrop(_DelayedDrop):
     """Defines a PyFuncApp drop for a given function `f`"""
 
     def __init__(self, f, nout):
         _DelayedDrop.__init__(self)
         self.f = f
-
-        fmodule = f.__module__
-        if fmodule == '__main__':
-            fmodule = 'dlg.pyfunc_support'
-
         self.fname = None
         if hasattr(f, '__name__'):
             self.fname = f.__name__
@@ -303,7 +297,7 @@ class _DataDrop(_DelayedDrop):
     def __init__(self, producer=None, pydata=None):
         _DelayedDrop.__init__(self, producer)
 
-        if not (bool(producer is None) ^ bool(pydata is None)):
+        if bool(producer is None) == bool(pydata is None):
             raise ValueError("either producer or pydata must be not None")
         self.pydata = pydata
 
