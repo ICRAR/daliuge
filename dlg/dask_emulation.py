@@ -152,9 +152,9 @@ class _DelayedDrop(object):
         graph[oid] = dd
         logger.debug("Appended %r/%s to the Physical Graph", self, oid)
 
-    def _to_physical_graph(self, visited, full_graph):
+    def _to_physical_graph(self, visited, graph):
 
-        self._append_to_graph(visited, full_graph)
+        self._append_to_graph(visited, graph)
 
         dependencies = list(self.inputs)
         if self.producer:
@@ -166,8 +166,10 @@ class _DelayedDrop(object):
                 self._add_upstream(d)
                 continue
 
-            d._to_physical_graph(visited, full_graph)
+            d = d._to_physical_graph(visited, graph)
             self._add_upstream(d)
+
+        return self
 
     def _add_upstream(self, upstream_drop):
         """Link the given drop as either a producer or input of this drop"""
