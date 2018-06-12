@@ -88,13 +88,24 @@ def _get_client(**kwargs):
 
 class _DelayedDrop(object):
 
+    _drop_count = 0
+
     def __init__(self, producer=None):
+        self._dropdict = None
         self.producer = producer
         self.inputs = []
 
     @property
+    def next_drop_oid(self):
+        i = _DelayedDrop._drop_count
+        _DelayedDrop._drop_count += 1
+        return i
+
+    @property
     def dropdict(self):
-        return self.make_dropdict()
+        if self._dropdict is None:
+            self._dropdict = self.make_dropdict()
+        return self._dropdict
 
     def compute(self, **kwargs):
         """Returns the result of the (possibly) delayed computation by sending
@@ -130,21 +141,26 @@ class _DelayedDrop(object):
 
     def get_graph(self):
         graph = {}
-        self._to_physical_graph({}, graph, 0)
+        self._to_physical_graph({}, graph)
         return graph
 
-    def _to_physical_graph(self, visited, full_graph, i):
+    def _append_to_graph(self, visited, graph):
+        oid = str(self.next_drop_oid)
+        dd = self.dropdict
+        dd['oid'] = oid
+        visited[self] = oid
+        graph[oid] = dd
+        logger.debug("Appended %r/%s to the Physical Graph", self, oid)
+
+    def _to_physical_graph(self, visited, full_graph):
+
+        self._append_to_graph(visited, full_graph)
+        my_dd = self.dropdict
+        oid = my_dd['oid']
 
         dependencies = list(self.inputs)
         if self.producer:
             dependencies.append(self.producer)
-
-        oid = str(i)
-        my_dd = self.dropdict
-        my_dd['oid'] = oid
-        full_graph[oid] = my_dd
-        i += 1
-
         for d in dependencies:
             if isinstance(d, list):
                 d = tuple(d)
@@ -152,12 +168,10 @@ class _DelayedDrop(object):
                 self._link(d, my_dd, full_graph[visited[d]])
                 continue
 
-            logger.debug("Turning %r into a node of the Physical Graph" % d)
-            i, d_oid = d._to_physical_graph(visited, full_graph, i)
-            visited[d] = d_oid
+            d_oid = d._to_physical_graph(visited, full_graph)
             self._link(d, my_dd, full_graph[d_oid])
 
-        return i, oid
+        return oid
 
     def _link(self, dep, my_dd, d_dd):
         # The dependency was either a producer or one of the inputs
