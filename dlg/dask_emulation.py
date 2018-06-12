@@ -183,23 +183,41 @@ class _DelayedDrop(object):
             logger.debug("Set %r/%s as input of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
 
 
+class _Listifier(BarrierAppDROP):
+    """Returns a list with all objects as contents"""
+    def run(self):
+        self.outputs[0].write(pickle.dumps([pickle.loads(droputils.allDropContents(x)) for x in self.inputs]))
+
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
 
     def __init__(self, *drops):
+        super(_DelayedDrops, self).__init__()
         self.drops = drops
+        self.inputs.extend(drops)
 
-    def _to_physical_graph(self, visited, full_graph, i):
+    def _to_physical_graph(self, visited, graph):
+
+        output = _DataDrop(producer=self)
+        output._append_to_graph(visited, graph)
+
+        self._append_to_graph(visited, graph)
+        output._add_upstream(self)
+
         for d in self.drops:
-            if d in visited:
-                continue
-            d._to_physical_graph(visited, full_graph, i)
+            d._to_physical_graph(visited, graph)
+            self._add_upstream(d)
+
+        return output
 
     def __iter__(self):
         return iter(self.drops)
 
     def __getitem__(self, i):
         return self.drops[i]
+
+    def make_dropdict(self):
+        return dropdict({'type': 'app', 'app': 'dlg.dask_emulation._Listifier'})
 
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
