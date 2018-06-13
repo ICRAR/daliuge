@@ -67,7 +67,8 @@ from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOSche
 from .utils.bash_parameter import BashCommand
 from ..drop import dropdict
 from ..graph_loader import STORAGE_TYPES
-
+from .dm_utils import get_lg_ver_type, convert_construct, convert_fields, \
+                        LG_VER_EAGLE, LG_VER_OLD, LG_VER_EAGLE_CONVERTED
 
 logger = logging.getLogger(__name__)
 
@@ -1599,6 +1600,12 @@ class LG():
 
         with f:
             lg = json.load(f)
+            lgver = get_lg_ver_type(lg)
+            if (LG_VER_EAGLE == lgver):
+                lg = convert_fields(lg)
+                lg = convert_construct(lg)
+            elif (LG_VER_EAGLE_CONVERTED == lgver):
+                lg = convert_construct(lg)
             self._done_dict = dict()
             self._group_q = collections.defaultdict(list)
             self._output_q = collections.defaultdict(list)
