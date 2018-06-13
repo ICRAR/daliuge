@@ -34,19 +34,24 @@ LG_VER_EAGLE = 3
 
 TEMP_FILE_FOLDER = '/tmp'
 
-def get_lg_ver_type(lg_name):
+def get_lg_ver_type(lgo):
     """
     Get the version type of this logical graph
     """
-    with open(lg_name, 'r+') as file_object:
-        lgo = json.load(file_object)
+    # with open(lg_name, 'r+') as file_object:
+    #     lgo = json.load(file_object)
 
     nodes = lgo['nodeDataArray']
     if (len(nodes) == 0):
         raise Exception("Invalid LG, nodes not found")
 
     if ('fields' in nodes[0]):
-        return LG_VER_EAGLE
+        fds = nodes[0]['fields']
+        kw = fds[0]['name']
+        if (kw in nodes[0]):
+            return LG_VER_EAGLE_CONVERTED
+        else:
+            return LG_VER_EAGLE
 
     if ('linkDataArray' in lgo and len(lgo['linkDataArray']) > 0):
         lnk = lgo['linkDataArray'][0]
@@ -60,6 +65,79 @@ def get_lg_ver_type(lg_name):
             return LG_VER_EAGLE_CONVERTED
         else:
             return LG_VER_OLD
+
+def get_keyset(lgo):
+    return set([x['key'] for x in lgo['nodeDataArray']])
+
+def convert_fields(lgo):
+    nodes = lgo['nodeDataArray']
+    for node in nodes:
+        fields = node['fields']
+        for field in fields:
+            name = field.get('name', '')
+            if (name != ''):
+                # Add a node property.
+                # print("Set %s to %s" % (name, field.get('value', '')))
+                node[name] = field.get('value', '')
+    return lgo
+
+def convert_construct(lgo):
+    """
+    1. for each scatter, create a "new" application drop
+    2. reset the key of the scatter construct to 'k_new'
+    3. reset the "group" keyword of each drop inside the construct to 'k_new'
+    """
+    #print('%d nodes in lg' % len(lgo['nodeDataArray']))
+    keyset = get_keyset(lgo)
+    old_new_grpk_map = dict()
+    old_new_gather_map = dict()
+    new_nodes = []
+    for node in lgo['nodeDataArray']:
+        if (node['category'] not in ['SplitData', 'DataGather']):
+            continue
+        if ('application' not in node):
+            continue
+        # step 1
+        app_node = dict()
+        app_node['key'] = node['key']
+        app_node['category'] = node['application']
+        if ('group' in node):
+            app_node['group'] = node['group']
+        if ('appFields' in node):
+            for afd in node['appFields']:
+                app_node[afd['name']] = afd['value']
+        if ('DataGather' == node['category']):
+            app_node['group_start'] = 1
+        new_nodes.append(app_node)
+
+        # step 2
+        k_new = min(keyset) - 1
+        node['key'] = k_new
+        keyset.add(k_new)
+        old_new_grpk_map[app_node['key']] = k_new
+
+        if ('DataGather' == node['category']):
+            old_new_gather_map[app_node['key']] = k_new
+
+    if (len(new_nodes) > 0):
+        lgo['nodeDataArray'].extend(new_nodes)
+
+        # step 3
+        for node in lgo['nodeDataArray']:
+            if ('group' in node and node['group'] in old_new_grpk_map):
+                k_old = node['group']
+                node['group'] = old_new_grpk_map[k_old]
+
+        # step 4
+        for link in lgo['linkDataArray']:
+            if (link['to'] in old_new_gather_map):
+                k_old = link['to']
+                link['to'] = old_new_gather_map[k_old]
+                #print("from %d to %d to %d" % (link['from'], k_old, link['to']))
+
+    #print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
+    return lgo
+
 
 def convert_eagle_to_daliuge_json(lg_name):
     """
@@ -81,6 +159,7 @@ def convert_eagle_to_daliuge_json(lg_name):
             name = field.get('name', '')
             if (name != ''):
                 # Add a node property.
+                # print("Set %s to %s" % (name, field.get('value', '')))
                 node[name] = field.get('value', '')
 
     ################## PART II #########################
@@ -160,5 +239,6 @@ def convert_eagle_to_daliuge_json(lg_name):
     return new_path
 
 if __name__ == '__main__':
-    lg_name = '/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/eagle_test01.json'
-    convert_eagle_to_daliuge_json(lg_name)
+    lg_name = '/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.json'
+    #convert_eagle_to_daliuge_json(lg_name)
+    print(get_lg_ver_type(lg_name))
