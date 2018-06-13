@@ -55,6 +55,8 @@ def get_lg_ver_type(lgo):
 
     if ('linkDataArray' in lgo and len(lgo['linkDataArray']) > 0):
         lnk = lgo['linkDataArray'][0]
+        if ('fromPort' not in lnk):
+            return LG_VER_OLD
         if (lnk['fromPort'] in ['B', 'T', 'R', 'L']):
             # only the old lg links can be Bottom, Top, Right and Left
             return LG_VER_OLD
@@ -83,8 +85,9 @@ def convert_fields(lgo):
 
 def convert_construct(lgo):
     """
-    1. for each scatter, create a "new" application drop
-    2. reset the key of the scatter construct to 'k_new'
+    1. for each scatter/gather, create a "new" application drop, which shares
+       the same 'key' as the construct
+    2. reset the key of the scatter/gather construct to 'k_new'
     3. reset the "group" keyword of each drop inside the construct to 'k_new'
     """
     #print('%d nodes in lg' % len(lgo['nodeDataArray']))
