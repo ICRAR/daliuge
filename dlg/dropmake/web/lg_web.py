@@ -324,7 +324,7 @@ def gen_pgt():
         # Partition the PGT
         pgt = partition(pgt, algo=algo, num_partitions=num_partitions,
                         num_islands=num_islands, partition_label=par_label,
-                        **algo_params)
+                        show_gojs=True, **algo_params)
 
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
