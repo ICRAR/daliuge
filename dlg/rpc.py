@@ -89,6 +89,7 @@ class ZeroRPCClient(RPCClientBase):
     """ZeroRPC client support"""
 
     request = collections.namedtuple('request', 'method args queue')
+    response = collections.namedtuple('response', 'value is_exception')
 
     def start(self):
         super(ZeroRPCClient, self).start()
@@ -125,7 +126,10 @@ class ZeroRPCClient(RPCClientBase):
                 def __make_call(self, method, *args):
                     res_queue = Queue.Queue()
                     req_queue.put(ZeroRPCClient.request(method, args, res_queue))
-                    return res_queue.get()
+                    x = res_queue.get()
+                    if x.is_exception:
+                        raise x.value
+                    return x.value
                 def call_drop(self, session_id, uid, name, *args):
                     return self.__make_call('call_drop', session_id, uid, name, *args)
                 def get_drop_property(self, session_id, uid, name):
@@ -164,9 +168,19 @@ class ZeroRPCClient(RPCClientBase):
             except Queue.Empty:
                 gevent.sleep(0.005)
 
+    def process_response(self, req, async_response):
+        import gevent
+        try:
+            x = ZeroRPCClient.response(async_response.get_nowait(), False)
+        except Exception as e:
+            if isinstance(e, gevent.Timeout):
+                raise RuntimeError("Timed out on AsyncResult.get_nowait")
+            x = ZeroRPCClient.response(e, True)
+        req.queue.put(x)
+
     def queue_request(self, client, req):
         async_result = client.__call__(req.method, *req.args, async=True)
-        async_result.rawlink(lambda x: req.queue.put(x.value))
+        async_result.rawlink(lambda x: self.process_response(req, x))
 
     def get_rpc_client(self, hostname, port):
         client = self.get_client_for_endpoint(hostname, port)
