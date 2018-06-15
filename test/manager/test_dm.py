@@ -78,7 +78,7 @@ class NMTestsMixIn(object):
         for nm in self._dms:
             nm.shutdown()
 
-    def _test_runGraphInTwoNMs(self, g1, g2, rels, a_data, c_data):
+    def _test_runGraphInTwoNMs(self, g1, g2, rels, root_data, leaf_data, root_oids=('A',), leaf_oid='C'):
         """Utility to run a graph in two Node Managers"""
 
         dm1, dm2 = [self._start_dm() for _ in range(2)]
@@ -94,21 +94,23 @@ class NMTestsMixIn(object):
         drops.update(dm1._sessions[sessionId].drops)
         drops.update(dm2._sessions[sessionId].drops)
 
-        a, b, c = [drops[x] for x in ('A', 'B', 'C')]
-        with droputils.DROPWaiterCtx(self, c, 1):
-            a.write(a_data)
-            a.setCompleted()
+        leaf_drop = drops[leaf_oid]
+        with droputils.DROPWaiterCtx(self, leaf_drop, 1):
+            for oid in root_oids:
+                drop = drops[oid]
+                drop.write(root_data)
+                drop.setCompleted()
 
-        for drop in a, b, c:
+        for drop in drops.values():
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        c_drop_data = droputils.allDropContents(c)
-        if c_data is not None:
-            self.assertEqual(len(c_data), len(c_drop_data))
-            self.assertEqual(c_data, c_drop_data)
+        leaf_drop_data = droputils.allDropContents(leaf_drop)
+        if leaf_data is not None:
+            self.assertEqual(len(leaf_data), len(leaf_drop_data))
+            self.assertEqual(leaf_data, leaf_drop_data)
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-        return c_drop_data
+        return leaf_drop_data
 
 class TestDM(NMTestsMixIn, unittest.TestCase):
 
