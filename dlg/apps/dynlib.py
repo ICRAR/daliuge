@@ -27,6 +27,7 @@ import multiprocessing
 import threading
 
 import six
+from six.moves import queue  # @UnresolvedImport
 
 from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
@@ -297,6 +298,15 @@ def _run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
     finally:
         client.shutdown()
 
+def get_from_subprocess(proc, q):
+    """Gets elements from the queue, checking that the process is still alive"""
+    while proc.is_alive():
+        try:
+            return q.get(timeout=0.1)
+        except queue.Empty:
+            pass
+    raise RuntimeError("Subprocess died unexpectedly")
+
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""
 
@@ -333,7 +343,7 @@ class DynlibProcApp(BarrierAppDROP):
                      'running the application')
             for step in steps:
                 logger.info("Subprocess %s", step)
-                error = queue.get()
+                error = get_from_subprocess(proc, queue)
                 if error is not None:
                     logger.error("Error in sub-process when " + step)
                     raise error
