@@ -262,39 +262,45 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, input_closers)
 
-def _run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
+
+class finish_subprocess(Exception): pass
+
+def _run_in_proc(*args):
+    try:
+        _do_run_in_proc(*args)
+    except finish_subprocess:
+        pass
+
+def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
+    def advance_step(f, *args, **kwargs):
+        try:
+            r = f(*args, **kwargs)
+            queue.put(None)
+            return r
+        except Exception as e:
+            queue.put(e)
+            raise finish_subprocess()
 
     # Step 1: initialise the library and return if there is an error
-    try:
-        lib, c_app = load_and_init(libname, oid, uid, params)
-        queue.put(None)
-    except Exception as e:
-        # The other end will read this
-        queue.put(e)
-        return
+    lib, c_app = advance_step(load_and_init, libname, oid, uid, params)
 
     client = rpc.RPCClient()
     try:
         client.start()
 
-        # Step 2: setup DropProxy objects for both inputs and outputs
-        try:
+        def setup_drop_proxies(inputs, outputs):
             to_drop_proxy = lambda x: rpc.DropProxy(client, x[0], x[1], x[2], x[3])
             inputs = [to_drop_proxy(i) for i in inputs]
             outputs = [to_drop_proxy(o) for o in outputs]
-            queue.put(None)
-        except Exception as e:
-            queue.put(e)
-            return
+            return inputs, outputs
+        inputs, outputs = advance_step(setup_drop_proxies, inputs, outputs)
 
         # Step 3: Finish initializing the C structure and run the application
-        try:
+        def do_run():
             input_closers = prepare_c_inputs(c_app, inputs)
             prepare_c_outputs(c_app, outputs)
             run(lib, c_app, input_closers)
-            queue.put(None)
-        except Exception as e:
-            queue.put(e)
+        advance_step(do_run)
     finally:
         client.shutdown()
 
