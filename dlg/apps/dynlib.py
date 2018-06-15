@@ -321,6 +321,7 @@ class DynlibProcApp(BarrierAppDROP):
         inputs = [self._get_proxy_info(i) for i in self.inputs]
         outputs = [self._get_proxy_info(o) for o in self.outputs]
 
+        logger.info("Starting new process to run the dynlib on")
         queue = multiprocessing.Queue()
         args = (queue, self.libname, self.oid, self.uid, self.app_params, inputs, outputs)
         proc = multiprocessing.Process(target=_run_in_proc, args=args)
@@ -331,6 +332,7 @@ class DynlibProcApp(BarrierAppDROP):
                      'creating DropProxy instances',
                      'running the application')
             for step in steps:
+                logger.info("Subprocess %s", step)
                 error = queue.get()
                 if error is not None:
                     logger.error("Error in sub-process when " + step)
