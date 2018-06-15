@@ -176,7 +176,6 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         a_data = os.urandom(32)
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data * 2, root_oids=('A', 'B'), leaf_oid='D')
 
-
 @unittest.skipUnless(_try_library(), "Example dynamic library not available")
 class IntraNMDynlibAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dfms.apps.dynlib.DynlibApp"
@@ -184,3 +183,14 @@ class IntraNMDynlibAppTest(IntraNMMixIng, unittest.TestCase):
 @unittest.skipUnless(_try_library(), "Example dynamic library not available")
 class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dfms.apps.dynlib.DynlibProcApp"
+
+    def test_crashing_dynlib(self):
+        """Like test_multiple_inputs_in_remote_nm, but C crashes"""
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"},
+              {"oid":"B", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"C", "type":"app", "app": self.app, "lib": _libpath, "print_stats": print_stats, "bufsize": bufsize, "crash_and_burn": 1},
+              {"oid":"D", "type":"plain", "storage": "memory", "producers":["C"]}]
+        rels = [DROPRel('A', DROPLinkType.INPUT, 'C'), DROPRel('B', DROPLinkType.INPUT, 'C')]
+        a_data = os.urandom(32)
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, None,
+            root_oids=('A', 'B'), leaf_oid='D', expected_failures=('C', 'D'))
