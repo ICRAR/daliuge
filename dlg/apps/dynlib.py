@@ -85,13 +85,14 @@ def _to_c_input(i):
     Convert an input drop into its corresponding C structure
     """
 
-    def _read(_i, desc, buf, n):
-        x = _i.read(desc, n)
+    input_read = i.read
+    def _read(desc, buf, n):
+        x = input_read(desc, n)
         ctypes.memmove(buf, x, len(x))
         return len(x)
 
     desc = i.open()
-    r = _read_cb_type(functools.partial(_read, i, desc))
+    r = _read_cb_type(functools.partial(_read, desc))
     c_input = CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r)
     return desc, c_input
 
