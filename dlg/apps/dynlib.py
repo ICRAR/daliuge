@@ -116,7 +116,7 @@ def prepare_c_inputs(c_app, inputs):
     input_closers = []
     for i in inputs:
         desc, c_input = _to_c_input(i)
-        input_closers.append(lambda: i.close(desc))
+        input_closers.append(functools.partial(i.close, desc))
         c_inputs.append(c_input)
     c_app.inputs = (CDlgInput * len(c_inputs))(*c_inputs)
     c_app.n_inputs = len(c_inputs)
