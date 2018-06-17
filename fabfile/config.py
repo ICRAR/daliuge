@@ -10,7 +10,8 @@ APP = 'daliuge'
 
 # Define the correct version of python to be used.
 APP_PYTHON_VERSION = '3.6'
-#APP_PYTHON_URL = 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz'
+
+# APP_PYTHON_URL = 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz'
 
 # AWS settings
 DEFAULT_AWS_KEY_NAME = 'icrar_ngas'
