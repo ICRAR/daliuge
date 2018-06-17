@@ -67,7 +67,8 @@ from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOSche
 from .utils.bash_parameter import BashCommand
 from ..drop import dropdict
 from ..graph_loader import STORAGE_TYPES
-
+from .dm_utils import get_lg_ver_type, convert_construct, convert_fields, \
+                        LG_VER_EAGLE, LG_VER_OLD, LG_VER_EAGLE_CONVERTED
 
 logger = logging.getLogger(__name__)
 
@@ -1002,6 +1003,7 @@ class PGT(object):
 
         ret['nodeDataArray'] = nodes
         ret['linkDataArray'] = links
+        self._gojs_json_obj = ret
         if (string_rep):
             return json.dumps(ret, indent=2)
         else:
@@ -1220,6 +1222,7 @@ class MetisPGTP(PGT):
             jsobj = None
         self._parse_metis_output(metis_parts, jsobj)
         self._metis_out = metis_parts
+        self._gojs_json_obj = jsobj # could be none if not visual
         if (string_rep and jsobj is not None):
             return json.dumps(jsobj, indent=2)
         else:
@@ -1525,12 +1528,13 @@ class MySarkarPGTP(PGT):
 
             self._node_list = node_list
             self._inner_parts = inner_parts
-
+            self._gojs_json_obj = jsobj
             if (string_rep and jsobj is not None):
                 return json.dumps(jsobj, indent=2)
             else:
                 return jsobj
         else:
+            self._gojs_json_obj = None
             return None
 
 class MinNumPartsPGTP(MySarkarPGTP):
@@ -1595,9 +1599,16 @@ class LG():
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%dT%H:%M:%S')
         self._session_id = ssid
+        self._loop_aware_set = set()
 
         with f:
             lg = json.load(f)
+            lgver = get_lg_ver_type(lg)
+            if (LG_VER_EAGLE == lgver):
+                lg = convert_fields(lg)
+                lg = convert_construct(lg)
+            elif (LG_VER_EAGLE_CONVERTED == lgver):
+                lg = convert_construct(lg)
             self._done_dict = dict()
             self._group_q = collections.defaultdict(list)
             self._output_q = collections.defaultdict(list)
@@ -1624,6 +1635,8 @@ class LG():
                 self.validate_link(src, tgt)
                 src.add_output(tgt)
                 tgt.add_input(src)
+                if ('1' == lk.get('loop_aware', '0')):
+                    self._loop_aware_set.add('%s-%s' % (lk['from'], lk['to']))
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
@@ -1875,7 +1888,7 @@ class LG():
             self.lgn_to_pgn(lgn)
 
         logger.info("Unroll progress - lgn_to_pgn done {0} for session {1}".format(len(self._start_list), self._session_id))
-
+        self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
             sid = lk['from'] # source
             tid = lk['to'] # target
@@ -1943,7 +1956,25 @@ class LG():
                         if (sdrop['loop_cxt'] == tdrop['loop_cxt']):
                             self._link_drops(slgn, tlgn, sdrop, tdrop)
                 else:
-                    if (slgn.h_level >= tlgn.h_level):
+                    lpaw = ('%s-%s' % (sid, tid)) in self_loop_aware_set
+                    if (slgn.group is not None and slgn.group.is_loop() and
+                            lpaw and slgn.h_level > tlgn.h_level):
+                        loop_iter = slgn.group.dop
+                        for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
+                            for j, sdrop in enumerate(chunk):
+                                # only link drops in the last loop iteration
+                                if (j % loop_iter == loop_iter - 1):
+                                    self._link_drops(slgn, tlgn, sdrop, tdrops[i])
+                    elif (tlgn.group is not None and tlgn.group.is_loop() and
+                            lpaw and slgn.h_level < tlgn.h_level):
+                        loop_iter = tlgn.group.dop
+                        for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
+                            for j, tdrop in enumerate(chunk):
+                                # only link drops in the first loop iteration
+                                if (j % loop_iter == 0):
+                                    self._link_drops(slgn, tlgn, sdrops[i], tdrop)
+
+                    elif (slgn.h_level >= tlgn.h_level):
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
                             # distribute slgn evenly to tlgn
                             for sdrop in chunk:
@@ -2068,7 +2099,7 @@ def known_algorithms():
     return [x for x in _known_algos.keys() if isinstance(x, six.string_types)]
 
 def partition(pgt, algo, num_partitions=1, num_islands=1,
-              partition_label='partition', **algo_params):
+              partition_label='partition', show_gojs=False, **algo_params):
     """Partitions a Physical Graph Template"""
 
     if isinstance(algo, six.string_types):
@@ -2119,8 +2150,9 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
     else:
         raise GraphException("Unknown partition algorithm: {0}".format(algo))
 
-    pgt.to_gojs_json(string_rep=False, visual=False)
+    pgt.to_gojs_json(string_rep=False, visual=show_gojs)
+
     if do_merge:
-        pgt.merge_partitions(num_islands, form_island=True, island_type=1, visual=True)
+        pgt.merge_partitions(num_islands, form_island=True, visual=show_gojs)
 
     return pgt

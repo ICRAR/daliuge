@@ -374,6 +374,8 @@ class AbstractDROP(EventFirer):
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
             raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self.status,))
+        if descriptor is None:
+            raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
             raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
 
