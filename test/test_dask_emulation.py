@@ -21,6 +21,8 @@
 #
 import unittest
 
+from six.moves import reduce  # @UnresolvedImport
+
 from dlg import delayed
 from dlg import tool
 from dlg.utils import terminate_or_kill
@@ -28,8 +30,14 @@ from dlg.utils import terminate_or_kill
 def add(x, y):
     return x + y
 
+def add_list(numbers):
+    return reduce(add, numbers)
+
 def subtract(x, y):
     return x - y
+
+def subtract_list(numbers):
+    return reduce(subtract, numbers)
 
 def multiply(x, y):
     return x * y
@@ -61,9 +69,18 @@ class TestDelayed(unittest.TestCase):
             |-- substract --> the_sub --|
         3 --|
         """
-
         the_sum = delayed(add)(1., 2.)
         the_sub = delayed(subtract)(4., 3.)
+        division = delayed(divide)(the_sum, the_sub)
+        parts = delayed(partition, nout=2)(division)
+        result = delayed(add)(*parts).compute()
+        self.assertEqual(3., result)
+
+    def test_args_as_lists(self):
+        """Like test_simple, but some arguments are passed down as lists"""
+        one, two, three, four = delayed(1.), delayed(2.), delayed(3.), delayed(4.)
+        the_sum = delayed(add_list)([one, two])
+        the_sub = delayed(subtract_list)([four, three])
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
         result = delayed(add)(*parts).compute()
