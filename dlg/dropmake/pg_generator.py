@@ -1601,6 +1601,10 @@ class LG():
         self._session_id = ssid
         self._loop_aware_set = set()
 
+        # key - gather drop oid, value - a tuple with two elements
+                # input drops list and output drops list
+        self._gather_cache = dict()
+
         with f:
             lg = json.load(f)
             lgver = get_lg_ver_type(lg)
@@ -1784,7 +1788,8 @@ class LG():
                     if (lgn.is_groupby()):
                         self._drop_dict['new_added'].append(src_gdrop['grp-data_drop'])
                     elif (lgn.is_gather()):
-                        self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
+                        pass
+                        #self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
                 for child in lgn.children:
                     self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
         elif (lgn.is_mpi()):
@@ -1838,11 +1843,21 @@ class LG():
         if (slgn.is_branch()):
             sdrop = src_drop['null_drop']
         elif (slgn.is_gather()):
-            sdrop = src_drop['gather-data_drop']
+            #sdrop = src_drop['gather-data_drop']
+            pass
         elif (slgn.is_groupby()):
             sdrop = src_drop['grp-data_drop']
         else:
             sdrop = src_drop
+
+        if (tlgn.is_gather()):
+            gather_oid = tgt_drop['oid']
+            if gather_oid not in self._gather_cache:
+                # [self, input_list, output_list]
+                self._gather_cache[gather_oid] = [tgt_drop, [], []]
+            tup = self._gather_cache[gather_oid]
+            tup[1].append(sdrop)
+            return
 
         tdrop = tgt_drop
         s_type = slgn.jd['category']
@@ -1869,8 +1884,16 @@ class LG():
                 bc = src_drop['command']
                 bc.add_output_param(tlgn.id, tgt_drop['oid'])
         else:
-            sdrop.addConsumer(tdrop)
-            tdrop.addInput(sdrop)
+            if (slgn.is_gather()): # don't really add them
+                gather_oid = src_drop['oid']
+                if gather_oid not in self._gather_cache:
+                    # [self, input_list, output_list]
+                    self._gather_cache[gather_oid] = [src_drop, [], []]
+                tup = self._gather_cache[gather_oid]
+                tup[2].append(tgt_drop)
+            else:
+                sdrop.addConsumer(tdrop)
+                tdrop.addInput(sdrop)
             if ('BashShellApp' == t_type):
                 bc = tgt_drop['command']
                 bc.add_input_param(slgn.id, src_drop['oid'])
@@ -2032,6 +2055,14 @@ class LG():
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
 
+        for k, v in self._gather_cache.iteritems():
+            input_list = v[1]
+            output_drop = v[2][0]
+            for data_drop in input_list:
+                data_drop.addConsumer(output_drop)
+                output_drop.addInput(data_drop)
+                #print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
+
         logger.info("Unroll progress - links done {0} for session {1}".format(len(self._lg_links), self._session_id))
 
         #clean up extra drops
@@ -2051,9 +2082,11 @@ class LG():
                     if 'grp-data_drop' in sl_drop:
                         del sl_drop['grp-data_drop']
             elif (lgn.is_gather()):
-                for sl_drop in self._drop_dict[lid]:
-                    if 'gather-data_drop' in sl_drop:
-                        del sl_drop['gather-data_drop']
+                #lid_sub = "{0}-gather-data".format(lid)
+                del self._drop_dict[lid]
+                # for sl_drop in self._drop_dict[lid]:
+                #     if 'gather-data_drop' in sl_drop:
+                #         del sl_drop['gather-data_drop']
 
         logger.info("Unroll progress - extra drops done for session {0}".format(self._session_id))
         ret = []
