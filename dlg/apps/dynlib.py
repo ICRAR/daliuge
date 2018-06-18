@@ -27,6 +27,7 @@ import multiprocessing
 import threading
 
 import six
+from six.moves import queue  # @UnresolvedImport
 
 from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
@@ -85,13 +86,14 @@ def _to_c_input(i):
     Convert an input drop into its corresponding C structure
     """
 
-    def _read(_i, desc, buf, n):
-        x = _i.read(desc, n)
+    input_read = i.read
+    def _read(desc, buf, n):
+        x = input_read(desc, n)
         ctypes.memmove(buf, x, len(x))
         return len(x)
 
     desc = i.open()
-    r = _read_cb_type(functools.partial(_read, i, desc))
+    r = _read_cb_type(functools.partial(_read, desc))
     c_input = CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r)
     return desc, c_input
 
@@ -115,7 +117,7 @@ def prepare_c_inputs(c_app, inputs):
     input_closers = []
     for i in inputs:
         desc, c_input = _to_c_input(i)
-        input_closers.append(lambda: i.close(desc))
+        input_closers.append(functools.partial(i.close, desc))
         c_inputs.append(c_input)
     c_app.inputs = (CDlgInput * len(c_inputs))(*c_inputs)
     c_app.n_inputs = len(c_inputs)
@@ -260,41 +262,56 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, input_closers)
 
-def _run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
+
+class finish_subprocess(Exception): pass
+
+def _run_in_proc(*args):
+    try:
+        _do_run_in_proc(*args)
+    except finish_subprocess:
+        pass
+
+def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
+    def advance_step(f, *args, **kwargs):
+        try:
+            r = f(*args, **kwargs)
+            queue.put(None)
+            return r
+        except Exception as e:
+            queue.put(e)
+            raise finish_subprocess()
 
     # Step 1: initialise the library and return if there is an error
-    try:
-        lib, c_app = load_and_init(libname, oid, uid, params)
-        queue.put(None)
-    except Exception as e:
-        # The other end will read this
-        queue.put(e)
-        return
+    lib, c_app = advance_step(load_and_init, libname, oid, uid, params)
 
     client = rpc.RPCClient()
     try:
         client.start()
 
-        # Step 2: setup DropProxy objects for both inputs and outputs
-        try:
+        def setup_drop_proxies(inputs, outputs):
             to_drop_proxy = lambda x: rpc.DropProxy(client, x[0], x[1], x[2], x[3])
             inputs = [to_drop_proxy(i) for i in inputs]
             outputs = [to_drop_proxy(o) for o in outputs]
-            queue.put(None)
-        except Exception as e:
-            queue.put(e)
-            return
+            return inputs, outputs
+        inputs, outputs = advance_step(setup_drop_proxies, inputs, outputs)
 
         # Step 3: Finish initializing the C structure and run the application
-        try:
+        def do_run():
             input_closers = prepare_c_inputs(c_app, inputs)
             prepare_c_outputs(c_app, outputs)
             run(lib, c_app, input_closers)
-            queue.put(None)
-        except Exception as e:
-            queue.put(e)
+        advance_step(do_run)
     finally:
         client.shutdown()
+
+def get_from_subprocess(proc, q):
+    """Gets elements from the queue, checking that the process is still alive"""
+    while proc.is_alive():
+        try:
+            return q.get(timeout=0.1)
+        except queue.Empty:
+            pass
+    raise RuntimeError("Subprocess died unexpectedly")
 
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""
@@ -320,6 +337,7 @@ class DynlibProcApp(BarrierAppDROP):
         inputs = [self._get_proxy_info(i) for i in self.inputs]
         outputs = [self._get_proxy_info(o) for o in self.outputs]
 
+        logger.info("Starting new process to run the dynlib on")
         queue = multiprocessing.Queue()
         args = (queue, self.libname, self.oid, self.uid, self.app_params, inputs, outputs)
         proc = multiprocessing.Process(target=_run_in_proc, args=args)
@@ -330,7 +348,8 @@ class DynlibProcApp(BarrierAppDROP):
                      'creating DropProxy instances',
                      'running the application')
             for step in steps:
-                error = queue.get()
+                logger.info("Subprocess %s", step)
+                error = get_from_subprocess(proc, queue)
                 if error is not None:
                     logger.error("Error in sub-process when " + step)
                     raise error
