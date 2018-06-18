@@ -83,6 +83,26 @@ def convert_fields(lgo):
                 node[name] = field.get('value', '')
     return lgo
 
+def _build_node_index(lgo):
+    ret = dict()
+    for node in lgo['nodeDataArray']:
+        ret[node['key']] = node
+
+    return ret
+
+def _relink_gather(appnode, lgo, gather_newkey, node_index):
+    """
+    for links whose 'from' is gather, 'to' is gather-internal data,
+    relink them such that 'from' is the appnode
+    """
+
+    gather_oldkey = appnode['key']
+    for link in lgo['linkDataArray']:
+        if (link['from'] == gather_oldkey):
+            node = node_index[link['to']]
+            if (node['group'] == gather_oldkey):
+                pass
+
 def convert_construct(lgo):
     """
     1. for each scatter/gather, create a "new" application drop, which shares
@@ -95,6 +115,7 @@ def convert_construct(lgo):
     old_new_grpk_map = dict()
     old_new_gather_map = dict()
     new_nodes = []
+    #node_index = _build_node_index(lgo) # old index
     for node in lgo['nodeDataArray']:
         if (node['category'] not in ['SplitData', 'DataGather']):
             continue
@@ -104,6 +125,7 @@ def convert_construct(lgo):
         app_node = dict()
         app_node['key'] = node['key']
         app_node['category'] = node['application']
+        app_node['text'] = node['text']
         if ('group' in node):
             app_node['group'] = node['group']
         if ('appFields' in node):
@@ -121,6 +143,8 @@ def convert_construct(lgo):
 
         if ('DataGather' == node['category']):
             old_new_gather_map[app_node['key']] = k_new
+            app_node['group'] = k_new
+            app_node['group_start'] = 1
 
     if (len(new_nodes) > 0):
         lgo['nodeDataArray'].extend(new_nodes)
