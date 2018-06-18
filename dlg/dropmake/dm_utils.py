@@ -114,8 +114,13 @@ def convert_construct(lgo):
     keyset = get_keyset(lgo)
     old_new_grpk_map = dict()
     old_new_gather_map = dict()
+    old_newnew_gather_map = dict()
     new_nodes = []
-    #node_index = _build_node_index(lgo) # old index
+
+    duplicated_gather_app = dict() # temmporarily duplicate gather as an extra
+    # application drop if a gather has internal input, which will result in
+    # a cycle that is not allowed in DAG during graph translation
+
     for node in lgo['nodeDataArray']:
         if (node['category'] not in ['SplitData', 'DataGather']):
             continue
@@ -141,13 +146,31 @@ def convert_construct(lgo):
         keyset.add(k_new)
         old_new_grpk_map[app_node['key']] = k_new
 
+
         if ('DataGather' == node['category']):
             old_new_gather_map[app_node['key']] = k_new
             app_node['group'] = k_new
             app_node['group_start'] = 1
 
+            # extra step to deal with "internal output" fromo within Gather
+            dup_app_node_k = min(keyset) - 1
+            keyset.add(dup_app_node_k)
+            dup_app_node = dict()
+            dup_app_node['key'] = dup_app_node_k
+            dup_app_node['category'] = node['application']
+            dup_app_node['text'] = node['text']
+            if ('group' in node):
+                dup_app_node['group'] = node['group']
+            if ('appFields' in node):
+                for afd in node['appFields']:
+                    dup_app_node[afd['name']] = afd['value']
+            duplicated_gather_app[k_new] = dup_app_node
+
+
     if (len(new_nodes) > 0):
         lgo['nodeDataArray'].extend(new_nodes)
+
+        node_index = _build_node_index(lgo)
 
         # step 3
         for node in lgo['nodeDataArray']:
@@ -159,7 +182,39 @@ def convert_construct(lgo):
         for link in lgo['linkDataArray']:
             if (link['to'] in old_new_gather_map):
                 k_old = link['to']
-                link['to'] = old_new_gather_map[k_old]
+                k_new = old_new_gather_map[k_old]
+                link['to'] = k_new
+
+                # deal with the internal output from Gather
+                from_node = node_index[link['from']]
+                if (from_node['group'] == k_new):
+                    dup_app_node = duplicated_gather_app[k_new]
+                    k_new_new = dup_app_node['key']
+                    link['to'] = k_new_new
+                    if (k_new_new not in node_index):
+                        node_index[k_new_new] = dup_app_node
+                        lgo['nodeDataArray'].append(dup_app_node)
+                        old_newnew_gather_map[k_old] = k_new_new
+
+        # step 5
+        # relink the connection from gather to its external output if the gather
+        # has internal output that has been delt with in Step 4
+        for link in lgo['linkDataArray']:
+            if (link['from'] in old_new_gather_map):
+                k_old = link['from']
+                k_new = old_new_gather_map[k_old]
+                to_node = node_index[link['to']]
+                gather_construct = node_index[k_new]
+                if (('group' not in to_node) and ('group' not in gather_construct)):
+                    cond1 = True
+                elif (('group' in to_node) and ('group' in gather_construct) and
+                     to_node['group'] == gather_construct['group']):
+                    cond1 = True
+                else:
+                    cond1 = False
+
+                if (cond1 and (k_old in old_newnew_gather_map)):
+                    link['from'] = old_newnew_gather_map[k_old]
                 #print("from %d to %d to %d" % (link['from'], k_old, link['to']))
 
     #print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
