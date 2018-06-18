@@ -88,13 +88,24 @@ def _get_client(**kwargs):
 
 class _DelayedDrop(object):
 
+    _drop_count = 0
+
     def __init__(self, producer=None):
+        self._dropdict = None
         self.producer = producer
         self.inputs = []
 
     @property
+    def next_drop_oid(self):
+        i = _DelayedDrop._drop_count
+        _DelayedDrop._drop_count += 1
+        return i
+
+    @property
     def dropdict(self):
-        return self.make_dropdict()
+        if self._dropdict is None:
+            self._dropdict = self.make_dropdict()
+        return self._dropdict
 
     def compute(self, **kwargs):
         """Returns the result of the (possibly) delayed computation by sending
@@ -130,54 +141,74 @@ class _DelayedDrop(object):
 
     def get_graph(self):
         graph = {}
-        self._to_physical_graph({}, graph, 0)
+        self._to_physical_graph({}, graph)
         return graph
 
-    def _to_physical_graph(self, visited, full_graph, i):
+    def _append_to_graph(self, visited, graph):
+        oid = str(self.next_drop_oid)
+        dd = self.dropdict
+        dd['oid'] = oid
+        visited[self] = oid
+        graph[oid] = dd
+        logger.debug("Appended %r/%s to the Physical Graph", self, oid)
+
+    def _to_physical_graph(self, visited, graph):
+
+        self._append_to_graph(visited, graph)
 
         dependencies = list(self.inputs)
         if self.producer:
             dependencies.append(self.producer)
-
-        oid = str(i)
-        my_dd = self.dropdict
-        my_dd['oid'] = oid
-        full_graph[oid] = my_dd
-        i += 1
-
         for d in dependencies:
             if isinstance(d, list):
                 d = tuple(d)
             if d in visited:
-                self._link(d, my_dd, full_graph[visited[d]])
+                self._add_upstream(d)
                 continue
 
-            logger.debug("Turning %r into a node of the Physical Graph" % d)
-            i, d_oid = d._to_physical_graph(visited, full_graph, i)
-            visited[d] = d_oid
-            self._link(d, my_dd, full_graph[d_oid])
+            d = d._to_physical_graph(visited, graph)
+            self._add_upstream(d)
 
-        return i, oid
+        return self
 
-    def _link(self, dep, my_dd, d_dd):
-        # The dependency was either a producer or one of the inputs
-        if dep == self.producer:
-            my_dd.addProducer(d_dd)
-        elif dep in self.inputs:
-            my_dd.addInput(d_dd)
+    def _add_upstream(self, upstream_drop):
+        """Link the given drop as either a producer or input of this drop"""
+        self_dd = self.dropdict
+        up_dd = upstream_drop.dropdict
+        if isinstance(self, _DataDrop):
+            self_dd.addProducer(up_dd)
+            logger.debug("Set %r/%s as producer of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
+        else:
+            self_dd.addInput(up_dd)
+            logger.debug("Set %r/%s as input of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
 
+
+class _Listifier(BarrierAppDROP):
+    """Returns a list with all objects as contents"""
+    def run(self):
+        self.outputs[0].write(pickle.dumps([pickle.loads(droputils.allDropContents(x)) for x in self.inputs]))
 
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
 
     def __init__(self, *drops):
+        super(_DelayedDrops, self).__init__()
         self.drops = drops
+        self.inputs.extend(drops)
 
-    def _to_physical_graph(self, visited, full_graph, i):
+    def _to_physical_graph(self, visited, graph):
+
+        output = _DataDrop(producer=self)
+        output._append_to_graph(visited, graph)
+
+        self._append_to_graph(visited, graph)
+        output._add_upstream(self)
+
         for d in self.drops:
-            if d in visited:
-                continue
-            d._to_physical_graph(visited, full_graph, i)
+            d._to_physical_graph(visited, graph)
+            self._add_upstream(d)
+
+        return output
 
     def __iter__(self):
         return iter(self.drops)
@@ -185,9 +216,11 @@ class _DelayedDrops(_DelayedDrop):
     def __getitem__(self, i):
         return self.drops[i]
 
+    def make_dropdict(self):
+        return dropdict({'type': 'app', 'app': 'dlg.dask_emulation._Listifier'})
+
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
-
 
 class _AppDrop(_DelayedDrop):
     """Defines a PyFuncApp drop for a given function `f`"""
@@ -195,11 +228,6 @@ class _AppDrop(_DelayedDrop):
     def __init__(self, f, nout):
         _DelayedDrop.__init__(self)
         self.f = f
-
-        fmodule = f.__module__
-        if fmodule == '__main__':
-            fmodule = 'dlg.pyfunc_support'
-
         self.fname = None
         if hasattr(f, '__name__'):
             self.fname = f.__name__
@@ -221,11 +249,12 @@ class _AppDrop(_DelayedDrop):
             my_dropdict['func_defaults'] = self.fdefaults
         return my_dropdict
 
-    def _link(self, dep, my_dd, d_dd):
-        _DelayedDrop._link(self, dep, my_dd, d_dd)
-        name = self.kwarg_names.pop()
-        if name:
-            my_dd['func_arg_mapping'][name] = d_dd['oid']
+    def _add_upstream(self, dep):
+        _DelayedDrop._add_upstream(self, dep)
+        if self.kwarg_names:
+            name = self.kwarg_names.pop()
+            if name:
+                self.dropdict['func_arg_mapping'][name] = dep.dropdict['oid']
 
     def _to_delayed_arg(self, arg):
 
@@ -268,7 +297,7 @@ class _DataDrop(_DelayedDrop):
     def __init__(self, producer=None, pydata=None):
         _DelayedDrop.__init__(self, producer)
 
-        if not (bool(producer is None) ^ bool(pydata is None)):
+        if bool(producer is None) == bool(pydata is None):
             raise ValueError("either producer or pydata must be not None")
         self.pydata = pydata
 
