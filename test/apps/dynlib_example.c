@@ -22,16 +22,20 @@
 // MA 02111-1307  USA
 //
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include "dlg_app.h"
 
 struct app_data {
 	short print_stats;
+	short crash_and_burn;
 	unsigned long total;
 	unsigned long write_duration;
 	unsigned int bufsize;
@@ -51,7 +55,7 @@ unsigned long usecs(struct timeval *start, struct timeval *end)
 
 int init(dlg_app_info *app, const char ***params)
 {
-	short print_stats = 0;
+	short print_stats = 0, crash_and_burn = 0;
 	const char **param;
 	unsigned int bufsize = 64 * 1024;
 
@@ -69,6 +73,11 @@ int init(dlg_app_info *app, const char ***params)
 			              strcmp(param[1], "true") == 0;
 		}
 
+		else if (strcmp(param[0], "crash_and_burn") == 0) {
+			crash_and_burn = strcmp(param[1], "1") == 0 ||
+			                 strcmp(param[1], "true") == 0;
+		}
+
 		else if (strcmp(param[0], "bufsize") == 0) {
 			bufsize = (unsigned int)atoi(param[1]);
 		}
@@ -81,6 +90,7 @@ int init(dlg_app_info *app, const char ***params)
 		return 1;
 	}
 	to_app_data(app)->print_stats = print_stats;
+	to_app_data(app)->crash_and_burn = crash_and_burn;
 	to_app_data(app)->total = 0;
 	to_app_data(app)->write_duration = 0;
 	to_app_data(app)->bufsize = bufsize;
@@ -121,9 +131,13 @@ int run(dlg_app_info *app)
 {
 	char *buf;
 	unsigned int bufsize;
-	unsigned int total = 0, i;
+	unsigned int total = 0, i, j;
 	unsigned long read_duration = 0, write_duration = 0;
 	struct timeval start, end;
+
+	if (to_app_data(app)->crash_and_burn) {
+		kill(getpid(), SIGKILL);
+	}
 
 	if (to_app_data(app)->print_stats) {
 		printf("running / done methods addresses are %p / %p\n", app->running, app->done);
@@ -136,23 +150,25 @@ int run(dlg_app_info *app)
 		return 1;
 	}
 
-	while (1) {
+	for (i = 0; i < app->n_inputs; i++) {
+		while (1) {
 
-		gettimeofday(&start, NULL);
-		size_t n_read = app->inputs[0].read(buf, bufsize);
-		gettimeofday(&end, NULL);
-		read_duration += usecs(&start, &end);
-		if (!n_read) {
-			break;
-		}
+			gettimeofday(&start, NULL);
+			size_t n_read = app->inputs[i].read(buf, bufsize);
+			gettimeofday(&end, NULL);
+			read_duration += usecs(&start, &end);
+			if (!n_read) {
+				break;
+			}
 
-		gettimeofday(&start, NULL);
-		for (i = 0; i < app->n_outputs; i++) {
-			app->outputs[i].write(buf, n_read);
+			gettimeofday(&start, NULL);
+			for (j = 0; j < app->n_outputs; j++) {
+				app->outputs[j].write(buf, n_read);
+			}
+			gettimeofday(&end, NULL);
+			write_duration += usecs(&start, &end);
+			total += n_read;
 		}
-		gettimeofday(&end, NULL);
-		write_duration += usecs(&start, &end);
-		total += n_read;
 	}
 
 	free(buf);
@@ -162,8 +178,8 @@ int run(dlg_app_info *app)
 
 	if (to_app_data(app)->print_stats) {
 		printf("Buffer size used by the application: %u\n", to_app_data(app)->bufsize);
-		printf("Read %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (read_duration / 1000000.));
-		printf("Wrote %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / (write_duration / 1000000.));
+		printf("Read %.3f [MB] of data from %u inputs at %.3f [MB/s]\n", total_mb, app->n_inputs, total_mb / (read_duration / 1000000.));
+		printf("Wrote %.3f [MB] of data to %u outputs at %.3f [MB/s]\n", total_mb, app->n_outputs, total_mb / (write_duration / 1000000.));
 		printf("Copied %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / duration);
 	}
 
