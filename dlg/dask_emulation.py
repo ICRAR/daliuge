@@ -107,6 +107,10 @@ class _DelayedDrop(object):
             self._dropdict = self.make_dropdict()
         return self._dropdict
 
+    @property
+    def oid(self):
+        return self.dropdict['oid']
+
     def compute(self, **kwargs):
         """Returns the result of the (possibly) delayed computation by sending
         the graph to a Drop Manager and waiting for the result to arrive back"""
@@ -171,16 +175,16 @@ class _DelayedDrop(object):
 
         return self
 
-    def _add_upstream(self, upstream_drop):
+    def _add_upstream(self, upstream):
         """Link the given drop as either a producer or input of this drop"""
         self_dd = self.dropdict
-        up_dd = upstream_drop.dropdict
+        up_dd = upstream.dropdict
         if isinstance(self, _DataDrop):
             self_dd.addProducer(up_dd)
-            logger.debug("Set %r/%s as producer of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
+            logger.debug("Set %r/%s as producer of %r/%s", upstream, upstream.oid, self, self.oid)
         else:
             self_dd.addInput(up_dd)
-            logger.debug("Set %r/%s as input of %r/%s", upstream_drop, up_dd['oid'], self, self_dd['oid'])
+            logger.debug("Set %r/%s as input of %r/%s", upstream, upstream.oid, self, self.oid)
 
 
 class _Listifier(BarrierAppDROP):
@@ -253,8 +257,9 @@ class _AppDrop(_DelayedDrop):
         _DelayedDrop._add_upstream(self, dep)
         if self.kwarg_names:
             name = self.kwarg_names.pop()
-            if name:
-                self.dropdict['func_arg_mapping'][name] = dep.dropdict['oid']
+            if name is not None:
+                logger.debug("Adding %s/%s to function mapping for %s", name, dep.oid, self.fname)
+                self.dropdict['func_arg_mapping'][name] = dep.oid
 
     def _to_delayed_arg(self, arg):
 
