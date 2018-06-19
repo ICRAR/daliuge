@@ -86,11 +86,13 @@ class BashAppTests(unittest.TestCase):
     def test_envvars(self):
         """Checks that the DLG_* environment variables are available to bash programs"""
 
+        app_uid = 'a'
+        session_id = 'session-id'
+
         # a fake session that has an ID
         class dummy(object): pass
         session = dummy()
-        session.id = 'session-id'
-        app_uid = 'a'
+        session.sessionId = session_id
 
         def assert_envvar_is_there(varname, value):
             command = "echo -n $%s > %%o0" % (varname)
@@ -102,7 +104,7 @@ class BashAppTests(unittest.TestCase):
             self.assertEqual(six.b(value), droputils.allDropContents(b))
 
         assert_envvar_is_there('DLG_UID', app_uid)
-        assert_envvar_is_there('DLG_SESSION_ID', session.id)
+        assert_envvar_is_there('DLG_SESSION_ID', session_id)
 
 class StreamingBashAppTests(unittest.TestCase):
 

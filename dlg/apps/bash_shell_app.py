@@ -213,7 +213,7 @@ class BashShellBase(object):
             raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
     def _run_bash(self, *args, **kwargs):
-        session_id = self._dlg_session.id if self._dlg_session is not None else ''
+        session_id = self._dlg_session.sessionId if self._dlg_session is not None else ''
         run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
     def dataURL(self):
