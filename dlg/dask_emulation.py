@@ -107,6 +107,9 @@ class _DelayedDrop(object):
             self._dropdict = self.make_dropdict()
         return self._dropdict
 
+    def reset(self):
+        self._dropdict = None
+
     @property
     def oid(self):
         return self.dropdict['oid']
@@ -119,7 +122,7 @@ class _DelayedDrop(object):
         port = 10000
         # Add one final application that will wait for all results
         # and transmit them back to us
-        transmitter_oid = str(len(graph))
+        transmitter_oid = str(self.next_drop_oid)
         transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port})
         for leaf_oid in droputils.get_leaves(graph.values()):
             graph[leaf_oid].addConsumer(transmitter)
@@ -144,15 +147,19 @@ class _DelayedDrop(object):
             return ret
 
     def get_graph(self):
+        _DelayedDrop._drop_count = 0
         graph = {}
-        self._to_physical_graph({}, graph)
+        visited = set()
+        self._to_physical_graph(visited, graph)
+        for d in visited:
+            d.reset()
         return graph
 
     def _append_to_graph(self, visited, graph):
         oid = str(self.next_drop_oid)
         dd = self.dropdict
         dd['oid'] = oid
-        visited[self] = oid
+        visited.add(self)
         graph[oid] = dd
         logger.debug("Appended %r/%s to the Physical Graph", self, oid)
 
@@ -217,6 +224,9 @@ class _DelayedDrops(_DelayedDrop):
     def __iter__(self):
         return iter(self.drops)
 
+    def __len__(self):
+        return len(self.drops)
+
     def __getitem__(self, i):
         return self.drops[i]
 
@@ -236,11 +246,12 @@ class _AppDrop(_DelayedDrop):
         if hasattr(f, '__name__'):
             self.fname = f.__name__
         self.fcode, self.fdefaults = pyfunc.serialize_func(f)
-        self.kwarg_names = []
+        self.original_kwarg_names = []
         self.nout = nout
 
     def make_dropdict(self):
 
+        self.kwarg_names = list(self.original_kwarg_names)
         self.kwarg_names.reverse()
         my_dropdict = dropdict({'type': 'app', 'app': 'dlg.apps.pyfunc.PyFuncApp', 'func_arg_mapping': {}})
         if self.fname is not None:
@@ -281,11 +292,12 @@ class _AppDrop(_DelayedDrop):
         logger.debug("Delayed function %s called with %d args and %d kwargs", self.fname, len(args), len(kwargs))
         for arg in args:
             self.inputs.append(self._to_delayed_arg(arg))
-            self.kwarg_names.append(None)
+            self.original_kwarg_names.append(None)
 
         for name, arg in kwargs.items():
+            logger.debug("Adding named argument %s=%r to call for %s", name, arg, self.fname)
             self.inputs.append(self._to_delayed_arg(arg))
-            self.kwarg_names.append(name)
+            self.original_kwarg_names.append(name)
 
         if self.nout == 1:
             return _DataDrop(producer=self)
