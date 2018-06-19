@@ -2055,7 +2055,7 @@ class LG():
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
 
-        for k, v in self._gather_cache.iteritems():
+        for k, v in self._gather_cache.items():
             input_list = v[1]
             output_drop = v[2][0]
             for data_drop in input_list:
