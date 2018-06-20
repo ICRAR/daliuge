@@ -1010,7 +1010,7 @@ class Scheduler(object):
         G.graph['node_weight_attr'] = 'cc'
         for part in self._parts:
             #sc = part.schedule
-            G.add_node(part.partition_id, cc=1)
+            G.add_node(part.partition_id, cc=len(self._dag.nodes()))
 
         for e in self._part_edges:
             u = e[0]
