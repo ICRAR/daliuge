@@ -83,6 +83,29 @@ class BashAppTests(unittest.TestCase):
         msg = 'This is a message with a double quotes: "'
         assert_message_is_correct(msg, "echo -n '{0}' > %o0".format(msg))
 
+    def test_envvars(self):
+        """Checks that the DLG_* environment variables are available to bash programs"""
+
+        app_uid = 'a'
+        session_id = 'session-id'
+
+        # a fake session that has an ID
+        class dummy(object): pass
+        session = dummy()
+        session.sessionId = session_id
+
+        def assert_envvar_is_there(varname, value):
+            command = "echo -n $%s > %%o0" % (varname)
+            a = BashShellApp(app_uid, app_uid, dlg_session=session, command=command)
+            b = FileDROP('b', 'b')
+            a.addOutput(b)
+            with DROPWaiterCtx(self, b, 100):
+                a.async_execute()
+            self.assertEqual(six.b(value), droputils.allDropContents(b))
+
+        assert_envvar_is_there('DLG_UID', app_uid)
+        assert_envvar_is_there('DLG_SESSION_ID', session_id)
+
 class StreamingBashAppTests(unittest.TestCase):
 
     def test_single_pipe(self):
