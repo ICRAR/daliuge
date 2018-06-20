@@ -266,6 +266,9 @@ def main():
     parser.add_option('--part-algo', type="string", dest='part_algo', help='Partition algorithms',
                       default='metis')
 
+    parser.add_option('--ssid', type="string", dest='ssid', help='session id',
+                      default='1')
+
     parser.add_option("-u", "--all_nics", action="store_true",
                       dest="all_nics", help="Listen on all NICs for a node manager", default=False)
 
@@ -368,7 +371,7 @@ def main():
             if options.logical_graph or options.physical_graph:
                 pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
                 if options.logical_graph:
-                    unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
+                    unrolled = tool.unroll(options.logical_graph, options.ssid, options.zerorun, apps[options.app])
                     pgt = pg_generator.partition(unrolled, options.part_algo, num_partitions=len(node_mgrs))
                     pgt = pgt.to_pg_spec([], ret_str=False, num_islands=1, tpl_nodes_len=len(node_mgrs) + 1)
                     del unrolled
@@ -427,7 +430,7 @@ def main():
             # 3 unroll the graph while waiting for node managers to start
             pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
             if options.logical_graph:
-                unrolled = tool.unroll(options.logical_graph, '1', options.zerorun, apps[options.app])
+                unrolled = tool.unroll(options.logical_graph, options.ssid, options.zerorun, apps[options.app])
                 pgt = pg_generator.partition(unrolled, options.part_algo, num_partitions=len(ip_list) - 1, num_islands=options.num_islands)
                 pgt = pgt.to_pg_spec([], ret_str=False, num_islands=options.num_islands,
                                      tpl_nodes_len=len(ip_list) - 1 + options.num_islands)
