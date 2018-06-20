@@ -2149,7 +2149,8 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
 
     # Read all possible values with defaults
     # Not all algorithms use them, but makes the coding easier
-    do_merge = num_islands > 1
+    #do_merge = num_islands > 1
+    could_merge = True
     min_goal = algo_params.get('min_goal', 0)
     ptype = algo_params.get('ptype', 0)
     max_load_imb = algo_params.get('max_load_imb', 90)
@@ -2167,25 +2168,25 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
         if (ufactor <= 0):
             ufactor = 1
         pgt = MetisPGTP(pgt, num_partitions, min_goal, partition_label, ptype,
-                         ufactor, merge_parts=do_merge)
+                         ufactor, merge_parts=could_merge)
 
     elif algo == ALGO_MY_SARKAR:
         pgt = MySarkarPGTP(pgt, num_partitions, partition_label, max_dop,
-                            merge_parts=do_merge)
+                            merge_parts=could_merge)
 
     elif algo == ALGO_MIN_NUM_PARTS:
         time_greedy = 1 - time_greedy / 100.0 # assuming between 1 to 100
-        pgt =  MinNumPartsPGTP(pgt, deadline, num_partitions, partition_label, max_dop, merge_parts=do_merge, optimistic_factor=time_greedy)
+        pgt =  MinNumPartsPGTP(pgt, deadline, num_partitions, partition_label, max_dop, merge_parts=could_merge, optimistic_factor=time_greedy)
 
     elif algo == ALGO_PSO:
-        pgt = PSOPGTP(pgt, partition_label, max_dop, deadline=deadline, topk=topk, swarm_size=swarm_size, merge_parts=do_merge)
+        pgt = PSOPGTP(pgt, partition_label, max_dop, deadline=deadline, topk=topk, swarm_size=swarm_size, merge_parts=could_merge)
 
     else:
         raise GraphException("Unknown partition algorithm: {0}".format(algo))
 
     pgt.to_gojs_json(string_rep=False, visual=show_gojs)
 
-    if do_merge:
-        pgt.merge_partitions(num_islands, form_island=True, visual=show_gojs)
+    # if could_merge:
+    #     pgt.merge_partitions(num_islands, form_island=True, visual=show_gojs)
 
     return pgt
