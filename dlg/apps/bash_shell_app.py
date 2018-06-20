@@ -59,7 +59,8 @@ def mesage_stdouts(prefix, stdout, stderr, enc='utf8'):
         msg += "\n==STDERR==\n" + utils.b2s(stderr, enc)
     return msg
 
-def run_bash(cmd, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
+def run_bash(cmd, app_uid, session_id, inputs, outputs, stdin=None,
+             stdout=subprocess.PIPE):
     """
     Runs the given `cmd`. If any `inputs` and/or `outputs` are given
     (dictionaries of uid:drop elements) they are used to replace any placeholder
@@ -82,6 +83,11 @@ def run_bash(cmd, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
     dataURLOutputs = {uid: o for uid,o in outputs.items() if not droputils.has_path(o)}
     cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
+    # Pass down daliuge-specific information to the subprocesses as environment variables
+    env = os.environ.copy()
+    env['DLG_UID'] = app_uid
+    env['DLG_SESSION_ID'] = session_id
+
     # Wrap everything inside bash
     cmd = ('/bin/bash', '-c', cmd)
     logger.debug("Command after user creation and wrapping is: %s", cmd)
@@ -94,7 +100,7 @@ def run_bash(cmd, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
                                stdin=stdin,
                                stdout=stdout,
                                stderr=subprocess.PIPE,
-                               env=os.environ.copy())
+                               env=env)
 
     logger.debug("Process launched, waiting now...")
 
@@ -206,6 +212,10 @@ class BashShellBase(object):
         if not self._command:
             raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
+    def _run_bash(self, *args, **kwargs):
+        session_id = self._dlg_session.sessionId if self._dlg_session is not None else ''
+        run_bash(self._command, self.uid, session_id, *args, **kwargs)
+
     def dataURL(self):
         return type(self).__name__
 
@@ -264,7 +274,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
     StreamingOutputBashApp for those cases.
     """
     def run(self):
-        run_bash(self._command, self._inputs, self._outputs)
+        self._run_bash(self._inputs, self._outputs)
 
 class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
     """
@@ -273,7 +283,7 @@ class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
     """
     def run(self):
         with contextlib.closing(prepare_output_channel(self.node, self.outputs[0])) as outchan:
-            run_bash(self._command, self._inputs, {}, stdout=outchan)
+            self._run_bash(self._inputs, {}, stdout=outchan)
         logger.debug("Closed output channel")
 
 class StreamingInputBashApp(StreamingInputBashAppBase):
@@ -287,7 +297,7 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
     """
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
-            run_bash(self._command, {}, self._outputs, stdin=inchan)
+            self._run_bash({}, self._outputs, stdin=inchan)
         logger.debug("Closed input channel")
 
 class StreamingInputOutputBashApp(StreamingInputBashAppBase):
@@ -298,6 +308,6 @@ class StreamingInputOutputBashApp(StreamingInputBashAppBase):
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
             with contextlib.closing(prepare_output_channel(self.node, self.outputs[0])) as outchan:
-                run_bash(self._command, {}, {}, stdout=outchan, stdin=inchan)
+                self._run_bash({}, {}, stdout=outchan, stdin=inchan)
             logger.debug("Closed output channel")
         logger.debug("Closed input channel")
