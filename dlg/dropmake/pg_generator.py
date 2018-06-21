@@ -1342,7 +1342,7 @@ class MySarkarPGTP(PGT):
                 def merge_partitions(self, new_num_parts, form_island=False)
         """
         super(MySarkarPGTP, self).__init__(drop_list, build_dag=False)
-        self._dag = DAGUtil.build_dag_from_drops(self._drop_list, fake_super_root=True)
+        self._dag = DAGUtil.build_dag_from_drops(self._drop_list, fake_super_root=False)
         self._num_parts = num_partitions
         self._max_dop = max_dop # max dop per partition
         self._par_label = par_label
