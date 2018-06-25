@@ -558,10 +558,10 @@ class LGNode():
             kwargs['num_cpus'] = int(self.jd.get('num_cpus', 1))
             self._update_key_value_attributes(kwargs)
             dropSpec.update(kwargs)
-        elif (drop_type == 'DynlibApp'):
+        elif (drop_type in ['DynlibApp', 'DynlibProcApp']):
             if ('libpath' not in self.jd or len(self.jd['libpath']) == 0):
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
-            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.dynlib.DynlibApp'})
+            dropSpec = dropdict({'oid':oid, 'type':'app', 'app':'dlg.apps.dynlib.%s' % drop_type})
             kwargs['lib'] = self.jd['libpath']
             kwargs['tw'] = int(self.jd['execution_time'])
             self._update_key_value_attributes(kwargs)
@@ -1835,7 +1835,8 @@ class LG():
         return ret
 
     def _is_stream_link(self, s_type, t_type):
-        return ((s_type in ['Component', 'DynlibApp']) and (t_type in ['Component', 'DynlibApp']))
+        return ((s_type in ['Component', 'DynlibApp', 'DynlibProcApp']) and \
+            (t_type in ['Component', 'DynlibApp', 'DynlibProcApp']))
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop):
         """
@@ -1877,7 +1878,7 @@ class LG():
             dropSpec_null.addStreamingConsumer(tdrop)
             tdrop.addStreamingInput(dropSpec_null)
             self._drop_dict['new_added'].append(dropSpec_null)
-        elif (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker']):
+        elif (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker', 'DynlibProcApp']):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
             if ('BashShellApp' == s_type):
