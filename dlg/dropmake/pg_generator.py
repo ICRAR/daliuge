@@ -72,6 +72,8 @@ from .dm_utils import get_lg_ver_type, convert_construct, convert_fields, \
 
 logger = logging.getLogger(__name__)
 
+APP_DROP_TYPES = ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker', 'DynlibProcApp']
+
 class GraphException(Exception):
     pass
 
@@ -1654,11 +1656,11 @@ class LG():
             raise GInvalidLink("Loop construct {0} or {1} cannot be linked".format(src.text, tgt.text))
 
         if (src.is_gather()):
-            if (not (tgt.jd['category'] in ['Component', 'BashShellApp'] and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
+            if (not (tgt.jd['category'] in APP_DROP_TYPES and tgt.is_group_start() and src.inputs[0].h_level == tgt.h_level)):
                 raise GInvalidLink("Gather {0}'s output {1} must be a Group-Start Component inside a Group with the same H level as Gather's input".format(src.id, tgt.id))
             #raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
         elif (src.is_branch()):
-            if (tgt.jd['category'] not in ['Component', 'BashShellApp'] and (not tgt.is_end_node())):
+            if (tgt.jd['category'] not in APP_DROP_TYPES and (not tgt.is_end_node())):
                 raise GInvalidLink("Branch {0}'s output {1} must be Component".format(src.id, tgt.id))
 
         if (tgt.is_groupby()):
@@ -1878,7 +1880,7 @@ class LG():
             dropSpec_null.addStreamingConsumer(tdrop)
             tdrop.addStreamingInput(dropSpec_null)
             self._drop_dict['new_added'].append(dropSpec_null)
-        elif (s_type in ['Component', 'BashShellApp', 'mpi', 'DynlibApp', 'docker', 'DynlibProcApp']):
+        elif (s_type in APP_DROP_TYPES):
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
             if ('BashShellApp' == s_type):
@@ -1928,16 +1930,26 @@ class LG():
                 # 2. Scatter "naturally" does not have output
                 if (slgn.is_gather() and tlgn.gid != sid): # not the artifical link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
+                    # this is a way to manually sequentialise a Scatter that has a high DoP
                     for i, ga_drop in enumerate(sdrops):
+                        if (ga_drop['oid'] not in self._gather_cache):
+                            logger.warning('Gather %s Drop not yet in cache, sequentialisation may fail!' % slgn.text)
+                            continue
                         j = (i + 1) * slgn.gather_width
                         if (j >= tlgn.group.dop and j % tlgn.group.dop == 0):
                             continue
                         while (j < (i + 2) * slgn.gather_width and j < tlgn.group.dop * (i + 1)):
-                            if 'gather-data_drop' in ga_drop:
-                                gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
+                            gather_input_list = self._gather_cache[ga_drop['oid']][1]
+                            for gddrop in gather_input_list:
                                 gddrop.addConsumer(tdrops[j])
                                 tdrops[j].addInput(gddrop)
                                 j += 1
+
+                            # if 'gather-data_drop' in ga_drop:
+                            #     gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
+                            #     gddrop.addConsumer(tdrops[j])
+                            #     tdrops[j].addInput(gddrop)
+                            #     j += 1
                 else:
                     if (len(sdrops) != len(tdrops)):
                         err_info = "For within-group links, # {2} Group Inputs {0} must be the same as # {3} of Component Outputs {1}".format(slgn.id,
@@ -2058,7 +2070,10 @@ class LG():
 
         for k, v in self._gather_cache.items():
             input_list = v[1]
-            output_drop = v[2][0]
+            try:
+                output_drop = v[2][0]
+            except:
+                continue # the gather hasn't got output drops, just move on
             for data_drop in input_list:
                 data_drop.addConsumer(output_drop)
                 output_drop.addInput(data_drop)
