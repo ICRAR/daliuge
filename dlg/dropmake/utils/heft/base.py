@@ -27,14 +27,14 @@ Heterogeneous Earliest Finish Time -- A static scheduling heuristic
 
 Cast of Characters:
 agent - resources (e.g. machines)
-job - the job to be allocated (job == task)
-orders - dict {agent: [jobs-run-on-agent-in-order]}
-jobson - dict {job: agent-on-which-job-is-run}
-prec - dict {job: (jobs which directly precede job)}
-succ - dict {job: (jobs which directly succeed job)}
-compcost - function :: job, agent -> time to compute job on agent
-commcost - function :: job, job, agent, agent -> time to transfer results
-                       of one job needed by another between two agents
+task - the task to be allocated
+orders - dict {agent: [tasks-run-on-agent-in-order]}
+taskson - dict {task: agent-on-which-task-is-run}
+prec - dict {task: (tasks which directly precede task)}
+succ - dict {task: (tasks which directly succeed task)}
+compcost - function :: task, agent -> time to compute task on agent
+commcost - function :: task, task, agent, agent -> time to transfer results
+                       of one task needed by another between two agents
 
 [1]. http://en.wikipedia.org/wiki/Heterogeneous_Earliest_Finish_Time
 
@@ -49,7 +49,7 @@ from itertools import chain
 import itertools as it
 import networkx as nx
 
-Event = namedtuple('Event', 'job start end')
+Event = namedtuple('Event', 'task start end')
 
 def reverse_dict(d):
     """ Reverses direction of dependence dict
@@ -64,9 +64,9 @@ def reverse_dict(d):
             result[val] = result.get(val, tuple()) + (key, )
     return result
 
-def find_job_event(job_name, orders_dict):
+def find_task_event(task_name, orders_dict):
     for event in it.chain.from_iterable(orders_dict.values()):
-        if event.job == job_name:
+        if event.task == task_name:
             return event
 
 
@@ -86,7 +86,7 @@ def cbar(ni, nj, agents, commcost):
 
 
 def ranku(ni, agents, succ,  compcost, commcost):
-    """ Rank of job
+    """ Rank of task
 
     This code is designed to mirror the wikipedia entry.
     Please see that for details
@@ -104,15 +104,15 @@ def ranku(ni, agents, succ,  compcost, commcost):
         return w(ni)
 
 
-def endtime(job, events):
-    """ Endtime of job in list of events """
+def endtime(task, events):
+    """ Endtime of task in list of events """
     for e in events:
-        if e.job == job:
+        if e.task == task:
             return e.end
 
 
 def find_first_gap(agent_orders, desired_start_time, duration):
-    """Find the first gap in an agent's list of jobs
+    """Find the first gap in an agent's list of tasks
 
     Essentially this is equivalent to "sequentialisation"
     But for DAG-preserving, such sequentialisation does not work since the execution
@@ -122,10 +122,10 @@ def find_first_gap(agent_orders, desired_start_time, duration):
     So the actual start time cannot be after the desired_start time, it must be
     at the desired_start_time. This is the main difference from the original HEFT.
 
-    This means if the job cannot run at the desired_start_time (i.e. No gaps found)
+    This means if the task cannot run at the desired_start_time (i.e. No gaps found)
     due to resource depletion (e.g. DoP overflow), then the agent has to either
-    reject the job or face the consequence of resource over-subscription, or
-    ask for creating a new resource unit for that job/task
+    reject the task or face the consequence of resource over-subscription, or
+    ask for creating a new resource unit for that task
 
     The gap must be after `desired_start_time` and of length at least
     `duration`.
@@ -133,7 +133,7 @@ def find_first_gap(agent_orders, desired_start_time, duration):
     #TODO change to a "DAG preserved" first gap
     #TODO return an infinite large value if the DoP constraint is not met
 
-    # No jobs: can fit it in whenever the job is ready to run
+    # No tasks: can fit it in whenever the task is ready to run
     if (agent_orders is None) or (len(agent_orders)) == 0:
         return desired_start_time
 
@@ -150,47 +150,49 @@ def find_first_gap(agent_orders, desired_start_time, duration):
     return max(agent_orders[-1].end, desired_start_time)
 
 
-def start_time(job, orders, jobson, prec, commcost, compcost, agent):
-    """ Earliest time that job can be executed on agent """
+def start_time(task, orders, taskson, prec, commcost, compcost, agent):
+    """ Earliest time that task can be executed on agent """
 
-    duration = compcost(job, agent)
+    duration = compcost(task, agent)
 
-    if job in prec:
-        comm_ready = max([endtime(p, orders[jobson[p]])
-                          + commcost(p, job, jobson[p], agent) for p in prec[job]])
+    if task in prec:
+        comm_ready = max([endtime(p, orders[taskson[p]])
+                          + commcost(p, task, taskson[p], agent) for p in prec[task]])
     else:
         comm_ready = 0
 
     return find_first_gap(orders[agent], comm_ready, duration)
 
 
-def allocate(job, orders, jobson, prec, compcost, commcost):
-    """ Allocate job to the machine with earliest finish time
+def allocate(task, orders, taskson, prec, compcost, commcost):
+    """ Allocate task to the machine with earliest finish time
 
     Operates in place
     """
-    st = partial(start_time, job, orders, jobson, prec, commcost, compcost)
+    st = partial(start_time, task, orders, taskson, prec, commcost, compcost)
 
-    def ft(machine): return st(machine) + compcost(job, machine)
+    def ft(machine): return st(machine) + compcost(task, machine)
 
     # 'min()' represents 'earliest' finished time (ft)
     # this is exactly why the allocation policy is considered greedy!
+    #TODO the new greediness should be based on "DoP" since all start time will be
+    # the same (the desired_start_time). Smaller DoP (or bigger leftover) is better
     agent = min(orders.keys(), key=ft)
     start = st(agent)
     end = ft(agent)
-    #assert(end == start + compcost(job, agent))
+    #assert(end == start + compcost(task, agent))
 
-    orders[agent].append(Event(job, start, end))
+    orders[agent].append(Event(task, start, end))
     #orders[agent] = sorted(orders[agent], key=lambda e: e.start)
     orders[agent].sort(key=lambda e: e.start)
     # Might be better to use a different data structure to keep each
     # agent's orders sorted at a lower cost.
 
-    jobson[job] = agent
+    taskson[task] = agent
 
 
 def makespan(orders):
-    """ Finish time of last job """
+    """ Finish time of last task """
     return max(v[-1].end for v in orders.values() if v)
 
 
@@ -201,19 +203,19 @@ def schedule(succ, agents, compcost, commcost):
 
     succ - DAG of tasks {a: (b, c)} where b, and c follow a
     agents - set of agents that can perform work
-    compcost - function :: job, agent -> runtime
+    compcost - function :: task, agent -> runtime
     commcost - function :: j1, j2, a1, a2 -> communication time
     """
     rank = partial(ranku, agents=agents, succ=succ,
                    compcost=compcost, commcost=commcost)
     prec = reverse_dict(succ)
 
-    jobs = set(succ.keys()) | set(x for xx in succ.values() for x in xx)
-    jobs = sorted(jobs, key=rank)
+    tasks = set(succ.keys()) | set(x for xx in succ.values() for x in xx)
+    tasks = sorted(tasks, key=rank)
 
     orders = {agent: [] for agent in agents}
-    jobson = dict()
-    for job in reversed(jobs):
-        allocate(job, orders, jobson, prec, compcost, commcost)
+    taskson = dict()
+    for task in reversed(tasks):
+        allocate(task, orders, taskson, prec, compcost, commcost)
 
-    return orders, jobson
+    return orders, taskson
