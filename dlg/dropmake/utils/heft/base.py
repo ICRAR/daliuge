@@ -1,4 +1,4 @@
-# This file was ported and adapted from:
+# This file was ported and adapted by chen.wu@icrar.org from:
 # https://github.com/mrocklin/heft/blob/master/heft/core.py
 
 # The original copyright statement is as below:
@@ -26,8 +26,8 @@ Heterogeneous Earliest Finish Time -- A static scheduling heuristic
      IEEE Transactions on Parallel and Distributed Systems 2002
 
 Cast of Characters:
-
-job - the job to be allocated
+agent - resources (e.g. machines)
+job - the job to be allocated (job == task)
 orders - dict {agent: [jobs-run-on-agent-in-order]}
 jobson - dict {job: agent-on-which-job-is-run}
 prec - dict {job: (jobs which directly precede job)}
@@ -45,23 +45,45 @@ consumes exactly one processor at a time
 
 from functools import partial
 from collections import namedtuple
-from util import reverse_dict
 from itertools import chain
+import itertools as it
+import networkx as nx
 
 Event = namedtuple('Event', 'job start end')
+
+def reverse_dict(d):
+    """ Reverses direction of dependence dict
+
+    >>> d = {'a': (1, 2), 'b': (2, 3), 'c':()}
+    >>> reverse_dict(d)
+    {1: ('a',), 2: ('a', 'b'), 3: ('b',)}
+    """
+    result = {}
+    for key in d:
+        for val in d[key]:
+            result[val] = result.get(val, tuple()) + (key, )
+    return result
+
+def find_job_event(job_name, orders_dict):
+    for event in it.chain.from_iterable(orders_dict.values()):
+        if event.job == job_name:
+            return event
+
 
 def wbar(ni, agents, compcost):
     """ Average computation cost """
     return sum(compcost(ni, agent) for agent in agents) / len(agents)
+
 
 def cbar(ni, nj, agents, commcost):
     """ Average communication cost """
     n = len(agents)
     if n == 1:
         return 0
-    npairs = n * (n-1)
+    npairs = n * (n - 1)
     return 1. * sum(commcost(ni, nj, a1, a2) for a1 in agents for a2 in agents
-                                        if a1 != a2) / npairs
+                    if a1 != a2) / npairs
+
 
 def ranku(ni, agents, succ,  compcost, commcost):
     """ Rank of job
@@ -72,7 +94,7 @@ def ranku(ni, agents, succ,  compcost, commcost):
     [1]. http://en.wikipedia.org/wiki/Heterogeneous_Earliest_Finish_Time
     """
     rank = partial(ranku, compcost=compcost, commcost=commcost,
-                           succ=succ, agents=agents)
+                   succ=succ, agents=agents)
     w = partial(wbar, compcost=compcost, agents=agents)
     c = partial(cbar, agents=agents, commcost=commcost)
 
@@ -81,27 +103,44 @@ def ranku(ni, agents, succ,  compcost, commcost):
     else:
         return w(ni)
 
+
 def endtime(job, events):
     """ Endtime of job in list of events """
     for e in events:
         if e.job == job:
             return e.end
 
+
 def find_first_gap(agent_orders, desired_start_time, duration):
     """Find the first gap in an agent's list of jobs
+
+    Essentially this is equivalent to "sequentialisation"
+    But for DAG-preserving, such sequentialisation does not work since the execution
+    will be triggered as soon as the `desired_start_time` arrives regardless of
+    scheduling decisions (insertion into some gap slots)
+
+    So the actual start time cannot be after the desired_start time, it must be
+    at the desired_start_time. This is the main difference from the original HEFT.
+
+    This means if the job cannot run at the desired_start_time (i.e. No gaps found)
+    due to resource depletion (e.g. DoP overflow), then the agent has to either
+    reject the job or face the consequence of resource over-subscription, or
+    ask for creating a new resource unit for that job/task
 
     The gap must be after `desired_start_time` and of length at least
     `duration`.
     """
+    #TODO change to a "DAG preserved" first gap
+    #TODO return an infinite large value if the DoP constraint is not met
 
     # No jobs: can fit it in whenever the job is ready to run
     if (agent_orders is None) or (len(agent_orders)) == 0:
-        return desired_start_time;
+        return desired_start_time
 
     # Try to fit it in between each pair of Events, but first prepend a
     # dummy Event which ends at time 0 to check for gaps before any real
     # Event starts.
-    a = chain([Event(None,None,0)], agent_orders[:-1])
+    a = chain([Event(None, None, 0)], agent_orders[:-1])
     for e1, e2 in zip(a, agent_orders):
         earliest_start = max(desired_start_time, e1.end)
         if e2.start - earliest_start > duration:
@@ -110,6 +149,7 @@ def find_first_gap(agent_orders, desired_start_time, duration):
     # No gaps found: put it at the end, or whenever the task is ready
     return max(agent_orders[-1].end, desired_start_time)
 
+
 def start_time(job, orders, jobson, prec, commcost, compcost, agent):
     """ Earliest time that job can be executed on agent """
 
@@ -117,11 +157,12 @@ def start_time(job, orders, jobson, prec, commcost, compcost, agent):
 
     if job in prec:
         comm_ready = max([endtime(p, orders[jobson[p]])
-                       + commcost(p, job, jobson[p], agent) for p in prec[job]])
+                          + commcost(p, job, jobson[p], agent) for p in prec[job]])
     else:
         comm_ready = 0
 
     return find_first_gap(orders[agent], comm_ready, duration)
+
 
 def allocate(job, orders, jobson, prec, compcost, commcost):
     """ Allocate job to the machine with earliest finish time
@@ -129,7 +170,8 @@ def allocate(job, orders, jobson, prec, compcost, commcost):
     Operates in place
     """
     st = partial(start_time, job, orders, jobson, prec, commcost, compcost)
-    ft = lambda machine: st(machine) + compcost(job, machine)
+
+    def ft(machine): return st(machine) + compcost(job, machine)
 
     # 'min()' represents 'earliest' finished time (ft)
     # this is exactly why the allocation policy is considered greedy!
@@ -146,9 +188,11 @@ def allocate(job, orders, jobson, prec, compcost, commcost):
 
     jobson[job] = agent
 
+
 def makespan(orders):
     """ Finish time of last job """
     return max(v[-1].end for v in orders.values() if v)
+
 
 def schedule(succ, agents, compcost, commcost):
     """ Schedule computation dag onto worker agents
@@ -161,7 +205,7 @@ def schedule(succ, agents, compcost, commcost):
     commcost - function :: j1, j2, a1, a2 -> communication time
     """
     rank = partial(ranku, agents=agents, succ=succ,
-                          compcost=compcost, commcost=commcost)
+                   compcost=compcost, commcost=commcost)
     prec = reverse_dict(succ)
 
     jobs = set(succ.keys()) | set(x for xx in succ.values() for x in xx)
