@@ -37,9 +37,10 @@ from itertools import chain
 import itertools as it
 #import networkx as nx
 import numpy as np
-
+import sys
 
 Event = namedtuple('Event', 'task start end')
+LATEST_STT = sys.maxsize # this should be python2/3 compatible
 
 class res_usage(object):
     """
@@ -51,7 +52,7 @@ class res_usage(object):
         self.edt = -1
         self.arr = None
 
-    def can_allocate_task(self, desired_st_time, duration, demand):
+    def can_alloc_task(self, desired_st_time, duration, demand):
         if (self.edt == -1):
             return True
         dedt = min(desired_st_time + duration, self.edt)
@@ -127,7 +128,8 @@ def endtime(task, events):
             return e.end
 
 
-def find_first_gap(agent_orders, desired_start_time, duration, supply, demand):
+def find_first_gap(agent_orders, desired_start_time, duration,
+                   agent_res_usage, task_demand):
     """Find the first gap in an agent's list of tasks
 
     Essentially this is equivalent to "sequentialisation"
@@ -153,17 +155,22 @@ def find_first_gap(agent_orders, desired_start_time, duration, supply, demand):
     if (agent_orders is None) or (len(agent_orders)) == 0:
         return desired_start_time
 
+    if (agent_res_usage.can_alloc_task(desired_start_time, duration, task_demand)):
+        return desired_start_time
+    else:
+        return LATEST_STT
+
     # Try to fit it in between each pair of Events, but first prepend a
     # dummy Event which ends at time 0 to check for gaps before any real
     # Event starts.
-    a = chain([Event(None, None, 0)], agent_orders[:-1])
-    for e1, e2 in zip(a, agent_orders):
-        earliest_start = max(desired_start_time, e1.end)
-        if e2.start - earliest_start > duration:
-            return earliest_start
-
-    # No gaps found: put it at the end, or whenever the task is ready
-    return max(agent_orders[-1].end, desired_start_time)
+    # a = chain([Event(None, None, 0)], agent_orders[:-1])
+    # for e1, e2 in zip(a, agent_orders):
+    #     earliest_start = max(desired_start_time, e1.end)
+    #     if e2.start - earliest_start > duration:
+    #         return earliest_start
+    #
+    # # No gaps found: put it at the end, or whenever the task is ready
+    # return max(agent_orders[-1].end, desired_start_time)
 
 
 def start_time(task, orders, taskson, prec, commcost, compcost,
@@ -200,16 +207,20 @@ def allocate(task, orders, taskson, prec, compcost, commcost, usages, workload):
     # the same (the desired_start_time). Smaller DoP (or bigger leftover) is better
     agent = min(orders.keys(), key=ft)
     start = st(agent)
+    if (start == LATEST_STT):
+        raise Exception('No sufficient resources to run task {0}'.format(task))
     end = ft(agent)
     #assert(end == start + compcost(task, agent))
 
-    orders[agent].append(Event(task, start, end))
+    new_event = Event(task, start, end)
+    orders[agent].append(new_event)
     #orders[agent] = sorted(orders[agent], key=lambda e: e.start)
     orders[agent].sort(key=lambda e: e.start)
     # Might be better to use a different data structure to keep each
     # agent's orders sorted at a lower cost.
 
     taskson[task] = agent
+    usages[agent].add_task(self, new_event, workload[task])
 
 
 def makespan(orders):
