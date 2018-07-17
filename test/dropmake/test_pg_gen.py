@@ -155,3 +155,10 @@ class TestPGGen(unittest.TestCase):
             drop_list = lg.unroll_to_tpl()
             pgtp = MinNumPartsPGTP(drop_list, tgt_deadline[i])
             pgtp.json
+
+    def test_pg_eagle(self):
+        lgs = ['eagle_gather_simple.json', 'eagle_gather_empty.json', 'eagle_gather.json']
+        for lg in lgs:
+            fp = get_lg_fname(lg)
+            lg = LG(fp)
+            lg.unroll_to_tpl()
