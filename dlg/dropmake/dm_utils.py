@@ -45,13 +45,18 @@ def get_lg_ver_type(lgo):
     if (len(nodes) == 0):
         raise Exception("Invalid LG, nodes not found")
 
-    if ('fields' in nodes[0]):
-        fds = nodes[0]['fields']
-        kw = fds[0]['name']
-        if (kw in nodes[0]):
-            return LG_VER_EAGLE_CONVERTED
-        else:
-            return LG_VER_EAGLE
+    for i, node in enumerate(nodes):
+        if (i > 5):
+            break
+        if ('fields' in node):
+            fds = node['fields']
+            for fd in fds:
+                if ('name' in fd):
+                    kw = fd['name']
+                    if (kw in node):
+                        return LG_VER_EAGLE_CONVERTED
+                    else:
+                        return LG_VER_EAGLE
 
     if ('linkDataArray' in lgo and len(lgo['linkDataArray']) > 0):
         lnk = lgo['linkDataArray'][0]
