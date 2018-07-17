@@ -37,7 +37,7 @@ class SleepApp(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
-        self._sleepTime = self._getArg(kwargs, 'sleepTime', 0)
+        self._sleepTime = float(self._getArg(kwargs, 'sleepTime', 0))
 
     def run(self):
         time.sleep(self._sleepTime)
