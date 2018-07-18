@@ -33,7 +33,7 @@ from .. import droputils
 from .. import graph_loader
 from .. import rpc
 from .. import utils
-from ..ddap_protocol import DROPStates, DROPLinkType, DROPRel
+from ..ddap_protocol import DROPLinkType, DROPRel
 from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
 from ..exceptions import InvalidSessionState, InvalidGraphException, \
@@ -231,7 +231,8 @@ class Session(object):
 
             # Register them with the error handler
             for l in event_listeners:
-                drop.subscribe(l, eventType='status')
+                drop.subscribe(l)
+
         logger.info("Stored all drops, proceeding with further customization")
 
         # Add listeners that will move the session to FINISHED state

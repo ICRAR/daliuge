@@ -75,7 +75,7 @@ class ErrorStatusListener(object):
         self._error_listener = error_listener
 
     def handleEvent(self, evt):
-        if evt.status == DROPStates.ERROR:
+        if evt.type == 'status' and evt.status == DROPStates.ERROR:
             self._error_listener.on_error(self._session.drops[evt.uid])
 
 
