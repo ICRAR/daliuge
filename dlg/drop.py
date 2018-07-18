@@ -582,11 +582,12 @@ class AbstractDROP(EventFirer):
         """
         kwargs['oid'] = self.oid
         kwargs['uid'] = self.uid
-        # Adding session id.
+        # Adding session id, if any.
         session_id = ''
         if self._dlg_session:
             session_id = self._dlg_session.sessionId
         kwargs['session_id'] = session_id
+        kwargs['name'] = self.name
         self._fireEvent(eventType, **kwargs)
 
     @property
