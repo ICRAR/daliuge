@@ -53,7 +53,7 @@ class res_usage(object):
         self.arr = None
 
     def can_alloc_task(self, desired_st_time, duration, demand):
-        if (self.edt == -1):
+        if (self.edt == -1 or desired_st_time >= self.edt):
             return True
         dedt = min(desired_st_time + duration, self.edt)
         # each timestep should not exceed supply
@@ -220,7 +220,7 @@ def allocate(task, orders, taskson, prec, compcost, commcost, usages, workload):
     # agent's orders sorted at a lower cost.
 
     taskson[task] = agent
-    usages[agent].add_task(self, new_event, workload[task])
+    usages[agent].add_task(new_event, workload[task])
 
 
 def makespan(orders):
@@ -246,7 +246,7 @@ def schedule(succ, agents, compcost, commcost, capacity, workload):
     tasks = sorted(tasks, key=rank)
 
     orders = {agent: [] for agent in agents}
-    usages = {agent: res_usage(agent, supply) for agent, supply in zip(agents, capacity)}
+    usages = {agent: res_usage(agent, supply) for agent, supply in capacity.items()}
     taskson = dict()
     for task in reversed(tasks):
         allocate(task, orders, taskson, prec, compcost, commcost, usages, workload)
