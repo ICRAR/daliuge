@@ -42,31 +42,57 @@ import sys
 Event = namedtuple('Event', 'task start end')
 LATEST_STT = sys.maxsize # this should be python2/3 compatible
 
+RES_TYPE_CPU = 1
+RES_TYPE_MEM = 2
+#RES_TYPE_IO = 3
+RES_TYPES = [RES_TYPE_CPU, RES_TYPE_MEM]
+#RES_TYPES = [RES_TYPE_CPU]
+
 class res_usage(object):
     """
     Resource usage of a particular machine/agent
     """
     def __init__(self, agent, supply):
+        self.res_types = supply.keys()
+        self.arr = dict()
+        for k in self.res_types:
+            if (k not in RES_TYPES):
+                raise Exception('Unknow resource type {0}'.format(k))
+            else:
+                self.arr[k] = None
         self.agent = agent
         self.supply = supply
         self.edt = -1
-        self.arr = None
 
     def can_alloc_task(self, desired_st_time, duration, demand):
         if (self.edt == -1 or desired_st_time >= self.edt):
+            for k, v in demand.items():
+                if (v > self.supply[k]):
+                    return False
             return True
         dedt = min(desired_st_time + duration, self.edt)
         # each timestep should not exceed supply
-        return sum(self.arr[desired_st_time:dedt] + demand > self.supply) == 0
+        for k, v in demand.items(): # for each resource type
+            res_arr = self.arr[k]
+            #TODO use a threshold instead of an outright '0'
+            if sum(res_arr[desired_st_time:dedt] + v > self.supply[k]) > 0:
+                return False
+        return True
 
     def add_task(self, event, demand):
         self.edt = max(event.end, self.edt)
-        if (self.arr is None):
-            self.arr = np.zeros(self.edt)
-        elif (self.arr.size < self.edt):
-            delt = self.edt - self.arr.size
-            self.arr = np.hstack([self.arr, np.zeros(delt)])
-        self.arr[event.start:event.end] += demand
+        to_be_updated = []
+        for k, res_arr in self.arr.items():
+            if (res_arr is None):
+                res_arr = np.zeros(self.edt)
+                to_be_updated.append((k, res_arr))
+            elif (res_arr.size < self.edt):
+                delt = self.edt - res_arr.size
+                res_arr = np.hstack([res_arr, np.zeros(delt)])
+            res_arr[event.start:event.end] += demand[k]
+        
+        for k, v in to_be_updated:
+            self.arr[k] = v
 
 def reverse_dict(d):
     """ Reverses direction of dependence dict
@@ -192,8 +218,9 @@ def start_time(task, orders, taskson, prec, commcost, compcost,
 def allocate(task, orders, taskson, prec, compcost, commcost, usages, workload):
     """ Allocate task to the machine with earliest finish time
 
-    capacity is a dictionary, key is agent id, and value is capacity (integer)
-    workload is a dictionary, key is task id, and value is workload (integer)
+    usages is a dict, key is agent, and value is the res_usage instance
+    workload is a dict, key is task id, and value is another dict:
+        k - res_type, v - amount (int)
 
     """
     st = partial(start_time, task, orders, taskson, prec, commcost, compcost,
@@ -237,6 +264,9 @@ def schedule(succ, agents, compcost, commcost, capacity, workload):
     agents - set of agents that can perform work
     compcost - function :: task, agent -> runtime
     commcost - function :: j1, j2, a1, a2 -> communication time
+
+    capacity is a dictionary, key is agent id, and value is capacity (dict)
+    workload is a dictionary, key is task id, and value is workload (dict)
     """
     rank = partial(ranku, agents=agents, succ=succ,
                    compcost=compcost, commcost=commcost)
