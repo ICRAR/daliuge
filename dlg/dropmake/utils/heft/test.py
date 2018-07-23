@@ -1,4 +1,5 @@
-from single_capacity_dop import Event, cbar, ranku, schedule, start_time, wbar
+from single_capacity_dop import Event, cbar, ranku, schedule, \
+start_time, wbar, makespan, RES_TYPES
 
 """
 This is a simple script to use the HEFT function provided based on the example given in the original HEFT paper.
@@ -30,13 +31,22 @@ dag = {1: (2, 3, 4, 5, 6),
 def setup_capacity(agents):
     ac = dict()
     for i, a in enumerate(agents):
-        ac[a] = 8 * (i + 1)
+        supply = {}
+        for j, res in enumerate(RES_TYPES):
+            supply[res] = (8 + j) * (i + 1)
+        #print(supply)
+        ac[a] = supply
+    #print('all capacity', ac)
     return ac
 
 def setup_workload(tasks):
     wl = dict()
     for i, t in enumerate(tasks):
-        wl[t] = 2 * (i + 1)
+        demand = {}
+        for j, res in enumerate(RES_TYPES):
+            demand[res] = (1 + j) * (i + 1)
+        #print(demand)
+        wl[t] = demand
     return wl
 
 def compcost(task, agent):
@@ -158,3 +168,4 @@ orders, taskson = schedule(dag, agents, compcost, commcost, cpct, wkld)
 for eachP in sorted(orders):
     print(eachP, orders[eachP])
 print(taskson)
+print(makespan(orders))
