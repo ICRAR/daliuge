@@ -19,4 +19,5 @@ APP_ROOT="/group/mwaops/cwu/dfms"
 SID=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_DIR=$APP_ROOT"/logs/"$SID
 mkdir -m $LOG_DIR # to remove potential directory creation conflicts later
-aprun -B /home/cwu/dfms_env/bin/python $APP_ROOT"/cluster/start_dfms_cluster.py" -l $LOG_DIR -m $DLG_MON_HOST -o $DLG_MON_PORT
+#aprun -B /home/cwu/dfms_env/bin/python $APP_ROOT"/cluster/start_dfms_cluster.py" -l $LOG_DIR -m $DLG_MON_HOST -o $DLG_MON_PORT
+aprun -B /home/cwu/dfms_env/bin/python -m dlg.deploy.pawsey.start_dfms_cluster -l $LOG_DIR -m $DLG_MON_HOST -o $DLG_MON_PORT
