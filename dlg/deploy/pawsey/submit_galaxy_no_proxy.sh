@@ -17,7 +17,7 @@ APP_ROOT="/scratch2/mwaops/cwu/dfms"
 SID=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_DIR=$APP_ROOT"/logs/"$SID
 mkdir -m $LOG_DIR # to remove potential directory creation conflicts later
-aprun -B /home/cwu/dfms_env/bin/python $APP_ROOT"/cluster/start_dfms_cluster.py" -l $LOG_DIR -g 7 -d
-
+#aprun -B /home/cwu/dfms_env/bin/python $APP_ROOT"/cluster/start_dfms_cluster.py" -l $LOG_DIR -g 7 -d
+aprun -B /home/cwu/dfms_env/bin/python -m dlg.deploy.pawsey.start_dfms_cluster -l $LOG_DIR -g 7 -d
 # Tianhe2 submit like this (sorry I think the 'N' means different things on Tianhe, please change it)
 # mpirun -n 10 -N 1 /home/cwu/dfms_env/bin/python $APP_ROOT"/cluster/start_dfms_cluster.py" -l $LOG_DIR -g 0 -d -c Tianhe2
