@@ -127,7 +127,7 @@ def get_ip_via_ifconfig(loc='Pawsey'):
 def get_ip_via_netifaces(loc=''):
     return utils.get_local_ip_addr()[0][0]
 
-def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
+def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''):
     """
     Start node manager
     """
@@ -135,7 +135,8 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None):
     lv = 'v' * logv
     parser = optparse.OptionParser()
     args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
-            str(max_threads), '--no-dlm']
+            str(max_threads), '--no-dlm',
+            '--event-listeners', event_listeners]
     cmdline.dlgNM(parser, args)
 
 def start_dim(node_list, log_dir, logv=1):
@@ -279,6 +280,9 @@ def main():
     parser.add_option("-S", "--check_with_session", action="store_true",
                       dest="check_with_session", help="Check for node managers' availability by creating/destroy a session", default=False)
 
+    parser.add_option("--event-listeners", action="store", type="string",
+                      dest="event_listeners", help="A colon-separated list of event listener classes to be used", default='')
+
     (options, _) = parser.parse_args()
 
     if options.check_interfaces:
@@ -357,7 +361,8 @@ def main():
                 logger.info("Starting node manager on host {0}".format(origin_ip))
                 start_node_mgr(log_dir, logv=logv,
                 max_threads=options.max_threads,
-                host=None if options.all_nics else origin_ip)
+                host=None if options.all_nics else origin_ip,
+                event_listeners=options.event_listeners)
         else:
 
             # 'no_nms' are known not to be NMs
@@ -499,7 +504,8 @@ def main():
                 logger.info("Starting node manager on host {0}".format(origin_ip))
                 start_node_mgr(log_dir, logv=logv,
                 max_threads=options.max_threads,
-                host=None if options.all_nics else origin_ip)
+                host=None if options.all_nics else origin_ip,
+                event_listeners=options.event_listeners)
 
 if __name__ == '__main__':
     main()
