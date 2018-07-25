@@ -1,4 +1,4 @@
-from single_capacity_dop import Event, cbar, ranku, schedule, \
+from dlg_heft import Event, cbar, ranku, schedule, \
 start_time, wbar, makespan, RES_TYPES
 
 """
