@@ -167,17 +167,16 @@ def stop_when_graph_exec_finished(host, port, mpi_comm):
     Monitors the execution status of a graph by polling host/port,
     and stops DALiuGE when the execution has been finished.
     """
-
     # Use monitorclient to interact with island manager.
     dc = DataIslandManagerClient(host=host, port=port, timeout=MM_WAIT_TIME)
 
     while True:
-        logger.info("Getting session information.")
+        logger.debug("Getting session information.")
         # TODO This should be changed for multiple sessions.
         for session in dc.sessions():
             stt = time.time()
             session_status = session['status']
-            logger.info("Session status: %r", session_status)
+            logger.debug("Session status: %r", session_status)
             are_finished = [s == SessionStates.FINISHED for s in session_status.values()]
             if all(are_finished):
                 logger.info("Stopping DALiuGE application.")
