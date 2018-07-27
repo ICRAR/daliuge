@@ -49,6 +49,7 @@ from ...manager import cmdline
 from ...manager.client import NodeManagerClient, DataIslandManagerClient
 from ...manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
+from ...manager.session import SessionStates
 
 
 DIM_WAIT_TIME = 60
@@ -160,6 +161,28 @@ def start_mm(node_list, log_dir, logv=1):
     args = ['-l', log_dir, '-N', ','.join(node_list), '-%s' % lv,
             '-H', '0.0.0.0', '-m', '2048']
     cmdline.dlgMM(parser, args)
+
+def stop_when_graph_exec_finished(host, port, mpi_comm):
+    """
+    Monitors the execution status of a graph by polling host/port,
+    and stops DALiuGE when the execution has been finished.
+    """
+
+    # Use monitorclient to interact with island manager.
+    dc = DataIslandManagerClient(host=host, port=port, timeout=MM_WAIT_TIME)
+
+    while True:
+        # TODO This should be changed for multiple sessions.
+        for session in dc.sessions():
+            stt = time.time()
+            sessionStatus = session['status']
+            if (sessionStatus == SessionStates.FINISHED):
+                # Stop DALiuGE application.
+                mpi_comm.Abort()
+
+            dt = time.time() - stt
+            if (dt < GRAPH_MONITOR_INTERVAL):
+                time.sleep(GRAPH_MONITOR_INTERVAL - dt)
 
 def monitor_graph(host, port, dump_path):
     """
@@ -401,6 +424,12 @@ def main():
                         monitor_graph(host, port, dump_path)
 
                 threading.Thread(target=submit_and_monitor).start()
+
+                def monitor_execution_finished():
+                    host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
+                    stop_when_graph_exec_finished(host, port, comm)
+
+                threading.Thread(target=monitor_execution_finished).start()
 
             # Start the DIM
             logger.info("Starting island manager on host %s", origin_ip)
