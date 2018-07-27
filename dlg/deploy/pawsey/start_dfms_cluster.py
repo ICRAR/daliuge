@@ -177,6 +177,7 @@ def stop_when_graph_exec_finished(host, port, mpi_comm):
             stt = time.time()
             sessionStatus = session['status']
             if (sessionStatus == SessionStates.FINISHED):
+                logger.info("Stopping DALiuGE application.")
                 # Stop DALiuGE application.
                 mpi_comm.Abort()
 
