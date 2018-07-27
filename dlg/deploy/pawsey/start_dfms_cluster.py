@@ -172,10 +172,12 @@ def stop_when_graph_exec_finished(host, port, mpi_comm):
     dc = DataIslandManagerClient(host=host, port=port, timeout=MM_WAIT_TIME)
 
     while True:
+        logger.info("Getting session information.")
         # TODO This should be changed for multiple sessions.
         for session in dc.sessions():
             stt = time.time()
             sessionStatus = session['status']
+            logger.info("Session status %d", sessionStatus)
             if (sessionStatus == SessionStates.FINISHED):
                 logger.info("Stopping DALiuGE application.")
                 # Stop DALiuGE application.
