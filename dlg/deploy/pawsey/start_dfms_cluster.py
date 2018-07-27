@@ -176,9 +176,10 @@ def stop_when_graph_exec_finished(host, port, mpi_comm):
         # TODO This should be changed for multiple sessions.
         for session in dc.sessions():
             stt = time.time()
-            sessionStatus = session['status']
-            logger.info("Session status %d", sessionStatus)
-            if (sessionStatus == SessionStates.FINISHED):
+            session_status = session['status']
+            logger.info("Session status: %r", session_status)
+            are_finished = [s == SessionStates.FINISHED for s in session_status.values()]
+            if all(are_finished):
                 logger.info("Stopping DALiuGE application.")
                 # Stop DALiuGE application.
                 mpi_comm.Abort()
