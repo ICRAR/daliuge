@@ -162,7 +162,7 @@ def start_mm(node_list, log_dir, logv=1):
             '-H', '0.0.0.0', '-m', '2048']
     cmdline.dlgMM(parser, args)
 
-def stop_when_graph_exec_finished(host, port, mpi_comm):
+def stop_when_graph_exec_finished(host, port, mpi_comm, sleep_time_before_stopping=0):
     """
     Monitors the execution status of a graph by polling host/port,
     and stops DALiuGE when the execution has been finished.
@@ -172,13 +172,15 @@ def stop_when_graph_exec_finished(host, port, mpi_comm):
 
     while True:
         logger.debug("Getting session information.")
-        # TODO This should be changed for multiple sessions.
+        # TODO This should be adjusted for multiple sessions.
         for session in dc.sessions():
             stt = time.time()
             session_status = session['status']
             logger.debug("Session status: %r", session_status)
+            # Determine if all sessions finished.
             are_finished = [s == SessionStates.FINISHED for s in session_status.values()]
             if all(are_finished):
+                time.sleep(sleep_time_before_stopping)
                 logger.info("Stopping DALiuGE application.")
                 # Stop DALiuGE application.
                 mpi_comm.Abort()
@@ -309,6 +311,9 @@ def main():
     parser.add_option("--event-listeners", action="store", type="string",
                       dest="event_listeners", help="A colon-separated list of event listener classes to be used", default='')
 
+    parser.add_option("--sleep-after-execution", action="store", type="int",
+                      dest="sleep_after_execution", help="Sleep time interval after graph execution finished", default=0)
+
     (options, _) = parser.parse_args()
 
     if options.check_interfaces:
@@ -430,7 +435,8 @@ def main():
 
                 def monitor_execution_finished():
                     host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
-                    stop_when_graph_exec_finished(host, port, comm)
+                    sleep_time = options.sleep_after_execution
+                    stop_when_graph_exec_finished(host, port, comm, sleep_time)
 
                 threading.Thread(target=monitor_execution_finished).start()
 
