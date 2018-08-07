@@ -674,6 +674,7 @@ class LGNode():
         oid = self.make_oid(iid)
         dropSpec = self._create_test_drop_spec(oid, kwargs)
         kwargs['iid'] = iid
+        kwargs['lg_key'] = self.id
         kwargs['dt'] = self.jd['category']
         kwargs['nm'] = self.text
         dropSpec.update(kwargs)

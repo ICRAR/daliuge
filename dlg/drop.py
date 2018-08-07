@@ -155,6 +155,12 @@ class AbstractDROP(EventFirer):
         # but is not necessarily always there
         self.name = self._getArg(kwargs, 'nm', "")
 
+        # The key of this drop in the original Logical Graph
+        # This information might or might not be present depending on how the
+        # physical graph was generated (or if this drop is being created as part
+        # of a graph, to begin with), so we default it to an empty value
+        self.lg_key = self._getArg(kwargs, 'lg_key', '')
+
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
         # We keep the UIDs in a set for O(1) "x in set" operations
@@ -584,6 +590,7 @@ class AbstractDROP(EventFirer):
         kwargs['uid'] = self.uid
         kwargs['session_id'] = self._dlg_session.sessionId if self._dlg_session else ''
         kwargs['name'] = self.name
+        kwargs['lg_key'] = self.lg_key
         self._fireEvent(eventType, **kwargs)
 
     @property
