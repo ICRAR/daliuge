@@ -5,4 +5,10 @@ dir=$(dirname $0)
 cd $dir
 
 # Go!
-docker build --no-cache -t dfms/centos7:latest .
+if [ -f ../../setup.py ]; then
+    cd ../..
+    docker build --no-cache -t dfms/centos7:latest -f docker/dfms/Dockerfile_incontext .
+else
+    docker build --no-cache -t dfms/centos7:latest .
+fi
+
