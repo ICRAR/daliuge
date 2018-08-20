@@ -51,6 +51,7 @@ def serialize_func(f):
     a = _getargsspec(f)
     if a.defaults:
         fdefaults = dict(zip(a.args[-len(a.defaults):], a.defaults))
+    logger.debug("Defaults for function %r: %r", f, fdefaults)
     return fser, fdefaults
 
 
@@ -109,7 +110,7 @@ class PyFuncApp(BarrierAppDROP):
         # Mapping from argname to default value. Should match only the last part
         # of the argnames list
         self.fdefaults = self._getArg(kwargs, 'func_defaults', {}) or {}
-        logger.debug("Default values for function: %r", self.fdefaults)
+        logger.debug("Default values for function %s: %r", self.fname, self.fdefaults)
 
         # Mapping between argument name and input drop uids
         self.func_arg_mapping = self._getArg(kwargs, 'func_arg_mapping', {})
