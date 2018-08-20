@@ -48,6 +48,20 @@ def divide(x, y):
 def partition(x):
     return x / 2, x - x / 2
 
+def sum_with_args(a, *args):
+    """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
+    return a + sum(args)
+
+def sum_with_kwargs(a, **kwargs):
+    """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
+    b = kwargs.pop('b', 0)
+    return a + b
+
+def sum_with_args_and_kwarg(a, *args, **kwargs):
+    """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
+    b = kwargs.pop('b', 0)
+    return a + sum(args) + b
+
 class TestDelayed(unittest.TestCase):
 
     def setUp(self):
@@ -85,3 +99,21 @@ class TestDelayed(unittest.TestCase):
         parts = delayed(partition, nout=2)(division)
         result = delayed(add)(*parts).compute()
         self.assertEqual(3., result)
+
+    def test_with_args(self):
+        """Tests that delayed() works correctly with kwargs"""
+        self.assertEqual(delayed(sum_with_args)(1).compute(), 1)
+        self.assertEqual(delayed(sum_with_args)(1, 20).compute(), 21)
+        self.assertEqual(delayed(sum_with_args)(1, 20, 30).compute(), 51)
+
+    def test_with_kwargs(self):
+        """Tests that delayed() works correctly with args and kwargs"""
+        self.assertEqual(delayed(sum_with_kwargs)(1).compute(), 1)
+        self.assertEqual(delayed(sum_with_kwargs)(1, b=20).compute(), 21)
+        self.assertEqual(delayed(sum_with_kwargs)(1, b=20, x=-111).compute(), 21)
+
+    def test_with_args_and_kwargs(self):
+        """Tests that delayed() works correctly with kwargs"""
+        self.assertEqual(delayed(sum_with_args_and_kwarg)(1).compute(), 1)
+        self.assertEqual(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000).compute(), 121)
+        self.assertEqual(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000).compute(), 151)
