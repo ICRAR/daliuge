@@ -126,9 +126,10 @@ class PyFuncApp(BarrierAppDROP):
 
         # Keyword arguments are made up by the default values plus the inputs
         # that match one of the keyword argument names
+        argnames = _getargsspec(self.f).args
         kwargs = {name: inputs.pop(uid)
                   for name, uid in self.func_arg_mapping.items()
-                  if name in self.fdefaults}
+                  if name in self.fdefaults or name not in argnames}
 
         # The rest of the inputs are the positional arguments
         args = list(inputs.values())
