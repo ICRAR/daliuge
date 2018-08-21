@@ -321,7 +321,7 @@ class _DataDrop(_DelayedDrop):
     def make_dropdict(self):
         my_dropdict = dropdict({'type': 'plain', 'storage': 'memory'})
         if not self.producer:
-            my_dropdict['pydata'] = utils.b2s(base64.b64encode(pickle.dumps(self.pydata)))
+            my_dropdict['pydata'] = pyfunc.serialize_data(self.pydata)
         return my_dropdict
 
     def __repr__(self):

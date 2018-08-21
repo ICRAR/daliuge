@@ -19,8 +19,10 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import json
 import unittest
 
+import numpy as np
 from six.moves import reduce  # @UnresolvedImport
 
 from dlg import delayed
@@ -61,6 +63,20 @@ def sum_with_args_and_kwarg(a, *args, **kwargs):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
     b = kwargs.pop('b', 0)
     return a + sum(args) + b
+
+class MyType(object):
+    """A type that is serializable but not convertible to JSON"""
+    def __init__(self, x):
+        self.x = x
+        self.array = np.zeros(1)
+try:
+    json.dumps(MyType(1))
+    assert False, "Should fail to serialize to JSON"
+except:
+    pass
+
+def sum_with_user_defined_default(a, b=MyType(10)):
+    return a + b.x
 
 class TestDelayed(unittest.TestCase):
 
@@ -117,3 +133,8 @@ class TestDelayed(unittest.TestCase):
         self.assertEqual(delayed(sum_with_args_and_kwarg)(1).compute(), 1)
         self.assertEqual(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000).compute(), 121)
         self.assertEqual(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000).compute(), 151)
+
+    def test_with_user_defined_default(self):
+        """Tests that delayed() works with default values that are not json-dumpable"""
+        self.assertEquals(delayed(sum_with_user_defined_default)(1).compute(), 11)
+        self.assertEquals(delayed(sum_with_user_defined_default)(1, MyType(20)).compute(), 21)
