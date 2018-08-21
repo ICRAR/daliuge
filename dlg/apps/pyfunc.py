@@ -31,7 +31,7 @@ import dill
 import six
 import six.moves.cPickle as pickle  # @UnresolvedImport
 
-from .. import droputils
+from .. import droputils, utils
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
@@ -39,6 +39,12 @@ from ..exceptions import InvalidDropException
 _getargsspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
 
 logger = logging.getLogger(__name__)
+
+def serialize_data(d):
+    return utils.b2s(base64.b64encode(pickle.dumps(d)))
+
+def deserialize_data(d):
+    return pickle.loads(base64.b64decode(six.b(d)))
 
 def serialize_func(f):
 
@@ -50,7 +56,7 @@ def serialize_func(f):
     fdefaults = {}
     a = _getargsspec(f)
     if a.defaults:
-        fdefaults = dict(zip(a.args[-len(a.defaults):], a.defaults))
+        fdefaults = dict(zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults]))
     logger.debug("Defaults for function %r: %r", f, fdefaults)
     return fser, fdefaults
 
@@ -109,7 +115,8 @@ class PyFuncApp(BarrierAppDROP):
 
         # Mapping from argname to default value. Should match only the last part
         # of the argnames list
-        self.fdefaults = self._getArg(kwargs, 'func_defaults', {}) or {}
+        fdefaults = self._getArg(kwargs, 'func_defaults', {}) or {}
+        self.fdefaults = {name: deserialize_data(d) for name, d in fdefaults.items()}
         logger.debug("Default values for function %s: %r", self.fname, self.fdefaults)
 
         # Mapping between argument name and input drop uids
