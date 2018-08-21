@@ -38,6 +38,7 @@ _TIMEOUT = 10
 class TestDaemon(unittest.TestCase):
 
     def create_daemon(self, *args, **kwargs):
+        self._daemon_t = None
         self._daemon = DlgDaemon(*args, **kwargs)
 
         if 'noNM' not in kwargs or not kwargs['noNM']:
@@ -69,11 +70,12 @@ class TestDaemon(unittest.TestCase):
             pass
 
     def tearDown(self):
+        if self._daemon_t is not None:
+            self._daemon.stop(_TIMEOUT)
+            self._daemon_t.join(_TIMEOUT)
+            self.assertFalse(self._daemon_t.is_alive(), "Daemon running thread should have finished by now")
+            self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DALiuGE Daemon REST interface should be off')
         unittest.TestCase.tearDown(self)
-        self._daemon.stop(_TIMEOUT)
-        self._daemon_t.join(_TIMEOUT)
-        self.assertFalse(self._daemon_t.is_alive(), "Daemon running thread should have finished by now")
-        self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DALiuGE Daemon REST interface should be off')
 
     def test_nm_starts(self):
         # Simplest case...
