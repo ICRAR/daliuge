@@ -162,10 +162,13 @@ def portIsOpen(host, port, timeout=0):
 def connect_to(host, port, timeout=None):
     """
     Connects to ``host``:``port`` within the given timeout and return the
-    connected socket. If no connection could be established ``None`` is
-    returned.
+    connected socket. If no connection could be established a socket.timeout
+    error is raised
     """
-    return check_port(host, port, timeout=timeout, return_socket=True)
+    s = check_port(host, port, timeout=timeout, return_socket=True)
+    if s is False:
+        raise socket.timeout()
+    return s
 
 def write_to(host, port, data, timeout=None):
     """
