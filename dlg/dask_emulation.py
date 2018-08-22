@@ -137,8 +137,9 @@ class _DelayedDrop(object):
         client.append_graph(session_id, graph)
         client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
 
-        s = utils.connect_to('localhost', port, 300)
-        s.settimeout(kwargs.get('timeout', None))
+        timeout = kwargs.get('timeout', None)
+        s = utils.connect_to('localhost', port, timeout)
+        s.settimeout(timeout)
         with contextlib.closing(s):
             s = s.makefile("rb")
             nbytes = struct.unpack('>i', s.read(4))[0]
