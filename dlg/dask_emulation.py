@@ -207,6 +207,7 @@ class _DelayedDrops(_DelayedDrop):
         super(_DelayedDrops, self).__init__()
         self.drops = drops
         self.inputs.extend(drops)
+        logger.debug("Created %r", self)
 
     def _to_physical_graph(self, visited, graph):
 
@@ -249,6 +250,7 @@ class _AppDrop(_DelayedDrop):
         self.fcode, self.fdefaults = pyfunc.serialize_func(f)
         self.original_kwarg_names = []
         self.nout = nout
+        logger.debug("Created %r" % self)
 
     def make_dropdict(self):
 
@@ -275,6 +277,7 @@ class _AppDrop(_DelayedDrop):
 
     def _to_delayed_arg(self, arg):
 
+        logger.info("Turning into delayed arg for %r: %r", self, arg)
         if isinstance(arg, _DelayedDrop):
             return arg
 
@@ -296,7 +299,6 @@ class _AppDrop(_DelayedDrop):
             self.original_kwarg_names.append(None)
 
         for name, arg in kwargs.items():
-            logger.debug("Adding named argument %s=%r to call for %s", name, arg, self.fname)
             self.inputs.append(self._to_delayed_arg(arg))
             self.original_kwarg_names.append(name)
 
@@ -307,7 +309,7 @@ class _AppDrop(_DelayedDrop):
         return _DelayedDrops(*outputs)
 
     def __repr__(self):
-        return "<_DelayedApp fname=%s>" % (self.fname)
+        return "<_DelayedApp fname=%s, nout=%s>" % (self.fname, str(self.nout))
 
 class _DataDrop(_DelayedDrop):
     """Defines an in-memory drop"""
@@ -318,6 +320,7 @@ class _DataDrop(_DelayedDrop):
         if bool(producer is None) == bool(pydata is None):
             raise ValueError("either producer or pydata must be not None")
         self.pydata = pydata
+        logger.debug("Created %r", self)
 
     def make_dropdict(self):
         my_dropdict = dropdict({'type': 'plain', 'storage': 'memory'})
@@ -327,8 +330,8 @@ class _DataDrop(_DelayedDrop):
 
     def __repr__(self):
         if not self.producer:
-            return "<_DelayedDataDrop, pydata=%r>" % self.pydata
-        return "<_DelayedDataDrop>"
+            return "<_DataDrop, pydata=%r>" % (self.pydata,)
+        return "<_DataDrop, producer=%r>" % self.producer
 
 def delayed(x, *args, **kwargs):
     """Like dask.delayed, but quietly swallowing anything other than `nout`"""
