@@ -181,9 +181,10 @@ def stop_when_graph_exec_finished(host, port, mpi_comm, sleep_time_before_stoppi
             are_finished = [s == SessionStates.FINISHED for s in session_status.values()]
             if all(are_finished):
                 time.sleep(sleep_time_before_stopping)
-                logger.info("Stopping DALiuGE application.")
+                #logger.info("Stopping DALiuGE application.")
                 # Stop DALiuGE application.
-                mpi_comm.Abort()
+                #mpi_comm.Abort()
+                return
 
             dt = time.time() - stt
             if (dt < GRAPH_MONITOR_INTERVAL):
@@ -390,10 +391,18 @@ def main():
                     logger.warning("Couldn't connect to the main drop manager, proxy not started")
             elif (run_node_mgr):
                 logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv,
-                max_threads=options.max_threads,
-                host=None if options.all_nics else origin_ip,
-                event_listeners=options.event_listeners)
+
+                def start_node_mgr_in_thread():
+                    start_node_mgr(log_dir, logv=logv,
+                                   max_threads=options.max_threads,
+                                   host=None if options.all_nics else origin_ip,
+                                   event_listeners=options.event_listeners)
+
+                threading.Thread(target=start_node_mgr_in_thread).start()
+                comm.barrier()
+
+                logger.info("Stopping DALiuGE application on rank %d", rank)
+                comm.Abort()
         else:
 
             # 'no_nms' are known not to be NMs
@@ -433,16 +442,23 @@ def main():
 
                 threading.Thread(target=submit_and_monitor).start()
 
-                def monitor_execution_finished():
-                    host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
-                    sleep_time = options.sleep_after_execution
-                    stop_when_graph_exec_finished(host, port, comm, sleep_time)
-
-                threading.Thread(target=monitor_execution_finished).start()
-
             # Start the DIM
             logger.info("Starting island manager on host %s", origin_ip)
-            start_dim(node_mgrs, log_dir, logv=logv)
+            def start_dim_in_thread():
+                start_dim(node_mgrs, log_dir, logv=logv)
+
+            threading.Thread(target=start_dim_in_thread).start()
+
+            def monitor_execution_finished():
+                host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
+                sleep_time = options.sleep_after_execution
+                stop_when_graph_exec_finished(host, port, comm, sleep_time)
+
+            monitor_execution_finished()
+            comm.barrier()
+
+            logger.info("Stopping DALiuGE application on rank %d", rank)
+            comm.Abort()
 
     elif (options.num_islands > 1):
         if (rank == 0):
