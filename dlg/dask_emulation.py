@@ -123,7 +123,7 @@ class _DelayedDrop(object):
         # Add one final application that will wait for all results
         # and transmit them back to us
         transmitter_oid = str(self.next_drop_oid)
-        transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port})
+        transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
         for leaf_oid in droputils.get_leaves(graph.values()):
             graph[leaf_oid].addConsumer(transmitter)
         graph[transmitter_oid] = transmitter
@@ -233,7 +233,7 @@ class _DelayedDrops(_DelayedDrop):
         return self.drops[i]
 
     def make_dropdict(self):
-        return dropdict({'type': 'app', 'app': 'dlg.dask_emulation._Listifier'})
+        return dropdict({'type': 'app', 'app': 'dlg.dask_emulation._Listifier', 'nm': 'listifier'})
 
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
