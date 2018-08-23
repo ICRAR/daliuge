@@ -134,21 +134,25 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''
     """
     host = host or '0.0.0.0'
     lv = 'v' * logv
-    parser = optparse.OptionParser()
+    #parser = optparse.OptionParser()
     args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
             str(max_threads), '--no-dlm',
             '--event-listeners', event_listeners]
-    cmdline.dlgNM(parser, args)
+    #cmdline.dlgNM(parser, args)
+    process = tool.start_process('nm', args)
+    return process
 
 def start_dim(node_list, log_dir, logv=1):
     """
     Start data island manager
     """
     lv = 'v' * logv
-    parser = optparse.OptionParser()
+    #parser = optparse.OptionParser()
     args = ['-l', log_dir, '-%s' % lv, '-N', ','.join(node_list),
             '-H', '0.0.0.0', '-m', '2048']
-    cmdline.dlgDIM(parser, args)
+    #cmdline.dlgDIM(parser, args)
+    process = tool.start_process('dim', args)
+    return process
 
 def start_mm(node_list, log_dir, logv=1):
     """
