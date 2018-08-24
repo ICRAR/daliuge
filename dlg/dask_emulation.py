@@ -157,6 +157,8 @@ class _DelayedDrop(object):
         return graph
 
     def _append_to_graph(self, visited, graph):
+        if self in visited:
+            return
         oid = str(self.next_drop_oid)
         dd = self.dropdict
         dd['oid'] = oid
