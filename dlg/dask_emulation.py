@@ -304,11 +304,10 @@ class _AppDrop(_DelayedDrop):
             self.inputs.append(self._to_delayed_arg(arg))
             self.original_kwarg_names.append(name)
 
-        if self.nout == 1:
+        if self.nout is None:
             return _DataDrop(producer=self)
 
-        outputs = [_DataDrop(producer=self) for _ in range(self.nout)]
-        return _DelayedDrops(*outputs)
+        return _DataDropSequence(nout=self.nout, producer=self)
 
     def __repr__(self):
         return "<_DelayedApp fname=%s, nout=%s>" % (self.fname, str(self.nout))
@@ -335,6 +334,27 @@ class _DataDrop(_DelayedDrop):
             return "<_DataDrop, pydata=%r>" % (self.pydata,)
         return "<_DataDrop, producer=%r>" % self.producer
 
+class _DataDropSequence(_DataDrop):
+    """One or more _DataDrops that can be subscribed"""
+
+    def __init__(self, nout, producer):
+        super(_DataDrop, self).__init__(producer=producer)
+        self.nout = nout
+        logger.debug("Created %r", self)
+
+    def __iter__(self):
+        for i in range(self.nout):
+            yield self[i]
+
+    def __len__(self):
+        return self.nout
+
+    def __getitem__(self, i):
+        return delayed(lambda x, i: x[i])(self, i)
+
+    def __repr__(self):
+        return "<_DataDropSequence nout=%d, producer=%r>" % (self.nout, self.producer)
+
 def delayed(x, *args, **kwargs):
     """Like dask.delayed, but quietly swallowing anything other than `nout`"""
     if 'nout' in kwargs:
@@ -342,7 +362,7 @@ def delayed(x, *args, **kwargs):
     elif args:
         nout = args[0]
     else:
-        nout = 1
+        nout = None
     if callable(x):
         return _AppDrop(x, nout=nout)
     return _DataDrop(pydata=x)
