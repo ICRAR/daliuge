@@ -138,3 +138,38 @@ class TestDelayed(unittest.TestCase):
         """Tests that delayed() works with default values that are not json-dumpable"""
         self.assertEquals(delayed(sum_with_user_defined_default)(1).compute(), 11)
         self.assertEquals(delayed(sum_with_user_defined_default)(1, MyType(20)).compute(), 21)
+
+    def test_with_noniterable_nout_1(self):
+        """Tests that using nout=1 works as expected with non-iterable objects"""
+        # Simple call
+        self.assertEquals(delayed(add, nout=1)(1, 2).compute(), 3)
+        self.assertEquals(delayed(add, nout=1)(1, 2)[0].compute(), 3)
+
+        # Compute a delayed that uses a delayed with nout=1
+        addition = delayed(add, nout=1)(1, 2)
+        self.assertEquals(delayed(add)(addition[0], 3).compute(), 6)
+
+        # Like above, but the first delayed also uses nout=1
+        self.assertEquals(delayed(add, nout=1)(addition[0], 3).compute(), 6)
+        self.assertEquals(delayed(add, nout=1)(addition[0], 3)[0].compute(), 6)
+
+        # Iterate over single result, which itself is not iterable
+        results = []
+        for x in delayed(add, nout=1)(1, 2):
+            results.append(delayed(add)(x, 3).compute())
+        self.assertListEqual(results, [6])
+
+        # Like above, but use the delayed result in another delayed function
+        results = []
+        for x in delayed(add, nout=1)(1, 2):
+            results.append(delayed(add)(x, 3).compute())
+        self.assertListEqual(results, [6])
+
+    def test_with_iterable_nout_1(self):
+        """Tests that using nout=1 works as expected with iterable objects"""
+        # Like last test above, but result is actually iterable
+        results = []
+        listify = lambda _x: [_x]
+        for x in delayed(listify, nout=1)(2):
+            results.append(delayed(add_list)(x).compute())
+        self.assertListEqual(results, [2])
