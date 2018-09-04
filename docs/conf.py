@@ -28,6 +28,24 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
     subprocess.Popen([sys.executable, 'setup.py', 'build'], cwd="..").wait()
 
+# Mock the rest of the external modules we need so the API autodoc
+# gets correctly generated
+try:
+    from unittest.mock import MagicMock
+except:
+    from mock import Mock as MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, _):
+        return MagicMock()
+
+MOCK_MODULES = ("boto3", "botocore", "bottle", "configobj", "crc32c", "dill",
+    "docker", "lockfile", "metis", "netifaces", "networkx", "paramiko", "psutil",
+    "pyswarm", "python-daemon", "pyzmq", "scp", "zeroconf", "zerorpc")
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
