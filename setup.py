@@ -174,8 +174,13 @@ else:
 
 # Python 2 support has been dropped in zeroconf 0.20.
 # Also, 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
+# Also, 0.21.0 erroneously tags 3.4 as supported, while in fact it isn't
+# (see https://github.com/jstasiak/python-zeroconf/issues/139 for details).
+# We provided a fix for that, so from 0.21.1 is already good.
 if sys.version_info[:2] == (2, 7):
     install_requires.append("zeroconf == 0.19.1")
+elif sys.version_info[:2] <= (3, 4):
+    install_requires.append("zeroconf != 0.21.0")
 else:
     install_requires.append("zeroconf >= 0.19.1")
 
