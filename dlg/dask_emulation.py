@@ -86,6 +86,46 @@ def _get_client(**kwargs):
     timeout = kwargs.get('timeout', None)
     return NodeManagerClient(host, port, timeout)
 
+def _is_list_of_delayeds(x):
+    return isinstance(x, (list, tuple)) and len(x) > 0 and isinstance(x[0], _DataDrop)
+
+def compute(value, **kwargs):
+    """Returns the result of the (possibly) delayed computation by sending
+    the graph to a Drop Manager and waiting for the result to arrive back"""
+
+    # Support calling compute with a list of DelayedDrops
+    if _is_list_of_delayeds(value):
+        value = _DelayedDrops(*value)
+
+    graph = value.get_graph()
+    port = 10000
+    # Add one final application that will wait for all results
+    # and transmit them back to us
+    transmitter_oid = '-1'
+    transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
+    for leaf_oid in droputils.get_leaves(graph.values()):
+        graph[leaf_oid].addConsumer(transmitter)
+    graph[transmitter_oid] = transmitter
+
+    graph = list(graph.values())
+
+    # Submit and wait
+    session_id = 'session-%f' % time.time()
+    client = _get_client(**kwargs)
+    client.create_session(session_id)
+    client.append_graph(session_id, graph)
+    client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
+
+    timeout = kwargs.get('timeout', None)
+    s = utils.connect_to('localhost', port, timeout)
+    s.settimeout(timeout)
+    with contextlib.closing(s):
+        s = s.makefile("rb")
+        nbytes = struct.unpack('>i', s.read(4))[0]
+        ret = pickle.loads(s.read(nbytes))
+        logger.info("Received %r from graph computation", ret)
+        return ret
+
 class _DelayedDrop(object):
 
     _drop_count = 0
@@ -115,37 +155,7 @@ class _DelayedDrop(object):
         return self.dropdict['oid']
 
     def compute(self, **kwargs):
-        """Returns the result of the (possibly) delayed computation by sending
-        the graph to a Drop Manager and waiting for the result to arrive back"""
-
-        graph = self.get_graph()
-        port = 10000
-        # Add one final application that will wait for all results
-        # and transmit them back to us
-        transmitter_oid = str(self.next_drop_oid)
-        transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
-        for leaf_oid in droputils.get_leaves(graph.values()):
-            graph[leaf_oid].addConsumer(transmitter)
-        graph[transmitter_oid] = transmitter
-
-        graph = list(graph.values())
-
-        # Submit and wait
-        session_id = 'session-%f' % time.time()
-        client = _get_client(**kwargs)
-        client.create_session(session_id)
-        client.append_graph(session_id, graph)
-        client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
-
-        timeout = kwargs.get('timeout', None)
-        s = utils.connect_to('localhost', port, timeout)
-        s.settimeout(timeout)
-        with contextlib.closing(s):
-            s = s.makefile("rb")
-            nbytes = struct.unpack('>i', s.read(4))[0]
-            ret = pickle.loads(s.read(nbytes))
-            logger.info("Received %r from graph computation", ret)
-            return ret
+        return compute(self, **kwargs)
 
     def get_graph(self):
         _DelayedDrop._drop_count = 0
@@ -287,7 +297,7 @@ class _AppDrop(_DelayedDrop):
             return None
 
         # Turn lists/tuples of _DataDrop objects into a _DelayedDrops
-        if isinstance(arg, (list, tuple)) and len(arg) > 0 and isinstance(arg[0], _DataDrop):
+        if _is_list_of_delayeds(arg):
             return _DelayedDrops(*arg)
 
         # Plain data gets turned into a _DataDrop
