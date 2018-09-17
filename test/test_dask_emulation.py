@@ -133,6 +133,12 @@ class _TestDelayed(object):
         result = compute(doubles)
         self.assertEqual([2., 4., 6., 8.], result)
 
+    def test_none_arg(self):
+        """Test that calling delayed(f)(None) works"""
+        delayed = self.delayed
+        compute = self.compute
+        self.assertEqual(compute(delayed(lambda _: None)(None)), None)
+
     def test_with_args(self):
         """Tests that delayed() works correctly with kwargs"""
         delayed = self.delayed

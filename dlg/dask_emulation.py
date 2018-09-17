@@ -293,9 +293,6 @@ class _AppDrop(_DelayedDrop):
         if isinstance(arg, _DelayedDrop):
             return arg
 
-        if arg is None:
-            return None
-
         # Turn lists/tuples of _DataDrop objects into a _DelayedDrops
         if _is_list_of_delayeds(arg):
             return _DelayedDrops(*arg)
@@ -322,13 +319,14 @@ class _AppDrop(_DelayedDrop):
     def __repr__(self):
         return "<_DelayedApp fname=%s, nout=%s>" % (self.fname, str(self.nout))
 
+_no_data = object()
 class _DataDrop(_DelayedDrop):
     """Defines an in-memory drop"""
 
-    def __init__(self, producer=None, pydata=None):
+    def __init__(self, producer=None, pydata=_no_data):
         _DelayedDrop.__init__(self, producer)
 
-        if bool(producer is None) == bool(pydata is None):
+        if bool(producer is None) == bool(pydata is _no_data):
             raise ValueError("either producer or pydata must be not None")
         self.pydata = pydata
         logger.debug("Created %r", self)
