@@ -81,6 +81,9 @@ case "$1" in
 		echo "Checking DALiuGE Node Manager status"
 		su $USER -c "$DLG nm --status"
 		RETVAL=$?
+		if [ $RETVAL -ne 0 ]; then
+			echo "DALiuGE Node Manager not running"
+		fi
 		;;
 	restart)
 		echo -n "Restarting DALiuGE Node Manager"

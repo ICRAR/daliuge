@@ -7,7 +7,7 @@
 #
 # The user used to run DALiuGE
 #
-USER=dlg
+USER=daliuge
 
 #
 # DALiuGE process to invoke

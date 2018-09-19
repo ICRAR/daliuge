@@ -77,6 +77,9 @@ case "$1" in
 		echo "Checking DALiuGE Data Island Manager status"
 		su $USER -c "$DLG dim --status"
 		RETVAL=$?
+		if [ $RETVAL -ne 0 ]; then
+			echo "DALiuGE Data Island Manager not running"
+		fi
 		;;
 	restart)
 		echo -n "Restarting DALiuGE Data Island Manager"

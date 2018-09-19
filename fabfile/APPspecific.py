@@ -138,14 +138,17 @@ def start_APP_and_check_status():
     Starts the APP daemon process and checks that the server is up and running
     then it shuts down the server
     """
-    # We sleep 2 here as it was found on Mac deployment to docker container
-    # that the shell would exit before the APPDaemon could detach, thus
-    # resulting in no startup self.
-    #
-    # Please replace following line with something meaningful
-    # virtualenv('ngamsDaemon start -cfg {0} && sleep 2'.format(tgt_cfg))
     virtualenv('dlg --help')
     success('dlg help is working...')
+
+def sysinitstart_APP_and_check_status():
+    """
+    Starts the APP daemon process and checks that the server is up and running
+    then it shuts down the server
+    """
+    sudo('service dlg-nm start')
+    sudo('service dlg-dim start')
+
 
 def APP_build_cmd():
 
@@ -215,9 +218,9 @@ def install_sysv_init_script(nsd, nuser, cfgfile):
 
     # Different distros place it in different directories
     # The init script is prepared for both
-    opt_file = '/etc/sysconfig/dlg.options'
+    opt_file = '/etc/sysconfig/dlg'
     if get_linux_flavor() in ('Ubuntu', 'Debian'):
-        opt_file = '/etc/default/dlg.options'
+        opt_file = '/etc/default/dlg'
 
     # Script file installation
     sudo('cp {0}/fabfile/init/sysv/dlg-* /etc/init.d/'.format(nsd))
@@ -240,5 +243,5 @@ def install_sysv_init_script(nsd, nuser, cfgfile):
 env.build_cmd = APP_build_cmd
 env.APP_init_install_function = install_sysv_init_script
 env.APP_start_check_function = start_APP_and_check_status
-env.sysinitAPP_start_check_function = start_APP_and_check_status
+env.sysinitAPP_start_check_function = sysinitstart_APP_and_check_status
 env.prepare_APP_data_dir = prepare_APP_data_dir
