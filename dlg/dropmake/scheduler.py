@@ -467,7 +467,7 @@ class DilworthPartition(Partition):
             self._max_dop = self._tmp_max_dop
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_add was not probed before add()")
+            raise SchedulerException("can_add was not probed before add()")
 
     def can_merge(self, that):
         """
@@ -508,7 +508,7 @@ class DilworthPartition(Partition):
             self._max_dop = self._tmp_max_dop
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_merge was not probed before add()")
+            raise SchedulerException("can_merge was not probed before add()")
 
 class WeightedDilworthPartition(DilworthPartition):
     """
@@ -874,7 +874,7 @@ class MultiWeightPartition(Partition):
             self._max_dop = self._tmp_max_dops
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_add was not probed before add()")
+            raise SchedulerException("can_add was not probed before add()")
 
     def can_merge(self, that):
         """
@@ -906,7 +906,7 @@ class MultiWeightPartition(Partition):
             self._max_dop = self._tmp_max_dops
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_merge was not probed before add()")
+            raise SchedulerException("can_merge was not probed before add()")
 
 class KFamilyPartition(Partition):
     """
@@ -958,7 +958,7 @@ class KFamilyPartition(Partition):
             #print("Gid %d just merged with DoP %d" % (self._gid, self._tmp_max_dop))
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_merge was not probed before add()")
+            raise SchedulerException("can_merge was not probed before add()")
 
 class Scheduler(object):
     """
