@@ -41,18 +41,20 @@ warning() {
 }
 
 function print_usage {
-	echo "$0 [-h | -?] [-f] [-p <python_exec>] <virtualenv_dir>"
+	echo "$0 [-h | -?] [-f] [-p <python_exec>] [-3 | -2] <virtualenv_dir>"
 	echo
 	echo "-h, -?: Show this help"
-	echo "-p <python_exec>: Use <python_exec> as the python interpreted for this virtualenv"
 	echo "-f: Install Fabric into the virtual environment"
+	echo "-p <python_exec>: Use <python_exec> as the python interpreted for this virtualenv"
+	echo "-3, -2: Choose between python 3 or 2.7. Defaults to 2.7"
 }
 
 # Command-line option parsing
 FABRIC_READY=
 PYTHON_EXEC=
+PYTHON_VERSION=
 
-while getopts "fp:h?" opt
+while getopts "fp:32h?" opt
 do
 	case "$opt" in
 		f)
@@ -60,6 +62,24 @@ do
 			;;
 		p)
 			PYTHON_EXEC="$OPTARG"
+			;;
+		3)
+			if [ "${PYTHON_VERSION}" = "2" ]
+			then
+				echo "Error: Cannot specify -2 and -3 together" 1>&2
+				print_usage 1>&2
+				exit 1
+			fi
+			PYTHON_VERSION=3
+			;;
+		2)
+			if [ "${PYTHON_VERSION}" = "3" ]
+			then
+				echo "Error: Cannot specify -2 and -3 together" 1>&2
+				print_usage 1>&2
+				exit 1
+			fi
+			PYTHON_VERSION=2
 			;;
 		[h?])
 			print_usage
@@ -76,47 +96,68 @@ then
 	print_usage 1>&2
 	exit 1
 fi
+
 veDir=${@:$OPTIND:1}
 if [[ -d "$veDir" ]]
 then
 	error "$veDir already exists"
 fi
 
+# Still default to python 2
+PYTHON_VERSION=${PYTHON_VERSION:-2}
+
 # First things first, check that we have python installed
 # We default to whatever is in the path if not specified
-PYTHON_EXEC=${PYTHON_EXEC:-python36}
+if [ -z "${PYTHON_EXEC}" ]
+then
+	if [ ${PYTHON_VERSION} = "2" ]
+	then
+		PYTHON_EXEC=python
+	else
+		PYTHON_EXEC=python3
+	fi
+fi
 if [[ -z "$(command -v ${PYTHON_EXEC} 2> /dev/null)" ]]
 then
-	error "No Python found in this system, install Python 3.6"
+	error "No Python found in this system, install Python 2.7 or above"
 fi
 
 # Check that the python version is correct
 pythonVersion=$(${PYTHON_EXEC} -V 2>&1)
-if [[ ! "$pythonVersion" == *"3.6"* ]]
+if [[ "${PYTHON_VERSION}" == "2" && ! "$pythonVersion" == *" 2.7"* ]]
 then
-	error "Python 3.6 needed, found: $pythonVersion"
+	error "Python 2.7 needed, found: $pythonVersion"
+elif [[ "${PYTHON_VERSION}" == "3" && ! "$pythonVersion" == *" 3."* ]]
+then
+	error "Python 3 needed, found: $pythonVersion"
 fi
 
 # Check if we already have virtualenv
 # If not download one and untar it
-veCommand="virtualenv -p $PYTHON_EXEC"
+# Python 3 comes with virtualenv though
 sourceCommand="source -- $veDir/bin/activate"
-if [[ -z "$(command -v virtualenv 2> /dev/null)" ]]
+if [ ${PYTHON_VERSION} = "3" ]
 then
-	VIRTUALENV_URL='https://pypi.python.org/packages/8b/2c/c0d3e47709d0458816167002e1aa3d64d03bdeb2a9d57c5bd18448fd24cd/virtualenv-15.0.3.tar.gz#md5=a5a061ad8a37d973d27eb197d05d99bf'
-	if [[ ! -z "$(command -v wget 2> /dev/null)" ]]
+	veCommand="${PYTHON_EXEC} -mvenv"
+else
+	veCommand="virtualenv -p $PYTHON_EXEC"
+	if [[ -z "$(command -v virtualenv 2> /dev/null)" ]]
 	then
-		wget "$VIRTUALENV_URL" || error "Failed to download virtualenv"
-	elif [[ ! -z "$(command -v curl 2> /dev/null)" ]]
-	then
-		curl "$VIRTUALENV_URL" -o virtualenv-15.0.3.tar.gz || error "Failed to download virtualenv"
-	else
-		error "Can't find a download tool (tried wget and curl), cannot download virtualenv"
-	fi
+		VIRTUALENV_URL='https://pypi.python.org/packages/8b/2c/c0d3e47709d0458816167002e1aa3d64d03bdeb2a9d57c5bd18448fd24cd/virtualenv-15.0.3.tar.gz#md5=a5a061ad8a37d973d27eb197d05d99bf'
+		if [[ ! -z "$(command -v wget 2> /dev/null)" ]]
+		then
+			wget "$VIRTUALENV_URL" || error "Failed to download virtualenv"
+		elif [[ ! -z "$(command -v curl 2> /dev/null)" ]]
+		then
+			curl "$VIRTUALENV_URL" -o virtualenv-15.0.3.tar.gz || error "Failed to download virtualenv"
+		else
+			error "Can't find a download tool (tried wget and curl), cannot download virtualenv"
+		fi
 
-	tar xf virtualenv-15.0.3.tar.gz || error "Failed to untar virtualenv"
-	veCommand="$PYTHON_EXEC virtualenv-15.0.3/virtualenv.py -p $PYTHON_EXEC"
-	REMOVE_VE="yes"
+		tar xf virtualenv-15.0.3.tar.gz || error "Failed to untar virtualenv"
+		veCommand="$PYTHON_EXEC virtualenv-15.0.3/virtualenv.py -p $PYTHON_EXEC"
+		REMOVE_VE="yes"
+	fi
 fi
 
 # Create a virtual environment for the NGAMS installation procedure to begin
@@ -134,7 +175,12 @@ fi
 if [[ "$FABRIC_READY" == "yes" ]]
 then
 	$sourceCommand || error "Failed to source virtualenv"
-	pip install boto Fabric pycrypto || error "Failed to install fabric packages in virtualenv"
+	FABRIC=fabric
+	if [ ${PYTHON_VERSION} = "3" ]
+	then
+		FABRIC=fabric3
+	fi
+	pip install boto ${FABRIC} pycrypto || error "Failed to install fabric packages in virtualenv"
 fi
 
 echo
