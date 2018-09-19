@@ -89,35 +89,28 @@ env.AWS_SUDO_USER = 'ec2-user' # required to install init scripts.
 # Alpha-sorted packages per package manager
 env.pkgs = {
             'YUM_PACKAGES': [
-                     'python27-devel',
-                     'python-devel',
-                     'readline-devel',
-                     'openssl-devel',
-                     'gcc',
+                    'wget',
+                    'tar',
+                    'gcc',
                       ],
             'APT_PACKAGES': [
-                    'python-dev',
-                    'python-setuptools',
                     'tar',
                     'wget',
                     'gcc',
                     ],
             'SLES_PACKAGES': [
-                    'python-devel',
                     'wget',
-                    'zlib',
-                    'zlib-devel',
                     'gcc',
                     ],
             'BREW_PACKAGES': [
                     'wget',
+                    'gcc',
                     ],
             'PORT_PACKAGES': [
                     'wget',
+                    'gcc',
                     ],
             'APP_EXTRA_PYTHON_PACKAGES': [
-                    'pycrypto',
-                    'sphinx',
                     ],
         }
 
@@ -140,7 +133,7 @@ from fabfileTemplate.pkgmgr import check_brew_port, check_brew_cellar
 # get the settings from the fab environment if set on command line
 settings = overwrite_defaults(defaults)
 
-def start_APP_and_check_status(tgt_cfg):
+def start_APP_and_check_status():
     """
     Starts the APP daemon process and checks that the server is up and running
     then it shuts down the server
@@ -151,10 +144,23 @@ def start_APP_and_check_status(tgt_cfg):
     #
     # Please replace following line with something meaningful
     # virtualenv('ngamsDaemon start -cfg {0} && sleep 2'.format(tgt_cfg))
-    pass
+    virtualenv('dlg --help')
+    success('dlg help is working...')
 
 def APP_build_cmd():
-    return ''
+
+    # The installation of the bsddb package (needed by ngamsCore) is in
+    # particular difficult because it requires some flags to be passed on
+    # (particularly if using MacOSX's port
+    # >>>> NOTE: This function potentially needs heavy customisation <<<<<<
+    build_cmd = []
+    # linux_flavor = get_linux_flavor()
+
+    build_cmd.append('cd {0} ;'.format(env.APP_SRC_DIR_NAME))
+    build_cmd.append('pip install .')
+
+    return ' '.join(build_cmd)
+
 
 def build_APP():
     """
@@ -198,7 +204,6 @@ def prepare_APP_data_dir():
         error = res
     abort(error)
 
-
 def install_sysv_init_script(nsd, nuser, cfgfile):
     """
     Install the APP init script for an operational deployment.
@@ -210,25 +215,25 @@ def install_sysv_init_script(nsd, nuser, cfgfile):
 
     # Different distros place it in different directories
     # The init script is prepared for both
-    opt_file = '/etc/sysconfig/{0}'.format(env.APP_NAME)
+    opt_file = '/etc/sysconfig/dlg.options'
     if get_linux_flavor() in ('Ubuntu', 'Debian'):
-        opt_file = '/etc/default/{0}'.format(env.APP_NAME)
+        opt_file = '/etc/default/dlg.options'
 
     # Script file installation
-    sudo('cp {0}/fabfile/init/sysv/{1}-server /etc/init.d/'.format(nsd,
-                                                                   env.APP_NAME))
-    sudo('chmod 755 /etc/init.d/{0}-server'.format(env.APP_NAME))
+    sudo('cp {0}/fabfile/init/sysv/dlg-* /etc/init.d/'.format(nsd))
+    sudo('chmod 755 /etc/init.d/dlg-*')
 
     # Options file installation and edition
-    sudo('cp {0}/fabfile/init/sysv/APP-server.options {1}'.format(nsd,
-                                                                  opt_file))
+    sudo('cp {0}/fabfile/init/sysv/dlg.options {1}'.format(nsd, opt_file))
     sudo('chmod 644 %s' % (opt_file,))
 
     # Enabling init file on boot
     if check_command('update-rc.d'):
-        sudo('update-rc.d {0}-server defaults'.format(env.APP_NAME))
+        sudo('update-rc.d dlg-nm defaults')
+        sudo('update-rc.d dlg-dim defaults')
     else:
-        sudo('chkconfig --add {0}-server'.format(env.APP_NAME))
+        sudo('chkconfig --add dlg-nm')
+        sudo('chkconfig --add dlg-dim')
 
     success("{0} init script installed".format(env.APP_NAME))
 
