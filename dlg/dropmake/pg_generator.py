@@ -154,12 +154,7 @@ class LGNode():
 
     def has_converted(self):
         return self._converted
-        """
-        if (self.is_group()):
-            return self._converted
-        return False
-        """
-
+    
     def complete_conversion(self):
         self._converted = True
 
@@ -815,6 +810,10 @@ class PGT(object):
             self._json_str = self.to_gojs_json(visual=True)
         return self._json_str
         # return self.to_gojs_json()
+    
+    def merge_partitions(self, new_num_parts, form_island=False,
+                        island_type=0, visual=False):
+        raise Exception('Not implemented. Call sub-class')
 
     def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0):
         """
@@ -1139,7 +1138,6 @@ class MetisPGTP(PGT):
         G = self._G
         #start_k = len(self._drop_list) + 1
         start_k = self._drop_list_len + 1
-        stt = time.time()
         for gnode, gid in zip(G.nodes(data=True), metis_out):
             groups.add(gid)
             gnode = gnode[1]
@@ -2069,7 +2067,7 @@ class LG():
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.id))
 
-        for k, v in self._gather_cache.items():
+        for _, v in self._gather_cache.items():
             input_list = v[1]
             try:
                 output_drop = v[2][0]
