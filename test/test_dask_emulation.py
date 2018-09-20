@@ -26,11 +26,13 @@ import numpy as np
 from six.moves import reduce  # @UnresolvedImport
 
 from dlg import delayed as dlg_delayed
+from dlg.dask_emulation import compute as dlg_compute
 from dlg import tool
 from dlg.utils import terminate_or_kill
 
 try:
     from dask import delayed as dask_delayed
+    from dask import compute as dask_compute
 except ImportError:
     dask_delayed = None
 
@@ -121,6 +123,22 @@ class _TestDelayed(object):
         result = compute(delayed(add)(*parts))
         self.assertEqual(3., result)
 
+    def test_compute_with_lists(self):
+        """Make sure we can call compute() directly on the list objects"""
+        delayed = self.delayed
+        compute = self.compute
+
+        one, two, three, four = delayed(1.), delayed(2.), delayed(3.), delayed(4.)
+        doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
+        result = compute(doubles)
+        self.assertEqual([2., 4., 6., 8.], result)
+
+    def test_none_arg(self):
+        """Test that calling delayed(f)(None) works"""
+        delayed = self.delayed
+        compute = self.compute
+        self.assertEqual(compute(delayed(lambda _: None)(None)), None)
+
     def test_with_args(self):
         """Tests that delayed() works correctly with kwargs"""
         delayed = self.delayed
@@ -190,24 +208,23 @@ class TestNoDelayed(unittest.TestCase, _TestDelayed):
     def compute(self, val):
         return val
 
-class _TestCommonDelayed(_TestDelayed):
-    """Common class for dlg- and dask-based delayed tests"""
-    def compute(self, val):
-        return val.compute()
-
-class TestDlgDelayed(_TestCommonDelayed, unittest.TestCase):
+class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     """dlg-base tests, they start/stop the node manager and use dlg_delayed"""
     def delayed(self, f, *args, **kwargs):
         return dlg_delayed(f, *args, **kwargs)
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.dmProcess = tool.start_process('nm')
+    def compute(self, val):
+        return dlg_compute(val)
     def tearDown(self):
         terminate_or_kill(self.dmProcess, 5)
         unittest.TestCase.tearDown(self)
 
 @unittest.skipIf(dask_delayed is None, 'dask is not available')
-class TestDaskDelayed(_TestCommonDelayed, unittest.TestCase):
+class TestDaskDelayed(_TestDelayed, unittest.TestCase):
     """dask-base tests, they use dask_delayed"""
     def delayed(self, f, *args, **kwargs):
         return dask_delayed(f, *args, **kwargs)
+    def compute(self, val):
+        return dask_compute(val)[0]

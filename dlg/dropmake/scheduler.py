@@ -76,19 +76,18 @@ class Schedule(object):
         """
         if (self._sma is None):
             G = self._dag
+            N = max(self.makespan[1], 1)
             if (DEBUG):
                 lpl_str = []
                 lpl_c = 0
-                for lpn in lpl[0]:
+                for lpn in self.makespan[0]:
                     ww = G.node[lpn].get('weight', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
-                logger.debug("lpl: ", " -> ".join(lpl_str))
-                logger.debug("lplt = ", lpl_c)
-            N = self.makespan
+                logger.debug("lpl: " + " -> ".join(lpl_str))
+                logger.debug("lplt = %d" % int(lpl_c))
+            
             M = self._max_dop
-            if (N < 1):
-                N = 1
             #print "N (makespan) is ", N, "M is ", M
             ma = np.zeros((M, N), dtype=int)
             pr = np.zeros((M), dtype=int)
@@ -467,7 +466,7 @@ class DilworthPartition(Partition):
             self._max_dop = self._tmp_max_dop
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_add was not probed before add()")
+            raise SchedulerException("can_add was not probed before add()")
 
     def can_merge(self, that):
         """
@@ -508,7 +507,7 @@ class DilworthPartition(Partition):
             self._max_dop = self._tmp_max_dop
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_merge was not probed before add()")
+            raise SchedulerException("can_merge was not probed before add()")
 
 class WeightedDilworthPartition(DilworthPartition):
     """
@@ -759,7 +758,8 @@ class MultiWeightPartition(Partition):
             _modules/networkx/algorithms/dag.html
             """
             stt = time.time()
-            antichains_stacks = [([], nx.topological_sort(dag, reverse=True))]
+            reverse_toposort = list(reversed(list(nx.topological_sort(dag))))
+            antichains_stacks = [([], reverse_toposort)]
             self._ac_sort_time += time.time() - stt
             while antichains_stacks:
                 (antichain, stack) = antichains_stacks.pop()
@@ -874,7 +874,7 @@ class MultiWeightPartition(Partition):
             self._max_dop = self._tmp_max_dops
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_add was not probed before add()")
+            raise SchedulerException("can_add was not probed before add()")
 
     def can_merge(self, that):
         """
@@ -906,7 +906,7 @@ class MultiWeightPartition(Partition):
             self._max_dop = self._tmp_max_dops
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_merge was not probed before add()")
+            raise SchedulerException("can_merge was not probed before add()")
 
 class KFamilyPartition(Partition):
     """
@@ -958,7 +958,7 @@ class KFamilyPartition(Partition):
             #print("Gid %d just merged with DoP %d" % (self._gid, self._tmp_max_dop))
         else:
             # we could recalcuate it again, but we are lazy!
-            raise GraphException("can_merge was not probed before add()")
+            raise SchedulerException("can_merge was not probed before add()")
 
 class Scheduler(object):
     """
@@ -1388,8 +1388,8 @@ class PSOScheduler(Scheduler):
             else: #elif (ugid and vgid):
                 # cannot change Partition once is in!
                 part = None
-            uw = gu['weight']
-            vw = gv['weight']
+            #uw = gu['weight']
+            #vw = gv['weight']
 
             if (part is None):
                 recover_edge = True
@@ -1540,7 +1540,7 @@ class MCTSScheduler(PSOScheduler):
         state = mcts.run()
         if logger.isEnabledFor(logging.DEBUG):
             leng = len(G.edges())
-            logger.debug("Each MCTS move on average took {0} seconds".formats((time.time() - stt) / leng))
+            logger.debug("Each MCTS move on average took {0} seconds".format((time.time() - stt) / leng))
         #calculate the solution under the state found by MCTS
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
@@ -1603,7 +1603,7 @@ class SAScheduler(PSOScheduler):
         # 4. calculate the solution under the 'annealed' state
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
-        logger.debug("Simulated Annealing scheduler took %.f secs, energy = %f, num_parts = %d".format(edt - stt, e, num_parts))
+        logger.debug("Simulated Annealing scheduler took %.2f secs, energy = %f, num_parts = %d" % (edt - stt, e, num_parts))
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:
@@ -1787,7 +1787,7 @@ class DAGUtil(object):
                 ma[i, stt:edt] = np.ones((1, leng))
             except:
                 logger.error("i, stt, edt, leng = %d, %d, %d, %d", i, stt, edt, leng)
-                logger.error("N, M = %d, %d, %d, %d", M, N)
+                logger.error("N, M = %d, %d", M, N)
                 raise
             #print ma[i, :]
         return ma
