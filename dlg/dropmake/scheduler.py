@@ -84,8 +84,8 @@ class Schedule(object):
                     ww = G.node[lpn].get('weight', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
-                logger.debug("lpl: " + " -> ".join(lpl_str))
-                logger.debug("lplt = %d" % int(lpl_c))
+                logger.debug("lpl: %s", " -> ".join(lpl_str))
+                logger.debug("lplt = %d", int(lpl_c))
             
             M = self._max_dop
             #print "N (makespan) is ", N, "M is ", M
@@ -168,7 +168,7 @@ class Partition(object):
         self._child_parts = None
         self._tmp_merge_dag = None
         self._tmp_new_ac = None
-        logger.debug("My dop = {0}".format(self._ask_max_dop))
+        logger.debug("My dop = %r", self._ask_max_dop)
 
     @property
     def parent_id(self):
@@ -1540,7 +1540,7 @@ class MCTSScheduler(PSOScheduler):
         state = mcts.run()
         if logger.isEnabledFor(logging.DEBUG):
             leng = len(G.edges())
-            logger.debug("Each MCTS move on average took {0} seconds".format((time.time() - stt) / leng))
+            logger.debug("Each MCTS move on average took %.2f seconds", (time.time() - stt) / leng)
         #calculate the solution under the state found by MCTS
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
@@ -1603,7 +1603,7 @@ class SAScheduler(PSOScheduler):
         # 4. calculate the solution under the 'annealed' state
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
-        logger.debug("Simulated Annealing scheduler took %.2f secs, energy = %f, num_parts = %d" % (edt - stt, e, num_parts))
+        logger.debug("Simulated Annealing scheduler took %f secs, energy = %f, num_parts = %d", edt - stt, e, num_parts)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:
