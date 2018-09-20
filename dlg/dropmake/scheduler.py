@@ -26,8 +26,8 @@ import platform
 import random
 import sys
 import time
-
-import pkg_resources
+import copy
+copy
 
 import networkx as nx
 import numpy as np
@@ -914,41 +914,55 @@ class KFamilyPartition(Partition):
     the Theorem 3.1 in
     http://fmdb.cs.ucla.edu/Treports/930014.pdf
     """
-    def __init__(self, gid, max_dop, w_attr='num_cpus', global_dag=None):
+    def __init__(self, gid, max_dop, global_dag=None):
+        """
+        max_dop:    dict with key:   resource_attributes (string)
+                              value: resource_capacity (integer)
+        """
         super(KFamilyPartition, self).__init__(gid, max_dop)
         self._bpg = nx.DiGraph()
         self._global_dag = global_dag
         self._check_global_dag = global_dag is not None
-        self._w_attr = w_attr
+        self._w_attr = max_dop.keys()
         self._tc = defaultdict(set)
+        self._tmp_max_dop = None
 
-    def add_node(self, u, weight):
+    def add_node(self, u):
         """
         Add a single node u to the partition
         """
-        u_aw = self._global_dag.node[u].get(self._w_attr, 1)
-        kwargs = {self._w_attr: u_aw}
-        self._dag.add_node(u, **kwargs)
-        self._tmp_max_dop = get_max_weighted_antichain(self._dag, w_attr=self._w_attr)[0]
+        kwargs = dict()
+        if (self._tmp_max_dop is None):
+            self._tmp_max_dop = dict()
+        for _w_attr in self._w_attr:
+            u_aw = self._global_dag.node[u].get(_w_attr, 1)
+            kwargs[_w_attr] = u_aw
+            self._tmp_max_dop[_w_attr] = get_max_weighted_antichain(self._dag, w_attr=_w_attr)[0]
         self._max_dop = self._tmp_max_dop
         #print('init max_dop', self._global_dag.node[u]['text'], self._max_dop)
+        self._dag.add_node(u, **kwargs)
 
     def can_merge(self, that, u, v):
         """
         """
         dag = nx.compose(self._dag, that._dag)
         dag.add_edge(u, v)
-        mydop = get_max_weighted_antichain(dag, w_attr=self._w_attr)[0]
+        tmp_max_dop = copy.deepcopy(self._tmp_max_dop)
 
-        curr_max = max(self._max_dop, that._max_dop)
-        if (mydop <= curr_max):
-            self._tmp_max_dop = curr_max
-            return True # if you don't increase DoP, we accept that immediately
-        elif (mydop > self._ask_max_dop):
-            return False
-        else:
-            self._tmp_max_dop = mydop
-            return True
+        for _w_attr in self._w_attr:
+            mydop = get_max_weighted_antichain(dag, w_attr=_w_attr)[0]
+            curr_max = max(self._max_dop[_w_attr], that._max_dop[_w_attr])
+        
+            if (mydop <= curr_max):
+                # if you don't increase DoP, we accept that immediately
+                tmp_max_dop[_w_attr] = curr_max
+            elif (mydop > self._ask_max_dop[_w_attr]):
+                return False
+            else:
+                tmp_max_dop[_w_attr] = mydop
+        
+        self._tmp_max_dop = tmp_max_dop # only change it when returning True
+        return True
 
     def merge(self, that, u, v):
         self._dag = nx.compose(self._dag, that._dag)
@@ -1165,7 +1179,7 @@ class MySarkarScheduler(Scheduler):
             #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
             #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
             part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
-            part.add_node(n[0], n[1].get('weight', 1))
+            part.add_node(n[0])
             g_dict[st_gid] = part
             parts.append(part) # will it get rejected?
             st_gid += 1
