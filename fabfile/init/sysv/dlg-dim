@@ -54,7 +54,9 @@ case "$1" in
 		if [ -n "${DIM_NODES}" ]; then
 			OPTS="$OPTS -N ${DIM_NODES}"
 		fi
-
+		if [ -n "${WORK_DIR}" ]; then
+			OPTS="$OPTS --work-dir=$WORK_DIR --log-dir=$WORK_DIR/log"
+		fi
 		# Launch the server and check right away if it started correctly
 		su $USER -c "$DLG dim -d $OPTS"
 		RETVAL=$?
@@ -79,6 +81,8 @@ case "$1" in
 		RETVAL=$?
 		if [ $RETVAL -ne 0 ]; then
 			echo "DALiuGE Data Island Manager not running"
+		else
+			echo "DALiuGE Data Island Manager running"
 		fi
 		;;
 	restart)
