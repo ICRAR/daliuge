@@ -58,7 +58,9 @@ case "$1" in
 			cd "${CWD}"
 			OPTS="$OPTS --cwd"
 		fi
-
+		if [ -n "${WORK_DIR}" ]; then
+			OPTS="$OPTS --work-dir=$WORK_DIR --log-dir=$WORK_DIR/log"
+		fi
 		# Launch the server and check right away if it started correctly
 		su $USER -c "$DLG nm -d $OPTS"
 		RETVAL=$?
@@ -83,6 +85,8 @@ case "$1" in
 		RETVAL=$?
 		if [ $RETVAL -ne 0 ]; then
 			echo "DALiuGE Node Manager not running"
+		else
+			echo "DALiuGE Node Manager running"
 		fi
 		;;
 	restart)
