@@ -27,7 +27,7 @@ import random
 import sys
 import time
 import copy
-copy
+import pkg_resources
 
 import networkx as nx
 import numpy as np
@@ -55,7 +55,7 @@ class Schedule(object):
     """
     def __init__(self, dag, max_dop):
         self._dag = dag
-        self._max_dop = max_dop
+        self._max_dop = max_dop if type(max_dop) == int else max_dop.get('num_cpus', 1)
         DAGUtil.label_schedule(self._dag)
         self._lpl = None
         self._wkl = None
@@ -65,8 +65,10 @@ class Schedule(object):
     def makespan(self):
         if (self._lpl is None):
             lpl = DAGUtil.get_longest_path(self._dag, show_path=True)
-            self._lpl = lpl[1] - (len(lpl[0]) - 1) #TODO find out why
-        return self._lpl
+            self._lpl = lpl
+        else:
+            lpl = self._lpl 
+        return lpl[1]# - (len(lpl[0]) - 1)
 
     @property
     def schedule_matrix(self):
@@ -76,19 +78,19 @@ class Schedule(object):
         """
         if (self._sma is None):
             G = self._dag
-            N = max(self.makespan[1], 1)
+            N = max(self.makespan, 1)
             if (DEBUG):
                 lpl_str = []
                 lpl_c = 0
-                for lpn in self.makespan[0]:
-                    ww = G.node[lpn].get('weight', 0)
+                for lpn in self._lpl[0]:
+                    ww = G.node[lpn].get('num_cpus', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
                 logger.debug("lpl: %s", " -> ".join(lpl_str))
                 logger.debug("lplt = %d", int(lpl_c))
             
             M = self._max_dop
-            #print "N (makespan) is ", N, "M is ", M
+            #print("N (makespan) is ", N, "M is ", M)
             ma = np.zeros((M, N), dtype=int)
             pr = np.zeros((M), dtype=int)
             last_pid = -1
@@ -122,6 +124,7 @@ class Schedule(object):
                 last_pid = curr_pid
                 prev_n = n
             self._sma = ma
+            #print(ma)
         return self._sma
 
     @property
@@ -919,6 +922,15 @@ class KFamilyPartition(Partition):
         max_dop:    dict with key:   resource_attributes (string)
                               value: resource_capacity (integer)
         """
+        mtype = type(max_dop)
+        if (mtype == int):
+            # backward compatible
+            max_dop = {'num_cpus': max_dop}
+        elif (mtype == dict):
+            pass
+        else:
+            raise SchedulerException('Invalid max_dop type: %r' % mtype)
+        
         super(KFamilyPartition, self).__init__(gid, max_dop)
         self._bpg = nx.DiGraph()
         self._global_dag = global_dag
@@ -934,13 +946,15 @@ class KFamilyPartition(Partition):
         kwargs = dict()
         if (self._tmp_max_dop is None):
             self._tmp_max_dop = dict()
+        self_global_dag = self._global_dag
         for _w_attr in self._w_attr:
-            u_aw = self._global_dag.node[u].get(_w_attr, 1)
+            u_aw = self_global_dag.node[u].get(_w_attr, 1)
             kwargs[_w_attr] = u_aw
-            self._tmp_max_dop[_w_attr] = get_max_weighted_antichain(self._dag, w_attr=_w_attr)[0]
-        self._max_dop = self._tmp_max_dop
-        #print('init max_dop', self._global_dag.node[u]['text'], self._max_dop)
+        kwargs['weight'] = self_global_dag.node[u].get('weight', 5)
         self._dag.add_node(u, **kwargs)
+        for k in self._w_attr:
+            self._tmp_max_dop[_w_attr] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
+        self._max_dop = self._tmp_max_dop        
 
     def can_merge(self, that, u, v):
         """
@@ -1002,29 +1016,32 @@ class Scheduler(object):
     def partition_dag(self):
         raise SchedulerException("Not implemented. Try subclass instead")
 
-    def merge_partitions(self, num_partitions, bal_cond=0):
+    def merge_partitions(self, num_partitions, bal_cond=1):
         """
         Merge M partitions into N partitions where N < M
             implemented using METIS for now
 
         bal_cond:  load balance condition (integer):
-                    0 - workload, 1 - count
+                    0 - workload, 
+                    1 - CPU count (faster to evaluate than workload)
         """
         # 1. build the bi-directional graph (each partition is a node)
         metis = DAGUtil.import_metis()
         G = nx.Graph()
-        G.graph['edge_weight_attr'] = 'weight'
         st_gid = len(self._drop_list) + len(self._parts) + 1
-        # if (bal_cond == 0):
-        #     G.graph['node_weight_attr'] = ['wkl', 'eff']
-        #     for part in self._parts:
-        #         sc = part.schedule
-        #         G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
-        # else:
-        G.graph['node_weight_attr'] = 'cc'
-        for part in self._parts:
-            #sc = part.schedule
-            G.add_node(part.partition_id, cc=part._max_dop)
+        if (bal_cond == 0):
+            G.graph['node_weight_attr'] = ['wkl', 'eff']
+            for part in self._parts:
+                sc = part.schedule
+                G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
+        else:
+            G.graph['node_weight_attr'] = 'cc'
+            for part in self._parts:
+                #sc = part.schedule
+                pdop = part._max_dop
+                #TODO add memory as one of the LB condition too
+                cc_eval = pdop if type(pdop) == int else pdop.get('num_cpus', 1)
+                G.add_node(part.partition_id, cc=cc_eval)
 
         for e in self._part_edges:
             u = e[0]
