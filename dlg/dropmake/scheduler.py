@@ -57,18 +57,17 @@ class Schedule(object):
         self._dag = dag
         self._max_dop = max_dop if type(max_dop) == int else max_dop.get('num_cpus', 1)
         DAGUtil.label_schedule(self._dag)
-        self._lpl = None
+        self._lpl = DAGUtil.get_longest_path(self._dag, default_weight=0, show_path=True)
         self._wkl = None
         self._sma = None
 
     @property
     def makespan(self):
-        if (self._lpl is None):
-            lpl = DAGUtil.get_longest_path(self._dag, show_path=True)
-            self._lpl = lpl
-        else:
-            lpl = self._lpl 
-        return lpl[1]# - (len(lpl[0]) - 1)
+        return self._lpl[1]
+    
+    @property
+    def longest_path(self):
+        return self._lpl[0]
 
     @property
     def schedule_matrix(self):
@@ -82,7 +81,7 @@ class Schedule(object):
             if (DEBUG):
                 lpl_str = []
                 lpl_c = 0
-                for lpn in self._lpl[0]:
+                for lpn in self.longest_path:
                     ww = G.node[lpn].get('num_cpus', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
