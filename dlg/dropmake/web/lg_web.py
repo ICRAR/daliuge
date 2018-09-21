@@ -316,8 +316,9 @@ def gen_pgt():
         num_islands = query.get('num_islands', default=0, type=int)
         par_label = query.get('par_label', 'Partition')
         algo_params = {}
-        for name, typ in zip(('min_goal', 'ptype', 'max_laod_imb', 'max_dop', 'time_greedy', 'deadline', 'topk', 'swarm_size'),
-                            (int, int, int, int, float, int, int, int)):
+        for name, typ in zip(('min_goal', 'ptype', 'max_laod_imb', 'max_cpu', 'time_greedy', 
+                              'deadline', 'topk', 'swarm_size', 'max_mem'),
+                            (int, int, int, int, float, int, int, int, int)):
             if name in query:
                 algo_params[name] = query.get(name, type=typ)
 

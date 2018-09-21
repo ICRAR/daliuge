@@ -952,7 +952,7 @@ class KFamilyPartition(Partition):
         kwargs['weight'] = self_global_dag.node[u].get('weight', 5)
         self._dag.add_node(u, **kwargs)
         for k in self._w_attr:
-            self._tmp_max_dop[_w_attr] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
+            self._tmp_max_dop[k] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
         self._max_dop = self._tmp_max_dop        
 
     def can_merge(self, that, u, v):
