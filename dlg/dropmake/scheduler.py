@@ -959,7 +959,8 @@ class KFamilyPartition(Partition):
         """
         """
         dag = nx.compose(self._dag, that._dag)
-        dag.add_edge(u, v)
+        if (u is not None ):
+            dag.add_edge(u, v)
         tmp_max_dop = copy.deepcopy(self._tmp_max_dop)
 
         for _w_attr in self._w_attr:
@@ -979,7 +980,8 @@ class KFamilyPartition(Partition):
 
     def merge(self, that, u, v):
         self._dag = nx.compose(self._dag, that._dag)
-        self._dag.add_edge(u, v)
+        if (u is not None):
+            self._dag.add_edge(u, v)
         if (self._tmp_max_dop is not None):
             self._max_dop = self._tmp_max_dop
             #print("Gid %d just merged with DoP %d" % (self._gid, self._tmp_max_dop))
@@ -987,7 +989,7 @@ class KFamilyPartition(Partition):
             # we could recalcuate it again, but we are lazy!
             raise SchedulerException("can_merge was not probed before add()")
 
-class Scheduler(object):
+class Scheduler(object):   
     """
     Static Scheduling consists of three steps:
     1. partition the DAG into an optimal number (M) of partitions
@@ -1169,6 +1171,34 @@ class MySarkarScheduler(Scheduler):
 
         return part_new
 
+    def reduce_partitions(self, parts, g_dict, G):
+        """
+        further reduce the number of partitions by merging partitions whose max_dop
+        is less than capacity
+
+        step 1 - sort partition list based on their
+                 _max_dop of num_cpus as default
+        step 2 - enumerate each partition p to see merging
+                 between p and its neighbour is feasible
+        """
+        done_reduction = False
+        num_reductions = 0
+        while (not done_reduction):
+            #TODO consider other w_attrs other than CPUs!
+            parts.sort(key=lambda x: x._max_dop['num_cpus'])
+            for i, partA in enumerate(parts):
+                if (i < len(parts) - 1):
+                    partB = parts[i + 1]
+                    new_part = self._merge_two_parts(partA._gid, partB._gid, None, None,
+                                                    None, None, g_dict, parts, G)
+                    if (new_part is not None):
+                        num_reductions += 1
+                        break # force re-sorting
+                else:
+                    done_reduction = True
+                    logger.info('Performed reductions %d times', num_reductions)
+                    break
+
     def partition_dag(self):
         """
         Return a tuple of
@@ -1223,7 +1253,7 @@ class MySarkarScheduler(Scheduler):
                 curr_lpl = DAGUtil.get_longest_path(G, show_path=False,
                 topo_sort=topo_sorted)[1]
                 plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))
-
+        self.reduce_partitions(parts, g_dict, G)
         edt = time.time() - stt
         self._parts = parts
         if (dump_progress):
