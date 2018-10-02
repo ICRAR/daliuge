@@ -1183,9 +1183,9 @@ class MySarkarScheduler(Scheduler):
         """
         done_reduction = False
         num_reductions = 0
+        #TODO consider other w_attrs other than CPUs!
+        parts.sort(key=lambda x: x._max_dop['num_cpus'])
         while (not done_reduction):
-            #TODO consider other w_attrs other than CPUs!
-            parts.sort(key=lambda x: x._max_dop['num_cpus'])
             for i, partA in enumerate(parts):
                 if (i < len(parts) - 1):
                     partB = parts[i + 1]
