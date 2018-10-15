@@ -26,7 +26,7 @@ import platform
 import random
 import sys
 import time
-
+import copy
 import pkg_resources
 
 import networkx as nx
@@ -55,18 +55,19 @@ class Schedule(object):
     """
     def __init__(self, dag, max_dop):
         self._dag = dag
-        self._max_dop = max_dop
+        self._max_dop = max_dop if type(max_dop) == int else max_dop.get('num_cpus', 1)
         DAGUtil.label_schedule(self._dag)
-        self._lpl = None
+        self._lpl = DAGUtil.get_longest_path(self._dag, default_weight=0, show_path=True)
         self._wkl = None
         self._sma = None
 
     @property
     def makespan(self):
-        if (self._lpl is None):
-            lpl = DAGUtil.get_longest_path(self._dag, show_path=True)
-            self._lpl = lpl[1] - (len(lpl[0]) - 1) #TODO find out why
-        return self._lpl
+        return self._lpl[1]
+    
+    @property
+    def longest_path(self):
+        return self._lpl[0]
 
     @property
     def schedule_matrix(self):
@@ -76,19 +77,19 @@ class Schedule(object):
         """
         if (self._sma is None):
             G = self._dag
-            N = max(self.makespan[1], 1)
+            N = max(self.makespan, 1)
             if (DEBUG):
                 lpl_str = []
                 lpl_c = 0
-                for lpn in self.makespan[0]:
-                    ww = G.node[lpn].get('weight', 0)
+                for lpn in self.longest_path:
+                    ww = G.node[lpn].get('num_cpus', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
-                logger.debug("lpl: " + " -> ".join(lpl_str))
-                logger.debug("lplt = %d" % int(lpl_c))
+                logger.debug("lpl: %s", " -> ".join(lpl_str))
+                logger.debug("lplt = %d", int(lpl_c))
             
             M = self._max_dop
-            #print "N (makespan) is ", N, "M is ", M
+            #print("N (makespan) is ", N, "M is ", M)
             ma = np.zeros((M, N), dtype=int)
             pr = np.zeros((M), dtype=int)
             last_pid = -1
@@ -122,6 +123,7 @@ class Schedule(object):
                 last_pid = curr_pid
                 prev_n = n
             self._sma = ma
+            #print(ma)
         return self._sma
 
     @property
@@ -168,7 +170,7 @@ class Partition(object):
         self._child_parts = None
         self._tmp_merge_dag = None
         self._tmp_new_ac = None
-        logger.debug("My dop = {0}".format(self._ask_max_dop))
+        logger.debug("My dop = %r", self._ask_max_dop)
 
     @property
     def parent_id(self):
@@ -914,45 +916,72 @@ class KFamilyPartition(Partition):
     the Theorem 3.1 in
     http://fmdb.cs.ucla.edu/Treports/930014.pdf
     """
-    def __init__(self, gid, max_dop, w_attr='num_cpus', global_dag=None):
+    def __init__(self, gid, max_dop, global_dag=None):
+        """
+        max_dop:    dict with key:   resource_attributes (string)
+                              value: resource_capacity (integer)
+        """
+        mtype = type(max_dop)
+        if (mtype == int):
+            # backward compatible
+            max_dop = {'num_cpus': max_dop}
+        elif (mtype == dict):
+            pass
+        else:
+            raise SchedulerException('Invalid max_dop type: %r' % mtype)
+        
         super(KFamilyPartition, self).__init__(gid, max_dop)
         self._bpg = nx.DiGraph()
         self._global_dag = global_dag
         self._check_global_dag = global_dag is not None
-        self._w_attr = w_attr
+        self._w_attr = max_dop.keys()
         self._tc = defaultdict(set)
+        self._tmp_max_dop = None
 
-    def add_node(self, u, weight):
+    def add_node(self, u):
         """
         Add a single node u to the partition
         """
-        u_aw = self._global_dag.node[u].get(self._w_attr, 1)
-        kwargs = {self._w_attr: u_aw}
+        kwargs = dict()
+        if (self._tmp_max_dop is None):
+            self._tmp_max_dop = dict()
+        self_global_dag = self._global_dag
+        for _w_attr in self._w_attr:
+            u_aw = self_global_dag.node[u].get(_w_attr, 1)
+            kwargs[_w_attr] = u_aw
+        kwargs['weight'] = self_global_dag.node[u].get('weight', 5)
         self._dag.add_node(u, **kwargs)
-        self._tmp_max_dop = get_max_weighted_antichain(self._dag, w_attr=self._w_attr)[0]
-        self._max_dop = self._tmp_max_dop
-        #print('init max_dop', self._global_dag.node[u]['text'], self._max_dop)
+        for k in self._w_attr:
+            self._tmp_max_dop[k] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
+        self._max_dop = self._tmp_max_dop        
 
     def can_merge(self, that, u, v):
         """
         """
         dag = nx.compose(self._dag, that._dag)
-        dag.add_edge(u, v)
-        mydop = get_max_weighted_antichain(dag, w_attr=self._w_attr)[0]
+        if (u is not None ):
+            dag.add_edge(u, v)
+        tmp_max_dop = copy.deepcopy(self._tmp_max_dop)
 
-        curr_max = max(self._max_dop, that._max_dop)
-        if (mydop <= curr_max):
-            self._tmp_max_dop = curr_max
-            return True # if you don't increase DoP, we accept that immediately
-        elif (mydop > self._ask_max_dop):
-            return False
-        else:
-            self._tmp_max_dop = mydop
-            return True
+        for _w_attr in self._w_attr:
+            mydop = get_max_weighted_antichain(dag, w_attr=_w_attr)[0]
+            curr_max = max(self._max_dop[_w_attr], that._max_dop[_w_attr])
+        
+            if (mydop <= curr_max):
+                # if you don't increase DoP, we accept that immediately
+                tmp_max_dop[_w_attr] = curr_max
+            elif (mydop > self._ask_max_dop[_w_attr]):
+                return False
+            else:
+                tmp_max_dop[_w_attr] = mydop
+        
+        self._tmp_max_dop = tmp_max_dop # only change it when returning True
+        return True
 
     def merge(self, that, u, v):
         self._dag = nx.compose(self._dag, that._dag)
-        self._dag.add_edge(u, v)
+        if (u is not None):
+            self._dag.add_edge(u, v)
         if (self._tmp_max_dop is not None):
             self._max_dop = self._tmp_max_dop
             #print("Gid %d just merged with DoP %d" % (self._gid, self._tmp_max_dop))
@@ -960,7 +989,7 @@ class KFamilyPartition(Partition):
             # we could recalcuate it again, but we are lazy!
             raise SchedulerException("can_merge was not probed before add()")
 
-class Scheduler(object):
+class Scheduler(object):   
     """
     Static Scheduling consists of three steps:
     1. partition the DAG into an optimal number (M) of partitions
@@ -988,29 +1017,32 @@ class Scheduler(object):
     def partition_dag(self):
         raise SchedulerException("Not implemented. Try subclass instead")
 
-    def merge_partitions(self, num_partitions, bal_cond=0):
+    def merge_partitions(self, num_partitions, bal_cond=1):
         """
         Merge M partitions into N partitions where N < M
             implemented using METIS for now
 
         bal_cond:  load balance condition (integer):
-                    0 - workload, 1 - count
+                    0 - workload, 
+                    1 - CPU count (faster to evaluate than workload)
         """
         # 1. build the bi-directional graph (each partition is a node)
         metis = DAGUtil.import_metis()
         G = nx.Graph()
-        G.graph['edge_weight_attr'] = 'weight'
         st_gid = len(self._drop_list) + len(self._parts) + 1
-        # if (bal_cond == 0):
-        #     G.graph['node_weight_attr'] = ['wkl', 'eff']
-        #     for part in self._parts:
-        #         sc = part.schedule
-        #         G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
-        # else:
-        G.graph['node_weight_attr'] = 'cc'
-        for part in self._parts:
-            #sc = part.schedule
-            G.add_node(part.partition_id, cc=part._max_dop)
+        if (bal_cond == 0):
+            G.graph['node_weight_attr'] = ['wkl', 'eff']
+            for part in self._parts:
+                sc = part.schedule
+                G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
+        else:
+            G.graph['node_weight_attr'] = 'cc'
+            for part in self._parts:
+                #sc = part.schedule
+                pdop = part._max_dop
+                #TODO add memory as one of the LB condition too
+                cc_eval = pdop if type(pdop) == int else pdop.get('num_cpus', 1)
+                G.add_node(part.partition_id, cc=cc_eval)
 
         for e in self._part_edges:
             u = e[0]
@@ -1139,6 +1171,34 @@ class MySarkarScheduler(Scheduler):
 
         return part_new
 
+    def reduce_partitions(self, parts, g_dict, G):
+        """
+        further reduce the number of partitions by merging partitions whose max_dop
+        is less than capacity
+
+        step 1 - sort partition list based on their
+                 _max_dop of num_cpus as default
+        step 2 - enumerate each partition p to see merging
+                 between p and its neighbour is feasible
+        """
+        done_reduction = False
+        num_reductions = 0
+        #TODO consider other w_attrs other than CPUs!
+        parts.sort(key=lambda x: x._max_dop['num_cpus'])
+        while (not done_reduction):
+            for i, partA in enumerate(parts):
+                if (i < len(parts) - 1):
+                    partB = parts[i + 1]
+                    new_part = self._merge_two_parts(partA._gid, partB._gid, None, None,
+                                                    None, None, g_dict, parts, G)
+                    if (new_part is not None):
+                        num_reductions += 1
+                        break # force re-sorting
+                else:
+                    done_reduction = True
+                    logger.info('Performed reductions %d times', num_reductions)
+                    break
+
     def partition_dag(self):
         """
         Return a tuple of
@@ -1165,7 +1225,7 @@ class MySarkarScheduler(Scheduler):
             #part = WeightedDilworthPartition(st_gid, self._max_dop, G)
             #part = MultiWeightPartition(st_gid, self._max_dop, global_dag=G)
             part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
-            part.add_node(n[0], n[1].get('weight', 1))
+            part.add_node(n[0])
             g_dict[st_gid] = part
             parts.append(part) # will it get rejected?
             st_gid += 1
@@ -1193,7 +1253,7 @@ class MySarkarScheduler(Scheduler):
                 curr_lpl = DAGUtil.get_longest_path(G, show_path=False,
                 topo_sort=topo_sorted)[1]
                 plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))
-
+        self.reduce_partitions(parts, g_dict, G)
         edt = time.time() - stt
         self._parts = parts
         if (dump_progress):
@@ -1540,7 +1600,7 @@ class MCTSScheduler(PSOScheduler):
         state = mcts.run()
         if logger.isEnabledFor(logging.DEBUG):
             leng = len(G.edges())
-            logger.debug("Each MCTS move on average took {0} seconds".format((time.time() - stt) / leng))
+            logger.debug("Each MCTS move on average took %.2f seconds", (time.time() - stt) / leng)
         #calculate the solution under the state found by MCTS
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
@@ -1603,7 +1663,7 @@ class SAScheduler(PSOScheduler):
         # 4. calculate the solution under the 'annealed' state
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, state)
         edt = time.time()
-        logger.debug("Simulated Annealing scheduler took %.2f secs, energy = %f, num_parts = %d" % (edt - stt, e, num_parts))
+        logger.debug("Simulated Annealing scheduler took %f secs, energy = %f, num_parts = %d", edt - stt, e, num_parts)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
             if not 'gid' in n[1]:

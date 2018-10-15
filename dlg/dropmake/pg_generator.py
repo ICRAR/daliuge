@@ -2169,7 +2169,8 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
     min_goal = algo_params.get('min_goal', 0)
     ptype = algo_params.get('ptype', 0)
     max_load_imb = algo_params.get('max_load_imb', 90)
-    max_dop = algo_params.get('max_dop', 8)
+    max_cpu = algo_params.get('max_cpu', 8)
+    max_mem = algo_params.get('max_mem', 1000)
     time_greedy = algo_params.get('time_greedy', 50)
     deadline = algo_params.get('deadline', None)
     topk = algo_params.get('topk', 30)
@@ -2186,6 +2187,7 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
                          ufactor, merge_parts=could_merge)
 
     elif algo == ALGO_MY_SARKAR:
+        max_dop = {'num_cpus': max_cpu, 'mem_usage': max_mem}
         pgt = MySarkarPGTP(pgt, num_partitions, partition_label, max_dop,
                             merge_parts=could_merge)
 
