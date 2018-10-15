@@ -1669,20 +1669,20 @@
                 <tr><td/><td/></tr>
                 <tr>
                 <td>
-                  Algorithm 0
+                  Unroll
                 </td>
                 <td>
                   <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-                  <button id="pgButton" class="button" onclick="genPGT()">Generate Physical Graph Template</button>
+                  <button id="pgButton" class="button" onclick="genPGT()">Generate PGT</button>
                 </td>
                 </tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
-                <tr><td>
+                <!-- <tr><td>
                   # of Islands
-                </td><td><input type="number" name="num_islands" min="0" value="0" id="num_islands"></td></tr>
+                </td><td><input type="number" name="num_islands" min="0" value="0" id="num_islands"></td></tr> -->
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
                 <tr><td/><td/></tr>
@@ -1695,24 +1695,19 @@
                 <tr><td/><td/></tr>
               <tr>
               <form action="/gen_pgt" method="get" id="pgtp_form" target="_blank">
-              <td> Algorithm 1</td><td>Minimise data movement while subject to load balancing </td>
+              <td> </td><td>Minimise data movement and balance loads given the number of nodes </td>
               </tr>
               <tr>
               <td># of nodes </td><td><input type="number" name="num_par" min="1" value="1"></td>
               </tr>
               <tr>
-              <td>Partition label</td>
+              <td>Node label</td>
               <td>
               <input type="text" name="par_label" value="Node">
               </td>
             </tr>
 
             <tr>
-            <!--
-            <td>
-              # of islands
-            </td>
-            -->
 
             <input type="hidden" name="min_goal" value="0">
             <input type="hidden" name="num_islands_metis" value="0" id="num_islands_metis">
@@ -1746,7 +1741,7 @@
             </td>
             <td>
               <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-              <button id="pgtButton" class="button" onclick="genPGTP_metis()">Generate PGTP (direct graph partitioning)</button>
+              <button id="pgtButton" class="button" onclick="genPGTP_metis()">Generate PGTP (Metis)</button>
             </td>
             </tr>
             </form>
@@ -1764,85 +1759,40 @@
           <tr/>
           <tr>
           <form action="/gen_pgt" method="get" id="pgtp_form_02" target="_blank">
-          <td>Algorithm 2 </td><td>Minimise execution time while subject to each partition's DoP<input type="hidden" name="num_par" value="5"></td>
+          <td></td><td>Minimise execution time and resources given node capacities<input type="hidden" name="num_par" value="5"></td>
           </tr>
           <tr>
-          <td>Partition label</td>
+          <td>Node label</td>
           <td>
-          <input type="text" name="par_label" value="Partition">
+          <input type="text" name="par_label" value="Node">
           </td>
         </tr>
         <tr>
-        <td>Max DoP per partition</td>
-        <td>
-        <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
-        </td>
-      </tr>
-      <!-- <tr>
-        <td>
-          Partition algorithm
-        </td>
-        <td>
-          Augmented <a href="http://dl.acm.org/citation.cfm?id=534475" target="_blank">Sarkar (1989)</a> by adding DoP constraints and removing artifical linearisation
-        </td>
-      </tr> -->
+          <td>CPUs per node</td>
+          <td>
+          <input type="number" name="max_cpu" min="1" value="8">&nbsp;
+          </td>
+        </tr>
+        <tr>
+          <td>Memory per node</td>
+          <td>
+          <input type="number" name="max_mem" min="1" value="1000">&nbsp;Megabytes
+          </td>
+        </tr>
+      
         <tr>
         <td>
           <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_02">
           <input type="hidden" name="algo" value="mysarkar">
         </td>
         <td>
-          <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
-          <button id="pgtButton02" class="button" onclick="genPGTP_edgezero()">Generate PGTP (edgezeroing) </button>
+          <button id="pgtButton02" class="button" onclick="genPGTP_edgezero()">Generate PGTP (MinRes) </button>
           <input type="hidden" name="num_islands_edgezero" value="0">
         </td>
         </tr>
         </form>
-        <!--
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-        <tr><td/><td/></tr>
-       <tr>
-      <form action="/gen_pgt" method="get" id="pgtp_form_03" target="_blank">
-        <td>Island Algorithm</td><td>Nodes inside, Islands outside<input type="hidden" name="merge_par" value="1"></td>
-      </tr>
-      <tr>
-        <td># of Islands</td>
-        <td>
-        <input type="number" name="num_par" min="2" value="5">
-        </td>
-      </tr>
-      <tr>
-        <td>Partition label</td>
-        <td>
-        <input type="text" name="par_label" value="Node">
-        </td>
-      </tr>
-      <tr>
-        <td>Max DoP per inner partition</td>
-        <td>
-        <input type="number" name="max_dop" min="1" value="8">&nbsp;(DoP - Degree of Parallelism)
-        </td>
-      </tr>
-    <tr>
-    <td>
-      <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_03">
-      <input type="hidden" name="algo" value="mysarkar">
-    </td>
-    <td>
-      <button id="pgtButton03" class="button" onclick="genPGTP03()">Generate PGTP with Islands</button>
-    </td>
-    </tr>
-    </form>
-    -->
-    <tr><td/><td/></tr>
+
+    <!-- <tr><td/><td/></tr>
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
     <tr><td/><td/></tr>
@@ -1883,7 +1833,6 @@
     <input type="hidden" name="algo" value="min_num_parts">
   </td>
   <td>
-    <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
     <button id="pgtButton04" class="button" onclick="genPGTP_lookahead()">Generate PGTP (Lookahead)</button>
     <input type="hidden" name="num_islands_lookahead" value="0">
   </td>
@@ -1945,12 +1894,11 @@
   <input type="hidden" name="algo" value="pso">
 </td>
 <td>
-  <!-- <input type="submit" value="Generate Physical Graph Template Partition" class="button"> -->
   <button id="pgtButton05" class="button" onclick="genPGTP_pso()">Generate PGTP (particle swarm)</button>
   <input type="hidden" name="num_islands_pso" value="0">
 </td>
 </tr>
-</form>
+</form> -->
 
   </table>
 
