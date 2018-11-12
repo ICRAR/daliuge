@@ -33,7 +33,7 @@ from .. import droputils
 from .. import graph_loader
 from .. import rpc
 from .. import utils
-from ..ddap_protocol import DROPLinkType, DROPRel
+from ..ddap_protocol import DROPLinkType, DROPRel, DROPStates
 from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
 from ..exceptions import InvalidSessionState, InvalidGraphException, \
@@ -47,7 +47,7 @@ class SessionStates:
     An enumeration of the different states in which a Session can be found at
     any given point of time.
     """
-    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED = range(5)
+    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED, CANCELLED = range(6)
 
 class LeavesCompletionListener(object):
 
@@ -355,7 +355,7 @@ class Session(object):
         logger.info("Session %s finished", self._sessionId)
 
     def getGraphStatus(self):
-        if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED):
+        if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED, SessionStates.CANCELLED):
             raise InvalidSessionState("The session is currently not running, cannot get graph status")
 
         # We shouldn't traverse the full graph because there might be nodes
@@ -372,6 +372,18 @@ class Session(object):
             statusDict[drop.oid]['status'] = drop.status
 
         return statusDict
+
+    @track_current_session
+    def cancel(self):
+        status = self.status
+        if status != SessionStates.RUNNING:
+            raise InvalidSessionState("Can't cancel this session in its current status: %d" % (status))
+        for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
+            downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
+            if drop.status not in (DROPStates.ERROR, DROPStates.COMPLETED, DROPStates.CANCELLED):
+                drop.cancel()
+        self.status = SessionStates.CANCELLED
+        logger.info('Session %s cancelled', self._sessionId)
 
     def getGraph(self):
         return dict(self._graph)
