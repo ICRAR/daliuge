@@ -72,6 +72,10 @@ svg {
   fill: #700000;
 }
 
+.node.cancelled :first-child {
+  fill: #cccccc;
+}
+
 .node.deleted :first-child {
   color: #700000;
 }

@@ -20,9 +20,9 @@
 //    MA 02111-1307  USA
 //
 
-var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished']
-var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'expired', 'deleted']
-var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error']
+var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled']
+var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled']
+var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled']
 var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
 var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
@@ -303,9 +303,9 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, handler, delay) {
 			// During PRISITINE and BUILDING we need to update the graph structure
 			// During DEPLOYING we call ourselves again anyway, because we need
 			// to know when we go to RUNNING.
-			// During RUNNING (or potentially FINISHED, if the execution is
+			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
-			if( status == 3 || status == 4 ) {
+			if (status == 3 || status == 4 || status == 5) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay);
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
@@ -415,7 +415,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				var cur_status = get_status_name(curVal);
-				return prevVal && (cur_status == 'completed' || cur_status == 'error');
+				return prevVal && (cur_status == 'completed' || cur_status == 'error' || cur_status == 'cancelled');
 			}, true);
 			if (!allCompleted) {
 				d3.timer(updateStates, delay);
