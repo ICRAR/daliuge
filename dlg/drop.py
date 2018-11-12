@@ -872,6 +872,9 @@ class AbstractDROP(EventFirer):
         if self._wio:
             self._wio.close()
 
+        if self.status == DROPStates.CANCELLED:
+            return
+
         logger.info("Moving %r to ERROR", self)
         self.status = DROPStates.ERROR
 
@@ -886,7 +889,10 @@ class AbstractDROP(EventFirer):
         to COMPLETED, or when the expected amount of data held by a DROP
         is not known in advanced.
         '''
-        if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+        status = self.status
+        if status == DROPStates.CANCELLED:
+            return
+        if status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
 
         # Close our writing IO instance.
@@ -907,6 +913,10 @@ class AbstractDROP(EventFirer):
         # Mind you we're not accessing _status, but status. This way we use the
         # lock in status() to access _status
         return (self.status == DROPStates.COMPLETED)
+
+    def cancel(self):
+        '''Moves this drop to the CANCELLED state'''
+        self.status = DROPStates.CANCELLED
 
     @property
     def node(self):
@@ -1460,6 +1470,11 @@ class AppDROP(ContainerDROP):
         logger.debug("Moving %r to %s", self, "FINISHED" if self._execStatus is AppDROPStates.FINISHED else "ERROR")
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
+    def cancel(self):
+        '''Moves this application drop to its CANCELLED state'''
+        super(AppDROP, self).cancel()
+        self.execStatus = AppDROPStates.CANCELLED
+
 class InputFiredAppDROP(AppDROP):
     """
     An InputFiredAppDROP accepts no streaming inputs and waits until a given
@@ -1583,9 +1598,13 @@ class InputFiredAppDROP(AppDROP):
         while tries < self._n_tries:
             try:
                 self.run()
+                if self.execStatus == AppDROPStates.CANCELLED:
+                    return
                 self.execStatus = AppDROPStates.FINISHED
                 break
             except:
+                if self.execStatus == AppDROPStates.CANCELLED:
+                    return
                 tries += 1
                 logger.exception('Error while executing %r (try %d/%d)' % (self, tries, self._n_tries))
 
