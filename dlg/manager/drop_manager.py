@@ -98,6 +98,12 @@ class DROPManager(object):
         """
 
     @abc.abstractmethod
+    def cancelSession(self, sessionId):
+        """
+        Cancels the session `sessionId`
+        """
+
+    @abc.abstractmethod
     def destroySession(self, sessionId):
         """
         Destroys the session `sessionId`

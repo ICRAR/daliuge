@@ -44,7 +44,7 @@ class DROPStates:
     COMPLETED. Later, they transition through EXPIRED, eventually arriving to
     DELETED.
     """
-    INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED = range(6)
+    INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED, CANCELLED = range(7)
 
 class AppDROPStates:
     """
@@ -53,7 +53,7 @@ class AppDROPStates:
     are started. Depending on the execution result they eventually move to the
     FINISHED or ERROR state.
     """
-    NOT_RUN, RUNNING, FINISHED, ERROR = range(4)
+    NOT_RUN, RUNNING, FINISHED, ERROR, CANCELLED = range(5)
 
 class DROPPhases:
     """
