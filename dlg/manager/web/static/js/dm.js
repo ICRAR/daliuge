@@ -29,6 +29,16 @@ var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'paralle
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
 
+function get_status_name(s)
+{
+	if (typeof s.execStatus != 'undefined') {
+		return EXECSTATUS_CLASSES[s.execStatus];
+	}
+	else {
+		return STATUS_CLASSES[s.status];
+	}
+}
+
 function uniqueSessionStatus(status) {
 
 	// If we are querying one of the Composite Managers (like the DIM or the MM)
@@ -400,16 +410,12 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 			// Anyway, we could double-check in the future
 			d3.selectAll('g.nodes').selectAll('g.node')
 			.data(statuses).attr("class", function(s) {
-				if ( typeof s.execStatus != 'undefined' ) {
-					return "node " + EXECSTATUS_CLASSES[s.execStatus];
-				}
-				else {
-					return "node " + STATUS_CLASSES[s.status];
-				}
-			})
+				return "node " + get_status_name(s);
+			});
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
-				return prevVal && (curVal == 2);
+				var cur_status = get_status_name(curVal);
+				return prevVal && (cur_status == 'completed' || cur_status == 'error');
 			}, true);
 			if (!allCompleted) {
 				d3.timer(updateStates, delay);
@@ -422,7 +428,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 						return;
 					}
 					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
-				})
+				});
 			}
 		})
 		return true;
