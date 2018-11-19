@@ -12,7 +12,7 @@ USER=daliuge
 #
 # DALiuGE process to invoke
 #
-DLG=dlg
+DLG="source ~/daliuge_rt/bin/activate && dlg"
 
 #
 # Hosts to bind the Managers to.
