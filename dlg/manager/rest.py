@@ -119,6 +119,7 @@ class ManagerRestServer(RestServer):
         app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
         app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
         app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
+        app.post(  '/api/sessions/<sessionId>/cancel',       callback=self.cancelSession)
         app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
         app.get(   '/api/sessions/<sessionId>/graph/size',   callback=self.getGraphSize)
         app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
@@ -174,6 +175,10 @@ class ManagerRestServer(RestServer):
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
         self.dm.deploySession(sessionId,completedDrops=completedDrops)
+
+    @daliuge_aware
+    def cancelSession(self, sessionId):
+        self.dm.cancelSession(sessionId)
 
     @daliuge_aware
     def getGraph(self, sessionId):

@@ -21,14 +21,15 @@
 #
 import functools
 import os
+import time
 import unittest
 
 import six
 
 from ..manager import test_dm
 from dlg import droputils
-from dlg.apps.dynlib import DynlibApp, DynlibStreamApp
-from dlg.ddap_protocol import DROPRel, DROPLinkType
+from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
+from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.drop import InMemoryDROP, NullDROP
 
 _libname = 'dynlib_example'
@@ -116,6 +117,20 @@ class DynlibAppTest(unittest.TestCase):
             drop_data = droputils.allDropContents(drop)
             self.assertEqual(len(data), len(drop_data), 'Data from %r is not what we wanted :(' % (drop,))
             self.assertEqual(data, drop_data)
+
+    def test_cancel_dynlibprocapp(self):
+        '''Checks that we can cancel a long-running dynlib proc app'''
+
+        a = DynlibProcApp('a', 'a', lib=_libpath, sleep_seconds=10)
+        with droputils.DROPWaiterCtx(self, (), timeout=0):
+            a.async_execute()
+
+        time.sleep(1)
+        t0 = time.time()
+        a.cancel()
+        self.assertLess(time.time() - t0, 1, 'Cancelled dynlibprocapp in less than a second')
+        self.assertEqual(DROPStates.CANCELLED, a.status)
+
 
 class IntraNMMixIng(test_dm.NMTestsMixIn):
 
