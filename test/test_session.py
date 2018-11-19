@@ -21,9 +21,10 @@
 #
 import unittest
 
-from dlg.ddap_protocol import DROPLinkType
+from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.manager.session import Session, SessionStates
 from dlg.exceptions import InvalidGraphException
+from dlg.droputils import DROPWaiterCtx
 
 
 class TestSession(unittest.TestCase):
@@ -91,3 +92,40 @@ class TestSession(unittest.TestCase):
             self.assertEqual(1, len(b.outputs))
             c = b.outputs[0]
             self.assertEqual('C', c.oid)
+
+    def test_cancel(self):
+        '''Cancels a whole graph execution'''
+        with Session('1') as s:
+            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":"memory", 'consumers': ['B']},
+                            {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 2},
+                            {"oid":"C", "type":"plain", "storage":"memory", 'producers': ['B']}])
+            s.deploy()
+            self.assertEqual(SessionStates.RUNNING, s.status)
+            s.cancel()
+            self.assertEqual(SessionStates.CANCELLED, s.status)
+            for uid in 'ABC':
+                self.assertEqual(DROPStates.CANCELLED, s.drops[uid].status)
+            self.assertEqual(AppDROPStates.CANCELLED, s.drops['B'].execStatus)
+
+    def test_partial_cancel(self):
+        '''Like test_cancel, but only part of the graph should be cancelled'''
+        with Session('1') as s:
+            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":"memory", 'consumers': ['B']},
+                            {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 0},
+                            {"oid":"C", "type":"plain", "storage":"memory", 'producers': ['B'], 'consumers': ['D']},
+                            {"oid":"D", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 10},
+                            {"oid":"E", "type":"plain", "storage":"memory", 'producers': ['D']}])
+            s.deploy()
+            self.assertEqual(SessionStates.RUNNING, s.status)
+
+            # Move first three drops to completed, D should take longer to execute
+            with DROPWaiterCtx(self, s.drops['C'], 1):
+                s.drops['A'].write(b'x')
+                s.drops['A'].setCompleted()
+            # Cancel the session, A, B and C should remain COMPLETED
+            s.cancel()
+            self.assertEqual(SessionStates.CANCELLED, s.status)
+            for uid in 'ABC':
+                self.assertEqual(DROPStates.COMPLETED, s.drops[uid].status)
+            for uid in 'DE':
+                self.assertEqual(DROPStates.CANCELLED, s.drops[uid].status)

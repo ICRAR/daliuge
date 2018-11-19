@@ -324,6 +324,7 @@ class DynlibProcApp(BarrierAppDROP):
         self.libname = kwargs.pop('lib')
         self.timeout = self._getArg(kwargs, 'timeout', 600) # 10 minutes
         self.app_params = kwargs
+        self.proc = None
 
     def run(self):
 
@@ -342,6 +343,7 @@ class DynlibProcApp(BarrierAppDROP):
         args = (queue, self.libname, self.oid, self.uid, self.app_params, inputs, outputs)
         proc = multiprocessing.Process(target=_run_in_proc, args=args)
         proc.start()
+        self.proc = proc
 
         try:
             steps = ('loading and initialising library',
@@ -367,3 +369,10 @@ class DynlibProcApp(BarrierAppDROP):
         host, port = rpc_server._rpc_host, rpc_server._rpc_port
         host = utils.to_externally_contactable_host(host, prefer_local=True)
         return (host, port, x._dlg_session.sessionId, x.uid)
+
+    def cancel(self):
+        BarrierAppDROP.cancel(self)
+        try:
+            self.proc.terminate()
+        except:
+            logger.exception("Error while terminating process %r", self.proc)
