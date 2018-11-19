@@ -253,6 +253,17 @@ class CompositeManager(DROPManager):
         logger.info('Successfully created session %s in all hosts', sessionId)
         self._sessionIds.append(sessionId)
 
+    def _cancelSession(self, dm, host, sessionId):
+        dm.cancelSession(sessionId)
+        logger.debug('Successfully cancelled session %s on %s', sessionId, host)
+
+    def cancelSession(self, sessionId):
+        """
+        Cancels a session in all underlying DMs.
+        """
+        logger.info('Cancelled session %s in all hosts', sessionId)
+        self.replicate(sessionId, self._cancelSession, "cancelling sessions")
+
     def _destroySession(self, dm, host, sessionId):
         dm.destroySession(sessionId)
         logger.debug('Successfully destroyed session %s on %s', sessionId, host)

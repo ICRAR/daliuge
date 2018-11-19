@@ -39,6 +39,7 @@ struct app_data {
 	unsigned long total;
 	unsigned long write_duration;
 	unsigned int bufsize;
+	unsigned int sleep_seconds;
 };
 
 static inline
@@ -58,6 +59,7 @@ int init(dlg_app_info *app, const char ***params)
 	short print_stats = 0, crash_and_burn = 0;
 	const char **param;
 	unsigned int bufsize = 64 * 1024;
+	unsigned int sleep_seconds = 0;
 
 	while (1) {
 
@@ -82,6 +84,10 @@ int init(dlg_app_info *app, const char ***params)
 			bufsize = (unsigned int)atoi(param[1]);
 		}
 
+		else if (strcmp(param[0], "sleep_seconds") == 0) {
+			sleep_seconds = (unsigned int)atoi(param[1]);
+		}
+
 		params++;
 	}
 
@@ -91,6 +97,7 @@ int init(dlg_app_info *app, const char ***params)
 	}
 	to_app_data(app)->print_stats = print_stats;
 	to_app_data(app)->crash_and_burn = crash_and_burn;
+	to_app_data(app)->sleep_seconds = sleep_seconds;
 	to_app_data(app)->total = 0;
 	to_app_data(app)->write_duration = 0;
 	to_app_data(app)->bufsize = bufsize;
@@ -141,6 +148,10 @@ int run(dlg_app_info *app)
 
 	if (to_app_data(app)->print_stats) {
 		printf("running / done methods addresses are %p / %p\n", app->running, app->done);
+	}
+
+	if (to_app_data(app)->sleep_seconds) {
+		sleep(to_app_data(app)->sleep_seconds);
 	}
 
 	bufsize = to_app_data(app)->bufsize;

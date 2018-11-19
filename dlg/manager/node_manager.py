@@ -255,6 +255,10 @@ class NodeManagerBase(DROPManager):
 
         session.deploy(completedDrops=completedDrops, event_listeners=listeners, foreach=foreach)
 
+    def cancelSession(self, sessionId):
+        self._check_session_id(sessionId)
+        self._sessions[sessionId].cancel()
+
     def destroySession(self, sessionId):
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
