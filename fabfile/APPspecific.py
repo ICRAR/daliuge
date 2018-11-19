@@ -26,16 +26,16 @@ sources, installing it and making sure it works after starting it.
 NOTE: This requires modifications for the specific application where this
 fabfile is used. Please make sure not to use it without those modifications.
 """
-import os
+import os, sys
 from fabric.state import env
 from fabric.colors import red
 from fabric.operations import local
-from fabric.decorators import task
+from fabric.decorators import task, parallel
 from fabric.context_managers import settings, cd
 from fabric.contrib.files import exists, sed
 from fabric.utils import abort
+from fabric.contrib.console import confirm
 import urllib2
-
 
 # >>> All the settings below are kept in the special fabric environment
 # >>> dictionary called env. Don't change the names, only adjust the
@@ -91,6 +91,7 @@ env.pkgs = {
             'YUM_PACKAGES': [
                     'wget',
                     'tar',
+                    'git',
                     'gcc',
                       ],
             'APT_PACKAGES': [
@@ -117,6 +118,7 @@ env.pkgs = {
 # Don't re-export the tasks imported from other modules, only the ones defined
 # here
 __all__ = [
+    'cleanup'
 ]
 
 # Set the rpository root to be relative to the location of this file.
@@ -239,6 +241,14 @@ def install_sysv_init_script(nsd, nuser, cfgfile):
         sudo('chkconfig --add dlg-dim')
 
     success("{0} init script installed".format(env.APP_NAME))
+
+@task
+@parallel
+def cleanup():
+    run('rm -rf daliuge_*')
+    run('rm -rf DALIUGE')
+    run('if [ -f .bash_profile.orig ]; then mv .bash_profile.orig .bash_profile; fi')
+
 
 env.build_cmd = APP_build_cmd
 env.APP_init_install_function = install_sysv_init_script
