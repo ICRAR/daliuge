@@ -27,7 +27,7 @@ For a detailed description of a task run "fab -d <task>"
 End users will likely use the hl.operations_deploy or hl.user_deploy tasks,
 Other tasks, including lower-level tasks, can also be invoked.
 """
-import APPspecific
+import fabfile.APPspecific
 from fabfileTemplate import APPcommon
 from fabfileTemplate import aws
 from fabfileTemplate import hl

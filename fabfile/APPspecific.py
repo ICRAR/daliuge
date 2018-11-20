@@ -35,7 +35,7 @@ from fabric.context_managers import settings, cd
 from fabric.contrib.files import exists, sed
 from fabric.utils import abort
 from fabric.contrib.console import confirm
-import urllib2
+#import urllib2
 
 # >>> All the settings below are kept in the special fabric environment
 # >>> dictionary called env. Don't change the names, only adjust the
@@ -178,7 +178,7 @@ def build_APP():
         develop = False
         no_doc_dependencies = APP_doc_dependencies()
         build_cmd = APP_build_cmd()
-        print build_cmd
+        print(build_cmd)
         if build_cmd != '':
             virtualenv(build_cmd)
     success("{0} built and installed".format(env.APP_NAME))
@@ -249,9 +249,13 @@ def cleanup():
     run('rm -rf DALIUGE')
     run('if [ -f .bash_profile.orig ]; then mv .bash_profile.orig .bash_profile; fi')
 
+def install_docker_compose():
+    pass
 
 env.build_cmd = APP_build_cmd
 env.APP_init_install_function = install_sysv_init_script
 env.APP_start_check_function = start_APP_and_check_status
 env.sysinitAPP_start_check_function = sysinitstart_APP_and_check_status
 env.prepare_APP_data_dir = prepare_APP_data_dir
+env.APP_extra_sudo_function = install_docker_compose
+
