@@ -170,7 +170,7 @@ fi
 
 # Install initial packages into the new venv
 # Fabric is needed to allow using the fab scripts in the first place.
-# pycrypto is needed by the SSH pubkey-related bits in the fab scripts.
+# pycryptodome is needed by the SSH pubkey-related bits in the fab scripts.
 # boto is needed to support the aws-related fab tasks.
 if [[ "$FABRIC_READY" == "yes" ]]
 then
@@ -180,7 +180,7 @@ then
 	then
 		FABRIC=fabric3
 	fi
-	pip install boto ${FABRIC} pycrypto || error "Failed to install fabric packages in virtualenv"
+	pip install boto ${FABRIC} pycryptodome || error "Failed to install fabric packages in virtualenv"
 fi
 
 echo
