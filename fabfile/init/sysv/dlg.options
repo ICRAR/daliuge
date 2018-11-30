@@ -27,8 +27,8 @@ DIM_HOST=0.0.0.0
 # An empty value means that Managers will use their default ports
 # (8000/8001 for Node/DataIsland Manager, respectively)
 #
-NM_PORT=8888
-DIM_PORT=7777
+NM_PORT=
+DIM_PORT=
 
 #
 # Logging level used by the DALiuGE Managers
@@ -46,7 +46,7 @@ NO_DLM=YES
 # The directory where the DALiuGE Managers should run in
 # An empty value means that the Managers will run under /
 #
-CWD=/home/daliuge/DALIUGE
+# CWD=/home/daliuge/DALIUGE
 
 #
 # Comma-separated list of nodes that the Data Island Manager should manage
