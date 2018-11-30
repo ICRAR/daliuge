@@ -64,10 +64,12 @@ env.APP_ROOT_DIR_NAME = env.APP_NAME.upper()
 env.APP_INSTALL_DIR_NAME = env.APP_NAME.lower() + '_rt'
 
 # Version of Python required for the Application
-env.APP_PYTHON_VERSION = '2.7'
+# env.APP_PYTHON_VERSION = '2.7'
+env.APP_PYTHON_VERSION = '3.6'
 
 # URL to download the correct Python version
-env.APP_PYTHON_URL = 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz'
+# env.APP_PYTHON_URL = 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz'
+env.APP_PYTHON_URL = 'https://www.python.org/ftp/python/3.6.7/Python-3.6.7.tgz'
 
 env.APP_DATAFILES = []
 # >>> The following settings are only used within this APPspecific file, but may be
@@ -83,7 +85,8 @@ env.AWS_AMI_NAME = 'Amazon'
 env.AWS_INSTANCES = 1
 env.AWS_INSTANCE_TYPE = 't1.micro'
 env.AWS_KEY_NAME = 'icrar_{0}'.format(env.APP_USER)
-env.AWS_SEC_GROUP = 'DALIUGE' # Security group allows SSH and other ports
+env.AWS_SEC_GROUP = 'DALIUGE' # Security group
+env.AWS_SEC_GROUP_PORTS = [22, 80, 8000, 8001] # ports to open
 env.AWS_SUDO_USER = 'ec2-user' # required to install init scripts.
 
 # Alpha-sorted packages per package manager
@@ -93,6 +96,7 @@ env.pkgs = {
                     'tar',
                     'git',
                     'gcc',
+                    'python36-devel',  #this is the latest available with AWS Linux
                       ],
             'APT_PACKAGES': [
                     'tar',
@@ -191,7 +195,7 @@ def prepare_APP_data_dir():
     nrd = APP_root_dir()
     # tgt_cfg = os.path.join(nrd, 'cfg', 'ngamsServer.conf')
     tgt_cfg = None
-    res = run('mkdir {0}'.format(nrd))
+    res = run('mkdir -p {0}'.format(nrd))
     with cd(APP_source_dir()):
         for d in env.APP_DATAFILES:
             res = run('scp -r {0} {1}/.'.format(d, nrd), quiet=True)
