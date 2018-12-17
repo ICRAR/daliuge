@@ -91,7 +91,7 @@ env.AWS_SUDO_USER = 'ec2-user' # required to install init scripts.
 
 # Alpha-sorted packages per package manager
 env.pkgs = {
-            'YUM_PACKAGES': [
+            'YUM_PACKAGES': [   
                     'wget',
                     'tar',
                     'git',
@@ -169,24 +169,6 @@ def APP_build_cmd():
     build_cmd.append('pip install .')
 
     return ' '.join(build_cmd)
-
-
-def build_APP():
-    """
-    Builds and installs APP into the target virtualenv.
-    """
-    with cd(APP_source_dir()):
-        extra_pkgs = extra_python_packages()
-        if extra_pkgs:
-            virtualenv('pip install %s' % ' '.join(extra_pkgs))
-        develop = False
-        no_doc_dependencies = APP_doc_dependencies()
-        build_cmd = APP_build_cmd()
-        print(build_cmd)
-        if build_cmd != '':
-            virtualenv(build_cmd)
-    success("{0} built and installed".format(env.APP_NAME))
-
 
 def prepare_APP_data_dir():
     """Creates a new APP root directory"""
