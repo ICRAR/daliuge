@@ -39,7 +39,8 @@ from fabric.contrib.console import confirm
 
 # >>> All the settings below are kept in the special fabric environment
 # >>> dictionary called env. Don't change the names, only adjust the
-# >>> values if necessary. The most important one is env.APP.
+# >>> values if necessary. The most important one is env.APP_NAME, which
+# is controlling most of the rest.
 
 # The following variable will define the Application name as well as directory
 # structure and a number of other application specific names.
