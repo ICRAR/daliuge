@@ -9,6 +9,7 @@ dist
 .cache
 .settings
 .pytest_cache
+.vscode
 dlg/version.py
 test/apps/libdynlib_example.so
 test/apps/dynlib_example.o
