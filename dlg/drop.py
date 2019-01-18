@@ -876,13 +876,11 @@ class AbstractDROP(EventFirer):
         '''
         Moves this DROP to the ERROR state.
         '''
-        # Close our writing IO instance.
-        # If written externally, self._wio will have remained None
-        if self._wio:
-            self._wio.close()
 
         if self.status == DROPStates.CANCELLED:
             return
+
+        self._closeWriters()
 
         logger.info("Moving %r to ERROR", self)
         self.status = DROPStates.ERROR

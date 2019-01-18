@@ -229,7 +229,6 @@ class BashShellBase(object):
         BarrierAppDROP.cancel(self)
         try:
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
-            #self.proc.terminate()
         except:
             logger.exception("Error while terminating process %r", self.proc)
 
