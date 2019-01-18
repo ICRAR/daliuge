@@ -214,6 +214,29 @@ class TestDIM(unittest.TestCase):
             a.setCompleted()
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
 
+    def test_doCancel(self):
+
+        def assertGraphStatus(sessionId, expectedStatus):
+            graphStatusByDim = self.dim.getGraphStatus(sessionId)
+            graphStatusByDM = self.dm.getGraphStatus(sessionId)
+            self.assertDictEqual(graphStatusByDim, graphStatusByDM)
+            for dropStatus in graphStatusByDim.values():
+                self.assertEqual(expectedStatus, dropStatus['status'])
+
+        sessionId = 'lala'
+        self.createSessionAndAddTypicalGraph(sessionId, 10)
+        self.dim.deploySession(sessionId)
+        assertGraphStatus(sessionId, DROPStates.INITIALIZED)
+
+        self.dim.cancelSession(sessionId)
+
+        #a, c = [self.dm._sessions[sessionId].drops[x] for x in ('A', 'C')]
+        #data = os.urandom(10)
+        #with droputils.DROPWaiterCtx(self, c, 3):
+        #    a.write(data)
+        #    a.setCompleted()
+        assertGraphStatus(sessionId, DROPStates.CANCELLED)
+
 
 class TestREST(unittest.TestCase):
 
