@@ -369,6 +369,15 @@ class AbstractDROP(EventFirer):
         io = self._rios.pop(descriptor)
         io.close(**kwargs)
 
+    def _closeWriters(self):
+        """
+        Close our writing IO instance.
+        If written externally, self._wio will have remained None
+        """
+        if self._wio:
+            self._wio.close()
+            self._wio = None
+
     def read(self, descriptor, count=4096, **kwargs):
         """
         Reads `count` bytes from the given DROP `descriptor`.
@@ -895,10 +904,7 @@ class AbstractDROP(EventFirer):
         if status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
 
-        # Close our writing IO instance.
-        # If written externally, self._wio will have remained None
-        if self._wio:
-            self._wio.close()
+        self._closeWriters()
 
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
@@ -915,7 +921,8 @@ class AbstractDROP(EventFirer):
         return (self.status == DROPStates.COMPLETED)
 
     def cancel(self):
-        '''Moves this drop to the CANCELLED state'''
+        '''Moves this drop to the CANCELLED state closing any writers we opened'''
+        self._closeWriters()
         self.status = DROPStates.CANCELLED
 
     @property
