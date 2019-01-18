@@ -42,7 +42,7 @@ cache: pip
 
 # Support for coveralls
 before_install:
- - pip install coveralls pytest pytest-cov
+ - pip install -U coveralls pytest pytest-cov
  - pip install -U setuptools
 
 # install daliuge in editable mode
