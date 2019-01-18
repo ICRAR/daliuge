@@ -30,6 +30,7 @@ as a stream of data to the previous/next application.
 import contextlib
 import logging
 import os
+import signal
 import socket
 import struct
 import subprocess
@@ -58,66 +59,6 @@ def mesage_stdouts(prefix, stdout, stderr, enc='utf8'):
     if stderr:
         msg += "\n==STDERR==\n" + utils.b2s(stderr, enc)
     return msg
-
-def run_bash(cmd, app_uid, session_id, inputs, outputs, stdin=None,
-             stdout=subprocess.PIPE):
-    """
-    Runs the given `cmd`. If any `inputs` and/or `outputs` are given
-    (dictionaries of uid:drop elements) they are used to replace any placeholder
-    value in `cmd` with either drop paths or dataURLs.
-
-    `stdin` indicates at file descriptor or file object to use as the standard
-    input of the bash process. If not given no stdin is given to the process.
-
-    Similarly, `stdout` is a file descriptor or file object where the standard
-    output of the process is piped to. If not given it is consumed by this
-    method and potentially logged.
-    """
-
-    # Replace inputs/outputs in command line with paths or data URLs
-    fsInputs = {uid: i for uid,i in inputs.items() if droputils.has_path(i)}
-    fsOutputs = {uid: o for uid,o in outputs.items() if droputils.has_path(o)}
-    cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
-
-    dataURLInputs = {uid: i for uid,i in inputs.items() if not droputils.has_path(i)}
-    dataURLOutputs = {uid: o for uid,o in outputs.items() if not droputils.has_path(o)}
-    cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
-
-    # Pass down daliuge-specific information to the subprocesses as environment variables
-    env = os.environ.copy()
-    env['DLG_UID'] = app_uid
-    env['DLG_SESSION_ID'] = session_id
-
-    # Wrap everything inside bash
-    cmd = ('/bin/bash', '-c', cmd)
-    logger.debug("Command after user creation and wrapping is: %s", cmd)
-
-    start = time.time()
-
-    # Run and wait until it finishes
-    process = subprocess.Popen(cmd,
-                               close_fds=True,
-                               stdin=stdin,
-                               stdout=stdout,
-                               stderr=subprocess.PIPE,
-                               env=env)
-
-    logger.debug("Process launched, waiting now...")
-
-    pstdout, pstderr = process.communicate()
-    if stdout != subprocess.PIPE:
-        pstdout = b"<piped-out>"
-    pcode = process.returncode
-
-    end = time.time()
-    logger.info("Finished in %.3f [s] with exit code %d", (end-start), pcode)
-
-    if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
-        logger.debug(mesage_stdouts("Command finished successfully", pstdout, pstderr))
-    elif pcode != 0:
-        message = "Command didn't finish successfully (exit code %d)" % (pcode,)
-        logger.error(mesage_stdouts(message, pstdout, pstderr))
-        raise Exception(message)
 
 def close_and_remove(fo, fname):
     fo.close()
@@ -208,16 +149,89 @@ class BashShellBase(object):
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
 
+        self.proc = None
+
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
             raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
-    def _run_bash(self, *args, **kwargs):
+    def _run_bash(self, inputs, outputs, stdin=None,
+                 stdout=subprocess.PIPE):
+        """
+        Runs the given `cmd`. If any `inputs` and/or `outputs` are given
+        (dictionaries of uid:drop elements) they are used to replace any placeholder
+        value in `cmd` with either drop paths or dataURLs.
+
+        `stdin` indicates at file descriptor or file object to use as the standard
+        input of the bash process. If not given no stdin is given to the process.
+
+        Similarly, `stdout` is a file descriptor or file object where the standard
+        output of the process is piped to. If not given it is consumed by this
+        method and potentially logged.
+        """
+
         session_id = self._dlg_session.sessionId if self._dlg_session is not None else ''
-        run_bash(self._command, self.uid, session_id, *args, **kwargs)
+        cmd = self._command
+        app_uid = self.uid
+        # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
+
+        # Replace inputs/outputs in command line with paths or data URLs
+        fsInputs = {uid: i for uid,i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid,o in outputs.items() if droputils.has_path(o)}
+        cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
+
+        dataURLInputs = {uid: i for uid,i in inputs.items() if not droputils.has_path(i)}
+        dataURLOutputs = {uid: o for uid,o in outputs.items() if not droputils.has_path(o)}
+        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+
+        # Pass down daliuge-specific information to the subprocesses as environment variables
+        env = os.environ.copy()
+        env['DLG_UID'] = app_uid
+        env['DLG_SESSION_ID'] = session_id
+
+        # Wrap everything inside bash
+        cmd = ('/bin/bash', '-c', cmd)
+        logger.debug("Command after user creation and wrapping is: %s", cmd)
+
+        start = time.time()
+
+        # Run and wait until it finishes
+        process = subprocess.Popen(cmd,
+                                   close_fds=True,
+                                   stdin=stdin,
+                                   stdout=stdout,
+                                   stderr=subprocess.PIPE,
+                                   env=env,
+                                   preexec_fn=os.setsid)
+        self.proc = process
+
+        logger.debug("Process launched, waiting now...")
+
+        pstdout, pstderr = process.communicate()
+        if stdout != subprocess.PIPE:
+            pstdout = b"<piped-out>"
+        pcode = process.returncode
+
+        end = time.time()
+        logger.info("Finished in %.3f [s] with exit code %d", (end-start), pcode)
+
+        if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
+            logger.debug(mesage_stdouts("Command finished successfully", pstdout, pstderr))
+        elif pcode != 0:
+            message = "Command didn't finish successfully (exit code %d)" % (pcode,)
+            logger.error(mesage_stdouts(message, pstdout, pstderr))
+            raise Exception(message)
 
     def dataURL(self):
         return type(self).__name__
+
+    def cancel(self):
+        BarrierAppDROP.cancel(self)
+        try:
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+            #self.proc.terminate()
+        except:
+            logger.exception("Error while terminating process %r", self.proc)
 
 class StreamingInputBashAppBase(BashShellBase, AppDROP):
     """
