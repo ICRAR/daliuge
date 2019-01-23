@@ -33,6 +33,7 @@
 			<button type="button" value="TB" class="btn btn-default"><span class="glyphicon glyphicon-resize-vertical"> </span></button>
 		</div>
 	</div>
+	<button id="cancelBtn" type="button" class="btn btn-default">Cancel Session</button>
 
 	<div style="overflow: auto; max-height: 600px;">
 	<table id="pg-list" class="table table-striped table-condensed" >
@@ -55,6 +56,10 @@
 
 
 <script>
+
+
+var cancelSessionBtn = d3.select('#cancelBtn');
+
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
 
@@ -137,6 +142,25 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	}
 	startStatusQuery(serverUrl, sessionId, selectedNode, f, 1000);
 }
+var cancelSessionBtn = d3.select('#cancelBtn');
+
+function cancel_session(serverUrl, sessionId) {
+
+	console.log("test")
+	var url = serverUrl + '/api';
+	url += '/sessions/' + sessionId + '/cancel';
+	cancelSessionBtn.attr('disabled', null);
+
+	d3.json(url).post(function (error, response){
+		if( error ) {
+			console.error(error)
+			return
+		}
+
+		cancelSessionBtn.attr('disabled', null);
+	});
+}
+
 
 (function(){
 
@@ -148,6 +172,9 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	if( selectedNode == '' ) { selectedNode = null; }
 	if( viewMode == '' ) { viewMode = null; }
 	if( !viewMode || (viewMode != 'list' && viewMode != 'graph') ) { viewMode = 'graph'; }
+
+	// Listeners for the cancelSession button
+	cancelSessionBtn.on('click', function(){ cancel_session(serverUrl, sessionId); } );
 
 	/* Nothing to do, sorry */
 	if( sessionId == null ) {
