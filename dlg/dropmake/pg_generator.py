@@ -1652,7 +1652,7 @@ class LG():
                 from_port = lk.get('fromPort', '__None__')
                 if (stream_output_ports.get(from_port, None) == lk['from']):
                     lk['is_stream'] = True
-                    #print("got stream from %s to %s" % (lk['from'], lk['to']))
+                    logger.debug("Found stream from %s to %s" % (lk['from'], lk['to']))
                 else:
                     lk['is_stream'] = False
                 if ('1' == lk.get('loop_aware', '0')):
@@ -1871,9 +1871,10 @@ class LG():
             gather_oid = tgt_drop['oid']
             if gather_oid not in self._gather_cache:
                 # [self, input_list, output_list]
-                self._gather_cache[gather_oid] = [tgt_drop, [], []]
+                self._gather_cache[gather_oid] = [tgt_drop, [], [], llink]
             tup = self._gather_cache[gather_oid]
             tup[1].append(sdrop)
+            logger.debug('Hit gather, link is from %s to %s' % (llink['from'], llink['to']))
             return
 
         tdrop = tgt_drop
@@ -1905,12 +1906,12 @@ class LG():
                 gather_oid = src_drop['oid']
                 if gather_oid not in self._gather_cache:
                     # [self, input_list, output_list]
-                    self._gather_cache[gather_oid] = [src_drop, [], []]
+                    self._gather_cache[gather_oid] = [src_drop, [], [], llink]
                 tup = self._gather_cache[gather_oid]
                 tup[2].append(tgt_drop)
             else: #sdrop is a data drop
                 if (llink.get('is_stream', False)):
-                    print("link stream connection %s to %s" % (sdrop['oid'], tdrop['oid']))
+                    logger.debug("link stream connection %s to %s" % (sdrop['oid'], tdrop['oid']))
                     sdrop.addStreamingConsumer(tdrop)
                     tdrop.addStreamingInput(sdrop)
                 else:
@@ -1960,6 +1961,8 @@ class LG():
                             continue
                         while (j < (i + 2) * slgn.gather_width and j < tlgn.group.dop * (i + 1)):
                             gather_input_list = self._gather_cache[ga_drop['oid']][1]
+                            #TODO merge this code into the function 
+                            # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
                             for gddrop in gather_input_list:
                                 gddrop.addConsumer(tdrops[j])
                                 tdrops[j].addInput(gddrop)
@@ -2091,12 +2094,20 @@ class LG():
         for _, v in self._gather_cache.items():
             input_list = v[1]
             try:
-                output_drop = v[2][0]
+                output_drop = v[2][0] # "peek" the first element of the output list
             except:
                 continue # the gather hasn't got output drops, just move on
+            llink = v[-1]
             for data_drop in input_list:
-                data_drop.addConsumer(output_drop)
-                output_drop.addInput(data_drop)
+                #TODO merge this code into the function 
+                    # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
+                if (llink.get('is_stream', False)):
+                    logger.debug("link stream connection %s to %s" % (data_drop['oid'], output_drop['oid']))
+                    data_drop.addStreamingConsumer(output_drop)
+                    output_drop.addStreamingInput(data_drop)
+                else:
+                    data_drop.addConsumer(output_drop)
+                    output_drop.addInput(data_drop)
                 #print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info("Unroll progress - links done {0} for session {1}".format(len(self._lg_links), self._session_id))
