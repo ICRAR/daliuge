@@ -319,7 +319,7 @@ def convert_eagle_to_daliuge_json(lg_name):
         with open(new_path, "w") as outfile:
             json.dump(logical_graph, outfile, sort_keys=True, indent=4,)
     except Exception as exp:
-        raise GraphException("Failed to save a pretranslated graph {0}:{1}".format(lg_name, str(exp)))
+        raise Exception("Failed to save a pretranslated graph {0}:{1}".format(lg_name, str(exp)))
     finally:
         pass
 
