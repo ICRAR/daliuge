@@ -179,7 +179,8 @@ class ZeroRPCClient(RPCClientBase):
         req.queue.put(x)
 
     def queue_request(self, client, req):
-        async_result = client.__call__(req.method, *req.args, async=True)
+        # Pass "async" in a dictionary; 3.7+ fails because it's a keyword
+        async_result = client.__call__(req.method, *req.args, **{'async': True})
         async_result.rawlink(lambda x: self.process_response(req, x))
 
     def get_rpc_client(self, hostname, port):
