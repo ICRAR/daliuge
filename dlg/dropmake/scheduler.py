@@ -1889,6 +1889,7 @@ class DAGUtil(object):
         """
         key_dict = dict() # {oid : node_id}
         drop_dict = dict() # {oid : drop}
+        out_bound_keys = ['streamingConsumers', 'consumers', 'outputs']
         for i, drop in enumerate(drop_list):
             oid = drop['oid']
             key_dict[oid] = i + 1 # starting from 1
@@ -1899,14 +1900,14 @@ class DAGUtil(object):
             myk = i + 1
             tt = drop['type']
             if ('plain' == tt):
-                if (drop['nm'] == 'StreamNull'):
-                    obk = 'streamingConsumers'
-                else:
-                    obk = 'consumers' # outbound keyword
+                # if (drop['nm'] == 'StreamNull'):
+                #     obk = 'streamingConsumers'
+                # else:
+                #     obk = 'consumers' # outbound keyword
                 tw = 0
                 dtp = 0
             elif ('app' == tt):
-                obk = 'outputs'
+                #obk = 'outputs'
                 tw = int(drop['tw'])
                 dtp = 1
             else:
@@ -1919,12 +1920,13 @@ class DAGUtil(object):
             else:
                 G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp,
                 num_cpus=num_cpus)
-            if obk in drop:
-                for oup in drop[obk]:
-                    if ('plain' == tt):
-                        G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
-                    elif ('app' == tt):
-                        G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
+            for obk in out_bound_keys:
+                if obk in drop:
+                    for oup in drop[obk]:
+                        if ('plain' == tt):
+                            G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
+                        elif ('app' == tt):
+                            G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
 
         if (fake_super_root):
             super_root = dropdict({'oid':'-92', 'type':'plain', 'storage':'null'})

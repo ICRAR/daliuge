@@ -51,10 +51,11 @@ class EvtConsumer(object):
     object when consuming a DROP. Used throughout the tests as a barrier to wait
     until all DROPs of a given graph have executed.
     '''
-    def __init__(self, evt):
+    def __init__(self, evt, expected_states=[]):
         self._evt = evt
+        self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
     def handleEvent(self, e):
-        if e.status in (DROPStates.COMPLETED, DROPStates.ERROR):
+        if e.status in self._expected_states:
             self._evt.set()
 
 
@@ -73,15 +74,16 @@ class DROPWaiterCtx(object):
          a.setCompleted()
     """
 
-    def __init__(self, test, drops, timeout=1):
+    def __init__(self, test, drops, timeout=1, expected_states=[]):
         self._drops = listify(drops)
+        self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
         self._test = test
         self._timeout = timeout
         self._evts = []
     def __enter__(self):
         for drop in self._drops:
             evt = threading.Event()
-            drop.subscribe(EvtConsumer(evt), 'status')
+            drop.subscribe(EvtConsumer(evt, expected_states=self._expected_states), 'status')
             self._evts.append(evt)
         return self
     def __exit__(self, typ, value, tb):
