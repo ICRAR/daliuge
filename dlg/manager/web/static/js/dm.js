@@ -435,3 +435,61 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 	}
 	d3.timer(updateStates);
 }
+
+/**
+ * Determine, based on the numerical status, if the associated session can be cancelled.
+ *
+ * @param status  the numerical status of the associated session.
+ * @returns {boolean}  true if it can be cancelled and false otherwise.
+ */
+function does_status_allow_cancel(status) {
+    // During RUNNING we can cancel
+    if (status == 3) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Cancel the given sessionId using the provided information.
+ *
+ * @param serverUrl to use for the REST API
+ * @param sessionId to cancel
+ * @param cancelSessionBtn that initiated the cancel
+ */
+function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
+
+    var url = serverUrl + '/api';
+    url += '/sessions/' + sessionId;
+
+    d3.json(url, function(error, sessionInfo) {
+
+        if (error) {
+            //bootbox.alert(error);
+            console.error(error);
+            return;
+        }
+
+        if (does_status_allow_cancel(sessionInfo['status'])) {
+            bootbox.alert("Cdoes_state_all_cancel was true");
+            url += '/cancel';
+            cancelSessionBtn.attr('disabled', null);
+
+            d3.json(url).post(function (error, response) {
+                // We don't expect a response so ignoring it.
+
+                if( error ) {
+                    console.error(error)
+                    return
+                }
+
+                cancelSessionBtn.attr('disabled', null);
+            });
+
+        } else {
+            // display an error
+            bootbox.alert("Can't cancel " + sessionId + " unless it is RUNNING.");
+        }
+    })
+}
