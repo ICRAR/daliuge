@@ -137,6 +137,11 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		if( selectedNode ) { url += '&node=' + selectedNode; }
 		return url;
 	};
+
+	var cancelBtnSessionId = function(s) {
+		return "cancelBtn" + s;
+	};
+
 	d3.json(url, function (error, response){
 		if( error ) {
 			console.error(error)
@@ -148,6 +153,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		sessions.sort(function comp(a,b) {
 			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
 		});
+		console.log(sessions[0]);
 		var rows = tbodyEl.selectAll('tr').data(sessions);
 		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
@@ -173,6 +179,20 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		    .append('span').classed('glyphicon glyphicon-share-alt', true)
 		statusCells.select('a').attr('href', sessionLink)
 		statusCells.exit().remove()
+
+        var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
+		actionCells.enter().append('td').classed('actions', true)
+            .append("button").attr('id', cancelBtnSessionId)
+            .attr('type', 'button').attr('class', 'btn btn-default').text('Cancel')
+		actionCells.select('button')
+		actionCells.exit().remove()
+
+		sessions.forEach(function(session) {
+			console.log(session)
+			var cancelSessionBtn = d3.select("#cancelBtn" + session.sessionId);
+			// Listeners for the cancelSession button
+			cancelSessionBtn.on('click', function() { cancel_session(serverUrl, session.sessionId, cancelSessionBtn); } );
+		})
 
 		refreshBtn.attr('disabled', null);
 
