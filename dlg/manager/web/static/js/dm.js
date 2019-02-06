@@ -139,8 +139,13 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	};
 
 	var cancelBtnSessionId = function(s) {
-		return "cancelBtn" + s;
+		console.log(hashCode(s))
+		return "cancelBtn" + hashCode(s);
 	};
+
+	var hashCode = function(s){
+		return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+	}
 
 	d3.json(url, function (error, response){
 		if( error ) {
@@ -189,7 +194,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		sessions.forEach(function(session) {
 			console.log(session)
-			var cancelSessionBtn = d3.select("#cancelBtn" + session.sessionId);
+			var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
 			// Listeners for the cancelSession button
 			cancelSessionBtn.on('click', function() { cancel_session(serverUrl, session.sessionId, cancelSessionBtn); } );
 		})
@@ -492,7 +497,7 @@ function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
         }
 
         if (does_status_allow_cancel(sessionInfo['status'])) {
-            bootbox.alert("Cdoes_state_all_cancel was true");
+            bootbox.alert("Cancel of " + sessionId + " in progress.");
             url += '/cancel';
             cancelSessionBtn.attr('disabled', null);
 
