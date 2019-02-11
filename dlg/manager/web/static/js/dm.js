@@ -469,7 +469,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
  */
 function does_status_allow_cancel(status) {
     // During RUNNING we can cancel
-    if (status == 3) {
+    if (uniqueSessionStatus(status) == 3) {
         return true;
     } else {
         return false;
