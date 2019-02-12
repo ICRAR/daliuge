@@ -103,9 +103,20 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 		orientButtons.attr("disabled", null);
 	});
 
+	// This works assuming that the status list comes in the same order
+	// that the graph was created, which is true
+	// Anyway, we could double-check in the future
 	var delay = 1000;
-	var f = drawGraphForDrops.bind(null, g, drawGraph);
-	startStatusQuery(serverUrl, sessionId, selectedNode, f, 1000);
+	var graph_update_handler = drawGraphForDrops.bind(null, g, drawGraph);
+	var status_update_handler = function(statuses) {
+		d3.selectAll('g.nodes').selectAll('g.node')
+		.data(statuses).attr("class", function(s) {
+			return "node " + get_status_name(s);
+		});
+	};
+
+	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
+	                 status_update_handler, 1000);
 }
 
 function view_as_list(sessionId, selectedNode, serverUrl) {
@@ -114,7 +125,7 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	d3.select('#graph-orientation-buttons').remove();
 	d3.select('#pg-graph').remove();
 
-	var f = function(oids, dropSpecs) {
+	var graph_update_handler = function(oids, dropSpecs) {
 
 		var dropSpecList = [];
 		for(var idx in oids) {
@@ -139,9 +150,12 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 		uidCells.enter().append('td').classed('status', true).text(String)
 		uidCells.text(String)
 		uidCells.exit().remove()
+	};
 
-	}
-	startStatusQuery(serverUrl, sessionId, selectedNode, f, 1000);
+	var status_update_handler = function(statuses) { };
+
+	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
+	                 status_update_handler, 1000);
 }
 
 (function(){
