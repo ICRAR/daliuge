@@ -28,6 +28,7 @@
 
 	<div class="btn-toolbar" role="toolbar">
 		<div class="btn-group" role="group" id="view-mode-buttons">
+			<button type="button" value="progress-bar" class="btn btn-default">Progress Bar</button>
 			<button type="button" value="graph" class="btn btn-default">Graph</button>
 			<button type="button" value="list" class="btn btn-default">List</button>
 		</div>
@@ -56,15 +57,72 @@
 	<svg><g/></svg>
 </div>
 
+<div class="progress" id="pg-progress-bar">
+	<svg></svg>
+</div>
 
 <script>
 
+function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
+	d3.select('#graph-orientation-buttons').remove();
+	d3.select('#pg-list').remove();
+	d3.select('#pg-graph').remove();
+
+	const width = 1000;
+	var graph_update_handler = function(oids, dropSpecs) {};
+
+	var status_update_handler = function(statuses)
+	{
+
+		var states = ['completed', 'finished',
+		              'running', 'writing',
+		              'error', 'expired', 'deleted',
+		              'cancelled',
+		              'not_run', 'initialized'];
+		var states_idx = d3.scale.ordinal().domain(states).rangePoints([0, states.length - 1]);
+
+		var scale = function(x) {
+			return Math.round(x * width / statuses.length);
+		};
+
+		/* Get total and per-status counts, then normalize to 0-100% */
+		var total = statuses.length;
+		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		statuses.reduce(function(status_counts, s) {
+			var idx = states_idx(get_status_name(s));
+			status_counts[idx] = status_counts[idx] + 1;
+			return status_counts;
+		}, status_counts);
+
+		for (var cumsum = [0], i = 0; i < status_counts.length - 1; i++)
+			cumsum[i + 1] = cumsum[i] + status_counts[i];
+
+		status_counts = status_counts.map(function(x, i) {
+			return [scale(cumsum[i]), scale(x)];
+		});
+
+		var rects = d3.select('#pg-progress-bar svg').selectAll('rect').data(status_counts);
+		rects.enter().append('rect')
+		     .style('height', 20).style('width', 0).style('x', 0).style('y', 20)
+		     .transition().delay(0).duration(500)
+		     .style('x', function(d) { return d[0] + 20; })
+		     .style('width', function(d) { return d[1]; })
+		     .attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+		rects.style('x', function(d) { return d[0] + 20; })
+		     .style('width', function(d) { return d[1]; })
+		     .attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+		rects.exit().remove();
+	}
+	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
+	                 status_update_handler, 1000);
+}
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
 
 	/* Remove the list-related stuff */
 	d3.select('#pg-list').remove()
+	d3.select('#pg-progress-bar').remove();
 
 	// Set up zoom support
 	var svg = d3.select("svg");
@@ -123,6 +181,7 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	/* Remove the graph-related stuff */
 	d3.select('#graph-orientation-buttons').remove();
 	d3.select('#pg-graph').remove();
+	d3.select('#pg-progress-bar').remove();
 
 	var graph_update_handler = function(oids, dropSpecs) {
 
@@ -164,7 +223,9 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	if( sessionId == '' ) { sessionId = null; }
 	if( selectedNode == '' ) { selectedNode = null; }
 	if( viewMode == '' ) { viewMode = null; }
-	if( !viewMode || (viewMode != 'list' && viewMode != 'graph') ) { viewMode = 'graph'; }
+	if( !viewMode || (viewMode != 'list' && viewMode != 'graph' && viewMode != 'progress-bar') ) {
+		viewMode = 'progress-bar';
+	}
 
 	// Listeners for the cancelSession button
 	cancelSessionBtn.on('click', function(){ cancel_session(serverUrl, sessionId, cancelSessionBtn); } );
@@ -203,7 +264,10 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	});
 
 	var serverUrl = '{{!serverUrl}}';
-	if( viewMode == 'list' ) {
+	if( viewMode == 'progress-bar' ) {
+		view_as_progress_bar(sessionId, selectedNode, serverUrl);
+	}
+	else if( viewMode == 'list' ) {
 		view_as_list(sessionId, selectedNode, serverUrl);
 	}
 	else {
