@@ -410,7 +410,7 @@ function _addEdge(g, fromOid, toOid) {
 function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 
 	// Support for node query forwarding
-	url = serverUrl + '/api';
+	var url = serverUrl + '/api';
 	if( selectedNode ) {
 		url += '/nodes/' + selectedNode;
 	}
