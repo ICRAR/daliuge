@@ -6,6 +6,9 @@
 	<title>Session '{{sessionId}}'</title>
 	<script src="/static/js/d3/d3.v3.min.js"></script>
 	<script src="/static/js/d3/dagre-d3.min.js"></script>
+	<script src="/static/js/jquery-1.11.3.min.js"></script>
+	<script src="/static/js/bootstrap.min.js"></script>
+	<script src="/static/js/bootbox.min.js"></script>
 	<script src="/static/js/dm.js"></script>
 	<link  href="/static/css/session.css" rel="stylesheet" type="text/css"/>
 	<link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
@@ -33,6 +36,7 @@
 			<button type="button" value="TB" class="btn btn-default"><span class="glyphicon glyphicon-resize-vertical"> </span></button>
 		</div>
 	</div>
+	<button id="cancelBtn" type="button" class="btn btn-default">Cancel Session</button>
 
 	<div style="overflow: auto; max-height: 600px;">
 	<table id="pg-list" class="table table-striped table-condensed" >
@@ -55,6 +59,8 @@
 
 
 <script>
+
+
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
 
@@ -144,10 +150,15 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	var sessionId = '{{sessionId}}';
 	var selectedNode = '{{selectedNode}}';
 	var viewMode = '{{viewMode}}';
+	var cancelSessionBtn = d3.select('#cancelBtn');
+
 	if( sessionId == '' ) { sessionId = null; }
 	if( selectedNode == '' ) { selectedNode = null; }
 	if( viewMode == '' ) { viewMode = null; }
 	if( !viewMode || (viewMode != 'list' && viewMode != 'graph') ) { viewMode = 'graph'; }
+
+	// Listeners for the cancelSession button
+	cancelSessionBtn.on('click', function(){ cancel_session(serverUrl, sessionId, cancelSessionBtn); } );
 
 	/* Nothing to do, sorry */
 	if( sessionId == null ) {

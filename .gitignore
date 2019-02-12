@@ -13,3 +13,5 @@ dist
 dlg/version.py
 test/apps/libdynlib_example.so
 test/apps/dynlib_example.o
+.idea
+daliuge.iml
