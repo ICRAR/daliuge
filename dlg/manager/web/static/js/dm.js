@@ -137,6 +137,16 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		if( selectedNode ) { url += '&node=' + selectedNode; }
 		return url;
 	};
+
+	var cancelBtnSessionId = function(s) {
+		console.log(hashCode(s))
+		return "cancelBtn" + hashCode(s);
+	};
+
+	var hashCode = function(s){
+		return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+	}
+
 	d3.json(url, function (error, response){
 		if( error ) {
 			console.error(error)
@@ -148,6 +158,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		sessions.sort(function comp(a,b) {
 			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
 		});
+		console.log(sessions[0]);
 		var rows = tbodyEl.selectAll('tr').data(sessions);
 		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
@@ -173,6 +184,20 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		    .append('span').classed('glyphicon glyphicon-share-alt', true)
 		statusCells.select('a').attr('href', sessionLink)
 		statusCells.exit().remove()
+
+        var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
+		actionCells.enter().append('td').classed('actions', true)
+            .append("button").attr('id', cancelBtnSessionId)
+            .attr('type', 'button').attr('class', 'btn btn-default').text('Cancel')
+		actionCells.select('button')
+		actionCells.exit().remove()
+
+		sessions.forEach(function(session) {
+			console.log(session)
+			var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
+			// Listeners for the cancelSession button
+			cancelSessionBtn.on('click', function() { cancel_session(serverUrl, session.sessionId, cancelSessionBtn); } );
+		})
 
 		refreshBtn.attr('disabled', null);
 
@@ -434,4 +459,62 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 		return true;
 	}
 	d3.timer(updateStates);
+}
+
+/**
+ * Determine, based on the numerical status, if the associated session can be cancelled.
+ *
+ * @param status  the numerical status of the associated session.
+ * @returns {boolean}  true if it can be cancelled and false otherwise.
+ */
+function does_status_allow_cancel(status) {
+    // During RUNNING we can cancel
+    if (uniqueSessionStatus(status) == 3) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Cancel the given sessionId using the provided information.
+ *
+ * @param serverUrl to use for the REST API
+ * @param sessionId to cancel
+ * @param cancelSessionBtn that initiated the cancel
+ */
+function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
+
+    var url = serverUrl + '/api';
+    url += '/sessions/' + sessionId;
+
+    d3.json(url, function(error, sessionInfo) {
+
+        if (error) {
+            //bootbox.alert(error);
+            console.error(error);
+            return;
+        }
+
+        if (does_status_allow_cancel(sessionInfo['status'])) {
+            bootbox.alert("Cancel of " + sessionId + " in progress.");
+            url += '/cancel';
+            cancelSessionBtn.attr('disabled', null);
+
+            d3.json(url).post(function (error, response) {
+                // We don't expect a response so ignoring it.
+
+                if( error ) {
+                    console.error(error)
+                    return
+                }
+
+                cancelSessionBtn.attr('disabled', null);
+            });
+
+        } else {
+            // display an error
+            bootbox.alert("Can't cancel " + sessionId + " unless it is RUNNING.");
+        }
+    })
 }
