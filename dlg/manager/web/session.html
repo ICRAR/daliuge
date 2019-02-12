@@ -43,7 +43,6 @@
 		<thead>
 			<tr>
 				<th>OID</th>
-				<th>UID</th>
 				<th>Status</th>
 			</tr>
 		</thead>
@@ -140,19 +139,15 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 		oidCells.enter().append('td').classed('oid', true).text(String)
 		oidCells.text(String)
 		oidCells.exit().remove()
+	};
 
-		var uidCells = rows.selectAll('td.uid').data(function values(d) { return (d.uid ? [d.uid] : ['']); });
-		uidCells.enter().append('td').classed('uid', true).text(String)
-		uidCells.text(String)
-		uidCells.exit().remove()
-
-		var uidCells = rows.selectAll('td.status').data(function values(d) { return (d.status ? [d.status] : ['']); });
+	var status_update_handler = function (statuses) {
+		var rows = d3.select('#pg-list tbody').selectAll('tr').data(statuses);
+		var uidCells = rows.selectAll('td.status').data(function values(s) { return [get_status_name(s)]; });
 		uidCells.enter().append('td').classed('status', true).text(String)
 		uidCells.text(String)
 		uidCells.exit().remove()
 	};
-
-	var status_update_handler = function(statuses) { };
 
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
 	                 status_update_handler, 1000);
