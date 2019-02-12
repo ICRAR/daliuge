@@ -296,7 +296,8 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
  * scheduled anymore, and #startGraphStatusUpdates is called instead.
  *
  */
-function startStatusQuery(serverUrl, sessionId, selectedNode, handler, delay) {
+function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
+                          status_update_handler, delay) {
 
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
@@ -322,7 +323,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, handler, delay) {
 			if( oids.length > 0 ) {
 				// Get sorted oids
 				oids.sort();
-				handler(oids, doSpecs);
+				graph_update_handler(oids, doSpecs);
 			}
 
 			// During PRISITINE and BUILDING we need to update the graph structure
@@ -331,7 +332,8 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, handler, delay) {
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if (status == 3 || status == 4 || status == 5) {
-				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay);
+				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
+				                        status_update_handler);
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
@@ -407,7 +409,8 @@ function _addEdge(g, fromOid, toOid) {
  * graph from the REST server, updating the current display to show the correct
  * colors
  */
-function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
+function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
+                                 status_update_handler) {
 
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
@@ -433,10 +436,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay) {
 			// This works assuming that the status list comes in the same order
 			// that the graph was created, which is true
 			// Anyway, we could double-check in the future
-			d3.selectAll('g.nodes').selectAll('g.node')
-			.data(statuses).attr("class", function(s) {
-				return "node " + get_status_name(s);
-			});
+			status_update_handler(statuses);
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				var cur_status = get_status_name(curVal);
