@@ -137,7 +137,7 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''
     args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
             str(max_threads), '--no-dlm',
             '--event-listeners', event_listeners]
-    return tool.start_process('nm', args)
+    return cmdline.dlgNM(optparse.OptionParser(), args)
 
 def start_dim(node_list, log_dir, logv=1):
     """
