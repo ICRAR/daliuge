@@ -403,7 +403,7 @@ def main():
                                          event_listeners=options.event_listeners)
         else:
 
-            comm.Split(mpi4py.MPI_UNDEFINED, rank)
+            comm.Split(MPI.UNDEFINED, rank)
 
             # 'no_nms' are known not to be NMs
             no_nms = [origin_ip, 'None']
@@ -461,7 +461,7 @@ def main():
 
     elif (options.num_islands > 1):
         if (rank == 0):
-            comm.Split(mpi4py.MPI_UNDEFINED, 0)
+            comm.Split(MPI.UNDEFINED, 0)
             # master manager
             # 1. use ip_adds to produce the physical graph
             ip_list = []
@@ -545,7 +545,7 @@ def main():
             dim_ranks = comm.bcast(dim_ranks, root=0)
             logger.debug("Receiving dim_ranks = {0}, my rank is {1}".format(dim_ranks, rank))
             if (rank in dim_ranks):
-                comm.Split(mpi4py.MPI_UNDEFINED, 0)
+                comm.Split(MPI.UNDEFINED, 0)
                 logger.debug("Rank {0} is a DIM preparing for receiving".format(rank))
                 # island manager
                 # get a list of nodes that are its children from rank 0 (MM)
