@@ -2225,7 +2225,7 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
 
     elif algo == ALGO_MIN_NUM_PARTS:
         time_greedy = 1 - time_greedy / 100.0 # assuming between 1 to 100
-        pgt =  MinNumPartsPGTP(pgt, deadline, num_partitions, partition_label, max_dop, merge_parts=could_merge, optimistic_factor=time_greedy)
+        pgt =  MinNumPartsPGTP(pgt, deadline, num_partitions, partition_label, max_cpu, merge_parts=could_merge, optimistic_factor=time_greedy)
 
     elif algo == ALGO_PSO:
         pgt = PSOPGTP(pgt, partition_label, max_dop, deadline=deadline, topk=topk, swarm_size=swarm_size, merge_parts=could_merge)
