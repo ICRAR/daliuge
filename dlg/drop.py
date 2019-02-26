@@ -692,6 +692,13 @@ class AbstractDROP(EventFirer):
                 except:
                     self._parent = prevParent
 
+    def get_consumers_nodes(self):
+        """
+        Gets the physical node address(s) of the consumer of this drop.
+        """
+        return [cons.node for cons in self._consumers] +\
+               [cons.node for cons in self._streamingConsumers]
+
     @property
     def consumers(self):
         """
