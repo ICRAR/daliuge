@@ -357,3 +357,47 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
+
+
+    def test_runGraphSeveralDropsPerDM_with_get_consumer_nodes(self):
+        """
+        A test that creates several DROPs in two different DMs and runs
+        the graph. Checks the node address(s) of the consumers in the second DM.
+        The graph looks like this
+
+        DM #1                  DM #2
+        ===================    ================
+        | A --> C --> D --|----|-| --> E      |
+        |                 |    | |
+        |                 |    | | --> F      |
+        ===================    ================
+
+        :see: `self.test_runGraphSeveralDropsPerDM_with_get_consumer_nodes`
+        """
+        ip_addr_1 = '8.8.8.8'
+        ip_addr_2 = '8.8.8.9'
+
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
+
+        sessionId = 's1'
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
+              {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp", "consumers":["D"]},
+              {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
+        g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "node": ip_addr_1},
+              {"oid":"F", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "node": ip_addr_2}]
+
+        rels = [DROPRel('D', DROPLinkType.INPUT, 'E'),
+                DROPRel('D', DROPLinkType.INPUT, 'F')]
+        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
+        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+
+        self.assertEqual(3, len(dm1._sessions[sessionId].drops))
+        self.assertEqual(2, len(dm2._sessions[sessionId].drops))
+
+        cons_nodes = dm1._sessions[sessionId].drops['D'].get_consumers_nodes()
+
+        self.assertTrue(ip_addr_1 in cons_nodes)
+        self.assertTrue(ip_addr_2 in cons_nodes)
+
+        dm1.destroySession(sessionId)
+        dm2.destroySession(sessionId)
