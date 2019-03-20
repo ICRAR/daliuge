@@ -61,6 +61,7 @@ def gen_mysarkar_pgtp(lgfname, pgt_dir, num_islands=2,
     re_dict = pgt.result()
     re_dict['unroll_time'] = '%.3f' % (unroll_ett - stt)
     re_dict['schedule_time'] = '%.3f' % (schedule_ett - unroll_ett)
+    re_dict['num_drops'] = '%d' % len(drop_list)
     if (print_result):
         part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in re_dict.items()])
         print(part_info)
