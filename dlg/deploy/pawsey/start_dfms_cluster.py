@@ -397,8 +397,7 @@ def main():
     if (options.num_islands == 1):
         nm_proc = None
         if (rank != 0):
-            nms_comm = comm.Split(1, rank)
-            set_nms_comm(nms_comm)
+            set_nms_comm(MPI.COMM_SELF)
             if (run_proxy and rank == 1):
                 # Wait until the Island Manager is open
                 if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
@@ -413,8 +412,6 @@ def main():
                                          host=None if options.all_nics else origin_ip,
                                          event_listeners=options.event_listeners)
         else:
-
-            comm.Split(MPI.UNDEFINED, rank)
 
             # 'no_nms' are known not to be NMs
             no_nms = [origin_ip, 'None']
@@ -476,7 +473,6 @@ def main():
 
     elif (options.num_islands > 1):
         if (rank == 0):
-            comm.Split(MPI.UNDEFINED, 0)
             # master manager
             # 1. use ip_adds to produce the physical graph
             ip_list = []
@@ -560,7 +556,6 @@ def main():
             dim_ranks = comm.bcast(dim_ranks, root=0)
             logger.debug("Receiving dim_ranks = {0}, my rank is {1}".format(dim_ranks, rank))
             if (rank in dim_ranks):
-                comm.Split(MPI.UNDEFINED, 0)
                 logger.debug("Rank {0} is a DIM preparing for receiving".format(rank))
                 # island manager
                 # get a list of nodes that are its children from rank 0 (MM)
@@ -571,8 +566,7 @@ def main():
                 start_dim(nm_list, log_dir, logv=logv)
             else:
                 # node manager
-                nms_comm = comm.Split(1, rank)
-                set_nms_comm(nms_comm)
+                set_nms_comm(MPI.COMM_SELF)
                 logger.info("Starting node manager on host {0}".format(origin_ip))
                 start_node_mgr(log_dir, logv=logv,
                 max_threads=options.max_threads,
