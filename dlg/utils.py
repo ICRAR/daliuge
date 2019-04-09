@@ -26,6 +26,7 @@ Module containing miscellaneous utility classes and functions.
 import contextlib
 import errno
 import functools
+import importlib
 import json
 import logging
 import math
@@ -424,6 +425,13 @@ def object_tracking(name):
 
     track_current_drop.tlocal = current_object
     return track_current_drop
+
+def get_symbol(name):
+    """Gets the global symbol ``name``, which is an "absolute path" to a python
+    name in the form of ``pkg.subpkg.subpkg.module.name``"""
+    parts = name.split('.')
+    module = importlib.import_module('.'.join(parts[:-1]))
+    return getattr(module, parts[-1])
 
 class ZlibCompressedStream(object):
     """
