@@ -255,6 +255,13 @@ def set_nms_comm(comm):
     # HACK: applications needing an MPI communicator should read this
     dlg.mpi_comm = comm
 
+def modify_pg(pgt, modificator):
+    parts = modificator.split(',')
+    func = utils.get_symbol(parts[0])
+    args = [x for x in parts[1:] if '=' not in x]
+    kwargs = {k: v for x in parts[1:] for k, v in x.split('=')}
+    return func(pgt, *args, **kwargs)
+
 def main():
 
     parser = optparse.OptionParser()
@@ -316,6 +323,10 @@ def main():
 
     parser.add_option('-M', "--nm-mpi-communicators", action="store_true",
                       help="Create an MPI communicator including only the node manager ranks")
+
+    parser.add_option('--pg-modificators',
+                      help=('A colon-separated list of python functions that modify a PG before submission. '
+                            'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'))
 
     (options, _) = parser.parse_args()
 
@@ -422,6 +433,10 @@ def main():
                     del unrolled
                 else:
                     pgt = json.loads(options.physical_graph)
+
+            # modify the PG if necessary
+            for modificator in options.pg_modificators.split(':'):
+                pgt = modify_pg(pgt, modificator)
 
             # Check that which NMs are up and use only those form now on
             node_mgrs = check_hosts(node_mgrs, NODE_DEFAULT_REST_PORT,
