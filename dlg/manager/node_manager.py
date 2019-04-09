@@ -26,7 +26,6 @@ thus represents the bottom of the DROP management hierarchy.
 
 import abc
 import collections
-import importlib
 import logging
 import multiprocessing.pool
 import os
@@ -85,13 +84,7 @@ def _load(obj, callable_attr):
     python module only if it has the indicated attribute and it is callable.
     """
     if isinstance(obj, six.string_types):
-        try:
-            parts = obj.split('.')
-            module = importlib.import_module('.'.join(parts[:-1]))
-        except:
-            logger.exception('Creating the error listener')
-            raise
-        obj = getattr(module, parts[-1])()
+        obj = utils.get_symbol(obj)()
     if not hasattr(obj, callable_attr) or not callable(getattr(obj, callable_attr)):
         raise ValueError("%r doesn't contain an %s attribute that can be called" % (obj, callable_attr))
     return obj
