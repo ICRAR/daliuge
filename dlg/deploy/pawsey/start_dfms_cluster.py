@@ -258,8 +258,8 @@ def set_nms_comm(comm):
 def modify_pg(pgt, modifier):
     parts = modifier.split(',')
     func = utils.get_symbol(parts[0])
-    args = [x for x in parts[1:] if '=' not in x]
-    kwargs = {k: v for x in parts[1:] for k, v in x.split('=')}
+    args = list(filter(lambda x: '=' not in x, parts[1:]))
+    kwargs = dict(map(lambda x: x.split('='), filter(lambda x: '=' in x, parts[1:])))
     return func(pgt, *args, **kwargs)
 
 def main():
@@ -433,7 +433,7 @@ def main():
 
             # modify the PG if necessary
             for modifier in options.pg_modifiers.split(':'):
-                pgt = modify_pg(pgt, modifier)
+                modify_pg(pgt, modifier)
 
             # Check that which NMs are up and use only those form now on
             node_mgrs = check_hosts(node_mgrs, NODE_DEFAULT_REST_PORT,
