@@ -184,11 +184,6 @@ elif sys.version_info[:2] <= (3, 4):
 else:
     install_requires.append("zeroconf >= 0.19.1")
 
-# Packages that need to be installed from somewhere different than PyPI
-dependency_links = [
-    # None at the moment
-]
-
 # Extra requirements that are not needed by your every day daliuge installation
 extra_requires = {
     # spead is required only for a specific app and its test, which we
@@ -232,7 +227,6 @@ setup(
         'test.apps': ['dynlib_example.c']
       },
       install_requires=install_requires,
-      dependency_links=dependency_links,
       extras_require=extra_requires,
       test_suite="test",
       entry_points={

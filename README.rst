@@ -33,11 +33,17 @@ Installation
 
 To get the latest stable version::
 
- pip install --process-dependency-links daliuge
+ pip install daliuge
 
-Otherwise clone this repository, go inside,
-and run either ``pip install --process-dependency-links .`` (preferred)
-or ``python setup.py install``.
+You can also install directly from GitHub::
+
+ pip install git+https://github.com/ICRAR/daliuge
+
+Or if you plan to develop |daliuge|::
+
+ git clone https://github.com/ICRAR/daliuge
+ cd daliuge
+ pip install -e .
 
 .. |daliuge| replace:: DALiuGE
 .. _ICRAR: http://www.icrar.org
