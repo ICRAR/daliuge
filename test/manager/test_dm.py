@@ -401,3 +401,42 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
+
+    def test_run_streaming_consumer_remotely(self):
+        """
+        A test that checks that a streaming consumer works correctly across
+        node managers when its input is in a different node, like this:
+
+        DM #1                 DM #2
+        ==================    ==============
+        | A --> B --> C -|----|--> D --> E |
+        ==================    ==============
+
+        Here B is anormal application and D is a streaming consumer of C.
+        We use A and E to compare that all data flows correctly.
+        """
+
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"},
+              {"oid":"B", "type":"app", "app": "dlg.apps.simple.CopyApp", "inputs": ["A"], "outputs":["C"]},
+              {"oid":"C", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"D", "type":"app", "app":"dlg.apps.crc.CRCStreamApp", "outputs": ["E"]},
+              {"oid":"E", "type":"plain", "storage": "memory"}]
+        rels = [DROPRel('C', DROPLinkType.STREAMING_INPUT, 'D')]
+        a_data = os.urandom(32)
+        e_data = six.b(str(crc32(a_data, 0)))
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid='E')
+
+    def test_run_streaming_consumer_remotely2(self):
+        """
+        Like above, but C is hostd by DM #2.
+        """
+
+        g1 = [{"oid":"A", "type":"plain", "storage": "memory"},
+              {"oid":"B", "type":"app", "app": "dlg.apps.simple.CopyApp", "inputs": ["A"]}]
+        g2 = [{"oid":"C", "type":"plain", "storage": "memory"},
+              {"oid":"D", "type":"app", "app":"dlg.apps.crc.CRCStreamApp", "streamingInputs": ["C"], "outputs": ["E"]},
+              {"oid":"E", "type":"plain", "storage": "memory"}]
+        rels = [DROPRel('C', DROPLinkType.OUTPUT, 'B')]
+        a_data = os.urandom(32)
+        e_data = six.b(str(crc32(a_data, 0)))
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid='E')
