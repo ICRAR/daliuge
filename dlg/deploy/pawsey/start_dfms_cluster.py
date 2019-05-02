@@ -508,6 +508,10 @@ def main():
             else:
                 pgt = json.loads(options.physical_graph)
 
+            # modify the PG if necessary
+            for modifier in options.pg_modifiers.split(':'):
+                modify_pg(pgt, modifier)
+
             #logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
             node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT,
                                     check_with_session=options.check_with_session,
