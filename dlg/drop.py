@@ -846,12 +846,6 @@ class AbstractDROP(EventFirer):
         wait until this DROP has been moved to the COMPLETED state.
         """
 
-        # Consumers have a "consume" method that gets invoked when
-        # this DROP moves to COMPLETED
-        if not hasattr(streamingConsumer, 'dropCompleted') or not hasattr(streamingConsumer, 'dataWritten'):
-            raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
-                                               "The streaming consumer doesn't have a 'dropCompleted' and/or 'dataWritten' method")
-
         # An object cannot be a normal and streaming streamingConsumer at the same time,
         # see the comment in the __init__ method
         scuid = streamingConsumer.uid
