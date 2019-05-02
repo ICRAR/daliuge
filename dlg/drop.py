@@ -1479,7 +1479,12 @@ class AppDROP(ContainerDROP):
         properties are set to their correct values correctly before invoking
         this method.
         """
-        logger.debug("Moving %r to %s", self, "FINISHED" if self._execStatus is AppDROPStates.FINISHED else "ERROR")
+        is_error = self._execStatus == AppDROPStates.ERROR
+        if is_error:
+            self.status = DROPStates.ERROR
+        else:
+            self.status = DROPStates.COMPLETED
+        logger.debug("Moving %r to %s", self, "FINISHED" if not is_error else "ERROR")
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
     def cancel(self):
