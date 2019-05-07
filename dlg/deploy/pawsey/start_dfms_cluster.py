@@ -129,10 +129,11 @@ def get_ip_via_ifconfig(loc='Pawsey'):
 def get_ip_via_netifaces(loc=''):
     return utils.get_local_ip_addr()[0][0]
 
-def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''):
+def start_node_mgr(log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=''):
     """
     Start node manager
     """
+    logger.info("Starting node manager on host %s", my_ip)
     host = host or '0.0.0.0'
     lv = 'v' * logv
     args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
@@ -140,10 +141,11 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''
             '--event-listeners', event_listeners]
     return cmdline.dlgNM(optparse.OptionParser(), args)
 
-def start_dim(node_list, log_dir, logv=1):
+def start_dim(node_list, log_dir, origin_ip, logv=1):
     """
     Start data island manager
     """
+    logger.info("Starting island manager on host %s for node managers %r", origin_ip, node_list)
     lv = 'v' * logv
     args = ['-l', log_dir, '-%s' % lv, '-N', ','.join(node_list),
             '-H', '0.0.0.0', '-m', '2048']
@@ -393,9 +395,7 @@ def main():
                 else:
                     logger.warning("Couldn't connect to the main drop manager, proxy not started")
             elif (run_node_mgr):
-                # Start the node manager.
-                logger.info("Starting node manager on host {0}".format(origin_ip))
-                nm_proc = start_node_mgr(log_dir, logv=logv,
+                nm_proc = start_node_mgr(log_dir, origin_ip, logv=logv,
                                          max_threads=options.max_threads,
                                          host=None if options.all_nics else origin_ip,
                                          event_listeners=options.event_listeners)
@@ -442,9 +442,7 @@ def main():
 
                 threading.Thread(target=submit_and_monitor).start()
 
-            # Start the DIM.
-            logger.info("Starting island manager on host %s", origin_ip)
-            nm_proc = start_dim(node_mgrs, log_dir, logv=logv)
+            nm_proc = start_dim(node_mgrs, log_dir, origin_ip, logv=logv)
 
             # Wait until the pipeline execution gets finished.
             host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
@@ -555,11 +553,9 @@ def main():
                 # no need to wait for node managers since the master manager
                 # has already made sure they are up running
                 logger.debug("nm_list for DIM {0} is {1}".format(rank, nm_list))
-                start_dim(nm_list, log_dir, logv=logv)
+                start_dim(nm_list, log_dir, origin_ip, logv=logv)
             else:
-                # node manager
-                logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv,
+                start_node_mgr(log_dir, origin_ip, logv=logv,
                 max_threads=options.max_threads,
                 host=None if options.all_nics else origin_ip,
                 event_listeners=options.event_listeners)
