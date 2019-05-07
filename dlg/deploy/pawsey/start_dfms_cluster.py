@@ -478,7 +478,7 @@ def main():
 
             # 2 broadcast dim ranks to all nodes to let them know who is the DIM
             dim_ranks = []
-            dim_ip_list = ip_list[0:options.num_islands]
+            dim_ip_list = ip_list[:options.num_islands]
             logger.info("A list of DIM IPs: {0}".format(dim_ip_list))
             for dim_ip in dim_ip_list:
                 dim_ranks.append(ip_rank_dict[dim_ip])
