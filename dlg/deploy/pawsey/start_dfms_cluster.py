@@ -257,6 +257,33 @@ def modify_pg(pgt, modifier):
     kwargs = dict(map(lambda x: x.split('='), filter(lambda x: '=' in x, parts[1:])))
     return func(pgt, *args, **kwargs)
 
+def get_pg(opts, nms, dims):
+    """Gets the Physical Graph that is eventually submitted to the cluster, if any"""
+
+    if not opts.logical_graph and not opts.physical_graph:
+        return
+
+    num_nms = len(nms)
+    num_dims = len(dims)
+    pip_name = utils.fname_to_pipname(opts.logical_graph or opts.physical_graph)
+    if opts.logical_graph:
+        unrolled = tool.unroll(opts.logical_graph, opts.ssid, opts.zerorun, apps[opts.app])
+        pgt = pg_generator.partition(unrolled, opts.part_algo, num_partitions=num_nms + num_dims, num_islands=num_dims)
+        del unrolled # quickly dispose of potentially big object
+        pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_dims, tpl_nodes_len=num_nms + num_dims)
+    else:
+        pgt = json.loads(opts.physical_graph)
+
+    # modify the PG as necessary
+    for modifier in opts.pg_modifiers.split(':'):
+        modify_pg(pgt, modifier)
+
+    # Check that which NMs are up and use only those form now on
+    nms = check_hosts(nms, NODE_DEFAULT_REST_PORT,
+                      check_with_session=opts.check_with_session,
+                      timeout=MM_WAIT_TIME)
+    return tool.resource_map(pgt, dims + nms, pip_name, num_dims)
+
 def main():
 
     parser = optparse.OptionParser()
@@ -406,39 +433,14 @@ def main():
                 no_nms += [proxy_ip]
             node_mgrs = [ip for ip in ip_adds if ip not in no_nms]
 
-            # unroll the graph first (if any) while starting node managers on other nodes
-            pgt = None
-            if options.logical_graph or options.physical_graph:
-                pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
-                if options.logical_graph:
-                    unrolled = tool.unroll(options.logical_graph, options.ssid, options.zerorun, apps[options.app])
-                    pgt = pg_generator.partition(unrolled, options.part_algo, num_partitions=len(node_mgrs))
-                    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=1, tpl_nodes_len=len(node_mgrs) + 1)
-                    del unrolled
-                else:
-                    pgt = json.loads(options.physical_graph)
-
-            # modify the PG if necessary
-            for modifier in options.pg_modifiers.split(':'):
-                modify_pg(pgt, modifier)
-
-            # Check that which NMs are up and use only those form now on
-            node_mgrs = check_hosts(node_mgrs, NODE_DEFAULT_REST_PORT,
-                                    check_with_session=options.check_with_session,
-                                    timeout=MM_WAIT_TIME)
-
-            # We have a PGT, let's map it and submit it
-            if pgt:
-                pg = tool.resource_map(pgt, [origin_ip] + node_mgrs, pip_name, options.num_islands)
-                del pgt
-
+            pg = get_pg(options, node_mgrs, [origin_ip])
+            if pg:
                 def submit_and_monitor():
                     host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
                     tool.submit(host, port, pg)
                     if options.dump:
                         dump_path = '{0}/monitor'.format(log_dir)
                         monitor_graph(host, port, dump_path)
-
                 threading.Thread(target=submit_and_monitor).start()
 
             nm_proc = start_dim(node_mgrs, log_dir, origin_ip, logv=logv)
@@ -482,31 +484,7 @@ def main():
                 dim_ranks.append(ip_rank_dict[dim_ip])
             dim_ranks = comm.bcast(dim_ranks, root=0)
 
-            # 3 unroll the graph while waiting for node managers to start
-            pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
-            if options.logical_graph:
-                unrolled = tool.unroll(options.logical_graph, options.ssid, options.zerorun, apps[options.app])
-                pgt = pg_generator.partition(unrolled, options.part_algo, num_partitions=len(ip_list) - 1, num_islands=options.num_islands)
-                pgt = pgt.to_pg_spec([], ret_str=False, num_islands=options.num_islands,
-                                     tpl_nodes_len=len(ip_list) - 1 + options.num_islands)
-                del unrolled
-            else:
-                pgt = json.loads(options.physical_graph)
-
-            # modify the PG if necessary
-            for modifier in options.pg_modifiers.split(':'):
-                modify_pg(pgt, modifier)
-
-            #logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
-            node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT,
-                                    check_with_session=options.check_with_session,
-                                    timeout=MM_WAIT_TIME)
-
-            # 4.  produce the physical graph based on the available node managers
-            # that have already been running (we have to assume island manager
-            # will run smoothly in the future)
-            logger.info("Master Manager producing the physical graph")
-            pg = tool.resource_map(pgt, dim_ip_list + node_mgrs, pip_name, options.num_islands)
+            pg = get_pg(options, ip_list[options.num_islands:], ip_list[:options.num_islands])
 
             # 5. parse the pg_spec to get the mapping from islands to node list
             dim_rank_nodes_dict = collections.defaultdict(set)
