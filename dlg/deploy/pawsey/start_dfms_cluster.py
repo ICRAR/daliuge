@@ -385,20 +385,19 @@ def main():
             proxy_ip = origin_ip
             comm.send(proxy_ip, dest=0)
 
-    if (options.num_islands == 1):
-        nm_proc = None
-        if (rank != 0):
-            if (run_proxy and rank == 1):
-                # Wait until the Island Manager is open
-                if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
-                    start_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
-                else:
-                    logger.warning("Couldn't connect to the main drop manager, proxy not started")
-            elif (run_node_mgr):
-                nm_proc = start_node_mgr(log_dir, origin_ip, logv=logv,
-                                         max_threads=options.max_threads,
-                                         host=None if options.all_nics else origin_ip,
-                                         event_listeners=options.event_listeners)
+    if options.num_islands == 1:
+        if run_proxy and rank == 1:
+            # Wait until the Island Manager is open
+            nm_proc = None
+            if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
+                start_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+            else:
+                logger.warning("Couldn't connect to the main drop manager, proxy not started")
+        elif run_node_mgr and rank != 0:
+            nm_proc = start_node_mgr(log_dir, origin_ip, logv=logv,
+                                     max_threads=options.max_threads,
+                                     host=None if options.all_nics else origin_ip,
+                                     event_listeners=options.event_listeners)
         else:
 
             # 'no_nms' are known not to be NMs
