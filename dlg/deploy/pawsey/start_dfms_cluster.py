@@ -268,7 +268,11 @@ def get_pg(opts, nms, dims):
     pip_name = utils.fname_to_pipname(opts.logical_graph or opts.physical_graph)
     if opts.logical_graph:
         unrolled = tool.unroll(opts.logical_graph, opts.ssid, opts.zerorun, apps[opts.app])
-        pgt = pg_generator.partition(unrolled, opts.part_algo, num_partitions=num_nms + num_dims, num_islands=num_dims)
+        algo_params = tool.parse_partition_algo_params(opts.algo_params)
+        pgt = pg_generator.partition(unrolled, opts.part_algo,
+                                     num_partitions=num_nms + num_dims,
+                                     num_islands=num_dims,
+                                     **algo_params)
         del unrolled # quickly dispose of potentially big object
         pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_dims, tpl_nodes_len=num_nms + num_dims)
     else:
@@ -335,6 +339,8 @@ def main():
 
     parser.add_option('--part-algo', type="string", dest='part_algo', help='Partition algorithms',
                       default='metis')
+    parser.add_option("-A", "--algo-param", action="append", dest="algo_params",
+                      help="Extra name=value parameters used by the algorithms (algorithm-specific)")
 
     parser.add_option('--ssid', type="string", dest='ssid', help='session id',
                       default='1')
