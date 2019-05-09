@@ -147,7 +147,9 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
     lv = 'v' * logv
     args = ['-l', log_dir, '-%s' % lv, '-N', ','.join(node_list),
             '-H', '0.0.0.0', '-m', '2048']
-    return tool.start_process('dim', args)
+    proc = tool.start_process('dim', args)
+    logger.info('Island manager process started with pid %d', proc.pid)
+    return proc
 
 def start_mm(node_list, log_dir, logv=1):
     """
