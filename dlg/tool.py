@@ -66,25 +66,24 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
 
     return drop_list
 
+_param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
+               'max_cpu': int, 'time_greedy': float, 'deadline': int,
+               'topk': int, 'swarm_size': int, 'max_mem': int}
+def parse_partition_algo_params(algo_params):
+    # Double-check that parameters are of shape name=value
+    for p in algo_params:
+        if len(list(filter(None, p.split('=')))) != 2:
+            raise optparse.OptionValueError('Algorithm parameter has no form of name=value: %s' % (p,))
+    # Extract algorithm parameters and convert to proper type
+    return {n: _param_types[n](v)
+            for n, v in map(lambda p: p.split('='), algo_params)
+            if n in _param_types}
+
 def partition(pgt, opts):
 
     from .dropmake import pg_generator
 
-    algo_params = opts.algo_params or []
-    param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
-                   'max_dop': int, 'time_greedy': float, 'deadline': int,
-                   'topk': int, 'swarm_size': int}
-
-    # Double-check that -A command-line flags are of shape name=value
-    for p in algo_params:
-        if len(list(filter(None, p.split('=')))) != 2:
-            raise optparse.OptionValueError('Algorithm parameter has no form of name=value: %s' % (p,))
-
-    # Extract algorithm parameters and convert to proper type
-    algo_params = {n: param_types[n](v)
-                   for n, v in map(lambda p: p.split('='), algo_params)
-                   if n in param_types}
-
+    algo_params = parse_partition_algo_params(opts.algo_params or [])
     pgt = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
                                  num_islands=opts.islands, partition_label='partition',
                                  **algo_params)
