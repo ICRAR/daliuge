@@ -248,13 +248,6 @@ def start_proxy(loc, dlg_host, dlg_port, monitor_host, monitor_port):
         logger.exception("DALiuGE proxy terminated unexpectedly")
         sys.exit(1)
 
-def set_env(rank):
-    os.environ['PYRO_MAX_RETRIES'] = '10'
-
-def set_nms_comm(comm):
-    # HACK: applications needing an MPI communicator should read this
-    dlg.mpi_comm = comm
-
 def modify_pg(pgt, modifier):
     parts = modifier.split(',')
     func = utils.get_symbol(parts[0])
@@ -320,9 +313,6 @@ def main():
 
     parser.add_option("--sleep-after-execution", action="store", type="int",
                       dest="sleep_after_execution", help="Sleep time interval after graph execution finished", default=0)
-
-    parser.add_option('-M', "--nm-mpi-communicators", action="store_true",
-                      help="Create an MPI communicator including only the node manager ranks")
 
     parser.add_option('--pg-modifiers',
                       help=('A colon-separated list of python functions that modify a PG before submission. '
@@ -393,11 +383,9 @@ def main():
             proxy_ip = origin_ip
             comm.send(proxy_ip, dest=0)
 
-    set_env(rank)
     if (options.num_islands == 1):
         nm_proc = None
         if (rank != 0):
-            set_nms_comm(MPI.COMM_SELF)
             if (run_proxy and rank == 1):
                 # Wait until the Island Manager is open
                 if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
@@ -570,7 +558,6 @@ def main():
                 start_dim(nm_list, log_dir, logv=logv)
             else:
                 # node manager
-                set_nms_comm(MPI.COMM_SELF)
                 logger.info("Starting node manager on host {0}".format(origin_ip))
                 start_node_mgr(log_dir, logv=logv,
                 max_threads=options.max_threads,
