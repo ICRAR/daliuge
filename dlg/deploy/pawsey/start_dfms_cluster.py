@@ -450,7 +450,8 @@ def main():
             # 9. start dlgMM using islands IP addresses (this will block)
             start_mm(remote.dim_ips, log_dir, logv=logv)
         else:
-            start_dim(remote.recv_dim_nodes(), log_dir, remote.my_ip, logv=logv)
+            proc = start_dim(remote.recv_dim_nodes(), log_dir, remote.my_ip, logv=logv)
+            utils.wait_or_kill(proc, 1e8, period=5)
 
 if __name__ == '__main__':
     main()
