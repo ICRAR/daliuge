@@ -386,11 +386,11 @@ def terminate_or_kill(proc, timeout):
     proc.terminate()
     wait_or_kill(proc, timeout)
 
-def wait_or_kill(proc, timeout):
+def wait_or_kill(proc, timeout, period=0.1):
     waitLoops = 0
-    max_loops = math.ceil(timeout/0.1)
+    max_loops = math.ceil(timeout / period)
     while proc.poll() is None and waitLoops < max_loops:
-        time.sleep(0.1)
+        time.sleep(period)
         waitLoops += 1
 
     kill9 = waitLoops == max_loops
