@@ -43,12 +43,12 @@ cache: pip
 # Support for coveralls
 before_install:
  - pip install -U coveralls pytest pytest-cov
- - pip install -U setuptools
+ - pip install -U setuptools pip wheel
 
 # install daliuge in editable mode
 # This will ensure both that our dependencies are installed
 # and that our version file is generated here.
- - pip install --process-dependency-links -e .
+ - pip install -e .
 
 # run the tests, making sure subprocesses generate coverage information
 script:
