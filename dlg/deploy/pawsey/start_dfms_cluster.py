@@ -30,7 +30,6 @@ Current plan (as of 12-April-2016):
        addresses
 """
 
-import collections
 import json
 import logging
 import multiprocessing
@@ -42,8 +41,7 @@ import threading
 import time
 import uuid
 
-import dlg
-from . import dfms_proxy
+from . import dfms_proxy, remotes
 from ... import utils, tool
 from ...dropmake import pg_generator
 from ...manager import cmdline
@@ -129,10 +127,11 @@ def get_ip_via_ifconfig(loc='Pawsey'):
 def get_ip_via_netifaces(loc=''):
     return utils.get_local_ip_addr()[0][0]
 
-def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''):
+def start_node_mgr(log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=''):
     """
     Start node manager
     """
+    logger.info("Starting node manager on host %s", my_ip)
     host = host or '0.0.0.0'
     lv = 'v' * logv
     args = ['-l', log_dir, '-%s' % lv, '-H', host, '-m', '1024', '-t',
@@ -140,14 +139,17 @@ def start_node_mgr(log_dir, logv=1, max_threads=0, host=None, event_listeners=''
             '--event-listeners', event_listeners]
     return cmdline.dlgNM(optparse.OptionParser(), args)
 
-def start_dim(node_list, log_dir, logv=1):
+def start_dim(node_list, log_dir, origin_ip, logv=1):
     """
     Start data island manager
     """
+    logger.info("Starting island manager on host %s for node managers %r", origin_ip, node_list)
     lv = 'v' * logv
     args = ['-l', log_dir, '-%s' % lv, '-N', ','.join(node_list),
             '-H', '0.0.0.0', '-m', '2048']
-    return tool.start_process('dim', args)
+    proc = tool.start_process('dim', args)
+    logger.info('Island manager process started with pid %d', proc.pid)
+    return proc
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -248,19 +250,50 @@ def start_proxy(loc, dlg_host, dlg_port, monitor_host, monitor_port):
         logger.exception("DALiuGE proxy terminated unexpectedly")
         sys.exit(1)
 
-def set_env(rank):
-    os.environ['PYRO_MAX_RETRIES'] = '10'
-
-def set_nms_comm(comm):
-    # HACK: applications needing an MPI communicator should read this
-    dlg.mpi_comm = comm
-
 def modify_pg(pgt, modifier):
     parts = modifier.split(',')
     func = utils.get_symbol(parts[0])
     args = list(filter(lambda x: '=' not in x, parts[1:]))
     kwargs = dict(map(lambda x: x.split('='), filter(lambda x: '=' in x, parts[1:])))
     return func(pgt, *args, **kwargs)
+
+def get_pg(opts, nms, dims):
+    """Gets the Physical Graph that is eventually submitted to the cluster, if any"""
+
+    if not opts.logical_graph and not opts.physical_graph:
+        return
+
+    num_nms = len(nms)
+    num_dims = len(dims)
+    pip_name = utils.fname_to_pipname(opts.logical_graph or opts.physical_graph)
+    if opts.logical_graph:
+        unrolled = tool.unroll(opts.logical_graph, opts.ssid, opts.zerorun, apps[opts.app])
+        pgt = pg_generator.partition(unrolled, opts.part_algo, num_partitions=num_nms + num_dims, num_islands=num_dims)
+        del unrolled # quickly dispose of potentially big object
+        pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_dims, tpl_nodes_len=num_nms + num_dims)
+    else:
+        pgt = json.loads(opts.physical_graph)
+
+    # modify the PG as necessary
+    for modifier in opts.pg_modifiers.split(':'):
+        modify_pg(pgt, modifier)
+
+    # Check that which NMs are up and use only those form now on
+    nms = check_hosts(nms, NODE_DEFAULT_REST_PORT,
+                      check_with_session=opts.check_with_session,
+                      timeout=MM_WAIT_TIME)
+    pg = tool.resource_map(pgt, dims + nms, pip_name, num_dims)
+    with open(os.path.join(opts.log_dir, 'pg.json'), 'wb') as f:
+        json.dump(pg, f)
+    return pg
+
+def get_remote(opts):
+    find_ip = get_ip_via_ifconfig if opts.use_ifconfig else get_ip_via_netifaces
+    my_ip = find_ip(opts.loc)
+    if opts.remote_mechanism == 'mpi':
+        return remotes.MPIRemote(opts, my_ip)
+    else: # == 'slurm'
+        return remotes.SlurmRemote(opts, my_ip)
 
 def main():
 
@@ -321,12 +354,12 @@ def main():
     parser.add_option("--sleep-after-execution", action="store", type="int",
                       dest="sleep_after_execution", help="Sleep time interval after graph execution finished", default=0)
 
-    parser.add_option('-M', "--nm-mpi-communicators", action="store_true",
-                      help="Create an MPI communicator including only the node manager ranks")
-
     parser.add_option('--pg-modifiers',
                       help=('A colon-separated list of python functions that modify a PG before submission. '
                             'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'))
+
+    parser.add_option('-r', '--remote-mechanism', help='The mechanism used by this script to coordinate remote processes',
+                      choices=['mpi', 'slurm'], default='mpi')
 
     (options, _) = parser.parse_args()
 
@@ -344,206 +377,68 @@ def main():
     if (options.monitor_host is not None and options.num_islands > 1):
         parser.error("We do not support proxy monitor multiple islands yet")
 
-    logv = max(min(3, options.verbose_level), 1)
+    remote = get_remote(options)
 
-    from mpi4py import MPI  # @UnresolvedImport
-    comm = MPI.COMM_WORLD  # @UndefinedVariable
-    num_procs = comm.Get_size()
-    rank = comm.Get_rank()
-
-    log_dir = "{0}/{1}".format(options.log_dir, rank)
+    log_dir = "{0}/{1}".format(options.log_dir, remote.rank)
     os.makedirs(log_dir)
     logfile = log_dir + "/start_dlg_cluster.log"
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format=FORMAT)
 
-    if (num_procs > 1 and options.monitor_host is not None):
-        logger.info("Trying to start DALiuGE cluster with proxy")
-        run_proxy = True
-        threshold = 2
-    else:
-        logger.info("Trying to start DALiuGE cluster without proxy")
-        run_proxy = False
-        threshold = 1
+    logger.info('Starting DALiuGE cluster with %d nodes', remote.size)
+    logger.debug('Cluster nodes: %r', remote.sorted_peers)
+    logger.debug("Using %s as the local IP where required", remote.my_ip)
 
-    if (num_procs == threshold):
-        logger.warning("No MPI processes left for running Drop Managers")
-        run_node_mgr = False
-    else:
-        run_node_mgr = True
+    logv = max(min(3, options.verbose_level), 1)
 
-    # attach rank information at the end of IP address for multi-islands
-    rank_str = '' if options.num_islands == 1 else ',%s' % rank
-    find_ip = get_ip_via_ifconfig if options.use_ifconfig else get_ip_via_netifaces
-    public_ip = find_ip(options.loc)
-    ip_adds = '{0}{1}'.format(public_ip, rank_str)
-    origin_ip = ip_adds.split(',')[0]
-    ip_adds = comm.gather(ip_adds, root=0)
+    if remote.is_nm:
+        nm_proc = start_node_mgr(log_dir, remote.my_ip, logv=logv,
+            max_threads=options.max_threads,
+            host=None if options.all_nics else remote.my_ip,
+            event_listeners=options.event_listeners)
 
-    proxy_ip = None
-    if run_proxy:
-        # send island/master manager's IP address to the DALiuGE proxy
-        # also let island manager know the DALiuGE proxy's IP
-        if rank == 0:
-            mgr_ip = origin_ip
-            comm.send(mgr_ip, dest=1)
-            proxy_ip = comm.recv(source=1)
-        elif rank == 1:
-            mgr_ip = comm.recv(source=0)
-            proxy_ip = origin_ip
-            comm.send(proxy_ip, dest=0)
-
-    set_env(rank)
-    if (options.num_islands == 1):
-        nm_proc = None
-        if (rank != 0):
-            set_nms_comm(MPI.COMM_SELF)
-            if (run_proxy and rank == 1):
-                # Wait until the Island Manager is open
-                if utils.portIsOpen(mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
-                    start_proxy(options.loc, mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
-                else:
-                    logger.warning("Couldn't connect to the main drop manager, proxy not started")
-            elif (run_node_mgr):
-                # Start the node manager.
-                logger.info("Starting node manager on host {0}".format(origin_ip))
-                nm_proc = start_node_mgr(log_dir, logv=logv,
-                                         max_threads=options.max_threads,
-                                         host=None if options.all_nics else origin_ip,
-                                         event_listeners=options.event_listeners)
+    elif options.num_islands == 1:
+        if remote.is_proxy:
+            # Wait until the Island Manager is open
+            nm_proc = None
+            if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
+                start_proxy(options.loc, remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+            else:
+                logger.warning("Couldn't connect to the main drop manager, proxy not started")
         else:
-
-            # 'no_nms' are known not to be NMs
-            no_nms = [origin_ip, 'None']
-            if proxy_ip:
-                no_nms += [proxy_ip]
-            node_mgrs = [ip for ip in ip_adds if ip not in no_nms]
-
-            # unroll the graph first (if any) while starting node managers on other nodes
-            pgt = None
-            if options.logical_graph or options.physical_graph:
-                pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
-                if options.logical_graph:
-                    unrolled = tool.unroll(options.logical_graph, options.ssid, options.zerorun, apps[options.app])
-                    pgt = pg_generator.partition(unrolled, options.part_algo, num_partitions=len(node_mgrs))
-                    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=1, tpl_nodes_len=len(node_mgrs) + 1)
-                    del unrolled
-                else:
-                    pgt = json.loads(options.physical_graph)
-
-            # modify the PG if necessary
-            for modifier in options.pg_modifiers.split(':'):
-                modify_pg(pgt, modifier)
-
-            # Check that which NMs are up and use only those form now on
-            node_mgrs = check_hosts(node_mgrs, NODE_DEFAULT_REST_PORT,
-                                    check_with_session=options.check_with_session,
-                                    timeout=MM_WAIT_TIME)
-
-            # We have a PGT, let's map it and submit it
-            if pgt:
-                pg = tool.resource_map(pgt, [origin_ip] + node_mgrs, pip_name, options.num_islands)
-                del pgt
-
+            pg = get_pg(options, remote.nm_ips, remote.dim_ips)
+            if pg:
                 def submit_and_monitor():
                     host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
                     tool.submit(host, port, pg)
                     if options.dump:
                         dump_path = '{0}/monitor'.format(log_dir)
                         monitor_graph(host, port, dump_path)
-
                 threading.Thread(target=submit_and_monitor).start()
 
-            # Start the DIM.
-            logger.info("Starting island manager on host %s", origin_ip)
-            nm_proc = start_dim(node_mgrs, log_dir, logv=logv)
+            nm_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
 
             # Wait until the pipeline execution gets finished.
             host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
             monitor_execution_finished(host, port)
             time.sleep(options.sleep_after_execution)
 
-        # Wait for all processces.
-        comm.barrier()
-
         if nm_proc is not None:
             # Stop DALiuGE.
-            logger.info("Stopping DALiuGE application on rank %d", rank)
+            logger.info("Stopping DALiuGE application on rank %d", remote.rank)
             utils.terminate_or_kill(nm_proc, 5)
 
-    elif (options.num_islands > 1):
-        if (rank == 0):
-            # master manager
-            # 1. use ip_adds to produce the physical graph
-            ip_list = []
-            ip_rank_dict = dict() # k - ip, v - MPI rank
-            for ipr in ip_adds:
-                iprs = ipr.split(',')
-                ip = iprs[0]
-                r = iprs[1]
-                if (ip == origin_ip or 'None' == ip):
-                    continue
-                ip_list.append(ip)
-                ip_rank_dict[ip] = int(r)
+    else:
 
-            if (len(ip_list) <= options.num_islands):
-                raise Exception("Insufficient nodes available for node managers")
+        if remote.is_highest_level_manager:
 
-            # 2 broadcast dim ranks to all nodes to let them know who is the DIM
-            dim_ranks = []
-            dim_ip_list = ip_list[0:options.num_islands]
-            logger.info("A list of DIM IPs: {0}".format(dim_ip_list))
-            for dim_ip in dim_ip_list:
-                dim_ranks.append(ip_rank_dict[dim_ip])
-            dim_ranks = comm.bcast(dim_ranks, root=0)
-
-            # 3 unroll the graph while waiting for node managers to start
-            pip_name = utils.fname_to_pipname(options.logical_graph or options.physical_graph)
-            if options.logical_graph:
-                unrolled = tool.unroll(options.logical_graph, options.ssid, options.zerorun, apps[options.app])
-                pgt = pg_generator.partition(unrolled, options.part_algo, num_partitions=len(ip_list) - 1, num_islands=options.num_islands)
-                pgt = pgt.to_pg_spec([], ret_str=False, num_islands=options.num_islands,
-                                     tpl_nodes_len=len(ip_list) - 1 + options.num_islands)
-                del unrolled
-            else:
-                pgt = json.loads(options.physical_graph)
-
-            # modify the PG if necessary
-            for modifier in options.pg_modifiers.split(':'):
-                modify_pg(pgt, modifier)
-
-            #logger.info("Waiting all node managers to start in %f seconds", MM_WAIT_TIME)
-            node_mgrs = check_hosts(ip_list[options.num_islands:], NODE_DEFAULT_REST_PORT,
-                                    check_with_session=options.check_with_session,
-                                    timeout=MM_WAIT_TIME)
-
-            # 4.  produce the physical graph based on the available node managers
-            # that have already been running (we have to assume island manager
-            # will run smoothly in the future)
-            logger.info("Master Manager producing the physical graph")
-            pg = tool.resource_map(pgt, dim_ip_list + node_mgrs, pip_name, options.num_islands)
-
-            # 5. parse the pg_spec to get the mapping from islands to node list
-            dim_rank_nodes_dict = collections.defaultdict(set)
-            for drop in pg:
-                dim_ip = drop['island']
-                # if (not dim_ip in dim_ip_list):
-                #     raise Exception("'{0}' node is not in island list {1}".format(dim_ip, dim_ip_list))
-                r = ip_rank_dict[dim_ip]
-                n = drop['node']
-                dim_rank_nodes_dict[r].add(n)
-
-            # 6 send a node list to each DIM so that it can start
-            for dim_ip in dim_ip_list:
-                r = ip_rank_dict[dim_ip]
-                logger.debug("Sending node list to rank {0}".format(r))
-                #TODO this should be in a thread since it is blocking!
-                comm.send(list(dim_rank_nodes_dict[r]), dest=r)
+            pg = get_pg(options, remote.nm_ips, remote.dim_ips)
+            remote.send_dim_nodes(pg)
 
             # 7. make sure all DIMs are up running
-            dim_ips_up = check_hosts(dim_ip_list, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10)
-            if len(dim_ips_up) < len(dim_ip_list):
-                logger.warning("Not all DIMs were up and running: %d/%d", len(dim_ips_up), len(dim_ip_list))
+            dim_ips_up = check_hosts(remote.dim_ips, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10)
+            if len(dim_ips_up) < len(remote.dim_ips):
+                logger.warning("Not all DIMs were up and running: %d/%d", len(dim_ips_up), len(remote.dim_ips))
 
             # 8. submit the graph in a thread (wait for mm to start)
             def submit():
@@ -553,29 +448,10 @@ def main():
             threading.Thread(target=submit).start()
 
             # 9. start dlgMM using islands IP addresses (this will block)
-            start_mm(dim_ip_list, log_dir, logv=logv)
-
+            start_mm(remote.dim_ips, log_dir, logv=logv)
         else:
-            dim_ranks = None
-            dim_ranks = comm.bcast(dim_ranks, root=0)
-            logger.debug("Receiving dim_ranks = {0}, my rank is {1}".format(dim_ranks, rank))
-            if (rank in dim_ranks):
-                logger.debug("Rank {0} is a DIM preparing for receiving".format(rank))
-                # island manager
-                # get a list of nodes that are its children from rank 0 (MM)
-                nm_list = comm.recv(source=0)
-                # no need to wait for node managers since the master manager
-                # has already made sure they are up running
-                logger.debug("nm_list for DIM {0} is {1}".format(rank, nm_list))
-                start_dim(nm_list, log_dir, logv=logv)
-            else:
-                # node manager
-                set_nms_comm(MPI.COMM_SELF)
-                logger.info("Starting node manager on host {0}".format(origin_ip))
-                start_node_mgr(log_dir, logv=logv,
-                max_threads=options.max_threads,
-                host=None if options.all_nics else origin_ip,
-                event_listeners=options.event_listeners)
+            proc = start_dim(remote.recv_dim_nodes(), log_dir, remote.my_ip, logv=logv)
+            utils.wait_or_kill(proc, 1e8, period=5)
 
 if __name__ == '__main__':
     main()
