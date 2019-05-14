@@ -272,7 +272,8 @@ def get_pg(opts, nms, dims):
         del unrolled # quickly dispose of potentially big object
         pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_dims, tpl_nodes_len=num_nms + num_dims)
     else:
-        pgt = json.loads(opts.physical_graph)
+        with open(opts.physical_graph, 'rb') as f:
+            pgt = json.load(f)
 
     # modify the PG as necessary
     for modifier in opts.pg_modifiers.split(':'):
