@@ -36,6 +36,7 @@ class S3DROP(AbstractDROP):
     def __init__(self, oid, uid, **kwargs):
         self._bucket = None
         self._key = None
+        self._storage_class = None
         self._aws_access_key_id = None
         self._aws_secret_access_key = None
         self._profile_name = None
@@ -49,6 +50,7 @@ class S3DROP(AbstractDROP):
         """
         self._bucket = self._getArg(kwargs, 'bucket', None)
         self._key = self._getArg(kwargs, 'key', None)
+        self._storage_class = self._getArg(kwargs, 'storage_class', None)
         self._aws_access_key_id = self._getArg(kwargs, 'aws_access_key_id', None)
         self._aws_secret_access_key = self._getArg(kwargs, 'aws_secret_access_key', None)
         self._profile_name = self._getArg(kwargs, 'profile_name', None)
@@ -68,6 +70,14 @@ class S3DROP(AbstractDROP):
         :return: the S3 key
         """
         return self._key
+
+    @property
+    def storage_class(self):
+        """
+        Return the AWS storage class
+        :return: the AWS storage class
+        """
+        return self._storage_class
 
     @property
     def path(self):
