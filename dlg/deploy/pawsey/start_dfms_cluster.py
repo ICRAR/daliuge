@@ -215,7 +215,8 @@ def monitor_graph(host, port, dump_path):
             time_str = '%.3f' % time.time()
             wgs['ts'] = time_str
 
-            if (not graph_dict.has_key(ssid)):
+            #if (not graph_dict.has_key(ssid)):
+            if (ssid not in graph_dict):
                 graph = dc.graph(ssid)
                 graph_dict[ssid] = graph
                 wg = {}
