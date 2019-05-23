@@ -46,6 +46,8 @@ class Remote(object):
         self.rank = rank
         self.size = size
         self.sorted_peers = sorted_peers
+        if len(set(self.sorted_peers)) != self.size:
+            raise RuntimeError('More than one task started per node, cannot continue')
         nm_range = self._nm_range()
         if nm_range[0] == nm_range[1]:
             raise RuntimeError('No nodes left for Node Managers with the requested setup')
