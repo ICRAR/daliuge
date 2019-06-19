@@ -25,7 +25,7 @@ import time
 
 from .. import droputils
 from ..drop import BarrierAppDROP, ContainerDROP
-from ..types import dlg_float_param
+from ..param_types import dlg_float_param
 
 
 class NullBarrierApp(BarrierAppDROP):

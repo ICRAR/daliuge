@@ -25,7 +25,7 @@ import uuid
 
 from ..drop import ContainerDROP
 from ..drop import FileDROP
-from dlg.types import dlg_string_param, dlg_list_param
+from dlg.param_types import dlg_string_param, dlg_list_param
 
 
 class FileImportApp(ContainerDROP):
