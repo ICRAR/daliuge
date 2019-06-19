@@ -45,7 +45,7 @@ from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
 from ..drop import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
-from ..types import dlg_string_param
+from ..param_types import dlg_string_param
 
 
 logger = logging.getLogger(__name__)

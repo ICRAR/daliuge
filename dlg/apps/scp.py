@@ -21,7 +21,7 @@
 #
 from .. import remote
 from ..drop import BarrierAppDROP
-from ..types import dlg_string_param
+from ..param_types import dlg_string_param
 
 
 class ScpApp(BarrierAppDROP):

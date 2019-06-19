@@ -31,7 +31,7 @@ import socket
 from ..ddap_protocol import DROPRel, DROPLinkType
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidRelationshipException
-from ..types import dlg_string_param, dlg_int_param, dlg_bool_param
+from ..param_types import dlg_string_param, dlg_int_param, dlg_bool_param
 
 
 logger = logging.getLogger(__name__)
