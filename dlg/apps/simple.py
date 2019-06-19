@@ -25,6 +25,7 @@ import time
 
 from .. import droputils
 from ..drop import BarrierAppDROP, ContainerDROP
+from ..types import dlg_float_param
 
 
 class NullBarrierApp(BarrierAppDROP):
@@ -32,15 +33,17 @@ class NullBarrierApp(BarrierAppDROP):
     def run(self):
         pass
 
+
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
+    sleep_time = dlg_float_param('sleep time', 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
-        self._sleepTime = float(self._getArg(kwargs, 'sleepTime', 0))
 
     def run(self):
-        time.sleep(self._sleepTime)
+        time.sleep(self.sleep_time)
+
 
 class CopyApp(BarrierAppDROP):
     """
@@ -62,6 +65,7 @@ class CopyApp(BarrierAppDROP):
         else:
             for outputDrop in self.outputs:
                 droputils.copyDropContents(inputDrop, outputDrop)
+
 
 class SleepAndCopyApp(SleepApp, CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""

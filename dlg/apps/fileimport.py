@@ -25,6 +25,7 @@ import uuid
 
 from ..drop import ContainerDROP
 from ..drop import FileDROP
+from dlg.types import dlg_string_param, dlg_list_param
 
 
 class FileImportApp(ContainerDROP):
@@ -34,24 +35,25 @@ class FileImportApp(ContainerDROP):
     is created which contains the path to the file. The FileDROP is then added
     to the FileImportApp (ContainerDROP)
     """
+    dirname = dlg_string_param('dirname', None)
+    ext = dlg_list_param('ext', [])
 
     def initialize(self, **kwargs):
         super(ContainerDROP, self).initialize(**kwargs)
         self._children = []
 
-        self._dirname = self._getArg(kwargs, 'dirname', None)
-        if not self._dirname:
+        if not self.dirname:
             raise Exception('dirname not defined')
-        if not os.path.isdir(self._dirname):
-            raise Exception('%s is not a directory' % (self._dirname))
-        ext = self._getArg(kwargs, 'ext', [])
-        if not ext:
+        if not os.path.isdir(self.dirname):
+            raise Exception('%s is not a directory' % (self.dirname))
+
+        if not self.ext:
             raise Exception('ext not defined')
-        self._ext = [x.lower() for x in ext]
+        self._ext = [x.lower() for x in self.ext]
         self._scan_and_import_files()
 
     def _scan_and_import_files(self):
-        for root, dirs, files in os.walk(self._dirname):
+        for root, dirs, files in os.walk(self.dirname):
             for f in files:
                 _, ext = os.path.splitext(f)
                 if ext.lower() in self._ext:

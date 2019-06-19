@@ -45,6 +45,7 @@ from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
 from ..drop import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
+from ..types import dlg_string_param
 
 
 logger = logging.getLogger(__name__)
@@ -140,19 +141,19 @@ def prepare_input_channel(data):
 
     raise Exception("Unsupported streaming channel: %s", data)
 
+
 class BashShellBase(object):
     """
     Common class for BashShell apps. It simply requires a command to be
     specified.
     """
+    command = dlg_string_param('Bash command', None)
 
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
-
-        self._command = self._getArg(kwargs, 'command', None)
-        if not self._command:
+        if not self.command:
             raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
     def _run_bash(self, inputs, outputs, stdin=None,
@@ -171,7 +172,7 @@ class BashShellBase(object):
         """
 
         session_id = self._dlg_session.sessionId if self._dlg_session is not None else ''
-        cmd = self._command
+        cmd = self.command
         app_uid = self.uid
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 

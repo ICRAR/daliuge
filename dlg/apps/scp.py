@@ -21,6 +21,7 @@
 #
 from .. import remote
 from ..drop import BarrierAppDROP
+from ..types import dlg_string_param
 
 
 class ScpApp(BarrierAppDROP):
@@ -37,12 +38,12 @@ class ScpApp(BarrierAppDROP):
     TO other host. This application's node must thus coincide with one of the
     two I/O DROPs.
     """
+    remoteUser = dlg_string_param('remoteUser', None)
+    pkeyPath = dlg_string_param('pkeyPath', None)
+    timeout = dlg_string_param('timeout', None)
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
-        self._remoteUser = self._getArg(kwargs, 'remoteUser', None)
-        self._pkeyPath   = self._getArg(kwargs, 'pkeyPath', None)
-        self._timeout    = self._getArg(kwargs, 'timeout', None)
 
     def run(self):
 
@@ -81,6 +82,8 @@ class ScpApp(BarrierAppDROP):
         # recursive = isinstance(inp, DirectoryContainer)
         recursive = hasattr(inp, 'children')
         if self.node == inp.node:
-            remote.copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath, timeout=self._timeout)
+            remote.copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive,
+                          username=self.remoteUser, pkeyPath=self.pkeyPath, timeout=self.timeout)
         else:
-            remote.copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath, timeout=self._timeout)
+            remote.copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive,
+                            username=self.remoteUser, pkeyPath=self.pkeyPath, timeout=self.timeout)
