@@ -31,9 +31,11 @@ import socket
 from ..ddap_protocol import DROPRel, DROPLinkType
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidRelationshipException
+from ..types import dlg_string_param, dlg_int_param, dlg_bool_param
 
 
 logger = logging.getLogger(__name__)
+
 
 class SocketListenerApp(BarrierAppDROP):
     '''
@@ -49,31 +51,19 @@ class SocketListenerApp(BarrierAppDROP):
 
     _dryRun = False
 
+    host = dlg_string_param('host', '127.0.0.1')
+    port = dlg_int_param('port', 1111)
+    bufsize = dlg_int_param('bufsize', 4096)
+    reuseAddr = dlg_bool_param('reuseAddr', False)
+
     def initialize(self, **kwargs):
         super(SocketListenerApp, self).initialize(**kwargs)
 
-        host = None
-        port = None
-        if 'host' in kwargs:
-            host = kwargs.pop('host')
-        if 'port' in kwargs:
-            port = int(kwargs.pop('port'))
-        if not host:
-            host = '127.0.0.1'
-        if not port:
-            port = 1111
-
-        self._host = host
-        self._port = port
-        self._bufsize = int(self._getArg(kwargs, 'bufsize', 4096))
-        self._reuseAddr = self._getArg(kwargs, 'reuseAddr', False)
-
     def run(self):
-
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception('At least one output should have been added to %r' % (self))
+            raise Exception('At least one output should have been added to %r' % self)
 
         # Don't really listen for data if running dry
         if self._dryRun:
@@ -82,7 +72,7 @@ class SocketListenerApp(BarrierAppDROP):
         # Accept one connection at most
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         with contextlib.closing(serverSocket):
-            if self._reuseAddr:
+            if self.reuseAddr:
                 serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             serverSocket.bind((self.host, self.port))
             serverSocket.listen(1)
@@ -94,7 +84,7 @@ class SocketListenerApp(BarrierAppDROP):
         n = 0
         with contextlib.closing(clientSocket):
             while True:
-                data = clientSocket.recv(self._bufsize)
+                data = clientSocket.recv(self.bufsize)
                 if not data:
                     break
                 n += len(data)
@@ -102,18 +92,11 @@ class SocketListenerApp(BarrierAppDROP):
                     out.write(data)
         logger.info('TCP receiver received %d bytes of data', n)
 
-    @property
-    def host(self):
-        return self._host
-
-    @property
-    def port(self):
-        return self._port
-
     # Avoid inputs
     def addInput(self, inputDrop, back=True):
         raise InvalidRelationshipException(DROPRel(inputDrop.uid, DROPLinkType.INPUT, self.uid),
                                            "SocketListenerApp should have no inputs")
+
     def addStreamingInput(self, streamingInputDrop, back=True):
         raise InvalidRelationshipException(DROPRel(streamingInputDrop.uid, DROPLinkType.STREAMING_INPUT, self.uid),
                                            "SocketListenerApp should have no inputs")
