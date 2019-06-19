@@ -36,13 +36,13 @@ class NullBarrierApp(BarrierAppDROP):
 
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
-    sleep_time = dlg_float_param('sleep time', 0)
+    sleepTime = dlg_float_param('sleep time', 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
 
     def run(self):
-        time.sleep(self.sleep_time)
+        time.sleep(self.sleepTime)
 
 
 class CopyApp(BarrierAppDROP):
