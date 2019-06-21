@@ -25,7 +25,8 @@ import uuid
 
 from ..drop import ContainerDROP
 from ..drop import FileDROP
-from dlg.param_types import dlg_string_param, dlg_list_param
+from dlg.meta import dlg_string_param, dlg_list_param, dlg_component, \
+    dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
 
 class FileImportApp(ContainerDROP):
@@ -35,6 +36,14 @@ class FileImportApp(ContainerDROP):
     is created which contains the path to the file. The FileDROP is then added
     to the FileImportApp (ContainerDROP)
     """
+    compontent_meta = dlg_component('Recursively scans a directory (dirname) and checks for files with '
+                                    'a particular extension (ext). If a match is made then a FileDROP '
+                                    'is created which contains the path to the file. The FileDROP is then added '
+                                    'to the FileImportApp (ContainerDROP)',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
     dirname = dlg_string_param('dirname', None)
     ext = dlg_list_param('ext', [])
 

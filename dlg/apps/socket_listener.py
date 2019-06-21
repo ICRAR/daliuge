@@ -31,7 +31,8 @@ import socket
 from ..ddap_protocol import DROPRel, DROPLinkType
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidRelationshipException
-from ..param_types import dlg_string_param, dlg_int_param, dlg_bool_param
+from ..meta import dlg_string_param, dlg_int_param, dlg_bool_param, \
+    dlg_component, dlg_batch_output, dlg_batch_input, dlg_streaming_input
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,11 @@ class SocketListenerApp(BarrierAppDROP):
     '''
 
     _dryRun = False
+
+    compontent_meta = dlg_component('A BarrierAppDROP that listens on a socket for data',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
 
     host = dlg_string_param('host', '127.0.0.1')
     port = dlg_int_param('port', 1111)
