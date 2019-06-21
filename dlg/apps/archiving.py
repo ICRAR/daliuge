@@ -22,6 +22,8 @@
 from ..drop import BarrierAppDROP, ContainerDROP
 from ..droputils import DROPFile
 from ..io import NgasIO, OpenMode, NgasLiteIO
+from ..meta import dlg_string_param, dlg_float_param, dlg_int_param, \
+    dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
 
 class ExternalStoreApp(BarrierAppDROP):
@@ -34,6 +36,12 @@ class ExternalStoreApp(BarrierAppDROP):
     shouldn't contain any output, making it a leaf node of the physical graph
     where it resides.
     """
+    compontent_meta = dlg_component('An application that takes its input DROP (which must be one, and only one) '
+                                    'and creates a copy of it in a completely external store, from the point '
+                                    'of view of the DALiuGE framework.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
 
     def run(self):
 
@@ -62,13 +70,19 @@ class NgasArchivingApp(ExternalStoreApp):
     new NGAS client process. This way we can read the different storage types
     supported by the framework, and not only filesystem objects.
     '''
+    compontent_meta = dlg_component('An ExternalStoreApp class that takes its input DROP and archives it in '
+                                    'an NGAS server. It currently deals with non-container DROPs only.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    ngasSrv = dlg_string_param('NGAS hostname', 'localhost')
+    ngasPort = dlg_int_param('NGAS Port', 7777)
+    ngasConnectTimeout = dlg_float_param('Connect Timeout', 2.)
+    ngasTimeout = dlg_float_param('Timeout', 2.)
 
     def initialize(self, **kwargs):
         super(NgasArchivingApp, self).initialize(**kwargs)
-        self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
-        self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        self._ngasTimeout        = float(self._getArg(kwargs, 'ngasConnectTimeout', 2.))
-        self._ngasConnectTimeout = float(self._getArg(kwargs, 'ngasTimeout', 2.))
 
     def store(self, inDrop):
         if isinstance(inDrop, ContainerDROP):
@@ -76,9 +90,9 @@ class NgasArchivingApp(ExternalStoreApp):
 
         size = -1 if inDrop.size is None else inDrop.size
         try:
-            ngasIO = NgasIO(self._ngasSrv, inDrop.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
+            ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
         except ImportError:
-            ngasIO = NgasLiteIO(self._ngasSrv, inDrop.uid, self._ngasPort, self._ngasConnectTimeout, self._ngasTimeout, size)
+            ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
 
         ngasIO.open(OpenMode.OPEN_WRITE)
 
