@@ -22,7 +22,6 @@
 import codecs
 import json
 import os
-import threading
 import time
 import unittest
 
@@ -31,50 +30,30 @@ import pkg_resources
 from dlg import droputils, tool
 from dlg import utils
 from dlg.ddap_protocol import DROPStates
-from dlg.manager import constants
-from dlg.manager.composite_manager import DataIslandManager, MasterManager
-from dlg.manager.node_manager import NodeManager
-from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
+from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
-from dlg.utils import portIsOpen
 from test.manager import testutils
+from test.testutils import ManagerStarter
 
 
-hostname = 'localhost'
+hostname = '127.0.0.1'
 
-def setUpMMTests(self):
+class DimAndNMStarter(ManagerStarter):
 
-    # Start a NM and a DIM. See test_dim for more details
-    self.nm = NodeManager(False)
-    self._nm_server = NMRestServer(self.nm)
-    self._nm_t = threading.Thread(name="lala",target=self._nm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
-    self._nm_t.start()
+    def setUp(self):
+        super(DimAndNMStarter, self).setUp()
+        self.nm_info = self.start_nm_in_thread()
+        self.dim_info = self.start_dim_in_thread()
+        self.nm = self.nm_info.manager
+        self.dim = self.dim_info.manager
+        self.mm = MasterManager([hostname])
 
-    # The DIM we're testing
-    self.dim = DataIslandManager([hostname])
-    self._dim_server = CompositeManagerRestServer(self.dim)
-    self._dim_t = threading.Thread(name="lalo",target=self._dim_server.start, args=(hostname,constants.ISLAND_DEFAULT_REST_PORT))
-    self._dim_t.start()
+    def tearDown(self):
+        self.mm.shutdown()
+        self.dim_info.stop()
+        self.nm_info.stop()
 
-    self.mm = MasterManager([hostname])
-
-    # Make sure the managers have started
-    self.assertTrue(portIsOpen(hostname, constants.NODE_DEFAULT_REST_PORT, 5))
-    self.assertTrue(portIsOpen(hostname, constants.ISLAND_DEFAULT_REST_PORT, 5))
-
-def tearDownMMTests(self):
-    self._nm_server.stop()
-    self._nm_t.join()
-    self._dim_server.stop()
-    self._dim_t.join()
-    self.dim.shutdown()
-    self.mm.shutdown()
-    self.nm.shutdown()
-
-class TestMM(unittest.TestCase):
-
-    setUp = setUpMMTests
-    tearDown = tearDownMMTests
+class TestMM(DimAndNMStarter, unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname, 'consumers':['B']},
@@ -226,10 +205,7 @@ class TestMM(unittest.TestCase):
         assertGraphStatus(sessionId, DROPStates.COMPLETED)
 
 
-class TestREST(unittest.TestCase):
-
-    setUp = setUpMMTests
-    tearDown = tearDownMMTests
+class TestREST(DimAndNMStarter, unittest.TestCase):
 
     def test_fullRound(self):
         """
