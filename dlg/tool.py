@@ -228,7 +228,8 @@ def fill(parser, args):
         help="Path to the Logical Graph (default: stdin)")
     parser.add_option(
         '-p', '--parameter', action='append',
-        help="Parameter specification (either 'name=value' or a JSON string)")
+        help="Parameter specification (either 'name=value' or a JSON string)",
+        default=())
 
     (opts, args) = parser.parse_args(args)
     _setup_logging(opts)
