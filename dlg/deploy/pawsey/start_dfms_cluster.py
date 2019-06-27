@@ -397,6 +397,12 @@ def main():
     logger.debug('Cluster nodes: %r', remote.sorted_peers)
     logger.debug("Using %s as the local IP where required", remote.my_ip)
 
+    envfile = os.path.join(log_dir, 'env.txt')
+    logger.debug("Dumping process' environment to %s", envfile)
+    with open(envfile, 'wt') as f:
+        for name, value in sorted(os.environ.items()):
+            f.write('%s=%s\n' % (name, value))
+
     logv = max(min(3, options.verbose_level), 1)
 
     if remote.is_nm:
