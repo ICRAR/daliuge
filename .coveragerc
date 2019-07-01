@@ -26,4 +26,4 @@
 # part of the core software
 [run]
 source = dlg/
-omit = dlg/deploy/*
+omit = dlg/deploy/pawsey/*
