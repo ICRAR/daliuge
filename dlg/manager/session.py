@@ -268,9 +268,9 @@ class Session(object):
         #
         # This is done in a separate iteration at the very end because all drops
         # to make sure all event listeners are ready
+        self.status = SessionStates.RUNNING
         self.trigger_drops(completedDrops)
 
-        self.status = SessionStates.RUNNING
         logger.info("Session %s is now RUNNING", self._sessionId)
 
     def _run(self, worker):

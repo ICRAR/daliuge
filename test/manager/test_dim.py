@@ -22,7 +22,6 @@
 import codecs
 import json
 import os
-import threading
 import time
 import unittest
 
@@ -31,51 +30,28 @@ import pkg_resources
 from dlg import droputils, tool
 from dlg import utils
 from dlg.ddap_protocol import DROPStates
-from dlg.manager import constants
 from dlg.manager.composite_manager import DataIslandManager
-from dlg.manager.node_manager import NodeManager
-from dlg.manager.rest import NMRestServer
 from dlg.manager.session import SessionStates
-from dlg.utils import portIsOpen
 from test.manager import testutils
+from test.testutils import ManagerStarter
 
 
 hostname = 'localhost'
 
-def setUpDimTests(self):
+class LocalDimStarter(ManagerStarter):
 
-    # Start a DM. This is the DM which the DIM connects to.
-    #
-    # We start it here to avoid the DIM connecting via SSH to the localhost
-    # and spawning a dlgNM process; both things need proper setup which we
-    # cannot do here (ssh publick key installation, ssh service up, proper
-    # environment available, etc)
-    #
-    # Anyway, this is also useful because we can check that things have
-    # occurred at the DM level in the test cases
-    self.dm = NodeManager(False)
-    self._dm_server = NMRestServer(self.dm)
-    self._dm_t = threading.Thread(target=self._dm_server.start, args=(hostname,constants.NODE_DEFAULT_REST_PORT))
-    self._dm_t.start()
+    def setUp(self):
+        super(LocalDimStarter, self).setUp()
+        self.nm_info = self.start_nm_in_thread()
+        self.dm = self.nm_info.manager
+        self.dim = DataIslandManager([hostname])
 
-    # The DIM we're testing
-    self.dim = DataIslandManager([hostname])
+    def tearDown(self):
+        self.nm_info.stop()
+        self.dim.shutdown()
+        super(LocalDimStarter, self).tearDown()
 
-    self.assertTrue(portIsOpen(hostname, constants.NODE_DEFAULT_REST_PORT, 5))
-
-def tearDownDimTests(self):
-
-    # Stop the server and wait until it's closed
-    self._dm_server.stop()
-    self._dm_t.join()
-    self.dm.shutdown()
-    self.assertFalse(self._dm_t.isAlive())
-    self.dim.shutdown()
-
-class TestDIM(unittest.TestCase):
-
-    setUp = setUpDimTests
-    tearDown = tearDownDimTests
+class TestDIM(LocalDimStarter, unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
         graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'consumers':['B']},
@@ -238,10 +214,7 @@ class TestDIM(unittest.TestCase):
         assertGraphStatus(sessionId, DROPStates.CANCELLED)
 
 
-class TestREST(unittest.TestCase):
-
-    setUp = setUpDimTests
-    tearDown = tearDownDimTests
+class TestREST(LocalDimStarter, unittest.TestCase):
 
     def test_fullRound(self):
         """
