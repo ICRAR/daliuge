@@ -134,13 +134,7 @@ class MPIRemote(Remote):
         return self.comm.recv(source=0)
 
 
-class SlurmRemote(Remote):
-
-    def __init__(self, options, my_ip):
-        super(SlurmRemote, self).__init__(options, my_ip)
-        self._set_world(
-            int(os.environ['SLURM_PROCID']), int(os.environ['SLURM_NTASKS']),
-            slurm_utils.list_as_string(os.environ['SLURM_NODELIST']))
+class FilesystemBasedRemote(Remote):
 
     def send_dim_nodes(self, pg):
         basedir = self.options.log_dir
@@ -158,3 +152,30 @@ class SlurmRemote(Remote):
             time.sleep(1)
         with open(fname, 'rb') as f:
             return pickle.load(f)
+
+
+class SlurmRemote(FilesystemBasedRemote):
+
+    def __init__(self, options, my_ip):
+        super(SlurmRemote, self).__init__(options, my_ip)
+        self._set_world(
+            int(os.environ['SLURM_PROCID']), int(os.environ['SLURM_NTASKS']),
+            slurm_utils.list_as_string(os.environ['SLURM_NODELIST']))
+
+
+class LFSRemote(FilesystemBasedRemote):
+
+    @staticmethod
+    def get_nodes(cls, mcpu_hosts_desc):
+        """'batch1 1 node1 4 node2 4 node3 4....' -> ['node1', 'node2', 'node3']"""
+        # The first node seems to always be the "mother" node, which doesn't
+        # necessarily participate on the "world"
+        parts = mcpu_hosts_desc.split()
+        return parts[2::2]
+
+    def __init__(self, options, my_ip):
+        super(LFSRemote, self).__init__(options, my_ip)
+        self._set_world(
+            int(os.environ['JSM_NAMESPACE_SIZE']),
+            int(os.environ['JSM_NAMESPACE_RANK']),
+            LFSRemote.get_nodes(os.environ['LSB_MCPU_HOSTS']))
