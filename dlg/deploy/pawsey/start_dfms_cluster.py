@@ -42,13 +42,13 @@ import time
 import uuid
 
 from . import dfms_proxy, remotes
+from .. import common
 from ... import utils, tool
 from ...dropmake import pg_generator
 from ...manager import cmdline
-from ...manager.client import NodeManagerClient, DataIslandManagerClient
+from ...manager.client import NodeManagerClient
 from ...manager.constants import NODE_DEFAULT_REST_PORT, \
 ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
-from ...manager.session import SessionStates
 
 
 DIM_WAIT_TIME = 60
@@ -163,78 +163,18 @@ def start_mm(node_list, log_dir, logv=1):
             '-H', '0.0.0.0', '-m', '2048']
     cmdline.dlgMM(parser, args)
 
-def monitor_execution_finished(host, port):
-    """
-    Monitors the execution status of a graph by polling host/port,
-    and returns when the pipeline execution has been finished.
-    """
-    # Use monitorclient to interact with island manager.
-    dc = DataIslandManagerClient(host=host, port=port, timeout=MM_WAIT_TIME)
+def submit_and_monitor(pg, opts, port):
+    def _task():
+        dump_path = None
+        if opts.dump:
+            dump_path = os.path.join(opts.log_dir, 'status-monitoring.json')
+        session_id = common.submit(pg, host='127.0.0.1', port=port)
+        common.monitor_sessions(session_id, host='127.0.0.1', port=port,
+                                status_dump_path=dump_path)
+    t = threading.Thread(target=_task)
+    t.start()
+    return t
 
-    while True:
-        logger.debug("Getting session information.")
-        # TODO This should be adjusted for multiple sessions.
-        for session in dc.sessions():
-            stt = time.time()
-            session_status = session['status']
-            logger.debug("Session status: %r", session_status)
-            # Determine if all sessions finished.
-            are_finished = [s == SessionStates.FINISHED for s in session_status.values()]
-            if all(are_finished):
-                return
-
-            dt = time.time() - stt
-            if (dt < GRAPH_MONITOR_INTERVAL):
-                time.sleep(GRAPH_MONITOR_INTERVAL - dt)
-
-def monitor_graph(host, port, dump_path):
-    """
-    monitors the execution status of a graph by polling host/port
-    """
-
-    # use monitorclient to interact with island manager
-    dc = DataIslandManagerClient(host=host, port=port, timeout=MM_WAIT_TIME)
-
-    # We want to monitor the status of the execution
-    fp = os.path.dirname(dump_path)
-    if (not os.path.exists(fp)):
-        return
-    gfile = "{0}_g.log".format(dump_path)
-    sfile = "{0}_s.log".format(dump_path)
-    graph_dict = dict() # k - ssid, v - graph spec json obj
-    logger.debug("Ready to check sessions")
-
-    while True:
-
-        for session in dc.sessions(): #TODO the interval won't work for multiple sessions
-            stt = time.time()
-            ssid = session['sessionId']
-            wgs = {}
-            wgs['ssid'] = ssid
-            wgs['gs'] = dc.graph_status(ssid) #TODO check error
-            time_str = '%.3f' % time.time()
-            wgs['ts'] = time_str
-
-            #if (not graph_dict.has_key(ssid)):
-            if (ssid not in graph_dict):
-                graph = dc.graph(ssid)
-                graph_dict[ssid] = graph
-                wg = {}
-                wg['ssid'] = ssid
-                wg['g'] = graph
-                # append to file as a line
-                with open(gfile, 'a') as fg:
-                    json.dump(wg, fg)
-                    fg.write(os.linesep)
-
-            # append to file as a line
-            with open(sfile, 'a') as fs:
-                json.dump(wgs, fs)
-                fs.write(os.linesep)
-
-            dt = time.time() - stt
-            if (dt < GRAPH_MONITOR_INTERVAL):
-                time.sleep(GRAPH_MONITOR_INTERVAL - dt)
 
 def start_proxy(loc, dlg_host, dlg_port, monitor_host, monitor_port):
     """
@@ -406,7 +346,7 @@ def main():
     logv = max(min(3, options.verbose_level), 1)
 
     if remote.is_nm:
-        nm_proc = start_node_mgr(log_dir, remote.my_ip, logv=logv,
+        start_node_mgr(log_dir, remote.my_ip, logv=logv,
             max_threads=options.max_threads,
             host=None if options.all_nics else remote.my_ip,
             event_listeners=options.event_listeners)
@@ -421,22 +361,9 @@ def main():
                 logger.warning("Couldn't connect to the main drop manager, proxy not started")
         else:
             pg = get_pg(options, remote.nm_ips, remote.dim_ips)
-            if pg:
-                def submit_and_monitor():
-                    host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
-                    tool.submit(host, port, pg)
-                    if options.dump:
-                        dump_path = '{0}/monitor'.format(log_dir)
-                        monitor_graph(host, port, dump_path)
-                threading.Thread(target=submit_and_monitor).start()
-
+            monitoring_thread = submit_and_monitor(pg, options, ISLAND_DEFAULT_REST_PORT)
             nm_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
-
-            # Wait until the pipeline execution gets finished.
-            host, port = 'localhost', ISLAND_DEFAULT_REST_PORT
-            monitor_execution_finished(host, port)
-            time.sleep(options.sleep_after_execution)
-
+            monitoring_thread.join()
         if nm_proc is not None:
             # Stop DALiuGE.
             logger.info("Stopping DALiuGE application on rank %d", remote.rank)
@@ -454,15 +381,9 @@ def main():
             if len(dim_ips_up) < len(remote.dim_ips):
                 logger.warning("Not all DIMs were up and running: %d/%d", len(dim_ips_up), len(remote.dim_ips))
 
-            # 8. submit the graph in a thread (wait for mm to start)
-            def submit():
-                if not check_host('localhost', MASTER_DEFAULT_REST_PORT, timeout=GRAPH_SUBMIT_WAIT_TIME):
-                    logger.warning("Master Manager didn't come up in %d seconds", GRAPH_SUBMIT_WAIT_TIME)
-                tool.submit('localhost', MASTER_DEFAULT_REST_PORT, pg)
-            threading.Thread(target=submit).start()
-
-            # 9. start dlgMM using islands IP addresses (this will block)
+            monitoring_thread = submit_and_monitor(pg, options, MASTER_DEFAULT_REST_PORT)
             start_mm(remote.dim_ips, log_dir, logv=logv)
+            monitoring_thread.join()
         else:
             proc = start_dim(remote.recv_dim_nodes(), log_dir, remote.my_ip, logv=logv)
             utils.wait_or_kill(proc, 1e8, period=5)
