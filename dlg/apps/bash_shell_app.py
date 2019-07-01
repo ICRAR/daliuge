@@ -38,13 +38,14 @@ import tempfile
 import threading
 import time
 import types
-
 import six
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
 from ..drop import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
+from ..meta import dlg_string_param, dlg_component, dlg_batch_input, \
+    dlg_batch_output, dlg_streaming_input
 
 
 logger = logging.getLogger(__name__)
@@ -140,19 +141,20 @@ def prepare_input_channel(data):
 
     raise Exception("Unsupported streaming channel: %s", data)
 
+
 class BashShellBase(object):
     """
     Common class for BashShell apps. It simply requires a command to be
     specified.
     """
 
+    command = dlg_string_param('Bash command', None)
+
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
-
-        self._command = self._getArg(kwargs, 'command', None)
-        if not self._command:
+        if not self.command:
             raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
     def _run_bash(self, inputs, outputs, stdin=None,
@@ -171,7 +173,7 @@ class BashShellBase(object):
         """
 
         session_id = self._dlg_session.sessionId if self._dlg_session is not None else ''
-        cmd = self._command
+        cmd = self.command
         app_uid = self.uid
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
@@ -286,6 +288,11 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
     its inputs are COMPLETED. It also *doesn't* output a stream of data; see
     StreamingOutputBashApp for those cases.
     """
+    compontent_meta = dlg_component('An app that runs a bash command in batch mode',
+                                    [dlg_batch_input('text/*', [])],
+                                    [dlg_batch_output('text/*', [])],
+                                    [dlg_streaming_input('text/*')])
+
     def run(self):
         self._run_bash(self._inputs, self._outputs)
 
@@ -294,6 +301,11 @@ class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
     Like BashShellApp, but its stdout is a stream of data that is fed into the
     next application.
     """
+    compontent_meta = dlg_component('Like BashShellApp, but its stdout is a stream '
+                                    'of data that is fed into the next application.',
+                                    [dlg_batch_input('text/*', [])],
+                                    [dlg_batch_output('text/*', [])],
+                                    [dlg_streaming_input('text/*')])
     def run(self):
         with contextlib.closing(prepare_output_channel(self.node, self.outputs[0])) as outchan:
             self._run_bash(self._inputs, {}, stdout=outchan)
@@ -308,6 +320,11 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
     to establish the streaming channel. This information is also used to kick
     this application off.
     """
+    compontent_meta = dlg_component('An app that runs a bash command that consumes data from stdin.',
+                                    [dlg_batch_input('text/*', [])],
+                                    [dlg_batch_output('text/*', [])],
+                                    [dlg_streaming_input('text/*')])
+
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
             self._run_bash({}, self._outputs, stdin=inchan)
@@ -318,6 +335,11 @@ class StreamingInputOutputBashApp(StreamingInputBashAppBase):
     Like StreamingInputBashApp, but its stdout is also a stream of data that is
     fed into the next application.
     """
+    compontent_meta = dlg_component('Like StreamingInputBashApp, but its stdout is also a '
+                                    'stream of data that is fed into the next application.',
+                                    [dlg_batch_input('text/*', [])],
+                                    [dlg_batch_output('text/*', [])],
+                                    [dlg_streaming_input('text/*')])
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
             with contextlib.closing(prepare_output_channel(self.node, self.outputs[0])) as outchan:

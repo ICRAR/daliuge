@@ -38,6 +38,7 @@ import shutil
 import threading
 import time
 import re
+import inspect
 
 import six
 from six import BytesIO
@@ -48,7 +49,8 @@ from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
-
+from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
+    dlg_string_param, dlg_bool_param, dlg_dict_param
 
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
@@ -136,6 +138,8 @@ class AbstractDROP(EventFirer):
         """
 
         super(AbstractDROP, self).__init__()
+
+        self._extract_attributes(**kwargs)
 
         # Copy it since we're going to modify it
         kwargs = dict(kwargs)
@@ -283,6 +287,37 @@ class AbstractDROP(EventFirer):
         # Sub-class initialization; mark ourselves as INITIALIZED after that
         self.initialize(**kwargs)
         self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
+
+    def _extract_attributes(self, **kwargs):
+        # Take a class dlg defined parameter class attribute and create an instanced attribute on object
+        for attr_name, obj in inspect.getmembers(self):
+            if isinstance(obj, dlg_float_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None:
+                    value = float(value)
+            elif isinstance(obj, dlg_bool_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None:
+                    value = bool(value)
+            elif isinstance(obj, dlg_int_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None:
+                    value = int(value)
+            elif isinstance(obj, dlg_string_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None:
+                    value = str(value)
+            elif isinstance(obj, dlg_list_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None and not isinstance(value, list):
+                    raise Exception("dlg_list_param %s is not a list" % attr_name)
+            elif isinstance(obj, dlg_dict_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None and not isinstance(value, dict):
+                    raise Exception("dlg_list_param %s is not a dict" % attr_name)
+            else:
+                continue
+            setattr(self, attr_name, value)
 
     def _getArg(self, kwargs, key, default):
         val = default
@@ -1002,6 +1037,11 @@ class FileDROP(AbstractDROP, PathBasedDrop):
     this drop's session, namelly ``/the/cwd/$session_id``.
     """
 
+    filepath = dlg_string_param('filepath', None)
+    dirname = dlg_string_param('dirname', None)
+    delete_parent_directory = dlg_bool_param('delete_parent_directory', False)
+    check_filepath_exists = dlg_bool_param('check_filepath_exists', False)
+
     def sanitize_paths(self, filepath, dirname):
 
         # No filepath has been given, there's nothing to sanitize
@@ -1020,32 +1060,29 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         return filepath_b, filepath_d
 
     non_fname_chars = re.compile(r':|%s' % os.sep)
+
     def initialize(self, **kwargs):
         """
         FileDROP-specific initialization.
         """
-        self._delete_parent_dir = self._getArg(kwargs, 'delete_parent_directory', False)
-
-        # The two pieces of information we offer users to tweak
+        # filepath, dirpath the two pieces of information we offer users to tweak
         # These are very intermingled but are not exactly the same, see below
-        filepath = self._getArg(kwargs, 'filepath', None)
-        dirname = self._getArg(kwargs, 'dirname', None)
 
         # Duh!
-        if isabs(filepath) and dirname:
+        if isabs(self.filepath) and self.dirname:
             raise InvalidDropException(self, 'An absolute filepath does not allow a dirname to be specified')
 
         # Sanitize filepath/dirname into proper directories-only and
         # filename-only components (e.g., dirname='lala' and filename='1/2'
         # results in dirname='lala/1' and filename='2'
-        filepath, dirname = self.sanitize_paths(filepath, dirname)
+        filepath, dirname = self.sanitize_paths(self.filepath, self.dirname)
 
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
         check = False
-        if (isabs(dirname) and filepath):
-            check = self._getArg(kwargs, 'check_filepath_exists', False)
+        if isabs(dirname) and filepath:
+            check = self.check_filepath_exists
 
         # Default filepath to drop UID and dirname to per-session directory
         if not filepath:
@@ -1064,7 +1101,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 
     def delete(self):
         AbstractDROP.delete(self)
-        if self._delete_parent_dir:
+        if self.delete_parent_directory:
             try:
                 os.rmdir(self._root)
             except OSError as e:
@@ -1077,39 +1114,46 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         hostname = os.uname()[1] # TODO: change when necessary
         return "file://" + hostname + self._path
 
+
 class ShoreDROP(AbstractDROP):
+    doid = dlg_string_param('doid', 'test_data_object')
+    column = dlg_string_param('column', 'test_column')
+    row = dlg_int_param('row', 0)
+    rows = dlg_int_param('rows', 1)
+    address = dlg_string_param('address', None)
+
     def initialize(self, **kwargs):
-        self._doid = self._getArg(kwargs, 'doid', 'test_data_object')
-        self._column = self._getArg(kwargs, 'column', 'test_column')
-        self._row = self._getArg(kwargs, 'row', 0)
-        self._rows = self._getArg(kwargs, 'rows', 1)
-        self._address = self._getArg(kwargs, 'address', None)
+        pass
+
     def getIO(self):
-        return ShoreIO(self._doid, self._column, self._row, self._rows, self._address)
+        return ShoreIO(self.doid, self.column, self.row, self.rows, self.address)
+
     @property
     def dataURL(self):
-        return self._address
+        return self.address
 
 
 class NgasDROP(AbstractDROP):
     '''
     A DROP that points to data stored in an NGAS server
     '''
+    ngasSrv = dlg_string_param('ngasSrv', 'localhost')
+    ngasPort = dlg_int_param('ngasPort', 7777)
+    ngasTimeout = dlg_int_param('ngasTimeout', 2)
+    ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
 
     def initialize(self, **kwargs):
-        self._ngasSrv            = self._getArg(kwargs, 'ngasSrv', 'localhost')
-        self._ngasPort           = int(self._getArg(kwargs, 'ngasPort', 7777))
-        self._ngasTimeout        = int(self._getArg(kwargs, 'ngasTimeout', 2))
-        self._ngasConnectTimeout = int(self._getArg(kwargs, 'ngasConnectTimeout', 2))
+       pass
 
     def getIO(self):
-        return NgasIO(self._ngasSrv, self.uid, port=self._ngasPort,
-                      ngasConnectTimeout=self._ngasConnectTimeout,
-                      ngasTimeout=self._ngasTimeout)
+        return NgasIO(self.ngasSrv, self.uid, port=self.ngasPort,
+                      ngasConnectTimeout=self.ngasConnectTimeout,
+                      ngasTimeout=self.ngasTimeout)
 
     @property
     def dataURL(self):
-        return "ngas://%s:%d/%s" % (self._ngasSrv, self._ngasPort, self.uid)
+        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.uid)
+
 
 class InMemoryDROP(AbstractDROP):
     """
@@ -1133,6 +1177,7 @@ class InMemoryDROP(AbstractDROP):
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
+
 class NullDROP(AbstractDROP):
     """
     A DROP that doesn't store any data.
@@ -1145,10 +1190,12 @@ class NullDROP(AbstractDROP):
     def dataURL(self):
         return "null://"
 
+
 class RDBMSDrop(AbstractDROP):
     """
     A Drop that stores data in a table of a relational database
     """
+    dbparams = dlg_dict_param('dbparams', {})
 
     def initialize(self, **kwargs):
         AbstractDROP.initialize(self, **kwargs)
@@ -1165,15 +1212,13 @@ class RDBMSDrop(AbstractDROP):
         # The table this Drop points at
         self._db_table = kwargs.pop('dbtable')
 
-        # Optional connection parameters
-        self._db_params = self._getArg(kwargs, 'dbparams', {})
 
     def getIO(self):
         # This Drop cannot be accessed directly
         return ErrorIO()
 
     def _connection(self):
-        return contextlib.closing(self._db_drv.connect(**self._db_params))
+        return contextlib.closing(self._db_drv.connect(**self.dbparams))
 
     def _cursor(self, conn):
         return contextlib.closing(conn.cursor())
@@ -1224,6 +1269,7 @@ class RDBMSDrop(AbstractDROP):
     def dataURL(self):
         return "rdbms://%s/%s/%r" % (self._db_drv.__name__, self._db_table, self._db_params)
 
+
 class ContainerDROP(AbstractDROP):
     """
     A DROP that doesn't directly point to some piece of data, but instead
@@ -1244,6 +1290,7 @@ class ContainerDROP(AbstractDROP):
     #===========================================================================
     def getIO(self):
         return ErrorIO()
+
     def dataURL(self):
         raise NotImplementedError()
 
@@ -1285,6 +1332,7 @@ class ContainerDROP(AbstractDROP):
             return any([c.exists() for c in  self._children])
         return True
 
+
 class DirectoryContainer(PathBasedDrop, ContainerDROP):
     """
     A ContainerDROP that represents a filesystem directory. It only allows
@@ -1292,6 +1340,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
     can only be added if they are placed directly within the directory
     represented by this DirectoryContainer.
     """
+    check_exists = dlg_bool_param('check_exists', True)
 
     def initialize(self, **kwargs):
         ContainerDROP.initialize(self, **kwargs)
@@ -1301,8 +1350,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 
         directory = kwargs['dirname']
 
-        check_exists = self._getArg(kwargs, 'check_exists', True)
-        if check_exists is True:
+        if self.check_exists is True:
             if not os.path.isdir(directory):
                 raise InvalidDropException(self, '%s is not a directory' % (directory))
 
@@ -1486,6 +1534,7 @@ class AppDROP(ContainerDROP):
         super(AppDROP, self).cancel()
         self.execStatus = AppDROPStates.CANCELLED
 
+
 class InputFiredAppDROP(AppDROP):
     """
     An InputFiredAppDROP accepts no streaming inputs and waits until a given
@@ -1511,26 +1560,28 @@ class InputFiredAppDROP(AppDROP):
     to erroneous effective inputs, and after which the application will not be
     run but moved to the ERROR state itself instead.
     """
+    input_error_threshold = dlg_int_param('Input error threshold (0 and 100)', 0)
+    n_effective_inputs = dlg_int_param('Number of effective inputs', -1)
+    n_tries = dlg_int_param('Number of tries', 1)
+
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
         self._completedInputs = []
         self._errorInputs = []
 
         # Error threshold must be within 0 and 100
-        self._input_error_threshold = int(self._getArg(kwargs, 'input_error_threshold', 0))
-        if self._input_error_threshold < 0 or self._input_error_threshold > 100:
+        if self.input_error_threshold < 0 or self.input_error_threshold > 100:
             raise InvalidDropException(self, "%r: input_error_threshold not within [0,100]" % (self,))
 
         # Amount of effective inputs
         if 'n_effective_inputs' not in kwargs:
             raise InvalidDropException(self, "%r: n_effective_inputs is mandatory" % (self,))
-        self._n_effective_inputs = int(kwargs['n_effective_inputs'])
-        if self._n_effective_inputs < -1 or self._n_effective_inputs == 0:
+
+        if self.n_effective_inputs < -1 or self.n_effective_inputs == 0:
             raise InvalidDropException(self, "%r: n_effective_inputs must be > 0 or equals to -1" % (self,))
 
         # Number of tries
-        self._n_tries = int(self._getArg(kwargs, 'n_tries', 1))
-        if self._n_tries < 1:
+        if self.n_tries < 1:
             raise InvalidDropException(self, 'Invalid n_tries, must be a positive number')
 
     def addStreamingInput(self, streamingInputDrop, back=True):
@@ -1544,14 +1595,14 @@ class InputFiredAppDROP(AppDROP):
 
         # A value of -1 means all inputs
         n_inputs = len(self._inputs)
-        n_eff_inputs = self._n_effective_inputs
+        n_eff_inputs = self.n_effective_inputs
         if n_eff_inputs == -1:
             n_eff_inputs = n_inputs
 
         # More effective inputs than inputs, this is a horror
         if n_eff_inputs > n_inputs:
             raise Exception("%r: More effective inputs (%d) than inputs (%d)" % \
-                            (self, self._n_effective_inputs, n_inputs))
+                            (self, self.n_effective_inputs, n_inputs))
 
         if drop_state == DROPStates.ERROR:
             self._errorInputs.append(uid)
@@ -1567,11 +1618,12 @@ class InputFiredAppDROP(AppDROP):
             # calculate the number of errors that have already occurred
             percent_failed = math.floor((error_len/float(n_eff_inputs)) * 100)
 
-            logger.debug("Error on inputs for %r: %d/%d", self, percent_failed, self._input_error_threshold)
+            logger.debug("Error on inputs for %r: %d/%d", self, percent_failed, self.input_error_threshold)
 
             # if we hit the input error threshold then ERROR the drop and move on
-            if percent_failed > self._input_error_threshold:
-                logger.info("Error threshold reached on %r, not executing it: %d/%d", self, percent_failed, self._input_error_threshold)
+            if percent_failed > self.input_error_threshold:
+                logger.info("Error threshold reached on %r, not executing it: %d/%d",
+                            self, percent_failed, self.input_error_threshold)
 
                 self.execStatus = AppDROPStates.ERROR
                 self.status =  DROPStates.ERROR
@@ -1606,7 +1658,7 @@ class InputFiredAppDROP(AppDROP):
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
-        while tries < self._n_tries:
+        while tries < self.n_tries:
             try:
                 self.run()
                 if self.execStatus == AppDROPStates.CANCELLED:
@@ -1617,10 +1669,10 @@ class InputFiredAppDROP(AppDROP):
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 tries += 1
-                logger.exception('Error while executing %r (try %d/%d)' % (self, tries, self._n_tries))
+                logger.exception('Error while executing %r (try %d/%d)' % (self, tries, self.n_tries))
 
         # We gave up running the application, go to error
-        if tries == self._n_tries:
+        if tries == self.n_tries:
             self.execStatus = AppDROPStates.ERROR
             drop_state = DROPStates.ERROR
 
