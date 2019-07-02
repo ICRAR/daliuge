@@ -56,6 +56,7 @@ import logging
 import math
 import os
 import random
+import string
 import time
 from itertools import product
 
@@ -2146,6 +2147,31 @@ class LG():
                 drop['command'] = bc.to_real_command()
 
         return ret
+
+class _LGTemplate(string.Template):
+    delimiter = '%'
+    idpattern = r'[_a-z][_a-z0-9\.]*'
+
+def _flatten_dict(d):
+    flat = dict(d)
+    for key, value in d.items():
+        if isinstance(value, dict):
+            flattened = _flatten_dict(value)
+            flat.update({"%s.%s" % (key, k): v for k, v in flattened.items()})
+        else:
+            flat[key] = value
+    return flat
+
+def fill(lg, params):
+    """Logical Graph + params -> Filled Logical Graph"""
+    logger.info('Filling Logical Graph with parameters: %r', params)
+    flat_params = _flatten_dict(params)
+    if hasattr(lg, 'read'):
+        lg = lg.read()
+    elif not isinstance(lg, six.string_types):
+        lg = json.dumps(lg)
+    lg = _LGTemplate(lg).substitute(flat_params)
+    return json.loads(lg)
 
 def unroll(lg, oid_prefix=None):
     """Unrolls a logical graph"""

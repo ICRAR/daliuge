@@ -19,8 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from .. import remote
-from ..drop import BarrierAppDROP
+from ..remote import copyTo, copyFrom
+from ..drop import BarrierAppDROP, ShoreDROP, NgasDROP, InMemoryDROP, \
+    NullDROP, RDBMSDrop, ContainerDROP
+from ..meta import dlg_string_param, dlg_component, dlg_batch_input, \
+    dlg_batch_output, dlg_streaming_input
 
 
 class ScpApp(BarrierAppDROP):
@@ -37,12 +40,20 @@ class ScpApp(BarrierAppDROP):
     TO other host. This application's node must thus coincide with one of the
     two I/O DROPs.
     """
+    compontent_meta = dlg_component('A BarrierAppDROP that copies the content of its single '
+                                    'input onto its single output via SSHs scp protocol.',
+                                    [dlg_batch_input('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,
+                                                                  NullDROP, RDBMSDrop, ContainerDROP])],
+                                    [dlg_batch_output('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,
+                                                                   NullDROP, RDBMSDrop, ContainerDROP])],
+                                    [dlg_streaming_input('binary/*')])
+
+    remoteUser = dlg_string_param('remoteUser', None)
+    pkeyPath = dlg_string_param('pkeyPath', None)
+    timeout = dlg_string_param('timeout', None)
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
-        self._remoteUser = self._getArg(kwargs, 'remoteUser', None)
-        self._pkeyPath   = self._getArg(kwargs, 'pkeyPath', None)
-        self._timeout    = self._getArg(kwargs, 'timeout', None)
 
     def run(self):
 
@@ -81,6 +92,8 @@ class ScpApp(BarrierAppDROP):
         # recursive = isinstance(inp, DirectoryContainer)
         recursive = hasattr(inp, 'children')
         if self.node == inp.node:
-            remote.copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath, timeout=self._timeout)
+            copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive,
+                   username=self.remoteUser, pkeyPath=self.pkeyPath, timeout=self.timeout)
         else:
-            remote.copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive, username=self._remoteUser, pkeyPath=self._pkeyPath, timeout=self._timeout)
+            copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive,
+                     username=self.remoteUser, pkeyPath=self.pkeyPath, timeout=self.timeout)
