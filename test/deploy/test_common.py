@@ -26,7 +26,7 @@ import unittest
 from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates
-from test.testutils import ManagerStarter
+from dlg.testutils import ManagerStarter
 
 
 class TestDeployCommon(ManagerStarter, unittest.TestCase):
