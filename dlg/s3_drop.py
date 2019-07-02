@@ -48,11 +48,11 @@ class S3DROP(AbstractDROP):
         Returns the path to the S3 object
         :return: the path
         """
-        return self.bucket + '/' + self.key
+        return '{}/{}'.format(self.bucket, self.key)
 
     @property
     def dataURL(self):
-        return "s3://" + self.bucket + '/' + self.key
+        return "s3://{}/{}".format(self.bucket, self.key)
 
     def exists(self):
         s3 = self._get_s3_connection()
