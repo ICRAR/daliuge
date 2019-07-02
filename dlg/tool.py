@@ -114,23 +114,14 @@ def resource_map(pgt, nodes, pip_name, num_islands):
 
     return pgt # now it's a PG
 
-def submit(host, port, pg,
-           skip_deploy=False, session_id=None, completed_uids=None):
-
-    from . import droputils
-    from .manager.client import CompositeManagerClient
-
-    session_id = session_id or "%f" % (time.time())
-    completed_uids = completed_uids or droputils.get_roots(pg)
-
-    with CompositeManagerClient(host, port, timeout=10) as client:
-        client.create_session(session_id)
-        logger.info("Session %s created", session_id)
-        client.append_graph(session_id, pg)
-        logger.info("Graph for session %s appended", session_id)
-        if not skip_deploy:
-            client.deploy_session(session_id, completed_uids=completed_uids)
-            logger.info("Session %s deployed", session_id)
+def submit(pg, opts):
+    from .deploy import common
+    session_id = common.submit(pg, host=opts.host, port=opts.port,
+                               skip_deploy=opts.skip_deploy,
+                               session_id=opts.session_id)
+    if opts.wait:
+        common.monitor_sessions(session_id, host=opts.host, port=opts.port,
+                                poll_interval=opts.poll_interval)
 
 def _add_logging_options(parser):
     parser.add_option("-v", "--verbose", action="count",
@@ -218,6 +209,44 @@ def version(parser, args):
     from . import __version__, __git_version__
     print("Version: %s" % __version__)
     print("Git version: %s" % __git_version__)
+
+@cmdwrap('fill', 'Fill a Logical Graph with parameters')
+def fill(parser, args):
+    _add_logging_options(parser)
+    _add_output_options(parser)
+    parser.add_option(
+        '-L', '--logical-graph', default='-',
+        help="Path to the Logical Graph (default: stdin)")
+    parser.add_option(
+        '-p', '--parameter', action='append',
+        help="Parameter specification (either 'name=value' or a JSON string)",
+        default=())
+
+    (opts, args) = parser.parse_args(args)
+    _setup_logging(opts)
+    dump = _setup_output(opts)
+
+    def param_spec_type(s):
+        if s.startswith('{'):
+            return 'json'
+        elif '=' in s:
+            return 'kv'
+        else:
+            return None
+
+    # putting all parameters together in a single dictionary
+    for p in opts.parameter:
+        if param_spec_type(p) is None:
+            parser.error('Parameter %s is neither JSON nor has it key=value form' % p)
+    params = [p.split('=')
+              for p in opts.parameter
+              if param_spec_type(p) == 'kv']
+    params = dict(params)
+    for json_param in (json.loads(p) for p in opts.parameter if param_spec_type(p) == 'json'):
+        params.update(json_param)
+
+    from .dropmake.pg_generator import fill
+    dump(fill(_open_i(opts.logical_graph), params))
 
 def _add_unroll_options(parser):
     parser.add_option('-L', '--logical-graph', action="store", dest='lg_path', type="string",
@@ -348,11 +377,15 @@ def dlg_submit(parser, args):
                       help='Session ID (default: <pg_name>-<current-time>)', default=None)
     parser.add_option('-S', '--skip-deploy', action='store_true', dest='skip_deploy',
                       help='Skip the deployment step (default: False)', default=False)
+    parser.add_option('-w', '--wait', action='store_true',
+                      help='Wait for the graph execution to finish (default: False)', default=False)
+    parser.add_option('-i', '--poll-interval', type='float',
+                      help='Polling interval used for monitoring the execution (default: 10)',
+                      default=10)
     (opts, args) = parser.parse_args(args)
 
     with _open_i(opts.pg_path) as f:
-        submit(opts.host, opts.port, json.load(f),
-               skip_deploy=opts.skip_deploy, session_id=opts.session_id)
+        submit(json.load(f), opts)
 
 
 def print_usage(prgname):
