@@ -27,67 +27,20 @@ import botocore
 
 from .drop import AbstractDROP
 from .io import ErrorIO
+from .meta import dlg_string_param
 
 
 class S3DROP(AbstractDROP):
     """
     A DROP that points to data stored in S3
     """
-    # def __init__(self, oid, uid, **kwargs):
-    #     self._bucket = None
-    #     self._key = None
-    #     self._storage_class = None
-    #     self._tags = None
-    #     self._aws_access_key_id = None
-    #     self._aws_secret_access_key = None
-    #     self._profile_name = None
-    #     self._s3 = None
-    #     super(S3DROP, self).__init__(oid, uid, **kwargs)
-
-    def initialize(self, **kwargs):
-        """
-
-        :param kwargs: the dictionary of arguments
-        """
-        self._bucket = self._getArg(kwargs, 'bucket', None)
-        self._key = self._getArg(kwargs, 'key', None)
-        self._storage_class = self._getArg(kwargs, 'storage_class', None)
-        self._tags = self._getArg(kwargs, 'tags', None)
-        self._aws_access_key_id = self._getArg(kwargs, 'aws_access_key_id', None)
-        self._aws_secret_access_key = self._getArg(kwargs, 'aws_secret_access_key', None)
-        self._profile_name = self._getArg(kwargs, 'profile_name', None)
-
-    @property
-    def bucket(self):
-        """
-        Returns the bucket name
-        :return: the bucket name
-        """
-        return self._bucket
-
-    @property
-    def key(self):
-        """
-        Return the S3 key
-        :return: the S3 key
-        """
-        return self._key
-
-    @property
-    def storage_class(self):
-        """
-        Return the AWS storage class
-        :return: the AWS storage class
-        """
-        return self._storage_class
-
-    @property
-    def tags(self):
-        """
-        Return the AWS Metadata tags
-        :return: the AWS Metadata tags
-        """
-        return self._tags
+    bucket = dlg_string_param('bucket', None)
+    key = dlg_string_param('key', None)
+    storage_class = dlg_string_param('storage_class', None)
+    tags = dlg_string_param('tags', None)
+    aws_access_key_id = dlg_string_param('aws_access_key_id', None)
+    aws_secret_access_key = dlg_string_param('aws_secret_access_key', None)
+    profile_name = dlg_string_param('profile_name', None)
 
     @property
     def path(self):
@@ -95,16 +48,16 @@ class S3DROP(AbstractDROP):
         Returns the path to the S3 object
         :return: the path
         """
-        return self._bucket + '/' + self._key
+        return self.bucket + '/' + self.key
 
     @property
     def dataURL(self):
-        return "s3://" + self._bucket + '/' + self._key
+        return "s3://" + self.bucket + '/' + self.key
 
     def exists(self):
         s3 = self._get_s3_connection()
         try:
-            s3.meta.client.head_bucket(Bucket=self._bucket)
+            s3.meta.client.head_bucket(Bucket=self.bucket)
         except botocore.exceptions.ClientError as e:
             # If a client error is thrown, then check that it was a 404 error.
             # If it was a 404 error, then the bucket does not exist.
@@ -113,7 +66,7 @@ class S3DROP(AbstractDROP):
                 return False
 
         try:
-            s3.meta.client.head_object(Bucket=self._bucket, Key=self._key)
+            s3.meta.client.head_object(Bucket=self.bucket, Key=self.key)
         except botocore.exceptions.ClientError as e:
             # If a client error is thrown, then check that it was a 404 error.
             # If it was a 404 error, then the bucket does not exist.
@@ -126,7 +79,7 @@ class S3DROP(AbstractDROP):
     def size(self):
         if self.exists():
             s3 = self._get_s3_connection()
-            object = s3.Object(self._bucket, self._key)
+            object = s3.Object(self.bucket, self.key)
             return object.content_length
 
         return -1
@@ -140,8 +93,13 @@ class S3DROP(AbstractDROP):
 
     def _get_s3_connection(self):
         if self._s3 is None:
-            if self._profile_name is not None or self._aws_access_key_id is not None or self._aws_secret_access_key is not None:
-                session = boto3.session.Session(profile_name=self._profile_name, aws_access_key_id=self._aws_access_key_id, aws_secret_access_key=self._aws_secret_access_key)
+            if (self.profile_name is not None
+                    or self.aws_access_key_id is not None
+                    or self.aws_secret_access_key is not None):
+                session = boto3.session.Session(
+                    profile_name=self.profile_name,
+                    aws_access_key_id=self.aws_access_key_id,
+                    aws_secret_access_key=self.aws_secret_access_key)
                 self._s3 = session.resource('s3')
             else:
                 self._s3 = boto3.resource('s3')
