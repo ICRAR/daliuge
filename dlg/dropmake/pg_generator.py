@@ -2273,9 +2273,9 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
         raise GraphException("Unknown partition algorithm: {0}".format(algo))
 
     pgt.to_gojs_json(string_rep=False, visual=show_gojs)
-
-    # if could_merge:
-    #     pgt.merge_partitions(num_islands, form_island=True, visual=show_gojs)
+    if not show_gojs:
+        pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands,
+                             tpl_nodes_len=num_partitions + num_islands)
 
     return pgt
 

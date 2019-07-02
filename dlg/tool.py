@@ -69,13 +69,11 @@ def partition(pgt, opts):
     from .dropmake import pg_generator
 
     algo_params = parse_partition_algo_params(opts.algo_params or [])
-    pgt = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
+    pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
                                  num_islands=opts.islands, partition_label='partition',
                                  **algo_params)
-    pg_spec = pgt.to_pg_spec([], ret_str=False, num_islands=opts.islands,
-                          tpl_nodes_len=opts.partitions + opts.islands)
     logger.info("PG spec is calculated!")
-    return pg_spec
+    return pg
 
 
 def submit(pg, opts):

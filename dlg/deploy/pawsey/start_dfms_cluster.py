@@ -214,7 +214,6 @@ def get_pg(opts, nms, dims):
                                      num_islands=num_dims,
                                      **algo_params)
         del unrolled # quickly dispose of potentially big object
-        pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_dims, tpl_nodes_len=num_nms + num_dims)
     else:
         with open(opts.physical_graph, 'rb') as f:
             pgt = json.load(f)
