@@ -2278,3 +2278,20 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
     #     pgt.merge_partitions(num_islands, form_island=True, visual=show_gojs)
 
     return pgt
+
+def resource_map(pgt, nodes, num_islands=1):
+    '''Maps a Physical Graph Template `pgt` to `nodes`'''
+
+    if not nodes:
+        err_info = "Empty node_list, cannot map the PG template"
+        raise ValueError(err_info)
+
+    dim_list = nodes[0:num_islands]
+    nm_list = nodes[num_islands:]
+    for drop_spec in pgt:
+        nidx = int(drop_spec['node'][1:]) # skip '#'
+        drop_spec['node'] = nm_list[nidx]
+        iidx = int(drop_spec['island'][1:]) # skip '#'
+        drop_spec['island'] = dim_list[iidx]
+
+    return pgt # now it's a PG
