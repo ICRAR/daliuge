@@ -49,22 +49,9 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     and return the latter.
     This method prepends `oid_prefix` to all generated Drop OIDs.
     '''
-
     from .dropmake.pg_generator import unroll
     logger.info("Start to unroll %s", lg_path)
-    drop_list = unroll(_open_i(lg_path), oid_prefix=oid_prefix)
-
-    # Optionally set sleepTimes to 0 and apps to a specific type
-    if zerorun:
-        for dropspec in drop_list:
-            if 'sleepTime' in dropspec:
-                dropspec['sleepTime'] = 0
-    if app:
-        for dropspec in drop_list:
-            if 'app' in dropspec:
-                dropspec['app'] = app
-
-    return drop_list
+    return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
 
 _param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
                'max_cpu': int, 'time_greedy': float, 'deadline': int,
