@@ -2173,12 +2173,22 @@ def fill(lg, params):
     lg = _LGTemplate(lg).substitute(flat_params)
     return json.loads(lg)
 
-def unroll(lg, oid_prefix=None):
+def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     """Unrolls a logical graph"""
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    logger.info("Logical Graph unroll completed in %.3f [s]. # of Drops: %d", (time.time() - start), len(drop_list))
+    logger.info("Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
+                (time.time() - start), len(drop_list))
+    # Optionally set sleepTimes to 0 and apps to a specific type
+    if zerorun:
+        for dropspec in drop_list:
+            if 'sleepTime' in dropspec:
+                dropspec['sleepTime'] = 0
+    if app:
+        for dropspec in drop_list:
+            if 'app' in dropspec:
+                dropspec['app'] = app
     return drop_list
 
 
