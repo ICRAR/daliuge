@@ -33,16 +33,16 @@ class S3DROP(AbstractDROP):
     """
     A DROP that points to data stored in S3
     """
-    def __init__(self, oid, uid, **kwargs):
-        self._bucket = None
-        self._key = None
-        self._storage_class = None
-        self._tags = None
-        self._aws_access_key_id = None
-        self._aws_secret_access_key = None
-        self._profile_name = None
-        self._s3 = None
-        super(S3DROP, self).__init__(oid, uid, **kwargs)
+    # def __init__(self, oid, uid, **kwargs):
+    #     self._bucket = None
+    #     self._key = None
+    #     self._storage_class = None
+    #     self._tags = None
+    #     self._aws_access_key_id = None
+    #     self._aws_secret_access_key = None
+    #     self._profile_name = None
+    #     self._s3 = None
+    #     super(S3DROP, self).__init__(oid, uid, **kwargs)
 
     def initialize(self, **kwargs):
         """
