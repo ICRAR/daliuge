@@ -46,7 +46,7 @@ class ManagerInfo(object):
         self.server.stop()
         self.thread.join()
         self.manager.shutdown()
-        self.test.assertFalse(self.thread.isAlive())
+        self.test.assertFalse(self.thread.is_alive())
 
 class ManagerStarter(object):
 
