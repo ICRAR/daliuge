@@ -289,8 +289,18 @@ class AbstractDROP(EventFirer):
         self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
 
     def _extract_attributes(self, **kwargs):
+
+        def getmembers(object, predicate=None):
+            for cls in object.__class__.__mro__[:-1]:
+                for k, v in vars(cls).items():
+                    try:
+                        if not predicate or predicate(v):
+                            yield k, v
+                    except AttributeError:
+                        continue
+
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
-        for attr_name, obj in inspect.getmembers(self):
+        for attr_name, obj in getmembers(self, lambda a: not(inspect.isfunction(a) or isinstance(a, property))):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None:
