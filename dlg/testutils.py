@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import collections
 import threading
 
 from dlg.manager import constants
@@ -47,7 +46,7 @@ class ManagerInfo(object):
         self.server.stop()
         self.thread.join()
         self.manager.shutdown()
-        self.test.assertFalse(self.thread.isAlive())
+        self.test.assertFalse(self.thread.is_alive())
 
 class ManagerStarter(object):
 

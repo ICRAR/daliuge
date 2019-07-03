@@ -206,16 +206,14 @@ def get_pg(opts, nms, dims):
 
     num_nms = len(nms)
     num_dims = len(dims)
-    pip_name = utils.fname_to_pipname(opts.logical_graph or opts.physical_graph)
     if opts.logical_graph:
-        unrolled = tool.unroll(opts.logical_graph, opts.ssid, opts.zerorun, apps[opts.app])
+        unrolled = pg_generator.unroll(opts.logical_graph, opts.ssid, opts.zerorun, apps[opts.app])
         algo_params = tool.parse_partition_algo_params(opts.algo_params)
         pgt = pg_generator.partition(unrolled, opts.part_algo,
                                      num_partitions=num_nms + num_dims,
                                      num_islands=num_dims,
                                      **algo_params)
         del unrolled # quickly dispose of potentially big object
-        pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_dims, tpl_nodes_len=num_nms + num_dims)
     else:
         with open(opts.physical_graph, 'rb') as f:
             pgt = json.load(f)
@@ -228,7 +226,7 @@ def get_pg(opts, nms, dims):
     nms = check_hosts(nms, NODE_DEFAULT_REST_PORT,
                       check_with_session=opts.check_with_session,
                       timeout=MM_WAIT_TIME)
-    pg = tool.resource_map(pgt, dims + nms, pip_name, num_dims)
+    pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims)
     with open(os.path.join(opts.log_dir, 'pg.json'), 'wt') as f:
         json.dump(pg, f)
     return pg
