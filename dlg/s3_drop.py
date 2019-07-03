@@ -27,7 +27,7 @@ import botocore
 
 from .drop import AbstractDROP
 from .io import ErrorIO
-from .meta import dlg_string_param, dlg_dict_param
+from .meta import dlg_string_param, dlg_list_param
 
 
 class S3DROP(AbstractDROP):
@@ -37,7 +37,7 @@ class S3DROP(AbstractDROP):
     bucket = dlg_string_param('bucket', None)
     key = dlg_string_param('key', None)
     storage_class = dlg_string_param('storage_class', None)
-    tags = dlg_dict_param('tags', None)
+    tags = dlg_list_param('tags', None)
     aws_access_key_id = dlg_string_param('aws_access_key_id', None)
     aws_secret_access_key = dlg_string_param('aws_secret_access_key', None)
     profile_name = dlg_string_param('profile_name', None)

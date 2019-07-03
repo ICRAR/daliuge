@@ -324,7 +324,7 @@ class AbstractDROP(EventFirer):
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None and not isinstance(value, dict):
-                    raise Exception("dlg_list_param %s is not a dict" % attr_name)
+                    raise Exception("dlg_dict_param {} is not a dict. It is a {}".format(attr_name, type(value)))
             else:
                 continue
             setattr(self, attr_name, value)
