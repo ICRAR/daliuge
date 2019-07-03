@@ -1596,7 +1596,12 @@ class LG():
         if isinstance(f, six.string_types):
             if (not os.path.exists(f)):
                 raise GraphException("Logical graph {0} not found".format(f))
-            f = open(f)
+            with open(f) as f:
+                lg = json.load(f)
+        elif hasattr(f, 'read'):
+            lg = json.load(f)
+        else:
+            lg = f
         if (ssid is None):
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%dT%H:%M:%S')
@@ -1607,57 +1612,55 @@ class LG():
                 # input drops list and output drops list
         self._gather_cache = dict()
 
-        with f:
-            lg = json.load(f)
-            lgver = get_lg_ver_type(lg)
-            if (LG_VER_EAGLE == lgver):
-                lg = convert_fields(lg)
-                lg = convert_construct(lg)
-            elif (LG_VER_EAGLE_CONVERTED == lgver):
-                lg = convert_construct(lg)
-            self._done_dict = dict()
-            self._group_q = collections.defaultdict(list)
-            self._output_q = collections.defaultdict(list)
-            self._start_list = []
-            all_list = []
-            stream_output_ports = dict() # key - port_id, value - construct key
-            for jd in lg['nodeDataArray']:
-                if (jd['category'] == 'Comment' or jd['category'] == 'Description'):
-                    continue
-                lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
-                all_list.append(lgn)
-                node_ouput_ports = jd.get('outputPorts', [])
-                node_ouput_ports += jd.get('outputLocalPorts', [])
-                # check all the outports of this node, and store "stream" output
-                if (len(node_ouput_ports) > 0):
-                    for out_port in node_ouput_ports:
-                        if (out_port.get('IdText', '').lower().endswith('stream')):
-                            stream_output_ports[out_port['Id']] = jd['key']
+        lgver = get_lg_ver_type(lg)
+        if (LG_VER_EAGLE == lgver):
+            lg = convert_fields(lg)
+            lg = convert_construct(lg)
+        elif (LG_VER_EAGLE_CONVERTED == lgver):
+            lg = convert_construct(lg)
+        self._done_dict = dict()
+        self._group_q = collections.defaultdict(list)
+        self._output_q = collections.defaultdict(list)
+        self._start_list = []
+        all_list = []
+        stream_output_ports = dict() # key - port_id, value - construct key
+        for jd in lg['nodeDataArray']:
+            if (jd['category'] == 'Comment' or jd['category'] == 'Description'):
+                continue
+            lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
+            all_list.append(lgn)
+            node_ouput_ports = jd.get('outputPorts', [])
+            node_ouput_ports += jd.get('outputLocalPorts', [])
+            # check all the outports of this node, and store "stream" output
+            if (len(node_ouput_ports) > 0):
+                for out_port in node_ouput_ports:
+                    if (out_port.get('IdText', '').lower().endswith('stream')):
+                        stream_output_ports[out_port['Id']] = jd['key']
 
-            for lgn in all_list:
-                if (lgn.is_start() and lgn.jd["category"] != "Comment" and lgn.jd["category"] != "Description"):
-                    if (lgn.jd["category"] == "Variables"):
-                        self._g_var.append(lgn)
-                    else:
-                        self._start_list.append(lgn)
-
-            self._lg_links = lg['linkDataArray']
-
-            for lk in self._lg_links:
-                src = self._done_dict[lk['from']]
-                tgt = self._done_dict[lk['to']]
-                self.validate_link(src, tgt)
-                src.add_output(tgt)
-                tgt.add_input(src)
-                # check stream links
-                from_port = lk.get('fromPort', '__None__')
-                if (stream_output_ports.get(from_port, None) == lk['from']):
-                    lk['is_stream'] = True
-                    logger.debug("Found stream from %s to %s" % (lk['from'], lk['to']))
+        for lgn in all_list:
+            if (lgn.is_start() and lgn.jd["category"] != "Comment" and lgn.jd["category"] != "Description"):
+                if (lgn.jd["category"] == "Variables"):
+                    self._g_var.append(lgn)
                 else:
-                    lk['is_stream'] = False
-                if ('1' == lk.get('loop_aware', '0')):
-                    self._loop_aware_set.add('%s-%s' % (lk['from'], lk['to']))
+                    self._start_list.append(lgn)
+
+        self._lg_links = lg['linkDataArray']
+
+        for lk in self._lg_links:
+            src = self._done_dict[lk['from']]
+            tgt = self._done_dict[lk['to']]
+            self.validate_link(src, tgt)
+            src.add_output(tgt)
+            tgt.add_input(src)
+            # check stream links
+            from_port = lk.get('fromPort', '__None__')
+            if (stream_output_ports.get(from_port, None) == lk['from']):
+                lk['is_stream'] = True
+                logger.debug("Found stream from %s to %s" % (lk['from'], lk['to']))
+            else:
+                lk['is_stream'] = False
+            if ('1' == lk.get('loop_aware', '0')):
+                self._loop_aware_set.add('%s-%s' % (lk['from'], lk['to']))
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
@@ -2173,12 +2176,22 @@ def fill(lg, params):
     lg = _LGTemplate(lg).substitute(flat_params)
     return json.loads(lg)
 
-def unroll(lg, oid_prefix=None):
+def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     """Unrolls a logical graph"""
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    logger.info("Logical Graph unroll completed in %.3f [s]. # of Drops: %d", (time.time() - start), len(drop_list))
+    logger.info("Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
+                (time.time() - start), len(drop_list))
+    # Optionally set sleepTimes to 0 and apps to a specific type
+    if zerorun:
+        for dropspec in drop_list:
+            if 'sleepTime' in dropspec:
+                dropspec['sleepTime'] = 0
+    if app:
+        for dropspec in drop_list:
+            if 'app' in dropspec:
+                dropspec['app'] = app
     return drop_list
 
 
@@ -2260,8 +2273,25 @@ def partition(pgt, algo, num_partitions=1, num_islands=1,
         raise GraphException("Unknown partition algorithm: {0}".format(algo))
 
     pgt.to_gojs_json(string_rep=False, visual=show_gojs)
-
-    # if could_merge:
-    #     pgt.merge_partitions(num_islands, form_island=True, visual=show_gojs)
+    if not show_gojs:
+        pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands,
+                             tpl_nodes_len=num_partitions + num_islands)
 
     return pgt
+
+def resource_map(pgt, nodes, num_islands=1):
+    '''Maps a Physical Graph Template `pgt` to `nodes`'''
+
+    if not nodes:
+        err_info = "Empty node_list, cannot map the PG template"
+        raise ValueError(err_info)
+
+    dim_list = nodes[0:num_islands]
+    nm_list = nodes[num_islands:]
+    for drop_spec in pgt:
+        nidx = int(drop_spec['node'][1:]) # skip '#'
+        drop_spec['node'] = nm_list[nidx]
+        iidx = int(drop_spec['island'][1:]) # skip '#'
+        drop_spec['island'] = dim_list[iidx]
+
+    return pgt # now it's a PG

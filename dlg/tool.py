@@ -28,8 +28,6 @@ import subprocess
 import sys
 import time
 
-from . import utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -49,22 +47,9 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     and return the latter.
     This method prepends `oid_prefix` to all generated Drop OIDs.
     '''
-
     from .dropmake.pg_generator import unroll
     logger.info("Start to unroll %s", lg_path)
-    drop_list = unroll(_open_i(lg_path), oid_prefix=oid_prefix)
-
-    # Optionally set sleepTimes to 0 and apps to a specific type
-    if zerorun:
-        for dropspec in drop_list:
-            if 'sleepTime' in dropspec:
-                dropspec['sleepTime'] = 0
-    if app:
-        for dropspec in drop_list:
-            if 'app' in dropspec:
-                dropspec['app'] = app
-
-    return drop_list
+    return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
 
 _param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
                'max_cpu': int, 'time_greedy': float, 'deadline': int,
@@ -84,35 +69,12 @@ def partition(pgt, opts):
     from .dropmake import pg_generator
 
     algo_params = parse_partition_algo_params(opts.algo_params or [])
-    pgt = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
+    pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
                                  num_islands=opts.islands, partition_label='partition',
                                  **algo_params)
-    pg_spec = pgt.to_pg_spec([], ret_str=False, num_islands=opts.islands,
-                          tpl_nodes_len=opts.partitions + opts.islands)
     logger.info("PG spec is calculated!")
-    return pg_spec
+    return pg
 
-
-def resource_map(pgt, nodes, pip_name, num_islands):
-    '''
-    Maps a Physical Graph Template `pgt` to `nodes`
-    '''
-
-    if not nodes:
-        err_info = "Empty node_list, cannot map the PG template"
-        raise ValueError(err_info)
-
-    logger.info("Start to translate {0}".format(pip_name))
-    dim_list = nodes[0:num_islands]
-    nm_list = nodes[num_islands:]
-    for drop_spec in pgt:
-        nidx = int(drop_spec['node'][1:]) # skip '#'
-        drop_spec['node'] = nm_list[nidx]
-        iidx = int(drop_spec['island'][1:]) # skip '#'
-        drop_spec['island'] = dim_list[iidx]
-    logger.info("Translation completed for {0}".format(pip_name))
-
-    return pgt # now it's a PG
 
 def submit(pg, opts):
     from .deploy import common
@@ -341,6 +303,7 @@ def dlg_map(parser, args):
     _setup_logging(opts)
     dump = _setup_output(opts)
 
+    from .dropmake import pg_generator
     from .manager.client import CompositeManagerClient
 
     if opts.nodes:
@@ -356,8 +319,7 @@ def dlg_map(parser, args):
     with _open_i(opts.pgt_path) as f:
         pgt = json.load(f)
 
-    pip_name = utils.fname_to_pipname(opts.pgt_path)
-    dump(resource_map(pgt, nodes, pip_name, opts.islands))
+    dump(pg_generator.resource_map(pgt, nodes, opts.islands))
 
 
 @cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')

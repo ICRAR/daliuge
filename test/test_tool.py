@@ -28,7 +28,7 @@ import pkg_resources
 from dlg import tool, utils
 from dlg.deploy import common
 from dlg.manager.session import SessionStates
-from test.testutils import ManagerStarter
+from dlg.testutils import ManagerStarter
 
 
 class TestTool(ManagerStarter, unittest.TestCase):

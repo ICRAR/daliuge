@@ -32,8 +32,8 @@ from dlg import utils
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
+from dlg.testutils import ManagerStarter
 from test.manager import testutils
-from test.testutils import ManagerStarter
 
 
 hostname = '127.0.0.1'
