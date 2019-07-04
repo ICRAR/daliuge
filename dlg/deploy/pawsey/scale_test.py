@@ -466,7 +466,7 @@ class LogParser(object):
         actual_num_nm = num_node_mgrs or theory_num_nm
         if actual_num_nm != num_finished_sess:
             print("Pipeline %s is not complete: %d != %d." % (pip_name, actual_num_nm, num_finished_sess))
-            return
+            #return
         else:
             failed_nodes = theory_num_nm - actual_num_nm
             num_nodes -= failed_nodes
@@ -486,6 +486,8 @@ class LogParser(object):
             if (deploy_time is None): # since some node managers failed to start
                 continue
             exec_time = indexed_leps['completion_time'].get_duration() or indexed_leps['completion_time_old'].get_duration()
+            if (exec_time is None):
+                continue
             real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
             if real_exec_time > max_exec_time:
                 max_exec_time = real_exec_time
