@@ -320,7 +320,7 @@ class AbstractDROP(EventFirer):
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None and not isinstance(value, list):
-                    raise Exception("dlg_list_param %s is not a list" % attr_name)
+                    raise Exception("dlg_list_param {} is not a list. It is a {}".format(attr_name, type(value)))
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None and not isinstance(value, dict):
