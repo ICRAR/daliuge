@@ -55,7 +55,10 @@ def setup_logger_class():
                 drop = drop.track_current_drop.tlocal.drop
             except AttributeError:
                 drop = None
-            drop_uid = drop.uid if drop else ''
+            try:
+                drop_uid = drop.uid if drop else ''
+            except AttributeError:
+                drop_uid = ''
 
             # Do the same with the session_id, which can be found via the drop (if any)
             # or checking if there is a session currently executing something
