@@ -33,6 +33,20 @@
 
 #include "dlg_app.h"
 
+/*
+compontent_meta = dlg_component('dynlib_example', 'dynlib_example for dlg tests',
+                            [dlg_batch_input('binary/*', [])],
+                            [dlg_batch_output('binary/*', [])],
+                            [dlg_streaming_input('binary/*')])
+
+print_stats = dlg_int_param('print_stats', None)
+crash_and_burn = dlg_int_param('crash_and_burn', None)
+total = dlg_int_param('total', None)
+write_duration = dlg_int_param('write_duration', None)
+bufsize = dlg_int_param('bufsize', None)
+sleep_seconds = dlg_int_param('sleep_seconds', None)
+*/
+
 struct app_data {
 	short print_stats;
 	short crash_and_burn;
