@@ -293,11 +293,8 @@ class AbstractDROP(EventFirer):
         def getmembers(object, predicate=None):
             for cls in object.__class__.__mro__[:-1]:
                 for k, v in vars(cls).items():
-                    try:
-                        if not predicate or predicate(v):
-                            yield k, v
-                    except AttributeError:
-                        continue
+                    if not predicate or predicate(v):
+                        yield k, v
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
         for attr_name, obj in getmembers(self, lambda a: not(inspect.isfunction(a) or isinstance(a, property))):
