@@ -36,7 +36,7 @@ class FileImportApp(ContainerDROP):
     is created which contains the path to the file. The FileDROP is then added
     to the FileImportApp (ContainerDROP)
     """
-    compontent_meta = dlg_component('Recursively scans a directory (dirname) and checks for files with '
+    compontent_meta = dlg_component('FileImportApp', 'Recursively scans a directory (dirname) and checks for files with '
                                     'a particular extension (ext). If a match is made then a FileDROP '
                                     'is created which contains the path to the file. The FileDROP is then added '
                                     'to the FileImportApp (ContainerDROP)',

@@ -42,7 +42,7 @@ class CRCApp(BarrierAppDROP):
     This is a simple example of an BarrierAppDROP being implemented, and
     not something really intended to be used in a production system
     '''
-    compontent_meta = dlg_component('A BarrierAppDROP that calculates the '
+    compontent_meta = dlg_component('CRCApp', 'A BarrierAppDROP that calculates the '
                                     'CRC of the single DROP it consumes',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
@@ -76,7 +76,7 @@ class CRCStreamApp(AppDROP):
     Calculate CRC in the streaming mode
     i.e. A "streamingConsumer" of its predecessor in the graph
     """
-    compontent_meta = dlg_component('Calculate CRC in the streaming mode.',
+    compontent_meta = dlg_component('CRCStreamApp', 'Calculate CRC in the streaming mode.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
