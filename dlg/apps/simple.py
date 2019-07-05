@@ -30,7 +30,7 @@ from ..meta import dlg_float_param, dlg_component, dlg_batch_input, \
 
 
 class NullBarrierApp(BarrierAppDROP):
-    compontent_meta = dlg_component('Null Barrier.',
+    compontent_meta = dlg_component('NullBarrierApp', 'Null Barrier.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
@@ -42,7 +42,7 @@ class NullBarrierApp(BarrierAppDROP):
 
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
-    compontent_meta = dlg_component('Sleep App.',
+    compontent_meta = dlg_component('SleepApp', 'Sleep App.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
@@ -62,7 +62,7 @@ class CopyApp(BarrierAppDROP):
     All inputs are copied into all outputs in the order they were declared in
     the graph.
     """
-    compontent_meta = dlg_component('Copy App.',
+    compontent_meta = dlg_component('CopyApp', 'Copy App.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])

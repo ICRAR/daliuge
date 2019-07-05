@@ -288,7 +288,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
     its inputs are COMPLETED. It also *doesn't* output a stream of data; see
     StreamingOutputBashApp for those cases.
     """
-    compontent_meta = dlg_component('An app that runs a bash command in batch mode',
+    compontent_meta = dlg_component('BashShellApp', 'An app that runs a bash command in batch mode',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
                                     [dlg_streaming_input('text/*')])
@@ -301,7 +301,7 @@ class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
     Like BashShellApp, but its stdout is a stream of data that is fed into the
     next application.
     """
-    compontent_meta = dlg_component('Like BashShellApp, but its stdout is a stream '
+    compontent_meta = dlg_component('StreamingOutputBashApp', 'Like BashShellApp, but its stdout is a stream '
                                     'of data that is fed into the next application.',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
@@ -320,7 +320,7 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
     to establish the streaming channel. This information is also used to kick
     this application off.
     """
-    compontent_meta = dlg_component('An app that runs a bash command that consumes data from stdin.',
+    compontent_meta = dlg_component('StreamingInputBashApp', 'An app that runs a bash command that consumes data from stdin.',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
                                     [dlg_streaming_input('text/*')])
@@ -335,7 +335,7 @@ class StreamingInputOutputBashApp(StreamingInputBashAppBase):
     Like StreamingInputBashApp, but its stdout is also a stream of data that is
     fed into the next application.
     """
-    compontent_meta = dlg_component('Like StreamingInputBashApp, but its stdout is also a '
+    compontent_meta = dlg_component('StreamingInputOutputBashApp', 'Like StreamingInputBashApp, but its stdout is also a '
                                     'stream of data that is fed into the next application.',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
