@@ -40,7 +40,7 @@ class ScpApp(BarrierAppDROP):
     TO other host. This application's node must thus coincide with one of the
     two I/O DROPs.
     """
-    compontent_meta = dlg_component('A BarrierAppDROP that copies the content of its single '
+    compontent_meta = dlg_component('ScpApp', 'A BarrierAppDROP that copies the content of its single '
                                     'input onto its single output via SSHs scp protocol.',
                                     [dlg_batch_input('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,
                                                                   NullDROP, RDBMSDrop, ContainerDROP])],

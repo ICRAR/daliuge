@@ -48,7 +48,8 @@ class dlg_streaming_input(object):
 
 
 class dlg_component(object):
-    def __init__(self, description, batch_inputs, batch_outputs, streaming_inputs):
+    def __init__(self, name, description, batch_inputs, batch_outputs, streaming_inputs):
+        self.name = name
         self.description = description
         self.batch_inputs = batch_inputs
         self.batch_outputs = batch_outputs

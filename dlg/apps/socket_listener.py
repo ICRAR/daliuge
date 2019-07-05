@@ -52,7 +52,7 @@ class SocketListenerApp(BarrierAppDROP):
 
     _dryRun = False
 
-    compontent_meta = dlg_component('A BarrierAppDROP that listens on a socket for data',
+    compontent_meta = dlg_component('SocketListenerApp', 'A BarrierAppDROP that listens on a socket for data',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
