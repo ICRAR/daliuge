@@ -210,7 +210,7 @@ def get_pg(opts, nms, dims):
         unrolled = pg_generator.unroll(opts.logical_graph, opts.ssid, opts.zerorun, apps[opts.app])
         algo_params = tool.parse_partition_algo_params(opts.algo_params)
         pgt = pg_generator.partition(unrolled, opts.part_algo,
-                                     num_partitions=num_nms + num_dims,
+                                     num_partitions=num_nms,
                                      num_islands=num_dims,
                                      **algo_params)
         del unrolled # quickly dispose of potentially big object
