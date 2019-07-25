@@ -66,18 +66,13 @@ def launchServer(opts):
         _terminating = True
         logger.info("Exiting from %s" % (dmName))
 
-        dm.shutdown()
-        server.stop()
-
+        server.stop_manager()
         logger.info("Thanks for using our %s, come back again :-)" % (dmName))
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    server_t = threading.Thread(target=server.start, args=(opts.host, opts.port), name="HTTP server")
-    server_t.start()
-    # Now simply wait...
-    signal.pause()
+    server.start(opts.host, opts.port)
 
 
 def addCommonOptions(parser, defaultPort):

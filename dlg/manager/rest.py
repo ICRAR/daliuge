@@ -27,6 +27,7 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 import functools
 import json
 import logging
+import threading
 
 import bottle
 import pkg_resources
@@ -113,6 +114,7 @@ class ManagerRestServer(RestServer):
 
         # Mappings
         app = self.app
+        app.post(  '/api/stop',                              callback=self.stop_manager)
         app.post(  '/api/sessions',                          callback=self.createSession)
         app.get(   '/api/sessions',                          callback=self.getSessions)
         app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
@@ -138,6 +140,14 @@ class ManagerRestServer(RestServer):
         the default ones and perform other DataManager-specific actions.
         The default implementation does nothing.
         """
+
+    def _stop_manager(self):
+        self.dm.shutdown()
+        self.stop()
+
+    @daliuge_aware
+    def stop_manager(self):
+        threading.Thread(target=self._stop_manager).start()
 
     @daliuge_aware
     def createSession(self):
