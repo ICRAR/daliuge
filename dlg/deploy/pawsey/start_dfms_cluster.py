@@ -163,6 +163,24 @@ def start_mm(node_list, log_dir, logv=1):
             '-H', '0.0.0.0', '-m', '2048']
     cmdline.dlgMM(parser, args)
 
+
+def _stop(endpoints):
+    def _the_stop(endpoint):
+        common.BaseDROPManagerClient(endpoint[0], endpoint[1]).stop()
+    tp = multiprocessing.pool.ThreadPool(min(50, len(endpoints)))
+    tp.map(_the_stop, endpoints)
+    tp.close()
+    tp.join()
+
+def stop_nms(ips):
+    _stop([(ip, NODE_DEFAULT_REST_PORT) for ip in ips])
+
+def stop_dims(ips):
+    _stop([(ip, ISLAND_DEFAULT_REST_PORT) for ip in ips])
+
+def stop_mm(ip):
+    _stop((ip, MASTER_DEFAULT_REST_PORT))
+
 def submit_and_monitor(pg, opts, port):
     def _task():
         dump_path = None
@@ -364,6 +382,8 @@ def main():
             monitoring_thread = submit_and_monitor(pg, options, ISLAND_DEFAULT_REST_PORT)
             nm_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
             monitoring_thread.join()
+            stop_dims(['127.0.0.1'])
+            stop_nms(remote.nm_ips)
         if nm_proc is not None:
             # Stop DALiuGE.
             logger.info("Stopping DALiuGE application on rank %d", remote.rank)
@@ -384,9 +404,13 @@ def main():
             monitoring_thread = submit_and_monitor(pg, options, MASTER_DEFAULT_REST_PORT)
             start_mm(remote.dim_ips, log_dir, logv=logv)
             monitoring_thread.join()
+            stop_mm(['127.0.0.1'])
+            stop_dims(remote.dim_ips)
         else:
-            proc = start_dim(remote.recv_dim_nodes(), log_dir, remote.my_ip, logv=logv)
+            nm_ips = remote.recv_dim_nodes()
+            proc = start_dim(nm_ips, log_dir, remote.my_ip, logv=logv)
             utils.wait_or_kill(proc, 1e8, period=5)
+            stop_nms(remote.nm_ips)
 
 if __name__ == '__main__':
     main()
