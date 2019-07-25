@@ -124,7 +124,7 @@ class RestClient(object):
     The base class for our REST clients
     """
 
-    def __init__(self, host, port, timeout):
+    def __init__(self, host, port, timeout=None):
         self.host = host
         self.port = port
         self.timeout = timeout
