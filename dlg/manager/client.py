@@ -43,6 +43,9 @@ class BaseDROPManagerClient(RestClient):
         url = '/api' + url
         return RestClient._request(self, url, method, content=content, headers=headers)
 
+    def stop(self):
+        self._POST('/stop')
+
     def cancelSession(self, sessionId):
         self._POST('/sessions/%s/cancel' % urllib.quote(sessionId))
 
