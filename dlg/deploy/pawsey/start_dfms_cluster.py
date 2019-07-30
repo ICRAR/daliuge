@@ -35,6 +35,7 @@ import logging
 import multiprocessing
 import optparse
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -194,11 +195,11 @@ def submit_and_monitor(pg, opts, port):
     return t
 
 
-def start_proxy(loc, dlg_host, dlg_port, monitor_host, monitor_port):
+def start_proxy(dlg_host, dlg_port, monitor_host, monitor_port):
     """
     Start the DALiuGE proxy server
     """
-    proxy_id = loc + '%.3f' % time.time()
+    proxy_id = socket.gethostname() + '%.3f' % time.time()
     server = dfms_proxy.ProxyServer(proxy_id, dlg_host, monitor_host, dlg_port, monitor_port)
     try:
         server.loop()
@@ -374,7 +375,7 @@ def main():
             # Wait until the Island Manager is open
             nm_proc = None
             if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
-                start_proxy(options.loc, remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
+                start_proxy(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, options.monitor_host, options.monitor_port)
             else:
                 logger.warning("Couldn't connect to the main drop manager, proxy not started")
         else:
