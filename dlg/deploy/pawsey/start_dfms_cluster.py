@@ -107,26 +107,18 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
 
     return [ip for ip in up if ip]
 
-def get_ip_via_ifconfig(loc='Pawsey'):
-    """
-    This is brittle, but works on Magnus/Galaxy for now
-    """
+def get_ip_via_ifconfig(iface_index):
     out = subprocess.check_output('ifconfig')
-    if (loc == 'Pawsey'):
-        ln = 1 # e.g. 10.128.0.98
-    elif (loc == 'Tianhe2'):
-        ln = 18 # e.g. 12.6.2.134
-    else:
-        raise Exception("Unknown deploy location: {0}".format(loc))
-    try:
-        line = out.split('\n')[ln]
-        return line.split()[1].split(':')[1]
-    except:
-        logger.warning("Fail to obtain IP address from {0}".format(out))
-        return 'None'
+    ifaces_info = list(filter(None, out.split(b'\n\n')))
+    logger.info('Found %d interfaces, getting %d', len(ifaces_info), iface_index)
+    for line in ifaces_info[iface_index].splitlines():
+        line = line.strip()
+        if line.startswith(b'inet'):
+                return utils.b2s(line.split()[1])
+    raise ValueError('Interace %d is not an IP interface' % iface_index)
 
-def get_ip_via_netifaces(loc=''):
-    return utils.get_local_ip_addr()[0][0]
+def get_ip_via_netifaces(iface_index):
+    return utils.get_local_ip_addr()[iface_index][0]
 
 def start_node_mgr(log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=''):
     """
@@ -252,7 +244,7 @@ def get_pg(opts, nms, dims):
 
 def get_remote(opts):
     find_ip = get_ip_via_ifconfig if opts.use_ifconfig else get_ip_via_netifaces
-    my_ip = find_ip(opts.loc)
+    my_ip = find_ip(opts.interface)
     if opts.remote_mechanism == 'mpi':
         return remotes.MPIRemote(opts, my_ip)
     elif opts.remote_mechanism == 'lfs':
@@ -293,9 +285,8 @@ def main():
     parser.add_option('-d', '--dump', action='store_true',
                     dest='dump', help = 'dump file base name?', default=False)
 
-    parser.add_option("-c", "--loc", action="store", type="string",
-                    dest="loc", help="deployment location (e.g. 'Pawsey' or 'Tianhe2')",
-                    default="Pawsey")
+    parser.add_option("-i", "--interface", type="int",
+                      help="Index of network interface to use as the external interface/address for each host", default=0)
 
     parser.add_option('--part-algo', type="string", dest='part_algo', help='Partition algorithms',
                       default='metis')
@@ -331,8 +322,14 @@ def main():
     (options, _) = parser.parse_args()
 
     if options.check_interfaces:
-        print("From netifaces: %s" % get_ip_via_netifaces())
-        print("From ifconfig: %s" % get_ip_via_ifconfig())
+        try:
+            print("From netifaces: %s" % get_ip_via_netifaces(options.interface))
+        except:
+            logger.exception("Failed to get information via netifaces")
+        try:
+            print("From ifconfig: %s" % get_ip_via_ifconfig(options.interface))
+        except:
+            logger.exception('Failed to get information via ifconfig')
         sys.exit(0)
 
     if bool(options.logical_graph) == bool(options.physical_graph):
