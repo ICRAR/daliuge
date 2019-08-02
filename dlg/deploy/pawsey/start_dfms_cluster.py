@@ -402,7 +402,7 @@ def main():
             monitoring_thread = submit_and_monitor(pg, options, MASTER_DEFAULT_REST_PORT)
             start_mm(remote.dim_ips, log_dir, logv=logv)
             monitoring_thread.join()
-            stop_mm(['127.0.0.1'])
+            stop_mm('127.0.0.1')
             stop_dims(remote.dim_ips)
         else:
             nm_ips = remote.recv_dim_nodes()
