@@ -28,6 +28,7 @@ from .. import droputils
 from ..manager import constants
 from ..manager.client import BaseDROPManagerClient
 from ..manager.session import SessionStates
+import itertools
 
 
 logger = logging.getLogger(__name__)
@@ -72,11 +73,17 @@ def _get_client(host, port, timeout, status_dump_path=None):
         kwargs['dump_path'] = status_dump_path
     return clazz(**kwargs)
 
+
 def _session_status(session):
-    session_status = session['status']
-    if isinstance(session_status, dict):
-        return session_status.values()
-    return session_status
+    def _get(status):
+        if isinstance(status, dict):
+            status = [_get(s) for s in status.values()]
+            if isinstance(status[0], list):
+                status = list(itertools.chain(*status))
+        return status
+    x =  _get(session['status'])
+    return x
+
 
 def _session_finished(session):
     session_status = _session_status(session)
