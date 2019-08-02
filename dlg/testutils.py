@@ -25,7 +25,7 @@ from dlg.manager import constants
 from dlg.manager.node_manager import NodeManager
 from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 from dlg.utils import portIsOpen
-from dlg.manager.composite_manager import DataIslandManager
+from dlg.manager.composite_manager import DataIslandManager, MasterManager
 
 
 class ManagerInfo(object):
@@ -67,3 +67,8 @@ class ManagerStarter(object):
                             port=constants.ISLAND_DEFAULT_REST_PORT):
         return self._start_manager_in_thread(
             port, DataIslandManager, CompositeManagerRestServer, nm_hosts)
+
+    def start_mm_in_thread(self, nm_hosts=['127.0.0.1'],
+                            port=constants.MASTER_DEFAULT_REST_PORT):
+        return self._start_manager_in_thread(
+            port, MasterManager, CompositeManagerRestServer, nm_hosts)
