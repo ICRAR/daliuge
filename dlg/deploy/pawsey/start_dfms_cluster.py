@@ -172,7 +172,7 @@ def stop_dims(ips):
     _stop([(ip, ISLAND_DEFAULT_REST_PORT) for ip in ips])
 
 def stop_mm(ip):
-    _stop((ip, MASTER_DEFAULT_REST_PORT))
+    _stop([(ip, MASTER_DEFAULT_REST_PORT)])
 
 def submit_and_monitor(pg, opts, port):
     def _task():
