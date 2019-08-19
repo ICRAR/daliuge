@@ -67,7 +67,6 @@ def launchServer(opts):
         logger.info("Exiting from %s" % (dmName))
 
         server.stop_manager()
-        logger.info("Thanks for using our %s, come back again :-)" % (dmName))
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
