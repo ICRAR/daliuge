@@ -96,7 +96,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
                 logger.info("Host %s:%d is running", ip, port)
                 return ip
             logger.warning("Failed to contact host %s:%d", ip, port)
-            ntries -= 0
+            ntries -= 1
         return None
 
     # Don't return None values
