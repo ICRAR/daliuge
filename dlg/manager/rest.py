@@ -144,6 +144,8 @@ class ManagerRestServer(RestServer):
     def _stop_manager(self):
         self.dm.shutdown()
         self.stop()
+        logger.info("Thanks for using our %s, come back again :-)" %
+                (self.dm.__class__.__name__))
 
     @daliuge_aware
     def stop_manager(self):
