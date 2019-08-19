@@ -380,7 +380,9 @@ def terminate_or_kill(proc, timeout):
     the given timeout. If the process is still alive after the timeout it is
     killed.
     """
-    if proc.poll() is not None:
+    ecode = proc.poll()
+    if ecode is not None:
+        logger.info("Process %d already exited with code %d", proc.pid, ecode)
         return
     logger.info('Terminating %d', proc.pid)
     proc.terminate()
