@@ -52,6 +52,14 @@ else:
         return b
 b2s.__doc__ = "Converts bytes into a string"
 
+def timed_import(module_name):
+    """Imports `module_name` and log how long it took to import it"""
+    start = time.time()
+    module = importlib.import_module(module_name)
+    logger.info('Imported %s in %.3f seconds', module, time.time() - start)
+    return module
+
+
 def get_local_ip_addr():
     """
     Enumerate all interfaces and return bound IP addresses (exclude localhost)
