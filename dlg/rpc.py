@@ -194,6 +194,11 @@ class ZeroRPCServer(RPCServerBase):
     def start(self):
         super(ZeroRPCServer, self).start()
 
+        # Early importing of big modules. These can take a long time in
+        # distributed filesystems on HPC environments with a big node count
+        for module in ('gevent', 'zerorpc'):
+            utils.timed_import(module)
+
         # Starts the single-threaded ZeroRPC server for RPC requests
         timeout = 30
         server_started = threading.Event()
@@ -204,11 +209,8 @@ class ZeroRPCServer(RPCServerBase):
 
     def run_zrpcserver(self, host, port, server_started):
 
-        # temporarily timing import statements to check FS times on HPC environs
-        start = time.time()
         import gevent
         import zerorpc
-        logger.info("Importing of gevent and zerorpc took %.3f seconds", time.time() - start)
 
         # Use a specific context; otherwise multiple servers on the same process
         # (only during tests) share the same Context.instance() which is global
