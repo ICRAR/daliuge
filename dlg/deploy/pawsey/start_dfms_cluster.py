@@ -180,8 +180,13 @@ def submit_and_monitor(pg, opts, port):
         if opts.dump:
             dump_path = os.path.join(opts.log_dir, 'status-monitoring.json')
         session_id = common.submit(pg, host='127.0.0.1', port=port)
-        common.monitor_sessions(session_id, host='127.0.0.1', port=port,
-                                status_dump_path=dump_path)
+        while True:
+            try:
+                common.monitor_sessions(session_id, host='127.0.0.1', port=port,
+                                        status_dump_path=dump_path)
+                break
+            except:
+                logger.exception('Monitoring failed, restarting it')
     t = threading.Thread(target=_task)
     t.start()
     return t
