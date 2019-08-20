@@ -236,7 +236,7 @@ def get_pg(opts, nms, dims):
     # Check that which NMs are up and use only those form now on
     nms = check_hosts(nms, NODE_DEFAULT_REST_PORT,
                       check_with_session=opts.check_with_session,
-                      timeout=MM_WAIT_TIME)
+                      timeout=MM_WAIT_TIME, retry=3)
     pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims)
     with open(os.path.join(opts.log_dir, 'pg.json'), 'wt') as f:
         json.dump(pg, f)
