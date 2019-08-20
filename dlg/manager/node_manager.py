@@ -313,9 +313,7 @@ class ZMQPubSubMixIn(object):
     def start(self):
 
         # temporarily timing import statements to check FS times on HPC environs
-        start = time.time()
-        import zmq
-        logger.info("Importing of zmq took %.3f seconds", time.time() - start)
+        zmq = utils.timed_import('zmq')
 
         self._pubsub_running = True
         super(ZMQPubSubMixIn, self).start()
