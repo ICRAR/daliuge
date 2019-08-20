@@ -54,7 +54,11 @@ def launchServer(opts):
 
     logger.info('DALiuGE version %s running at %s', version.full_version, os.getcwd())
     logger.info('Creating %s' % (dmName))
-    dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
+    try:
+        dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
+    except:
+        logger.exception('Error while creating/starting our %s, exiting in shame :-(', dmName)
+        return
 
     server = opts.restType(dm, opts.maxreqsize)
 
