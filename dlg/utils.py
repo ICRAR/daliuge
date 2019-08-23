@@ -56,7 +56,7 @@ def timed_import(module_name):
     """Imports `module_name` and log how long it took to import it"""
     start = time.time()
     module = importlib.import_module(module_name)
-    logger.info('Imported %s in %.3f seconds', module, time.time() - start)
+    logger.info('Imported %s in %.3f seconds', module_name, time.time() - start)
     return module
 
 
