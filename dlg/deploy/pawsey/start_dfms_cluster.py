@@ -366,6 +366,12 @@ def main():
 
     logv = max(min(3, options.verbose_level), 1)
 
+    if remote.is_highest_level_manager:
+        nodesfile = os.path.join(log_dir, 'nodes.txt')
+        logger.debug("Dumping list of nodes to %s", nodesfile)
+        with open(nodesfile, 'wt') as f:
+            f.write('\n'.join(remote.sorted_peers))
+
     if remote.is_nm:
         start_node_mgr(log_dir, remote.my_ip, logv=logv,
             max_threads=options.max_threads,
