@@ -309,6 +309,8 @@ def main():
 
     parser.add_option('--check-interfaces', action='store_true',
                       dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
+    parser.add_option('--collect-interfaces', action='store_true',
+                      dest='collect_interfaces', help = 'Collect all interfaces and exit', default=False)
     parser.add_option('--use-ifconfig', action='store_true',
                       dest='use_ifconfig', help='Use ifconfig to find a suitable external interface/address for each host', default=False)
     parser.add_option("-S", "--check_with_session", action="store_true",
@@ -339,6 +341,14 @@ def main():
         except:
             logger.exception('Failed to get information via ifconfig')
         sys.exit(0)
+    elif options.collect_interfaces:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD  # @UndefinedVariable
+        ips = comm.allgather(get_ip(options))
+        if comm.Get_rank() == 0:
+            print(' '.join(ips))
+        sys.exit(0)
+
 
     if bool(options.logical_graph) == bool(options.physical_graph):
         parser.error("Either a logical graph or physical graph filename must be specified")
