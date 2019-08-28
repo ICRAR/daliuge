@@ -247,9 +247,12 @@ def get_pg(opts, nms, dims):
         json.dump(pg, f)
     return pg
 
-def get_remote(opts):
+def get_ip(opts):
     find_ip = get_ip_via_ifconfig if opts.use_ifconfig else get_ip_via_netifaces
-    my_ip = find_ip(opts.interface)
+    return find_ip(opts.interface)
+
+def get_remote(opts):
+    my_ip = get_ip(opts)
     if opts.remote_mechanism == 'mpi':
         return remotes.MPIRemote(opts, my_ip)
     elif opts.remote_mechanism == 'dlg':
