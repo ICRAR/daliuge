@@ -252,8 +252,8 @@ def get_remote(opts):
     my_ip = find_ip(opts.interface)
     if opts.remote_mechanism == 'mpi':
         return remotes.MPIRemote(opts, my_ip)
-    elif opts.remote_mechanism == 'lfs':
-        return remotes.LFSRemote(opts, my_ip)
+    elif opts.remote_mechanism == 'dlg':
+        return remotes.DALiuGERemote(opts, my_ip)
     else: # == 'slurm'
         return remotes.SlurmRemote(opts, my_ip)
 
@@ -322,7 +322,7 @@ def main():
                             'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'))
 
     parser.add_option('-r', '--remote-mechanism', help='The mechanism used by this script to coordinate remote processes',
-                      choices=['mpi', 'slurm', 'lfs'], default='mpi')
+                      choices=['mpi', 'slurm', 'dlg'], default='mpi')
 
     (options, _) = parser.parse_args()
 
