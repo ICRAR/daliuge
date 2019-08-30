@@ -169,5 +169,5 @@ class DALiuGERemote(FilesystemBasedRemote):
     def __init__(self, options, my_ip):
         super(DALiuGERemote, self).__init__(options, my_ip)
         ips = os.environ['DALIUGE_CLUSTER_IPS'].split()
-        self._set_world(int(os.environ['DALIUGE_CLUSTER_RANK']),
-                        len(ips), ips)
+        rank = ips.index(my_ip)
+        self._set_world(rank, len(ips), ips)
