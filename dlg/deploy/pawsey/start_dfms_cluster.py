@@ -327,7 +327,7 @@ def main():
                             'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'))
 
     parser.add_option('-r', '--remote-mechanism', help='The mechanism used by this script to coordinate remote processes',
-                      choices=['mpi', 'slurm', 'dlg'], default='mpi')
+                      choices=['mpi', 'slurm', 'dlg', 'dlg-hybrid'], default='mpi')
 
     (options, _) = parser.parse_args()
 
