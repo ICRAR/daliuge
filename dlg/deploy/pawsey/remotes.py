@@ -171,3 +171,10 @@ class DALiuGERemote(FilesystemBasedRemote):
         ips = os.environ['DALIUGE_CLUSTER_IPS'].split()
         rank = ips.index(my_ip)
         self._set_world(rank, len(ips), ips)
+
+class DALiuGEHybridRemote(DALiuGERemote):
+    """Like DALiuGERemote, but initializes MPI as well"""
+
+    def __init__(self, options, my_ip):
+        from mpi4py import MPI  # @UnusedImport
+        super(DALiuGEHybridRemote, self).__init__(options, my_ip)
