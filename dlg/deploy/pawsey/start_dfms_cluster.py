@@ -257,6 +257,8 @@ def get_remote(opts):
         return remotes.MPIRemote(opts, my_ip)
     elif opts.remote_mechanism == 'dlg':
         return remotes.DALiuGERemote(opts, my_ip)
+    elif opts.remote_mechanism == 'dlg-hybrid':
+        return remotes.DALiuGEHybridRemote(opts, my_ip)
     else: # == 'slurm'
         return remotes.SlurmRemote(opts, my_ip)
 
