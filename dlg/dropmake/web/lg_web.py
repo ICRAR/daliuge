@@ -43,7 +43,6 @@ from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
 
-
 def file_as_string(fname, enc='utf8'):
     b = pkg_resources.resource_string(__name__, fname) # @UndefinedVariable
     return utils.b2s(b, enc)
@@ -55,6 +54,16 @@ gen_pgt_sem = threading.Semaphore(1)
 err_prefix = "[Error]"
 MAX_PGT_FN_CNT= 300
 pgt_fn_count = 0
+
+ALGO_PARAMS = [
+    ('min_goal', int),
+    ('ptype', int),
+    ('max_load_imb', int),
+    ('max_cpu', int),
+    ('time_greedy', float),
+    ('deadline', int),
+    ('topk', int),
+    ('swarm_size', int)]
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
@@ -316,9 +325,7 @@ def gen_pgt():
         num_islands = query.get('num_islands', default=0, type=int)
         par_label = query.get('par_label', 'Partition')
         algo_params = {}
-        for name, typ in zip(('min_goal', 'ptype', 'max_laod_imb', 'max_cpu', 'time_greedy', 
-                              'deadline', 'topk', 'swarm_size', 'max_mem'),
-                            (int, int, int, int, float, int, int, int, int)):
+        for name, typ in ALGO_PARAMS:
             if name in query:
                 algo_params[name] = query.get(name, type=typ)
 
@@ -342,6 +349,81 @@ def gen_pgt():
         response.status = 500
         trace_msg = traceback.format_exc()
         return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
+
+@route('/gen_pgt', method='POST')
+def gen_pgt_post():
+    """
+    Translating Logical Graphs to Physical Graphs.
+    Differs from get_pgt above by the fact that the logical graph data is POSTed
+    to this route in a HTTP form, whereas gen_pgt loads the logical graph data
+    from a local file
+    """
+    # Retrieve the graph name.
+    lg_name = request.forms.get('lg_name')
+
+    # Retrieve json data.
+    json_string = request.forms.get('json_data')
+    logical_graph = json.loads(json.loads(json_string))
+
+    try:
+        # Save graph
+        new_path = save(lg_name, logical_graph)
+
+        # Unrolling LG to PGT.
+        pgt = unroll(new_path)
+
+        # Define partitioning parameters.
+        algo = request.forms.get('algo', 'none')
+        num_partitions = request.forms.get('num_par', default=1, type=int)
+        num_islands = request.forms.get('num_islands', default=0, type=int)
+        par_label = request.forms.get('par_label', 'Partition')
+
+        # Build a map with extra parameters, more specific to some algorithms.
+        algo_params = {}
+        for name, typ in ALGO_PARAMS:
+            if name in request.forms:
+                algo_params[name] = request.forms.get(name, type=typ)
+
+        # Partition the PGT
+        pgt = partition(pgt, algo=algo, num_partitions=num_partitions,
+                        num_islands=num_islands, partition_label=par_label,
+                        show_gojs=True,
+                        **algo_params)
+
+        pgt_id = pg_mgr.add_pgt(pgt, lg_name)
+
+        part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])
+        tpl = file_as_string('pg_viewer.html')
+        return template(tpl, pgt_view_json_name=pgt_id,
+                               partition_info=part_info,
+                               title="Physical Graph Template %s" %
+                               ('' if num_partitions == 0 else 'Partitioning'))
+    except GraphException as ge:
+        return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name), 500
+    except SchedulerException as se:
+        return "Graph scheduling exception {1}: {0}".format(str(se),
+                                                            lg_name), 500
+    except Exception:
+        trace_msg = traceback.format_exc()
+        return "Graph partition exception {1}: {0}".format(trace_msg, lg_name), 500
+
+def save(lg_name, logical_graph):
+    """
+    Saves graph.
+    """
+    try:
+        new_path = os.path.join(lg_dir, lg_name)
+
+        # Overwrite file on disks.
+        with open(new_path, "w") as outfile:
+            json.dump(logical_graph, outfile, sort_keys=True, indent=4,)
+    except Exception as exp:
+        raise GraphException("Failed to save a pretranslated graph {0}:{1}".
+                             format(lg_name, str(exp)))
+    finally:
+        pass
+
+    return new_path
 
 @get('/')
 def root():
