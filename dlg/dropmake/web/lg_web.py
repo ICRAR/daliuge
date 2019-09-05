@@ -63,7 +63,8 @@ ALGO_PARAMS = [
     ('time_greedy', float),
     ('deadline', int),
     ('topk', int),
-    ('swarm_size', int)]
+    ('swarm_size', int),
+    ('max_mem', int)] # max_mem is only relevant for the old editor, not used in EAGLE
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
