@@ -30,6 +30,7 @@ import signal
 import sys
 import threading
 import time
+import codecs
 
 from bottle import route, request, get, static_file, template, redirect, \
  response, HTTPResponse
@@ -350,7 +351,8 @@ def gen_pgt_post():
 
     # Retrieve json data.
     json_string = request.forms.get('json_data')
-    logical_graph = json.loads(json_string.decode('string-escape').strip('"'))
+    #logical_graph = json.loads(json_string.decode('string-escape').strip('"'))
+    logical_graph = json.loads(codecs.decode(json_string, 'unicode_escape').strip('"'))
 
     try:
         # Save graph
