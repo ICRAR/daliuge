@@ -316,24 +316,10 @@ def gen_pgt():
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
     try:
-
         # LG -> PGT
-        pgt = unroll(lg_path(lg_name))
+        pgt = unroll_and_partition_with_params(lg_path(lg_name), query)
 
-        # Read parameters from request
-        algo = query.get('algo', 'none')
-        num_partitions = query.get('num_par', default=1, type=int)
-        num_islands = query.get('num_islands', default=0, type=int)
-        par_label = query.get('par_label', 'Partition')
-        algo_params = {}
-        for name, typ in ALGO_PARAMS:
-            if name in query:
-                algo_params[name] = query.get(name, type=typ)
-
-        # Partition the PGT
-        pgt = partition(pgt, algo=algo, num_partitions=num_partitions,
-                        num_islands=num_islands, partition_label=par_label,
-                        show_gojs=True, **algo_params)
+        num_partitions = pgt._num_parts;
 
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
@@ -364,49 +350,57 @@ def gen_pgt_post():
 
     # Retrieve json data.
     json_string = request.forms.get('json_data')
-    logical_graph = json.loads(json.loads(json_string))
+    logical_graph = json.loads(json_string.decode('string-escape').strip('"'))
 
     try:
         # Save graph
         new_path = save(lg_name, logical_graph)
 
-        # Unrolling LG to PGT.
-        pgt = unroll(new_path)
+        # LG -> PGT
+        pgt = unroll_and_partition_with_params(new_path, request.forms)
 
-        # Define partitioning parameters.
-        algo = request.forms.get('algo', 'none')
-        num_partitions = request.forms.get('num_par', default=1, type=int)
-        num_islands = request.forms.get('num_islands', default=0, type=int)
-        par_label = request.forms.get('par_label', 'Partition')
-
-        # Build a map with extra parameters, more specific to some algorithms.
-        algo_params = {}
-        for name, typ in ALGO_PARAMS:
-            if name in request.forms:
-                algo_params[name] = request.forms.get(name, type=typ)
-
-        # Partition the PGT
-        pgt = partition(pgt, algo=algo, num_partitions=num_partitions,
-                        num_islands=num_islands, partition_label=par_label,
-                        show_gojs=True,
-                        **algo_params)
+        num_partitions = pgt._num_parts;
 
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
         part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])
         tpl = file_as_string('pg_viewer.html')
-        return template(tpl, pgt_view_json_name=pgt_id,
-                               partition_info=part_info,
-                               title="Physical Graph Template %s" %
-                               ('' if num_partitions == 0 else 'Partitioning'))
+        return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, title="Physical Graph Template %s" % ('' if num_partitions == 0 else 'Partitioning'))
     except GraphException as ge:
         return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name), 500
     except SchedulerException as se:
-        return "Graph scheduling exception {1}: {0}".format(str(se),
-                                                            lg_name), 500
+        return "Graph scheduling exception {1}: {0}".format(str(se), lg_name), 500
     except Exception:
         trace_msg = traceback.format_exc()
         return "Graph partition exception {1}: {0}".format(trace_msg, lg_name), 500
+
+
+def unroll_and_partition_with_params(lg_path, algo_params_source):
+    print("unroll_and_partition_with_params()")
+
+    # Unrolling LG to PGT.
+    pgt = unroll(lg_path)
+
+    # Define partitioning parameters.
+    algo           = algo_params_source.get('algo', 'none')
+    num_partitions = algo_params_source.get('num_par', default=1, type=int)
+    num_islands    = algo_params_source.get('num_islands', default=0, type=int)
+    par_label      = algo_params_source.get('par_label', 'Partition')
+
+    # Build a map with extra parameters, more specific to some algorithms.
+    algo_params = {}
+    for name, typ in ALGO_PARAMS:
+        if name in algo_params_source:
+            algo_params[name] = algo_params_source.get(name, type=typ)
+
+    # Partition the PGT
+    pgt = partition(pgt, algo=algo, num_partitions=num_partitions,
+                    num_islands=num_islands, partition_label=par_label,
+                    show_gojs=True,
+                    **algo_params)
+
+    return pgt
+
 
 def save(lg_name, logical_graph):
     """

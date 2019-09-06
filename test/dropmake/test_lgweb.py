@@ -27,9 +27,10 @@ import unittest
 
 import pkg_resources
 
+import six.moves.urllib_parse as urllib  # @UnresolvedImport
+
 from dlg import tool, utils
 from dlg.restutils import RestClient, RestClientException
-
 
 lg_dir = pkg_resources.resource_filename(__name__, '.')  # @UndefinedVariable
 lgweb_port = 8000
@@ -113,6 +114,31 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._get_json, '/pgt_jsonbody?pgt_name=unknown.json')
         # good!
         c._get_json('/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.json')
+
+    def test_get_pgt_post(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+
+        # load logical graph JSON from file
+        json_data = "{\"modelData\":{\"fileType\":3,\"repo\":\"james-strauss-uwa/eagle-test\",\"filePath\":\"test\",\"sha\":\"1c6b3f778c5dc72a80001e7f2d08f639be9ad8a6\",\"git_url\":\"https://api.github.com/repos/james-strauss-uwa/eagle-test/git/blobs/1c6b3f778c5dc72a80001e7f2d08f639be9ad8a6\"},\"nodeDataArray\":[{\"category\":\"memory\",\"categoryType\":\"DataDrop\",\"type\":\"memory\",\"isData\":true,\"isGroup\":false,\"canHaveInputs\":true,\"canHaveOutputs\":true,\"colour\":\" #394BB2\",\"key\":-1,\"text\":\"Enter label\",\"loc\":\"200 100\",\"inputPorts\":[],\"outputPorts\":[{\"Id\":\"ab5ada14-04d7-4b03-816d-c43428d4e2e4\",\"IdText\":\"event\"}],\"inputLocalPorts\":[],\"outputLocalPorts\":[],\"appFields\":[],\"fields\":[{\"text\":\"Data volume\",\"name\":\"data_volume\",\"value\":\"5\"},{\"text\":\"Group end\",\"name\":\"group_end\",\"value\":\"0\"}]},{\"category\":\"BashShellApp\",\"categoryType\":\"ApplicationDrop\",\"type\":\"BashShellApp\",\"isData\":false,\"isGroup\":false,\"canHaveInputs\":true,\"canHaveOutputs\":true,\"colour\":\" #1C2833\",\"key\":-2,\"text\":\"Enter label\",\"loc\":\"400 200\",\"inputPorts\":[{\"Id\":\"c12aa833-43a9-4c1e-abaa-c77396010a31\",\"IdText\":\"event\"}],\"outputPorts\":[{\"Id\":\"47c421b8-5cdc-4ff7-ab7e-b75140f2d951\",\"IdText\":\"event\"}],\"inputLocalPorts\":[],\"outputLocalPorts\":[],\"appFields\":[],\"fields\":[{\"text\":\"Execution time\",\"name\":\"execution_time\",\"value\":\"5\"},{\"text\":\"Num CPUs\",\"name\":\"num_cpus\",\"value\":\"1\"},{\"text\":\"Group start\",\"name\":\"group_start\",\"value\":\"0\"},{\"text\":\"Arg01\",\"name\":\"Arg01\",\"value\":\"\"},{\"text\":\"Arg02\",\"name\":\"Arg02\",\"value\":\"\"},{\"text\":\"Arg03\",\"name\":\"Arg03\",\"value\":\"\"},{\"text\":\"Arg04\",\"name\":\"Arg04\",\"value\":\"\"},{\"text\":\"Arg05\",\"name\":\"Arg05\",\"value\":\"\"},{\"text\":\"Arg06\",\"name\":\"Arg06\",\"value\":\"\"},{\"text\":\"Arg07\",\"name\":\"Arg07\",\"value\":\"\"},{\"text\":\"Arg08\",\"name\":\"Arg08\",\"value\":\"\"},{\"text\":\"Arg09\",\"name\":\"Arg09\",\"value\":\"\"},{\"text\":\"Arg10\",\"name\":\"Arg10\",\"value\":\"\"}]},{\"category\":\"Component\",\"categoryType\":\"ApplicationDrop\",\"type\":\"Component\",\"isData\":false,\"isGroup\":false,\"canHaveInputs\":true,\"canHaveOutputs\":true,\"colour\":\" #3498DB\",\"key\":-3,\"text\":\"Enter label\",\"loc\":\"600 300\",\"inputPorts\":[{\"Id\":\"0178b7ce-79ed-406d-9e4b-ee2a53c168ec\",\"IdText\":\"event\"}],\"outputPorts\":[{\"Id\":\"f487361b-f633-43ba-978d-c65d7a52c34d\",\"IdText\":\"event\"}],\"inputLocalPorts\":[],\"outputLocalPorts\":[],\"appFields\":[],\"fields\":[{\"text\":\"Execution time\",\"name\":\"execution_time\",\"value\":\"5\"},{\"text\":\"Num CPUs\",\"name\":\"num_cpus\",\"value\":\"1\"},{\"text\":\"Group start\",\"name\":\"group_start\",\"value\":\"0\"},{\"text\":\"Appclass\",\"name\":\"appclass\",\"value\":\"test.graphsRepository\"},{\"text\":\"Arg01\",\"name\":\"Arg01\",\"value\":\"\"},{\"text\":\"Arg02\",\"name\":\"Arg02\",\"value\":\"\"},{\"text\":\"Arg03\",\"name\":\"Arg03\",\"value\":\"\"},{\"text\":\"Arg04\",\"name\":\"Arg04\",\"value\":\"\"},{\"text\":\"Arg05\",\"name\":\"Arg05\",\"value\":\"\"},{\"text\":\"Arg06\",\"name\":\"Arg06\",\"value\":\"\"},{\"text\":\"Arg07\",\"name\":\"Arg07\",\"value\":\"\"},{\"text\":\"Arg08\",\"name\":\"Arg08\",\"value\":\"\"},{\"text\":\"Arg09\",\"name\":\"Arg09\",\"value\":\"\"},{\"text\":\"Arg10\",\"name\":\"Arg10\",\"value\":\"\"}]},{\"category\":\"file\",\"categoryType\":\"DataDrop\",\"type\":\"file\",\"isData\":true,\"isGroup\":false,\"canHaveInputs\":true,\"canHaveOutputs\":true,\"colour\":\" #394BB2\",\"key\":-4,\"text\":\"Enter label\",\"loc\":\"800 400\",\"inputPorts\":[{\"Id\":\"c05689f4-6c5a-47dc-b3b1-fcbdfa09e4df\",\"IdText\":\"event\"}],\"outputPorts\":[],\"inputLocalPorts\":[],\"outputLocalPorts\":[],\"appFields\":[],\"fields\":[{\"text\":\"Data volume\",\"name\":\"data_volume\",\"value\":\"5\"},{\"text\":\"Group end\",\"name\":\"group_end\",\"value\":\"0\"},{\"text\":\"Check file path exists\",\"name\":\"check_filepath_exists\",\"value\":\"1\"},{\"text\":\"File path\",\"name\":\"filepath\",\"value\":\"\"},{\"text\":\"Directory name\",\"name\":\"dirname\",\"value\":\"\"}]}],\"linkDataArray\":[{\"from\":-1,\"fromPort\":\"ab5ada14-04d7-4b03-816d-c43428d4e2e4\",\"to\":-2,\"toPort\":\"c12aa833-43a9-4c1e-abaa-c77396010a31\"},{\"from\":-2,\"fromPort\":\"47c421b8-5cdc-4ff7-ab7e-b75140f2d951\",\"to\":-3,\"toPort\":\"0178b7ce-79ed-406d-9e4b-ee2a53c168ec\"},{\"from\":-3,\"fromPort\":\"f487361b-f633-43ba-978d-c65d7a52c34d\",\"to\":-4,\"toPort\":\"c05689f4-6c5a-47dc-b3b1-fcbdfa09e4df\"}]}"
+
+        # new graphs cannot currently be added
+        form_data = {
+            'algo': 'metis',
+            'lg_name': 'metis.graph',
+            'json_data': json_data,
+            'num_islands': 0,
+            'num_par': 1,
+            'par_label': 'Partition',
+            'max_load_imb': 100,
+            'max_cpu': 8
+            }
+
+        try:
+            content = urllib.urlencode(form_data)
+            ret = c._POST('/gen_pgt', content, content_type='application/x-www-form-urlencoded')
+        except RestClientException as e:
+            self.fail(e)
 
     def test_load_lgeditor(self):
 
