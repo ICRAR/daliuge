@@ -30,7 +30,6 @@ import signal
 import sys
 import threading
 import time
-import codecs
 
 from bottle import route, request, get, static_file, template, redirect, \
  response, HTTPResponse
@@ -351,8 +350,7 @@ def gen_pgt_post():
 
     # Retrieve json data.
     json_string = request.forms.get('json_data')
-    #logical_graph = json.loads(json_string.decode('string-escape').strip('"'))
-    logical_graph = json.loads(codecs.decode(json_string, 'unicode_escape').strip('"'))
+    logical_graph = json.loads(json_string)
 
     try:
         # Save graph
@@ -378,8 +376,6 @@ def gen_pgt_post():
 
 
 def unroll_and_partition_with_params(lg_path, algo_params_source):
-    print("unroll_and_partition_with_params()")
-
     # Unrolling LG to PGT.
     pgt = unroll(lg_path)
 
@@ -413,7 +409,7 @@ def save(lg_name, logical_graph):
 
         # Overwrite file on disks.
         with open(new_path, "w") as outfile:
-            json.dump(logical_graph, outfile, sort_keys=True, indent=4,)
+            json.dump(logical_graph, outfile, sort_keys=True, indent=4)
     except Exception as exp:
         raise GraphException("Failed to save a pretranslated graph {0}:{1}".
                              format(lg_name, str(exp)))
