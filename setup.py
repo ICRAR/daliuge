@@ -167,10 +167,11 @@ install_requires = [
 # Keep alpha-sorted PLEASE!
 
 # Python 3.6 is only supported in NetworkX 2 and above
+# But we are not compatible with 2.4 yet, so we need to constrain that
+networkx_dep = 'networkx<2.4'
 if sys.version_info >= (3, 6, 0):
-    install_requires.append("networkx>=2.0")
-else:
-    install_requires.append("networkx")
+    networkx_dep += ",>=2.0"
+install_requires.append(networkx_dep)
 
 # Python 2 support has been dropped in zeroconf 0.20.
 # Also, 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
