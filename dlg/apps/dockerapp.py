@@ -214,9 +214,12 @@ class DockerApp(BarrierAppDROP):
         self._removeContainer = self._getArg(kwargs, 'removeContainer', True)
 
         # Additional volume bindings can be specified for existing files/dirs
-        # on the host system.
+        # on the host system. They are given either as a list or as a
+        # comma-separated string
         self._additionalBindings = {}
-        for binding in self._getArg(kwargs, 'additionalBindings', []):
+        bindings = self._getArg(kwargs, 'additionalBindings', [])
+        bindings = bindings.split(',') if isinstance(bindings, str) else bindings
+        for binding in bindings:
             if binding.find(':') == -1:
                 host_path = container_path = binding
             else:
