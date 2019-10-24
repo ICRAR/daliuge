@@ -319,7 +319,7 @@ def gen_pgt():
         # LG -> PGT
         pgt = unroll_and_partition_with_params(lg_path(lg_name), query)
 
-        num_partitions = pgt._num_parts;
+        num_partitions = 0#pgt._num_parts;
 
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
@@ -346,33 +346,32 @@ def gen_pgt_post():
     from a local file
     """
     # Retrieve the graph name.
-    lg_name = request.forms.get('lg_name')
+    reqform = request.forms
+    lg_name = reqform.get('lg_name')
+    #print('lg_name', lg_name)
 
     # Retrieve json data.
-    json_string = request.forms.get('json_data')
-    logical_graph = json.loads(json_string)
-
+    json_string = reqform.get('json_data')    
     try:
-        # Save graph
-        new_path = save(lg_name, logical_graph)
-
+        logical_graph = json.loads(json_string)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(new_path, request.forms)
-
-        num_partitions = pgt._num_parts;
-
+        pgt = unroll_and_partition_with_params(logical_graph, reqform)
+        par_algo = reqform.get('algo', 'none')
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
         part_info = ' - '.join(['{0}:{1}'.format(k, v) for k, v in pgt.result().items()])
         tpl = file_as_string('pg_viewer.html')
-        return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, title="Physical Graph Template %s" % ('' if num_partitions == 0 else 'Partitioning'))
+        return template(tpl, pgt_view_json_name=pgt_id, partition_info=part_info, title="Physical Graph Template %s" % ('' if (par_algo == 'none') else 'Partitioning'))
     except GraphException as ge:
-        return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name), 500
+        trace_msg = traceback.format_exc()
+        print(trace_msg)
+        return "Invalid Logical Graph {1}: {0}".format(str(ge), lg_name)
     except SchedulerException as se:
-        return "Graph scheduling exception {1}: {0}".format(str(se), lg_name), 500
+        return "Graph scheduling exception {1}: {0}".format(str(se), lg_name)
     except Exception:
         trace_msg = traceback.format_exc()
-        return "Graph partition exception {1}: {0}".format(trace_msg, lg_name), 500
+        print(trace_msg)
+        return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 
 def unroll_and_partition_with_params(lg_path, algo_params_source):
@@ -385,7 +384,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
     num_islands    = algo_params_source.get('num_islands', default=0, type=int)
     par_label      = algo_params_source.get('par_label', 'Partition')
 
-    # Build a map with extra parameters, more specific to some algorithms.
+    # Build a map with extra parameters, more specific to some par_algoithms.
     algo_params = {}
     for name, typ in ALGO_PARAMS:
         if name in algo_params_source:
