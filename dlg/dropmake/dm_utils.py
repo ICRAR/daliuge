@@ -126,15 +126,21 @@ def convert_construct(lgo):
     # application drop if a gather has internal input, which will result in
     # a cycle that is not allowed in DAG during graph translation
 
+    app_keywords = ['application', 'inputApplication', 'outputApplication']
     for node in lgo['nodeDataArray']:
         if (node['category'] not in ['SplitData', 'DataGather']):
             continue
-        if ('application' not in node):
+        has_app = None
+        for ak in app_keywords:
+            if (ak in node):
+                has_app = ak
+                break
+        if (has_app is None):
             continue
         # step 1
         app_node = dict()
         app_node['key'] = node['key']
-        app_node['category'] = node['application']
+        app_node['category'] = node[has_app]#node['application']
         app_node['text'] = node['text']
         if ('group' in node):
             app_node['group'] = node['group']
@@ -162,7 +168,7 @@ def convert_construct(lgo):
             keyset.add(dup_app_node_k)
             dup_app_node = dict()
             dup_app_node['key'] = dup_app_node_k
-            dup_app_node['category'] = node['application']
+            dup_app_node['category'] = node[has_app] #node['application']
             dup_app_node['text'] = node['text']
             if ('group' in node):
                 dup_app_node['group'] = node['group']
