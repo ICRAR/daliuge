@@ -27,6 +27,7 @@ Dropmake utils
 import json
 import os
 import os.path as osp
+import copy
 
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
@@ -108,6 +109,76 @@ def _relink_gather(appnode, lgo, gather_newkey, node_index):
             if (node['group'] == gather_oldkey):
                 pass
 
+def convert_mkn(lgo):
+    """
+    convert MKN into scatters and gathers based on "testMKN.graph"
+    hardcode the assumption M > K > N for now
+    """
+    keyset = get_keyset(lgo)
+    old_new_k2n_to_map = dict()
+    old_new_k2n_from_map = dict()
+    app_keywords = ['inputApplication', 'outputApplication']
+
+    for node in lgo['nodeDataArray']:
+        if ('MKN' != node['category']):
+            continue
+        for ak in app_keywords:
+            if (ak not in node):
+                raise Exception('MKN construct {0} must specify {1}'.format(node['key'], ak))
+        mknv_dict = dict()
+        for mknv in node['fields']:
+            mknv_dict[mknv['name']] = int(mknv['value'])
+
+        # step 1 - clone the current MKN
+        #mkn_key = node['key']
+        mkn_local_input_keys = [x['Id'] for x in node['inputLocalPorts']]
+        mkn_output_keys = [x['Id'] for x in node['outputPorts']]
+        node_mk = node
+        node_kn = copy.deepcopy(node_mk)
+
+        node_mk['application'] = node['inputApplication']
+        node_mk['category'] = 'DataGather'
+        node_mk['text'] = node_mk['text'] + "_InApp"
+        del node['inputApplication']
+        del node['outputApplication']
+        del node['outputAppFields']
+        num_inputs = mknv_dict['m'] // mknv_dict['k']
+        new_field = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (num_inputs)}
+        node_mk['fields'].append(new_field)
+
+        node_kn['category'] = 'DataGather'
+        node_kn['text'] = node_kn['text'] + "_OutApp"
+        k_new = min(keyset) - 1
+        node_kn['key'] = k_new
+        node_kn['application'] = node_kn['outputApplication']
+        node_kn['inputAppFields'] = node_kn['outputAppFields']
+        del node_kn['inputApplication']
+        del node_kn['outputApplication']
+        del node_kn['outputAppFields']
+
+        num_inputs = mknv_dict['k'] // mknv_dict['n']
+        new_field_kn = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (num_inputs)}
+        node_kn['fields'].append(new_field_kn)
+        lgo['nodeDataArray'].append(node_kn)
+
+        # for all connections that point to the local input ports of the MKN construct
+        # we reconnect them to the "new" gather
+        for mlik in mkn_local_input_keys:
+            old_new_k2n_to_map[mlik] = k_new
+            
+        for mok in mkn_output_keys:
+            old_new_k2n_from_map[mok] = k_new
+    
+    for link in lgo['linkDataArray']:
+        if (link['fromPort'] in old_new_k2n_from_map):
+            link['from'] = old_new_k2n_from_map[link['fromPort']]
+        elif (link['toPort'] in old_new_k2n_to_map):
+            link['to'] = old_new_k2n_to_map[link['toPort']]
+
+    #with open('/tmp/MKN_translate.graph', 'w') as f:
+    #    json.dump(lgo, f)
+    return lgo
+
 def convert_construct(lgo):
     """
     1. for each scatter/gather, create a "new" application drop, which shares
@@ -144,9 +215,11 @@ def convert_construct(lgo):
         app_node['text'] = node['text']
         if ('group' in node):
             app_node['group'] = node['group']
-        if ('appFields' in node):
-            for afd in node['appFields']:
-                app_node[afd['name']] = afd['value']
+        for app_fd_name in ['appFields', 'inputAppFields']:
+            if (app_fd_name in node):
+                for afd in node[app_fd_name]:
+                    app_node[afd['name']] = afd['value']
+                break
         if ('DataGather' == node['category']):
             app_node['group_start'] = 1
         new_nodes.append(app_node)
@@ -156,7 +229,6 @@ def convert_construct(lgo):
         node['key'] = k_new
         keyset.add(k_new)
         old_new_grpk_map[app_node['key']] = k_new
-
 
         if ('DataGather' == node['category']):
             old_new_gather_map[app_node['key']] = k_new
@@ -172,9 +244,11 @@ def convert_construct(lgo):
             dup_app_node['text'] = node['text']
             if ('group' in node):
                 dup_app_node['group'] = node['group']
-            if ('appFields' in node):
-                for afd in node['appFields']:
-                    dup_app_node[afd['name']] = afd['value']
+            for app_fd_name in ['appFields', 'inputAppFields']:
+                if (app_fd_name in node):
+                    for afd in node[app_fd_name]:
+                        dup_app_node[afd['name']] = afd['value']
+                    break
             duplicated_gather_app[k_new] = dup_app_node
 
 

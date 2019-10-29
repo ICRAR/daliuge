@@ -68,7 +68,7 @@ from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOSche
 from .utils.bash_parameter import BashCommand
 from ..drop import dropdict
 from ..graph_loader import STORAGE_TYPES
-from .dm_utils import get_lg_ver_type, convert_construct, convert_fields, \
+from .dm_utils import get_lg_ver_type, convert_construct, convert_fields, convert_mkn, \
                         LG_VER_EAGLE, LG_VER_OLD, LG_VER_EAGLE_CONVERTED
 
 logger = logging.getLogger(__name__)
@@ -1614,6 +1614,7 @@ class LG():
 
         lgver = get_lg_ver_type(lg)
         if (LG_VER_EAGLE == lgver):
+            lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
         elif (LG_VER_EAGLE_CONVERTED == lgver):
@@ -1668,7 +1669,8 @@ class LG():
 
     def validate_link(self, src, tgt):
         if (src.is_scatter() or tgt.is_scatter()):
-            raise GInvalidLink("Scatter construct {0} or {1} cannot be linked".format(src.text, tgt.text))
+            prompt = "Remember to specify Input App Type for the Scatter construct!"
+            raise GInvalidLink("Scatter construct {0} or {1} cannot be linked. {2}".format(src.text, tgt.text, prompt))
 
         if (src.is_loop() or tgt.is_loop()):
             raise GInvalidLink("Loop construct {0} or {1} cannot be linked".format(src.text, tgt.text))
