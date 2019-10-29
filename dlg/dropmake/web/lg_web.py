@@ -371,7 +371,8 @@ def gen_pgt_post():
     except Exception:
         trace_msg = traceback.format_exc()
         print(trace_msg)
-        return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
+        raise
+        #return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 
 def unroll_and_partition_with_params(lg_path, algo_params_source):
