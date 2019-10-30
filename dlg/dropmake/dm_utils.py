@@ -123,6 +123,9 @@ def _check_MKN(m, k, n):
         from .pg_generator import GraphException
         raise GraphException('M-K and k-N must be pairs of multiples')
 
+def _make_unique_port_key(port_key, node_key):
+    return '%s+++%d' % (port_key, node_key)
+
 def convert_mkn(lgo):
     """
     convert MKN into scatters and gathers based on "random_thoughts.graph"
@@ -152,8 +155,8 @@ def convert_mkn(lgo):
 
         # step 1 - clone the current MKN
         mkn_key = node['key']
-        mkn_local_input_keys = [x['Id'] for x in node['inputLocalPorts']]
-        mkn_output_keys = [x['Id'] for x in node['outputPorts']]
+        mkn_local_input_keys = [_make_unique_port_key(x['Id'], node['key']) for x in node['inputLocalPorts']]
+        mkn_output_keys = [_make_unique_port_key(x['Id'], node['key']) for x in node['outputPorts']]
         node_mk = node
         node_kn = copy.deepcopy(node_mk)
         node_split_n = copy.deepcopy(node_mk)
@@ -162,9 +165,9 @@ def convert_mkn(lgo):
         node_mk['category'] = 'DataGather'
         node_mk['type'] = 'DataGather'
         node_mk['text'] = node_mk['text'] + "_InApp"
-        del node['inputApplication']
-        del node['outputApplication']
-        del node['outputAppFields']
+        del node_mk['inputApplication']
+        del node_mk['outputApplication']
+        del node_mk['outputAppFields']
         new_field = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (M)}
         node_mk['fields'].append(new_field)
 
@@ -221,13 +224,15 @@ def convert_mkn(lgo):
 
     need_to_change_n_products = dict()
     for link in lgo['linkDataArray']:
-        if (link['fromPort'] in old_new_k2n_from_map):
-            link['from'] = old_new_k2n_from_map[link['fromPort']]
-        elif (link['toPort'] in old_new_k2n_to_map):
-            link['to'] = old_new_k2n_to_map[link['toPort']]
+        ufpk = _make_unique_port_key(link['fromPort'], link['from'])
+        utpk = _make_unique_port_key(link['toPort'], link['to'])
+        if (ufpk in old_new_k2n_from_map):
+            link['from'] = old_new_k2n_from_map[ufpk]
+        elif (utpk in old_new_k2n_to_map):
+            link['to'] = old_new_k2n_to_map[utpk]
         
-        if (link['fromPort'] in n_products_map):
-            need_to_change_n_products[link['to']] = n_products_map[link['fromPort']]
+        if (ufpk in n_products_map):
+            need_to_change_n_products[link['to']] = n_products_map[ufpk]
 
     #TODO change the parent for K and N data drops
     for node in lgo['nodeDataArray']:
@@ -244,8 +249,8 @@ def convert_mkn(lgo):
         if node['key'] in need_to_change_n_products:
             node['group'] = need_to_change_n_products[node['key']]
 
-    #with open('/Users/chen/Documents/MKN_translate_001.graph', 'w') as f:
-    #    json.dump(lgo, f, indent=4)
+    # with open('/Users/chen/Documents/MKN_translate_003.graph', 'w') as f:
+    #     json.dump(lgo, f, indent=4)
     return lgo
 
 def convert_mkn_all_share_m(lgo):
@@ -417,7 +422,8 @@ def convert_construct(lgo):
 
                 # deal with the internal output from Gather
                 from_node = node_index[link['from']]
-                if (from_node['group'] == k_new):
+                # this is an obsolete and awkard way of checking internal output (for backward compatibility)
+                if ('group' in from_node and from_node['group'] == k_new): 
                     dup_app_node = duplicated_gather_app[k_new]
                     k_new_new = dup_app_node['key']
                     link['to'] = k_new_new
