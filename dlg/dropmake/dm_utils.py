@@ -244,8 +244,8 @@ def convert_mkn(lgo):
         if node['key'] in need_to_change_n_products:
             node['group'] = need_to_change_n_products[node['key']]
 
-    with open('/Users/chen/Documents/MKN_translate_001.graph', 'w') as f:
-        json.dump(lgo, f, indent=4)
+    #with open('/Users/chen/Documents/MKN_translate_001.graph', 'w') as f:
+    #    json.dump(lgo, f, indent=4)
     return lgo
 
 def convert_mkn_all_share_m(lgo):
