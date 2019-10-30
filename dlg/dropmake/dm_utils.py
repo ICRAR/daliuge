@@ -123,11 +123,140 @@ def _check_MKN(m, k, n):
         from .pg_generator import GraphException
         raise GraphException('M-K and k-N must be pairs of multiples')
 
-
 def convert_mkn(lgo):
+    """
+    convert MKN into scatters and gathers based on "random_thoughts.graph"
+    NO hardcoded assumptions (e.g. M > K > N) are needed
+
+    EACH instance of the MKN construct takes M inputs
+    """
+    keyset = get_keyset(lgo)
+    old_new_k2n_to_map = dict()
+    old_new_k2n_from_map = dict()
+    old_new_parent_map_split_1 = dict()
+    old_new_parent_map_split_2 = dict()
+    dont_change_group = set()
+    n_products_map = dict()
+    app_keywords = ['inputApplication', 'outputApplication']
+
+    for node in lgo['nodeDataArray']:
+        if ('MKN' != node['category']):
+            continue
+        for ak in app_keywords:
+            if (ak not in node):
+                raise Exception('MKN construct {0} must specify {1}'.format(node['key'], ak))
+        mknv_dict = dict()
+        for mknv in node['fields']:
+            mknv_dict[mknv['name']] = int(mknv['value'])
+        M, K, N = mknv_dict['m'], mknv_dict['k'], mknv_dict['n']
+
+        # step 1 - clone the current MKN
+        mkn_key = node['key']
+        mkn_local_input_keys = [x['Id'] for x in node['inputLocalPorts']]
+        mkn_output_keys = [x['Id'] for x in node['outputPorts']]
+        node_mk = node
+        node_kn = copy.deepcopy(node_mk)
+        node_split_n = copy.deepcopy(node_mk)
+
+        node_mk['application'] = node['inputApplication']
+        node_mk['category'] = 'DataGather'
+        node_mk['type'] = 'DataGather'
+        node_mk['text'] = node_mk['text'] + "_InApp"
+        del node['inputApplication']
+        del node['outputApplication']
+        del node['outputAppFields']
+        new_field = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (M)}
+        node_mk['fields'].append(new_field)
+
+        node_kn['category'] = 'SplitData'
+        node_kn['type'] = 'SplitData'
+        node_kn['text'] = node_kn['text'] + "_OutApp"
+        k_new = min(keyset) - 1
+        keyset.add(k_new)
+        node_kn['key'] = k_new
+        node_kn['group'] = mkn_key
+        dont_change_group.add(k_new)
+        old_new_parent_map_split_1[mkn_key] = k_new
+        node_kn['application'] = node_kn['outputApplication']
+        node_kn['inputAppFields'] = node_kn['outputAppFields']
+        del node_kn['inputApplication']
+        del node_kn['outputApplication']
+        del node_kn['outputAppFields']
+
+        new_field_kn = {'name': 'num_of_copies', 'text': 'Number of copies', 'value': '%d' % (K)}
+        node_kn['fields'].append(new_field_kn)
+        lgo['nodeDataArray'].append(node_kn)
+
+        # for all connections that point to the local input ports of the MKN construct
+        # we reconnect them to the "new" scatter
+        for mlik in mkn_local_input_keys:
+            old_new_k2n_to_map[mlik] = k_new
+        
+        # for all connections that go from the outputPorts of the MKN construct
+        # we reconnect them from the new scatter
+        for mok in mkn_output_keys:
+            old_new_k2n_from_map[mok] = k_new
+        
+        node_split_n['category'] = 'SplitData'
+        node_split_n['type'] = 'SplitData'
+        node_split_n['text'] = 'Nothing'
+        k_new = min(keyset) - 1
+        keyset.add(k_new)
+        node_split_n['key'] = k_new
+        node_split_n['group'] = mkn_key
+        dont_change_group.add(k_new)
+        old_new_parent_map_split_2[mkn_key] = k_new
+
+        for mok in mkn_output_keys:
+            n_products_map[mok] = k_new
+
+        del node_split_n['inputApplication']
+        del node_split_n['outputApplication']
+        del node_split_n['outputAppFields']
+        #del node_split_n['intputAppFields']
+
+        new_field_kn = {'name': 'num_of_copies', 'text': 'Number of copies', 'value': '%d' % (N)}
+        node_split_n['fields'].append(new_field_kn)
+        lgo['nodeDataArray'].append(node_split_n)
+
+    need_to_change_n_products = dict()
+    for link in lgo['linkDataArray']:
+        if (link['fromPort'] in old_new_k2n_from_map):
+            link['from'] = old_new_k2n_from_map[link['fromPort']]
+        elif (link['toPort'] in old_new_k2n_to_map):
+            link['to'] = old_new_k2n_to_map[link['toPort']]
+        
+        if (link['fromPort'] in n_products_map):
+            need_to_change_n_products[link['to']] = n_products_map[link['fromPort']]
+
+    #TODO change the parent for K and N data drops
+    for node in lgo['nodeDataArray']:
+        if (not 'group' in node):
+            continue
+        if (node['key'] in dont_change_group):
+            continue
+        if node['group'] in old_new_parent_map_split_1:
+            node['group'] = old_new_parent_map_split_1[node['group']]
+        elif node['group'] in old_new_parent_map_split_2:
+            node['group'] = old_new_parent_map_split_2[node['group']]
+    
+    for node in lgo['nodeDataArray']:
+        if node['key'] in need_to_change_n_products:
+            node['group'] = need_to_change_n_products[node['key']]
+
+    with open('/Users/chen/Documents/MKN_translate_001.graph', 'w') as f:
+        json.dump(lgo, f, indent=4)
+    return lgo
+
+def convert_mkn_all_share_m(lgo):
     """
     convert MKN into scatters and gathers based on "testMKN.graph"
     hardcode the assumption M > K > N for now
+
+    ALL instances of the MKN construct take M inputs. Thus, each instance takes M // K inputs.
+    
+    NB - This function is NOT called by the pg_generator. It is here for the sake of comparison 
+    and demonstration.
     """
     keyset = get_keyset(lgo)
     old_new_k2n_to_map = dict()
@@ -165,6 +294,7 @@ def convert_mkn(lgo):
         node_kn['category'] = 'DataGather'
         node_kn['text'] = node_kn['text'] + "_OutApp"
         k_new = min(keyset) - 1
+        keyset.add(k_new)
         node_kn['key'] = k_new
         node_kn['application'] = node_kn['outputApplication']
         node_kn['inputAppFields'] = node_kn['outputAppFields']
