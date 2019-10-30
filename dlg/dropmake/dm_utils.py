@@ -109,6 +109,21 @@ def _relink_gather(appnode, lgo, gather_newkey, node_index):
             if (node['group'] == gather_oldkey):
                 pass
 
+def _check_MKN(m, k, n):
+    """
+    Need to work with python 2 as well
+    """
+    m, k, n = float(m), float(k), float(n)
+    ratio1 = m / k if m >= k else k / m
+    ratio2 = k / n if k >= n else n / k
+
+    if (ratio1.is_integer() and ratio2.is_integer()):
+        return int(ratio1), int(ratio2)
+    else:
+        from .pg_generator import GraphException
+        raise GraphException('M-K and k-N must be pairs of multiples')
+
+
 def convert_mkn(lgo):
     """
     convert MKN into scatters and gathers based on "testMKN.graph"
@@ -128,6 +143,8 @@ def convert_mkn(lgo):
         mknv_dict = dict()
         for mknv in node['fields']:
             mknv_dict[mknv['name']] = int(mknv['value'])
+        M, K, N = mknv_dict['m'], mknv_dict['k'], mknv_dict['n']
+        ratio_mk, ratio_kn = _check_MKN(M, K, N)
 
         # step 1 - clone the current MKN
         #mkn_key = node['key']
@@ -142,8 +159,7 @@ def convert_mkn(lgo):
         del node['inputApplication']
         del node['outputApplication']
         del node['outputAppFields']
-        num_inputs = mknv_dict['m'] // mknv_dict['k']
-        new_field = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (num_inputs)}
+        new_field = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (ratio_mk)}
         node_mk['fields'].append(new_field)
 
         node_kn['category'] = 'DataGather'
@@ -156,8 +172,7 @@ def convert_mkn(lgo):
         del node_kn['outputApplication']
         del node_kn['outputAppFields']
 
-        num_inputs = mknv_dict['k'] // mknv_dict['n']
-        new_field_kn = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (num_inputs)}
+        new_field_kn = {'name': 'num_of_inputs', 'text': 'Number of inputs', 'value': '%d' % (ratio_kn)}
         node_kn['fields'].append(new_field_kn)
         lgo['nodeDataArray'].append(node_kn)
 
