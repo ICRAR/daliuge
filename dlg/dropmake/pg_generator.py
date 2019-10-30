@@ -1729,9 +1729,9 @@ class LG():
                     ll.dop,
                     rl.dop))
             else:
-                raise GInvalidLink("{0} and {1} are not hierarchically related: {2} and {3}".format(src.id, tgt.id,
+                raise GInvalidLink("{0} and {1} are not hierarchically related: {2}-({4}) and {3}-({5})".format(src.id, tgt.id,
                 src.group_hierarchy,
-                tgt.group_hierarchy))
+                tgt.group_hierarchy, src.text, tgt.text))
 
     def lgn_to_pgn(self, lgn, iid='0', lpcxt=None):
         """
