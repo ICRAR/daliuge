@@ -164,7 +164,11 @@ def convert_mkn(lgo):
         node_mk['application'] = node['inputApplication']
         node_mk['category'] = 'DataGather'
         node_mk['type'] = 'DataGather'
-        node_mk['text'] = node_mk['text'] + "_InApp"
+        ipan = node_mk.get('inputAppName', '')
+        if (len(ipan) == 0):
+            node_mk['text'] = node_mk['text'] + "_InApp"
+        else:
+            node_mk['text'] = ipan
         del node_mk['inputApplication']
         del node_mk['outputApplication']
         del node_mk['outputAppFields']
@@ -173,7 +177,12 @@ def convert_mkn(lgo):
 
         node_kn['category'] = 'SplitData'
         node_kn['type'] = 'SplitData'
-        node_kn['text'] = node_kn['text'] + "_OutApp"
+
+        opan = node_kn.get('outputAppName', '')
+        if (len(opan) == 0):
+            node_kn['text'] = node_kn['text'] + "_OutApp"
+        else:
+            node_kn['text'] = opan
         k_new = min(keyset) - 1
         keyset.add(k_new)
         node_kn['key'] = k_new
