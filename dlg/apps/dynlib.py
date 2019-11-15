@@ -37,49 +37,64 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-_read_cb_type = ctypes.CFUNCTYPE(ctypes.c_size_t,
-                                 ctypes.POINTER(ctypes.c_char),
-                                 ctypes.c_size_t)
+_read_cb_type = ctypes.CFUNCTYPE(
+    ctypes.c_size_t, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t
+)
 
-_write_cb_type = ctypes.CFUNCTYPE(ctypes.c_size_t,
-                                  ctypes.POINTER(ctypes.c_char),
-                                  ctypes.c_size_t)
+_write_cb_type = ctypes.CFUNCTYPE(
+    ctypes.c_size_t, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t
+)
 
 _app_running_cb_type = ctypes.CFUNCTYPE(None)
 
 _app_done_cb_type = ctypes.CFUNCTYPE(None, ctypes.c_int)
 
+
 class CDlgInput(ctypes.Structure):
-    _fields_ = [('uid', ctypes.c_char_p),
-                ('oid', ctypes.c_char_p),
-                ('name', ctypes.c_char_p),
-                ('status', ctypes.c_int),
-                ('read', _read_cb_type)]
+    _fields_ = [
+        ("uid", ctypes.c_char_p),
+        ("oid", ctypes.c_char_p),
+        ("name", ctypes.c_char_p),
+        ("status", ctypes.c_int),
+        ("read", _read_cb_type),
+    ]
+
 
 class CDlgStreamingInput(ctypes.Structure):
-    _fields_ = [('uid', ctypes.c_char_p),
-                ('oid', ctypes.c_char_p),
-                ('name', ctypes.c_char_p)]
+    _fields_ = [
+        ("uid", ctypes.c_char_p),
+        ("oid", ctypes.c_char_p),
+        ("name", ctypes.c_char_p),
+    ]
+
 
 class CDlgOutput(ctypes.Structure):
-    _fields_ = [('uid', ctypes.c_char_p),
-                ('oid', ctypes.c_char_p),
-                ('name', ctypes.c_char_p),
-                ('write', _write_cb_type)]
+    _fields_ = [
+        ("uid", ctypes.c_char_p),
+        ("oid", ctypes.c_char_p),
+        ("name", ctypes.c_char_p),
+        ("write", _write_cb_type),
+    ]
+
 
 class CDlgApp(ctypes.Structure):
-    _fields_ = [('appname', ctypes.c_char_p),
-                ('uid', ctypes.c_char_p),
-                ('oid', ctypes.c_char_p),
-                ('inputs', ctypes.POINTER(CDlgInput)),
-                ('n_inputs', ctypes.c_uint),
-                ('streaming_inputs', ctypes.POINTER(CDlgStreamingInput)),
-                ('n_streaming_inputs', ctypes.c_uint),
-                ('outputs', ctypes.POINTER(CDlgOutput)),
-                ('n_outputs', ctypes.c_uint),
-                ('running', _app_running_cb_type),
-                ('done', _app_done_cb_type),
-                ('data', ctypes.c_void_p),]
+    _fields_ = [
+        ("appname", ctypes.c_char_p),
+        ("uid", ctypes.c_char_p),
+        ("oid", ctypes.c_char_p),
+        ("ranks", ctypes.POINTER(ctypes.c_int32)),
+        ("n_ranks", ctypes.c_uint),
+        ("inputs", ctypes.POINTER(CDlgInput)),
+        ("n_inputs", ctypes.c_uint),
+        ("streaming_inputs", ctypes.POINTER(CDlgStreamingInput)),
+        ("n_streaming_inputs", ctypes.c_uint),
+        ("outputs", ctypes.POINTER(CDlgOutput)),
+        ("n_outputs", ctypes.c_uint),
+        ("running", _app_running_cb_type),
+        ("done", _app_done_cb_type),
+        ("data", ctypes.c_void_p),
+    ]
+
 
 def _to_c_input(i):
     """
@@ -87,6 +102,7 @@ def _to_c_input(i):
     """
 
     input_read = i.read
+
     def _read(desc, buf, n):
         x = input_read(desc, n)
         ctypes.memmove(buf, x, len(x))
@@ -96,6 +112,7 @@ def _to_c_input(i):
     r = _read_cb_type(functools.partial(_read, desc))
     c_input = CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r)
     return desc, c_input
+
 
 def _to_c_output(o):
     """
@@ -107,6 +124,7 @@ def _to_c_output(o):
 
     w = _write_cb_type(functools.partial(_write, o))
     return CDlgOutput(six.b(o.uid), six.b(o.oid), six.b(o.name), w)
+
 
 def prepare_c_inputs(c_app, inputs):
     """
@@ -123,6 +141,7 @@ def prepare_c_inputs(c_app, inputs):
     c_app.n_inputs = len(c_inputs)
     return input_closers
 
+
 def prepare_c_outputs(c_app, outputs):
     """
     Converts all outputs to its C equivalents and sets them into `c_app`
@@ -131,6 +150,15 @@ def prepare_c_outputs(c_app, outputs):
     c_outputs = [_to_c_output(o) for o in outputs]
     c_app.outputs = (CDlgOutput * len(c_outputs))(*c_outputs)
     c_app.n_outputs = len(c_outputs)
+
+
+def prepare_c_ranks(c_app, ranks):
+    """
+    Convert the ranks list into its C equivalent and sets them to `c_app`
+    """
+    c_app.ranks = (ctypes.c_int32 * len(ranks))(*ranks)
+    c_app.n_ranks = len(ranks)
+
 
 def run(lib, c_app, input_closers):
     """
@@ -144,8 +172,10 @@ def run(lib, c_app, input_closers):
         for closer in input_closers:
             closer()
 
+
 class InvalidLibrary(Exception):
     pass
+
 
 def load_and_init(libname, oid, uid, params):
     """
@@ -155,11 +185,12 @@ def load_and_init(libname, oid, uid, params):
 
     # Try with a simple name, or as full path
     from ctypes.util import find_library
+
     libname = find_library(libname) or libname
 
     lib = ctypes.cdll.LoadLibrary(libname)
     logger.info("Loaded %s as %r", libname, lib)
-    expected_functions = ('init', 'run')
+    expected_functions = ("init", "run")
     for fname in expected_functions:
         if hasattr(lib, fname):
             continue
@@ -169,12 +200,22 @@ def load_and_init(libname, oid, uid, params):
     # We pass no inputs because we don't know them (and don't need them)
     # at this point yet.
     # The running and done callbacks are also NULLs
-    c_app = CDlgApp(None, six.b(uid), six.b(oid),
-                    None, 0, None, 0, None, 0,
-                    ctypes.cast(None, _app_running_cb_type),
-                    ctypes.cast(None, _app_done_cb_type),
-                    None)
-
+    c_app = CDlgApp(
+        None,
+        six.b(uid),
+        six.b(oid),
+        None,
+        0,
+        None,
+        0,
+        None,
+        0,
+        None,
+        0,
+        ctypes.cast(None, _app_running_cb_type),
+        ctypes.cast(None, _app_done_cb_type),
+        None,
+    )
 
     # Collect the rest of the parameters to pass them down to the library
     # We need to keep them in a local variable so when we expose them to
@@ -184,7 +225,7 @@ def load_and_init(libname, oid, uid, params):
 
     # Wrap in ctypes
     str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
-    two_str_type = (ctypes.c_char_p * 2)
+    two_str_type = ctypes.c_char_p * 2
     app_params = [two_str_type(k, v) for k, v in local_params]
     app_params.append(None)
     params = (str_ptr_type * len(app_params))(*app_params)
@@ -195,16 +236,18 @@ def load_and_init(libname, oid, uid, params):
 
     return lib, c_app
 
-class DynlibAppBase(object):
 
+class DynlibAppBase(object):
     def initialize(self, **kwargs):
         super(DynlibAppBase, self).initialize(**kwargs)
 
-        if 'lib' not in kwargs:
+        if "lib" not in kwargs:
             raise InvalidDropException(self, "library not specified")
 
         try:
-            self.lib, self._c_app = load_and_init(kwargs.pop('lib'), self.oid, self.uid, kwargs)
+            self.lib, self._c_app = load_and_init(
+                kwargs.pop("lib"), self.oid, self.uid, kwargs
+            )
         except InvalidLibrary as e:
             raise InvalidDropException(self, e.args[0])
 
@@ -219,8 +262,8 @@ class DynlibAppBase(object):
                 return
             prepare_c_outputs(self._c_app, self.outputs)
 
-class DynlibStreamApp(DynlibAppBase, AppDROP):
 
+class DynlibStreamApp(DynlibAppBase, AppDROP):
     def initialize(self, **kwargs):
         super(DynlibStreamApp, self).initialize(**kwargs)
 
@@ -228,6 +271,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         # is running, and that it has ended
         def _running():
             self.execStatus = AppDROPStates.RUNNING
+
         def _done(status):
             self.execStatus = status
             self._notifyAppIsFinished()
@@ -256,20 +300,27 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
+    def initialize(self, **kwargs):
+        super(DynlibApp, self).initialize(**kwargs)
+        self.ranks = self._getArg(kwargs, 'rank', None)
 
     def run(self):
         input_closers = prepare_c_inputs(self._c_app, self.inputs)
+        prepare_c_ranks(self._c_app, self.ranks)
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, input_closers)
 
 
-class finish_subprocess(Exception): pass
+class finish_subprocess(Exception):
+    pass
+
 
 def _run_in_proc(*args):
     try:
         _do_run_in_proc(*args)
     except finish_subprocess:
         pass
+
 
 def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
     def advance_step(f, *args, **kwargs):
@@ -293,6 +344,7 @@ def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
             inputs = [to_drop_proxy(i) for i in inputs]
             outputs = [to_drop_proxy(o) for o in outputs]
             return inputs, outputs
+
         inputs, outputs = advance_step(setup_drop_proxies, inputs, outputs)
 
         # Step 3: Finish initializing the C structure and run the application
@@ -300,9 +352,11 @@ def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
             input_closers = prepare_c_inputs(c_app, inputs)
             prepare_c_outputs(c_app, outputs)
             run(lib, c_app, input_closers)
+
         advance_step(do_run)
     finally:
         client.shutdown()
+
 
 def get_from_subprocess(proc, q):
     """Gets elements from the queue, checking that the process is still alive"""
@@ -313,23 +367,24 @@ def get_from_subprocess(proc, q):
             pass
     raise RuntimeError("Subprocess died unexpectedly")
 
+
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""
 
     def initialize(self, **kwargs):
         super(DynlibProcApp, self).initialize(**kwargs)
 
-        if 'lib' not in kwargs:
+        if "lib" not in kwargs:
             raise InvalidDropException(self, "library not specified")
-        self.libname = kwargs.pop('lib')
-        self.timeout = self._getArg(kwargs, 'timeout', 600) # 10 minutes
+        self.libname = kwargs.pop("lib")
+        self.timeout = self._getArg(kwargs, "timeout", 600)  # 10 minutes
         self.app_params = kwargs
         self.proc = None
 
     def run(self):
 
-        if not hasattr(self, '_rpc_server'):
-            raise Exception('DynlibProcApp can only run within an RPC server')
+        if not hasattr(self, "_rpc_server"):
+            raise Exception("DynlibProcApp can only run within an RPC server")
 
         # On the sub-process we create DropProxy objects, so we need to extract
         # from our inputs/outputs their contact point (RPC-wise) information.
@@ -340,15 +395,25 @@ class DynlibProcApp(BarrierAppDROP):
 
         logger.info("Starting new process to run the dynlib on")
         queue = multiprocessing.Queue()
-        args = (queue, self.libname, self.oid, self.uid, self.app_params, inputs, outputs)
+        args = (
+            queue,
+            self.libname,
+            self.oid,
+            self.uid,
+            self.app_params,
+            inputs,
+            outputs,
+        )
         proc = multiprocessing.Process(target=_run_in_proc, args=args)
         proc.start()
         self.proc = proc
 
         try:
-            steps = ('loading and initialising library',
-                     'creating DropProxy instances',
-                     'running the application')
+            steps = (
+                "loading and initialising library",
+                "creating DropProxy instances",
+                "running the application",
+            )
             for step in steps:
                 logger.info("Subprocess %s", step)
                 error = get_from_subprocess(proc, queue)
@@ -360,7 +425,7 @@ class DynlibProcApp(BarrierAppDROP):
 
     def _get_proxy_info(self, x):
         if isinstance(x, rpc.DropProxy):
-            return (x.hostname, x.port, x.session_id, x.uid)
+            return x.hostname, x.port, x.session_id, x.uid
 
         # TODO: we can't use the NodeManager's host directly here, as that
         #       indicates the address the different servers *bind* to
