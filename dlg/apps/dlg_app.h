@@ -98,6 +98,8 @@ typedef struct _dlg_app_info {
     char *appname;
 	char *uid;
 	char *oid;
+	int *ranks;
+	unsigned int n_ranks;
 	dlg_input_info *inputs;
 	unsigned int n_inputs;
 	dlg_input_info *streaming_inputs;

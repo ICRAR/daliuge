@@ -230,6 +230,7 @@ def setupLogging(opts):
 
     return fileHandler
 
+
 def dlgNM(parser, args):
     """
     Entry point for the dlg nm command

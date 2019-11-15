@@ -33,10 +33,12 @@ from .scheduler import DAGUtil, SchedulerException
 
 MAX_PGT_FN_CNT = 300
 
+
 class PGUtil(object):
     """
     Helper functions dealing with Physical Graphs
     """
+
     @staticmethod
     def vstack_mat(A, B, separator=False):
         """
@@ -52,20 +54,20 @@ class PGUtil(object):
         """
         sa = A.shape
         sb = B.shape
-        if (sa[1] == sb[1]):
-            if (separator):
+        if sa[1] == sb[1]:
+            if separator:
                 return np.vstack((A, np.zeros((1, sb[1])), B))
             else:
                 return np.vstack((A, B))
         s = A if sa[1] < sb[1] else B
         l = A if sa[1] > sb[1] else B
         gap = l.shape[1] - s.shape[1]
-        if (separator):
+        if separator:
             pad = np.zeros((s.shape[0] + 1, l.shape[1]))
-            pad[:-1, :(-1 * gap)] = s
+            pad[:-1, : (-1 * gap)] = s
         else:
             pad = np.zeros((s.shape[0], l.shape[1]))
-            pad[:, :(-1 * gap)] = s
+            pad[:, : (-1 * gap)] = s
         return np.vstack((pad, l))
 
 
@@ -73,6 +75,7 @@ class PGManager(object):
     """
     Physical Graph Manager
     """
+
     def __init__(self, root_dir):
         self._pgt_dict = dict()
         self._pgt_fn_count = 0
@@ -87,9 +90,9 @@ class PGManager(object):
         Return:
             A unique PGT id (handle)
         """
-        #self._gen_pgt_sem.acquire()
+        # self._gen_pgt_sem.acquire()
         self._pgt_fn_count += 1
-        if (self._pgt_fn_count == MAX_PGT_FN_CNT + 1):
+        if self._pgt_fn_count == MAX_PGT_FN_CNT + 1:
             self._pgt_fn_count = 0
         pgt_id = lg_name.replace(".json", "{0}_pgt.json".format(self._pgt_fn_count))
         pgt_path = "{0}/{1}".format(self._root_dir, pgt_id)
@@ -97,7 +100,7 @@ class PGManager(object):
         try:
             # if the pgt name has a group with / then let's create a subdirectory
             # for it
-            if '/' in lg_name:
+            if "/" in lg_name:
                 lg_dir = os.path.dirname(lg_name)
                 try:
                     os.makedirs(os.path.join(self._root_dir, lg_dir))
@@ -105,14 +108,14 @@ class PGManager(object):
                     pass
             # overwrite file on disks
             with open(pgt_path, "w") as f:
-                #json.dump(pgt.to_gojs_json(string_rep=False, visual=True), f)
+                # json.dump(pgt.to_gojs_json(string_rep=False, visual=True), f)
                 json.dump(pgt._gojs_json_obj, f)
             self._pgt_dict[pgt_id] = pgt
         except Exception as exp:
             raise GraphException("Fail to save PGT {0}:{1}".format(pgt_path, str(exp)))
         finally:
             pass
-            #self._gen_pgt_sem.release()
+            # self._gen_pgt_sem.release()
         return pgt_id
 
     def get_pgt(self, pgt_id):
@@ -128,7 +131,7 @@ class PGManager(object):
             the gantt chart matrix (numarray) given a PGT id
         """
         pgt = self.get_pgt(pgt_id)
-        if (pgt is None):
+        if pgt is None:
             raise GraphException("PGT {0} not found".format(pgt_id))
         try:
             gcm = DAGUtil.ganttchart_matrix(pgt.dag)
@@ -136,7 +139,7 @@ class PGManager(object):
             DAGUtil.label_schedule(pgt.dag)
             gcm = DAGUtil.ganttchart_matrix(pgt.dag)
 
-        if (json_str):
+        if json_str:
             gcm = json.dumps(gcm.tolist())
         return gcm
 
@@ -146,19 +149,23 @@ class PGManager(object):
             a list of schedule matrices (numarrays) given a PGT id
         """
         pgt = self.get_pgt(pgt_id)
-        if (pgt is None):
+        if pgt is None:
             raise GraphException("PGT {0} not found".format(pgt_id))
         jsobj = None
         try:
             parts = pgt._partitions
         except AttributeError:
-            raise GraphException("Graph '{0}' has not yet been partitioned, so cannot produce scheduling matrix.".format(pgt_id))
+            raise GraphException(
+                "Graph '{0}' has not yet been partitioned, so cannot produce scheduling matrix.".format(
+                    pgt_id
+                )
+            )
         for part in parts:
             sm = part.schedule.schedule_matrix
-            if (jsobj is None):
+            if jsobj is None:
                 jsobj = sm
             else:
                 jsobj = PGUtil.vstack_mat(jsobj, sm, separator=True)
-        if (json_str):
+        if json_str:
             jsobj = json.dumps(jsobj.tolist())
         return jsobj
