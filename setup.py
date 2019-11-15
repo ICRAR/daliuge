@@ -43,9 +43,11 @@ VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
 VERSION_FILE = 'dlg/version.py'
 PTH_FILE = 'lib64_dist.pth'
 
+
 def get_git_version():
     out = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
     return out.strip().decode('ascii')
+
 
 def get_version_info():
     git_version = 'Unknown'
@@ -76,6 +78,7 @@ if not is_release:
                       'git_version': git_version,
                       'is_release': RELEASE}
         f.write(info.strip())
+
 
 # Every time we overwrite the version file
 write_version_info()

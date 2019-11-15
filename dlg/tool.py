@@ -31,29 +31,35 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 def _open_i(path, flags=None):
     if path == '-':
         return sys.stdin
     return open(os.path.expanduser(path), flags or 'r')
+
 
 def _open_o(path, flags=None):
     if path == '-':
         return sys.stdout
     return open(os.path.expanduser(path), flags or 'w')
 
+
 def unroll(lg_path, oid_prefix, zerorun=False, app=None):
-    '''
+    """
     Unrolls the Logical Graph in `lg_graph` into a Physical Graph Template
     and return the latter.
     This method prepends `oid_prefix` to all generated Drop OIDs.
-    '''
+    """
     from .dropmake.pg_generator import unroll
     logger.info("Start to unroll %s", lg_path)
     return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
 
+
 _param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
                'max_cpu': int, 'time_greedy': float, 'deadline': int,
                'topk': int, 'swarm_size': int, 'max_mem': int}
+
+
 def parse_partition_algo_params(algo_params):
     # Double-check that parameters are of shape name=value
     for p in algo_params:
@@ -63,6 +69,7 @@ def parse_partition_algo_params(algo_params):
     return {n: _param_types[n](v)
             for n, v in map(lambda p: p.split('='), algo_params)
             if n in _param_types}
+
 
 def partition(pgt, opts):
 
@@ -85,17 +92,20 @@ def submit(pg, opts):
         common.monitor_sessions(session_id, host=opts.host, port=opts.port,
                                 poll_interval=opts.poll_interval)
 
+
 def _add_logging_options(parser):
     parser.add_option("-v", "--verbose", action="count",
                       dest="verbose", help="Become more verbose. The more flags, the more verbose")
     parser.add_option("-q", "--quiet", action="count",
                       dest="quiet", help="Be less verbose. The more flags, the quieter")
 
+
 def _add_output_options(parser):
     parser.add_option('-o', '--output', action="store", dest='output', type="string",
                       help='Where the output should be written to (default: stdout)', default='-')
     parser.add_option('-f', '--format', action="store_true",
                       dest='format', help="Format JSON output (newline, 2-space indent)")
+
 
 def _setup_logging(opts):
 
@@ -135,6 +145,8 @@ def _setup_output(opts):
 
 
 commands = {}
+
+
 def cmdwrap(cmdname, desc):
     def decorated(f):
 
@@ -166,11 +178,13 @@ cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to conta
 cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dlg.deploy.pawsey.dfms_monitor:run')
 cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dlg.dropmake.web.lg_web:run')
 
+
 @cmdwrap('version', 'Reports the DALiuGE version and exits')
 def version(parser, args):
     from . import __version__, __git_version__
     print("Version: %s" % __version__)
     print("Git version: %s" % __git_version__)
+
 
 @cmdwrap('fill', 'Fill a Logical Graph with parameters')
 def fill(parser, args):
@@ -210,6 +224,7 @@ def fill(parser, args):
     from .dropmake.pg_generator import fill
     dump(fill(_open_i(opts.logical_graph), params))
 
+
 def _add_unroll_options(parser):
     parser.add_option('-L', '--logical-graph', action="store", dest='lg_path', type="string",
                       help='Path to the Logical Graph (default: stdin)', default='-')
@@ -226,6 +241,7 @@ def _add_unroll_options(parser):
     )
     return apps
 
+
 @cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template')
 def dlg_unroll(parser, args):
 
@@ -239,6 +255,7 @@ def dlg_unroll(parser, args):
 
     dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
 
+
 def _add_partition_options(parser):
 
     from .dropmake import pg_generator
@@ -250,6 +267,7 @@ def _add_partition_options(parser):
                       dest="algo", help="algorithm used to do the partitioning", default="metis")
     parser.add_option("-A", "--algorithm-param", action="append", dest="algo_params",
                       help="Extra name=value parameters used by the algorithms (algorithm-specific)")
+
 
 @cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions')
 def dlg_partition(parser, args):
@@ -268,6 +286,7 @@ def dlg_partition(parser, args):
 
     dump(partition(pgt, opts))
 
+
 @cmdwrap('unroll-and-partition', 'unroll + partition')
 def dlg_unroll_and_partition(parser, args):
 
@@ -281,6 +300,7 @@ def dlg_unroll_and_partition(parser, args):
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
     dump(partition(pgt, opts))
+
 
 @cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
@@ -357,6 +377,7 @@ def print_usage(prgname):
     print('')
     print('Try %s [command] --help for more details' % (prgname))
 
+
 def run(args=sys.argv):
 
     # Manually parse the first argument, which will be
@@ -381,6 +402,7 @@ def run(args=sys.argv):
 
     commands[cmd][1](sys.argv[1:])
 
+
 def start_process(cmd, args=(), **subproc_args):
     """
     Start 'dlg cmd <args>' in a different process.
@@ -399,6 +421,7 @@ def start_process(cmd, args=(), **subproc_args):
         cmdline.extend(args)
     logger.debug("Launching %s", cmdline)
     return subprocess.Popen(cmdline, **subproc_args)
+
 
 # We can also be executed as a module
 if __name__ == '__main__':
