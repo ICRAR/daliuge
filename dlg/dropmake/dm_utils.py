@@ -173,6 +173,7 @@ def convert_mkn(lgo):
             _make_unique_port_key(x["Id"], node["key"]) for x in node["outputPorts"]
         ]
         node_mk = node
+        node_mk["mkn"] = [M, K, N]
         node_kn = copy.deepcopy(node_mk)
         node_split_n = copy.deepcopy(node_mk)
 
@@ -411,8 +412,13 @@ def convert_construct(lgo):
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         app_node["text"] = node["text"]
+
+        if 'mkn' in node:
+            app_node['mkn'] = node['mkn']
+
         if "group" in node:
             app_node["group"] = node["group"]
+
         for app_fd_name in ["appFields", "inputAppFields"]:
             if app_fd_name in node:
                 for afd in node[app_fd_name]:
@@ -440,8 +446,13 @@ def convert_construct(lgo):
             dup_app_node["key"] = dup_app_node_k
             dup_app_node["category"] = node[has_app]  # node['application']
             dup_app_node["text"] = node["text"]
+
+            if 'mkn' in node:
+                dup_app_node['mkn'] = node['mkn']
+
             if "group" in node:
                 dup_app_node["group"] = node["group"]
+
             for app_fd_name in ["appFields", "inputAppFields"]:
                 if app_fd_name in node:
                     for afd in node[app_fd_name]:
