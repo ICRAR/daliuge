@@ -557,7 +557,19 @@ class LGNode:
                 for kv in v.split(","):  # comma separated k-v pairs
                     k_v = kv.replace(" ", "").split("=")
                     if len(k_v) > 1:
-                        kwargs[k_v[0]] = k_v[1]
+                        # Do substitutions for MKN
+                        if "mkn" in self.jd:
+                            mkn = self.jd["mkn"]
+                            value = k_v[1]
+                            if "%m" in value:
+                                value = value.replace("%m", str(mkn[0]))
+                            if "%k" in value:
+                                value = value.replace("%k", str(mkn[1]))
+                            if "%n" in value:
+                                value = value.replace("%n", str(mkn[2]))
+                            kwargs[k_v[0]] = value
+                        else:
+                            kwargs[k_v[0]] = k_v[1]
 
     def _create_test_drop_spec(self, oid, rank, kwargs):
         """
@@ -585,7 +597,7 @@ class LGNode:
                         "nm": "lstnr",
                         "tw": 5,
                         "sleepTime": 5,
-                        "rank": rank
+                        "rank": rank,
                     }
                 )
                 # tw -- task weight
@@ -606,7 +618,9 @@ class LGNode:
                 fp = self.jd.get("filepath", None)
                 if fp:
                     kwargs["filepath"] = fp
-        elif drop_type == "Component":  # default generic component becomes "sleep and copy"
+        elif (
+            drop_type == "Component"
+        ):  # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
             else:
@@ -630,18 +644,30 @@ class LGNode:
                 kwargs["sleepTime"] = execTime
 
             kwargs["tw"] = execTime
-            drop_spec = dropdict({"oid": oid, "type": "app", "app": app_class, "rank": rank})
+            drop_spec = dropdict(
+                {"oid": oid, "type": "app", "app": app_class, "rank": rank}
+            )
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
+            if "mkn" in self.jd:
+                kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
         elif drop_type in ["DynlibApp", "DynlibProcApp"]:
             if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": "dlg.apps.dynlib.{}".format(drop_type), "rank": rank}
+                {
+                    "oid": oid,
+                    "type": "app",
+                    "app": "dlg.apps.dynlib.{}".format(drop_type),
+                    "rank": rank,
+                }
             )
             kwargs["lib"] = self.jd["libpath"]
             kwargs["tw"] = int(self.jd["execution_time"])
+            if "mkn" in self.jd:
+                kwargs["mkn"] = self.jd["mkn"]
+
             self._update_key_value_attributes(kwargs)
 
             drop_spec.update(kwargs)
@@ -651,7 +677,9 @@ class LGNode:
                 kwargs["maxprocs"] = int(self.jd.get("num_of_procs", 4))
             else:
                 app_str = "dlg.apps.bash_shell_app.BashShellApp"
-            drop_spec = dropdict({"oid": oid, "type": "app", "app": app_str, "rank": rank})
+            drop_spec = dropdict(
+                {"oid": oid, "type": "app", "app": app_str, "rank": rank}
+            )
             if "execution_time" in self.jd:
                 kwargs["tw"] = int(self.jd["execution_time"])
             else:
@@ -677,7 +705,9 @@ class LGNode:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
             typ = "app"
-            drop_spec = dropdict({"oid": oid, "type": typ, "app": app_class, "rank": rank})
+            drop_spec = dropdict(
+                {"oid": oid, "type": typ, "app": app_class, "rank": rank}
+            )
 
             image = str(self.jd.get("image"))
             if image == "":
@@ -702,7 +732,12 @@ class LGNode:
 
         elif drop_type == "GroupBy":
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": "dlg.apps.simple.SleepApp", "rank": rank}
+                {
+                    "oid": oid,
+                    "type": "app",
+                    "app": "dlg.apps.simple.SleepApp",
+                    "rank": rank,
+                }
             )
             sij = self.inputs[0].jd
             if not "data_volume" in sij:
@@ -717,7 +752,7 @@ class LGNode:
                     "storage": "memory",
                     "nm": "grpdata",
                     "dw": dw,
-                    "rank": rank
+                    "rank": rank,
                 }
             )
             kwargs["grp-data_drop"] = dropSpec_grp
@@ -727,7 +762,12 @@ class LGNode:
             dropSpec_grp.addProducer(drop_spec)
         elif drop_type == "DataGather":
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": "dlg.apps.simple.SleepApp", "rank": rank}
+                {
+                    "oid": oid,
+                    "type": "app",
+                    "app": "dlg.apps.simple.SleepApp",
+                    "rank": rank,
+                }
             )
             gi = self.inputs[0]
             if gi.is_groupby():
@@ -742,7 +782,7 @@ class LGNode:
                     "storage": "memory",
                     "nm": "gthrdt",
                     "dw": dw,
-                    "rank": rank
+                    "rank": rank,
                 }
             )
             kwargs["gather-data_drop"] = dropSpec_gather
@@ -753,7 +793,12 @@ class LGNode:
         elif drop_type == "Branch":
             # create an App first
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": "dlg.apps.simple.SleepApp", "rank": rank}
+                {
+                    "oid": oid,
+                    "type": "app",
+                    "app": "dlg.apps.simple.SleepApp",
+                    "rank": rank,
+                }
             )
             dropSpec_null = dropdict(
                 {
@@ -762,7 +807,7 @@ class LGNode:
                     "storage": "null",
                     "nm": "null",
                     "dw": 0,
-                    "rank": rank
+                    "rank": rank,
                 }
             )
             kwargs["null_drop"] = dropSpec_null
@@ -771,7 +816,9 @@ class LGNode:
             drop_spec.addOutput(dropSpec_null)
             dropSpec_null.addProducer(drop_spec)
         elif drop_type in ["Start", "End"]:
-            drop_spec = dropdict({"oid": oid, "type": "plain", "storage": "null", "rank": rank})
+            drop_spec = dropdict(
+                {"oid": oid, "type": "plain", "storage": "null", "rank": rank}
+            )
         elif drop_type == "Loop":
             pass
         else:
@@ -2091,7 +2138,9 @@ class LG:
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
 
-                if extra_links_drops and not lgn.is_loop():  # make GroupBy and Gather drops
+                if (
+                    extra_links_drops and not lgn.is_loop()
+                ):  # make GroupBy and Gather drops
                     src_gdrop = lgn.make_single_drop(miid)
                     self._drop_dict[lgn.id].append(src_gdrop)
                     if lgn.is_groupby():
@@ -2121,7 +2170,7 @@ class LG:
         Yield successive n-sized chunks from l.
         """
         for i in range(0, len(l), n):
-            yield l[i: i + n]
+            yield l[i : i + n]
 
     def _unroll_gather_as_output(self, slgn, tlgn, sdrops, tdrops, chunk_size, llink):
         if slgn.h_level < tlgn.h_level:
@@ -2149,7 +2198,11 @@ class LG:
         return ret
 
     def _is_stream_link(self, s_type, t_type):
-        return s_type in ["Component", "DynlibApp", "DynlibProcApp"] and t_type in ["Component", "DynlibApp", "DynlibProcApp"]
+        return s_type in ["Component", "DynlibApp", "DynlibProcApp"] and t_type in [
+            "Component",
+            "DynlibApp",
+            "DynlibProcApp",
+        ]
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
         """
