@@ -609,9 +609,6 @@ class LGNode:
                 kwargs["check_filepath_exists"] = cfeb
                 fp = self.jd.get("filepath", None)
                 if fp:
-                    # Do we need to do a child number substitution
-                    if "%c" in fp:
-                        fp = fp.replace("%c", str(rank[-1]))
                     kwargs["filepath"] = fp
         elif (
             drop_type == "Component"
