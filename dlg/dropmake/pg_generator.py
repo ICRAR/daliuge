@@ -559,15 +559,7 @@ class LGNode:
                     if len(k_v) > 1:
                         # Do substitutions for MKN
                         if "mkn" in self.jd:
-                            mkn = self.jd["mkn"]
-                            value = k_v[1]
-                            if "%m" in value:
-                                value = value.replace("%m", str(mkn[0]))
-                            if "%k" in value:
-                                value = value.replace("%k", str(mkn[1]))
-                            if "%n" in value:
-                                value = value.replace("%n", str(mkn[2]))
-                            kwargs[k_v[0]] = value
+                            kwargs[k_v[0]] = self._mkn_substitution(self.jd["mkn"], k_v[1])
                         else:
                             kwargs[k_v[0]] = k_v[1]
 
@@ -617,6 +609,9 @@ class LGNode:
                 kwargs["check_filepath_exists"] = cfeb
                 fp = self.jd.get("filepath", None)
                 if fp:
+                    # Do we need to do a child number substitution
+                    if "%c" in fp:
+                        fp = fp.replace("%c", str(rank[-1]))
                     kwargs["filepath"] = fp
         elif (
             drop_type == "Component"
@@ -845,6 +840,17 @@ class LGNode:
     def str_to_bool(value, default_value=False):
         res = True if value in ["1", "true", "yes"] else default_value
         return res
+
+    @staticmethod
+    def _mkn_substitution(mkn, value):
+        if "%m" in value:
+            value = value.replace("%m", str(mkn[0]))
+        if "%k" in value:
+            value = value.replace("%k", str(mkn[1]))
+        if "%n" in value:
+            value = value.replace("%n", str(mkn[2]))
+
+        return value
 
 
 class PGT(object):
