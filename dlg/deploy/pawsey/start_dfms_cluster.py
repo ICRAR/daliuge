@@ -326,7 +326,8 @@ def main():
 
     parser.add_option('--pg-modifiers',
                       help=('A colon-separated list of python functions that modify a PG before submission. '
-                            'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'))
+                            'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'),
+                      default='')
 
     parser.add_option('-r', '--remote-mechanism', help='The mechanism used by this script to coordinate remote processes',
                       choices=['mpi', 'slurm', 'dlg', 'dlg-hybrid'], default='mpi')
