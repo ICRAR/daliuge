@@ -21,6 +21,7 @@
 #
 import collections
 
+
 class DROPLinkType:
     """
     An enumeration of the different relationships that can exist between DROPs.
@@ -33,9 +34,8 @@ class DROPLinkType:
      * PRODUCER           / OUTPUT
      * PARENT             / CHILD
     """
-    CONSUMER, STREAMING_CONSUMER, PRODUCER, \
-    PARENT, CHILD, \
-    INPUT, STREAMING_INPUT, OUTPUT = range(8)
+    CONSUMER, STREAMING_CONSUMER, PRODUCER, PARENT, CHILD, INPUT, STREAMING_INPUT, OUTPUT = range(8)
+
 
 class DROPStates:
     """
@@ -46,6 +46,7 @@ class DROPStates:
     """
     INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED, CANCELLED = range(7)
 
+
 class AppDROPStates:
     """
     An enumeration of the different execution states an AppDROP can be found in.
@@ -54,6 +55,7 @@ class AppDROPStates:
     FINISHED or ERROR state.
     """
     NOT_RUN, RUNNING, FINISHED, ERROR, CANCELLED = range(5)
+
 
 class DROPPhases:
     """
@@ -64,6 +66,7 @@ class DROPPhases:
     """
     PLASMA, GAS, SOLID, LIQUID, LOST = range(5)
 
+
 # https://en.wikipedia.org/wiki/Cyclic_redundancy_check#Standards_and_common_use
 class ChecksumTypes:
     """
@@ -73,6 +76,7 @@ class ChecksumTypes:
     calculate it.
     """
     CRC_32, CRC_32C = range(2)
+
 
 class ExecutionMode:
     """
@@ -90,6 +94,7 @@ class ExecutionMode:
     the graph effectively drives its own execution without external intervention.
     """
     DROP, EXTERNAL = range(2)
+
 
 # This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
 # lhs and rhs are DROP OIDs
