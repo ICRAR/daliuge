@@ -36,17 +36,22 @@ except:
     from binascii import crc32  # @Reimport
 
 
-hostname = 'localhost'
+hostname = "localhost"
+
 
 def memory(uid, **kwargs):
-    dropSpec = dropdict({'oid':uid, 'type':'plain', 'storage':'memory'})
+    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": "memory"})
     dropSpec.update(kwargs)
     return dropSpec
 
+
 def sleepAndCopy(uid, **kwargs):
-    dropSpec = dropdict({'oid':uid, 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp'})
+    dropSpec = dropdict(
+        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp"}
+    )
     dropSpec.update(kwargs)
     return dropSpec
+
 
 def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.createSession(sessionId)
@@ -54,22 +59,30 @@ def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.add_node_subscriptions(sessionId, node_subscriptions)
     nm.deploySession(sessionId)
 
+
 class ErroneousApp(BarrierAppDROP):
     def run(self):
         raise Exception("Sorry, we always fail")
 
+
 def nm_conninfo(n):
-    return 'localhost', 5553 + n, 6666 + n
+    return "localhost", 5553 + n, 6666 + n
+
 
 class NMTestsMixIn(object):
-
     def __init__(self, *args, **kwargs):
         super(NMTestsMixIn, self).__init__(*args, **kwargs)
         self._dms = []
 
     def _start_dm(self, **kwargs):
         host, events_port, rpc_port = nm_conninfo(len(self._dms))
-        nm = NodeManager(useDLM=False, host=host, events_port = events_port, rpc_port = rpc_port, **kwargs)
+        nm = NodeManager(
+            useDLM=False,
+            host=host,
+            events_port=events_port,
+            rpc_port=rpc_port,
+            **kwargs
+        )
         self._dms.append(nm)
         return nm
 
@@ -78,13 +91,22 @@ class NMTestsMixIn(object):
         for nm in self._dms:
             nm.shutdown()
 
-    def _test_runGraphInTwoNMs(self, g1, g2, rels, root_data, leaf_data,
-          root_oids=('A',), leaf_oid='C', expected_failures=[]):
+    def _test_runGraphInTwoNMs(
+        self,
+        g1,
+        g2,
+        rels,
+        root_data,
+        leaf_data,
+        root_oids=("A",),
+        leaf_oid="C",
+        expected_failures=[],
+    ):
         """Utility to run a graph in two Node Managers"""
 
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = 's1'
+        sessionId = "s1"
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
@@ -102,7 +124,9 @@ class NMTestsMixIn(object):
                 drop.write(root_data)
                 drop.setCompleted()
 
-        expected_successes = [drops[oid] for oid in drops if oid not in expected_failures]
+        expected_successes = [
+            drops[oid] for oid in drops if oid not in expected_failures
+        ]
         expected_failures = [drops[oid] for oid in drops if oid in expected_failures]
         for drop in expected_successes:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
@@ -120,13 +144,20 @@ class NMTestsMixIn(object):
         dm2.destroySession(sessionId)
         return leaf_drop_data
 
-class TestDM(NMTestsMixIn, unittest.TestCase):
 
+class TestDM(NMTestsMixIn, unittest.TestCase):
     def _deploy_error_graph(self, **kwargs):
-        sessionId = 'lala'
-        g = [{"oid":"A", "type":"plain", "storage": "memory"},
-             {"oid":"B", "type":"app", "app":"test.manager.test_dm.ErroneousApp", "inputs": ["A"]},
-             {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
+        sessionId = "lala"
+        g = [
+            {"oid": "A", "type": "plain", "storage": "memory"},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "test.manager.test_dm.ErroneousApp",
+                "inputs": ["A"],
+            },
+            {"oid": "C", "type": "plain", "storage": "memory", "producers": ["B"]},
+        ]
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -136,11 +167,13 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         evt = threading.Event()
         erroneous_drops = []
+
         class listener(object):
             def on_error(self, drop):
                 erroneous_drops.append(drop.uid)
-                if len(erroneous_drops) == 2: # both 'C' and 'B' failed already
+                if len(erroneous_drops) == 2:  # both 'C' and 'B' failed already
                     evt.set()
+
         self._deploy_error_graph(error_listener=listener())
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
 
@@ -148,13 +181,16 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """Tests that user-provided event listeners work"""
 
         evt = threading.Event()
+
         class listener(object):
             def __init__(self):
                 self.recv = 0
+
             def handleEvent(self, _evt):
                 self.recv += 1
                 if self.recv == 3:
                     evt.set()
+
         self._deploy_error_graph(event_listeners=[listener()])
         self.assertTrue(evt.wait(10), "Didn't receive events on time")
 
@@ -171,14 +207,15 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         =======    =============
         """
 
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dlg.apps.crc.CRCApp"},
-              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
-        rels = [DROPRel('B', DROPLinkType.CONSUMER, 'A')]
+        g1 = [{"oid": "A", "type": "plain", "storage": "memory"}]
+        g2 = [
+            {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
+            {"oid": "C", "type": "plain", "storage": "memory", "producers": ["B"]},
+        ]
+        rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
         c_data = six.b(str(crc32(a_data, 0)))
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, c_data)
-
 
     def test_runGraphSeveralDropsPerDM(self):
         """
@@ -196,16 +233,22 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = 's1'
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
-              {"oid":"B", "type":"plain", "storage": "memory"},
-              {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp"},
-              {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
-        g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum"},
-              {"oid":"F", "type":"plain", "storage": "memory", "producers":["E"]}]
+        sessionId = "s1"
+        g1 = [
+            {"oid": "A", "type": "plain", "storage": "memory", "consumers": ["C"]},
+            {"oid": "B", "type": "plain", "storage": "memory"},
+            {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
+            {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
+        ]
+        g2 = [
+            {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
+            {"oid": "F", "type": "plain", "storage": "memory", "producers": ["E"]},
+        ]
 
-        rels = [DROPRel('D', DROPLinkType.INPUT, 'E'),
-                DROPRel('B', DROPLinkType.INPUT, 'E')]
+        rels = [
+            DROPRel("D", DROPLinkType.INPUT, "E"),
+            DROPRel("B", DROPLinkType.INPUT, "E"),
+        ]
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 
@@ -214,16 +257,20 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        a,b,c,d = [dm1._sessions[sessionId].drops[x] for x in ('A', 'B', 'C', 'D')]
-        e,f = [dm2._sessions[sessionId].drops[x] for x in ('E', 'F')]
+        a, b, c, d = [dm1._sessions[sessionId].drops[x] for x in ("A", "B", "C", "D")]
+        e, f = [dm2._sessions[sessionId].drops[x] for x in ("E", "F")]
         with droputils.DROPWaiterCtx(self, f, 5):
-            a.write(b'a')
+            a.write(b"a")
             a.setCompleted()
-            b.write(b'a')
+            b.write(b"a")
             b.setCompleted()
 
-        for drop in a,b,c,d,e,f:
-            self.assertEqual(DROPStates.COMPLETED, drop.status, "DROP %s is not COMPLETED" % (drop.uid))
+        for drop in a, b, c, d, e, f:
+            self.assertEqual(
+                DROPStates.COMPLETED,
+                drop.status,
+                "DROP %s is not COMPLETED" % (drop.uid),
+            )
 
         self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
         self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
@@ -258,50 +305,67 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2, dm3, dm4 = [self._start_dm() for _ in range(4)]
 
-        sessionId = 's1'
-        g1 = [memory('A', expectedSize=1)]
-        g2 = [sleepAndCopy('B', outputs=['C','D','E'], sleepTime=0),
-              memory('C'),
-              memory('D'),
-              memory('E'),
-              sleepAndCopy('F', inputs=['C','D','E'], sleepTime=0)]
-        g3 = [sleepAndCopy('G', outputs=['H','I','J'], sleepTime=0),
-              memory('H'),
-              memory('I'),
-              memory('J'),
-              sleepAndCopy('K', inputs=['H','I','J'], sleepTime=0)]
-        g4 = [memory('L'),
-              memory('M'),
-              sleepAndCopy('N', inputs=['L','M'], outputs=['O'], sleepTime=0),
-              memory('O')]
+        sessionId = "s1"
+        g1 = [memory("A", expectedSize=1)]
+        g2 = [
+            sleepAndCopy("B", outputs=["C", "D", "E"], sleepTime=0),
+            memory("C"),
+            memory("D"),
+            memory("E"),
+            sleepAndCopy("F", inputs=["C", "D", "E"], sleepTime=0),
+        ]
+        g3 = [
+            sleepAndCopy("G", outputs=["H", "I", "J"], sleepTime=0),
+            memory("H"),
+            memory("I"),
+            memory("J"),
+            sleepAndCopy("K", inputs=["H", "I", "J"], sleepTime=0),
+        ]
+        g4 = [
+            memory("L"),
+            memory("M"),
+            sleepAndCopy("N", inputs=["L", "M"], outputs=["O"], sleepTime=0),
+            memory("O"),
+        ]
 
-        rels_12 = [DROPRel('A', DROPLinkType.INPUT, 'B')]
-        rels_13 = [DROPRel('A', DROPLinkType.INPUT, 'G')]
-        rels_24 = [DROPRel('F', DROPLinkType.PRODUCER, 'L')]
-        rels_34 = [DROPRel('K', DROPLinkType.PRODUCER, 'M')]
-        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13})
-        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24})
-        quickDeploy(dm3, sessionId, g3, {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34})
-        quickDeploy(dm4, sessionId, g4, {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34})
+        rels_12 = [DROPRel("A", DROPLinkType.INPUT, "B")]
+        rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
+        rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
+        rels_34 = [DROPRel("K", DROPLinkType.PRODUCER, "M")]
+        quickDeploy(
+            dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13}
+        )
+        quickDeploy(
+            dm2, sessionId, g2, {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24}
+        )
+        quickDeploy(
+            dm3, sessionId, g3, {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34}
+        )
+        quickDeploy(
+            dm4, sessionId, g4, {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34}
+        )
 
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
         self.assertEqual(5, len(dm2._sessions[sessionId].drops))
         self.assertEqual(5, len(dm3._sessions[sessionId].drops))
         self.assertEqual(4, len(dm4._sessions[sessionId].drops))
 
-
-        a = dm1._sessions[sessionId].drops['A']
-        o = dm4._sessions[sessionId].drops['O']
+        a = dm1._sessions[sessionId].drops["A"]
+        o = dm4._sessions[sessionId].drops["O"]
         drops = []
         for x in (dm1, dm2, dm3, dm4):
             drops += x._sessions[sessionId].drops.values()
 
         # Run! This should trigger the full execution of the graph
         with droputils.DROPWaiterCtx(self, o, 5):
-            a.write(b'a')
+            a.write(b"a")
 
         for drop in drops:
-            self.assertEqual(DROPStates.COMPLETED, drop.status, "Status of '%s' is not COMPLETED: %d" % (drop.uid, drop.status))
+            self.assertEqual(
+                DROPStates.COMPLETED,
+                drop.status,
+                "Status of '%s' is not COMPLETED: %d" % (drop.uid, drop.status),
+            )
 
         for dm in [dm1, dm2, dm3, dm4]:
             dm.destroySession(sessionId)
@@ -327,29 +391,36 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = 's1'
+        sessionId = "s1"
         N = 100
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
+        g1 = [{"oid": "A", "type": "plain", "storage": "memory"}]
+        g2 = [{"oid": "C", "type": "plain", "storage": "memory"}]
         rels = []
         for i in range(N):
             b_oid = "B%d" % (i,)
             # SleepAndCopyApp effectively opens the input drop
-            g2.append({"oid":b_oid, "type":"app", "app":"dlg.apps.simple.SleepAndCopyApp", "outputs":["C"], "sleepTime": 0})
-            rels.append(DROPRel('A', DROPLinkType.INPUT, b_oid))
+            g2.append(
+                {
+                    "oid": b_oid,
+                    "type": "app",
+                    "app": "dlg.apps.simple.SleepAndCopyApp",
+                    "outputs": ["C"],
+                    "sleepTime": 0,
+                }
+            )
+            rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
 
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
-        self.assertEqual(1,   len(dm1._sessions[sessionId].drops))
-        self.assertEqual(1+N, len(dm2._sessions[sessionId].drops))
-
+        self.assertEqual(1, len(dm1._sessions[sessionId].drops))
+        self.assertEqual(1 + N, len(dm2._sessions[sessionId].drops))
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        a = dm1._sessions[sessionId].drops['A']
-        c = dm2._sessions[sessionId].drops['C']
+        a = dm1._sessions[sessionId].drops["A"]
+        c = dm2._sessions[sessionId].drops["C"]
         with droputils.DROPWaiterCtx(self, c, 10):
-            a.write(b'a')
+            a.write(b"a")
             a.setCompleted()
 
         for i in range(N):
@@ -357,7 +428,6 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
-
 
     def test_runGraphSeveralDropsPerDM_with_get_consumer_nodes(self):
         """
@@ -374,27 +444,48 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         :see: `self.test_runGraphSeveralDropsPerDM_with_get_consumer_nodes`
         """
-        ip_addr_1 = '8.8.8.8'
-        ip_addr_2 = '8.8.8.9'
+        ip_addr_1 = "8.8.8.8"
+        ip_addr_2 = "8.8.8.9"
 
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = 's1'
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers":["C"]},
-              {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp", "consumers":["D"]},
-              {"oid":"D", "type":"plain", "storage": "memory", "producers": ["C"]}]
-        g2 = [{"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "node": ip_addr_1},
-              {"oid":"F", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "node": ip_addr_2}]
+        sessionId = "s1"
+        g1 = [
+            {"oid": "A", "type": "plain", "storage": "memory", "consumers": ["C"]},
+            {
+                "oid": "C",
+                "type": "app",
+                "app": "dlg.apps.crc.CRCApp",
+                "consumers": ["D"],
+            },
+            {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
+        ]
+        g2 = [
+            {
+                "oid": "E",
+                "type": "app",
+                "app": "test.test_drop.SumupContainerChecksum",
+                "node": ip_addr_1,
+            },
+            {
+                "oid": "F",
+                "type": "app",
+                "app": "test.test_drop.SumupContainerChecksum",
+                "node": ip_addr_2,
+            },
+        ]
 
-        rels = [DROPRel('D', DROPLinkType.INPUT, 'E'),
-                DROPRel('D', DROPLinkType.INPUT, 'F')]
+        rels = [
+            DROPRel("D", DROPLinkType.INPUT, "E"),
+            DROPRel("D", DROPLinkType.INPUT, "F"),
+        ]
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 
         self.assertEqual(3, len(dm1._sessions[sessionId].drops))
         self.assertEqual(2, len(dm2._sessions[sessionId].drops))
 
-        cons_nodes = dm1._sessions[sessionId].drops['D'].get_consumers_nodes()
+        cons_nodes = dm1._sessions[sessionId].drops["D"].get_consumers_nodes()
 
         self.assertTrue(ip_addr_1 in cons_nodes)
         self.assertTrue(ip_addr_2 in cons_nodes)
@@ -416,27 +507,57 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         We use A and E to compare that all data flows correctly.
         """
 
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory"},
-              {"oid":"B", "type":"app", "app": "dlg.apps.simple.CopyApp", "inputs": ["A"], "outputs":["C"]},
-              {"oid":"C", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"D", "type":"app", "app":"dlg.apps.crc.CRCStreamApp", "outputs": ["E"]},
-              {"oid":"E", "type":"plain", "storage": "memory"}]
-        rels = [DROPRel('C', DROPLinkType.STREAMING_INPUT, 'D')]
+        g1 = [
+            {"oid": "A", "type": "plain", "storage": "memory"},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.CopyApp",
+                "inputs": ["A"],
+                "outputs": ["C"],
+            },
+            {"oid": "C", "type": "plain", "storage": "memory"},
+        ]
+        g2 = [
+            {
+                "oid": "D",
+                "type": "app",
+                "app": "dlg.apps.crc.CRCStreamApp",
+                "outputs": ["E"],
+            },
+            {"oid": "E", "type": "plain", "storage": "memory"},
+        ]
+        rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
         e_data = six.b(str(crc32(a_data, 0)))
-        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid='E')
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
         """
         Like above, but C is hostd by DM #2.
         """
 
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory"},
-              {"oid":"B", "type":"app", "app": "dlg.apps.simple.CopyApp", "inputs": ["A"]}]
-        g2 = [{"oid":"C", "type":"plain", "storage": "memory"},
-              {"oid":"D", "type":"app", "app":"dlg.apps.crc.CRCStreamApp", "streamingInputs": ["C"], "outputs": ["E"]},
-              {"oid":"E", "type":"plain", "storage": "memory"}]
-        rels = [DROPRel('C', DROPLinkType.OUTPUT, 'B')]
+        g1 = [
+            {"oid": "A", "type": "plain", "storage": "memory"},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.CopyApp",
+                "inputs": ["A"],
+            },
+        ]
+        g2 = [
+            {"oid": "C", "type": "plain", "storage": "memory"},
+            {
+                "oid": "D",
+                "type": "app",
+                "app": "dlg.apps.crc.CRCStreamApp",
+                "streamingInputs": ["C"],
+                "outputs": ["E"],
+            },
+            {"oid": "E", "type": "plain", "storage": "memory"},
+        ]
+        rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
         e_data = six.b(str(crc32(a_data, 0)))
-        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid='E')
+        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")

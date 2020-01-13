@@ -194,11 +194,21 @@ def load_and_init(libname, oid, uid, params):
 
     lib = ctypes.cdll.LoadLibrary(libname)
     logger.info("Loaded %s as %r", libname, lib)
-    expected_functions = ("init", "run")
+    expected_functions = ["run"]
     for fname in expected_functions:
         if hasattr(lib, fname):
             continue
         raise InvalidLibrary("%s doesn't have function %s" % (libname, fname))
+
+    one_of_functions = ["init", "init2"]
+    found_one = False
+    for fname in one_of_functions:
+        if hasattr(lib, fname):
+            found_one = True
+            break
+
+    if not found_one:
+        raise InvalidLibrary("%s doesn't have one of the functions %s" % (libname, one_of_functions))
 
     # Create the initial contents of the C dlg_app_info structure
     # We pass no inputs because we don't know them (and don't need them)
@@ -221,22 +231,33 @@ def load_and_init(libname, oid, uid, params):
         None,
     )
 
-    # Collect the rest of the parameters to pass them down to the library
-    # We need to keep them in a local variable so when we expose them to
-    # the app later on via pointers we still have their contents
-    local_params = [(six.b(str(k)), six.b(str(v))) for k, v in params.items()]
-    logger.debug("Extra parameters passed to application: %r", local_params)
+    if hasattr(lib, "init2"):
+        # With init2 we pass the params as a PyObject*
+        logger.info("Extra parameters passed to application: {}".format(params))
+        if lib.init2(ctypes.pointer(c_app), ctypes.py_object(params)):
+            raise InvalidLibrary("{} failed during initialization (init2)".format(libname))
 
-    # Wrap in ctypes
-    str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
-    two_str_type = ctypes.c_char_p * 2
-    app_params = [two_str_type(k, v) for k, v in local_params]
-    app_params.append(None)
-    params = (str_ptr_type * len(app_params))(*app_params)
+    elif hasattr(lib, "init"):
+        # Collect the rest of the parameters to pass them down to the library
+        # We need to keep them in a local variable so when we expose them to
+        # the app later on via pointers we still have their contents
+        local_params = [(six.b(str(k)), six.b(str(v))) for k, v in params.items()]
+        logger.debug("Extra parameters passed to application: %r", local_params)
 
-    # Let the shared library initialize this app
-    if lib.init(ctypes.pointer(c_app), params):
-        raise InvalidLibrary("%s failed during initialization" % (libname,))
+        # Wrap in ctypes
+        str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
+        two_str_type = ctypes.c_char_p * 2
+        app_params = [two_str_type(k, v) for k, v in local_params]
+        app_params.append(None)
+        params = (str_ptr_type * len(app_params))(*app_params)
+
+        # Let the shared library initialize this app
+        # If we have a list of key/value pairs that are all strings
+        if lib.init(ctypes.pointer(c_app), params):
+            raise InvalidLibrary("{} failed during initialization (init)".format(libname))
+
+    else:
+        raise InvalidLibrary("{} failed during initialization. No init or init2".format(libname))
 
     return lib, c_app
 
