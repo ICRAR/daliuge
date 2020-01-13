@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+#include <Python.h>
+
 /**
  * The different status a data drop can be found at.
  */
@@ -124,6 +126,15 @@ typedef struct _dlg_app_info {
  * @return Whether the initialization was successful (0) or not (any other value).
  */
 int init(dlg_app_info *app, const char ***params);
+
+/**
+ * Initializes a new application. Expects a dictionary containing all the parameters.
+ *
+ * @param app The new application instance
+ * @param params A PyObject pointer to a a PyObject. it is up to the imp
+ * @return Whether the initialization was successful (0) or not (any other value).
+ */
+int init2(dlg_app_info *app, PyObject* params);
 
 /**
  * Provides a simple entry point to execute batch-oriented applications.

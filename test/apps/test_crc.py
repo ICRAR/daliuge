@@ -34,11 +34,13 @@ from dlg.apps.dynlib import DynlibApp
 from dlg.drop import FileDROP, InMemoryDROP
 
 from . import test_dynlib
+from .setp_up import build_shared_library
+from .test_dynlib import _libname, _libpath
 
 
 class CRCAppTests(unittest.TestCase):
 
-    @unittest.skipUnless(test_dynlib._try_library(), "Example dynamic library not available")
+    @unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
     def test_with_dynlib(self):
         """
         We test the following graph:

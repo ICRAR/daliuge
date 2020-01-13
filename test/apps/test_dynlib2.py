@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2017
+#    (c) UWA - The University of Western Australia, 2020
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -33,11 +33,11 @@ from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.drop import InMemoryDROP, NullDROP
 
-_libname = "dynlib_example"
-_libfname = "libdynlib_example.so"
+_libname = "dynlib_example2"
+_libfname = "libdynlib_example2.so"
 _libpath = os.path.join(os.path.dirname(__file__), _libfname)
-print_stats = 0
-bufsize = 20 * 1024 * 1024
+print_stats = False
+bufsize = 10 * 1024 * 1024
 
 
 @unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
@@ -231,7 +231,7 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
-                "crash_and_burn": 1,
+                "crash_and_burn": True,
             },
             {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
         ]
