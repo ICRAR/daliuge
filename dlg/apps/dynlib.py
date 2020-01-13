@@ -156,8 +156,12 @@ def prepare_c_ranks(c_app, ranks):
     """
     Convert the ranks list into its C equivalent and sets them to `c_app`
     """
-    c_app.ranks = (ctypes.c_int32 * len(ranks))(*ranks)
-    c_app.n_ranks = len(ranks)
+    if ranks is None:
+        # The number of ranks is
+        c_app.n_ranks = 0
+    else:
+        c_app.ranks = (ctypes.c_int32 * len(ranks))(*ranks)
+        c_app.n_ranks = len(ranks)
 
 
 def run(lib, c_app, input_closers):

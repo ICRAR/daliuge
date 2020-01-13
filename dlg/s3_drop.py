@@ -42,6 +42,10 @@ class S3DROP(AbstractDROP):
     aws_secret_access_key = dlg_string_param('aws_secret_access_key', None)
     profile_name = dlg_string_param('profile_name', None)
 
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, uid, **kwargs)
+        self._s3 = None
+
     @property
     def path(self):
         """
