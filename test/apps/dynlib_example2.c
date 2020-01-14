@@ -84,8 +84,19 @@ int init2(dlg_app_info *app, PyObject* pyObject)
     }
 
 	while (PyDict_Next(pyObject, &pos, &key, &value)) {
-	    if (PyUnicode_Check(key)) {
-	        const char *param = PyUnicode_AsUTF8(key);
+	    /*
+	     * Python3 and Python2 handle strings differently so cater for both
+	     */
+	    if (PyUnicode_Check(key) || PyBytes_Check(key)) {
+            PyObject *s;
+            if( PyUnicode_Check(key) ) {  // python3 has unicode, but we convert to bytes
+                s = PyUnicode_AsUTF8String(key);
+            }
+            else {                       // python2 has bytes already
+                s = PyObject_Bytes(key);
+            }
+
+	        char *param = PyBytes_AsString(s);
             if (strcmp(param, "print_stats") == 0) {
                 if (PyBool_Check(value)) {
                     print_stats = value == Py_True;
