@@ -94,6 +94,9 @@ int init2(dlg_app_info *app, PyObject* pyObject)
             }
             else {                       // python2 has bytes already
                 s = PyObject_Bytes(key);
+                if (s == NULL) {
+                    continue;
+                }
             }
 
 	        char *param = PyBytes_AsString(s);
@@ -104,8 +107,13 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 else if (PyLong_Check(value)) {
                     print_stats = PyLong_AsLong(value) == 1L;
                 }
+#if PY_MAJOR_VERSION == 2
+                else if (PyInt_Check(value)) {
+                    print_stats = PyInt_AsLong(value) == 1;
+                }
+#endif
                 else {
-                    PySys_WriteStdout("Value at position %ld is not the correct type\n", pos);
+                    fprintf(stderr, "Value for %s is not the correct type\n", param);
                 }
             }
 
@@ -116,8 +124,13 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 else if (PyLong_Check(value)) {
                     crash_and_burn = PyLong_AsLong(value) == 1L;
                 }
+#if PY_MAJOR_VERSION == 2
+                else if (PyInt_Check(value)) {
+                    crash_and_burn = PyInt_AsLong(value) == 1;
+                }
+#endif
                 else {
-                    PySys_WriteStdout("Value at position %ld is not the correct type\n", pos);
+                    fprintf(stderr, "Value for %s is not the correct type\n", param);
                 }
             }
 
@@ -125,8 +138,13 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 if (PyLong_Check(value)) {
                     bufsize = PyLong_AsLong(value);
                 }
+#if PY_MAJOR_VERSION == 2
+                else if (PyInt_Check(value)) {
+                    bufsize = PyInt_AsLong(value);
+                }
+#endif
                 else {
-                    PySys_WriteStdout("Value at position %ld is not the correct type\n", pos);
+                    fprintf(stderr, "Value for %s is not the correct type\n", param);
                 }
             }
 
@@ -134,8 +152,13 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 if (PyLong_Check(value)) {
                     sleep_seconds = PyLong_AsLong(value);
                 }
+#if PY_MAJOR_VERSION == 2
+                else if (PyInt_Check(value)) {
+                    sleep_seconds = PyInt_AsLong(value);
+                }
+#endif
                 else {
-                    PySys_WriteStdout("Value at position %ld is not the correct type\n", pos);
+                    fprintf(stderr, "Value for %s is not the correct type\n", param);
                 }
             }
         }
