@@ -40,7 +40,9 @@ print_stats = False
 bufsize = 10 * 1024 * 1024
 
 
-@unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
 class DynlibAppTest(unittest.TestCase):
     def test_simple_batch_copy(self):
         self._test_simple_copy(False)
@@ -208,12 +210,16 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         )
 
 
-@unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
 class IntraNMDynlibAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dlg.apps.dynlib.DynlibApp"
 
 
-@unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
 class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dlg.apps.dynlib.DynlibProcApp"
 
@@ -250,3 +256,32 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
             leaf_oid="D",
             expected_failures=("C", "D"),
         )
+
+
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
+class TestExceptionRaised(unittest.TestCase):
+    def test_exception_print_stats(self):
+        """
+        Pass in bad data for the dynlib
+        """
+        with self.assertRaises(TypeError) as context:
+            _ = DynlibApp(
+                "a", "a", lib=_libpath, print_stats="print_stats", bufsize=bufsize
+            )
+
+        self.assertTrue(
+            "print_stats should be a Boolean or Int" in str(context.exception)
+        )
+
+    def test_exception_bufsize(self):
+        """
+        Pass in bad data for the dynlib
+        """
+        with self.assertRaises(TypeError) as context:
+            _ = DynlibApp(
+                "a", "a", lib=_libpath, print_stats=print_stats, bufsize="bufsize"
+            )
+
+        self.assertTrue("bufsize should be an Int" in str(context.exception))
