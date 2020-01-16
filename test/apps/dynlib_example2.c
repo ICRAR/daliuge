@@ -69,7 +69,16 @@ unsigned long usecs(struct timeval *start, struct timeval *end)
 	return (end->tv_sec - start->tv_sec) * 1000000 + (end->tv_usec - start->tv_usec);
 }
 
-int init2(dlg_app_info *app, PyObject* pyObject)
+PyObject* build_error(PyObject* exception_type, const char* message)
+{
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    PyObject *exception = PyObject_CallFunctionObjArgs(exception_type, PyUnicode_FromString(message), NULL);
+    PyGILState_Release(gstate);
+    return exception;
+}
+
+PyObject* init2(dlg_app_info *app, PyObject* pyObject)
 {
 	short print_stats = 0, crash_and_burn = 0;
 	unsigned int bufsize = 64 * 1024;
@@ -79,8 +88,7 @@ int init2(dlg_app_info *app, PyObject* pyObject)
     Py_ssize_t pos = 0;
 
     if (!PyDict_Check(pyObject)) {
-        PySys_WriteStdout("Argument is not a Python dict\n");
-        return 1;
+        return build_error(PyExc_TypeError, "pyObject should be dictionary");
     }
 
 	while (PyDict_Next(pyObject, &pos, &key, &value)) {
@@ -94,9 +102,6 @@ int init2(dlg_app_info *app, PyObject* pyObject)
             }
             else {                       // python2 has bytes already
                 s = PyObject_Bytes(key);
-                if (s == NULL) {
-                    continue;
-                }
             }
 
 	        char *param = PyBytes_AsString(s);
@@ -113,7 +118,7 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    fprintf(stderr, "Value for %s is not the correct type\n", param);
+                    return build_error(PyExc_TypeError, "print_stats should be a Boolean or Int");
                 }
             }
 
@@ -130,7 +135,7 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    fprintf(stderr, "Value for %s is not the correct type\n", param);
+                    return build_error(PyExc_TypeError, "crash_and_burn should be a Boolean or Int");
                 }
             }
 
@@ -144,7 +149,7 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    fprintf(stderr, "Value for %s is not the correct type\n", param);
+                    return build_error(PyExc_TypeError, "bufsize should be an Int");
                 }
             }
 
@@ -158,18 +163,18 @@ int init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    fprintf(stderr, "Value for %s is not the correct type\n", param);
+                    return build_error(PyExc_TypeError, "sleep_seconds should be an Int");
                 }
             }
         }
         else {
-            PySys_WriteStdout("Key at %ld is not a string\n", pos);
+            return build_error(PyExc_TypeError, "One of the keys was not a string");
         }
 	}
 
 	app->data = malloc(sizeof(struct app_data));
 	if (!app->data) {
-		return 1;
+		return build_error(PyExc_MemoryError, "Allocating space for the app_data");
 	}
 	to_app_data(app)->print_stats = print_stats;
 	to_app_data(app)->crash_and_burn = crash_and_burn;
@@ -177,7 +182,7 @@ int init2(dlg_app_info *app, PyObject* pyObject)
 	to_app_data(app)->total = 0;
 	to_app_data(app)->write_duration = 0;
 	to_app_data(app)->bufsize = bufsize;
-	return 0;
+	return PyLong_FromLong(0);
 }
 
 void data_written(dlg_app_info *app, const char *uid, const char *data, size_t n)
