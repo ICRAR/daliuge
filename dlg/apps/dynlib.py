@@ -193,12 +193,12 @@ def load_and_init(libname, oid, uid, params):
     libname = find_library(libname) or libname
 
     lib = ctypes.cdll.LoadLibrary(libname)
-    logger.info("Loaded %s as %r", libname, lib)
+    logger.info("Loaded {} as {!r}".format(libname, lib))
     expected_functions = ["run"]
     for fname in expected_functions:
         if hasattr(lib, fname):
             continue
-        raise InvalidLibrary("%s doesn't have function %s" % (libname, fname))
+        raise InvalidLibrary("{} doesn't have function {}".format(libname, fname))
 
     one_of_functions = ["init", "init2"]
     found_one = False
@@ -234,7 +234,12 @@ def load_and_init(libname, oid, uid, params):
     if hasattr(lib, "init2"):
         # With init2 we pass the params as a PyObject*
         logger.info("Extra parameters passed to application: {}".format(params))
-        if lib.init2(ctypes.pointer(c_app), ctypes.py_object(params)):
+        init2 = lib.init2
+        init2.restype = ctypes.py_object
+        result = init2(ctypes.pointer(c_app), ctypes.py_object(params))
+        if isinstance(result, Exception):
+            raise result
+        if result:
             raise InvalidLibrary("{} failed during initialization (init2)".format(libname))
 
     elif hasattr(lib, "init"):
