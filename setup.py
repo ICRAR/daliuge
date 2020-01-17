@@ -37,7 +37,7 @@ from setuptools.command.install import install
 # by setuptools/pkg_resources or "final" versions.
 MAJOR   = 0
 MINOR   = 8
-PATCH   = 1
+PATCH   = 2
 RELEASE = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
 VERSION_FILE = 'dlg/version.py'
@@ -146,7 +146,6 @@ except subprocess.CalledProcessError:
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
-    "boto3",
     "bottle",
     "configobj",
     "crc32c",
@@ -203,7 +202,10 @@ extra_requires = {
     'drive-casa': ["drive-casa>0.7"],
 
     # MPI support (MPIApp drops and HPC experiments) requires mpi4py
-    'MPI': ['mpi4py']
+    'MPI': ['mpi4py'],
+
+    # AWS storage types
+    'aws': ["boto3"],
 }
 
 
