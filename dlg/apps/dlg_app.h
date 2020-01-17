@@ -146,15 +146,6 @@ PyObject* init2(dlg_app_info *app, PyObject* params);
 int run(dlg_app_info *app);
 
 /**
- * Provides a simple entry point to execute batch-oriented applications.
- *
- * @param app The application instance
- * @return A python object which could contain an Python Exception, or a number
-           if the run was successful (0) or not (any other value)
- */
-PyObject* run2(dlg_app_info *app);
-
-/**
  * Receives data written into one of the streaming inputs of the application.
  * This method should be implemented only by streaming-oriented applications.
  *

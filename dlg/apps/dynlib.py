@@ -103,8 +103,8 @@ def _to_c_input(i):
 
     input_read = i.read
 
-    def _read(desc, buf, n):
-        x = input_read(desc, n)
+    def _read(desc_, buf, n):
+        x = input_read(desc_, n)
         ctypes.memmove(buf, x, len(x))
         return len(x)
 
@@ -170,7 +170,17 @@ def run(lib, c_app, input_closers):
     all opened file descriptors are closed.
     """
     try:
-        if lib.run(ctypes.pointer(c_app)):
+        if hasattr(lib, "run2"):
+            # With run2 we pass the results as a PyObject*
+            run2 = lib.run2
+            run2.restype = ctypes.py_object
+            result = run2(ctypes.pointer(c_app))
+            if isinstance(result, Exception):
+                raise result
+            if result:
+                raise Exception("Invocation of {}:run2 returned with status {}".format(lib, result))
+
+        elif lib.run(ctypes.pointer(c_app)):
             raise Exception("Invocation of %r:run returned with status != 0" % lib)
     finally:
         for closer in input_closers:
@@ -194,21 +204,17 @@ def load_and_init(libname, oid, uid, params):
 
     lib = ctypes.cdll.LoadLibrary(libname)
     logger.info("Loaded {} as {!r}".format(libname, lib))
-    expected_functions = ["run"]
-    for fname in expected_functions:
-        if hasattr(lib, fname):
-            continue
-        raise InvalidLibrary("{} doesn't have function {}".format(libname, fname))
 
-    one_of_functions = ["init", "init2"]
-    found_one = False
-    for fname in one_of_functions:
-        if hasattr(lib, fname):
-            found_one = True
-            break
+    one_of_functions = [["run", "run2"], ["init", "init2"]]
+    for functions in one_of_functions:
+        found_one = False
+        for fname in functions:
+            if hasattr(lib, fname):
+                found_one = True
+                break
 
-    if not found_one:
-        raise InvalidLibrary("%s doesn't have one of the functions %s" % (libname, one_of_functions))
+        if not found_one:
+            raise InvalidLibrary("{} doesn't have one of the functions {}".format(libname, functions))
 
     # Create the initial contents of the C dlg_app_info structure
     # We pass no inputs because we don't know them (and don't need them)
@@ -341,14 +347,14 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         run(self.lib, self._c_app, input_closers)
 
 
-class finish_subprocess(Exception):
+class FinishSubprocess(Exception):
     pass
 
 
 def _run_in_proc(*args):
     try:
         _do_run_in_proc(*args)
-    except finish_subprocess:
+    except FinishSubprocess:
         pass
 
 
@@ -360,7 +366,7 @@ def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
             return r
         except Exception as e:
             queue.put(e)
-            raise finish_subprocess()
+            raise FinishSubprocess()
 
     # Step 1: initialise the library and return if there is an error
     lib, c_app = advance_step(load_and_init, libname, oid, uid, params)

@@ -34,26 +34,12 @@
 
 #include "dlg_app.h"
 
-/*
-compontent_meta = dlg_component('dynlib_example', 'dynlib_example for dlg tests',
-                            [dlg_batch_input('binary/*', [])],
-                            [dlg_batch_output('binary/*', [])],
-                            [dlg_streaming_input('binary/*')])
-
-print_stats = dlg_int_param('print_stats', None)
-crash_and_burn = dlg_int_param('crash_and_burn', None)
-total = dlg_int_param('total', None)
-write_duration = dlg_int_param('write_duration', None)
-bufsize = dlg_int_param('bufsize', None)
-sleep_seconds = dlg_int_param('sleep_seconds', None)
-*/
-
 struct app_data {
 	short print_stats;
 	short crash_and_burn;
 	unsigned long total;
 	unsigned long write_duration;
-	unsigned int bufsize;
+	unsigned long long bufsize;
 	unsigned int sleep_seconds;
 };
 
@@ -81,7 +67,7 @@ PyObject* build_error(PyObject* exception_type, const char* message)
 PyObject* init2(dlg_app_info *app, PyObject* pyObject)
 {
 	short print_stats = 0, crash_and_burn = 0;
-	unsigned int bufsize = 64 * 1024;
+	unsigned long long bufsize = 64 * 1024;
 	unsigned int sleep_seconds = 0;
     PyObject *key;
     PyObject *value;
@@ -215,10 +201,10 @@ void drop_completed(dlg_app_info *app, const char *uid, drop_status status)
 	free(app->data);
 }
 
-int run(dlg_app_info *app)
+PyObject* run2(dlg_app_info *app)
 {
 	char *buf;
-	unsigned int bufsize;
+	unsigned long long bufsize;
 	unsigned int total = 0, i, j;
 	unsigned long read_duration = 0, write_duration = 0;
 	struct timeval start, end;
@@ -239,7 +225,7 @@ int run(dlg_app_info *app)
 	buf = (char *)malloc(bufsize);
 	if (!buf) {
 		fprintf(stderr, "Couldn't allocate memory for read/write buffer\n");
-		return 1;
+		return build_error(PyExc_MemoryError, "Couldn't allocate memory for read/write buffer");
 	}
 
 	for (i = 0; i < app->n_inputs; i++) {
@@ -275,5 +261,5 @@ int run(dlg_app_info *app)
 		printf("Copied %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / duration);
 	}
 
-	return 0;
+	return PyLong_FromLong(0);
 }
