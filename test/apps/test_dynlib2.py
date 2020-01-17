@@ -285,3 +285,15 @@ class TestExceptionRaised(unittest.TestCase):
             )
 
         self.assertTrue("bufsize should be an Int" in str(context.exception))
+
+    def test_exception_memory_error(self):
+        """
+        Pass in bad data for the dynlib
+        """
+        with self.assertRaises(MemoryError) as context:
+            dynlib_app = DynlibApp(
+                "a", "a", lib=_libpath, print_stats=print_stats, bufsize=pow(2, 40)
+            )
+            dynlib_app.run()
+
+        self.assertTrue("Couldn't allocate memory for read/write buffer" in str(context.exception))
