@@ -36,7 +36,6 @@ from .drop import ContainerDROP, InMemoryDROP, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
-from .s3_drop import S3DROP
 
 
 STORAGE_TYPES = {
@@ -44,11 +43,16 @@ STORAGE_TYPES = {
     'file'  : FileDROP,
     'ngas'  : NgasDROP,
     'null'  : NullDROP,
-    's3'    : S3DROP,
     'json'  : JsonDROP,
 }
 
-# Dictionary for the key used to store 1-to-N relationships between DROPs
+try:
+    from .s3_drop import S3DROP
+    STORAGE_TYPES['s3'] = S3DROP
+except ImportError:
+    pass
+
+    # Dictionary for the key used to store 1-to-N relationships between DROPs
 # in the the DROP specification format
 __TOMANY = {
     DROPLinkType.CONSUMER:           'consumers',
