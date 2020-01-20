@@ -27,8 +27,6 @@
 extern "C" {
 #endif
 
-#include <Python.h>
-
 /**
  * The different status a data drop can be found at.
  */
@@ -128,32 +126,12 @@ typedef struct _dlg_app_info {
 int init(dlg_app_info *app, const char ***params);
 
 /**
- * Initializes a new application. Expects a dictionary containing all the parameters.
- *
- * @param app The new application instance
- * @param params A PyObject pointer to a a PyObject. it is up to the imp
- * @return A python object which could contain an Python Exception, or a success (0)
- *         or fail (any other value)
- */
-PyObject* init2(dlg_app_info *app, PyObject* params);
-
-/**
  * Provides a simple entry point to execute batch-oriented applications.
  *
  * @param app The application instance
  * @return Whether the execution was successful (0) or not (any other value)
  */
 int run(dlg_app_info *app);
-
-
-/**
- * Provides a simple entry point to execute batch-oriented applications.
- *
- * @param app The application instance
- * @return A python object which could contain an Python Exception, or a success (0)
- *         or fail (any other value)
- */
-PyObject* run2(dlg_app_info *app);
 
 /**
  * Receives data written into one of the streaming inputs of the application.
