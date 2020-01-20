@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "dlg_app.h"
+#include "dlg_app2.h"
 
 struct app_data {
 	short print_stats;
