@@ -154,12 +154,13 @@ def cmdwrap(cmdname, desc):
         # in which case we lazy-load the module:function when it gets called
         if not callable(f):
             orig_f = f
-            class importer(object):
+
+            class Importer(object):
                 def __call__(self, *args, **kwargs):
                     modname, fname = orig_f.split(':')
                     module = importlib.import_module(modname)
                     return getattr(module, fname)(*args, **kwargs)
-            f = importer()
+            f = Importer()
 
         def wrapped(*args, **kwargs):
             parser = optparse.OptionParser(description=desc)
