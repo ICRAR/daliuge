@@ -35,27 +35,27 @@ from setuptools.command.install import install
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR   = 0
-MINOR   = 8
-PATCH   = 3
+MAJOR = 0
+MINOR = 8
+PATCH = 4
 RELEASE = True
-VERSION = '%d.%d.%d' % (MAJOR, MINOR, PATCH)
-VERSION_FILE = 'dlg/version.py'
-PTH_FILE = 'lib64_dist.pth'
+VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
+VERSION_FILE = "dlg/version.py"
+PTH_FILE = "lib64_dist.pth"
 
 
 def get_git_version():
-    out = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    return out.strip().decode('ascii')
+    out = subprocess.check_output(["git", "rev-parse", "HEAD"])
+    return out.strip().decode("ascii")
 
 
 def get_version_info():
-    git_version = 'Unknown'
-    if os.path.exists('.git'):
+    git_version = "Unknown"
+    if os.path.exists(".git"):
         git_version = get_git_version()
     full_version = VERSION
     if not RELEASE:
-        full_version = '%s.dev0+%s' % (VERSION, git_version[:7])
+        full_version = "%s.dev0+%s" % (VERSION, git_version[:7])
     return full_version, git_version
 
 
@@ -72,11 +72,13 @@ if not is_release:
     version = full_version
 """
     full_version, git_version = get_version_info()
-    with open(VERSION_FILE, 'w') as f:
-        info = tpl % {'version': VERSION,
-                      'full_version': full_version,
-                      'git_version': git_version,
-                      'is_release': RELEASE}
+    with open(VERSION_FILE, "w") as f:
+        info = tpl % {
+            "version": VERSION,
+            "full_version": full_version,
+            "git_version": git_version,
+            "is_release": RELEASE,
+        }
         f.write(info.strip())
 
 
@@ -92,8 +94,8 @@ class lib64_path(install):
         lib64/python-x.x/dist-packages
         """
         lp = os.path.abspath(os.path.curdir)
-        with open(PTH_FILE, 'w') as f:
-            f.write(lp.replace('/lib/', '/lib64/'))
+        with open(PTH_FILE, "w") as f:
+            f.write(lp.replace("/lib/", "/lib64/"))
 
     def initialize_options(self):
         install.initialize_options(self)
@@ -101,15 +103,14 @@ class lib64_path(install):
 
     def finalize_options(self):
         install.finalize_options(self)
-        self.set_undefined_options('build', ('build_scripts', 'build_scripts'))
+        self.set_undefined_options("build", ("build_scripts", "build_scripts"))
 
     def run(self):
         install.run(self)
-        lp = sysconfig.get_path('stdlib')
-        with open(PTH_FILE, 'w') as f:
-            f.write('{0}/dist-packages'.format(lp))
-        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib,
-                                                       PTH_FILE))
+        lp = sysconfig.get_path("stdlib")
+        with open(PTH_FILE, "w") as f:
+            f.write("{0}/dist-packages".format(lp))
+        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
 
 
 # HACK - HACK - HACK - HACK
@@ -136,10 +137,10 @@ class lib64_path(install):
 #
 # HACK - HACK - HACK - HACK
 try:
-    subprocess.check_call(['pip', 'install', 'numpy'])
+    subprocess.check_call(["pip", "install", "numpy"])
 except subprocess.CalledProcessError:
     try:
-        subprocess.check_call(['easy_install', 'numpy'])
+        subprocess.check_call(["easy_install", "numpy"])
     except subprocess.CalledProcessError:
         raise Exception("Couldn't install numpy manually, sorry :(")
 
@@ -162,15 +163,15 @@ install_requires = [
     "pyzmq",
     "scp",
     # 1.10 contains an important race-condition fix on lazy-loaded modules
-    'six>=1.10',
+    "six>=1.10",
     # 0.6 brings python3 support plus other fixes
-    "zerorpc >= 0.6"
+    "zerorpc >= 0.6",
 ]
 # Keep alpha-sorted PLEASE!
 
 # Python 3.6 is only supported in NetworkX 2 and above
 # But we are not compatible with 2.4 yet, so we need to constrain that
-networkx_dep = 'networkx<2.4'
+networkx_dep = "networkx<2.4"
 if sys.version_info >= (3, 6, 0):
     networkx_dep += ",>=2.0"
 install_requires.append(networkx_dep)
@@ -191,56 +192,56 @@ else:
 extra_requires = {
     # spead is required only for a specific app and its test, which we
     # skip anyway if spead is not found
-    'spead': ["spead2==0.4.0"],
-
+    "spead": ["spead2==0.4.0"],
     # Pyro4 and RPyC are semi-supported RPC alternatives
     # (while zerorpc is the default)
-    'pyro': ['Pyro4>=4.47'],  # 4.47 contains a fix we contributed
-    'rpyc': ['rpyc'],
-
+    "pyro": ["Pyro4>=4.47"],  # 4.47 contains a fix we contributed
+    "rpyc": ["rpyc"],
     # drive-casa is used by some manual tests under test/integrate
-    'drive-casa': ["drive-casa>0.7"],
-
+    "drive-casa": ["drive-casa>0.7"],
     # MPI support (MPIApp drops and HPC experiments) requires mpi4py
-    'MPI': ['mpi4py'],
-
+    "MPI": ["mpi4py"],
     # AWS storage types
-    'aws': ["boto3"],
+    "aws": ["boto3"],
 }
 
 
 setup(
-      name='daliuge',
-      version=get_version_info()[0],
-      description=u'Data Activated \uF9CA (flow) Graph Engine - DALiuGE',
-      long_description="The SKA-SDK prototype for the Execution Framework component",
-      author='ICRAR DIA Group',
-      author_email='dfms_prototype@googlegroups.com',
-      url='https://github.com/ICRAR/daliuge',
-      license="LGPLv2+",
-      packages=find_packages(exclude=('test', 'test.*', 'fabfile')),
-      package_data={
-        'dlg.apps': ['dlg_app.h'],
-        'dlg.manager': ['web/*.html', 'web/static/css/*.css',
-                        'web/static/fonts/*', 'web/static/js/*.js',
-                        'web/static/js/d3/*'],
-        'dlg.dropmake': ['web/lg_editor.html', 'web/*.css', 'web/*.js',
-                         'web/*.json', 'web/*.map',
-                         'web/img/jsoneditor-icons.png', 'web/pg_viewer.html',
-                         'web/matrix_vis.html',
-                         'lib/libmetis.*'],
-        'test.dropmake': ['logical_graphs/*.json'],
-        'test.apps': ['dynlib_example.c']
-      },
-      install_requires=install_requires,
-      extras_require=extra_requires,
-      test_suite="test",
-      entry_points={
-          'console_scripts': [
-              'dlg=dlg.tool:run',  # One tool to rule them all
-          ],
-      },
-      cmdclass={
-            'install': lib64_path
-            },
+    name="daliuge",
+    version=get_version_info()[0],
+    description=u"Data Activated \uF9CA (flow) Graph Engine - DALiuGE",
+    long_description="The SKA-SDK prototype for the Execution Framework component",
+    author="ICRAR DIA Group",
+    author_email="dfms_prototype@googlegroups.com",
+    url="https://github.com/ICRAR/daliuge",
+    license="LGPLv2+",
+    packages=find_packages(exclude=("test", "test.*", "fabfile")),
+    package_data={
+        "dlg.apps": ["dlg_app.h", "dlg_app2.h"],
+        "dlg.manager": [
+            "web/*.html",
+            "web/static/css/*.css",
+            "web/static/fonts/*",
+            "web/static/js/*.js",
+            "web/static/js/d3/*",
+        ],
+        "dlg.dropmake": [
+            "web/lg_editor.html",
+            "web/*.css",
+            "web/*.js",
+            "web/*.json",
+            "web/*.map",
+            "web/img/jsoneditor-icons.png",
+            "web/pg_viewer.html",
+            "web/matrix_vis.html",
+            "lib/libmetis.*",
+        ],
+        "test.dropmake": ["logical_graphs/*.json"],
+        "test.apps": ["dynlib_example.c", "dynlib_example2.c"],
+    },
+    install_requires=install_requires,
+    extras_require=extra_requires,
+    test_suite="test",
+    entry_points={"console_scripts": ["dlg=dlg.tool:run"]},  # One tool to rule them all
+    cmdclass={"install": lib64_path},
 )
