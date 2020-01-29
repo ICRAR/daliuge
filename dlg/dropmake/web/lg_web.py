@@ -31,6 +31,7 @@ import signal
 import sys
 import threading
 import time
+import warnings
 
 from bottle import (
     route,
@@ -491,7 +492,7 @@ def root():
 
 
 def run(parser, args):
-
+    warnings.warn("Running the translator from daliuge is deprecated", DeprecationWarning)
     epilog = """
 If you have no Logical Graphs yet and want to see some you can grab a copy
 of those maintained at:
