@@ -1,0 +1,191 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: DALiuGE
+  license:
+    name: LGPLv2+
+  description: ''
+paths:
+  /api/stop:
+    post:
+      operationId: stopManager
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      description: Stop the manager
+  /api/sessions:
+    post:
+      description: Create a new session
+      operationId: createSession
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+              required:
+                - sessionId
+        description: Session ID
+      parameters:
+        - schema:
+            type: string
+            default: application/json
+          in: header
+          name: Content-Type
+        - schema:
+            type: string
+          in: header
+          name: Content-Encoding
+    get:
+      description: Get sessions on server
+      operationId: getSessions
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}':
+    get:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+    delete:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/status':
+    get:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/deploy':
+    post:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/cancel':
+    post:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/graph':
+    get:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/graph/size':
+    get:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/graph/status':
+    get:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  '/api/sessions/{sessionId}/graph/append':
+    post:
+      description: null
+      operationId: null
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+components:
+  schemas:
+    error:
+      type: string
+      args: dynamicFields
+    dynamicFields:
+      type: object
+      additionalProperties: {}
