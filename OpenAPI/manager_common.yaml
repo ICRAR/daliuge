@@ -1,0 +1,328 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: DALiuGE Managers
+  license:
+    name: LGPLv2+
+  description: Entry points common to all levels of managers
+  contact: {}
+paths:
+  /api/stop:
+    post:
+      operationId: stopManager
+      responses:
+        '200':
+          description: OK
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      description: Stop the manager
+      tags: []
+  /api/sessions:
+    post:
+      description: Create a new session
+      operationId: createSession
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+              required:
+                - sessionId
+        description: Session ID
+      parameters: []
+      tags: []
+    get:
+      description: Get the list of sessions on this Manager
+      operationId: getSessions
+      responses:
+        '200':
+          description: The list of sessions on this Manager
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/session_information'
+              examples: {}
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+  '/api/sessions/{sessionId}':
+    get:
+      description: Returns the main information of session `sessionId`
+      operationId: getSessionInformation
+      responses:
+        '200':
+          description: The main information of session `sessionId`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/session'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    delete:
+      description: Removes session `sessionId`
+      operationId: destroySession
+      responses:
+        '200':
+          description: Expected response to a valid request
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+        description: ''
+  '/api/sessions/{sessionId}/status':
+    get:
+      description: Returns the status of `sessionId`
+      operationId: getSessionStatus
+      responses:
+        '200':
+          description: The status of `sessionId`
+          content:
+            application/json:
+              schema:
+                type: integer
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+  '/api/sessions/{sessionId}/deploy':
+    post:
+      description: Deploys session `sessionId`
+      operationId: deploySession
+      responses:
+        '200':
+          description: OK
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: completed
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+  '/api/sessions/{sessionId}/cancel':
+    post:
+      description: Cancels session `sessionId`
+      operationId: cancelSession
+      responses:
+        '200':
+          description: OK
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+  '/api/sessions/{sessionId}/graph':
+    get:
+      description: Returns the physical graph of session `sessionId`
+      operationId: getGraph
+      responses:
+        '200':
+          description: The physical graph of session `sessionId`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/physical_graph'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+  '/api/sessions/{sessionId}/graph/size':
+    get:
+      description: Returns the size of the graph of session `sessionId`
+      operationId: getGraphSize
+      responses:
+        '200':
+          description: The size of the graph of session `sessionId`
+          content:
+            application/json:
+              schema:
+                type: integer
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+  '/api/sessions/{sessionId}/graph/status':
+    get:
+      description: Returns the status graph of session `sessionId`
+      operationId: getGraphStatus
+      responses:
+        '200':
+          description: Returns status graph of session `sessionId`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/physical_graph_status'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+  '/api/sessions/{sessionId}/graph/append':
+    post:
+      description: Appends a physical graph to session `sessionId`
+      operationId: addGraphParts
+      responses:
+        '200':
+          description: OK
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/physical_graph'
+        description: The graph content to append
+      tags: []
+    parameters:
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+components:
+  schemas:
+    error:
+      description: An error raised by the application
+    node_session_information:
+      title: node_session_information
+      type: array
+      items:
+        type: object
+        properties:
+          sessionId:
+            type: string
+          status:
+            type: integer
+          size:
+            type: integer
+      description: High-level information for a given session at the node level
+    composite_session_information:
+      title: composite_session_information
+      type: array
+      description: High-level information for a given session at the Data Island and Master Manager levels
+      items:
+        type: object
+        properties:
+          sessionId:
+            type: string
+          status:
+            type: object
+          size:
+            type: object
+    session_information:
+      title: session_information
+      oneOf:
+        - $ref: '#/components/schemas/composite_session_information'
+        - $ref: '#/components/schemas/node_session_information'
+      description: Generic session information type
+    session:
+      title: session
+      type: object
+      properties:
+        status:
+          type: string
+        graph:
+          $ref: '#/components/schemas/physical_graph'
+    physical_graph:
+      title: physical_graph
+      type: object
+      description: A DALiuGE physical graph
+    physical_graph_status:
+      type: object
+      title: physical_graph_status
+      description: A structure holding status information for a physical graph
+  securitySchemes: {}
+servers: []
+tags: []
+
