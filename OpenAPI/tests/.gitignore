@@ -1,5 +1,4 @@
 config.properties
 node_manager_client
 composite_manager_client
-dlgDIM.log
-dlgNM.log
+translator_client
