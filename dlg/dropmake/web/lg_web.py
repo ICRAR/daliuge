@@ -582,8 +582,11 @@ https://github.com/ICRAR/daliuge-logical-graphs
     global pg_mgr
     pg_mgr = PGManager(pgt_dir)
 
-    # catch SIGTERM as SIGINT
-    signal.signal(signal.SIGTERM, lambda x, y: os.kill(os.getpid(), signal.SIGINT))
+    # Simple and easy
+    def handler(*_args):
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, handler)
+    signal.signal(signal.SIGINT, handler)
 
     bottle.run(
         host=options.host,
