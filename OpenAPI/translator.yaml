@@ -1,0 +1,81 @@
+openapi: 3.0.0
+info:
+  title: DALiuGE translator
+  version: '1.0'
+  description: REST API description of the DALiuGE translator
+servers:
+  - url: 'http://localhost:8084'
+paths:
+  /gen_pgt:
+    post:
+      summary: ''
+      operationId: gen_pgt
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: object
+      description: Translates a Logical Graph into Physical Graph Template and returns an HTML view of the latter
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                lg_name:
+                  type: string
+                json_data:
+                  type: string
+                algo:
+                  type: string
+                num_par:
+                  type: integer
+                num_islands:
+                  type: integer
+                par_label:
+                  type: string
+                min_goal:
+                  type: integer
+                ptype:
+                  type: integer
+                max_load_imb:
+                  type: integer
+                max_cpu:
+                  type: integer
+                time_greedy:
+                  type: number
+                deadline:
+                  type: integer
+                swarm_size:
+                  type: integer
+                max_mem:
+                  type: integer
+              required:
+                - lg_name
+                - json_data
+                - algo
+        description: ''
+  /gen_pg:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '303':
+          description: Redirection to DALiuGE Manager HTML UI
+      operationId: gen_pg
+      description: Generates a Physical Graph and submits it for execution to a DALiuGE runtime
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: pgt_id
+        - schema:
+            type: string
+          in: query
+          name: dlg_mgr_host
+        - schema:
+            type: integer
+          in: query
+          name: dlg_mgr_port
