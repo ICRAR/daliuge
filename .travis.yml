@@ -33,6 +33,7 @@ python:
  - "3.5"
  - "3.6"
  - "3.7"
+ - "3.8"
 
 # We want to use docker during the tests
 services:
