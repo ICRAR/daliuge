@@ -54,8 +54,8 @@ class TestTool(ManagerStarter, unittest.TestCase):
             submit = tool.start_process('submit', ['-w', '-i', '0.2'], stdin=map_.stdout)
 
             for proc in fill, unroll, partition, map_, submit:
-                self.assertEquals(proc.wait(), 0)
+                self.assertEqual(proc.wait(), 0)
 
             # It actually finished
             sessions_status = common.monitor_sessions().values()
-            self.assertEquals(next(iter(next(iter(sessions_status)))), SessionStates.FINISHED)
+            self.assertEqual(next(iter(next(iter(sessions_status)))), SessionStates.FINISHED)

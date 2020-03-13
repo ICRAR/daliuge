@@ -54,12 +54,12 @@ class TestRest(unittest.TestCase):
         self._dm_server.stop()
         self._dm_t.join()
         self.dm.shutdown()
-        self.assertFalse(self._dm_t.isAlive())
+        self.assertFalse(self._dm_t.is_alive())
 
         self._dim_server.stop()
         self._dim_t.join()
         self.dim.shutdown()
-        self.assertFalse(self._dim_t.isAlive())
+        self.assertFalse(self._dim_t.is_alive())
 
     def test_index(self):
         # Just check that the HTML pages load properly

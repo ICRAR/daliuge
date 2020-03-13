@@ -171,8 +171,8 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        self.assertEquals(compute(delayed(sum_with_user_defined_default)(1)), 11)
-        self.assertEquals(compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21)
+        self.assertEqual(compute(delayed(sum_with_user_defined_default)(1)), 11)
+        self.assertEqual(compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21)
 
     def test_with_noniterable_nout_1(self):
         """Tests that using nout=1 works as expected with non-iterable objects"""
@@ -180,14 +180,14 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        self.assertEquals(compute(delayed(add, nout=1)(1, 2)), 3)
+        self.assertEqual(compute(delayed(add, nout=1)(1, 2)), 3)
 
         # Compute a delayed that uses a delayed with nout=1
         addition = delayed(add, nout=1)(1, 2)
-        self.assertEquals(compute(delayed(add)(addition, 3)), 6)
+        self.assertEqual(compute(delayed(add)(addition, 3)), 6)
 
         # Like above, but the first delayed also uses nout=1
-        self.assertEquals(compute(delayed(add, nout=1)(addition, 3)), 6)
+        self.assertEqual(compute(delayed(add, nout=1)(addition, 3)), 6)
 
     def test_with_iterable_nout_1(self):
         """Tests that using nout=1 works as expected with iterable objects"""
