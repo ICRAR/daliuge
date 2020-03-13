@@ -12,6 +12,7 @@ dist
 .vscode
 daliuge-runtime/dlg/runtime/version.py
 daliuge-common/dlg/common/version.py
+daliuge-translator/dlg/translator/version.py
 test/apps/libdynlib_example.so
 test/apps/dynlib_example.o
 test/apps/libdynlib_example2.so
