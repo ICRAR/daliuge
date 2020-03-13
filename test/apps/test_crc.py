@@ -46,8 +46,8 @@ class CRCAppTests(unittest.TestCase):
         We test the following graph:
 
         A -----> B ----> C ---> D ---> E
-           |        \--> F ---> G ---> H
-           \------------------> I ---> J
+           |        +--> F ---> G ---> H
+           +------------------> I ---> J
 
         A and C are FileDrops; B is a DynlibApp; D, G and I are CRCApps;
         F, E, H and J are InMemoryDrops.

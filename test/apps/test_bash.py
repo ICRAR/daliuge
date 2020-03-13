@@ -120,7 +120,7 @@ class StreamingBashAppTests(unittest.TestCase):
         |   echo    |     | "/a/pipe"  |     |    dc     |     |        |
         -----*-------     --------------     ------*------     ----------
              |                                     |
-             \-------------|named-pipe|------------/
+             +-------------|named-pipe|------------+
 
         BashApp A writes "5 4 3 2 1" (each on a new line), which is read by cat
         and redirected to D.
@@ -160,7 +160,7 @@ class StreamingBashAppTests(unittest.TestCase):
         |   echo    |     | "/pipe1"   |     |    dc     |     | "/pipe2"   |     |   sort    |     |        |
         -----*-------     --------------     ----*--*-----     --------------     -----*-------     ----------
              |                                   |  |                                  |
-             \-------------|named-pipe|----------\  \-----------|named-pipe|-----------/
+             +-------------|named-pipe|----------+  +-----------|named-pipe|-----------+
 
         BashApp A writes "5 4 3 2 1" (each on a new line), which is read
         by "cat" (BashApp C). The printed results (a copy of the original) are

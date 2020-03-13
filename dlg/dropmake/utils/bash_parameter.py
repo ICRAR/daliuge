@@ -20,8 +20,8 @@
 
 import re
 
-inp_regex = re.compile('%i\[(-[0-9]+)\]')
-out_regex = re.compile('%o\[(-[0-9]+)\]')
+inp_regex = re.compile(r'%i\[(-[0-9]+)\]')
+out_regex = re.compile(r'%o\[(-[0-9]+)\]')
 
 class BashCommand(object):
     """
