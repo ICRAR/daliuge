@@ -35,12 +35,12 @@ from setuptools.command.install import install
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 0
-MINOR = 8
-PATCH = 4
+MAJOR = 1
+MINOR = 0
+PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
-VERSION_FILE = "dlg/version.py"
+VERSION_FILE = "dlg/runtime/version.py"
 PTH_FILE = "lib64_dist.pth"
 
 
@@ -207,9 +207,9 @@ extra_requires = {
 
 
 setup(
-    name="daliuge",
+    name="daliuge-runtime",
     version=get_version_info()[0],
-    description=u"Data Activated \uF9CA (flow) Graph Engine - DALiuGE",
+    description=u"Data Activated \uF9CA (flow) Graph Engine - Runtime",
     long_description="The SKA-SDK prototype for the Execution Framework component",
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
@@ -242,6 +242,5 @@ setup(
     install_requires=install_requires,
     extras_require=extra_requires,
     test_suite="test",
-    entry_points={"console_scripts": ["dlg=dlg.tool:run"]},  # One tool to rule them all
     cmdclass={"install": lib64_path},
 )

@@ -1707,48 +1707,6 @@ class BarrierAppDROP(InputFiredAppDROP):
         super(BarrierAppDROP, self).initialize(**kwargs)
 
 
-class dropdict(dict):
-    """
-    An intermediate representation of a DROP that can be easily serialized
-    into a transport format such as JSON or XML.
-
-    This dictionary holds all the important information needed to call any given
-    DROP constructor. The most essential pieces of information are the
-    DROP's OID, and its type (which determines the class to instantiate).
-    Depending on the type more fields will be required. This class doesn't
-    enforce these requirements though, as it only acts as an information
-    container.
-
-    This class also offers a few utility methods to make it look more like an
-    actual DROP class. This way, users can use the same set of methods
-    both to create DROPs representations (i.e., instances of this class)
-    and actual DROP instances.
-
-    Users of this class are, for example, the graph_loader module which deals
-    with JSON -> DROP representation transformations, and the different
-    repositories where graph templates are expected to be found by the
-    DROPManager.
-    """
-    def _addSomething(self, other, key):
-        if key not in self:
-            self[key] = []
-        if other['oid'] not in self[key]:
-            self[key].append(other['oid'])
-
-    def addConsumer(self, other):
-        self._addSomething(other, 'consumers')
-    def addStreamingConsumer(self, other):
-        self._addSomething(other, 'streamingConsumers')
-    def addInput(self, other):
-        self._addSomething(other, 'inputs')
-    def addStreamingInput(self, other):
-        self._addSomething(other, 'streamingInputs')
-    def addOutput(self, other):
-        self._addSomething(other, 'outputs')
-    def addProducer(self, other):
-        self._addSomething(other, 'producers')
-
-
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
 # used to append a a DROP into a relationship collection of another
 # (e.g., one uses `addConsumer` to add a DROPLinkeType.CONSUMER DROP into

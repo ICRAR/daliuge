@@ -30,8 +30,8 @@ import unittest
 import six
 
 from dlg import droputils
-from dlg.drop import InMemoryDROP, FileDROP, \
-    BarrierAppDROP, dropdict
+from dlg.common import dropdict
+from dlg.drop import InMemoryDROP, FileDROP, BarrierAppDROP
 from dlg.droputils import DROPFile
 
 

@@ -19,15 +19,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import importlib
+"""sub-commands for the dlg command line utility"""
+
 import json
 import logging
 import optparse
 import os
-import subprocess
 import sys
-import time
 
+from ..common import tool
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     and return the latter.
     This method prepends `oid_prefix` to all generated Drop OIDs.
     """
-    from .dropmake.pg_generator import unroll
+    from ..dropmake.pg_generator import unroll
     logger.info("Start to unroll %s", lg_path)
     return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
 
@@ -73,7 +73,7 @@ def parse_partition_algo_params(algo_params):
 
 def partition(pgt, opts):
 
-    from .dropmake import pg_generator
+    from ..dropmake import pg_generator
 
     algo_params = parse_partition_algo_params(opts.algo_params or [])
     pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
@@ -84,20 +84,13 @@ def partition(pgt, opts):
 
 
 def submit(pg, opts):
-    from .deploy import common
+    from ..deploy import common
     session_id = common.submit(pg, host=opts.host, port=opts.port,
                                skip_deploy=opts.skip_deploy,
                                session_id=opts.session_id)
     if opts.wait:
         common.monitor_sessions(session_id, host=opts.host, port=opts.port,
                                 poll_interval=opts.poll_interval)
-
-
-def _add_logging_options(parser):
-    parser.add_option("-v", "--verbose", action="count",
-                      dest="verbose", help="Become more verbose. The more flags, the more verbose")
-    parser.add_option("-q", "--quiet", action="count",
-                      dest="quiet", help="Be less verbose. The more flags, the quieter")
 
 
 def _add_output_options(parser):
@@ -107,36 +100,6 @@ def _add_output_options(parser):
                       dest='format', help="Format JSON output (newline, 2-space indent)")
 
 
-def _setup_logging(opts):
-
-    levels = [
-        logging.NOTSET,
-        logging.DEBUG,
-        logging.INFO,
-        logging.WARNING,
-        logging.ERROR,
-        logging.CRITICAL
-    ]
-
-    # Default is WARNING
-    lidx = 3
-    if opts.verbose:
-        lidx -= min((opts.verbose, 3))
-    elif opts.quiet:
-        lidx += min((opts.quiet, 2))
-    level = levels[lidx]
-
-    # Let's configure logging now
-    # We use stderr for loggin because stdout is the default output file
-    # for several operations
-    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
-    fmt.converter = time.gmtime
-    streamHdlr = logging.StreamHandler(sys.stderr)
-    streamHdlr.setFormatter(fmt)
-    logging.root.addHandler(streamHdlr)
-    logging.root.setLevel(level)
-
-
 def _setup_output(opts):
     def dump(obj):
         with _open_o(opts.output) as f:
@@ -144,52 +107,8 @@ def _setup_output(opts):
     return dump
 
 
-commands = {}
-
-
-def cmdwrap(cmdname, desc):
-    def decorated(f):
-
-        # If it's not a callable we assume it's a string
-        # in which case we lazy-load the module:function when it gets called
-        if not callable(f):
-            orig_f = f
-
-            class Importer(object):
-                def __call__(self, *args, **kwargs):
-                    modname, fname = orig_f.split(':')
-                    module = importlib.import_module(modname)
-                    return getattr(module, fname)(*args, **kwargs)
-            f = Importer()
-
-        def wrapped(*args, **kwargs):
-            parser = optparse.OptionParser(description=desc)
-            f(parser, *args, **kwargs)
-        commands[cmdname] = (desc, wrapped)
-        return wrapped
-    return decorated
-
-# Commands existing in other modules
-cmdwrap('nm', 'Starts a Node Manager')('dlg.manager.cmdline:dlgNM')
-cmdwrap('dim', 'Starts a Drop Island Manager')('dlg.manager.cmdline:dlgDIM')
-cmdwrap('mm', 'Starts a Master Manager')('dlg.manager.cmdline:dlgMM')
-cmdwrap('replay', 'Starts a Replay Manager')('dlg.manager.cmdline:dlgReplay')
-cmdwrap('daemon', 'Starts a DALiuGE Daemon process')('dlg.manager.proc_daemon:run_with_cmdline')
-cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')('dlg.deploy.pawsey.dfms_proxy:run')
-cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dlg.deploy.pawsey.dfms_monitor:run')
-cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dlg.dropmake.web.lg_web:run')
-
-
-@cmdwrap('version', 'Reports the DALiuGE version and exits')
-def version(parser, args):
-    from . import __version__, __git_version__
-    print("Version: %s" % __version__)
-    print("Git version: %s" % __git_version__)
-
-
-@cmdwrap('fill', 'Fill a Logical Graph with parameters')
 def fill(parser, args):
-    _add_logging_options(parser)
+    tool.add_logging_options(parser)
     _add_output_options(parser)
     parser.add_option(
         '-L', '--logical-graph', default='-',
@@ -200,7 +119,7 @@ def fill(parser, args):
         default=())
 
     (opts, args) = parser.parse_args(args)
-    _setup_logging(opts)
+    tool.setup_logging(opts)
     dump = _setup_output(opts)
 
     def param_spec_type(s):
@@ -222,7 +141,7 @@ def fill(parser, args):
     for json_param in (json.loads(p) for p in opts.parameter if param_spec_type(p) == 'json'):
         params.update(json_param)
 
-    from .dropmake.pg_generator import fill
+    from ..dropmake.pg_generator import fill
     dump(fill(_open_i(opts.logical_graph), params))
 
 
@@ -243,15 +162,14 @@ def _add_unroll_options(parser):
     return apps
 
 
-@cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template')
 def dlg_unroll(parser, args):
 
     # Unroll Logical Graph
-    _add_logging_options(parser)
+    tool.add_logging_options(parser)
     _add_output_options(parser)
     apps = _add_unroll_options(parser)
     (opts, args) = parser.parse_args(args)
-    _setup_logging(opts)
+    tool.setup_logging(opts)
     dump = _setup_output(opts)
 
     dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
@@ -259,7 +177,7 @@ def dlg_unroll(parser, args):
 
 def _add_partition_options(parser):
 
-    from .dropmake import pg_generator
+    from ..dropmake import pg_generator
     parser.add_option("-N", "--partitions", action="store", type="int",
                       dest="partitions", help="Number of partitions to generate", default=1)
     parser.add_option("-i", "--islands", action="store", type="int",
@@ -270,16 +188,15 @@ def _add_partition_options(parser):
                       help="Extra name=value parameters used by the algorithms (algorithm-specific)")
 
 
-@cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions')
 def dlg_partition(parser, args):
 
-    _add_logging_options(parser)
+    tool.add_logging_options(parser)
     _add_output_options(parser)
     _add_partition_options(parser)
     parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
                       help='Path to the Physical Graph Template (default: stdin)', default='-')
     (opts, args) = parser.parse_args(args)
-    _setup_logging(opts)
+    tool.setup_logging(opts)
     dump = _setup_output(opts)
 
     with _open_i(opts.pgt_path) as fi:
@@ -288,27 +205,25 @@ def dlg_partition(parser, args):
     dump(partition(pgt, opts))
 
 
-@cmdwrap('unroll-and-partition', 'unroll + partition')
 def dlg_unroll_and_partition(parser, args):
 
-    _add_logging_options(parser)
+    tool.add_logging_options(parser)
     _add_output_options(parser)
     apps = _add_unroll_options(parser)
     _add_partition_options(parser)
     (opts, args) = parser.parse_args(args)
-    _setup_logging(opts)
+    tool.setup_logging(opts)
     dump = _setup_output(opts)
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
     dump(partition(pgt, opts))
 
 
-@cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')
 def dlg_map(parser, args):
 
-    from .manager import constants
+    from ..manager import constants
 
-    _add_logging_options(parser)
+    tool.add_logging_options(parser)
     _add_output_options(parser)
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
@@ -321,11 +236,11 @@ def dlg_map(parser, args):
     parser.add_option("-i", "--islands", action="store", type="int",
                       dest="islands", help="Number of islands to use during the partitioning", default=1)
     (opts, args) = parser.parse_args(args)
-    _setup_logging(opts)
+    tool.setup_logging(opts)
     dump = _setup_output(opts)
 
-    from .dropmake import pg_generator
-    from .manager.client import CompositeManagerClient
+    from ..dropmake import pg_generator
+    from ..manager.client import CompositeManagerClient
 
     if opts.nodes:
         nodes = [n for n in opts.nodes.split(',') if n]
@@ -343,13 +258,12 @@ def dlg_map(parser, args):
     dump(pg_generator.resource_map(pgt, nodes, opts.islands))
 
 
-@cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')
 def dlg_submit(parser, args):
 
-    from .manager import constants
+    from ..manager import constants
 
     # Submit Physical Graph
-    _add_logging_options(parser)
+    tool.add_logging_options(parser)
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
@@ -369,61 +283,3 @@ def dlg_submit(parser, args):
 
     with _open_i(opts.pg_path) as f:
         submit(json.load(f), opts)
-
-
-def print_usage(prgname):
-    print('Usage: %s [command] [options]' % (prgname))
-    print('')
-    print('\n'.join(['Commands are:'] + ['\t%-25.25s%s' % (cmdname,desc_and_f[0]) for cmdname,desc_and_f in sorted(commands.items())]))
-    print('')
-    print('Try %s [command] --help for more details' % (prgname))
-
-
-def run(args=sys.argv):
-
-    # Manually parse the first argument, which will be
-    # either -h/--help or a dlg command
-    # In the future we should probably use the argparse module
-    prgname = sys.argv[0]
-    if len(sys.argv) == 1:
-        print_usage(prgname)
-        sys.exit(1)
-
-    cmd = sys.argv[1]
-    sys.argv.pop(0)
-
-    if cmd in ['-h', '--help', 'help']:
-        print_usage(prgname)
-        sys.exit(0)
-
-    if cmd not in commands:
-        print("Unknown command: %s" % (cmd,))
-        print_usage(prgname)
-        sys.exit(1)
-
-    commands[cmd][1](sys.argv[1:])
-
-
-def start_process(cmd, args=(), **subproc_args):
-    """
-    Start 'dlg cmd <args>' in a different process.
-    If `cmd` is not a known command an exception is raised.
-    `subproc_args` are passed down to the process creation via `Popen`.
-
-    This method returns the new process.
-    """
-
-    from .exceptions import DaliugeException
-    if cmd not in commands:
-        raise DaliugeException("Unknown command: %s" % (cmd,))
-
-    cmdline = [sys.executable, '-m', __name__, cmd]
-    if args:
-        cmdline.extend(args)
-    logger.debug("Launching %s", cmdline)
-    return subprocess.Popen(cmdline, **subproc_args)
-
-
-# We can also be executed as a module
-if __name__ == '__main__':
-    run()

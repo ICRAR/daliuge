@@ -25,7 +25,8 @@ import unittest
 
 import pkg_resources
 
-from dlg import tool, utils
+from dlg import utils
+from dlg.common import tool
 from dlg.deploy import common
 from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
@@ -37,9 +38,12 @@ class TestTool(ManagerStarter, unittest.TestCase):
         """Checks that all dlg commands have a help"""
         for cmd in tool.commands:
             with open(os.devnull, 'wb') as devnull:
-                p = tool.start_process(cmd, ['-h'], stdout=devnull, stderr=devnull)
+                p = tool.start_process(cmd, ['-h'],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = p.communicate()
                 utils.wait_or_kill(p, timeout=10)
-                self.assertEqual(0, p.returncode)
+                self.assertEqual(0, p.returncode, 'cmd: %s, out: %s' % (
+                    cmd + ' -h', utils.b2s(out + err)))
 
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""

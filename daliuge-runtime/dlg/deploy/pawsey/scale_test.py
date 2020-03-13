@@ -37,7 +37,8 @@ import subprocess
 import sys
 import time
 
-from ... import __git_version__ as git_commit, utils
+from ... import utils
+from ...runtime import __git_version__ as git_commit
 
 
 sub_tpl_str = """#!/bin/bash --login
