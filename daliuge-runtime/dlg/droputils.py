@@ -34,6 +34,7 @@ import six
 from .ddap_protocol import DROPStates
 from .drop import AppDROP
 from .io import IOForURL, OpenMode
+from . import common
 
 
 logger = logging.getLogger(__name__)
@@ -385,62 +386,6 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
-def get_roots(pg_spec):
-    """
-    Returns a set with the OIDs of the dropspecs that are the roots of the given physical
-    graph specification.
-    """
-
-    # We find all the nonroots first, which are easy to spot.
-    # The rest are the roots
-    all_oids = set()
-    nonroots = set()
-    for dropspec in pg_spec:
-
-        oid = dropspec['oid']
-        all_oids.add(oid)
-
-        if dropspec['type'] in ('app', 'socket'):
-            if dropspec.get('inputs', None) or dropspec.get('streamingInputs', None):
-                nonroots.add(oid)
-            if dropspec.get('outputs', None):
-                nonroots |= set(dropspec['outputs'])
-        elif dropspec['type'] == 'plain':
-            if dropspec.get('producers', None):
-                nonroots.add(oid)
-            if dropspec.get('consumers', None):
-                nonroots |= set(dropspec['consumers'])
-            if dropspec.get('streamingConsumers', None):
-                nonroots |= set(dropspec['streamingConsumers'])
-
-    return all_oids - nonroots
-
-def get_leaves(pg_spec):
-    """
-    Returns a set with the OIDs of the dropspecs that are the leaves of the given physical
-    graph specification.
-    """
-
-    # We find all the nonleaves first, which are easy to spot.
-    # The rest are the leaves
-    all_oids = set()
-    nonleaves = set()
-    for dropspec in pg_spec:
-
-        oid = dropspec['oid']
-        all_oids.add(oid)
-
-        if dropspec['type'] == 'app':
-            if dropspec.get('outputs', None):
-                nonleaves.add(oid)
-            if dropspec.get('streamingInputs', None):
-                nonleaves |= set(dropspec['streamingInputs'])
-            if dropspec.get('inputs', None):
-                nonleaves |= set(dropspec['inputs'])
-        elif dropspec['type'] == 'plain':
-            if dropspec.get('producers', None):
-                nonleaves |= set(dropspec['producers'])
-            if dropspec.get('consumers', None) or dropspec.get('streamingConsumers', None):
-                nonleaves.add(oid)
-
-    return all_oids - nonleaves
+# Easing the transition from single- to multi-package
+get_leaves = common.get_leaves
+get_roots = common.get_roots

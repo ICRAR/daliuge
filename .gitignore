@@ -10,7 +10,8 @@ dist
 .settings
 .pytest_cache
 .vscode
-daliuge-runtime/dlg/version.py
+daliuge-runtime/dlg/runtime/version.py
+daliuge-common/dlg/common/version.py
 test/apps/libdynlib_example.so
 test/apps/dynlib_example.o
 test/apps/libdynlib_example2.so

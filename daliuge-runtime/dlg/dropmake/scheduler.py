@@ -24,7 +24,6 @@ import logging
 import os
 import platform
 import random
-import sys
 import time
 import copy
 import pkg_resources
@@ -38,8 +37,7 @@ from .utils.anneal import Annealer
 from .utils.mcts import DAGTree, MCTS
 from .utils.antichains import get_max_weighted_antichain
 
-from .. import droputils
-from ..drop import dropdict
+from ..common import dropdict, get_roots
 
 
 logger = logging.getLogger(__name__)
@@ -1934,7 +1932,7 @@ class DAGUtil(object):
             G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root,
                        num_cpus=0, text='fake_super_root')
 
-            for oup in droputils.get_roots(drop_list):
+            for oup in get_roots(drop_list):
                 G.add_weighted_edges_from([(super_k, key_dict[oup], 1)])
 
         return G

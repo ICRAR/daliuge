@@ -27,8 +27,9 @@ import unittest
 
 import pkg_resources
 
-from dlg import droputils, tool
+from dlg import droputils
 from dlg import utils
+from dlg.common import tool
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.session import SessionStates
