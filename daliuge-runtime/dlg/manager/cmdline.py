@@ -41,7 +41,8 @@ from .node_manager import NodeManager
 from .replay import ReplayManager, ReplayManagerServer
 from .rest import NMRestServer, CompositeManagerRestServer, \
     MasterManagerRestServer
-from .. import version, utils
+from .. import utils
+from ..runtime import version
 
 
 _terminating = False

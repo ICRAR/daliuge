@@ -45,7 +45,7 @@ def get_tool():
     # This import is performed at runtime to avoid a circular dependency
     # at import time with the tool module, which imports this module
     # to make it available as a 'dlg' command
-    from .. import tool
+    from ..common import tool
     return tool
 
 def _get_address(zeroconf_service_info):

@@ -32,9 +32,10 @@ import six.moves.cPickle as pickle  # @UnresolvedImport
 
 from . import utils, droputils
 from .apps import pyfunc
-from .drop import dropdict, BarrierAppDROP
+from .common import dropdict
+from .ddap_protocol import DROPStates
+from .drop import BarrierAppDROP
 from .exceptions import InvalidDropException
-from dlg.ddap_protocol import DROPStates
 
 
 logger = logging.getLogger(__name__)

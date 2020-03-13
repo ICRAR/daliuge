@@ -25,9 +25,9 @@ import unittest
 import numpy as np
 from six.moves import reduce  # @UnresolvedImport
 
-from dlg import delayed as dlg_delayed
+from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.dask_emulation import compute as dlg_compute
-from dlg import tool
+from dlg.common import tool
 from dlg.utils import terminate_or_kill
 
 try:

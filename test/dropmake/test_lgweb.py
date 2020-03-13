@@ -29,7 +29,8 @@ import pkg_resources
 
 import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
-from dlg import tool, utils
+from dlg import utils
+from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
 
 lg_dir = pkg_resources.resource_filename(__name__, '.')  # @UndefinedVariable

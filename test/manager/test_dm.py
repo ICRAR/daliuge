@@ -27,7 +27,8 @@ import six
 
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dlg.drop import BarrierAppDROP, dropdict
+from dlg.common import dropdict
+from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
 try:
