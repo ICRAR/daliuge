@@ -55,10 +55,10 @@ class DynlibAppTest(unittest.TestCase):
         Checks that the following graph works, both in streaming and batch mode:
 
         A ----> B ----> C
-           |       \--> D
+           |       +--> D
            |
-           \--> E ----> F
-                   \--> G
+           +--> E ----> F
+                   +--> G
 
         Both B and E use the same dynamically loaded library and work with their
         input A to copy the inputs into their outputs.
