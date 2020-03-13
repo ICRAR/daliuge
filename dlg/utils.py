@@ -87,11 +87,19 @@ def register_service(zc, service_type_name, service_name, ipaddr, port, protocol
 
     Returns ZeroConf object and ServiceInfo object
     """
-    from zeroconf import ServiceInfo
+    import zeroconf
     sn = service_name if len(service_name) <= 15 else service_name[:15]
     stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
     sn = '{0}.{1}'.format(sn, stn)
-    info = ServiceInfo(stn, sn, address=socket.inet_aton(ipaddr), port=port, properties={})
+
+    # "addresses" deprecates "address" in 0.23+
+    address = socket.inet_aton(ipaddr)
+    kwargs = {}
+    if tuple(map(int, zeroconf.__version__.split('.')))[:2] >= (0, 23):
+        kwargs['addresses'] = [address]
+    else:
+        kwargs['address'] = address
+    info = zeroconf.ServiceInfo(stn, sn, port=port, properties={}, **kwargs)
     zc.register_service(info)
     return info
 

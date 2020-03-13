@@ -48,6 +48,11 @@ def get_tool():
     from .. import tool
     return tool
 
+def _get_address(zeroconf_service_info):
+    if tuple(map(int, zc.__version__.split('.')))[:2] >= (0, 23):
+        return zeroconf_service_info.addresses[0]
+    return zeroconf_service_info.address
+
 class DlgDaemon(RestServer):
     """
     The DALiuGE Daemon
@@ -196,7 +201,7 @@ class DlgDaemon(RestServer):
             def nm_callback(zeroconf, service_type, name, state_change):
                 info = zeroconf.get_service_info(service_type, name)
                 if state_change is zc.ServiceStateChange.Added:
-                    server = socket.inet_ntoa(info.address)
+                    server = socket.inet_ntoa(_get_address(info))
                     port = info.port
                     node_managers[name] = (server, port)
                     logger.info("Found a new Node Manager on %s:%d, will add it to the MM" % (server, port))
