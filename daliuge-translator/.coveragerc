@@ -2,7 +2,7 @@
 # Coverage configuration file
 #
 # ICRAR - International Centre for Radio Astronomy Research
-# (c) UWA - The University of Western Australia, 2016
+# (c) UWA - The University of Western Australia, 2020
 # Copyright by UWA (in the framework of the ICRAR)
 # All rights reserved
 #
@@ -25,5 +25,5 @@
 # We currently exclude the deploy directory because it's not
 # part of the core software
 [run]
-source = dlg/
-omit = dlg/deploy/pawsey/*
+source = dlg
+         ../daliuge-common/dlg
