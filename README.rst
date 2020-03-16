@@ -31,19 +31,30 @@ documentation <https://daliuge.readthedocs.io/>`_
 Installation
 ------------
 
-To get the latest stable version::
+To get the latest stable version of the full package::
 
  pip install daliuge
 
-You can also install directly from GitHub::
+If you only want the translator engine and don't need the runtime,
+or vice-versa, you can install them separately::
 
- pip install git+https://github.com/ICRAR/daliuge
+ pip install daliuge-translator
+ pip install daliuge-runtime
+
+.. You can also install each directly from GitHub::
+..
+..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-common&subdirectory=daliuge-common"
+..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-translator&subdirectory=daliuge-translator"
+..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-runtime&subdirectory=daliuge-runtime"
+..  pip install "git+https://github.com/ICRAR/daliuge"
 
 Or if you plan to develop |daliuge|::
 
  git clone https://github.com/ICRAR/daliuge
  cd daliuge
- pip install -e .
+ pip install -e daliuge-common
+ pip install -e daliuge-translator # optional
+ pip install -e daliuge-runtime    # optional
 
 .. |daliuge| replace:: DALiuGE
 .. _ICRAR: http://www.icrar.org
