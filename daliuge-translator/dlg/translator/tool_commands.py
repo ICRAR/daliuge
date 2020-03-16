@@ -283,3 +283,12 @@ def dlg_submit(parser, args):
 
     with _open_i(opts.pg_path) as f:
         submit(json.load(f), opts)
+
+def register_commands():
+    tool.cmdwrap('lgweb', 'A Web server for the Logical Graph Editor', 'dlg.dropmake.web.lg_web:run')
+    tool.cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager', dlg_submit)
+    tool.cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph', dlg_map)
+    tool.cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template', dlg_unroll)
+    tool.cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions', dlg_partition)
+    tool.cmdwrap('unroll-and-partition', 'unroll + partition', dlg_unroll_and_partition)
+    tool.cmdwrap('fill', 'Fill a Logical Graph with parameters', fill)
