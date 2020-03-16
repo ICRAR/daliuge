@@ -118,6 +118,7 @@ install_requires = [
     "bottle",
     "configobj",
     "crc32c",
+    "daliuge-common==%s" % (VERSION,),
     "dill",
     "docker",
     "lockfile",
