@@ -81,6 +81,20 @@ if not is_release:
 # Every time we overwrite the version file
 write_version_info()
 
+install_requires = [
+    "bottle",
+    "metis>=0.2a3",
+    # Python 3.6 is only supported in NetworkX 2 and above
+    # But we are not compatible with 2.4 yet, so we need to constrain that
+    "networkx<2.4; python_version<'3.6'",
+    "networkx<2.4,>= 2.0; python_version>='3.6.0'",
+    "numpy",
+    "psutil",
+    "pyswarm",
+    # 1.10 contains an important race-condition fix on lazy-loaded modules
+    "six>=1.10",
+]
+
 setup(
     name="daliuge-translator",
     version=get_version_info()[0],
@@ -90,6 +104,7 @@ setup(
     author_email="rtobar@icrar.org",
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
+    install_requires=install_requires,
     packages=find_packages(),
     test_suite="test",
 )
