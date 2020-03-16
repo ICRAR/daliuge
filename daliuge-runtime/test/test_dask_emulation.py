@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import json
+import os
 import unittest
 
 import numpy as np
@@ -214,7 +215,9 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
         return dlg_delayed(f, *args, **kwargs)
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.dmProcess = tool.start_process('nm')
+        env = os.environ.copy()
+        env['PYTHONPATH'] = env.get('PYTHONPATH', '') + ":" + os.getcwd()
+        self.dmProcess = tool.start_process('nm', env=env)
     def compute(self, val):
         return dlg_compute(val)
     def tearDown(self):

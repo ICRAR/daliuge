@@ -199,6 +199,9 @@ setup(
         "test.dropmake": ["logical_graphs/*.json"],
         "test.apps": ["dynlib_example.c", "dynlib_example2.c"],
     },
+    entry_points = {
+        'dlg.tool_commands': ['runtime=dlg.runtime.tool_commands']
+    },
     install_requires=install_requires,
     extras_require=extra_requires,
     test_suite="test",

@@ -28,6 +28,8 @@ import subprocess
 import sys
 import time
 
+import pkg_resources
+
 
 logger = logging.getLogger(__name__)
 
@@ -70,62 +72,36 @@ def setup_logging(opts):
 
 
 commands = {}
+def cmdwrap(cmdname, desc, f):
+
+    # If it's not a callable we assume it's a string
+    # in which case we lazy-load the module:function when it gets called
+    if not callable(f):
+        orig_f = f
+
+        class Importer(object):
+            def __call__(self, *args, **kwargs):
+                modname, fname = orig_f.split(':')
+                module = importlib.import_module(modname)
+                return getattr(module, fname)(*args, **kwargs)
+        f = Importer()
+
+    def wrapped(*args, **kwargs):
+        parser = optparse.OptionParser(description=desc)
+        f(parser, *args, **kwargs)
+    commands[cmdname] = (desc, wrapped)
 
 
-def cmdwrap(cmdname, desc):
-    def decorated(f):
-
-        # If it's not a callable we assume it's a string
-        # in which case we lazy-load the module:function when it gets called
-        if not callable(f):
-            orig_f = f
-
-            class Importer(object):
-                def __call__(self, *args, **kwargs):
-                    modname, fname = orig_f.split(':')
-                    module = importlib.import_module(modname)
-                    return getattr(module, fname)(*args, **kwargs)
-            f = Importer()
-
-        def wrapped(*args, **kwargs):
-            parser = optparse.OptionParser(description=desc)
-            f(parser, *args, **kwargs)
-        commands[cmdname] = (desc, wrapped)
-        return wrapped
-    return decorated
-
-# Commands existing in other packages/distributions
-# One day we should think how to extend this at runtime automatically
-try:
-    importlib.import_module('dlg.runtime.version')
-    cmdwrap('nm', 'Starts a Node Manager')('dlg.manager.cmdline:dlgNM')
-    cmdwrap('dim', 'Starts a Drop Island Manager')('dlg.manager.cmdline:dlgDIM')
-    cmdwrap('mm', 'Starts a Master Manager')('dlg.manager.cmdline:dlgMM')
-    cmdwrap('replay', 'Starts a Replay Manager')('dlg.manager.cmdline:dlgReplay')
-    cmdwrap('daemon', 'Starts a DALiuGE Daemon process')('dlg.manager.proc_daemon:run_with_cmdline')
-    cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers')('dlg.deploy.pawsey.dfms_proxy:run')
-    cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments')('dlg.deploy.pawsey.dfms_monitor:run')
-except ImportError:
-    pass
-try:
-    importlib.import_module('dlg.translator.version')
-    cmdwrap('lgweb', 'A Web server for the Logical Graph Editor')('dlg.dropmake.web.lg_web:run')
-    cmdwrap('fill', 'Fill a Logical Graph with parameters')('dlg.translator.tool_ext:fill')
-    cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template')('dlg.translator.tool_ext:dlg_unroll')
-    cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions')('dlg.translator.tool_ext:dlg_partition')
-    cmdwrap('unroll-and-partition', 'unroll + partition')('dlg.translator.tool_ext:dlg_unroll_and_partition')
-    cmdwrap('map', 'Maps a Physical Graph Template to resources and produces a Physical Graph')('dlg.translator.tool_ext:dlg_map')
-    cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager')('dlg.translator.tool_ext:dlg_submit')
-except ImportError:
-    pass
-
-
-@cmdwrap('version', 'Reports the DALiuGE version and exits')
 def version(parser, args):
     from .version import version, git_version
     print("Version: %s" % version)
     print("Git version: %s" % git_version)
 
+cmdwrap('version', 'Reports the DALiuGE version and exits', version)
+
+def _load_commands():
+    for entry_point in pkg_resources.iter_entry_points('dlg.tool_commands'):
+        entry_point.load().register_commands()
 
 def print_usage(prgname):
     print('Usage: %s [command] [options]' % (prgname))
@@ -136,6 +112,8 @@ def print_usage(prgname):
 
 
 def run(args=sys.argv):
+
+    _load_commands()
 
     # Manually parse the first argument, which will be
     # either -h/--help or a dlg command
@@ -169,11 +147,13 @@ def start_process(cmd, args=(), **subproc_args):
     This method returns the new process.
     """
 
+    _load_commands()
+
     from ..exceptions import DaliugeException
     if cmd not in commands:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
-    cmdline = [sys.executable, '-m', __name__, cmd]
+    cmdline = ['dlg', cmd]
     if args:
         cmdline.extend(args)
     logger.debug("Launching %s", cmdline)
