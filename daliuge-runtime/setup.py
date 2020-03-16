@@ -112,38 +112,6 @@ class lib64_path(install):
             f.write("{0}/dist-packages".format(lp))
         install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
 
-
-# HACK - HACK - HACK - HACK
-#
-# We externally make sure that numpy is installed because spead2 needs it there
-# at compile time (and therefore at runtime too).
-
-# An initial solution for this problem was to add numpy to the setup_requires
-# argument of spead2's setup invocation. This solves the problem of compiling
-# numpy, but requires some extra code to make numpy's include directory
-# (which isn't installed in a standard location, and therefore must be queried
-# to numpy itself via numpy.include_dir()) available to spead2's setup in order
-# to build its C extensions correctly. The main drawback from this solution is
-# that numpy's egg location remains inside the spead2's source code tree (in the
-# root of the tree when using setuptools < 7, inside the .eggs/ directory when
-# using setuptools>=7). This was reported in setuptool issues #209 and #391, but
-# still remains an issue. Although one could live with such an installation, it
-# doesn't sound ideal at all since the software is not installed when one would
-# expect it to be; also permissions-based problems could arise.
-#
-# For the time being I'm choosing instead to simply install numpy via a pip
-# command-line invocation. It will avoid any numpy mingling by spead2, and will
-# return quickly if it has been already installed
-#
-# HACK - HACK - HACK - HACK
-try:
-    subprocess.check_call(["pip", "install", "numpy"])
-except subprocess.CalledProcessError:
-    try:
-        subprocess.check_call(["easy_install", "numpy"])
-    except subprocess.CalledProcessError:
-        raise Exception("Couldn't install numpy manually, sorry :(")
-
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
@@ -153,12 +121,10 @@ install_requires = [
     "dill",
     "docker",
     "lockfile",
-    "metis>=0.2a3",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
     "paramiko",
     "psutil",
-    "pyswarm",
     "python-daemon",
     "pyzmq",
     "scp",
@@ -168,13 +134,6 @@ install_requires = [
     "zerorpc >= 0.6",
 ]
 # Keep alpha-sorted PLEASE!
-
-# Python 3.6 is only supported in NetworkX 2 and above
-# But we are not compatible with 2.4 yet, so we need to constrain that
-networkx_dep = "networkx<2.4"
-if sys.version_info >= (3, 6, 0):
-    networkx_dep += ",>=2.0"
-install_requires.append(networkx_dep)
 
 # Python 2 support has been dropped in zeroconf 0.20.
 # Also, 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
