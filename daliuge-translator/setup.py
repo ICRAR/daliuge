@@ -107,5 +107,8 @@ setup(
     license="LGPLv2+",
     install_requires=install_requires,
     packages=find_packages(),
+    entry_points = {
+        'dlg.tool_commands': ['translator=dlg.translator.tool_commands']
+    },
     test_suite="test",
 )
