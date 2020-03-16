@@ -67,7 +67,7 @@ import six
 from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 from .utils.bash_parameter import BashCommand
 from ..common import dropdict
-from ..graph_loader import STORAGE_TYPES
+from ..common import STORAGE_TYPES
 from .dm_utils import (
     get_lg_ver_type,
     convert_construct,

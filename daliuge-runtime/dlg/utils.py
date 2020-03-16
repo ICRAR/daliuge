@@ -23,34 +23,23 @@
 Module containing miscellaneous utility classes and functions.
 """
 
-import contextlib
 import errno
 import functools
 import importlib
-import json
 import logging
-import math
 import os
 import socket
-import sys
 import threading
 import time
-import types
 import zlib
 
 import netifaces
 import six
 
+from . import common
+
 
 logger = logging.getLogger(__name__)
-
-if sys.version_info[0] > 2:
-    def b2s(b, enc='utf8'):
-        return b.decode(enc)
-else:
-    def b2s(b, enc='utf8'):
-        return b
-b2s.__doc__ = "Converts bytes into a string"
 
 def timed_import(module_name):
     """Imports `module_name` and log how long it took to import it"""
@@ -164,130 +153,6 @@ def to_externally_contactable_host(host, prefer_local=False):
     # All addresses were loopbacks! let's return the last one
     raise a
 
-def portIsClosed(host, port, timeout):
-    """
-    Checks if a given ``host``/``port`` is closed, with a given ``timeout``.
-    """
-    return check_port(host, port, timeout=timeout, checking_open=False)
-
-def portIsOpen(host, port, timeout=0):
-    """
-    Checks if a given ``host``/``port`` is open, with a given ``timeout``.
-    """
-    return check_port(host, port, timeout=timeout, checking_open=True)
-
-def connect_to(host, port, timeout=None):
-    """
-    Connects to ``host``:``port`` within the given timeout and return the
-    connected socket. If no connection could be established a socket.timeout
-    error is raised
-    """
-    s = check_port(host, port, timeout=timeout, return_socket=True)
-    if s is False:
-        raise socket.timeout()
-    return s
-
-def write_to(host, port, data, timeout=None):
-    """
-    Connects to ``host``:``port`` within the given timeout and write the given
-    piece of ``data`` into the connected socket.
-    """
-    sock = connect_to(host, port, timeout=timeout)
-    with contextlib.closing(sock):
-        sock.send(data)
-
-def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
-    """
-    Checks that the port specified by ``host``:``port`` is either open or
-    closed (depending on the value of ``checking_open``) within a given
-    ``timeout``.
-    When checking for an open port, this method will keep trying to connect to
-    it either until the given ``timeout`` has expired or until the socket is
-    found open. When checking for a closed port this method will keep trying to
-    connect to it until the connection is unsuccessful, or until the ``timeout``
-    expires.
-    Additionally, if some ``data`` is passed and the method is ``checking_open``
-    then ``data`` will be written to the socket if it connects successfully.
-
-    This method returns ``True`` if the port was found on the expected state
-    within the time limit, and ``False`` otherwise.
-    """
-
-    if return_socket and not checking_open:
-        raise ValueError("If return_socket is True then checking_open must be True")
-
-    start = time.time()
-    while True:
-        try:
-
-            # Calculate the timeout used during this cycle
-            # If we're past the timeout we have failed already
-            thisTimeout = None
-            if timeout is not None and timeout != 0:
-                thisTimeout = timeout - (time.time() - start)
-                if thisTimeout <= 0:
-                    return False
-
-            # Create the socket and try to connect, sending data if required
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            if return_socket:
-                ret = s
-            else:
-                ret = True
-
-            # socket is closed always on error, conditionally otherwise
-            try:
-                s.settimeout(thisTimeout)
-                s.connect((host, port))
-                if not return_socket:
-                    s.close()
-            except socket.error:
-                s.close()
-                raise
-
-            # Success if we were checking for an open port!
-            if checking_open:
-                return ret
-
-            # Otherwise keep trying until we find the socket closed
-            time.sleep(0.1)
-            continue
-
-        except socket.timeout:
-            logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]', host, port, thisTimeout)
-            return not checking_open
-
-        except socket.error as e:
-
-            # If the connection becomes suddenly closed from the server-side.
-            # We assume that it's not re-opening any time soon
-            if e.errno == errno.ECONNRESET:
-                logger.debug("Connection closed by %s:%d, assuming it will stay closed", host, port)
-                if not return_socket:
-                    return not checking_open
-                raise
-
-            # The port is closed
-            elif e.errno == errno.ECONNREFUSED:
-
-                if not checking_open:
-                    return True
-
-                # Keep trying because we're checking if it's open
-                if timeout is not None:
-                    if time.time() - start > timeout:
-                        logger.debug('Refused connection to %s:%d for more than %f seconds', host, port, timeout)
-                        if not return_socket:
-                            return False
-                        raise
-
-                time.sleep(0.1)
-                continue
-
-            # Any other error should be raised
-            raise
-
 def getDlgDir():
     """
     Returns the root of the directory structure used by the DALiuGE framework at
@@ -390,32 +255,6 @@ def prepare_sql(sql, paramstyle, data=()):
 
     return (sql, data)
 
-def terminate_or_kill(proc, timeout):
-    """
-    Terminates a process and waits until it has completed its execution within
-    the given timeout. If the process is still alive after the timeout it is
-    killed.
-    """
-    ecode = proc.poll()
-    if ecode is not None:
-        logger.info("Process %d already exited with code %d", proc.pid, ecode)
-        return
-    logger.info('Terminating %d', proc.pid)
-    proc.terminate()
-    wait_or_kill(proc, timeout)
-
-def wait_or_kill(proc, timeout, period=0.1):
-    waitLoops = 0
-    max_loops = math.ceil(timeout / period)
-    while proc.poll() is None and waitLoops < max_loops:
-        time.sleep(period)
-        waitLoops += 1
-
-    kill9 = waitLoops == max_loops
-    if kill9:
-        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
-        proc.kill()
-    proc.wait()
 
 def object_tracking(name):
     """
@@ -450,96 +289,6 @@ def get_symbol(name):
     parts = name.split('.')
     module = importlib.import_module('.'.join(parts[:-1]))
     return getattr(module, parts[-1])
-
-class ZlibCompressedStream(object):
-    """
-    An object that takes a input of uncompressed stream and returns a compressed version of its
-    contents when .read() is read.
-    """
-
-    def __init__(self, content):
-        self.content = content
-        self.compressor = zlib.compressobj()
-        self.buf = []
-        self.buflen = 0
-        self.exhausted = False
-
-    def readall(self):
-
-        if not self.compressor:
-            return b''
-
-        content = self.content
-        response = []
-        compressor = self.compressor
-
-        blocksize = 8192
-        uncompressed = content.read(blocksize)
-        while True:
-            if not uncompressed:
-                break
-            compressed = compressor.compress(uncompressed)
-            response.append(compressed)
-            uncompressed = content.read(blocksize)
-
-        response.append(compressor.flush())
-        self.compressor = None
-        return b''.join(response)
-
-    def read(self, n=-1):
-
-        if n <= 0:
-            return self.readall()
-
-        if self.buflen >= n:
-            data = b''.join(self.buf)
-            self.buf = [data[n:]]
-            self.buflen -= n;
-            return data[:n]
-
-        # Dump contents of previous buffer
-        response = []
-        written = 0
-        if self.buflen:
-            written += self.buflen
-            data = b''.join(self.buf)
-            response.append(data)
-            self.buf = []
-            self.buflen = 0
-
-        compressor = self.compressor
-        if not compressor:
-            return b''.join(response)
-
-        while True:
-
-            decompressed = self.content.read(n)
-            if not decompressed:
-                compressed = compressor.flush()
-                compressor = self.compressor = None
-            else:
-                compressed = compressor.compress(decompressed)
-
-            if compressed:
-                size = len(compressed)
-
-                # If we have more compressed bytes than we need we write only
-                # those needed to get us to n.
-                to_write = min(n - written, size)
-                if to_write:
-                    response.append(compressed[:to_write])
-                    written += to_write
-
-                # The rest of the unwritten compressed bytes go into our internal
-                # buffer
-                if written == n:
-                    self.buf.append(compressed[to_write:])
-                    self.buflen += size - to_write
-
-            if written == n or not compressor:
-                break
-
-        return b''.join(response)
 
 class ZlibUncompressedStream(object):
     """
@@ -638,79 +387,16 @@ class ZlibUncompressedStream(object):
 
         return b''.join(response)
 
-class JSONStream(object):
+# Backwards compatibility
+terminate_or_kill = common.terminate_or_kill
+wait_or_kill = common.wait_or_kill
+b2s = common.b2s
 
-    def __init__(self, objects):
-        if isinstance(objects, (list, tuple, types.GeneratorType)):
-            self.objects = enumerate(objects)
-            self.isiter = True
-        else:
-            self.objects = objects
-            self.isiter = False
+check_port = common.check_port
+connect_to = common.connect_to
+portIsClosed = common.portIsClosed
+portIsOpen = common.portIsOpen
+write_to = common.write_to
 
-        self.buf = []
-        self.buflen = 0
-        self.nreads = 0
-
-    def read(self, n=-1):
-
-        if n == -1:
-            raise ValueError("n must be positive")
-
-        if self.buflen >= n:
-            self.buflen -= n;
-            data = b''.join(self.buf)
-            self.buf = [data[n:]]
-            return data[:n]
-
-        written = 0
-        response = []
-
-        # Dump contents of previous buffer
-        if self.buflen:
-            data = b''.join(self.buf)
-            written += self.buflen
-            response.append(data)
-            self.buf = []
-            self.buflen = 0
-
-        if self.nreads and not self.isiter:
-            return b''.join(response)
-        self.nreads += 1
-
-        while True:
-
-            if self.isiter:
-                try:
-                    i,obj = next(self.objects)
-                    json_out = b'[' if i == 0 else b','
-                    json_out += json.dumps(obj).encode('latin1')
-                except StopIteration:
-                    json_out = b']'
-                    self.isiter = False # not nice, but prevents more reads
-            else:
-                json_out = json.dumps(self.objects).encode('latin1')
-
-            if json_out:
-                size = len(json_out)
-
-                # If we have more decompressed bytes than we need we write only
-                # those needed to get us to n.
-                to_write = min(n - written, size)
-                if to_write:
-                    response.append(json_out[0:to_write])
-                    written += to_write
-
-                # The rest of the unwritten decompressed bytes go into our internal
-                # buffer
-                if written == n:
-                    self.buf.append(json_out[to_write:])
-                    self.buflen += size - to_write
-
-            if written == n:
-                break
-
-            if not self.isiter:
-                break
-
-        return b''.join(response)
+JSONStream = common.JSONStream
+ZlibCompressedStream = common.ZlibCompressedStream

@@ -46,9 +46,8 @@ from bottle import (
 import bottle
 import pkg_resources
 
-from ... import droputils, restutils, utils
-from ...manager.client import CompositeManagerClient
-from ...restutils import RestClientException
+from ... import common, restutils
+from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
@@ -56,7 +55,7 @@ from ..scheduler import SchedulerException
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
-    return utils.b2s(b, enc)
+    return common.b2s(b, enc)
 
 
 # lg_dir = None
@@ -331,13 +330,13 @@ def gen_pg():
         # print "session created"
         mgr_client.append_graph(ssid, pg_spec)
         # print "graph appended"
-        completed_uids = droputils.get_roots(pg_spec)
+        completed_uids = common.get_roots(pg_spec)
         mgr_client.deploy_session(ssid, completed_uids=completed_uids)
         # mgr_client.deploy_session(ssid, completed_uids=[])
         # print "session deployed"
         # 3. redirect to the master drop manager
         redirect("http://{0}:{1}/session?sessionId={2}".format(mhost, mport, ssid))
-    except RestClientException as re:
+    except restutils.RestClientException as re:
         response.status = 500
         return "Fail to interact with DALiUGE Drop Manager: {0}".format(re)
     except HTTPResponse:

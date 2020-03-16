@@ -36,7 +36,7 @@ import zeroconf as zc
 
 from . import constants, client
 from .. import utils
-from ..restutils import RestServer
+from ..restserver import RestServer
 
 
 logger = logging.getLogger(__name__)

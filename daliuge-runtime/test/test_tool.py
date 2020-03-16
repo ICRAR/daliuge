@@ -22,7 +22,7 @@
 import subprocess
 import unittest
 
-from dlg import utils
+from dlg import common
 from dlg.common import tool
 from dlg.testutils import ManagerStarter
 
@@ -35,6 +35,6 @@ class TestTool(ManagerStarter, unittest.TestCase):
             p = tool.start_process(cmd, ['-h'],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
-            utils.wait_or_kill(p, timeout=10)
+            common.wait_or_kill(p, timeout=10)
             self.assertEqual(0, p.returncode, 'cmd: %s, out: %s' % (
-                cmd + ' -h', utils.b2s(out + err)))
+                cmd + ' -h', common.b2s(out + err)))
