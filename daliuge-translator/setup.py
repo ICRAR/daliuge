@@ -83,6 +83,7 @@ write_version_info()
 
 install_requires = [
     "bottle",
+    "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
     # Python 3.6 is only supported in NetworkX 2 and above
     # But we are not compatible with 2.4 yet, so we need to constrain that
