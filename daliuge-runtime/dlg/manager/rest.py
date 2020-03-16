@@ -38,7 +38,8 @@ from .. import utils
 from ..exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
     InvalidDropException, InvalidRelationshipException, SubManagerException
-from ..restutils import RestServer, RestClient, RestClientException
+from ..restserver import RestServer
+from ..restutils import RestClient, RestClientException
 
 
 logger = logging.getLogger(__name__)

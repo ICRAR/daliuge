@@ -29,7 +29,7 @@ import pkg_resources
 
 import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
-from dlg import utils
+from dlg import common
 from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
 
@@ -48,7 +48,7 @@ class TestLGWeb(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
         self.devnull.close()
-        utils.terminate_or_kill(self.web_proc, 10)
+        common.terminate_or_kill(self.web_proc, 10)
         unittest.TestCase.tearDown(self)
 
     def _generate_pgt(self, c):
@@ -121,7 +121,6 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient('localhost', lgweb_port, 10)
 
         # an API call with an empty form should cause an error
-        empty_form_data = urllib.urlencode({})
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
 
         # new logical graph JSON
@@ -143,7 +142,7 @@ class TestLGWeb(unittest.TestCase):
         # POST form to /gen_pgt
         try:
             content = urllib.urlencode(form_data)
-            ret = c._POST('/gen_pgt', content, content_type='application/x-www-form-urlencoded')
+            c._POST('/gen_pgt', content, content_type='application/x-www-form-urlencoded')
         except RestClientException as e:
             self.fail(e)
 

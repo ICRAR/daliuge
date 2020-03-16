@@ -221,7 +221,7 @@ def dlg_unroll_and_partition(parser, args):
 
 def dlg_map(parser, args):
 
-    from ..manager import constants
+    from .. import constants
 
     tool.add_logging_options(parser)
     _add_output_options(parser)
@@ -240,7 +240,7 @@ def dlg_map(parser, args):
     dump = _setup_output(opts)
 
     from ..dropmake import pg_generator
-    from ..manager.client import CompositeManagerClient
+    from ..clients import CompositeManagerClient
 
     if opts.nodes:
         nodes = [n for n in opts.nodes.split(',') if n]
