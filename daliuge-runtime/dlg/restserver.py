@@ -19,12 +19,37 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-"""Backwards compatibility for client"""
-from .. import clients
+import logging
+
+import bottle
 
 
-BaseDROPManagerClient = clients.BaseDROPManagerClient
-NodeManagerClient = clients.NodeManagerClient
-CompositeManagerClient = clients.CompositeManagerClient
-DataIslandManagerClient = clients.DataIslandManagerClient
-MasterManagerClient = clients.MasterManagerClient
+from .restutils import RestServerWSGIServer
+
+logger = logging.getLogger(__name__)
+
+class RestServer(object):
+    """
+    The base class for our REST servers
+    """
+
+    def __init__(self):
+        self._server = None
+        self._server_thr = None
+        self.app = bottle.Bottle()
+
+    def start(self, host, port):
+        host = host or 'localhost'
+        port = port or 8080
+
+        logger.info("Starting REST server on %s:%d" % (host, port))
+
+        self._server = RestServerWSGIServer(self.app, host, port)
+        self._server.serve_forever()
+
+    def stop(self, timeout=None):
+        if self._server:
+            logger.info("Stopping REST server")
+            self._server.server_close()
+            self.app.close()
+            self._server = None

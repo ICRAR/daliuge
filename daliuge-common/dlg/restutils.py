@@ -22,26 +22,26 @@
 import codecs
 import json
 import logging
-from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
+import wsgiref.simple_server
 
-import bottle
 import six
 import six.moves.http_client as httplib  # @UnresolvedImport
 import six.moves.socketserver as SocketServer  # @UnresolvedImport
 import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
+from . import common
 from . import exceptions
-from . import utils
 from .exceptions import DaliugeException, SubManagerException
 
 
 logger = logging.getLogger(__name__)
 
-class ThreadingWSGIServer(SocketServer.ThreadingMixIn, WSGIServer):
+
+class ThreadingWSGIServer(SocketServer.ThreadingMixIn, wsgiref.simple_server.WSGIServer):
     daemon_threads = True
     allow_reuse_address = True
 
-class LoggingWSGIRequestHandler(WSGIRequestHandler):
+class LoggingWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
     def log_message(self, fmt, *args):
         logger.debug(fmt, *args)
 
@@ -50,9 +50,9 @@ class RestServerWSGIServer:
         self.wsgi_app = wsgi_app
         self.listen = listen
         self.port = port
-        self.server = make_server(self.listen, self.port, self.wsgi_app,
-                                  server_class=ThreadingWSGIServer,
-                                  handler_class=LoggingWSGIRequestHandler)
+        self.server = wsgiref.simple_server.make_server(self.listen,
+            self.port, self.wsgi_app, server_class=ThreadingWSGIServer,
+            handler_class=LoggingWSGIRequestHandler)
 
     def serve_forever(self):
         self.server.serve_forever()
@@ -60,32 +60,6 @@ class RestServerWSGIServer:
     def server_close(self):
         self.server.shutdown()
         self.server.server_close()
-
-class RestServer(object):
-    """
-    The base class for our REST servers
-    """
-
-    def __init__(self):
-        self._server = None
-        self._server_thr = None
-        self.app = bottle.Bottle()
-
-    def start(self, host, port):
-        host = host or 'localhost'
-        port = port or 8080
-
-        logger.info("Starting REST server on %s:%d" % (host, port))
-
-        self._server = RestServerWSGIServer(self.app, host, port)
-        self._server.serve_forever()
-
-    def stop(self, timeout=None):
-        if self._server:
-            logger.info("Stopping REST server")
-            self._server.server_close()
-            self.app.close()
-            self._server = None
 
 class RestClientException(DaliugeException):
     """
@@ -158,7 +132,7 @@ class RestClient(object):
 
     def _post_json(self, url, content, compress=False):
         if not isinstance(content, (six.text_type, six.binary_type)):
-            content = utils.JSONStream(content)
+            content = common.JSONStream(content)
         ret = self._POST(url, content, content_type='application/json', compress=compress)
         return json.load(ret) if ret else None
 
@@ -175,7 +149,7 @@ class RestClient(object):
                 content = codecs.getencoder('utf8')(content)[0]
             if not hasattr(content, 'read'):
                 content = six.BytesIO(content)
-            content = utils.ZlibCompressedStream(content)
+            content = common.ZlibCompressedStream(content)
         return self._request(url, 'POST', content, headers)
 
     def _DELETE(self, url):
@@ -186,7 +160,7 @@ class RestClient(object):
         # Do the HTTP stuff...
         logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
 
-        if not utils.portIsOpen(self.host, self.port, self.timeout):
+        if not common.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
 
         if content and hasattr(content, 'read'):

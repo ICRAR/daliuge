@@ -19,34 +19,33 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import json
 import subprocess
 import unittest
 
 import pkg_resources
 
 from dlg.common import tool
-from dlg.deploy import common
-from dlg.manager.session import SessionStates
-from dlg.testutils import ManagerStarter
+from dlg import common
 
 
-class TestTool(ManagerStarter, unittest.TestCase):
+class TestTool(unittest.TestCase):
 
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
-        with self.start_nm_in_thread(), self.start_dim_in_thread():
-            lg = pkg_resources.resource_filename( # @UndefinedVariable
-                'test.dropmake', 'logical_graphs/lofar_std.json')
+        lg = pkg_resources.resource_filename( # @UndefinedVariable
+            'test.dropmake', 'logical_graphs/lofar_std.json')
 
-            fill = tool.start_process('fill', ['-L', lg], stdout=subprocess.PIPE)
-            unroll = tool.start_process('unroll', ['-z', '--app', '1'], stdin=fill.stdout, stdout=subprocess.PIPE)
-            partition = tool.start_process('partition', stdin=unroll.stdout, stdout=subprocess.PIPE)
-            map_ = tool.start_process('map', stdin=partition.stdout, stdout=subprocess.PIPE)
-            submit = tool.start_process('submit', ['-w', '-i', '0.2'], stdin=map_.stdout)
+        fill = tool.start_process('fill', ['-L', lg], stdout=subprocess.PIPE)
+        unroll = tool.start_process('unroll', ['-z', '--app', '1'], stdin=fill.stdout, stdout=subprocess.PIPE)
+        partition = tool.start_process('partition', stdin=unroll.stdout, stdout=subprocess.PIPE)
+        map_ = tool.start_process('map', ['-N', '127.0.0.1,127.0.0.1'], stdin=partition.stdout, stdout=subprocess.PIPE)
+        mapped_graph, _ = map_.communicate()
 
-            for proc in fill, unroll, partition, map_, submit:
-                self.assertEqual(proc.wait(), 0)
+        for proc in fill, unroll, partition, map_:
+            self.assertEqual(proc.wait(), 0)
 
-            # It actually finished
-            sessions_status = common.monitor_sessions().values()
-            self.assertEqual(next(iter(next(iter(sessions_status)))), SessionStates.FINISHED)
+        # It's valid JSON content, and actually a physical graph
+        mapped_graph = json.loads(common.b2s(mapped_graph))
+        self.assertTrue(list(common.get_roots(mapped_graph)))
+        self.assertTrue(list(common.get_leaves(mapped_graph)))
