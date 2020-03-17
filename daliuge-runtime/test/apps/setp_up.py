@@ -18,15 +18,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import functools
-import os
-import time
-import unittest
-
-import six
 
 # Try to compile the library, if possible. If it's there already we're cool
 def build_shared_library(libname, libpath):
+    import os
+    import distutils.ccompiler
+    from dlg.runtime import get_include_dir
+
     prev_path = os.getcwd()
     os.chdir(os.path.dirname(__file__))
 
@@ -39,9 +37,6 @@ def build_shared_library(libname, libpath):
                 and os.stat(srcname).st_ctime <= os.stat(libpath).st_ctime
         ):
             return True
-
-        import distutils.ccompiler
-        from dlg import get_include_dir
 
         comp = distutils.ccompiler.new_compiler()
         distutils.sysconfig.customize_compiler(comp)
