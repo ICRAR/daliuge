@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2020
+#    (c) UWA - The University of Western Australia, 2015
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -20,27 +20,19 @@
 #    MA 02111-1307  USA
 #
 
-from setuptools import setup
+def __setupTestLogging():
 
-MAJOR = 1
-MINOR = 0
-PATCH = 0
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
+    import os
+    import logging
 
-install_requires = [
-    "daliuge-common==%s" % (VERSION,),
-    "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
-]
+    # If we indicated a logging level for the tests we use that level
+    # for our framework (and enable logging)
+    level = os.environ.get('DALIUGE_TESTS_LOGLEVEL', None)
+    if level:
+        fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+        logging.basicConfig(format=fmt, level=level)
+    else:
+        logging.root.addHandler(logging.NullHandler())
 
-setup(
-    name="daliuge",
-    version=VERSION,
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Catch-all proto-package",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
-    author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
-    url="https://github.com/ICRAR/daliuge",
-    license="LGPLv2+",
-    install_requires=install_requires,
-)
+__setupTestLogging()
+del __setupTestLogging

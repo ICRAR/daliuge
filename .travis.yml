@@ -27,13 +27,19 @@ sudo: required
 
 # let's go!
 language: python
-python:
- - "2.7"
- - "3.4"
- - "3.5"
- - "3.6"
- - "3.7"
- - "3.8"
+matrix:
+  include:
+    - python: "3.8"
+      env: NO_DLG_RUNTIME=1
+    - python: "3.8"
+      env: NO_DLG_TRANSLATOR=1
+    - python: "3.8"
+      env: TEST_OPENAPI=1
+    - python: "3.7"
+    - python: "3.6"
+    - python: "3.5"
+    - python: "3.4"
+    - python: "2.7"
 
 # We want to use docker during the tests
 services:
@@ -42,22 +48,22 @@ services:
 # Try to speed up builds by caching our dependencies
 cache: pip
 
-# Support for coveralls
 before_install:
  - pip install -U coveralls pytest pytest-cov
  - pip install -U setuptools pip wheel
 
-# install daliuge in editable mode
-# This will ensure both that our dependencies are installed
-# and that our version file is generated here.
- - pip install -e .
+install:
+ - pip install -e daliuge-common/
+ - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
+ - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
 
 # run the tests, making sure subprocesses generate coverage information
 script:
- - mkdir tmp
- - echo -e "import coverage\ncoverage.process_startup()" > tmp/sitecustomize.py
- - PYTHONPATH=$PWD/tmp py.test --cov
- - test $TRAVIS_PYTHON_VERSION != 3.8 || (cd OpenAPI/tests && ./test_managers_openapi.sh)
+ - COVFILES=
+ - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
+ - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
+ - coverage combine $COVFILES
+ - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:

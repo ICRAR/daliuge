@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2020
+#    (c) UWA - The University of Western Australia, 2016
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -19,28 +19,37 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import logging
 
-from setuptools import setup
+import bottle
 
-MAJOR = 1
-MINOR = 0
-PATCH = 0
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 
-install_requires = [
-    "daliuge-common==%s" % (VERSION,),
-    "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
-]
+from .restutils import RestServerWSGIServer
 
-setup(
-    name="daliuge",
-    version=VERSION,
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Catch-all proto-package",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
-    author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
-    url="https://github.com/ICRAR/daliuge",
-    license="LGPLv2+",
-    install_requires=install_requires,
-)
+logger = logging.getLogger(__name__)
+
+class RestServer(object):
+    """
+    The base class for our REST servers
+    """
+
+    def __init__(self):
+        self._server = None
+        self._server_thr = None
+        self.app = bottle.Bottle()
+
+    def start(self, host, port):
+        host = host or 'localhost'
+        port = port or 8080
+
+        logger.info("Starting REST server on %s:%d" % (host, port))
+
+        self._server = RestServerWSGIServer(self.app, host, port)
+        self._server.serve_forever()
+
+    def stop(self, timeout=None):
+        if self._server:
+            logger.info("Stopping REST server")
+            self._server.server_close()
+            self.app.close()
+            self._server = None

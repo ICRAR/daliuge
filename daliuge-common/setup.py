@@ -19,28 +19,48 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import os
 
+from setuptools import find_packages
 from setuptools import setup
 
+# Version information
+# We do like numpy: we have a major/minor/patch hand-written version written
+# here. If we find the git commit (either via "git" command execution or in a
+# dlg/version.py file) we append it to the VERSION later.
+# The RELEASE flag allows us to create development versions properly supported
+# by setuptools/pkg_resources or "final" versions.
 MAJOR = 1
 MINOR = 0
 PATCH = 0
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
+VERSION = (MAJOR, MINOR, PATCH)
+VERSION_FILE = "dlg/common/version.py"
+RELEASE = True
+
+def do_versioning():
+    # Avoid importing, the package doesn't exist as such yet
+    with open(os.path.join('dlg', 'version_helper.py')) as f:
+        code = f.read()
+    _globals = {}
+    exec(code, _globals)
+    return _globals['write_version_info'](VERSION, VERSION_FILE, RELEASE)
 
 install_requires = [
-    "daliuge-common==%s" % (VERSION,),
-    "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
+    # 1.10 contains an important race-condition fix on lazy-loaded modules
+    "six>=1.10",
 ]
 
 setup(
-    name="daliuge",
-    version=VERSION,
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Catch-all proto-package",
+    name="daliuge-common",
+    version=do_versioning(),
+    description=u"Data Activated \uF9CA (flow) Graph Engine - Common functionality",
     long_description="The SKA-SDK prototype for the Execution Framework component",
     author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
+    author_email="dfms_prototype@googlegroups.com",
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
+    packages=find_packages(),
     install_requires=install_requires,
+    test_suite="test",
+    entry_points={"console_scripts": ["dlg=dlg.common.tool:run"]},  # One tool to rule them all
 )

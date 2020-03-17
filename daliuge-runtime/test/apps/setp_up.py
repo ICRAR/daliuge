@@ -1,4 +1,3 @@
-#
 #    ICRAR - International Centre for Radio Astronomy Research
 #    (c) UWA - The University of Western Australia, 2020
 #    Copyright by UWA (in the framework of the ICRAR)
@@ -20,27 +19,35 @@
 #    MA 02111-1307  USA
 #
 
-from setuptools import setup
+# Try to compile the library, if possible. If it's there already we're cool
+def build_shared_library(libname, libpath):
+    import os
+    import distutils.ccompiler
+    from dlg.runtime import get_include_dir
 
-MAJOR = 1
-MINOR = 0
-PATCH = 0
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
+    prev_path = os.getcwd()
+    os.chdir(os.path.dirname(__file__))
 
-install_requires = [
-    "daliuge-common==%s" % (VERSION,),
-    "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
-]
+    try:
 
-setup(
-    name="daliuge",
-    version=VERSION,
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Catch-all proto-package",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
-    author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
-    url="https://github.com/ICRAR/daliuge",
-    license="LGPLv2+",
-    install_requires=install_requires,
-)
+        # No need to rebuild
+        srcname = libname + ".c"
+        if (
+                os.path.isfile(libpath)
+                and os.stat(srcname).st_ctime <= os.stat(libpath).st_ctime
+        ):
+            return True
+
+        comp = distutils.ccompiler.new_compiler()
+        distutils.sysconfig.customize_compiler(comp)
+        comp.add_include_dir(distutils.sysconfig.get_python_inc())
+
+        comp.add_include_dir(get_include_dir())
+        objs = comp.compile([srcname])
+        comp.link_shared_lib(objs, output_libname=libname)
+
+        return True
+    except:
+        return False
+    finally:
+        os.chdir(prev_path)
