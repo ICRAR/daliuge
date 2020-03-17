@@ -56,6 +56,25 @@ Or if you plan to develop |daliuge|::
  pip install -e daliuge-translator # optional
  pip install -e daliuge-runtime    # optional
 
+
+Porting from |daliuge| 0.X
+--------------------------
+
+With the release of |daliuge| 1.0.0
+the code has been broken down into separate packages
+to accommodate leaner and easier installations
+when only a subset of the functionality is required.
+In doing so we tried to maintain
+as much backward compatibility as possible,
+but there are some minor exceptions:
+
+ * Code doing ``from dlg import delayed`` or similar must be changed
+   to ``from dlg.runtime import delayed``.
+ * Scripts finding the include directory path for daliuge headers
+   using code like ``python -c 'import dlg; print(dlg.get_include_dir())``
+   should switch to invoke ``dlg include_dir`` instead.
+
+
 .. |daliuge| replace:: DALiuGE
 .. _ICRAR: http://www.icrar.org
 .. [#f1] 流 (pronounced Liu) is the Chinese character for "flow".
