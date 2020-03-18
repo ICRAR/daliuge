@@ -684,7 +684,9 @@ class LGNode:
             for i in range(10):
                 k = "Arg%02d" % (i + 1,)
                 if k not in self.jd:
-                    continue
+                    k = "arg%02d" % (i + 1,)
+                    if k not in self.jd:
+                        continue
                 v = self.jd[k]
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
