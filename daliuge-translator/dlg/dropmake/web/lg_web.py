@@ -197,6 +197,22 @@ def pgtjsonbody_get():
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
+@get("/pgt_cwl")
+def pgtcwl_get():
+    """
+    Return CWL representation of the logical graph
+    """
+    # print "get jsonbody is called"
+    pgt_name = request.query.get("pgt_name")
+    if pgt_exists(pgt_name):
+        # print "Loading {0}".format(lg_name)
+        pgt = pgt_path(pgt_name)
+        with open(pgt, "r") as f:
+            data = f.read()
+        return data
+    else:
+        response.status = 404
+        return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
 @get("/lg_editor")
 def load_lg_editor():
