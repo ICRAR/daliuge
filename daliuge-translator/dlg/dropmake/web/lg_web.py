@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import warnings
+import cwlgen
 
 from bottle import (
     route,
@@ -202,14 +203,29 @@ def pgtcwl_get():
     """
     Return CWL representation of the logical graph
     """
-    # print "get jsonbody is called"
     pgt_name = request.query.get("pgt_name")
+
     if pgt_exists(pgt_name):
-        # print "Loading {0}".format(lg_name)
+        # load PGT file from path
         pgt = pgt_path(pgt_name)
         with open(pgt, "r") as f:
             data = f.read()
-        return data
+
+        # build filename for CWL file from PGT filename
+        cwl_name = pgt_name[:-6] + ".cwl"
+
+        # TODO: create the CWL workflow
+        cwl_workflow = cwlgen.Workflow('', label='', doc='', cwl_version='v1.0')
+
+        # build path for CWL file
+        cwl = pgt_path(cwl_name)
+
+        # save CWL to path
+        with open(cwl, "w") as f:
+            f.write(cwl_workflow.export_string())
+
+        # respond with download of CWL file
+        return static_file(cwl_name, root=pgt_path(""), download=True)
     else:
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
