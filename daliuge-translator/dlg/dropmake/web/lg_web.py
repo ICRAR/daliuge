@@ -206,26 +206,30 @@ def pgtcwl_get():
     pgt_name = request.query.get("pgt_name")
 
     if pgt_exists(pgt_name):
-        # load PGT file from path
-        pgt = pgt_path(pgt_name)
-        with open(pgt, "r") as f:
-            data = f.read()
+        # get PGT from manager
+        pgtp = pg_mgr.get_pgt(pgt_name)
+
+        # build node list
+        node_list = ["localhost", "localhost"]
+
+        # mapping PGTP to resources (node list)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
         # build filename for CWL file from PGT filename
-        cwl_name = pgt_name[:-6] + ".cwl"
+        cwl_filename = pgt_name[:-6] + ".cwl"
 
-        # TODO: create the CWL workflow
-        cwl_workflow = cwlgen.Workflow('', label='', doc='', cwl_version='v1.0')
+        # create the CWL workflow
+        cwl_workflow = translate_pg_spec_to_cwl(pg_spec);
 
         # build path for CWL file
-        cwl = pgt_path(cwl_name)
+        cwl_path = pgt_path(cwl_filename)
 
         # save CWL to path
-        with open(cwl, "w") as f:
+        with open(cwl_path, "w") as f:
             f.write(cwl_workflow.export_string())
 
         # respond with download of CWL file
-        return static_file(cwl_name, root=pgt_path(""), download=True)
+        return static_file(cwl_filename, root=pgt_path(""), download=True)
     else:
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
@@ -515,6 +519,22 @@ def save(lg_name, logical_graph):
         pass
 
     return new_path
+
+
+def translate_pg_spec_to_cwl(pg):
+    """
+    """
+    print("translate_pg_spec_to_cwl")
+    print("pg:" + str(pg))
+
+    # create the workflow
+    cwl_workflow = cwlgen.Workflow('', label='', doc='', cwl_version='v1.0')
+
+    # add steps to the workflow
+    for node in pg:
+        print(str(node['lg_key']) + " " + node['nm'])
+
+    return cwl_workflow
 
 
 @get("/")
