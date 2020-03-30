@@ -33,6 +33,7 @@ import threading
 import time
 import warnings
 import cwlgen
+from zipfile import ZipFile
 
 from bottle import (
     route,
@@ -217,19 +218,17 @@ def pgtcwl_get():
 
         # build filename for CWL file from PGT filename
         cwl_filename = pgt_name[:-6] + ".cwl"
-
-        # create the CWL workflow
-        cwl_workflow = translate_pg_spec_to_cwl(pg_spec);
+        zip_filename = pgt_name[:-6] + ".zip"
 
         # build path for CWL file
         cwl_path = pgt_path(cwl_filename)
+        zip_path = pgt_path(zip_filename)
 
-        # save CWL to path
-        with open(cwl_path, "w") as f:
-            f.write(cwl_workflow.export_string())
+        # create the CWL workflow
+        create_cwl_workflow(pg_spec, cwl_path, zip_path);
 
-        # respond with download of CWL file
-        return static_file(cwl_filename, root=pgt_path(""), download=True)
+        # respond with download of ZIP file
+        return static_file(zip_filename, root=pgt_path(""), download=True)
     else:
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
@@ -521,21 +520,60 @@ def save(lg_name, logical_graph):
     return new_path
 
 
-def translate_pg_spec_to_cwl(pg):
+def create_cwl_workflow(pg_spec, cwl_path, zip_path):
     """
     """
-    print("translate_pg_spec_to_cwl")
-    print("pg:" + str(pg))
+    print("create_cwl_workflow")
+    print("pg_spec:" + str(pg_spec))
+
+    # create list for command line tool description files
+    step_files = []
 
     # create the workflow
     cwl_workflow = cwlgen.Workflow('', label='', doc='', cwl_version='v1.0')
 
     # add steps to the workflow
-    for node in pg:
-        print(str(node['lg_key']) + " " + node['nm'])
+    for index, node in enumerate(pg_spec):
+        print(str(node['lg_key']) + " " + str(node['nm']))
 
-    return cwl_workflow
+        if node['dt'] == 'BashShellApp':
+            filename = "step" + str(index) + ".cwl"
+            create_command_line_tool(node, pgt_path(filename))
+            step_files.append(pgt_path(filename))
 
+    # save CWL to path
+    with open(cwl_path, "w") as f:
+        f.write(cwl_workflow.export_string())
+
+    # add all files together into zip
+    zipObj = ZipFile(zip_path, 'w')
+
+    # Add multiple files to the zip
+    for step_file in step_files:
+        zipObj.write(step_file)
+
+    zipObj.write(cwl_path)
+
+    # close the Zip File
+    zipObj.close()
+
+
+def create_command_line_tool(node, filename):
+    print("create_command_line_tool(" + node['nm'] + "," + filename + ")")
+
+    cwl_tool = cwlgen.CommandLineTool(tool_id='grep', label='print lines matching a pattern', base_command='grep', cwl_version='v1.0')
+
+    file_binding = cwlgen.CommandLineBinding(position=2)
+    input_file = cwlgen.CommandInputParameter('input_file', param_type='File', input_binding=file_binding, doc='input file from which you want to look for the pattern')
+    cwl_tool.inputs.append(input_file)
+
+    pattern_binding = cwlgen.CommandLineBinding(position=1)
+    pattern = cwlgen.CommandInputParameter('pattern', param_type='string', input_binding=pattern_binding, doc='pattern to find in the input file')
+    cwl_tool.inputs.append(pattern)
+
+    # write to file
+    with open(filename, "w") as f:
+        f.write(cwl_tool.export_string())
 
 @get("/")
 def root():
