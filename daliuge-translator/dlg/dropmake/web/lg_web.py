@@ -524,7 +524,7 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
     """
     """
     print("create_cwl_workflow")
-    print("pg_spec:" + str(pg_spec))
+    #print("pg_spec:" + str(pg_spec))
 
     # create list for command line tool description files
     step_files = []
@@ -532,24 +532,64 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
     # create the workflow
     cwl_workflow = cwlgen.Workflow('', label='', doc='', cwl_version='v1.0')
 
+    # create files dictionary
+    files = {}
+
+    # look for input and output files in the pg_spec
+    for index, node in enumerate(pg_spec):
+        command = node.get('command', None)
+        dataType = node.get('dt', None)
+        outputId = node.get('oid', None)
+
+        #print("lg_key:" + str(node['lg_key']) + " nm:" + str(node['nm']) + " command:" + str(command))
+
+        if dataType == "file":
+            files[outputId] = "step" + str(index) + "/output_file_0"
+
+    # debug
+    print("files:" + str(files))
+
     # add steps to the workflow
     for index, node in enumerate(pg_spec):
-        print(str(node['lg_key']) + " " + str(node['nm']))
+        dataType = node.get('dt', '')
+        print(str(index) + ":" + dataType)
 
-        if node['dt'] == 'BashShellApp':
+        if dataType == 'BashShellApp':
+            #print(str(node))
+            name = node.get('nm', '')
+            inputs = node.get('inputs', [])
+            outputs = node.get('outputs', [])
+            print(str(name) + " in:" + str(len(inputs)) + " out:" + str(len(outputs)))
+
             # create command line tool description
             filename = "step" + str(index) + ".cwl"
             create_command_line_tool(node, pgt_path(filename))
             step_files.append(pgt_path(filename))
 
-            # add step
-            step = cwlgen.WorkflowStep(str(node['nm']), run=filename)
+            # create step
+            step = cwlgen.WorkflowStep("step" + str(index), run=filename)
+
+            # add input to step
+            for index, input in enumerate(inputs):
+                print("add input " + input + " " + files[input])
+                step.inputs.append(cwlgen.WorkflowStepInput('input_file_' + str(index), source=files[input]))
+
+            # add output to step
+            for index, output in enumerate(outputs):
+                print("add output " + output + " " + files[output])
+                step.out.append(cwlgen.WorkflowStepOutput('output_file_' + str(index)))
+
+            # add step to workflow
             cwl_workflow.steps.append(step)
+            print("num steps " + str(len(cwl_workflow.steps)))
 
 
     # save CWL to path
     with open(cwl_path, "w") as f:
         f.write(cwl_workflow.export_string())
+
+    # debug : print contents of workflow
+    print(cwl_workflow.export_string())
 
     # put workflow and command line tool description files all together in a zip
     zipObj = ZipFile(zip_path, 'w')
@@ -561,8 +601,41 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
 
 def create_command_line_tool(node, filename):
     print("create_command_line_tool(" + node['nm'] + "," + filename + ")")
+    #print(str(node))
 
-    cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=node['nm'], base_command=node['command'], cwl_version='v1.0')
+    # get inputs and outputs
+    inputs = node.get('inputs', [])
+    outputs = node.get('outputs', [])
+
+    # strip command down to just the basic command, with no input or output parameters
+    base_command = node.get('command', '')
+    for input in inputs:
+        base_command = base_command.replace('%i['+input+']', '')
+    for output in outputs:
+        base_command = base_command.replace('%o['+ output+']', '')
+
+    base_command = base_command.replace('<', '')
+    base_command = base_command.replace('>', '')
+    base_command = base_command.strip()
+
+    print("base_command:!" + base_command + "!")
+
+    cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=node['nm'], base_command=base_command, cwl_version='v1.0')
+
+    # add inputs
+    for index, input in enumerate(inputs):
+        file_binding = cwlgen.CommandLineBinding(position=index)
+        input_file = cwlgen.CommandInputParameter('input_file_' + str(index), param_type='File', input_binding=file_binding, doc='input file ' + str(index))
+        cwl_tool.inputs.append(input_file)
+
+    if len(inputs) == 0:
+        cwl_tool.inputs.append(cwlgen.CommandInputParameter('dummy', param_type='null', doc='dummy'))
+
+    # add outputs
+    for index, output in enumerate(outputs):
+        file_binding = cwlgen.CommandLineBinding()
+        output_file = cwlgen.CommandOutputParameter('output_file_' + str(index), param_type='stdout', output_binding=file_binding, doc='output file ' + str(index))
+        cwl_tool.outputs.append(output_file)
 
     # write to file
     with open(filename, "w") as f:
