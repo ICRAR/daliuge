@@ -594,8 +594,8 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
     # put workflow and command line tool description files all together in a zip
     zipObj = ZipFile(zip_path, 'w')
     for step_file in step_files:
-        zipObj.write(step_file)
-    zipObj.write(cwl_path)
+        zipObj.write(step_file, os.path.basename(step_file))
+    zipObj.write(cwl_path, os.path.basename(cwl_path))
     zipObj.close()
 
 
