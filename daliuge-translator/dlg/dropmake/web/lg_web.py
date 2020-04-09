@@ -540,26 +540,27 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
         command = node.get('command', None)
         dataType = node.get('dt', None)
         outputId = node.get('oid', None)
+        outputs = node.get('outputs', [])
 
-        #print("lg_key:" + str(node['lg_key']) + " nm:" + str(node['nm']) + " command:" + str(command))
+        #print(str(index) + " lg_key:" + str(node['lg_key']) + " nm:" + str(node['nm']) + " command:" + str(command) + " dataType:" + str(dataType) + " outputId:" + str(outputId) + " outputs:" + str(outputs))
 
-        if dataType == "file":
-            files[outputId] = "step" + str(index) + "/output_file_0"
+        if len(outputs) > 0:
+            files[outputs[0]] = "step" + str(index) + "/output_file_0"
 
     # debug
-    print("files:" + str(files))
+    #print("files:" + str(files))
 
     # add steps to the workflow
     for index, node in enumerate(pg_spec):
         dataType = node.get('dt', '')
-        print(str(index) + ":" + dataType)
+        #print(str(index) + ":" + dataType)
 
         if dataType == 'BashShellApp':
             #print(str(node))
             name = node.get('nm', '')
             inputs = node.get('inputs', [])
             outputs = node.get('outputs', [])
-            print(str(name) + " in:" + str(len(inputs)) + " out:" + str(len(outputs)))
+            #print(str(name) + " in:" + str(len(inputs)) + " out:" + str(len(outputs)))
 
             # create command line tool description
             filename = "step" + str(index) + ".cwl"
@@ -571,17 +572,17 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
 
             # add input to step
             for index, input in enumerate(inputs):
-                print("add input " + input + " " + files[input])
+                #print("add input " + input + " " + files[input])
                 step.inputs.append(cwlgen.WorkflowStepInput('input_file_' + str(index), source=files[input]))
 
             # add output to step
             for index, output in enumerate(outputs):
-                print("add output " + output + " " + files[output])
+                #print("add output " + output + " " + files[output])
                 step.out.append(cwlgen.WorkflowStepOutput('output_file_' + str(index)))
 
             # add step to workflow
             cwl_workflow.steps.append(step)
-            print("num steps " + str(len(cwl_workflow.steps)))
+            #print("num steps " + str(len(cwl_workflow.steps)))
 
 
     # save CWL to path
@@ -589,7 +590,7 @@ def create_cwl_workflow(pg_spec, cwl_path, zip_path):
         f.write(cwl_workflow.export_string())
 
     # debug : print contents of workflow
-    print(cwl_workflow.export_string())
+    #print(cwl_workflow.export_string())
 
     # put workflow and command line tool description files all together in a zip
     zipObj = ZipFile(zip_path, 'w')
@@ -609,16 +610,19 @@ def create_command_line_tool(node, filename):
 
     # strip command down to just the basic command, with no input or output parameters
     base_command = node.get('command', '')
-    for input in inputs:
-        base_command = base_command.replace('%i['+input+']', '')
-    for output in outputs:
-        base_command = base_command.replace('%o['+ output+']', '')
+    #for input in inputs:
+    #    base_command = base_command.replace('%i['+input+']', '')
+    #for output in outputs:
+    #    base_command = base_command.replace('%o['+ output+']', '')
 
-    base_command = base_command.replace('<', '')
-    base_command = base_command.replace('>', '')
-    base_command = base_command.strip()
+    #base_command = base_command.replace('<', '')
+    #base_command = base_command.replace('>', '')
+    #base_command = base_command.strip()
 
-    print("base_command:!" + base_command + "!")
+    # TODO: find a better way of specifying command line program + arguments
+    base_command = base_command[:base_command.index(" ")]
+
+    #print("base_command:!" + base_command + "!")
 
     cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=node['nm'], base_command=base_command, cwl_version='v1.0')
 
