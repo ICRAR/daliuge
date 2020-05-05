@@ -50,7 +50,7 @@ trap shutdown_dlg EXIT
 
 # Run the test client for managers only, which will perform a number of
 # operations in the servers, all of which should basically work
-sleep 1
+sleep 2
 try python managers_test_client.py
 
 # Now run the test client for the translator, which should culminate
