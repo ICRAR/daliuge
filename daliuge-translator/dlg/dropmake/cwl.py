@@ -30,11 +30,9 @@ from zipfile import ZipFile
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(pg_spec, pgt_path, cwl_path, zip_path):
+def create_workflow(pgt, pgt_path, cwl_path, zip_path):
     """
     """
-    print("create_workflow()")
-    #print("pg_spec:" + str(pg_spec))
 
     # create list for command line tool description files
     step_files = []
@@ -46,7 +44,7 @@ def create_workflow(pg_spec, pgt_path, cwl_path, zip_path):
     files = {}
 
     # look for input and output files in the pg_spec
-    for index, node in enumerate(pg_spec):
+    for index, node in enumerate(pgt):
         command = node.get('command', None)
         dataType = node.get('dt', None)
         outputId = node.get('oid', None)
@@ -61,7 +59,7 @@ def create_workflow(pg_spec, pgt_path, cwl_path, zip_path):
     #print("files:" + str(files))
 
     # add steps to the workflow
-    for index, node in enumerate(pg_spec):
+    for index, node in enumerate(pgt):
         dataType = node.get('dt', '')
         #print(str(index) + ":" + dataType)
 
