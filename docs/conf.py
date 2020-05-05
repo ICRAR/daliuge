@@ -45,7 +45,8 @@ class Mock(MagicMock):
         return MagicMock()
 
 MOCK_MODULES = ("boto3", "botocore", "bottle", "configobj", "crc32c", "dill",
-    "docker", "lockfile", "metis", "netifaces", "networkx", "paramiko", "psutil",
+    "docker", "lockfile", "metis", "netifaces", "networkx", "numpy",
+    "paramiko", "paramiko.client", "paramiko.rsakey", "psutil",
     "pyswarm", "python-daemon", "pyzmq", "scp", "zeroconf", "zerorpc")
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
