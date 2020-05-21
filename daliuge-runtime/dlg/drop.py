@@ -51,6 +51,7 @@ from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
+from .reproducibility import constants
 
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
@@ -221,6 +222,11 @@ class AbstractDROP(EventFirer):
         self._checksum     = None
         self._checksumType = None
         self._size         = None
+
+        self._merkleRoot = None
+        self._committed = False
+        self._MerkleTree = None
+        self._merkleData = []
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
