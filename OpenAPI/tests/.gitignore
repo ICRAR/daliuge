@@ -1,0 +1,4 @@
+config.properties
+node_manager_client
+composite_manager_client
+translator_client

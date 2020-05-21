@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: DALiuGE Node Manager
+  version: '1.0'
+  description: Node Manager specific entry points
+  contact: {}
+tags: []
+servers: []
+paths:
+  /api:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The status of the Node Manager
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    $ref: './manager_common.yaml#/components/schemas/node_session_information'
+      operationId: getNMStatus
+      description: Return the status of the Node Manager
+  /api/stop:
+    $ref: './manager_common.yaml#/paths/~1api~1stop'
+  /api/sessions:
+    $ref: './manager_common.yaml#/paths/~1api~1sessions'
+  '/api/sessions/{sessionId}':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}'
+  '/api/sessions/{sessionId}/status':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1status'
+  '/api/sessions/{sessionId}/deploy':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1deploy'
+  '/api/sessions/{sessionId}/cancel':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1cancel'
+  '/api/sessions/{sessionId}/graph':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph'
+  '/api/sessions/{sessionId}/graph/size':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph~1size'
+  '/api/sessions/{sessionId}/graph/status':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph~1status'
+  '/api/sessions/{sessionId}/graph/append':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph~1append'
+components:
+  schemas: {}
+

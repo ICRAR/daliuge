@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2020
+#    (c) UWA - The University of Western Australia, 2016
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -19,28 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""Backwards compatibility for client"""
+from .. import clients
 
-from setuptools import setup
 
-MAJOR = 1
-MINOR = 0
-PATCH = 0
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
-
-install_requires = [
-    "daliuge-common==%s" % (VERSION,),
-    "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
-]
-
-setup(
-    name="daliuge",
-    version=VERSION,
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Catch-all proto-package",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
-    author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
-    url="https://github.com/ICRAR/daliuge",
-    license="LGPLv2+",
-    install_requires=install_requires,
-)
+BaseDROPManagerClient = clients.BaseDROPManagerClient
+NodeManagerClient = clients.NodeManagerClient
+CompositeManagerClient = clients.CompositeManagerClient
+DataIslandManagerClient = clients.DataIslandManagerClient
+MasterManagerClient = clients.MasterManagerClient

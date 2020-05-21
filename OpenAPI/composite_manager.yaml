@@ -1,0 +1,238 @@
+openapi: 3.0.0
+info:
+  title: DALiuGE Composite Manager
+  version: '1.0'
+  description: Composite Manager specific entry points
+  contact: {}
+tags: []
+servers: []
+paths:
+  /api:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The status of the Composite Manager
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/composite_manager_status'
+      operationId: getCMStatus
+      description: Return the status of the Composite Manager
+  /api/nodes:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The list of nodes covered by this Composite Manager
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      operationId: getCMNodes
+      description: Returns the list of nodes covered by this Composite Manager
+  '/api/nodes/{node}':
+    parameters:
+      - schema:
+          type: string
+        name: node
+        in: path
+        required: true
+    delete:
+      tags: []
+      summary: ''
+      operationId: removeCMNode
+      responses:
+        '200':
+          description: OK
+      description: "Remove `node` from this Composite Manager's nodes list"
+    post:
+      tags: []
+      summary: ''
+      operationId: addCMNode
+      responses:
+        '200':
+          description: OK
+      description: "Add `node` to this Composite Manager's nodes list"
+  '/api/nodes/{node}/sessions':
+    parameters:
+      - schema:
+          type: string
+        name: node
+        in: path
+        required: true
+    get:
+      summary: ''
+      tags: []
+      responses:
+        '200':
+          description: 'The list of sessions on `node`, managed by this Manager'
+          content:
+            application/json:
+              schema:
+                title: session_information
+                oneOf:
+                  - title: composite_session_information
+                    type: array
+                    description: High-level information for a given session at the Data Island and Master Manager levels
+                    items:
+                      type: object
+                      properties:
+                        sessionId:
+                          type: string
+                        status:
+                          type: object
+                        size:
+                          type: object
+                  - title: node_session_information
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        sessionId:
+                          type: string
+                        status:
+                          type: integer
+                        size:
+                          type: integer
+                    description: High-level information for a given session at the node level
+                description: Generic session information type
+      operationId: getNodeSessions
+      description: 'Get the list of sessions on `node`, managed by this Manager'
+  '/api/nodes/{node}/sessions/{sessionId}':
+    parameters:
+      - schema:
+          type: string
+        name: node
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The main information of session `sessionId` in node `node`
+          content:
+            application/json:
+              schema:
+                $ref: './manager_common.yaml#/components/schemas/session'
+      operationId: getNodeSessionInformation
+      description: Returns the main information of session `sessionId` in node `node`
+  '/api/nodes/{node}/sessions/{sessionId}/status':
+    parameters:
+      - schema:
+          type: string
+        name: node
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The status of `sessionId` in `node `
+          content:
+            application/json:
+              schema:
+                type: integer
+      operationId: getNodeSessionStatus
+      description: Returns the status of `sessionId` in `node`
+  '/api/nodes/{node}/sessions/{sessionId}/graph':
+    parameters:
+      - schema:
+          type: string
+        name: node
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The physical graph of session `sessionId` in `node`
+          content:
+            application/json:
+              schema:
+                $ref: './manager_common.yaml#/components/schemas/physical_graph'
+      operationId: getNodeGraph
+      description: Returns the physical graph of session `sessionId` in `node`
+  '/api/nodes/{node}/sessions/{sessionId}/graph/status':
+    parameters:
+      - schema:
+          type: string
+        name: node
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: sessionId
+        in: path
+        required: true
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: The status graph of session `sessionId` in `node`
+          content:
+            application/json:
+              schema:
+                $ref: './manager_common.yaml#/components/schemas/physical_graph_status'
+      operationId: getNodeGraphStatus
+      description: Returns the status graph of session `sessionId` in `node`
+
+  /api/stop:
+    $ref: './manager_common.yaml#/paths/~1api~1stop'
+  /api/sessions:
+    $ref: './manager_common.yaml#/paths/~1api~1sessions'
+  '/api/sessions/{sessionId}':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}'
+  '/api/sessions/{sessionId}/status':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1status'
+  '/api/sessions/{sessionId}/deploy':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1deploy'
+  '/api/sessions/{sessionId}/cancel':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1cancel'
+  '/api/sessions/{sessionId}/graph':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph'
+  '/api/sessions/{sessionId}/graph/size':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph~1size'
+  '/api/sessions/{sessionId}/graph/status':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph~1status'
+  '/api/sessions/{sessionId}/graph/append':
+    $ref: './manager_common.yaml#/paths/~1api~1sessions~1{sessionId}~1graph~1append'
+components:
+  schemas:
+    composite_manager_status:
+      title: composite_manager_status
+      type: object
+      properties:
+        hosts:
+          type: array
+          items:
+            type: string
+        sessionIds:
+          type: array
+          items:
+            type: string
+      description: Component Manager status structure
+

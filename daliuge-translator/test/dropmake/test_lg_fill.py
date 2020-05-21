@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2020
+#    (c) UWA - The University of Western Australia, 2019
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -20,27 +20,27 @@
 #    MA 02111-1307  USA
 #
 
-from setuptools import setup
+import unittest
+import os
+import pkg_resources
 
-MAJOR = 1
-MINOR = 0
-PATCH = 0
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
+from dlg.dropmake import pg_generator
+import json
 
-install_requires = [
-    "daliuge-common==%s" % (VERSION,),
-    "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
-]
+lg_dir = pkg_resources.resource_filename(__name__, 'logical_graphs')  # @UndefinedVariable
 
-setup(
-    name="daliuge",
-    version=VERSION,
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Catch-all proto-package",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
-    author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
-    url="https://github.com/ICRAR/daliuge",
-    license="LGPLv2+",
-    install_requires=install_requires,
-)
+class LGFillTest(unittest.TestCase):
+
+    def test_fill_lg(self):
+        params = {
+            'param1': 1,
+            'param2': '2',
+            'param1.param2': True,
+            'param4': {
+                'what': 'hi'
+            }
+        }
+        with open(os.path.join(lg_dir, 'chiles_simple.json')) as f:
+            lg = pg_generator.fill(json.load(f), params)
+        for node_idx, value in zip((20, 21, 22, 23), ('1', '2', 'True', 'hi')):
+            self.assertEqual(lg['nodeDataArray'][node_idx]['Arg10'], value)
