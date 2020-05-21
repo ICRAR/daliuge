@@ -17,16 +17,20 @@ import shlex
 import subprocess
 import sys
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
-
-
-# Run "python setup.py build" to generate the dlg/version.py file
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
-if read_the_docs_build:
-    subprocess.Popen([sys.executable, 'setup.py', 'build'], cwd="..").wait()
+
+def prepare_for_docs(path):
+    # Run "python setup.py build" to generate the version.py files, and make
+    # packages available for documenting their APIs
+    path = os.path.abspath(path)
+    sys.path.insert(0, path)
+    if read_the_docs_build:
+        subprocess.Popen([sys.executable, 'setup.py', 'build'], cwd=path).wait()
+
+prepare_for_docs('../daliuge-common')
+prepare_for_docs('../daliuge-translator')
+prepare_for_docs('../daliuge-runtime')
+
 
 # Mock the rest of the external modules we need so the API autodoc
 # gets correctly generated
@@ -41,7 +45,8 @@ class Mock(MagicMock):
         return MagicMock()
 
 MOCK_MODULES = ("boto3", "botocore", "bottle", "configobj", "crc32c", "dill",
-    "docker", "lockfile", "metis", "netifaces", "networkx", "paramiko", "psutil",
+    "docker", "lockfile", "metis", "netifaces", "networkx", "numpy",
+    "paramiko", "paramiko.client", "paramiko.rsakey", "psutil",
     "pyswarm", "python-daemon", "pyzmq", "scp", "zeroconf", "zerorpc")
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
@@ -89,7 +94,7 @@ author = u'ICRAR'
 # The full version, including alpha/beta/rc tags.
 # release = version
 try:
-    from dlg import version, full_version as release
+    from dlg.common.version import version, full_version as release
 except ImportError:
     version = '0.2.0'
     release = version
