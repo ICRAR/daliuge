@@ -37,17 +37,17 @@ from .drop import ContainerDROP, InMemoryDROP, \
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
 
-
 STORAGE_TYPES = {
     'memory': InMemoryDROP,
-    'file'  : FileDROP,
-    'ngas'  : NgasDROP,
-    'null'  : NullDROP,
-    'json'  : JsonDROP,
+    'file': FileDROP,
+    'ngas': NgasDROP,
+    'null': NullDROP,
+    'json': JsonDROP,
 }
 
 try:
     from .s3_drop import S3DROP
+
     STORAGE_TYPES['s3'] = S3DROP
 except ImportError:
     pass
@@ -55,13 +55,13 @@ except ImportError:
     # Dictionary for the key used to store 1-to-N relationships between DROPs
 # in the the DROP specification format
 __TOMANY = {
-    DROPLinkType.CONSUMER:           'consumers',
+    DROPLinkType.CONSUMER: 'consumers',
     DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
-    DROPLinkType.INPUT:              'inputs',
-    DROPLinkType.STREAMING_INPUT:    'streamingInputs',
-    DROPLinkType.OUTPUT:             'outputs',
-    DROPLinkType.CHILD:              'children',
-    DROPLinkType.PRODUCER:           'producers',
+    DROPLinkType.INPUT: 'inputs',
+    DROPLinkType.STREAMING_INPUT: 'streamingInputs',
+    DROPLinkType.OUTPUT: 'outputs',
+    DROPLinkType.CHILD: 'children',
+    DROPLinkType.PRODUCER: 'producers',
 }
 
 # Same for above, but for n-to-1 relationships
@@ -70,10 +70,11 @@ __TOONE = {
 }
 
 # Both also contain the reverse mapping
-__TOMANY.update({v:k for k,v in __TOMANY.items()})
-__TOONE.update({v:k for k,v in __TOONE.items()})
+__TOMANY.update({v: k for k, v in __TOMANY.items()})
+__TOONE.update({v: k for k, v in __TOONE.items()})
 
 logger = logging.getLogger(__name__)
+
 
 def addLink(linkType, lhDropSpec, rhOID, force=False):
     """
@@ -159,11 +160,13 @@ def removeUnmetRelationships(dropSpecList):
 
     return unmetRelationships
 
+
 def check_dropspec(n, dropSpec):
     if 'oid' not in dropSpec:
         raise InvalidGraphException("Drop #%d is missing its 'oid' argument: %r" % (n, dropSpec))
     if 'type' not in dropSpec:
         raise InvalidGraphException("Drop %s is missing its 'type' argument" % (dropSpec['oid']))
+
 
 def loadDropSpecs(dropSpecList):
     """
@@ -176,8 +179,7 @@ def loadDropSpecs(dropSpecList):
 
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
-    for n,dropSpec in enumerate(dropSpecList):
-
+    for n, dropSpec in enumerate(dropSpecList):
         # 'type' and 'oit' are mandatory
         check_dropspec(n, dropSpec)
         dropType = dropSpec['type']
@@ -199,7 +201,7 @@ def loadDropSpecs(dropSpecList):
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]: dropSpecs[oid]
 
-        # N-1 relationships
+            # N-1 relationships
             elif rel in __TOONE:
                 # See comment above
                 dropSpecs[dropSpec[rel]]
@@ -207,15 +209,14 @@ def loadDropSpecs(dropSpecList):
     # Done!
     return dropSpecs
 
-def createGraphFromDropSpecList(dropSpecList, session=None):
 
+def createGraphFromDropSpecList(dropSpecList, session=None):
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
     logger.info("Creating %d drops", len(dropSpecList))
-    for n,dropSpec in enumerate(dropSpecList):
-
+    for n, dropSpec in enumerate(dropSpecList):
         check_dropspec(n, dropSpec)
         dropType = dropSpec.pop('type')
 
@@ -262,9 +263,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     return roots
 
+
 def _createPlain(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
-    kwargs   = _getKwargs(dropSpec)
+    kwargs = _getKwargs(dropSpec)
 
     # 'storage' is mandatory
     storageType = STORAGE_TYPES[dropSpec['storage']]
@@ -272,9 +274,10 @@ def _createPlain(dropSpec, dryRun=False, session=None):
         return
     return storageType(oid, uid, dlg_session=session, **kwargs)
 
+
 def _createContainer(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
-    kwargs   = _getKwargs(dropSpec)
+    kwargs = _getKwargs(dropSpec)
 
     # if no 'container' is specified, we default to ContainerDROP
     if 'container' in dropSpec:
@@ -285,7 +288,7 @@ def _createContainer(dropSpec, dryRun=False, session=None):
         if parts[0] == 'dfms':
             parts[0] = 'dlg'
 
-        module  = importlib.import_module('.'.join(parts[:-1]))
+        module = importlib.import_module('.'.join(parts[:-1]))
         containerType = getattr(module, parts[-1])
     else:
         containerType = ContainerDROP
@@ -295,28 +298,30 @@ def _createContainer(dropSpec, dryRun=False, session=None):
 
     return containerType(oid, uid, dlg_session=session, **kwargs)
 
+
 def _createSocket(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
-    kwargs   = _getKwargs(dropSpec)
+    kwargs = _getKwargs(dropSpec)
 
     if dryRun:
         return
     return SocketListenerApp(oid, uid, dlg_session=session, **kwargs)
 
+
 def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
-    kwargs   = _getKwargs(dropSpec)
+    kwargs = _getKwargs(dropSpec)
     del kwargs['app']
 
     appName = dropSpec['app']
-    parts   = appName.split('.')
+    parts = appName.split('.')
 
     # Support old "dfms..." package names (pre-Oct2017)
     if parts[0] == 'dfms':
         parts[0] = 'dlg'
 
     try:
-        module  = importlib.import_module('.'.join(parts[:-1]))
+        module = importlib.import_module('.'.join(parts[:-1]))
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError):
         raise InvalidGraphException("drop %s specifies non-existent application: %s" % (oid, appName,))
@@ -324,6 +329,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
     if dryRun:
         return
     return appType(oid, uid, dlg_session=session, **kwargs)
+
 
 def _getIds(dropSpec):
     # uid is copied from oid if not explicitly given
@@ -333,12 +339,14 @@ def _getIds(dropSpec):
         uid = dropSpec['uid']
     return oid, uid
 
+
 def _getKwargs(dropSpec):
     kwargs = dict(dropSpec)
     del kwargs['oid']
     if 'uid' in kwargs:
         del kwargs['uid']
     return kwargs
+
 
 __CREATION_FUNCTIONS = {
     'plain': _createPlain,

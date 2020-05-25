@@ -24,16 +24,15 @@ import subprocess
 import unittest
 
 import pkg_resources
-
-from dlg.common import tool
 from dlg import common
+from dlg.common import tool
 
 
 class TestTool(unittest.TestCase):
 
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
-        lg = pkg_resources.resource_filename( # @UndefinedVariable
+        lg = pkg_resources.resource_filename(  # @UndefinedVariable
             'test.dropmake', 'logical_graphs/lofar_std.json')
 
         fill = tool.start_process('fill', ['-L', lg], stdout=subprocess.PIPE)

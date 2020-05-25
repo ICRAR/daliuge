@@ -160,12 +160,12 @@ class JSONStream(object):
 
             if self.isiter:
                 try:
-                    i,obj = next(self.objects)
+                    i, obj = next(self.objects)
                     json_out = b'[' if i == 0 else b','
                     json_out += json.dumps(obj).encode('latin1')
                 except StopIteration:
                     json_out = b']'
-                    self.isiter = False # not nice, but prevents more reads
+                    self.isiter = False  # not nice, but prevents more reads
             else:
                 json_out = json.dumps(self.objects).encode('latin1')
 

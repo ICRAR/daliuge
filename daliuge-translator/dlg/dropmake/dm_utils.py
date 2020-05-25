@@ -24,10 +24,10 @@
 Dropmake utils
 """
 
+import copy
 import json
 import os
 import os.path as osp
-import copy
 
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
@@ -502,9 +502,9 @@ def convert_construct(lgo):
                 if "group" not in to_node and "group" not in gather_construct:
                     cond1 = True
                 elif (
-                    "group" in to_node
-                    and "group" in gather_construct
-                    and to_node["group"] == gather_construct["group"]
+                        "group" in to_node
+                        and "group" in gather_construct
+                        and to_node["group"] == gather_construct["group"]
                 ):
                     cond1 = True
                 else:

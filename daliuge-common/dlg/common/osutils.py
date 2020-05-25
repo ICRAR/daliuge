@@ -24,8 +24,8 @@ import logging
 import math
 import time
 
-
 logger = logging.getLogger(__name__)
+
 
 def terminate_or_kill(proc, timeout):
     """
@@ -40,6 +40,7 @@ def terminate_or_kill(proc, timeout):
     logger.info('Terminating %d', proc.pid)
     proc.terminate()
     wait_or_kill(proc, timeout)
+
 
 def wait_or_kill(proc, timeout, period=0.1):
     waitLoops = 0

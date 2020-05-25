@@ -41,15 +41,14 @@ class TestSpeadReceiverApp(unittest.TestCase):
 
     @unittest.skipIf(USE_SPEAD is False, "skipping test")
     def test_speadApp(self):
-
         port = 1111
         itemId = 0x2000
 
         thread_pool = spead2.ThreadPool()
         self._stream = spead2.send.UdpStream(thread_pool, "localhost", port, spead2.send.StreamConfig(rate=1e7))
 
-        a = SpeadReceiverApp('a','a',port=port, itemId=itemId)
-        b = InMemoryDROP('b','b')
+        a = SpeadReceiverApp('a', 'a', port=port, itemId=itemId)
+        b = InMemoryDROP('b', 'b')
         a.addOutput(b)
 
         size = 1024
@@ -58,12 +57,12 @@ class TestSpeadReceiverApp(unittest.TestCase):
         msg = os.urandom(size)
         with DROPWaiterCtx(self, b, timeout=1):
             ig = spead2.send.ItemGroup(flavour=spead2.Flavour(4, 64, 48))
-            item = ig.add_item(itemId, 'main_data', 'a char array', shape=(size,), format=[('c',8)])
+            item = ig.add_item(itemId, 'main_data', 'a char array', shape=(size,), format=[('c', 8)])
             item.value = msg
             self._stream.send_heap(ig.get_heap())
             self._stream.send_heap(ig.get_end())
 
-        for drop in a,b:
+        for drop in a, b:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
 
         self.assertEqual(size, b.size)

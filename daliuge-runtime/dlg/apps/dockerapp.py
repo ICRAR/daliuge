@@ -29,13 +29,12 @@ import os
 import threading
 import time
 
-from configobj import ConfigObj
 import docker
+from configobj import ConfigObj
 
 from .. import utils, droputils
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
-
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +62,7 @@ class ContainerIpWaiter(object):
     def waitForIp(self, timeout=None):
         self._evt.wait(timeout)
         return self._uid, self._containerIp
+
 
 class DockerApp(BarrierAppDROP):
     """
@@ -225,7 +225,8 @@ class DockerApp(BarrierAppDROP):
             else:
                 host_path, container_path = binding.split(':')
             if not os.path.exists(host_path):
-                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
+                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (
+                host_path,))
             self._additionalBindings[host_path] = container_path
 
         logger.info("%r with image '%s' and command '%s' created", self, self._image, self._command)
@@ -239,7 +240,7 @@ class DockerApp(BarrierAppDROP):
             start = time.time()
             c.images.pull(self._image)
             end = time.time()
-            logger.debug("Took %.2f [s] to pull image '%s'", (end-start), self._image)
+            logger.debug("Took %.2f [s] to pull image '%s'", (end - start), self._image)
         else:
             logger.debug("Image '%s' found, no need to pull it", self._image)
         c.api.close()
@@ -279,12 +280,12 @@ class DockerApp(BarrierAppDROP):
 
         iitems = self._inputs.items()
         oitems = self._outputs.items()
-        fsInputs  = {uid: i for uid,i in iitems if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid,o in oitems if droputils.has_path(o)}
-        dockerInputs  = {uid: DockerPath(DLG_ROOT + i.path) for uid,i in fsInputs.items()}
-        dockerOutputs = {uid: DockerPath(DLG_ROOT + o.path) for uid,o in fsOutputs.items()}
-        dataURLInputs  = {uid: i for uid,i in iitems if not droputils.has_path(i)}
-        dataURLOutputs = {uid: o for uid,o in oitems if not droputils.has_path(o)}
+        fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
+        dockerInputs = {uid: DockerPath(DLG_ROOT + i.path) for uid, i in fsInputs.items()}
+        dockerOutputs = {uid: DockerPath(DLG_ROOT + o.path) for uid, o in fsOutputs.items()}
+        dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
+        dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
 
         cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
@@ -293,9 +294,10 @@ class DockerApp(BarrierAppDROP):
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
-        binds  = [                i.path  + ":" +                  dockerInputs[uid].path  for uid,i in fsInputs.items()]
-        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path) for uid,o in fsOutputs.items()]
-        binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
+        binds = [i.path + ":" + dockerInputs[uid].path for uid, i in fsInputs.items()]
+        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path) for uid, o in
+                  fsOutputs.items()]
+        binds += [host_path + ":" + container_path for host_path, container_path in self._additionalBindings.items()]
         logger.debug("Volume bindings: %r", binds)
 
         # Wait until the DockerApps this application runtime depends on have
@@ -309,9 +311,9 @@ class DockerApp(BarrierAppDROP):
         # useful to make sure that the USER environment variable is set in those
         # cases (e.g., casapy requires this to correctly operate)
         user = self._user
-        env  = {}
+        env = {}
         if user is not None:
-            env = {'USER':user}
+            env = {'USER': user}
 
         if self._ensureUserAndSwitch is True:
             # Append commands that will make sure a user is present with the
@@ -322,7 +324,10 @@ class DockerApp(BarrierAppDROP):
             createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(uid)
             for dirname in set([os.path.dirname(x.path) for x in dockerOutputs.values()]):
                 createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
-            createUserAndGo += "cd; su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, utils.escapeQuotes(cmd, doubleQuotes=False))
+            createUserAndGo += "cd; su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid,
+                                                                                                           utils.escapeQuotes(
+                                                                                                               cmd,
+                                                                                                               doubleQuotes=False))
 
             cmd = createUserAndGo
 
@@ -341,11 +346,11 @@ class DockerApp(BarrierAppDROP):
 
         # Create container
         container = c.containers.create(
-                self._image,
-                cmd,
-                volumes=binds,
-                user=user,
-                environment=env,
+            self._image,
+            cmd,
+            volumes=binds,
+            user=user,
+            environment=env,
         )
         self._containerId = cId = container.id
         logger.info("Created container %s for %r", cId, self)
@@ -372,12 +377,13 @@ class DockerApp(BarrierAppDROP):
             self._exitCode = x
 
         end = time.time()
-        logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
+        logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end - start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
             stdout = container.logs(stream=False, stdout=True, stderr=False)
             stderr = container.logs(stream=False, stdout=False, stderr=True)
-            logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
+            logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId,
+                         stdout, stderr)
         elif self._exitCode != 0:
             stdout = container.logs(stream=False, stdout=True, stderr=False)
             stderr = container.logs(stream=False, stdout=False, stderr=True)

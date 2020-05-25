@@ -30,8 +30,8 @@ import logging
 
 from ..hsm import store
 
-
 logger = logging.getLogger(__name__)
+
 
 class HierarchicalStorageManager(object):
 

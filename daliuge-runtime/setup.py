@@ -112,6 +112,7 @@ class lib64_path(install):
             f.write("{0}/dist-packages".format(lp))
         install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
 
+
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
@@ -165,7 +166,6 @@ extra_requires = {
     "aws": ["boto3"],
 }
 
-
 setup(
     name="daliuge-runtime",
     version=get_version_info()[0],
@@ -199,7 +199,7 @@ setup(
         "test.dropmake": ["logical_graphs/*.json"],
         "test.apps": ["dynlib_example.c", "dynlib_example2.c"],
     },
-    entry_points = {
+    entry_points={
         'dlg.tool_commands': ['runtime=dlg.runtime.tool_commands']
     },
     install_requires=install_requires,

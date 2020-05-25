@@ -35,9 +35,10 @@ Here we treat each edge zeroing step as a "move" in the Go game
 """
 
 import time
-from random import choice
-from math import log, sqrt
 from collections import defaultdict
+from math import log, sqrt
+from random import choice
+
 
 class DAGTree(object):
     """
@@ -85,7 +86,7 @@ class DAGTree(object):
         # convert '98760' to [9, 8, 7, 6, 0]
         x = [int(ii) for ii in list(state_history[-1][:])]
         # print x
-        if (len(x) < leng): #padding
+        if (len(x) < leng):  # padding
             x += [3] * (leng - len(x))
 
         stuff = self._scheduler._partition_G(G, x)
@@ -115,15 +116,16 @@ class DAGTree(object):
         else:
             return None
 
+
 class MCTS(object):
     def __init__(self, dag_tree, calculation_time=30, max_moves=1000, factor=1.4):
         self._dag_tree = dag_tree
         self._calc_time = calculation_time
         self._max_moves = max_moves
         self._states = []
-        #self._dag_tree.append_state(self._states, init_state)
-        self.scores = defaultdict(int)#{} # key: state, value: score
-        self.plays = defaultdict(int)#{} # key: state, value: count
+        # self._dag_tree.append_state(self._states, init_state)
+        self.scores = defaultdict(int)  # {} # key: state, value: score
+        self.plays = defaultdict(int)  # {} # key: state, value: count
         self.max_depth = 0
         # Exploration constant, increase for more exploratory moves,
         # decrease to prefer moves with known higher win rates.
@@ -137,8 +139,8 @@ class MCTS(object):
         leng = self._dag_tree._leng
         while (len(state) < leng):
             m, state = self.next_move()
-            #print "max_depth = {0}, state: {1}".format(self.max_depth, state)
-            #print "max_depth = {0}".format(self.max_depth)
+            # print "max_depth = {0}, state: {1}".format(self.max_depth, state)
+            # print "max_depth = {0}".format(self.max_depth)
         return [int(ii) for ii in list(state)]
 
     def next_move(self):
@@ -166,7 +168,7 @@ class MCTS(object):
                 num_moves = nm
                 move = p
                 new_state = S
-        #print overall_payout, num_moves, move, new_state
+        # print overall_payout, num_moves, move, new_state
         self.update(new_state)
         return (move, new_state)
 
@@ -219,7 +221,7 @@ class MCTS(object):
         scores[state] += payout
         ps = self._dag_tree.parent_state(state)
         while (ps is not None):
-            #print plays
+            # print plays
             plays[ps] += 1
             scores[ps] += payout
             ps = self._dag_tree.parent_state(ps)

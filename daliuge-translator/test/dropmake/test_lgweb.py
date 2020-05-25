@@ -26,15 +26,14 @@ import tempfile
 import unittest
 
 import pkg_resources
-
 import six.moves.urllib_parse as urllib  # @UnresolvedImport
-
 from dlg import common
 from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
 
 lg_dir = pkg_resources.resource_filename(__name__, '.')  # @UndefinedVariable
 lgweb_port = 8000
+
 
 class TestLGWeb(unittest.TestCase):
 
@@ -52,7 +51,8 @@ class TestLGWeb(unittest.TestCase):
         unittest.TestCase.tearDown(self)
 
     def _generate_pgt(self, c):
-        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        c._GET(
+            '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
 
     def test_get_lgjson(self):
 
@@ -100,16 +100,19 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient('localhost', lgweb_port, 10)
 
         # doesn't exist!
-        self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        self.assertRaises(RestClientException, c._GET,
+                          '/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
         # unknown algorithm
-        self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=noidea')
+        self.assertRaises(RestClientException, c._GET,
+                          '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=noidea')
         # this should work now
         self._generate_pgt(c)
 
     def test_get_pgtjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
-        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        c._GET(
+            '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
 
         # doesn't exist
         self.assertRaises(RestClientException, c._get_json, '/pgt_jsonbody?pgt_name=unknown.json')
@@ -137,7 +140,7 @@ class TestLGWeb(unittest.TestCase):
             'par_label': 'Partition',
             'max_load_imb': 100,
             'max_cpu': 8
-            }
+        }
 
         # POST form to /gen_pgt
         try:
@@ -168,7 +171,6 @@ class TestLGWeb(unittest.TestCase):
         c._GET('/pg_viewer')
         # also fine, PGT exists
         c._GET('/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.json')
-
 
     def _test_pgt_action(self, path, unknown_fails):
 
