@@ -41,6 +41,8 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
+from dlg.common.reproducibility.MerkleTree.MerkleTree.MerkleTree import MerkleTree
+from dlg.common.reproducibility.constants import ReproduciblityFlags
 from six import BytesIO
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
@@ -70,6 +72,7 @@ class ListAsDict(list):
     """A list that adds drop UIDs to a set as they get appended to the list"""
 
     def __init__(self, my_set):
+        super().__init__()
         self.set = my_set
 
     def append(self, drop):
@@ -229,8 +232,9 @@ class AbstractDROP(EventFirer):
 
         self._merkleRoot = None
         self._committed = False
-        self._MerkleTree = None
+        self._merkleTree = None
         self._merkleData = []
+        self._reproduciblity = ReproduciblityFlags.NOTHING
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
@@ -275,8 +279,8 @@ class AbstractDROP(EventFirer):
         # the DROP.
         # Expected lifespan for this object, used by to expire them
         if 'lifespan' in kwargs and 'expireAfterUse' in kwargs:
-            raise InvalidDropException(self, "%r specifies both `lifespan` and `expireAfterUse`" \
-                                             "but they are mutually exclusive" % (self,))
+            raise InvalidDropException(self, "%r specifies both `lifespan` and `expireAfterUse` but they are mutually "
+                                             "exclusive" % (self,))
 
         self._expireAfterUse = self._getArg(kwargs, 'expireAfterUse', False)
         self._expirationDate = -1
@@ -563,9 +567,9 @@ class AbstractDROP(EventFirer):
     @checksum.setter
     def checksum(self, value):
         if self._checksum is not None:
-            raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % (self))
+            raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % self)
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % (self))
+            raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % self)
         self._checksum = value
 
     @property
@@ -589,6 +593,46 @@ class AbstractDROP(EventFirer):
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("DROP %s is still not fully written, cannot manually set a checksum type yet" % (self))
         self._checksumType = value
+
+    @property
+    def merkleroot(self):
+        return self._merkleRoot
+
+    def generate_rerun_data(self):
+        """
+        Provides a serailized list of Rerun data.
+        At runtime, Rerunning only requires execution success or failure.
+        :return: A list containing
+        """
+        return [self._status]
+
+    def generate_merkle_data(self):
+        """
+        Provides a serialized summary of data as a list.
+        Fields constitute a single entry in this list.
+        Wraps several methods dependent on this DROPs reproducibility level
+        Some of these are abstract.
+        :return: A list of elements constituting a summary of this drop
+        """
+        if self._reproduciblity is ReproduciblityFlags.NOTHING:
+            return []
+        elif self._reproduciblity is ReproduciblityFlags.RERUN:
+            return self.generate_rerun_data()
+        else:
+            raise NotImplementedError("Currently other levels are not in development.")
+
+    def commit(self):
+        """
+        Generates the MerkleRoot of this DROP
+        """
+        if not self._committed:
+            #  Generate the MerkleData
+            self._merkleData = self.generate_merkle_data()
+            # Fill MerkleTree, add data and set the MerkleRoot Value
+            self._merkleTree = MerkleTree()
+            self._merkleRoot = self._merkleTree.add_data(self._merkleData)
+        else:
+            raise Exception("Trying to re-commit DROP %s, cannot overwrite." % self)
 
     @property
     def oid(self):
@@ -1252,7 +1296,7 @@ class RDBMSDrop(AbstractDROP):
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
                 sql = "INSERT into %s (%s) VALUES (%s)" % (
-                self._db_table, ','.join(vals.keys()), ','.join(['{}'] * len(vals)))
+                    self._db_table, ','.join(vals.keys()), ','.join(['{}'] * len(vals)))
                 sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
                 cur.execute(sql, vals)
