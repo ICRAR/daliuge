@@ -34,7 +34,6 @@ from ..ddap_protocol import AppDROPStates
 from ..drop import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-
 logger = logging.getLogger(__name__)
 
 _read_cb_type = ctypes.CFUNCTYPE(
@@ -336,6 +335,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
+
     def initialize(self, **kwargs):
         super(DynlibApp, self).initialize(**kwargs)
         self.ranks = self._getArg(kwargs, 'rank', None)

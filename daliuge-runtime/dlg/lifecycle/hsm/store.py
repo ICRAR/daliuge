@@ -27,17 +27,17 @@ DROPs that use that layer as its storage mechanism.
 @author: rtobar
 '''
 
-from abc import ABCMeta, abstractmethod
 import json
 import logging
 import os
+from abc import ABCMeta, abstractmethod
 
 import psutil
 
 from ...drop import FileDROP, InMemoryDROP, NgasDROP
 
-
 logger = logging.getLogger(__name__)
+
 
 class AbstractStore(object):
     """
@@ -58,7 +58,7 @@ class AbstractStore(object):
         if logger.isEnabledFor(logging.DEBUG):
             avail = self.getAvailableSpace()
             total = self.getTotalSpace()
-            perc  = avail*100./total
+            perc = avail * 100. / total
             logger.debug("Available/Total space on %s: %d/%d (%.2f %%)" % (self, avail, total, perc))
         pass
 
@@ -88,6 +88,7 @@ class AbstractStore(object):
     def _updateSpaces(self):
         pass
 
+
 class FileSystemStore(AbstractStore):
     """
     A filesystem store implementation. It requires a mount point at construction
@@ -95,6 +96,7 @@ class FileSystemStore(AbstractStore):
     device fully. It creates FileDROPs that live directly in the root of
     the filesystem, and monitors the usage of the filesystem.
     """
+
     def __init__(self, mountPoint, savingDir=None):
         super(FileSystemStore, self).__init__()
 
@@ -121,7 +123,7 @@ class FileSystemStore(AbstractStore):
         fragmentSize = stat.f_bsize
 
         totalSpace = blocks * fragmentSize
-        availableSpace=freeBlocks * blockSize
+        availableSpace = freeBlocks * blockSize
         self._setTotalSpace(totalSpace)
         self._setAvailableSpace(availableSpace)
 
@@ -131,6 +133,7 @@ class FileSystemStore(AbstractStore):
 
     def __str__(self):
         return self._mountPoint
+
 
 class MemoryStore(AbstractStore):
     """
@@ -153,11 +156,13 @@ class MemoryStore(AbstractStore):
     def __str__(self):
         return 'Memory'
 
+
 class NgasStore(AbstractStore):
     """
     A store that a given NGAS server as its storage mechanism. It creates
     NgasDROPs and monitors the disks usage of the NGAS system.
     """
+
     def __init__(self, host=None, port=None, initialCheck=True):
 
         try:
@@ -190,7 +195,7 @@ class NgasStore(AbstractStore):
             # col14 = bytes_stored
             totalAvailable += float(disk['col13'])
             totalStored += int(disk['col14'])
-        totalAvailable *= 1024**2 # to bytes
+        totalAvailable *= 1024 ** 2  # to bytes
 
         # TODO: Check if these computations are correct, I'm not sure if the
         #       quantities stored by NGAS should be interpreted like this, or
@@ -199,7 +204,7 @@ class NgasStore(AbstractStore):
         self._setAvailableSpace(totalAvailable)
 
     def createDrop(self, oid, uid, **kwargs):
-        kwargs['ngasSrv']  = self._host
+        kwargs['ngasSrv'] = self._host
         kwargs['ngasPort'] = self._port
         return NgasDROP(oid, uid, **kwargs)
 
@@ -209,6 +214,7 @@ class NgasStore(AbstractStore):
 
     def __str__(self):
         return "NGAS@%s:%d" % (self._host, self._port)
+
 
 class DirectoryStore(AbstractStore):
     """
@@ -234,10 +240,11 @@ class DirectoryStore(AbstractStore):
 
         sizeFile = os.path.join(dirName, self.__SIZE_FILE)
         if not initialize and not os.path.isfile(sizeFile):
-            raise Exception("No %s file under %s, cannot determine available space for DirectoryStore" % (self.__SIZE_FILE, dirName))
+            raise Exception("No %s file under %s, cannot determine available space for DirectoryStore" % (
+            self.__SIZE_FILE, dirName))
         else:
             # Should be used only for testing
-            size = 1024**3
+            size = 1024 ** 3
             logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING', sizeFile, size)
             self.prepareDirectory(dirName, size)
 

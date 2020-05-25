@@ -32,8 +32,8 @@ except:
 
 from ..drop import BarrierAppDROP
 
-
 logger = logging.getLogger(__name__)
+
 
 class SpeadReceiverApp(BarrierAppDROP):
     """
@@ -55,21 +55,21 @@ class SpeadReceiverApp(BarrierAppDROP):
         super(SpeadReceiverApp, self).initialize(**kwargs)
 
         # Basic connectivity parameters
-        self._host             = self._getArg(kwargs, 'host', 'localhost')
-        self._port             = self._getArg(kwargs, 'port', 1111)
-        self._itemId           = self._getArg(kwargs, 'itemId', 0x1000)
+        self._host = self._getArg(kwargs, 'host', 'localhost')
+        self._port = self._getArg(kwargs, 'port', 1111)
+        self._itemId = self._getArg(kwargs, 'itemId', 0x1000)
 
         # Performance tuning
-        self._maxPacketSize    = self._getArg(kwargs, 'maxPacketSize', 9200)
+        self._maxPacketSize = self._getArg(kwargs, 'maxPacketSize', 9200)
         self._socketBufferSize = self._getArg(kwargs, 'socketBufferSize', 8388608)
-        self._maxHeaps         = self._getArg(kwargs, 'maxHeaps', 4)
+        self._maxHeaps = self._getArg(kwargs, 'maxHeaps', 4)
 
         # Memory and thread pool tuning
-        self._mpLower          = self._getArg(kwargs, 'mpLower', 4096)
-        self._mpUpper          = self._getArg(kwargs, 'mpUpper', 4096*8)
-        self._mpMaxFree        = self._getArg(kwargs, 'mpMaxFree', 10)
-        self._mpInitial        = self._getArg(kwargs, 'mpInitial', 1)
-        self._tpThreads        = self._getArg(kwargs, 'tpThreads', 1)
+        self._mpLower = self._getArg(kwargs, 'mpLower', 4096)
+        self._mpUpper = self._getArg(kwargs, 'mpUpper', 4096 * 8)
+        self._mpMaxFree = self._getArg(kwargs, 'mpMaxFree', 10)
+        self._mpInitial = self._getArg(kwargs, 'mpInitial', 1)
+        self._tpThreads = self._getArg(kwargs, 'tpThreads', 1)
 
     def run(self):
 

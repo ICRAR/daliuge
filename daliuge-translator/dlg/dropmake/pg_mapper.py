@@ -61,23 +61,25 @@ But with the following modifications:
 """
 from .pg_generator import GraphException
 
+
 class ResourceCapability(object):
     """
     Currently assume compute nodes are all homogeneous as
     defined in SDP Compute Island
     """
+
     def __init__(self, num_island, num_nodes_per_island,
-                num_cores_per_node, intra_inter_ratio):
+                 num_cores_per_node, intra_inter_ratio):
         """
         intra_inter_ratio:  ratio between intra-island bandwith and inter-island
                             bandwidth (integer and should be >= 1)
         """
         if (intra_inter_ratio < 1):
-            raise GraphException('Invalid intra_inter_ratio {0}'\
-            .format(intra_inter_ratio))
+            raise GraphException('Invalid intra_inter_ratio {0}' \
+                                 .format(intra_inter_ratio))
         self._num_island = num_island
         self._num_nodes_pi = num_nodes_per_island
-        self._num_cores_pn = num_cores_per_node # per compute node
+        self._num_cores_pn = num_cores_per_node  # per compute node
         self._island_ratio = float(intra_inter_ratio)
         self._ttnodes = num_island * num_nodes_per_island
 
@@ -88,7 +90,7 @@ class ResourceCapability(object):
         if (nodeA >= self._ttnodes or nodeB >= self._ttnodes):
             raise GraphException('Invalid node id')
         gap = nodeA // self._num_nodes_pi - nodeB // self._num_nodes_pi
-        return self._island_ratio  if gap == 0 else 1.0
+        return self._island_ratio if gap == 0 else 1.0
 
     def avg_comp_cost(self, drop, comp_node):
         """
@@ -105,6 +107,7 @@ class ResourceCapability(object):
     def avg_comm_cost(self, drop_edge_weight):
         return (drop_edge_weight / 1.0 +
                 drop_edge_weight / self._island_ratio) / 2
+
 
 class ResourceAvailability(ResourceCapability):
     pass

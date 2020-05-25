@@ -23,10 +23,11 @@
 import os
 import uuid
 
-from ..drop import ContainerDROP
-from ..drop import FileDROP
 from dlg.meta import dlg_string_param, dlg_list_param, dlg_component, \
     dlg_batch_input, dlg_batch_output, dlg_streaming_input
+
+from ..drop import ContainerDROP
+from ..drop import FileDROP
 
 
 class FileImportApp(ContainerDROP):
@@ -36,7 +37,8 @@ class FileImportApp(ContainerDROP):
     is created which contains the path to the file. The FileDROP is then added
     to the FileImportApp (ContainerDROP)
     """
-    compontent_meta = dlg_component('FileImportApp', 'Recursively scans a directory (dirname) and checks for files with '
+    compontent_meta = dlg_component('FileImportApp',
+                                    'Recursively scans a directory (dirname) and checks for files with '
                                     'a particular extension (ext). If a match is made then a FileDROP '
                                     'is created which contains the path to the file. The FileDROP is then added '
                                     'to the FileImportApp (ContainerDROP)',
@@ -69,7 +71,7 @@ class FileImportApp(ContainerDROP):
                     path = '{0}/{1}'.format(root, f)
                     fd = FileDROP(str(uuid.uuid1()),
                                   str(uuid.uuid1()),
-                                  filepath = path,
-                                  check_filepath_exists = True)
+                                  filepath=path,
+                                  check_filepath_exists=True)
                     self._children.append(fd)
                     fd._parent = self

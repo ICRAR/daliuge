@@ -5,25 +5,26 @@ frequency ranges and widths
 To run it standalone, change the directories, which are now hardcoded
 """
 
-from sys import argv
-import sys, os, datetime, time
+import datetime
+import os
+import time
 
 if __name__ == '__main__':
-    
+
     dt = datetime.datetime.now()
     timestr = dt.strftime('%Y-%m-%dT%H-%M-%S')
-    
+
     ms_dir = '/scratch/partner1024/chiles/final_products/20131122_941_6_FINAL_PRODUCTS/13B-266.sb27261805.eb28549602.56618.334173599535_calibrated_deepfield.ms'
-    #ms_dir = '/scratch/jason/13B-266.sb28624226.eb28625769.56669.43262586805_calibrated_deepfield_adios.ms'
+    # ms_dir = '/scratch/jason/13B-266.sb28624226.eb28625769.56669.43262586805_calibrated_deepfield_adios.ms'
     log_dir = '/home/cwu/chiles/processing'
-    #log_dir = '/scratch/jason/tmp'
+    # log_dir = '/scratch/jason/tmp'
     output_vis = '/scratch/partner1024/chiles/split_vis/{0}'.format(timestr)
-    #output_vis = '/scratch/jason/tmp/split_vis/{0}'.format(timestr)
+    # output_vis = '/scratch/jason/tmp/split_vis/{0}'.format(timestr)
     log_file = '{0}/{1}_split_time.log'.format(log_dir, timestr)
-    
+
     os.mkdir(output_vis)
     gap = 4
-    
+
     st = time.time()
     for i in range(1):
         mstransform(vis=ms_dir,
@@ -42,12 +43,12 @@ if __name__ == '__main__':
                     nspw=1,
                     createmms=False,
                     datacolumn="data")
-    
+
     tt = time.time() - st
-    f = open(log_file,'w')
+    f = open(log_file, 'w')
     f.write('total split time = {0} seconds'.format(tt))
     f.close()
-    
+
     """
     mstransform(vis=/scratch/partner1024/chiles/final_products//20131025_951_4_FINAL_PRODUCTS/13B-266.sb27248272.eb28094627.56590.41308579861_calibrated_deepfield.ms,
     outputvis=/scratch/partner1024/chiles/split_vis/12345/20131025_951_4/vis_1024~1028,

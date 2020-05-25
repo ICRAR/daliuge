@@ -22,6 +22,7 @@
 import os
 import subprocess
 
+
 def get_git_version():
     out = subprocess.check_output(["git", "rev-parse", "HEAD"])
     return out.strip().decode("ascii")
@@ -39,6 +40,7 @@ def get_version_info(version, is_release):
 
 def version_as_string(version_tuple):
     return "%d.%d.%d" % version_tuple
+
 
 def write_version_info(version_tuple, version_file, is_release):
     tpl = """

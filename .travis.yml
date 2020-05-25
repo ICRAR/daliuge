@@ -43,28 +43,28 @@ matrix:
 
 # We want to use docker during the tests
 services:
- - docker
+  - docker
 
 # Try to speed up builds by caching our dependencies
 cache: pip
 
 before_install:
- - pip install -U coveralls pytest pytest-cov
- - pip install -U setuptools pip wheel
+  - pip install -U coveralls pytest pytest-cov
+  - pip install -U setuptools pip wheel
 
 install:
- - pip install -e daliuge-common/
- - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
- - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
+  - pip install -e daliuge-common/
+  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
+  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
 
 # run the tests, making sure subprocesses generate coverage information
 script:
- - COVFILES=
- - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
- - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
- - coverage combine $COVFILES
- - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
+  - COVFILES=
+  - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
+  - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
+  - coverage combine $COVFILES
+  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
- - coveralls
+  - coveralls

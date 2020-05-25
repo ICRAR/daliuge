@@ -32,9 +32,10 @@ https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache\
 /spark/scheduler/DAGScheduler.scala
 """
 
+
 class Stage(object):
     def __init__(self, id):
-        self._id = id #normally this is the group construct key
+        self._id = id  # normally this is the group construct key
         self._lg_nodes = []
 
     def __hash__(self):
@@ -42,6 +43,7 @@ class Stage(object):
 
     def add_node(lgnode):
         self._lg_nodes.append(lgnode)
+
 
 def parse_node(curr_node, done_dict, stg_set):
     node_list = curr_node.outputs
@@ -60,6 +62,7 @@ def parse_node(curr_node, done_dict, stg_set):
                 done_dict[n.id] = done_dict[curr_node.id]
         parse_node(n, done_dict, stg_set)
 
+
 def produce_stages(lg):
     """
     output a list of stages sorted by the scheduling order
@@ -68,4 +71,4 @@ def produce_stages(lg):
     lgn_list = lg._lgn_list
     dag_roots = [x for x in lgn_list if x.is_dag_root()]
     done_dict = dict()
-    #for n in dag_roots:
+    # for n in dag_roots:

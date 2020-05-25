@@ -56,8 +56,8 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
 
 
 _param_types = {'min_goal': int, 'ptype': int, 'max_load_imb': int,
-               'max_cpu': int, 'time_greedy': float, 'deadline': int,
-               'topk': int, 'swarm_size': int, 'max_mem': int}
+                'max_cpu': int, 'time_greedy': float, 'deadline': int,
+                'topk': int, 'swarm_size': int, 'max_mem': int}
 
 
 def parse_partition_algo_params(algo_params):
@@ -72,13 +72,12 @@ def parse_partition_algo_params(algo_params):
 
 
 def partition(pgt, opts):
-
     from ..dropmake import pg_generator
 
     algo_params = parse_partition_algo_params(opts.algo_params or [])
     pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
-                                 num_islands=opts.islands, partition_label='partition',
-                                 **algo_params)
+                                num_islands=opts.islands, partition_label='partition',
+                                **algo_params)
     logger.info("PG spec is calculated!")
     return pg
 
@@ -104,6 +103,7 @@ def _setup_output(opts):
     def dump(obj):
         with _open_o(opts.output) as f:
             json.dump(obj, f, indent=None if opts.format is None else 2)
+
     return dump
 
 
@@ -151,9 +151,12 @@ def _add_unroll_options(parser):
     parser.add_option('-p', '--oid-prefix', action="store", dest='oid_prefix', type="string",
                       help='Prefix to use for generated OIDs', default='1')
     parser.add_option("-z", "--zerorun", action="store_true",
-                      dest="zerorun", help="Generate a Physical Graph Template that takes no time to run", default=False)
+                      dest="zerorun", help="Generate a Physical Graph Template that takes no time to run",
+                      default=False)
     parser.add_option("--app", action="store", type="int",
-                      dest="app", help="Force an app to be used in the Physical Graph. 0=Don't force, 1=SleepApp, 2=SleepAndCopy", default=0)
+                      dest="app",
+                      help="Force an app to be used in the Physical Graph. 0=Don't force, 1=SleepApp, 2=SleepAndCopy",
+                      default=0)
     apps = (
         None,
         'dlg.apps.simple.SleepApp',
@@ -163,7 +166,6 @@ def _add_unroll_options(parser):
 
 
 def dlg_unroll(parser, args):
-
     # Unroll Logical Graph
     tool.add_logging_options(parser)
     _add_output_options(parser)
@@ -176,7 +178,6 @@ def dlg_unroll(parser, args):
 
 
 def _add_partition_options(parser):
-
     from ..dropmake import pg_generator
     parser.add_option("-N", "--partitions", action="store", type="int",
                       dest="partitions", help="Number of partitions to generate", default=1)
@@ -189,7 +190,6 @@ def _add_partition_options(parser):
 
 
 def dlg_partition(parser, args):
-
     tool.add_logging_options(parser)
     _add_output_options(parser)
     _add_partition_options(parser)
@@ -206,7 +206,6 @@ def dlg_partition(parser, args):
 
 
 def dlg_unroll_and_partition(parser, args):
-
     tool.add_logging_options(parser)
     _add_output_options(parser)
     apps = _add_unroll_options(parser)
@@ -220,7 +219,6 @@ def dlg_unroll_and_partition(parser, args):
 
 
 def dlg_map(parser, args):
-
     from .. import constants
 
     tool.add_logging_options(parser)
@@ -228,11 +226,13 @@ def dlg_map(parser, args):
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
-                      dest='port', help='The port we connect to to deploy the graph', default=constants.ISLAND_DEFAULT_REST_PORT)
+                      dest='port', help='The port we connect to to deploy the graph',
+                      default=constants.ISLAND_DEFAULT_REST_PORT)
     parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
                       help='Path to the Physical Graph to submit (default: stdin)', default='-')
     parser.add_option("-N", "--nodes", action="store",
-                      dest="nodes", help="The nodes where the Physical Graph will be distributed, comma-separated", default=None)
+                      dest="nodes", help="The nodes where the Physical Graph will be distributed, comma-separated",
+                      default=None)
     parser.add_option("-i", "--islands", action="store", type="int",
                       dest="islands", help="Number of islands to use during the partitioning", default=1)
     (opts, args) = parser.parse_args(args)
@@ -259,7 +259,6 @@ def dlg_map(parser, args):
 
 
 def dlg_submit(parser, args):
-
     from ..manager import constants
 
     # Submit Physical Graph
@@ -267,7 +266,8 @@ def dlg_submit(parser, args):
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
-                      dest='port', help='The port we connect to to deploy the graph', default=constants.ISLAND_DEFAULT_REST_PORT)
+                      dest='port', help='The port we connect to to deploy the graph',
+                      default=constants.ISLAND_DEFAULT_REST_PORT)
     parser.add_option('-P', '--physical-graph', action='store', dest='pg_path', type='string',
                       help='Path to the Physical Graph to submit (default: stdin)', default='-')
     parser.add_option('-s', '--session-id', action='store', dest='session_id', type='string',
@@ -283,6 +283,7 @@ def dlg_submit(parser, args):
 
     with _open_i(opts.pg_path) as f:
         submit(json.load(f), opts)
+
 
 def register_commands():
     tool.cmdwrap('lgweb', 'A Web server for the Logical Graph Editor', 'dlg.dropmake.web.lg_web:run')

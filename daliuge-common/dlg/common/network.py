@@ -19,14 +19,14 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import contextlib
 import errno
 import logging
 import socket
 import time
-import contextlib
-
 
 logger = logging.getLogger(__name__)
+
 
 def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     """
@@ -127,11 +127,13 @@ def portIsClosed(host, port, timeout):
     """
     return check_port(host, port, timeout=timeout, checking_open=False)
 
+
 def portIsOpen(host, port, timeout=0):
     """
     Checks if a given ``host``/``port`` is open, with a given ``timeout``.
     """
     return check_port(host, port, timeout=timeout, checking_open=True)
+
 
 def connect_to(host, port, timeout=None):
     """
@@ -143,6 +145,7 @@ def connect_to(host, port, timeout=None):
     if s is False:
         raise socket.timeout()
     return s
+
 
 def write_to(host, port, data, timeout=None):
     """

@@ -34,7 +34,6 @@ from ..exceptions import InvalidRelationshipException
 from ..meta import dlg_string_param, dlg_int_param, dlg_bool_param, \
     dlg_component, dlg_batch_output, dlg_batch_input, dlg_streaming_input
 
-
 logger = logging.getLogger(__name__)
 
 
