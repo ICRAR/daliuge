@@ -22,7 +22,6 @@
 """Backwards compatibility for constants"""
 from .. import constants
 
-
 DEFAULT_PORTS = constants.DEFAULT_PORTS
 NODE_DEFAULT_REST_PORT = constants.NODE_DEFAULT_REST_PORT
 ISLAND_DEFAULT_REST_PORT = constants.ISLAND_DEFAULT_REST_PORT

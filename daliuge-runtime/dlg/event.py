@@ -23,8 +23,8 @@
 import collections
 import logging
 
-
 logger = logging.getLogger(__name__)
+
 
 class Event(object):
     """
@@ -41,6 +41,7 @@ class Event(object):
 
     def __repr__(self, *args, **kwargs):
         return '<Event %r>' % (self.__dict__)
+
 
 class EventFirer(object):
     """

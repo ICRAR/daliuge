@@ -30,22 +30,22 @@ from . import constants
 from .client import NodeManagerClient
 from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from .drop_manager import DROPManager
-from .. import remote, graph_loader
+from .. import graph_loader
 from ..ddap_protocol import DROPRel
 from ..exceptions import InvalidGraphException, DaliugeException, \
     SubManagerException
 from ..utils import portIsOpen
 
-
 logger = logging.getLogger(__name__)
+
 
 def uid_for_drop(dropSpec):
     if 'uid' in dropSpec:
         return dropSpec['uid']
     return dropSpec['oid']
 
-def sanitize_relations(interDMRelations, graph):
 
+def sanitize_relations(interDMRelations, graph):
     # TODO: Big change required to remove this hack here
     #
     # Values in the interDMRelations array use OIDs to identify drops.
@@ -72,11 +72,13 @@ def sanitize_relations(interDMRelations, graph):
         newDMRelations.append(new_rel)
     interDMRelations[:] = newDMRelations
 
+
 def group_by_node(uids, graph):
     uids_by_node = collections.defaultdict(list)
     for uid in uids:
         uids_by_node[graph[uid]['node']].append(uid)
     return uids_by_node
+
 
 class CompositeManager(DROPManager):
     """
@@ -123,10 +125,10 @@ class CompositeManager(DROPManager):
         self._dmHosts = dmHosts
         self._graph = {}
         self._drop_rels = {}
-        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
+        self._sessionIds = []  # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmCheckTimeout = dmCheckTimeout
-        n_threads = max(1,min(len(dmHosts),20))
+        n_threads = max(1, min(len(dmHosts), 20))
         self._tp = multiprocessing.pool.ThreadPool(n_threads)
 
         # The list of bottom-level nodes that are covered by this manager
@@ -333,7 +335,8 @@ class CompositeManager(DROPManager):
         # Create the individual graphs on each DM now that they are correctly
         # separated.
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
-        self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=perPartition.items())
+        self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs",
+                       iterable=perPartition.items())
         logger.info('Successfully added individual graphSpec of session %s to each DM', sessionId)
 
     def _deploySession(self, dm, host, sessionId):
@@ -413,6 +416,7 @@ class CompositeManager(DROPManager):
         self.replicate(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
         return sum(allCounts)
 
+
 class DataIslandManager(CompositeManager):
     """
     The DataIslandManager, which manages a number of NodeManagers.
@@ -433,6 +437,7 @@ class DataIslandManager(CompositeManager):
     def add_node(self, node):
         CompositeManager.add_node(self, node)
         self._dmHosts.append(node)
+
 
 class MasterManager(CompositeManager):
     """

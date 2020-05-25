@@ -33,7 +33,7 @@ class TestTool(ManagerStarter, unittest.TestCase):
         """Checks that all dlg commands have a help"""
         for cmd in tool.commands:
             p = tool.start_process(cmd, ['-h'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
             common.wait_or_kill(p, timeout=10)
             self.assertEqual(0, p.returncode, 'cmd: %s, out: %s' % (

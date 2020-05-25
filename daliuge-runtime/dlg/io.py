@@ -19,21 +19,22 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import abstractmethod, ABCMeta
 import logging
 import os
+from abc import abstractmethod, ABCMeta
 
-from six import BytesIO
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
+from six import BytesIO
 
 from . import ngaslite
 from . import shoreClient
 
-
 logger = logging.getLogger(__name__)
+
 
 class OpenMode:
     OPEN_WRITE, OPEN_READ = range(2)
+
 
 class DataIO(object):
     """
@@ -115,16 +116,21 @@ class DataIO(object):
         """
 
     @abstractmethod
-    def _open(self, **kwargs): pass
+    def _open(self, **kwargs):
+        pass
 
     @abstractmethod
-    def _read(self, count, **kwargs): pass
+    def _read(self, count, **kwargs):
+        pass
 
     @abstractmethod
-    def _write(self, data, **kwargs): pass
+    def _write(self, data, **kwargs):
+        pass
 
     @abstractmethod
-    def _close(self, **kwargs): pass
+    def _close(self, **kwargs):
+        pass
+
 
 class NullIO(DataIO):
     """
@@ -149,6 +155,7 @@ class NullIO(DataIO):
     def delete(self):
         pass
 
+
 class ErrorIO(DataIO):
     """
     An DataIO method that throws exceptions if any of its methods is invoked
@@ -171,6 +178,7 @@ class ErrorIO(DataIO):
 
     def delete(self):
         raise NotImplementedError()
+
 
 class MemoryIO(DataIO):
     """
@@ -206,6 +214,7 @@ class MemoryIO(DataIO):
     def delete(self):
         self._buf.close()
 
+
 class FileIO(DataIO):
 
     def __init__(self, filename, **kwargs):
@@ -236,9 +245,10 @@ class FileIO(DataIO):
     def delete(self):
         os.unlink(self._fnm)
 
+
 class ShoreIO(DataIO):
 
-    def __init__(self, doid, column, row, rows = 1, address = None, **kwargs):
+    def __init__(self, doid, column, row, rows=1, address=None, **kwargs):
         super(ShoreIO, self).__init__()
         self._doid = doid
         self._column = column
@@ -276,8 +286,6 @@ class ShoreIO(DataIO):
         pass
 
 
-
-
 class NgasIO(DataIO):
     '''
     A DROP whose data is finally stored into NGAS. Since NGAS doesn't
@@ -285,7 +293,7 @@ class NgasIO(DataIO):
     in a file on the local filesystem and then move it to the NGAS destination
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
 
         # Check that we actually have the NGAMS client libraries
         try:
@@ -295,12 +303,12 @@ class NgasIO(DataIO):
             raise
 
         super(NgasIO, self).__init__()
-        self._ngasSrv            = hostname
-        self._ngasPort           = port
+        self._ngasSrv = hostname
+        self._ngasPort = port
         self._ngasConnectTimeout = ngasConnectTimeout
-        self._ngasTimeout        = ngasTimeout
-        self._fileId             = fileId
-        self._length             = length
+        self._ngasTimeout = ngasTimeout
+        self._fileId = fileId
+        self._length = length
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -320,10 +328,10 @@ class NgasIO(DataIO):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
             reply, msg, _, _ = client._httpPost(
-                     client.getHost(), client.getPort(), 'QARCHIVE',
-                     'application/octet-stream', dataRef=self._buf,
-                     pars=[['filename',self._fileId]], dataSource='BUFFER',
-                     dataSize=self._writtenDataSize)
+                client.getHost(), client.getPort(), 'QARCHIVE',
+                'application/octet-stream', dataRef=self._buf,
+                pars=[['filename', self._fileId]], dataSource='BUFFER',
+                dataSize=self._writtenDataSize)
             self._buf = None
             if reply != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
@@ -349,7 +357,8 @@ class NgasIO(DataIO):
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
     def delete(self):
-        pass # We never delete stuff from NGAS
+        pass  # We never delete stuff from NGAS
+
 
 class NgasLiteIO(DataIO):
     '''
@@ -361,14 +370,14 @@ class NgasLiteIO(DataIO):
     that this class will throw an error if its `exists` method is invoked.
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
         super(NgasLiteIO, self).__init__()
-        self._ngasSrv            = hostname
-        self._ngasPort           = port
+        self._ngasSrv = hostname
+        self._ngasPort = port
         self._ngasConnectTimeout = ngasConnectTimeout
-        self._ngasTimeout        = ngasTimeout
-        self._fileId             = fileId
-        self._length             = length
+        self._ngasTimeout = ngasTimeout
+        self._fileId = fileId
+        self._length = length
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -376,7 +385,8 @@ class NgasLiteIO(DataIO):
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
-            return ngaslite.beingArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, length=self._length)
+            return ngaslite.beingArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout,
+                                         length=self._length)
         return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
 
     def _close(self, **kwargs):
@@ -399,7 +409,8 @@ class NgasLiteIO(DataIO):
         raise NotImplementedError("This method is not supported by this class")
 
     def delete(self):
-        pass # We never delete stuff from NGAS
+        pass  # We never delete stuff from NGAS
+
 
 def IOForURL(url):
     """
@@ -412,7 +423,7 @@ def IOForURL(url):
         hostname = url.netloc
         filename = url.path
         if hostname == 'localhost' or hostname == '127.0.0.1' or \
-           hostname == os.uname()[1]:
+                hostname == os.uname()[1]:
             io = FileIO(filename)
     elif url.scheme == 'null':
         io = NullIO()

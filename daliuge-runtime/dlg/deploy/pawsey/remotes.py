@@ -27,8 +27,8 @@ import time
 
 from . import slurm_utils
 
-
 logger = logging.getLogger(__name__)
+
 
 class Remote(object):
 
@@ -172,9 +172,9 @@ class DALiuGERemote(FilesystemBasedRemote):
         rank = ips.index(my_ip)
         self._set_world(rank, len(ips), ips)
 
+
 class DALiuGEHybridRemote(DALiuGERemote):
     """Like DALiuGERemote, but initializes MPI as well"""
 
     def __init__(self, options, my_ip):
-        from mpi4py import MPI  # @UnusedImport
         super(DALiuGEHybridRemote, self).__init__(options, my_ip)

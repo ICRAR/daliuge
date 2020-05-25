@@ -38,8 +38,8 @@ import six
 
 from . import common
 
-
 logger = logging.getLogger(__name__)
+
 
 def timed_import(module_name):
     """Imports `module_name` and log how long it took to import it"""
@@ -58,17 +58,19 @@ def get_local_ip_addr():
     if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
     if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
     iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] \
-                    if 'addr' in s and not s['addr'].startswith('127.')]
+                   if 'addr' in s and not s['addr'].startswith('127.')]
     return iface_addrs
+
 
 def get_all_ipv4_addresses():
     """Get a list of all IPv4 interfaces found in this computer"""
     proto = netifaces.AF_INET
     return [addr['addr']
-        for iface in netifaces.interfaces()
-        for iface_proto, addrs in netifaces.ifaddresses(iface).items() if proto == iface_proto
-        for addr in addrs if 'addr' in addr
-    ]
+            for iface in netifaces.interfaces()
+            for iface_proto, addrs in netifaces.ifaddresses(iface).items() if proto == iface_proto
+            for addr in addrs if 'addr' in addr
+            ]
+
 
 def register_service(zc, service_type_name, service_name, ipaddr, port, protocol='tcp'):
     """
@@ -92,11 +94,13 @@ def register_service(zc, service_type_name, service_name, ipaddr, port, protocol
     zc.register_service(info)
     return info
 
+
 def deregister_service(zc, info):
     """
     ZeroConf: Deregister service
     """
     zc.unregister_service(info)
+
 
 def browse_service(zc, service_type_name, protocol, callback):
     """
@@ -115,6 +119,7 @@ def browse_service(zc, service_type_name, protocol, callback):
     browser = ServiceBrowser(zc, stn, handlers=[callback])
     return browser
 
+
 def zmq_safe(host_or_addr):
     """Converts `host_or_addr` to a format that is safe for ZMQ to use"""
 
@@ -124,6 +129,7 @@ def zmq_safe(host_or_addr):
 
     # Return otherwise always an IP address
     return socket.gethostbyname(host_or_addr)
+
 
 def to_externally_contactable_host(host, prefer_local=False):
     """
@@ -153,6 +159,7 @@ def to_externally_contactable_host(host, prefer_local=False):
     # All addresses were loopbacks! let's return the last one
     raise a
 
+
 def getDlgDir():
     """
     Returns the root of the directory structure used by the DALiuGE framework at
@@ -162,6 +169,7 @@ def getDlgDir():
         return os.environ['DLG_ROOT']
     return os.path.join(os.path.expanduser("~"), ".dlg")
 
+
 def getDlgPidDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
@@ -170,6 +178,7 @@ def getDlgPidDir():
     """
     return os.path.join(getDlgDir(), 'pid')
 
+
 def getDlgLogsDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
@@ -177,6 +186,7 @@ def getDlgLogsDir():
     currently doesn't exist
     """
     return os.path.join(getDlgDir(), 'logs')
+
 
 def createDirIfMissing(path):
     """
@@ -188,9 +198,11 @@ def createDirIfMissing(path):
         if e.errno != errno.EEXIST:
             raise
 
+
 def isabs(path):
     """Like os.path.isabs, but handles None"""
     return path and os.path.isabs(path)
+
 
 def fname_to_pipname(fname):
     """
@@ -202,16 +214,18 @@ def fname_to_pipname(fname):
         fname = fname[:-5]
     return fname
 
+
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
     Escapes single and double quotes in a string. Useful to include commands
     in a shell invocation or similar.
     """
     if singleQuotes:
-        s = s.replace("'","'\\''")
+        s = s.replace("'", "'\\''")
     if doubleQuotes:
-        s = s.replace('"','\\"')
+        s = s.replace('"', '\\"')
     return s
+
 
 def prepare_sql(sql, paramstyle, data=()):
     """
@@ -241,17 +255,23 @@ def prepare_sql(sql, paramstyle, data=()):
 
     logger.debug('Generating %d markers with paramstyle = %s', n, paramstyle)
 
-    if   paramstyle == 'qmark':    markers = ['?'             for i in range(n)]
-    elif paramstyle == 'numeric':  markers = [':%d'%(i)       for i in range(n)]
-    elif paramstyle == 'named':    markers = [':n%d'%(i)      for i in range(n)]
-    elif paramstyle == 'format':   markers = [':%s'           for i in range(n)]
-    elif paramstyle == 'pyformat': markers = [':%%(n%d)s'%(i) for i in range(n)]
-    else: raise Exception('Unknown paramstyle: %s' % (paramstyle))
+    if paramstyle == 'qmark':
+        markers = ['?' for i in range(n)]
+    elif paramstyle == 'numeric':
+        markers = [':%d' % (i) for i in range(n)]
+    elif paramstyle == 'named':
+        markers = [':n%d' % (i) for i in range(n)]
+    elif paramstyle == 'format':
+        markers = [':%s' for i in range(n)]
+    elif paramstyle == 'pyformat':
+        markers = [':%%(n%d)s' % (i) for i in range(n)]
+    else:
+        raise Exception('Unknown paramstyle: %s' % (paramstyle))
 
     sql = sql.format(*markers)
 
     if paramstyle in ['format', 'pyformat']:
-        data = {'n%d'%(i): d for i,d in enumerate(data)}
+        data = {'n%d' % (i): d for i, d in enumerate(data)}
 
     return (sql, data)
 
@@ -264,6 +284,7 @@ def object_tracking(name):
     """
 
     current_object = threading.local()
+
     def track_current_drop(f):
 
         @functools.wraps(f)
@@ -278,10 +299,12 @@ def object_tracking(name):
                 return f(*args, **kwargs)
             finally:
                 setattr(current_object, name, previous)
+
         return _wrapper
 
     track_current_drop.tlocal = current_object
     return track_current_drop
+
 
 def get_symbol(name):
     """Gets the global symbol ``name``, which is an "absolute path" to a python
@@ -289,6 +312,7 @@ def get_symbol(name):
     parts = name.split('.')
     module = importlib.import_module('.'.join(parts[:-1]))
     return getattr(module, parts[-1])
+
 
 class ZlibUncompressedStream(object):
     """
@@ -386,6 +410,7 @@ class ZlibUncompressedStream(object):
                 break
 
         return b''.join(response)
+
 
 # Backwards compatibility
 terminate_or_kill = common.terminate_or_kill

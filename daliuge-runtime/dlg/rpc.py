@@ -31,22 +31,24 @@ import importlib
 import logging
 import os
 import threading
-import time
 
 from six.moves import queue as Queue  # @UnresolvedImport
 
 from . import utils
 from .exceptions import DaliugeException
 
-
 logger = logging.getLogger(__name__)
+
 
 class RPCObject(object):
     """Base class for all RCP clients and server"""
+
     def start(self):
         self.rpc_running = True
+
     def shutdown(self):
         self.rpc_running = False
+
 
 class RPCClientBase(RPCObject):
     """Base class for all RPC clients"""
@@ -62,12 +64,13 @@ class RPCClientBase(RPCObject):
         class remote_method(object):
             def __del__(self):
                 closer()
+
             def __call__(self, *args):
                 return client.call_drop(session_id, uid, name, *args)
 
         # Shortcut to avoid extra calls
         known_methods = ()
-        #known_methods = ('open', 'read', 'write', 'close')
+        # known_methods = ('open', 'read', 'write', 'close')
         closeit = False
         try:
             if name in known_methods or client.has_method(session_id, uid, name):
@@ -78,8 +81,10 @@ class RPCClientBase(RPCObject):
             if closeit:
                 closer()
 
+
 class RPCServerBase(RPCObject):
     """Base class for all RPC server"""
+
     def __init__(self, host, port):
         self._rpc_host = host
         self._rpc_port = port
@@ -130,10 +135,13 @@ class ZeroRPCClient(RPCClientBase):
                     if x.is_exception:
                         raise x.value
                     return x.value
+
                 def call_drop(self, session_id, uid, name, *args):
                     return self.__make_call('call_drop', session_id, uid, name, *args)
+
                 def get_drop_property(self, session_id, uid, name):
                     return self.__make_call('get_drop_property', session_id, uid, name)
+
                 def has_method(self, session_id, uid, name):
                     return self.__make_call('has_method', session_id, uid, name)
 
@@ -150,7 +158,7 @@ class ZeroRPCClient(RPCClientBase):
         # and generates the same channel IDs, confusing the server
         import zerorpc
         ctx = zerorpc.Context()
-        client = zerorpc.Client("tcp://%s:%d" % (host,port), context=ctx)
+        client = zerorpc.Client("tcp://%s:%d" % (host, port), context=ctx)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)
         gevent.joinall([forwarder])
@@ -188,6 +196,7 @@ class ZeroRPCClient(RPCClientBase):
         # No closing function since clients are long-lived
         return client, lambda: None
 
+
 class ZeroRPCServer(RPCServerBase):
     """ZeroRPC server support"""
 
@@ -202,7 +211,8 @@ class ZeroRPCServer(RPCServerBase):
         # Starts the single-threaded ZeroRPC server for RPC requests
         timeout = 30
         server_started = threading.Event()
-        self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server", args=(self._rpc_host, self._rpc_port, server_started))
+        self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server",
+                                                  args=(self._rpc_host, self._rpc_port, server_started))
         self._zrpcserverthread.start()
         if not server_started.wait(timeout):
             raise Exception("ZeroRPC server didn't start within %d seconds" % (timeout,))
@@ -240,7 +250,7 @@ class ZeroRPCServer(RPCServerBase):
         self._zrpcserverthread.join()
 
 
-class RPyCClient(RPCClientBase): # pragma: no cover
+class RPyCClient(RPCClientBase):  # pragma: no cover
     """RPyC client support"""
 
     def get_rpc_client(self, hostname, port):
@@ -248,7 +258,8 @@ class RPyCClient(RPCClientBase): # pragma: no cover
         client = rpyc.connect(hostname, port)
         return client.root, client.close
 
-class RPyCServer(RPCServerBase): # pragma: no cover
+
+class RPyCServer(RPCServerBase):  # pragma: no cover
     """RPyC server support"""
 
     def start(self):
@@ -258,15 +269,18 @@ class RPyCServer(RPCServerBase): # pragma: no cover
         from rpyc.utils.server import ThreadedServer
 
         nm = self
+
         class NMService(rpyc.Service):
             def exposed_call_drop(self, session_id, uid, name, *args):
                 return nm.call_drop(session_id, uid, name, *args)
+
             def exposed_get_drop_property(self, session_id, uid, name):
                 return nm.get_drop_attribute(session_id, uid, name)
+
             def exposed_has_method(self, session_id, uid, name):
                 return nm.has_method(session_id, uid, name)
 
-        self._rpycserver = ThreadedServer(NMService, hostname=self._rpc_host, port=self._rpc_port) # ThreadPoolServer
+        self._rpycserver = ThreadedServer(NMService, hostname=self._rpc_host, port=self._rpc_port)  # ThreadPoolServer
 
         # Starts the single-threaded RPyC server for RPC requests
         self._rpycserverthread = threading.Thread(target=self._rpycserver.start, name="RPyC server")
@@ -278,7 +292,8 @@ class RPyCServer(RPCServerBase): # pragma: no cover
         self._rpycserver.close()
         self._rpycserverthread.join()
 
-class PyroRPCClient(RPCClientBase): # pragma: no cover
+
+class PyroRPCClient(RPCClientBase):  # pragma: no cover
     """Pyro client support"""
 
     def get_rpc_client(self, hostname, port):
@@ -287,7 +302,8 @@ class PyroRPCClient(RPCClientBase): # pragma: no cover
         proxy = Pyro4.Proxy(uri)
         return proxy, proxy._pyroRelease
 
-class PyroRPCServer(RPCServerBase): # pragma: no cover
+
+class PyroRPCServer(RPCServerBase):  # pragma: no cover
     """Base Pyro server support. Subclasses support different server types"""
 
     def start(self):
@@ -346,7 +362,7 @@ class PyroRPCServer(RPCServerBase): # pragma: no cover
             from .event import Event
 
             def __pyro4_class_to_dict(o):
-                d = {'__class__' : o.__class__.__name__, '__module__': o.__class__.__module__}
+                d = {'__class__': o.__class__.__name__, '__module__': o.__class__.__module__}
                 d.update(o.__dict__)
                 return d
 
@@ -368,7 +384,7 @@ class PyroRPCServer(RPCServerBase): # pragma: no cover
             Pyro4.config.SERIALIZERS_ACCEPTED = ['pickle']
 
         # We could also do one or the other depending on the major version of python
-        #setup_serpent()
+        # setup_serpent()
         setup_pickle()
 
         # In Pyro4 >= 4.46 the default for this option changed to True, which would
@@ -381,7 +397,8 @@ class PyroRPCServer(RPCServerBase): # pragma: no cover
         # than enough
         Pyro4.config.COMMTIMEOUT = 60
 
-class MultiplexPyroRPCServer(PyroRPCServer): # pragma: no cover
+
+class MultiplexPyroRPCServer(PyroRPCServer):  # pragma: no cover
     """Pyro server support with mutliplex server type"""
 
     def setup_pyro(self):
@@ -389,7 +406,8 @@ class MultiplexPyroRPCServer(PyroRPCServer): # pragma: no cover
         import Pyro4
         Pyro4.config.SERVERTYPE = 'multiplex'
 
-class ThreadedPyroRPCServer(PyroRPCServer): # pragma: no cover
+
+class ThreadedPyroRPCServer(PyroRPCServer):  # pragma: no cover
     """Pyro server support with multithreaded server type"""
 
     def setup_pyro(self):
@@ -400,18 +418,21 @@ class ThreadedPyroRPCServer(PyroRPCServer): # pragma: no cover
         if hasattr(Pyro4.config, 'THREADPOOL_ALLOW_QUEUE'):
             Pyro4.config.THREADPOOL_ALLOW_QUEUE = False
 
+
 # Check which rpc backend should be exposed
 rpc_lib = os.environ.get('DALIUGE_RPC', 'zerorpc')
-if rpc_lib in ('pyro', 'pyro-multiplex'): # pragma: no cover
+if rpc_lib in ('pyro', 'pyro-multiplex'):  # pragma: no cover
     RPCServer, RPCClient = MultiplexPyroRPCServer, PyroRPCClient
-elif rpc_lib == 'pyro-threaded': # pragma: no cover
+elif rpc_lib == 'pyro-threaded':  # pragma: no cover
     RPCServer, RPCClient = ThreadedPyroRPCServer, PyroRPCClient
 elif rpc_lib == 'zerorpc':
     RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
-elif rpc_lib == 'rpyc': # pragma: no cover
+elif rpc_lib == 'rpyc':  # pragma: no cover
     RPCServer, RPCClient = RPyCServer, RPyCClient
-else: # pragma: no cover
-    raise DaliugeException("Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc, rpyc" % (rpc_lib,))
+else:  # pragma: no cover
+    raise DaliugeException(
+        "Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc, rpyc" % (rpc_lib,))
+
 
 class DropProxy(object):
     """

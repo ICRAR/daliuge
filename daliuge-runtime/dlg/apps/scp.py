@@ -19,11 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from ..remote import copyTo, copyFrom
 from ..drop import BarrierAppDROP, ShoreDROP, NgasDROP, InMemoryDROP, \
     NullDROP, RDBMSDrop, ContainerDROP
 from ..meta import dlg_string_param, dlg_component, dlg_batch_input, \
     dlg_batch_output, dlg_streaming_input
+from ..remote import copyTo, copyFrom
 
 
 class ScpApp(BarrierAppDROP):
@@ -41,7 +41,7 @@ class ScpApp(BarrierAppDROP):
     two I/O DROPs.
     """
     compontent_meta = dlg_component('ScpApp', 'A BarrierAppDROP that copies the content of its single '
-                                    'input onto its single output via SSHs scp protocol.',
+                                              'input onto its single output via SSHs scp protocol.',
                                     [dlg_batch_input('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,
                                                                   NullDROP, RDBMSDrop, ContainerDROP])],
                                     [dlg_batch_output('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,

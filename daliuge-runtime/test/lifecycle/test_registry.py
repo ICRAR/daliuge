@@ -26,8 +26,8 @@ import unittest
 from dlg.drop import InMemoryDROP
 from dlg.lifecycle.registry import RDBMSRegistry
 
-
 DBFILE = 'testing_dlm.db'
+
 
 class TestRDBMSRegistry(unittest.TestCase):
 
@@ -36,8 +36,10 @@ class TestRDBMSRegistry(unittest.TestCase):
         conn = sqlite3.connect(DBFILE)  # @UndefinedVariable
         cur = conn.cursor()
         cur.execute('CREATE TABLE dlg_drop(oid varchar(64) PRIMARY KEY, phase integer)');
-        cur.execute('CREATE TABLE dlg_dropinstance(uid varchar(64) PRIMARY KEY, oid varchar(64), dataRef varchar(128))');
-        cur.execute('CREATE TABLE dlg_dropaccesstime(oid varchar(64), accessTime TIMESTAMP, PRIMARY KEY (oid, accessTime))');
+        cur.execute(
+            'CREATE TABLE dlg_dropinstance(uid varchar(64) PRIMARY KEY, oid varchar(64), dataRef varchar(128))');
+        cur.execute(
+            'CREATE TABLE dlg_dropaccesstime(oid varchar(64), accessTime TIMESTAMP, PRIMARY KEY (oid, accessTime))');
         conn.close()
 
     def tearDown(self):
@@ -58,7 +60,6 @@ class TestRDBMSRegistry(unittest.TestCase):
         conn.close()
 
     def test_addDropInstances(self):
-
         a1 = InMemoryDROP('a', 'a1')
         a2 = InMemoryDROP('a', 'a2')
         registry = RDBMSRegistry('sqlite3', DBFILE)
@@ -90,7 +91,6 @@ class TestRDBMSRegistry(unittest.TestCase):
         conn.close()
 
     def test_dropAccess(self):
-
         a1 = InMemoryDROP('a', 'a1')
         registry = RDBMSRegistry('sqlite3', DBFILE)
         registry.addDrop(a1)

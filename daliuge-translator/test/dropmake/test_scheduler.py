@@ -24,32 +24,32 @@ import unittest
 
 import pkg_resources
 import psutil
-
 from dlg.dropmake.pg_generator import LG
 from dlg.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
-Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
-
+                                    Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
 
 if 'DALIUGE_TESTS_RUNLONGTESTS' in os.environ:
     skip_long_tests = not bool(os.environ['DALIUGE_TESTS_RUNLONGTESTS'])
 else:
     if ((psutil.Process().username().lower() in ('chen', 'cwu')) and
-    bool(int(os.environ.get('TEST_PSO_SCHEDULER', 0)))):
+            bool(int(os.environ.get('TEST_PSO_SCHEDULER', 0)))):
         skip_long_tests = False
     else:
         skip_long_tests = True
 
+
 def get_lg_fname(lg_name):
     return pkg_resources.resource_filename(__name__, 'logical_graphs/{0}'.format(lg_name))  # @UndefinedVariable
+
 
 class TestScheduler(unittest.TestCase):
 
     def test_incremental_antichain(self):
         part = Partition(100, 8)
         G = part._dag
-        assert(part.probe_max_dop(1, 2, True, True, True) == DAGUtil.get_max_dop(part._dag))
+        assert (part.probe_max_dop(1, 2, True, True, True) == DAGUtil.get_max_dop(part._dag))
         G.add_edge(2, 3)
-        assert(part.probe_max_dop(2, 3, False, True, True) == DAGUtil.get_max_dop(part._dag))
+        assert (part.probe_max_dop(2, 3, False, True, True) == DAGUtil.get_max_dop(part._dag))
         # G.add_edge(1, 4)
         # assert(part.probe_max_dop(1, 4, False, True, True) == DAGUtil.get_max_dop(part._dag))
         # G.add_edge(2, 5)
@@ -90,7 +90,7 @@ class TestScheduler(unittest.TestCase):
                     part.schedule.schedule_matrix
                     DAGUtil.ganttchart_matrix(part.schedule._dag, part.schedule._topo_sort)
                 """
-            #mys.merge_partitions(numparts)
+            # mys.merge_partitions(numparts)
 
     @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
     def test_pso_scheduler(self):

@@ -31,20 +31,20 @@ import traceback
 
 import six
 
+from . import common
 from .ddap_protocol import DROPStates
 from .drop import AppDROP
 from .io import IOForURL, OpenMode
-from . import common
-
 
 logger = logging.getLogger(__name__)
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output
-indexed_ipath_pattern    = re.compile(r".*%i\[.+\].*")
-indexed_opath_pattern    = re.compile(r".*%o\[.+\].*")
+indexed_ipath_pattern = re.compile(r".*%i\[.+\].*")
+indexed_opath_pattern = re.compile(r".*%o\[.+\].*")
 indexed_idataurl_pattern = re.compile(r".*%iDataURL\[.+\].*")
 indexed_odataurl_pattern = re.compile(r".*%oDataURL\[.+\].*")
+
 
 class EvtConsumer(object):
     '''
@@ -52,9 +52,11 @@ class EvtConsumer(object):
     object when consuming a DROP. Used throughout the tests as a barrier to wait
     until all DROPs of a given graph have executed.
     '''
+
     def __init__(self, evt, expected_states=[]):
         self._evt = evt
         self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
+
     def handleEvent(self, e):
         if e.status in self._expected_states:
             self._evt.set()
@@ -81,12 +83,14 @@ class DROPWaiterCtx(object):
         self._test = test
         self._timeout = timeout
         self._evts = []
+
     def __enter__(self):
         for drop in self._drops:
             evt = threading.Event()
             drop.subscribe(EvtConsumer(evt, expected_states=self._expected_states), 'status')
             self._evts.append(evt)
         return self
+
     def __exit__(self, typ, value, tb):
         if typ is not None:
             traceback.print_tb(tb)
@@ -112,6 +116,7 @@ def allDropContents(drop, bufsize=4096):
     drop.close(desc)
     return buf.getvalue()
 
+
 def copyDropContents(source, target, bufsize=4096):
     '''
     Manually copies data from one DROP into another, in bufsize steps
@@ -123,6 +128,7 @@ def copyDropContents(source, target, bufsize=4096):
         target.write(buf)
         buf = read(desc, bufsize)
     source.close(desc)
+
 
 def getUpstreamObjects(drop):
     """
@@ -144,6 +150,7 @@ def getUpstreamObjects(drop):
         upObjs += drop.producers
     return upObjs
 
+
 def getDownstreamObjects(drop):
     """
     Returns a list of all direct "downstream" DROPs for the given
@@ -163,15 +170,17 @@ def getDownstreamObjects(drop):
         downObjs += drop.streamingConsumers
     return downObjs
 
+
 def getLeafNodes(nodes):
     """
     Returns a list of all the "leaf nodes" of the graph pointed by `nodes`.
     `nodes` is either a single DROP, or a list of DROPs.
     """
     nodes = listify(nodes)
-    return [drop for drop,_ in breadFirstTraverse(nodes) if not getDownstreamObjects(drop)]
+    return [drop for drop, _ in breadFirstTraverse(nodes) if not getDownstreamObjects(drop)]
 
-def depthFirstTraverse(node, visited = []):
+
+def depthFirstTraverse(node, visited=[]):
     """
     Depth-first iterator for a DROP graph.
 
@@ -191,6 +200,7 @@ def depthFirstTraverse(node, visited = []):
         for x in depthFirstTraverse(drop, visited):
             yield x
 
+
 def breadFirstTraverse(toVisit):
     """
     Breadth-first iterator for a DROP graph.
@@ -209,7 +219,6 @@ def breadFirstTraverse(toVisit):
 
     # See how many arguments we should used when calling func
     while toVisit:
-
         # Pay the node a visit
         node = toVisit.popleft()
         dependencies = getDownstreamObjects(node)
@@ -219,6 +228,7 @@ def breadFirstTraverse(toVisit):
         next_visits = [n for n in dependencies if n not in visited]
         visited.update(next_visits)
         toVisit += next_visits
+
 
 def listify(o):
     """
@@ -231,6 +241,7 @@ def listify(o):
     if isinstance(o, tuple):
         return list(o)
     return [o]
+
 
 class DROPFile(object):
     """
@@ -249,6 +260,7 @@ class DROPFile(object):
 
     Objects of this class can also be used in a `with` context.
     """
+
     def __init__(self, drop):
         self._drop = drop
         self._io = IOForURL(drop.dataURL)
@@ -296,12 +308,14 @@ class DROPFile(object):
     def __enter__(self):
         self.open()
         return self
+
     def __exit__(self, typ, value, traceback):
         self.close()
 
     def __del__(self):
         if not self._isClosed:
             self.close()
+
 
 def has_path(x):
     """Returns `True` if `x` has a `path` attribute"""
@@ -310,6 +324,7 @@ def has_path(x):
         return True
     except:
         return False
+
 
 def replace_path_placeholders(cmd, inputs, outputs):
     """
@@ -326,11 +341,11 @@ def replace_path_placeholders(cmd, inputs, outputs):
     logger.debug('Replacing cmd %s with placeholders with I/O uids: %r, %r',
                  cmd, inputs.keys(), outputs.keys())
 
-    for x,i in enumerate(inputs.values()):
+    for x, i in enumerate(inputs.values()):
         pathRef = "%%i%d" % (x,)
         if pathRef in cmd:
             cmd = cmd.replace(pathRef, i.path)
-    for x,o in enumerate(outputs.values()):
+    for x, o in enumerate(outputs.values()):
         pathRef = "%%o%d" % (x)
         if pathRef in cmd:
             cmd = cmd.replace(pathRef, o.path)
@@ -348,6 +363,7 @@ def replace_path_placeholders(cmd, inputs, outputs):
 
     return cmd
 
+
 def replace_dataurl_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the dataURL property of the
@@ -364,20 +380,20 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     # bind their data via volumes into the docker container. Instead they
     # communicate their dataURL via command-line replacement
 
-    for x,i in enumerate(inputs.values()):
+    for x, i in enumerate(inputs.values()):
         dataUrlRef = "%%iDataURL%d" % (x,)
         if dataUrlRef in cmd:
             cmd = cmd.replace(dataUrlRef, i.dataURL)
-    for x,o in enumerate(outputs.values()):
+    for x, o in enumerate(outputs.values()):
         dataUrlRef = "%%oDataURL%d" % (x,)
         if dataUrlRef in cmd:
             cmd = cmd.replace(dataUrlRef, o.dataURL)
 
-    for uid,i in inputs.items():
+    for uid, i in inputs.items():
         dataURLRef = "%%iDataURL[%s]" % (uid,)
         if dataURLRef in cmd:
             cmd = cmd.replace(dataURLRef, i.dataURL)
-    for uid,o in outputs.items():
+    for uid, o in outputs.items():
         dataURLRef = "%%oDataURL[%s]" % (uid,)
         if dataURLRef in cmd:
             cmd = cmd.replace(dataUrlRef, o.dataURL)
@@ -385,6 +401,7 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     logger.debug("Command after data URL placeholder replacement is: %s", cmd)
 
     return cmd
+
 
 # Easing the transition from single- to multi-package
 get_leaves = common.get_leaves

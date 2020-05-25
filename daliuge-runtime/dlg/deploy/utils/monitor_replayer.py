@@ -32,25 +32,32 @@ with Daliuge. To run this module, please
 this module also depends on networkx (included in Daliuge), which produces the
 edge list that becomes input for gephi vis tool.
 """
-import pygraphviz as pgv
-import networkx as nx
-import json, os, logging, optparse, sys, commands, filecmp
+import filecmp
+import json
+import logging
+import optparse
+import os
+import sqlite3 as dbdrv
+import sys
 from collections import defaultdict
 from datetime import datetime as dt
 from xml.etree.ElementTree import ElementTree
-import sqlite3 as dbdrv
+
+import commands
+import networkx as nx
 import numpy as np
+import pygraphviz as pgv
 
 logger = logging.getLogger(__name__)
 
 ORIGINAL_COLOR = (87, 87, 87)
 YELLOW_COLOR = (255, 255, 0)
-#GREEN_COLOR = (102, 255, 178)
+# GREEN_COLOR = (102, 255, 178)
 GREEN_COLOR = (0, 255, 0)
 RED_COLOR = (255, 0, 0)
 BLUE_COLOR = (102, 178, 255)
 
-#TODO place java class in the current dir, and include it in Git repo
+# TODO place java class in the current dir, and include it in Git repo
 java_cmd = "java -classpath /tmp/classes:/Users/Chen/proj/gephi-toolkit/gephi-toolkit-0.9.1-all.jar dlg.deploy.utils.export_graph"
 
 sql_create_status = """\
@@ -66,6 +73,7 @@ WHERE ts >= {0} and ts < {1}
 GROUP BY oid
 """
 
+
 class GraphPlayer(object):
     def __init__(self, graph_path, status_path):
         for fp in [graph_path, status_path]:
@@ -74,7 +82,8 @@ class GraphPlayer(object):
             if (not os.path.exists(fp)):
                 raise Exception("JSON file not found: {0}".format(fp))
         self.oid_gnid_dict = dict()
-        self.node_graph_dict = defaultdict(list) # k - node-ip, v - a list of tuple of (graph node_id, downstream drop ids)
+        self.node_graph_dict = defaultdict(
+            list)  # k - node-ip, v - a list of tuple of (graph node_id, downstream drop ids)
         self.gnid_ip_dict = dict()
         self.status_path = status_path
         with open(graph_path) as f:
@@ -90,16 +99,16 @@ class GraphPlayer(object):
 
     def status_to_colour(self, st):
         st = int(st)
-        if (st == 0): #INITIALIZED or NOT_RUN
+        if (st == 0):  # INITIALIZED or NOT_RUN
             r, g, b = ORIGINAL_COLOR
-        elif (st == 1): # WRITING or RUNNING
-            #logger.debug("running")
+        elif (st == 1):  # WRITING or RUNNING
+            # logger.debug("running")
             r, g, b = YELLOW_COLOR
-        elif (st == 2): # COMPLETED or FINISHED
-            #logger.debug("completed")
+        elif (st == 2):  # COMPLETED or FINISHED
+            # logger.debug("completed")
             r, g, b = GREEN_COLOR
-        elif (st == 3): # ERROR
-            #logger.debug("error")
+        elif (st == 3):  # ERROR
+            # logger.debug("error")
             r, g, b = RED_COLOR
         else:
             r, g, b = BLUE_COLOR
@@ -134,7 +143,8 @@ class GraphPlayer(object):
         with open(self.status_path) as f:
             for i, line in enumerate(f):
                 colour_dict = dict()
-                colour_dict['{}'] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (ORIGINAL_COLOR[0], ORIGINAL_COLOR[1], ORIGINAL_COLOR[2])
+                colour_dict['{}'] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
+                ORIGINAL_COLOR[0], ORIGINAL_COLOR[1], ORIGINAL_COLOR[2])
                 output_lines = []
                 pgs = json.loads(line)
                 ts = pgs['ts']
@@ -150,22 +160,22 @@ class GraphPlayer(object):
                         output_lines.append(gexf_line)
                     else:
                         if (gexf_line.find("<viz:color") > -1):
-                            #logger.debug("Starting with viz color")
+                            # logger.debug("Starting with viz color")
                             if (node_id is None):
                                 raise Exception("wrong order")
                             output_lines.append(colour_dict[node_id])
                         else:
                             if (gexf_line.find("<node id=") > -1):
-                                #<node id="38345" label="38345">
-                                #38345
+                                # <node id="38345" label="38345">
+                                # 38345
                                 node_id = gexf_line.split()[1].split('=')[1][1:-1]
                             output_lines.append(gexf_line)
                 # each line generate a new file
                 new_gexf = '{0}/{1}.gexf'.format(out_dir, ts)
                 with open(new_gexf, 'w') as fo:
                     for new_line in output_lines:
-                        #fo.write('{0}{1}'.format(new_line, os.linesep))
-                        #fo.write('{0}{1}'.format(new_line, '\n'))
+                        # fo.write('{0}{1}'.format(new_line, os.linesep))
+                        # fo.write('{0}{1}'.format(new_line, '\n'))
                         fo.write(new_line)
                 logger.info("GEXF file '{0}' is generated".format(new_gexf))
                 new_png = new_gexf.split('.gexf')[0] + '.png'
@@ -182,7 +192,7 @@ class GraphPlayer(object):
 
     def get_downstream_drop_ids(self, dropspec):
         if (dropspec['type'] == 'app'):
-            ds_kw = 'outputs' #down stream key word
+            ds_kw = 'outputs'  # down stream key word
         elif (dropspec['type'] == 'plain'):
             ds_kw = 'consumers'
         else:
@@ -197,7 +207,7 @@ class GraphPlayer(object):
         A graph contains all compute nodes and their relationships
         """
         G = pgv.AGraph(strict=False, directed=True)
-        temp_dict = defaultdict(int) #key - from_to_ip, val - counter
+        temp_dict = defaultdict(int)  # key - from_to_ip, val - counter
 
         for i, ip in enumerate(self.node_graph_dict.keys()):
             G.add_node(ip, shape='rect', label='%d' % i)
@@ -224,8 +234,8 @@ class GraphPlayer(object):
         # convert grep_log_file to csv
         if (out_dir is None):
             out_dir = os.path.dirname(gexf_file)
-        #grep_log_file = '{0}/statelog.txt'.format(out_dir)
-        #cmd = ""
+        # grep_log_file = '{0}/statelog.txt'.format(out_dir)
+        # cmd = ""
         csv_file = '{0}/csv_file.csv'.format(out_dir)
         sqlite_file = '{0}/sqlite_file.sqlite'.format(out_dir)
 
@@ -235,7 +245,7 @@ class GraphPlayer(object):
             with open(csv_file, "w") as fo:
                 for line in alllines:
                     ts = line.split('[DEBUG]')[0].split('dlgNM.log:')[1].strip()
-                    ts = int(dt.strptime(ts,'%Y-%m-%d %H:%M:%S,%f').strftime('%s'))
+                    ts = int(dt.strptime(ts, '%Y-%m-%d %H:%M:%S,%f').strftime('%s'))
                     oid = line.split('oid=')[1].split()[0]
                     state = line.split()[-1]
                     fo.write('{0},{1},{2},{3}'.format(ts, oid, state, os.linesep))
@@ -293,8 +303,8 @@ class GraphPlayer(object):
             drops = cur.fetchall()
             cur.close()
 
-            #build a dictionary
-            drop_dict = dict() # key - gnid, value: drop status
+            # build a dictionary
+            drop_dict = dict()  # key - gnid, value: drop status
             for drop in drops:
                 gnid = self.oid_gnid_dict[drop[1]]
                 drop_dict[gnid] = drop[2]
@@ -325,7 +335,6 @@ class GraphPlayer(object):
             if (ret[0] != 0):
                 logger.error("Fail to print png from %s to %s: %s" % (last_gexf, new_png, ret[1]))
 
-
     def build_drop_subgraphs(self, node_range='[0:20]'):
         pass
 
@@ -338,7 +347,7 @@ class GraphPlayer(object):
         else:
             G = nx.Graph()
             do_subgraph = False
-        subgraph_dict = defaultdict(list) # k - node-ip, v - a list of graph nodes
+        subgraph_dict = defaultdict(list)  # k - node-ip, v - a list of graph nodes
         oid_gnid_dict = dict()
 
         for i, oid in enumerate(self.pg_spec.keys()):
@@ -350,15 +359,15 @@ class GraphPlayer(object):
             ip = dropspec['node']
             subgraph_dict[ip].append(gid)
             if (dropspec['type'] == 'app'):
-                G.add_node(gid, shape='rect', label='')#, fixedsize=True, hight=.05, width=.05)
-            elif (dropspec['type'] == 'plain'): #parallelogram
-                G.add_node(gid, shape='circle', label='')#, fixedsize=True, hight=.05, width=.05)
+                G.add_node(gid, shape='rect', label='')  # , fixedsize=True, hight=.05, width=.05)
+            elif (dropspec['type'] == 'plain'):  # parallelogram
+                G.add_node(gid, shape='circle', label='')  # , fixedsize=True, hight=.05, width=.05)
         logger.info("Graph nodes added")
 
         for dropspec in self.pg_spec.itervalues():
             gid = oid_gnid_dict[dropspec['oid']]
             if (dropspec['type'] == 'app'):
-                ds_kw = 'outputs' #down stream key word
+                ds_kw = 'outputs'  # down stream key word
             elif (dropspec['type'] == 'plain'):
                 ds_kw = 'consumers'
             else:
@@ -372,10 +381,11 @@ class GraphPlayer(object):
             for i, subgraph_nodes in enumerate(subgraph_dict.values()):
                 # we don't care about the subgraph label or rank
                 subgraph = G.add_subgraph(subgraph_nodes, label='%d' % i, name="cluster_%d" % i, rank="same")
-                subgraph.graph_attr['rank']='same'
+                subgraph.graph_attr['rank'] = 'same'
             logger.info("Subgraph added")
 
         return G
+
 
 if __name__ == '__main__':
     """
@@ -407,9 +417,9 @@ if __name__ == '__main__':
     parser.add_option("-d", "--dot_file", action="store", type="string",
                       dest="dot_file", help="output do file", default=None)
     parser.add_option('-s', '--subgraph', action='store_true',
-                    dest='subgraph', help = 'create subgraph per node', default=False)
+                      dest='subgraph', help='create subgraph per node', default=False)
     parser.add_option('-e', '--edgelist', action='store_true',
-                    dest='edgelist', help = 'store edge list instead of dot file', default=False)
+                      dest='edgelist', help='store edge list instead of dot file', default=False)
 
     parser.add_option("-r", "--grep_log_file", action="store", type="string",
                       dest="grep_log_file", help="grep log file", default=None)
@@ -435,7 +445,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     gp = GraphPlayer(options.graph_path, options.status_path)
-    #gp.parse_status(options.gexf_file, out_dir=options.gexf_output_dir)
+    # gp.parse_status(options.gexf_file, out_dir=options.gexf_output_dir)
     gp.get_state_changes(options.gexf_file, options.grep_log_file, out_dir=options.gexf_output_dir)
     """
     g = gp.build_node_graph()

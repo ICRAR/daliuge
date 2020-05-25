@@ -27,9 +27,9 @@ from six.moves import urllib_parse as urllib  # @UnresolvedImport
 from . import constants
 from .restutils import RestClient
 
-
 logger = logging.getLogger(__name__)
 compress = os.environ.get('DALIUGE_COMPRESSED_JSON', True)
+
 
 class BaseDROPManagerClient(RestClient):
     """
@@ -97,7 +97,8 @@ class BaseDROPManagerClient(RestClient):
         the DROP specifications.
         """
         graph = self._get_json('/sessions/%s/graph' % (urllib.quote(sessionId),))
-        logger.debug('Successfully read graph (%d nodes) from session %s on %s:%s', len(graph), sessionId, self.host, self.port)
+        logger.debug('Successfully read graph (%d nodes) from session %s on %s:%s', len(graph), sessionId, self.host,
+                     self.port)
         return graph
 
     def sessions(self):
@@ -142,10 +143,12 @@ class BaseDROPManagerClient(RestClient):
     getGraphSize = graph_size
     getGraph = graph
 
+
 class NodeManagerClient(BaseDROPManagerClient):
     """
     A NodeManager REST client
     """
+
     def __init__(self, host='localhost', port=constants.NODE_DEFAULT_REST_PORT, timeout=10):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
@@ -158,6 +161,7 @@ class NodeManagerClient(BaseDROPManagerClient):
     def shutdown_node_manager(self):
         self._GET('/shutdown')
 
+
 class CompositeManagerClient(BaseDROPManagerClient):
 
     def nodes(self):
@@ -169,17 +173,21 @@ class CompositeManagerClient(BaseDROPManagerClient):
     def remove_node(self, node):
         self._DELETE('/nodes/%s' % (node,))
 
+
 class DataIslandManagerClient(CompositeManagerClient):
     """
     A DataIslandManager REST client
     """
+
     def __init__(self, host='localhost', port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10):
         super(DataIslandManagerClient, self).__init__(host=host, port=port, timeout=timeout)
+
 
 class MasterManagerClient(CompositeManagerClient):
     """
     A MasterManager REST client
     """
+
     def __init__(self, host='localhost', port=constants.MASTER_DEFAULT_REST_PORT, timeout=10):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 

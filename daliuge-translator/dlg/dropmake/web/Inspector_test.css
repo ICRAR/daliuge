@@ -3,23 +3,23 @@
   see also: inspector.js, inspector.html
 */
 
-  .inspector-container {
+.inspector-container {
     color: #FDFDFD;
     background-color: #272625;
     /*width: 200px;*/ /* chen.wu */
     padding: 2px;
     height: 480px;
-  }
+}
 
-  .make-inline {
+.make-inline {
     display: inline;
-  }
+}
 
-  * {
+* {
     font-family: helvetica;
-  }
+}
 
-  .inspector {
+.inspector {
     margin: 2px;
 
     font: 12px helvetica, sans-serif;
@@ -33,124 +33,126 @@
     -khtml-user-select: none;
     -ms-user-select: none;
     cursor: default;
-  }
+}
 
 
-  .inspector-container select {
+.inspector-container select {
     border: 0px;
     width: 100%;
-  }
+}
 
-  .inspector input {
+.inspector input {
     background-color: #202020;
     color: #F5F5F5;
     border: 0px;
-  }
-  .inspector input:focus {
+}
+
+.inspector input:focus {
     color: #FDFDFD;
-  }
+}
 
-  .inspector input:disabled {
-      color: #7B7B7B;; /* gray-blue */
-  }
+.inspector input:disabled {
+    color: #7B7B7B;; /* gray-blue */
+}
 
-  .inspector select {
+.inspector select {
     background-color: #202020;
     color: #F5F5F5;
     border: 0px;
-  }
-  .inspector select:focus {
-    color: #FDFDFD;
-  }
+}
 
-  .row {
+.inspector select:focus {
+    color: #FDFDFD;
+}
+
+.row {
     margin-bottom: 2px;
-  }
+}
 
-  .cell {
+.cell {
     display: inline-block;
     width: 50%;
     text-align: right;
-  }
+}
 
-  .right-align {
+.right-align {
     text-align: right;
-  }
+}
 
-  .input-short {
+.input-short {
     width: 40px;
     text-indent: 1px;
     text-align: center;
-  }
+}
 
-  .input-long {
+.input-long {
     width: 82%;
     text-indent: 1px;
     text-align: left; /* chen.wu */
-  }
+}
 
-  .inspector-nullable input[type=text]{
+.inspector-nullable input[type=text] {
     width: 165px;
-  }
+}
 
-  .inspector-n-field-label {
+.inspector-n-field-label {
     margin-right: 5px;
     margin-bottom: 5px;
-  }
+}
 
-  .inspector-button-container {
+.inspector-button-container {
     margin: 6px;
     text-align: center;
-  }
+}
 
-  .inspector-button-container input {
+.inspector-button-container input {
     margin: 2px;
     font-size: 100%;
-  }
+}
 
-  .inspector-group {
+.inspector-group {
     padding: 1px 3px 1px 3px;
     /*border: 1px solid red; /* DEBUG */
     border-top: 2px solid #272625; /* dark gray */
-  }
+}
 
-  .inspector-group select {
+.inspector-group select {
     width: 50%;
-  }
+}
 
-  .inspector-group label {
+.inspector-group label {
 
-  }
+}
 
-  .inspector-section {
+.inspector-section {
     background-color: #333;
-  }
+}
 
-  .inspector-container h3, .inspector-container h2 {
+.inspector-container h3, .inspector-container h2 {
     background-color: #272625;
     padding: 1px;
     margin: 0;
-  }
+}
 
-  .inspector-container h3 {
+.inspector-container h3 {
     font-size: 14px;
     margin-top: 2px;
-  }
+}
 
-  .inspector-container h2 {
+.inspector-container h2 {
     font-size: 18px;
-  }
+}
 
-  label.property-name {
+label.property-name {
     width: 60px;
     margin-right: 5px;
     font-weight: bold;
     /*display: inline-block;*/
     text-align: left; /* chen.wu */
 
-  }
+}
 
-  .spectrum-control {
+.spectrum-control {
     border: 0px;
     background: none;
-  }
+}
