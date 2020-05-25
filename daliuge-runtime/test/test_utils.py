@@ -27,7 +27,6 @@ import unittest
 import zlib
 
 import six
-
 from dlg import utils
 
 
@@ -40,7 +39,7 @@ class TestUtils(unittest.TestCase):
             f.write(zlib.compress(b'abc'))
 
         # Read parts from the beginning
-        for b,n in ((b'abc', 3), (b'ab', 2), (b'a', 1)):
+        for b, n in ((b'abc', 3), (b'ab', 2), (b'a', 1)):
             with open(fname, 'rb') as f:
                 s = utils.ZlibUncompressedStream(f)
                 self.assertEqual(b, s.read(n))
@@ -56,7 +55,7 @@ class TestUtils(unittest.TestCase):
         os.remove(fname)
 
         # Try now with bigger data sizes
-        for size in [2**x+y for x in range(3,18) for y in (-1,0,1)]:
+        for size in [2 ** x + y for x in range(3, 18) for y in (-1, 0, 1)]:
 
             original_bytes = os.urandom(size)
             compressed_bytes = zlib.compress(original_bytes)
@@ -69,7 +68,7 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(original_bytes, b)
 
             # Now read little by little
-            read_size = min(size//4, 1024);
+            read_size = min(size // 4, 1024);
             b = b''
             compressed_stream = six.BytesIO(compressed_bytes)
             uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
@@ -77,7 +76,6 @@ class TestUtils(unittest.TestCase):
                 b += u
             self.assertEqual(size, len(b))
             self.assertEqual(original_bytes, b)
-
 
     def test_zlib_compressed_stream_writer(self):
 
@@ -92,7 +90,7 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(compressed_ref[0:x], compressed[0:x])
 
         # Try now with bigger data sizes
-        for size in [2**x+y for x in range(3,18) for y in (-1,0,1)]:
+        for size in [2 ** x + y for x in range(3, 18) for y in (-1, 0, 1)]:
 
             original_bytes = os.urandom(size)
             compressed_bytes = zlib.compress(original_bytes)
@@ -105,7 +103,7 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(compressed_bytes, b)
 
             # Now read little by little
-            read_size = min(size//4, 1024)
+            read_size = min(size // 4, 1024)
             uncompressed_stream = six.BytesIO(original_bytes)
             compressed_stream = utils.ZlibCompressedStream(uncompressed_stream)
             b = b''
@@ -122,7 +120,7 @@ class TestUtils(unittest.TestCase):
 
     def _test_zlib_streams_combined(self, gen_bytes):
 
-        sizes = [2**x+y for x in range(1,18) for y in (-1,0,1)]
+        sizes = [2 ** x + y for x in range(1, 18) for y in (-1, 0, 1)]
         for size in sizes:
 
             original_bytes = gen_bytes(size)
@@ -140,7 +138,7 @@ class TestUtils(unittest.TestCase):
                 self.assertEqual(0, len(uncompressed_stream.read(100)))
 
             # Read with given number of bytes
-            for n in (1, len(original_bytes)//2, len(original_bytes)):
+            for n in (1, len(original_bytes) // 2, len(original_bytes)):
 
                 these_bytes = original_bytes[0:n]
 
@@ -157,17 +155,20 @@ class TestUtils(unittest.TestCase):
                     self.assertEqual(0, len(uncompressed_stream.read(100)))
 
     def test_json_stream_simple_sequence(self):
-        for s in ([0], [{}], ['a'], [{'oid':'A', 'type': 'plain'}]):
+        for s in ([0], [{}], ['a'], [{'oid': 'A', 'type': 'plain'}]):
             stream = utils.JSONStream(s)
             self.assertEqual(s, json.loads(stream.read(100).decode('utf8')));
 
     def test_json_stream_sequences(self):
 
-        ref = [1,2,3]
-        objects_list = [1,2,3]
-        objects_tuple = (1,2,3)
+        ref = [1, 2, 3]
+        objects_list = [1, 2, 3]
+        objects_tuple = (1, 2, 3)
+
         def objects_gen():
-            yield 1; yield 2; yield 3
+            yield 1;
+            yield 2;
+            yield 3
 
         for objects in (objects_list, objects_tuple, objects_gen()):
             stream = utils.JSONStream(objects)

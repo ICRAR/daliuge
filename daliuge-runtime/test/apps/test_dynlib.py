@@ -25,13 +25,13 @@ import time
 import unittest
 
 import six
-
-from .setp_up import build_shared_library
-from ..manager import test_dm
 from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.drop import InMemoryDROP, NullDROP
+
+from .setp_up import build_shared_library
+from ..manager import test_dm
 
 _libname = "dynlib_example"
 _libfname = "libdynlib_example.so"
@@ -115,7 +115,6 @@ class DynlibAppTest(unittest.TestCase):
 
 
 class IntraNMMixIng(test_dm.NMTestsMixIn):
-
     # Indicate which particular application should the test use
     app = None
 

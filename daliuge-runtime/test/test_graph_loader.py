@@ -30,18 +30,19 @@ from dlg.drop import InMemoryDROP, ContainerDROP, \
 # Used in the textual representation of the graphs in these tests
 class DummyApp(AppDROP): pass
 
+
 class TestGraphLoader(unittest.TestCase):
 
     def test_singleMemoryDrop(self):
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory"}]
+        dropSpecList = [{"oid": "A", "type": "plain", "storage": "memory"}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
 
     def test_containerDrop(self):
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory"},
-                        {"oid":"B", "type":"container", "children":["A"]}]
+        dropSpecList = [{"oid": "A", "type": "plain", "storage": "memory"},
+                        {"oid": "B", "type": "container", "children": ["A"]}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
@@ -53,15 +54,16 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual("B", b.uid)
 
         # A directory container
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"file", "dirname":"."},
-                        {"oid":"B", "type":"container", "container":"dlg.drop.DirectoryContainer", "children":["A"], "dirname":"."}]
+        dropSpecList = [{"oid": "A", "type": "plain", "storage": "file", "dirname": "."},
+                        {"oid": "B", "type": "container", "container": "dlg.drop.DirectoryContainer", "children": ["A"],
+                         "dirname": "."}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         b = a.parent
         self.assertIsInstance(b, DirectoryContainer)
 
     def test_consumer(self):
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]},
-                        {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
+        dropSpecList = [{"oid": "A", "type": "plain", "storage": "memory", "consumers": ["B"]},
+                        {"oid": "B", "type": "app", "app": "test.test_graph_loader.DummyApp"}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
@@ -74,15 +76,14 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual(a, b.inputs[0])
 
     def test_removeUnmetRelationships(self):
-
         # Unmet relationsips are
         # DROPRel(D, CONSUMER, A)
         # DROPRel(D, STREAMING_CONSUMER, C)
         # DROPRel(Z, PRODUCER, A)
         # DROPRel(X, PRODUCER, A)
-        graphDesc = [{'oid':'A', 'consumers':['B', 'D'], 'producers':['Z','X']},
-                     {'oid':'B', 'outputs':['C']},
-                     {'oid':'C', 'streamingConsumers':['D']}]
+        graphDesc = [{'oid': 'A', 'consumers': ['B', 'D'], 'producers': ['Z', 'X']},
+                     {'oid': 'B', 'outputs': ['C']},
+                     {'oid': 'C', 'streamingConsumers': ['D']}]
 
         unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
         self.assertEqual(4, len(unmetRelationships))

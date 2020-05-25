@@ -30,12 +30,12 @@ from .rest import ManagerRestServer
 from .session import SessionStates
 from ..exceptions import NoSessionException, InvalidSessionState
 
-
 logger = logging.getLogger(__name__)
 
 build_step = 3
 deploy_step = 6
 run_step = 7
+
 
 class ReplayManager(DROPManager):
 
@@ -67,10 +67,13 @@ class ReplayManager(DROPManager):
     # Only queries are supported by the replay manager
     def createSession(self, sessionId):
         raise NotImplementedError()
+
     def addGraphSpec(self, sessionId, graphSpec):
         raise NotImplementedError()
+
     def deploySession(self, sessionId, completedDrops=[]):
         raise NotImplementedError()
+
     def destroySession(self, sessionId):
         raise NotImplementedError()
 
@@ -133,6 +136,7 @@ class ReplayManager(DROPManager):
 
     def getSessionIds(self):
         return [self._session_id]
+
 
 class ReplayManagerServer(ManagerRestServer):
 
