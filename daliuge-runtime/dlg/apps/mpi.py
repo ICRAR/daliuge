@@ -29,8 +29,8 @@ import sys
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-
 logger = logging.getLogger(__name__)
+
 
 class MPIApp(BarrierAppDROP):
     """
@@ -78,13 +78,14 @@ class MPIApp(BarrierAppDROP):
         vendor, version = MPI.get_vendor()  # @UndefinedVariable
         info = MPI.Info.Create()  # @UndefinedVariable
         logger.debug("MPI vendor is %s, version %s", vendor, '.'.join([str(x) for x in version]))  # @UndefinedVariable
-        comm_children = MPI.COMM_SELF.Spawn(cmd, args=args, maxprocs=self._maxprocs, errcodes=errcodes, info=info)  # @UndefinedVariable
+        comm_children = MPI.COMM_SELF.Spawn(cmd, args=args, maxprocs=self._maxprocs, errcodes=errcodes,
+                                            info=info)  # @UndefinedVariable
 
         n_children = comm_children.Get_remote_size()
         logger.info("%d MPI children apps spawned, gathering exit data", n_children)
 
         if self._use_wrapper:
-            children_data = comm_children.gather(('','', 0), root=MPI.ROOT)  # @UndefinedVariable
+            children_data = comm_children.gather(('', '', 0), root=MPI.ROOT)  # @UndefinedVariable
             exit_codes = [x[2] for x in children_data]
             logger.info("Exit codes gathered from children processes: %r", exit_codes)
 
@@ -93,7 +94,8 @@ class MPIApp(BarrierAppDROP):
                 if code == 0:
                     continue
                 any_failed = True
-                logger.error("stdout/stderr follow for rank %d:\nSTDOUT\n======\n%s\n\nSTDERR\n======\n%s", rank, stdout, stderr)
+                logger.error("stdout/stderr follow for rank %d:\nSTDOUT\n======\n%s\n\nSTDERR\n======\n%s", rank,
+                             stdout, stderr)
 
             if any_failed:
                 raise Exception("One or more MPI children didn't exit cleanly")
@@ -103,7 +105,6 @@ class MPIApp(BarrierAppDROP):
 
 # When we are called by the MPIApp
 def module_as_main():
-
     # Get the parent communicator before anything else happens
     # This way we ensure the communicator is valid
     from mpi4py import MPI
@@ -119,7 +120,8 @@ def module_as_main():
     # argv[0] is the name of this module
     # argv[1:] is the actual command + args
     try:
-        proc = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, close_fds=False)
+        proc = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
+                                close_fds=False)
         stdout, stderr = proc.communicate()
         code = proc.returncode
     except Exception as e:
@@ -127,6 +129,7 @@ def module_as_main():
 
     # Gather the results in the spawner rank and good bye
     parent_comm.gather((stdout, stderr, code), root=0)
+
 
 if __name__ == '__main__':
     module_as_main()

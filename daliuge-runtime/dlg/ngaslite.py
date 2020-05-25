@@ -42,8 +42,10 @@ def retrieve(host, fileId, port=7777, timeout=None):
     conn.request('GET', '/RETRIEVE?file_id=' + fileId)
     response = conn.getresponse()
     if response.status != httplib.OK:
-        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, response.status, response.msg))
+        raise Exception(
+            "Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, response.status, response.msg))
     return response
+
 
 def beingArchive(host, fileId, port=7777, timeout=0, length=-1):
     """
@@ -63,10 +65,12 @@ def beingArchive(host, fileId, port=7777, timeout=0, length=-1):
     conn.endheaders()
     return conn
 
+
 def finishArchive(conn, fileId):
     """
     Checks that an archiving started by `beginArchive` went on successfully.
     """
     response = conn.getresponse()
     if response.status != httplib.OK:
-        raise Exception("Error while QARCHIVE-ing %s to %s:%d: %d %s" % (fileId, conn.host, conn.port, response.status, response.msg))
+        raise Exception("Error while QARCHIVE-ing %s to %s:%d: %d %s" % (
+        fileId, conn.host, conn.port, response.status, response.msg))

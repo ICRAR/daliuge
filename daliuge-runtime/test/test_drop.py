@@ -21,15 +21,14 @@
 #
 
 import contextlib
-import os, unittest
+import os
 import random
 import shutil
 import sqlite3
 import tempfile
+import unittest
 
 import six
-from six import BytesIO
-
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
@@ -37,7 +36,7 @@ from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-
+from six import BytesIO
 
 try:
     from crc32c import crc32
@@ -46,8 +45,10 @@ except:
 
 ONE_MB = 1024 ** 2
 
+
 def _start_ns_thread(ns_daemon):
     ns_daemon.requestLoop()
+
 
 def isContainer(drop):
     # return isinstance(drop, ContainerDROP)
@@ -59,12 +60,14 @@ def isContainer(drop):
     except AttributeError:
         return False
 
+
 class SumupContainerChecksum(BarrierAppDROP):
     """
     A dummy BarrierAppDROP that recursively sums up the checksums of
     all the individual DROPs it consumes, and then stores the final
     result in its output DROP
     """
+
     def run(self):
         crcSum = 0
         for inputDrop in self.inputs:
@@ -73,14 +76,15 @@ class SumupContainerChecksum(BarrierAppDROP):
         outputDrop = self.outputs[0]
         outputDrop.write(six.b(str(crcSum)))
 
+
 class TestDROP(unittest.TestCase):
 
     def setUp(self):
         """
         library-specific setup
         """
-        self._test_drop_sz = 16 # MB
-        self._test_block_sz =  2 # MB
+        self._test_drop_sz = 16  # MB
+        self._test_block_sz = 2  # MB
         self._test_num_blocks = self._test_drop_sz // self._test_block_sz
         self._test_block = os.urandom(self._test_block_sz * ONE_MB)
 
@@ -113,7 +117,7 @@ class TestDROP(unittest.TestCase):
         """
         Test an AbstractDROP and a simple AppDROP (for checksum calculation)
         """
-        a = dropType('oid:A', 'uid:A', expectedSize = self._test_drop_sz * ONE_MB)
+        a = dropType('oid:A', 'uid:A', expectedSize=self._test_drop_sz * ONE_MB)
         b = SumupContainerChecksum('oid:B', 'uid:B')
         c = InMemoryDROP('oid:C', 'uid:C')
         b.addInput(a)
@@ -203,7 +207,7 @@ class TestDROP(unittest.TestCase):
             a.setCompleted()
 
         # Get intermediate and final results and compare
-        actualRes   = []
+        actualRes = []
         for i in [c, e, g]:
             actualRes.append(droputils.allDropContents(i))
         map(lambda x, y: self.assertEqual(x, y), [cResExpected, eResExpected, gResExpected], actualRes)
@@ -245,7 +249,7 @@ class TestDROP(unittest.TestCase):
         hold the sum of B1, B2 and B3's checksums
         """
 
-        #create file data objects
+        # create file data objects
         a1 = InMemoryDROP('oid:A1', 'uid:A1')
         a2 = InMemoryDROP('oid:A2', 'uid:A2')
         a3 = InMemoryDROP('oid:A3', 'uid:A3')
@@ -259,16 +263,16 @@ class TestDROP(unittest.TestCase):
         c3 = InMemoryDROP('oid:C3', 'uid:C3')
 
         # The final DROP that sums up the CRCs from the container DROP
-        d = SumupContainerChecksum('oid:D', 'uid:D', input_error_threshold = 33)
+        d = SumupContainerChecksum('oid:D', 'uid:D', input_error_threshold=33)
         e = InMemoryDROP('oid:E', 'uid:E')
 
         # Wire together
-        dropAList = [a1,a2,a3]
-        dropBList = [b1,b2,b3]
-        dropCList = [c1,c2,c3]
-        for dropA,dropB in zip(dropAList, dropBList):
+        dropAList = [a1, a2, a3]
+        dropBList = [b1, b2, b3]
+        dropCList = [c1, c2, c3]
+        for dropA, dropB in zip(dropAList, dropBList):
             dropA.addConsumer(dropB)
-        for dropB,dropC in zip(dropBList, dropCList):
+        for dropB, dropC in zip(dropBList, dropCList):
             dropB.addOutput(dropC)
         for dropC in dropCList:
             dropC.addConsumer(d)
@@ -277,12 +281,14 @@ class TestDROP(unittest.TestCase):
         # Write data into the initial "A" DROPs, which should trigger
         # the whole chain explained above
         with DROPWaiterCtx(self, e):
-            #for dropA in dropAList: # this should be parallel for
-            a1.write(b' '); a1.setCompleted()
+            # for dropA in dropAList: # this should be parallel for
+            a1.write(b' ');
+            a1.setCompleted()
             if tooManyFailures:
                 a2.setError()
             else:
-                a2.write(b' '); a2.setCompleted()
+                a2.write(b' ');
+                a2.setCompleted()
             a3.setError()
 
         if tooManyFailures:
@@ -327,7 +333,7 @@ class TestDROP(unittest.TestCase):
         """
 
         filelen = self._test_drop_sz * ONE_MB
-        #create file data objects
+        # create file data objects
         a1 = FileDROP('oid:A1', 'uid:A1', expectedSize=filelen)
         a2 = FileDROP('oid:A2', 'uid:A2', expectedSize=filelen)
         a3 = FileDROP('oid:A3', 'uid:A3', expectedSize=filelen)
@@ -345,12 +351,12 @@ class TestDROP(unittest.TestCase):
         e = InMemoryDROP('oid:E', 'uid:E')
 
         # Wire together
-        dropAList = [a1,a2,a3]
-        dropBList = [b1,b2,b3]
-        dropCList = [c1,c2,c3]
-        for dropA,dropB in map(lambda a,b: (a,b), dropAList, dropBList):
+        dropAList = [a1, a2, a3]
+        dropBList = [b1, b2, b3]
+        dropCList = [c1, c2, c3]
+        for dropA, dropB in map(lambda a, b: (a, b), dropAList, dropBList):
             dropA.addConsumer(dropB)
-        for dropB,dropC in map(lambda b,c: (b,c), dropBList, dropCList):
+        for dropB, dropC in map(lambda b, c: (b, c), dropBList, dropCList):
             dropB.addOutput(dropC)
         for dropC in dropCList:
             dropC.addConsumer(d)
@@ -359,7 +365,7 @@ class TestDROP(unittest.TestCase):
         # Write data into the initial "A" DROPs, which should trigger
         # the whole chain explained above
         with DROPWaiterCtx(self, e):
-            for dropA in dropAList: # this should be parallel for
+            for dropA in dropAList:  # this should be parallel for
                 for _ in range(self._test_num_blocks):
                     dropA.write(self._test_block)
 
@@ -410,12 +416,12 @@ class TestDROP(unittest.TestCase):
                     outputs[int(n) % 2].write(n + b" ")
 
         # Create DROPs
-        a =     InMemoryDROP('oid:A', 'uid:A')
-        b =        NumberWriterApp('oid:B', 'uid:B')
-        c =     InMemoryDROP('oid:A', 'uid:A')
+        a = InMemoryDROP('oid:A', 'uid:A')
+        b = NumberWriterApp('oid:B', 'uid:B')
+        c = InMemoryDROP('oid:A', 'uid:A')
         d = OddAndEvenContainerApp('oid:D', 'uid:D')
-        e =     InMemoryDROP('oid:E', 'uid:E')
-        f =     InMemoryDROP('oid:F', 'uid:F')
+        e = InMemoryDROP('oid:E', 'uid:E')
+        f = InMemoryDROP('oid:F', 'uid:F')
 
         # Wire them together
         a.addConsumer(b)
@@ -425,16 +431,15 @@ class TestDROP(unittest.TestCase):
         d.addOutput(f)
 
         # Start the execution
-        with DROPWaiterCtx(self, [e,f]):
+        with DROPWaiterCtx(self, [e, f]):
             a.write(b'20')
             a.setCompleted()
 
         # Check the final results are correct
-        for drop in [a,b,c,d,e]:
+        for drop in [a, b, c, d, e]:
             self.assertEqual(drop.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (drop))
         self.assertEqual(b"0 2 4 6 8 10 12 14 16 18", droputils.allDropContents(e).strip())
         self.assertEqual(b"1 3 5 7 9 11 13 15 17 19", droputils.allDropContents(f).strip())
-
 
     def test_dropWroteFromOutside(self):
         """
@@ -555,11 +560,13 @@ class TestDROP(unittest.TestCase):
             def initialize(self, **kwargs):
                 super(LastCharWriterApp, self).initialize(**kwargs)
                 self._lastByte = None
+
             def dataWritten(self, uid, data):
                 self.execStatus = AppDROPStates.RUNNING
                 outputDrop = self.outputs[0]
                 self._lastByte = data[-1:]
                 outputDrop.write(self._lastByte)
+
             def dropCompleted(self, uid, status):
                 self.execStatus = AppDROPStates.FINISHED
                 self._notifyAppIsFinished()
@@ -586,13 +593,13 @@ class TestDROP(unittest.TestCase):
             if lastByte is not None:
                 self.assertEqual(lastByte, b._lastByte)
 
-        checkDropStates(DROPStates.INITIALIZED , DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
+        checkDropStates(DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
         a.write(b'abcde')
         checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b'e')
         a.write(b'fghij')
         checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b'j')
         a.write(b'k')
-        with DROPWaiterCtx(self, [d,e]):
+        with DROPWaiterCtx(self, [d, e]):
             a.setCompleted()
         checkDropStates(DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, b'k')
 
@@ -636,7 +643,7 @@ class TestDROP(unittest.TestCase):
         # Prepare our playground
         cwd = os.getcwd()
         os.chdir('/tmp')
-        dirname  = "/tmp/.hidden"
+        dirname = "/tmp/.hidden"
         dirname2 = "/tmp/.hidden/inside"
         if not os.path.exists(dirname2):
             os.makedirs(dirname2)
@@ -677,29 +684,31 @@ class TestDROP(unittest.TestCase):
         A test that checks that multiple-producers correctly drive the state of
         their shared output
         """
-        class App(BarrierAppDROP): pass
 
-        a,b,c,d,e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in range(5)]
+        class App(BarrierAppDROP):
+            pass
+
+        a, b, c, d, e = [App(chr(ord('A') + i), chr(ord('A') + i)) for i in range(5)]
         f = InMemoryDROP('F', 'F')
-        for drop in a,b,c,d,e:
+        for drop in a, b, c, d, e:
             drop.addOutput(f)
 
         self.assertEqual(DROPStates.INITIALIZED, f.status)
-        for drop in a,b,c,d,e:
+        for drop in a, b, c, d, e:
             self.assertEqual(AppDROPStates.NOT_RUN, drop.execStatus)
 
         # Run the first 4 ones, F should still be in INITIALIZED
-        for drop in a,b,c,d:
+        for drop in a, b, c, d:
             drop.execute()
         self.assertEqual(DROPStates.INITIALIZED, f.status)
         self.assertEqual(AppDROPStates.NOT_RUN, e.execStatus)
-        for drop in a,b,c,d:
+        for drop in a, b, c, d:
             self.assertEqual(AppDROPStates.FINISHED, drop.execStatus)
 
         # Run the final one, now F should be COMPLETED
         e.execute()
         self.assertEqual(DROPStates.COMPLETED, f.status)
-        for drop in a,b,c,d,e:
+        for drop in a, b, c, d, e:
             self.assertEqual(AppDROPStates.FINISHED, drop.execStatus)
 
     def test_eager_inputFired_app(self):
@@ -721,9 +730,9 @@ class TestDROP(unittest.TestCase):
 
         # 2 effective inputs, 4 outputs. Trigger 2 inputs and make sure the
         # app has run
-        a,b,c,d = [InMemoryDROP(str(i), str(i)) for i in range(4)]
+        a, b, c, d = [InMemoryDROP(str(i), str(i)) for i in range(4)]
         e = InputFiredAppDROP('e', 'e', n_effective_inputs=2)
-        for x in a,b,c,d:
+        for x in a, b, c, d:
             e.addInput(x)
 
         with DROPWaiterCtx(self, e, 5):
@@ -742,6 +751,7 @@ class TestDROP(unittest.TestCase):
             def initialize(self, **kwargs):
                 BarrierAppDROP.initialize(self, **kwargs)
                 self.i = 0
+
             def run(self):
                 if self.i == 0:
                     self.i = 1
@@ -782,6 +792,7 @@ class TestDROP(unittest.TestCase):
             self.assertEqual(0, res[0][0])
         finally:
             os.unlink(dbfile)
+
 
 if __name__ == '__main__':
     unittest.main()

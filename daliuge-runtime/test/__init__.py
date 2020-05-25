@@ -21,7 +21,6 @@
 #
 
 def __setupTestLogging():
-
     import os
     import logging
 
@@ -33,6 +32,7 @@ def __setupTestLogging():
         logging.basicConfig(format=fmt, level=level)
     else:
         logging.root.addHandler(logging.NullHandler())
+
 
 __setupTestLogging()
 del __setupTestLogging

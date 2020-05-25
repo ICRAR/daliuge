@@ -53,7 +53,6 @@ import six.moves.BaseHTTPServer as BaseHTTPServer  # @UnresolvedImport
 
 from ...utils import b2s
 
-
 BUFF_SIZE = 16384
 outstanding_conn = 20
 default_publication_port = 20000
@@ -65,6 +64,7 @@ logger = logging.getLogger(__name__)
 delimit = b'@#%!$'
 dl = len(delimit)
 
+
 def recvall(sock, count):
     buf = b''
     while count:
@@ -75,10 +75,12 @@ def recvall(sock, count):
         count -= len(newbuf)
     return buf
 
+
 def send_to_proxy(sock, data):
     length = len(data)
     sock.sendall(struct.pack('!I', length))
     sock.sendall(data)
+
 
 def recv_from_proxy(sock):
     lengthbuf = recvall(sock, 4)
@@ -86,6 +88,7 @@ def recv_from_proxy(sock):
         return None
     length, = struct.unpack('!I', lengthbuf)
     return recvall(sock, length)
+
 
 # HTTP support to get the list of available proxies
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -111,7 +114,8 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write(b"No proxies available yet")
                 return
 
-            aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host,b2s(proxyId),client_port) for proxyId, client_port in self.monitor.proxy_ids.items()]
+            aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host, b2s(proxyId), client_port) for
+                    proxyId, client_port in self.monitor.proxy_ids.items()]
             html = '</li><li>'.join(aEls)
             html = '<ul><li>' + html + '</li></ul>'
             self.wfile.write(six.b(html))
@@ -122,16 +126,20 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(self.monitor.proxy_ids, indent=2))
 
+
 class Server(BaseHTTPServer.HTTPServer):
     def __init__(self, monitor):
         self.monitor = monitor
         BaseHTTPServer.HTTPServer.__init__(self, (monitor.host, monitor.publication_port), Handler)
 
+
 sockandaddr = collections.namedtuple('sockandaddr', 'sock addr')
+
 
 class Monitor:
 
-    def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port, publication_port=default_publication_port):
+    def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port,
+                 publication_port=default_publication_port):
         """
         host:             listening host (string)
         proxy_port:       port exposed to the DALiuGE proxy  (int)
@@ -155,7 +163,7 @@ class Monitor:
         self.client_port_to_proxy_port = {}
 
         # To save the tags we attach to each client socket
-        self.tag_dict = {} # k - socket hash, v - socket tag
+        self.tag_dict = {}  # k - socket hash, v - socket tag
 
         # Proxy IDs to client ports. We publish that information in publication_port
         self.proxy_ids = {}
@@ -285,7 +293,7 @@ class Monitor:
 
     def remove_proxy_socket(self, sock):
 
-        for proxyport,saa in self.proxy_sockets.items():
+        for proxyport, saa in self.proxy_sockets.items():
             if saa.sock == sock:
                 break
 
@@ -347,7 +355,7 @@ class Monitor:
         proxy_id = proxy_id.strip()
         proxy_id_str = b2s(proxy_id)
         if proxy_id in self.proxy_ids or \
-           proxy_id.startswith(b'GET ') or proxy_id.startswith(b'POST '):
+                proxy_id.startswith(b'GET ') or proxy_id.startswith(b'POST '):
             logger.info('Proxy identified as %s, rejecting', proxy_id_str)
             proxysock.sendall(b'0')
             self.close_socket(proxysock, True)
@@ -447,7 +455,7 @@ class Monitor:
         logger.debug("Received data from client %s", tag_str)
         proxy_port = self.client_port_to_proxy_port[sock.getsockname()[1]]
         proxy_socket = None
-        for port,proxy_sock in self.proxy_sockets.items():
+        for port, proxy_sock in self.proxy_sockets.items():
             if port == proxy_port:
                 proxy_socket = proxy_sock.sock
                 break
@@ -464,21 +472,21 @@ class Monitor:
 
 
 def run(parser, args):
-
     parser.add_option("-H", "--host", action="store", type="string",
-                    dest="host", help="The network interface the monitor is bind",
-                    default='0.0.0.0')
+                      dest="host", help="The network interface the monitor is bind",
+                      default='0.0.0.0')
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The monitor port exposed to the DALiuGE proxy",
-                    default=default_proxy_port)
+                      dest="monitor_port", help="The monitor port exposed to the DALiuGE proxy",
+                      default=default_proxy_port)
     parser.add_option("-c", "--client_port", action="store", type="int",
-                    dest="client_port", help = "The proxy port exposed to the client",
-                    default=default_client_base_port)
+                      dest="client_port", help="The proxy port exposed to the client",
+                      default=default_client_base_port)
     parser.add_option("-p", "--publication_port", action="store", type="int",
-                      dest="publication_port", help="Port used to publish the list of proxies for clients to look at", default=default_publication_port)
+                      dest="publication_port", help="Port used to publish the list of proxies for clients to look at",
+                      default=default_publication_port)
     parser.add_option("-d", "--debug",
-                  action="store_true", dest="debug", default=False,
-                  help="Whether to log debug info")
+                      action="store_true", dest="debug", default=False,
+                      help="Whether to log debug info")
     (options, args) = parser.parse_args(args)
 
     if (options.debug):

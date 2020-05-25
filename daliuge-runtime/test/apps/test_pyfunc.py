@@ -27,8 +27,6 @@ import unittest
 
 import six
 import six.moves.cPickle as pickle  # @UnresolvedImport
-
-from ..manager import test_dm
 from dlg import droputils
 from dlg.apps import pyfunc
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
@@ -36,17 +34,22 @@ from dlg.drop import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 
+from ..manager import test_dm
 
 logger = logging.getLogger(__name__)
+
 
 def func1(arg1):
     return arg1
 
+
 def func2(arg1):
     return arg1 * 2;
 
+
 def func3():
     return ['b', 'c', 'd']
+
 
 def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
     """Returns a - b * c + (y - x) * z. Default is a + 300"""
@@ -54,8 +57,8 @@ def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
     logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
     return res
 
-def _PyFuncApp(oid, uid, f, **kwargs):
 
+def _PyFuncApp(oid, uid, f, **kwargs):
     fname = None
     if isinstance(f, six.string_types):
         fname = f = "test.apps.test_pyfunc." + f
@@ -66,6 +69,7 @@ def _PyFuncApp(oid, uid, f, **kwargs):
                             func_code=fcode,
                             func_defaults=fdefaults,
                             **kwargs)
+
 
 class TestPyFuncApp(unittest.TestCase):
 
@@ -82,7 +86,8 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
-        self.assertRaises(InvalidDropException, pyfunc.PyFuncApp, 'a', 'a', func_name='test.apps.test_pyfunc.doesnt_exist')
+        self.assertRaises(InvalidDropException, pyfunc.PyFuncApp, 'a', 'a',
+                          func_name='test.apps.test_pyfunc.doesnt_exist')
 
     def test_valid_creation(self):
         _PyFuncApp('a', 'a', 'func1')
@@ -121,8 +126,10 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_inner_func(self):
         n = random.randint(0, 1e6)
+
         def f(x):
             return x + 2
+
         self._test_simple_functions(f, n, n + 2)
 
     def test_lambda(self):
@@ -131,8 +138,10 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_inner_func_with_closure(self):
         n = random.randint(0, 1e6)
+
         def f(x):
             return x + n
+
         self._test_simple_functions(f, n, n + n)
 
     def test_lambda_with_closure(self):
@@ -235,6 +244,7 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_defaults(0, 1, 1, x=40)
         self._test_defaults(249, 1, 2, x=35)
 
+
 class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
 
     def test_input_in_remote_nm(self):
@@ -248,9 +258,9 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'},
-              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
+        g1 = [{"oid": "A", "type": "plain", "storage": "memory"}]
+        g2 = [{"oid": "B", "type": "app", "app": "dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'},
+              {"oid": "C", "type": "plain", "storage": "memory", "producers": ["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
@@ -266,9 +276,9 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --> B --|----|-> C |
         =============    =======
         """
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers": ['B']},
-              {"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'}]
-        g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
+        g1 = [{"oid": "A", "type": "plain", "storage": "memory", "consumers": ['B']},
+              {"oid": "B", "type": "app", "app": "dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'}]
+        g2 = [{"oid": "C", "type": "plain", "storage": "memory"}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)

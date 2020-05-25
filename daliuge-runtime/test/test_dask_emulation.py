@@ -24,12 +24,11 @@ import os
 import unittest
 
 import numpy as np
-from six.moves import reduce  # @UnresolvedImport
-
-from dlg.dask_emulation import delayed as dlg_delayed
-from dlg.dask_emulation import compute as dlg_compute
 from dlg.common import tool
+from dlg.dask_emulation import compute as dlg_compute
+from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.utils import terminate_or_kill
+from six.moves import reduce  # @UnresolvedImport
 
 try:
     from dask import delayed as dask_delayed
@@ -41,51 +40,66 @@ except ImportError:
 def add(x, y):
     return x + y
 
+
 def add_list(numbers):
     return reduce(add, numbers)
+
 
 def subtract(x, y):
     return x - y
 
+
 def subtract_list(numbers):
     return reduce(subtract, numbers)
+
 
 def multiply(x, y):
     return x * y
 
+
 def divide(x, y):
     return x / y
+
 
 def partition(x):
     return x / 2, x - x / 2
 
+
 def sum_with_args(a, *args):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
     return a + sum(args)
+
 
 def sum_with_kwargs(a, **kwargs):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
     b = kwargs.pop('b', 0)
     return a + b
 
+
 def sum_with_args_and_kwarg(a, *args, **kwargs):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
     b = kwargs.pop('b', 0)
     return a + sum(args) + b
 
+
 class MyType(object):
     """A type that is serializable but not convertible to JSON"""
+
     def __init__(self, x):
         self.x = x
         self.array = np.zeros(1)
+
+
 try:
     json.dumps(MyType(1))
     assert False, "Should fail to serialize to JSON"
 except:
     pass
 
+
 def sum_with_user_defined_default(a, b=MyType(10)):
     return a + b.x
+
 
 class _TestDelayed(object):
     """Test definitions run under non-delayed, dlg_delayed and possibly dask_delayed contexts"""
@@ -204,30 +218,40 @@ class _TestDelayed(object):
 
 class TestNoDelayed(unittest.TestCase, _TestDelayed):
     """Non-delayed tests"""
+
     def delayed(self, f, *_, **__):
         return f
+
     def compute(self, val):
         return val
 
+
 class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     """dlg-base tests, they start/stop the node manager and use dlg_delayed"""
+
     def delayed(self, f, *args, **kwargs):
         return dlg_delayed(f, *args, **kwargs)
+
     def setUp(self):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
         env['PYTHONPATH'] = env.get('PYTHONPATH', '') + ":" + os.getcwd()
         self.dmProcess = tool.start_process('nm', env=env)
+
     def compute(self, val):
         return dlg_compute(val)
+
     def tearDown(self):
         terminate_or_kill(self.dmProcess, 5)
         unittest.TestCase.tearDown(self)
 
+
 @unittest.skipIf(dask_delayed is None, 'dask is not available')
 class TestDaskDelayed(_TestDelayed, unittest.TestCase):
     """dask-base tests, they use dask_delayed"""
+
     def delayed(self, f, *args, **kwargs):
         return dask_delayed(f, *args, **kwargs)
+
     def compute(self, val):
         return dask_compute(val)[0]

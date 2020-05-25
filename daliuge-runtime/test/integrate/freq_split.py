@@ -5,10 +5,14 @@ Used as a template to be wrapped by the DROP framework
 chen.wu@icrar.org
 """
 
-import sys, os, datetime, subprocess, re, logging
-from string import Template
+import datetime
+import logging
+import os
+import re
+import subprocess
+import sys
 from optparse import OptionParser
-
+from string import Template
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,7 @@ mstransform(vis='${infile}',
             createmms=False,
             datacolumn="data")
 """
+
 
 def freq_map(low_req, hi_req, *args):
     """
@@ -88,7 +93,6 @@ def freq_map(low_req, hi_req, *args):
     '14~14'
     """
 
-
     #     SpwID  Name           #Chans   Frame   Ch0(MHz)   Ch0(MHz)   Ch0(MHz)ChanWid(kHz)  TotBW(kHz) BBC Num  Corrs
     #     0      EVLA_L#A0C0#0    2048   TOPO     941.000    946.000    951.000      15.625     32000.0      12  RR  LL
     #     1      EVLA_L#A0C0#1    2048   TOPO     973.000    978.000    983.000      15.625     32000.0      12  RR  LL
@@ -106,22 +110,22 @@ def freq_map(low_req, hi_req, *args):
     #     13     EVLA_L#A0C0#13   2048   TOPO    1357.000   1362.000   1367.000      15.625     32000.0      12  RR  LL
     #     14     EVLA_L#A0C0#14   2048   TOPO    1389.000   1394.000   1399.000      15.625     32000.0      12  RR  LL
 
-    f_tab = [[941.00,   946.00,   951.00],
-    [973.00,   978.00,   983.00],
-    [1005.00,  1010.00,  1015.00],
-    [1037.00,  1042.00,  1047.00],
-    [1069.00,  1074.00,  1079.00],
-    [1101.00,  1106.00,  1111.00],
-    [1133.00,  1138.00,  1143.00],
-    [1165.00,  1170.00,  1175.00],
-    [1197.00,  1202.00,  1207.00],
-    [1229.00,  1234.00,  1239.00],
-    [1261.00,  1266.00,  1271.00],
-    [1293.00,  1298.00,  1303.00],
-    [1325.00,  1330.00,  1335.00],
-    [1357.00,  1362.00,  1367.00],
-    [1389.00,  1394.00,  1399.00],
-    [1421.00,  1426.00,  1431.00]]
+    f_tab = [[941.00, 946.00, 951.00],
+             [973.00, 978.00, 983.00],
+             [1005.00, 1010.00, 1015.00],
+             [1037.00, 1042.00, 1047.00],
+             [1069.00, 1074.00, 1079.00],
+             [1101.00, 1106.00, 1111.00],
+             [1133.00, 1138.00, 1143.00],
+             [1165.00, 1170.00, 1175.00],
+             [1197.00, 1202.00, 1207.00],
+             [1229.00, 1234.00, 1239.00],
+             [1261.00, 1266.00, 1271.00],
+             [1293.00, 1298.00, 1303.00],
+             [1325.00, 1330.00, 1335.00],
+             [1357.00, 1362.00, 1367.00],
+             [1389.00, 1394.00, 1399.00],
+             [1421.00, 1426.00, 1431.00]]
 
     if_low = 0
     if_hi = 14
@@ -129,31 +133,31 @@ def freq_map(low_req, hi_req, *args):
     ifn_hi = 2
 
     if (args):
-     if (args[0] == 941):
-       ifn_low = 0
-       ifn_hi = 0
-     elif (args[0] == 946):
-       ifn_low = 1
-       ifn_hi = 1
-     elif (args[0] == 951):
-       ifn_low = 2
-       ifn_hi = 2
+        if (args[0] == 941):
+            ifn_low = 0
+            ifn_hi = 0
+        elif (args[0] == 946):
+            ifn_low = 1
+            ifn_hi = 1
+        elif (args[0] == 951):
+            ifn_low = 2
+            ifn_hi = 2
 
     for nif_low in range(0, 16):
         f = f_tab[nif_low]
-        #print nif_low,f
+        # print nif_low,f
         if ((f[ifn_low]) > ((low_req) - 2)):
             if_low = nif_low - 1
-            #print 'Using '+str(if_low)+' for lower SPW edge'
+            # print 'Using '+str(if_low)+' for lower SPW edge'
             nif_low = 14
             break
 
     for nif_hi in range(0, 16):
         f = f_tab[nif_hi]
-        #print nif_hi,f
+        # print nif_hi,f
         if (f[ifn_hi] > (hi_req + 2)):
             if_hi = nif_hi - 1
-            #print 'Using '+str(if_hi)+' for upper SPW edge'
+            # print 'Using '+str(if_hi)+' for upper SPW edge'
             nif_hi = 14
             break
 
@@ -165,6 +169,7 @@ def freq_map(low_req, hi_req, *args):
 
     spw = "{0}~{1}".format(if_low, if_hi)
     return spw
+
 
 def launch_mstransform(infile, outfile, no_chan,
                        freq1, width_freq, spw_range,
@@ -198,6 +203,7 @@ def launch_mstransform(infile, outfile, no_chan,
     casa_process = subprocess.Popen(casapy_cmd.split())
     return casa_process
 
+
 def do_split(infile, outdir, min_freq, max_freq,
              step_freq, width_freq, work_dir, casa_bin_dir):
     """
@@ -222,7 +228,7 @@ def do_split(infile, outdir, min_freq, max_freq,
     freq2 = min_freq + step_freq
     bottom_edge = re.search('_[0-9]{3}_', infile)
     if (bottom_edge):
-        #e.g. 20131122_941_6_FINAL_PRODUCTS --> 941
+        # e.g. 20131122_941_6_FINAL_PRODUCTS --> 941
         bedge = bottom_edge.group(0)
         bedge = int(bedge[1:4])
     else:
@@ -231,7 +237,7 @@ def do_split(infile, outdir, min_freq, max_freq,
     casa_proc_list = []
     gen_script_dir = "{0}/{1}".format(work_dir, timestr)
 
-    for i in range(steps): # potentially parallel
+    for i in range(steps):  # potentially parallel
         spw_range = freq_map(freq1, freq2, bedge)
         if (rem and (i == steps - 1)):
             freq_range = "{0}~{1}".format(min_freq + i * step_freq, max_freq)
@@ -251,7 +257,8 @@ def do_split(infile, outdir, min_freq, max_freq,
         freq2 += step_freq
 
     for csp in casa_proc_list:
-        csp.wait() # join all sub-processes before exiting
+        csp.wait()  # join all sub-processes before exiting
+
 
 if __name__ == "__main__":
     """
@@ -280,9 +287,9 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
     if (None == options.infile or
-        None == options.outdir or
-        None == options.work_dir or
-        None == options.casa_bin_dir):
+            None == options.outdir or
+            None == options.work_dir or
+            None == options.casa_bin_dir):
         parser.print_help()
         sys.exit(1)
 

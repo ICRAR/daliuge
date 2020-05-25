@@ -37,6 +37,7 @@ VERSION = (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/common/version.py"
 RELEASE = True
 
+
 def do_versioning():
     # Avoid importing, the package doesn't exist as such yet
     with open(os.path.join('dlg', 'version_helper.py')) as f:
@@ -44,6 +45,7 @@ def do_versioning():
     _globals = {}
     exec(code, _globals)
     return _globals['write_version_info'](VERSION, VERSION_FILE, RELEASE)
+
 
 install_requires = [
     # 1.10 contains an important race-condition fix on lazy-loaded modules

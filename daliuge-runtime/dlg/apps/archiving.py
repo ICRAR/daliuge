@@ -36,7 +36,8 @@ class ExternalStoreApp(BarrierAppDROP):
     shouldn't contain any output, making it a leaf node of the physical graph
     where it resides.
     """
-    compontent_meta = dlg_component('ExternalStoreApp', 'An application that takes its input DROP (which must be one, and only one) '
+    compontent_meta = dlg_component('ExternalStoreApp',
+                                    'An application that takes its input DROP (which must be one, and only one) '
                                     'and creates a copy of it in a completely external store, from the point '
                                     'of view of the DALiuGE framework.',
                                     [dlg_batch_input('binary/*', [])],
@@ -61,6 +62,7 @@ class ExternalStoreApp(BarrierAppDROP):
         `inputDrop` into an external store.
         """
 
+
 class NgasArchivingApp(ExternalStoreApp):
     '''
     An ExternalStoreApp class that takes its input DROP and archives it in
@@ -70,7 +72,8 @@ class NgasArchivingApp(ExternalStoreApp):
     new NGAS client process. This way we can read the different storage types
     supported by the framework, and not only filesystem objects.
     '''
-    compontent_meta = dlg_component('NgasArchivingApp', 'An ExternalStoreApp class that takes its input DROP and archives it in '
+    compontent_meta = dlg_component('NgasArchivingApp',
+                                    'An ExternalStoreApp class that takes its input DROP and archives it in '
                                     'an NGAS server. It currently deals with non-container DROPs only.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
@@ -92,7 +95,8 @@ class NgasArchivingApp(ExternalStoreApp):
         try:
             ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
         except ImportError:
-            ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
+            ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout,
+                                size)
 
         ngasIO.open(OpenMode.OPEN_WRITE)
 
