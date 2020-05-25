@@ -19,17 +19,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import os
 import unittest
 
-from dlg import utils
 from dlg import droputils
+from dlg import utils
 from dlg.apps.socket_listener import SocketListenerApp
-from dlg.drop import InMemoryDROP
 from dlg.ddap_protocol import DROPStates
+from dlg.drop import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
-import os
-
 
 try:
     from crc32c import crc32  # @UnusedImport
@@ -64,11 +63,11 @@ class TestSocketListener(unittest.TestCase):
 
         # Create the socket, write, and close the connection, allowing
         # A to move to COMPLETED
-        with DROPWaiterCtx(self, d, 3): # That's plenty of time
+        with DROPWaiterCtx(self, d, 3):  # That's plenty of time
             a.async_execute()
             utils.write_to(host, port, data, 1)
 
-        for drop in [a,b,c,d]:
+        for drop in [a, b, c, d]:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
 
         # Our expectations are fulfilled!

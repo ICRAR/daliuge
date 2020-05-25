@@ -49,8 +49,7 @@ from ...dropmake import pg_generator
 from ...manager import cmdline
 from ...manager.client import NodeManagerClient
 from ...manager.constants import NODE_DEFAULT_REST_PORT, \
-ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
-
+    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT
 
 DIM_WAIT_TIME = 60
 MM_WAIT_TIME = DIM_WAIT_TIME
@@ -63,6 +62,7 @@ apps = (
     "test.graphsRepository.SleepApp",
     "test.graphsRepository.SleepAndCopyApp",
 )
+
 
 def check_host(host, port, timeout=5, check_with_session=False):
     """
@@ -82,6 +82,7 @@ def check_host(host, port, timeout=5, check_with_session=False):
         return True
     except:
         return False
+
 
 def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
     """
@@ -107,6 +108,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
 
     return [ip for ip in up if ip]
 
+
 def get_ip_via_ifconfig(iface_index):
     out = subprocess.check_output('ifconfig')
     ifaces_info = list(filter(None, out.split(b'\n\n')))
@@ -114,11 +116,13 @@ def get_ip_via_ifconfig(iface_index):
     for line in ifaces_info[iface_index].splitlines():
         line = line.strip()
         if line.startswith(b'inet'):
-                return utils.b2s(line.split()[1])
+            return utils.b2s(line.split()[1])
     raise ValueError('Interace %d is not an IP interface' % iface_index)
+
 
 def get_ip_via_netifaces(iface_index):
     return utils.get_local_ip_addr()[iface_index][0]
+
 
 def start_node_mgr(log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=''):
     """
@@ -132,6 +136,7 @@ def start_node_mgr(log_dir, my_ip, logv=1, max_threads=0, host=None, event_liste
             '--event-listeners', event_listeners]
     return cmdline.dlgNM(optparse.OptionParser(), args)
 
+
 def start_dim(node_list, log_dir, origin_ip, logv=1):
     """
     Start data island manager
@@ -143,6 +148,7 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
     proc = tool.start_process('dim', args)
     logger.info('Island manager process started with pid %d', proc.pid)
     return proc
+
 
 def start_mm(node_list, log_dir, logv=1):
     """
@@ -160,19 +166,24 @@ def start_mm(node_list, log_dir, logv=1):
 def _stop(endpoints):
     def _the_stop(endpoint):
         common.BaseDROPManagerClient(endpoint[0], endpoint[1]).stop()
+
     tp = multiprocessing.pool.ThreadPool(min(50, len(endpoints)))
     tp.map(_the_stop, endpoints)
     tp.close()
     tp.join()
 
+
 def stop_nms(ips):
     _stop([(ip, NODE_DEFAULT_REST_PORT) for ip in ips])
+
 
 def stop_dims(ips):
     _stop([(ip, ISLAND_DEFAULT_REST_PORT) for ip in ips])
 
+
 def stop_mm(ip):
     _stop([(ip, MASTER_DEFAULT_REST_PORT)])
+
 
 def submit_and_monitor(pg, opts, port):
     def _task():
@@ -187,6 +198,7 @@ def submit_and_monitor(pg, opts, port):
                 break
             except:
                 logger.exception('Monitoring failed, restarting it')
+
     t = threading.Thread(target=_task)
     t.start()
     return t
@@ -207,12 +219,14 @@ def start_proxy(dlg_host, dlg_port, monitor_host, monitor_port):
         logger.exception("DALiuGE proxy terminated unexpectedly")
         sys.exit(1)
 
+
 def modify_pg(pgt, modifier):
     parts = modifier.split(',')
     func = utils.get_symbol(parts[0])
     args = list(filter(lambda x: '=' not in x, parts[1:]))
     kwargs = dict(map(lambda x: x.split('='), filter(lambda x: '=' in x, parts[1:])))
     return func(pgt, *args, **kwargs)
+
 
 def get_pg(opts, nms, dims):
     """Gets the Physical Graph that is eventually submitted to the cluster, if any"""
@@ -229,7 +243,7 @@ def get_pg(opts, nms, dims):
                                      num_partitions=num_nms,
                                      num_islands=num_dims,
                                      **algo_params)
-        del unrolled # quickly dispose of potentially big object
+        del unrolled  # quickly dispose of potentially big object
     else:
         with open(opts.physical_graph, 'rb') as f:
             pgt = json.load(f)
@@ -247,9 +261,11 @@ def get_pg(opts, nms, dims):
         json.dump(pg, f)
     return pg
 
+
 def get_ip(opts):
     find_ip = get_ip_via_ifconfig if opts.use_ifconfig else get_ip_via_netifaces
     return find_ip(opts.interface)
+
 
 def get_remote(opts):
     my_ip = get_ip(opts)
@@ -259,44 +275,47 @@ def get_remote(opts):
         return remotes.DALiuGERemote(opts, my_ip)
     elif opts.remote_mechanism == 'dlg-hybrid':
         return remotes.DALiuGEHybridRemote(opts, my_ip)
-    else: # == 'slurm'
+    else:  # == 'slurm'
         return remotes.SlurmRemote(opts, my_ip)
 
-def main():
 
+def main():
     parser = optparse.OptionParser()
     parser.add_option("-l", "--log_dir", action="store", type="string",
-                    dest="log_dir", help="Log directory (required)")
+                      dest="log_dir", help="Log directory (required)")
     # if this parameter is present, it means we want to get monitored
     parser.add_option("-m", "--monitor_host", action="store", type="string",
-                    dest="monitor_host", help="Monitor host IP (optional)")
+                      dest="monitor_host", help="Monitor host IP (optional)")
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help="Monitor port",
-                    default=dfms_proxy.default_dlg_monitor_port)
+                      dest="monitor_port", help="Monitor port",
+                      default=dfms_proxy.default_dlg_monitor_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
-                    dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
-                    default=1)
+                      dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
+                      default=1)
     parser.add_option("-z", "--zerorun", action="store_true",
                       dest="zerorun", help="Generate a physical graph that takes no time to run", default=False)
     parser.add_option("--app", action="store", type="int",
                       dest="app", help="The app to use in the PG. 1=SleepApp (default), 2=SleepAndCopy", default=0)
 
     parser.add_option("-t", "--max-threads", action="store", type="int",
-                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
+                      dest="max_threads",
+                      help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
 
     parser.add_option("-L", "--logical-graph", action="store", type="string",
                       dest="logical_graph", help="The filename of the logical graph to deploy", default=None)
     parser.add_option("-P", "--physical-graph", action="store", type="string",
-                      dest="physical_graph", help="The filename of the physical graph (template) to deploy", default=None)
+                      dest="physical_graph", help="The filename of the physical graph (template) to deploy",
+                      default=None)
 
     parser.add_option('-s', '--num_islands', action='store', type='int',
-                    dest='num_islands', default=1, help='The number of Data Islands')
+                      dest='num_islands', default=1, help='The number of Data Islands')
 
     parser.add_option('-d', '--dump', action='store_true',
-                    dest='dump', help = 'dump file base name?', default=False)
+                      dest='dump', help='dump file base name?', default=False)
 
     parser.add_option("-i", "--interface", type="int",
-                      help="Index of network interface to use as the external interface/address for each host", default=0)
+                      help="Index of network interface to use as the external interface/address for each host",
+                      default=0)
 
     parser.add_option('--part-algo', type="string", dest='part_algo', help='Partition algorithms',
                       default='metis')
@@ -310,26 +329,31 @@ def main():
                       dest="all_nics", help="Listen on all NICs for a node manager", default=False)
 
     parser.add_option('--check-interfaces', action='store_true',
-                      dest='check_interfaces', help = 'Run a small network interfaces test and exit', default=False)
+                      dest='check_interfaces', help='Run a small network interfaces test and exit', default=False)
     parser.add_option('--collect-interfaces', action='store_true',
-                      dest='collect_interfaces', help = 'Collect all interfaces and exit', default=False)
+                      dest='collect_interfaces', help='Collect all interfaces and exit', default=False)
     parser.add_option('--use-ifconfig', action='store_true',
-                      dest='use_ifconfig', help='Use ifconfig to find a suitable external interface/address for each host', default=False)
+                      dest='use_ifconfig',
+                      help='Use ifconfig to find a suitable external interface/address for each host', default=False)
     parser.add_option("-S", "--check_with_session", action="store_true",
-                      dest="check_with_session", help="Check for node managers' availability by creating/destroy a session", default=False)
+                      dest="check_with_session",
+                      help="Check for node managers' availability by creating/destroy a session", default=False)
 
     parser.add_option("--event-listeners", action="store", type="string",
-                      dest="event_listeners", help="A colon-separated list of event listener classes to be used", default='')
+                      dest="event_listeners", help="A colon-separated list of event listener classes to be used",
+                      default='')
 
     parser.add_option("--sleep-after-execution", action="store", type="int",
-                      dest="sleep_after_execution", help="Sleep time interval after graph execution finished", default=0)
+                      dest="sleep_after_execution", help="Sleep time interval after graph execution finished",
+                      default=0)
 
     parser.add_option('--pg-modifiers',
                       help=('A colon-separated list of python functions that modify a PG before submission. '
                             'Each specification is in the form of <funcname>[,[arg1=]val1][,[arg2=]val2]...'),
                       default='')
 
-    parser.add_option('-r', '--remote-mechanism', help='The mechanism used by this script to coordinate remote processes',
+    parser.add_option('-r', '--remote-mechanism',
+                      help='The mechanism used by this script to coordinate remote processes',
                       choices=['mpi', 'slurm', 'dlg', 'dlg-hybrid'], default='mpi')
 
     (options, _) = parser.parse_args()
@@ -351,7 +375,6 @@ def main():
         if comm.Get_rank() == 0:
             print(' '.join(ips))
         sys.exit(0)
-
 
     if bool(options.logical_graph) == bool(options.physical_graph):
         parser.error("Either a logical graph or physical graph filename must be specified")
@@ -390,9 +413,9 @@ def main():
 
     if remote.is_nm:
         start_node_mgr(log_dir, remote.my_ip, logv=logv,
-            max_threads=options.max_threads,
-            host=None if options.all_nics else remote.my_ip,
-            event_listeners=options.event_listeners)
+                       max_threads=options.max_threads,
+                       host=None if options.all_nics else remote.my_ip,
+                       event_listeners=options.event_listeners)
 
     elif options.num_islands == 1:
         if remote.is_proxy:
@@ -436,6 +459,7 @@ def main():
             proc = start_dim(nm_ips, log_dir, remote.my_ip, logv=logv)
             utils.wait_or_kill(proc, 1e8, period=5)
             stop_nms(remote.nm_ips)
+
 
 if __name__ == '__main__':
     main()

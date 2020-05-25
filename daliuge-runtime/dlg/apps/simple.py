@@ -36,6 +36,7 @@ class NullBarrierApp(BarrierAppDROP):
                                     [dlg_streaming_input('binary/*')])
 
     """A BarrierAppDrop that doesn't perform any work"""
+
     def run(self):
         pass
 

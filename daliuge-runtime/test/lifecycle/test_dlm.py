@@ -77,7 +77,6 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(1, len(manager.getDropUids(drop)))
 
     def test_expiringNormalDrop(self):
-
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
             drop = FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
             manager.addDrop(drop)
@@ -89,7 +88,6 @@ class TestDataLifecycleManager(unittest.TestCase):
             time.sleep(1)
 
             self.assertEqual(DROPStates.EXPIRED, drop.status)
-
 
     def test_lostDrop(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
@@ -150,7 +148,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             manager.addDrop(c)
 
             # Make sure all consumers are done
-            with DROPWaiterCtx(self, [c,d], 1):
+            with DROPWaiterCtx(self, [c, d], 1):
                 a.setCompleted()
                 b.setCompleted()
 
@@ -162,6 +160,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertFalse(a.exists())
             self.assertTrue(b.exists())
             b.delete()
+
 
 if __name__ == '__main__':
     unittest.main()

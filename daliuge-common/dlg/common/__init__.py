@@ -22,8 +22,8 @@
 """Common utilities used by daliuge packages"""
 import sys
 
-from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
+from .osutils import terminate_or_kill, wait_or_kill
 from .streams import ZlibCompressedStream, JSONStream
 
 STORAGE_TYPES = {'memory', 'file', 'ngas', 'null', 'json'}
@@ -59,6 +59,7 @@ class dropdict(dict):
     repositories where graph templates are expected to be found by the
     DROPManager.
     """
+
     def _addSomething(self, other, key):
         if key not in self:
             self[key] = []
@@ -67,14 +68,19 @@ class dropdict(dict):
 
     def addConsumer(self, other):
         self._addSomething(other, 'consumers')
+
     def addStreamingConsumer(self, other):
         self._addSomething(other, 'streamingConsumers')
+
     def addInput(self, other):
         self._addSomething(other, 'inputs')
+
     def addStreamingInput(self, other):
         self._addSomething(other, 'streamingInputs')
+
     def addOutput(self, other):
         self._addSomething(other, 'outputs')
+
     def addProducer(self, other):
         self._addSomething(other, 'producers')
 

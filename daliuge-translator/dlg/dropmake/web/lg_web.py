@@ -26,13 +26,15 @@ import json
 import logging
 import optparse
 import os
-import traceback
 import signal
 import sys
 import threading
 import time
+import traceback
 import warnings
 
+import bottle
+import pkg_resources
 from bottle import (
     route,
     request,
@@ -43,14 +45,12 @@ from bottle import (
     response,
     HTTPResponse,
 )
-import bottle
-import pkg_resources
 
-from ... import common, restutils
-from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
+from ... import common, restutils
+from ...clients import CompositeManagerClient
 
 
 def file_as_string(fname, enc="utf8"):
@@ -376,7 +376,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-            % ("" if num_partitions == 0 else "Partitioning"),
+                  % ("" if num_partitions == 0 else "Partitioning"),
         )
     except GraphException as ge:
         response.status = 500
@@ -584,6 +584,7 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # Simple and easy
     def handler(*_args):
         raise KeyboardInterrupt
+
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 

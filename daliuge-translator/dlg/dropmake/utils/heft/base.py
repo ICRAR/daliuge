@@ -43,13 +43,13 @@ multiple cores. The original HEFT algorithm assumes each task
 consumes exactly one processor at a time
 """
 
-from functools import partial
-from collections import namedtuple
-from itertools import chain
 import itertools as it
-import networkx as nx
+from collections import namedtuple
+from functools import partial
+from itertools import chain
 
 Event = namedtuple('Event', 'task start end')
+
 
 def reverse_dict(d):
     """ Reverses direction of dependence dict
@@ -61,8 +61,9 @@ def reverse_dict(d):
     result = {}
     for key in d:
         for val in d[key]:
-            result[val] = result.get(val, tuple()) + (key, )
+            result[val] = result.get(val, tuple()) + (key,)
     return result
+
 
 def find_task_event(task_name, orders_dict):
     for event in it.chain.from_iterable(orders_dict.values()):
@@ -85,7 +86,7 @@ def cbar(ni, nj, agents, commcost):
                     if a1 != a2) / npairs
 
 
-def ranku(ni, agents, succ,  compcost, commcost):
+def ranku(ni, agents, succ, compcost, commcost):
     """ Rank of task
 
     This code is designed to mirror the wikipedia entry.
@@ -130,8 +131,8 @@ def find_first_gap(agent_orders, desired_start_time, duration):
     The gap must be after `desired_start_time` and of length at least
     `duration`.
     """
-    #TODO change to a "DAG preserved" first gap
-    #TODO return an infinite large value if the DoP constraint is not met
+    # TODO change to a "DAG preserved" first gap
+    # TODO return an infinite large value if the DoP constraint is not met
 
     # No tasks: can fit it in whenever the task is ready to run
     if (agent_orders is None) or (len(agent_orders)) == 0:
@@ -175,15 +176,15 @@ def allocate(task, orders, taskson, prec, compcost, commcost):
 
     # 'min()' represents 'earliest' finished time (ft)
     # this is exactly why the allocation policy is considered greedy!
-    #TODO the new greediness should be based on "DoP" since all start time will be
+    # TODO the new greediness should be based on "DoP" since all start time will be
     # the same (the desired_start_time). Smaller DoP (or bigger leftover) is better
     agent = min(orders.keys(), key=ft)
     start = st(agent)
     end = ft(agent)
-    #assert(end == start + compcost(task, agent))
+    # assert(end == start + compcost(task, agent))
 
     orders[agent].append(Event(task, start, end))
-    #orders[agent] = sorted(orders[agent], key=lambda e: e.start)
+    # orders[agent] = sorted(orders[agent], key=lambda e: e.start)
     orders[agent].sort(key=lambda e: e.start)
     # Might be better to use a different data structure to keep each
     # agent's orders sorted at a lower cost.
