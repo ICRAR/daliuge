@@ -27,6 +27,7 @@ import base64
 import collections
 import contextlib
 import errno
+import hashlib
 import heapq
 import importlib
 import inspect
@@ -41,8 +42,8 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
-from dlg.common.reproducibility.MerkleTree.MerkleTree.MerkleTree import MerkleTree
-from dlg.common.reproducibility.constants import ReproduciblityFlags
+from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT
+from merklelib import MerkleTree
 from six import BytesIO
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
@@ -81,6 +82,10 @@ class ListAsDict(list):
 
 
 track_current_drop = object_tracking('drop')
+
+
+def drop_hash(value):
+    return hashlib.sha3_256(value).hexdigest()
 
 
 # ===============================================================================
@@ -230,11 +235,13 @@ class AbstractDROP(EventFirer):
         self._checksumType = None
         self._size = None
 
-        self._merkleRoot = None
+        # Recording runtime repropduciblity information is handled via MerkleTrees
+        # Switching on the reproduciblity level will determine what information is recorded.
         self._committed = False
+        self._merkleRoot = None
         self._merkleTree = None
         self._merkleData = []
-        self._reproduciblity = ReproduciblityFlags.NOTHING
+        self._reproduciblity = REPRO_DEFAULT
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
@@ -598,6 +605,23 @@ class AbstractDROP(EventFirer):
     def merkleroot(self):
         return self._merkleRoot
 
+    @property
+    def reproducibility_level(self):
+        return self._reproduciblity
+
+    @reproducibility_level.setter
+    def reproducibility_level(self, new_flag):
+        if type(new_flag) != ReproduciblityFlags:
+            raise TypeError("new_flag must be a Reproduciblity flag enum.")
+        else:
+            if self._committed:
+                # Current behaviour, set to un-committed again after change
+                self._committed = False
+                self._merkleRoot = None
+                self._merkleTree = None
+                self._merkleData = []
+            self._reproduciblity = new_flag
+
     def generate_rerun_data(self):
         """
         Provides a serailized list of Rerun data.
@@ -624,13 +648,16 @@ class AbstractDROP(EventFirer):
     def commit(self):
         """
         Generates the MerkleRoot of this DROP
+        Should only be called once this DROP is completed.
         """
         if not self._committed:
             #  Generate the MerkleData
             self._merkleData = self.generate_merkle_data()
             # Fill MerkleTree, add data and set the MerkleRoot Value
-            self._merkleTree = MerkleTree()
-            self._merkleRoot = self._merkleTree.add_data(self._merkleData)
+            self._merkleTree = MerkleTree(self._merkleData, drop_hash)
+            self._merkleRoot = self._merkleTree.merkle_root
+            # Set as committed
+            self._committed = True
         else:
             raise Exception("Trying to re-commit DROP %s, cannot overwrite." % self)
 
@@ -1004,6 +1031,8 @@ class AbstractDROP(EventFirer):
 
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
+        # Commits current reproduciblity data to an internal MerkleTree
+        self.commit()
 
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.COMPLETED)
