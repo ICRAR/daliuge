@@ -23,24 +23,27 @@
 Module containing the core DROP classes.
 """
 
-from abc import ABCMeta, abstractmethod
 import base64
 import collections
 import contextlib
 import errno
+import hashlib
 import heapq
 import importlib
+import inspect
 import logging
 import math
 import os
 import random
+import re
 import shutil
 import threading
 import time
-import re
-import inspect
+from abc import ABCMeta, abstractmethod
 
 import six
+from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT
+from merklelib import MerkleTree
 from six import BytesIO
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
@@ -48,26 +51,31 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
-from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
+from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
 try:
     from crc32c import crc32  # @UnusedImport
+
     _checksumType = ChecksumTypes.CRC_32C
 except:
     from binascii import crc32  # @Reimport
-    _checksumType = ChecksumTypes.CRC_32
 
+    _checksumType = ChecksumTypes.CRC_32
 
 logger = logging.getLogger(__name__)
 
+
 class ListAsDict(list):
     """A list that adds drop UIDs to a set as they get appended to the list"""
+
     def __init__(self, my_set):
+        super().__init__()
         self.set = my_set
+
     def append(self, drop):
         super(ListAsDict, self).append(drop)
         self.set.add(drop.uid)
@@ -75,9 +83,14 @@ class ListAsDict(list):
 
 track_current_drop = object_tracking('drop')
 
-#===============================================================================
+
+def drop_hash(value):
+    return hashlib.sha3_256(value).hexdigest()
+
+
+# ===============================================================================
 # DROP classes follow
-#===============================================================================
+# ===============================================================================
 
 
 class AbstractDROP(EventFirer):
@@ -195,10 +208,10 @@ class AbstractDROP(EventFirer):
         self._streamingConsumers = ListAsDict(self._streamingConsumers_uids)
 
         self._refCount = 0
-        self._refLock  = threading.Lock()
+        self._refLock = threading.Lock()
         self._location = None
-        self._parent   = None
-        self._status   = None
+        self._parent = None
+        self._status = None
         self._statusLock = threading.RLock()
 
         # Current and target phases.
@@ -218,9 +231,17 @@ class AbstractDROP(EventFirer):
         # this information.
         # Note also that the setters of these two properties also allow to set
         # a value on them, but only if they are None
-        self._checksum     = None
+        self._checksum = None
         self._checksumType = None
-        self._size         = None
+        self._size = None
+
+        # Recording runtime repropduciblity information is handled via MerkleTrees
+        # Switching on the reproduciblity level will determine what information is recorded.
+        self._committed = False
+        self._merkleRoot = None
+        self._merkleTree = None
+        self._merkleData = []
+        self._reproduciblity = REPRO_DEFAULT
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
@@ -265,8 +286,8 @@ class AbstractDROP(EventFirer):
         # the DROP.
         # Expected lifespan for this object, used by to expire them
         if 'lifespan' in kwargs and 'expireAfterUse' in kwargs:
-            raise InvalidDropException(self, "%r specifies both `lifespan` and `expireAfterUse`" \
-                             "but they are mutually exclusive" % (self,))
+            raise InvalidDropException(self, "%r specifies both `lifespan` and `expireAfterUse` but they are mutually "
+                                             "exclusive" % (self,))
 
         self._expireAfterUse = self._getArg(kwargs, 'expireAfterUse', False)
         self._expirationDate = -1
@@ -286,7 +307,7 @@ class AbstractDROP(EventFirer):
 
         # Sub-class initialization; mark ourselves as INITIALIZED after that
         self.initialize(**kwargs)
-        self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
+        self._status = DROPStates.INITIALIZED  # no need to use synchronised self.status here
 
     def _extract_attributes(self, **kwargs):
 
@@ -297,7 +318,7 @@ class AbstractDROP(EventFirer):
                         yield k, v
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
-        for attr_name, obj in getmembers(self, lambda a: not(inspect.isfunction(a) or isinstance(a, property))):
+        for attr_name, obj in getmembers(self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None:
@@ -553,9 +574,9 @@ class AbstractDROP(EventFirer):
     @checksum.setter
     def checksum(self, value):
         if self._checksum is not None:
-            raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % (self))
+            raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % self)
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % (self))
+            raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % self)
         self._checksum = value
 
     @property
@@ -579,6 +600,66 @@ class AbstractDROP(EventFirer):
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("DROP %s is still not fully written, cannot manually set a checksum type yet" % (self))
         self._checksumType = value
+
+    @property
+    def merkleroot(self):
+        return self._merkleRoot
+
+    @property
+    def reproducibility_level(self):
+        return self._reproduciblity
+
+    @reproducibility_level.setter
+    def reproducibility_level(self, new_flag):
+        if type(new_flag) != ReproduciblityFlags:
+            raise TypeError("new_flag must be a Reproduciblity flag enum.")
+        else:
+            if self._committed:
+                # Current behaviour, set to un-committed again after change
+                self._committed = False
+                self._merkleRoot = None
+                self._merkleTree = None
+                self._merkleData = []
+            self._reproduciblity = new_flag
+
+    def generate_rerun_data(self):
+        """
+        Provides a serailized list of Rerun data.
+        At runtime, Rerunning only requires execution success or failure.
+        :return: A list containing
+        """
+        return [self._status]
+
+    def generate_merkle_data(self):
+        """
+        Provides a serialized summary of data as a list.
+        Fields constitute a single entry in this list.
+        Wraps several methods dependent on this DROPs reproducibility level
+        Some of these are abstract.
+        :return: A list of elements constituting a summary of this drop
+        """
+        if self._reproduciblity is ReproduciblityFlags.NOTHING:
+            return []
+        elif self._reproduciblity is ReproduciblityFlags.RERUN:
+            return self.generate_rerun_data()
+        else:
+            raise NotImplementedError("Currently other levels are not in development.")
+
+    def commit(self):
+        """
+        Generates the MerkleRoot of this DROP
+        Should only be called once this DROP is completed.
+        """
+        if not self._committed:
+            #  Generate the MerkleData
+            self._merkleData = self.generate_merkle_data()
+            # Fill MerkleTree, add data and set the MerkleRoot Value
+            self._merkleTree = MerkleTree(self._merkleData, drop_hash)
+            self._merkleRoot = self._merkleTree.merkle_root
+            # Set as committed
+            self._committed = True
+        else:
+            raise Exception("Trying to re-commit DROP %s, cannot overwrite." % self)
 
     @property
     def oid(self):
@@ -709,7 +790,7 @@ class AbstractDROP(EventFirer):
                 return
             self._status = value
 
-        self._fire('status', status = value)
+        self._fire('status', status=value)
 
     @property
     def parent(self):
@@ -727,7 +808,7 @@ class AbstractDROP(EventFirer):
             logger.warning("A parent is already set in %r, overwriting with new value" % (self,))
         if parent:
             prevParent = self._parent
-            self._parent = parent # a parent is a container
+            self._parent = parent  # a parent is a container
             if hasattr(parent, 'addChild') and self not in parent.children:
                 try:
                     parent.addChild(self)
@@ -738,7 +819,7 @@ class AbstractDROP(EventFirer):
         """
         Gets the physical node address(s) of the consumer of this drop.
         """
-        return [cons.node for cons in self._consumers] +\
+        return [cons.node for cons in self._consumers] + \
                [cons.node for cons in self._streamingConsumers]
 
     @property
@@ -856,7 +937,8 @@ class AbstractDROP(EventFirer):
             nProd = len(self._producers)
 
             if nFinished > nProd:
-                raise Exception("More producers finished that registered in DROP %r: %d > %d" % (self, nFinished, nProd))
+                raise Exception(
+                    "More producers finished that registered in DROP %r: %d > %d" % (self, nFinished, nProd))
             elif nFinished == nProd:
                 finished = True
 
@@ -898,7 +980,7 @@ class AbstractDROP(EventFirer):
         # Add if not already present
         if scuid in self._streamingConsumers_uids:
             return
-        logger.debug('Adding new streaming streaming consumer for %r: %s' %(self, streamingConsumer))
+        logger.debug('Adding new streaming streaming consumer for %r: %s' % (self, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
@@ -949,6 +1031,8 @@ class AbstractDROP(EventFirer):
 
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
+        # Commits current reproduciblity data to an internal MerkleTree
+        self.commit()
 
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.COMPLETED)
@@ -973,6 +1057,7 @@ class AbstractDROP(EventFirer):
     @property
     def dataIsland(self):
         return self._dataIsland
+
 
 class PathBasedDrop(object):
     """Base class for data drops that handle paths (i.e., file and directory drops)"""
@@ -1006,6 +1091,7 @@ class PathBasedDrop(object):
     @property
     def path(self):
         return self._path
+
 
 class FileDROP(AbstractDROP, PathBasedDrop):
     """
@@ -1118,7 +1204,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 
     @property
     def dataURL(self):
-        hostname = os.uname()[1] # TODO: change when necessary
+        hostname = os.uname()[1]  # TODO: change when necessary
         return "file://" + hostname + self._path
 
 
@@ -1150,7 +1236,7 @@ class NgasDROP(AbstractDROP):
     ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
 
     def initialize(self, **kwargs):
-       pass
+        pass
 
     def getIO(self):
         return NgasIO(self.ngasSrv, self.uid, port=self.ngasPort,
@@ -1219,7 +1305,6 @@ class RDBMSDrop(AbstractDROP):
         # The table this Drop points at
         self._db_table = kwargs.pop('dbtable')
 
-
     def getIO(self):
         # This Drop cannot be accessed directly
         return ErrorIO()
@@ -1237,10 +1322,10 @@ class RDBMSDrop(AbstractDROP):
         """
         with self._connection() as c:
             with self._cursor(c) as cur:
-
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
-                sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
+                sql = "INSERT into %s (%s) VALUES (%s)" % (
+                    self._db_table, ','.join(vals.keys()), ','.join(['{}'] * len(vals)))
                 sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
                 cur.execute(sql, vals)
@@ -1292,9 +1377,9 @@ class ContainerDROP(AbstractDROP):
         super(ContainerDROP, self).initialize(**kwargs)
         self._children = []
 
-    #===========================================================================
+    # ===========================================================================
     # No data-related operations should actually be called in Container DROPs
-    #===========================================================================
+    # ===========================================================================
     def getIO(self):
         return ErrorIO()
 
@@ -1336,7 +1421,7 @@ class ContainerDROP(AbstractDROP):
         if self._children:
             # TODO: Or should it be all()? Depends on what the exact contract of
             #       "exists" is
-            return any([c.exists() for c in  self._children])
+            return any([c.exists() for c in self._children])
         return True
 
 
@@ -1379,13 +1464,13 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
     def exists(self):
         return os.path.isdir(self._path)
 
-#===============================================================================
+
+# ===============================================================================
 # AppDROP classes follow
-#===============================================================================
+# ===============================================================================
 
 
 class AppDROP(ContainerDROP):
-
     '''
     An AppDROP is a DROP representing an application that reads data
     from one or more DROPs (its inputs), and writes data onto one or more
@@ -1422,12 +1507,12 @@ class AppDROP(ContainerDROP):
         # Input and output objects are later referenced by their *index*
         # (relative to the order in which they were added to this object)
         # Therefore we use an ordered dict to keep the insertion order.
-        self._inputs  = collections.OrderedDict()
+        self._inputs = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
         # Same as above, only that these correspond to the 'streaming' version
         # of the consumers
-        self._streamingInputs  = collections.OrderedDict()
+        self._streamingInputs = collections.OrderedDict()
 
         # An AppDROP has a second, separate state machine indicating its
         # execution status.
@@ -1623,7 +1708,7 @@ class InputFiredAppDROP(AppDROP):
 
         if (error_len + ok_len) == n_eff_inputs:
             # calculate the number of errors that have already occurred
-            percent_failed = math.floor((error_len/float(n_eff_inputs)) * 100)
+            percent_failed = math.floor((error_len / float(n_eff_inputs)) * 100)
 
             logger.debug("Error on inputs for %r: %d/%d", self, percent_failed, self.input_error_threshold)
 
@@ -1633,7 +1718,7 @@ class InputFiredAppDROP(AppDROP):
                             self, percent_failed, self.input_error_threshold)
 
                 self.execStatus = AppDROPStates.ERROR
-                self.status =  DROPStates.ERROR
+                self.status = DROPStates.ERROR
                 self._notifyAppIsFinished()
             else:
                 self.async_execute()
@@ -1696,11 +1781,13 @@ class InputFiredAppDROP(AppDROP):
     def exists(self):
         return True
 
+
 class BarrierAppDROP(InputFiredAppDROP):
     """
     A BarrierAppDROP is an InputFireAppDROP that waits for all its inputs to
     complete, effectively blocking the flow of the graph execution.
     """
+
     def initialize(self, **kwargs):
         # Blindly override existing value if any
         kwargs['n_effective_inputs'] = -1
@@ -1712,13 +1799,13 @@ class BarrierAppDROP(InputFiredAppDROP):
 # (e.g., one uses `addConsumer` to add a DROPLinkeType.CONSUMER DROP into
 # another)
 LINKTYPE_1TON_APPEND_METHOD = {
-    DROPLinkType.CONSUMER:           'addConsumer',
+    DROPLinkType.CONSUMER: 'addConsumer',
     DROPLinkType.STREAMING_CONSUMER: 'addStreamingConsumer',
-    DROPLinkType.INPUT:              'addInput',
-    DROPLinkType.STREAMING_INPUT:    'addStreamingInput',
-    DROPLinkType.OUTPUT:             'addOutput',
-    DROPLinkType.CHILD:              'addChild',
-    DROPLinkType.PRODUCER:           'addProducer'
+    DROPLinkType.INPUT: 'addInput',
+    DROPLinkType.STREAMING_INPUT: 'addStreamingInput',
+    DROPLinkType.OUTPUT: 'addOutput',
+    DROPLinkType.CHILD: 'addChild',
+    DROPLinkType.PRODUCER: 'addProducer'
 }
 
 # Same as above, but for N-to-1 relationships, in which case we indicate not a
@@ -1728,13 +1815,13 @@ LINKTYPE_NTO1_PROPERTY = {
 }
 
 LINKTYPE_1TON_BACK_APPEND_METHOD = {
-    DROPLinkType.CONSUMER:           'addInput',
+    DROPLinkType.CONSUMER: 'addInput',
     DROPLinkType.STREAMING_CONSUMER: 'addStreamingInput',
-    DROPLinkType.INPUT:              'addConsumer',
-    DROPLinkType.STREAMING_INPUT:    'addStreamingConsumer',
-    DROPLinkType.OUTPUT:             'addProducer',
-    DROPLinkType.CHILD:              'setParent',
-    DROPLinkType.PRODUCER:           'addOutput'
+    DROPLinkType.INPUT: 'addConsumer',
+    DROPLinkType.STREAMING_INPUT: 'addStreamingConsumer',
+    DROPLinkType.OUTPUT: 'addProducer',
+    DROPLinkType.CHILD: 'setParent',
+    DROPLinkType.PRODUCER: 'addOutput'
 }
 
 LINKTYPE_NTO1_BACK_APPEND_METHOD = {

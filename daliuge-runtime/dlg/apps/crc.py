@@ -24,9 +24,9 @@ Module containing an example application that calculates a CRC value
 """
 
 import six
+from dlg.ddap_protocol import AppDROPStates
 
 from ..drop import BarrierAppDROP, AppDROP
-from dlg.ddap_protocol import AppDROPStates
 from ..meta import dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
 try:
@@ -43,7 +43,7 @@ class CRCApp(BarrierAppDROP):
     not something really intended to be used in a production system
     '''
     compontent_meta = dlg_component('CRCApp', 'A BarrierAppDROP that calculates the '
-                                    'CRC of the single DROP it consumes',
+                                              'CRC of the single DROP it consumes',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])

@@ -37,8 +37,8 @@ from .ddap_protocol import DROPStates
 from .drop import BarrierAppDROP
 from .exceptions import InvalidDropException
 
-
 logger = logging.getLogger(__name__)
+
 
 class ResultTransmitter(BarrierAppDROP):
     '''Collects data from all inputs and transmits it to whomever connects to
@@ -76,7 +76,6 @@ class ResultTransmitter(BarrierAppDROP):
 
 
 def _get_client(**kwargs):
-
     if 'client' in kwargs:
         return kwargs['client']
 
@@ -87,8 +86,10 @@ def _get_client(**kwargs):
     timeout = kwargs.get('timeout', None)
     return NodeManagerClient(host, port, timeout)
 
+
 def _is_list_of_delayeds(x):
     return isinstance(x, (list, tuple)) and len(x) > 0 and isinstance(x[0], _DataDrop)
+
 
 def compute(value, **kwargs):
     """Returns the result of the (possibly) delayed computation by sending
@@ -103,7 +104,9 @@ def compute(value, **kwargs):
     # Add one final application that will wait for all results
     # and transmit them back to us
     transmitter_oid = '-1'
-    transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
+    transmitter = dropdict(
+        {'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port,
+         'nm': 'result transmitter'})
     for leaf_oid in droputils.get_leaves(graph.values()):
         graph[leaf_oid].addConsumer(transmitter)
     graph[transmitter_oid] = transmitter
@@ -127,8 +130,8 @@ def compute(value, **kwargs):
         logger.info("Received %r from graph computation", ret)
         return ret
 
-class _DelayedDrop(object):
 
+class _DelayedDrop(object):
     _drop_count = 0
 
     def __init__(self, producer=None):
@@ -210,8 +213,10 @@ class _DelayedDrop(object):
 
 class _Listifier(BarrierAppDROP):
     """Returns a list with all objects as contents"""
+
     def run(self):
         self.outputs[0].write(pickle.dumps([pickle.loads(droputils.allDropContents(x)) for x in self.inputs]))
+
 
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
@@ -223,7 +228,6 @@ class _DelayedDrops(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def _to_physical_graph(self, visited, graph):
-
         output = _DataDrop(producer=self)
         output._append_to_graph(visited, graph)
 
@@ -250,6 +254,7 @@ class _DelayedDrops(_DelayedDrop):
 
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
+
 
 class _AppDrop(_DelayedDrop):
     """Defines a PyFuncApp drop for a given function `f`"""
@@ -320,7 +325,10 @@ class _AppDrop(_DelayedDrop):
     def __repr__(self):
         return "<_DelayedApp fname=%s, nout=%s>" % (self.fname, str(self.nout))
 
+
 _no_data = object()
+
+
 class _DataDrop(_DelayedDrop):
     """Defines an in-memory drop"""
 
@@ -343,6 +351,7 @@ class _DataDrop(_DelayedDrop):
             return "<_DataDrop, pydata=%r>" % (self.pydata,)
         return "<_DataDrop, producer=%r>" % self.producer
 
+
 class _DataDropSequence(_DataDrop):
     """One or more _DataDrops that can be subscribed"""
 
@@ -363,6 +372,7 @@ class _DataDropSequence(_DataDrop):
 
     def __repr__(self):
         return "<_DataDropSequence nout=%d, producer=%r>" % (self.nout, self.producer)
+
 
 def delayed(x, *args, **kwargs):
     """Like dask.delayed, but quietly swallowing anything other than `nout`"""

@@ -41,15 +41,15 @@ from ..exceptions import InvalidGraphException, InvalidSessionState, \
 from ..restserver import RestServer
 from ..restutils import RestClient, RestClientException
 
-
 logger = logging.getLogger(__name__)
 
+
 def file_as_string(fname, enc='utf8'):
-    b = pkg_resources.resource_string(__name__, fname) # @UndefinedVariable
+    b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
     return utils.b2s(b, enc)
 
-def daliuge_aware(func):
 
+def daliuge_aware(func):
     @functools.wraps(func)
     def fwrapper(*args, **kwargs):
         try:
@@ -81,7 +81,7 @@ def daliuge_aware(func):
                 status = 555
                 eargs = {}
                 # args[1] is a dictionary of host:exception
-                for host,subex in e.args[1].items():
+                for host, subex in e.args[1].items():
                     eargs[host] = {'type': subex.__class__.__name__, 'args': subex.args}
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args
@@ -93,6 +93,7 @@ def daliuge_aware(func):
             return json.dumps(error)
 
     return fwrapper
+
 
 class ManagerRestServer(RestServer):
     """
@@ -115,22 +116,22 @@ class ManagerRestServer(RestServer):
 
         # Mappings
         app = self.app
-        app.post(  '/api/stop',                              callback=self.stop_manager)
-        app.post(  '/api/sessions',                          callback=self.createSession)
-        app.get(   '/api/sessions',                          callback=self.getSessions)
-        app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
-        app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
-        app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
-        app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
-        app.post(  '/api/sessions/<sessionId>/cancel',       callback=self.cancelSession)
-        app.get(   '/api/sessions/<sessionId>/graph',        callback=self.getGraph)
-        app.get(   '/api/sessions/<sessionId>/graph/size',   callback=self.getGraphSize)
-        app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
-        app.post(  '/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
+        app.post('/api/stop', callback=self.stop_manager)
+        app.post('/api/sessions', callback=self.createSession)
+        app.get('/api/sessions', callback=self.getSessions)
+        app.get('/api/sessions/<sessionId>', callback=self.getSessionInformation)
+        app.delete('/api/sessions/<sessionId>', callback=self.destroySession)
+        app.get('/api/sessions/<sessionId>/status', callback=self.getSessionStatus)
+        app.post('/api/sessions/<sessionId>/deploy', callback=self.deploySession)
+        app.post('/api/sessions/<sessionId>/cancel', callback=self.cancelSession)
+        app.get('/api/sessions/<sessionId>/graph', callback=self.getGraph)
+        app.get('/api/sessions/<sessionId>/graph/size', callback=self.getGraphSize)
+        app.get('/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
+        app.post('/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
 
         # The non-REST mappings that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
-        app.get(  '/session', callback=self.visualizeSession)
+        app.get('/session', callback=self.visualizeSession)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -146,7 +147,7 @@ class ManagerRestServer(RestServer):
         self.dm.shutdown()
         self.stop()
         logger.info("Thanks for using our %s, come back again :-)" %
-                (self.dm.__class__.__name__))
+                    (self.dm.__class__.__name__))
 
     @daliuge_aware
     def stop_manager(self):
@@ -161,7 +162,8 @@ class ManagerRestServer(RestServer):
     def sessions(self):
         sessions = []
         for sessionId in self.dm.getSessionIds():
-            sessions.append({'sessionId':sessionId, 'status':self.dm.getSessionStatus(sessionId), 'size': self.dm.getGraphSize(sessionId)})
+            sessions.append({'sessionId': sessionId, 'status': self.dm.getSessionStatus(sessionId),
+                             'size': self.dm.getGraphSize(sessionId)})
         return sessions
 
     @daliuge_aware
@@ -187,7 +189,7 @@ class ManagerRestServer(RestServer):
         completedDrops = []
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
-        self.dm.deploySession(sessionId,completedDrops=completedDrops)
+        self.dm.deploySession(sessionId, completedDrops=completedDrops)
 
     @daliuge_aware
     def cancelSession(self, sessionId):
@@ -222,9 +224,9 @@ class ManagerRestServer(RestServer):
         graph_parts = bottle.json_loads(json_content.read())
         self.dm.addGraphSpec(sessionId, graph_parts)
 
-    #===========================================================================
+    # ===========================================================================
     # non-REST methods
-    #===========================================================================
+    # ===========================================================================
     def server_static(self, filepath):
         staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
         return bottle.static_file(filepath, root=staticRoot)
@@ -244,6 +246,7 @@ class ManagerRestServer(RestServer):
                                serverUrl=serverUrl,
                                dmType=self.dm.__class__.__name__)
 
+
 class NMRestServer(ManagerRestServer):
     """
     A REST server for NodeManagers. It includes mappings for NM-specific
@@ -251,13 +254,13 @@ class NMRestServer(ManagerRestServer):
     """
 
     def initializeSpecifics(self, app):
-        app.get(   '/api',                                    callback=self.getNMStatus)
-        app.post(  '/api/sessions/<sessionId>/graph/link',    callback=self.linkGraphParts)
-        app.post(  '/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
-        app.post(  '/api/sessions/<sessionId>/trigger',       callback=self.trigger_drops)
+        app.get('/api', callback=self.getNMStatus)
+        app.post('/api/sessions/<sessionId>/graph/link', callback=self.linkGraphParts)
+        app.post('/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
+        app.post('/api/sessions/<sessionId>/trigger', callback=self.trigger_drops)
         # The non-REST mappings that serve HTML-related content
-        app.get(   '/', callback=self.visualizeDM)
-        app.get(   '/api/shutdown',                            callback=self.shutdown_node_manager)
+        app.get('/', callback=self.visualizeDM)
+        app.get('/api/shutdown', callback=self.shutdown_node_manager)
 
     @daliuge_aware
     def shutdown_node_manager(self):
@@ -291,9 +294,9 @@ class NMRestServer(ManagerRestServer):
             return
         self.dm.trigger_drops(sessionId, bottle.request.json)
 
-    #===========================================================================
+    # ===========================================================================
     # non-REST methods
-    #===========================================================================
+    # ===========================================================================
     def visualizeDM(self):
         tpl = file_as_string('web/dm.html')
         urlparts = bottle.request.urlparts
@@ -303,6 +306,7 @@ class NMRestServer(ManagerRestServer):
                                dmType=self.dm.__class__.__name__,
                                reset='false')
 
+
 class CompositeManagerRestServer(ManagerRestServer):
     """
     A REST server for DataIslandManagers. It includes mappings for DIM-specific
@@ -310,20 +314,20 @@ class CompositeManagerRestServer(ManagerRestServer):
     """
 
     def initializeSpecifics(self, app):
-        app.get(   '/api',                                   callback=self.getCMStatus)
-        app.get(   '/api/nodes',                             callback=self.getCMNodes)
-        app.post(  '/api/nodes/<node>',                      callback=self.addCMNode)
-        app.delete('/api/nodes/<node>',                      callback=self.removeCMNode)
+        app.get('/api', callback=self.getCMStatus)
+        app.get('/api/nodes', callback=self.getCMNodes)
+        app.post('/api/nodes/<node>', callback=self.addCMNode)
+        app.delete('/api/nodes/<node>', callback=self.removeCMNode)
 
         # Query forwarding to sub-nodes
-        app.get(   '/api/nodes/<node>/sessions',                          callback=self.getNodeSessions)
-        app.get(   '/api/nodes/<node>/sessions/<sessionId>',              callback=self.getNodeSessionInformation)
-        app.get(   '/api/nodes/<node>/sessions/<sessionId>/status',       callback=self.getNodeSessionStatus)
-        app.get(   '/api/nodes/<node>/sessions/<sessionId>/graph',        callback=self.getNodeGraph)
-        app.get(   '/api/nodes/<node>/sessions/<sessionId>/graph/status', callback=self.getNodeGraphStatus)
+        app.get('/api/nodes/<node>/sessions', callback=self.getNodeSessions)
+        app.get('/api/nodes/<node>/sessions/<sessionId>', callback=self.getNodeSessionInformation)
+        app.get('/api/nodes/<node>/sessions/<sessionId>/status', callback=self.getNodeSessionStatus)
+        app.get('/api/nodes/<node>/sessions/<sessionId>/graph', callback=self.getNodeGraph)
+        app.get('/api/nodes/<node>/sessions/<sessionId>/graph/status', callback=self.getNodeGraphStatus)
 
         # The non-REST mappings that serve HTML-related content
-        app.get(  '/', callback=self.visualizeDIM)
+        app.get('/', callback=self.visualizeDIM)
 
     @daliuge_aware
     def getCMStatus(self):
@@ -376,21 +380,22 @@ class CompositeManagerRestServer(ManagerRestServer):
         with NodeManagerClient(host=node) as dm:
             return dm.graph_status(sessionId)
 
-    #===========================================================================
+    # ===========================================================================
     # non-REST methods
-    #===========================================================================
+    # ===========================================================================
     def visualizeDIM(self):
         tpl = file_as_string('web/dim.html')
         urlparts = bottle.request.urlparts
         selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
         serverUrl = urlparts.scheme + '://' + urlparts.netloc
         return bottle.template(tpl,
-                        dmType=self.dm.__class__.__name__,
-                        dmPort=self.dm.dmPort,
-                        serverUrl=serverUrl,
-                        dmHosts=json.dumps(self.dm.dmHosts),
-                        nodes=json.dumps(self.dm.nodes),
-                        selectedNode=selectedNode)
+                               dmType=self.dm.__class__.__name__,
+                               dmPort=self.dm.dmPort,
+                               serverUrl=serverUrl,
+                               dmHosts=json.dumps(self.dm.dmHosts),
+                               nodes=json.dumps(self.dm.nodes),
+                               selectedNode=selectedNode)
+
 
 class MasterManagerRestServer(CompositeManagerRestServer):
 

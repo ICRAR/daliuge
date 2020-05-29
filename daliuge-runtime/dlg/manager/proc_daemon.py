@@ -38,8 +38,8 @@ from . import constants, client
 from .. import utils
 from ..restserver import RestServer
 
-
 logger = logging.getLogger(__name__)
+
 
 def get_tool():
     # This import is performed at runtime to avoid a circular dependency
@@ -48,10 +48,12 @@ def get_tool():
     from ..common import tool
     return tool
 
+
 def _get_address(zeroconf_service_info):
     if tuple(map(int, zc.__version__.split('.')))[:2] >= (0, 23):
         return zeroconf_service_info.addresses[0]
     return zeroconf_service_info.address
+
 
 class DlgDaemon(RestServer):
     """
@@ -84,14 +86,14 @@ class DlgDaemon(RestServer):
 
         # Starting managers
         app = self.app
-        app.post('/managers/node',       callback=self.rest_startNM)
+        app.post('/managers/node', callback=self.rest_startNM)
         app.post('/managers/dataisland', callback=self.rest_startDIM)
-        app.post('/managers/master',     callback=self.rest_startMM)
+        app.post('/managers/master', callback=self.rest_startMM)
 
         # Querying about managers
-        app.get('/managers/node',       callback=self.rest_getNMInfo)
+        app.get('/managers/node', callback=self.rest_getNMInfo)
         app.get('/managers/dataisland', callback=self.rest_getDIMInfo)
-        app.get('/managers/master',     callback=self.rest_getMMInfo)
+        app.get('/managers/master', callback=self.rest_getMMInfo)
 
         # Automatically start those that we need
         if master:
@@ -134,6 +136,7 @@ class DlgDaemon(RestServer):
             # done with it
             logger.debug("Stopping the web server")
             ioloop_stopped = threading.Event()
+
             def stop_ioloop():
                 self._ioloop.stop()
                 ioloop_stopped.set()
@@ -173,11 +176,12 @@ class DlgDaemon(RestServer):
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0],
+                                                   constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
         tool = get_tool()
-        args  = ['--host', '0.0.0.0']
+        args = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         if nodes:
             args += ['--nodes', ",".join(nodes)]
@@ -187,7 +191,7 @@ class DlgDaemon(RestServer):
 
     def startMM(self):
         tool = get_tool()
-        args  = ['--host', '0.0.0.0']
+        args = ['--host', '0.0.0.0']
         args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
         self._mm_proc = tool.start_process('mm', args)
@@ -198,6 +202,7 @@ class DlgDaemon(RestServer):
         if self._zeroconf:
             mm_client = client.MasterManagerClient()
             node_managers = {}
+
             def nm_callback(zeroconf, service_type, name, state_change):
                 info = zeroconf.get_service_info(service_type, name)
                 if state_change is zc.ServiceStateChange.Added:
@@ -207,7 +212,7 @@ class DlgDaemon(RestServer):
                     logger.info("Found a new Node Manager on %s:%d, will add it to the MM" % (server, port))
                     mm_client.add_node(server)
                 elif state_change is zc.ServiceStateChange.Removed:
-                    server,port = node_managers[name]
+                    server, port = node_managers[name]
                     logger.info("Node Manager on %s:%d disappeared, removing it from the MM" % (server, port))
 
                     # Don't bother to remove it if we're shutting down. This way
@@ -223,15 +228,15 @@ class DlgDaemon(RestServer):
 
     def _verbosity_as_cmdline(self):
         if self._verbosity > 0:
-            return ["-" + "v"*self._verbosity]
+            return ["-" + "v" * self._verbosity]
         elif self._verbosity < 0:
-            return ["-" + "q"*(-self._verbosity)]
+            return ["-" + "q" * (-self._verbosity)]
         return ()
 
     # Rest interface
     def _rest_start_manager(self, proc, start_method):
         if proc is not None:
-            bottle.abort(409, 'The Drop Manager is already running') # Conflict
+            bottle.abort(409, 'The Drop Manager is already running')  # Conflict
         start_method()
 
     def _rest_get_manager_info(self, proc):
@@ -266,13 +271,15 @@ class DlgDaemon(RestServer):
 
 
 terminating = False
+
+
 def run_with_cmdline(parser, args):
     parser.add_option('-m', '--master', action='store_true',
                       dest="master", help="Start this DALiuGE daemon as the master daemon", default=False)
     parser.add_option("--no-nm", action="store_true",
-                      dest="noNM", help = "Don't start a NodeDropManager by default", default=False)
+                      dest="noNM", help="Don't start a NodeDropManager by default", default=False)
     parser.add_option("--no-zeroconf", action="store_true",
-                      dest="noZC", help = "Don't enable zeroconf on this DALiuGE daemon", default=False)
+                      dest="noZC", help="Don't enable zeroconf on this DALiuGE daemon", default=False)
     parser.add_option("-v", "--verbose", action="count",
                       dest="verbose", help="Become more verbose. The more flags, the more verbose", default=0)
     parser.add_option("-q", "--quiet", action="count",
@@ -296,7 +303,8 @@ def run_with_cmdline(parser, args):
         logger.info("Received signal %d, will stop the daemon now" % (signalNo,))
         terminating = True
         daemon.stop(10)
-    signal.signal(signal.SIGINT,  handle_signal)
+
+    signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
     # Go, go, go!

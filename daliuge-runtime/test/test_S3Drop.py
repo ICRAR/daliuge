@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 from unittest.case import skipIf
+
 """
 Test the S3 Drop
 """

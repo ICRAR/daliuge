@@ -24,6 +24,7 @@ import unittest
 
 from dlg.deploy.pawsey import slurm_utils
 
+
 class TestSlurmUtils(unittest.TestCase):
 
     def assert_list_as_string(self, s, expected_list):

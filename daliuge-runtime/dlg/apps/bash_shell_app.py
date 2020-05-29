@@ -38,6 +38,7 @@ import tempfile
 import threading
 import time
 import types
+
 import six
 
 from .. import droputils, utils
@@ -47,8 +48,8 @@ from ..exceptions import InvalidDropException
 from ..meta import dlg_string_param, dlg_component, dlg_batch_input, \
     dlg_batch_output, dlg_streaming_input
 
-
 logger = logging.getLogger(__name__)
+
 
 def mesage_stdouts(prefix, stdout, stderr, enc='utf8'):
     msg = prefix
@@ -61,6 +62,7 @@ def mesage_stdouts(prefix, stdout, stderr, enc='utf8'):
         msg += "\n==STDERR==\n" + utils.b2s(stderr, enc)
     return msg
 
+
 def close_and_remove(fo, fname):
     fo.close()
     try:
@@ -68,6 +70,7 @@ def close_and_remove(fo, fname):
         logger.debug("Removed %s", fname)
     except OSError:
         logger.exception("Error while removing %s", fname)
+
 
 def prepare_output_channel(this_node, out_drop):
     """
@@ -109,6 +112,7 @@ def prepare_output_channel(this_node, out_drop):
             logger.debug("Received connection from %r", csockaddr)
             return csock
 
+
 def prepare_input_channel(data):
     """
     Prepares an input channel that will serve as the stdin of a bash command.
@@ -124,7 +128,7 @@ def prepare_input_channel(data):
 
         # Return an object that runs pipe.read on read()
         # and close_and_remove on close()
-        chan = lambda: None # a simple object where attributes can be set!
+        chan = lambda: None  # a simple object where attributes can be set!
         chan.read = pipe.read
         chan.fileno = pipe.fileno
         chan.close = types.MethodType(lambda s: close_and_remove(pipe, pipe_name), chan)
@@ -158,7 +162,7 @@ class BashShellBase(object):
             raise InvalidDropException(self, 'No command specified, cannot create BashShellApp')
 
     def _run_bash(self, inputs, outputs, stdin=None,
-                 stdout=subprocess.PIPE):
+                  stdout=subprocess.PIPE):
         """
         Runs the given `cmd`. If any `inputs` and/or `outputs` are given
         (dictionaries of uid:drop elements) they are used to replace any placeholder
@@ -178,12 +182,12 @@ class BashShellBase(object):
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
         # Replace inputs/outputs in command line with paths or data URLs
-        fsInputs = {uid: i for uid,i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid,o in outputs.items() if droputils.has_path(o)}
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-        dataURLInputs = {uid: i for uid,i in inputs.items() if not droputils.has_path(i)}
-        dataURLOutputs = {uid: o for uid,o in outputs.items() if not droputils.has_path(o)}
+        dataURLInputs = {uid: i for uid, i in inputs.items() if not droputils.has_path(i)}
+        dataURLOutputs = {uid: o for uid, o in outputs.items() if not droputils.has_path(o)}
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
@@ -215,7 +219,7 @@ class BashShellBase(object):
         pcode = process.returncode
 
         end = time.time()
-        logger.info("Finished in %.3f [s] with exit code %d", (end-start), pcode)
+        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
 
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(mesage_stdouts("Command finished successfully", pstdout, pstderr))
@@ -233,6 +237,7 @@ class BashShellBase(object):
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
         except:
             logger.exception("Error while terminating process %r", self.proc)
+
 
 class StreamingInputBashAppBase(BashShellBase, AppDROP):
     """
@@ -275,6 +280,7 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
             self._this_finished = True
             self.notify_if_finished()
 
+
 #
 # Now the actual 4 classes:
 # * batch
@@ -296,20 +302,23 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
     def run(self):
         self._run_bash(self._inputs, self._outputs)
 
+
 class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
     """
     Like BashShellApp, but its stdout is a stream of data that is fed into the
     next application.
     """
     compontent_meta = dlg_component('StreamingOutputBashApp', 'Like BashShellApp, but its stdout is a stream '
-                                    'of data that is fed into the next application.',
+                                                              'of data that is fed into the next application.',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
                                     [dlg_streaming_input('text/*')])
+
     def run(self):
         with contextlib.closing(prepare_output_channel(self.node, self.outputs[0])) as outchan:
             self._run_bash(self._inputs, {}, stdout=outchan)
         logger.debug("Closed output channel")
+
 
 class StreamingInputBashApp(StreamingInputBashAppBase):
     """
@@ -320,7 +329,8 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
     to establish the streaming channel. This information is also used to kick
     this application off.
     """
-    compontent_meta = dlg_component('StreamingInputBashApp', 'An app that runs a bash command that consumes data from stdin.',
+    compontent_meta = dlg_component('StreamingInputBashApp',
+                                    'An app that runs a bash command that consumes data from stdin.',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
                                     [dlg_streaming_input('text/*')])
@@ -330,16 +340,19 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
             self._run_bash({}, self._outputs, stdin=inchan)
         logger.debug("Closed input channel")
 
+
 class StreamingInputOutputBashApp(StreamingInputBashAppBase):
     """
     Like StreamingInputBashApp, but its stdout is also a stream of data that is
     fed into the next application.
     """
-    compontent_meta = dlg_component('StreamingInputOutputBashApp', 'Like StreamingInputBashApp, but its stdout is also a '
+    compontent_meta = dlg_component('StreamingInputOutputBashApp',
+                                    'Like StreamingInputBashApp, but its stdout is also a '
                                     'stream of data that is fed into the next application.',
                                     [dlg_batch_input('text/*', [])],
                                     [dlg_batch_output('text/*', [])],
                                     [dlg_streaming_input('text/*')])
+
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
             with contextlib.closing(prepare_output_channel(self.node, self.outputs[0])) as outchan:

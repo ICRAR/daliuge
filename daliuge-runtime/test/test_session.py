@@ -22,9 +22,9 @@
 import unittest
 
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
-from dlg.manager.session import Session, SessionStates
-from dlg.exceptions import InvalidGraphException
 from dlg.droputils import DROPWaiterCtx
+from dlg.exceptions import InvalidGraphException
+from dlg.manager.session import Session, SessionStates
 
 
 class TestSession(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestSession(unittest.TestCase):
             self.assertEqual(SessionStates.PRISTINE, s.status)
             self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
 
-            s.addGraphSpec([{"oid":"A", "type":"container"}])
+            s.addGraphSpec([{"oid": "A", "type": "container"}])
             self.assertEqual(SessionStates.BUILDING, s.status)
 
             s.deploy()
@@ -57,24 +57,26 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec(self):
         with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"container"}])
-            s.addGraphSpec([{"oid":"C", "type":"container"}])
+            s.addGraphSpec([{"oid": "A", "type": "container"}])
+            s.addGraphSpec([{"oid": "B", "type": "container"}])
+            s.addGraphSpec([{"oid": "C", "type": "container"}])
 
             # Adding an existing DROP
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"A", "type":"container"}])
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid": "A", "type": "container"}])
 
             # Adding invalid specs
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app"}]) # missing "storage"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"plain", "storage":"invalid"}]) # invalid "storage"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"invalid"}]) # invalid "type"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app", "storage":"null", "outputs":["X"]}]) # missing X DROP
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid": "D", "type": "app"}])  # missing "storage"
+            self.assertRaises(Exception, s.addGraphSpec,
+                              [{"oid": "D", "type": "plain", "storage": "invalid"}])  # invalid "storage"
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid": "D", "type": "invalid"}])  # invalid "type"
+            self.assertRaises(Exception, s.addGraphSpec,
+                              [{"oid": "D", "type": "app", "storage": "null", "outputs": ["X"]}])  # missing X DROP
 
     def test_linking(self):
         with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dlg.apps.crc.CRCApp"}])
-            s.addGraphSpec([{"oid":"C", "type":"container"}])
+            s.addGraphSpec([{"oid": "A", "type": "container"}])
+            s.addGraphSpec([{"oid": "B", "type": "app", "storage": "null", "app": "dlg.apps.crc.CRCApp"}])
+            s.addGraphSpec([{"oid": "C", "type": "container"}])
 
             # Link them now
             s.linkGraphParts('A', 'B', DROPLinkType.CONSUMER)
@@ -96,9 +98,9 @@ class TestSession(unittest.TestCase):
     def test_cancel(self):
         '''Cancels a whole graph execution'''
         with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":"memory", 'consumers': ['B']},
-                            {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 2},
-                            {"oid":"C", "type":"plain", "storage":"memory", 'producers': ['B']}])
+            s.addGraphSpec([{"oid": "A", "type": "plain", "storage": "memory", 'consumers': ['B']},
+                            {"oid": "B", "type": "app", "app": "dlg.apps.simple.SleepApp", "sleepTime": 2},
+                            {"oid": "C", "type": "plain", "storage": "memory", 'producers': ['B']}])
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
             s.cancel()
@@ -110,11 +112,11 @@ class TestSession(unittest.TestCase):
     def test_partial_cancel(self):
         '''Like test_cancel, but only part of the graph should be cancelled'''
         with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":"memory", 'consumers': ['B']},
-                            {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 0},
-                            {"oid":"C", "type":"plain", "storage":"memory", 'producers': ['B'], 'consumers': ['D']},
-                            {"oid":"D", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 10},
-                            {"oid":"E", "type":"plain", "storage":"memory", 'producers': ['D']}])
+            s.addGraphSpec([{"oid": "A", "type": "plain", "storage": "memory", 'consumers': ['B']},
+                            {"oid": "B", "type": "app", "app": "dlg.apps.simple.SleepApp", "sleepTime": 0},
+                            {"oid": "C", "type": "plain", "storage": "memory", 'producers': ['B'], 'consumers': ['D']},
+                            {"oid": "D", "type": "app", "app": "dlg.apps.simple.SleepApp", "sleepTime": 10},
+                            {"oid": "E", "type": "plain", "storage": "memory", 'producers': ['D']}])
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
 

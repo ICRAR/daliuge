@@ -35,19 +35,20 @@ from .. import droputils, utils
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-
 _getargsspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
 
 logger = logging.getLogger(__name__)
 
+
 def serialize_data(d):
     return utils.b2s(base64.b64encode(pickle.dumps(d)))
+
 
 def deserialize_data(d):
     return pickle.loads(base64.b64decode(six.b(d)))
 
-def serialize_func(f):
 
+def serialize_func(f):
     if isinstance(f, six.string_types):
         parts = f.split('.')
         f = getattr(importlib.import_module('.'.join(parts[:-1])), parts[-1])
@@ -77,8 +78,10 @@ def import_using_name(app, fname):
     except AttributeError:
         raise InvalidDropException(app, 'Module %s has no member %s' % (modname, fname))
 
+
 def import_using_code(code):
     return dill.loads(code)
+
 
 class PyFuncApp(BarrierAppDROP):
     """

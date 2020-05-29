@@ -33,7 +33,6 @@ from . import common
 from . import exceptions
 from .exceptions import DaliugeException, SubManagerException
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -41,18 +40,20 @@ class ThreadingWSGIServer(SocketServer.ThreadingMixIn, wsgiref.simple_server.WSG
     daemon_threads = True
     allow_reuse_address = True
 
+
 class LoggingWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
     def log_message(self, fmt, *args):
         logger.debug(fmt, *args)
 
+
 class RestServerWSGIServer:
-    def __init__(self, wsgi_app, listen = '127.0.0.1', port = 8080):
+    def __init__(self, wsgi_app, listen='127.0.0.1', port=8080):
         self.wsgi_app = wsgi_app
         self.listen = listen
         self.port = port
         self.server = wsgiref.simple_server.make_server(self.listen,
-            self.port, self.wsgi_app, server_class=ThreadingWSGIServer,
-            handler_class=LoggingWSGIRequestHandler)
+                                                        self.port, self.wsgi_app, server_class=ThreadingWSGIServer,
+                                                        handler_class=LoggingWSGIRequestHandler)
 
     def serve_forever(self):
         self.server.serve_forever()
@@ -61,10 +62,12 @@ class RestServerWSGIServer:
         self.server.shutdown()
         self.server.server_close()
 
+
 class RestClientException(DaliugeException):
     """
     Exception thrown by the RestClient
     """
+
 
 def hexdigits(n):
     digits = 0
@@ -73,16 +76,20 @@ def hexdigits(n):
         n //= 16
     return digits
 
+
 def chunk(data):
     return ("%x" % len(data)).encode('ascii') + b'\r\n' + data + b'\r\n'
+
 
 class chunked(object):
     """
     A reader that returns chunked HTTP content
     """
+
     def __init__(self, content):
         self.content = content
         self.finished = False
+
     def read(self, n):
         if self.finished:
             return b''
@@ -92,6 +99,7 @@ class chunked(object):
             self.finished = True
             return b"0\r\n\r\n"
         return chunk(data)
+
 
 class RestClient(object):
     """
@@ -112,13 +120,14 @@ class RestClient(object):
             self._conn.close()
 
     __del__ = _close
+
     def __enter__(self):
         return self
+
     def __exit__(self, typ, value, traceback):
         self._close()
         if typ:
             raise value
-
 
     def _get_json(self, url):
         ret = self._GET(url)
@@ -183,7 +192,7 @@ class RestClient(object):
                 eargs = error['args']
 
                 if etype == SubManagerException:
-                    for host,args in eargs.items():
+                    for host, args in eargs.items():
                         subetype = getattr(exceptions, args['type'])
                         subargs = args['args']
                         eargs[host] = subetype(*subargs)

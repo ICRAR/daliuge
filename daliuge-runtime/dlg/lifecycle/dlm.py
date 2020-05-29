@@ -130,14 +130,15 @@ from .. import droputils
 from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from ..drop import ContainerDROP
 
-
 logger = logging.getLogger(__name__)
+
 
 class DataLifecycleManagerBackgroundTask(threading.Thread):
     '''
     A thread that periodically runs some of the methods on the given DLM until
     signaled to stop
     '''
+
     def __init__(self, dlm, period, finishedEvent):
         threading.Thread.__init__(self, name="DLMBackgroundTask")
         self._dlm = dlm
@@ -153,6 +154,7 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
                 break
             self.doTask(dlm)
 
+
 class DROPChecker(DataLifecycleManagerBackgroundTask):
     '''
     A thread that performs several checks on existing DROPs
@@ -166,6 +168,7 @@ class DROPChecker(DataLifecycleManagerBackgroundTask):
         # if they are not found
         dlm.deleteLostDrops()
 
+
 class DROPGarbageCollector(DataLifecycleManagerBackgroundTask):
     '''
     A thread that performs "garbage collection" of DROPs; that is, it physically
@@ -175,6 +178,7 @@ class DROPGarbageCollector(DataLifecycleManagerBackgroundTask):
     def doTask(self, dlm):
         # The names says it all
         dlm.deleteExpiredDrops()
+
 
 class DROPMover(DataLifecycleManagerBackgroundTask):
     '''
@@ -187,6 +191,7 @@ class DROPMover(DataLifecycleManagerBackgroundTask):
     def doTask(self, dlm):
         dlm.moveDropsAround()
 
+
 class DropEventListener(object):
 
     def __init__(self, dlm):
@@ -198,6 +203,7 @@ class DropEventListener(object):
         elif event.type == 'status':
             if event.status == DROPStates.COMPLETED:
                 self._dlm.handleCompletedDrop(event.uid)
+
 
 class DataLifecycleManager(object):
 
@@ -216,7 +222,7 @@ class DataLifecycleManager(object):
         if 'checkPeriod' in kwargs:
             self._checkPeriod = float(kwargs['checkPeriod'])
 
-        self._cleanupPeriod = 10*self._checkPeriod
+        self._cleanupPeriod = 10 * self._checkPeriod
         if 'cleanupPeriod' in kwargs:
             self._cleanupPeriod = float(kwargs['cleanupPeriod'])
 
@@ -254,7 +260,6 @@ class DataLifecycleManager(object):
     def __exit__(self, typ, value, traceback):
         self.cleanup()
 
-
     def _deleteDrop(self, drop):
         logger.debug("Deleting DROP %r", drop)
         drop.delete()
@@ -283,12 +288,12 @@ class DataLifecycleManager(object):
             # (if no lifespan was specified for the DROP, its expiration
             # date will be -1 and it will be skipped)
             elif drop.expirationDate == -1 or \
-                 now <= drop.expirationDate:
+                    now <= drop.expirationDate:
                 continue
 
             if drop.isBeingRead():
                 logger.info("%r has expired but is currently being read, " \
-                             "will skip expiration for the time being", drop)
+                            "will skip expiration for the time being", drop)
                 continue
 
             # Finally!
@@ -338,7 +343,8 @@ class DataLifecycleManager(object):
                     definitelyLost = True
 
             if definitelyLost:
-                logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST", drop.oid, drop.uid)
+                logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST", drop.oid,
+                             drop.uid)
                 drop.phase = DROPPhases.LOST
                 self._reg.setDropPhase(drop, drop.phase)
 
@@ -491,7 +497,8 @@ class DataLifecycleManager(object):
     def _replicate(self, drop, store):
 
         # Dummy, but safe, new UID
-        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)])
+        newUid = 'uid:' + ''.join(
+            [random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)])
 
         logger.debug('Creating new DROP with uid %s from %r', newUid, drop)
 
