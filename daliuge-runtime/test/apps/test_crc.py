@@ -27,7 +27,6 @@ import os
 import unittest
 
 import six
-
 from dlg import droputils
 from dlg.apps.crc import CRCApp, crc32
 from dlg.apps.dynlib import DynlibApp

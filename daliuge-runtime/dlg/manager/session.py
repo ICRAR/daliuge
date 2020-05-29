@@ -39,8 +39,8 @@ from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
 from ..exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
 
-
 logger = logging.getLogger(__name__)
+
 
 class SessionStates:
     """
@@ -48,6 +48,7 @@ class SessionStates:
     any given point of time.
     """
     PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED, CANCELLED = range(6)
+
 
 class LeavesCompletionListener(object):
 
@@ -59,12 +60,14 @@ class LeavesCompletionListener(object):
     def handleEvent(self, evt):
         # TODO: be thread-safe
         self._completed += 1
-        logger.debug("%d/%d leaf drops completed on session %s", self._completed, self._nexpected, self._session.sessionId)
+        logger.debug("%d/%d leaf drops completed on session %s", self._completed, self._nexpected,
+                     self._session.sessionId)
         if self._completed == self._nexpected:
             self._session.finish()
 
 
 track_current_session = utils.object_tracking('session')
+
 
 class Session(object):
     """
@@ -86,8 +89,8 @@ class Session(object):
 
     def __init__(self, sessionId, nm=None):
         self._sessionId = sessionId
-        self._graph = {} # key: oid, value: dropSpec dictionary
-        self._drops = {} # key: oid, value: actual drop object
+        self._graph = {}  # key: oid, value: dropSpec dictionary
+        self._drops = {}  # key: oid, value: actual drop object
         self._statusLock = threading.Lock()
         self._roots = []
         self._proxyinfo = []
@@ -141,7 +144,8 @@ class Session(object):
 
         status = self.status
         if status not in (SessionStates.PRISTINE, SessionStates.BUILDING):
-            raise InvalidSessionState("Can't add graphs to this session since it isn't in the PRISTINE or BUILDING status: %d" % (status))
+            raise InvalidSessionState(
+                "Can't add graphs to this session since it isn't in the PRISTINE or BUILDING status: %d" % (status))
 
         self.status = SessionStates.BUILDING
 
@@ -199,7 +203,7 @@ class Session(object):
         # in reality this particular session is managing nothing
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or \
-           (not self._graph and status != SessionStates.PRISTINE):
+                (not self._graph and status != SessionStates.PRISTINE):
             raise InvalidSessionState("Can't deploy this session in its current status: %d" % (status))
 
         if not self._graph and completedDrops:
@@ -218,7 +222,7 @@ class Session(object):
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values(), session=self)
         logger.info("%d drops successfully created", len(self._graph))
 
-        for drop,_ in droputils.breadFirstTraverse(self._roots):
+        for drop, _ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
             self._drops[drop.uid] = drop
@@ -249,7 +253,7 @@ class Session(object):
         # Foreach
         if foreach:
             logger.info("Invoking 'foreach' on each drop")
-            for drop,_ in droputils.breadFirstTraverse(self._roots):
+            for drop, _ in droputils.breadFirstTraverse(self._roots):
                 foreach(drop)
             logger.info("'foreach' invoked for each drop")
 
@@ -279,7 +283,7 @@ class Session(object):
         self.finish()
 
     def trigger_drops(self, uids):
-        for drop,downStreamDrops in droputils.breadFirstTraverse(self._roots):
+        for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
             if drop.uid in uids:
                 if isinstance(drop, InputFiredAppDROP):
@@ -304,7 +308,7 @@ class Session(object):
     def add_node_subscriptions(self, relationships):
 
         evt_consumer = (DROPLinkType.CONSUMER, DROPLinkType.STREAMING_CONSUMER, DROPLinkType.OUTPUT)
-        evt_producer = (DROPLinkType.INPUT,    DROPLinkType.STREAMING_INPUT,    DROPLinkType.PRODUCER)
+        evt_producer = (DROPLinkType.INPUT, DROPLinkType.STREAMING_INPUT, DROPLinkType.PRODUCER)
 
         for host, droprels in relationships.items():
 
@@ -332,7 +336,7 @@ class Session(object):
 
                 # We are in the event receiver side
                 if (rel.rel in evt_consumer and rel.lhs is local_uid) or \
-                   (rel.rel in evt_producer and rel.rhs is local_uid):
+                        (rel.rel in evt_producer and rel.rhs is local_uid):
                     dropsubs[remote_uid].add(local_uid)
 
             self._dropsubs.update(dropsubs)

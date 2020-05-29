@@ -1,7 +1,6 @@
 import composite_manager_client as cmc
 import node_manager_client as nmc
 
-
 nm_config = nmc.Configuration()
 nm_config.host = "127.0.0.1:8000"
 dim_config = cmc.Configuration()

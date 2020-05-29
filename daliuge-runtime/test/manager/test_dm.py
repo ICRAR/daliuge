@@ -24,10 +24,9 @@ import threading
 import unittest
 
 import six
-
 from dlg import droputils
-from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.common import dropdict
+from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
@@ -35,7 +34,6 @@ try:
     from crc32c import crc32  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
-
 
 hostname = "localhost"
 
@@ -93,15 +91,15 @@ class NMTestsMixIn(object):
             nm.shutdown()
 
     def _test_runGraphInTwoNMs(
-        self,
-        g1,
-        g2,
-        rels,
-        root_data,
-        leaf_data,
-        root_oids=("A",),
-        leaf_oid="C",
-        expected_failures=[],
+            self,
+            g1,
+            g2,
+            rels,
+            root_data,
+            leaf_data,
+            root_oids=("A",),
+            leaf_oid="C",
+            expected_failures=[],
     ):
         """Utility to run a graph in two Node Managers"""
 

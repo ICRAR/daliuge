@@ -19,19 +19,20 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import abc
 import copy
+import datetime
 import math
-import sys
-import time
+import pickle
 import random
 import signal
-import pickle
-import datetime
-import abc
+import sys
+import time
 
 
 def round_figures(x, n):
@@ -42,13 +43,12 @@ def round_figures(x, n):
 def time_string(seconds):
     """Returns time in seconds as a string formatted HHHH:MM:SS."""
     s = int(round(seconds))  # round to nearest second
-    h, s = divmod(s, 3600)   # get hours and remainder
-    m, s = divmod(s, 60)     # split remainder into minutes and seconds
+    h, s = divmod(s, 3600)  # get hours and remainder
+    m, s = divmod(s, 60)  # split remainder into minutes and seconds
     return '%4i:%02i:%02i' % (h, m, s)
 
 
 class Annealer(object):
-
     """Performs simulated annealing by calling functions to calculate
     energy and make moves on a state.  The temperature schedule for
     annealing may be provided manually or estimated automatically.
@@ -151,13 +151,13 @@ class Annealer(object):
         if step == 0:
             print(' Temperature        Energy    Accept   Improve     Elapsed   Remaining')
             sys.stdout.write('\r%12.2f  %12.2f                      %s            ' % \
-                (T, E, time_string(elapsed)))
+                             (T, E, time_string(elapsed)))
             sys.stdout.flush()
         else:
             remain = (self.steps - step) * (elapsed / step)
             sys.stdout.write('\r%12.2f  %12.2f  %7.2f%%  %7.2f%%  %s  %s' % \
-            (T, E, 100.0 * acceptance, 100.0 * improvement,\
-            time_string(elapsed), time_string(remain))),
+                             (T, E, 100.0 * acceptance, 100.0 * improvement, \
+                              time_string(elapsed), time_string(remain))),
             sys.stdout.flush()
 
     def anneal(self):
@@ -199,7 +199,7 @@ class Annealer(object):
             dE = E - prevEnergy
             trials += 1
             if ((not self.meet_constraint()) or
-            (dE > 0.0 and math.exp(-dE / T) < random.random())):
+                    (dE > 0.0 and math.exp(-dE / T) < random.random())):
                 # Restore previous state
                 self.state = self.copy_state(prevState)
                 E = prevEnergy
@@ -251,7 +251,7 @@ class Annealer(object):
                 E = self.energy()
                 dE = E - prevEnergy
                 if ((not self.meet_constraint()) or
-                (dE > 0.0 and math.exp(-dE / T) < random.random())):
+                        (dE > 0.0 and math.exp(-dE / T) < random.random())):
                     self.state = self.copy_state(prevState)
                     E = prevEnergy
                 else:
@@ -303,6 +303,6 @@ class Annealer(object):
         elapsed = time.time() - self.start
         duration = round_figures(int(60.0 * minutes * step / elapsed), 2)
 
-        print('') # New line after auto() output
+        print('')  # New line after auto() output
         # Don't perform anneal, just return params
         return {'tmax': Tmax, 'tmin': Tmin, 'steps': duration}

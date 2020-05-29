@@ -28,12 +28,13 @@ from dlg.manager import client
 from dlg.utils import terminate_or_kill
 from test.manager import testutils
 
-
 logger = logging.getLogger(__name__)
 hostname = 'localhost'
 
+
 def memory_drop(uid):
-    return dropdict({'node':hostname, 'oid':uid, 'uid':uid, 'type':'plain', 'storage':'memory'})
+    return dropdict({'node': hostname, 'oid': uid, 'uid': uid, 'type': 'plain', 'storage': 'memory'})
+
 
 def create_graph(branches, drops_per_branch):
     graph = []
@@ -44,7 +45,8 @@ def create_graph(branches, drops_per_branch):
             data_uid = 'data_%d_branch_%d' % (i, branch)
             app_uid = 'app_%d_branch_%d' % (i, branch)
             data_drop = memory_drop(data_uid)
-            app_drop = dropdict({'node':hostname, 'oid':app_uid, 'uid':app_uid, 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':0})
+            app_drop = dropdict({'node': hostname, 'oid': app_uid, 'uid': app_uid, 'type': 'app',
+                                 'app': 'dlg.apps.simple.SleepAndCopyApp', 'sleepTime': 0})
             data_drop.addConsumer(app_drop)
             graph.append(data_drop)
             graph.append(app_drop)
@@ -63,6 +65,7 @@ def create_graph(branches, drops_per_branch):
     graph.append(final_drop)
     return graph, completed_uids
 
+
 class TestBigGraph(unittest.TestCase):
     """
     A small class that simply checks that the deployment of a considerable-sized
@@ -80,10 +83,9 @@ class TestBigGraph(unittest.TestCase):
         unittest.TestCase.tearDown(self)
 
     def test_submit_hugegraph(self):
-
         # Each branch contains a data drop and an app drop
         # All branches connect to a final data drop
-        drops_per_branch=5000
+        drops_per_branch = 5000
         branches = 5
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
@@ -91,9 +93,8 @@ class TestBigGraph(unittest.TestCase):
         self._run_graph(graph, completed_uids, 5)
 
     def _run_graph(self, graph, completed_uids, timeout):
-
         sessionId = 'lala'
-        restPort  = 8888
+        restPort = 8888
         args = ['--port', str(restPort), '-N', hostname, '-qq']
 
         c = client.NodeManagerClient(port=restPort)

@@ -30,7 +30,6 @@ import time
 
 import pkg_resources
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +41,6 @@ def add_logging_options(parser):
 
 
 def setup_logging(opts):
-
     levels = [
         logging.NOTSET,
         logging.DEBUG,
@@ -63,7 +61,8 @@ def setup_logging(opts):
     # Let's configure logging now
     # We use stderr for loggin because stdout is the default output file
     # for several operations
-    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
+    fmt = logging.Formatter(
+        "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
     fmt.converter = time.gmtime
     streamHdlr = logging.StreamHandler(sys.stderr)
     streamHdlr.setFormatter(fmt)
@@ -72,8 +71,9 @@ def setup_logging(opts):
 
 
 commands = {}
-def cmdwrap(cmdname, desc, f):
 
+
+def cmdwrap(cmdname, desc, f):
     # If it's not a callable we assume it's a string
     # in which case we lazy-load the module:function when it gets called
     if not callable(f):
@@ -84,11 +84,13 @@ def cmdwrap(cmdname, desc, f):
                 modname, fname = orig_f.split(':')
                 module = importlib.import_module(modname)
                 return getattr(module, fname)(*args, **kwargs)
+
         f = Importer()
 
     def wrapped(*args, **kwargs):
         parser = optparse.OptionParser(description=desc)
         f(parser, *args, **kwargs)
+
     commands[cmdname] = (desc, wrapped)
 
 
@@ -97,22 +99,25 @@ def version(parser, args):
     print("Version: %s" % version)
     print("Git version: %s" % git_version)
 
+
 cmdwrap('version', 'Reports the DALiuGE version and exits', version)
+
 
 def _load_commands():
     for entry_point in pkg_resources.iter_entry_points('dlg.tool_commands'):
         entry_point.load().register_commands()
 
+
 def print_usage(prgname):
     print('Usage: %s [command] [options]' % (prgname))
     print('')
-    print('\n'.join(['Commands are:'] + ['\t%-25.25s%s' % (cmdname,desc_and_f[0]) for cmdname,desc_and_f in sorted(commands.items())]))
+    print('\n'.join(['Commands are:'] + ['\t%-25.25s%s' % (cmdname, desc_and_f[0]) for cmdname, desc_and_f in
+                                         sorted(commands.items())]))
     print('')
     print('Try %s [command] --help for more details' % (prgname))
 
 
 def run(args=sys.argv):
-
     _load_commands()
 
     # Manually parse the first argument, which will be

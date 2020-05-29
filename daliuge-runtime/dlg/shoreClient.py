@@ -26,11 +26,13 @@
 #    jason.wang@icrar.org or jason.ruonan.wang@gmail.com
 
 import os
+
 import six.moves.cPickle as pickle  # @UnresolvedImport
 
 message_socket = None
 transport_socket = None
 isInited = False
+
 
 def securityCheck(doid, column, row, rows):
     if type(row) is not int:
@@ -41,7 +43,8 @@ def securityCheck(doid, column, row, rows):
         return False
     return True
 
-def shoreZmqInit(address = None):
+
+def shoreZmqInit(address=None):
     import zmq
     global message_socket
     global transport_socket
@@ -50,7 +53,8 @@ def shoreZmqInit(address = None):
         message_address = address
     else:
         message_address = os.environ['SHORE_DAEMON_ADDRESS']
-    transport_address = message_address.split(':')[0] + ':' + message_address.split(':')[1] + ':' + str(int(message_address.split(':')[2]) + 1)
+    transport_address = message_address.split(':')[0] + ':' + message_address.split(':')[1] + ':' + str(
+        int(message_address.split(':')[2]) + 1)
     context = zmq.Context()
     message_socket = context.socket(zmq.REQ)
     message_socket.connect(message_address)
@@ -58,25 +62,27 @@ def shoreZmqInit(address = None):
     transport_socket.connect(transport_address)
     isInited = True
 
+
 def shoreDelete(doid, column=None):
     if not isInited:
         shoreZmqInit()
     msg_send = {
-        'operation' : 'delete',
-        'doid' : doid,
-        'column' : column,
+        'operation': 'delete',
+        'doid': doid,
+        'column': column,
     }
     message_socket.send(pickle.dumps(msg_send))
     ret = pickle.loads(message_socket.recv())
     return ret
 
+
 def shoreQuery(doid, column=None):
     if not isInited:
         shoreZmqInit()
     msg_send = {
-        'operation' : 'query',
-        'doid' : doid,
-        'column' : column,
+        'operation': 'query',
+        'doid': doid,
+        'column': column,
     }
     message_socket.send(pickle.dumps(msg_send))
     ret = pickle.loads(message_socket.recv())
@@ -97,18 +103,19 @@ def shoreQuery(doid, column=None):
         return None
     return ret
 
-def shoreGet(doid, column, row, rows = 1, slicer = None):
-    if not securityCheck(doid,column,row,rows):
+
+def shoreGet(doid, column, row, rows=1, slicer=None):
+    if not securityCheck(doid, column, row, rows):
         return None
 
     if not isInited:
         shoreZmqInit()
     msg_send = {
-        'operation' : 'get',
-        'doid' : doid,
-        'column' : column,
-        'row' : row,
-        'rows' : rows
+        'operation': 'get',
+        'doid': doid,
+        'column': column,
+        'row': row,
+        'rows': rows
     }
     message_socket.send(pickle.dumps(msg_send))
     ret = pickle.loads(message_socket.recv())
@@ -128,18 +135,17 @@ def shoreGet(doid, column, row, rows = 1, slicer = None):
 
     # transport
     if 'event_id' in ret:
-        pkg_dict = {'event_id':ret['event_id'],'operation':'get'}
+        pkg_dict = {'event_id': ret['event_id'], 'operation': 'get'}
         pkg_pickled = pickle.dumps(pkg_dict)
         transport_socket.send(pkg_pickled)
         ret = transport_socket.recv()
         ret = pickle.loads(ret)
         return ret
 
-def shorePut(doid, column, row, data, rows = 1, slicer = None):
 
-    if not securityCheck(doid,column,row,rows):
+def shorePut(doid, column, row, data, rows=1, slicer=None):
+    if not securityCheck(doid, column, row, rows):
         return None
-
 
     if not isInited:
         shoreZmqInit()
@@ -148,24 +154,22 @@ def shorePut(doid, column, row, data, rows = 1, slicer = None):
     dtype = data.dtype
     # message
     msg_send = {
-        'operation' : 'put',
-        'doid' : doid,
-        'column' : column,
-        'row' : row,
+        'operation': 'put',
+        'doid': doid,
+        'column': column,
+        'row': row,
         'rows': rows,
-        'shape' : shape,
-        'datatype' : dtype,
+        'shape': shape,
+        'datatype': dtype,
     }
     if slicer:
-        msg_send['slicer']=slicer
+        msg_send['slicer'] = slicer
     message_socket.send(pickle.dumps(msg_send))
     ret = pickle.loads(message_socket.recv())
 
     # transport
     if 'event_id' in ret:
-        msg_send = {'event_id':ret['event_id'], 'data':data, 'operation':'put'}
+        msg_send = {'event_id': ret['event_id'], 'data': data, 'operation': 'put'}
         transport_socket.send(pickle.dumps(msg_send))
         ret = transport_socket.recv()
         ret = pickle.loads(ret)
-
-

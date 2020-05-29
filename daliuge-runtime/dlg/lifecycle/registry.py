@@ -31,26 +31,27 @@ The registry simply (for the time being) keeps a record of:
 @author: rtobar
 '''
 
-from abc import abstractmethod, ABCMeta
 import importlib
 import logging
 import time
+from abc import abstractmethod, ABCMeta
 
 from ..ddap_protocol import DROPPhases
 from ..utils import prepare_sql
 
-
 logger = logging.getLogger(__name__)
 
+
 class DROP(object):
-    oid         = None
-    phase       = DROPPhases.GAS
-    instances   = []
+    oid = None
+    phase = DROPPhases.GAS
+    instances = []
     accessTimes = []
 
+
 class DROPInstance(object):
-    oid     = None
-    uid     = None
+    oid = None
+    uid = None
     storage = None
 
 
@@ -106,11 +107,12 @@ class Registry():
         if not oid in self._drops:
             raise Exception('DROP %s is not present in the registry' % (oid))
 
+
 class InMemoryRegistry(Registry):
 
     def __init__(self):
         super(InMemoryRegistry, self).__init__()
-        self._drops= {}
+        self._drops = {}
 
     def addDrop(self, drop):
         '''
@@ -118,8 +120,8 @@ class InMemoryRegistry(Registry):
         '''
         # Check that the DROP is not in the registry
         dropRow = DROP()
-        dropRow.oid       = drop.oid
-        dropRow.phase     = drop.phase
+        dropRow.oid = drop.oid
+        dropRow.phase = drop.phase
         dropRow.instances = {drop.uid: drop}
         self._drops[dropRow.oid] = dropRow
 
@@ -149,6 +151,7 @@ class InMemoryRegistry(Registry):
             return self._drops[oid].accesTimes[-1]
         else:
             return -1
+
 
 class RDBMSRegistry(Registry):
 
@@ -219,7 +222,8 @@ class RDBMSRegistry(Registry):
     def addDropInstance(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'INSERT INTO dlg_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})', (drop.oid, drop.uid, drop.dataURL))
+            self.execute(cur, 'INSERT INTO dlg_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})',
+                         (drop.oid, drop.uid, drop.dataURL))
             cur.close()
 
     def getDropUids(self, drop, conn=None):
@@ -239,13 +243,16 @@ class RDBMSRegistry(Registry):
     def recordNewAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})', (oid, self._dbmod.TimestampFromTicks(time.time())))
+            self.execute(cur, 'INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})',
+                         (oid, self._dbmod.TimestampFromTicks(time.time())))
             cur.close()
 
     def getLastAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'SELECT accessTime FROM dlg_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1', (oid,))
+            self.execute(cur,
+                         'SELECT accessTime FROM dlg_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1',
+                         (oid,))
             row = cur.fetchone()
             cur.close()
             if row is None:

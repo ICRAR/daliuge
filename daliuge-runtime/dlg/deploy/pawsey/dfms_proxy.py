@@ -36,10 +36,11 @@ DALiuGE proxy that runs inside a firewall
 --------------------------------------------------------------------------------
 """
 
+import logging
 import select
 import socket
 import struct
-import sys, logging
+import sys
 import time
 
 import six
@@ -58,6 +59,7 @@ logger = logging.getLogger(__name__)
 delimit = b'@#%!$'
 dl = len(delimit)
 
+
 def recvall(sock, count):
     buf = b''
     while count:
@@ -68,10 +70,12 @@ def recvall(sock, count):
         count -= len(newbuf)
     return buf
 
+
 def send_to_monitor(sock, data):
     length = len(data)
     sock.sendall(struct.pack('!I', length))
     sock.sendall(data)
+
 
 def recv_from_monitor(sock):
     lengthbuf = recvall(sock, 4)
@@ -80,8 +84,10 @@ def recv_from_monitor(sock):
     length, = struct.unpack('!I', lengthbuf)
     return recvall(sock, length)
 
+
 class ProxyServer:
-    def __init__(self, proxy_id, dlg_host, monitor_host, dlg_port=default_dlg_port, monitor_port=default_dlg_monitor_port):
+    def __init__(self, proxy_id, dlg_host, monitor_host, dlg_port=default_dlg_port,
+                 monitor_port=default_dlg_monitor_port):
         self._proxy_id = proxy_id if len(proxy_id) <= 80 else proxy_id[:80]
         self._dlg_host = dlg_host
         self._dlg_port = dlg_port
@@ -95,7 +101,7 @@ class ProxyServer:
         while True:
             if retry_count >= conn_retry_count:
                 logger.error("Retry connecting to DALiuGE monitor exhausted, quit")
-                #sys.exit(2)
+                # sys.exit(2)
             try:
                 the_socket = socket.create_connection((server, port))
                 the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
@@ -136,7 +142,7 @@ class ProxyServer:
             if (just_re_connected):
                 just_re_connected = False
             inputready, _, _ = select.select(
-                    inputlist + list(self._dlg_sock_dict.values()), [], [], delay)
+                inputlist + list(self._dlg_sock_dict.values()), [], [], delay)
             for the_socket in inputready:
                 if (just_re_connected):
                     continue
@@ -191,23 +197,25 @@ class ProxyServer:
                         if (len(data) == 0):
                             self.close_dlg_socket(the_socket, tag)
 
+
 def run(parser, args):
     '''
     Entry point for the dlg proxy command
     '''
     parser.add_option("-d", "--dlg_host", action="store", type="string",
-                    dest="dlg_host", help="DALiuGE Node Manager host IP (required)")
+                      dest="dlg_host", help="DALiuGE Node Manager host IP (required)")
     parser.add_option("-m", "--monitor_host", action="store", type="string",
-                    dest="monitor_host", help="Monitor host IP (required)")
+                      dest="monitor_host", help="Monitor host IP (required)")
     parser.add_option("-l", "--log_dir", action="store", type="string",
-                    dest="log_dir", help="Log directory (optional)", default='.')
+                      dest="log_dir", help="Log directory (optional)", default='.')
     parser.add_option("-f", "--dlg_port", action="store", type="int",
-                    dest="dlg_port", help = "The port the DALiuGE Node Manager is running on", default=default_dlg_port)
+                      dest="dlg_port", help="The port the DALiuGE Node Manager is running on", default=default_dlg_port)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The port the DALiuGE monitor is running on", default=default_dlg_monitor_port)
+                      dest="monitor_port", help="The port the DALiuGE monitor is running on",
+                      default=default_dlg_monitor_port)
     parser.add_option("-b", "--debug",
-                  action="store_true", dest="debug", default=False,
-                  help="Whether to log debug info")
+                      action="store_true", dest="debug", default=False,
+                      help="Whether to log debug info")
     parser.add_option("-i", "--id", action="store", type="string",
                       dest="id", help="The ID of this proxy for on the monitor side (required)", default=None)
     (options, args) = parser.parse_args(args)

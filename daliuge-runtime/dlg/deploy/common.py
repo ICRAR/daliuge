@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import itertools
 import json
 import logging
 import os
@@ -28,10 +29,9 @@ from .. import droputils
 from ..manager import constants
 from ..manager.client import BaseDROPManagerClient
 from ..manager.session import SessionStates
-import itertools
-
 
 logger = logging.getLogger(__name__)
+
 
 class _StatusDumper(BaseDROPManagerClient):
     """A client that dumps the graph status each time a session is queried"""
@@ -65,6 +65,7 @@ class _StatusDumper(BaseDROPManagerClient):
 def _is_end_state(session_status):
     return session_status in (SessionStates.FINISHED, SessionStates.CANCELLED)
 
+
 def _get_client(host, port, timeout, status_dump_path=None):
     kwargs = {'host': host, 'port': port, 'timeout': timeout}
     clazz = BaseDROPManagerClient
@@ -81,7 +82,8 @@ def _session_status(session):
             if isinstance(status[0], list):
                 status = list(itertools.chain(*status))
         return status
-    x =  _get(session['status'])
+
+    x = _get(session['status'])
     return x
 
 
@@ -91,6 +93,7 @@ def _session_finished(session):
     if isinstance(session_status, int):
         return _is_end_state(session_status)
     return all(_is_end_state(s) for s in session_status)
+
 
 def monitor_sessions(session_id=None, poll_interval=10, host='127.0.0.1',
                      port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60,
@@ -113,6 +116,7 @@ def monitor_sessions(session_id=None, poll_interval=10, host='127.0.0.1',
             if all(_session_finished(s) for s in sessions):
                 return {s['sessionId']: _session_status(s) for s in sessions}
             time.sleep(poll_interval)
+
 
 def submit(pg, host='127.0.0.1', port=constants.ISLAND_DEFAULT_REST_PORT,
            timeout=60, skip_deploy=False, session_id=None):
