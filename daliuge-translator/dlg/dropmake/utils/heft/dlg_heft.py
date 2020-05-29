@@ -31,27 +31,30 @@ commcost - function :: task, task, agent, agent -> time to transfer results
                        of one task needed by another between two agents
 """
 
-from functools import partial
-from collections import namedtuple
-from itertools import chain
 import itertools as it
-#import networkx as nx
-import numpy as np
 import sys
+from collections import namedtuple
+from functools import partial
+
+# import networkx as nx
+import numpy as np
 
 Event = namedtuple('Event', 'task start end')
-LATEST_STT = sys.maxsize # this should be python2/3 compatible
+LATEST_STT = sys.maxsize  # this should be python2/3 compatible
 
 RES_TYPE_CPU = 1
 RES_TYPE_MEM = 2
-#RES_TYPE_IO = 3
+# RES_TYPE_IO = 3
 RES_TYPES = [RES_TYPE_CPU, RES_TYPE_MEM]
-#RES_TYPES = [RES_TYPE_CPU]
+
+
+# RES_TYPES = [RES_TYPE_CPU]
 
 class res_usage(object):
     """
     Resource usage of a particular machine/agent
     """
+
     def __init__(self, agent, supply):
         self.res_types = supply.keys()
         self.arr = dict()
@@ -72,9 +75,9 @@ class res_usage(object):
             return True
         dedt = min(desired_st_time + duration, self.edt)
         # each timestep should not exceed supply
-        for k, v in demand.items(): # for each resource type
+        for k, v in demand.items():  # for each resource type
             res_arr = self.arr[k]
-            #TODO use a threshold instead of an outright '0'
+            # TODO use a threshold instead of an outright '0'
             if sum(res_arr[desired_st_time:dedt] + v > self.supply[k]) > 0:
                 return False
         return True
@@ -90,9 +93,10 @@ class res_usage(object):
                 delt = self.edt - res_arr.size
                 res_arr = np.hstack([res_arr, np.zeros(delt)])
             res_arr[event.start:event.end] += demand[k]
-        
+
         for k, v in to_be_updated:
             self.arr[k] = v
+
 
 def reverse_dict(d):
     """ Reverses direction of dependence dict
@@ -104,8 +108,9 @@ def reverse_dict(d):
     result = {}
     for key in d:
         for val in d[key]:
-            result[val] = result.get(val, tuple()) + (key, )
+            result[val] = result.get(val, tuple()) + (key,)
     return result
+
 
 def find_task_event(task_name, orders_dict):
     for event in it.chain.from_iterable(orders_dict.values()):
@@ -128,7 +133,7 @@ def cbar(ni, nj, agents, commcost):
                     if a1 != a2) / npairs
 
 
-def ranku(ni, agents, succ,  compcost, commcost):
+def ranku(ni, agents, succ, compcost, commcost):
     """ Rank of task
 
     This code is designed to mirror the wikipedia entry.
@@ -174,8 +179,8 @@ def find_first_gap(agent_orders, desired_start_time, duration,
     The gap must be after `desired_start_time` and of length at least
     `duration`.
     """
-    #TODO change to a "DAG preserved" first gap
-    #TODO return an infinite large value if the DoP constraint is not met
+    # TODO change to a "DAG preserved" first gap
+    # TODO return an infinite large value if the DoP constraint is not met
 
     # No tasks: can fit it in whenever the task is ready to run
     if (agent_orders is None) or (len(agent_orders)) == 0:
@@ -230,18 +235,18 @@ def allocate(task, orders, taskson, prec, compcost, commcost, usages, workload):
 
     # 'min()' represents 'earliest' finished time (ft)
     # this is exactly why the allocation policy is considered greedy!
-    #TODO the new greediness should be based on "DoP" since all start time will be
+    # TODO the new greediness should be based on "DoP" since all start time will be
     # the same (the desired_start_time). Smaller DoP (or bigger leftover) is better
     agent = min(orders.keys(), key=ft)
     start = st(agent)
     if (start == LATEST_STT):
         raise Exception('No sufficient resources to run task {0}'.format(task))
     end = ft(agent)
-    #assert(end == start + compcost(task, agent))
+    # assert(end == start + compcost(task, agent))
 
     new_event = Event(task, start, end)
     orders[agent].append(new_event)
-    #orders[agent] = sorted(orders[agent], key=lambda e: e.start)
+    # orders[agent] = sorted(orders[agent], key=lambda e: e.start)
     orders[agent].sort(key=lambda e: e.start)
     # Might be better to use a different data structure to keep each
     # agent's orders sorted at a lower cost.

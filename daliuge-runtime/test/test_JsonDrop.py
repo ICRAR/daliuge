@@ -83,7 +83,7 @@ class TestJsonDROP(unittest.TestCase):
         if not os.path.exists(DIR):
             os.makedirs(DIR)
 
-        #with open(os.path.join(DIR, 'oid___uid'), mode='w') as write_file:
+        # with open(os.path.join(DIR, 'oid___uid'), mode='w') as write_file:
         with open(os.path.join(DIR, 'uid'), mode='w') as write_file:
             write_file.write(FILE_TEXT)
 

@@ -1,5 +1,5 @@
-from dlg_heft import Event, cbar, ranku, schedule, \
-start_time, wbar, makespan, RES_TYPES
+from dlg_heft import schedule, \
+    makespan, RES_TYPES
 
 """
 This is a simple script to use the HEFT function provided based on the example given in the original HEFT paper.
@@ -16,7 +16,6 @@ c [Event(task=1, start=0, end=9), Event(task=3, start=9, end=28), Event(task=2, 
 {1: 'c', 4: 'b', 3: 'c', 2: 'c', 5: 'c', 6: 'a', 9: 'b', 7: 'c', 8: 'a', 10: 'b'}
 """
 
-
 dag = {1: (2, 3, 4, 5, 6),
        2: (8, 9),
        3: (7,),
@@ -28,16 +27,18 @@ dag = {1: (2, 3, 4, 5, 6),
        9: (10,),
        10: ()}
 
+
 def setup_capacity(agents):
     ac = dict()
     for i, a in enumerate(agents):
         supply = {}
         for j, res in enumerate(RES_TYPES):
             supply[res] = (8 + j) * (i + 1)
-        #print(supply)
+        # print(supply)
         ac[a] = supply
-    #print('all capacity', ac)
+    # print('all capacity', ac)
     return ac
+
 
 def setup_workload(tasks):
     wl = dict()
@@ -45,121 +46,122 @@ def setup_workload(tasks):
         demand = {}
         for j, res in enumerate(RES_TYPES):
             demand[res] = (1 + j) * (i + 1)
-        #print(demand)
+        # print(demand)
         wl[t] = demand
     return wl
 
+
 def compcost(task, agent):
     if (task == 1):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 14
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 16
         else:
             return 9
 
     if (task == 2):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 13
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 19
         else:
             return 18
     if (task == 3):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 11
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 13
         else:
             return 19
     if (task == 4):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 13
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 8
         else:
             return 17
     if (task == 5):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 12
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 13
         else:
             return 10
     if (task == 6):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 13
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 16
         else:
             return 9
     if (task == 7):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 7
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 15
         else:
             return 11
     if (task == 8):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 5
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 11
         else:
             return 14
     if (task == 9):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 18
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 12
         else:
             return 20
     if (task == 10):
-        if(agent == 'a'):
+        if (agent == 'a'):
             return 21
-        elif(agent == 'b'):
+        elif (agent == 'b'):
             return 7
         else:
             return 16
 
 
 def commcost(ni, nj, A, B):
-
-    if(A == B):
+    if (A == B):
         return 0
     else:
-        if(ni == 1 and nj == 2):
+        if (ni == 1 and nj == 2):
             return 18
-        if(ni == 1 and nj == 3):
+        if (ni == 1 and nj == 3):
             return 12
-        if(ni == 1 and nj == 4):
+        if (ni == 1 and nj == 4):
             return 9
-        if(ni == 1 and nj == 5):
+        if (ni == 1 and nj == 5):
             return 11
-        if(ni == 1 and nj == 6):
+        if (ni == 1 and nj == 6):
             return 14
-        if(ni == 2 and nj == 8):
+        if (ni == 2 and nj == 8):
             return 19
-        if(ni == 2 and nj == 9):
+        if (ni == 2 and nj == 9):
             return 16
-        if(ni == 3 and nj == 7):
+        if (ni == 3 and nj == 7):
             return 23
-        if(ni == 4 and nj == 8):
+        if (ni == 4 and nj == 8):
             return 27
-        if(ni == 4 and nj == 9):
+        if (ni == 4 and nj == 9):
             return 23
-        if(ni == 5 and nj == 9):
+        if (ni == 5 and nj == 9):
             return 13
-        if(ni == 6 and nj == 8):
+        if (ni == 6 and nj == 8):
             return 15
-        if(ni == 7 and nj == 10):
+        if (ni == 7 and nj == 10):
             return 17
-        if(ni == 8 and nj == 10):
+        if (ni == 8 and nj == 10):
             return 11
-        if(ni == 9 and nj == 10):
+        if (ni == 9 and nj == 10):
             return 13
         else:
             return 0
+
 
 agents = 'abc'
 cpct = setup_capacity(agents)

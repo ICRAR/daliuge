@@ -24,11 +24,11 @@ This package contains the modules implementing the core functionality of
 the system.
 """
 
+
 # It is of utmost importance that this is the *first* thing we do any time
 # we load daliuge up. Most modules in daliuge that have a logger create it at
 # import time, so we need to perform this setup before doing any other imports
 def setup_logger_class():
-
     # Doc building is failing due with "ValueError: Empty module name" in
     # "from . import drop" further below, which I can't easily explain.
     # Just skip this setup in RTD for the time being
@@ -75,10 +75,10 @@ def setup_logger_class():
             return record
 
     logging.setLoggerClass(_DlgLogger)
+
+
 setup_logger_class()
 del setup_logger_class
 
 from .version import git_version as __git_version__
 from .version import version as __version__
-from ..apps import get_include_dir
-from ..dask_emulation import delayed

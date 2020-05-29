@@ -42,12 +42,12 @@ from .session import Session
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
 from ..drop import AppDROP
-from ..exceptions import NoSessionException, SessionAlreadyExistsException,\
+from ..exceptions import NoSessionException, SessionAlreadyExistsException, \
     DaliugeException
 from ..lifecycle.dlm import DataLifecycleManager
 
-
 logger = logging.getLogger(__name__)
+
 
 class NMDropEventListener(object):
 
@@ -59,12 +59,14 @@ class NMDropEventListener(object):
         event.session_id = self._session_id
         self._nm.publish_event(event)
 
+
 class LogEvtListener(object):
     def handleEvent(self, event):
         if event.type == 'status':
             logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
         elif event.type == 'execStatus':
             logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
+
 
 class ErrorStatusListener(object):
     """An event listener that passes down the erroneous drop to an error handler"""
@@ -111,7 +113,7 @@ class NodeManagerBase(DROPManager):
                  dlgPath=None,
                  error_listener=None,
                  event_listeners=[],
-                 max_threads = 0):
+                 max_threads=0):
 
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
@@ -303,7 +305,6 @@ class NodeManagerBase(DROPManager):
 
 
 class ZMQPubSubMixIn(object):
-
     subscription = collections.namedtuple('subscription', 'endpoint finished_evt')
 
     def __init__(self, host, events_port):
@@ -332,17 +333,17 @@ class ZMQPubSubMixIn(object):
         pubsock_created = threading.Event()
         subsock_created = threading.Event()
 
-        self._zmqpubthread = threading.Thread(target = self._zmq_pub_thread, name="ZMQ evtpub", args=(pubsock_created,))
+        self._zmqpubthread = threading.Thread(target=self._zmq_pub_thread, name="ZMQ evtpub", args=(pubsock_created,))
         self._zmqpubthread.start()
         if not pubsock_created.wait(timeout):
             raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
 
-        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub", args=(subsock_created,))
+        self._zmqsubthread = threading.Thread(target=self._zmq_sub_thread, name="ZMQ evtsub", args=(subsock_created,))
         self._zmqsubthread.start()
         if not subsock_created.wait(timeout):
             raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
 
-        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread, name="ZMQ evtsubq")
+        self._zmqsubqthread = threading.Thread(target=self._zmq_sub_queue_thread, name="ZMQ evtsubq")
         self._zmqsubqthread.start()
 
     def shutdown(self):
@@ -370,7 +371,7 @@ class ZMQPubSubMixIn(object):
         import zmq
 
         pub = self._zmqctx.socket(zmq.PUB)  # @UndefinedVariable
-        pub.set_hwm(0) # Never drop messages that should be sent
+        pub.set_hwm(0)  # Never drop messages that should be sent
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(self._events_host), self._events_port)
         pub.bind(endpoint)
         logger.info("Listening for events via ZeroMQ on %s", endpoint)
@@ -386,7 +387,7 @@ class ZMQPubSubMixIn(object):
 
             while self._pubsub_running:
                 try:
-                    pub.send_pyobj(obj, flags = zmq.NOBLOCK)  # @UndefinedVariable
+                    pub.send_pyobj(obj, flags=zmq.NOBLOCK)  # @UndefinedVariable
                     break
                 except zmq.error.Again:
                     logger.debug("Got an 'Again' when publishing event")
@@ -419,7 +420,7 @@ class ZMQPubSubMixIn(object):
                 pass
 
             try:
-                evt = sub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
+                evt = sub.recv_pyobj(flags=zmq.NOBLOCK)  # @UndefinedVariable
                 self._recvevts.put(evt)
             except zmq.error.Again:
                 time.sleep(0.01)
@@ -431,8 +432,11 @@ class ZMQPubSubMixIn(object):
 
 # So far we currently support ZMQ only for event publishing
 EventMixIn = ZMQPubSubMixIn
+
+
 # Load the corresponding RPC classes and finish the construciton of NodeManager
 class RpcMixIn(rpc.RPCClient, rpc.RPCServer): pass
+
 
 # Final NodeManager class
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):

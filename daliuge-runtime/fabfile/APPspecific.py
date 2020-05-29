@@ -26,16 +26,14 @@ sources, installing it and making sure it works after starting it.
 NOTE: This requires modifications for the specific application where this
 fabfile is used. Please make sure not to use it without those modifications.
 """
-import os, sys
-from fabric.state import env
-from fabric.colors import red
-from fabric.operations import local
+import os
+
+from fabric.context_managers import cd
 from fabric.decorators import task, parallel
-from fabric.context_managers import settings, cd
-from fabric.contrib.files import exists, sed
+from fabric.state import env
 from fabric.utils import abort
-from fabric.contrib.console import confirm
-#import urllib2
+
+# import urllib2
 
 # >>> All the settings below are kept in the special fabric environment
 # >>> dictionary called env. Don't change the names, only adjust the
@@ -86,39 +84,39 @@ env.AWS_AMI_NAME = 'Amazon'
 env.AWS_INSTANCES = 1
 env.AWS_INSTANCE_TYPE = 't2.micro'
 env.AWS_KEY_NAME = 'icrar_{0}'.format(env.APP_USER)
-env.AWS_SEC_GROUP = 'DALIUGE' # Security group
-env.AWS_SEC_GROUP_PORTS = [22, 80, 8000, 8001] # ports to open
-env.AWS_SUDO_USER = 'ec2-user' # required to install init scripts.
+env.AWS_SEC_GROUP = 'DALIUGE'  # Security group
+env.AWS_SEC_GROUP_PORTS = [22, 80, 8000, 8001]  # ports to open
+env.AWS_SUDO_USER = 'ec2-user'  # required to install init scripts.
 
 # Alpha-sorted packages per package manager
 env.pkgs = {
-            'YUM_PACKAGES': [   
-                    'wget',
-                    'tar',
-                    'git',
-                    'gcc',
-                    'python36-devel',  #this is the latest available with AWS Linux
-                      ],
-            'APT_PACKAGES': [
-                    'tar',
-                    'wget',
-                    'gcc',
-                    ],
-            'SLES_PACKAGES': [
-                    'wget',
-                    'gcc',
-                    ],
-            'BREW_PACKAGES': [
-                    'wget',
-                    'gcc',
-                    ],
-            'PORT_PACKAGES': [
-                    'wget',
-                    'gcc',
-                    ],
-            'APP_EXTRA_PYTHON_PACKAGES': [
-                    ],
-        }
+    'YUM_PACKAGES': [
+        'wget',
+        'tar',
+        'git',
+        'gcc',
+        'python36-devel',  # this is the latest available with AWS Linux
+    ],
+    'APT_PACKAGES': [
+        'tar',
+        'wget',
+        'gcc',
+    ],
+    'SLES_PACKAGES': [
+        'wget',
+        'gcc',
+    ],
+    'BREW_PACKAGES': [
+        'wget',
+        'gcc',
+    ],
+    'PORT_PACKAGES': [
+        'wget',
+        'gcc',
+    ],
+    'APP_EXTRA_PYTHON_PACKAGES': [
+    ],
+}
 
 # Don't re-export the tasks imported from other modules, only the ones defined
 # here
@@ -130,15 +128,15 @@ __all__ = [
 env.APP_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 # >>> The following lines need to be after the definitions above!!!
-from fabfileTemplate.utils import sudo, info, success, default_if_empty, home, run
-from fabfileTemplate.utils import overwrite_defaults, failure
-from fabfileTemplate.system import check_command, get_linux_flavor, MACPORT_DIR
-from fabfileTemplate.APPcommon import virtualenv, APP_doc_dependencies, APP_source_dir
-from fabfileTemplate.APPcommon import APP_root_dir, extra_python_packages, APP_user, build
-from fabfileTemplate.pkgmgr import check_brew_port, check_brew_cellar
+from fabfileTemplate.utils import sudo, info, success, run
+from fabfileTemplate.utils import overwrite_defaults
+from fabfileTemplate.system import check_command, get_linux_flavor
+from fabfileTemplate.APPcommon import virtualenv, APP_source_dir
+from fabfileTemplate.APPcommon import APP_root_dir
 
 # get the settings from the fab environment if set on command line
 settings = overwrite_defaults(defaults)
+
 
 def start_APP_and_check_status():
     """
@@ -147,6 +145,7 @@ def start_APP_and_check_status():
     """
     virtualenv('dlg --help')
     success('dlg help is working...')
+
 
 def sysinitstart_APP_and_check_status():
     """
@@ -158,7 +157,6 @@ def sysinitstart_APP_and_check_status():
 
 
 def APP_build_cmd():
-
     # The installation of the bsddb package (needed by ngamsCore) is in
     # particular difficult because it requires some flags to be passed on
     # (particularly if using MacOSX's port
@@ -170,6 +168,7 @@ def APP_build_cmd():
     build_cmd.append('pip install .')
 
     return ' '.join(build_cmd)
+
 
 def prepare_APP_data_dir():
     """Creates a new APP root directory"""
@@ -191,10 +190,11 @@ def prepare_APP_data_dir():
                                                                         nrd)
     if res.return_code == 2:
         error = (nrd + " already exists. Specify APP_OVERWRITE_ROOT to "
-                 "overwrite, or a different APP_ROOT_DIR location")
+                       "overwrite, or a different APP_ROOT_DIR location")
     else:
         error = res
     abort(error)
+
 
 def install_sysv_init_script(nsd, nuser, cfgfile):
     """
@@ -229,6 +229,7 @@ def install_sysv_init_script(nsd, nuser, cfgfile):
 
     success("{0} init script installed".format(env.APP_NAME))
 
+
 @task
 @parallel
 def cleanup():
@@ -236,8 +237,10 @@ def cleanup():
     run('rm -rf DALIUGE')
     run('if [ -f .bash_profile.orig ]; then mv .bash_profile.orig .bash_profile; fi')
 
+
 def install_docker_compose():
     pass
+
 
 env.build_cmd = APP_build_cmd
 env.APP_init_install_function = install_sysv_init_script
@@ -245,4 +248,3 @@ env.APP_start_check_function = start_APP_and_check_status
 env.sysinitAPP_start_check_function = sysinitstart_APP_and_check_status
 env.prepare_APP_data_dir = prepare_APP_data_dir
 env.APP_extra_sudo_function = install_docker_compose
-

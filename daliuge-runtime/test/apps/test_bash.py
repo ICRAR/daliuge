@@ -29,9 +29,8 @@ import tempfile
 import unittest
 
 import six
-
 from dlg import droputils
-from dlg.apps.bash_shell_app import BashShellApp, StreamingInputBashApp,\
+from dlg.apps.bash_shell_app import BashShellApp, StreamingInputBashApp, \
     StreamingOutputBashApp, StreamingInputOutputBashApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import FileDROP, InMemoryDROP
@@ -91,6 +90,7 @@ class BashAppTests(unittest.TestCase):
 
         # a fake session that has an ID
         class dummy(object): pass
+
         session = dummy()
         session.sessionId = session_id
 
@@ -105,6 +105,7 @@ class BashAppTests(unittest.TestCase):
 
         assert_envvar_is_there('DLG_UID', app_uid)
         assert_envvar_is_there('DLG_SESSION_ID', session_id)
+
 
 class StreamingBashAppTests(unittest.TestCase):
 
@@ -142,9 +143,9 @@ class StreamingBashAppTests(unittest.TestCase):
             a.async_execute()
 
         # The application executed, finished, and its output was recorded
-        for drop in (a,b,c,d):
+        for drop in (a, b, c, d):
             self.assertEqual(DROPStates.COMPLETED, drop.status, "Drop %r not COMPLETED: %d" % (drop, drop.status))
-        self.assertEqual([5,4,3,2,1], [int(x) for x in droputils.allDropContents(d).split(six.b('\n'))])
+        self.assertEqual([5, 4, 3, 2, 1], [int(x) for x in droputils.allDropContents(d).split(six.b('\n'))])
 
         # Clean up and go
         os.remove(output_fname)
@@ -188,9 +189,9 @@ class StreamingBashAppTests(unittest.TestCase):
             a.async_execute()
 
         # The application executed, finished, and its output was recorded
-        for drop in (a,b,c,d,e,f):
+        for drop in (a, b, c, d, e, f):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual([1,2,3,4,5], [int(x) for x in droputils.allDropContents(f).strip().split(six.b('\n'))])
+        self.assertEqual([1, 2, 3, 4, 5], [int(x) for x in droputils.allDropContents(f).strip().split(six.b('\n'))])
 
         # Clean up and go
         os.remove(output_fname)

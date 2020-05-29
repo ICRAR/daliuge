@@ -24,13 +24,11 @@ import threading
 import time
 import unittest
 
-from six.moves import http_client as httplib  # @UnresolvedImport
-
 from dlg import utils, restutils
 from dlg.manager import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
-
+from six.moves import http_client as httplib  # @UnresolvedImport
 
 _TIMEOUT = 10
 
@@ -42,9 +40,11 @@ class TestDaemon(unittest.TestCase):
         self._daemon = DlgDaemon(*args, **kwargs)
 
         if 'noNM' not in kwargs or not kwargs['noNM']:
-            self.assertTrue(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT), 'The NM did not start successfully')
+            self.assertTrue(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
+                            'The NM did not start successfully')
         if 'master' in kwargs and kwargs['master']:
-            self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
+            self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
+                            'The MM did not start successfully')
 
         self._daemon_t = threading.Thread(target=lambda: self._daemon.start('localhost', 9000))
         self._daemon_t.start()
@@ -62,7 +62,7 @@ class TestDaemon(unittest.TestCase):
         # To actually avoid this we need to do some actual HTTP talk, which will
         # ensure the server is actually serving requests, and therefore already
         # in the daemon's hand
-        #self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
+        # self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
         try:
             restutils.RestClient('localhost', 9000, 10)._GET('/anything')
         except restutils.RestClientException:
@@ -74,7 +74,8 @@ class TestDaemon(unittest.TestCase):
             self._daemon.stop(_TIMEOUT)
             self._daemon_t.join(_TIMEOUT)
             self.assertFalse(self._daemon_t.is_alive(), "Daemon running thread should have finished by now")
-            self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT), 'DALiuGE Daemon REST interface should be off')
+            self.assertTrue(utils.portIsClosed('localhost', 9000, _TIMEOUT),
+                            'DALiuGE Daemon REST interface should be off')
         unittest.TestCase.tearDown(self)
 
     def test_nm_starts(self):
@@ -88,8 +89,10 @@ class TestDaemon(unittest.TestCase):
     def test_nothing_starts(self):
         # Nothing should start now
         self.create_daemon(master=False, noNM=True, disable_zeroconf=True)
-        self.assertFalse(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, 0), 'NM started but it should not have')
-        self.assertFalse(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, 0), 'NM started but it should not have')
+        self.assertFalse(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, 0),
+                         'NM started but it should not have')
+        self.assertFalse(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, 0),
+                         'NM started but it should not have')
 
     def test_start_master_via_rest(self):
 
@@ -97,7 +100,8 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the master starts
         self._start('master', httplib.OK)
-        self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
+        self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
+                        'The MM did not start successfully')
 
     def test_zeroconf_discovery(self):
 
@@ -123,7 +127,8 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the DataIsland starts with the given nodes
         self._start('dataisland', httplib.OK, {'nodes': nodes})
-        self.assertTrue(utils.portIsOpen('localhost', constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT), 'The DIM did not start successfully')
+        self.assertTrue(utils.portIsOpen('localhost', constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT),
+                        'The DIM did not start successfully')
 
     def _start(self, manager_name, expected_code, payload=None):
         conn = httplib.HTTPConnection('localhost', 9000)

@@ -28,7 +28,6 @@ import unittest
 import configobj
 import docker
 import six
-
 from dlg import droputils, utils
 from dlg.apps.dockerapp import DockerApp
 from dlg.drop import FileDROP, NgasDROP
@@ -41,9 +40,9 @@ try:
 except:
     pass
 
+
 @unittest.skipIf(docker_unavailable, "Docker daemon not available")
 class DockerTests(unittest.TestCase):
-
     _temp = None
     _docker_available = False
 
@@ -135,7 +134,7 @@ class DockerTests(unittest.TestCase):
 
         def assertMsgIsCorrect(msg, command):
             a = DockerApp('a', 'a', image='ubuntu:14.04', command=command)
-            b = FileDROP('b','b')
+            b = FileDROP('b', 'b')
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
@@ -162,7 +161,7 @@ class DockerTests(unittest.TestCase):
         self._ngas_and_fs_io("echo -n '%iDataURL[a]' > %o[c]")
 
     def _ngas_and_fs_io(self, command):
-        a = NgasDROP('a', 'a') # not a filesystem-related DROP, we can reference its URL in the command-line
+        a = NgasDROP('a', 'a')  # not a filesystem-related DROP, we can reference its URL in the command-line
         b = DockerApp('b', 'b', image="ubuntu:14.04", command=command)
         c = FileDROP('c', 'c')
         b.addInput(a)
@@ -171,11 +170,10 @@ class DockerTests(unittest.TestCase):
             a.setCompleted()
         self.assertEqual(six.b(a.dataURL), droputils.allDropContents(c))
 
-
     def test_additional_bindings(self):
 
         # Some additional stuff to bind into docker
-        tempDir  = tempfile.mkdtemp()
+        tempDir = tempfile.mkdtemp()
         tempFile = tempfile.mktemp()
         with open(tempFile, 'w') as f:
             f.write('data')
@@ -183,11 +181,11 @@ class DockerTests(unittest.TestCase):
         # One binding specifies the target path in the container, the other doesn't
         # so it defaults to the same path
         a = DockerApp(
-                'a',
-                'a',
-                image='ubuntu:14.04',
-                command="cp /opt/file %s" % (tempDir,),
-                additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)]
+            'a',
+            'a',
+            image='ubuntu:14.04',
+            command="cp /opt/file %s" % (tempDir,),
+            additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)]
         )
         a.execute()
 

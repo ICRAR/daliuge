@@ -23,6 +23,7 @@
 class ListTokens(object):
     STRING, COMMA, RANGE_SEP, MULTICASE_START, MULTICASE_END = range(5)
 
+
 def _list_tokenizer(s):
     buff = []
     for char in s:
@@ -51,8 +52,8 @@ def _list_tokenizer(s):
         yield ListTokens.STRING, ''.join(buff)
         buff = []
 
-def _parse_list_tokens(token_iter):
 
+def _parse_list_tokens(token_iter):
     def finish_element(sub_values, range_start):
         if sub_values:
             values.extend(sub_values)
@@ -92,6 +93,7 @@ def _parse_list_tokens(token_iter):
                 sub_values = [s + value for s in sub_values]
             else:
                 values.append(value)
+
 
 def list_as_string(s):
     """'a008,b[072-073,076]' --> ['a008', 'b072', 'b073', 'b076']"""

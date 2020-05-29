@@ -30,15 +30,14 @@ from dlg.apps.fileimport import FileImportApp
 
 
 class FileImportAppTests(unittest.TestCase):
-
     root = '/tmp/test_file_import'
 
     dirs = ['%s/files/' % root,
             '%s/empty/' % root]
 
-    files = ['%s%s' % (dirs[0],'test.fits'),
-             '%s%s' % (dirs[0],'test1.fits'),
-             '%s%s' % (dirs[0],'test2.txt')]
+    files = ['%s%s' % (dirs[0], 'test.fits'),
+             '%s%s' % (dirs[0], 'test1.fits'),
+             '%s%s' % (dirs[0], 'test2.txt')]
 
     def setUp(self):
         for d in self.dirs:
@@ -51,21 +50,21 @@ class FileImportAppTests(unittest.TestCase):
         shutil.rmtree(self.root)
 
     def test_import(self):
-        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = self.files[0], ext = ['.fits']))
-        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = self.root, ext = []))
-        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = self.root))
-        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname = '', ext = []))
+        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname=self.files[0], ext=['.fits']))
+        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname=self.root, ext=[]))
+        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname=self.root))
+        self.assertRaises(Exception, lambda: FileImportApp('a', 'b', dirname='', ext=[]))
 
-        a = FileImportApp('a', 'b', dirname = self.root, ext = ['.fits'])
+        a = FileImportApp('a', 'b', dirname=self.root, ext=['.fits'])
         self.assertEqual(len(a.children), 2)
         self.assertEqual(a.children[0].path in self.files, True)
         self.assertEqual(a.children[1].path in self.files, True)
 
-        a = FileImportApp('a', 'b', dirname = self.dirs[1], ext = ['.fits'])
+        a = FileImportApp('a', 'b', dirname=self.dirs[1], ext=['.fits'])
         self.assertEqual(len(a.children), 0)
 
-        a = FileImportApp('a', 'b', dirname = self.root, ext = ['.txt'])
+        a = FileImportApp('a', 'b', dirname=self.root, ext=['.txt'])
         self.assertEqual(len(a.children), 1)
 
-        a = FileImportApp('a', 'b', dirname = self.root, ext = ['.hdf5'])
+        a = FileImportApp('a', 'b', dirname=self.root, ext=['.hdf5'])
         self.assertEqual(len(a.children), 0)

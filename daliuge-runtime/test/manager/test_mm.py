@@ -26,7 +26,6 @@ import time
 import unittest
 
 import pkg_resources
-
 from dlg import droputils
 from dlg import utils
 from dlg.common import tool
@@ -36,8 +35,8 @@ from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
 from test.manager import testutils
 
-
 hostname = '127.0.0.1'
+
 
 class DimAndNMStarter(ManagerStarter):
 
@@ -54,12 +53,15 @@ class DimAndNMStarter(ManagerStarter):
         self.dim_info.stop()
         self.nm_info.stop()
 
+
 class TestMM(DimAndNMStarter, unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname, 'island':hostname},
-                     {'oid':'C', 'type':'plain', 'storage':'memory', 'island':hostname, 'node':hostname}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'island': hostname, 'node': hostname,
+                      'consumers': ['B']},
+                     {'oid': 'B', 'type': 'app', 'app': 'dlg.apps.simple.SleepAndCopyApp', 'sleepTime': sleepTime,
+                      'outputs': ['C'], 'node': hostname, 'island': hostname},
+                     {'oid': 'C', 'type': 'plain', 'storage': 'memory', 'island': hostname, 'node': hostname}]
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 
@@ -74,23 +76,23 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         sessionId = 'lalo'
 
         # No node specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory'}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory'}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # Wrong node specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':'unknown_host'}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': 'unknown_host'}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # No island specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': hostname}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # Wrong island specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'island':'unknown_host'}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': hostname, 'island': 'unknown_host'}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # OK
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':'memory', 'node':hostname, 'island':hostname}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': hostname, 'island': hostname}]
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 
@@ -140,9 +142,9 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
     def test_sessionStatus(self):
 
         def assertSessionStatus(sessionId, status):
-            sessionStatusMM  = self.mm.getSessionStatus(sessionId)
+            sessionStatusMM = self.mm.getSessionStatus(sessionId)
             sessionStatusDIM = self.dim.getSessionStatus(sessionId)
-            sessionStatusNM  = self.nm.getSessionStatus(sessionId)
+            sessionStatusNM = self.nm.getSessionStatus(sessionId)
             self.assertEqual(1, len(sessionStatusMM))
             self.assertIn(hostname, sessionStatusMM)
             self.assertDictEqual(sessionStatusDIM, sessionStatusMM[hostname])
@@ -175,7 +177,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
 
         graphSpecFromMM = self.mm.getGraph(sessionId)
         self.assertEqual(3, len(graphSpecFromMM))
-        for oid in ('A','B','C'):
+        for oid in ('A', 'B', 'C'):
             self.assertIn(oid, graphSpecFromMM)
         graphSepcFromNM = self.nm.getGraph(sessionId)
         graphSepcFromDIM = self.dim.getGraph(sessionId)
@@ -215,9 +217,9 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
         """
 
         sessionId = 'lala'
-        restPort  = 8888
+        restPort = 8888
 
-        args = ['--port', str(restPort), '-N',hostname, '-qqq']
+        args = ['--port', str(restPort), '-N', hostname, '-qqq']
         mmProcess = tool.start_process('mm', args)
 
         with testutils.terminating(mmProcess, 10):
@@ -245,30 +247,35 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
-            with pkg_resources.resource_stream('test', 'graphs/complex.js') as f: # @UndefinedVariable
+            with pkg_resources.resource_stream('test', 'graphs/complex.js') as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader('utf-8')(f))
             for dropSpec in complexGraphSpec:
                 dropSpec['node'] = hostname
                 dropSpec['island'] = hostname
             testutils.post(self, '/sessions/%s/graph/append' % (sessionId), restPort, json.dumps(complexGraphSpec))
-            self.assertEqual({hostname: {hostname: SessionStates.BUILDING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: {hostname: SessionStates.BUILDING}},
+                             testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # Now we deploy the graph...
-            testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K", mimeType='application/x-www-form-urlencoded')
-            self.assertEqual({hostname: {hostname: SessionStates.RUNNING}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            testutils.post(self, '/sessions/%s/deploy' % (sessionId), restPort, "completed=SL_A,SL_B,SL_C,SL_D,SL_K",
+                           mimeType='application/x-www-form-urlencoded')
+            self.assertEqual({hostname: {hostname: SessionStates.RUNNING}},
+                             testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
 
             # ...and write to all 5 root nodes that are listening in ports
             # starting at 1111
             msg = os.urandom(10)
             for i in range(5):
-                utils.write_to('localhost', 1111+i, msg, 2), "Couldn't write data to localhost:%d" % (1111+i)
+                utils.write_to('localhost', 1111 + i, msg, 2), "Couldn't write data to localhost:%d" % (1111 + i)
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort)[hostname].values():
+            while SessionStates.RUNNING in testutils.get(self, '/sessions/%s/status' % (sessionId), restPort)[
+                hostname].values():
                 time.sleep(0.2)
 
-            self.assertEqual({hostname: {hostname: SessionStates.FINISHED}}, testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
+            self.assertEqual({hostname: {hostname: SessionStates.FINISHED}},
+                             testutils.get(self, '/sessions/%s/status' % (sessionId), restPort))
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
             sessions = testutils.get(self, '/sessions', restPort)
             self.assertEqual(0, len(sessions))

@@ -40,7 +40,6 @@ import time
 from ... import utils
 from ...runtime import __git_version__ as git_commit
 
-
 sub_tpl_str = """#!/bin/bash --login
 
 #SBATCH --nodes=$NUM_NODES
@@ -62,6 +61,7 @@ sub_tpl = string.Template(sub_tpl_str)
 default_aws_mon_host = 'sdp-dfms.ddns.net'
 default_aws_mon_port = 8898
 
+
 class DefaultConfig(object):
     def __init__(self):
         self._dict = dict()
@@ -78,12 +78,14 @@ class DefaultConfig(object):
     def getpar(self, k):
         return self._dict.get(k)
 
+
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
         super(GalaxyMWAConfig, self).__init__()
 
     def init_list(self):
         return ['mwaops', '/group/mwaops/cwu/dfms/logs']
+
 
 class GalaxyASKAPConfig(DefaultConfig):
     def __init__(self):
@@ -92,6 +94,7 @@ class GalaxyASKAPConfig(DefaultConfig):
     def init_list(self):
         return ['astronomy856', '/group/astronomy856/cwu/dfms/logs']
 
+
 class MagnusConfig(DefaultConfig):
     def __init__(self):
         super(MagnusConfig, self).__init__()
@@ -99,21 +102,24 @@ class MagnusConfig(DefaultConfig):
     def init_list(self):
         return ['pawsey0129', '/group/pawsey0129/daliuge_logs']
 
+
 class TianHe2Config(DefaultConfig):
     def __init__(self):
         super(TianHe2Config, self).__init__()
 
-    def init_list(self): #TODO please fill in
+    def init_list(self):  # TODO please fill in
         return ['SHAO', '/group/shao/daliuge_logs']
 
+
 class ConfigFactory():
-    mapping = {'galaxy_mwa':GalaxyMWAConfig, 'galaxy_askap':GalaxyASKAPConfig,
-    'magnus':MagnusConfig, 'galaxy':GalaxyASKAPConfig}
+    mapping = {'galaxy_mwa': GalaxyMWAConfig, 'galaxy_askap': GalaxyASKAPConfig,
+               'magnus': MagnusConfig, 'galaxy': GalaxyASKAPConfig}
 
     @staticmethod
     def create_config(facility=None):
         facility = facility.lower() if (facility is not None) else facility
         return ConfigFactory.mapping.get(facility)()
+
 
 class PawseyClient(object):
     """
@@ -168,9 +174,9 @@ class PawseyClient(object):
     @property
     def num_daliuge_nodes(self):
         if (self._run_proxy):
-            ret = self._num_nodes - 1 # exclude the proxy node
+            ret = self._num_nodes - 1  # exclude the proxy node
         else:
-            ret = self._num_nodes - 0 # exclude the data island node?
+            ret = self._num_nodes - 0  # exclude the data island node?
         if (ret <= 0):
             raise Exception("Not enough nodes {0} to run DALiuGE.".format(self._num_nodes))
         return ret
@@ -179,7 +185,7 @@ class PawseyClient(object):
         """
         (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
         """
-        dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S") #.%f
+        dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         return "{0}_N{1}_{2}".format(self._pip_name, self.num_daliuge_nodes, dtstr)
 
     def label_job_dur(self):
@@ -203,7 +209,8 @@ class PawseyClient(object):
         pardict['ACCOUNT'] = self._acc
         pardict['PY_BIN'] = sys.executable
         pardict['LOG_DIR'] = lgdir
-        pardict['GRAPH_PAR'] = '-L "{0}"'.format(self._lg) if self._lg else '-P "{0}"'.format(self._pg) if self._pg else ''
+        pardict['GRAPH_PAR'] = '-L "{0}"'.format(self._lg) if self._lg else '-P "{0}"'.format(
+            self._pg) if self._pg else ''
         pardict['PROXY_PAR'] = '-m %s -o %d' % (self._mon_host, self._mon_port) if self._run_proxy else ''
         pardict['GRAPH_VIS_PAR'] = '-d' if self._graph_vis else ''
         pardict['LOGV_PAR'] = '-v %d' % self._logv
@@ -222,19 +229,21 @@ class PawseyClient(object):
         with open(os.path.join(lgdir, 'git_commit.txt'), 'w') as gf:
             gf.write(git_commit)
 
-        os.chdir(lgdir) # so that slurm logs will be dumped here
+        os.chdir(lgdir)  # so that slurm logs will be dumped here
         print(subprocess.check_output(['sbatch', job_file]))
+
 
 class LogEntryPair(object):
     """
     """
+
     def __init__(self, name, gstart, gend):
         self._name = name
-        self._gstart = gstart + 2 # group 0 is the whole matching line, group 1 is the catchall
+        self._gstart = gstart + 2  # group 0 is the whole matching line, group 1 is the catchall
         self._gend = gend + 2
         self._start_time = None
         self._end_time = None
-        self._other = dict() # hack
+        self._other = dict()  # hack
 
     def get_timestamp(self, line):
         """
@@ -262,8 +271,8 @@ class LogEntryPair(object):
 
     def get_duration(self):
         if ((self._start_time is None) or (self._end_time is None)):
-            #print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
-            #self._start_time, self._end_time)
+            # print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
+            # self._start_time, self._end_time)
             return None
         return (self._end_time - self._start_time)
 
@@ -302,29 +311,29 @@ class LogParser(object):
     """
 
     dim_kl = ['Start to unroll',
-    'Unroll completed for {0} with # of Drops',
-    'Start to translate',
-    'Translation completed for',
-    'PG spec is calculated',
-    'Creating Session {0} in all hosts',
-    'Successfully created session {0} in all hosts',
-    'Separating graph',
-    'Removed (and sanitized) {0} inter-dm relationships',
-    'Adding individual graphSpec of session {0} to each DM',
-    'Successfully added individual graphSpec of session {0} to each DM',
-    'Deploying Session {0} in all hosts',
-    'Successfully deployed session {0} in all hosts',
-    'Establishing {0} drop relationships',
-    'Established all drop relationships {0} in',
-    'Moving Drops to COMPLETED right away',
-    'Successfully triggered drops',
-    'Got a node list with {0} node managers']
+              'Unroll completed for {0} with # of Drops',
+              'Start to translate',
+              'Translation completed for',
+              'PG spec is calculated',
+              'Creating Session {0} in all hosts',
+              'Successfully created session {0} in all hosts',
+              'Separating graph',
+              'Removed (and sanitized) {0} inter-dm relationships',
+              'Adding individual graphSpec of session {0} to each DM',
+              'Successfully added individual graphSpec of session {0} to each DM',
+              'Deploying Session {0} in all hosts',
+              'Successfully deployed session {0} in all hosts',
+              'Establishing {0} drop relationships',
+              'Established all drop relationships {0} in',
+              'Moving Drops to COMPLETED right away',
+              'Successfully triggered drops',
+              'Got a node list with {0} node managers']
 
     nm_kl = [
-        'Starting Pyro4 Daemon for session', # Logged by the old master branch
-        'Creating DROPs for session',        # Drops are being created
-        'Session {0} is now RUNNING',        # All drops created and ready
-        'Session {0} finished'               # All drops executed
+        'Starting Pyro4 Daemon for session',  # Logged by the old master branch
+        'Creating DROPs for session',  # Drops are being created
+        'Session {0} is now RUNNING',  # All drops created and ready
+        'Session {0} finished'  # All drops executed
     ]
 
     kwords = dict()
@@ -355,7 +364,7 @@ class LogParser(object):
 
     def build_nm_log_entry_pairs(self):
         return [LogEntryPair(name, g1, g2) for name, g1, g2 in (
-            ('completion_time_old', 0, 3), # Old master branch
+            ('completion_time_old', 0, 3),  # Old master branch
             ('completion_time', 2, 3),
             ('node_deploy_time', 1, 2),
         )]
@@ -467,7 +476,7 @@ class LogParser(object):
         actual_num_nm = num_node_mgrs or theory_num_nm
         if actual_num_nm != num_finished_sess:
             print("Pipeline %s is not complete: %d != %d." % (pip_name, actual_num_nm, num_finished_sess))
-            #return
+            # return
         else:
             failed_nodes = theory_num_nm - actual_num_nm
             num_nodes -= failed_nodes
@@ -484,9 +493,10 @@ class LogParser(object):
 
             indexed_leps = {lep._name: lep for lep in log_entry_pairs}
             deploy_time = indexed_leps['node_deploy_time'].get_duration()
-            if (deploy_time is None): # since some node managers failed to start
+            if (deploy_time is None):  # since some node managers failed to start
                 continue
-            exec_time = indexed_leps['completion_time'].get_duration() or indexed_leps['completion_time_old'].get_duration()
+            exec_time = indexed_leps['completion_time'].get_duration() or indexed_leps[
+                'completion_time_old'].get_duration()
             if (exec_time is None):
                 continue
             real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
@@ -496,9 +506,9 @@ class LogParser(object):
         temp_nm = [str(max_exec_time)]
 
         ret = [user_name, socket.gethostname().split('-')[0], pip_name, do_date,
-        num_nodes, num_drops, git_commit]
+               num_nodes, num_drops, git_commit]
         ret = [str(x) for x in ret]
-        num_dims = num_dims if num_dims == 1 else num_dims - 1 #exclude master manager
+        num_dims = num_dims if num_dims == 1 else num_dims - 1  # exclude master manager
         add_line = ','.join(ret + temp_dim + temp_nm + [str(int(num_dims))])
         if (out_csv is not None):
             with open(out_csv, 'a') as of:
@@ -509,8 +519,8 @@ class LogParser(object):
 
     def check_log_dir(self, log_dir):
         possible_logs = [
-        os.path.join(log_dir, '0', 'dlgDIM.log'),
-        os.path.join(log_dir, '0', 'dlgMM.log')
+            os.path.join(log_dir, '0', 'dlgDIM.log'),
+            os.path.join(log_dir, '0', 'dlgMM.log')
         ]
         for dim_log_f in possible_logs:
             if (os.path.exists(dim_log_f)):
@@ -521,6 +531,7 @@ class LogParser(object):
                         self._dim_log_f.append(cluster_log)
                 return True
         return False
+
 
 if __name__ == '__main__':
     parser = optparse.OptionParser()
@@ -534,22 +545,23 @@ if __name__ == '__main__':
     parser.add_option("-L", "--logical-graph", action="store", type="string",
                       dest="logical_graph", help="The filename of the logical graph to deploy", default=None)
     parser.add_option("-P", "--physical-graph", action="store", type="string",
-                      dest="physical_graph", help="The filename of the physical graph (template) to deploy", default=None)
+                      dest="physical_graph", help="The filename of the physical graph (template) to deploy",
+                      default=None)
     parser.add_option("-t", "--job-dur", action="store", type="int",
                       dest="job_dur", help="job duration in minutes", default=30)
     parser.add_option("-n", "--num_nodes", action="store", type="int",
                       dest="num_nodes", help="number of compute nodes requested", default=5)
     parser.add_option('-i', '--graph_vis', action='store_true',
-                    dest='graph_vis', help='Whether to visualise graph (poll status)', default=False)
+                      dest='graph_vis', help='Whether to visualise graph (poll status)', default=False)
     parser.add_option('-p', '--run_proxy', action='store_true',
-                    dest='run_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
+                      dest='run_proxy', help='Whether to attach proxy server for real-time monitoring', default=False)
     parser.add_option("-m", "--monitor_host", action="store", type="string",
-                    dest="mon_host", help="Monitor host IP (optional)", default=default_aws_mon_host)
+                      dest="mon_host", help="Monitor host IP (optional)", default=default_aws_mon_host)
     parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="mon_port", help="The port to bind DALiuGE monitor", default=default_aws_mon_port)
+                      dest="mon_port", help="The port to bind DALiuGE monitor", default=default_aws_mon_port)
     parser.add_option("-v", "--verbose-level", action="store", type="int",
-                    dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
-                    default=1)
+                      dest="verbose_level", help="Verbosity level (1-3) of the DIM/NM logging",
+                      default=1)
     parser.add_option("-c", "--csvoutput", action="store",
                       dest="csv_output", help="CSV output file to keep the log analysis result")
     parser.add_option("-z", "--zerorun", action="store_true",
@@ -557,13 +569,15 @@ if __name__ == '__main__':
     parser.add_option("-y", "--sleepncopy", action="store_true",
                       dest="sleepncopy", help="Whether include COPY in the default Component drop", default=False)
     parser.add_option("-T", "--max-threads", action="store", type="int",
-                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
+                      dest="max_threads",
+                      help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
     parser.add_option('-s', '--num_islands', action='store', type='int',
-                    dest='num_islands', default=1, help='The number of Data Islands')
+                      dest='num_islands', default=1, help='The number of Data Islands')
     parser.add_option("-u", "--all_nics", action="store_true",
                       dest="all_nics", help="Listen on all NICs for a node manager", default=False)
     parser.add_option("-S", "--check_with_session", action="store_true",
-                      dest="check_with_session", help="Check for node managers' availability by creating/destroy a session", default=False)
+                      dest="check_with_session",
+                      help="Check for node managers' availability by creating/destroy a session", default=False)
 
     (opts, args) = parser.parse_args(sys.argv)
     if (opts.action == 2):

@@ -27,12 +27,12 @@ import logging
 import os
 import time
 
+import scp
 from paramiko.client import SSHClient, AutoAddPolicy
 from paramiko.rsakey import RSAKey
-import scp
-
 
 logger = logging.getLogger(__name__)
+
 
 def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
     """
@@ -40,11 +40,11 @@ def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
     """
     chan = client.get_transport().open_session()
     chan.settimeout(timeout)
-    chan.exec_command('/bin/bash -l -c "%s"' % (command.replace('"','\"')))
+    chan.exec_command('/bin/bash -l -c "%s"' % (command.replace('"', '\"')))
     # Otherwise do something like this:
-    #chan.get_pty(width=80, height=24)
-    #chan.invoke_shell()
-    #chan.sendall(command + "\n")
+    # chan.get_pty(width=80, height=24)
+    # chan.invoke_shell()
+    # chan.sendall(command + "\n")
 
     # Wait until the command has finished execution and return the full contents
     # of the stdout and stderr
@@ -63,6 +63,7 @@ def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
         stderr = f.read()
     return stdout, stderr, exitStatus
 
+
 def execRemote(host, command, username=None, timeout=None, bufsize=-1):
     """
     Executes `command` on `host`. If `username` is provided, the command will
@@ -71,6 +72,7 @@ def execRemote(host, command, username=None, timeout=None, bufsize=-1):
     """
     with createClient(host, username) as client:
         return execRemoteWithClient(client, command, timeout, bufsize)
+
 
 def createClient(host, username=None, pkeyPath=None):
     """
@@ -84,9 +86,11 @@ def createClient(host, username=None, pkeyPath=None):
     client.connect(host, username=username, pkey=pkey)
     return client
 
+
 def __scpProgress(filename, size, sent):
     if size == sent:
         logger.debug("Finished scp-ing %s (%d bytes)", filename, sent)
+
 
 def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
     """
@@ -100,6 +104,7 @@ def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pk
     with scp.SCPClient(client.get_transport(), progress=__scpProgress, socket_timeout=timeout) as scpClient:
         scpClient.get(remote_path=remotePath, local_path=localPath, recursive=recursive)
     client.close()
+
 
 def copyTo(host, localFiles, remotePath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
     """

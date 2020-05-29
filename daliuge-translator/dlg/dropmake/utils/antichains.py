@@ -34,6 +34,7 @@ import sys
 
 import networkx as nx
 
+
 def _create_split_graph(dag, w_attr='weight'):
     """
     Given a normal DiGraph, create its equivalent split graph
@@ -42,7 +43,7 @@ def _create_split_graph(dag, w_attr='weight'):
     for el in dag.nodes(data=True):
         xi = '{0}_x'.format(el[0])
         yi = '{0}_y'.format(el[0])
-        #print(el)
+        # print(el)
         bpg.add_edge('s', xi, capacity=el[1].get(w_attr, 1), weight=0)
         bpg.add_edge(xi, yi, capacity=sys.maxsize, weight=1)
         bpg.add_edge(yi, 't', capacity=el[1].get(w_attr, 1), weight=0)
@@ -52,58 +53,60 @@ def _create_split_graph(dag, w_attr='weight'):
 
         for udown in el_des:
             bpg.add_edge(xi, '{0}_y'.format(udown),
-            capacity=sys.maxsize, weight=0)
+                         capacity=sys.maxsize, weight=0)
         for uup in el_pred:
             bpg.add_edge('{0}_x'.format(uup), yi,
-            capacity=sys.maxsize, weight=0)
+                         capacity=sys.maxsize, weight=0)
 
     return bpg
 
+
 def _get_pi_solution(split_graph):
-        """
-        1. create H (admissable graph) based on Section 3
-        http://fmdb.cs.ucla.edu/Treports/930014.pdf
+    """
+    1. create H (admissable graph) based on Section 3
+    http://fmdb.cs.ucla.edu/Treports/930014.pdf
 
-        2. calculate the max flow f' on H using networkx
+    2. calculate the max flow f' on H using networkx
 
-        3. construct Residual graph from f' on H based on
-        https://www.topcoder.com/community/data-science/\
-        data-science-tutorials/minimum-cost-flow-part-two-algorithms/
+    3. construct Residual graph from f' on H based on
+    https://www.topcoder.com/community/data-science/\
+    data-science-tutorials/minimum-cost-flow-part-two-algorithms/
 
-        4. calculate Pi based on Section 3 again
-        """
-        # Step 1
-        H = nx.DiGraph()
-        H.add_nodes_from(split_graph)
-        for ed in split_graph.edges(data=True):
-            Cxy = ed[2].get('capacity', sys.maxsize)
-            Axy = ed[2]['weight']
-            if (Axy == 0 and Cxy > 0):
-                H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
+    4. calculate Pi based on Section 3 again
+    """
+    # Step 1
+    H = nx.DiGraph()
+    H.add_nodes_from(split_graph)
+    for ed in split_graph.edges(data=True):
+        Cxy = ed[2].get('capacity', sys.maxsize)
+        Axy = ed[2]['weight']
+        if (Axy == 0 and Cxy > 0):
+            H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
 
-        # Step 2
-        flow_value, flow_dict = nx.maximum_flow(H, 's', 't')
+    # Step 2
+    flow_value, flow_dict = nx.maximum_flow(H, 's', 't')
 
-        # Step 3
-        R = nx.DiGraph()
-        R.add_nodes_from(H)
-        for ed in H.edges(data=True):
-            Xij = flow_dict[ed[0]][ed[1]]
-            Uij = ed[2].get('capacity', sys.maxsize)
-            Cij = ed[2]['weight']
-            if (Uij - Xij) > 0:
-                R.add_edge(ed[0], ed[1], weight=Cij)
-            if (Xij > 0):
-                R.add_edge(ed[1], ed[0], weight=-1 * Cij)
+    # Step 3
+    R = nx.DiGraph()
+    R.add_nodes_from(H)
+    for ed in H.edges(data=True):
+        Xij = flow_dict[ed[0]][ed[1]]
+        Uij = ed[2].get('capacity', sys.maxsize)
+        Cij = ed[2]['weight']
+        if (Uij - Xij) > 0:
+            R.add_edge(ed[0], ed[1], weight=Cij)
+        if (Xij > 0):
+            R.add_edge(ed[1], ed[0], weight=-1 * Cij)
 
-        # Step 4
-        pai = dict()
-        for n in R.nodes():
-            if (nx.has_path(R, 's', n)):
-                pai[n] = 0
-            else:
-                pai[n] = 1
-        return pai
+    # Step 4
+    pai = dict()
+    for n in R.nodes():
+        if (nx.has_path(R, 's', n)):
+            pai[n] = 0
+        else:
+            pai[n] = 1
+    return pai
+
 
 def get_max_weighted_antichain(dag, w_attr='weight'):
     """
@@ -118,19 +121,20 @@ def get_max_weighted_antichain(dag, w_attr='weight'):
     bpg = _create_split_graph(dag, w_attr=w_attr)
     pai = _get_pi_solution(bpg)
 
-    w_antichain_len = 0 #weighted antichain length
+    w_antichain_len = 0  # weighted antichain length
     antichain_names = []
     for h in range(2):
         for nd in bpg.nodes():
             if (nd.endswith('_x')):
                 y_nd = nd.split('_x')[0] + '_y'
                 if ((1 - pai[nd] + pai['s'] == h) and
-                (pai[y_nd] - pai[nd] == 1)):
+                        (pai[y_nd] - pai[nd] == 1)):
                     w_antichain_len += bpg.adj['s'][nd]['capacity']
-                    #print(' *** %d' % bpg.edge['s'][nd]['capacity'])
+                    # print(' *** %d' % bpg.edge['s'][nd]['capacity'])
                     antichain_names.append(nd)
 
     return w_antichain_len, antichain_names
+
 
 def create_small_seq_graph():
     G = nx.DiGraph()
@@ -139,8 +143,9 @@ def create_small_seq_graph():
     G.node[1]['weight'] = 5
     G.node[2]['weight'] = 4
     G.node[3]['weight'] = 7
-    #print("")
+    # print("")
     return G, 7
+
 
 def create_medium_seq_graph():
     G = create_small_seq_graph()[0]
@@ -155,6 +160,7 @@ def create_medium_seq_graph():
     G.node[7]['weight'] = 1
     return G, 7
 
+
 def create_small_parral_graph():
     G = nx.DiGraph()
     G.add_edge(1, 2)
@@ -165,6 +171,7 @@ def create_small_parral_graph():
     G.node[3]['weight'] = 7
     return G, 13
 
+
 def create_medium_parral_graph():
     G = create_small_parral_graph()[0]
     G.add_edge(2, 4)
@@ -172,6 +179,7 @@ def create_medium_parral_graph():
     G.node[4]['weight'] = 3
     G.node[5]['weight'] = 4
     return G, 14
+
 
 if __name__ == "__main__":
     gs = [create_small_seq_graph(),
