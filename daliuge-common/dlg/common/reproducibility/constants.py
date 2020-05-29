@@ -9,3 +9,6 @@ class ReproduciblityFlags(Enum):
     REPLICATE_COMP = 4
     REPLICATE_SCI = 5
     EXPERIMENTAL = 6
+
+
+REPRO_DEFAULT = ReproduciblityFlags.RERUN
