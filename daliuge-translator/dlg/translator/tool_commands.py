@@ -116,7 +116,7 @@ def fill(parser, args):
     parser.add_option(
         '-p', '--parameter', action='append',
         help="Parameter specification (either 'name=value' or a JSON string)",
-        default=())
+        default=[])
 
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
