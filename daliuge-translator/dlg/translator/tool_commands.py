@@ -27,6 +27,8 @@ import optparse
 import os
 import sys
 
+from dlg.common.reproducibility.setup import initialize_lg_data
+
 from ..common import tool
 
 logger = logging.getLogger(__name__)
@@ -117,6 +119,9 @@ def fill(parser, args):
         '-p', '--parameter', action='append',
         help="Parameter specification (either 'name=value' or a JSON string)",
         default=[])
+    parser.add_option(
+        '-R', '--reproducibility', default='0',
+        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0'-'5'")
 
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
@@ -142,7 +147,7 @@ def fill(parser, args):
         params.update(json_param)
 
     from ..dropmake.pg_generator import fill
-    dump(fill(_open_i(opts.logical_graph), params))
+    dump(initialize_lg_data(fill(_open_i(opts.logical_graph), params), opts.reproducibility))
 
 
 def _add_unroll_options(parser):
