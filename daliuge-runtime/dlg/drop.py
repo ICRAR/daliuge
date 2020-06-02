@@ -42,7 +42,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
-from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT
+from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported
 from merklelib import MerkleTree
 from six import BytesIO
 
@@ -613,7 +613,7 @@ class AbstractDROP(EventFirer):
     def reproducibility_level(self, new_flag):
         if type(new_flag) != ReproduciblityFlags:
             raise TypeError("new_flag must be a Reproduciblity flag enum.")
-        else:
+        elif rmode_supported(new_flag):
             if self._committed:
                 # Current behaviour, set to un-committed again after change
                 self._committed = False
@@ -621,6 +621,8 @@ class AbstractDROP(EventFirer):
                 self._merkleTree = None
                 self._merkleData = []
             self._reproduciblity = new_flag
+        else:
+            raise ValueError("new_flag %d is not supported", new_flag)
 
     def generate_rerun_data(self):
         """
