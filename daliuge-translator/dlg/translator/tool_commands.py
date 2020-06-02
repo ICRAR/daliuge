@@ -27,7 +27,7 @@ import optparse
 import os
 import sys
 
-from dlg.common.reproducibility.setup import initialize_lg_data
+from dlg.common.reproducibility.setup import init_lg_repro_data
 
 from ..common import tool
 
@@ -147,7 +147,7 @@ def fill(parser, args):
         params.update(json_param)
 
     from ..dropmake.pg_generator import fill
-    dump(initialize_lg_data(fill(_open_i(opts.logical_graph), params), opts.reproducibility))
+    dump(init_lg_repro_data(fill(_open_i(opts.logical_graph), params), opts.reproducibility))
 
 
 def _add_unroll_options(parser):
