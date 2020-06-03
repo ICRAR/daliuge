@@ -83,6 +83,7 @@ write_version_info()
 
 install_requires = [
     "bottle",
+    "cwlgen",
     "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
     # Python 3.6 is only supported in NetworkX 2 and above
@@ -94,7 +95,6 @@ install_requires = [
     "pyswarm",
     # 1.10 contains an important race-condition fix on lazy-loaded modules
     "six>=1.10",
-    "cwlgen",
 ]
 
 setup(
