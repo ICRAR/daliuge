@@ -47,7 +47,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -1120,24 +1120,6 @@ class FileDROP(AbstractDROP, PathBasedDrop):
     def dataURL(self):
         hostname = os.uname()[1] # TODO: change when necessary
         return "file://" + hostname + self._path
-
-
-class ShoreDROP(AbstractDROP):
-    doid = dlg_string_param('doid', 'test_data_object')
-    column = dlg_string_param('column', 'test_column')
-    row = dlg_int_param('row', 0)
-    rows = dlg_int_param('rows', 1)
-    address = dlg_string_param('address', None)
-
-    def initialize(self, **kwargs):
-        pass
-
-    def getIO(self):
-        return ShoreIO(self.doid, self.column, self.row, self.rows, self.address)
-
-    @property
-    def dataURL(self):
-        return self.address
 
 
 class NgasDROP(AbstractDROP):
