@@ -22,11 +22,14 @@
 
 import logging
 import os
-import cwlgen
 from zipfile import ZipFile
 
-#from ..common import dropdict, get_roots
+import cwlgen
 
+from dlg import common
+
+
+#from ..common import dropdict, get_roots
 logger = logging.getLogger(__name__)
 
 
@@ -133,7 +136,8 @@ def create_command_line_tool(node, filename):
 
     #print("base_command:!" + base_command + "!")
 
-    cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=node['nm'], base_command=base_command, cwl_version='v1.0')
+    # cwlgen's Serializer class doesn't support python 2.7's unicode types
+    cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=common.u2s(node['nm']), base_command=base_command, cwl_version='v1.0')
 
     # add inputs
     for index, input in enumerate(inputs):
