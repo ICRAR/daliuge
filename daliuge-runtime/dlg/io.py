@@ -27,7 +27,6 @@ from six import BytesIO
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
 
 from . import ngaslite
-from . import shoreClient
 
 
 logger = logging.getLogger(__name__)
@@ -235,47 +234,6 @@ class FileIO(DataIO):
 
     def delete(self):
         os.unlink(self._fnm)
-
-class ShoreIO(DataIO):
-
-    def __init__(self, doid, column, row, rows = 1, address = None, **kwargs):
-        super(ShoreIO, self).__init__()
-        self._doid = doid
-        self._column = column
-        self._row = row
-        self._rows = rows
-        self._address = address
-        shoreClient.shoreZmqInit(address)
-
-    def _open(self, **kwargs):
-        return None
-
-    def _read(self, **kwargs):
-        msg = shoreClient.shoreGet(self._doid, self._column, self._row, self._rows)
-        if type(msg) is dict:
-            if 'data' in msg:
-                return msg['data']
-
-    def _write(self, data, **kwargs):
-        msg = shoreClient.shorePut(self._doid, self._column, self._row, data, self._rows)
-        return len(data)
-
-    def _close(self, **kwargs):
-        return None
-
-    def exists(self):
-        msg = shoreClient.shoreQuery(self._doid, self._column)
-        if type(msg) is dict:
-            if 'return' in msg:
-                if type(msg['return']) is dict:
-                    if 'do' and 'column' in msg['return']:
-                        return True
-        return False
-
-    def delete(self):
-        pass
-
-
 
 
 class NgasIO(DataIO):
