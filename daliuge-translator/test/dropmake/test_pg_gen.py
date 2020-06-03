@@ -212,6 +212,6 @@ class TestPGGen(unittest.TestCase):
             zip_ref.close()
 
             cmd = ['cwltool', '--validate', out]
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            p.communicate()
-            self.assertEqual(p.returncode, 0)
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            self.assertEqual(p.returncode, 0, b'stdout:\n' + stdout + b'\nstderr:\n' + stderr)
