@@ -34,11 +34,6 @@ dlg.apps.socket_listener
 .. automodule:: dlg.apps.socket_listener
         :members:
 
-dlg.apps.spead_receiver
-^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dlg.apps.spead_receiver
-        :members:
-
 dlg.apps.scp
 ^^^^^^^^^^^^
 .. automodule:: dlg.apps.scp
