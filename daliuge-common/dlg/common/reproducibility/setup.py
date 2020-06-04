@@ -66,14 +66,13 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     TODO: Per-drop initialization
     TODO: Cryptographic processing of structure
     """
-    rmode = ReproduciblityFlags(rmode)
+    rmode = ReproduciblityFlags(int(rmode))
     if not rmode_supported(rmode):
         rmode = REPRO_DEFAULT
     reprodata = {
-        'rmode': rmode
+        'rmode': str(rmode.value)
     }
     lgt['reproData'] = reprodata
-
     return lgt
 
 
