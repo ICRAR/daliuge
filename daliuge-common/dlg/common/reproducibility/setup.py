@@ -2,14 +2,32 @@ from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFA
 
 
 #  ------ Drop-Based Functionality ------
-def accumulate_drop_data(drop: dict, level: ReproduciblityFlags):
+def accumulate_rerun_drop_data(drop: dict):
     """
-    Accumulates relevant reproducibility fields for a given drop.
+    Accumulates relevant reproducibility fields for a given drop at the Rerun level.
+    Asserting Rerunning requires relatively little information. We are more interested in the structure between drops.
     :param drop:
-    :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
+    category_type = drop['categoryType']
+
+    data['category_type'] = category_type
+    data['category'] = drop['category']
+
+    if category_type == "Data":
+        data['streaming'] = drop['Streaming']
+        pass
+    elif category_type == "Application":
+        data['streaming'] = drop['Streaming']
+        pass
+    elif category_type == "Group":
+        pass
+    elif category_type == "Control":
+        pass
+    elif category_type == "Other":
+        pass
+
     return data
 
 
