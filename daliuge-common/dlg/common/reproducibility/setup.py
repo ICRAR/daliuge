@@ -100,6 +100,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
       - We generate the hash-data of root nodes, moving through the graph to the leaves
       - This way we visit all drops once generating data in O(drop + link) time --> O(V + E) --> Optimal
       TODO: Chaining links
+      - Takes the merkle_root of a node, it's parents and adds those to a new Merkletree appending that merkle_root
     """
     rmode = ReproduciblityFlags(int(rmode))
     if not rmode_supported(rmode):
