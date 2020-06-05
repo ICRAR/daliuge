@@ -9,7 +9,8 @@ def accumulate_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    pass
+    data = {}
+    return data
 
 
 def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
@@ -19,7 +20,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproduciblity information.
     """
-    pass
+    return drop
 
 
 def init_lg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
@@ -29,7 +30,7 @@ def init_lg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information
     """
-    pass
+    return drop
 
 
 def init_pgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
@@ -39,7 +40,7 @@ def init_pgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information
     """
-    pass
+    return drop
 
 
 def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
@@ -49,7 +50,7 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information
     """
-    pass
+    return drop
 
 
 #  ------ Graph-Wide Functionality ------
@@ -83,7 +84,7 @@ def init_lg_repro_data(lg: dict, rmode: str):
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
-    pass
+    return lg
 
 
 def init_pgt_repro_data(pgt: dict, rmode: str):
@@ -93,7 +94,7 @@ def init_pgt_repro_data(pgt: dict, rmode: str):
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
-    pass
+    return pgt
 
 
 def init_pg_repro_data(pg: dict, rmode: str):
@@ -103,4 +104,4 @@ def init_pg_repro_data(pg: dict, rmode: str):
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
-    pass
+    return pg
