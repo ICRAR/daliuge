@@ -1,25 +1,30 @@
 from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported
+from merklelib import MerkleTree
 
 
 #  ------ Drop-Based Functionality ------
-def accumulate_rerun_drop_data(drop: dict):
+def accumulate_drop_data(drop: dict, level: ReproduciblityFlags):
     """
-    Accumulates relevant reproducibility fields for a given drop at the Rerun level.
-    Asserting Rerunning requires relatively little information. We are more interested in the structure between drops.
+    Accumulates relevant reproducibility fields for a single drop.
+    TODO: Implement alternative level functionality.
     :param drop:
+    :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
+    if level == ReproduciblityFlags.NOTHING:
+        return data
+
     category_type = drop['categoryType']
 
     data['category_type'] = category_type
     data['category'] = drop['category']
 
     if category_type == "Data":
-        data['streaming'] = drop['Streaming']
+        data['streaming'] = drop['streaming']
         pass
     elif category_type == "Application":
-        data['streaming'] = drop['Streaming']
+        data['streaming'] = drop['streaming']
         pass
     elif category_type == "Group":
         pass
@@ -36,8 +41,16 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     Creates and appends per-drop reproducibility information at the logical template stage.
     :param drop:
     :param level:
-    :return: The same drop with appended reproduciblity information.
+    :return: The same drop with appended reproducibility information.
     """
+    data = accumulate_drop_data(drop, level)
+    merkledata = []
+    for key, value in data.items():
+        temp = [key, value]
+        merkledata.append(temp)
+    merkletree = MerkleTree(merkledata)
+    data['merkleroot'] = merkletree.merkle_root
+    drop['reprodata'] = data
     return drop
 
 
@@ -82,16 +95,19 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
 
-    TODO: Per-drop initialization
-    TODO: Cryptographic processing of structure
+    TODO: Cryptographic processing of structure (chaining)
+      TODO: Topological sorting of graph
+      - We generate the hash-data of root nodes, moving through the graph to the leaves
+      - This way we visit all drops once generating data in O(drop + link) time --> O(V + E) --> Optimal
+      TODO: Chaining links
     """
     rmode = ReproduciblityFlags(int(rmode))
     if not rmode_supported(rmode):
         rmode = REPRO_DEFAULT
-    reprodata = {
-        'rmode': str(rmode.value)
-    }
-    lgt['reproData'] = reprodata
+    reprodata = {'rmode': str(rmode.value)}
+    for drop in lgt['nodeDataArray']:
+        init_lgt_repro_drop_data(drop, rmode)
+    lgt['reprodata'] = reprodata
     return lgt
 
 
