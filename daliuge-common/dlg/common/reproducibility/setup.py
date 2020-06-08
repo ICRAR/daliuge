@@ -86,6 +86,52 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
 
 #  ------ Graph-Wide Functionality ------
 
+def topo_sort(lg: dict):
+    """
+    Uses Kahn's algorithm to topologically sort a logical graph dictionary.
+    Exploits that a DAG contains at least one node with in-degree 0.
+    Processes nodes in-order.
+    O(V + E) time complexity.
+    :param lg:
+    :return:
+    """
+    from collections import deque
+    dropset = {}  # Also contains in-degree information
+    neighbourset = {}
+    visited = 0
+    q = deque()
+
+    for drop in lg['nodeDataArray']:
+        did = int(drop['key'])
+        dropset[did] = [drop, 0]
+        neighbourset[did] = []
+
+    for edge in lg['linkDataArray']:
+        src = int(edge['from'])
+        dest = int(edge['to'])
+        dropset[dest][1] += 1
+        neighbourset[src].append(dest)
+
+    #  did == 'drop id'
+    for did in dropset:
+        if dropset[did][1] == 0:
+            q.append(did)
+
+    while q:
+        did = q.pop()
+        visited += 1
+        for n in neighbourset[did]:
+            dropset[n][1] -= 1
+            if dropset[n][1] == 0:  # Add drops at the DAG-frontier
+                q.append(n)
+        # Process TODO: This is where the block-dag will be built.
+        print(did)
+
+    if visited != len(dropset):
+        print("Not a DAG")
+        # TODO: Improve error handling
+
+
 def init_lgt_repro_data(lgt: dict, rmode: str):
     """
     Creates and appends graph-wide reproducibility data at the logical template stage.
@@ -96,9 +142,6 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     :return: The same lgt object with new information appended
 
     TODO: Cryptographic processing of structure (chaining)
-      TODO: Topological sorting of graph
-      - We generate the hash-data of root nodes, moving through the graph to the leaves
-      - This way we visit all drops once generating data in O(drop + link) time --> O(V + E) --> Optimal
       TODO: Chaining links
       - Takes the merkle_root of a node, it's parents and adds those to a new Merkletree appending that merkle_root
     """
@@ -108,6 +151,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     reprodata = {'rmode': str(rmode.value)}
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
+    topo_sort(lgt)
     lgt['reprodata'] = reprodata
     return lgt
 
