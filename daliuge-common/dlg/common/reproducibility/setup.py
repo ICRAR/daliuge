@@ -50,6 +50,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
         merkledata.append(temp)
     merkletree = MerkleTree(merkledata)
     data['merkleroot'] = merkletree.merkle_root
+    data['parenthashes'] = []  # Initialized here in-case this drop ends up having in-deg = 0
     drop['reprodata'] = data
     return drop
 
@@ -86,11 +87,19 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
 
 #  ------ Graph-Wide Functionality ------
 
+def build_block_data(drop: dict):
+    block_data = [drop['reprodata']['merkleroot']]
+    for parenthash in sorted(drop['reprodata']['parenthashes']):
+        block_data.append(parenthash)
+    mtree = MerkleTree(block_data)
+    drop['reprodata']['blockhash'] = mtree.merkle_root
+
+
 def topo_sort(lg: dict):
     """
     Uses Kahn's algorithm to topologically sort a logical graph dictionary.
     Exploits that a DAG contains at least one node with in-degree 0.
-    Processes nodes in-order.
+    Processes drops in-order.
     O(V + E) time complexity.
     :param lg:
     :return:
@@ -119,13 +128,15 @@ def topo_sort(lg: dict):
 
     while q:
         did = q.pop()
+        # Process
+        build_block_data(dropset[did][0])
         visited += 1
         for n in neighbourset[did]:
             dropset[n][1] -= 1
+            #  Add our new hash to the parent-hash list
+            dropset[n][0]['reprodata']['parenthashes'].append(dropset[did][0]['reprodata']['blockhash'])
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
-        # Process TODO: This is where the block-dag will be built.
-        print(did)
 
     if visited != len(dropset):
         print("Not a DAG")
@@ -140,10 +151,6 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     :param lgt: The logical graph data structure (a JSON object (a dict))
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
-
-    TODO: Cryptographic processing of structure (chaining)
-      TODO: Chaining links
-      - Takes the merkle_root of a node, it's parents and adds those to a new Merkletree appending that merkle_root
     """
     rmode = ReproduciblityFlags(int(rmode))
     if not rmode_supported(rmode):
