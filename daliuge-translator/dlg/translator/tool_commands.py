@@ -27,7 +27,7 @@ import optparse
 import os
 import sys
 
-from dlg.common.reproducibility.setup import init_lgt_repro_data, init_lg_repro_data
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data
 
 from ..common import tool
 
