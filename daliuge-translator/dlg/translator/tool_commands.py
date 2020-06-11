@@ -224,7 +224,10 @@ def dlg_unroll_and_partition(parser, args):
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
     init_pgt_unroll_repro_data(pgt)
-    dump(init_pgt_partition_repro_data(partition(pgt, opts)))
+    repro = pgt.pop()
+    pgt = partition(pgt, opts)
+    pgt.append(repro)
+    dump(init_pgt_partition_repro_data(pgt))
 
 
 def dlg_map(parser, args):
@@ -264,6 +267,7 @@ def dlg_map(parser, args):
     with _open_i(opts.pgt_path) as f:
         pgt = json.load(f)
 
+    repro = pgt.pop() # TODO: Re-include
     dump(pg_generator.resource_map(pgt, nodes, opts.islands))
 
 
