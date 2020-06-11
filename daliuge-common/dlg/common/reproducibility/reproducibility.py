@@ -173,10 +173,10 @@ def init_lg_repro_data(lg: dict, rmode: str):
     return lg
 
 
-def init_pgt_repro_data(pgt: dict, rmode: str):
+def init_pgt_repro_data(pgt: list, rmode: str):
     """
     Handles adding reproducibility data at the physical graph template level.
-    :param pgt: The logical graph data structure (a JSON object (a dict))
+    :param pgt: The physical graph template structure (a list of drops)
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
