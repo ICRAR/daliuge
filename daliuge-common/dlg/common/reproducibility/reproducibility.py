@@ -191,11 +191,10 @@ def init_pgt_partition_repro_data(pgt: list):
     return pgt
 
 
-def init_pg_repro_data(pg: dict, rmode: str):
+def init_pg_repro_data(pg: dict):
     """
     Handles adding reproducibility data at the physical graph template level.
-    :param pg: The logical graph data structure (a JSON object (a dict))
-    :param rmode: One of several values 0-5 defined in constants.py
+    :param pg: The logical graph data structure (a list of drops + reprodata dictionary)
     :return: The same pg object with new information appended
     """
     return pg
