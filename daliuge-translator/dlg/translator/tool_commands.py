@@ -27,7 +27,8 @@ import optparse
 import os
 import sys
 
-from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
+    init_pgt_unroll_repro_data, init_pgt_partition_repro_data
 
 from ..common import tool
 
@@ -178,8 +179,8 @@ def dlg_unroll(parser, args):
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
     dump = _setup_output(opts)
-
-    dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
+    pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
+    dump(init_pgt_unroll_repro_data(pgt))
 
 
 def _add_partition_options(parser):
@@ -207,8 +208,9 @@ def dlg_partition(parser, args):
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
     repro = pgt.pop()
-
-    dump(partition(pgt, opts))
+    pgt = partition(pgt, opts)
+    pgt.append(repro)
+    dump(init_pgt_partition_repro_data(pgt))
 
 
 def dlg_unroll_and_partition(parser, args):
@@ -221,7 +223,8 @@ def dlg_unroll_and_partition(parser, args):
     dump = _setup_output(opts)
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
-    dump(partition(pgt, opts))
+    init_pgt_unroll_repro_data(pgt)
+    dump(init_pgt_partition_repro_data(partition(pgt, opts)))
 
 
 def dlg_map(parser, args):

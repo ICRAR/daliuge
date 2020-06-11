@@ -63,7 +63,6 @@ from itertools import product
 import networkx as nx
 import numpy as np
 import six
-from dlg.common.reproducibility.reproducibility import init_pgt_repro_data
 
 from .dm_utils import (
     get_lg_ver_type,
@@ -2635,7 +2634,6 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
-    init_pgt_repro_data(drop_list, lg.reprodata["rmode"])
     drop_list.append(lg.reprodata)
     return drop_list
 
@@ -2769,8 +2767,6 @@ def partition(
             num_islands=num_islands,
             tpl_nodes_len=num_partitions + num_islands,
         )
-
-    print(type(pgt))
     return pgt
 
 
