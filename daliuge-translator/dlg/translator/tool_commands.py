@@ -108,7 +108,7 @@ def _setup_output(opts):
     return dump
 
 
-def fill(parser, args):
+def dlg_fill(parser, args):
     tool.add_logging_options(parser)
     _add_output_options(parser)
     parser.add_option(
@@ -298,4 +298,4 @@ def register_commands():
     tool.cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template', dlg_unroll)
     tool.cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions', dlg_partition)
     tool.cmdwrap('unroll-and-partition', 'unroll + partition', dlg_unroll_and_partition)
-    tool.cmdwrap('fill', 'Fill a Logical Graph with parameters', fill)
+    tool.cmdwrap('fill', 'Fill a Logical Graph with parameters', dlg_fill)

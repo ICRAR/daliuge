@@ -2770,6 +2770,7 @@ def partition(
             tpl_nodes_len=num_partitions + num_islands,
         )
 
+    print(type(pgt))
     return pgt
 
 
