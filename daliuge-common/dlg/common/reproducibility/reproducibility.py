@@ -173,12 +173,20 @@ def init_lg_repro_data(lg: dict, rmode: str):
     return lg
 
 
-def init_pgt_repro_data(pgt: list, rmode: str):
+def init_pgt_unroll_repro_data(pgt: list):
     """
     Handles adding reproducibility data at the physical graph template level.
-    :param pgt: The physical graph template structure (a list of drops)
-    :param rmode: One several values 0-5 defined in constants.py
-    :return: The same lgt object with new information appended
+    :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
+    :return: The same pgt object with new information appended
+    """
+    return pgt
+
+
+def init_pgt_partition_repro_data(pgt: list):
+    """
+    Handles adding reproducibility data at the physical graph template level after resource partitioning.
+    :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
+    :return: The same pgt object with new information recorded
     """
     return pgt
 
@@ -187,7 +195,7 @@ def init_pg_repro_data(pg: dict, rmode: str):
     """
     Handles adding reproducibility data at the physical graph template level.
     :param pg: The logical graph data structure (a JSON object (a dict))
-    :param rmode: One several values 0-5 defined in constants.py
-    :return: The same lgt object with new information appended
+    :param rmode: One of several values 0-5 defined in constants.py
+    :return: The same pg object with new information appended
     """
     return pg
