@@ -831,6 +831,7 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
+        kwargs["reprodata"] = self.jd["reprodata"]
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -2316,13 +2317,13 @@ class LG:
             tdrops = self._drop_dict[tid]
             chunk_size = self._get_chunk_size(slgn, tlgn)
             if slgn.is_group() and not tlgn.is_group():
-                # this link must be artifically added (within group link)
+                # this link must be artificially added (within group link)
                 # since
                 # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
                 if (
                         slgn.is_gather() and tlgn.gid != sid
-                ):  # not the artifical link between gather and its own start child
+                ):  # not the artificial link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
                     # this is a way to manually sequentialise a Scatter that has a high DoP
                     for i, ga_drop in enumerate(sdrops):
@@ -2613,6 +2614,7 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
+    print(drop_list)
     logger.info(
         "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
         (time.time() - start),
