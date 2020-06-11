@@ -75,7 +75,6 @@ def parse_partition_algo_params(algo_params):
 
 def partition(pgt, opts):
     from ..dropmake import pg_generator
-
     algo_params = parse_partition_algo_params(opts.algo_params or [])
     pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
                                 num_islands=opts.islands, partition_label='partition',
@@ -207,6 +206,7 @@ def dlg_partition(parser, args):
 
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
+    repro = pgt.pop()
 
     dump(partition(pgt, opts))
 
