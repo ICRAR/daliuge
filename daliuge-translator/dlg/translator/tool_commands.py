@@ -28,7 +28,7 @@ import os
 import sys
 
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
-    init_pgt_unroll_repro_data, init_pgt_partition_repro_data
+    init_pgt_unroll_repro_data, init_pgt_partition_repro_data, init_pg_repro_data
 
 from ..common import tool
 
@@ -207,7 +207,7 @@ def dlg_partition(parser, args):
 
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
-    repro = pgt.pop()
+    repro = pgt.pop() # TODO: Re-integrate
     pgt = partition(pgt, opts)
     pgt.append(repro)
     dump(init_pgt_partition_repro_data(pgt))
@@ -224,7 +224,7 @@ def dlg_unroll_and_partition(parser, args):
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
     init_pgt_unroll_repro_data(pgt)
-    repro = pgt.pop()
+    repro = pgt.pop() # TODO: Re-integrate
     pgt = partition(pgt, opts)
     pgt.append(repro)
     dump(init_pgt_partition_repro_data(pgt))
@@ -267,8 +267,10 @@ def dlg_map(parser, args):
     with _open_i(opts.pgt_path) as f:
         pgt = json.load(f)
 
-    repro = pgt.pop() # TODO: Re-include
-    dump(pg_generator.resource_map(pgt, nodes, opts.islands))
+    repro = pgt.pop()  # TODO: Re-include
+    pg = pg_generator.resource_map(pgt, nodes, opts.islands)
+    pg.append(repro)
+    dump(init_pg_repro_data(pg))
 
 
 def dlg_submit(parser, args):
@@ -295,7 +297,10 @@ def dlg_submit(parser, args):
     (opts, args) = parser.parse_args(args)
 
     with _open_i(opts.pg_path) as f:
-        submit(json.load(f), opts)
+        pg = json.load(f)
+        repro = pg.pop()  # TODO: Re-integrate
+        submit(pg, opts)
+        pg.append(repro)
 
 
 def register_commands():
