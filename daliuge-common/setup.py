@@ -50,6 +50,7 @@ def do_versioning():
 install_requires = [
     # 1.10 contains an important race-condition fix on lazy-loaded modules
     "six>=1.10",
+    "merklelib>=1.0",
 ]
 
 setup(
