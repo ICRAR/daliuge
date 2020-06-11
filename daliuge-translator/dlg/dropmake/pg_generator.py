@@ -63,6 +63,7 @@ from itertools import product
 import networkx as nx
 import numpy as np
 import six
+from dlg.common.reproducibility.reproducibility import init_pgt_repro_data
 
 from .dm_utils import (
     get_lg_ver_type,
@@ -131,6 +132,7 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
+        self._reprodata = jd["reprodata"]
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -831,7 +833,7 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
-        kwargs["reprodata"] = self.jd["reprodata"]
+        kwargs["reprodata"] = self._reprodata
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -1943,6 +1945,7 @@ class LG:
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
         self._lgn_list = all_list
+        self._reprodata = lg["reprodata"]
 
     def validate_link(self, src, tgt):
         if src.is_scatter() or tgt.is_scatter():
@@ -2580,6 +2583,10 @@ class LG:
 
         return ret
 
+    @property
+    def reprodata(self):
+        return self._reprodata
+
 
 class _LGTemplate(string.Template):
     delimiter = "%"
@@ -2614,7 +2621,6 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    print(drop_list)
     logger.info(
         "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
         (time.time() - start),
@@ -2629,6 +2635,8 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
+    init_pgt_repro_data(drop_list, lg.reprodata["rmode"])
+    drop_list.append(lg.reprodata)
     return drop_list
 
 
