@@ -3,7 +3,7 @@ from merklelib import MerkleTree
 
 
 #  ------ Drop-Based Functionality ------
-def accumulate_drop_data(drop: dict, level: ReproduciblityFlags):
+def accumulate_lg_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
     TODO: Implement alternative level functionality.
@@ -36,6 +36,27 @@ def accumulate_drop_data(drop: dict, level: ReproduciblityFlags):
     return data
 
 
+def accumulate_pgt_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Accumulates relevant reproducibility fields for a single drop at the physical template level.
+    TODO: Implement alternative level functionality.
+    :param drop:
+    :param level:
+    :return: A dictionary containing accumulated reproducibility data for a given drop.
+    """
+    data = {}
+    if level == ReproduciblityFlags.NOTHING:
+        return data
+    data["type"] = drop["type"]
+    data["rank"] = drop["rank"]
+    if data["type"] == 'plain':
+        data["storage"] = drop['storage']
+    else:
+        data["app"] = drop["app"]
+
+    return data
+
+
 def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Creates and appends per-drop reproducibility information at the logical template stage.
@@ -43,7 +64,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information.
     """
-    data = accumulate_drop_data(drop, level)
+    data = accumulate_lg_drop_data(drop, level)
     merkledata = []
     for key, value in data.items():
         temp = [key, value]
@@ -65,7 +86,28 @@ def init_lg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     return drop
 
 
-def init_pgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
+def init_pgt_unroll_repro_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Creates and appends per-drop reproducibility information at the physical graph template stage.
+    :param drop:
+    :param level:
+    :return: The same drop with appended reproducibility information
+    """
+    data = accumulate_pgt_drop_data(drop, level)
+    merkledata = []
+    for key, value in data.items():
+        temp = [key, value]
+        merkledata.append(temp)
+    merkletree = MerkleTree(merkledata)
+    data['merkleroot'] = merkletree.merkle_root
+    data['parenthashes'] = []  # Initialized here in-case this drop ends up having in-deg = 0
+    #  Separated so chaining can happen on independent elements (or both later)
+    data['lgdata'] = drop['reprodata']  # Embedding into a sub-dict
+    drop['reprodata'] = data
+    return drop
+
+
+def init_pgt_partition_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Creates and appends per-drop reproducibility information at the physical graph template stage.
     :param drop:
@@ -95,7 +137,7 @@ def build_block_data(drop: dict):
     drop['reprodata']['blockhash'] = mtree.merkle_root
 
 
-def topo_sort(lg: dict):
+def lg_build_blockdag(lg: dict):
     """
     Uses Kahn's algorithm to topologically sort a logical graph dictionary.
     Exploits that a DAG contains at least one node with in-degree 0.
@@ -143,6 +185,19 @@ def topo_sort(lg: dict):
         # TODO: Improve error handling
 
 
+def pgt_build_blockdag(drops: list):
+    """
+    Uses Kahn's algorithm to topologically sort a list of physical graph template nodes
+    Exploits that a DAG contains at least one node with in-degree 0.
+    Processes drops in-order.
+    O(V + E) time complexity.
+    :param drops: The list of drops
+    :return:
+    """
+
+    pass
+
+
 def init_lgt_repro_data(lgt: dict, rmode: str):
     """
     Creates and appends graph-wide reproducibility data at the logical template stage.
@@ -158,7 +213,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     reprodata = {'rmode': str(rmode.value)}
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
-    topo_sort(lgt)
+    lg_build_blockdag(lgt)
     lgt['reprodata'] = reprodata
     return lgt
 
@@ -178,6 +233,15 @@ def init_pgt_unroll_repro_data(pgt: list):
     :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
     :return: The same pgt object with new information appended
     """
+    reprodata = pgt.pop()
+    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    if not rmode_supported(rmode):
+        rmode = REPRO_DEFAULT
+        reprodata["rmode"] = str(rmode.value)
+    for drop in pgt:
+        init_pgt_unroll_repro_drop_data(drop, rmode)
+    pgt_build_blockdag(pgt)
+    pgt.append(reprodata)
     return pgt
 
 
