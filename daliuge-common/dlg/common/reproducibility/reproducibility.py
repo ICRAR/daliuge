@@ -119,7 +119,7 @@ def init_pgt_unroll_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     merkletree = MerkleTree(merkledata)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pg_parenthashes'] = []
+    drop['reprodata']['pgt_parenthashes'] = []
     drop['reprodata']['pgt_data'] = data
     return drop
 
@@ -152,6 +152,14 @@ def build_lg_block_data(drop: dict):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data)
     drop['reprodata']['lg_blockhash'] = mtree.merkle_root
+
+
+def build_pgt_block_data(drop: dict):
+    block_data = [drop['reprodata']['pgt_data']['merkleroot'], drop['reprodata']['lg_blockhash']]
+    for parenthash in sorted(drop['reprodata']['pgt_parenthashes']):
+        block_data.append(parenthash)
+    mtree = MerkleTree(block_data)
+    drop['reprodata']['pgt_blockhash'] = mtree.merkle_root
 
 
 def lg_build_blockdag(lg: dict):
@@ -193,7 +201,8 @@ def lg_build_blockdag(lg: dict):
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             #  Add our new hash to the parent-hash list
-            dropset[n][0]['reprodata']['lg_parenthashes'].append(dropset[did][0]['reprodata']['lg_blockhash'])
+            parenthash = dropset[did][0]['reprodata']['lg_blockhash']
+            dropset[n][0]['reprodata']['lg_parenthashes'].append(parenthash)
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
 
@@ -212,7 +221,46 @@ def pgt_build_blockdag(drops: list):
     :return:
     """
     #  Check if pg-blockhash is none
-    pass
+    from collections import deque
+    dropset = {}
+    neighbourset = {}
+    visited = 0
+    q = deque()
+
+    for drop in drops:
+        did = drop['oid']
+        dropset[did] = [drop, 0]  # To guarantee all nodes have entries
+    for drop in drops:
+        did = drop['oid']
+        neighbourset[did] = []
+        if 'outputs' in drop:
+            for dest in drop['outputs']:
+                dropset[dest][1] += 1
+                neighbourset[did].append(dest)
+        if 'consumers' in drop:  # There may be some bizarre scenario when a drop has both
+            for dest in drop['consumers']:
+                dropset[dest][1] += 1
+                neighbourset[did].append(dest)
+
+    for did in dropset:
+        if dropset[did][1] == 0:
+            q.append(did)
+
+    while q:
+        did = q.pop()
+        build_pgt_block_data(dropset[did][0])
+        visited += 1
+        for n in neighbourset[did]:
+            dropset[n][1] -= 1
+            # Add our new hash to the parest-hash list
+            parenthash = dropset[did][0]['reprodata']['pgt_blockhash']
+            dropset[n][0]['reprodata']['pgt_parenthashes'].append(parenthash)
+            if dropset[n][1] == 0:
+                q.append(n)
+
+    if visited != len(dropset):
+        print("Not a DAG")
+        # TODO: Improve error handling
 
 
 def init_lgt_repro_data(lgt: dict, rmode: str):
