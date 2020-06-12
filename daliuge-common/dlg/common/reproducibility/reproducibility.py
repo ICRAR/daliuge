@@ -211,7 +211,7 @@ def pgt_build_blockdag(drops: list):
     :param drops: The list of drops
     :return:
     """
-
+    #  Check if pg-blockhash is none
     pass
 
 
@@ -275,7 +275,15 @@ def init_pgt_partition_repro_data(pgt: list):
     :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
     :return: The same pgt object with new information recorded
     """
-    #  Check if pg-blockhash is none
+    reprodata = pgt.pop()
+    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    if not rmode_supported(rmode):
+        rmode = REPRO_DEFAULT
+        reprodata["rmode"] = str(rmode.value)
+    for drop in pgt:
+        init_pgt_partition_repro_drop_data(drop, rmode)
+    pgt_build_blockdag(pgt)
+    pgt.append(reprodata)
     return pgt
 
 
