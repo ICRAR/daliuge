@@ -148,7 +148,7 @@ def dlg_fill(parser, args):
 
     from ..dropmake.pg_generator import fill
     graph = fill(_open_i(opts.logical_graph), params)
-    dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility), opts.reproducibility))
+    dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
 
 
 def _add_unroll_options(parser):

@@ -163,11 +163,10 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     return lgt
 
 
-def init_lg_repro_data(lg: dict, rmode: str):
+def init_lg_repro_data(lg: dict):
     """
     Handles adding reproducibility data at the logical graph level.
     :param lg: The logical graph data structure (a JSON object (a dict))
-    :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
     return lg
