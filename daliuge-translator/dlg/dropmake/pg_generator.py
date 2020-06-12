@@ -131,7 +131,7 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
-        self._reprodata = jd["reprodata"]
+        self._reprodata = jd['reprodata'].copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -835,7 +835,8 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
-        kwargs["reprodata"] = self._reprodata
+        # Behaviour is that child-nodes inherit reproducibility data from their parents.
+        kwargs["reprodata"] = self._reprodata.copy()
         dropSpec.update(kwargs)
         return dropSpec
 
