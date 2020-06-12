@@ -691,7 +691,10 @@ class LGNode:
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
             # kwargs['command'] = ' '.join(cmds)
-            kwargs["command"] = BashCommand(cmds).to_real_command()  # TODO: Surely one records the actual command.
+            if drop_type == 'mpi':
+                kwargs["command"] = BashCommand(cmds).to_real_command()
+            else:
+                kwargs["command"] = BashCommand(cmds)  # TODO: Check if this actually solves a problem.
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
