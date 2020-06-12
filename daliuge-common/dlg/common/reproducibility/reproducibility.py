@@ -3,7 +3,7 @@ from merklelib import MerkleTree
 
 
 #  ------ Drop-Based Functionality ------
-def accumulate_lg_drop_data(drop: dict, level: ReproduciblityFlags):
+def accumulate_lgt_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
     TODO: Implement alternative level functionality.
@@ -36,6 +36,17 @@ def accumulate_lg_drop_data(drop: dict, level: ReproduciblityFlags):
     return data
 
 
+def accumulate_lg_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Accumulates relevant reproducibility fields for a single drop.
+    TODO: Implement alternative level functionality.
+    :param drop:
+    :param level:
+    :return: A dictionary containing accumulated reproducibility data for a given drop.
+    """
+    return {}
+
+
 def accumulate_pgt_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop at the physical template level.
@@ -64,15 +75,14 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information.
     """
-    data = accumulate_lg_drop_data(drop, level)
+    data = accumulate_lgt_drop_data(drop, level)
     merkledata = []
     for key, value in data.items():
         temp = [key, value]
         merkledata.append(temp)
     merkletree = MerkleTree(merkledata)
     data['merkleroot'] = merkletree.merkle_root
-    data['parenthashes'] = []  # Initialized here in-case this drop ends up having in-deg = 0
-    drop['reprodata'] = data
+    drop['reprodata'] = {'lgt_data': data, 'lg_parenthashes': []}
     return drop
 
 
@@ -83,6 +93,14 @@ def init_lg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information
     """
+    data = accumulate_lg_drop_data(drop, level)
+    merkledata = []
+    for key, value in data.items():
+        temp = [key, value]
+        merkledata.append(temp)
+    merkletree = MerkleTree(merkledata)
+    data['merkleroot'] = merkletree.merkle_root
+    drop['reprodata']['lg_data'] = data
     return drop
 
 
@@ -100,10 +118,9 @@ def init_pgt_unroll_repro_drop_data(drop: dict, level: ReproduciblityFlags):
         merkledata.append(temp)
     merkletree = MerkleTree(merkledata)
     data['merkleroot'] = merkletree.merkle_root
-    data['parenthashes'] = []  # Initialized here in-case this drop ends up having in-deg = 0
     #  Separated so chaining can happen on independent elements (or both later)
-    data['lgdata'] = drop['reprodata']  # Embedding into a sub-dict
-    drop['reprodata'] = data
+    drop['reprodata']['pg_parenthashes'] = []
+    drop['reprodata']['pgt_data'] = data
     return drop
 
 
@@ -129,12 +146,12 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
 
 #  ------ Graph-Wide Functionality ------
 
-def build_block_data(drop: dict):
-    block_data = [drop['reprodata']['merkleroot']]
-    for parenthash in sorted(drop['reprodata']['parenthashes']):
+def build_lg_block_data(drop: dict):
+    block_data = [drop['reprodata']['lgt_data']['merkleroot']]
+    for parenthash in sorted(drop['reprodata']['lg_parenthashes']):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data)
-    drop['reprodata']['blockhash'] = mtree.merkle_root
+    drop['reprodata']['lg_blockhash'] = mtree.merkle_root
 
 
 def lg_build_blockdag(lg: dict):
@@ -171,12 +188,12 @@ def lg_build_blockdag(lg: dict):
     while q:
         did = q.pop()
         # Process
-        build_block_data(dropset[did][0])
+        build_lg_block_data(dropset[did][0])
         visited += 1
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             #  Add our new hash to the parent-hash list
-            dropset[n][0]['reprodata']['parenthashes'].append(dropset[did][0]['reprodata']['blockhash'])
+            dropset[n][0]['reprodata']['lg_parenthashes'].append(dropset[did][0]['reprodata']['lg_blockhash'])
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
 
@@ -213,7 +230,6 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     reprodata = {'rmode': str(rmode.value)}
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
-    lg_build_blockdag(lgt)
     lgt['reprodata'] = reprodata
     return lgt
 
@@ -221,9 +237,17 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
 def init_lg_repro_data(lg: dict):
     """
     Handles adding reproducibility data at the logical graph level.
+    Also builds the logical data blockdag over the entire structure.
     :param lg: The logical graph data structure (a JSON object (a dict))
     :return: The same lgt object with new information appended
     """
+    rmode = ReproduciblityFlags(int(lg['reprodata']['rmode']))
+    if not rmode_supported(rmode):
+        rmode = REPRO_DEFAULT
+        lg['reprodata']["rmode"] = str(rmode.value)
+    for drop in lg['nodeDataArray']:
+        init_lg_repro_drop_data(drop, rmode)
+    lg_build_blockdag(lg)
     return lg
 
 
@@ -251,6 +275,7 @@ def init_pgt_partition_repro_data(pgt: list):
     :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
     :return: The same pgt object with new information recorded
     """
+    #  Check if pg-blockhash is none
     return pgt
 
 
