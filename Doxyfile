@@ -1,0 +1,29 @@
+PROJECT_NUMBER         = $(PROJECT_VERSION)
+
+# The INPUT tag is used to specify the files and/or directories that contain
+# documented source files. You may enter file names like myfile.cpp or
+# directories like /usr/src/myproject. Separate the files or directories with
+# spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
+# Note: If this tag is empty the current directory is searched.
+
+INPUT                  = 
+
+# The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
+# into which the generated documentation will be written. If a relative path is
+# entered, it will be relative to the location where doxygen was started. If
+# left blank the current directory will be used.
+
+OUTPUT_DIRECTORY       = 
+
+OUTPUT_LANGUAGE        = English
+
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_PROGRAMLISTING     = YES
+XML_NS_MEMB_FILE_SCOPE = YES
+AUTOLINK_SUPPORT       = NO
+IDL_PROPERTY_SUPPORT   = NO
+RECURSIVE              = YES
+ENABLE_PREPROCESSING   = NO
+CLASS_DIAGRAMS         = NO
