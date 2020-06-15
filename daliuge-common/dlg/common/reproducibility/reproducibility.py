@@ -47,7 +47,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproduciblityFlags):
     return {}
 
 
-def accumulate_pgt_drop_data(drop: dict, level: ReproduciblityFlags):
+def accumulate_pgt_unroll_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop at the physical template level.
     TODO: Implement alternative level functionality.
@@ -65,6 +65,25 @@ def accumulate_pgt_drop_data(drop: dict, level: ReproduciblityFlags):
     else:
         data["app"] = drop["app"]
 
+    return data
+
+
+def accumulate_pgt_partition_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Is as combination of unroll drop data
+    :param drop:
+    :param level:
+    :return:
+    """
+    data = {}
+    if level == ReproduciblityFlags.NOTHING:
+        return data
+    data = accumulate_pgt_unroll_drop_data(drop, level)
+    # This is the only piece of new information added at the partition level
+    # It is only pertinent to Repetition and Computational replication
+    if level == ReproduciblityFlags.REPEAT or level == ReproduciblityFlags.REPLICATE_COMP:
+        data["node"] = drop["node"][1:]
+        data["island"] = drop["island"][1:]
     return data
 
 
@@ -104,14 +123,7 @@ def init_lg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     return drop
 
 
-def init_pgt_unroll_repro_drop_data(drop: dict, level: ReproduciblityFlags):
-    """
-    Creates and appends per-drop reproducibility information at the physical graph template stage.
-    :param drop:
-    :param level:
-    :return: The same drop with appended reproducibility information
-    """
-    data = accumulate_pgt_drop_data(drop, level)
+def append_pgt_repro_data(drop: dict, data: dict):
     merkledata = []
     for key, value in data.items():
         temp = [key, value]
@@ -124,13 +136,27 @@ def init_pgt_unroll_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     return drop
 
 
-def init_pgt_partition_repro_drop_data(drop: dict, level: ReproduciblityFlags):
+def init_pgt_unroll_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     """
-    Creates and appends per-drop reproducibility information at the physical graph template stage.
+    Creates and appends per-drop reproducibility information at the physical graph template stage when unrolling.
     :param drop:
     :param level:
     :return: The same drop with appended reproducibility information
     """
+    data = accumulate_pgt_unroll_drop_data(drop, level)
+    append_pgt_repro_data(drop, data)
+    return drop
+
+
+def init_pgt_partition_repro_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Creates and appends per-drop reproducibility information at the physical graph template stage when partitioning.
+    :param drop:
+    :param level:
+    :return: The same drop with appended reproducibility information
+    """
+    data = accumulate_pgt_partition_drop_data(drop, level)
+    append_pgt_repro_data(drop, data)
     return drop
 
 
