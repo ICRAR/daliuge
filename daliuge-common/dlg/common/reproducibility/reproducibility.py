@@ -87,6 +87,23 @@ def accumulate_pgt_partition_drop_data(drop: dict, level: ReproduciblityFlags):
     return data
 
 
+def accumulate_pg_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Accumulate relevant reproducibility fields for a single drop at the physical graph level.
+    TODO: Implement alternative level functionality.
+    :param drop:
+    :param level:
+    :return: A dictionary containing accumulated reproducibility data for a given drop.
+    """
+    data = {}
+    if level == ReproduciblityFlags.NOTHING:
+        return data
+    if level == ReproduciblityFlags.REPEAT or level == ReproduciblityFlags.REPLICATE_COMP:
+        data['node'] = drop['node']
+        data['island'] = drop['island']
+    return data
+
+
 def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     """
     Creates and appends per-drop reproducibility information at the logical template stage.
@@ -167,6 +184,16 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     :param level:
     :return: The same drop with appended reproducibility information
     """
+    data = accumulate_pg_drop_data(drop, level)
+    merkledata = []
+    for key, value in data.items():
+        temp = [key, value]
+        merkledata.append(temp)
+    merkletree = MerkleTree(merkledata)
+    data['merkleroot'] = merkletree.merkle_root
+    #  Separated so chaining can happen on independent elements (or both later)
+    drop['reprodata']['pg_parenthashes'] = []
+    drop['reprodata']['pg_data'] = data
     return drop
 
 
@@ -186,6 +213,10 @@ def build_pgt_block_data(drop: dict):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data)
     drop['reprodata']['pgt_blockhash'] = mtree.merkle_root
+
+
+def build_pg_block_data(drop: dict):
+    pass
 
 
 def lg_build_blockdag(lg: dict):
@@ -289,6 +320,10 @@ def pgt_build_blockdag(drops: list):
         # TODO: Improve error handling
 
 
+def pg_build_blockdag(drops: list):
+    pass
+
+
 def init_lgt_repro_data(lgt: dict, rmode: str):
     """
     Creates and appends graph-wide reproducibility data at the logical template stage.
@@ -361,10 +396,19 @@ def init_pgt_partition_repro_data(pgt: list):
     return pgt
 
 
-def init_pg_repro_data(pg: dict):
+def init_pg_repro_data(pg: list):
     """
     Handles adding reproducibility data at the physical graph template level.
     :param pg: The logical graph data structure (a list of drops + reprodata dictionary)
     :return: The same pg object with new information appended
     """
+    reprodata = pg.pop()
+    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    if not rmode_supported(rmode):
+        rmode = REPRO_DEFAULT
+        reprodata["rmode"] = str(rmode.value)
+    for drop in pg:
+        init_pg_repro_drop_data(drop, rmode)
+    pg_build_blockdag(pg)
+    pg.append(reprodata)
     return pg
