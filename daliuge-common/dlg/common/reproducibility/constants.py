@@ -6,8 +6,8 @@ class ReproduciblityFlags(Enum):
     RERUN = 1
     REPEAT = 2
     REPRODUCE = 3
-    REPLICATE_COMP = 4
-    REPLICATE_SCI = 5
+    REPLICATE_SCI = 4  # Rerun + Reproduce (holds numerically)
+    REPLICATE_COMP = 5  # Repeat + Reproduce (holds numerically)
     EXPERIMENTAL = 6
 
 
