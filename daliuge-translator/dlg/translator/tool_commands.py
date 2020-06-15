@@ -207,7 +207,7 @@ def dlg_partition(parser, args):
 
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
-    repro = pgt.pop() # TODO: Re-integrate
+    repro = pgt.pop()  # TODO: Re-integrate
     pgt = partition(pgt, opts)
     pgt.append(repro)
     dump(init_pgt_partition_repro_data(pgt))
@@ -224,7 +224,7 @@ def dlg_unroll_and_partition(parser, args):
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
     init_pgt_unroll_repro_data(pgt)
-    repro = pgt.pop() # TODO: Re-integrate
+    repro = pgt.pop()  # TODO: Re-integrate
     pgt = partition(pgt, opts)
     pgt.append(repro)
     dump(init_pgt_partition_repro_data(pgt))
