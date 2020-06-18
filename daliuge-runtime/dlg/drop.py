@@ -42,7 +42,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
-from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported
+from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported, HASHING_ALG
 from merklelib import MerkleTree
 from six import BytesIO
 
@@ -85,7 +85,7 @@ track_current_drop = object_tracking('drop')
 
 
 def drop_hash(value):
-    return hashlib.sha3_256(value).hexdigest()
+    return HASHING_ALG(value).hexdigest()
 
 
 # ===============================================================================
