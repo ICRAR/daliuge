@@ -1,6 +1,9 @@
 from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported
 from merklelib import MerkleTree
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def common_hash(value):
@@ -37,7 +40,6 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproduciblityFlags):
         pass
     elif category_type == "Other":
         pass
-
     return data
 
 
@@ -275,6 +277,8 @@ def lg_build_blockdag(lg: dict):
     if visited != len(dropset):
         raise ValueError("Not a DAG")
 
+    logger.info("BlockDAG Generated at LG/T level")
+
 
 def pgt_build_blockdag(drops: list):
     """
@@ -326,8 +330,11 @@ def pgt_build_blockdag(drops: list):
     if visited != len(dropset):
         raise ValueError("Not a DAG")
 
+    logger.info("BlockDAG Generated at PGT level")
+
 
 def pg_build_blockdag(drops: list):
+    logger.debug("PG BlockDAG currently not implemented")
     pass
 
 
@@ -342,11 +349,13 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     """
     rmode = ReproduciblityFlags(int(rmode))
     if not rmode_supported(rmode):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
     reprodata = {'rmode': str(rmode.value), 'meta_data': accumulate_meta_data()}
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
     lgt['reprodata'] = reprodata
+    logger.info("Reproducibility data finished at LGT level")
     return lgt
 
 
@@ -359,11 +368,13 @@ def init_lg_repro_data(lg: dict):
     """
     rmode = ReproduciblityFlags(int(lg['reprodata']['rmode']))
     if not rmode_supported(rmode):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         lg['reprodata']["rmode"] = str(rmode.value)
     for drop in lg['nodeDataArray']:
         init_lg_repro_drop_data(drop, rmode)
     lg_build_blockdag(lg)
+    logger.info("Reproducibility data finished at LG level")
     return lg
 
 
@@ -376,12 +387,14 @@ def init_pgt_unroll_repro_data(pgt: list):
     reprodata = pgt.pop()
     rmode = ReproduciblityFlags(int(reprodata["rmode"]))
     if not rmode_supported(rmode):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         reprodata["rmode"] = str(rmode.value)
     for drop in pgt:
         init_pgt_unroll_repro_drop_data(drop, rmode)
     pgt_build_blockdag(pgt)
     pgt.append(reprodata)
+    logger.info("Reproducibility data finished at PGT unroll level")
     return pgt
 
 
@@ -394,12 +407,14 @@ def init_pgt_partition_repro_data(pgt: list):
     reprodata = pgt.pop()
     rmode = ReproduciblityFlags(int(reprodata["rmode"]))
     if not rmode_supported(rmode):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         reprodata["rmode"] = str(rmode.value)
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop, rmode)
     pgt_build_blockdag(pgt)
     pgt.append(reprodata)
+    logger.info("Reproducibility data finished at PGT partition level")
     return pgt
 
 
@@ -412,10 +427,12 @@ def init_pg_repro_data(pg: list):
     reprodata = pg.pop()
     rmode = ReproduciblityFlags(int(reprodata["rmode"]))
     if not rmode_supported(rmode):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         reprodata["rmode"] = str(rmode.value)
     for drop in pg:
         init_pg_repro_drop_data(drop, rmode)
     pg_build_blockdag(pg)
     pg.append(reprodata)
+    logger.info("Reproducibility data finished at PG level")
     return pg
