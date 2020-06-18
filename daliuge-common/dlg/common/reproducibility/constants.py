@@ -1,4 +1,5 @@
 from enum import Enum
+import hashlib
 
 PROTOCOL_VERSION = 0.1
 
@@ -14,6 +15,7 @@ class ReproduciblityFlags(Enum):
 
 
 REPRO_DEFAULT = ReproduciblityFlags.NOTHING
+HASHING_ALG = hashlib.sha3_256
 
 
 def rmode_supported(flag: ReproduciblityFlags):
