@@ -1,5 +1,7 @@
 from enum import Enum
 
+PROTOCOL_VERSION = 0.1
+
 
 class ReproduciblityFlags(Enum):
     NOTHING = 0
