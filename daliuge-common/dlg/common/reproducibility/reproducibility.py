@@ -352,6 +352,8 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
     reprodata = {'rmode': str(rmode.value), 'meta_data': accumulate_meta_data()}
+    meta_tree = MerkleTree(reprodata, common_hash)
+    reprodata['merkleroot'] = meta_tree.merkle_root
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
     lgt['reprodata'] = reprodata
