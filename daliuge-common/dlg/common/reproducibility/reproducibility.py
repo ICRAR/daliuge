@@ -1,5 +1,10 @@
-from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported
+from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
+    rmode_supported
 from merklelib import MerkleTree
+
+
+def common_hash(value):
+    return HASHING_ALG(value).hexdigest()
 
 
 #  ------ Drop-Based Functionality ------
@@ -116,7 +121,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     for key, value in data.items():
         temp = [key, value]
         merkledata.append(temp)
-    merkletree = MerkleTree(merkledata)
+    merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     drop['reprodata'] = {'lgt_data': data, 'lg_parenthashes': []}
     return drop
@@ -134,7 +139,7 @@ def init_lg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     for key, value in data.items():
         temp = [key, value]
         merkledata.append(temp)
-    merkletree = MerkleTree(merkledata)
+    merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     drop['reprodata']['lg_data'] = data
     return drop
@@ -145,7 +150,7 @@ def append_pgt_repro_data(drop: dict, data: dict):
     for key, value in data.items():
         temp = [key, value]
         merkledata.append(temp)
-    merkletree = MerkleTree(merkledata)
+    merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
     drop['reprodata']['pgt_parenthashes'] = []
@@ -189,7 +194,7 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     for key, value in data.items():
         temp = [key, value]
         merkledata.append(temp)
-    merkletree = MerkleTree(merkledata)
+    merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
     drop['reprodata']['pg_parenthashes'] = []
@@ -199,11 +204,16 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
 
 #  ------ Graph-Wide Functionality ------
 
+def accumulate_meta_data():
+    data = {'repro_protocol': PROTOCOL_VERSION, 'hashing_alg': str(HASHING_ALG)[8:-2]}
+    return data
+
+
 def build_lg_block_data(drop: dict):
     block_data = [drop['reprodata']['lgt_data']['merkleroot']]
     for parenthash in sorted(drop['reprodata']['lg_parenthashes']):
         block_data.append(parenthash)
-    mtree = MerkleTree(block_data)
+    mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['lg_blockhash'] = mtree.merkle_root
 
 
@@ -211,7 +221,7 @@ def build_pgt_block_data(drop: dict):
     block_data = [drop['reprodata']['pgt_data']['merkleroot'], drop['reprodata']['lg_blockhash']]
     for parenthash in sorted(drop['reprodata']['pgt_parenthashes']):
         block_data.append(parenthash)
-    mtree = MerkleTree(block_data)
+    mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['pgt_blockhash'] = mtree.merkle_root
 
 
@@ -336,7 +346,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     rmode = ReproduciblityFlags(int(rmode))
     if not rmode_supported(rmode):
         rmode = REPRO_DEFAULT
-    reprodata = {'rmode': str(rmode.value)}
+    reprodata = {'rmode': str(rmode.value), 'meta_data': accumulate_meta_data()}
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
     lgt['reprodata'] = reprodata
