@@ -101,8 +101,6 @@ def accumulate_pg_drop_data(drop: dict, level: ReproduciblityFlags):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
-    if level == ReproduciblityFlags.NOTHING:
-        return data
     if level == ReproduciblityFlags.REPEAT or level == ReproduciblityFlags.REPLICATE_COMP:
         data['node'] = drop['node']
         data['island'] = drop['island']
@@ -274,8 +272,7 @@ def lg_build_blockdag(lg: dict):
                 q.append(n)
 
     if visited != len(dropset):
-        print("Not a DAG")
-        # TODO: Improve error handling
+        raise ValueError("Not a DAG")
 
 
 def pgt_build_blockdag(drops: list):
@@ -326,8 +323,7 @@ def pgt_build_blockdag(drops: list):
                 q.append(n)
 
     if visited != len(dropset):
-        print("Not a DAG")
-        # TODO: Improve error handling
+        raise ValueError("Not a DAG")
 
 
 def pg_build_blockdag(drops: list):
