@@ -998,6 +998,16 @@ class AbstractDROP(EventFirer):
         if self.executionMode == ExecutionMode.DROP:
             self.subscribe(streamingConsumer, 'dropCompleted')
 
+    def completedrop(self, status):
+        """
+        Builds final reproducibility data for this drop and fires a 'dropComplete' event.
+        This should be called once a drop is finished in success or error
+        :return:
+        """
+        self.commit()
+        reprodata = {'data': self._merkleData, 'merkleroot': self.merkleroot}
+        self._fire('dropCompleted', status=status, reprodata=reprodata)
+
     @track_current_drop
     def setError(self):
         '''
@@ -1013,7 +1023,7 @@ class AbstractDROP(EventFirer):
         self.status = DROPStates.ERROR
 
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.ERROR)
+        self.completedrop(status=DROPStates.ERROR)
 
     @track_current_drop
     def setCompleted(self):
@@ -1037,7 +1047,7 @@ class AbstractDROP(EventFirer):
         self.commit()
 
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.COMPLETED)
+        self.completedrop(status=DROPStates.COMPLETED)
 
     def isCompleted(self):
         '''
