@@ -275,7 +275,7 @@ def lg_build_blockdag(lg: dict):
                 q.append(n)
 
     if visited != len(dropset):
-        raise ValueError("Not a DAG")
+        raise Exception("Not a DAG")
 
     logger.info("BlockDAG Generated at LG/T level")
 
@@ -328,7 +328,7 @@ def pgt_build_blockdag(drops: list):
                 q.append(n)
 
     if visited != len(dropset):
-        raise ValueError("Not a DAG")
+        raise Exception("Not a DAG")
 
     logger.info("BlockDAG Generated at PGT level")
 
