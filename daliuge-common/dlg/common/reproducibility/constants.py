@@ -1,5 +1,5 @@
-from enum import Enum
 import hashlib
+from enum import Enum
 
 PROTOCOL_VERSION = 0.1
 
@@ -14,7 +14,7 @@ class ReproduciblityFlags(Enum):
     EXPERIMENTAL = 6
 
 
-REPRO_DEFAULT = ReproduciblityFlags.NOTHING
+REPRO_DEFAULT = ReproduciblityFlags.RERUN
 HASHING_ALG = hashlib.sha3_256
 
 
