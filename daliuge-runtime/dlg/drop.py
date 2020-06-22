@@ -235,8 +235,8 @@ class AbstractDROP(EventFirer):
         self._checksumType = None
         self._size = None
 
-        # Recording runtime repropduciblity information is handled via MerkleTrees
-        # Switching on the reproduciblity level will determine what information is recorded.
+        # Recording runtime reproducibility information is handled via MerkleTrees
+        # Switching on the reproducibility level will determine what information is recorded.
         self._committed = False
         self._merkleRoot = None
         self._merkleTree = None
