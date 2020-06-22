@@ -99,7 +99,7 @@ class Session(object):
         self._error_status_listener = None
         self._nm = nm
         self._dropsubs = {}
-        self._reprodata = None
+        self._graphreprodata = None
 
     @property
     def sessionId(self):
@@ -125,7 +125,7 @@ class Session(object):
 
     @property
     def reprodata(self):
-        return self._reprodata
+        return self._graphreprodata
 
     @track_current_session
     def addGraphSpec(self, graphSpec):
@@ -158,7 +158,7 @@ class Session(object):
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
-        graphSpecDict, self._reprodata = graph_loader.loadDropSpecs(graphSpec)
+        graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
 
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
