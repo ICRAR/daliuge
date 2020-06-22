@@ -28,6 +28,8 @@ import inspect
 import logging
 import threading
 
+from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
+
 from . import constants
 from .. import droputils
 from .. import graph_loader
@@ -38,7 +40,6 @@ from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
 from ..exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
-from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 
 logger = logging.getLogger(__name__)
 
@@ -384,7 +385,8 @@ class Session(object):
 
     def append_reprodata(self, oid, reprodata):
         if oid in self._graph:
-            self._graph[oid]['reprodata']['pg_data'] = reprodata
+            self._graph[oid]['reprodata']['pg_data']['run_data'] = reprodata['data']
+            self._graph[oid]['reprodata']['pg_data']['run_merkleroot'] = reprodata['merkleroot']
 
     @track_current_session
     def finish(self):
