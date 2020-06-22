@@ -38,6 +38,7 @@ from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
 from ..exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
+from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,21 @@ class LeavesCompletionListener(object):
                      self._session.sessionId)
         if self._completed == self._nexpected:
             self._session.finish()
+
+
+class ReproFinishedListener(object):
+    def __init__(self, graph, session):
+        self._session = session
+        self._nexpected = len(graph)
+        self._completed = 0
+
+    def handleEvent(self, evt):
+        self._completed += 1
+        self._session.append_reprodata(evt.oid, evt.reprodata)
+        logger.debug("%d/%d drops filed reproducibility", self._completed, self._nexpected)
+        if self._completed == self._nexpected:
+            logger.debug("Building Reproducibility BlockDAG")
+            init_runtime_repro_data(self._session._graph, self._session._graphreprodata)
 
 
 track_current_session = utils.object_tracking('session')
@@ -230,6 +246,9 @@ class Session(object):
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values(), session=self)
         logger.info("%d drops successfully created", len(self._graph))
 
+        #  Add listeners for reproducibility information
+        repro_listener = ReproFinishedListener(self._graph, self)
+
         for drop, _ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
@@ -244,6 +263,8 @@ class Session(object):
             # Register them with the error handler
             for l in event_listeners:
                 drop.subscribe(l)
+            #  Register each drop for reproducibility listening
+            drop.subscribe(repro_listener, 'reproducibility')
 
         logger.info("Stored all drops, proceeding with further customization")
 
@@ -305,7 +326,7 @@ class Session(object):
         Called when an event has been fired by a remote drop.
         The event is then delivered to the interested drops of this session.
         """
-        if not evt.uid in self._dropsubs:
+        if evt.uid not in self._dropsubs:
             logger.debug("No subscription found for drop %s", evt.uid)
             return
         for tgt in self._dropsubs[evt.uid]:
@@ -360,6 +381,10 @@ class Session(object):
                     mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
 
                 self._proxyinfo.append((host, rpc_port, local_uid, mname, remote_uid))
+
+    def append_reprodata(self, oid, reprodata):
+        if oid in self._graph:
+            self._graph[oid]['reprodata']['pg_data'] = reprodata
 
     @track_current_session
     def finish(self):

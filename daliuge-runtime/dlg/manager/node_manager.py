@@ -201,6 +201,9 @@ class NodeManagerBase(DROPManager):
         self._sessions[sessionId] = Session(sessionId, nm=self)
         logger.info('Created session %s', sessionId)
 
+    def getsession(self, sessionId):
+        return self._sessions[sessionId]
+
     def getSessionStatus(self, sessionId):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].status
@@ -237,7 +240,6 @@ class NodeManagerBase(DROPManager):
                 drop.subscribe(evt_listener, 'producerFinished')
             else:
                 drop.subscribe(evt_listener, 'dropCompleted')
-            drop.subscribe(evt_listener, 'reproducibility')
 
             # Purely for logging purposes
             log_evt_listener = self._logging_event_listener
