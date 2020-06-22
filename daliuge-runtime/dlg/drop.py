@@ -611,6 +611,10 @@ class AbstractDROP(EventFirer):
 
     @reproducibility_level.setter
     def reproducibility_level(self, new_flag):
+        if type(new_flag) == str:
+            new_flag = ReproduciblityFlags(int(new_flag))
+        elif type(new_flag) == int:
+            new_flag = ReproduciblityFlags(new_flag)
         if type(new_flag) != ReproduciblityFlags:
             raise TypeError("new_flag must be a Reproduciblity flag enum.")
         elif rmode_supported(new_flag):
