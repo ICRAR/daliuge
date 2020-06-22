@@ -255,7 +255,13 @@ def build_pgt_block_data(drop: dict):
 
 
 def build_pg_block_data(drop: dict):
-    pass
+    block_data = [drop['reprodata']['pg_data']['merkleroot'],
+                  drop['reprodata']['pgt_blockhash'],
+                  drop['reprodata']['lg_blockhash']]
+    for parenthash in sorted(drop['reprodata']['pg_parenthashes']):
+        block_data.append(parenthash)
+    mtree = MerkleTree(block_data, common_hash)
+    drop['reprodata']['pg_blockhash'] = mtree.merkle_root
 
 
 def lg_build_blockdag(lg: dict):
@@ -362,8 +368,56 @@ def pgt_build_blockdag(drops: list):
 
 
 def pg_build_blockdag(drops: list):
-    logger.debug("PG BlockDAG currently not implemented")
-    pass
+    """
+    Uses Kahn's algorithm to topologically sort a list of physical graph template nodes
+    Exploits that a DAG contains at least one node with in-degree 0.
+    Processes drops in-order.
+    O(V + E) time complexity.
+    :param drops: The list of drops
+    :return:
+    """
+    #  Check if pg-blockhash is none
+    from collections import deque
+    dropset = {}
+    neighbourset = {}
+    visited = 0
+    q = deque()
+
+    for drop in drops:
+        did = drop['oid']
+        dropset[did] = [drop, 0]  # To guarantee all nodes have entries
+    for drop in drops:
+        did = drop['oid']
+        neighbourset[did] = []
+        if 'outputs' in drop:
+            for dest in drop['outputs']:
+                dropset[dest][1] += 1
+                neighbourset[did].append(dest)
+        if 'consumers' in drop:  # There may be some bizarre scenario when a drop has both
+            for dest in drop['consumers']:
+                dropset[dest][1] += 1
+                neighbourset[did].append(dest)
+
+    for did in dropset:
+        if dropset[did][1] == 0:
+            q.append(did)
+
+    while q:
+        did = q.pop()
+        build_pg_block_data(dropset[did][0])
+        visited += 1
+        for n in neighbourset[did]:
+            dropset[n][1] -= 1
+            # Add our new hash to the parest-hash list
+            parenthash = dropset[did][0]['reprodata']['pg_blockhash']
+            dropset[n][0]['reprodata']['pg_parenthashes'].append(parenthash)
+            if dropset[n][1] == 0:
+                q.append(n)
+
+    if visited != len(dropset):
+        raise Exception("Not a DAG")
+
+    logger.info("BlockDAG Generated at PG level")
 
 
 def runtime_build_blockdag(drops: dict):
