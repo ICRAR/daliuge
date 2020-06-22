@@ -417,12 +417,7 @@ def pg_build_blockdag(drops: list):
     if visited != len(dropset):
         raise Exception("Not a DAG")
 
-    logger.info("BlockDAG Generated at PG level")
-
-
-def runtime_build_blockdag(drops: dict):
-    pass
-    # logger.debug("Runtime BlockDAG currently not implemented")
+    # logger.info("BlockDAG Generated at PG level")
 
 
 def init_lgt_repro_data(lgt: dict, rmode: str):
@@ -542,7 +537,7 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
         reprodata["rmode"] = str(rmode.value)
     for drop in pg.items():
         init_runtime_repro_drop_data(drop[1], rmode)
-    runtime_build_blockdag(pg)
+    pg_build_blockdag(list(pg.values()))
     pg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
     return pg

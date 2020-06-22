@@ -174,6 +174,7 @@ class ManagerRestServer(RestServer):
     def getSessionInformation(self, sessionId):
         graphDict = self.dm.getGraph(sessionId)
         status = self.dm.getSessionStatus(sessionId)
+        logger.debug("%s", json.dumps(graphDict))
         return {'status': status, 'graph': graphDict}
 
     @daliuge_aware
