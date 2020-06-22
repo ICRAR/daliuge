@@ -14,7 +14,7 @@ class ReproduciblityFlags(Enum):
     EXPERIMENTAL = 6
 
 
-REPRO_DEFAULT = ReproduciblityFlags.RERUN
+REPRO_DEFAULT = ReproduciblityFlags.NOTHING
 HASHING_ALG = hashlib.sha3_256
 
 
