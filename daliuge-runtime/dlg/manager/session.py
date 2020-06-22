@@ -99,6 +99,7 @@ class Session(object):
         self._error_status_listener = None
         self._nm = nm
         self._dropsubs = {}
+        self._reprodata = None
 
     @property
     def sessionId(self):
@@ -122,6 +123,10 @@ class Session(object):
     def drops(self):
         return self._drops
 
+    @property
+    def reprodata(self):
+        return self._reprodata
+
     @track_current_session
     def addGraphSpec(self, graphSpec):
         """
@@ -131,7 +136,10 @@ class Session(object):
         DROP. Each DROP specification is checked to see it contains
         all the necessary details to construct a proper DROP. If one
         DROP specification is found to be inconsistent the whole operation
-        fill wail.
+        will fail.
+
+        This operation also 'slices off' a dictionary containing graph-wide
+        reproducibility information. This is stored as a class variable for later use.
 
         Adding graph specs to the session is only allowed while the session is
         in the PRISTINE or BUILDING status; otherwise an exception will be
@@ -150,7 +158,7 @@ class Session(object):
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
-        graphSpecDict = graph_loader.loadDropSpecs(graphSpec)
+        graphSpecDict, self._reprodata = graph_loader.loadDropSpecs(graphSpec)
 
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)

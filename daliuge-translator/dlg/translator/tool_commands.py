@@ -298,7 +298,7 @@ def dlg_submit(parser, args):
 
     with _open_i(opts.pg_path) as f:
         pg = json.load(f)
-        repro = pg.pop()  # TODO: Re-integrate
+        repro = pg[-1]
         submit(pg, opts)
         pg.append(repro)
 
