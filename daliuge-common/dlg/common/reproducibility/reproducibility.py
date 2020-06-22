@@ -1,7 +1,8 @@
+import logging
+
 from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported
 from merklelib import MerkleTree
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -203,9 +204,33 @@ def init_pg_repro_drop_data(drop: dict, level: ReproduciblityFlags):
     return drop
 
 
+def init_runtime_repro_drop_data(drop: dict, level: ReproduciblityFlags):
+    """
+    Merges runtime and PG graph data on a per-drop basis.
+    :param drop:
+    :param level:
+    :return:
+    """
+    pg_data = accumulate_pg_drop_data(drop, level)
+    merkledata = []
+    for key, value in pg_data.items():
+        temp = [key, value]
+        merkledata.append(temp)
+    merkledata.append(drop['reprodata']['pg_data']['run_merkleroot'])
+    merkletree = MerkleTree(merkledata, common_hash)
+    pg_data['run_data'] = drop['reprodata']['pg_data']['run_data'].copy()
+    pg_data['run_merkleroot'] = drop['reprodata']['pg_data']['run_merkleroot']
+    pg_data['merkleroot'] = merkletree.merkle_root
+    drop['reprodata']['pg_data'] = pg_data
+    return drop
+
+
 #  ------ Graph-Wide Functionality ------
 
 def accumulate_meta_data():
+    """
+    WARNING: Relies on naming convention in hashlib.
+    """
     data = {'repro_protocol': PROTOCOL_VERSION, 'hashing_alg': str(HASHING_ALG)[8:-2]}
     return data
 
@@ -341,6 +366,11 @@ def pg_build_blockdag(drops: list):
     pass
 
 
+def runtime_build_blockdag(drops: dict):
+    pass
+    # logger.debug("Runtime BlockDAG currently not implemented")
+
+
 def init_lgt_repro_data(lgt: dict, rmode: str):
     """
     Creates and appends graph-wide reproducibility data at the logical template stage.
@@ -444,5 +474,21 @@ def init_pg_repro_data(pg: list):
 
 
 def init_runtime_repro_data(pg: dict, reprodata: dict):
-    for drop in pg.values():
-        print(drop['reprodata']['pg_data'])
+    """
+    Adds reproducibility data at the runtime level to graph-wide values.
+    :param pg:
+    :param reprodata:
+    :return:
+    """
+    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    if not rmode_supported(rmode):
+        # TODO: Logging needs sessionID at this stage
+        # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
+        rmode = REPRO_DEFAULT
+        reprodata["rmode"] = str(rmode.value)
+    for drop in pg.items():
+        init_runtime_repro_drop_data(drop[1], rmode)
+    runtime_build_blockdag(pg)
+    pg['reprodata'] = reprodata
+    # logger.info("Reproducibility data finished at runtime level")
+    return pg
