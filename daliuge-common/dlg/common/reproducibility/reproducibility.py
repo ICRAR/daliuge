@@ -441,3 +441,8 @@ def init_pg_repro_data(pg: list):
     pg.append(reprodata)
     logger.info("Reproducibility data finished at PG level")
     return pg
+
+
+def init_runtime_repro_data(pg: dict, reprodata: dict):
+    for drop in pg.values():
+        print(drop['reprodata']['pg_data'])
