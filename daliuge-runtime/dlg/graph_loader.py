@@ -229,7 +229,8 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         cf = __CREATION_FUNCTIONS[dropType]
         drop = cf(dropSpec, session=session)
         if session is not None:
-            drop.reproducibility_level = session.reprodata['rmode']
+            # Now using per-drop reproducibility setting.
+            drop.reproducibility_level = dropSpec['reprodata']['rmode']  # session.reprodata['rmode']
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
