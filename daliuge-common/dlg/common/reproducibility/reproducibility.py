@@ -124,7 +124,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
         merkledata.append(temp)
     merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
-    drop['reprodata'] = {'lgt_data': data, 'lg_parenthashes': []}
+    drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': []}
     return drop
 
 
