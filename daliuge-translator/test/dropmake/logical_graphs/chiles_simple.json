@@ -1,58 +1,989 @@
-{ "class": "go.GraphLinksModel",
-  "linkFromPortIdProperty": "fromPort",
-  "linkToPortIdProperty": "toPort",
-  "nodeDataArray": [ 
-{"category":"Start", "text":"Start", "key":-14, "loc":"-679.999999999993 -276.0000000000005"},
-{"category":"Comment", "text":"Chiles Simple LG:\ndata partition is explicit ", "key":-10, "loc":"266.7812500000001 -548"},
-{"category":"Comment", "text":"Split by freq", "key":-23, "loc":"-182.21874999999972 -582.0000000000006"},
-{"category":"memory", "text":"Day1", "data_volume":100, "key":-25, "loc":"-507.328125 -539"},
-{"category":"Component", "text":"MST", "execution_time":20, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-26, "loc":"-316.328125 -539"},
-{"category":"memory", "text":"Day1-Split1", "data_volume":5, "key":-27, "loc":"-76.328125 -539"},
-{"category":"memory", "text":"Data", "data_volume":30, "key":-3, "loc":"295.671875 -266"},
-{"category":"Component", "text":"CLEAN", "execution_time":100, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-2, "loc":"148.671875 -261"},
-{"category":"memory", "text":"Day2", "data_volume":100, "key":-11, "loc":"-514.328125 -401"},
-{"category":"memory", "text":"Day3", "data_volume":100, "key":-12, "loc":"-516.328125 -292"},
-{"category":"memory", "text":"Day4", "data_volume":100, "key":-13, "loc":"-521.328125 -176"},
-{"category":"memory", "text":"Day5", "data_volume":100, "key":-15, "loc":"-514.328125 -92"},
-{"category":"Component", "text":"MST", "execution_time":20, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-16, "loc":"-319.328125 -397"},
-{"category":"Component", "text":"MST", "execution_time":20, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-17, "loc":"-326.328125 -300"},
-{"category":"Component", "text":"MST", "execution_time":20, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-18, "loc":"-321.328125 -189"},
-{"category":"Component", "text":"MST", "execution_time":20, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-19, "loc":"-333.328125 -90"},
-{"category":"memory", "text":"Day2-Split1", "data_volume":5, "key":-20, "loc":"-73.328125 -386"},
-{"category":"memory", "text":"Day3-Split1", "data_volume":5, "key":-21, "loc":"-70.328125 -281"},
-{"category":"memory", "text":"Day4-Split1", "data_volume":5, "key":-22, "loc":"-79.328125 -182"},
-{"category":"memory", "text":"Day5-Split1", "data_volume":5, "key":-24, "loc":"-81.328125 -87"},
-{"category":"Component", "text":"Copy", "execution_time":15, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"%{param1}", "key":-28, "loc":"-628.328125 -603"},
-{"category":"Component", "text":"Copy", "execution_time":15, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"%param2", "key":-29, "loc":"-626.328125 -488"},
-{"category":"Component", "text":"Copy", "execution_time":15, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"%{param1.param2}", "key":-30, "loc":"-624.328125 -374"},
-{"category":"Component", "text":"Copy", "execution_time":15, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"%{param4.what}", "key":-31, "loc":"-606.328125 -258"},
-{"category":"Component", "text":"Copy", "execution_time":15, "group_start":0, "Arg01":"", "Arg02":"", "Arg03":"", "Arg04":"", "Arg05":"", "Arg06":"", "Arg07":"", "Arg08":"", "Arg09":"", "Arg10":"", "key":-32, "loc":"-608.328125 -153"}
- ],
-  "linkDataArray": [ 
-{"from":-25, "to":-26, "fromPort":"R", "toPort":"L", "points":[-474.9240474700928,-539,-464.9240474700928,-539,-407.61230754852295,-539,-407.61230754852295,-539,-350.3005676269531,-539,-340.3005676269531,-539]},
-{"from":-26, "to":-27, "fromPort":"R", "toPort":"L", "points":[-292.3556823730469,-539,-282.3556823730469,-539,-214.5426845550537,-539,-214.5426845550537,-539,-146.72968673706055,-539,-136.72968673706055,-539]},
-{"from":-2, "to":-3, "fromPort":"R", "toPort":"L", "points":[181.61353302001953,-261,191.61353302001953,-261,223.46294689178467,-261,223.46294689178467,-266,255.3123607635498,-266,265.3123607635498,-266]},
-{"from":-27, "to":-2, "fromPort":"R", "toPort":"T", "points":[-15.926563262939453,-539,-5.926563262939453,-539,148.671875,-539,148.671875,-413.21886215209963,148.671875,-287.4377243041992,148.671875,-277.4377243041992]},
-{"from":-11, "to":-16, "fromPort":"R", "toPort":"L", "points":[-481.9240474700928,-401,-471.9240474700928,-401,-412.61230754852295,-401,-412.61230754852295,-397,-353.3005676269531,-397,-343.3005676269531,-397]},
-{"from":-12, "to":-17, "fromPort":"R", "toPort":"L", "points":[-483.9240474700928,-292,-473.9240474700928,-292,-417.11230754852295,-292,-417.11230754852295,-300,-360.3005676269531,-300,-350.3005676269531,-300]},
-{"from":-13, "to":-18, "fromPort":"R", "toPort":"L", "points":[-488.9240474700928,-176,-478.9240474700928,-176,-417.11230754852295,-176,-417.11230754852295,-189,-355.3005676269531,-189,-345.3005676269531,-189]},
-{"from":-15, "to":-19, "fromPort":"R", "toPort":"L", "points":[-481.9240474700928,-92,-471.9240474700928,-92,-419.61230754852295,-92,-419.61230754852295,-90,-367.3005676269531,-90,-357.3005676269531,-90]},
-{"from":-16, "to":-20, "fromPort":"R", "toPort":"L", "points":[-295.3556823730469,-397,-285.3556823730469,-397,-214.5426845550537,-397,-214.5426845550537,-386,-143.72968673706055,-386,-133.72968673706055,-386]},
-{"from":-17, "to":-21, "fromPort":"R", "toPort":"L", "points":[-302.3556823730469,-300,-292.3556823730469,-300,-216.5426845550537,-300,-216.5426845550537,-281,-140.72968673706055,-281,-130.72968673706055,-281]},
-{"from":-18, "to":-22, "fromPort":"R", "toPort":"L", "points":[-297.3556823730469,-189,-287.3556823730469,-189,-218.5426845550537,-189,-218.5426845550537,-182,-149.72968673706055,-182,-139.72968673706055,-182]},
-{"from":-19, "to":-24, "fromPort":"R", "toPort":"L", "points":[-309.3556823730469,-90,-299.3556823730469,-90,-225.5426845550537,-90,-225.5426845550537,-87,-151.72968673706055,-87,-141.72968673706055,-87]},
-{"from":-20, "to":-2, "fromPort":"R", "toPort":"L", "points":[-12.926563262939453,-386,-2.926563262939453,-386,51.40182685852051,-386,51.40182685852051,-261,105.73021697998047,-261,115.73021697998047,-261]},
-{"from":-21, "to":-2, "fromPort":"R", "toPort":"L", "points":[-9.926563262939453,-281,0.07343673706054688,-281,52.90182685852051,-281,52.90182685852051,-261,105.73021697998047,-261,115.73021697998047,-261]},
-{"from":-22, "to":-2, "fromPort":"R", "toPort":"B", "points":[-18.926563262939453,-182,-8.926563262939453,-182,148.671875,-182,148.671875,-208.28113784790037,148.671875,-234.56227569580076,148.671875,-244.56227569580076]},
-{"from":-24, "to":-2, "fromPort":"R", "toPort":"B", "points":[-20.926563262939453,-87,-10.926563262939453,-87,148.671875,-87,148.671875,-160.78113784790037,148.671875,-234.56227569580076,148.671875,-244.56227569580076]},
-{"from":-14, "to":-28, "fromPort":"T", "toPort":"L", "points":[-679.999999999993,-296.0000000000005,-679.999999999993,-306.0000000000005,-679.999999999993,-603,-671.9698944091762,-603,-663.9397888183594,-603,-653.9397888183594,-603]},
-{"from":-28, "to":-25, "fromPort":"R", "toPort":"T", "points":[-602.7164611816406,-603,-592.7164611816406,-603,-507.328125,-603,-507.328125,-584.2188621520996,-507.328125,-565.4377243041993,-507.328125,-555.4377243041993]},
-{"from":-14, "to":-29, "fromPort":"T", "toPort":"L", "points":[-679.999999999993,-296.0000000000005,-679.999999999993,-306.0000000000005,-679.999999999993,-488.00000000000006,-670.9698944091762,-488.00000000000006,-661.9397888183594,-488.00000000000006,-651.9397888183594,-488.00000000000006]},
-{"from":-14, "to":-30, "fromPort":"T", "toPort":"L", "points":[-679.999999999993,-296.0000000000005,-679.999999999993,-306.0000000000005,-679.999999999993,-374.00000000000006,-669.9698944091762,-374.00000000000006,-659.9397888183594,-374.00000000000006,-649.9397888183594,-374.00000000000006]},
-{"from":-14, "to":-31, "fromPort":"R", "toPort":"L", "points":[-646.0998840331961,-276.0000000000005,-636.0998840331961,-276.0000000000005,-636.0998840331961,-267.0000000000003,-641.9397888183594,-267.0000000000003,-641.9397888183594,-258.00000000000006,-631.9397888183594,-258.00000000000006]},
-{"from":-14, "to":-32, "fromPort":"B", "toPort":"L", "points":[-679.999999999993,-256.0000000000005,-679.999999999993,-246.0000000000005,-679.999999999993,-153.00000000000006,-661.9698944091762,-153.00000000000006,-643.9397888183594,-153.00000000000006,-633.9397888183594,-153.00000000000006]},
-{"from":-31, "to":-13, "fromPort":"R", "toPort":"L", "points":[-580.7164611816406,-258.00000000000006,-570.7164611816406,-258.00000000000006,-567.2243318557739,-258.00000000000006,-567.2243318557739,-176,-563.7322025299072,-176,-553.7322025299072,-176]},
-{"from":-29, "to":-11, "fromPort":"R", "toPort":"L", "points":[-600.7164611816406,-488.00000000000006,-590.7164611816406,-488.00000000000006,-573.7243318557739,-488.00000000000006,-573.7243318557739,-401,-556.7322025299072,-401,-546.7322025299072,-401]},
-{"from":-30, "to":-12, "fromPort":"R", "toPort":"L", "points":[-598.7164611816406,-374.00000000000006,-588.7164611816406,-374.00000000000006,-573.7243318557739,-374.00000000000006,-573.7243318557739,-292,-558.7322025299072,-292,-548.7322025299072,-292]},
-{"from":-32, "to":-15, "fromPort":"R", "toPort":"L", "points":[-582.7164611816406,-153.00000000000006,-572.7164611816406,-153.00000000000006,-564.7243318557739,-153.00000000000006,-564.7243318557739,-92,-556.7322025299072,-92,-546.7322025299072,-92]}
- ]}
+{
+    "modelData": {
+        "fileType": "graph",
+        "repoService": "Unknown",
+        "repo": "",
+        "filePath": "../../daliuge/daliuge-translator/test/dropmake/logical_graphs/chiles_simple.json",
+        "sha": "",
+        "git_url": ""
+    },
+    "nodeDataArray": [
+        {
+            "category": "Start",
+            "colour": "#229954",
+            "key": -14,
+            "text": "Start",
+            "description": "",
+            "loc": "-679 -276",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "T",
+                    "IdText": "T-L"
+                },
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                },
+                {
+                    "Id": "B",
+                    "IdText": "B-L"
+                }
+            ],
+            "outputPorts": [],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Comment",
+            "colour": "#799938",
+            "key": -10,
+            "text": "Chiles Simple LG:\ndata partition is explicit ",
+            "description": "",
+            "loc": "266 -548",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [],
+            "outputPorts": [],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [],
+            "desiredSize": {
+                "width": 200,
+                "height": 200
+            }
+        },
+        {
+            "category": "Comment",
+            "colour": "#799938",
+            "key": -23,
+            "text": "Split by freq",
+            "description": "",
+            "loc": "-182 -582",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [],
+            "outputPorts": [],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [],
+            "desiredSize": {
+                "width": 200,
+                "height": 200
+            }
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -25,
+            "text": "Day1",
+            "description": "",
+            "loc": "-507 -539",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "T",
+                    "IdText": "R-T"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -26,
+            "text": "MST",
+            "description": "",
+            "loc": "-316 -539",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -27,
+            "text": "Day1-Split1",
+            "description": "",
+            "loc": "-76 -539",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-T"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -3,
+            "text": "Data",
+            "description": "",
+            "loc": "295 -266",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -2,
+            "text": "CLEAN",
+            "description": "",
+            "loc": "148 -261",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "T",
+                    "IdText": "R-T"
+                },
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                },
+                {
+                    "Id": "B",
+                    "IdText": "R-B"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -11,
+            "text": "Day2",
+            "description": "",
+            "loc": "-514 -401",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -12,
+            "text": "Day3",
+            "description": "",
+            "loc": "-516 -292",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -13,
+            "text": "Day4",
+            "description": "",
+            "loc": "-521 -176",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -15,
+            "text": "Day5",
+            "description": "",
+            "loc": "-514 -92",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -16,
+            "text": "MST",
+            "description": "",
+            "loc": "-319 -397",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -17,
+            "text": "MST",
+            "description": "",
+            "loc": "-326 -300",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -18,
+            "text": "MST",
+            "description": "",
+            "loc": "-321 -189",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -19,
+            "text": "MST",
+            "description": "",
+            "loc": "-333 -90",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -20,
+            "text": "Day2-Split1",
+            "description": "",
+            "loc": "-73 -386",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -21,
+            "text": "Day3-Split1",
+            "description": "",
+            "loc": "-70 -281",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -22,
+            "text": "Day4-Split1",
+            "description": "",
+            "loc": "-79 -182",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-B"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Memory",
+            "colour": "#394BB2",
+            "key": -24,
+            "text": "Day5-Split1",
+            "description": "",
+            "loc": "-81 -87",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-B"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -28,
+            "text": "Copy",
+            "description": "",
+            "loc": "-628 -603",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-T"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "T-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -29,
+            "text": "Copy",
+            "description": "",
+            "loc": "-626 -488",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "T-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -30,
+            "text": "Copy",
+            "description": "",
+            "loc": "-624 -374",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "T-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -31,
+            "text": "Copy",
+            "description": "",
+            "loc": "-606 -258",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "R-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        },
+        {
+            "category": "Component",
+            "colour": "#3498DB",
+            "key": -32,
+            "text": "Copy",
+            "description": "",
+            "loc": "-608 -153",
+            "collapsed": false,
+            "streaming": false,
+            "subject": null,
+            "inputAppName": "",
+            "outputAppName": "",
+            "exitAppName": "",
+            "inputApplication": "Unknown",
+            "outputApplication": "Unknown",
+            "inputPorts": [
+                {
+                    "Id": "R",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "L",
+                    "IdText": "B-L"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": []
+        }
+    ],
+    "linkDataArray": [
+        {
+            "from": -25,
+            "fromPort": "R",
+            "to": -26,
+            "toPort": "L"
+        },
+        {
+            "from": -26,
+            "fromPort": "R",
+            "to": -27,
+            "toPort": "L"
+        },
+        {
+            "from": -2,
+            "fromPort": "R",
+            "to": -3,
+            "toPort": "L"
+        },
+        {
+            "from": -27,
+            "fromPort": "R",
+            "to": -2,
+            "toPort": "T"
+        },
+        {
+            "from": -11,
+            "fromPort": "R",
+            "to": -16,
+            "toPort": "L"
+        },
+        {
+            "from": -12,
+            "fromPort": "R",
+            "to": -17,
+            "toPort": "L"
+        },
+        {
+            "from": -13,
+            "fromPort": "R",
+            "to": -18,
+            "toPort": "L"
+        },
+        {
+            "from": -15,
+            "fromPort": "R",
+            "to": -19,
+            "toPort": "L"
+        },
+        {
+            "from": -16,
+            "fromPort": "R",
+            "to": -20,
+            "toPort": "L"
+        },
+        {
+            "from": -17,
+            "fromPort": "R",
+            "to": -21,
+            "toPort": "L"
+        },
+        {
+            "from": -18,
+            "fromPort": "R",
+            "to": -22,
+            "toPort": "L"
+        },
+        {
+            "from": -19,
+            "fromPort": "R",
+            "to": -24,
+            "toPort": "L"
+        },
+        {
+            "from": -20,
+            "fromPort": "R",
+            "to": -2,
+            "toPort": "L"
+        },
+        {
+            "from": -21,
+            "fromPort": "R",
+            "to": -2,
+            "toPort": "L"
+        },
+        {
+            "from": -22,
+            "fromPort": "R",
+            "to": -2,
+            "toPort": "B"
+        },
+        {
+            "from": -24,
+            "fromPort": "R",
+            "to": -2,
+            "toPort": "B"
+        },
+        {
+            "from": -14,
+            "fromPort": "T",
+            "to": -28,
+            "toPort": "L"
+        },
+        {
+            "from": -28,
+            "fromPort": "R",
+            "to": -25,
+            "toPort": "T"
+        },
+        {
+            "from": -14,
+            "fromPort": "T",
+            "to": -29,
+            "toPort": "L"
+        },
+        {
+            "from": -14,
+            "fromPort": "T",
+            "to": -30,
+            "toPort": "L"
+        },
+        {
+            "from": -14,
+            "fromPort": "R",
+            "to": -31,
+            "toPort": "L"
+        },
+        {
+            "from": -14,
+            "fromPort": "B",
+            "to": -32,
+            "toPort": "L"
+        },
+        {
+            "from": -31,
+            "fromPort": "R",
+            "to": -13,
+            "toPort": "L"
+        },
+        {
+            "from": -29,
+            "fromPort": "R",
+            "to": -11,
+            "toPort": "L"
+        },
+        {
+            "from": -30,
+            "fromPort": "R",
+            "to": -12,
+            "toPort": "L"
+        },
+        {
+            "from": -32,
+            "fromPort": "R",
+            "to": -15,
+            "toPort": "L"
+        }
+    ]
+}
