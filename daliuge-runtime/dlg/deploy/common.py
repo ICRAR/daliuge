@@ -126,7 +126,7 @@ def submit(pg, host='127.0.0.1', port=constants.ISLAND_DEFAULT_REST_PORT,
     """
     client = _get_client(host, port, timeout)
     session_id = session_id or "%f" % (time.time())
-    completed_uids = droputils.get_roots(pg)
+    completed_uids = droputils.get_roots(pg[:-1])
     with client:
         client.create_session(session_id)
         logger.info("Session %s created", session_id)

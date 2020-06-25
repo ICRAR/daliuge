@@ -42,7 +42,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
-from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT
+from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported, HASHING_ALG
 from merklelib import MerkleTree
 from six import BytesIO
 
@@ -85,7 +85,7 @@ track_current_drop = object_tracking('drop')
 
 
 def drop_hash(value):
-    return hashlib.sha3_256(value).hexdigest()
+    return HASHING_ALG(value).hexdigest()
 
 
 # ===============================================================================
@@ -235,8 +235,8 @@ class AbstractDROP(EventFirer):
         self._checksumType = None
         self._size = None
 
-        # Recording runtime repropduciblity information is handled via MerkleTrees
-        # Switching on the reproduciblity level will determine what information is recorded.
+        # Recording runtime reproducibility information is handled via MerkleTrees
+        # Switching on the reproducibility level will determine what information is recorded.
         self._committed = False
         self._merkleRoot = None
         self._merkleTree = None
@@ -611,9 +611,13 @@ class AbstractDROP(EventFirer):
 
     @reproducibility_level.setter
     def reproducibility_level(self, new_flag):
+        if type(new_flag) == str:
+            new_flag = ReproduciblityFlags(int(new_flag))
+        elif type(new_flag) == int:
+            new_flag = ReproduciblityFlags(new_flag)
         if type(new_flag) != ReproduciblityFlags:
             raise TypeError("new_flag must be a Reproduciblity flag enum.")
-        else:
+        elif rmode_supported(new_flag):
             if self._committed:
                 # Current behaviour, set to un-committed again after change
                 self._committed = False
@@ -621,6 +625,8 @@ class AbstractDROP(EventFirer):
                 self._merkleTree = None
                 self._merkleData = []
             self._reproduciblity = new_flag
+        else:
+            raise ValueError("new_flag %d is not supported", new_flag)
 
     def generate_rerun_data(self):
         """
@@ -996,6 +1002,16 @@ class AbstractDROP(EventFirer):
         if self.executionMode == ExecutionMode.DROP:
             self.subscribe(streamingConsumer, 'dropCompleted')
 
+    def completedrop(self):
+        """
+        Builds final reproducibility data for this drop and fires a 'dropComplete' event.
+        This should be called once a drop is finished in success or error
+        :return:
+        """
+        self.commit()
+        reprodata = {'data': self._merkleData, 'merkleroot': self.merkleroot}
+        self._fire(eventType='reproducibility', reprodata=reprodata)
+
     @track_current_drop
     def setError(self):
         '''
@@ -1011,7 +1027,8 @@ class AbstractDROP(EventFirer):
         self.status = DROPStates.ERROR
 
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.ERROR)
+        self._fire(eventType='dropCompleted', status=DROPStates.ERROR)
+        self.completedrop()
 
     @track_current_drop
     def setCompleted(self):
@@ -1031,11 +1048,9 @@ class AbstractDROP(EventFirer):
 
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
-        # Commits current reproduciblity data to an internal MerkleTree
-        self.commit()
-
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.COMPLETED)
+        self._fire(eventType='dropCompleted', status=DROPStates.COMPLETED)
+        self.completedrop()
 
     def isCompleted(self):
         '''
@@ -1620,6 +1635,7 @@ class AppDROP(ContainerDROP):
             self.status = DROPStates.COMPLETED
         logger.debug("Moving %r to %s", self, "FINISHED" if not is_error else "ERROR")
         self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+        self.completedrop()
 
     def cancel(self):
         '''Moves this application drop to its CANCELLED state'''

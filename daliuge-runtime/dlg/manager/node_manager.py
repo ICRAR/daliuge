@@ -66,6 +66,8 @@ class LogEvtListener(object):
             logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
         elif event.type == 'execStatus':
             logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
+        elif event.type == 'reproducibility':
+            logger.debug('Reproducibility event Drop uid=%s, oid=%s merkleroot=%s', event.uid, event.oid, event.reprodata['merkleroot'])
 
 
 class ErrorStatusListener(object):
@@ -199,6 +201,9 @@ class NodeManagerBase(DROPManager):
         self._sessions[sessionId] = Session(sessionId, nm=self)
         logger.info('Created session %s', sessionId)
 
+    def getsession(self, sessionId):
+        return self._sessions[sessionId]
+
     def getSessionStatus(self, sessionId):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].status
@@ -240,6 +245,7 @@ class NodeManagerBase(DROPManager):
             log_evt_listener = self._logging_event_listener
             if log_evt_listener:
                 drop.subscribe(log_evt_listener, 'status')
+                drop.subscribe(log_evt_listener, 'reproducibility')
                 if isinstance(drop, AppDROP):
                     drop.subscribe(log_evt_listener, 'execStatus')
 
