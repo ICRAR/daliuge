@@ -27,6 +27,9 @@ import optparse
 import os
 import sys
 
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
+    init_pgt_unroll_repro_data, init_pgt_partition_repro_data, init_pg_repro_data
+
 from ..common import tool
 
 logger = logging.getLogger(__name__)
@@ -73,7 +76,6 @@ def parse_partition_algo_params(algo_params):
 
 def partition(pgt, opts):
     from ..dropmake import pg_generator
-
     algo_params = parse_partition_algo_params(opts.algo_params or [])
     pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
                                 num_islands=opts.islands, partition_label='partition',
@@ -107,7 +109,7 @@ def _setup_output(opts):
     return dump
 
 
-def fill(parser, args):
+def dlg_fill(parser, args):
     tool.add_logging_options(parser)
     _add_output_options(parser)
     parser.add_option(
@@ -116,7 +118,10 @@ def fill(parser, args):
     parser.add_option(
         '-p', '--parameter', action='append',
         help="Parameter specification (either 'name=value' or a JSON string)",
-        default=())
+        default=[])
+    parser.add_option(
+        '-R', '--reproducibility', default='0',
+        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0'-'5'")
 
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
@@ -142,7 +147,8 @@ def fill(parser, args):
         params.update(json_param)
 
     from ..dropmake.pg_generator import fill
-    dump(fill(_open_i(opts.logical_graph), params))
+    graph = fill(_open_i(opts.logical_graph), params)
+    dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
 
 
 def _add_unroll_options(parser):
@@ -173,8 +179,8 @@ def dlg_unroll(parser, args):
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
     dump = _setup_output(opts)
-
-    dump(unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]))
+    pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
+    dump(init_pgt_unroll_repro_data(pgt))
 
 
 def _add_partition_options(parser):
@@ -201,8 +207,10 @@ def dlg_partition(parser, args):
 
     with _open_i(opts.pgt_path) as fi:
         pgt = json.load(fi)
-
-    dump(partition(pgt, opts))
+    repro = pgt.pop()  # TODO: Re-integrate
+    pgt = partition(pgt, opts)
+    pgt.append(repro)
+    dump(init_pgt_partition_repro_data(pgt))
 
 
 def dlg_unroll_and_partition(parser, args):
@@ -215,7 +223,11 @@ def dlg_unroll_and_partition(parser, args):
     dump = _setup_output(opts)
 
     pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
-    dump(partition(pgt, opts))
+    init_pgt_unroll_repro_data(pgt)
+    repro = pgt.pop()  # TODO: Re-integrate
+    pgt = partition(pgt, opts)
+    pgt.append(repro)
+    dump(init_pgt_partition_repro_data(pgt))
 
 
 def dlg_map(parser, args):
@@ -255,7 +267,10 @@ def dlg_map(parser, args):
     with _open_i(opts.pgt_path) as f:
         pgt = json.load(f)
 
-    dump(pg_generator.resource_map(pgt, nodes, opts.islands))
+    repro = pgt.pop()  # TODO: Re-include
+    pg = pg_generator.resource_map(pgt, nodes, opts.islands)
+    pg.append(repro)
+    dump(init_pg_repro_data(pg))
 
 
 def dlg_submit(parser, args):
@@ -282,7 +297,10 @@ def dlg_submit(parser, args):
     (opts, args) = parser.parse_args(args)
 
     with _open_i(opts.pg_path) as f:
-        submit(json.load(f), opts)
+        pg = json.load(f)
+        repro = pg[-1]
+        submit(pg, opts)
+        pg.append(repro)
 
 
 def register_commands():
@@ -292,4 +310,4 @@ def register_commands():
     tool.cmdwrap('unroll', 'Unrolls a Logical Graph into a Physical Graph Template', dlg_unroll)
     tool.cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions', dlg_partition)
     tool.cmdwrap('unroll-and-partition', 'unroll + partition', dlg_unroll_and_partition)
-    tool.cmdwrap('fill', 'Fill a Logical Graph with parameters', fill)
+    tool.cmdwrap('fill', 'Fill a Logical Graph with parameters', dlg_fill)

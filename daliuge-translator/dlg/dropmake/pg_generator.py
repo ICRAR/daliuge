@@ -131,6 +131,7 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
+        self._reprodata = jd['reprodata'].copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -690,7 +691,10 @@ class LGNode:
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
             # kwargs['command'] = ' '.join(cmds)
-            kwargs["command"] = BashCommand(cmds)
+            if drop_type == 'mpi':
+                kwargs["command"] = BashCommand(cmds).to_real_command()
+            else:
+                kwargs["command"] = BashCommand(cmds)  # TODO: Check if this actually solves a problem.
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
@@ -831,6 +835,8 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
+        # Behaviour is that child-nodes inherit reproducibility data from their parents.
+        kwargs["reprodata"] = self._reprodata.copy()
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -1942,6 +1948,7 @@ class LG:
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
         self._lgn_list = all_list
+        self._reprodata = lg["reprodata"]
 
     def validate_link(self, src, tgt):
         if src.is_scatter() or tgt.is_scatter():
@@ -2316,13 +2323,13 @@ class LG:
             tdrops = self._drop_dict[tid]
             chunk_size = self._get_chunk_size(slgn, tlgn)
             if slgn.is_group() and not tlgn.is_group():
-                # this link must be artifically added (within group link)
+                # this link must be artificially added (within group link)
                 # since
                 # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
                 if (
                         slgn.is_gather() and tlgn.gid != sid
-                ):  # not the artifical link between gather and its own start child
+                ):  # not the artificial link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
                     # this is a way to manually sequentialise a Scatter that has a high DoP
                     for i, ga_drop in enumerate(sdrops):
@@ -2579,6 +2586,10 @@ class LG:
 
         return ret
 
+    @property
+    def reprodata(self):
+        return self._reprodata
+
 
 class _LGTemplate(string.Template):
     delimiter = "%"
@@ -2627,6 +2638,7 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
+    drop_list.append(lg.reprodata)
     return drop_list
 
 
@@ -2759,7 +2771,6 @@ def partition(
             num_islands=num_islands,
             tpl_nodes_len=num_partitions + num_islands,
         )
-
     return pgt
 
 

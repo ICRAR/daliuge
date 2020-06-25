@@ -28,6 +28,8 @@ import inspect
 import logging
 import threading
 
+from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
+
 from . import constants
 from .. import droputils
 from .. import graph_loader
@@ -66,6 +68,21 @@ class LeavesCompletionListener(object):
             self._session.finish()
 
 
+class ReproFinishedListener(object):
+    def __init__(self, graph, session):
+        self._session = session
+        self._nexpected = len(graph)
+        self._completed = 0
+
+    def handleEvent(self, evt):
+        self._completed += 1
+        self._session.append_reprodata(evt.oid, evt.reprodata)
+        logger.debug("%d/%d drops filed reproducibility", self._completed, self._nexpected)
+        if self._completed == self._nexpected:
+            logger.debug("Building Reproducibility BlockDAG")
+            init_runtime_repro_data(self._session._graph, self._session._graphreprodata)
+
+
 track_current_session = utils.object_tracking('session')
 
 
@@ -99,6 +116,7 @@ class Session(object):
         self._error_status_listener = None
         self._nm = nm
         self._dropsubs = {}
+        self._graphreprodata = None
 
     @property
     def sessionId(self):
@@ -122,6 +140,10 @@ class Session(object):
     def drops(self):
         return self._drops
 
+    @property
+    def reprodata(self):
+        return self._graphreprodata
+
     @track_current_session
     def addGraphSpec(self, graphSpec):
         """
@@ -131,7 +153,10 @@ class Session(object):
         DROP. Each DROP specification is checked to see it contains
         all the necessary details to construct a proper DROP. If one
         DROP specification is found to be inconsistent the whole operation
-        fill wail.
+        will fail.
+
+        This operation also 'slices off' a dictionary containing graph-wide
+        reproducibility information. This is stored as a class variable for later use.
 
         Adding graph specs to the session is only allowed while the session is
         in the PRISTINE or BUILDING status; otherwise an exception will be
@@ -150,7 +175,7 @@ class Session(object):
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
-        graphSpecDict = graph_loader.loadDropSpecs(graphSpec)
+        graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
 
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
@@ -222,6 +247,9 @@ class Session(object):
         self._roots = graph_loader.createGraphFromDropSpecList(self._graph.values(), session=self)
         logger.info("%d drops successfully created", len(self._graph))
 
+        #  Add listeners for reproducibility information
+        repro_listener = ReproFinishedListener(self._graph, self)
+
         for drop, _ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
@@ -236,6 +264,8 @@ class Session(object):
             # Register them with the error handler
             for l in event_listeners:
                 drop.subscribe(l)
+            #  Register each drop for reproducibility listening
+            drop.subscribe(repro_listener, 'reproducibility')
 
         logger.info("Stored all drops, proceeding with further customization")
 
@@ -297,7 +327,7 @@ class Session(object):
         Called when an event has been fired by a remote drop.
         The event is then delivered to the interested drops of this session.
         """
-        if not evt.uid in self._dropsubs:
+        if evt.uid not in self._dropsubs:
             logger.debug("No subscription found for drop %s", evt.uid)
             return
         for tgt in self._dropsubs[evt.uid]:
@@ -352,6 +382,11 @@ class Session(object):
                     mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
 
                 self._proxyinfo.append((host, rpc_port, local_uid, mname, remote_uid))
+
+    def append_reprodata(self, oid, reprodata):
+        if oid in self._graph:
+            self._graph[oid]['reprodata']['pg_data']['run_data'] = reprodata['data']
+            self._graph[oid]['reprodata']['pg_data']['run_merkleroot'] = reprodata['merkleroot']
 
     @track_current_session
     def finish(self):

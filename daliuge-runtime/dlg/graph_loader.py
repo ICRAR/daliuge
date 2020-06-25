@@ -175,10 +175,16 @@ def loadDropSpecs(dropSpecList):
     all DROP specifications (i.e., a dictionary of dictionaries) keyed on
     the OID of each DROP. Unlike `readObjectGraph` and `readObjectGraphS`,
     this method doesn't actually create the DROPs themselves.
+
+    Slices off graph-wise reproducibility data for later use
     """
 
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
+    reprodata = None
+    if dropSpecList[-1]['merkleroot'] is not None:
+        reprodata = dropSpecList.pop()
+        logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata['rmode'])
     for n, dropSpec in enumerate(dropSpecList):
         # 'type' and 'oit' are mandatory
         check_dropspec(n, dropSpec)
@@ -207,7 +213,7 @@ def loadDropSpecs(dropSpecList):
                 dropSpecs[dropSpec[rel]]
 
     # Done!
-    return dropSpecs
+    return dropSpecs, reprodata
 
 
 def createGraphFromDropSpecList(dropSpecList, session=None):
@@ -222,6 +228,9 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
         cf = __CREATION_FUNCTIONS[dropType]
         drop = cf(dropSpec, session=session)
+        if session is not None:
+            # Now using per-drop reproducibility setting.
+            drop.reproducibility_level = dropSpec['reprodata']['rmode']  # session.reprodata['rmode']
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
@@ -264,7 +273,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     return roots
 
 
-def _createPlain(dropSpec, dryRun=False, session=None):
+def _createPlain(dropSpec, dryRun=False, session=None, rmode=0):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -275,7 +284,7 @@ def _createPlain(dropSpec, dryRun=False, session=None):
     return storageType(oid, uid, dlg_session=session, **kwargs)
 
 
-def _createContainer(dropSpec, dryRun=False, session=None):
+def _createContainer(dropSpec, dryRun=False, session=None, rmode=0):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -299,7 +308,7 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     return containerType(oid, uid, dlg_session=session, **kwargs)
 
 
-def _createSocket(dropSpec, dryRun=False, session=None):
+def _createSocket(dropSpec, dryRun=False, session=None, rmode=0):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -308,7 +317,7 @@ def _createSocket(dropSpec, dryRun=False, session=None):
     return SocketListenerApp(oid, uid, dlg_session=session, **kwargs)
 
 
-def _createApp(dropSpec, dryRun=False, session=None):
+def _createApp(dropSpec, dryRun=False, session=None, rmode=0):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
     del kwargs['app']
