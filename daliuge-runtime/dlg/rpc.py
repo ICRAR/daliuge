@@ -31,7 +31,6 @@ import importlib
 import logging
 import os
 import threading
-import time
 
 from six.moves import queue as Queue  # @UnresolvedImport
 
