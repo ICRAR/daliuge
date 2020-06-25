@@ -323,16 +323,24 @@ def lg_build_blockdag(lg: dict):
     logger.info("BlockDAG Generated at LG/T level")
 
 
-def pgt_build_blockdag(drops: list):
+def build_blockdag(drops: list, abstraction: str = 'pgt'):
     """
-    Uses Kahn's algorithm to topologically sort a list of physical graph template nodes
+    Uses Kahn's algorithm to topologically sort a logical graph dictionary.
     Exploits that a DAG contains at least one node with in-degree 0.
     Processes drops in-order.
     O(V + E) time complexity.
     :param drops: The list of drops
+    :param abstraction: The level of graph abstraction 'pgt' || 'pg'
     :return:
     """
-    #  Check if pg-blockhash is none
+    blockstr = 'pgt'
+    parentstr = 'pgt_parenthashes'
+    block_builder = build_pgt_block_data
+    if abstraction == "pg":
+        blockstr = 'pg'
+        parentstr = 'pg_parenthashes'
+        block_builder = build_pg_block_data
+
     from collections import deque
     dropset = {}
     neighbourset = {}
@@ -360,73 +368,20 @@ def pgt_build_blockdag(drops: list):
 
     while q:
         did = q.pop()
-        build_pgt_block_data(dropset[did][0])
+        block_builder(dropset[did][0])
         visited += 1
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             # Add our new hash to the parest-hash list
-            parenthash = dropset[did][0]['reprodata']['pgt_blockhash']
-            dropset[n][0]['reprodata']['pgt_parenthashes'].append(parenthash)
+            parenthash = dropset[did][0]['reprodata'][blockstr]
+            dropset[n][0]['reprodata'][parentstr].append(parenthash)
             if dropset[n][1] == 0:
                 q.append(n)
 
     if visited != len(dropset):
         raise Exception("Not a DAG")
 
-    logger.info("BlockDAG Generated at PGT level")
-
-
-def pg_build_blockdag(drops: list):
-    """
-    Uses Kahn's algorithm to topologically sort a list of physical graph template nodes
-    Exploits that a DAG contains at least one node with in-degree 0.
-    Processes drops in-order.
-    O(V + E) time complexity.
-    :param drops: The list of drops
-    :return:
-    """
-    #  Check if pg-blockhash is none
-    from collections import deque
-    dropset = {}
-    neighbourset = {}
-    visited = 0
-    q = deque()
-
-    for drop in drops:
-        did = drop['oid']
-        dropset[did] = [drop, 0]  # To guarantee all nodes have entries
-    for drop in drops:
-        did = drop['oid']
-        neighbourset[did] = []
-        if 'outputs' in drop:
-            for dest in drop['outputs']:
-                dropset[dest][1] += 1
-                neighbourset[did].append(dest)
-        if 'consumers' in drop:  # There may be some bizarre scenario when a drop has both
-            for dest in drop['consumers']:
-                dropset[dest][1] += 1
-                neighbourset[did].append(dest)
-
-    for did in dropset:
-        if dropset[did][1] == 0:
-            q.append(did)
-
-    while q:
-        did = q.pop()
-        build_pg_block_data(dropset[did][0])
-        visited += 1
-        for n in neighbourset[did]:
-            dropset[n][1] -= 1
-            # Add our new hash to the parest-hash list
-            parenthash = dropset[did][0]['reprodata']['pg_blockhash']
-            dropset[n][0]['reprodata']['pg_parenthashes'].append(parenthash)
-            if dropset[n][1] == 0:
-                q.append(n)
-
-    if visited != len(dropset):
-        raise Exception("Not a DAG")
-
-    # logger.info("BlockDAG Generated at PG level")
+    # logger.info("BlockDAG Generated at" + abstraction + " level")
 
 
 def init_lgt_repro_data(lgt: dict, rmode: str):
@@ -475,7 +430,7 @@ def init_pgt_unroll_repro_data(pgt: list):
     reprodata = pgt.pop()
     for drop in pgt:
         init_pgt_unroll_repro_drop_data(drop)
-    pgt_build_blockdag(pgt)
+    build_blockdag(pgt, 'pgt')
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT unroll level")
     return pgt
@@ -490,7 +445,7 @@ def init_pgt_partition_repro_data(pgt: list):
     reprodata = pgt.pop()
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop)
-    pgt_build_blockdag(pgt)
+    build_blockdag(pgt, 'pgt')
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
     return pgt
@@ -510,7 +465,7 @@ def init_pg_repro_data(pg: list):
         reprodata["rmode"] = str(rmode.value)
     for drop in pg:
         init_pg_repro_drop_data(drop)
-    pg_build_blockdag(pg)
+    build_blockdag(pg, 'pg')
     pg.append(reprodata)
     logger.info("Reproducibility data finished at PG level")
     return pg
@@ -531,7 +486,7 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
         reprodata["rmode"] = str(rmode.value)
     for drop in pg.items():
         init_runtime_repro_drop_data(drop[1])
-    pg_build_blockdag(list(pg.values()))
+    build_blockdag(list(pg.values()), 'pg')
     pg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
     return pg
