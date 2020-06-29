@@ -209,7 +209,7 @@ class NodeManagerBase(DROPManager):
         return self._sessions[sessionId].status
 
     def getSessionReproStatus(self, sessionId):
-        pass
+        return self._sessions[sessionId].reprostatus
 
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
