@@ -128,6 +128,9 @@ class ManagerRestServer(RestServer):
         app.get('/api/sessions/<sessionId>/graph/size', callback=self.getGraphSize)
         app.get('/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
         app.post('/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
+        app.get('/api/sessions/<sessionId>/repro/status', callback=self.getSessionReproStatus)
+        app.get('/api/sessions/<sessionId>/repro/data', callback=self.getSessionReproData)
+
 
         # The non-REST mappings that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
@@ -176,6 +179,17 @@ class ManagerRestServer(RestServer):
         status = self.dm.getSessionStatus(sessionId)
         logger.debug("%s", json.dumps(graphDict))
         return {'status': status, 'graph': graphDict}
+
+    @daliuge_aware
+    def getSessionReproStatus(self, sessionId):
+        return self.dm.getSessionReproStatus(sessionId)
+
+    @daliuge_aware
+    def getSessionReproData(self, sessionId):
+        #  For now, we only have information on a per-graph basis.
+        graphDict = self.dm.getGraph(sessionId)
+        reprodata = self.dm.getGraphReproData(sessionId)
+        return {'graph': graphDict, 'reprodata': reprodata}
 
     @daliuge_aware
     def destroySession(self, sessionId):
