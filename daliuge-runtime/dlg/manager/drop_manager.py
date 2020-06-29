@@ -71,7 +71,7 @@ class DROPManager(object):
     @abc.abstractmethod
     def getSessionReproStatus(self, sessionId):
         """
-        Returns the reproducibility status of the session 'sessionId'.
+        Returns the reproducibility status of the session `sessionId`.
         Not guaranteed to be idenitcal to the usual SessionStatus.
         """
 
@@ -89,11 +89,6 @@ class DROPManager(object):
         Returns the status of the graph being executed in session `sessionId`.
         """
 
-    @abc.abstractmethod
-    def getGraphReproStatus(self, sessionId):
-        """
-        Returns the reproducibility status of the graph being executed in session 'sessionId'.
-        """
 
     @abc.abstractmethod
     def getGraph(self, sessionId):
