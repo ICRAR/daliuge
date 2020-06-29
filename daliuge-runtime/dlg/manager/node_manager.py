@@ -223,13 +223,14 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].getGraphStatus()
 
-    def getGraphReproStatus(self, sessionId):
-        pass
-
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
         #  TODO: Ensure returns reproducibility data.
         return self._sessions[sessionId].getGraph()
+
+    def getGraphReproData(self, sessionId):
+        #  TODO make graph reprodata accessible
+        return self._sessions[sessionId]._graphreprodata
 
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
