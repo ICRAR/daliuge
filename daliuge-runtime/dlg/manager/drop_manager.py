@@ -98,6 +98,12 @@ class DROPManager(object):
         """
 
     @abc.abstractmethod
+    def getGraphReproData(self, sessionId):
+        """
+        Returns the graph-wide reproducibility data for session `sessionId`
+        """
+
+    @abc.abstractmethod
     def deploySession(self, sessionId, completedDrops=[]):
         """
         Deploys the graph specification held by session `sessionId`, effectively
