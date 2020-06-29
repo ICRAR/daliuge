@@ -72,7 +72,7 @@ class DROPManager(object):
     def getSessionReproStatus(self, sessionId):
         """
         Returns the reproducibility status of the session `sessionId`.
-        Not guaranteed to be idenitcal to the usual SessionStatus.
+        Not guaranteed to be identical to the usual SessionStatus.
         """
 
     @abc.abstractmethod
