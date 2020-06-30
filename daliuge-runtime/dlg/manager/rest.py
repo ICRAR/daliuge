@@ -185,6 +185,15 @@ class ManagerRestServer(RestServer):
         return self.dm.getSessionReproStatus(sessionId)
 
     @daliuge_aware
+    def getSessionsReproStatus(self):
+        sessions = []
+        for sessionId in self.dm.getSessionIds():
+            sessions.append({'sessionId': sessionId, 'status': self.dm.getSessionStatus(sessionId),
+                             'size': self.dm.getGraphSize(sessionId),
+                             'repro': self.dm.getSessionReproStatus(sessionId)})
+        return sessions
+
+    @daliuge_aware
     def getSessionReproData(self, sessionId):
         #  For now, we only have information on a per-graph basis.
         graphDict = self.dm.getGraph(sessionId)
