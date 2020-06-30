@@ -392,6 +392,7 @@ class ZMQPubSubMixIn(object):
                     logger.debug("Got an 'Again' when publishing event")
                     time.sleep(0.01)
                     continue
+        pub.close()
 
     def _zmq_sub_queue_thread(self):
         while self._pubsub_running:
@@ -427,6 +428,7 @@ class ZMQPubSubMixIn(object):
                 # Figure out what to do here
                 logger.exception("Something bad happened in %s:%d to ZMQ :'(", self._events_host, self._events_port)
                 break
+        sub.close()
 
 
 # So far we currently support ZMQ only for event publishing
