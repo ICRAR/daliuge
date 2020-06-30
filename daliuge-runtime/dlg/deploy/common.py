@@ -141,6 +141,21 @@ def monitor_sessions_repro(session_id=None, poll_interval=10, host='127.0.0.1',
             time.sleep(poll_interval)
 
 
+def fetch_reproducibility(session_id=None, poll_interval=10, host='127.0.0.1',
+                          port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60):
+    """
+    Fetches the final graph and associated reproducibility information for `session_id`.
+    """
+    if session_id is None:
+        return {}
+    client = _get_client(host, port, timeout)
+    while True:
+        repro_data = client.session_repro_data(session_id)
+        if repro_data is not None:
+            return repro_data
+        time.sleep(poll_interval)
+
+
 def submit(pg, host='127.0.0.1', port=constants.ISLAND_DEFAULT_REST_PORT,
            timeout=60, skip_deploy=False, session_id=None):
     """
