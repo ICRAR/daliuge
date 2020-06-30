@@ -313,15 +313,15 @@ class ZMQPubSubMixIn(object):
     def start(self):
         self._pubsub_running = True
         super(ZMQPubSubMixIn, self).start()
-        self._pubevts = Queue.Queue()
-        self._recvevts = Queue.Queue()
+        self._events_in = Queue.Queue()
+        self._events_out = Queue.Queue()
         self._subscriptions = Queue.Queue()
 
         # Starts background threads, but wait until their sockets are created
         timeout = 30
-        self._zmqpubthread = self._start_thread(self._zmq_pub_thread, "ZMQ evtpub", timeout)
-        self._zmqsubthread = self._start_thread(self._zmq_sub_thread, "ZMQ evtsub", timeout)
-        self._zmqsubqthread = self._start_thread(self._zmq_sub_queue_thread, "ZMQ evtsubq")
+        self._event_publisher = self._start_thread(self._publish_events, "Evt pub", timeout)
+        self._event_receiver = self._start_thread(self._receive_events, "Evt recv", timeout)
+        self._event_deliverer = self._start_thread(self._deliver_events, "Evt delivery")
 
     def _start_thread(self, target, name, timeout=None):
         evt = threading.Event() if timeout else None
@@ -335,13 +335,13 @@ class ZMQPubSubMixIn(object):
     def shutdown(self):
         super(ZMQPubSubMixIn, self).shutdown()
         self._pubsub_running = False
-        self._zmqsubqthread.join()
-        self._zmqpubthread.join()
-        self._zmqsubthread.join()
+        self._event_deliverer.join()
+        self._event_publisher.join()
+        self._event_receiver.join()
         logger.info("ZeroMQ event publisher/subscriber finished")
 
     def publish_event(self, evt):
-        self._pubevts.put(evt)
+        self._events_out.put(evt)
 
     def subscribe(self, host, port):
         timeout = 5
@@ -352,20 +352,20 @@ class ZMQPubSubMixIn(object):
             raise DaliugeException("ZMQ subscription not achieved within %d seconds" % (timeout,))
         logger.info("Subscribed for events originating from %s", endpoint)
 
-    def _zmq_pub_thread(self, sock_created):
+    def _publish_events(self, sock_created):
         import zmq
 
         pub = self._context.socket(zmq.PUB)  # @UndefinedVariable
         pub.set_hwm(0) # Never drop messages that should be sent
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(self._events_host), self._events_port)
         pub.bind(endpoint)
-        logger.info("Listening for events via ZeroMQ on %s", endpoint)
+        logger.info("Publishing events via ZeroMQ on %s", endpoint)
         sock_created.set()
 
         while self._pubsub_running:
 
             try:
-                obj = self._pubevts.get_nowait()
+                obj = self._events_out.get_nowait()
             except Queue.Empty:
                 time.sleep(0.01)
                 continue
@@ -380,15 +380,15 @@ class ZMQPubSubMixIn(object):
                     continue
         pub.close()
 
-    def _zmq_sub_queue_thread(self):
+    def _deliver_events(self):
         while self._pubsub_running:
             try:
-                evt = self._recvevts.get_nowait()
+                evt = self._events_in.get_nowait()
                 self.deliver_event(evt)
             except Queue.Empty:
                 time.sleep(0.01)
 
-    def _zmq_sub_thread(self, sock_created):
+    def _receive_events(self, sock_created):
         import zmq
 
         sub = self._context.socket(zmq.SUB)  # @UndefinedVariable
@@ -407,7 +407,7 @@ class ZMQPubSubMixIn(object):
 
             try:
                 evt = sub.recv_pyobj(flags = zmq.NOBLOCK)  # @UndefinedVariable
-                self._recvevts.put(evt)
+                self._events_in.put(evt)
             except zmq.error.Again:
                 time.sleep(0.01)
             except Exception:
