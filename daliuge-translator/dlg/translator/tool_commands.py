@@ -94,9 +94,12 @@ def submit(pg, opts):
                                 poll_interval=opts.poll_interval)
 
     if opts.reproducibility:
+        dump = _setup_output(opts)
         common.monitor_sessions_repro(session_id, host=opts.host, port=opts.port,
                                       poll_interval=opts.poll_interval)
-        #  TODO: If checking reproducibility. Get final data and return that.
+        repro_data = common.fetch_reproducibility(session_id, host=opts.host, port=opts.port,
+                                     poll_interval=opts.poll_interval)
+        dump(repro_data['graph'])
 
 
 def _add_output_options(parser):
@@ -308,7 +311,6 @@ def dlg_submit(parser, args):
         pg = json.load(f)
         repro = pg[-1]
         submit(pg, opts)
-        #  TODO: Add one more function to get the reprodata for the graph
         pg.append(repro)
 
 
