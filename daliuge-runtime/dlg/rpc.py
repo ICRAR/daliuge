@@ -87,6 +87,12 @@ class ZeroRPCClient(RPCClientBase):
     request = collections.namedtuple('request', 'method args queue')
     response = collections.namedtuple('response', 'value is_exception')
 
+    def __init__(self, *args, **kwargs):
+        super(ZeroRPCClient, self).__init__(*args, **kwargs)
+        if not hasattr(self, '_context'):
+            zerorpc = utils.timed_import('zerorpc')
+            self._context = zerorpc.Context()
+
     def start(self):
         super(ZeroRPCClient, self).start()
 
@@ -140,20 +146,14 @@ class ZeroRPCClient(RPCClientBase):
 
     def run_zrpcclient(self, host, port, req_queue):
         import gevent
-
-        # Each client uses a different Context; otherwise they all share
-        # the same Context.instance() which is global to the process,
-        # and generates the same channel IDs, confusing the server
         import zerorpc
-        ctx = zerorpc.Context()
-        client = zerorpc.Client("tcp://%s:%d" % (host,port), context=ctx)
+        client = zerorpc.Client("tcp://%s:%d" % (host,port), context=self._context)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)
         gevent.joinall([forwarder])
 
         logger.info("Closing %s:%d ZeroRPC client", host, port)
         client.close()
-        ctx.destroy()
 
     def forward_requests(self, req_queue, client):
         import gevent
@@ -187,13 +187,16 @@ class ZeroRPCClient(RPCClientBase):
 class ZeroRPCServer(RPCServerBase):
     """ZeroRPC server support"""
 
+    @classmethod
+    def create_context(cls):
+        # This import can take a long time in big HPC deployments
+        return utils.timed_import('zerorpc').Context()
+
     def start(self):
         super(ZeroRPCServer, self).start()
 
-        # Early importing of big modules. These can take a long time in
-        # distributed filesystems on HPC environments with a big node count
-        for module in ('gevent', 'zerorpc'):
-            utils.timed_import(module)
+        # See above
+        utils.timed_import('gevent')
 
         # Starts the single-threaded ZeroRPC server for RPC requests
         timeout = 30
@@ -208,11 +211,8 @@ class ZeroRPCServer(RPCServerBase):
         import gevent
         import zerorpc
 
-        # Use a specific context; otherwise multiple servers on the same process
-        # (only during tests) share the same Context.instance() which is global
-        # to the process
-        ctx = zerorpc.Context()
-        self._zrpcserver = zerorpc.Server(self, context=ctx)
+        # Use context provided by subclass
+        self._zrpcserver = zerorpc.Server(self, context=self._context)
         # zmq needs an address, not a hostname
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port,)
         self._zrpcserver.bind(endpoint)
@@ -222,7 +222,7 @@ class ZeroRPCServer(RPCServerBase):
         runner = gevent.spawn(self._zrpcserver.run)
         stopper = gevent.spawn(self.stop_zrpcserver)
         gevent.joinall([runner, stopper])
-        ctx.destroy()
+        logger.info("ZeroRPC server finished")
 
     def stop_zrpcserver(self):
         import gevent

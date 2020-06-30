@@ -311,19 +311,11 @@ class ZMQPubSubMixIn(object):
         self._events_port = events_port
 
     def start(self):
-
-        # temporarily timing import statements to check FS times on HPC environs
-        zmq = utils.timed_import('zmq')
-
         self._pubsub_running = True
         super(ZMQPubSubMixIn, self).start()
         self._pubevts = Queue.Queue()
         self._recvevts = Queue.Queue()
         self._subscriptions = Queue.Queue()
-
-        # Setting up zeromq for event publishing/subscription
-        # They share the same context, there's no need for two separate ones
-        self._zmqctx = zmq.Context()
 
         # We create the sockets in their respective threads to avoid
         # multithreading issues with zmq, but still wait until they are created
@@ -351,8 +343,7 @@ class ZMQPubSubMixIn(object):
         self._zmqsubqthread.join()
         self._zmqpubthread.join()
         self._zmqsubthread.join()
-        self._zmqctx.destroy()
-        logger.info("ZMQ context used for event pub/sub destroyed")
+        logger.info("ZeroMQ event publisher/subscriber finished")
 
     def publish_event(self, evt):
         self._pubevts.put(evt)
@@ -369,7 +360,7 @@ class ZMQPubSubMixIn(object):
     def _zmq_pub_thread(self, sock_created):
         import zmq
 
-        pub = self._zmqctx.socket(zmq.PUB)  # @UndefinedVariable
+        pub = self._context.socket(zmq.PUB)  # @UndefinedVariable
         pub.set_hwm(0) # Never drop messages that should be sent
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(self._events_host), self._events_port)
         pub.bind(endpoint)
@@ -405,7 +396,7 @@ class ZMQPubSubMixIn(object):
     def _zmq_sub_thread(self, sock_created):
         import zmq
 
-        sub = self._zmqctx.socket(zmq.SUB)  # @UndefinedVariable
+        sub = self._context.socket(zmq.SUB)  # @UndefinedVariable
         sub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
         sock_created.set()
 
@@ -442,7 +433,14 @@ class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
     def __init__(self, useDLM=True, dlgPath=None, error_listener=None, event_listeners=[], max_threads=0,
                  host=None, rpc_port=constants.NODE_DEFAULT_RPC_PORT,
                  events_port=constants.NODE_DEFAULT_EVENTS_PORT):
+        # We "just know" that our RpcMixIn will have a create_context static
+        # method, which in reality means we are using the ZeroRPCServer class
+        self._context = RpcMixIn.create_context()
         host = host or '127.0.0.1'
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
         NodeManagerBase.__init__(self, useDLM, dlgPath, error_listener, event_listeners, max_threads)
+
+    def shutdown(self):
+        super(NodeManager, self).shutdown()
+        self._context.term()
