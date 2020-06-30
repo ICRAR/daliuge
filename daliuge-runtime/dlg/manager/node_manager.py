@@ -317,25 +317,20 @@ class ZMQPubSubMixIn(object):
         self._recvevts = Queue.Queue()
         self._subscriptions = Queue.Queue()
 
-        # We create the sockets in their respective threads to avoid
-        # multithreading issues with zmq, but still wait until they are created
-        # via these events
+        # Starts background threads, but wait until their sockets are created
         timeout = 30
-        pubsock_created = threading.Event()
-        subsock_created = threading.Event()
+        self._zmqpubthread = self._start_thread(self._zmq_pub_thread, "ZMQ evtpub", timeout)
+        self._zmqsubthread = self._start_thread(self._zmq_sub_thread, "ZMQ evtsub", timeout)
+        self._zmqsubqthread = self._start_thread(self._zmq_sub_queue_thread, "ZMQ evtsubq")
 
-        self._zmqpubthread = threading.Thread(target = self._zmq_pub_thread, name="ZMQ evtpub", args=(pubsock_created,))
-        self._zmqpubthread.start()
-        if not pubsock_created.wait(timeout):
-            raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
-
-        self._zmqsubthread = threading.Thread(target = self._zmq_sub_thread, name="ZMQ evtsub", args=(subsock_created,))
-        self._zmqsubthread.start()
-        if not subsock_created.wait(timeout):
-            raise Exception("Failed to create PUB ZMQ socket in %d seconds" % (timeout,))
-
-        self._zmqsubqthread = threading.Thread(target = self._zmq_sub_queue_thread, name="ZMQ evtsubq")
-        self._zmqsubqthread.start()
+    def _start_thread(self, target, name, timeout=None):
+        evt = threading.Event() if timeout else None
+        args = (evt,) if evt else ()
+        t = threading.Thread(target=target, name=name, args=args)
+        t.start()
+        if evt and not evt.wait(timeout):
+            raise Exception('Failed to start %s thread in %d seconds' % (name, timeout))
+        return t
 
     def shutdown(self):
         super(ZMQPubSubMixIn, self).shutdown()
