@@ -118,6 +118,29 @@ def monitor_sessions(session_id=None, poll_interval=10, host='127.0.0.1',
             time.sleep(poll_interval)
 
 
+def monitor_sessions_repro(session_id=None, poll_interval=10, host='127.0.0.1',
+                           port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60,
+                           status_dump_path=None):
+    """
+    Very similar to monitoring execution status of all (or one) session specified by `session_id`
+    by polling `host`:`port`, and returns when they all have finalized their reproducibility data.
+    """
+    client = _get_client(host, port, timeout, status_dump_path)
+    if session_id:
+        while True:
+            repro_status = client.session_repro_status(session_id)
+            print("Status is ", repro_status)
+            if repro_status:
+                return True
+            time.sleep(poll_interval)
+    else:
+        while True:
+            sessions = client.sessions()
+            if all(client.session_repro_status(s) for s in sessions):
+                return {s['sessionId']: s['repro'] for s in sessions}
+            time.sleep(poll_interval)
+
+
 def submit(pg, host='127.0.0.1', port=constants.ISLAND_DEFAULT_REST_PORT,
            timeout=60, skip_deploy=False, session_id=None):
     """
