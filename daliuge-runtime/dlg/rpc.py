@@ -27,15 +27,12 @@ technologies we support.
 """
 
 import collections
-import importlib
 import logging
-import os
 import threading
 
 from six.moves import queue as Queue  # @UnresolvedImport
 
 from . import utils
-from .exceptions import DaliugeException
 
 
 logger = logging.getLogger(__name__)
@@ -238,179 +235,7 @@ class ZeroRPCServer(RPCServerBase):
         super(ZeroRPCServer, self).shutdown()
         self._zrpcserverthread.join()
 
-
-class RPyCClient(RPCClientBase): # pragma: no cover
-    """RPyC client support"""
-
-    def get_rpc_client(self, hostname, port):
-        import rpyc
-        client = rpyc.connect(hostname, port)
-        return client.root, client.close
-
-class RPyCServer(RPCServerBase): # pragma: no cover
-    """RPyC server support"""
-
-    def start(self):
-        super(RPyCServer, self).start()
-
-        import rpyc
-        from rpyc.utils.server import ThreadedServer
-
-        nm = self
-        class NMService(rpyc.Service):
-            def exposed_call_drop(self, session_id, uid, name, *args):
-                return nm.call_drop(session_id, uid, name, *args)
-            def exposed_get_drop_property(self, session_id, uid, name):
-                return nm.get_drop_attribute(session_id, uid, name)
-            def exposed_has_method(self, session_id, uid, name):
-                return nm.has_method(session_id, uid, name)
-
-        self._rpycserver = ThreadedServer(NMService, hostname=self._rpc_host, port=self._rpc_port) # ThreadPoolServer
-
-        # Starts the single-threaded RPyC server for RPC requests
-        self._rpycserverthread = threading.Thread(target=self._rpycserver.start, name="RPyC server")
-        self._rpycserverthread.start()
-        logger.info("Listening for RPC requests via RPyC on %s:%d", self._rpc_host, self._rpc_port)
-
-    def shutdown(self):
-        super(RPyCServer, self).shutdown()
-        self._rpycserver.close()
-        self._rpycserverthread.join()
-
-class PyroRPCClient(RPCClientBase): # pragma: no cover
-    """Pyro client support"""
-
-    def get_rpc_client(self, hostname, port):
-        import Pyro4
-        uri = Pyro4.URI("PYRO:node_manager@%s:%d" % (hostname, port))
-        proxy = Pyro4.Proxy(uri)
-        return proxy, proxy._pyroRelease
-
-class PyroRPCServer(RPCServerBase): # pragma: no cover
-    """Base Pyro server support. Subclasses support different server types"""
-
-    def start(self):
-
-        import Pyro4
-
-        super(PyroRPCServer, self).start()
-
-        # Starts the single-threaded Pyro server for RPC requests
-        logger.info("Listening for RPC requests via Pyro on %s:%d", self._rpc_host, self._rpc_port)
-        self.setup_pyro()
-        self._pyrodaemon = Pyro4.Daemon(self._rpc_host, self._rpc_port)
-        self._pyrodaemon.register(self, "node_manager")
-        self._pyroserverthread = threading.Thread(target=self._pyrodaemon.requestLoop, name="PyroRPC server")
-        self._pyroserverthread.start()
-
-    def shutdown(self):
-        timeout = 5
-        super(PyroRPCServer, self).shutdown()
-        self._pyrodaemon.shutdown()
-        self._pyroserverthread.join(timeout)
-        host = 'localhost' if self._rpc_host == '0.0.0.0' else self._rpc_host
-        if not utils.portIsClosed(host, self._rpc_port, timeout):
-            logger.warning("Pyro RPC port %d is still open after %d seconds", timeout)
-
-    def setup_pyro(self):
-        """
-        Sets up Pyro configuration items.
-
-        Pyro >= 4.20 uses the 'serpent' serializer by default. In this serializer
-        "most custom classes aren't dealt with automatically" [1], including our
-        Event class. Thus, in order to support passing events via Pyro we need to
-        either instruct Pyro how to serialize the Event class, or to use the
-        'pickle' serializer.
-
-        We used to choose to add explicit support for the Event class and keep
-        using the 'serpent' serializer. Although more complex, it's in theory safer
-        (see [1] again). Once we started supporting python 3 we found that the
-        serpent serializer wasn't working correctly, most probably (but not totally
-        proven) having troubles with the bytes/bytearray data types. This forced us
-        to move back to the pickle serializer, which seems to perform better anyway.
-        We leave the previous serpent-based configuration as a reference in case we
-        want to revert to it.
-
-        In Pyro >= 4.46 the REQUIRE_EXPOSE configuration flag was defaulted to True.
-        Instead of embracing it (which would require us to change all our drop
-        classes and decorate them with @expose) we change the flag back to False.
-
-        [1] https://pythonhosted.org/Pyro4/clientcode.html#serialization
-        """
-
-        import Pyro4
-
-        def setup_serpent():
-
-            from .event import Event
-
-            def __pyro4_class_to_dict(o):
-                d = {'__class__' : o.__class__.__name__, '__module__': o.__class__.__module__}
-                d.update(o.__dict__)
-                return d
-
-            def __pyro4_dict_to_class(classname, d):
-                modname = d['__module__']
-                module = importlib.import_module(modname)
-                clazz = getattr(module, classname)
-                o = clazz()
-                for k in d:
-                    if k in ['__class__', '__module__']: continue
-                    setattr(o, k, d[k])
-                return o
-
-            Pyro4.util.SerializerBase.register_class_to_dict(Event, __pyro4_class_to_dict)
-            Pyro4.util.SerializerBase.register_dict_to_class('Event', __pyro4_dict_to_class)
-
-        def setup_pickle():
-            Pyro4.config.SERIALIZER = 'pickle'
-            Pyro4.config.SERIALIZERS_ACCEPTED = ['pickle']
-
-        # We could also do one or the other depending on the major version of python
-        #setup_serpent()
-        setup_pickle()
-
-        # In Pyro4 >= 4.46 the default for this option changed to True, which would
-        # mean we need to decorate all our classes with Pyro-specific code.
-        # We don't want that, and thus we restore the old "everything is exposed"
-        # behavior.
-        Pyro4.config.REQUIRE_EXPOSE = False
-
-        # A final thing: we use a default timeout of 60 [s], which should be more
-        # than enough
-        Pyro4.config.COMMTIMEOUT = 60
-
-class MultiplexPyroRPCServer(PyroRPCServer): # pragma: no cover
-    """Pyro server support with mutliplex server type"""
-
-    def setup_pyro(self):
-        super(MultiplexPyroRPCServer, self).setup_pyro()
-        import Pyro4
-        Pyro4.config.SERVERTYPE = 'multiplex'
-
-class ThreadedPyroRPCServer(PyroRPCServer): # pragma: no cover
-    """Pyro server support with multithreaded server type"""
-
-    def setup_pyro(self):
-        super(ThreadedPyroRPCServer, self).setup_pyro()
-        import Pyro4
-        Pyro4.config.SERVERTYPE = 'thread'
-        Pyro4.config.THREADPOOL_SIZE = 16
-        if hasattr(Pyro4.config, 'THREADPOOL_ALLOW_QUEUE'):
-            Pyro4.config.THREADPOOL_ALLOW_QUEUE = False
-
-# Check which rpc backend should be exposed
-rpc_lib = os.environ.get('DALIUGE_RPC', 'zerorpc')
-if rpc_lib in ('pyro', 'pyro-multiplex'): # pragma: no cover
-    RPCServer, RPCClient = MultiplexPyroRPCServer, PyroRPCClient
-elif rpc_lib == 'pyro-threaded': # pragma: no cover
-    RPCServer, RPCClient = ThreadedPyroRPCServer, PyroRPCClient
-elif rpc_lib == 'zerorpc':
-    RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
-elif rpc_lib == 'rpyc': # pragma: no cover
-    RPCServer, RPCClient = RPyCServer, RPyCClient
-else: # pragma: no cover
-    raise DaliugeException("Unknown RPC lib %s, use one of pyro, pyro-multiplex, pyro-threaded, zerorpc, rpyc" % (rpc_lib,))
+RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
 
 class DropProxy(object):
     """

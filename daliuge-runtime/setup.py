@@ -153,10 +153,6 @@ extra_requires = {
     # spead is required only for a specific app and its test, which we
     # skip anyway if spead is not found
     "spead": ["spead2==0.4.0"],
-    # Pyro4 and RPyC are semi-supported RPC alternatives
-    # (while zerorpc is the default)
-    "pyro": ["Pyro4>=4.47"],  # 4.47 contains a fix we contributed
-    "rpyc": ["rpyc"],
     # drive-casa is used by some manual tests under test/integrate
     "drive-casa": ["drive-casa>0.7"],
     # MPI support (MPIApp drops and HPC experiments) requires mpi4py
