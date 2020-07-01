@@ -81,6 +81,7 @@ class ReproFinishedListener(object):
         if self._completed == self._nexpected:
             logger.debug("Building Reproducibility BlockDAG")
             init_runtime_repro_data(self._session._graph, self._session._graphreprodata)
+            self._session.reprostatus = True
 
 
 track_current_session = utils.object_tracking('session')
@@ -117,6 +118,7 @@ class Session(object):
         self._nm = nm
         self._dropsubs = {}
         self._graphreprodata = None
+        self._reprofinished = False
 
     @property
     def sessionId(self):
@@ -143,6 +145,15 @@ class Session(object):
     @property
     def reprodata(self):
         return self._graphreprodata
+
+    @property
+    def reprostatus(self):
+        return self._reprofinished
+
+    @reprostatus.setter
+    def reprostatus(self, status):
+        with self._statusLock:  # TODO: Consider creating another lock
+            self._reprofinished = status
 
     @track_current_session
     def addGraphSpec(self, graphSpec):
