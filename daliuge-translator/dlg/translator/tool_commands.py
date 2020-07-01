@@ -93,6 +93,14 @@ def submit(pg, opts):
         common.monitor_sessions(session_id, host=opts.host, port=opts.port,
                                 poll_interval=opts.poll_interval)
 
+    if opts.reproducibility:
+        dump = _setup_output(opts)
+        common.monitor_sessions_repro(session_id, host=opts.host, port=opts.port,
+                                      poll_interval=opts.poll_interval)
+        repro_data = common.fetch_reproducibility(session_id, host=opts.host, port=opts.port,
+                                     poll_interval=opts.poll_interval)
+        dump(repro_data['graph'])
+
 
 def _add_output_options(parser):
     parser.add_option('-o', '--output', action="store", dest='output', type="string",
@@ -277,6 +285,7 @@ def dlg_submit(parser, args):
     from ..manager import constants
 
     # Submit Physical Graph
+    _add_output_options(parser)
     tool.add_logging_options(parser)
     parser.add_option('-H', '--host', action='store',
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
@@ -294,6 +303,8 @@ def dlg_submit(parser, args):
     parser.add_option('-i', '--poll-interval', type='float',
                       help='Polling interval used for monitoring the execution (default: 10)',
                       default=10)
+    parser.add_option('-R', '--reproducibility', action='store_true', dest='reproducibility',
+                      help='Fetch (and output) reproducibility data for the final execution graph (default: False)')
     (opts, args) = parser.parse_args(args)
 
     with _open_i(opts.pg_path) as f:

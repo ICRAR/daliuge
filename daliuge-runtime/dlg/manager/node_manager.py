@@ -208,6 +208,9 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].status
 
+    def getSessionReproStatus(self, sessionId):
+        return self._sessions[sessionId].reprostatus
+
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
         self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
@@ -222,7 +225,12 @@ class NodeManagerBase(DROPManager):
 
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
+        #  TODO: Ensure returns reproducibility data.
         return self._sessions[sessionId].getGraph()
+
+    def getGraphReproData(self, sessionId):
+        #  TODO make graph reprodata accessible
+        return self._sessions[sessionId]._graphreprodata
 
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
