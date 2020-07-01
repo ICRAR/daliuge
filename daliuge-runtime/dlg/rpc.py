@@ -30,6 +30,9 @@ import collections
 import logging
 import threading
 
+import gevent
+import zerorpc
+
 from six.moves import queue as Queue  # @UnresolvedImport
 
 from . import utils
@@ -90,7 +93,6 @@ class ZeroRPCClient(RPCClientBase):
     def __init__(self, *args, **kwargs):
         super(ZeroRPCClient, self).__init__(*args, **kwargs)
         if not hasattr(self, '_context'):
-            zerorpc = utils.timed_import('zerorpc')
             self._context = zerorpc.Context()
 
     def start(self):
@@ -145,8 +147,6 @@ class ZeroRPCClient(RPCClientBase):
             return client
 
     def run_zrpcclient(self, host, port, req_queue):
-        import gevent
-        import zerorpc
         client = zerorpc.Client("tcp://%s:%d" % (host,port), context=self._context)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)
@@ -156,7 +156,6 @@ class ZeroRPCClient(RPCClientBase):
         client.close()
 
     def forward_requests(self, req_queue, client):
-        import gevent
         while self.rpc_running:
             try:
                 req = req_queue.get_nowait()
@@ -165,7 +164,6 @@ class ZeroRPCClient(RPCClientBase):
                 gevent.sleep(0.005)
 
     def process_response(self, req, async_response):
-        import gevent
         try:
             x = ZeroRPCClient.response(async_response.get_nowait(), False)
         except Exception as e:
@@ -190,13 +188,10 @@ class ZeroRPCServer(RPCServerBase):
     @classmethod
     def create_context(cls):
         # This import can take a long time in big HPC deployments
-        return utils.timed_import('zerorpc').Context()
+        return zerorpc.Context()
 
     def start(self):
         super(ZeroRPCServer, self).start()
-
-        # See above
-        utils.timed_import('gevent')
 
         # Starts the single-threaded ZeroRPC server for RPC requests
         timeout = 30
@@ -207,10 +202,6 @@ class ZeroRPCServer(RPCServerBase):
             raise Exception("ZeroRPC server didn't start within %d seconds" % (timeout,))
 
     def run_zrpcserver(self, host, port, server_started):
-
-        import gevent
-        import zerorpc
-
         # Use context provided by subclass
         self._zrpcserver = zerorpc.Server(self, context=self._context)
         # zmq needs an address, not a hostname
@@ -225,7 +216,6 @@ class ZeroRPCServer(RPCServerBase):
         logger.info("ZeroRPC server finished")
 
     def stop_zrpcserver(self):
-        import gevent
         while self.rpc_running:
             gevent.sleep(0.01)
         logger.info("Closing ZeroRPC server on tcp://%s:%d", utils.zmq_safe(self._rpc_host), self._rpc_port)
