@@ -55,6 +55,8 @@ install:
  - pip install -e daliuge-common/
  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
+ - apt update && apt install -y doxygen
+   # - apt update && apt install -y git
 
 # run the tests, making sure subprocesses generate coverage information
 script:
@@ -63,6 +65,20 @@ script:
  - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
  - coverage combine $COVFILES
  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
+
+
+ - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
+ - git config --global user.name $GITHUB_USERNAME
+ - git config --global user.email "$GITHUB_USERNAME@gmail.com"
+ - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
+ - cd EAGLE_test_repo/
+ - git checkout origin/doxygentest
+ - rm -rf DALIUGE/
+ - mv ../DALIUGE/ .
+ - git checkout -b doxygentest
+ - git add * 
+ - git commit -m 'doxygen test'
+ - git push -u origin doxygentest
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
