@@ -56,7 +56,6 @@ install:
  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
  - sudo apt-get update && sudo apt-get install -y doxygen
-   # - apt update && apt install -y git
 
 # run the tests, making sure subprocesses generate coverage information
 script:
