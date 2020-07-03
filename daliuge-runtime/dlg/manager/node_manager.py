@@ -414,19 +414,31 @@ class ZMQPubSubMixIn(object):
 
     def _receive_events(self, sock_created):
         import zmq
+        from zmq.utils.monitor import recv_monitor_message
 
         sub = self._context.socket(zmq.SUB)  # @UndefinedVariable
         sub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
+        sub_monitor = sub.get_monitor_socket()
         sock_created.set()
 
+        pending_connections = {}
         while self._pubsub_running:
 
             # A new subscription has been requested
             try:
                 subscription = self._subscriptions.get_nowait()
                 sub.connect(subscription.endpoint)
-                subscription.finished_evt.set()
+                pending_connections[subscription.endpoint] = subscription.finished_evt
             except Queue.Empty:
+                pass
+
+            try:
+                msg = recv_monitor_message(sub_monitor, flags=zmq.NOBLOCK)
+                if msg['event'] != zmq.EVENT_CONNECTED:
+                    continue
+                finished_evt = pending_connections.pop(utils.b2s(msg['endpoint']))
+                finished_evt.set()
+            except zmq.error.Again:
                 pass
 
             try:
@@ -438,6 +450,8 @@ class ZMQPubSubMixIn(object):
                 # Figure out what to do here
                 logger.exception("Something bad happened in %s:%d to ZMQ :'(", self._events_host, self._events_port)
                 break
+
+        sub_monitor.close()
         sub.close()
 
 
