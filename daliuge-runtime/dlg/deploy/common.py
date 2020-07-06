@@ -129,7 +129,6 @@ def monitor_sessions_repro(session_id=None, poll_interval=10, host='127.0.0.1',
     if session_id:
         while True:
             repro_status = client.session_repro_status(session_id)
-            print("Status is ", repro_status)
             if repro_status:
                 return True
             time.sleep(poll_interval)
