@@ -360,7 +360,7 @@ class ZMQPubSubMixIn(object):
     def subscribe(self, host, port):
         timeout = 5
         finished_evt = threading.Event()
-        endpoint = "tcp://%s:%d" % (host, port)
+        endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
         self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
         if not finished_evt.wait(timeout):
             raise DaliugeException("ZMQ subscription not achieved within %d seconds" % (timeout,))
