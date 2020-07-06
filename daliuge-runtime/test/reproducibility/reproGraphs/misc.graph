@@ -1,0 +1,114 @@
+{
+    "linkDataArray": [],
+    "modelData": {
+        "filePath": "misc.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "category": "Comment",
+            "categoryType": "Other",
+            "collapsed": false,
+            "colour": "#799938",
+            "description": "A node that places a comment in the graph. The comment can be used to communicate important information or intention",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": false,
+            "isGroup": false,
+            "key": -1,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "streaming": false,
+            "subject": null,
+            "text": "Comment"
+        },
+        {
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "category": "Description",
+            "categoryType": "Other",
+            "collapsed": false,
+            "colour": "#9B3065",
+            "description": "A node that places a description in the graph. The description should be used to communicate the purpose of the graph",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [
+                {
+                    "text": "Description",
+                    "value": ""
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": false,
+            "isGroup": false,
+            "key": -2,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "streaming": false,
+            "subject": null,
+            "text": "Description"
+        },
+        {
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "category": "ExclusiveForceNode",
+            "categoryType": "Control",
+            "collapsed": false,
+            "colour": "#000000",
+            "description": "A group that completely specifies the computation on a single node. All child components must be deployed to a single node, and no other components can be deployed to the same node.",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": false,
+            "isGroup": true,
+            "key": -3,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "streaming": false,
+            "subject": null,
+            "text": "Exclusive Force Node"
+        }
+    ]
+}

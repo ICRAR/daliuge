@@ -1,0 +1,260 @@
+{
+    "linkDataArray": [],
+    "modelData": {
+        "filePath": "groups.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "GroupBy",
+            "categoryType": "Group",
+            "collapsed": false,
+            "colour": "#7F8C8D",
+            "description": "Placeholder 'group by' description",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "group_key",
+                    "text": "Group key",
+                    "value": "None"
+                },
+                {
+                    "name": "group_axis",
+                    "text": "Group axis",
+                    "value": "frequency"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "",
+            "inputLocalPorts": [
+                {
+                    "Id": "f21dd6fd-08ae-4955-bb05-6466dfa884f6",
+                    "IdText": "event"
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "c4f1785d-2427-42ef-ad3e-b4ed2428c5b4",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": true,
+            "key": -1,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "",
+            "outputLocalPorts": [
+                {
+                    "Id": "ff77c691-624b-471e-ac7e-c0f25cf86559",
+                    "IdText": "event"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "8ac46084-6e76-4223-8ff7-a352488368d4",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Group By"
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Gather",
+            "categoryType": "Group",
+            "collapsed": false,
+            "colour": "#D35400",
+            "description": "Placeholder 'gather' description",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "num_of_inputs",
+                    "text": "Number of inputs",
+                    "value": "2"
+                },
+                {
+                    "name": "gather_axis",
+                    "text": "Gather axis",
+                    "value": "frequency"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [
+                {
+                    "Id": "4694e4c6-c6ba-42f7-bad6-a2943d369ce6",
+                    "IdText": "event"
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "0bdb44ea-123d-42ff-825d-cb939175586a",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": true,
+            "key": -2,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "",
+            "outputLocalPorts": [
+                {
+                    "Id": "5fcb853a-efa5-4c48-aa72-e803f6d96cb7",
+                    "IdText": "event"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "237f5a78-5bd6-412f-8a8b-70e2f4ea4af1",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Gather"
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Scatter",
+            "categoryType": "Group",
+            "collapsed": false,
+            "colour": "#DDAD00",
+            "description": "Placeholder 'scatter' description",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "num_of_copies",
+                    "text": "Number of copies",
+                    "value": "4"
+                },
+                {
+                    "name": "scatter_axis",
+                    "text": "Scatter axis",
+                    "value": "time"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [
+                {
+                    "Id": "88f46618-57ac-4e9c-99a7-f9cf2d682852",
+                    "IdText": "event"
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "b8cc69ef-de0c-4c6a-bba2-df12aff17a8b",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": true,
+            "key": -3,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "",
+            "outputLocalPorts": [
+                {
+                    "Id": "c29554bd-8003-410a-9cce-c0d4376bb1ef",
+                    "IdText": "event"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "a8e147cb-065c-49ee-8c52-25c53cf36a07",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Scatter"
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Loop",
+            "categoryType": "Group",
+            "collapsed": false,
+            "colour": "#512E5F",
+            "description": "Placeholder 'loop' description",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "num_of_iter",
+                    "text": "Number loops",
+                    "value": "5"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "",
+            "inputLocalPorts": [
+                {
+                    "Id": "cf7081c4-4950-4ec8-b81c-634e1317d51f",
+                    "IdText": "event"
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "cb2023bd-4f82-4574-9be5-d9bdbe5a8960",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": true,
+            "key": -4,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "",
+            "outputLocalPorts": [
+                {
+                    "Id": "a71caf3a-3c4a-43b6-9732-275cc7e4e41a",
+                    "IdText": "event"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "355e0ec9-a0be-47f3-9257-a402be15c957",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Loop"
+        }
+    ]
+}
