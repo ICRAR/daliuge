@@ -27,7 +27,6 @@ import base64
 import collections
 import contextlib
 import errno
-import hashlib
 import heapq
 import importlib
 import inspect
@@ -611,13 +610,9 @@ class AbstractDROP(EventFirer):
 
     @reproducibility_level.setter
     def reproducibility_level(self, new_flag):
-        if type(new_flag) == str:
-            new_flag = ReproduciblityFlags(int(new_flag))
-        elif type(new_flag) == int:
-            new_flag = ReproduciblityFlags(new_flag)
         if type(new_flag) != ReproduciblityFlags:
             raise TypeError("new_flag must be a Reproduciblity flag enum.")
-        elif rmode_supported(new_flag):
+        elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
             if self._committed:
                 # Current behaviour, set to un-committed again after change
                 self._committed = False
@@ -626,7 +621,7 @@ class AbstractDROP(EventFirer):
                 self._merkleData = []
             self._reproduciblity = new_flag
         else:
-            raise ValueError("new_flag %d is not supported", new_flag)
+            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
 
     def generate_rerun_data(self):
         """
