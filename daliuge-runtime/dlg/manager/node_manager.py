@@ -303,6 +303,30 @@ class NodeManagerBase(DROPManager):
 
 
 class ZMQPubSubMixIn(object):
+    """
+    ZeroMQ-based event publisher and subscriber.
+
+    Event publishing and event reception are done in their own separate
+    threads, where the externally-facing ZeroMQ sockets are created and used.
+
+    Events to be published are fed into the publishing thread via a safe-thread
+    Queue object (self._events_out), enabling any local thread to publish events
+    without having to worry about ZeroMQ thread-safeness.
+
+    The event reception thread not only *receives* events, but also updates the
+    subscription socket to connect to new peers. These updates are fed via a
+    Queue object (self._subscriptions), enabling any local thread to indicate a
+    new peer to subscribe to in a thread-safe manner.
+
+    Note that we investigated not using Queue objects to communicate between
+    threads, and use inproc:// ZeroMQ sockets instead. This works, but at a
+    cost: all threads putting values into these sockets would need to check,
+    each time they use a socket in any manner, if the Context object is still
+    valid and hasn't been closed (or alternatively if self._pubsub_running is
+    still True). Our experience with this alternative was not satisfactory, and
+    therefore we went for a Queue-based thread communication model, making the
+    handling of ZeroMQ resources simpler.
+    """
 
     subscription = collections.namedtuple('subscription', 'endpoint finished_evt')
 
