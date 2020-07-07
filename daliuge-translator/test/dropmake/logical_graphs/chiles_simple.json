@@ -3,41 +3,62 @@
         "fileType": "graph",
         "repoService": "Unknown",
         "repo": "",
-        "filePath": "../../daliuge/daliuge-translator/test/dropmake/logical_graphs/chiles_simple.json",
+        "filePath": "/Users/james/working/update-logical-graphs/../daliuge/daliuge-translator/test/dropmake/logical_graphs/chiles_simple.json",
         "sha": "",
         "git_url": ""
     },
     "nodeDataArray": [
         {
             "category": "Start",
-            "colour": "#229954",
+            "categoryType": "Control",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": false,
+            "canHaveOutputs": true,
+            "color": "#229954",
+            "drawOrderHint": 0,
             "key": -14,
             "text": "Start",
             "description": "",
-            "loc": "-679 -276",
+            "x": 300,
+            "y": 427,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
-            "inputPorts": [
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
+            "inputPorts": [],
+            "outputPorts": [
                 {
-                    "Id": "T",
+                    "Id": "ce0cab94-6d9f-4305-a66c-0587fa140a08",
                     "IdText": "T-L"
                 },
                 {
-                    "Id": "R",
+                    "Id": "f83f4617-b3fd-4c68-9204-1c286719bfbb",
+                    "IdText": "T-L"
+                },
+                {
+                    "Id": "44536c15-4282-4e93-807e-31f31e7c51df",
+                    "IdText": "T-L"
+                },
+                {
+                    "Id": "ff2e8ed1-5c4a-4688-96a5-e69d6679cd70",
                     "IdText": "R-L"
                 },
                 {
-                    "Id": "B",
+                    "Id": "c6953ed8-aca3-45ba-9d6e-fe1577a38802",
                     "IdText": "B-L"
                 }
             ],
-            "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
@@ -46,83 +67,128 @@
         },
         {
             "category": "Comment",
-            "colour": "#799938",
+            "categoryType": "Other",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "color": "#799938",
+            "drawOrderHint": 0,
             "key": -10,
-            "text": "Chiles Simple LG:\ndata partition is explicit ",
+            "text": "",
             "description": "",
-            "loc": "266 -548",
+            "x": 1245,
+            "y": 155,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [],
             "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
             "outputAppFields": [],
-            "fields": [],
-            "desiredSize": {
-                "width": 200,
-                "height": 200
-            }
+            "fields": [
+                {
+                    "text": "Comment",
+                    "name": "comment",
+                    "value": "Chiles Simple LG:\ndata partition is explicit ",
+                    "description": "The text value of the comment"
+                }
+            ]
         },
         {
             "category": "Comment",
-            "colour": "#799938",
+            "categoryType": "Other",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "color": "#799938",
+            "drawOrderHint": 0,
             "key": -23,
-            "text": "Split by freq",
+            "text": "",
             "description": "",
-            "loc": "-182 -582",
+            "x": 797,
+            "y": 121,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [],
             "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
             "outputAppFields": [],
-            "fields": [],
-            "desiredSize": {
-                "width": 200,
-                "height": 200
-            }
+            "fields": [
+                {
+                    "text": "Comment",
+                    "name": "comment",
+                    "value": "Split by freq",
+                    "description": "The text value of the comment"
+                }
+            ]
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -25,
             "text": "Day1",
             "description": "",
-            "loc": "-507 -539",
+            "x": 472,
+            "y": 164,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
-                    "IdText": "R-L"
+                    "Id": "b6118915-a0c0-4f34-b3ed-b2ba7fcdcfb0",
+                    "IdText": "R-T"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "T",
-                    "IdText": "R-T"
+                    "Id": "dfb0cc28-6607-457f-b0bb-e7a3809bef6f",
+                    "IdText": "R-L"
                 }
             ],
             "inputLocalPorts": [],
@@ -133,28 +199,41 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -26,
             "text": "MST",
             "description": "",
-            "loc": "-316 -539",
+            "x": 663,
+            "y": 164,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "3ad06126-7f3a-4a21-a262-3fa04e3b2202",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "1df28049-c0e5-46fe-a470-b4422ac70980",
                     "IdText": "R-L"
                 }
             ],
@@ -166,29 +245,42 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -27,
             "text": "Day1-Split1",
             "description": "",
-            "loc": "-76 -539",
+            "x": 903,
+            "y": 164,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
-                    "IdText": "R-T"
+                    "Id": "6d9bad15-d822-402e-a2d4-cd5d00792e1c",
+                    "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
-                    "IdText": "R-L"
+                    "Id": "0595db9e-cd39-4d58-a922-19b97b6ab85b",
+                    "IdText": "R-T"
                 }
             ],
             "inputLocalPorts": [],
@@ -199,26 +291,39 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -3,
             "text": "Data",
             "description": "",
-            "loc": "295 -266",
+            "x": 1274,
+            "y": 437,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
-            "inputPorts": [],
-            "outputPorts": [
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
+            "inputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "5ed09b5c-3c35-47b4-8a68-ea1d5c1d9222",
                     "IdText": "R-L"
                 }
             ],
+            "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
@@ -227,37 +332,58 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -2,
             "text": "CLEAN",
             "description": "",
-            "loc": "148 -261",
+            "x": 1127,
+            "y": 442,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "962ad157-22f1-4f9b-b777-50479190d988",
+                    "IdText": "R-T"
+                },
+                {
+                    "Id": "3cb02078-316a-4a73-acd6-f2b5cc7eea35",
                     "IdText": "R-L"
+                },
+                {
+                    "Id": "713be701-d734-4e99-8b42-d5b6d8cc94c4",
+                    "IdText": "R-L"
+                },
+                {
+                    "Id": "39f5dc62-5525-471d-99f5-e51b80f50674",
+                    "IdText": "R-B"
+                },
+                {
+                    "Id": "f12a4206-d718-4853-937e-ba20f55faa7b",
+                    "IdText": "R-B"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "T",
-                    "IdText": "R-T"
-                },
-                {
-                    "Id": "L",
+                    "Id": "09109144-ed93-4499-9043-d08427f86e9d",
                     "IdText": "R-L"
-                },
-                {
-                    "Id": "B",
-                    "IdText": "R-B"
                 }
             ],
             "inputLocalPorts": [],
@@ -268,28 +394,41 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -11,
             "text": "Day2",
             "description": "",
-            "loc": "-514 -401",
+            "x": 465,
+            "y": 302,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "1a3a0bbc-23a2-4553-ab4f-d42339b52d3c",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "acdf59dd-937f-4dad-8337-0ee4af25cccc",
                     "IdText": "R-L"
                 }
             ],
@@ -301,28 +440,41 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -12,
             "text": "Day3",
             "description": "",
-            "loc": "-516 -292",
+            "x": 463,
+            "y": 411,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "c1385132-da36-4bc1-a579-8f2ec5cd80cc",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "696bb0a1-8a13-4501-af81-14be73133b22",
                     "IdText": "R-L"
                 }
             ],
@@ -334,28 +486,41 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -13,
             "text": "Day4",
             "description": "",
-            "loc": "-521 -176",
+            "x": 458,
+            "y": 527,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "fb7d7be2-5412-4e71-8e74-154e1ae7b7de",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "dd39db4b-7ec5-4661-826f-8e54ee58e525",
                     "IdText": "R-L"
                 }
             ],
@@ -367,28 +532,41 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -15,
             "text": "Day5",
             "description": "",
-            "loc": "-514 -92",
+            "x": 465,
+            "y": 611,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "753dfa6f-5e6e-41c2-8c57-0a3fd485d442",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "d233720f-6549-4c87-8433-ac90038fde22",
                     "IdText": "R-L"
                 }
             ],
@@ -400,28 +578,41 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -16,
             "text": "MST",
             "description": "",
-            "loc": "-319 -397",
+            "x": 660,
+            "y": 306,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "d1d91214-3e97-497d-a31f-0e88473a81ec",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "3af669e8-d7c1-418d-aec6-3fe224fc1bf1",
                     "IdText": "R-L"
                 }
             ],
@@ -433,28 +624,41 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -17,
             "text": "MST",
             "description": "",
-            "loc": "-326 -300",
+            "x": 653,
+            "y": 403,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "fa469810-9a7f-4cb8-923e-1fa294f15130",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "1f18382c-c48b-4509-8df4-8cf4d04740fc",
                     "IdText": "R-L"
                 }
             ],
@@ -466,28 +670,41 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -18,
             "text": "MST",
             "description": "",
-            "loc": "-321 -189",
+            "x": 658,
+            "y": 514,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "a56d7b49-3886-4dda-968a-e887a6ca64a5",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "3ba872c4-5802-4cc4-a049-44ce7df45753",
                     "IdText": "R-L"
                 }
             ],
@@ -499,28 +716,41 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -19,
             "text": "MST",
             "description": "",
-            "loc": "-333 -90",
+            "x": 646,
+            "y": 613,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "85e04329-b055-4db6-8ae9-de73dd82523e",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "a2ba0509-8db2-40b4-8464-252042df2fce",
                     "IdText": "R-L"
                 }
             ],
@@ -532,28 +762,41 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -20,
             "text": "Day2-Split1",
             "description": "",
-            "loc": "-73 -386",
+            "x": 906,
+            "y": 317,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "254611c7-ebb3-4e1e-b3a4-19e2e747278b",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "17667abc-2417-4d1c-a490-ccd73fe34355",
                     "IdText": "R-L"
                 }
             ],
@@ -565,28 +808,41 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -21,
             "text": "Day3-Split1",
             "description": "",
-            "loc": "-70 -281",
+            "x": 909,
+            "y": 422,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "2dfc92ed-40e2-4fc2-8acc-05e71a0cdc8b",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "f367ee69-2efb-4152-9c84-ada4db717cdc",
                     "IdText": "R-L"
                 }
             ],
@@ -598,29 +854,42 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -22,
             "text": "Day4-Split1",
             "description": "",
-            "loc": "-79 -182",
+            "x": 900,
+            "y": 521,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
-                    "IdText": "R-B"
+                    "Id": "f62ff16d-e696-4295-8fec-430133f5d1c0",
+                    "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
-                    "IdText": "R-L"
+                    "Id": "7cb90f77-0f01-4810-82cb-4e7b388b642f",
+                    "IdText": "R-B"
                 }
             ],
             "inputLocalPorts": [],
@@ -631,31 +900,44 @@
         },
         {
             "category": "Memory",
-            "colour": "#394BB2",
+            "categoryType": "Data",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -24,
             "text": "Day5-Split1",
             "description": "",
-            "loc": "-81 -87",
+            "x": 898,
+            "y": 616,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "b9b4d602-8514-4a0d-bad0-a0b0a70ee92a",
+                    "IdText": "R-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "912d2cf6-a59e-4304-ac89-5d8287d1b515",
                     "IdText": "R-B"
                 }
             ],
-            "outputPorts": [
-                {
-                    "Id": "L",
-                    "IdText": "R-L"
-                }
-            ],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
@@ -664,31 +946,44 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -28,
             "text": "Copy",
             "description": "",
-            "loc": "-628 -603",
+            "x": 351,
+            "y": 100,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "52cb4d0e-7683-4613-b4c9-c0f6264a10ac",
+                    "IdText": "T-L"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "a2ecbb8f-daff-4cc6-b6f1-92dc5ba1c209",
                     "IdText": "R-T"
                 }
             ],
-            "outputPorts": [
-                {
-                    "Id": "L",
-                    "IdText": "T-L"
-                }
-            ],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
@@ -697,29 +992,42 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -29,
             "text": "Copy",
             "description": "",
-            "loc": "-626 -488",
+            "x": 353,
+            "y": 215,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
-                    "IdText": "R-L"
+                    "Id": "57840887-d5bb-49dd-aed0-d31edf8f282d",
+                    "IdText": "T-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
-                    "IdText": "T-L"
+                    "Id": "8fd0b6c7-5917-47da-837a-57bdc08a972b",
+                    "IdText": "R-L"
                 }
             ],
             "inputLocalPorts": [],
@@ -730,31 +1038,44 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -30,
             "text": "Copy",
             "description": "",
-            "loc": "-624 -374",
+            "x": 355,
+            "y": 329,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
-                    "IdText": "R-L"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "L",
+                    "Id": "cb1e124e-a469-499c-b14a-d1272684afae",
                     "IdText": "T-L"
                 }
             ],
+            "outputPorts": [
+                {
+                    "Id": "6b05e9eb-8812-4002-ac96-19aee073f530",
+                    "IdText": "R-L"
+                }
+            ],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "inputAppFields": [],
@@ -763,28 +1084,41 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -31,
             "text": "Copy",
             "description": "",
-            "loc": "-606 -258",
+            "x": 373,
+            "y": 445,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
+                    "Id": "6d3d8676-a7a8-430a-9147-ee5f2f997f2f",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
+                    "Id": "54c507d0-6039-4654-b6a7-b1d52a273129",
                     "IdText": "R-L"
                 }
             ],
@@ -796,29 +1130,42 @@
         },
         {
             "category": "Component",
-            "colour": "#3498DB",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -32,
             "text": "Copy",
             "description": "",
-            "loc": "-608 -153",
+            "x": 371,
+            "y": 550,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "R",
-                    "IdText": "R-L"
+                    "Id": "a9b60d39-d6ab-4912-9164-7f893198f0ee",
+                    "IdText": "B-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "L",
-                    "IdText": "B-L"
+                    "Id": "576931d9-8dcd-43ef-841c-19485c72cd87",
+                    "IdText": "R-L"
                 }
             ],
             "inputLocalPorts": [],
@@ -831,159 +1178,159 @@
     "linkDataArray": [
         {
             "from": -25,
-            "fromPort": "R",
+            "fromPort": "dfb0cc28-6607-457f-b0bb-e7a3809bef6f",
             "to": -26,
-            "toPort": "L"
+            "toPort": "3ad06126-7f3a-4a21-a262-3fa04e3b2202"
         },
         {
             "from": -26,
-            "fromPort": "R",
+            "fromPort": "1df28049-c0e5-46fe-a470-b4422ac70980",
             "to": -27,
-            "toPort": "L"
+            "toPort": "6d9bad15-d822-402e-a2d4-cd5d00792e1c"
         },
         {
             "from": -2,
-            "fromPort": "R",
+            "fromPort": "09109144-ed93-4499-9043-d08427f86e9d",
             "to": -3,
-            "toPort": "L"
+            "toPort": "5ed09b5c-3c35-47b4-8a68-ea1d5c1d9222"
         },
         {
             "from": -27,
-            "fromPort": "R",
+            "fromPort": "0595db9e-cd39-4d58-a922-19b97b6ab85b",
             "to": -2,
-            "toPort": "T"
+            "toPort": "962ad157-22f1-4f9b-b777-50479190d988"
         },
         {
             "from": -11,
-            "fromPort": "R",
+            "fromPort": "acdf59dd-937f-4dad-8337-0ee4af25cccc",
             "to": -16,
-            "toPort": "L"
+            "toPort": "d1d91214-3e97-497d-a31f-0e88473a81ec"
         },
         {
             "from": -12,
-            "fromPort": "R",
+            "fromPort": "696bb0a1-8a13-4501-af81-14be73133b22",
             "to": -17,
-            "toPort": "L"
+            "toPort": "fa469810-9a7f-4cb8-923e-1fa294f15130"
         },
         {
             "from": -13,
-            "fromPort": "R",
+            "fromPort": "dd39db4b-7ec5-4661-826f-8e54ee58e525",
             "to": -18,
-            "toPort": "L"
+            "toPort": "a56d7b49-3886-4dda-968a-e887a6ca64a5"
         },
         {
             "from": -15,
-            "fromPort": "R",
+            "fromPort": "d233720f-6549-4c87-8433-ac90038fde22",
             "to": -19,
-            "toPort": "L"
+            "toPort": "85e04329-b055-4db6-8ae9-de73dd82523e"
         },
         {
             "from": -16,
-            "fromPort": "R",
+            "fromPort": "3af669e8-d7c1-418d-aec6-3fe224fc1bf1",
             "to": -20,
-            "toPort": "L"
+            "toPort": "254611c7-ebb3-4e1e-b3a4-19e2e747278b"
         },
         {
             "from": -17,
-            "fromPort": "R",
+            "fromPort": "1f18382c-c48b-4509-8df4-8cf4d04740fc",
             "to": -21,
-            "toPort": "L"
+            "toPort": "2dfc92ed-40e2-4fc2-8acc-05e71a0cdc8b"
         },
         {
             "from": -18,
-            "fromPort": "R",
+            "fromPort": "3ba872c4-5802-4cc4-a049-44ce7df45753",
             "to": -22,
-            "toPort": "L"
+            "toPort": "f62ff16d-e696-4295-8fec-430133f5d1c0"
         },
         {
             "from": -19,
-            "fromPort": "R",
+            "fromPort": "a2ba0509-8db2-40b4-8464-252042df2fce",
             "to": -24,
-            "toPort": "L"
+            "toPort": "b9b4d602-8514-4a0d-bad0-a0b0a70ee92a"
         },
         {
             "from": -20,
-            "fromPort": "R",
+            "fromPort": "17667abc-2417-4d1c-a490-ccd73fe34355",
             "to": -2,
-            "toPort": "L"
+            "toPort": "3cb02078-316a-4a73-acd6-f2b5cc7eea35"
         },
         {
             "from": -21,
-            "fromPort": "R",
+            "fromPort": "f367ee69-2efb-4152-9c84-ada4db717cdc",
             "to": -2,
-            "toPort": "L"
+            "toPort": "713be701-d734-4e99-8b42-d5b6d8cc94c4"
         },
         {
             "from": -22,
-            "fromPort": "R",
+            "fromPort": "7cb90f77-0f01-4810-82cb-4e7b388b642f",
             "to": -2,
-            "toPort": "B"
+            "toPort": "39f5dc62-5525-471d-99f5-e51b80f50674"
         },
         {
             "from": -24,
-            "fromPort": "R",
+            "fromPort": "912d2cf6-a59e-4304-ac89-5d8287d1b515",
             "to": -2,
-            "toPort": "B"
+            "toPort": "f12a4206-d718-4853-937e-ba20f55faa7b"
         },
         {
             "from": -14,
-            "fromPort": "T",
+            "fromPort": "ce0cab94-6d9f-4305-a66c-0587fa140a08",
             "to": -28,
-            "toPort": "L"
+            "toPort": "52cb4d0e-7683-4613-b4c9-c0f6264a10ac"
         },
         {
             "from": -28,
-            "fromPort": "R",
+            "fromPort": "a2ecbb8f-daff-4cc6-b6f1-92dc5ba1c209",
             "to": -25,
-            "toPort": "T"
+            "toPort": "b6118915-a0c0-4f34-b3ed-b2ba7fcdcfb0"
         },
         {
             "from": -14,
-            "fromPort": "T",
+            "fromPort": "f83f4617-b3fd-4c68-9204-1c286719bfbb",
             "to": -29,
-            "toPort": "L"
+            "toPort": "57840887-d5bb-49dd-aed0-d31edf8f282d"
         },
         {
             "from": -14,
-            "fromPort": "T",
+            "fromPort": "44536c15-4282-4e93-807e-31f31e7c51df",
             "to": -30,
-            "toPort": "L"
+            "toPort": "cb1e124e-a469-499c-b14a-d1272684afae"
         },
         {
             "from": -14,
-            "fromPort": "R",
+            "fromPort": "ff2e8ed1-5c4a-4688-96a5-e69d6679cd70",
             "to": -31,
-            "toPort": "L"
+            "toPort": "6d3d8676-a7a8-430a-9147-ee5f2f997f2f"
         },
         {
             "from": -14,
-            "fromPort": "B",
+            "fromPort": "c6953ed8-aca3-45ba-9d6e-fe1577a38802",
             "to": -32,
-            "toPort": "L"
+            "toPort": "a9b60d39-d6ab-4912-9164-7f893198f0ee"
         },
         {
             "from": -31,
-            "fromPort": "R",
+            "fromPort": "54c507d0-6039-4654-b6a7-b1d52a273129",
             "to": -13,
-            "toPort": "L"
+            "toPort": "fb7d7be2-5412-4e71-8e74-154e1ae7b7de"
         },
         {
             "from": -29,
-            "fromPort": "R",
+            "fromPort": "8fd0b6c7-5917-47da-837a-57bdc08a972b",
             "to": -11,
-            "toPort": "L"
+            "toPort": "1a3a0bbc-23a2-4553-ab4f-d42339b52d3c"
         },
         {
             "from": -30,
-            "fromPort": "R",
+            "fromPort": "6b05e9eb-8812-4002-ac96-19aee073f530",
             "to": -12,
-            "toPort": "L"
+            "toPort": "c1385132-da36-4bc1-a579-8f2ec5cd80cc"
         },
         {
             "from": -32,
-            "fromPort": "R",
+            "fromPort": "576931d9-8dcd-43ef-841c-19485c72cd87",
             "to": -15,
-            "toPort": "L"
+            "toPort": "753dfa6f-5e6e-41c2-8c57-0a3fd485d442"
         }
     ]
 }

@@ -15,19 +15,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -1,
             "text": "Enter label",
             "description": "",
-            "loc": "200 100",
+            "x": 200,
+            "y": 100,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [],
             "outputPorts": [
                 {
@@ -43,12 +51,14 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 }
             ]
         },
@@ -59,19 +69,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#1C2833",
+            "color": "#1C2833",
+            "drawOrderHint": 0,
             "key": -2,
             "text": "Enter label",
             "description": "",
-            "loc": "400 200",
+            "x": 400,
+            "y": 200,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "c12aa833-43a9-4c1e-abaa-c77396010a31",
@@ -92,67 +110,80 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         },
@@ -163,19 +194,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#3498DB",
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -3,
             "text": "Enter label",
             "description": "",
-            "loc": "600 300",
+            "x": 600,
+            "y": 300,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "0178b7ce-79ed-406d-9e4b-ee2a53c168ec",
@@ -196,72 +235,86 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Appclass",
                     "name": "appclass",
-                    "value": "test.graphsRepository"
+                    "value": "test.graphsRepository",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         },
@@ -272,19 +325,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -4,
             "text": "Enter label",
             "description": "",
-            "loc": "800 400",
+            "x": 800,
+            "y": 400,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "c05689f4-6c5a-47dc-b3b1-fcbdfa09e4df",
@@ -300,27 +361,32 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Check file path exists",
                     "name": "check_filepath_exists",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "File path",
                     "name": "filepath",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Directory name",
                     "name": "dirname",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         }
