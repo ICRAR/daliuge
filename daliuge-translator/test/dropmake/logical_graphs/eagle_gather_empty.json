@@ -12,20 +12,28 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -7,
             "text": "image per freq",
             "description": "",
-            "loc": "479 373",
+            "x": 808,
+            "y": 473,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
+            "selected": false,
+            "expanded": false,
             "group": -20,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "add668b4-f4f1-4ea9-91fc-80e3315d0f10",
@@ -46,12 +54,14 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 }
             ]
         },
@@ -62,19 +72,27 @@
             "isGroup": true,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#DDAD00",
+            "color": "#DDAD00",
+            "drawOrderHint": 0,
             "key": -20,
             "text": "ms-transform",
             "description": "",
-            "loc": "208 292",
+            "x": 537,
+            "y": 392,
+            "width": 491,
+            "height": 398,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "BashShellApp",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "BashShellApp",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "94a41ddc-d86b-4100-a6e8-c40d2811f128",
@@ -103,67 +121,80 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": "mstransform.sh"
+                    "value": "mstransform.sh",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ],
             "outputAppFields": [],
@@ -171,18 +202,16 @@
                 {
                     "text": "Number of copies",
                     "name": "num_of_copies",
-                    "value": "4"
+                    "value": "4",
+                    "description": ""
                 },
                 {
                     "text": "Scatter axis",
                     "name": "scatter_axis",
-                    "value": "time"
+                    "value": "time",
+                    "description": ""
                 }
-            ],
-            "desiredSize": {
-                "width": 491,
-                "height": 398
-            }
+            ]
         },
         {
             "category": "BashShellApp",
@@ -191,20 +220,28 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#1C2833",
+            "color": "#1C2833",
+            "drawOrderHint": 0,
             "key": -22,
             "text": "Clean",
             "description": "",
-            "loc": "339 505",
+            "x": 668,
+            "y": 605,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
+            "selected": false,
+            "expanded": false,
             "group": -20,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "input_string",
@@ -225,67 +262,80 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         },
@@ -296,20 +346,28 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -4,
             "text": "buffer",
             "description": "",
-            "loc": "242 350",
+            "x": 571,
+            "y": 450,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
+            "selected": false,
+            "expanded": false,
             "group": -20,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "111b3131-57a7-4023-ab14-ca67f6eec728",
@@ -330,12 +388,14 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 }
             ]
         },
@@ -346,20 +406,28 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -8,
             "text": "clean statistics",
             "description": "",
-            "loc": "491 622",
+            "x": 820,
+            "y": 722,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
+            "selected": false,
+            "expanded": false,
             "group": -20,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "d5653abf-b12f-4d97-ac15-d26702b20748",
@@ -380,12 +448,14 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 }
             ]
         },
@@ -396,19 +466,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#1C2833",
+            "color": "#1C2833",
+            "drawOrderHint": 0,
             "key": -5,
             "text": "Clean",
             "description": "",
-            "loc": "-29 45",
+            "x": 300,
+            "y": 145,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "input_string",
@@ -429,67 +507,80 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         },
@@ -500,19 +591,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -6,
             "text": "MeasurementSet",
             "description": "",
-            "loc": "45 168",
+            "x": 374,
+            "y": 268,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "fa25afa9-43a1-4383-b10f-7e8570bb41d2",
@@ -533,27 +632,32 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Check file path exists",
                     "name": "check_filepath_exists",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "File path",
                     "name": "filepath",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Directory name",
                     "name": "dirname",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         },
@@ -564,19 +668,27 @@
             "isGroup": true,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#D35400",
+            "color": "#D35400",
+            "drawOrderHint": 0,
             "key": -23,
             "text": "ImageConcat",
             "description": "",
-            "loc": "807 158",
+            "x": 1136,
+            "y": 258,
+            "width": 200,
+            "height": 232,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "BashShellApp",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "BashShellApp",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "878cdcfb-d6f8-47f7-be8b-bcbdc1159ca1",
@@ -605,67 +717,80 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": "imconcat"
+                    "value": "imconcat",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ],
             "outputAppFields": [],
@@ -673,18 +798,16 @@
                 {
                     "text": "Number of inputs",
                     "name": "num_of_inputs",
-                    "value": "2"
+                    "value": "2",
+                    "description": ""
                 },
                 {
                     "text": "Gather axis",
                     "name": "gather_axis",
-                    "value": "frequency"
+                    "value": "frequency",
+                    "description": ""
                 }
-            ],
-            "desiredSize": {
-                "width": 200,
-                "height": 232
-            }
+            ]
         },
         {
             "category": "End",
@@ -693,19 +816,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": false,
-            "colour": "#CB4335",
+            "color": "#CB4335",
+            "drawOrderHint": 0,
             "key": -11,
             "text": "Enter label",
             "description": "",
-            "loc": "1057 528",
+            "x": 1386,
+            "y": 628,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "1c6140f4-b8bc-42e8-9ae7-7187bfffa2da",
@@ -726,19 +857,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -10,
             "text": "Cube",
             "description": "",
-            "loc": "1019 251",
+            "x": 1348,
+            "y": 351,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "e53d93aa-2141-4d1b-b126-c21d204e9989",
@@ -759,12 +898,14 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 }
             ]
         }

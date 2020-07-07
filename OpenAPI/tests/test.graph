@@ -15,19 +15,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#3498DB",
+            "color": "#3498DB",
+            "drawOrderHint": 0,
             "key": -2,
             "text": "Sleep",
             "description": "",
-            "loc": "486 22",
+            "x": 486,
+            "y": 22,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "Unknown",
+            "outputApplicationType": "Unknown",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "d73e47fb-2bb2-48c5-8d9e-7711df0eb8ff",
@@ -48,72 +56,86 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1"
+                    "value": "1",
+                    "description": ""
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "Appclass",
                     "name": "appclass",
-                    "value": "dlg.apps.simple.SleepAndCopyApp"
+                    "value": "dlg.apps.simple.SleepAndCopyApp",
+                    "description": ""
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
-                    "value": "sleepTime=0"
+                    "value": "sleepTime=0",
+                    "description": ""
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
-                    "value": ""
+                    "value": "",
+                    "description": ""
                 }
             ]
         },
@@ -124,19 +146,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -4,
             "text": "Enter label",
             "description": "",
-            "loc": "270 39",
+            "x": 270,
+            "y": 39,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "Unknown",
+            "outputApplicationType": "Unknown",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "85a7fdf2-1b99-4bd1-8b6d-bd69b112fed3",
@@ -157,22 +187,26 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 },
                 {
                     "text": "filepath",
                     "name": "filepath",
-                    "value": "test.graph"
+                    "value": "test.graph",
+                    "description": ""
                 },
                 {
                     "text": "dirname",
                     "name": "dirname",
-                    "value": "%PWD%"
+                    "value": "%PWD%",
+                    "description": ""
                 }
             ]
         },
@@ -183,19 +217,27 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "colour": "#394BB2",
+            "color": "#394BB2",
+            "drawOrderHint": 0,
             "key": -6,
             "text": "Enter label",
             "description": "",
-            "loc": "834 39",
+            "x": 834,
+            "y": 39,
+            "width": 200,
+            "height": 200,
             "collapsed": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "inputAppName": "",
-            "outputAppName": "",
-            "exitAppName": "",
-            "inputApplication": "Unknown",
-            "outputApplication": "Unknown",
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "Unknown",
+            "outputApplicationType": "Unknown",
+            "exitApplicationType": "None",
             "inputPorts": [
                 {
                     "Id": "c44aca7c-6024-48ee-beff-f7ed5c1b3633",
@@ -216,12 +258,14 @@
                 {
                     "text": "Data volume",
                     "name": "data_volume",
-                    "value": "5"
+                    "value": "5",
+                    "description": ""
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
-                    "value": "0"
+                    "value": "0",
+                    "description": ""
                 }
             ]
         }
