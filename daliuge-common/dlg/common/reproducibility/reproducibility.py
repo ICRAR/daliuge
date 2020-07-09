@@ -285,7 +285,7 @@ def lg_build_blockdag(lg: dict):
     from collections import deque
     dropset = {}  # Also contains in-degree information
     neighbourset = {}
-    visited = 0
+    visited = []
     q = deque()
     for drop in lg['nodeDataArray']:
         did = int(drop['key'])
@@ -307,7 +307,7 @@ def lg_build_blockdag(lg: dict):
         did = q.pop()
         # Process
         build_lg_block_data(dropset[did][0])
-        visited += 1
+        visited.append(did)
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             #  Add our new hash to the parent-hash list
@@ -316,10 +316,11 @@ def lg_build_blockdag(lg: dict):
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
 
-    if visited != len(dropset):
+    if len(visited) != len(dropset):
         raise Exception("Not a DAG")
 
     logger.info("BlockDAG Generated at LG/T level")
+    return visited  # For debugging
 
 
 def build_blockdag(drops: list, abstraction: str = 'pgt'):
