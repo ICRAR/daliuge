@@ -92,14 +92,17 @@ class ToposortTests(unittest.TestCase):
         A --> B --> C --> B
         """
         lgt = self.init_graph("topoGraphs/testNotDAG.graph")
-        self.assertRaises(Exception, lg_build_blockdag(lgt))
+        with self.assertRaises(Exception):
+            lg_build_blockdag(lgt)
 
     def test_lg_blockdag_cycle(self):
         """
         A graph that is one cycle. This should fail
         A --> B --> C --> A
         """
-        assert False
+        lgt = self.init_graph("topoGraphs/testCycle.graph")
+        with self.assertRaises(Exception):
+            lg_build_blockdag(lgt)
 
     def test_lg_blockdag_empty(self):
         """
