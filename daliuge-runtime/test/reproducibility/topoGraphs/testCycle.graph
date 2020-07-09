@@ -1,0 +1,323 @@
+{
+    "linkDataArray": [
+        {
+            "from": -1,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -4,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        },
+        {
+            "from": -4,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -2,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        },
+        {
+            "from": -2,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -3,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        },
+        {
+            "from": -3,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -1,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        }
+    ],
+    "modelData": {
+        "filePath": "testCycle.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "0"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": ""
+                }
+            ],
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+                    "IdText": "event"
+                }
+            ],
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Bash Shell App",
+            "width": 200,
+            "x": 361,
+            "y": 104
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "0"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": ""
+                }
+            ],
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+                    "IdText": "event"
+                }
+            ],
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Bash Shell App",
+            "width": 200,
+            "x": 629,
+            "y": 595
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "0"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": ""
+                }
+            ],
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -3,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+                    "IdText": "event"
+                }
+            ],
+            "selected": true,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Bash Shell App",
+            "width": 200,
+            "x": 1208,
+            "y": 548
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "0"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": ""
+                }
+            ],
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -4,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+                    "IdText": "event"
+                }
+            ],
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Bash Shell App",
+            "width": 200,
+            "x": 722,
+            "y": 99
+        }
+    ]
+}
