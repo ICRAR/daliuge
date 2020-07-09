@@ -246,8 +246,8 @@ def accumulate_meta_data():
 
 def build_lg_block_data(drop: dict):
     block_data = [drop['reprodata']['lgt_data']['merkleroot']]
-    lg_hash = drop['reprodata']['lg_data']['merkleroot']
-    if lg_hash is not None:
+    if 'merkleroot' in drop['reprodata']['lg_data']:
+        lg_hash = drop['reprodata']['lg_data']['merkleroot']
         block_data.append(lg_hash)
     for parenthash in sorted(drop['reprodata']['lg_parenthashes']):
         block_data.append(parenthash)
@@ -287,7 +287,6 @@ def lg_build_blockdag(lg: dict):
     neighbourset = {}
     visited = 0
     q = deque()
-
     for drop in lg['nodeDataArray']:
         did = int(drop['key'])
         dropset[did] = [drop, 0]
