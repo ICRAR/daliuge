@@ -108,4 +108,6 @@ class ToposortTests(unittest.TestCase):
         """
         Tests an empty graph. Should fail gracefully.
         """
-        assert False
+        lgt = self.init_graph("topoGraphs/testEmpty.graph")
+        visited = lg_build_blockdag(lgt)
+        self.assertTrue(visited == [])
