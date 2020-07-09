@@ -91,7 +91,8 @@ class ToposortTests(unittest.TestCase):
         A graph that is not a dag. This should fail.
         A --> B --> C --> B
         """
-        assert False
+        lgt = self.init_graph("topoGraphs/testNotDAG.graph")
+        self.assertRaises(Exception, lg_build_blockdag(lgt))
 
     def test_lg_blockdag_cycle(self):
         """
