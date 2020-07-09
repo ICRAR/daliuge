@@ -51,7 +51,7 @@ class ToposortTests(unittest.TestCase):
         """
         lgt = self.init_graph("topoGraphs/testSingle.graph")
         visited = lg_build_blockdag(lgt)
-        assert visited == [-1]
+        self.assertTrue(visited == [-1])
 
     def test_lg_blockdag_twostart(self):
         """
@@ -62,7 +62,7 @@ class ToposortTests(unittest.TestCase):
         """
         lgt = self.init_graph("topoGraphs/testTwoStart.graph")
         visited = lg_build_blockdag(lgt)
-        assert visited == [-3, -1, -2]
+        self.assertTrue(visited == [-3, -1, -2])
 
     def test_lg_blockdag_twoend(self):
         """
@@ -73,7 +73,7 @@ class ToposortTests(unittest.TestCase):
         """
         lgt = self.init_graph("topoGraphs/testTwoEnd.graph")
         visited = lg_build_blockdag(lgt)
-        assert visited == [-1, -3, -2]
+        self.assertTrue(visited == [-1, -3, -2])
 
     def test_lg_blockdag_twolines(self):
         """
@@ -84,7 +84,7 @@ class ToposortTests(unittest.TestCase):
         lgt = self.init_graph("topoGraphs/testTwoLines.graph")
         visited = lg_build_blockdag(lgt)
         print(visited)
-        assert visited == [-2, -3, -1, -4]
+        self.assertTrue(visited == [-2, -3, -1, -4])
 
     def test_lg_blockdag_notDAG(self):
         """
@@ -98,6 +98,7 @@ class ToposortTests(unittest.TestCase):
         A graph that is one cycle. This should fail
         A --> B --> C --> A
         """
+        assert False
 
     def test_lg_blockdag_empty(self):
         """
