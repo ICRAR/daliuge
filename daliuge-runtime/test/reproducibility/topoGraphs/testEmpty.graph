@@ -1,0 +1,13 @@
+{
+    "linkDataArray": [],
+    "modelData": {
+        "filePath": "testEmpty.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": []
+}
