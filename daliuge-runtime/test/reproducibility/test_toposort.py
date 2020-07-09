@@ -71,7 +71,9 @@ class ToposortTests(unittest.TestCase):
         A
           --> C
         """
-        assert False
+        lgt = self.init_graph("topoGraphs/testTwoEnd.graph")
+        visited = lg_build_blockdag(lgt)
+        assert visited == [-1, -3, -2]
 
     def test_lg_blockdag_twolines(self):
         """
