@@ -1,7 +1,26 @@
 {
-    "linkDataArray": [],
+    "linkDataArray": [
+        {
+            "from": -1,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -2,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        },
+        {
+            "from": -2,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -3,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        },
+        {
+            "from": -3,
+            "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
+            "to": -1,
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+        }
+    ],
     "modelData": {
-        "filePath": "testTwoLines.graph",
+        "filePath": "testNotDAG.graph",
         "fileType": "graph",
         "git_url": "",
         "repo": "",
