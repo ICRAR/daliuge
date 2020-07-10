@@ -338,7 +338,7 @@ class LGNode:
     def is_group_end(self):
         return (
                 self.has_group()
-                and "group_end" in self.jd
+                and "group_end" in self.jdreprodata
                 and 1 == int(self.jd["group_end"])
         )
 
@@ -361,7 +361,7 @@ class LGNode:
         return self._jd["category"] == "mpi"
 
     @property
-    def group_keys(self):
+    def group_keys(self):reprodata
         """
         Return:
             None or a list of keys (each key is an integer)
