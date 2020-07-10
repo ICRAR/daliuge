@@ -29,17 +29,17 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproduciblityFlags):
     data['category_type'] = category_type
     data['category'] = drop['category']
 
-    if category_type == "Data":
+    if category_type == 'Data':
         data['streaming'] = drop['streaming']
         pass
-    elif category_type == "Application":
+    elif category_type == 'Application':
         data['streaming'] = drop['streaming']
         pass
-    elif category_type == "Group":
+    elif category_type == 'Group':
         pass
-    elif category_type == "Control":
+    elif category_type == 'Control':
         pass
-    elif category_type == "Other":
+    elif category_type == 'Other':
         pass
     return data
 
@@ -63,19 +63,19 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
-    rmode = ReproduciblityFlags(int(drop['reprodata']["rmode"]))
+    rmode = ReproduciblityFlags(int(drop['reprodata']['rmode']))
     if not rmode_supported(rmode):
-        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
+        logger.warning('Requested reproducibility mode %s not yet implemented', str(rmode))
         rmode = REPRO_DEFAULT
-        drop['reprodata']["rmode"] = str(rmode.value)
+        drop['reprodata']['rmode'] = str(rmode.value)
     if rmode == ReproduciblityFlags.NOTHING:
         return data
-    data["type"] = drop["type"]
-    data["rank"] = drop["rank"]
-    if data["type"] == 'plain':
-        data["storage"] = drop['storage']
+    data['type'] = drop['type']
+    data['rank'] = drop['rank']
+    if data['type'] == 'plain':
+        data['storage'] = drop['storage']
     else:
-        data["app"] = drop["app"]
+        data['app'] = drop['app']
 
     return data
 
@@ -86,17 +86,17 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     :param drop:
     :return:
     """
-    rmode = ReproduciblityFlags(int(drop['reprodata']["rmode"]))
+    rmode = ReproduciblityFlags(int(drop['reprodata']['rmode']))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
-        drop['reprodata']["rmode"] = str(rmode.value)
+        drop['reprodata']['rmode'] = str(rmode.value)
     data = accumulate_pgt_unroll_drop_data(drop)
     # This is the only piece of new information added at the partition level
     # It is only pertinent to Repetition and Computational replication
     if rmode == ReproduciblityFlags.REPEAT or rmode == ReproduciblityFlags.REPLICATE_COMP:
-        data["node"] = drop["node"][1:]
-        data["island"] = drop["island"][1:]
+        data['node'] = drop['node'][1:]
+        data['island'] = drop['island'][1:]
     return data
 
 
@@ -107,11 +107,11 @@ def accumulate_pg_drop_data(drop: dict):
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    rmode = ReproduciblityFlags(int(drop['reprodata']["rmode"]))
+    rmode = ReproduciblityFlags(int(drop['reprodata']['rmode']))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
-        drop['reprodata']["rmode"] = str(rmode.value)
+        drop['reprodata']['rmode'] = str(rmode.value)
     data = {}
     if rmode == ReproduciblityFlags.REPEAT or rmode == ReproduciblityFlags.REPLICATE_COMP:
         data['node'] = drop['node']
@@ -147,7 +147,7 @@ def init_lg_repro_drop_data(drop: dict):
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
-        drop['reprodata']["rmode"] = str(rmode.value)
+        drop['reprodata']['rmode'] = str(rmode.value)
     data = accumulate_lg_drop_data(drop, rmode)
     merkledata = []
     for key, value in data.items():
@@ -336,7 +336,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     blockstr = 'pgt'
     parentstr = 'pgt_parenthashes'
     block_builder = build_pgt_block_data
-    if abstraction == "pg":
+    if abstraction == 'pg':
         blockstr = 'pg'
         parentstr = 'pg_parenthashes'
         block_builder = build_pg_block_data
@@ -458,11 +458,11 @@ def init_pg_repro_data(pg: list):
     :return: The same pg object with new information appended
     """
     reprodata = pg.pop()
-    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    rmode = ReproduciblityFlags(int(reprodata['rmode']))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
-        reprodata["rmode"] = str(rmode.value)
+        reprodata['rmode'] = str(rmode.value)
     for drop in pg:
         init_pg_repro_drop_data(drop)
     build_blockdag(pg, 'pg')
@@ -478,12 +478,12 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
     :param reprodata:
     :return:
     """
-    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    rmode = ReproduciblityFlags(int(reprodata['rmode']))
     if not rmode_supported(rmode):
         # TODO: Logging needs sessionID at this stage
         # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
-        reprodata["rmode"] = str(rmode.value)
+        reprodata['rmode'] = str(rmode.value)
     for drop in pg.items():
         init_runtime_repro_drop_data(drop[1])
     build_blockdag(list(pg.values()), 'pg')

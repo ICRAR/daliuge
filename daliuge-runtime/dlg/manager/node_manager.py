@@ -199,7 +199,7 @@ class NodeManagerBase(DROPManager):
         if sessionId in self._sessions:
             raise SessionAlreadyExistsException(sessionId)
         self._sessions[sessionId] = Session(sessionId, nm=self)
-        logger.info('Created session %s', sessionId)
+        logger.info("Created session %s", sessionId)
 
     def getsession(self, sessionId):
         return self._sessions[sessionId]
@@ -284,7 +284,7 @@ class NodeManagerBase(DROPManager):
     def trigger_drops(self, sessionId, uids):
         self._check_session_id(sessionId)
         t = threading.Thread(target=self._sessions[sessionId].trigger_drops,
-                             name="Drop trigger",
+                             name='Drop trigger',
                              args=(uids,))
         t.start()
 

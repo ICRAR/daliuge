@@ -169,7 +169,7 @@ class AbstractDROP(EventFirer):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._getArg(kwargs, 'nm', "")
+        self.name = self._getArg(kwargs, 'nm', '')
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
@@ -466,13 +466,13 @@ class AbstractDROP(EventFirer):
 
     @track_current_drop
     def write(self, data, **kwargs):
-        '''
+        """
         Writes the given `data` into this DROP. This method is only meant
         to be called while the DROP is in INITIALIZED or WRITING state;
         once the DROP is COMPLETE or beyond only reading is allowed.
         The underlying storage mechanism is responsible for implementing the
         final writing logic via the `self.writeMeta()` method.
-        '''
+        """
 
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
@@ -490,7 +490,7 @@ class AbstractDROP(EventFirer):
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
-            logger.warning('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
+            logger.warning("Not all data was correctly written by %s (%d/%d bytes written)" % (self, nbytes, dataLen))
 
         # see __init__ for the initialization to None
         if self._size is None:
@@ -859,7 +859,7 @@ class AbstractDROP(EventFirer):
         # Add the reverse reference too automatically
         if cuid in self._consumers_uids:
             return
-        logger.debug('Adding new consumer %r to %r', consumer, self)
+        logger.debug("Adding new consumer %r to %r", consumer, self)
         self._consumers.append(consumer)
 
         # Subscribe the consumer to events sent when this DROP moves to
@@ -981,7 +981,7 @@ class AbstractDROP(EventFirer):
         # Add if not already present
         if scuid in self._streamingConsumers_uids:
             return
-        logger.debug('Adding new streaming streaming consumer for %r: %s' % (self, streamingConsumer))
+        logger.debug("Adding new streaming streaming consumer for %r: %s" % (self, streamingConsumer))
         self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
@@ -1009,9 +1009,9 @@ class AbstractDROP(EventFirer):
 
     @track_current_drop
     def setError(self):
-        '''
+        """
         Moves this DROP to the ERROR state.
-        '''
+        """
 
         if self.status == DROPStates.CANCELLED:
             return
@@ -1027,12 +1027,12 @@ class AbstractDROP(EventFirer):
 
     @track_current_drop
     def setCompleted(self):
-        '''
+        """
         Moves this DROP to the COMPLETED state. This can be used when not all the
         expected data has arrived for a given DROP, but it should still be moved
         to COMPLETED, or when the expected amount of data held by a DROP
         is not known in advanced.
-        '''
+        """
         status = self.status
         if status == DROPStates.CANCELLED:
             return
@@ -1048,15 +1048,17 @@ class AbstractDROP(EventFirer):
         self.completedrop()
 
     def isCompleted(self):
-        '''
+        """
         Checks whether this DROP is currently in the COMPLETED state or not
-        '''
+        """
         # Mind you we're not accessing _status, but status. This way we use the
         # lock in status() to access _status
         return (self.status == DROPStates.COMPLETED)
 
     def cancel(self):
-        '''Moves this drop to the CANCELLED state closing any writers we opened'''
+        """
+        Moves this drop to the CANCELLED state closing any writers we opened
+        """
         self._closeWriters()
         self.status = DROPStates.CANCELLED
 
@@ -1070,7 +1072,9 @@ class AbstractDROP(EventFirer):
 
 
 class PathBasedDrop(object):
-    """Base class for data drops that handle paths (i.e., file and directory drops)"""
+    """
+    Base class for data drops that handle paths (i.e., file and directory drops)
+    """
 
     def initialize(self, **kwargs):
         self._path = None
@@ -1237,9 +1241,9 @@ class ShoreDROP(AbstractDROP):
 
 
 class NgasDROP(AbstractDROP):
-    '''
+    """
     A DROP that points to data stored in an NGAS server
-    '''
+    """
     ngasSrv = dlg_string_param('ngasSrv', 'localhost')
     ngasPort = dlg_int_param('ngasPort', 7777)
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
@@ -1481,7 +1485,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 
 
 class AppDROP(ContainerDROP):
-    '''
+    """
     An AppDROP is a DROP representing an application that reads data
     from one or more DROPs (its inputs), and writes data onto one or more
     DROPs (its outputs).
@@ -1503,7 +1507,7 @@ class AppDROP(ContainerDROP):
     `dataWritten`. A common scenario anyway is to start an application only
     after all its inputs have moved to COMPLETED (implying that none of them is
     an streaming input); for these cases see the `BarrierAppDROP`.
-    '''
+    """
 
     def initialize(self, **kwargs):
 
@@ -1633,7 +1637,9 @@ class AppDROP(ContainerDROP):
         self.completedrop()
 
     def cancel(self):
-        '''Moves this application drop to its CANCELLED state'''
+        """
+        Moves this application drop to its CANCELLED state
+        """
         super(AppDROP, self).cancel()
         self.execStatus = AppDROPStates.CANCELLED
 
