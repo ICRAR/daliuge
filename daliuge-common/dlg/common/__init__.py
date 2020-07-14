@@ -26,7 +26,7 @@ from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-STORAGE_TYPES = {'memory', 'file', 'ngas', 'null', 'json'}
+STORAGE_TYPES = {'Memory', 'File', 'NGAS', 'null', 'json'}
 
 if sys.version_info[0] > 2:
     def b2s(b, enc='utf8'):
