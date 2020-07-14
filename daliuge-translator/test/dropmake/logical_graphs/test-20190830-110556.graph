@@ -2,6 +2,7 @@
     "modelData": {
         "fileType": "",
         "repoService": "GitHub",
+        "repoBranch": "",
         "repo": "james-strauss-uwa/eagle-test",
         "filePath": "test/test-20190830-110556.graph",
         "sha": "",
