@@ -26,7 +26,39 @@ from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-STORAGE_TYPES = {'Memory', 'File', 'NGAS', 'null', 'json'}
+class Categories:
+    START = 'Start'
+    END = 'End'
+
+    MEMORY = 'Memory'
+    FILE = 'File'
+    NGAS = 'NGAS'
+    NULL = 'null'
+    JSON = 'json'
+    S3 = 'S3'
+
+    SCATTER = 'Scatter'
+    GATHER = 'Gather'
+    GROUP_BY = 'GroupBy'
+    LOOP = 'Loop'
+
+    DATA = 'Data'
+    COMPONENT = 'Component'
+    BASH_SHELL_APP = 'BashShellApp'
+    MPI = 'Mpi'
+    DYNLIB_APP = 'DynlibApp'
+    DOCKER = 'Docker'
+    DYNLIB_PROC_APP = 'DynlibProcApp'
+
+STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
+APP_DROP_TYPES = [
+    Categories.COMPONENT,
+    Categories.BASH_SHELL_APP,
+    Categories.MPI,
+    Categories.DYNLIB_APP,
+    Categories.DOCKER,
+    Categories.DYNLIB_PROC_APP
+]
 
 if sys.version_info[0] > 2:
     def b2s(b, enc='utf8'):

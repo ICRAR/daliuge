@@ -67,7 +67,8 @@ import six
 from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 from .utils.bash_parameter import BashCommand
 from ..common import dropdict
-from ..common import STORAGE_TYPES
+from ..common import Categories
+from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
     get_lg_ver_type,
     convert_construct,
@@ -79,15 +80,6 @@ from .dm_utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-APP_DROP_TYPES = [
-    "Component",
-    "BashShellApp",
-    "mpi",
-    "DynlibApp",
-    "docker",
-    "DynlibProcApp",
-]
 
 
 class GraphException(Exception):
@@ -299,10 +291,10 @@ class LGNode:
         return len(self._outs) > 0
 
     def is_start_node(self):
-        return self.jd["category"] == "Start"
+        return self.jd["category"] == Categories.START
 
     def is_end_node(self):
-        return self.jd["category"] == "End"
+        return self.jd["category"] == Categories.END
 
     def is_start(self):
         return not self.has_group()
@@ -316,7 +308,7 @@ class LGNode:
                 return False
             else:
                 return True
-        elif self.inputs[0].jd["category"] == "Start":
+        elif self.inputs[0].jd["category"] == Categories.START:
             return True
         else:
             return False
@@ -324,7 +316,7 @@ class LGNode:
     def is_start_listener(self):
         return (
             len(self.inputs) == 1
-            and self.inputs[0].jd["category"] == "Start"
+            and self.inputs[0].jd["category"] == Categories.START
             and self.jd["category"] in STORAGE_TYPES
         )
 
@@ -346,19 +338,19 @@ class LGNode:
         return self._isgrp
 
     def is_scatter(self):
-        return self.is_group() and self._jd["category"] == "Scatter"
+        return self.is_group() and self._jd["category"] == Categories.SCATTER
 
     def is_gather(self):
-        return self._jd["category"] == "Gather"
+        return self._jd["category"] == Categories.GATHER
 
     def is_loop(self):
-        return self.is_group() and self._jd["category"] == "Loop"
+        return self.is_group() and self._jd["category"] == Categories.LOOP
 
     def is_groupby(self):
-        return self._jd["category"] == "GroupBy"
+        return self._jd["category"] == Categories.GROUP_BY
 
     def is_mpi(self):
-        return self._jd["category"] == "mpi"
+        return self._jd["category"] == Categories.MPI
 
     @property
     def group_keys(self):
@@ -743,7 +735,7 @@ class LGNode:
                 {
                     "oid": "{0}-grp-data".format(oid),
                     "type": "plain",
-                    "storage": "memory",
+                    "storage": Categories.MEMORY,
                     "nm": "grpdata",
                     "dw": dw,
                     "rank": rank,
@@ -773,7 +765,7 @@ class LGNode:
                 {
                     "oid": "{0}-gather-data".format(oid),
                     "type": "plain",
-                    "storage": "memory",
+                    "storage": Categories.MEMORY,
                     "nm": "gthrdt",
                     "dw": dw,
                     "rank": rank,
@@ -798,7 +790,7 @@ class LGNode:
                 {
                     "oid": "{0}-null_drop".format(oid),
                     "type": "plain",
-                    "storage": "null",
+                    "storage": Categories.NULL,
                     "nm": "null",
                     "dw": 0,
                     "rank": rank,
@@ -811,7 +803,7 @@ class LGNode:
             dropSpec_null.addProducer(drop_spec)
         elif drop_type in ["Start", "End"]:
             drop_spec = dropdict(
-                {"oid": oid, "type": "plain", "storage": "null", "rank": rank}
+                {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
             )
         elif drop_type == "Loop":
             pass
@@ -1145,7 +1137,7 @@ class PGT(object):
                                 {
                                     "oid": extra_oid,
                                     "type": "plain",
-                                    "storage": "memory",
+                                    "storage": Categories.MEMORY,
                                     "nm": "go_data",
                                     "dw": 1,
                                 }
@@ -1197,9 +1189,9 @@ class PGT(object):
             node["oid"] = oid
             tt = drop["type"]
             if "plain" == tt:
-                node["category"] = "Data"
+                node["category"] = Categories.DATA
             elif "app" == tt:
-                node["category"] = "Component"
+                node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
 
