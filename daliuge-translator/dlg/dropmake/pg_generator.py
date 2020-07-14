@@ -663,8 +663,8 @@ class LGNode:
             self._update_key_value_attributes(kwargs)
 
             drop_spec.update(kwargs)
-        elif drop_type in ["BashShellApp", "mpi"]:
-            if drop_type == "mpi":
+        elif drop_type in ["BashShellApp", "Mpi"]:
+            if drop_type == "Mpi":
                 app_str = "dlg.apps.mpi.MPIApp"
                 kwargs["maxprocs"] = int(self.jd.get("num_of_procs", 4))
             else:
