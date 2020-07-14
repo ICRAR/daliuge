@@ -651,6 +651,8 @@ class AbstractDROP(EventFirer):
             return []
         elif self._reproduciblity is ReproduciblityFlags.RERUN:
             return self.generate_rerun_data()
+        elif self._reproduciblity is ReproduciblityFlags.REPEAT:
+            return self.generate_repeat_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
 
