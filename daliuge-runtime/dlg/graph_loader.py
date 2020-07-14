@@ -39,16 +39,16 @@ from .json_drop import JsonDROP
 
 
 STORAGE_TYPES = {
-    'memory': InMemoryDROP,
-    'file'  : FileDROP,
-    'ngas'  : NgasDROP,
+    'Memory': InMemoryDROP,
+    'File'  : FileDROP,
+    'NGAS'  : NgasDROP,
     'null'  : NullDROP,
     'json'  : JsonDROP,
 }
 
 try:
     from .s3_drop import S3DROP
-    STORAGE_TYPES['s3'] = S3DROP
+    STORAGE_TYPES['S3'] = S3DROP
 except ImportError:
     pass
 

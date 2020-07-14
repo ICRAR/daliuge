@@ -695,7 +695,7 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        elif drop_type == "docker":
+        elif drop_type == "Docker":
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
             typ = "app"
@@ -754,7 +754,7 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(drop_spec)
-        elif drop_type == "DataGather":
+        elif drop_type == "Gather":
             drop_spec = dropdict(
                 {
                     "oid": oid,
