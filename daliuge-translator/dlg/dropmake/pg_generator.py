@@ -346,10 +346,10 @@ class LGNode:
         return self._isgrp
 
     def is_scatter(self):
-        return self.is_group() and self._jd["category"] == "SplitData"
+        return self.is_group() and self._jd["category"] == "Scatter"
 
     def is_gather(self):
-        return self._jd["category"] == "DataGather"
+        return self._jd["category"] == "Gather"
 
     def is_loop(self):
         return self.is_group() and self._jd["category"] == "Loop"
