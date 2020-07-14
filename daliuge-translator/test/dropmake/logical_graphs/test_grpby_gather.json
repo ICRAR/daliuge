@@ -2,6 +2,7 @@
     "modelData": {
         "fileType": "graph",
         "repoService": "Unknown",
+        "repoBranch": "",
         "repo": "",
         "filePath": "/Users/james/working/update-logical-graphs/../daliuge/daliuge-translator/test/dropmake/logical_graphs/test_grpby_gather.json",
         "sha": "",
@@ -39,7 +40,7 @@
             "inputPorts": [],
             "outputPorts": [
                 {
-                    "Id": "185d0e0c-9370-490b-8dae-1de41f45a6ac",
+                    "Id": "5f5d527e-fb72-488b-970c-87596cf7497b",
                     "IdText": "B-T"
                 }
             ],
@@ -80,7 +81,7 @@
             "inputPorts": [],
             "outputPorts": [
                 {
-                    "Id": "2a5e0465-3db8-452a-9ef9-4f2e0ae9cfa1",
+                    "Id": "db26ed04-fd87-4bd2-8c5f-b487cd253efb",
                     "IdText": "R-L"
                 }
             ],
@@ -102,10 +103,10 @@
             "key": -12,
             "text": "Scatter1",
             "description": "",
-            "x": 672,
-            "y": 411,
-            "width": 200,
-            "height": 200,
+            "x": 613,
+            "y": 292,
+            "width": 327,
+            "height": 321,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -151,10 +152,10 @@
             "key": -5,
             "text": "Scatter2",
             "description": "",
-            "x": 637,
-            "y": 388,
-            "width": 200,
-            "height": 200,
+            "x": 613,
+            "y": 235,
+            "width": 248,
+            "height": 274,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -220,17 +221,17 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "fb7b3b0a-5e57-48f5-b7ec-8d5739090016",
+                    "Id": "1bc19beb-6c6d-4141-ad4b-debc1dbcd0b3",
                     "IdText": "R-L"
                 },
                 {
-                    "Id": "c29051c9-adac-406f-9dbf-9612cbe0ec62",
+                    "Id": "26d34d77-091c-4c34-9505-65ab1693883b",
                     "IdText": "B-T"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "733f3a61-30d4-4037-b7f4-b32f5088a6af",
+                    "Id": "84e61b6c-545d-479f-a1d7-2c1f8a7435a0",
                     "IdText": "B-T"
                 }
             ],
@@ -271,13 +272,13 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "33683b78-8b43-4ad4-9905-8766da2f3c78",
+                    "Id": "34f54acd-d131-456f-a4ba-c93729baf0d9",
                     "IdText": "B-T"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "ba6f03a1-9bd9-4399-8d3b-7f964a6e5cbc",
+                    "Id": "73ec18fc-4bc9-4f87-8206-6fec078f32b4",
                     "IdText": "B-T"
                 }
             ],
@@ -318,25 +319,25 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "f0e7afd3-0db5-4f90-b65f-74e473bbb17a",
+                    "Id": "b718ed4a-2415-43ff-9f0a-d1de5ca8b7de",
                     "IdText": "B-T"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "dbe18359-a6fc-4dbf-87dd-557a485f5694",
+                    "Id": "8c03622b-3ad7-4f4e-8d17-60137bb7ed9d",
                     "IdText": "R-T"
                 },
                 {
-                    "Id": "c9f902ed-e980-4398-a63e-2a64b6eed89d",
+                    "Id": "ed33c92d-2515-46b1-8d6d-ec0fca03c47e",
                     "IdText": "L-R"
                 },
                 {
-                    "Id": "18d62088-c898-422f-9208-b0f6630d1cfb",
+                    "Id": "d7bf3025-3695-469d-bb3d-787981336b22",
                     "IdText": "B-T"
                 },
                 {
-                    "Id": "7d217056-b229-43ae-bc40-2460f22fb89b",
+                    "Id": "24ee88a6-8a86-47cf-8f06-e389f132d6d0",
                     "IdText": "R-L"
                 }
             ],
@@ -378,7 +379,7 @@
             "inputPorts": [],
             "outputPorts": [
                 {
-                    "Id": "cbb13a32-cd77-46f6-8703-e42791db1b8c",
+                    "Id": "cebe7832-e6cb-4cd4-b119-7432404daecc",
                     "IdText": "B-T"
                 }
             ],
@@ -419,7 +420,7 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "e80d931c-963a-4436-90d4-4be7478d689e",
+                    "Id": "042b0994-7521-477a-b293-626e19022a91",
                     "IdText": "R-T"
                 }
             ],
@@ -461,7 +462,7 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "14d6a7e4-0668-4315-97a1-5f6578d2c0ec",
+                    "Id": "abf3d509-64e7-4f33-87a2-c41f738706f0",
                     "IdText": "B-T"
                 }
             ],
@@ -484,10 +485,10 @@
             "key": -24,
             "text": "Gather",
             "description": "",
-            "x": 302,
-            "y": 487,
-            "width": 200,
-            "height": 200,
+            "x": 276,
+            "y": 360,
+            "width": 250,
+            "height": 222,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -502,7 +503,7 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "2388eb7e-ad07-4871-9f79-04b9c715fb62",
+                    "Id": "13fa0174-8083-49b4-a495-098a30f0f168",
                     "IdText": "L-R"
                 }
             ],
@@ -538,10 +539,10 @@
             "key": -14,
             "text": "Group By 2",
             "description": "",
-            "x": 637,
-            "y": 660,
-            "width": 200,
-            "height": 200,
+            "x": 613,
+            "y": 564,
+            "width": 248,
+            "height": 160,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -556,7 +557,7 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "f2c44546-136c-4e7a-8b60-c8097c453020",
+                    "Id": "95403f8d-aa96-42a1-bc0a-eca7cdafa646",
                     "IdText": "B-T"
                 }
             ],
@@ -616,10 +617,10 @@
             "key": -25,
             "text": "Gather",
             "description": "",
-            "x": 1057,
-            "y": 636,
-            "width": 200,
-            "height": 200,
+            "x": 1017,
+            "y": 504,
+            "width": 264,
+            "height": 232,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -634,7 +635,7 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "98581e66-7d42-4503-99a3-091cbd98362e",
+                    "Id": "4bcd7a0c-29da-4bea-9891-991b5243d6f1",
                     "IdText": "B-L"
                 }
             ],
@@ -689,7 +690,7 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "7be96331-dff6-4bea-89aa-67f358cd9cd1",
+                    "Id": "76cdfa06-bd69-4028-9bfc-af91706c1f22",
                     "IdText": "B-T"
                 }
             ],
@@ -730,13 +731,13 @@
             "exitApplicationType": "None",
             "inputPorts": [
                 {
-                    "Id": "cd7aa70a-12cf-4c53-9589-d77ed5c2dea3",
+                    "Id": "b3659a5a-b8a5-41f4-868a-550761ad3e0f",
                     "IdText": "R-L"
                 }
             ],
             "outputPorts": [
                 {
-                    "Id": "158a2383-3bfd-4e8e-916e-7ebebe1907e9",
+                    "Id": "e7025e67-d66b-40bf-bf6c-573b69c33536",
                     "IdText": "B-L"
                 }
             ],
@@ -864,7 +865,7 @@
             "inputPorts": [],
             "outputPorts": [
                 {
-                    "Id": "d96e063a-a1e9-49d5-a627-a53197718390",
+                    "Id": "f94c1ae4-9fc7-4a22-8dd2-f495be9b1560",
                     "IdText": "B-T"
                 }
             ],
@@ -964,69 +965,69 @@
     "linkDataArray": [
         {
             "from": -1,
-            "fromPort": "185d0e0c-9370-490b-8dae-1de41f45a6ac",
+            "fromPort": "5f5d527e-fb72-488b-970c-87596cf7497b",
             "to": -8,
-            "toPort": "33683b78-8b43-4ad4-9905-8766da2f3c78"
+            "toPort": "34f54acd-d131-456f-a4ba-c93729baf0d9"
         },
         {
             "from": -3,
-            "fromPort": "2a5e0465-3db8-452a-9ef9-4f2e0ae9cfa1",
+            "fromPort": "db26ed04-fd87-4bd2-8c5f-b487cd253efb",
             "to": -2,
-            "toPort": "fb7b3b0a-5e57-48f5-b7ec-8d5739090016"
+            "toPort": "1bc19beb-6c6d-4141-ad4b-debc1dbcd0b3"
         },
         {
             "from": -8,
-            "fromPort": "ba6f03a1-9bd9-4399-8d3b-7f964a6e5cbc",
+            "fromPort": "73ec18fc-4bc9-4f87-8206-6fec078f32b4",
             "to": -2,
-            "toPort": "c29051c9-adac-406f-9dbf-9612cbe0ec62"
+            "toPort": "26d34d77-091c-4c34-9505-65ab1693883b"
         },
         {
             "from": -2,
-            "fromPort": "733f3a61-30d4-4037-b7f4-b32f5088a6af",
+            "fromPort": "84e61b6c-545d-479f-a1d7-2c1f8a7435a0",
             "to": -10,
-            "toPort": "f0e7afd3-0db5-4f90-b65f-74e473bbb17a"
+            "toPort": "b718ed4a-2415-43ff-9f0a-d1de5ca8b7de"
         },
         {
             "from": -21,
-            "fromPort": "cbb13a32-cd77-46f6-8703-e42791db1b8c",
+            "fromPort": "cebe7832-e6cb-4cd4-b119-7432404daecc",
             "to": -23,
-            "toPort": "14d6a7e4-0668-4315-97a1-5f6578d2c0ec"
+            "toPort": "abf3d509-64e7-4f33-87a2-c41f738706f0"
         },
         {
             "from": -10,
-            "fromPort": "dbe18359-a6fc-4dbf-87dd-557a485f5694",
+            "fromPort": "8c03622b-3ad7-4f4e-8d17-60137bb7ed9d",
             "to": -22,
-            "toPort": "e80d931c-963a-4436-90d4-4be7478d689e"
+            "toPort": "042b0994-7521-477a-b293-626e19022a91"
         },
         {
             "from": -10,
-            "fromPort": "c9f902ed-e980-4398-a63e-2a64b6eed89d",
+            "fromPort": "ed33c92d-2515-46b1-8d6d-ec0fca03c47e",
             "to": -24,
-            "toPort": "2388eb7e-ad07-4871-9f79-04b9c715fb62"
+            "toPort": "13fa0174-8083-49b4-a495-098a30f0f168"
         },
         {
             "from": -10,
-            "fromPort": "18d62088-c898-422f-9208-b0f6630d1cfb",
+            "fromPort": "d7bf3025-3695-469d-bb3d-787981336b22",
             "to": -14,
-            "toPort": "f2c44546-136c-4e7a-8b60-c8097c453020"
+            "toPort": "95403f8d-aa96-42a1-bc0a-eca7cdafa646"
         },
         {
             "from": -10,
-            "fromPort": "7d217056-b229-43ae-bc40-2460f22fb89b",
+            "fromPort": "24ee88a6-8a86-47cf-8f06-e389f132d6d0",
             "to": -28,
-            "toPort": "cd7aa70a-12cf-4c53-9589-d77ed5c2dea3"
+            "toPort": "b3659a5a-b8a5-41f4-868a-550761ad3e0f"
         },
         {
             "from": -28,
-            "fromPort": "158a2383-3bfd-4e8e-916e-7ebebe1907e9",
+            "fromPort": "e7025e67-d66b-40bf-bf6c-573b69c33536",
             "to": -25,
-            "toPort": "98581e66-7d42-4503-99a3-091cbd98362e"
+            "toPort": "4bcd7a0c-29da-4bea-9891-991b5243d6f1"
         },
         {
             "from": -29,
-            "fromPort": "d96e063a-a1e9-49d5-a627-a53197718390",
+            "fromPort": "f94c1ae4-9fc7-4a22-8dd2-f495be9b1560",
             "to": -27,
-            "toPort": "7be96331-dff6-4bea-89aa-67f358cd9cd1"
+            "toPort": "76cdfa06-bd69-4028-9bfc-af91706c1f22"
         }
     ]
 }
