@@ -592,7 +592,7 @@ class LGNode:
                 drop_spec = dropdict(
                     {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
                 )
-            if drop_type == "file":
+            if drop_type == Categories.FILE:
                 dn = self.jd.get("dirname", None)
                 if dn:
                     kwargs["dirname"] = dn
@@ -603,7 +603,7 @@ class LGNode:
                 if fp:
                     kwargs["filepath"] = fp
         elif (
-            drop_type == "Component"
+            drop_type == Categories.COMPONENT
         ):  # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -746,7 +746,7 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(drop_spec)
-        elif drop_type == "Gather":
+        elif drop_type == Categories.GATHER:
             drop_spec = dropdict(
                 {
                     "oid": oid,
@@ -805,7 +805,7 @@ class LGNode:
             drop_spec = dropdict(
                 {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
             )
-        elif drop_type == "Loop":
+        elif drop_type == Categories.LOOP:
             pass
         else:
             raise GraphException("Unknown DROP type: '{0}'".format(drop_type))

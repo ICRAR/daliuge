@@ -37,6 +37,7 @@ class Categories:
     JSON = 'json'
     S3 = 'S3'
 
+    MKN = 'MKN'
     SCATTER = 'Scatter'
     GATHER = 'Gather'
     GROUP_BY = 'GroupBy'
