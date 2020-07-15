@@ -30,25 +30,25 @@
 	{
 		"oid":       "A",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["E"]
 	},
 	{
 		"oid":       "B",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["I"]
 	},
 	{
 		"oid":       "C",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["F"]
 	},
 	{
 		"oid":       "D",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["F"]
 	},
 	{
@@ -66,13 +66,13 @@
 	{
 		"oid":       "G",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["I"]
 	},
 	{
 		"oid":       "H",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["I"]
 	},
 	{
@@ -84,7 +84,7 @@
 	{
 		"oid":       "J",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["L", "M"]
 	},
 	{
@@ -97,7 +97,7 @@
 	{
 		"oid":       "K",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["M"]
 	},
 	{
@@ -115,19 +115,19 @@
 	{
 		"oid":       "N",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["Q"]
 	},
 	{
 		"oid":       "O",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["R"]
 	},
 	{
 		"oid":       "P",
 		"type":      "plain",
-		"storage":   "memory",
+		"storage":   "Memory",
 		"consumers": ["R"]
 	},
 	{
@@ -145,11 +145,11 @@
 	{
 		"oid":       "S",
 		"type":      "plain",
-		"storage":   "memory"
+		"storage":   "Memory"
 	},
 	{
 		"oid":       "T",
 		"type":      "plain",
-		"storage":   "memory"
+		"storage":   "Memory"
 	}
 ]

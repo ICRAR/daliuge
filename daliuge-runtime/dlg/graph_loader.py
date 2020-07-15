@@ -36,7 +36,7 @@ from .drop import ContainerDROP, InMemoryDROP, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
-from ..common import Categories
+from .common import Categories
 
 
 STORAGE_TYPES = {
