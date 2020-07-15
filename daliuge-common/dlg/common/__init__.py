@@ -41,6 +41,8 @@ class Categories:
     GATHER = 'Gather'
     GROUP_BY = 'GroupBy'
     LOOP = 'Loop'
+    BRANCH = 'Branch'
+    VARIABLES = 'Variables'
 
     DATA = 'Data'
     COMPONENT = 'Component'
@@ -49,6 +51,9 @@ class Categories:
     DYNLIB_APP = 'DynlibApp'
     DOCKER = 'Docker'
     DYNLIB_PROC_APP = 'DynlibProcApp'
+
+    COMMENT = 'Comment'
+    DESCRIPTION = 'Description'
 
 STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
 APP_DROP_TYPES = [
