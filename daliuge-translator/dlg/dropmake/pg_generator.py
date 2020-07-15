@@ -28,7 +28,7 @@ which will then be deployed and monitored by the Physical Graph Manager
 
 Examples of logical graph node JSON representation
 
-{ u'category': u'memory',
+{ u'category': u'Memory',
   u'data_volume': 25,
   u'group': -58,
   u'key': -59,
