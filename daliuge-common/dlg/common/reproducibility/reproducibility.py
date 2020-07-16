@@ -373,7 +373,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             # Add our new hash to the parest-hash list
-            parenthash = dropset[did][0]['reprodata'][blockstr]
+            parenthash = dropset[did][0]['reprodata'][parentstr]
             dropset[n][0]['reprodata'][parentstr].append(parenthash)
             if dropset[n][1] == 0:
                 q.append(n)
