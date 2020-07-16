@@ -285,6 +285,7 @@ def lg_build_blockdag(lg: dict):
     from collections import deque
     dropset = {}  # Also contains in-degree information
     neighbourset = {}
+    leaves = []
     visited = 0
     q = deque()
 
@@ -303,6 +304,8 @@ def lg_build_blockdag(lg: dict):
     for did in dropset:
         if dropset[did][1] == 0:
             q.append(did)
+        if not neighbourset[did]:  # Leaf node
+            leaves.append(did)
 
     while q:
         did = q.pop()
@@ -321,6 +324,11 @@ def lg_build_blockdag(lg: dict):
         raise Exception("Not a DAG")
 
     logger.info("BlockDAG Generated at LG/T level")
+
+    for i in range(len(leaves)):
+        leaf = leaves[i]
+        leaves[i] = dropset[leaf][0]['reprodata']['lg_blockhash']
+    return leaves
 
 
 def build_blockdag(drops: list, abstraction: str = 'pgt'):
@@ -344,6 +352,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     from collections import deque
     dropset = {}
     neighbourset = {}
+    leaves = []
     visited = 0
     q = deque()
 
@@ -365,6 +374,8 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     for did in dropset:
         if dropset[did][1] == 0:
             q.append(did)
+        if not neighbourset[did]:  # Leaf node
+            leaves.append(did)
 
     while q:
         did = q.pop()
@@ -380,6 +391,11 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
 
     if visited != len(dropset):
         raise Exception("Not a DAG")
+
+    for i in range(len(leaves)):
+        leaf = leaves[i]
+        leaves[i] = dropset[leaf][0]['reprodata'][blockstr + '_blockhash']
+    return leaves
 
     # logger.info("BlockDAG Generated at" + abstraction + " level")
 
@@ -416,7 +432,8 @@ def init_lg_repro_data(lg: dict):
     """
     for drop in lg['nodeDataArray']:
         init_lg_repro_drop_data(drop)
-    lg_build_blockdag(lg)
+    leaves = lg_build_blockdag(lg)
+    lg['reprodata']['leaves'] = leaves
     logger.info("Reproducibility data finished at LG level")
     return lg
 
@@ -430,7 +447,8 @@ def init_pgt_unroll_repro_data(pgt: list):
     reprodata = pgt.pop()
     for drop in pgt:
         init_pgt_unroll_repro_drop_data(drop)
-    build_blockdag(pgt, 'pgt')
+    leaves = build_blockdag(pgt, 'pgt')
+    reprodata['leaves'] = leaves
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT unroll level")
     return pgt
@@ -445,7 +463,8 @@ def init_pgt_partition_repro_data(pgt: list):
     reprodata = pgt.pop()
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop)
-    build_blockdag(pgt, 'pgt')
+    leaves = build_blockdag(pgt, 'pgt')
+    reprodata['leaves'] = leaves
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
     return pgt
@@ -465,7 +484,8 @@ def init_pg_repro_data(pg: list):
         reprodata["rmode"] = str(rmode.value)
     for drop in pg:
         init_pg_repro_drop_data(drop)
-    build_blockdag(pg, 'pg')
+    leaves = build_blockdag(pg, 'pg')
+    reprodata['leaves'] = leaves
     pg.append(reprodata)
     logger.info("Reproducibility data finished at PG level")
     return pg
@@ -486,7 +506,8 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
         reprodata["rmode"] = str(rmode.value)
     for drop in pg.items():
         init_runtime_repro_drop_data(drop[1])
-    build_blockdag(list(pg.values()), 'pg')
+    leaves = build_blockdag(list(pg.values()), 'pg')
+    reprodata['leaves'] = leaves
     pg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
     return pg
