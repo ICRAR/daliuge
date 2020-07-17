@@ -25,7 +25,7 @@ Tests the low-level functionality for drops to hash runtime data.
 
 import unittest
 
-from dlg.common.reproducibility.constants import ReproduciblityFlags
+from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import AbstractDROP, drop_hash
 from merklelib import MerkleTree
@@ -45,7 +45,7 @@ class RerunHashTests(unittest.TestCase):
         Tests that completed Rerun data contains the completed flag.
         """
         a = AbstractDROP('a', 'a')
-        a.reproducibility_level = ReproduciblityFlags.RERUN
+        a.reproducibility_level = ReproducibilityFlags.RERUN
         a.setCompleted()
         self.assertTrue(a.generate_rerun_data(), [DROPStates.COMPLETED])
 
@@ -54,9 +54,9 @@ class RerunHashTests(unittest.TestCase):
         Asserts that unimplemented but planned functionality is handled accordingly.
         """
         a = AbstractDROP('a', 'a')
-        a.reproducibility_level = ReproduciblityFlags.RERUN
+        a.reproducibility_level = ReproducibilityFlags.RERUN
         with self.assertRaises(NotImplementedError):
-            a.reproducibility_level = ReproduciblityFlags.REPEAT
+            a.reproducibility_level = ReproducibilityFlags.REPEAT
             a.generate_merkle_data()
 
     def test_commit_on_complete(self):
@@ -66,8 +66,8 @@ class RerunHashTests(unittest.TestCase):
 
         a = AbstractDROP('a', 'a')
         b = AbstractDROP('b', 'b')
-        a.reproducibility_level = ReproduciblityFlags.RERUN
-        b.reproducibility_level = ReproduciblityFlags.NOTHING
+        a.reproducibility_level = ReproducibilityFlags.RERUN
+        b.reproducibility_level = ReproducibilityFlags.NOTHING
         self.assertIsNone(a.merkleroot)
         self.assertIsNone(b.merkleroot)
 
@@ -88,7 +88,7 @@ class RerunHashTests(unittest.TestCase):
         Should raise an exception preventing a straight-recommit.
         """
         a = AbstractDROP('a', 'a')
-        a.reproducibility_level = ReproduciblityFlags.RERUN
+        a.reproducibility_level = ReproducibilityFlags.RERUN
         a.setCompleted()
         with self.assertRaises(Exception):
             a.commit()
@@ -101,17 +101,17 @@ class RerunHashTests(unittest.TestCase):
         """
         a = AbstractDROP('a', 'a')
         b = AbstractDROP('b', 'b')
-        a.reproducibility_level = ReproduciblityFlags.NOTHING
-        b.reproducibility_level = ReproduciblityFlags.NOTHING
+        a.reproducibility_level = ReproducibilityFlags.NOTHING
+        b.reproducibility_level = ReproducibilityFlags.NOTHING
 
         a.setCompleted()
         self.assertIsNone(a.merkleroot)
-        a.reproducibility_level = ReproduciblityFlags.RERUN
+        a.reproducibility_level = ReproducibilityFlags.RERUN
         a.commit()
         self.assertIsNotNone(a.merkleroot)
 
         self.assertIsNone(b.merkleroot)
-        b.reproducibility_level = ReproduciblityFlags.RERUN
+        b.reproducibility_level = ReproducibilityFlags.RERUN
         b.setCompleted()
         self.assertIsNotNone(b.merkleroot)
 
