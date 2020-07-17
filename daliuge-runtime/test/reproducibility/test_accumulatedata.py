@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from dlg.common.reproducibility.constants import ReproduciblityFlags
+from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import accumulate_lgt_drop_data
 
 
@@ -19,7 +19,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         app_hashes = []
         for i in range(5):
             app = node_data[i]
-            hash_data = accumulate_lgt_drop_data(app, ReproduciblityFlags.RERUN)
+            hash_data = accumulate_lgt_drop_data(app, ReproducibilityFlags.RERUN)
             print(hash_data)
             #app_hashes.append(HASHING_ALG(hash_data).hexdigest()))
         fp.close()

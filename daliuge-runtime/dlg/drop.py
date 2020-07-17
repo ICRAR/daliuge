@@ -41,7 +41,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
-from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, rmode_supported, HASHING_ALG
+from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, rmode_supported, HASHING_ALG
 from merklelib import MerkleTree
 from six import BytesIO
 
@@ -610,7 +610,7 @@ class AbstractDROP(EventFirer):
 
     @reproducibility_level.setter
     def reproducibility_level(self, new_flag):
-        if type(new_flag) != ReproduciblityFlags:
+        if type(new_flag) != ReproducibilityFlags:
             raise TypeError("new_flag must be a Reproduciblity flag enum.")
         elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
             if self._committed:
@@ -639,9 +639,9 @@ class AbstractDROP(EventFirer):
         Some of these are abstract.
         :return: A list of elements constituting a summary of this drop
         """
-        if self._reproduciblity is ReproduciblityFlags.NOTHING:
+        if self._reproduciblity is ReproducibilityFlags.NOTHING:
             return []
-        elif self._reproduciblity is ReproduciblityFlags.RERUN:
+        elif self._reproduciblity is ReproducibilityFlags.RERUN:
             return self.generate_rerun_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
