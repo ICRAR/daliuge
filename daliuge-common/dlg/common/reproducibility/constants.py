@@ -4,7 +4,7 @@ from enum import Enum
 PROTOCOL_VERSION = 0.1
 
 
-class ReproduciblityFlags(Enum):
+class ReproducibilityFlags(Enum):
     NOTHING = 0
     RERUN = 1
     REPEAT = 2
@@ -14,11 +14,11 @@ class ReproduciblityFlags(Enum):
     EXPERIMENTAL = 6
 
 
-REPRO_DEFAULT = ReproduciblityFlags.NOTHING
+REPRO_DEFAULT = ReproducibilityFlags.NOTHING
 HASHING_ALG = hashlib.sha3_256
 
 
-def rmode_supported(flag: ReproduciblityFlags):
+def rmode_supported(flag: ReproducibilityFlags):
     """
     Determines in a given flag is currently supported.
     A slightly pedantic solution but it does centralize the process.
@@ -27,9 +27,9 @@ def rmode_supported(flag: ReproduciblityFlags):
     :param flag: A ReproducibilityFlag enum being queried
     :return: True if supported, False otherwise
     """
-    if flag == ReproduciblityFlags.NOTHING \
-            or flag == ReproduciblityFlags.RERUN \
-            or flag == ReproduciblityFlags.EXPERIMENTAL:
+    if flag == ReproducibilityFlags.NOTHING \
+            or flag == ReproducibilityFlags.RERUN \
+            or flag == ReproducibilityFlags.EXPERIMENTAL:
         return True
     else:
         return False
