@@ -28,6 +28,8 @@ import collections
 import importlib
 import logging
 
+from dlg.common.reproducibility.constants import ReproducibilityFlags
+
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
 from .ddap_protocol import DROPRel, DROPLinkType
@@ -230,7 +232,8 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         drop = cf(dropSpec, session=session)
         if session is not None:
             # Now using per-drop reproducibility setting.
-            drop.reproducibility_level = dropSpec['reprodata']['rmode']  # session.reprodata['rmode']
+            drop.reproducibility_level = ReproducibilityFlags(int(dropSpec['reprodata']['rmode']))
+            # session.reprodata['rmode']
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
