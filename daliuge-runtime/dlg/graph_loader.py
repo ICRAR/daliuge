@@ -28,8 +28,6 @@ import collections
 import importlib
 import logging
 
-from dlg.common.reproducibility.constants import ReproduciblityFlags
-
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
 from .ddap_protocol import DROPRel, DROPLinkType

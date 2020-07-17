@@ -1,6 +1,6 @@
 import logging
 
-from dlg.common.reproducibility.constants import ReproduciblityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
+from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported
 from merklelib import MerkleTree
 
@@ -12,7 +12,7 @@ def common_hash(value):
 
 
 #  ------ Drop-Based Functionality ------
-def accumulate_lgt_drop_data(drop: dict, level: ReproduciblityFlags):
+def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
     TODO: Implement alternative level functionality.
@@ -21,7 +21,7 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproduciblityFlags):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
-    if level == ReproduciblityFlags.NOTHING:
+    if level == ReproducibilityFlags.NOTHING:
         return data
 
     category_type = drop['categoryType']
@@ -44,7 +44,7 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproduciblityFlags):
     return data
 
 
-def accumulate_lg_drop_data(drop: dict, level: ReproduciblityFlags):
+def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
     TODO: Implement alternative level functionality.
@@ -68,7 +68,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         drop['reprodata']["rmode"] = str(rmode.value)
-    if rmode == ReproduciblityFlags.NOTHING:
+    if rmode == ReproducibilityFlags.NOTHING:
         return data
     data["type"] = drop["type"]
     data["rank"] = drop["rank"]
@@ -94,7 +94,7 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     data = accumulate_pgt_unroll_drop_data(drop)
     # This is the only piece of new information added at the partition level
     # It is only pertinent to Repetition and Computational replication
-    if rmode == ReproduciblityFlags.REPEAT or rmode == ReproduciblityFlags.REPLICATE_COMP:
+    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP:
         data["node"] = drop["node"][1:]
         data["island"] = drop["island"][1:]
     return data
@@ -113,13 +113,13 @@ def accumulate_pg_drop_data(drop: dict):
         rmode = REPRO_DEFAULT
         drop['reprodata']["rmode"] = str(rmode.value)
     data = {}
-    if rmode == ReproduciblityFlags.REPEAT or rmode == ReproduciblityFlags.REPLICATE_COMP:
+    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP:
         data['node'] = drop['node']
         data['island'] = drop['island']
     return data
 
 
-def init_lgt_repro_drop_data(drop: dict, level: ReproduciblityFlags):
+def init_lgt_repro_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     Creates and appends per-drop reproducibility information at the logical template stage.
     :param drop:
