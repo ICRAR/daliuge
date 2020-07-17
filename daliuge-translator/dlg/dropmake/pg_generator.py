@@ -2592,7 +2592,7 @@ class LG:
 
 
 class _LGTemplate(string.Template):
-    delimiter = "%"
+    delimiter = "~"
     idpattern = r"[_a-z][_a-z0-9\.]*"
 
 
