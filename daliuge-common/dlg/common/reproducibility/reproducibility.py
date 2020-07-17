@@ -63,7 +63,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
-    rmode = ReproduciblityFlags(int(drop['reprodata']["rmode"]))
+    rmode = ReproducibilityFlags(int(drop['reprodata']["rmode"]))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -86,7 +86,7 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     :param drop:
     :return:
     """
-    rmode = ReproduciblityFlags(int(drop['reprodata']["rmode"]))
+    rmode = ReproducibilityFlags(int(drop['reprodata']["rmode"]))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -107,7 +107,7 @@ def accumulate_pg_drop_data(drop: dict):
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    rmode = ReproduciblityFlags(int(drop['reprodata']["rmode"]))
+    rmode = ReproducibilityFlags(int(drop['reprodata']["rmode"]))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -143,7 +143,7 @@ def init_lg_repro_drop_data(drop: dict):
     :param drop:
     :return: The same drop with appended reproducibility information
     """
-    rmode = ReproduciblityFlags(int(drop['reprodata']['rmode']))
+    rmode = ReproducibilityFlags(int(drop['reprodata']['rmode']))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -409,7 +409,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
-    rmode = ReproduciblityFlags(int(rmode))
+    rmode = ReproducibilityFlags(int(rmode))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -477,7 +477,7 @@ def init_pg_repro_data(pg: list):
     :return: The same pg object with new information appended
     """
     reprodata = pg.pop()
-    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    rmode = ReproducibilityFlags(int(reprodata["rmode"]))
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -498,7 +498,7 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
     :param reprodata:
     :return:
     """
-    rmode = ReproduciblityFlags(int(reprodata["rmode"]))
+    rmode = ReproducibilityFlags(int(reprodata["rmode"]))
     if not rmode_supported(rmode):
         # TODO: Logging needs sessionID at this stage
         # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
