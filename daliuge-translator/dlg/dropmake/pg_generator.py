@@ -361,7 +361,7 @@ class LGNode:
         return self._jd["category"] == "mpi"
 
     @property
-    def group_keys(self):reprodata
+    def group_keys(self):
         """
         Return:
             None or a list of keys (each key is an integer)
