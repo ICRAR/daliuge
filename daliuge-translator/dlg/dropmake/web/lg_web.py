@@ -212,7 +212,6 @@ def pgtcwl_get():
         # build node list
         mgr_client = SimpleManagerClient()
         node_list = mgr_client.nodes()
-        #node_list = ["localhost", "localhost"]
 
         # mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)

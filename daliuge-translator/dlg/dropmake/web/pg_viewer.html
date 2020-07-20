@@ -482,9 +482,6 @@
   }
 
   function makeCWL() {
-    console.log("makeCWL()");
-    console.log("requesting CWL for {{pgt_view_json_name}}")
-
     //given a logical graph name, get its CWL from the server
     $.ajax({
         url: "/pgt_cwl?pgt_name={{pgt_view_json_name}}",
