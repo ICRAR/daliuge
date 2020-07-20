@@ -53,25 +53,17 @@ def create_workflow(pgt, pgt_path, cwl_path, zip_path):
         outputId = node.get('oid', None)
         outputs = node.get('outputs', [])
 
-        #print(str(index) + " lg_key:" + str(node['lg_key']) + " nm:" + str(node['nm']) + " command:" + str(command) + " dataType:" + str(dataType) + " outputId:" + str(outputId) + " outputs:" + str(outputs))
-
         if len(outputs) > 0:
             files[outputs[0]] = "step" + str(index) + "/output_file_0"
-
-    # debug
-    #print("files:" + str(files))
 
     # add steps to the workflow
     for index, node in enumerate(pgt):
         dataType = node.get('dt', '')
-        #print(str(index) + ":" + dataType)
 
         if dataType == 'BashShellApp':
-            #print(str(node))
             name = node.get('nm', '')
             inputs = node.get('inputs', [])
             outputs = node.get('outputs', [])
-            #print(str(name) + " in:" + str(len(inputs)) + " out:" + str(len(outputs)))
 
             # create command line tool description
             filename = "step" + str(index) + ".cwl"
@@ -84,25 +76,18 @@ def create_workflow(pgt, pgt_path, cwl_path, zip_path):
 
             # add input to step
             for index, input in enumerate(inputs):
-                #print("add input " + input + " " + files[input])
                 step.inputs.append(cwlgen.WorkflowStepInput('input_file_' + str(index), source=files[input]))
 
             # add output to step
             for index, output in enumerate(outputs):
-                #print("add output " + output + " " + files[output])
                 step.out.append(cwlgen.WorkflowStepOutput('output_file_' + str(index)))
 
             # add step to workflow
             cwl_workflow.steps.append(step)
-            #print("num steps " + str(len(cwl_workflow.steps)))
-
 
     # save CWL to path
     with open(cwl_path, "w") as f:
         f.write(cwl_workflow.export_string())
-
-    # debug : print contents of workflow
-    #print(cwl_workflow.export_string())
 
     # put workflow and command line tool description files all together in a zip
     zipObj = ZipFile(zip_path, 'w')
@@ -113,28 +98,15 @@ def create_workflow(pgt, pgt_path, cwl_path, zip_path):
 
 
 def create_command_line_tool(node, filename):
-    print("create_command_line_tool(" + node['nm'] + "," + filename + ")")
-    #print(str(node))
-
     # get inputs and outputs
     inputs = node.get('inputs', [])
     outputs = node.get('outputs', [])
 
     # strip command down to just the basic command, with no input or output parameters
     base_command = node.get('command', '')
-    #for input in inputs:
-    #    base_command = base_command.replace('%i['+input+']', '')
-    #for output in outputs:
-    #    base_command = base_command.replace('%o['+ output+']', '')
-
-    #base_command = base_command.replace('<', '')
-    #base_command = base_command.replace('>', '')
-    #base_command = base_command.strip()
 
     # TODO: find a better way of specifying command line program + arguments
     base_command = base_command[:base_command.index(" ")]
-
-    #print("base_command:!" + base_command + "!")
 
     # cwlgen's Serializer class doesn't support python 2.7's unicode types
     cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=common.u2s(node['nm']), base_command=base_command, cwl_version='v1.0')
