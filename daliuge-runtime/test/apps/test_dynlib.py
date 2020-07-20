@@ -32,6 +32,7 @@ from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.drop import InMemoryDROP, NullDROP
+from dlg.common import Categories
 
 _libname = "dynlib_example"
 _libfname = "libdynlib_example.so"
@@ -130,7 +131,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid": "A", "type": "plain", "storage": "memory"}]
+        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [
             {
                 "oid": "B",
@@ -140,7 +141,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "C", "type": "plain", "storage": "memory", "producers": ["B"]},
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
         rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
         a_data = os.urandom(32)
@@ -157,7 +158,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =============    =======
         """
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory", "consumers": ["B"]},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["B"]},
             {
                 "oid": "B",
                 "type": "app",
@@ -167,7 +168,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "bufsize": bufsize,
             },
         ]
-        g2 = [{"oid": "C", "type": "plain", "storage": "memory"}]
+        g2 = [{"oid": "C", "type": "plain", "storage": Categories.MEMORY}]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
         a_data = os.urandom(32)
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
@@ -184,8 +185,8 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =======    ===============
         """
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory"},
-            {"oid": "B", "type": "plain", "storage": "memory"},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
         ]
         g2 = [
             {
@@ -196,7 +197,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
+            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
@@ -220,8 +221,8 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
     def test_crashing_dynlib(self):
         """Like test_multiple_inputs_in_remote_nm, but C crashes"""
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory"},
-            {"oid": "B", "type": "plain", "storage": "memory"},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
         ]
         g2 = [
             {
@@ -233,7 +234,7 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
                 "bufsize": bufsize,
                 "crash_and_burn": 1,
             },
-            {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
+            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
