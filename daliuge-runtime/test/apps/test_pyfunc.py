@@ -35,6 +35,7 @@ from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
+from dlg.common import Categories
 
 
 logger = logging.getLogger(__name__)
@@ -248,9 +249,9 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory"}]
+        g1 = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY}]
         g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'},
-              {"oid":"C", "type":"plain", "storage": "memory", "producers":["B"]}]
+              {"oid":"C", "type":"plain", "storage": Categories.MEMORY, "producers":["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
@@ -266,9 +267,9 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --> B --|----|-> C |
         =============    =======
         """
-        g1 = [{"oid":"A", "type":"plain", "storage": "memory", "consumers": ['B']},
+        g1 = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY, "consumers": ['B']},
               {"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'}]
-        g2 = [{"oid":"C", "type":"plain", "storage": "memory"}]
+        g2 = [{"oid":"C", "type":"plain", "storage": Categories.MEMORY}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)

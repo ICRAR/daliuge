@@ -27,7 +27,7 @@ import six
 
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dlg.common import dropdict
+from dlg.common import dropdict, Categories
 from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
@@ -41,7 +41,7 @@ hostname = "localhost"
 
 
 def memory(uid, **kwargs):
-    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": "memory"})
+    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY})
     dropSpec.update(kwargs)
     return dropSpec
 
@@ -150,14 +150,14 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
     def _deploy_error_graph(self, **kwargs):
         sessionId = "lala"
         g = [
-            {"oid": "A", "type": "plain", "storage": "memory"},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
                 "app": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
-            {"oid": "C", "type": "plain", "storage": "memory", "producers": ["B"]},
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
@@ -208,10 +208,10 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         =======    =============
         """
 
-        g1 = [{"oid": "A", "type": "plain", "storage": "memory"}]
+        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [
             {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "C", "type": "plain", "storage": "memory", "producers": ["B"]},
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
@@ -236,14 +236,14 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = "s1"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory", "consumers": ["C"]},
-            {"oid": "B", "type": "plain", "storage": "memory"},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
             {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
+            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
         ]
         g2 = [
             {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
-            {"oid": "F", "type": "plain", "storage": "memory", "producers": ["E"]},
+            {"oid": "F", "type": "plain", "storage": Categories.MEMORY, "producers": ["E"]},
         ]
 
         rels = [
@@ -394,8 +394,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = "s1"
         N = 100
-        g1 = [{"oid": "A", "type": "plain", "storage": "memory"}]
-        g2 = [{"oid": "C", "type": "plain", "storage": "memory"}]
+        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        g2 = [{"oid": "C", "type": "plain", "storage": Categories.MEMORY}]
         rels = []
         for i in range(N):
             b_oid = "B%d" % (i,)
@@ -452,14 +452,14 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = "s1"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory", "consumers": ["C"]},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
             {
                 "oid": "C",
                 "type": "app",
                 "app": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
-            {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
+            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
         ]
         g2 = [
             {
@@ -509,7 +509,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """
 
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory"},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
@@ -517,7 +517,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
-            {"oid": "C", "type": "plain", "storage": "memory"},
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
         ]
         g2 = [
             {
@@ -526,7 +526,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "app": "dlg.apps.crc.CRCStreamApp",
                 "outputs": ["E"],
             },
-            {"oid": "E", "type": "plain", "storage": "memory"},
+            {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
@@ -539,7 +539,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """
 
         g1 = [
-            {"oid": "A", "type": "plain", "storage": "memory"},
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
@@ -548,7 +548,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             },
         ]
         g2 = [
-            {"oid": "C", "type": "plain", "storage": "memory"},
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
             {
                 "oid": "D",
                 "type": "app",
@@ -556,7 +556,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "streamingInputs": ["C"],
                 "outputs": ["E"],
             },
-            {"oid": "E", "type": "plain", "storage": "memory"},
+            {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
