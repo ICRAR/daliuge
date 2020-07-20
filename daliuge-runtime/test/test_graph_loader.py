@@ -25,6 +25,7 @@ from dlg import graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPRel
 from dlg.drop import InMemoryDROP, ContainerDROP, \
     AppDROP, DirectoryContainer
+from dlg.common import Categories
 
 
 # Used in the textual representation of the graphs in these tests
@@ -33,14 +34,14 @@ class DummyApp(AppDROP): pass
 class TestGraphLoader(unittest.TestCase):
 
     def test_singleMemoryDrop(self):
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory"}]
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
 
     def test_containerDrop(self):
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory"},
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY},
                         {"oid":"B", "type":"container", "children":["A"]}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
@@ -53,14 +54,14 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual("B", b.uid)
 
         # A directory container
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"file", "dirname":"."},
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":Categories.FILE, "dirname":"."},
                         {"oid":"B", "type":"container", "container":"dlg.drop.DirectoryContainer", "children":["A"], "dirname":"."}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         b = a.parent
         self.assertIsInstance(b, DirectoryContainer)
 
     def test_consumer(self):
-        dropSpecList = [{"oid":"A", "type":"plain", "storage":"memory", "consumers":["B"]},
+        dropSpecList = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY, "consumers":["B"]},
                         {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)

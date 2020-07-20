@@ -1,4 +1,276 @@
 {
+    "modelData": {
+        "fileType": "graph",
+        "repoService": "Unknown",
+        "repoBranch": "",
+        "repo": "",
+        "filePath": "Vitaliy.graph",
+        "sha": "",
+        "git_url": ""
+    },
+    "nodeDataArray": [
+        {
+            "category": "Component",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -2,
+            "text": "Sleep",
+            "description": "",
+            "x": 486,
+            "y": 22,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "Unknown",
+            "outputApplicationType": "Unknown",
+            "exitApplicationType": "None",
+            "inputPorts": [
+                {
+                    "Id": "d73e47fb-2bb2-48c5-8d9e-7711df0eb8ff",
+                    "IdText": "data"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "323150da-ad2c-4162-8499-75c1f2e26e9f",
+                    "IdText": "data"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Appclass",
+                    "name": "appclass",
+                    "value": "dlg.apps.simple.SleepAndCopyApp",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleepTime=0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg02",
+                    "name": "Arg02",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg03",
+                    "name": "Arg03",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg04",
+                    "name": "Arg04",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg05",
+                    "name": "Arg05",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg06",
+                    "name": "Arg06",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg07",
+                    "name": "Arg07",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg08",
+                    "name": "Arg08",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg09",
+                    "name": "Arg09",
+                    "value": "",
+                    "description": ""
+                },
+                {
+                    "text": "Arg10",
+                    "name": "Arg10",
+                    "value": "",
+                    "description": ""
+                }
+            ]
+        },
+        {
+            "category": "File",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -4,
+            "text": "Enter label",
+            "description": "",
+            "x": 270,
+            "y": 39,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "Unknown",
+            "outputApplicationType": "Unknown",
+            "exitApplicationType": "None",
+            "inputPorts": [
+                {
+                    "Id": "85a7fdf2-1b99-4bd1-8b6d-bd69b112fed3",
+                    "IdText": "data"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "46af9588-6b4d-41fe-a2b3-1f8ed75918a2",
+                    "IdText": "data"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Data volume",
+                    "name": "data_volume",
+                    "value": "5",
+                    "description": ""
+                },
+                {
+                    "text": "Group end",
+                    "name": "group_end",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "filepath",
+                    "name": "filepath",
+                    "value": "test.graph",
+                    "description": ""
+                },
+                {
+                    "text": "dirname",
+                    "name": "dirname",
+                    "value": "%PWD%",
+                    "description": ""
+                }
+            ]
+        },
+        {
+            "category": "File",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -6,
+            "text": "Enter label",
+            "description": "",
+            "x": 834,
+            "y": 39,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "Unknown",
+            "outputApplicationType": "Unknown",
+            "exitApplicationType": "None",
+            "inputPorts": [
+                {
+                    "Id": "c44aca7c-6024-48ee-beff-f7ed5c1b3633",
+                    "IdText": "data"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "f7ecd8d3-6c7f-4c63-8474-4dacd64421af",
+                    "IdText": "data"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Data volume",
+                    "name": "data_volume",
+                    "value": "5",
+                    "description": ""
+                },
+                {
+                    "text": "Group end",
+                    "name": "group_end",
+                    "value": "0",
+                    "description": ""
+                }
+            ]
+        }
+    ],
     "linkDataArray": [
         {
             "from": -4,
@@ -11,233 +283,6 @@
             "fromPort": "323150da-ad2c-4162-8499-75c1f2e26e9f",
             "to": -6,
             "toPort": "c44aca7c-6024-48ee-beff-f7ed5c1b3633"
-        }
-    ],
-    "modelData": {
-        "filePath": "Vitaliy.graph",
-        "fileType": "graph",
-        "git_url": "",
-        "repo": "",
-        "repoService": "Unknown",
-        "sha": ""
-    },
-    "nodeDataArray": [
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "Component",
-            "categoryType": "Application",
-            "collapsed": false,
-            "colour": "#3498DB",
-            "description": "",
-            "exitAppName": "",
-            "fields": [
-                {
-                    "name": "execution_time",
-                    "text": "Execution time",
-                    "value": "0"
-                },
-                {
-                    "name": "num_cpus",
-                    "text": "Num CPUs",
-                    "value": "1"
-                },
-                {
-                    "name": "group_start",
-                    "text": "Group start",
-                    "value": "0"
-                },
-                {
-                    "name": "appclass",
-                    "text": "Appclass",
-                    "value": "dlg.apps.simple.SleepAndCopyApp"
-                },
-                {
-                    "name": "Arg01",
-                    "text": "Arg01",
-                    "value": "sleepTime=0"
-                },
-                {
-                    "name": "Arg02",
-                    "text": "Arg02",
-                    "value": ""
-                },
-                {
-                    "name": "Arg03",
-                    "text": "Arg03",
-                    "value": ""
-                },
-                {
-                    "name": "Arg04",
-                    "text": "Arg04",
-                    "value": ""
-                },
-                {
-                    "name": "Arg05",
-                    "text": "Arg05",
-                    "value": ""
-                },
-                {
-                    "name": "Arg06",
-                    "text": "Arg06",
-                    "value": ""
-                },
-                {
-                    "name": "Arg07",
-                    "text": "Arg07",
-                    "value": ""
-                },
-                {
-                    "name": "Arg08",
-                    "text": "Arg08",
-                    "value": ""
-                },
-                {
-                    "name": "Arg09",
-                    "text": "Arg09",
-                    "value": ""
-                },
-                {
-                    "name": "Arg10",
-                    "text": "Arg10",
-                    "value": ""
-                }
-            ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
-            "inputLocalPorts": [],
-            "inputPorts": [
-                {
-                    "Id": "d73e47fb-2bb2-48c5-8d9e-7711df0eb8ff",
-                    "IdText": "data"
-                }
-            ],
-            "isData": false,
-            "isGroup": false,
-            "key": -2,
-            "loc": "486.8289424438269 22.22270095505804",
-            "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
-            "outputLocalPorts": [],
-            "outputPorts": [
-                {
-                    "Id": "323150da-ad2c-4162-8499-75c1f2e26e9f",
-                    "IdText": "data"
-                }
-            ],
-            "streaming": false,
-            "subject": null,
-            "text": "Sleep"
-        },
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "file",
-            "categoryType": "Data",
-            "collapsed": false,
-            "colour": "#394BB2",
-            "description": "",
-            "exitAppName": "",
-            "fields": [
-                {
-                    "name": "data_volume",
-                    "text": "Data volume",
-                    "value": "5"
-                },
-                {
-                    "name": "group_end",
-                    "text": "Group end",
-                    "value": "0"
-                },
-                {
-                    "name": "filepath",
-                    "text": "filepath",
-                    "value": "test.graph"
-                },
-                {
-                    "name": "dirname",
-                    "text": "dirname",
-                    "value": "%PWD%"
-                }
-            ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
-            "inputLocalPorts": [],
-            "inputPorts": [
-                {
-                    "Id": "85a7fdf2-1b99-4bd1-8b6d-bd69b112fed3",
-                    "IdText": "data"
-                }
-            ],
-            "isData": true,
-            "isGroup": false,
-            "key": -4,
-            "loc": "270 39",
-            "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
-            "outputLocalPorts": [],
-            "outputPorts": [
-                {
-                    "Id": "46af9588-6b4d-41fe-a2b3-1f8ed75918a2",
-                    "IdText": "data"
-                }
-            ],
-            "streaming": false,
-            "subject": null,
-            "text": "Enter label"
-        },
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "file",
-            "categoryType": "Data",
-            "collapsed": false,
-            "colour": "#394BB2",
-            "description": "",
-            "exitAppName": "",
-            "fields": [
-                {
-                    "name": "data_volume",
-                    "text": "Data volume",
-                    "value": "5"
-                },
-                {
-                    "name": "group_end",
-                    "text": "Group end",
-                    "value": "0"
-                }
-            ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
-            "inputLocalPorts": [],
-            "inputPorts": [
-                {
-                    "Id": "c44aca7c-6024-48ee-beff-f7ed5c1b3633",
-                    "IdText": "data"
-                }
-            ],
-            "isData": true,
-            "isGroup": false,
-            "key": -6,
-            "loc": "834 39",
-            "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
-            "outputLocalPorts": [],
-            "outputPorts": [
-                {
-                    "Id": "f7ecd8d3-6c7f-4c63-8474-4dacd64421af",
-                    "IdText": "data"
-                }
-            ],
-            "streaming": false,
-            "subject": null,
-            "text": "Enter label"
         }
     ]
 }

@@ -27,14 +27,15 @@ from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
+from dlg.common import Categories
 
 
 class CommonTestsBase(ManagerStarter):
 
     def _submit(self):
-        pg = [{"oid":"A", "type":"plain", "storage": "memory"},
+        pg = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY},
               {"oid":"B", "type":"app", "app": "dlg.apps.simple.SleepApp", "inputs": ["A"], "outputs":["C"]},
-              {"oid":"C", "type":"plain", "storage": "memory"}]
+              {"oid":"C", "type":"plain", "storage": Categories.MEMORY}]
         for drop in pg:
             drop['node'] = '127.0.0.1'
             drop['island'] = '127.0.0.1'
