@@ -84,7 +84,6 @@ script:
  - git checkout -b doxygentest
  - git add * 
  - git commit -m 'doxygen test'
- - git pull
  - git push -u origin doxygentest
 
 # Publish to coveralls (only once per commit, so only using one environment)
