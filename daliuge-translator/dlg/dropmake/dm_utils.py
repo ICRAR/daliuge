@@ -55,7 +55,7 @@ def get_lg_ver_type(lgo):
             for fd in fds:
                 if "name" in fd:
                     kw = fd["name"]
-                    if kw in node:
+                    if kw in node and kw not in ['description']:
                         return LG_VER_EAGLE_CONVERTED
                     else:
                         return LG_VER_EAGLE
@@ -297,8 +297,8 @@ def convert_mkn_all_share_m(lgo):
     hardcode the assumption M > K > N for now
 
     ALL instances of the MKN construct take M inputs. Thus, each instance takes M // K inputs.
-    
-    NB - This function is NOT called by the pg_generator. It is here for the sake of comparison 
+
+    NB - This function is NOT called by the pg_generator. It is here for the sake of comparison
     and demonstration.
     """
     keyset = get_keyset(lgo)
