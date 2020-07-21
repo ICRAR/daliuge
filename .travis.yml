@@ -56,6 +56,7 @@ install:
  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
  - sudo apt-get update && sudo apt-get install -y doxygen
+ - sudo apt-get update && sudo apt-get install -y xsltproc
 
 # run the tests, making sure subprocesses generate coverage information
 script:
@@ -67,6 +68,12 @@ script:
 
 
  - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
+ - cd DALIUGE/xml
+ - xsltproc combine.xslt index.xml >daliuge.xml
+ - mv daliuge.xml ../.
+ - cd ..
+ - rm -rf xml/
+ - cd ..
  - git config --global user.name $GITHUB_USERNAME
  - git config --global user.email "$GITHUB_USERNAME@gmail.com"
  - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
