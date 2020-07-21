@@ -35,6 +35,15 @@ logger = logging.getLogger(__name__)
 
 def create_workflow(pgt, pgt_path, cwl_path, zip_path):
     """
+    Create a CWL workflow from a given Physical Graph Template
+
+    A CWL workflow consists of multiple files. A single file describing the
+    workflow, and multiple files each describing one step in the workflow. All
+    the files are combined into one zip file, so that a single file can be
+    downloaded by the user.
+
+    NOTE: CWL only supports workflow steps that are bash shell applications
+          Non-BashShellApp nodes are unable to be implemented in CWL
     """
 
     # create list for command line tool description files
@@ -98,6 +107,14 @@ def create_workflow(pgt, pgt_path, cwl_path, zip_path):
 
 
 def create_command_line_tool(node, filename):
+    """
+    Create a command line tool description file for a single step in a CWL
+    workflow.
+
+    NOTE: CWL only supports workflow steps that are bash shell applications
+          Non-BashShellApp nodes are unable to be implemented in CWL
+    """
+
     # get inputs and outputs
     inputs = node.get('inputs', [])
     outputs = node.get('outputs', [])
