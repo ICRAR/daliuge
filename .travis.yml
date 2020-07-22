@@ -50,17 +50,16 @@ cache: pip
 before_install:
  - pip install -U coveralls pytest pytest-cov
  - pip install -U setuptools pip wheel
- - pip install doxygen && pip install xsltproc
 
 install:
  - pip install -e daliuge-common/
  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
-   #- sudo apt-get update && sudo apt-get install -y doxygen
-   #- sudo apt-get update && sudo apt-get install -y xsltproc
 
-   #on:
-   # branch: doxygentest
+before_script:
+ - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
+   on:
+     branch: doxygentest
 # run the tests, making sure subprocesses generate coverage information
 script:
  - COVFILES=
@@ -69,7 +68,7 @@ script:
  - coverage combine $COVFILES
  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
-script:
+after_script:
  - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
  - cd DALIUGE/xml
  - xsltproc combine.xslt index.xml >daliuge.xml
@@ -88,6 +87,9 @@ script:
  - git add * 
  - git diff-index --quiet HEAD || git commit -m 'doxygen test'
  - git push -u origin doxygentest
+   on:
+     branch: doxygentest
+
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
  - coveralls
