@@ -50,6 +50,7 @@ cache: pip
 before_install:
  - pip install -U coveralls pytest pytest-cov
  - pip install -U setuptools pip wheel
+ - pip install -y doxygen && pip install -y xsltproc
 
 install:
  - pip install -e daliuge-common/
@@ -58,8 +59,6 @@ install:
    #- sudo apt-get update && sudo apt-get install -y doxygen
    #- sudo apt-get update && sudo apt-get install -y xsltproc
 
-after_install: 
- - pip install -e doxygen && pip install -e xsltproc
    #on:
    # branch: doxygentest
 # run the tests, making sure subprocesses generate coverage information
