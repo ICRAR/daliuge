@@ -71,9 +71,6 @@ script:
  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
 script:
-      on:
-        branch: doxygentest
-
  - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
  - cd DALIUGE/xml
  - xsltproc combine.xslt index.xml >daliuge.xml
