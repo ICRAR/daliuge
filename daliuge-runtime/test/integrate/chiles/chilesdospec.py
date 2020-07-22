@@ -23,6 +23,7 @@ import json
 import os
 
 from dlg.drop import dropdict
+from dlag.common import Categories
 
 
 # Directories and paths
@@ -49,21 +50,21 @@ CUBE_NAME = 'cube1408~1412'
 
 
 def fileSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':'file'})
+    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':Categories.FILE})
     dropSpec.update(kwargs)
-    return dropSpec 
+    return dropSpec
 
 
 def directorySpec(uid, **kwargs):
     dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dlg.drop.DirectoryContainer'})
     dropSpec.update(kwargs)
-    return dropSpec 
+    return dropSpec
 
 
 def fluxSpec(uid, **kwargs):
     dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.SourceFlux'})
     dropSpec.update(kwargs)
-    return dropSpec 
+    return dropSpec
 
 
 def splitSpec(uid, **kwargs):

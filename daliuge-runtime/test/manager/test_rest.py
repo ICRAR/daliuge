@@ -31,6 +31,7 @@ from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 from dlg.restutils import RestClient
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.exceptions import InvalidGraphException
+from dlg.common import Categories
 
 
 hostname = 'localhost'
@@ -89,14 +90,14 @@ class TestRest(unittest.TestCase):
         self.assertRaises(exceptions.InvalidSessionState, c.getGraphStatus, sid)
 
         # valid dropspec, but the socket listener app doesn't allow inputs
-        c.addGraphSpec(sid, [{'type': 'socket', 'oid': 'a', 'inputs': ['b']}, {'oid': 'b', 'type': 'plain', 'storage': 'memory'}])
+        c.addGraphSpec(sid, [{'type': 'socket', 'oid': 'a', 'inputs': ['b']}, {'oid': 'b', 'type': 'plain', 'storage': Categories.MEMORY}])
         self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
         c.createSession(sid)
         fname = tempfile.mktemp()
-        c.addGraphSpec(sid, [{'type': 'plain', 'storage': 'file', 'oid': 'a', 'filepath': fname, 'check_filepath_exists': True}])
+        c.addGraphSpec(sid, [{'type': 'plain', 'storage': Categories.FILE, 'oid': 'a', 'filepath': fname, 'check_filepath_exists': True}])
         self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
 
     def test_recursive(self):

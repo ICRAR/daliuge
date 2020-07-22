@@ -27,7 +27,7 @@ import psutil
 
 from dlg.dropmake.pg_generator import LG
 from dlg.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
-Partition, MinNumPartsScheduler, PSOScheduler, SAScheduler, MCTSScheduler)
+Partition, MinNumPartsScheduler, PSOScheduler)
 
 
 if 'DALIUGE_TESTS_RUNLONGTESTS' in os.environ:
@@ -104,27 +104,3 @@ class TestScheduler(unittest.TestCase):
             psps01.partition_dag()
             psps02 = PSOScheduler(drop_list, max_dop=mdp, deadline=deadline)
             psps02.partition_dag()
-
-    @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
-    def test_sa_scheduler(self):
-        lgs = {'lofar_std.json': 450}
-        mdp = 4
-        for lgn, deadline in lgs.items():
-            fp = get_lg_fname(lgn)
-            lg = LG(fp)
-            drop_list = lg.unroll_to_tpl()
-            pssa01 = SAScheduler(drop_list, max_dop=mdp)
-            pssa01.partition_dag()
-            pssa02 = SAScheduler(drop_list, max_dop=mdp, deadline=deadline)
-            pssa02.partition_dag()
-
-    @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
-    def test_mcts_scheduler(self):
-        lgs = {'lofar_std.json': 450}
-        mdp = 4
-        for lgn, deadline in lgs.items():
-            fp = get_lg_fname(lgn)
-            lg = LG(fp)
-            drop_list = lg.unroll_to_tpl()
-            pssa01 = MCTSScheduler(drop_list, max_dop=mdp, max_calc_time=0.25)
-            pssa01.partition_dag()
