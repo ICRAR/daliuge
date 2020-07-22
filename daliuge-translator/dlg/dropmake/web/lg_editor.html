@@ -520,7 +520,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-      myDiagram.nodeTemplateMap.add("memory",  // the Component category
+      myDiagram.nodeTemplateMap.add("Memory",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -546,7 +546,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("mpi",  // the Component category
+    myDiagram.nodeTemplateMap.add("Mpi",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -572,7 +572,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("ngas",  // the Component category
+    myDiagram.nodeTemplateMap.add("NGAS",  // the Component category
       $(go.Node, "Spot", nodeStyle(),
         // the Component (Application DROP) is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -623,7 +623,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("s3",  // the default category
+    myDiagram.nodeTemplateMap.add("S3",  // the default category
       $(go.Node, "Spot", nodeStyle(),
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -648,7 +648,7 @@
         makePort("B", go.Spot.Bottom, true, true)
       ));
 
-    myDiagram.nodeTemplateMap.add("file",  // the default category
+    myDiagram.nodeTemplateMap.add("File",  // the default category
       $(go.Node, "Spot", nodeStyle(),
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
@@ -1321,18 +1321,18 @@
                         num_cpus: 1, group_start: 0, libpath: "",
                         Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
                         Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
-                        { category: "memory", text: "InMemory\nDrop", data_volume: 5, group_end: 0},
-                        { category: "file", text: "FileDrop", data_volume: 5, group_end: 0,
+                        { category: "Memory", text: "InMemory\nDrop", data_volume: 5, group_end: 0},
+                        { category: "File", text: "FileDrop", data_volume: 5, group_end: 0,
                         check_filepath_exists: "1", filepath: "", dirname: ""},
-                        { category: "s3", text: "S3Drop", data_volume: 5, group_end: 0},
-                        { category: "ngas", text: "NGAS\nDrop", data_volume: 5, group_end: 0},
+                        { category: "S3", text: "S3Drop", data_volume: 5, group_end: 0},
+                        { category: "NGAS", text: "NGAS\nDrop", data_volume: 5, group_end: 0},
                         { category: "json", text: "JsonDrop", data_volume: 5, group_end: 0},
-                        { category: "mpi", text: "MPI\nDrop", group_end: 0, execution_time: 5,
+                        { category: "Mpi", text: "MPI\nDrop", group_end: 0, execution_time: 5,
                         num_cpus: 1, num_of_procs: 4,
                         Arg01: "", Arg02: "", Arg03: "", Arg04: "", Arg05: "",
                         Arg06: "", Arg07: "", Arg08: "", Arg09: "", Arg10: ""},
-                        { category: "SplitData", text: "Scatter", isGroup: true, num_of_copies: 4, scatter_axis: "time"},
-                        { category: "DataGather", text: "Gather", isGroup: true, num_of_inputs: 2, gather_axis: "frequency"},
+                        { category: "Scatter", text: "Scatter", isGroup: true, num_of_copies: 4, scatter_axis: "time"},
+                        { category: "Gather", text: "Gather", isGroup: true, num_of_inputs: 2, gather_axis: "frequency"},
                         { category: "GroupBy", text: "GroupBy", isGroup: true, group_key: "None", group_axis: "frequency"},
                         { category: "Loop", text: "Loop", isGroup: true, num_of_iter: 5},
                         { category: "Branch", text: "Branch\nCondition" },
@@ -1779,7 +1779,7 @@
           <input type="number" name="max_mem" min="1" value="1000">&nbsp;Megabytes
           </td>
         </tr>
-      
+
         <tr>
         <td>
           <input type="hidden" name="lg_name" value="to_be_filled" id="pgtp_lg_name_02">
