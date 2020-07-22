@@ -86,9 +86,6 @@ after_script:
  - git add * 
  - git diff-index --quiet HEAD || git commit -m 'doxygen test'
  - git push -u origin doxygentest
-   on:
-     branch: 
-     - doxygentest@ICRAR/daliuge
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
