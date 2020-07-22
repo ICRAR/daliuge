@@ -59,7 +59,7 @@ install:
 before_script:
  - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
    on:
-     branch: doxygentest
+     branch: doxygentest@ICRAR/DALiuGE
 # run the tests, making sure subprocesses generate coverage information
 script:
  - COVFILES=
@@ -88,7 +88,7 @@ after_script:
  - git diff-index --quiet HEAD || git commit -m 'doxygen test'
  - git push -u origin doxygentest
    on:
-     branch: doxygentest
+     branch: doxygentest@ICRAR/DALiuGE
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
