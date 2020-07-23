@@ -59,9 +59,13 @@ install:
 before_script:
  - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
    #if: branch = doxygentest@ICRAR/daliuge
-branches:
-  only:
-    - doxygentest
+   #branches:
+   #only:
+   #- doxygentest
+on:
+  push:
+    branches:
+      - doxygentest
 
 # run the tests, making sure subprocesses generate coverage information
 script:
