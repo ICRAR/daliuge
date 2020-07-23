@@ -60,7 +60,7 @@ before_script:
  - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
   branches:
     only:
-    - doxygentest
+    - doxygentest@ICRAR/daliuge
 
 # run the tests, making sure subprocesses generate coverage information
 script:
@@ -71,6 +71,9 @@ script:
  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
 after_script:
+  branches:
+    only:
+      - master
  - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
  - cd DALIUGE/xml
  - xsltproc combine.xslt index.xml >daliuge.xml
