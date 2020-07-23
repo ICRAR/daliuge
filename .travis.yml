@@ -67,7 +67,7 @@ before_script:
       #branches:
       #- doxygentest@ICRAR/daliuge
   on:
-    branch: doxygentest
+    branch: doxygentest@ICRAR/daliuge
 # run the tests, making sure subprocesses generate coverage information
 script:
  - COVFILES=
