@@ -65,7 +65,7 @@ before_script:
 on:
   push:
     branches:
-      - doxygentest
+      - doxygentest@ICRAR/daliuge
 
 # run the tests, making sure subprocesses generate coverage information
 script:
