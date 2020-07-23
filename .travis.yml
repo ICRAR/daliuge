@@ -58,7 +58,7 @@ install:
 
 before_script:
  - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
-   if: branch = doxygentest
+   #   if: branch = doxygentest
 
 # run the tests, making sure subprocesses generate coverage information
 script:
@@ -72,7 +72,7 @@ after_script:
         #branches:
         #only:
         #- doxygentest
-   if: branch = doxygentest
+        #   if: branch = doxygentest
 
  - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
  - cd DALIUGE/xml
