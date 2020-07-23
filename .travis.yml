@@ -61,12 +61,13 @@ before_script:
    #if: branch = doxygentest@ICRAR/daliuge
    #branches:
    #only:
-   #- doxygentest
-on:
-  push:
-    branches:
-      - doxygentest@ICRAR/daliuge
-
+   # - doxygentest@ICRAR/daliuge
+      #on:
+      #push:
+      #branches:
+      #- doxygentest@ICRAR/daliuge
+  on:
+    branch: doxygentest
 # run the tests, making sure subprocesses generate coverage information
 script:
  - COVFILES=
@@ -79,7 +80,7 @@ after_script:
         #branches:
         #only:
         #- doxygentest
-  if: branch = doxygentest@ICRAR/daliuge
+        #if: branch = doxygentest@ICRAR/daliuge
 
  - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
  - cd DALIUGE/xml
