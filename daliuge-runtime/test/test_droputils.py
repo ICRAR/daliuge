@@ -28,7 +28,7 @@ Created on 20 Jul 2015
 import unittest
 
 from dlg import droputils
-from dlg.common import dropdict
+from dlg.common import dropdict, Categories
 from dlg.drop import InMemoryDROP, FileDROP, BarrierAppDROP
 from dlg.droputils import DROPFile
 
@@ -177,8 +177,8 @@ class DropUtilsTest(unittest.TestCase):
         """
         A --> B
         """
-        pg_spec = [{"oid": "A", "type": "plain", "storage": "memory", "consumers": ["B"]},
-                   {"oid": "B", "type": "app", "app": "test.test_graph_loader.DummyApp"}]
+        pg_spec = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY, "consumers":["B"]},
+                   {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
         self.assertEqual('A', next(iter(roots)))
@@ -187,8 +187,8 @@ class DropUtilsTest(unittest.TestCase):
         A --> B
         The same, but now B references A
         """
-        pg_spec = [{"oid": "A", "type": "plain", "storage": "memory"},
-                   {"oid": "B", "type": "app", "app": "test.test_graph_loader.DummyApp", "inputs": ["A"]}]
+        pg_spec = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY},
+                   {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp", "inputs": ["A"]}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
         self.assertEqual('A', next(iter(roots)))
@@ -198,12 +198,12 @@ class DropUtilsTest(unittest.TestCase):
                         |--> E --> F
         B --------------|
         """
-        pg_spec = [{"oid": "A", "type": "plain", "storage": "memory"},
-                   {"oid": "B", "type": "plain", "storage": "memory"},
-                   {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp", "inputs": ['A']},
-                   {"oid": "D", "type": "plain", "storage": "memory", "producers": ["C"]},
-                   {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
-                   {"oid": "F", "type": "plain", "storage": "memory", "producers": ["E"]}]
+        pg_spec = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY},
+                   {"oid":"B", "type":"plain", "storage": Categories.MEMORY},
+                   {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp", "inputs": ['A']},
+                   {"oid":"D", "type":"plain", "storage": Categories.MEMORY, "producers": ["C"]},
+                   {"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
+                   {"oid":"F", "type":"plain", "storage": Categories.MEMORY, "producers":["E"]}]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(2, len(roots))
         self.assertListEqual(['A', 'B'], sorted(roots))

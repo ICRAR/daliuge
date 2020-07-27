@@ -28,7 +28,7 @@ which will then be deployed and monitored by the Physical Graph Manager
 
 Examples of logical graph node JSON representation
 
-{ u'category': u'memory',
+{ u'category': u'Memory',
   u'data_volume': 25,
   u'group': -58,
   u'key': -59,
@@ -64,29 +64,22 @@ import networkx as nx
 import numpy as np
 import six
 
+from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from .utils.bash_parameter import BashCommand
+from ..common import dropdict
+from ..common import Categories
+from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
     get_lg_ver_type,
     convert_construct,
     convert_fields,
     convert_mkn,
     LG_VER_EAGLE,
+    LG_VER_OLD,
     LG_VER_EAGLE_CONVERTED,
 )
-from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-from .utils.bash_parameter import BashCommand
-from ..common import STORAGE_TYPES
-from ..common import dropdict
 
 logger = logging.getLogger(__name__)
-
-APP_DROP_TYPES = [
-    "Component",
-    "BashShellApp",
-    "mpi",
-    "DynlibApp",
-    "docker",
-    "DynlibProcApp",
-]
 
 
 class GraphException(Exception):
@@ -299,10 +292,10 @@ class LGNode:
         return len(self._outs) > 0
 
     def is_start_node(self):
-        return self.jd["category"] == "Start"
+        return self.jd["category"] == Categories.START
 
     def is_end_node(self):
-        return self.jd["category"] == "End"
+        return self.jd["category"] == Categories.END
 
     def is_start(self):
         return not self.has_group()
@@ -316,16 +309,16 @@ class LGNode:
                 return False
             else:
                 return True
-        elif self.inputs[0].jd["category"] == "Start":
+        elif self.inputs[0].jd["category"] == Categories.START:
             return True
         else:
             return False
 
     def is_start_listener(self):
         return (
-                len(self.inputs) == 1
-                and self.inputs[0].jd["category"] == "Start"
-                and self.jd["category"] in STORAGE_TYPES
+            len(self.inputs) == 1
+            and self.inputs[0].jd["category"] == Categories.START
+            and self.jd["category"] in STORAGE_TYPES
         )
 
     def is_group_start(self):
@@ -338,7 +331,7 @@ class LGNode:
     def is_group_end(self):
         return (
                 self.has_group()
-                and "group_end" in self.jdreprodata
+                and "group_end" in self.jd
                 and 1 == int(self.jd["group_end"])
         )
 
@@ -346,19 +339,19 @@ class LGNode:
         return self._isgrp
 
     def is_scatter(self):
-        return self.is_group() and self._jd["category"] == "SplitData"
+        return self.is_group() and self._jd["category"] == Categories.SCATTER
 
     def is_gather(self):
-        return self._jd["category"] == "DataGather"
+        return self._jd["category"] == Categories.GATHER
 
     def is_loop(self):
-        return self.is_group() and self._jd["category"] == "Loop"
+        return self.is_group() and self._jd["category"] == Categories.LOOP
 
     def is_groupby(self):
-        return self._jd["category"] == "GroupBy"
+        return self._jd["category"] == Categories.GROUP_BY
 
     def is_mpi(self):
-        return self._jd["category"] == "mpi"
+        return self._jd["category"] == Categories.MPI
 
     @property
     def group_keys(self):
@@ -382,7 +375,7 @@ class LGNode:
                 )
 
     def is_branch(self):
-        return self._jd["category"] == "Branch"
+        return self._jd["category"] == Categories.BRANCH
 
     @property
     def gather_width(self):
@@ -600,7 +593,7 @@ class LGNode:
                 drop_spec = dropdict(
                     {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
                 )
-            if drop_type == "file":
+            if drop_type == Categories.FILE:
                 dn = self.jd.get("dirname", None)
                 if dn:
                     kwargs["dirname"] = dn
@@ -611,7 +604,7 @@ class LGNode:
                 if fp:
                     kwargs["filepath"] = fp
         elif (
-                drop_type == "Component"
+            drop_type == Categories.COMPONENT
         ):  # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -644,7 +637,7 @@ class LGNode:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in ["DynlibApp", "DynlibProcApp"]:
+        elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
             if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
             drop_spec = dropdict(
@@ -663,8 +656,8 @@ class LGNode:
             self._update_key_value_attributes(kwargs)
 
             drop_spec.update(kwargs)
-        elif drop_type in ["BashShellApp", "mpi"]:
-            if drop_type == "mpi":
+        elif drop_type in [Categories.BASH_SHELL_APP, Categories.MPI]:
+            if drop_type == Categories.MPI:
                 app_str = "dlg.apps.mpi.MPIApp"
                 kwargs["maxprocs"] = int(self.jd.get("num_of_procs", 4))
             else:
@@ -691,14 +684,14 @@ class LGNode:
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
             # kwargs['command'] = ' '.join(cmds)
-            if drop_type == 'mpi':
+            if drop_type == Categories.MPI:
                 kwargs["command"] = BashCommand(cmds).to_real_command()
             else:
                 kwargs["command"] = BashCommand(cmds)  # TODO: Check if this actually solves a problem.
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        elif drop_type == "docker":
+        elif drop_type == Categories.DOCKER:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
             typ = "app"
@@ -727,7 +720,7 @@ class LGNode:
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             drop_spec.update(kwargs)
 
-        elif drop_type == "GroupBy":
+        elif drop_type == Categories.GROUP_BY:
             drop_spec = dropdict(
                 {
                     "oid": oid,
@@ -746,7 +739,7 @@ class LGNode:
                 {
                     "oid": "{0}-grp-data".format(oid),
                     "type": "plain",
-                    "storage": "memory",
+                    "storage": Categories.MEMORY,
                     "nm": "grpdata",
                     "dw": dw,
                     "rank": rank,
@@ -757,7 +750,7 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_grp)
             dropSpec_grp.addProducer(drop_spec)
-        elif drop_type == "DataGather":
+        elif drop_type == Categories.GATHER:
             drop_spec = dropdict(
                 {
                     "oid": oid,
@@ -776,7 +769,7 @@ class LGNode:
                 {
                     "oid": "{0}-gather-data".format(oid),
                     "type": "plain",
-                    "storage": "memory",
+                    "storage": Categories.MEMORY,
                     "nm": "gthrdt",
                     "dw": dw,
                     "rank": rank,
@@ -787,7 +780,7 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(drop_spec)
-        elif drop_type == "Branch":
+        elif drop_type == Categories.BRANCH:
             # create an App first
             drop_spec = dropdict(
                 {
@@ -801,7 +794,7 @@ class LGNode:
                 {
                     "oid": "{0}-null_drop".format(oid),
                     "type": "plain",
-                    "storage": "null",
+                    "storage": Categories.NULL,
                     "nm": "null",
                     "dw": 0,
                     "rank": rank,
@@ -812,11 +805,11 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_null)
             dropSpec_null.addProducer(drop_spec)
-        elif drop_type in ["Start", "End"]:
+        elif drop_type in [Categories.START, Categories.END]:
             drop_spec = dropdict(
-                {"oid": oid, "type": "plain", "storage": "null", "rank": rank}
+                {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
             )
-        elif drop_type == "Loop":
+        elif drop_type == Categories.LOOP:
             pass
         else:
             raise GraphException("Unknown DROP type: '{0}'".format(drop_type))
@@ -1104,9 +1097,9 @@ class PGT(object):
             node["oid"] = oid
             tt = drop["type"]
             if "plain" == tt:
-                node["category"] = "Data"
+                node["category"] = Categories.DATA
             elif "app" == tt:
-                node["category"] = "Component"
+                node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
 
@@ -1150,7 +1143,7 @@ class PGT(object):
                                 {
                                     "oid": extra_oid,
                                     "type": "plain",
-                                    "storage": "memory",
+                                    "storage": Categories.MEMORY,
                                     "nm": "go_data",
                                     "dw": 1,
                                 }
@@ -1202,9 +1195,9 @@ class PGT(object):
             node["oid"] = oid
             tt = drop["type"]
             if "plain" == tt:
-                node["category"] = "Data"
+                node["category"] = Categories.DATA
             elif "app" == tt:
-                node["category"] = "Component"
+                node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
 
@@ -1904,7 +1897,7 @@ class LG:
         all_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
-            if jd["category"] == "Comment" or jd["category"] == "Description":
+            if jd["category"] == Categories.COMMENT or jd["category"] == Categories.DESCRIPTION:
                 continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             all_list.append(lgn)
@@ -1918,11 +1911,11 @@ class LG:
 
         for lgn in all_list:
             if (
-                    lgn.is_start()
-                    and lgn.jd["category"] != "Comment"
-                    and lgn.jd["category"] != "Description"
+                lgn.is_start()
+                and lgn.jd["category"] != Categories.COMMENT
+                and lgn.jd["category"] != Categories.DESCRIPTION
             ):
-                if lgn.jd["category"] == "Variables":
+                if lgn.jd["category"] == Categories.VARIABLES:
                     self._g_var.append(lgn)
                 else:
                     self._start_list.append(lgn)
@@ -1951,6 +1944,7 @@ class LG:
         self._reprodata = lg["reprodata"]
 
     def validate_link(self, src, tgt):
+        # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
         if src.is_scatter() or tgt.is_scatter():
             prompt = "Remember to specify Input App Type for the Scatter construct!"
             raise GInvalidLink(
@@ -2209,10 +2203,10 @@ class LG:
         return ret
 
     def _is_stream_link(self, s_type, t_type):
-        return s_type in ["Component", "DynlibApp", "DynlibProcApp"] and t_type in [
-            "Component",
-            "DynlibApp",
-            "DynlibProcApp",
+        return s_type in [Categories.COMPONENT, Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP] and t_type in [
+            Categories.COMPONENT,
+            Categories.DYNLIB_APP,
+            Categories.DYNLIB_PROC_APP,
         ]
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
@@ -2257,7 +2251,7 @@ class LG:
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
                     "type": "plain",
-                    "storage": "null",
+                    "storage": Categories.NULL,
                     "nm": "StreamNull",
                     "dw": 0,
                 }
@@ -2270,7 +2264,7 @@ class LG:
         elif s_type in APP_DROP_TYPES:
             sdrop.addOutput(tdrop)
             tdrop.addProducer(sdrop)
-            if "BashShellApp" == s_type:
+            if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
         else:
@@ -2292,7 +2286,7 @@ class LG:
                     # print("not a stream from %s to %s" % (llink['from'], llink['to']))
                     sdrop.addConsumer(tdrop)
                     tdrop.addInput(sdrop)
-            if "BashShellApp" == t_type:
+            if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
 
@@ -2580,7 +2574,7 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            if drop["type"] == "app" and drop["app"].endswith("BashShellApp"):
+            if drop["type"] == "app" and drop["app"].endswith(Categories.BASH_SHELL_APP):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 
