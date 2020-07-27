@@ -23,7 +23,7 @@ import logging
 import time
 import unittest
 
-from dlg.common import dropdict, tool
+from dlg.common import dropdict, tool, Categories
 from dlg.manager import client
 from dlg.utils import terminate_or_kill
 from test.manager import testutils
@@ -33,7 +33,7 @@ hostname = 'localhost'
 
 
 def memory_drop(uid):
-    return dropdict({'node': hostname, 'oid': uid, 'uid': uid, 'type': 'plain', 'storage': 'memory'})
+    return dropdict({'node': hostname, 'oid': uid, 'uid': uid, 'type': 'plain', 'storage': Categories.MEMORY})
 
 
 def create_graph(branches, drops_per_branch):

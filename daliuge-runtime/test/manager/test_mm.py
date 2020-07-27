@@ -28,7 +28,7 @@ import unittest
 import pkg_resources
 from dlg import droputils
 from dlg import utils
-from dlg.common import tool
+from dlg.common import tool, Categories
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
@@ -57,11 +57,11 @@ class DimAndNMStarter(ManagerStarter):
 class TestMM(DimAndNMStarter, unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
-        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'island': hostname, 'node': hostname,
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': Categories.MEMORY, 'island': hostname, 'node': hostname,
                       'consumers': ['B']},
                      {'oid': 'B', 'type': 'app', 'app': 'dlg.apps.simple.SleepAndCopyApp', 'sleepTime': sleepTime,
                       'outputs': ['C'], 'node': hostname, 'island': hostname},
-                     {'oid': 'C', 'type': 'plain', 'storage': 'memory', 'island': hostname, 'node': hostname}]
+                     {'oid': 'C', 'type': 'plain', 'storage': Categories.MEMORY, 'island': hostname, 'node': hostname}]
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 
@@ -76,23 +76,23 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         sessionId = 'lalo'
 
         # No node specified
-        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory'}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': Categories.MEMORY}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # Wrong node specified
-        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': 'unknown_host'}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': Categories.MEMORY, 'node': 'unknown_host'}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # No island specified
-        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': hostname}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': Categories.MEMORY, 'node': hostname}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # Wrong island specified
-        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': hostname, 'island': 'unknown_host'}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': Categories.MEMORY, 'node': hostname, 'island': 'unknown_host'}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # OK
-        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': 'memory', 'node': hostname, 'island': hostname}]
+        graphSpec = [{'oid': 'A', 'type': 'plain', 'storage': Categories.MEMORY, 'node': hostname, 'island': hostname}]
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 
@@ -106,7 +106,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         dropSpec = list(graphFromMM.values())[0]
         self.assertEqual('A', dropSpec['oid'])
         self.assertEqual('plain', dropSpec['type'])
-        self.assertEqual('memory', dropSpec['storage'])
+        self.assertEqual('Memory', dropSpec['storage'])
 
     def test_deployGraph(self):
 

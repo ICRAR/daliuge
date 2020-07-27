@@ -23,21 +23,21 @@
 Module containing the core DROP classes.
 """
 
+from abc import ABCMeta, abstractmethod
 import base64
 import collections
 import contextlib
 import errno
 import heapq
 import importlib
-import inspect
 import logging
 import math
 import os
 import random
-import re
 import shutil
 import threading
 import time
+import inspect
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -49,21 +49,20 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO, ShoreIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
+from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
-from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
 try:
     from crc32c import crc32  # @UnusedImport
-
     _checksumType = ChecksumTypes.CRC_32C
 except:
     from binascii import crc32  # @Reimport
-
     _checksumType = ChecksumTypes.CRC_32
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,6 @@ class ListAsDict(list):
     """A list that adds drop UIDs to a set as they get appended to the list"""
 
     def __init__(self, my_set):
-        super().__init__()
         self.set = my_set
 
     def append(self, drop):
@@ -169,7 +167,7 @@ class AbstractDROP(EventFirer):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._getArg(kwargs, 'nm', '')
+        self.name = self._getArg(kwargs, 'nm', "")
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
@@ -207,10 +205,10 @@ class AbstractDROP(EventFirer):
         self._streamingConsumers = ListAsDict(self._streamingConsumers_uids)
 
         self._refCount = 0
-        self._refLock = threading.Lock()
+        self._refLock  = threading.Lock()
         self._location = None
-        self._parent = None
-        self._status = None
+        self._parent   = None
+        self._status   = None
         self._statusLock = threading.RLock()
 
         # Current and target phases.
@@ -230,9 +228,9 @@ class AbstractDROP(EventFirer):
         # this information.
         # Note also that the setters of these two properties also allow to set
         # a value on them, but only if they are None
-        self._checksum = None
+        self._checksum     = None
         self._checksumType = None
-        self._size = None
+        self._size         = None
 
         # Recording runtime reproducibility information is handled via MerkleTrees
         # Switching on the reproducibility level will determine what information is recorded.
@@ -1222,24 +1220,6 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         return "file://" + hostname + self._path
 
 
-class ShoreDROP(AbstractDROP):
-    doid = dlg_string_param('doid', 'test_data_object')
-    column = dlg_string_param('column', 'test_column')
-    row = dlg_int_param('row', 0)
-    rows = dlg_int_param('rows', 1)
-    address = dlg_string_param('address', None)
-
-    def initialize(self, **kwargs):
-        pass
-
-    def getIO(self):
-        return ShoreIO(self.doid, self.column, self.row, self.rows, self.address)
-
-    @property
-    def dataURL(self):
-        return self.address
-
-
 class NgasDROP(AbstractDROP):
     """
     A DROP that points to data stored in an NGAS server
@@ -1338,8 +1318,7 @@ class RDBMSDrop(AbstractDROP):
             with self._cursor(c) as cur:
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
-                sql = "INSERT into %s (%s) VALUES (%s)" % (
-                    self._db_table, ','.join(vals.keys()), ','.join(['{}'] * len(vals)))
+                sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
                 sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
                 cur.execute(sql, vals)
@@ -1816,13 +1795,13 @@ class BarrierAppDROP(InputFiredAppDROP):
 # (e.g., one uses `addConsumer` to add a DROPLinkeType.CONSUMER DROP into
 # another)
 LINKTYPE_1TON_APPEND_METHOD = {
-    DROPLinkType.CONSUMER: 'addConsumer',
+    DROPLinkType.CONSUMER:           'addConsumer',
     DROPLinkType.STREAMING_CONSUMER: 'addStreamingConsumer',
-    DROPLinkType.INPUT: 'addInput',
-    DROPLinkType.STREAMING_INPUT: 'addStreamingInput',
-    DROPLinkType.OUTPUT: 'addOutput',
-    DROPLinkType.CHILD: 'addChild',
-    DROPLinkType.PRODUCER: 'addProducer'
+    DROPLinkType.INPUT:              'addInput',
+    DROPLinkType.STREAMING_INPUT:    'addStreamingInput',
+    DROPLinkType.OUTPUT:             'addOutput',
+    DROPLinkType.CHILD:              'addChild',
+    DROPLinkType.PRODUCER:           'addProducer'
 }
 
 # Same as above, but for N-to-1 relationships, in which case we indicate not a
@@ -1832,13 +1811,13 @@ LINKTYPE_NTO1_PROPERTY = {
 }
 
 LINKTYPE_1TON_BACK_APPEND_METHOD = {
-    DROPLinkType.CONSUMER: 'addInput',
+    DROPLinkType.CONSUMER:           'addInput',
     DROPLinkType.STREAMING_CONSUMER: 'addStreamingInput',
-    DROPLinkType.INPUT: 'addConsumer',
-    DROPLinkType.STREAMING_INPUT: 'addStreamingConsumer',
-    DROPLinkType.OUTPUT: 'addProducer',
-    DROPLinkType.CHILD: 'setParent',
-    DROPLinkType.PRODUCER: 'addOutput'
+    DROPLinkType.INPUT:              'addConsumer',
+    DROPLinkType.STREAMING_INPUT:    'addStreamingConsumer',
+    DROPLinkType.OUTPUT:             'addProducer',
+    DROPLinkType.CHILD:              'setParent',
+    DROPLinkType.PRODUCER:           'addOutput'
 }
 
 LINKTYPE_NTO1_BACK_APPEND_METHOD = {
