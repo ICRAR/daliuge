@@ -61,7 +61,7 @@ matrix:
         - mv ../DALIUGE/ .
         - git add *
         - git diff-index --quiet HEAD || git commit -m 'doxygen commit'
-        - git push -u origin doxygentest
+        - git push
 
 # We want to use docker during the tests
 services:
