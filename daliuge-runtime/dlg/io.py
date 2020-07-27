@@ -27,7 +27,6 @@ import six.moves.urllib.parse as urlparse  # @UnresolvedImport
 from six import BytesIO
 
 from . import ngaslite
-from . import shoreClient
 
 logger = logging.getLogger(__name__)
 
@@ -246,46 +245,6 @@ class FileIO(DataIO):
         os.unlink(self._fnm)
 
 
-class ShoreIO(DataIO):
-
-    def __init__(self, doid, column, row, rows=1, address=None, **kwargs):
-        super(ShoreIO, self).__init__()
-        self._doid = doid
-        self._column = column
-        self._row = row
-        self._rows = rows
-        self._address = address
-        shoreClient.shoreZmqInit(address)
-
-    def _open(self, **kwargs):
-        return None
-
-    def _read(self, **kwargs):
-        msg = shoreClient.shoreGet(self._doid, self._column, self._row, self._rows)
-        if type(msg) is dict:
-            if 'data' in msg:
-                return msg['data']
-
-    def _write(self, data, **kwargs):
-        msg = shoreClient.shorePut(self._doid, self._column, self._row, data, self._rows)
-        return len(data)
-
-    def _close(self, **kwargs):
-        return None
-
-    def exists(self):
-        msg = shoreClient.shoreQuery(self._doid, self._column)
-        if type(msg) is dict:
-            if 'return' in msg:
-                if type(msg['return']) is dict:
-                    if 'do' and 'column' in msg['return']:
-                        return True
-        return False
-
-    def delete(self):
-        pass
-
-
 class NgasIO(DataIO):
     '''
     A DROP whose data is finally stored into NGAS. Since NGAS doesn't
@@ -303,12 +262,12 @@ class NgasIO(DataIO):
             raise
 
         super(NgasIO, self).__init__()
-        self._ngasSrv = hostname
-        self._ngasPort = port
+        self._ngasSrv            = hostname
+        self._ngasPort           = port
         self._ngasConnectTimeout = ngasConnectTimeout
-        self._ngasTimeout = ngasTimeout
-        self._fileId = fileId
-        self._length = length
+        self._ngasTimeout        = ngasTimeout
+        self._fileId             = fileId
+        self._length             = length
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -370,14 +329,14 @@ class NgasLiteIO(DataIO):
     that this class will throw an error if its `exists` method is invoked.
     '''
 
-    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
         super(NgasLiteIO, self).__init__()
-        self._ngasSrv = hostname
-        self._ngasPort = port
+        self._ngasSrv            = hostname
+        self._ngasPort           = port
         self._ngasConnectTimeout = ngasConnectTimeout
-        self._ngasTimeout = ngasTimeout
-        self._fileId = fileId
-        self._length = length
+        self._ngasTimeout        = ngasTimeout
+        self._fileId             = fileId
+        self._length             = length
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport

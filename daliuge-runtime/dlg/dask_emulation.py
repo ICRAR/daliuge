@@ -32,7 +32,7 @@ import six.moves.cPickle as pickle  # @UnresolvedImport
 
 from . import utils, droputils
 from .apps import pyfunc
-from .common import dropdict
+from .common import dropdict, Categories
 from .ddap_protocol import DROPStates
 from .drop import BarrierAppDROP
 from .exceptions import InvalidDropException
@@ -341,7 +341,7 @@ class _DataDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-        my_dropdict = dropdict({'type': 'plain', 'storage': 'memory'})
+        my_dropdict = dropdict({'type': 'plain', 'storage': Categories.MEMORY})
         if not self.producer:
             my_dropdict['pydata'] = pyfunc.serialize_data(self.pydata)
         return my_dropdict

@@ -44,4 +44,9 @@ class LGFillTest(unittest.TestCase):
         with open(os.path.join(lg_dir, 'chiles_simple.json')) as f:
             lg = pg_generator.fill(json.load(f), params)
         for node_idx, value in zip((20, 21, 22, 23), ('1', '2', 'True', 'hi')):
-            self.assertEqual(lg['nodeDataArray'][node_idx]['Arg10'], value)
+            node = lg['nodeDataArray'][node_idx]
+            found = None
+            for field in node['fields']:
+                if field['name'] == 'Arg10':
+                    found = field['value']
+            self.assertEqual(found, value)

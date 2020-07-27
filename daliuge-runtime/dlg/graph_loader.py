@@ -38,32 +38,32 @@ from .drop import ContainerDROP, InMemoryDROP, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
+from .common import Categories
 
 STORAGE_TYPES = {
-    'memory': InMemoryDROP,
-    'file': FileDROP,
-    'ngas': NgasDROP,
-    'null': NullDROP,
-    'json': JsonDROP,
+    Categories.MEMORY: InMemoryDROP,
+    Categories.FILE  : FileDROP,
+    Categories.NGAS  : NgasDROP,
+    Categories.NULL  : NullDROP,
+    Categories.JSON  : JsonDROP,
 }
 
 try:
     from .s3_drop import S3DROP
-
-    STORAGE_TYPES['s3'] = S3DROP
+    STORAGE_TYPES[Categories.S3] = S3DROP
 except ImportError:
     pass
 
     # Dictionary for the key used to store 1-to-N relationships between DROPs
 # in the the DROP specification format
 __TOMANY = {
-    DROPLinkType.CONSUMER: 'consumers',
+    DROPLinkType.CONSUMER:           'consumers',
     DROPLinkType.STREAMING_CONSUMER: 'streamingConsumers',
-    DROPLinkType.INPUT: 'inputs',
-    DROPLinkType.STREAMING_INPUT: 'streamingInputs',
-    DROPLinkType.OUTPUT: 'outputs',
-    DROPLinkType.CHILD: 'children',
-    DROPLinkType.PRODUCER: 'producers',
+    DROPLinkType.INPUT:              'inputs',
+    DROPLinkType.STREAMING_INPUT:    'streamingInputs',
+    DROPLinkType.OUTPUT:             'outputs',
+    DROPLinkType.CHILD:              'children',
+    DROPLinkType.PRODUCER:           'producers',
 }
 
 # Same for above, but for n-to-1 relationships
