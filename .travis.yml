@@ -42,7 +42,7 @@ matrix:
     - name: doxygencommit
       branches:
         only:
-          - doxygentest
+          - master 
       before_script:
         - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
       after_script:
