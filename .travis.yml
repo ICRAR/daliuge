@@ -40,30 +40,30 @@ matrix:
     - python: "3.5"
     - python: "2.7"
     - name: doxygentest
-        branches:
-          only:
-            - doxygentest
-        before_script:
-          - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
-        after_script:
-          - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
-          - cd DALIUGE/xml
-          - xsltproc combine.xslt index.xml >daliuge.xml
-          - mv daliuge.xml ../.
-          - cd ..
-          - rm -rf xml/
-          - cd ..
-          - git config --global user.name $GITHUB_USERNAME
-          - git config --global user.email "$GITHUB_USERNAME@gmail.com"
-          - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
-          - cd EAGLE_test_repo/
-          - git checkout origin/doxygentest
-          - rm -rf DALIUGE/
-          - mv ../DALIUGE/ .
-          - git checkout -b doxygentest
-          - git add *
-          - git diff-index --quiet HEAD || git commit -m 'doxygen test'
-          - git push -u origin doxygentest
+      branches:
+        only:
+          - doxygentest
+      before_script:
+        - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
+      after_script:
+        - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
+        - cd DALIUGE/xml
+        - xsltproc combine.xslt index.xml >daliuge.xml
+        - mv daliuge.xml ../.
+        - cd ..
+        - rm -rf xml/
+        - cd ..
+        - git config --global user.name $GITHUB_USERNAME
+        - git config --global user.email "$GITHUB_USERNAME@gmail.com"
+        - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
+        - cd EAGLE_test_repo/
+        - git checkout origin/doxygentest
+        - rm -rf DALIUGE/
+        - mv ../DALIUGE/ .
+        - git checkout -b doxygentest
+        - git add *
+        - git diff-index --quiet HEAD || git commit -m 'doxygen test'
+        - git push -u origin doxygentest
 
 # We want to use docker during the tests
 services:
