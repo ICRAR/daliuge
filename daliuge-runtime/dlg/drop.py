@@ -884,6 +884,9 @@ class AbstractDROP(EventFirer):
             logger.debug("Adding back %r as input of %r", self, consumer)
             consumer.addInput(self, False)
 
+        # Add reproduciblity subscription
+        self.subscribe(consumer, 'reproducibility')
+
     @property
     def producers(self):
         """
@@ -924,6 +927,8 @@ class AbstractDROP(EventFirer):
         """
         if e.type == 'producerFinished':
             self.producerFinished(e.uid, e.status)
+        elif e.type == 'reproducibility':
+            self.dropReproComplete(e.uid, e.reprodata)
 
     @track_current_drop
     def producerFinished(self, uid, drop_state):
@@ -959,6 +964,13 @@ class AbstractDROP(EventFirer):
                 self.setError()
             else:
                 self.setCompleted()
+
+    def dropReproComplete(self, uid, reprodata):
+        """
+        Callback invoved when a DROP with UID `uid` has finishing processing its reproducibility information.
+        Importantly, this is independent of that drop being completed.
+        """
+        #  TODO: Perform some action
 
     @property
     def streamingConsumers(self):
@@ -1004,6 +1016,9 @@ class AbstractDROP(EventFirer):
         # right time
         if self.executionMode == ExecutionMode.DROP:
             self.subscribe(streamingConsumer, 'dropCompleted')
+
+        # Add reproducibility subscription
+        self.subscribe(streamingConsumer, 'reproducibility')
 
     def completedrop(self):
         """
