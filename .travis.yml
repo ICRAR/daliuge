@@ -42,11 +42,13 @@ matrix:
     - name: doxygencommit
       branches:
         only:
-          - master 
-      before_script:
+          - doxygentest 
+      before_install:
+      install:
         - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
-      after_script:
+      script:
         - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
+      after_success:  
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
         - mv daliuge.xml ../.
