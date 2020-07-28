@@ -170,18 +170,18 @@ or
 ```
 ### **Description** 
 
-A brief description of the purpose of this component. A detailed description is also included here. 
+A brief name for this component. A detailed description is also included here. 
 
 ```c++
 /*! 
-* \brief Load a CASA Measurement Set in the DaliugeApplication Framework 
-* \details We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
+* \brief Load Visibility
+* \details Load a CASA Measurement Set in the DaliugeApplication Framework. We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
 */ 
 ```
 ```python
 /## 
-# \brief Load a CASA Measurement Set in the DaliugeApplication Framework 
-# \details We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
+# \brief Load Visibility 
+# \details Load a CASA Measurement Set in the DaliugeApplication Framework. We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
 ```
 ### Location 
 
