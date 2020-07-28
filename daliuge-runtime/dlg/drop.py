@@ -625,7 +625,15 @@ class AbstractDROP(EventFirer):
         """
         Provides a serailized list of Rerun data.
         At runtime, Rerunning only requires execution success or failure.
-        :return: A list containing
+        :return: A list containing rerun values
+        """
+        return [self._status]
+
+    def generate_repeat_data(self):
+        """
+        Provides a list of Repeat data.
+        At runtime, repeating, like rerunning only requires execution success or failure.
+        :return: A list containing runtime exclusive repetition values.
         """
         return [self._status]
 
@@ -641,6 +649,8 @@ class AbstractDROP(EventFirer):
             return []
         elif self._reproduciblity is ReproducibilityFlags.RERUN:
             return self.generate_rerun_data()
+        elif self._reproduciblity is ReproduciblityFlags.REPEAT:
+            return self.generate_repeat_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
 

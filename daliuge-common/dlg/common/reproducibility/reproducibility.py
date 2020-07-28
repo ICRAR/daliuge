@@ -15,7 +15,6 @@ def common_hash(value):
 def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
-    TODO: Implement alternative level functionality.
     :param drop:
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
@@ -25,22 +24,17 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
         return data
 
     category_type = drop['categoryType']
+    category = drop['category']
 
-    data['category_type'] = category_type
-    data['category'] = drop['category']
+    if not rmode_supported(level):
+        raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
 
-    if category_type == 'Data':
+    if level.value >= ReproduciblityFlags.RERUN.value:
+        data['category_type'] = category_type
+        data['category'] = category
+        data['numInputPorts'] = len(drop['inputPorts'])
+        data['numOutputPorts'] = len(drop['outputPorts'])
         data['streaming'] = drop['streaming']
-        pass
-    elif category_type == 'Application':
-        data['streaming'] = drop['streaming']
-        pass
-    elif category_type == 'Group':
-        pass
-    elif category_type == 'Control':
-        pass
-    elif category_type == 'Other':
-        pass
     return data
 
 
@@ -52,7 +46,70 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    return {}
+    data = {}
+    if level == ReproduciblityFlags.NOTHING:
+        return data
+
+    category_type = drop['categoryType']
+    category = drop['category']
+
+    # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
+    fields = {e.pop('name'): e['value'] for e in map(dict, drop['fields'])}
+
+    if not rmode_supported(level):
+        raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
+    if level == ReproduciblityFlags.RERUN:
+        pass
+    elif level == ReproduciblityFlags.EXPERIMENTAL:  # TODO: Change to REPEAT
+        if category_type == 'Application':
+            data['execution_time'] = fields['execution_time']
+            data['num_cpus'] = fields['num_cpus']
+            if category == 'BashShellApp':
+                data['command'] = fields['Arg01']
+            elif category == 'DynlibApp':
+                data['libpath'] = fields['libpath']
+            elif category == 'mpi':
+                data['num_of_procs'] = fields['num_of_procs']
+            elif category == 'docker':
+                data['image'] = fields['image']
+                data['command'] = fields['commnad']
+                data['user'] = fields['user']
+                data['ensureUserAndSwitch'] = fields['ensureUserAndSwitch']
+                data['removeContainer'] = fields['removeContainer']
+                data['additionalBindings'] = fields['additionalBindings']
+            elif category == 'component':
+                data['appclass'] = fields['appclass']
+        elif category_type == 'Data':
+            data['data_volume'] = fields['data_volume']
+            if category == 'memory':
+                pass
+            elif category == 'file':
+                data['filepath'] = fields['filepath']
+                data['dirname'] = fields['dirname']
+                data['check_filepath_exists'] = fields['check_filepath_exists']
+            elif category == 's3':
+                pass
+            elif category == 'ngas':
+                pass
+        elif category_type == 'Group':
+            data['exitAppName'] = drop['exitAppName']
+            if category == 'GroupBy':
+                data['group_key'] = fields['group_key']
+                data['group_axis'] = fields['group_axis']
+            elif category == 'Gather':
+                data['num_of_inputs'] = fields['num_of_inputs']
+                data['gather_axis'] = fields['gather_axis']
+            elif category == 'Scatter':
+                data['num_of_copies'] = fields['num_of_copies']
+                data['scatter_axis'] = fields['scatter_axis']
+            elif category == 'Loop':
+                data['num_of_iter'] = fields['num_of_iter']
+        elif category_type == 'Control':
+            pass
+        elif category_type == 'Other':
+            pass
+
+    return data
 
 
 def accumulate_pgt_unroll_drop_data(drop: dict):
