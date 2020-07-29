@@ -40,7 +40,7 @@ matrix:
     - python: "3.5"
     - python: "2.7"
     - name: doxygencommit
-      if: branch = doxygentest #master   
+      if: branch = master   
       before_install:
       install:
         - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
