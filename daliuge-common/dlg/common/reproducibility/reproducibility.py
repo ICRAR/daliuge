@@ -29,7 +29,7 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
     if not rmode_supported(level):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
 
-    if level.value >= ReproduciblityFlags.RERUN.value:
+    if level.value >= ReproducibilityFlags.RERUN.value:
         data['category_type'] = category_type
         data['category'] = category
         data['numInputPorts'] = len(drop['inputPorts'])
@@ -47,7 +47,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
-    if level == ReproduciblityFlags.NOTHING:
+    if level == ReproducibilityFlags.NOTHING:
         return data
 
     category_type = drop['categoryType']
@@ -58,9 +58,9 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
 
     if not rmode_supported(level):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
-    if level == ReproduciblityFlags.RERUN:
+    if level == ReproducibilityFlags.RERUN:
         pass
-    elif level == ReproduciblityFlags.EXPERIMENTAL:  # TODO: Change to REPEAT
+    elif level == ReproducibilityFlags.EXPERIMENTAL:  # TODO: Change to REPEAT
         if category_type == 'Application':
             data['execution_time'] = fields['execution_time']
             data['num_cpus'] = fields['num_cpus']
@@ -498,7 +498,7 @@ def init_lg_repro_data(lg: dict):
     for drop in lg['nodeDataArray']:
         init_lg_repro_drop_data(drop)
     leaves = lg_build_blockdag(lg)
-    lg['reprodata']['leaves'] = leaves
+    lg['reprodata']['signature'] = agglomerate_leaves(leaves)
     logger.info("Reproducibility data finished at LG level")
     return lg
 
@@ -513,7 +513,7 @@ def init_pgt_unroll_repro_data(pgt: list):
     for drop in pgt:
         init_pgt_unroll_repro_drop_data(drop)
     leaves = build_blockdag(pgt, 'pgt')
-    reprodata['leaves'] = leaves
+    reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT unroll level")
     return pgt
@@ -529,7 +529,7 @@ def init_pgt_partition_repro_data(pgt: list):
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop)
     leaves = build_blockdag(pgt, 'pgt')
-    reprodata['leaves'] = leaves
+    reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
     return pgt
@@ -550,7 +550,7 @@ def init_pg_repro_data(pg: list):
     for drop in pg:
         init_pg_repro_drop_data(drop)
     leaves = build_blockdag(pg, 'pg')
-    reprodata['leaves'] = leaves
+    reprodata['signature'] = agglomerate_leaves(leaves)
     pg.append(reprodata)
     logger.info("Reproducibility data finished at PG level")
     return pg
@@ -572,7 +572,7 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
     for drop in pg.items():
         init_runtime_repro_drop_data(drop[1])
     leaves = build_blockdag(list(pg.values()), 'pg')
-    reprodata['leaves'] = leaves
+    reprodata['signature'] = agglomerate_leaves(leaves)
     pg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
     return pg
