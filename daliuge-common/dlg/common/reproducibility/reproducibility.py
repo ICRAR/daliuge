@@ -456,6 +456,15 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     # logger.info("BlockDAG Generated at" + abstraction + " level")
 
 
+def agglomerate_leaves(leaves: list):
+    """
+    Inserts all hash values in `leaves` into a merkleTree in sorted order (ascending).
+    Returns the root of this tree
+    """
+    merkletree = MerkleTree(sorted(leaves))
+    return merkletree.merkle_root
+
+
 def init_lgt_repro_data(lgt: dict, rmode: str):
     """
     Creates and appends graph-wide reproducibility data at the logical template stage.
