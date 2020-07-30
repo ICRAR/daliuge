@@ -170,18 +170,18 @@ or
 ```
 ### **Description** 
 
-A brief name for this component. A detailed description is also included here. 
+A brief description of the purpose of this component. A detailed description is also included here. 
 
 ```c++
 /*! 
-* \brief Load Visibility
-* \details Load a CASA Measurement Set in the DaliugeApplication Framework. We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
+ * \brief Loads visibility set 
+ * \details Loads a configuration from a file drop and a visibility set from a casacore::Measurement Set 
 */ 
 ```
 ```python
 /## 
-# \brief Load Visibility 
-# \details Load a CASA Measurement Set in the DaliugeApplication Framework. We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
+# \brief Loads visibility set 
+# \details Loads a configuration from a file drop and a visibility set from a casacore::Measurement Set 
 ```
 ### Location 
 
@@ -357,16 +357,16 @@ doxygen  #the default configuration file named as Doxyfile
 ```
 Otherwise ,  could get the location information with: 
 
-```shell
-git remote -v 
+```plain
+git config --get remote.origin.url 
 ```
 get the version information  with (at first, make sure it is the correct branch): 
 ```shell
 git rev-parse --short HEAD 
 ```
-and the GIT_REPO or PROJECT_VERSION  should be subscripted with GIT_REPO=$(git remote -v) and PROJECT_VERSION=$(git rev-parse --short HEAD) ,  could run like this: 
+and the GIT_REPO or PROJECT_VERSION  should be subscripted with GIT_REPO=$( git config --get remote.origin.url ) and PROJECT_VERSION=$(git rev-parse --short HEAD) ,  could run like this: 
 ```shell
-GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen 
+GIT_REPO=$(git  config --get remote .origin.url ) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen 
 ```
 Combine the files to one file. 
 ```shell
