@@ -29,6 +29,11 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
     if not rmode_supported(level):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
 
+    if level == ReproducibilityFlags.REPRODUCE:
+        data['category_type'] = category_type
+        data['category'] = category
+        return data  # Early return to avoid next conditional
+
     if level.value >= ReproducibilityFlags.RERUN.value:
         data['category_type'] = category_type
         data['category'] = category
@@ -91,6 +96,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
                 pass
             elif category == 'ngas':
                 pass
+            # TODO: Add NULL and JSON cases
         elif category_type == 'Group':
             data['exitAppName'] = drop['exitAppName']
             if category == 'GroupBy':
@@ -108,6 +114,8 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             pass
         elif category_type == 'Other':
             pass
+    elif level == ReproducibilityFlags.REPRODUCE:
+        pass
 
     return data
 
@@ -127,6 +135,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         drop['reprodata']['rmode'] = str(rmode.value)
     if rmode == ReproducibilityFlags.NOTHING:
         return data
+    # TODO: Consider adding more conditionals
     data['type'] = drop['type']
     data['rank'] = drop['rank']
     if data['type'] == 'plain':
