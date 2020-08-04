@@ -1,1 +1,1 @@
-docker run -ti -p 8000:8000 -p 9000:9000 icrar/daliuge-engine:latest
+docker run -ti --name daliuge-engine -p 8000:8000 -p 8001:8001 -p 8002:8002 -p 9000:9000  icrar/daliuge-engine:latest
