@@ -197,54 +197,6 @@ def pgtjsonbody_get():
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
-
-@get("/lg_editor")
-def load_lg_editor():
-    """
-    Let the LG editor load the specified logical graph JSON representation
-    """
-    lg_name = request.query.get("lg_name")
-    if lg_name is None or len(lg_name) == 0:
-        all_lgs = lg_repo_contents()
-        first_dir = next(iter(all_lgs))
-        lg_name = first_dir + "/" + all_lgs[first_dir][0]
-
-    if lg_exists(lg_name):
-        tpl = file_as_string("lg_editor.html")
-        all_lgs = lg_repo_contents()
-        return template(tpl, lg_json_name=lg_name, all_lgs=json.dumps(all_lgs))
-    else:
-        response.status = 404
-        return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
-
-
-@get("/pg_viewer")
-def load_pg_viewer():
-    """
-    RESTful interface for loading the Physical Graph Viewer
-    """
-    pgt_name = request.query.get("pgt_view_name")
-    if pgt_name is None or len(pgt_name) == 0:
-        all_pgts = pgt_repo_contents()
-        print(all_pgts)
-        first_dir = next(iter(all_pgts))
-        pgt_name = first_dir + "/" + all_pgts[first_dir][0]
-
-    if pgt_exists(pgt_name):
-        tpl = file_as_string("pg_viewer.html")
-        return template(
-            tpl,
-            pgt_view_json_name=pgt_name,
-            title="Physical Graph Template",
-            partition_info="",
-        )
-    else:
-        response.status = 404
-        return "{0}: physical graph template (view) {1} not found\n".format(
-            err_prefix, pgt_name
-        )
-
-
 @get("/show_gantt_chart")
 def show_gantt_chart():
     """

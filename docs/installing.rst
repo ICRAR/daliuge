@@ -1,6 +1,14 @@
 Installation
 ============
 
+Docker images
+-------------
+
+Using Docker is the easiest way to get the DALiuGE system up and running. Docker images for the DALiuGE execution engine and the DALiuGE translator can be built using
+the Docker-files under the ``docker`` directories. Please refer to the ``README`` files in the 
+daliuge_runtime and the daliuge_translator directories for more information.
+
+
 Requirements
 -------------
 
@@ -52,8 +60,3 @@ There is a known issue in some systems
 when installing the ``python-daemon`` dependency,
 which **needs** to be installed via ``pip``.
 
-Docker images
--------------
-
-Docker images can be built using the Dockerfiles under the ``docker`` directory.
-Please refer to the ``README`` file in the docker directory for more information.
