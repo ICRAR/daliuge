@@ -185,8 +185,8 @@ def convert_mkn(lgo):
             node_mk["text"] = node_mk["text"] + "_InApp"
         else:
             node_mk["text"] = ipan
-        del node_mk["inputApplicationName"]
-        del node_mk["outputApplicationName"]
+        del node_mk["inputApplication"]
+        del node_mk["outputApplication"]
         del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
@@ -198,7 +198,7 @@ def convert_mkn(lgo):
         node_kn["category"] = "SplitData"
         node_kn["type"] = "SplitData"
 
-        opan = node_kn.get("outputApplicationName", "")
+        opan = node_kn.get("outputAppName", "")
         if len(opan) == 0:
             node_kn["text"] = node_kn["text"] + "_OutApp"
         else:
