@@ -149,7 +149,7 @@ def convert_mkn(lgo):
     old_new_parent_map_split_2 = dict()
     dont_change_group = set()
     n_products_map = dict()
-    app_keywords = ["inputApplication", "outputApplication"]
+    app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
         if "MKN" != node["category"]:
@@ -177,7 +177,7 @@ def convert_mkn(lgo):
         node_kn = copy.deepcopy(node_mk)
         node_split_n = copy.deepcopy(node_mk)
 
-        node_mk["application"] = node["inputApplication"]
+        node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = "DataGather"
         node_mk["type"] = "DataGather"
         ipan = node_mk.get("inputAppName", "")
@@ -185,8 +185,8 @@ def convert_mkn(lgo):
             node_mk["text"] = node_mk["text"] + "_InApp"
         else:
             node_mk["text"] = ipan
-        del node_mk["inputApplication"]
-        del node_mk["outputApplication"]
+        del node_mk["inputApplicationName"]
+        del node_mk["outputApplicationName"]
         del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
@@ -198,7 +198,7 @@ def convert_mkn(lgo):
         node_kn["category"] = "SplitData"
         node_kn["type"] = "SplitData"
 
-        opan = node_kn.get("outputAppName", "")
+        opan = node_kn.get("outputApplicationName", "")
         if len(opan) == 0:
             node_kn["text"] = node_kn["text"] + "_OutApp"
         else:
