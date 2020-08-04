@@ -16,6 +16,7 @@ import os
 import shlex
 import subprocess
 import sys
+from datetime import datetime
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -82,7 +83,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'daliuge'
-copyright = u'2016, ICRAR'
+copyright = u'2016-{0}, ICRAR'.format(datetime.now().year)
 author = u'ICRAR'
 
 # The version info for the project you're documenting, acts as replacement for
