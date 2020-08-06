@@ -238,7 +238,7 @@ class AbstractDROP(EventFirer):
         self._merkleRoot = None
         self._merkleTree = None
         self._merkleData = []
-        self._reproduciblity = REPRO_DEFAULT
+        self._reproducibility = REPRO_DEFAULT
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
@@ -604,12 +604,12 @@ class AbstractDROP(EventFirer):
 
     @property
     def reproducibility_level(self):
-        return self._reproduciblity
+        return self._reproducibility
 
     @reproducibility_level.setter
     def reproducibility_level(self, new_flag):
         if type(new_flag) != ReproducibilityFlags:
-            raise TypeError("new_flag must be a Reproduciblity flag enum.")
+            raise TypeError("new_flag must be a reproducibility flag enum.")
         elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
             if self._committed:
                 # Current behaviour, set to un-committed again after change
@@ -617,7 +617,7 @@ class AbstractDROP(EventFirer):
                 self._merkleRoot = None
                 self._merkleTree = None
                 self._merkleData = []
-            self._reproduciblity = new_flag
+            self._reproducibility = new_flag
         else:
             raise NotImplementedError("new_flag %d is not supported", new_flag.value)
 
@@ -645,11 +645,11 @@ class AbstractDROP(EventFirer):
         Some of these are abstract.
         :return: A list of elements constituting a summary of this drop
         """
-        if self._reproduciblity is ReproducibilityFlags.NOTHING:
+        if self._reproducibility is ReproducibilityFlags.NOTHING:
             return []
-        elif self._reproduciblity is ReproducibilityFlags.RERUN:
+        elif self._reproducibility is ReproducibilityFlags.RERUN:
             return self.generate_rerun_data()
-        elif self._reproduciblity is ReproduciblityFlags.REPEAT:
+        elif self._reproducibility is ReproducibilityFlags.REPEAT:
             return self.generate_repeat_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
@@ -884,7 +884,7 @@ class AbstractDROP(EventFirer):
             logger.debug("Adding back %r as input of %r", self, consumer)
             consumer.addInput(self, False)
 
-        # Add reproduciblity subscription
+        # Add reproducibility subscription
         self.subscribe(consumer, 'reproducibility')
 
     @property
