@@ -41,7 +41,6 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
 def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
-    TODO: Implement alternative level functionality.
     :param drop:
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
@@ -60,7 +59,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
     if level == ReproducibilityFlags.RERUN:
         pass
-    elif level == ReproducibilityFlags.EXPERIMENTAL:  # TODO: Change to REPEAT
+    elif level == ReproducibilityFlags.REPEAT:
         if category_type == 'Application':
             data['execution_time'] = fields['execution_time']
             data['num_cpus'] = fields['num_cpus']
@@ -115,7 +114,6 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
 def accumulate_pgt_unroll_drop_data(drop: dict):
     """
     Accumulates relevant reproducibility fields for a single drop at the physical template level.
-    TODO: Implement alternative level functionality.
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
@@ -160,7 +158,6 @@ def accumulate_pgt_partition_drop_data(drop: dict):
 def accumulate_pg_drop_data(drop: dict):
     """
     Accumulate relevant reproducibility fields for a single drop at the physical graph level.
-    TODO: Implement alternative level functionality.
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
