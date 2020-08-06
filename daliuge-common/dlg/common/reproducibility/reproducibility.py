@@ -2,6 +2,7 @@ import logging
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported
+from .. import Categories
 from merklelib import MerkleTree
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,6 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
 def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     Accumulates relevant reproducibility fields for a single drop.
-    TODO: Implement alternative level functionality.
     :param drop:
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
@@ -65,50 +65,54 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
     if level == ReproducibilityFlags.RERUN:
         pass
-    elif level == ReproducibilityFlags.EXPERIMENTAL:  # TODO: Change to REPEAT
+    elif level == ReproducibilityFlags.REPEAT:
         if category_type == 'Application':
             data['execution_time'] = fields['execution_time']
             data['num_cpus'] = fields['num_cpus']
-            if category == 'BashShellApp':
+            if category == Categories.BASH_SHELL_APP:
                 data['command'] = fields['Arg01']
-            elif category == 'DynlibApp':
+            elif category == Categories.DYNLIB_APP:  # TODO: Deal with DYNLIB_PROC
                 data['libpath'] = fields['libpath']
-            elif category == 'mpi':
+            elif category == Categories.MPI:
                 data['num_of_procs'] = fields['num_of_procs']
-            elif category == 'docker':
+            elif category == Categories.DOCKER:
                 data['image'] = fields['image']
                 data['command'] = fields['commnad']
                 data['user'] = fields['user']
                 data['ensureUserAndSwitch'] = fields['ensureUserAndSwitch']
                 data['removeContainer'] = fields['removeContainer']
                 data['additionalBindings'] = fields['additionalBindings']
-            elif category == 'component':
+            elif category == Categories.COMPONENT:
                 data['appclass'] = fields['appclass']
-        elif category_type == 'Data':
+        elif category_type == Categories.DATA:
             data['data_volume'] = fields['data_volume']
-            if category == 'memory':
+            if category == Categories.MEMORY:
                 pass
-            elif category == 'file':
+            elif category == Categories.FILE:
                 data['filepath'] = fields['filepath']
                 data['dirname'] = fields['dirname']
                 data['check_filepath_exists'] = fields['check_filepath_exists']
-            elif category == 's3':
+            elif category == Categories.S3:
                 pass
-            elif category == 'ngas':
+            elif category == Categories.NGAS:
+                pass
+            elif category == Categories.JSON:
+                pass
+            elif category == Categories.NULL:
                 pass
             # TODO: Add NULL and JSON cases
         elif category_type == 'Group':
             data['exitAppName'] = drop['exitAppName']
-            if category == 'GroupBy':
+            if category == Categories.GROUP_BY:
                 data['group_key'] = fields['group_key']
                 data['group_axis'] = fields['group_axis']
-            elif category == 'Gather':
+            elif category == Categories.GATHER:
                 data['num_of_inputs'] = fields['num_of_inputs']
                 data['gather_axis'] = fields['gather_axis']
-            elif category == 'Scatter':
+            elif category == Categories.SCATTER:
                 data['num_of_copies'] = fields['num_of_copies']
                 data['scatter_axis'] = fields['scatter_axis']
-            elif category == 'Loop':
+            elif category == Categories.LOOP:
                 data['num_of_iter'] = fields['num_of_iter']
         elif category_type == 'Control':
             pass
@@ -123,7 +127,6 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
 def accumulate_pgt_unroll_drop_data(drop: dict):
     """
     Accumulates relevant reproducibility fields for a single drop at the physical template level.
-    TODO: Implement alternative level functionality.
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
@@ -135,13 +138,13 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         drop['reprodata']['rmode'] = str(rmode.value)
     if rmode == ReproducibilityFlags.NOTHING:
         return data
-    # TODO: Consider adding more conditionals
-    data['type'] = drop['type']
-    data['rank'] = drop['rank']
-    if data['type'] == 'plain':
-        data['storage'] = drop['storage']
-    else:
-        data['app'] = drop['app']
+    if rmode == ReproducibilityFlags.value >= ReproducibilityFlags.RERUN.value:
+        data['type'] = drop['type']
+        data['rank'] = drop['rank']
+        if data['type'] == 'plain':
+            data['storage'] = drop['storage']
+        else:
+            data['app'] = drop['app']
 
     return data
 
@@ -169,7 +172,6 @@ def accumulate_pgt_partition_drop_data(drop: dict):
 def accumulate_pg_drop_data(drop: dict):
     """
     Accumulate relevant reproducibility fields for a single drop at the physical graph level.
-    TODO: Implement alternative level functionality.
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
