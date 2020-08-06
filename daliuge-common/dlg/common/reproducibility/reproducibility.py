@@ -130,12 +130,13 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         drop['reprodata']['rmode'] = str(rmode.value)
     if rmode == ReproducibilityFlags.NOTHING:
         return data
-    data['type'] = drop['type']
-    data['rank'] = drop['rank']
-    if data['type'] == 'plain':
-        data['storage'] = drop['storage']
-    else:
-        data['app'] = drop['app']
+    if rmode == ReproducibilityFlags.value >= ReproducibilityFlags.RERUN.value:
+        data['type'] = drop['type']
+        data['rank'] = drop['rank']
+        if data['type'] == 'plain':
+            data['storage'] = drop['storage']
+        else:
+            data['app'] = drop['app']
 
     return data
 
