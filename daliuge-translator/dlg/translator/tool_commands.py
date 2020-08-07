@@ -286,18 +286,16 @@ def dlg_submit(parser, args):
 
 
 def cwl(parser, args):
-    print("cwl tool")
-
     tool.add_logging_options(parser)
     _add_output_options(parser)
-    apps = _add_unroll_options(parser)
-    _add_partition_options(parser)
+    parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
+                      help='Path to the Physical Graph Template (default: stdin)', default='-')
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
 
-    # get the pgt
-    pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
-    partition(pgt, opts)
+    # load the pgt
+    with _open_i(opts.pgt_path) as fi:
+        pgt = json.load(fi)
 
     # create the CWL workflow
     from ..dropmake.cwl import create_workflow
