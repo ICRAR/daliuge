@@ -47,7 +47,7 @@ import bottle
 import pkg_resources
 
 from ... import common, restutils
-from ...clients import CompositeManagerClient, SimpleManagerClient
+from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
@@ -209,26 +209,23 @@ def pgtcwl_get():
         # get PGT from manager
         pgtp = pg_mgr.get_pgt(pgt_name)
 
-        # build node list
-        mgr_client = SimpleManagerClient()
-        node_list = mgr_client.nodes()
-
-        # mapping PGTP to resources (node list)
-        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
+        # debug
+        print("pgtp:" + str(pgtp) + ":" + str(dir(pgtp)))
 
         # build filename for CWL file from PGT filename
         cwl_filename = pgt_name[:-6] + ".cwl"
         zip_filename = pgt_name[:-6] + ".zip"
 
-        # build path for CWL file
+        # get paths used while creating the CWL files
+        root_path = pgt_path("")
         cwl_path = pgt_path(cwl_filename)
         zip_path = pgt_path(zip_filename)
 
         # create the CWL workflow
-        create_workflow(pg_spec, pgt_path(""), cwl_path, zip_path);
+        create_workflow(pgtp.drops, root_path, cwl_path, zip_path);
 
         # respond with download of ZIP file
-        return static_file(zip_filename, root=pgt_path(""), download=True)
+        return static_file(zip_filename, root=root_path, download=True)
     else:
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
