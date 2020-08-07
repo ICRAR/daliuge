@@ -185,10 +185,3 @@ class MasterManagerClient(CompositeManagerClient):
 
     def create_island(self, island_host, nodes):
         self._post_json('/managers/%s/dataisland' % (urllib.quote(island_host)), {'nodes': nodes})
-
-class SimpleManagerClient():
-    """
-    A dummy manager client that only responds with a simple node list
-    """
-    def nodes(self):
-        return ['localhost', 'localhost']

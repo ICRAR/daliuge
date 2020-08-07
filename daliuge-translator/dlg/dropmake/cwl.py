@@ -33,7 +33,7 @@ from dlg import common
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(pgt, pgt_path, cwl_path, zip_path):
+def create_workflow(drops, pgt_path, cwl_path, zip_path):
     """
     Create a CWL workflow from a given Physical Graph Template
 
@@ -56,7 +56,7 @@ def create_workflow(pgt, pgt_path, cwl_path, zip_path):
     files = {}
 
     # look for input and output files in the pg_spec
-    for index, node in enumerate(pgt):
+    for index, node in enumerate(drops):
         command = node.get('command', None)
         dataType = node.get('dt', None)
         outputId = node.get('oid', None)
@@ -66,7 +66,7 @@ def create_workflow(pgt, pgt_path, cwl_path, zip_path):
             files[outputs[0]] = "step" + str(index) + "/output_file_0"
 
     # add steps to the workflow
-    for index, node in enumerate(pgt):
+    for index, node in enumerate(drops):
         dataType = node.get('dt', '')
 
         if dataType == 'BashShellApp':
@@ -124,9 +124,10 @@ def create_command_line_tool(node, filename):
 
     # TODO: find a better way of specifying command line program + arguments
     base_command = base_command[:base_command.index(" ")]
+    base_command = common.u2s(base_command)
 
     # cwlgen's Serializer class doesn't support python 2.7's unicode types
-    cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=common.u2s(node['nm']), base_command=base_command, cwl_version='v1.0')
+    cwl_tool = cwlgen.CommandLineTool(tool_id=common.u2s(node['app']), label=common.u2s(node['nm']), base_command=base_command, cwl_version='v1.0')
 
     # add inputs
     for index, input in enumerate(inputs):
