@@ -173,21 +173,22 @@ class TestPGGen(unittest.TestCase):
         import uuid
         import zipfile
         import subprocess
+        import tempfile
 
         output_list = []
 
-        cwl_output = "/tmp/cwloutput/"
-        shutil.rmtree(cwl_output, ignore_errors=True)
-        os.mkdir(cwl_output)
+        # create a temporary directory to contain files created during test
+        cwl_output = tempfile.mkdtemp()
 
-        direct = "/tmp/EAGLE_test_repo"
-        shutil.rmtree(direct, ignore_errors=True)
+        # create a temporary directory to contain a clone of EAGLE_test_repo
+        direct = tempfile.mkdtemp()
+
         REPO = "https://github.com/ICRAR/EAGLE_test_repo"
-        git.Git("/tmp/").clone(REPO)
+        git.Git(direct).clone(REPO)
 
         cwl_dir = os.getenv("CWL_GRAPHS", "SP-602")
 
-        graph_dir = direct + "/" + cwl_dir + "/"
+        graph_dir = direct + "/EAGLE_test_repo/" + cwl_dir + "/"
         for subdir, dirs, files in os.walk(graph_dir):
             for file in files:
                 f = os.path.join(subdir, file)
@@ -215,3 +216,9 @@ class TestPGGen(unittest.TestCase):
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             self.assertEqual(p.returncode, 0, b'stdout:\n' + stdout + b'\nstderr:\n' + stderr)
+
+        # delete the clone of EAGLE_test_repo
+        shutil.rmtree(direct, ignore_errors=True)
+
+        # delete the temporary output directory
+        shutil.rmtree(cwl_output, ignore_errors=True)
