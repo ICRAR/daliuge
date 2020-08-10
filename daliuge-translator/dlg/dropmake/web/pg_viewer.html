@@ -481,6 +481,24 @@
     }
   }
 
+  function makeCWL() {
+    //given a logical graph name, get its CWL from the server
+    $.ajax({
+        url: "/pgt_cwl?pgt_name={{pgt_view_json_name}}",
+        type: 'get',
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            if (404 == XMLHttpRequest.status) {
+              console.error('Server cannot locate physical graph file {{pgt_view_json_name}}');
+            } else {
+              console.error('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+            }
+        },
+        success: function(data){
+          console.log("success", data);
+        }
+    });
+  }
+
   function zoomToFit() {
     myDiagram.zoomToFit()
     // console.log(myDiagram.viewportBounds.width.toString());
@@ -552,6 +570,7 @@
     <button id="gantt_button" class="button" onclick="genGanttChart()">Produce Gantt Chart</button>
     <button id="schedule_button" class="button" onclick="genScheduleChart()">Produce Schedule Matrix</button>
     <button id="png_button" class="button" onclick="makePNG()">Export to PNG</button>
+    <button id="cwl_button" class="button" onclick="window.location.href='/pgt_cwl?pgt_name={{pgt_view_json_name}}'">Export to CWL</button>
     <button id="zoom_button" class="button" onclick="zoomToFit()">Zoom to Fit</button>
   </div>
 </div>

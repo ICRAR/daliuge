@@ -57,7 +57,7 @@ def get_lg_ver_type(lgo):
             for fd in fds:
                 if "name" in fd:
                     kw = fd["name"]
-                    if kw in node:
+                    if kw in node and kw not in ['description']:
                         return LG_VER_EAGLE_CONVERTED
                     else:
                         return LG_VER_EAGLE
