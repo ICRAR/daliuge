@@ -100,7 +100,6 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
                 pass
             elif category == Categories.NULL:
                 pass
-            # TODO: Add NULL and JSON cases
         elif category_type == 'Group':
             data['exitAppName'] = drop['exitAppName']
             if category == Categories.GROUP_BY:
@@ -138,7 +137,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         drop['reprodata']['rmode'] = str(rmode.value)
     if rmode == ReproducibilityFlags.NOTHING:
         return data
-    if rmode == ReproducibilityFlags.value >= ReproducibilityFlags.RERUN.value:
+    if rmode.value >= ReproducibilityFlags.RERUN.value:
         data['type'] = drop['type']
         data['rank'] = drop['rank']
         if data['type'] == 'plain':
@@ -201,7 +200,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproducibilityFlags):
         merkledata.append(temp)
     merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
-    drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': []}
+    drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': set()}
     return drop
 
 
@@ -224,7 +223,7 @@ def init_lg_repro_drop_data(drop: dict):
     merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     drop['reprodata']['lg_data'] = data
-    drop['reprodata']['lg_parenthashes'] = []
+    drop['reprodata']['lg_parenthashes'] = set()
     return drop
 
 
@@ -236,7 +235,7 @@ def append_pgt_repro_data(drop: dict, data: dict):
     merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pgt_parenthashes'] = []
+    drop['reprodata']['pgt_parenthashes'] = set()
     drop['reprodata']['pgt_data'] = data
     return drop
 
@@ -277,7 +276,7 @@ def init_pg_repro_drop_data(drop: dict):
     merkletree = MerkleTree(merkledata, common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pg_parenthashes'] = []
+    drop['reprodata']['pg_parenthashes'] = set()
     drop['reprodata']['pg_data'] = data
     return drop
 
@@ -381,9 +380,20 @@ def lg_build_blockdag(lg: dict):
         visited.append(did)
         for n in neighbourset[did]:
             dropset[n][1] -= 1
-            #  Add our new hash to the parent-hash list
-            parenthash = dropset[did][0]['reprodata']['lg_blockhash']
-            dropset[n][0]['reprodata']['lg_parenthashes'].append(parenthash)
+            parenthash = set()
+            rmode = dropset[did][0]['reprodata']['rmode']
+            if rmode == ReproducibilityFlags.REPRODUCE or \
+                    rmode == ReproducibilityFlags.REPLICATE_COMP or \
+                    rmode == ReproducibilityFlags.REPLICATE_SCI:
+                if dropset[did][0]['categoryType'] == Categories.DATA:
+                    # Add my hash into the child's parenthashes
+                    parenthash.add(dropset[did][0]['reprodata']['lg_blockhash'])
+                else:
+                    # Add my parenthashes into the child's parenthashes
+                    parenthash.update(dropset[did][0]['reprodata']['lg_parenthashes'])
+            else:
+                parenthash.add(dropset[did][0]['reprodata']['lg_blockhash'])
+            dropset[n][0]['reprodata']['lg_parenthashes'].update(parenthash)
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
 
@@ -450,9 +460,21 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         visited += 1
         for n in neighbourset[did]:
             dropset[n][1] -= 1
-            # Add our new hash to the parest-hash list
-            parenthash = dropset[did][0]['reprodata'][parentstr]
-            dropset[n][0]['reprodata'][parentstr].append(parenthash)
+            parenthash = set()
+            rmode = dropset[did][0]['reprodata']['rmode']
+            if rmode == ReproducibilityFlags.REPRODUCE or \
+                    rmode == ReproducibilityFlags.REPLICATE_COMP or \
+                    rmode == ReproducibilityFlags.REPLICATE_SCI:
+                if dropset[did][0]['categoryType'] == Categories.DATA:
+                    # Add my hash into the child's parenthashes
+                    parenthash.add(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                else:
+                    # Add my parenthashes into the child's parenthashes
+                    parenthash.update(dropset[did][0]['reprodata'][parentstr])
+            else:
+                # Add my parenthashes into the child's parenthashes
+                parenthash.update(dropset[did][0]['reprodata'][parentstr])
+            dropset[n][0]['reprodata'][parentstr].update(parenthash)
             if dropset[n][1] == 0:
                 q.append(n)
 
@@ -509,6 +531,9 @@ def init_lg_repro_data(lg: dict):
     for drop in lg['nodeDataArray']:
         init_lg_repro_drop_data(drop)
     leaves = lg_build_blockdag(lg)
+    for drop in lg['nodeDataArray']:
+        # Convert parenthash set into sorted list for JSON serialization
+        drop['reprodata']['lg_parenthashes'] = sorted(list(drop['reprodata']['lg_parenthashes']))
     lg['reprodata']['signature'] = agglomerate_leaves(leaves)
     logger.info("Reproducibility data finished at LG level")
     return lg
@@ -524,6 +549,9 @@ def init_pgt_unroll_repro_data(pgt: list):
     for drop in pgt:
         init_pgt_unroll_repro_drop_data(drop)
     leaves = build_blockdag(pgt, 'pgt')
+    for drop in pgt:
+        # Convert parenthash set into sorted list for JSON serialization
+        drop['reprodata']['pgt_parenthashes'] = sorted(list(drop['reprodata']['pgt_parenthashes']))
     reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT unroll level")
@@ -540,6 +568,9 @@ def init_pgt_partition_repro_data(pgt: list):
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop)
     leaves = build_blockdag(pgt, 'pgt')
+    for drop in pgt:
+        # Convert parenthash set into sorted list for JSON serialization
+        drop['reprodata']['pgt_parenthashes'] = sorted(list(drop['reprodata']['pgt_parenthashes']))
     reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
@@ -561,6 +592,9 @@ def init_pg_repro_data(pg: list):
     for drop in pg:
         init_pg_repro_drop_data(drop)
     leaves = build_blockdag(pg, 'pg')
+    for drop in pg:
+        # Convert parenthash set into sorted list for JSON serialization
+        drop['reprodata']['pg_parenthashes'] = sorted(list(drop['reprodata']['pg_parenthashes']))
     reprodata['signature'] = agglomerate_leaves(leaves)
     pg.append(reprodata)
     logger.info("Reproducibility data finished at PG level")
@@ -583,6 +617,9 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
     for drop in pg.items():
         init_runtime_repro_drop_data(drop[1])
     leaves = build_blockdag(list(pg.values()), 'pg')
+    for drop in pg.items():
+        # Convert parenthash set into sorted list for JSON serialization
+        drop[1]['reprodata']['pg_parenthashes'] = sorted(list(drop[1]['reprodata']['pg_parenthashes']))
     reprodata['signature'] = agglomerate_leaves(leaves)
     pg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
