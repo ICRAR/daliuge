@@ -51,6 +51,7 @@ from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
+from ..cwl import create_workflow
 
 
 def file_as_string(fname, enc="utf8"):
@@ -197,6 +198,37 @@ def pgtjsonbody_get():
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
+@get("/pgt_cwl")
+def pgtcwl_get():
+    """
+    Return CWL representation of the logical graph
+    """
+    pgt_name = request.query.get("pgt_name")
+
+    if pgt_exists(pgt_name):
+        # get PGT from manager
+        pgtp = pg_mgr.get_pgt(pgt_name)
+
+        # debug
+        print("pgtp:" + str(pgtp) + ":" + str(dir(pgtp)))
+
+        # build filename for CWL file from PGT filename
+        cwl_filename = pgt_name[:-6] + ".cwl"
+        zip_filename = pgt_name[:-6] + ".zip"
+
+        # get paths used while creating the CWL files
+        root_path = pgt_path("")
+        cwl_path = pgt_path(cwl_filename)
+        zip_path = pgt_path(zip_filename)
+
+        # create the CWL workflow
+        create_workflow(pgtp.drops, root_path, cwl_path, zip_path);
+
+        # respond with download of ZIP file
+        return static_file(zip_filename, root=root_path, download=True)
+    else:
+        response.status = 404
+        return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
 @get("/lg_editor")
 def load_lg_editor():
