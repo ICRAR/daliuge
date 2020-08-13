@@ -637,6 +637,14 @@ class AbstractDROP(EventFirer):
         """
         return [self._status]
 
+    def generate_reproduce_data(self):
+        """
+        Provides a list of Reproducibility data (specifically).
+        The default behaviour is to return nothing. Per-class behaviour is to be achieved by overriding this method.
+        :return: A list containing runtime exclusive reproducibility data.
+        """
+        return []
+
     def generate_merkle_data(self):
         """
         Provides a serialized summary of data as a list.
@@ -651,6 +659,8 @@ class AbstractDROP(EventFirer):
             return self.generate_rerun_data()
         elif self._reproducibility is ReproducibilityFlags.REPEAT:
             return self.generate_repeat_data()
+        elif self._reproducibility is ReproducibilityFlags.REPRODUCE:
+            return self.generate_reproduce_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
 
@@ -1244,6 +1254,10 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         hostname = os.uname()[1]  # TODO: change when necessary
         return "file://" + hostname + self._path
 
+    # Override
+    def generate_reproduce_data(self):
+        # TODO: Implement correctly
+        return ["FILE"]
 
 class NgasDROP(AbstractDROP):
     """
@@ -1265,6 +1279,11 @@ class NgasDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.uid)
+
+    # Override
+    def generate_reproduce_data(self):
+        # TODO: Implement Correctly
+        return ["FILE"]
 
 
 class InMemoryDROP(AbstractDROP):
@@ -1288,6 +1307,11 @@ class InMemoryDROP(AbstractDROP):
     def dataURL(self):
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
+
+    # Override
+    def generate_reproduce_data(self):
+        # TODO: Implement Correctly
+        return ["MEMORY"]
 
 
 class NullDROP(AbstractDROP):
@@ -1378,6 +1402,11 @@ class RDBMSDrop(AbstractDROP):
     @property
     def dataURL(self):
         return "rdbms://%s/%s/%r" % (self._db_drv.__name__, self._db_table, self._db_params)
+
+    # Override
+    def generate_reproduce_data(self):
+        # TODO: Implement Correctly
+        return ["RDBMS"]
 
 
 class ContainerDROP(AbstractDROP):
