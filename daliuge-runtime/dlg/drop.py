@@ -42,6 +42,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, rmode_supported, HASHING_ALG
+from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
 from six import BytesIO
 
@@ -1256,8 +1257,10 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 
     # Override
     def generate_reproduce_data(self):
-        # TODO: Implement correctly
-        return ["FILE"]
+        from .droputils import allDropContents
+        data = allDropContents(self, self.size)
+        return [common_hash(data)]
+
 
 class NgasDROP(AbstractDROP):
     """
@@ -1283,7 +1286,7 @@ class NgasDROP(AbstractDROP):
     # Override
     def generate_reproduce_data(self):
         # TODO: Implement Correctly
-        return ["FILE"]
+        return ["NGAS"]
 
 
 class InMemoryDROP(AbstractDROP):
@@ -1310,8 +1313,9 @@ class InMemoryDROP(AbstractDROP):
 
     # Override
     def generate_reproduce_data(self):
-        # TODO: Implement Correctly
-        return ["MEMORY"]
+        from .droputils import allDropContents
+        data = allDropContents(self, self.size)
+        return [common_hash(data)]
 
 
 class NullDROP(AbstractDROP):
