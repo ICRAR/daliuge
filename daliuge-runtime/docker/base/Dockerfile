@@ -1,26 +1,33 @@
-# We need centos 7 if we want gcc 4.8
-FROM centos:7
+# we are doing a two-stage build to keep the size of
+# the final image low.
 
-# Install all required packages
-RUN yum -y update && yum -y install \
-    boost-devel \
-    boost-python \
-    boost-system \
-    gcc-c++ \
-    git \
-    openssh-server \
-    openssh-clients \
-    python-devel && \
-    yum clean all && \
-    curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" && \
-    python get-pip.py && \
-    pip install numpy
+# First stage build and cleanup
+FROM python:3.8-slim
+ARG BUILD_ID
+LABEL stage=builder
+LABEL build=$BUILD_ID
+RUN apt-get update && apt-get install -y gcc
+RUN pip install numpy
 
-# Add the dfms user and create its private/public key pair
-# Also setup the SSH host keys
-RUN ssh-keygen -A && \
-    adduser --uid 1000 dfms
+COPY / /daliuge
 
-COPY dfms_docker.pem.pub /home/dfms/.ssh/authorized_keys
-RUN chmod 755 /home/dfms/.ssh && \
-    chown -R dfms.dfms /home/dfms/.ssh
+RUN cd /daliuge && \
+    pip install .
+
+
+# Second stage build taking what's required from first stage
+# FROM alpine
+# RUN apk add --update python3 db sqlite
+# COPY VERSION /home/ngas/VERSION
+# COPY startServer.sh /home/ngas/startServer.sh
+# COPY --from=0 /home/ngas/. /home/ngas/.
+# COPY --from=0 /usr/bin/. /usr/bin/.
+# COPY --from=0 /usr/lib/python3.8/site-packages/. /usr/lib/python3.8/site-packages/.
+# COPY --from=0 /NGAS/. /NGAS/.
+# RUN sed -i 's/127.0.0.1/0.0.0.0/g' /NGAS/cfg/ngamsServer.conf
+# Second stage build taking what's required from first stage
+FROM python:3.8-slim
+RUN apt-get update && apt-get install -y git
+COPY --from=0 /usr/local/lib/python3.8/site-packages/. /usr/local/lib/python3.8/site-packages/.
+COPY --from=0 /usr/local/bin/. /usr/local/bin/.
+COPY --from=0 /daliuge/. /daliuge/.
