@@ -387,18 +387,19 @@ def lg_build_blockdag(lg: dict):
         rmode = int(dropset[did][0]['reprodata']['rmode'])
         for n in neighbourset[did]:
             dropset[n][1] -= 1
+            parenthash = []
             if rmode == ReproducibilityFlags.REPRODUCE.value:
                 if dropset[did][0]['categoryType'] == Categories.DATA:
                     # Add my new hash to the parent-hash list
-                    parenthash = dropset[did][0]['reprodata']['lg_blockhash']
+                    parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
                 else:
                     # Add my parenthashes to the parent-hash list
-                    parenthash = dropset[did][0]['reprodata']['lg_parenthashes']
-            else:
-                parenthash = dropset[did][0]['reprodata']['lg_blockhash']
+                    parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
+            else:  # Non-compressing behaviour
+                parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
 
             #  Add our new hash to the parent-hash list
-            dropset[n][0]['reprodata']['lg_parenthashes'].append(parenthash)  # We deal with duplicates later
+            dropset[n][0]['reprodata']['lg_parenthashes'].extend(parenthash)  # We deal with duplicates later
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
 
@@ -466,17 +467,19 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         rmode = int(dropset[did][0]['reprodata']['rmode'])
         for n in neighbourset[did]:
             dropset[n][1] -= 1
+            parenthash = []
             if rmode == ReproducibilityFlags.REPRODUCE.value:
-                if dropset[did][0]['categoryType'] == Categories.DATA:
+                # TODO: Hack! may break later, proceed with caution
+                if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA:
                     # Add my new hash to the parent-hash list
-                    parenthash = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
+                    parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
                 else:
                     # Add my parenthashes to the parent-hash list
-                    parenthash = dropset[did][0]['reprodata'][parentstr]
+                    parenthash.extend(dropset[did][0]['reprodata'][parentstr])
             else:
-                parenthash = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
+                parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
             # Add our new hash to the parest-hash list
-            dropset[n][0]['reprodata'][parentstr].append(parenthash)
+            dropset[n][0]['reprodata'][parentstr].extend(parenthash)
             if dropset[n][1] == 0:
                 q.append(n)
 
