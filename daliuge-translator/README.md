@@ -13,7 +13,7 @@ Just execute the shell script:
 The *icrar/daliuge-translator:latest* image can be started using 
 
 ```
-./run_engine.sh
+./run_translator.sh
 ````
 
  This will start the image in interactive mode, means that the logs from the daemon are displayed on the screen, which is good for debugging sessions. The RESTful interface is mapped to http://localhost:8084 by default and that address can be configured in the EAGLE editor.
