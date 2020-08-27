@@ -1353,6 +1353,9 @@ class RDBMSDrop(AbstractDROP):
         # The table this Drop points at
         self._db_table = kwargs.pop('dbtable')
 
+        # Data store for reproducibility
+        self._querylog = []
+
     def getIO(self):
         # This Drop cannot be accessed directly
         return ErrorIO()
@@ -1375,6 +1378,7 @@ class RDBMSDrop(AbstractDROP):
                 sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
                 sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
+                self._querylog.append((sql, vals))
                 cur.execute(sql, vals)
                 c.commit()
 
@@ -1401,8 +1405,11 @@ class RDBMSDrop(AbstractDROP):
                 logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
                 cur.execute(sql, vals)
                 if cur.description:
-                    return cur.fetchall()
-                return []
+                    ret = cur.fetchall()
+                else:
+                    ret = []
+                self._querylog.append((sql, vals, ret))
+                return ret
 
     @property
     def dataURL(self):
@@ -1410,8 +1417,7 @@ class RDBMSDrop(AbstractDROP):
 
     # Override
     def generate_reproduce_data(self):
-        # TODO: Implement Correctly
-        return ["RDBMS"]
+        return self._querylog
 
 
 class ContainerDROP(AbstractDROP):
