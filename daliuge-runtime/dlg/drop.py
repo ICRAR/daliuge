@@ -1285,6 +1285,7 @@ class NgasDROP(AbstractDROP):
 
     # Override
     def generate_reproduce_data(self):
+        # TODO: This is a bad implementation. Will need to sort something better out
         from .droputils import allDropContents
         data = allDropContents(self, self.size)
         return [common_hash(data)]
