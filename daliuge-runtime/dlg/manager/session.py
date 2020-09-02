@@ -396,8 +396,8 @@ class Session(object):
 
     def append_reprodata(self, oid, reprodata):
         if oid in self._graph:
-            self._graph[oid]['reprodata']['pg_data']['run_data'] = reprodata['data']
-            self._graph[oid]['reprodata']['pg_data']['run_merkleroot'] = reprodata['merkleroot']
+            self._graph[oid]['reprodata']['rg_data'] = reprodata['data']
+            self._graph[oid]['reprodata']['rg_data']['merkleroot'] = reprodata['merkleroot']
 
     @track_current_session
     def finish(self):
