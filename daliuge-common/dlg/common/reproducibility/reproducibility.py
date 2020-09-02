@@ -281,23 +281,13 @@ def init_pg_repro_drop_data(drop: dict):
     return drop
 
 
-def init_runtime_repro_drop_data(drop: dict):
+def init_rg_repro_drop_data(drop: dict):
     """
-    Merges runtime and PG graph data on a per-drop basis.
+    Creates and appends per-drop reproducibility information at the runtime graph stage.
     :param drop:
-    :return:
+    :return: The same drop with appended reproducibility information
     """
-    pg_data = accumulate_pg_drop_data(drop)
-    merkledata = []
-    for key, value in pg_data.items():
-        temp = [key, value]
-        merkledata.append(temp)
-    merkledata.append(drop['reprodata']['pg_data']['run_merkleroot'])
-    merkletree = MerkleTree(merkledata, common_hash)
-    pg_data['run_data'] = drop['reprodata']['pg_data']['run_data'].copy()
-    pg_data['run_merkleroot'] = drop['reprodata']['pg_data']['run_merkleroot']
-    pg_data['merkleroot'] = merkletree.merkle_root
-    drop['reprodata']['pg_data'] = pg_data
+    drop['reprodata']['rg_parenthashes'] = []
     return drop
 
 
@@ -344,6 +334,19 @@ def build_pg_block_data(drop: dict):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['pg_blockhash'] = mtree.merkle_root
+
+
+def build_rg_block_data(drop: dict):
+    block_data = [drop['reprodata']['rg_data']['merkleroot'],
+                  drop['reprodata']['pg_blockhash'],
+                  drop['reprodata']['pgt_blockhash'],
+                  drop['reprodata']['lg_blockhash']]
+    hashset = set(drop['reprodata']['rg_parenthashes'])
+    drop['reprodata']['rg_parenthashes'] = list(hashset)
+    for parenthash in sorted(drop['reprodata']['rg_parenthashes']):
+        block_data.append(parenthash)
+    mtree = MerkleTree(block_data, common_hash)
+    drop['reprodata']['rg_blockhash'] = mtree.merkle_root
 
 
 def lg_build_blockdag(lg: dict):
@@ -431,6 +434,10 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         blockstr = 'pg'
         parentstr = 'pg_parenthashes'
         block_builder = build_pg_block_data
+    if abstraction == 'rg':
+        blockstr = 'rg'
+        parentstr = 'rg_parenthashes'
+        block_builder = build_rg_block_data
 
     from collections import deque
     dropset = {}
@@ -594,10 +601,10 @@ def init_pg_repro_data(pg: list):
     return pg
 
 
-def init_runtime_repro_data(pg: dict, reprodata: dict):
+def init_runtime_repro_data(rg: dict, reprodata: dict):
     """
     Adds reproducibility data at the runtime level to graph-wide values.
-    :param pg:
+    :param rg:
     :param reprodata:
     :return:
     """
@@ -607,10 +614,10 @@ def init_runtime_repro_data(pg: dict, reprodata: dict):
         # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         reprodata['rmode'] = str(rmode.value)
-    for drop in pg.items():
-        init_runtime_repro_drop_data(drop[1])
-    leaves = build_blockdag(list(pg.values()), 'pg')
+    for id, drop in rg.items():
+        init_rg_repro_drop_data(drop)
+    leaves = build_blockdag(list(rg.values()), 'rg')
     reprodata['signature'] = agglomerate_leaves(leaves)
-    pg['reprodata'] = reprodata
+    rg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
-    return pg
+    return rg
