@@ -628,7 +628,7 @@ class AbstractDROP(EventFirer):
         At runtime, Rerunning only requires execution success or failure.
         :return: A list containing rerun values
         """
-        return [self._status]
+        return {'status': self._status}
 
     def generate_repeat_data(self):
         """
@@ -636,7 +636,7 @@ class AbstractDROP(EventFirer):
         At runtime, repeating, like rerunning only requires execution success or failure.
         :return: A list containing runtime exclusive repetition values.
         """
-        return [self._status]
+        return {'status': self._status}
 
     def generate_reproduce_data(self):
         """
@@ -644,7 +644,7 @@ class AbstractDROP(EventFirer):
         The default behaviour is to return nothing. Per-class behaviour is to be achieved by overriding this method.
         :return: A list containing runtime exclusive reproducibility data.
         """
-        return []
+        return {}
 
     def generate_merkle_data(self):
         """
@@ -655,7 +655,7 @@ class AbstractDROP(EventFirer):
         :return: A list of elements constituting a summary of this drop
         """
         if self._reproducibility is ReproducibilityFlags.NOTHING:
-            return []
+            return {}
         elif self._reproducibility is ReproducibilityFlags.RERUN:
             return self.generate_rerun_data()
         elif self._reproducibility is ReproducibilityFlags.REPEAT:
@@ -1259,7 +1259,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
     def generate_reproduce_data(self):
         from .droputils import allDropContents
         data = allDropContents(self, self.size)
-        return [common_hash(data)]
+        return {'data_hash': common_hash(data)}
 
 
 class NgasDROP(AbstractDROP):
@@ -1288,7 +1288,7 @@ class NgasDROP(AbstractDROP):
         # TODO: This is a bad implementation. Will need to sort something better out
         from .droputils import allDropContents
         data = allDropContents(self, self.size)
-        return [common_hash(data)]
+        return {'data_hash': common_hash(data)}
 
 
 class InMemoryDROP(AbstractDROP):
@@ -1317,7 +1317,7 @@ class InMemoryDROP(AbstractDROP):
     def generate_reproduce_data(self):
         from .droputils import allDropContents
         data = allDropContents(self, self.size)
-        return [common_hash(data)]
+        return {'data_hash': common_hash(data)}
 
 
 class NullDROP(AbstractDROP):
@@ -1418,7 +1418,7 @@ class RDBMSDrop(AbstractDROP):
 
     # Override
     def generate_reproduce_data(self):
-        return self._querylog
+        return {'query_log': self._querylog}
 
 
 class ContainerDROP(AbstractDROP):
