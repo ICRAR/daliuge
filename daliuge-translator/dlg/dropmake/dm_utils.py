@@ -29,6 +29,8 @@ import os
 import os.path as osp
 import copy
 
+from ..common import Categories
+
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
 LG_VER_EAGLE = 3
@@ -55,7 +57,7 @@ def get_lg_ver_type(lgo):
             for fd in fds:
                 if "name" in fd:
                     kw = fd["name"]
-                    if kw in node:
+                    if kw in node and kw not in ['description']:
                         return LG_VER_EAGLE_CONVERTED
                     else:
                         return LG_VER_EAGLE
@@ -149,10 +151,10 @@ def convert_mkn(lgo):
     old_new_parent_map_split_2 = dict()
     dont_change_group = set()
     n_products_map = dict()
-    app_keywords = ["inputApplicationName", "outputApplicationName"]
+    app_keywords = ["inputApplication", "outputApplication"]
 
     for node in lgo["nodeDataArray"]:
-        if "MKN" != node["category"]:
+        if Categories.MKN != node["category"]:
             continue
         for ak in app_keywords:
             if ak not in node:
@@ -177,9 +179,9 @@ def convert_mkn(lgo):
         node_kn = copy.deepcopy(node_mk)
         node_split_n = copy.deepcopy(node_mk)
 
-        node_mk["application"] = node["inputApplicationName"]
-        node_mk["category"] = "DataGather"
-        node_mk["type"] = "DataGather"
+        node_mk["application"] = node["inputApplication"]
+        node_mk["category"] = Categories.GATHER
+        node_mk["type"] = Categories.GATHER
         ipan = node_mk.get("inputAppName", "")
         if len(ipan) == 0:
             node_mk["text"] = node_mk["text"] + "_InApp"
@@ -195,8 +197,8 @@ def convert_mkn(lgo):
         }
         node_mk["fields"].append(new_field)
 
-        node_kn["category"] = "SplitData"
-        node_kn["type"] = "SplitData"
+        node_kn["category"] = Categories.SCATTER
+        node_kn["type"] = Categories.SCATTER
 
         opan = node_kn.get("outputAppName", "")
         if len(opan) == 0:
@@ -233,8 +235,8 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             old_new_k2n_from_map[mok] = k_new
 
-        node_split_n["category"] = "SplitData"
-        node_split_n["type"] = "SplitData"
+        node_split_n["category"] = Categories.SCATTER
+        node_split_n["type"] = Categories.SCATTER
         node_split_n["text"] = "Nothing"
         k_new = min(keyset) - 1
         keyset.add(k_new)
@@ -297,8 +299,8 @@ def convert_mkn_all_share_m(lgo):
     hardcode the assumption M > K > N for now
 
     ALL instances of the MKN construct take M inputs. Thus, each instance takes M // K inputs.
-    
-    NB - This function is NOT called by the pg_generator. It is here for the sake of comparison 
+
+    NB - This function is NOT called by the pg_generator. It is here for the sake of comparison
     and demonstration.
     """
     keyset = get_keyset(lgo)
@@ -307,7 +309,7 @@ def convert_mkn_all_share_m(lgo):
     app_keywords = ["inputApplication", "outputApplication"]
 
     for node in lgo["nodeDataArray"]:
-        if "MKN" != node["category"]:
+        if Categories.MKN != node["category"]:
             continue
         for ak in app_keywords:
             if ak not in node:
@@ -328,7 +330,7 @@ def convert_mkn_all_share_m(lgo):
         node_kn = copy.deepcopy(node_mk)
 
         node_mk["application"] = node["inputApplication"]
-        node_mk["category"] = "DataGather"
+        node_mk["category"] = Categories.GATHER
         node_mk["text"] = node_mk["text"] + "_InApp"
         del node["inputApplication"]
         del node["outputApplication"]
@@ -340,7 +342,7 @@ def convert_mkn_all_share_m(lgo):
         }
         node_mk["fields"].append(new_field)
 
-        node_kn["category"] = "DataGather"
+        node_kn["category"] = Categories.GATHER
         node_kn["text"] = node_kn["text"] + "_OutApp"
         k_new = min(keyset) - 1
         keyset.add(k_new)
@@ -396,13 +398,16 @@ def convert_construct(lgo):
     # application drop if a gather has internal input, which will result in
     # a cycle that is not allowed in DAG during graph translation
 
-    app_keywords = ["application", "inputApplication", "outputApplication"]
+    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
-        if node["category"] not in ["SplitData", "DataGather"]:
+        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
             continue
         has_app = None
+
+        # try to find a application using several app_keywords
+        # disregard app_keywords that are not present, or have value "None"
         for ak in app_keywords:
-            if ak in node:
+            if ak in node and node[ak] != "None":
                 has_app = ak
                 break
         if has_app is None:
@@ -424,7 +429,7 @@ def convert_construct(lgo):
                 for afd in node[app_fd_name]:
                     app_node[afd["name"]] = afd["value"]
                 break
-        if "DataGather" == node["category"]:
+        if Categories.GATHER == node["category"]:
             app_node["group_start"] = 1
         new_nodes.append(app_node)
 
@@ -434,7 +439,7 @@ def convert_construct(lgo):
         keyset.add(k_new)
         old_new_grpk_map[app_node["key"]] = k_new
 
-        if "DataGather" == node["category"]:
+        if Categories.GATHER == node["category"]:
             old_new_gather_map[app_node["key"]] = k_new
             app_node["group"] = k_new
             app_node["group_start"] = 1
@@ -571,7 +576,7 @@ def convert_eagle_to_daliuge_json(lg_name):
                 group_node = nodes_all.get(group_key, "")
                 group_category = group_node.get("category", "")
 
-                if group_category == "DataGather" or group_category == "GroupBy":
+                if group_category == Categories.GATHER or group_category == Categories.GROUP_BY:
                     # Check if the node is first in that group.
                     fields = node["fields"]
                     for field in fields:
