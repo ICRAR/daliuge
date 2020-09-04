@@ -31,6 +31,8 @@ def rmode_supported(flag: ReproducibilityFlags):
             or flag == ReproducibilityFlags.RERUN \
             or flag == ReproducibilityFlags.REPEAT \
             or flag == ReproducibilityFlags.REPRODUCE \
+            or flag == ReproducibilityFlags.REPLICATE_SCI \
+            or flag == ReproducibilityFlags.REPLICATE_COMP \
             or flag == ReproducibilityFlags.EXPERIMENTAL:
         return True
     else:
