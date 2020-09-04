@@ -626,7 +626,7 @@ class AbstractDROP(EventFirer):
         """
         Provides a serailized list of Rerun data.
         At runtime, Rerunning only requires execution success or failure.
-        :return: A list containing rerun values
+        :return: A dictionary containing rerun values
         """
         return {'status': self._status}
 
@@ -634,7 +634,7 @@ class AbstractDROP(EventFirer):
         """
         Provides a list of Repeat data.
         At runtime, repeating, like rerunning only requires execution success or failure.
-        :return: A list containing runtime exclusive repetition values.
+        :return: A dictionary containing runtime exclusive repetition values.
         """
         return {'status': self._status}
 
@@ -642,7 +642,7 @@ class AbstractDROP(EventFirer):
         """
         Provides a list of Reproducibility data (specifically).
         The default behaviour is to return nothing. Per-class behaviour is to be achieved by overriding this method.
-        :return: A list containing runtime exclusive reproducibility data.
+        :return: A dictionary containing runtime exclusive reproducibility data.
         """
         return {}
 
@@ -674,7 +674,7 @@ class AbstractDROP(EventFirer):
         Fields constitute a single entry in this list.
         Wraps several methods dependent on this DROPs reproducibility level
         Some of these are abstract.
-        :return: A list of elements constituting a summary of this drop
+        :return: A dictionary of elements constituting a summary of this drop
         """
         if self._reproducibility is ReproducibilityFlags.NOTHING:
             return {}
@@ -684,6 +684,10 @@ class AbstractDROP(EventFirer):
             return self.generate_repeat_data()
         elif self._reproducibility is ReproducibilityFlags.REPRODUCE:
             return self.generate_reproduce_data()
+        elif self._reproducibility is ReproducibilityFlags.REPLICATE_SCI:
+            return self.generate_replicate_sci_data()
+        elif self._reproducibility is ReproducibilityFlags.REPLICATE_COMP:
+            return self.generate_replicate_comp_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
 
