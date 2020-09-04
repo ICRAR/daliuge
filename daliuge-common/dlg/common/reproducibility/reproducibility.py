@@ -65,7 +65,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
     if level == ReproducibilityFlags.RERUN:
         pass
-    elif level == ReproducibilityFlags.REPEAT:
+    elif level == ReproducibilityFlags.REPEAT or level == ReproducibilityFlags.REPLICATE_COMP:
         if category_type == 'Application':
             data['execution_time'] = fields['execution_time']
             data['num_cpus'] = fields['num_cpus']
@@ -391,7 +391,7 @@ def lg_build_blockdag(lg: dict):
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             parenthash = []
-            if rmode == ReproducibilityFlags.REPRODUCE.value:
+            if rmode == ReproducibilityFlags.REPRODUCE.value:  # TODO: Correct for replicate
                 if dropset[did][0]['categoryType'] == Categories.DATA:
                     # Add my new hash to the parent-hash list
                     parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
@@ -474,7 +474,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         rmode = int(dropset[did][0]['reprodata']['rmode'])
         for n in neighbourset[did]:
             dropset[n][1] -= 1
-            parenthash = []
+            parenthash = [] # TODO: Correct for replicate
             if rmode == ReproducibilityFlags.REPRODUCE.value:
                 # TODO: Hack! may break later, proceed with caution
                 if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA:
