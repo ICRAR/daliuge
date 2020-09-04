@@ -25,7 +25,7 @@ from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.manager.session import Session, SessionStates
 from dlg.exceptions import InvalidGraphException
 from dlg.droputils import DROPWaiterCtx
-
+from dlg.common import Categories
 
 class TestSession(unittest.TestCase):
 
@@ -68,12 +68,12 @@ class TestSession(unittest.TestCase):
             self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app"}]) # missing "storage"
             self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"plain", "storage":"invalid"}]) # invalid "storage"
             self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"invalid"}]) # invalid "type"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app", "storage":"null", "outputs":["X"]}]) # missing X DROP
+            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app", "storage":Categories.NULL, "outputs":["X"]}]) # missing X DROP
 
     def test_linking(self):
         with Session('1') as s:
             s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"app", "storage":"null", "app":"dlg.apps.crc.CRCApp"}])
+            s.addGraphSpec([{"oid":"B", "type":"app", "storage":Categories.NULL, "app":"dlg.apps.crc.CRCApp"}])
             s.addGraphSpec([{"oid":"C", "type":"container"}])
 
             # Link them now
@@ -96,9 +96,9 @@ class TestSession(unittest.TestCase):
     def test_cancel(self):
         '''Cancels a whole graph execution'''
         with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":"memory", 'consumers': ['B']},
+            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":Categories.MEMORY, 'consumers': ['B']},
                             {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 2},
-                            {"oid":"C", "type":"plain", "storage":"memory", 'producers': ['B']}])
+                            {"oid":"C", "type":"plain", "storage":Categories.MEMORY, 'producers': ['B']}])
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
             s.cancel()
@@ -110,11 +110,11 @@ class TestSession(unittest.TestCase):
     def test_partial_cancel(self):
         '''Like test_cancel, but only part of the graph should be cancelled'''
         with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":"memory", 'consumers': ['B']},
+            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":Categories.MEMORY, 'consumers': ['B']},
                             {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 0},
-                            {"oid":"C", "type":"plain", "storage":"memory", 'producers': ['B'], 'consumers': ['D']},
+                            {"oid":"C", "type":"plain", "storage":Categories.MEMORY, 'producers': ['B'], 'consumers': ['D']},
                             {"oid":"D", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 10},
-                            {"oid":"E", "type":"plain", "storage":"memory", 'producers': ['D']}])
+                            {"oid":"E", "type":"plain", "storage":Categories.MEMORY, 'producers': ['D']}])
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
 

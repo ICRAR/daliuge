@@ -26,15 +26,58 @@ from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-STORAGE_TYPES = {'memory', 'file', 'ngas', 'null', 'json'}
+class Categories:
+    START = 'Start'
+    END = 'End'
+
+    MEMORY = 'Memory'
+    FILE = 'File'
+    NGAS = 'NGAS'
+    NULL = 'null'
+    JSON = 'json'
+    S3 = 'S3'
+
+    MKN = 'MKN'
+    SCATTER = 'Scatter'
+    GATHER = 'Gather'
+    GROUP_BY = 'GroupBy'
+    LOOP = 'Loop'
+    BRANCH = 'Branch'
+    VARIABLES = 'Variables'
+
+    DATA = 'Data'
+    COMPONENT = 'Component'
+    BASH_SHELL_APP = 'BashShellApp'
+    MPI = 'Mpi'
+    DYNLIB_APP = 'DynlibApp'
+    DOCKER = 'Docker'
+    DYNLIB_PROC_APP = 'DynlibProcApp'
+
+    COMMENT = 'Comment'
+    DESCRIPTION = 'Description'
+
+STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
+APP_DROP_TYPES = [
+    Categories.COMPONENT,
+    Categories.BASH_SHELL_APP,
+    Categories.MPI,
+    Categories.DYNLIB_APP,
+    Categories.DOCKER,
+    Categories.DYNLIB_PROC_APP
+]
 
 if sys.version_info[0] > 2:
     def b2s(b, enc='utf8'):
         return b.decode(enc)
+    def u2s(u):
+        return u
 else:
     def b2s(b, enc='utf8'):
         return b
+    def u2s(u, enc='utf-8'):
+        return u.encode(enc)
 b2s.__doc__ = "Converts bytes into a string"
+u2s.__doc__ = 'Converts text into a string'
 
 
 class dropdict(dict):
