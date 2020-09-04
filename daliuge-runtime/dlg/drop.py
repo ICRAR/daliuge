@@ -646,6 +646,28 @@ class AbstractDROP(EventFirer):
         """
         return {}
 
+    def generate_replicate_sci_data(self):
+        """
+        Provides a list of scientific replication data.
+        This is by definition a merging of both reproduction and rerun data
+        :return: A dictionary containing runtime exclusive scientific replication data.
+        """
+        res = {}
+        res.update(self.generate_rerun_data())
+        res.update(self.generate_reproduce_data())
+        return res
+
+    def generate_replicate_comp_data(self):
+        """
+        Provides a list of computational replication data.
+        This is by definition a merging of both reproduction and repetition data
+        :return: A dictionary containing runtime exclusive computational replication data.
+        """
+        res = {}
+        res.update(self.generate_repeat_data())
+        res.update(self.generate_reproduce_data())
+        return res
+
     def generate_merkle_data(self):
         """
         Provides a serialized summary of data as a list.
