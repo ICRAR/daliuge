@@ -11,7 +11,11 @@ RUN pip install numpy
 
 COPY / /daliuge
 
-RUN cd /daliuge && \
+RUN cd /daliuge/daliuge-common && \
+    pip install .
+RUN cd /daliuge/daliuge-runtime && \
+    pip install .
+RUN cd /daliuge/daliuge-translator && \
     pip install .
 
 

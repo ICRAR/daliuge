@@ -3,7 +3,11 @@ FROM icrar/daliuge-base:latest
 
 # Get the DFMS sources and install them in the system
 RUN git clone https://github.com/ICRAR/daliuge ~/daliuge && \
-    cd ~/daliuge && \
+RUN cd /daliuge/daliuge-common && \
+    pip install .
+RUN cd /daliuge/daliuge-runtime && \
+    pip install .
+RUN cd /daliuge/daliuge-translator && \
     pip install .
 
 # Second stage build taking what's required from first stage
