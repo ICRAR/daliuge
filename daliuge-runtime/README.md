@@ -1,6 +1,6 @@
-# Docker containers
+# The daliuge-engine Docker Image
 
-We currently build the system in two images:
+We currently build the runtime system in two images:
 
 * *icrar/daliuge-base:latest* includes a CentOS 7 system with a 'dfms' user and all the requirements to install the dfms framework installed.
 * *icrar/daliuge-engine:latest* is built on top of the :base image and includes the installation of the DALiuGE framework.
@@ -37,35 +37,49 @@ This will start the image in interactive mode, means that the logs from the DALi
 
 ## Starting managers
 
-In a typical real-world scenario DALiuGE runs manager services on multiple machines. Each machine participating in a DALiuGE deployment will run at least one of these services. Each worker machine will need to run a Node Manager and, if more than one node participates in a deployment, in addition there must be a Master Manager running as well. The Master Manager can run on a seperate machine, or on one of the worker machine in addition to the Node Manager. For scalability reasons DALiuGE also introduces the concept of Data Islands, in order to keep the load on the Master under control for very big workflow runs. Data Islands are only really helpful when trying to deploy extremely large physical graphs with 10s of millions of nodes, they are not required when just a large number of machines are involved. Thus starting a DataIsland Manager is optional and could be started on a worker node, or a seperate machine.
+In a typical real-world scenario DALiuGE runs manager services on multiple machines. Each machine participating in a DALiuGE deployment will run at least one of these services. Each worker machine will need to run a Node Manager and, if more than one node participates in a deployment, in addition there must be a Master Manager running as well. The Master Manager can run on a seperate machine, or on one of the worker machine in addition to the Node Manager. For scalability reasons DALiuGE also introduces the concept of Data Islands, in order to keep the load on the Master under control for very big workflow runs. Data Islands are only really helpful when trying to deploy extremely large physical graphs with 10s of millions of nodes, they are not required when just a large number of machines are involved. Thus starting a DataIsland Manager is optional and could be started on a worker node, or a seperate machine. There are to alternative ways to start managers, one is using docker to execute a command inside the containers, the other is to execute RESTful commands using curl.
+
+### Using docker commands
 
 Here are examples of the commands used to start the managers on localhost, assuming that the docker image icrar/daliuge-engine:latest is running on localhost.
 
-### Node manager
+Starting node manager:
 
 ```bash
 docker exec -ti daliuge-engine dlg nm -v --no-dlm -H 0.0.0.0
 ```
 
-### Master manager
+Starting master manager:
 
 ```bash
 docker exec -ti daliuge-engine dlg mm -v -H 0.0.0.0
 ```
 
-### Starting managers using the RESTful interface
+### Using RESTful commands
 
-This would be required if the docker-engine is running on a remote host.
+It is also possible to use the RESTful interface to start the managers. This requires the usage of either curl or wget, since the API requires POST commands (using a browser is not easily possible). Note that if the containers had been deployed on multiple hosts, the commands below will need to be adjusted to reflect the actual hostname, rather than localhost.
+
+Starting the master manager:
 
 ```bash
 curl -X POST http://localhost:9000/managers/master
+```
+
+Starting the node manager:
+
+```bash
 curl -X POST http://localhost:9000/managers/node
+```
+
+Optional: Starting the island manager:
+
+```bash
 curl -d '{"nodes": ["0.0.0.0"]}' -H "Content-Type: application/json" -X POST http://localhost:9000/managers/dataisland
 ```
 
 ## Accessing the run-time web interface
 
-To access the session interface open a browser and point to https://localhost:8000. This allows to monitor the status of deployment sessions.
+DALiuGE also provides a basic web interface allowing to create and monitor sessions. To access the session interface open a browser and point to <https://localhost:8000>. This allows to monitor the status of deployment sessions.
 
 ## Usage
 
@@ -81,4 +95,4 @@ It is also possible to interact with both of them directly using the RESTful API
 
 ### EAGLE
 
-The DALiuGE run-time is integrated with the EAGLE (https://github.com/ICRAR/EAGLE) graphical workflow editor. EAGLE has an interface to the DALiuGE translator and through that users can also submit physical graph templates graphs for execution. Please refer to the EAGLE documentation for more details.
+The DALiuGE run-time is integrated with the EAGLE (<https://github.com/ICRAR/EAGLE>) graphical workflow editor. EAGLE has an interface to the DALiuGE translator and through that users can also submit physical graph templates graphs for execution. Please refer to the EAGLE documentation for more details.
