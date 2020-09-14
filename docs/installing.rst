@@ -9,13 +9,19 @@ the Docker-files under the ``docker`` directories. Please refer to the ``README`
 daliuge_runtime and the daliuge_translator directories for more information.
 
 
+Direct Installation
+-------------------
+
 Requirements
--------------
+############
+
 
 The |daliuge| framework requires no packages apart from those listed in its
+
 ``setup.py``
+
 file, which are automatically retrieved when running it. The spead2 library
-(one of the |daliuge|' optional requirements) however requires a number of libraries
+(one of the |daliuge| optional requirements) however requires a number of libraries
 installed on the system:
 
 * boost-python
@@ -24,7 +30,7 @@ installed on the system:
 * gcc >= 4.8
 
 Installing
-----------
+##########
 
 |daliuge| is based on setuptools, and thus it follows the standard python installation
 procedures.

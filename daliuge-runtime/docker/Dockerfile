@@ -1,13 +1,10 @@
 # We need the base image we build with the other Dockerfile
 FROM icrar/daliuge-base:latest
-
-# Get the DFMS sources and install them in the system
-RUN git clone https://github.com/ICRAR/daliuge ~/daliuge && \
-RUN cd /daliuge/daliuge-common && \
-    pip install .
-RUN cd /daliuge/daliuge-runtime && \
-    pip install .
-RUN cd /daliuge/daliuge-translator && \
+RUN apt-get update && apt-get install -y gcc
+RUN pip install --upgrade pip
+# Get the DALiuGE sources and install them in the system
+COPY / /daliuge
+RUN cd /daliuge && \
     pip install .
 
 # Second stage build taking what's required from first stage
