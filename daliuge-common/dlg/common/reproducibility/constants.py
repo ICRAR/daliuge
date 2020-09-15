@@ -17,6 +17,8 @@ class ReproducibilityFlags(Enum):
 REPRO_DEFAULT = ReproducibilityFlags.NOTHING
 HASHING_ALG = hashlib.sha3_256
 
+# TODO: Implement Rflag caster
+
 
 def rmode_supported(flag: ReproducibilityFlags):
     """
@@ -27,6 +29,8 @@ def rmode_supported(flag: ReproducibilityFlags):
     :param flag: A ReproducibilityFlag enum being queried
     :return: True if supported, False otherwise
     """
+    if type(flag) != ReproducibilityFlags:
+        raise TypeError("Need to be working with a ReproducibilityFlag enum")
     if flag == ReproducibilityFlags.NOTHING \
             or flag == ReproducibilityFlags.RERUN \
             or flag == ReproducibilityFlags.REPEAT \
