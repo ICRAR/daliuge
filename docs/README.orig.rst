@@ -53,11 +53,11 @@ The *daliuge-engine* image by default runs a generic daemon, which allows to the
 
 Building the three images is easy, just start with the daliuge-base image by running::
 
-  cd daliuge-common && ./build_base.sh && cd ..
+  cd daliuge-common && ./build_common.sh && cd ..
 
 then build the runtime::
 
-  cd daliuge-runtime && ./build_engine.sh && cd ..
+  cd daliuge-engine && ./build_engine.sh && cd ..
 
 and last build the translator::
 
@@ -65,7 +65,7 @@ and last build the translator::
 
 running the engine and the translator is equally simple::
 
-  cd daliuge-runtime && ./run_engine.sh && cd ..
+  cd daliuge-engine && ./run_engine.sh && cd ..
 
 and::
 
@@ -84,13 +84,13 @@ If you only want the translator engine and don't need the runtime,
 or vice-versa, you can install them separately::
 
  pip install daliuge-translator
- pip install daliuge-runtime
+ pip install daliuge-engine
 
 .. You can also install each directly from GitHub::
 ..
 ..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-common&subdirectory=daliuge-common"
 ..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-translator&subdirectory=daliuge-translator"
-..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-runtime&subdirectory=daliuge-runtime"
+..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-engine&subdirectory=daliuge-engine"
 ..  pip install "git+https://github.com/ICRAR/daliuge"
 
 Or if you plan to develop |daliuge|::
@@ -99,7 +99,7 @@ Or if you plan to develop |daliuge|::
  cd daliuge
  pip install -e daliuge-common
  pip install -e daliuge-translator # optional
- pip install -e daliuge-runtime    # optional
+ pip install -e daliuge-engine     # optional
 
 
 Porting from |daliuge| 0.X

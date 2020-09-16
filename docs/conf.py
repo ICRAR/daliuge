@@ -30,7 +30,7 @@ def prepare_for_docs(path):
 
 prepare_for_docs('../daliuge-common')
 prepare_for_docs('../daliuge-translator')
-prepare_for_docs('../daliuge-runtime')
+prepare_for_docs('../daliuge-engine')
 
 
 # Mock the rest of the external modules we need so the API autodoc

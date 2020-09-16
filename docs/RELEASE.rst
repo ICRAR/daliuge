@@ -18,7 +18,7 @@ Release procedure
     VERSION_MINOR=Y
     VERSION_PATCH=Z
     VERSION=$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH
-    SETUP_FILES="daliuge-common/setup.py daliuge-translator/setup.py daliuge-runtime/setup.py setup.py"
+    SETUP_FILES="daliuge-common/setup.py daliuge-translator/setup.py daliuge-engine/setup.py setup.py"
     sed -i "s/MAJOR = .*/MAJOR = $VERSION_MAJOR/; s/MINOR = .*/MINOR = $VERSION_MINOR/; s/PATCH = .*/PATCH = $VERSION_PATCH/" $SETUP_FILES
 
 * Double-check these are the only changes you will commit
@@ -47,7 +47,7 @@ Release procedure
   ::
 
     python setup.py sdist
-    for package in daliuge-common daliuge-translator daliuge-runtime; do
+    for package in daliuge-common daliuge-translator daliuge-engine; do
       cd $package
       python setup.py sdist
       cp dist/*-$VERSION.tar.gz $OLDPWD/dist
