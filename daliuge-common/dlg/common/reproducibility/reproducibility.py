@@ -8,7 +8,7 @@ from merklelib import MerkleTree
 logger = logging.getLogger(__name__)
 
 
-def common_hash(value): # TODO: check type
+def common_hash(value):  # TODO: check type
     return HASHING_ALG(value).hexdigest()
 
 
