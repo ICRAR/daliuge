@@ -1,5 +1,5 @@
 # We need the base image we build with the other Dockerfile
-FROM icrar/daliuge-base:latest
+FROM icrar/daliuge-common:latest
 RUN apt-get update && apt-get install -y gcc
 RUN pip install --upgrade pip
 # Get the DALiuGE sources and install them in the system
@@ -8,7 +8,7 @@ RUN cd /daliuge && \
     pip install .
 
 # Second stage build taking what's required from first stage
-FROM icrar/daliuge-base:latest
+FROM icrar/daliuge-common:latest
 COPY --from=0 /usr/local/lib/python3.8/site-packages/. /usr/local/lib/python3.8/site-packages/.
 COPY --from=0 /usr/local/bin/. /usr/local/bin/.
 COPY --from=0 /daliuge/. /daliuge/.

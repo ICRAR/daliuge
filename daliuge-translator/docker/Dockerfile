@@ -2,7 +2,7 @@
 # the final image low.
 
 # First stage build based on daliuge-common and cleanup
-FROM icrar/daliuge-base:latest
+FROM icrar/daliuge-common:latest
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
@@ -14,7 +14,7 @@ RUN cd /daliuge/translator && \
     pip install .
 
 # Second stage build taking what's required from first stage
-FROM icrar/daliuge-base:latest
+FROM icrar/daliuge-common:latest
 COPY --from=0 /usr/local/lib/python3.8/site-packages/. /usr/local/lib/python3.8/site-packages/.
 COPY --from=0 /usr/local/bin/. /usr/local/bin/.
 COPY --from=0 /daliuge/. /daliuge/.
