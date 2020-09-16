@@ -1,7 +1,7 @@
 import logging
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
-    rmode_supported
+    rmode_supported, rflag_caster
 from .. import Categories
 from merklelib import MerkleTree
 
@@ -130,7 +130,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
-    rmode = ReproducibilityFlags(int(drop['reprodata']['rmode']))
+    rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning('Requested reproducibility mode %s not yet implemented', str(rmode))
         rmode = REPRO_DEFAULT
@@ -154,7 +154,7 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     :param drop:
     :return:
     """
-    rmode = ReproducibilityFlags(int(drop['reprodata']['rmode']))
+    rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -174,7 +174,7 @@ def accumulate_pg_drop_data(drop: dict):
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    rmode = ReproducibilityFlags(int(drop['reprodata']['rmode']))
+    rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -210,7 +210,7 @@ def init_lg_repro_drop_data(drop: dict):
     :param drop:
     :return: The same drop with appended reproducibility information
     """
-    rmode = ReproducibilityFlags(int(drop['reprodata']['rmode']))
+    rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -387,7 +387,7 @@ def lg_build_blockdag(lg: dict):
         # Process
         build_lg_block_data(dropset[did][0])
         visited.append(did)
-        rmode = int(dropset[did][0]['reprodata']['rmode'])
+        rmode = rflag_caster(dropset[did][0]['reprodata']['rmode']).value
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             parenthash = []
@@ -519,7 +519,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     :param rmode: One several values 0-5 defined in constants.py
     :return: The same lgt object with new information appended
     """
-    rmode = ReproducibilityFlags(int(rmode))
+    rmode = rflag_caster(rmode)
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -587,7 +587,7 @@ def init_pg_repro_data(pg: list):
     :return: The same pg object with new information appended
     """
     reprodata = pg.pop()
-    rmode = ReproducibilityFlags(int(reprodata['rmode']))
+    rmode = rflag_caster(reprodata['rmode'])
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -608,13 +608,13 @@ def init_runtime_repro_data(rg: dict, reprodata: dict):
     :param reprodata:
     :return:
     """
-    rmode = ReproducibilityFlags(int(reprodata['rmode']))
+    rmode = rflag_caster(reprodata['rmode'])
     if not rmode_supported(rmode):
         # TODO: Logging needs sessionID at this stage
         # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         reprodata['rmode'] = str(rmode.value)
-    for id, drop in rg.items():
+    for drop_id, drop in rg.items():
         init_rg_repro_drop_data(drop)
     leaves = build_blockdag(list(rg.values()), 'rg')
     reprodata['signature'] = agglomerate_leaves(leaves)
