@@ -5,6 +5,10 @@ PROTOCOL_VERSION = 0.1
 
 
 class ReproducibilityFlags(Enum):
+    """
+    Enum for supported reproducibility modes.
+    TODO: Link to more detail description
+    """
     NOTHING = 0
     RERUN = 1
     REPEAT = 2
@@ -17,7 +21,27 @@ class ReproducibilityFlags(Enum):
 REPRO_DEFAULT = ReproducibilityFlags.NOTHING
 HASHING_ALG = hashlib.sha3_256
 
-# TODO: Implement Rflag caster
+
+def rflag_caster(val, default=REPRO_DEFAULT):
+    """
+    Function to safely cast strings and ints to their appropriate ReproducibilityFlag
+    E.g. rflag_caster(1) -> ReproducibilityFlag.RERUN
+    E.g. rlag_caster("3") -> ReproducibilityFlag.REPRODUCE
+    E.g. rflag_caster("two") -> REPRO_DEFAULT
+    :param val: The passed value (either int or str)
+    :param default: The default value to be returned upon failure
+    :return: Appropriate ReproducibilityFlag
+    """
+    if type(val) == str:
+        try:
+            return ReproducibilityFlags(int(val))
+        except(ValueError, TypeError):
+            return default
+    elif type(val) == int:
+        try:
+            return ReproducibilityFlags(val)
+        except(ValueError, TypeError):
+            return default
 
 
 def rmode_supported(flag: ReproducibilityFlags):
