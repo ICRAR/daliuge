@@ -79,13 +79,13 @@ before_install:
 install:
  - pip install -e daliuge-common/
  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
- - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
+ - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-engine/
 
 # run the tests, making sure subprocesses generate coverage information
 script:
  - COVFILES=
  - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && pip install -r test-requirements.txt && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
- - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
+ - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-engine && py.test --cov) && COVFILES+=" daliuge-engine/.coverage"; }
  - coverage combine $COVFILES
  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
