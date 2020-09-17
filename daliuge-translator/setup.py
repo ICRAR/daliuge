@@ -107,7 +107,7 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     install_requires=install_requires,
-    include_package_data=True
+    include_package_data=True,
     packages=find_packages(),
     entry_points = {
         'dlg.tool_commands': ['translator=dlg.translator.tool_commands']
