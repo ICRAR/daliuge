@@ -1,0 +1,5 @@
+dlg/dropmake/web/img/*
+dlg/dropmake/web/*.css
+dlg/dropmake/web/*.js
+dlg/dropmake/web/*.html
+dlg/dropmake/lib/*
