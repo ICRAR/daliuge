@@ -31,7 +31,20 @@ documentation <https://daliuge.readthedocs.io/>`_
 Installation
 ------------
 
-To get the latest stable version of the full package::
+docker
+------
+
+The easiest way to get started is to use the docker container installation procedures provided 
+to build and run the daliuge-runtime and the daliuge-translator. Please refer to
+the README files in the subdirectories daliuge-runtime and daliuge-translator, respectively.
+Depending on what you want to deploy you may need to build and run only the runtime or the
+translator.
+
+
+PyPi
+----
+
+It is also possible to install the latest stable version of the full package using PyPi::
 
  pip install daliuge
 
