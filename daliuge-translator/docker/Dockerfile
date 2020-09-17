@@ -20,4 +20,4 @@ COPY --from=0 /usr/local/bin/. /usr/local/bin/.
 COPY --from=0 /daliuge/. /daliuge/.
 
 EXPOSE 8084
-CMD [ "dlg", "lgweb", "-d", "/daliuge/translator/test/dropmake/logical_graphs", "-t", "/tmp" ]
+CMD [ "dlg", "lgweb", "-d", "/daliuge/translator/test/dropmake", "-t", "/tmp" ]
