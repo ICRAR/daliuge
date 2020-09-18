@@ -19,3 +19,4 @@ daliuge-engine/test/apps/libdynlib_example2.so
 daliuge-engine/test/apps/dynlib_example2.o
 .idea
 daliuge.iml
+*.cwl
