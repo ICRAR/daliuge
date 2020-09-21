@@ -222,7 +222,11 @@ def pgtcwl_get():
         zip_path = pgt_path(zip_filename)
 
         # create the CWL workflow
-        create_workflow(pgtp.drops, root_path, cwl_path, zip_path);
+        zip_contents = create_workflow(pgtp.drops, root_path, cwl_path);
+
+        # maybe eventually we don't need to write to file
+        with open(zip_path, 'wb') as f:
+            f.write(zip_contents)
 
         # respond with download of ZIP file
         return static_file(zip_filename, root=root_path, download=True)
