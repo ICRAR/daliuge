@@ -205,9 +205,15 @@ class TestPGGen(unittest.TestCase):
                 cwl_out_zip = cwl_output_dir + '/workflow.zip'
                 output_list.append((cwl_out, cwl_out_zip))
 
-                create_workflow(pgt, "", cwl_out, cwl_out_zip)
+                #create_workflow(pgt, "", cwl_out, cwl_out_zip)
+                cwl_contents = create_workflow(pgt, 'workflow.cwl')
+
+                # write output
+                with open(cwl_out_zip, 'w') as f:
+                    f.write(cwl_contents)
 
         for out, zip in output_list:
+            print("Testing. out:" + out + " zip:" + zip)
             zip_ref = zipfile.ZipFile(zip)
             zip_ref.extractall(os.path.dirname(zip))
             zip_ref.close()
