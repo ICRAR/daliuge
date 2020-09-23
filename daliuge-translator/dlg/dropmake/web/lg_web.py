@@ -218,11 +218,10 @@ def pgtcwl_get():
 
         # get paths used while creating the CWL files
         root_path = pgt_path("")
-        cwl_path = pgt_path(cwl_filename)
         zip_path = pgt_path(zip_filename)
 
         # create the CWL workflow
-        zip_contents = create_workflow(pgtp.drops, root_path, cwl_path);
+        zip_contents = create_workflow(pgtp.drops, cwl_filename);
 
         # maybe eventually we don't need to write to file
         with open(zip_path, 'wb') as f:

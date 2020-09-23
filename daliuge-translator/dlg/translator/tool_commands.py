@@ -299,7 +299,7 @@ def cwl(parser, args):
 
     # create the CWL workflow
     from ..dropmake.cwl import create_workflow
-    zip_contents = create_workflow(pgt, "", "workflow.cwl")
+    zip_contents = create_workflow(pgt, "workflow.cwl")
 
     # write output
     with _open_o(opts.output) as f:
