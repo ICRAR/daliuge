@@ -302,7 +302,7 @@ def cwl(parser, args):
     zip_contents = create_workflow(pgt, "workflow.cwl")
 
     # write output
-    with _open_o(opts.output) as f:
+    with _open_o(opts.output, "wb") as f:
         f.write(zip_contents)
 
 def register_commands():
