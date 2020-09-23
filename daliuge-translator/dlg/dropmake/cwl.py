@@ -100,9 +100,9 @@ def create_workflow(drops, cwl_filename):
     zipBuffer = io.BytesIO()
     zipObj = ZipFile(zipBuffer, 'w')
     for step_file in step_files:
-        step_file_buffer = io.BytesIO(step_file["contents"])
+        step_file_buffer = io.BytesIO(common.u2s(step_file["contents"]))
         zipObj.writestr(step_file["filename"], step_file_buffer.getvalue())
-    workflow_file_buffer = io.BytesIO(cwl_workflow.export_string())
+    workflow_file_buffer = io.BytesIO(common.u2s(cwl_workflow.export_string()))
     zipObj.writestr(cwl_filename, workflow_file_buffer.getvalue())
     zipObj.close()
 
