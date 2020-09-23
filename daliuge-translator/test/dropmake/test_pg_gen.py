@@ -209,7 +209,7 @@ class TestPGGen(unittest.TestCase):
                 cwl_contents = create_workflow(pgt, 'workflow.cwl')
 
                 # write output
-                with open(cwl_out_zip, 'w') as f:
+                with open(cwl_out_zip, 'wb') as f:
                     f.write(cwl_contents)
 
         for out, zip in output_list:
