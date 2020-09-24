@@ -209,23 +209,20 @@ def pgtcwl_get():
         # get PGT from manager
         pgtp = pg_mgr.get_pgt(pgt_name)
 
-        # debug
-        print("pgtp:" + str(pgtp) + ":" + str(dir(pgtp)))
-
         # build filename for CWL file from PGT filename
         cwl_filename = pgt_name[:-6] + ".cwl"
         zip_filename = pgt_name[:-6] + ".zip"
 
-        # get paths used while creating the CWL files
-        root_path = pgt_path("")
-        cwl_path = pgt_path(cwl_filename)
-        zip_path = pgt_path(zip_filename)
-
-        # create the CWL workflow
-        create_workflow(pgtp.drops, root_path, cwl_path, zip_path);
+        # create the workflow
+        import io
+        buffer = io.BytesIO()
+        create_workflow(pgtp.drops, cwl_filename, buffer)
 
         # respond with download of ZIP file
-        return static_file(zip_filename, root=root_path, download=True)
+        response.content_type = 'application/zip'
+        response.set_header("Content-Disposition", "attachment; filename=%s" % (zip_filename))
+        return buffer.getvalue()
+
     else:
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
