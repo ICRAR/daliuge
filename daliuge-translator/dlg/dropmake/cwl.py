@@ -22,8 +22,8 @@
 
 import logging
 import os
+import six
 from zipfile import ZipFile
-import io
 
 import cwlgen
 
@@ -34,7 +34,7 @@ from dlg import common
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(drops, cwl_filename):
+def create_workflow(drops, cwl_filename, buffer):
     """
     Create a CWL workflow from a given Physical Graph Template
 
@@ -97,16 +97,11 @@ def create_workflow(drops, cwl_filename):
             cwl_workflow.steps.append(step)
 
     # put workflow and command line tool description files all together in a zip
-    zipBuffer = io.BytesIO()
-    zipObj = ZipFile(zipBuffer, 'w')
+    zipObj = ZipFile(buffer, 'w')
     for step_file in step_files:
-        step_file_buffer = io.BytesIO(common.s2b(step_file["contents"]))
-        zipObj.writestr(step_file["filename"], step_file_buffer.getvalue())
-    workflow_file_buffer = io.BytesIO(common.s2b(cwl_workflow.export_string()))
-    zipObj.writestr(cwl_filename, workflow_file_buffer.getvalue())
+        zipObj.writestr(step_file["filename"], six.b(step_file["contents"]))
+    zipObj.writestr(cwl_filename, six.b(cwl_workflow.export_string()))
     zipObj.close()
-
-    return zipBuffer.getvalue()
 
 
 def create_command_line_tool(node):
