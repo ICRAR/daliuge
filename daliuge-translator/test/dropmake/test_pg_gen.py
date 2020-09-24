@@ -168,7 +168,6 @@ class TestPGGen(unittest.TestCase):
 
     def test_cwl_translate(self):
         import git
-        import io
         import os
         import shutil
         import uuid
@@ -206,12 +205,9 @@ class TestPGGen(unittest.TestCase):
                 cwl_out_zip = cwl_output_dir + '/workflow.zip'
                 output_list.append((cwl_out, cwl_out_zip))
 
-                buffer = io.BytesIO()
-                create_workflow(pgt, 'workflow.cwl', buffer)
-
                 # write output
                 with open(cwl_out_zip, 'wb') as f:
-                    f.write(buffer.getvalue())
+                    create_workflow(pgt, 'workflow.cwl', f)
 
         for out, zip in output_list:
             zip_ref = zipfile.ZipFile(zip)
