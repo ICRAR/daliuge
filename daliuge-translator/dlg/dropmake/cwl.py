@@ -22,6 +22,7 @@
 
 import logging
 import os
+import six
 from zipfile import ZipFile
 
 import cwlgen
@@ -33,7 +34,7 @@ from dlg import common
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(drops, pgt_path, cwl_path, zip_path):
+def create_workflow(drops, cwl_filename, buffer):
     """
     Create a CWL workflow from a given Physical Graph Template
 
@@ -76,9 +77,10 @@ def create_workflow(drops, pgt_path, cwl_path, zip_path):
 
             # create command line tool description
             filename = "step" + str(index) + ".cwl"
-            filename_with_path = os.path.join(pgt_path, filename)
-            create_command_line_tool(node, filename_with_path)
-            step_files.append(filename_with_path)
+            contents = create_command_line_tool(node)
+
+            # add contents of command line tool description to list of step files
+            step_files.append({"filename":filename, "contents": contents})
 
             # create step
             step = cwlgen.WorkflowStep("step" + str(index), run=filename)
@@ -94,19 +96,15 @@ def create_workflow(drops, pgt_path, cwl_path, zip_path):
             # add step to workflow
             cwl_workflow.steps.append(step)
 
-    # save CWL to path
-    with open(cwl_path, "w") as f:
-        f.write(cwl_workflow.export_string())
-
     # put workflow and command line tool description files all together in a zip
-    zipObj = ZipFile(zip_path, 'w')
+    zipObj = ZipFile(buffer, 'w')
     for step_file in step_files:
-        zipObj.write(step_file, os.path.basename(step_file))
-    zipObj.write(cwl_path, os.path.basename(cwl_path))
+        zipObj.writestr(step_file["filename"], six.b(step_file["contents"]))
+    zipObj.writestr(cwl_filename, six.b(cwl_workflow.export_string()))
     zipObj.close()
 
 
-def create_command_line_tool(node, filename):
+def create_command_line_tool(node):
     """
     Create a command line tool description file for a single step in a CWL
     workflow.
@@ -144,6 +142,4 @@ def create_command_line_tool(node, filename):
         output_file = cwlgen.CommandOutputParameter('output_file_' + str(index), param_type='stdout', output_binding=file_binding, doc='output file ' + str(index))
         cwl_tool.outputs.append(output_file)
 
-    # write to file
-    with open(filename, "w") as f:
-        f.write(cwl_tool.export_string())
+    return cwl_tool.export_string()
