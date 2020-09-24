@@ -299,13 +299,10 @@ def cwl(parser, args):
 
     # create the CWL workflow
     from ..dropmake.cwl import create_workflow
-    import io
-    buffer = io.BytesIO()
-    create_workflow(pgt, "workflow.cwl", buffer)
 
     # write to file
     with _open_o(opts.output, "wb") as f:
-        f.write(buffer.getvalue())
+        create_workflow(pgt, "workflow.cwl", f)
 
 def register_commands():
     tool.cmdwrap('lgweb', 'A Web server for the Logical Graph Editor', 'dlg.dropmake.web.lg_web:run')
