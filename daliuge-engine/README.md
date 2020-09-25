@@ -49,20 +49,20 @@ Starting node manager:
 docker exec -ti daliuge-engine dlg nm -v --no-dlm -H 0.0.0.0
 ```
 
-Starting master manager:
+Starting Data Island Manager:
 
 ```bash
-docker exec -ti daliuge-engine dlg mm -v -H 0.0.0.0
+docker exec -ti daliuge-engine dlg dim -N localhost -v -H 0.0.0.0
 ```
 
 ### Using RESTful commands
 
 It is also possible to use the RESTful interface to start the managers. This requires the usage of either curl or wget, since the API requires POST commands (using a browser is not easily possible). Note that if the containers had been deployed on multiple hosts, the commands below will need to be adjusted to reflect the actual hostname, rather than localhost.
 
-Starting the master manager:
+Starting the island manager:
 
 ```bash
-curl -X POST http://localhost:9000/managers/master
+curl -d '{"nodes": ["localhost"]}' -H "Content-Type: application/json" -X POST http://localhost:9000/managers/dataisland
 ```
 
 Starting the node manager:
@@ -71,10 +71,10 @@ Starting the node manager:
 curl -X POST http://localhost:9000/managers/node
 ```
 
-Optional: Starting the island manager:
+Optional: Starting the master manager:
 
 ```bash
-curl -d '{"nodes": ["0.0.0.0"]}' -H "Content-Type: application/json" -X POST http://localhost:9000/managers/dataisland
+curl -X POST http://localhost:9000/managers/master
 ```
 
 ## Accessing the run-time web interface
