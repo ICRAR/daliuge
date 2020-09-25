@@ -13,7 +13,12 @@ COPY --from=0 /usr/local/lib/python3.8/site-packages/. /usr/local/lib/python3.8/
 COPY --from=0 /usr/local/bin/. /usr/local/bin/.
 COPY --from=0 /daliuge/. /daliuge/.
 
+EXPOSE 5555
+EXPOSE 6666
 EXPOSE 8000
+EXPOSE 8001
+EXPOSE 8002
 EXPOSE 9000
+
 
 CMD ["dlg", "daemon", "-vv", "--no-nm"]
