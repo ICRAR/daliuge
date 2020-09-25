@@ -40,7 +40,7 @@ class TestPGGen(unittest.TestCase):
         fp = get_lg_fname('lofar_std.json')
         #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
-        self.assertEqual(len(lg._done_dict.keys()), 36)
+        self.assertEqual(len(lg._done_dict.keys()), 35)
         drop_list = lg.unroll_to_tpl()
         #print json.dumps(drop_list, indent=2)
         #pprint.pprint(drop_list)
