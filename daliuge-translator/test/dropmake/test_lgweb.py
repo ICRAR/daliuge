@@ -146,6 +146,69 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
+    def test_mkn_pgt_post(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+
+        # an API call with an empty form should cause an error
+        self.assertRaises(RestClientException, c._POST, '/gen_pgt')
+
+        # new logical graph JSON
+        with open('test/dropmake/logical_graphs/simpleMKN.graph', 'rb') as infile:
+            json_data = infile.read()
+
+        # add 'correct' data to the form
+        form_data = {
+            'algo': 'metis',
+            'lg_name': 'metis.graph',
+            'json_data': json_data,
+            'num_islands': 0,
+            'num_par': 1,
+            'par_label': 'Partition',
+            'max_load_imb': 100,
+            'max_cpu': 8
+        }
+
+        # POST form to /gen_pgt
+        try:
+            content = urllib.urlencode(form_data)
+            c._POST('/gen_pgt', content,
+                    content_type='application/x-www-form-urlencoded')
+        except RestClientException as e:
+            self.fail(e)
+
+    def test_loop_pgt_post(self):
+
+        c = RestClient('localhost', lgweb_port, 10)
+
+        # an API call with an empty form should cause an error
+        self.assertRaises(RestClientException, c._POST, '/gen_pgt')
+
+        # new logical graph JSON
+        with open('daliuge-translator/test/dropmake/logical_graphs/testLoop.graph', 'rb') as infile:
+            json_data = infile.read()
+
+        # add 'correct' data to the form
+        form_data = {
+            'algo': 'metis',
+            'lg_name': 'metis.graph',
+            'json_data': json_data,
+            'num_islands': 0,
+            'num_par': 1,
+            'par_label': 'Partition',
+            'max_load_imb': 100,
+            'max_cpu': 8
+        }
+
+        # POST form to /gen_pgt
+        try:
+            content = urllib.urlencode(form_data)
+            c._POST('/gen_pgt', content,
+                    content_type='application/x-www-form-urlencoded')
+        except RestClientException as e:
+            self.fail(e)
+
+
     def test_load_lgeditor(self):
 
         c = RestClient('localhost', lgweb_port, 10)
