@@ -151,7 +151,7 @@ def convert_mkn(lgo):
     old_new_parent_map_split_2 = dict()
     dont_change_group = set()
     n_products_map = dict()
-    app_keywords = ["inputApplication", "outputApplication"]
+    app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
         if Categories.MKN != node["category"]:
@@ -179,7 +179,7 @@ def convert_mkn(lgo):
         node_kn = copy.deepcopy(node_mk)
         node_split_n = copy.deepcopy(node_mk)
 
-        node_mk["application"] = node["inputApplication"]
+        node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = Categories.GATHER
         node_mk["type"] = Categories.GATHER
         ipan = node_mk.get("inputAppName", "")
@@ -187,8 +187,8 @@ def convert_mkn(lgo):
             node_mk["text"] = node_mk["text"] + "_InApp"
         else:
             node_mk["text"] = ipan
-        del node_mk["inputApplication"]
-        del node_mk["outputApplication"]
+        del node_mk["inputApplicationName"]
+        del node_mk["outputApplicationName"]
         del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
@@ -211,10 +211,10 @@ def convert_mkn(lgo):
         node_kn["group"] = mkn_key
         dont_change_group.add(k_new)
         old_new_parent_map_split_1[mkn_key] = k_new
-        node_kn["application"] = node_kn["outputApplication"]
+        node_kn["application"] = node_kn["outputApplicationName"]
         node_kn["inputAppFields"] = node_kn["outputAppFields"]
-        del node_kn["inputApplication"]
-        del node_kn["outputApplication"]
+        del node_kn["inputApplicationName"]
+        del node_kn["outputApplicationName"]
         del node_kn["outputAppFields"]
 
         new_field_kn = {
@@ -248,8 +248,8 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             n_products_map[mok] = k_new
 
-        del node_split_n["inputApplication"]
-        del node_split_n["outputApplication"]
+        del node_split_n["inputApplicationName"]
+        del node_split_n["outputApplicationName"]
         del node_split_n["outputAppFields"]
         # del node_split_n['intputAppFields']
 
@@ -306,7 +306,7 @@ def convert_mkn_all_share_m(lgo):
     keyset = get_keyset(lgo)
     old_new_k2n_to_map = dict()
     old_new_k2n_from_map = dict()
-    app_keywords = ["inputApplication", "outputApplication"]
+    app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
         if Categories.MKN != node["category"]:
@@ -329,11 +329,11 @@ def convert_mkn_all_share_m(lgo):
         node_mk = node
         node_kn = copy.deepcopy(node_mk)
 
-        node_mk["application"] = node["inputApplication"]
+        node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = Categories.GATHER
         node_mk["text"] = node_mk["text"] + "_InApp"
-        del node["inputApplication"]
-        del node["outputApplication"]
+        del node["inputApplicationName"]
+        del node["outputApplicationName"]
         del node["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
@@ -347,10 +347,10 @@ def convert_mkn_all_share_m(lgo):
         k_new = min(keyset) - 1
         keyset.add(k_new)
         node_kn["key"] = k_new
-        node_kn["application"] = node_kn["outputApplication"]
+        node_kn["application"] = node_kn["outputApplicationName"]
         node_kn["inputAppFields"] = node_kn["outputAppFields"]
-        del node_kn["inputApplication"]
-        del node_kn["outputApplication"]
+        del node_kn["inputApplicationName"]
+        del node_kn["outputApplicationName"]
         del node_kn["outputAppFields"]
 
         new_field_kn = {
@@ -398,7 +398,9 @@ def convert_construct(lgo):
     # application drop if a gather has internal input, which will result in
     # a cycle that is not allowed in DAG during graph translation
 
-    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
+# CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
+#    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
+    app_keywords = ["inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
         if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
             continue
