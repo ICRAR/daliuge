@@ -1,0 +1,294 @@
+{
+    "linkDataArray": [
+        {
+            "from": -4,
+            "fromPort": "1765f421-782c-4972-ab76-ac0c23bd95e3",
+            "to": -3,
+            "toPort": "ae981288-d839-4890-bb11-f54f336cfad0"
+        },
+        {
+            "from": -3,
+            "fromPort": "b7c36b5e-dbe7-4d9d-ad2f-abec81071de5",
+            "to": -2,
+            "toPort": "b133f803-42f7-4c70-83b7-803bf8ec3035",
+            "loop_aware": "1"
+        }
+    ],
+    "modelData": {
+        "filePath": "testLoop_new.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Loop",
+            "categoryType": "Group",
+            "collapsed": false,
+            "color": "#512E5F",
+            "description": "Placeholder 'loop' description",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": true,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "num_of_iter",
+                    "text": "Number loops",
+                    "value": "5"
+                }
+            ],
+            "height": 378.12856316963075,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [
+                {
+                    "Id": "a21aba04-cf68-4dab-b57f-dd0dba9e4c91",
+                    "IdText": "event"
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "123e02e1-0e35-47a3-8dca-2525f71a6766",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": true,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [
+                {
+                    "Id": "05863afc-5933-4eef-9f64-5e10a4b86ac6",
+                    "IdText": "event"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "1eeee75a-c2d6-49ea-b94b-5c208b8f3f0c",
+                    "IdText": "event"
+                }
+            ],
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Loop",
+            "width": 385.98717625064404,
+            "x": 606.4859101595122,
+            "y": 337.06816127722925
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "0"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": "sleep 5"
+                }
+            ],
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "b133f803-42f7-4c70-83b7-803bf8ec3035",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "1765f421-782c-4972-ab76-ac0c23bd95e3",
+                    "IdText": "event"
+                }
+            ],
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "SleepExternal",
+            "width": 200,
+            "x": 736.1530259962292,
+            "y": 855.7366246240957
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Memory",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "data_volume",
+                    "text": "Data volume",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "group_end",
+                    "text": "Group end",
+                    "value": "1"
+                }
+            ],
+            "group": -1,
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "ae981288-d839-4890-bb11-f54f336cfad0",
+                    "IdText": "event"
+                }
+            ],
+            "isData": true,
+            "isGroup": false,
+            "key": -3,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "b7c36b5e-dbe7-4d9d-ad2f-abec81071de5",
+                    "IdText": "event"
+                }
+            ],
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Memory",
+            "width": 200,
+            "x": 700.7892671316696,
+            "y": 593.7828552569915
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "1"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": "sleep 3"
+                }
+            ],
+            "group": -1,
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "b133f803-42f7-4c70-83b7-803bf8ec3035",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -4,
+            "outputAppFields": [],
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "1765f421-782c-4972-ab76-ac0c23bd95e3",
+                    "IdText": "event"
+                }
+            ],
+            "selected": true,
+            "showPorts": true,
+            "streaming": false,
+            "subject": null,
+            "text": "SleepInternal",
+            "width": 200,
+            "x": 692.9306540506565,
+            "y": 454.94735749242614
+        }
+    ]
+}
