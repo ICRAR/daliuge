@@ -21,13 +21,16 @@
 #
 import os
 import unittest
+from numpy import random, mean, array
+import six
+import six.moves.cPickle as pickle
+
 
 from dlg import droputils
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP
-
 
 class TestSimpleApps(unittest.TestCase):
 
@@ -95,13 +98,32 @@ class TestSimpleApps(unittest.TestCase):
     def test_randomarrayapp(self):
         i = NullDROP('i', 'i')
         c = RandomArrayApp('c', 'c')
-        c.addOutput(InMemoryDROP('o', 'o'))
+        o = InMemoryDROP('o', 'o')
+        c.addInput(i)
+        c.addOutput(o)
         self._test_graph_runs((i, c, o), i, o)
-        self.assertEqual(1, 1)
+        marray = c._getArray()
+        data = pickle.loads(droputils.allDropContents(o))
+        v = marray == data
+        self.assertEqual(v.all(), True)
 
     def test_averagearraysapp(self):
-        a = AverageArraysApp()
+        a = AverageArraysApp('a', 'a')
         i1, i2, o = (InMemoryDROP(x, x) for x in ('i1', 'i2', 'o'))
+        c = AverageArraysApp('c', 'c')
+        c.addInput(i1)
+        c.addInput(i2)
+        c.addOutput(o)
         for x in i1, i2:
-            a.addOutput(x)
+            a.addInput(x)
+        data1 = random.randint(0, 100, size=100)
+        data2 = random.randint(0, 100, size=100)
+        i1.write(pickle.dumps(data1))
+        i2.write(pickle.dumps(data2))
+        m = mean([array(data1), array(data2)], axis=0)
+        self._test_graph_runs((i1, i2, c, o), (i1, i2), o)
+        average = pickle.loads(droputils.allDropContents(o))
+        v = (m == average)
+        self.assertEqual(v.all(), True)
+
         
