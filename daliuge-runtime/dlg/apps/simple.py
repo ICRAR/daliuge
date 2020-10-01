@@ -23,11 +23,14 @@
 
 import time
 
-from .. import droputils
+from .. import droputils, utils
 from ..drop import BarrierAppDROP, ContainerDROP
-from ..meta import dlg_float_param, dlg_component, dlg_batch_input, \
-    dlg_batch_output, dlg_streaming_input
+from ..meta import dlg_float_param
+from ..meta import dlg_bool_param, dlg_int_param
+from ..meta import dlg_component, dlg_batch_input
+from ..meta import dlg_batch_output, dlg_streaming_input
 
+from pyfunc import serialize_data, deserialize_data
 
 class NullBarrierApp(BarrierAppDROP):
     compontent_meta = dlg_component('NullBarrierApp', 'Null Barrier.',
@@ -89,3 +92,107 @@ class SleepAndCopyApp(SleepApp, CopyApp):
     def run(self):
         SleepApp.run(self)
         CopyApp.run(self)
+
+
+class RandomArrayApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that generates an array of random numbers. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
+
+    Keywords:
+
+    integer:  bool [True], generate integer array
+    low:      float, lower boundary (will be converted to int for integer arrays)
+    high:     float, upper boundary (will be converted to int for integer arrays)
+    size:     int, number of array elements
+    """
+    from numpy import random
+    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+    
+    # default values
+    integer = dlg_bool_param('integer', True)
+    low = dlg_float_param('low', 0)
+    high = dlg_float_param('high', 100)
+    size = dlg_int_param('size', 100)
+
+    def initialize(self, **kwargs):
+        super(RandomArrayApp, self).initialize(**kwargs)
+
+    def run(self):
+        # At least one output should have been added
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output should have been added to %r' % self)
+        outs.write(serialize_data(self.generateRandomArray()))
+
+    def generateRandomArray(self):
+        if self.integer:
+            # generate an array of self.size integers with numbers between
+            # slef.low and self.high
+            marray = random.randint(int(self.low), int(self.high), size=(self.size))
+        else:
+            # generate an array of self.size floats with numbers between
+            # self.low and self.high
+            marray = (random.random(size=self.size) + self.low) * self.high
+        return marray
+
+
+class AverageArraysApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that averages arrays received on input. It requires
+    multiple inputs and writes the generated average vector to all of its
+    outputs.
+    The input arrays are assumed to have the same number of elements and
+    the output array will also have that same number of elements.
+
+    Keywords:
+
+    method:  string <['mean']|'median'>, use mean or median as method.
+    """
+    from numpy import mean, median
+    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    # default values
+    methods = ['mean', 'median']
+    method = dlg_string_param('method', methods[0])
+
+    def initialize(self, **kwargs):
+        super(RandomArrayApp, self).initialize(**kwargs)
+
+    def run(self):
+        # At least one output should have been added
+
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output should have been added to %r' % self)
+            avg = averageArray()
+            outs.write(serializeData(avg))  # average across inputs
+    
+    def getInputArray(self):
+        """
+        Create the input array from all inputs received. Shape is
+        (<#inputs>, <#elemnts>), where #elements is the length of the
+        vector received from one input.
+        """
+        ins = self.inputs
+        if len(ins) < 1:
+            raise Exception(
+                'At least one input should have been added to %r' % self)
+
+        marray = [deserialize_data(inp.read()) for inp in self.ins]
+        return marray
+
+
+    def averageArray(self, marray):
+        
+        method_to_call = getattr(numpy, self.method)
+        return method_to_call(marray, axis=0)
