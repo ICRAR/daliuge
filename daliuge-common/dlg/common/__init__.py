@@ -46,7 +46,7 @@ class Categories:
     VARIABLES = 'Variables'
 
     DATA = 'Data'
-    COMPONENT = 'Component'
+    COMPONENT = 'PythonApp'
     BASH_SHELL_APP = 'BashShellApp'
     MPI = 'Mpi'
     DYNLIB_APP = 'DynlibApp'

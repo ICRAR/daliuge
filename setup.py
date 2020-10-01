@@ -30,7 +30,7 @@ VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 install_requires = [
     "daliuge-common==%s" % (VERSION,),
     "daliuge-translator==%s" % (VERSION,),
-    "daliuge-runtime==%s" % (VERSION,),
+    "daliuge-engine==%s" % (VERSION,),
 ]
 
 setup(
