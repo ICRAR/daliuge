@@ -1,0 +1,6 @@
+Deployment
+==========
+
+The three components described in the :ref:`basics` section allow for a very flexible deployment. In a real world deployment there will always be one master manager, zero or a few data island managers, and as many node managers as there are computing nodes available to the |daliuge| execution engine. In very small deployments one node manager can take over the role of the master manager as well. 
+
+The primary usage scenario for the |daliuge| execution engine is to run it on a large cluster of machines with very large workflows of thousands to millions of individual tasks. However, for testing and small scale applications it is also possible to deploy the whole system on a single laptop or on a small cluster. It is also possible to deploy the whole system or parts of it on AWS or a Kubernetes cluster. For instance EAGLE and/or the *translator* could run locally, or on a single AWS instance and submit the physical graph to a master manager on some HPC system. This flexible deployment is also the reason why the individual components are kept well separated. 
