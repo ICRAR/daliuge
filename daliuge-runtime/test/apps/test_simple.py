@@ -24,6 +24,7 @@ import unittest
 
 from dlg import droputils
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
+from dlg.apps.simple import RandomArrayApp, AverageArraysApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP
 
@@ -48,7 +49,7 @@ class TestSimpleApps(unittest.TestCase):
         b.addInput(a)
         b.addOutput(c)
 
-        self._test_graph_runs((a, b, c), a, c)
+        a = NullDROP('a', 'a')
 
     def _test_copyapp_simple(self, app):
 
@@ -90,3 +91,17 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_sleepandcopyapp(self):
         self._test_copyapp(SleepAndCopyApp)
+
+    def test_randomarrayapp(self):
+        i = NullDROP('i', 'i')
+        c = RandomArrayApp('c', 'c')
+        c.addOutput(InMemoryDROP('o', 'o'))
+        self._test_graph_runs((i, c, o), i, o)
+        self.assertEqual(1, 1)
+
+    def test_averagearraysapp(self):
+        a = AverageArraysApp()
+        i1, i2, o = (InMemoryDROP(x, x) for x in ('i1', 'i2', 'o'))
+        for x in i1, i2:
+            a.addOutput(x)
+        
