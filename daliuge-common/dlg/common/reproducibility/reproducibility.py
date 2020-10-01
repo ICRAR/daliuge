@@ -2,8 +2,9 @@ import logging
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported, rflag_caster
-from .. import Categories
 from merklelib import MerkleTree
+
+from .. import Categories
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         if data['type'] == 'plain':
             data['storage'] = drop['storage']
         else:
-            data['app'] = drop['app']
+            data['dt'] = drop['dt']  # WARNING: Added to differentiate between subtle component differences.
 
     return data
 
