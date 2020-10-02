@@ -204,6 +204,8 @@ def pgtcwl_get():
     Return CWL representation of the logical graph
     """
     pgt_name = request.query.get("pgt_name")
+    print("pgt_name:!" + pgt_name + "!")
+    print("pgt_exists:" + str(pgt_exists(pgt_name)))
 
     if pgt_exists(pgt_name):
         # get PGT from manager
@@ -216,7 +218,12 @@ def pgtcwl_get():
         # create the workflow
         import io
         buffer = io.BytesIO()
-        create_workflow(pgtp.drops, cwl_filename, buffer)
+        try:
+            create_workflow(pgtp.drops, cwl_filename, buffer)
+        except Exception as e:
+            print("pgt_cwl(): caught exception during create_workflow")
+            response.status = 400 # HTTP 400 Bad Request
+            return e
 
         # respond with download of ZIP file
         response.content_type = 'application/zip'
@@ -224,6 +231,7 @@ def pgtcwl_get():
         return buffer.getvalue()
 
     else:
+        print("pgt_cwl(): not found")
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
