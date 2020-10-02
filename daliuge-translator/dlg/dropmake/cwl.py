@@ -28,7 +28,10 @@ from zipfile import ZipFile
 import cwlgen
 
 from dlg import common
+from dlg.common import Categories
 
+# the following node categories are not supported by the CWL translator
+UNSUPPORTED_DATA_TYPES = [Categories.COMPONENT, Categories.MPI, Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP, Categories.DOCKER]
 
 #from ..common import dropdict, get_roots
 logger = logging.getLogger(__name__)
@@ -46,6 +49,14 @@ def create_workflow(drops, cwl_filename, buffer):
     NOTE: CWL only supports workflow steps that are bash shell applications
           Non-BashShellApp nodes are unable to be implemented in CWL
     """
+
+    # search the drops for non-BashShellApp drops,
+    # if found, the graph cannot be translated into CWL
+    for index, node in enumerate(drops):
+        dataType = node.get('dt', '')
+        if dataType in UNSUPPORTED_DATA_TYPES:
+            print("create_workflow(): Found unsupported data type:" + dataType)
+            raise Exception('Node {0} has an unsupported dataType: {1}'.format(index, dataType))
 
     # create list for command line tool description files
     step_files = []
