@@ -55,7 +55,6 @@ def create_workflow(drops, cwl_filename, buffer):
     for index, node in enumerate(drops):
         dataType = node.get('dt', '')
         if dataType in UNSUPPORTED_DATA_TYPES:
-            print("create_workflow(): Found unsupported data type:" + dataType)
             raise Exception('Node {0} has an unsupported dataType: {1}'.format(index, dataType))
 
     # create list for command line tool description files
