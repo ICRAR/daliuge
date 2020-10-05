@@ -481,25 +481,41 @@
     }
   }
 
-  function makeCWL() {
-    //given a logical graph name, get its CWL from the server
-    $.ajax({
-        url: "/pgt_cwl?pgt_name={{pgt_view_json_name}}",
-        type: 'get',
-        error: function(XMLHttpRequest, textStatus, errorThrown) {
-            console.log("makeCWL() : error")
-            if (404 == XMLHttpRequest.status) {
-              console.error('Server cannot locate physical graph file {{pgt_view_json_name}}');
-              return;
-            }
-            if (400 == XMLHttpRequest.status) {
-              alert(XMLHttpRequest.responseText);
-              return;
-            }
+  function getCWLZipFilenameFromResponseURL(url){
+      const FILE_NAME_PREFIX = "pgt_name=";
+      return url.substring(url.lastIndexOf(FILE_NAME_PREFIX) + FILE_NAME_PREFIX.length, url.lastIndexOf('.graph')) + ".zip";
+  }
 
-            console.error('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+  function makeCWL() {
+    var fileName = "";
+    var error = "";
+
+    fetch('/pgt_cwl?pgt_name={{pgt_view_json_name}}')
+      .then(async resp => {
+
+        // if fetch was not successful, await the error message in the body of the response
+        if (resp.status !== 200){
+            error = await resp.text();
+            return;
         }
-    });
+
+        // otherwise, re-generate a filename for the download
+        filename = getCWLZipFilenameFromResponseURL(resp.url);
+
+        return resp.blob();
+      })
+      .then(blob => {
+        // build an object URL from the response and 'download' it
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => alert(error)); // present error, if it occurred
   }
 
   function zoomToFit() {
