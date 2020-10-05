@@ -221,7 +221,6 @@ def pgtcwl_get():
         try:
             create_workflow(pgtp.drops, cwl_filename, buffer)
         except Exception as e:
-            print("pgt_cwl(): caught exception during create_workflow")
             response.status = 400 # HTTP 400 Bad Request
             return e
 
@@ -231,7 +230,6 @@ def pgtcwl_get():
         return buffer.getvalue()
 
     else:
-        print("pgt_cwl(): not found")
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
