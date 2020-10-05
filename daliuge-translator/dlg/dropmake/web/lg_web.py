@@ -204,8 +204,6 @@ def pgtcwl_get():
     Return CWL representation of the logical graph
     """
     pgt_name = request.query.get("pgt_name")
-    print("pgt_name:!" + pgt_name + "!")
-    print("pgt_exists:" + str(pgt_exists(pgt_name)))
 
     if pgt_exists(pgt_name):
         # get PGT from manager
