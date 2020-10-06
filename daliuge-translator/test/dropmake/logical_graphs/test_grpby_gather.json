@@ -189,10 +189,10 @@
             "width": 248,
             "height": 274,
             "collapsed": false,
-            "showPorts": true,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "selected": true,
+            "selected": false,
             "expanded": true,
             "group": -12,
             "inputApplicationName": "sleep",
@@ -301,66 +301,6 @@
                     "text": "Execution Time",
                     "name": "execution_time",
                     "value": 5,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
@@ -531,66 +471,6 @@
                     "name": "execution_time",
                     "value": 5,
                     "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
-                    "description": ""
                 }
             ]
         },
@@ -639,66 +519,6 @@
                     "text": "Execution Time",
                     "name": "execution_time",
                     "value": 5,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
@@ -827,7 +647,7 @@
             "streaming": false,
             "subject": null,
             "selected": false,
-            "expanded": false,
+            "expanded": true,
             "inputApplicationName": "",
             "outputApplicationName": "",
             "exitApplicationName": "",
@@ -888,66 +708,6 @@
                     "name": "execution_time",
                     "value": 5,
                     "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
-                    "description": ""
                 }
             ]
         },
@@ -968,11 +728,11 @@
             "width": 264,
             "height": 232,
             "collapsed": false,
-            "showPorts": false,
+            "showPorts": true,
             "streaming": false,
             "subject": null,
-            "selected": false,
-            "expanded": false,
+            "selected": true,
+            "expanded": true,
             "inputApplicationName": "sleep",
             "outputApplicationName": "",
             "exitApplicationName": "",
@@ -1262,66 +1022,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 1,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
