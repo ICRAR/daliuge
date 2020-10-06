@@ -301,11 +301,8 @@ def cwl(parser, args):
     from ..dropmake.cwl import create_workflow
 
     # write to file
-    try:
-        with _open_o(opts.output, "wb") as f:
-            create_workflow(pgt, "workflow.cwl", f)
-    except Exception as e:
-        logger.error(e)
+    with _open_o(opts.output, "wb") as f:
+        create_workflow(pgt, "workflow.cwl", f)
 
 def register_commands():
     tool.cmdwrap('lgweb', 'A Web server for the Logical Graph Editor', 'dlg.dropmake.web.lg_web:run')

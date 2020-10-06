@@ -30,8 +30,8 @@ import cwlgen
 from dlg import common
 from dlg.common import Categories
 
-# the following node categories are not supported by the CWL translator
-UNSUPPORTED_CATEGORIES = [Categories.COMPONENT, Categories.MPI, Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP, Categories.DOCKER]
+# the following node categories are supported by the CWL translator
+SUPPORTED_CATEGORIES = [Categories.BASH_SHELL_APP, Categories.FILE]
 
 #from ..common import dropdict, get_roots
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ def create_workflow(drops, cwl_filename, buffer):
     # if found, the graph cannot be translated into CWL
     for index, node in enumerate(drops):
         dataType = node.get('dt', '')
-        if dataType in UNSUPPORTED_CATEGORIES:
+        if dataType not in SUPPORTED_CATEGORIES:
             raise Exception('Node {0} has an unsupported category: {1}'.format(index, dataType))
 
     # create list for command line tool description files
