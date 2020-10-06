@@ -1,10 +1,10 @@
 {
     "modelData": {
         "fileType": "graph",
-        "repoService": "Unknown",
-        "repoBranch": "",
-        "repo": "",
-        "filePath": "/Users/james/working/update-logical-graphs/../daliuge/daliuge-translator/test/dropmake/logical_graphs/chiles_simple.json",
+        "repoService": "GitHub",
+        "repoBranch": "graph_fixes",
+        "repo": "ICRAR/daliuge",
+        "filePath": "daliuge-translator/test/dropmake/logical_graphs/chiles_simple.json",
         "sha": "",
         "git_url": ""
     },
@@ -21,8 +21,8 @@
             "key": -14,
             "text": "Start",
             "description": "",
-            "x": 300,
-            "y": 427,
+            "x": 51,
+            "y": 322.78740157480314,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -78,10 +78,10 @@
             "key": -10,
             "text": "",
             "description": "",
-            "x": 1245,
-            "y": 155,
-            "width": 200,
-            "height": 200,
+            "x": 1103.0874872838256,
+            "y": 172.54832146490335,
+            "width": 142.01424211597154,
+            "height": 58.087493104828035,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -121,10 +121,10 @@
             "key": -23,
             "text": "",
             "description": "",
-            "x": 797,
-            "y": 121,
-            "width": 200,
-            "height": 200,
+            "x": 953.4391927774828,
+            "y": 739.6617100371747,
+            "width": 102.81466353908226,
+            "height": 40.67976936911634,
             "collapsed": false,
             "showPorts": false,
             "streaming": false,
@@ -206,7 +206,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -426,7 +426,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -572,8 +572,8 @@
             "key": -11,
             "text": "Day2",
             "description": "",
-            "x": 465,
-            "y": 302,
+            "x": 493.22990844354007,
+            "y": 273.7700915564598,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -625,8 +625,8 @@
             "key": -12,
             "text": "Day3",
             "description": "",
-            "x": 463,
-            "y": 411,
+            "x": 502.67446592065085,
+            "y": 389.6368260427265,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -678,8 +678,8 @@
             "key": -13,
             "text": "Day4",
             "description": "",
-            "x": 458,
-            "y": 527,
+            "x": 500.72634791454726,
+            "y": 502.5849440488301,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -731,8 +731,8 @@
             "key": -15,
             "text": "Day5",
             "description": "",
-            "x": 465,
-            "y": 611,
+            "x": 500.09664292980665,
+            "y": 604.8962360122076,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -773,7 +773,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -892,7 +892,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1011,7 +1011,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1130,7 +1130,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1461,7 +1461,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1477,10 +1477,10 @@
             "width": 200,
             "height": 200,
             "collapsed": false,
-            "showPorts": false,
+            "showPorts": true,
             "streaming": false,
             "subject": null,
-            "selected": false,
+            "selected": true,
             "expanded": false,
             "inputApplicationName": "",
             "outputApplicationName": "",
@@ -1580,7 +1580,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1699,7 +1699,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1818,7 +1818,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
@@ -1937,7 +1937,7 @@
             ]
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
             "isGroup": false,
