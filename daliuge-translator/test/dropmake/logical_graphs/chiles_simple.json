@@ -222,10 +222,10 @@
             "width": 200,
             "height": 200,
             "collapsed": false,
-            "showPorts": false,
+            "showPorts": true,
             "streaming": false,
             "subject": null,
-            "selected": false,
+            "selected": true,
             "expanded": false,
             "inputApplicationName": "",
             "outputApplicationName": "",
@@ -260,66 +260,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 0,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
@@ -496,66 +436,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 0,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
@@ -828,66 +708,6 @@
                     "name": "group_start",
                     "value": 0,
                     "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
-                    "description": ""
                 }
             ]
         },
@@ -947,66 +767,6 @@
                     "name": "group_start",
                     "value": 0,
                     "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
-                    "description": ""
                 }
             ]
         },
@@ -1022,7 +782,7 @@
             "key": -18,
             "text": "MST",
             "description": "",
-            "x": 658,
+            "x": 658.8537279453614,
             "y": 514,
             "width": 200,
             "height": 200,
@@ -1066,66 +826,6 @@
                     "name": "group_start",
                     "value": 0,
                     "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
-                    "description": ""
                 }
             ]
         },
@@ -1141,8 +841,8 @@
             "key": -19,
             "text": "MST",
             "description": "",
-            "x": 646,
-            "y": 613,
+            "x": 647.7074558907227,
+            "y": 612.1462720546386,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -1184,66 +884,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 0,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
@@ -1473,14 +1113,14 @@
             "text": "Copy",
             "description": "",
             "x": 351,
-            "y": 100,
+            "y": 99.14627205463859,
             "width": 200,
             "height": 200,
             "collapsed": false,
-            "showPorts": true,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "selected": true,
+            "selected": false,
             "expanded": false,
             "inputApplicationName": "",
             "outputApplicationName": "",
@@ -1515,60 +1155,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 0,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
                     "description": ""
                 },
                 {
@@ -1637,60 +1223,6 @@
                     "description": ""
                 },
                 {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
                     "text": "Arg 10",
                     "name": "Arg10",
                     "value": "%param2",
@@ -1753,60 +1285,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 0,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
                     "description": ""
                 },
                 {
@@ -1875,60 +1353,6 @@
                     "description": ""
                 },
                 {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
                     "text": "Arg 10",
                     "name": "Arg10",
                     "value": "%{param4.what}",
@@ -1991,66 +1415,6 @@
                     "text": "Group Start",
                     "name": "group_start",
                     "value": 0,
-                    "description": ""
-                },
-                {
-                    "text": "Arg 01",
-                    "name": "Arg01",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 02",
-                    "name": "Arg02",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 03",
-                    "name": "Arg03",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 04",
-                    "name": "Arg04",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 05",
-                    "name": "Arg05",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 06",
-                    "name": "Arg06",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 07",
-                    "name": "Arg07",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 08",
-                    "name": "Arg08",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 09",
-                    "name": "Arg09",
-                    "value": "",
-                    "description": ""
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "value": "",
                     "description": ""
                 }
             ]
