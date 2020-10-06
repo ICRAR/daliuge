@@ -120,25 +120,44 @@
             "subject": null,
             "selected": false,
             "expanded": true,
-            "inputApplicationName": "",
+            "inputApplicationName": "sleep",
             "outputApplicationName": "",
             "exitApplicationName": "",
-            "inputApplicationType": "None",
+            "inputApplicationType": "BashShellApp",
             "outputApplicationType": "None",
             "exitApplicationType": "None",
             "inputPorts": [],
             "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "fields": [
+            "inputAppFields": [
                 {
-                    "text": "Number of Splits",
-                    "name": "num_of_splits",
+                    "text": "Execution time",
+                    "name": "execution_time",
                     "value": "5",
                     "description": ""
                 },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleep 5",
+                    "description": "The command line to be executed"
+                }
+            ],
+            "outputAppFields": [],
+            "fields": [
                 {
                     "text": "Scatter Axis",
                     "name": "scatter_axis",
@@ -148,7 +167,7 @@
                 {
                     "text": "Number of copies",
                     "name": "num_of_copies",
-                    "value": "1",
+                    "value": "2",
                     "description": ""
                 }
             ]
@@ -170,31 +189,50 @@
             "width": 248,
             "height": 274,
             "collapsed": false,
-            "showPorts": false,
+            "showPorts": true,
             "streaming": false,
             "subject": null,
-            "selected": false,
+            "selected": true,
             "expanded": true,
             "group": -12,
-            "inputApplicationName": "",
+            "inputApplicationName": "sleep",
             "outputApplicationName": "",
             "exitApplicationName": "",
-            "inputApplicationType": "None",
+            "inputApplicationType": "BashShellApp",
             "outputApplicationType": "None",
             "exitApplicationType": "None",
             "inputPorts": [],
             "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "fields": [
+            "inputAppFields": [
                 {
-                    "text": "Number of Splits",
-                    "name": "num_of_splits",
-                    "value": "4",
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": "5",
                     "description": ""
                 },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleep 4",
+                    "description": "The command line to be executed"
+                }
+            ],
+            "outputAppFields": [],
+            "fields": [
                 {
                     "text": "Scatter Axis",
                     "name": "scatter_axis",
@@ -204,7 +242,7 @@
                 {
                     "text": "Number of copies",
                     "name": "num_of_copies",
-                    "value": "1",
+                    "value": "2",
                     "description": ""
                 }
             ]
@@ -724,7 +762,7 @@
             "color": "#D35400",
             "drawOrderHint": 0,
             "key": -24,
-            "text": "Gather1",
+            "text": "Gather2",
             "description": "",
             "x": 1128.6717557251907,
             "y": 321.83206106870193,
@@ -923,7 +961,7 @@
             "color": "#D35400",
             "drawOrderHint": 0,
             "key": -25,
-            "text": "Gather2",
+            "text": "Gather1",
             "description": "",
             "x": 837.6106870229006,
             "y": 675.7557251908395,
@@ -935,10 +973,10 @@
             "subject": null,
             "selected": false,
             "expanded": false,
-            "inputApplicationName": "",
+            "inputApplicationName": "sleep",
             "outputApplicationName": "",
             "exitApplicationName": "",
-            "inputApplicationType": "None",
+            "inputApplicationType": "BashShellApp",
             "outputApplicationType": "None",
             "exitApplicationType": "None",
             "inputPorts": [
@@ -950,7 +988,32 @@
             "outputPorts": [],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
-            "inputAppFields": [],
+            "inputAppFields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": "20",
+                    "description": ""
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleep 20",
+                    "description": "The command line to be executed"
+                }
+            ],
             "outputAppFields": [],
             "fields": [
                 {
@@ -1280,10 +1343,10 @@
             "width": 164.8854961832061,
             "height": 80.91602471038588,
             "collapsed": false,
-            "showPorts": true,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "selected": true,
+            "selected": false,
             "expanded": false,
             "inputApplicationName": "",
             "outputApplicationName": "",
