@@ -22,22 +22,21 @@
 """
 Module containing the core DROP classes.
 """
-import re
-from abc import ABCMeta, abstractmethod
 import base64
 import collections
 import contextlib
 import errno
 import heapq
 import importlib
+import inspect
 import logging
 import math
 import os
 import random
+import re
 import shutil
 import threading
 import time
-import inspect
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -51,9 +50,9 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
-from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
+from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
@@ -700,7 +699,7 @@ class AbstractDROP(EventFirer):
             #  Generate the MerkleData
             self._merkleData = self.generate_merkle_data()
             # Fill MerkleTree, add data and set the MerkleRoot Value
-            self._merkleTree = MerkleTree(self._merkleData, drop_hash)
+            self._merkleTree = MerkleTree(self._merkleData.items(), drop_hash)
             self._merkleRoot = self._merkleTree.merkle_root
             # Set as committed
             self._committed = True
