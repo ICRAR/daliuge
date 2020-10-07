@@ -195,11 +195,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproducibilityFlags):
     :return: The same drop with appended reproducibility information.
     """
     data = accumulate_lgt_drop_data(drop, level)
-    merkledata = []
-    for key, value in data.items():
-        temp = [key, value]
-        merkledata.append(temp)
-    merkletree = MerkleTree(merkledata, common_hash)
+    merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': []}
     return drop
@@ -217,11 +213,7 @@ def init_lg_repro_drop_data(drop: dict):
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
     data = accumulate_lg_drop_data(drop, rmode)
-    merkledata = []
-    for key, value in data.items():
-        temp = [key, value]
-        merkledata.append(temp)
-    merkletree = MerkleTree(merkledata, common_hash)
+    merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     drop['reprodata']['lg_data'] = data
     drop['reprodata']['lg_parenthashes'] = []
@@ -229,11 +221,7 @@ def init_lg_repro_drop_data(drop: dict):
 
 
 def append_pgt_repro_data(drop: dict, data: dict):
-    merkledata = []
-    for key, value in data.items():
-        temp = [key, value]
-        merkledata.append(temp)
-    merkletree = MerkleTree(merkledata, common_hash)
+    merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
     drop['reprodata']['pgt_parenthashes'] = []
@@ -270,11 +258,7 @@ def init_pg_repro_drop_data(drop: dict):
     :return: The same drop with appended reproducibility information
     """
     data = accumulate_pg_drop_data(drop)
-    merkledata = []
-    for key, value in data.items():
-        temp = [key, value]
-        merkledata.append(temp)
-    merkletree = MerkleTree(merkledata, common_hash)
+    merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
     drop['reprodata']['pg_parenthashes'] = []
@@ -525,7 +509,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
     reprodata = {'rmode': str(rmode.value), 'meta_data': accumulate_meta_data()}
-    meta_tree = MerkleTree(reprodata, common_hash)
+    meta_tree = MerkleTree(reprodata.items(), common_hash)
     reprodata['merkleroot'] = meta_tree.merkle_root
     for drop in lgt['nodeDataArray']:
         init_lgt_repro_drop_data(drop, rmode)
