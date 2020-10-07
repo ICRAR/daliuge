@@ -11,14 +11,14 @@ def writeOut(s="everybody"):
 
 def numpy_av(nums):
     import numpy as np
-    return np.mean(nums)
+    return np.asscalar(np.mean(nums))
 
 
 def my_av(nums):
     res = 0.0
     for x in nums:
         res += x
-    return x / len(nums)
+    return res / len(nums)
 
 
 class HelloWorldPythonIn(PyFuncApp):
