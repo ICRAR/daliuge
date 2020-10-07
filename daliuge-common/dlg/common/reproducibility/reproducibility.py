@@ -351,13 +351,14 @@ def lg_build_blockdag(lg: dict):
     q = deque()
     for drop in lg['nodeDataArray']:
         did = int(drop['key'])
-        dropset[did] = [drop, 0]
+        dropset[did] = [drop, 0, 0]
         neighbourset[did] = []
 
     for edge in lg['linkDataArray']:
         src = int(edge['from'])
         dest = int(edge['to'])
         dropset[dest][1] += 1
+        dropset[src][2] += 1
         neighbourset[src].append(dest)
 
     #  did == 'drop id'
@@ -377,7 +378,8 @@ def lg_build_blockdag(lg: dict):
             dropset[n][1] -= 1
             parenthash = []
             if rmode >= ReproducibilityFlags.REPRODUCE.value:
-                if dropset[did][0]['categoryType'] == Categories.DATA:
+                if dropset[did][0]['categoryType'] == Categories.DATA \
+                        and (dropset[did][1] == 0 or dropset[did][2] == 0):
                     # Add my new hash to the parent-hash list
                     parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
                 else:
@@ -433,17 +435,20 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
 
     for drop in drops:
         did = drop['oid']
-        dropset[did] = [drop, 0]  # To guarantee all nodes have entries
+        dropset[did] = [drop, 0, 0]  # To guarantee all nodes have entries
     for drop in drops:
         did = drop['oid']
         neighbourset[did] = []
         if 'outputs' in drop:
+            # Assumes the model where all edges are defined from source to destination. This may not always be the case.
             for dest in drop['outputs']:
                 dropset[dest][1] += 1
+                dropset[did][2] += 1
                 neighbourset[did].append(dest)
         if 'consumers' in drop:  # There may be some bizarre scenario when a drop has both
             for dest in drop['consumers']:
                 dropset[dest][1] += 1
+                dropset[did][2] += 1
                 neighbourset[did].append(dest)
 
     for did in dropset:
@@ -462,7 +467,8 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
             parenthash = []
             if rmode >= ReproducibilityFlags.REPRODUCE.value:
                 # TODO: Hack! may break later, proceed with caution
-                if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA:
+                if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA\
+                        and (dropset[did][1] == 0 or dropset[did][2] == 0):
                     # Add my new hash to the parent-hash list
                     parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
                 else:
