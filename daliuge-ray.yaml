@@ -137,6 +137,7 @@ initialization_commands:
 
 # List of shell commands to run to set up nodes.
 setup_commands: 
+    - apt install -y gcc
     - test -e daliuge || git clone https://github.com/ICRAR/daliuge.git
     - cd daliuge && git fetch && git checkout `cat /tmp/current_branch_sha`
     - cd daliuge/daliuge-common && pip install .
