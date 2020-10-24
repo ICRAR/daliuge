@@ -70,11 +70,20 @@
     "modelData": {
         "filePath": "test_grpby_gather.json",
         "fileType": "graph",
+<<<<<<< HEAD
         "git_url": "",
         "repo": "",
         "repoBranch": "",
         "repoService": "Unknown",
         "sha": ""
+=======
+        "repoService": "GitHub",
+        "repoBranch": "graph_fixes",
+        "repo": "ICRAR/daliuge",
+        "filePath": "daliuge-translator/test/dropmake/logical_graphs/test_grpby_gather.json",
+        "sha": "",
+        "git_url": ""
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
     },
     "nodeDataArray": [
         {
@@ -85,9 +94,21 @@
             "collapsed": false,
             "color": "#229954",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 302.0839694656489,
+            "y": 69.06870229007639,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [],
             "height": 200,
@@ -126,9 +147,21 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 371.51908396946556,
+            "y": 365.0916030534353,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -174,6 +207,7 @@
             "collapsed": false,
             "color": "#DDAD00",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
@@ -187,6 +221,58 @@
                 },
                 {
                     "description": "",
+=======
+            "x": 575.5954198473281,
+            "y": 69.86259541984745,
+            "width": 499.5191072653268,
+            "height": 397.33587786259534,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": true,
+            "inputApplicationName": "sleep",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "BashShellApp",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
+            "inputPorts": [],
+            "outputPorts": [],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": "5",
+                    "description": ""
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleep 5",
+                    "description": "The command line to be executed"
+                }
+            ],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Scatter Axis",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
                     "name": "scatter_axis",
                     "text": "Scatter Axis",
                     "value": "time"
@@ -194,8 +280,13 @@
                 {
                     "description": "",
                     "name": "num_of_copies",
+<<<<<<< HEAD
                     "text": "Number of copies",
                     "value": "1"
+=======
+                    "value": "2",
+                    "description": ""
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
                 }
             ],
             "height": 498.55280541559586,
@@ -229,6 +320,7 @@
             "collapsed": false,
             "color": "#DDAD00",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
@@ -242,6 +334,59 @@
                 },
                 {
                     "description": "",
+=======
+            "x": 593.1526717557249,
+            "y": 132.70992366412221,
+            "width": 248,
+            "height": 274,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": true,
+            "group": -12,
+            "inputApplicationName": "sleep",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "BashShellApp",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
+            "inputPorts": [],
+            "outputPorts": [],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": "5",
+                    "description": ""
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleep 4",
+                    "description": "The command line to be executed"
+                }
+            ],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Scatter Axis",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
                     "name": "scatter_axis",
                     "text": "Scatter Axis",
                     "value": "frequency"
@@ -249,8 +394,13 @@
                 {
                     "description": "",
                     "name": "num_of_copies",
+<<<<<<< HEAD
                     "text": "Number of copies",
                     "value": "1"
+=======
+                    "value": "2",
+                    "description": ""
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
                 }
             ],
             "group": -12,
@@ -278,6 +428,13 @@
             "y": 299.46184655215893
         },
         {
+<<<<<<< HEAD
+=======
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "PythonApp",
@@ -285,9 +442,21 @@
             "collapsed": false,
             "color": "#3498DB",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 623.2595419847326,
+            "y": 254.46564885496133,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -326,6 +495,7 @@
                     "IdText": "B-T"
                 }
             ],
+<<<<<<< HEAD
             "selected": false,
             "showPorts": false,
             "streaming": false,
@@ -334,6 +504,20 @@
             "width": 200,
             "x": 774.7778156997075,
             "y": 419.8573169694327
+=======
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Execution Time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": ""
+                }
+            ]
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
         },
         {
             "canHaveInputs": true,
@@ -343,9 +527,21 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 620.2061068702287,
+            "y": 191.30534351145027,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -397,9 +593,21 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 614.0992366412211,
+            "y": 357.2137404580149,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -456,6 +664,13 @@
             "y": 575.5027202367023
         },
         {
+<<<<<<< HEAD
+=======
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "PythonApp",
@@ -463,7 +678,23 @@
             "collapsed": false,
             "color": "#3498DB",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
+=======
+            "x": 1153.9083969465648,
+            "y": 406.3816793893126,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "group": -24,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -486,6 +717,7 @@
             "isGroup": false,
             "key": -21,
             "outputAppFields": [],
+<<<<<<< HEAD
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "outputLocalPorts": [],
@@ -493,6 +725,14 @@
                 {
                     "Id": "a3a49415-bef4-4095-a23c-40c63db7af7a",
                     "IdText": "B-T"
+=======
+            "fields": [
+                {
+                    "text": "Execution Time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": ""
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
                 }
             ],
             "selected": false,
@@ -505,16 +745,39 @@
             "y": 673.1346410177979
         },
         {
+<<<<<<< HEAD
+=======
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": false,
             "color": "#3498DB",
+<<<<<<< HEAD
             "description": "",
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "drawOrderHint": 0,
+            "key": -22,
+            "text": "Component0",
+            "description": "",
+            "x": 867.9083969465653,
+            "y": 257.824427480916,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -540,6 +803,7 @@
             "isGroup": false,
             "key": -22,
             "outputAppFields": [],
+<<<<<<< HEAD
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "outputLocalPorts": [],
@@ -552,6 +816,16 @@
             "width": 200,
             "x": 784.7768784639162,
             "y": 637.1377510593934
+=======
+            "fields": [
+                {
+                    "text": "Execution Time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": ""
+                }
+            ]
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
         },
         {
             "canHaveInputs": true,
@@ -561,9 +835,21 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 1152.6717557251907,
+            "y": 479.83206106870193,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -609,8 +895,27 @@
             "categoryType": "Group",
             "collapsed": false,
             "color": "#D35400",
+<<<<<<< HEAD
             "description": "",
             "drawOrderHint": 0,
+=======
+            "drawOrderHint": 0,
+            "key": -24,
+            "text": "Gather2",
+            "description": "",
+            "x": 1128.6717557251907,
+            "y": 321.83206106870193,
+            "width": 277.48091603053433,
+            "height": 232.68702290076334,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": true,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": true,
@@ -664,6 +969,7 @@
             "collapsed": false,
             "color": "#7F8C8D",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
@@ -671,6 +977,18 @@
             "fields": [],
             "height": 160,
             "inputAppFields": [],
+=======
+            "x": 497.732824427481,
+            "y": 655.6030534351144,
+            "width": 248,
+            "height": 160,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": true,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "inputApplicationName": "",
             "inputApplicationType": "None",
             "inputLocalPorts": [],
@@ -698,6 +1016,13 @@
             "y": 431.6990304588739
         },
         {
+<<<<<<< HEAD
+=======
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "PythonApp",
@@ -705,7 +1030,23 @@
             "collapsed": false,
             "color": "#3498DB",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
+=======
+            "x": 521.732824427481,
+            "y": 751.6030534351144,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "group": -14,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -713,6 +1054,7 @@
                 {
                     "description": "",
                     "name": "execution_time",
+<<<<<<< HEAD
                     "text": "Execution Time",
                     "value": 5
                 },
@@ -775,6 +1117,10 @@
                     "name": "Arg10",
                     "text": "Arg 10",
                     "value": ""
+=======
+                    "value": 5,
+                    "description": ""
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
                 }
             ],
             "group": -14,
@@ -808,6 +1154,7 @@
             "categoryType": "Group",
             "collapsed": false,
             "color": "#D35400",
+<<<<<<< HEAD
             "description": "",
             "drawOrderHint": 0,
             "exitApplicationName": "",
@@ -832,15 +1179,69 @@
             "inputApplicationName": "",
             "inputApplicationType": "None",
             "inputLocalPorts": [],
+=======
+            "drawOrderHint": 0,
+            "key": -25,
+            "text": "Gather1",
+            "description": "",
+            "x": 837.6106870229006,
+            "y": 675.7557251908395,
+            "width": 264,
+            "height": 232,
+            "collapsed": false,
+            "showPorts": true,
+            "streaming": false,
+            "subject": null,
+            "selected": true,
+            "expanded": true,
+            "inputApplicationName": "sleep",
+            "outputApplicationName": "",
+            "exitApplicationName": "",
+            "inputApplicationType": "BashShellApp",
+            "outputApplicationType": "None",
+            "exitApplicationType": "None",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "inputPorts": [
                 {
                     "Id": "c34f6c14-7edd-4da3-99da-0cd729ed64d1",
                     "IdText": "B-L"
                 }
             ],
+<<<<<<< HEAD
             "isData": false,
             "isGroup": true,
             "key": -25,
+=======
+            "outputPorts": [],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": "20",
+                    "description": ""
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": "1",
+                    "description": ""
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": "0",
+                    "description": ""
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "sleep 20",
+                    "description": "The command line to be executed"
+                }
+            ],
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "outputAppFields": [],
             "outputApplicationName": "",
             "outputApplicationType": "None",
@@ -863,9 +1264,21 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 861.6106870229006,
+            "y": 843.7557251908395,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -907,8 +1320,20 @@
         {
             "canHaveInputs": true,
             "canHaveOutputs": true,
+<<<<<<< HEAD
             "category": "GroupBy",
             "categoryType": "Group",
+=======
+            "color": "#7F8C8D",
+            "drawOrderHint": 0,
+            "key": -28,
+            "text": "Group By 1",
+            "description": "",
+            "x": 841.5419847328263,
+            "y": 555.9465648854966,
+            "width": 207.63357613832895,
+            "height": 93.89312977099235,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "collapsed": false,
             "color": "#7F8C8D",
             "description": "",
@@ -958,7 +1383,22 @@
             "collapsed": false,
             "color": "#799938",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
+=======
+            "x": 292.7175572519085,
+            "y": 696.4427480916031,
+            "width": 167.17557251908391,
+            "height": 69.46564885496194,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -1001,7 +1441,22 @@
             "collapsed": false,
             "color": "#799938",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
+=======
+            "x": 1079.8625954198471,
+            "y": 589.9160305343513,
+            "width": 198.4732824427481,
+            "height": 64.12213740458023,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -1012,6 +1467,7 @@
                     "text": "Comment",
                     "value": "Data gathered from every 2 groups\nis processed by Cpnt3"
                 }
+<<<<<<< HEAD
             ],
             "height": 59.76721963749384,
             "inputAppFields": [],
@@ -1019,6 +1475,13 @@
             "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [],
+=======
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "isData": false,
             "isGroup": false,
             "key": -19,
@@ -1044,9 +1507,21 @@
             "collapsed": false,
             "color": "#3498DB",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
             "exitApplicationName": "",
             "exitApplicationType": "None",
+=======
+            "x": 877.6106870229006,
+            "y": 771.7557251908395,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "expanded": false,
             "fields": [
                 {
@@ -1082,6 +1557,7 @@
                     "IdText": "B-T"
                 }
             ],
+<<<<<<< HEAD
             "selected": false,
             "showPorts": false,
             "streaming": false,
@@ -1090,6 +1566,26 @@
             "width": 200,
             "x": 1455.3428647939093,
             "y": 310.3789790059375
+=======
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": [
+                {
+                    "text": "Execution Time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": ""
+                },
+                {
+                    "text": "Group Start",
+                    "name": "group_start",
+                    "value": 1,
+                    "description": ""
+                }
+            ]
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
         },
         {
             "canHaveInputs": false,
@@ -1099,7 +1595,22 @@
             "collapsed": false,
             "color": "#799938",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
+=======
+            "x": 1197.4580152671738,
+            "y": 230.83206106870242,
+            "width": 164.8854961832061,
+            "height": 80.91602471038588,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -1142,7 +1653,22 @@
             "collapsed": false,
             "color": "#799938",
             "description": "",
+<<<<<<< HEAD
             "drawOrderHint": 0,
+=======
+            "x": 10.053435114504017,
+            "y": 39.69465648854966,
+            "width": 162.5954198473282,
+            "height": 47.32824136282658,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+>>>>>>> 252c3047fe39935fa4cf2ac6979a4356c84bf77a
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
