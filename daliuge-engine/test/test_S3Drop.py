@@ -50,7 +50,7 @@ class TestS3Drop(unittest.TestCase):
         drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='DoesNotExist', key='Nonsense')
         self.assertEqual(drop.exists(), False)
 
-        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='Nonsense')
+        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='ska-low-sim', key='Nonsense')
         self.assertEqual(drop.exists(), False)
 
         # drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='13B-266.sb25386827.eb28551343.56619.33367407408_calibrated_deepfield.ms.tar')
