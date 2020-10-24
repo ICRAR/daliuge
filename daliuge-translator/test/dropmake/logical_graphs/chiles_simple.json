@@ -160,11 +160,12 @@
     "modelData": {
         "filePath": "chiles_simple.json",
         "fileType": "graph",
-        "git_url": "",
-        "repo": "",
-        "repoBranch": "",
-        "repoService": "Unknown",
-        "sha": ""
+        "repoService": "GitHub",
+        "repoBranch": "graph_fixes",
+        "repo": "ICRAR/daliuge",
+        "filePath": "daliuge-translator/test/dropmake/logical_graphs/chiles_simple.json",
+        "sha": "",
+        "git_url": ""
     },
     "nodeDataArray": [
         {
@@ -175,9 +176,15 @@
             "collapsed": false,
             "color": "#229954",
             "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
+            "x": 51,
+            "y": 322.78740157480314,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
             "expanded": false,
             "fields": [],
             "height": 200,
@@ -232,7 +239,18 @@
             "collapsed": false,
             "color": "#799938",
             "description": "",
-            "drawOrderHint": 0,
+            "x": 1103.0874872838256,
+            "y": 172.54832146490335,
+            "width": 142.01424211597154,
+            "height": 58.087493104828035,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -252,13 +270,18 @@
             "inputPorts": [],
             "isData": false,
             "isGroup": false,
-            "key": -10,
-            "outputAppFields": [],
-            "outputApplicationName": "",
-            "outputApplicationType": "None",
-            "outputLocalPorts": [],
-            "outputPorts": [],
-            "selected": false,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "color": "#799938",
+            "drawOrderHint": 0,
+            "key": -23,
+            "text": "",
+            "description": "",
+            "x": 953.4391927774828,
+            "y": 739.6617100371747,
+            "width": 102.81466353908226,
+            "height": 40.67976936911634,
+            "collapsed": false,
             "showPorts": false,
             "streaming": false,
             "subject": null,
@@ -364,6 +387,10 @@
             "y": 154.952723290925
         },
         {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "PythonApp",
@@ -371,7 +398,18 @@
             "collapsed": false,
             "color": "#3498DB",
             "description": "",
-            "drawOrderHint": 0,
+            "x": 663,
+            "y": 164,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": true,
+            "streaming": false,
+            "subject": null,
+            "selected": true,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -385,68 +423,8 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
             ],
             "height": 200,
@@ -536,6 +514,10 @@
             "y": 164
         },
         {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "Memory",
@@ -605,70 +587,26 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
-            ],
+            ]
+        },
+        {
+            "category": "Memory",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -11,
+            "text": "Day2",
+            "description": "",
+            "x": 493.22990844354007,
+            "y": 273.7700915564598,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -726,9 +664,15 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
+            "x": 502.67446592065085,
+            "y": 389.6368260427265,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
             "expanded": false,
             "fields": [
                 {
@@ -779,9 +723,15 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
+            "x": 500.72634791454726,
+            "y": 502.5849440488301,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
             "expanded": false,
             "fields": [
                 {
@@ -832,9 +782,15 @@
             "collapsed": false,
             "color": "#394BB2",
             "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
+            "x": 500.09664292980665,
+            "y": 604.8962360122076,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
             "expanded": false,
             "fields": [
                 {
@@ -878,6 +834,10 @@
             "y": 506.64362740458125
         },
         {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "Memory",
@@ -952,70 +912,26 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -17,
+            "text": "MST",
+            "description": "",
+            "x": 653,
+            "y": 403,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -1071,70 +987,26 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -18,
+            "text": "MST",
+            "description": "",
+            "x": 658.8537279453614,
+            "y": 514,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -1190,70 +1062,26 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -19,
+            "text": "MST",
+            "description": "",
+            "x": 647.7074558907227,
+            "y": 612.1462720546386,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -1309,68 +1137,8 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
             ],
             "height": 200,
@@ -1619,6 +1387,10 @@
             "y": 616
         },
         {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
             "category": "PythonApp",
@@ -1626,7 +1398,18 @@
             "collapsed": false,
             "color": "#3498DB",
             "description": "",
-            "drawOrderHint": 0,
+            "x": 351,
+            "y": 99.14627205463859,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
             "exitApplicationName": "",
             "exitApplicationType": "None",
             "expanded": false,
@@ -1644,66 +1427,28 @@
                     "value": 0
                 },
                 {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
+                    "text": "Arg 10",
                     "name": "Arg10",
                     "text": "Arg 10",
                     "value": "%{param1}"
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -29,
+            "text": "Copy",
+            "description": "",
+            "x": 353,
+            "y": 215,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -1763,66 +1508,28 @@
                     "value": 0
                 },
                 {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
+                    "text": "Arg 10",
                     "name": "Arg10",
                     "text": "Arg 10",
                     "value": "%param2"
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -30,
+            "text": "Copy",
+            "description": "",
+            "x": 355,
+            "y": 329,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -1882,66 +1589,28 @@
                     "value": 0
                 },
                 {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
+                    "text": "Arg 10",
                     "name": "Arg10",
                     "text": "Arg 10",
                     "value": "%{param1.param2}"
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -31,
+            "text": "Copy",
+            "description": "",
+            "x": 373,
+            "y": 445,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -2001,66 +1670,28 @@
                     "value": 0
                 },
                 {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
+                    "text": "Arg 10",
                     "name": "Arg10",
                     "text": "Arg 10",
                     "value": "%{param4.what}"
                 }
-            ],
+            ]
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -32,
+            "text": "Copy",
+            "description": "",
+            "x": 371,
+            "y": 550,
+            "width": 200,
             "height": 200,
             "inputAppFields": [],
             "inputApplicationName": "",
@@ -2116,68 +1747,8 @@
                 {
                     "description": "",
                     "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "description": "",
-                    "name": "Arg01",
-                    "text": "Arg 01",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg02",
-                    "text": "Arg 02",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg03",
-                    "text": "Arg 03",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg04",
-                    "text": "Arg 04",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg05",
-                    "text": "Arg 05",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg06",
-                    "text": "Arg 06",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg07",
-                    "text": "Arg 07",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg08",
-                    "text": "Arg 08",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg09",
-                    "text": "Arg 09",
-                    "value": ""
-                },
-                {
-                    "description": "",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": ""
+                    "value": 0,
+                    "description": ""
                 }
             ],
             "height": 200,
