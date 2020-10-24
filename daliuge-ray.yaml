@@ -141,7 +141,7 @@ setup_commands:
     - test -e daliuge || git clone https://github.com/ICRAR/daliuge.git
     - cd daliuge && git fetch && git checkout `cat /tmp/current_branch_sha`
     - cd daliuge/daliuge-common && pip install .
-    - cd daliuge/daliuge-runtime && pip install .
+    - cd daliuge/daliuge-engine && pip install .
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
