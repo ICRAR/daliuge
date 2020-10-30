@@ -24,7 +24,6 @@ Module containing command-line entry points to launch Data Manager instances
 like DMs and DIMs.
 """
 
-import errno
 import logging
 import os
 import signal
@@ -153,14 +152,10 @@ def start(options, parser):
         if pid is None:
             sys.stderr.write('Cannot read PID file, is there an instance running?\n')
         else:
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except OSError as e:
-                # Process is gone and file was left dangling,
-                # let's clean it up ourselves
-                if e.errno == errno.ESRCH:
-                    sys.stderr.write('Process %d does not exist, removing PID file')
-                    os.unlink(pidfile)
+            utils.terminate_or_kill(utils.ExistingProcess(pid), 5)
+            if os.path.exists(pidfile):
+                sys.stderr.write('Process %d does not exist, removing PID file\n' % (pid,))
+                os.unlink(pidfile)
 
     # Check status
     elif options.status:
@@ -202,8 +197,13 @@ def setupLogging(opts):
     # optionally a session_id and drop_uid to indicate what is currently being
     # executed. This only applies to the NodeManager logs though, for which a
     # 'no_log_ids' option exists (but can be set to True).
+    # We also skip logging IDs when stopping a daemon, as the infrastructure
+    # won't have been set
+    log_ids = (opts.dmType == NodeManager and
+               not opts.no_log_ids and
+               not opts.stop)
     fmt = '%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] '
-    if opts.dmType == NodeManager and not opts.no_log_ids:
+    if log_ids:
         fmt += '[%(session_id)10.10s] [%(drop_uid)10.10s] '
     fmt += '%(name)s#%(funcName)s:%(lineno)s %(message)s'
     fmt = logging.Formatter(fmt)
