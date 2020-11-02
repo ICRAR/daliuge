@@ -28,6 +28,7 @@ import functools
 import importlib
 import logging
 import os
+import signal
 import socket
 import threading
 import time
@@ -386,6 +387,39 @@ class ZlibUncompressedStream(object):
                 break
 
         return b''.join(response)
+
+class ExistingProcess(object):
+    """A Popen-like class around an existing process"""
+
+    def __init__(self, pid):
+        """Creates a new ExistingProcess for the given pid"""
+        self.pid = pid
+        self.finished = False
+
+    def poll(self):
+        """Returns an exit status if the process finished, None if it exists"""
+        try:
+            os.kill(self.pid, signal.SIGCONT)
+            return None
+        except OSError as e:
+            if e.errno == errno.ESRCH:
+                self.finished = True
+                return 0
+
+    def terminate(self):
+        """Send a TERM signal"""
+        os.kill(self.pid, signal.SIGTERM)
+
+    def kill(self):
+        """Send a KILL signal"""
+        os.kill(self.pid, signal.SIGKILL)
+
+    def wait(self):
+        """Wait until the process finishes"""
+        if self.finished:
+            return
+        while self.poll() == None:
+            time.sleep(0.1)
 
 # Backwards compatibility
 terminate_or_kill = common.terminate_or_kill
