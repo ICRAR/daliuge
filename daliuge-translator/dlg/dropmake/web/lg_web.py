@@ -216,7 +216,11 @@ def pgtcwl_get():
         # create the workflow
         import io
         buffer = io.BytesIO()
-        create_workflow(pgtp.drops, cwl_filename, buffer)
+        try:
+            create_workflow(pgtp.drops, cwl_filename, buffer)
+        except Exception as e:
+            response.status = 400 # HTTP 400 Bad Request
+            return e
 
         # respond with download of ZIP file
         response.content_type = 'application/zip'
