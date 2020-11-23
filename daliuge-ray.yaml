@@ -73,7 +73,7 @@ auth:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
-    InstanceType: t2.medium
+    InstanceType: t3a.medium
     ImageId: ami-01bf596d1dc4da556 # Deep Learning AMI (Ubuntu) Version 30
 
     # You can provision additional disk space with a conf as follows
@@ -89,7 +89,7 @@ head_node:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
-    InstanceType: t2.medium
+    InstanceType: t3a.medium
     ImageId: ami-01bf596d1dc4da556
 
     # Run workers on spot by default. Comment this out to use on-demand.
