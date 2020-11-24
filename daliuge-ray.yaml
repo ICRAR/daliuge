@@ -28,8 +28,8 @@ docker:
     container_name: "ray_container"
     # If true, pulls latest version of image. Otherwise, `docker run` will only pull the image
     # if no cached version is present.
-    pull_before_run: True
-    run_options: []  # Extra options to pass into "docker run"
+    pull_before_run: False
+    run_options: [-v /var/run/docker.sock:/var/run/docker.sock -v /tmp/leap_test:/tmp/leap_test -p 8265:8265]  # Extra options to pass into "docker run"
 
     # Example of running a GPU head with CPU workers
     # head_image: "rayproject/ray:latest-gpu"
@@ -74,7 +74,8 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: t3a.medium
-    ImageId: ami-01bf596d1dc4da556 # Deep Learning AMI (Ubuntu) Version 30
+    # ImageId: ami-076e39b6b14e3bb20   # Amazon 64 bit
+    ImageId: ami-01bf596d1dc4da556 # Ubuntu Deep learning
 
     # You can provision additional disk space with a conf as follows
     BlockDeviceMappings:
@@ -90,7 +91,8 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: t3a.medium
-    ImageId: ami-01bf596d1dc4da556
+    # ImageId: ami-076e39b6b14e3bb20   # Amazon 64 bit
+    ImageId: ami-01bf596d1dc4da556 # Ubuntu Deep learning
 
     # Run workers on spot by default. Comment this out to use on-demand.
     # InstanceMarketOptions:
@@ -104,8 +106,8 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
-    # ".":"/Users/awicenec/tmp/ray_test",
-     # "/tmp/current_branch_sha": "/Users/awicenec/git/daliuge/.git/refs/heads/ray_test"
+#    "/tmp/leap_test":"/Users/awicenec/tmp/leap_test",
+#    "/tmp/current_branch_sha": "/Users/awicenec/git/daliuge/.git/refs/heads/ray_test"
 #    "/path1/on/remote/machine": "/path1/on/local/machine",
 #    "/path2/on/remote/machine": "/path2/on/local/machine",
 }
@@ -134,7 +136,14 @@ file_mounts_sync_continuously: False
 # List of commands that will be run before `setup_commands`. If docker is
 # enabled, these commands will run outside the container and before docker
 # is setup.
-initialization_commands: []
+initialization_commands: [
+    # curl -fsSL https://get.docker.com -o get-docker.sh,
+    # sudo apt update,
+    # sudo apt remove docker,
+    # sudo sh get-docker.sh,
+    # sudo usermod -aG docker $USER,
+    # sudo systemctl restart docker -f
+]
     # - sudo apt install -y gcc
 
 # List of shell commands to run to set up nodes.

@@ -224,8 +224,10 @@ class DockerApp(BarrierAppDROP):
                 host_path = container_path = binding
             else:
                 host_path, container_path = binding.split(':')
-            if not os.path.exists(host_path):
-                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
+                
+# NOTE: The following prevents mounts from host directly into secondary container if DALiuGE is running inside docker already.
+#            if not os.path.exists(host_path):
+#                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
             self._additionalBindings[host_path] = container_path
 
         logger.info("%r with image '%s' and command '%s' created", self, self._image, self._command)
