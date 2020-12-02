@@ -417,6 +417,7 @@ class ZMQPubSubMixIn(object):
         from zmq.utils.monitor import recv_monitor_message
 
         sub = self._context.socket(zmq.SUB)  # @UndefinedVariable
+        sub_endpoints = set()
         sub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
         sub_monitor = sub.get_monitor_socket()
         sock_created.set()
@@ -427,8 +428,11 @@ class ZMQPubSubMixIn(object):
             # A new subscription has been requested
             try:
                 subscription = self._subscriptions.get_nowait()
-                sub.connect(subscription.endpoint)
-                pending_connections[subscription.endpoint] = subscription.finished_evt
+                if subscription.endpoint in sub_endpoints:
+                    subscription.finished_evt.set()
+                else:
+                    sub.connect(subscription.endpoint)
+                    pending_connections[subscription.endpoint] = subscription.finished_evt
             except Queue.Empty:
                 pass
 
@@ -436,7 +440,9 @@ class ZMQPubSubMixIn(object):
                 msg = recv_monitor_message(sub_monitor, flags=zmq.NOBLOCK)
                 if msg['event'] != zmq.EVENT_CONNECTED:
                     continue
-                finished_evt = pending_connections.pop(utils.b2s(msg['endpoint']))
+                endpoint = utils.b2s(msg['endpoint'])
+                sub_endpoints.add(endpoint)
+                finished_evt = pending_connections.pop(endpoint)
                 finished_evt.set()
             except zmq.error.Again:
                 pass
