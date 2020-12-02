@@ -451,6 +451,10 @@ class ZMQPubSubMixIn(object):
                 logger.exception("Something bad happened in %s:%d to ZMQ :'(", self._events_host, self._events_port)
                 break
 
+        # Flush pending connection events to avoid callers hanging out forever
+        for evt in pending_connections:
+            evt.set()
+
         sub_monitor.close()
         sub.close()
 
