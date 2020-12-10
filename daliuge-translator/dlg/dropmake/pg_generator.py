@@ -540,6 +540,10 @@ class LGNode:
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
+        # get the arguments from new fields dictionary in a backwards compatible way
+        if 'fields' in self.jd:
+            for je in self.jd['fields']:
+                self.jd[je['text']]=je['value']
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
