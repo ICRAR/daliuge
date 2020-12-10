@@ -1,0 +1,34 @@
+# We need the base image we build with the other Dockerfile
+FROM rayproject/ray:latest-cpu
+
+RUN git clone https://github.com/ICRAR/daliuge && \
+    apt update && \
+    apt install -y gcc &&\
+    cd daliuge && \
+    git checkout ray_test && \
+    cd daliuge-engine  && \
+    pip install .  && \
+    cd ../daliuge-common  && \
+    pip install .  && \
+    cd ../daliuge-translator  && \
+    pip install .  && \
+    pip uninstall -y cwlgen && \
+    rm -rf /root/anaconda3/lib/python3.7/site-packages/ruamel_yaml* && \
+    pip install cwlgen && \
+    apt remove -y gcc  && \
+    rm -rf /usr/lib/gcc  && \
+    rm -rf /usr/lib/x86_64-linux-gnu/perl && \
+    rm -rf /usr/lib/x86_64-linux-gnu/perl-base && \
+    rm -rf /usr/lib/x86_64-linux-gnu/libperl.so.5.30 && \
+    rm -rf /usr/lib/x86_64-linux-gnu/libperl.so.5.30.0
+
+EXPOSE 5555
+EXPOSE 6666
+EXPOSE 8000
+EXPOSE 8001
+EXPOSE 8002
+EXPOSE 8084
+EXPOSE 9000
+
+
+CMD ["dlg", "daemon", "-vv", "-w", "--no-nm"]
