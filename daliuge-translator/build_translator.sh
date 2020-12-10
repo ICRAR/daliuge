@@ -1,1 +1,1 @@
-docker build -t icrar/daliuge-translator:latest -f docker/Dockerfile .
+docker build -t icrar/daliuge-translator:ray -f docker/Dockerfile .

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Go!
-docker build -t icrar/daliuge-common:latest -f docker/Dockerfile .
+docker build -t icrar/daliuge-common:ray -f docker/Dockerfile .
