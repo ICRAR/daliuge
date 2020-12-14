@@ -15,4 +15,4 @@ with tc.ApiClient(translator_config) as translator_client:
         lg_name='test', algo='metis', num_islands=1)
     print(html_content)
     html_content = translator.gen_pg(
-        pgt_id='test', dlg_mgr_host='127.0.0.1', dlg_mgr_port=8001)
+        pgt_id='test', dlg_mgr_host='127.0.0.1', dlg_mgr_port=8001, dlg_mgr_deploy='deploy')

@@ -79,3 +79,7 @@ paths:
             type: integer
           in: query
           name: dlg_mgr_port
+        - schema:
+            type: string
+          in: query
+          name: dlg_mgr_deploy
