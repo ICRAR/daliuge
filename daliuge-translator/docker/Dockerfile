@@ -16,7 +16,7 @@ RUN cd /daliuge/daliuge-translator && \
 # Second stage build taking what's required from first stage
 FROM icrar/daliuge-common:ray
 #COPY --from=0 /usr/local/lib/python3.8/site-packages/. /usr/local/lib/python3.8/site-packages/.
-COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/. /root/anaconda3/lib/python3.7/site-packages/.
+COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/dlg /root/anaconda3/lib/python3.7/site-packages/
 COPY --from=0 /root/anaconda3/bin/. /root/anaconda3/bin/.
 COPY --from=0 /daliuge/. /daliuge/.
 
