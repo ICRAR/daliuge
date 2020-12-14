@@ -60,7 +60,7 @@ class Categories:
 STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
 APP_DROP_TYPES = [
     Categories.COMPONENT,
-    Categories.PythonApp,
+    Categories.PYTHON_APP,
     Categories.BASH_SHELL_APP,
     Categories.MPI,
     Categories.DYNLIB_APP,

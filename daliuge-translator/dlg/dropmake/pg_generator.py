@@ -607,7 +607,7 @@ class LGNode:
                 if fp:
                     kwargs["filepath"] = fp
         elif (
-            drop_type in [Categories.COMPONENT or Categories.PYTHON_APP]
+            drop_type in [Categories.COMPONENT, Categories.PYTHON_APP]
         ):  # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -2201,11 +2201,10 @@ class LG:
 
     def _is_stream_link(self, s_type, t_type):
         return s_type in [
-                Categories.COMPONENT, 
-                Categories.DYNLIB_APP, 
-                Categories.DYNLIB_PROC_APP,
-                Categories.PYTHON_APP] 
-                and t_type in [
+            Categories.COMPONENT, 
+            Categories.DYNLIB_APP, 
+            Categories.DYNLIB_PROC_APP,
+            Categories.PYTHON_APP] and t_type in [
                 Categories.COMPONENT,
                 Categories.DYNLIB_APP,
                 Categories.DYNLIB_PROC_APP,
