@@ -46,7 +46,8 @@ class Categories:
     VARIABLES = 'Variables'
 
     DATA = 'Data'
-    COMPONENT = 'PythonApp'
+    COMPONENT = 'Component'
+    PYTHON_APP = 'PythonApp'
     BASH_SHELL_APP = 'BashShellApp'
     MPI = 'Mpi'
     DYNLIB_APP = 'DynlibApp'
@@ -59,6 +60,7 @@ class Categories:
 STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
 APP_DROP_TYPES = [
     Categories.COMPONENT,
+    Categories.PythonApp,
     Categories.BASH_SHELL_APP,
     Categories.MPI,
     Categories.DYNLIB_APP,
