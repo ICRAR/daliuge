@@ -16,11 +16,10 @@ RUN git clone https://github.com/ICRAR/daliuge && \
     rm -rf /root/anaconda3/lib/python3.7/site-packages/ruamel_yaml* && \
     pip install cwlgen && \
     apt remove -y gcc  && \
+    apt install -y vim && \
     rm -rf /usr/lib/gcc  && \
     rm -rf /usr/lib/x86_64-linux-gnu/perl && \
-    rm -rf /usr/lib/x86_64-linux-gnu/perl-base && \
-    rm -rf /usr/lib/x86_64-linux-gnu/libperl.so.5.30 && \
-    rm -rf /usr/lib/x86_64-linux-gnu/libperl.so.5.30.0
+    rm -rf /usr/lib/x86_64-linux-gnu/perl-base
 
 EXPOSE 5555
 EXPOSE 6666
@@ -31,4 +30,4 @@ EXPOSE 8084
 EXPOSE 9000
 
 
-CMD ["dlg", "daemon", "-vv", "-w", "--no-nm"]
+CMD ["dlg", "daemon", "-vv", "--no-nm"]
