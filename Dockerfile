@@ -8,3 +8,5 @@ RUN cd daliuge/daliuge-common && pip install . \
     && rm -rf /root/anaconda3/lib/python3.7/site-packages/azure \
     && apt-get remove cmake gcc -y \
     && apt-get clean 
+
+CMD ["dlg", "daemon", "-vv", "--no-nm"]
