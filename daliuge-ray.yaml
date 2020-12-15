@@ -23,7 +23,7 @@ autoscaling_mode: default
 # and opens all the necessary ports to support the Ray cluster.
 # Empty string means disabled.
 docker:
-    image: "icrar/daliuge-ray:initial"
+    image: "icrar/dlg_ray:1.1"
     # image: "rayproject/ray:latest-cpu" # You can change this to latest-cpu if you don't need GPU support and want a faster startup
     container_name: "ray_container"
     # If true, pulls latest version of image. Otherwise, `docker run` will only pull the image
@@ -35,8 +35,8 @@ docker:
     # head_image: "rayproject/ray:latest-gpu"
     # Allow Ray to automatically detect GPUs
 
-    # worker_image: "rayproject/ray:latest-cpu"
-    # worker_run_options: []
+    worker_image: "icrar/dlg_ray:1.1"
+    worker_run_options: [-v /var/run/docker.sock:/var/run/docker.sock -v /tmp/leap_test:/tmp/leap_test -p 8265:8265]
 
 # The autoscaler will scale up the cluster to this target fraction of resource
 # usage. For example, if a cluster of 10 nodes is 100% busy and
@@ -106,6 +106,7 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
+    "/var/dlg_home:/var/dlg_home"
 #    "/tmp/leap_test":"/Users/awicenec/tmp/leap_test",
 #    "/tmp/current_branch_sha": "/Users/awicenec/git/daliuge/.git/refs/heads/ray_test"
 #    "/path1/on/remote/machine": "/path1/on/local/machine",
@@ -148,6 +149,7 @@ initialization_commands: [
 
 # List of shell commands to run to set up nodes.
 setup_commands:
+    - apt update
     - apt install -y curl
 
 # Custom commands that will be run on the head node after common setup.
@@ -155,6 +157,7 @@ head_setup_commands: []
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands:
+    - apt update
     - apt install -y curl
 
 
@@ -164,17 +167,18 @@ head_start_ray_commands:
     - ulimit -n 65536; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
     # start DALiuGE data island manager
     - dlg dim -d -v -H 0.0.0.0
-    - dlg nm -d -v -H 0.0.0.0
-    - IP_ADDR="`python -c 'import ray; print(ray.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR
+    - dlg nm -d -v -H 0.0.0.0 --dlg-path=/var/dlg_home/code
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
+
     # bug in registration creates two entires in DIM
-    - IP_ADDR="`python -c 'import ray; print(ray.services.get_node_ip_address())'`"; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
+    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
     - ray stop
     - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
     # start DALiuGE node manager
-    - dlg nm -d -H 0.0.0.0
-    - IP_ADDR="`python -c 'import ray; print(ray.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+    - dlg nm -d -H 0.0.0.0 --dlg-path=/var/dlg_home/code
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
     # bug in registration creates two entires in DIM
-    - IP_ADDR="`python -c 'import ray; print(ray.services.get_node_ip_address())'`"; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
