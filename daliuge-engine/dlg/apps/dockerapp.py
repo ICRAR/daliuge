@@ -39,7 +39,8 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-DLG_ROOT = '/dlg_root'
+#DLG_ROOT = '/dlg_root'
+DLG_ROOT = ''
 
 DockerPath = collections.namedtuple('DockerPath', 'path')
 
