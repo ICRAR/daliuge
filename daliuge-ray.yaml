@@ -117,7 +117,7 @@ file_mounts: {
 # list of paths. The same path on the head node will be copied to the worker node.
 # This behavior is a subset of the file_mounts behavior. In the vast majority of cases
 # you should just use file_mounts. Only use this if you know what you're doing!
-cluster_synced_files: []
+cluster_synced_files: ["/var/dlg_home/code"]
 
 # Whether changes to directories in file_mounts or cluster_synced_files in the head node
 # should sync to the worker node continuously
@@ -138,6 +138,7 @@ file_mounts_sync_continuously: False
 # enabled, these commands will run outside the container and before docker
 # is setup.
 initialization_commands: [
+    sudo ln -s /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home,
     # curl -fsSL https://get.docker.com -o get-docker.sh,
     # sudo apt update,
     # sudo apt remove docker,
@@ -160,6 +161,14 @@ worker_setup_commands:
     - apt update
     - apt install -y curl
 
+# In order to get the leap_cli docker container mounting the /var/dlg_home directory correctly the leap_cli 
+# docker component needs to specify the following in the additional mounts parameter:
+#
+# /tmp/ray_tmp_mount/var/dlg_home/workspace:/var/dlg_home
+#
+# and on the ray hosts there need to be links:
+#
+# sudo ln -s /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home
 
 # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:
@@ -182,3 +191,5 @@ worker_start_ray_commands:
     - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
     # bug in registration creates two entires in DIM
     # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+
+ 
