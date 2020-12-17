@@ -158,7 +158,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             # be there anymore
             self.assertTrue(a.exists())
             self.assertTrue(b.exists())
-            time.sleep(2)
+            time.sleep(2.5)
             self.assertFalse(a.exists())
             self.assertTrue(b.exists())
             b.delete()
