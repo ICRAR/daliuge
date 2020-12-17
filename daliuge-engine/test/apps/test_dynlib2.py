@@ -293,7 +293,7 @@ class TestExceptionRaised(unittest.TestCase):
         """
         with self.assertRaises(MemoryError) as context:
             dynlib_app = DynlibApp(
-                "a", "a", lib=_libpath, print_stats=print_stats, bufsize=pow(2, 40)
+                "a", "a", lib=_libpath, print_stats=print_stats, bufsize=pow(2, 50)
             )
             dynlib_app.run()
 
