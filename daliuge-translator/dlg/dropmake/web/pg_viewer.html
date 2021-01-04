@@ -481,6 +481,43 @@
     }
   }
 
+  function getCWLZipFilenameFromResponseURL(url){
+      const FILE_NAME_PREFIX = "pgt_name=";
+      return url.substring(url.lastIndexOf(FILE_NAME_PREFIX) + FILE_NAME_PREFIX.length, url.lastIndexOf('.graph')) + ".zip";
+  }
+
+  function makeCWL() {
+    var fileName = "";
+    var error = "";
+
+    fetch('/pgt_cwl?pgt_name={{pgt_view_json_name}}')
+      .then(async resp => {
+
+        // if fetch was not successful, await the error message in the body of the response
+        if (resp.status !== 200){
+            error = await resp.text();
+            return;
+        }
+
+        // otherwise, re-generate a filename for the download
+        filename = getCWLZipFilenameFromResponseURL(resp.url);
+
+        return resp.blob();
+      })
+      .then(blob => {
+        // build an object URL from the response and 'download' it
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => alert(error)); // present error, if it occurred
+  }
+
   function zoomToFit() {
     myDiagram.zoomToFit()
     // console.log(myDiagram.viewportBounds.width.toString());
@@ -552,6 +589,7 @@
     <button id="gantt_button" class="button" onclick="genGanttChart()">Produce Gantt Chart</button>
     <button id="schedule_button" class="button" onclick="genScheduleChart()">Produce Schedule Matrix</button>
     <button id="png_button" class="button" onclick="makePNG()">Export to PNG</button>
+    <button id="cwl_button" class="button" onclick="makeCWL()">Export to CWL</button>
     <button id="zoom_button" class="button" onclick="zoomToFit()">Zoom to Fit</button>
   </div>
 </div>
