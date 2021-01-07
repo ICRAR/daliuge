@@ -12,10 +12,12 @@ class ReproducibilityFlags(Enum):
     NOTHING = 0
     RERUN = 1
     REPEAT = 2
-    REPRODUCE = 3
-    REPLICATE_SCI = 4  # Rerun + Reproduce (holds numerically)
-    REPLICATE_COMP = 5  # Repeat + Reproduce (holds numerically)
-    EXPERIMENTAL = 6
+    RECOMPUTE = 4
+    REPRODUCE = 5
+    REPLICATE_SCI = 6  # Rerun + Reproduce
+    REPLICATE_COMP = 7  # Recompute + Reproduce
+    REPLICATE_TOTAL = 8  # Repeat + Reproduce
+    EXPERIMENTAL = 9
 
 
 REPRO_DEFAULT = ReproducibilityFlags.NOTHING
@@ -58,9 +60,11 @@ def rmode_supported(flag: ReproducibilityFlags):
     if flag == ReproducibilityFlags.NOTHING \
             or flag == ReproducibilityFlags.RERUN \
             or flag == ReproducibilityFlags.REPEAT \
+            or flag == ReproducibilityFlags.RECOMPUTE \
             or flag == ReproducibilityFlags.REPRODUCE \
             or flag == ReproducibilityFlags.REPLICATE_SCI \
             or flag == ReproducibilityFlags.REPLICATE_COMP \
+            or flag == ReproducibilityFlags.REPLICATE_TOTAL \
             or flag == ReproducibilityFlags.EXPERIMENTAL:
         return True
     else:

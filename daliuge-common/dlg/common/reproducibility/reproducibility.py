@@ -66,7 +66,9 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
     if level == ReproducibilityFlags.RERUN:
         pass
-    elif level == ReproducibilityFlags.REPEAT or level == ReproducibilityFlags.REPLICATE_COMP:
+    elif level == ReproducibilityFlags.REPEAT or level == ReproducibilityFlags.REPLICATE_COMP \
+            or level == ReproducibilityFlags.RECOMPUTE \
+            or level == ReproducibilityFlags.REPLICATE_TOTAL:
         if category_type == 'Application':
             data['execution_time'] = fields['execution_time']
             data['num_cpus'] = fields['num_cpus']
@@ -78,7 +80,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
                 data['num_of_procs'] = fields['num_of_procs']
             elif category == Categories.DOCKER:
                 data['image'] = fields['image']
-                data['command'] = fields['commnad']
+                data['command'] = fields['command']
                 data['user'] = fields['user']
                 data['ensureUserAndSwitch'] = fields['ensureUserAndSwitch']
                 data['removeContainer'] = fields['removeContainer']
@@ -163,7 +165,8 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     data = accumulate_pgt_unroll_drop_data(drop)
     # This is the only piece of new information added at the partition level
     # It is only pertinent to Repetition and Computational replication
-    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP:
+    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP\
+            or rmode == ReproducibilityFlags.RECOMPUTE or rmode == ReproducibilityFlags.REPLICATE_TOTAL:
         data['node'] = drop['node'][1:]
         data['island'] = drop['island'][1:]
     return data
@@ -181,7 +184,8 @@ def accumulate_pg_drop_data(drop: dict):
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
     data = {}
-    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP:
+    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP\
+            or rmode == ReproducibilityFlags.RECOMPUTE or rmode == ReproducibilityFlags.REPLICATE_TOTAL:
         data['node'] = drop['node']
         data['island'] = drop['island']
     return data
