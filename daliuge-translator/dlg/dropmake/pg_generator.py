@@ -48,6 +48,9 @@ Examples of logical graph node JSON representation
 
 """
 
+if __name__ == '__main__':
+    __package__ = 'dlg.dropmake'
+
 from collections import defaultdict
 import collections
 import datetime
@@ -544,6 +547,7 @@ class LGNode:
         if 'fields' in self.jd:
             for je in self.jd['fields']:
                 self.jd[je['text']]=je['value']
+                kwargs[je['text']] = je['value']
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
@@ -606,6 +610,8 @@ class LGNode:
                 fp = self.jd.get("filepath", None)
                 if fp:
                     kwargs["filepath"] = fp
+            self._update_key_value_attributes(kwargs)
+            drop_spec.update(kwargs)
         elif (
             drop_type in [Categories.COMPONENT, Categories.PYTHON_APP]
         ):  # default generic component becomes "sleep and copy"
@@ -2782,3 +2788,11 @@ def resource_map(pgt, nodes, num_islands=1):
         drop_spec["island"] = dim_list[iidx]
 
     return pgt  # now it's a PG
+    
+
+if __name__ == '__main__':
+    with open('/Users/awicenec/Downloads/HelloWorldBash_LG.graph') as f:
+        lgs = f.read()
+    lg = json.loads(lgs)
+    drop_list = unroll(lg)
+    print('Unrolled')
