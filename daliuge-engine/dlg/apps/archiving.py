@@ -19,13 +19,14 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import logging
 from ..drop import BarrierAppDROP, ContainerDROP
 from ..droputils import DROPFile
 from ..io import NgasIO, OpenMode, NgasLiteIO
 from ..meta import dlg_string_param, dlg_float_param, dlg_int_param, \
     dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
-
+logger = logging.getLogger(__name__)
 class ExternalStoreApp(BarrierAppDROP):
     """
     An application that takes its input DROP (which must be one, and only
@@ -76,7 +77,7 @@ class NgasArchivingApp(ExternalStoreApp):
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
-    ngasSrv = dlg_string_param('NGAS hostname', 'localhost')
+    ngasSrv = dlg_string_param('NGAS Server', '130.95.218.221')
     ngasPort = dlg_int_param('NGAS Port', 7777)
     ngasConnectTimeout = dlg_float_param('Connect Timeout', 2.)
     ngasTimeout = dlg_float_param('Timeout', 2.)
@@ -85,10 +86,14 @@ class NgasArchivingApp(ExternalStoreApp):
         super(NgasArchivingApp, self).initialize(**kwargs)
 
     def store(self, inDrop):
+        logger.debug("NGAS Server %s", self.ngasSrv)
+        logger.debug("NGAS Port %s", self.ngasPort)
+
         if isinstance(inDrop, ContainerDROP):
             raise Exception("ContainerDROPs are not supported as inputs for this application")
 
         size = -1 if inDrop.size is None else inDrop.size
+        logger.debug("Content-length %s", size)
         try:
             ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
         except ImportError:

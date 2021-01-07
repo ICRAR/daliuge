@@ -47,7 +47,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, ErrorIO, NullIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -1116,6 +1116,27 @@ class FileDROP(AbstractDROP, PathBasedDrop):
                 if e.errno != errno.ENOTEMPTY:
                     raise
 
+    @track_current_drop
+    def setCompleted(self):
+        '''
+        Override this method in order to get the size of the drop set once it is completed.
+        '''
+        status = self.status
+        if status == DROPStates.CANCELLED:
+            return
+        if status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
+
+        self._closeWriters()
+
+        logger.debug("Moving %r to COMPLETED", self)
+        self.status = DROPStates.COMPLETED
+
+        # here we set the size
+        self._size = os.stat(self.path).st_size
+        # Signal our subscribers that the show is over
+        self._fire('dropCompleted', status=DROPStates.COMPLETED)
+
     @property
     def dataURL(self):
         hostname = os.uname()[1] # TODO: change when necessary
@@ -1135,9 +1156,13 @@ class NgasDROP(AbstractDROP):
        pass
 
     def getIO(self):
-        return NgasIO(self.ngasSrv, self.uid, port=self.ngasPort,
-                      ngasConnectTimeout=self.ngasConnectTimeout,
-                      ngasTimeout=self.ngasTimeout)
+        try:
+            ngasIO = NgasIO(self.ngasSrv, self.uid, self.ngasPort,
+                            self.ngasConnectTimeout, self.ngasTimeout)
+        except ImportError:
+            ngasIO = NgasLiteIO(self.ngasSrv, self.uid, self.ngasPort,
+                                self.ngasConnectTimeout, self.ngasTimeout)
+        return ngasIO
 
     @property
     def dataURL(self):
