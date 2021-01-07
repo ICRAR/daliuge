@@ -566,33 +566,6 @@
             "y": 444.9163671204406
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 100
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "value": 0,
-                    "description": ""
-                }
-            ]
-        },
-        {
             "category": "Memory",
             "categoryType": "Data",
             "isData": true,
@@ -891,33 +864,6 @@
             "y": 591.7745369932155
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 20
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "value": 0,
-                    "description": ""
-                }
-            ]
-        },
-        {
             "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
@@ -966,33 +912,6 @@
             "y": 264.1563452205281
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 20
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "value": 0,
-                    "description": ""
-                }
-            ]
-        },
-        {
             "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
@@ -1039,33 +958,6 @@
             "width": 200,
             "x": 663.1781862977094,
             "y": 364.5490739864314
-        },
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 20
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "value": 0,
-                    "description": ""
-                }
-            ]
         },
         {
             "category": "PythonApp",
@@ -1393,54 +1285,6 @@
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "x": 351,
-            "y": 99.14627205463859,
-            "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
-            "streaming": false,
-            "subject": null,
-            "selected": false,
-            "expanded": false,
-            "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 15
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": "%{param1}"
-                }
-            ]
-        },
-        {
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "isData": false,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
             "color": "#3498DB",
             "drawOrderHint": 0,
             "key": -29,
@@ -1481,39 +1325,6 @@
             "width": 200,
             "x": 352.1309095886344,
             "y": 114.70182465224677
-        },
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 15
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": "%param2"
-                }
-            ]
         },
         {
             "category": "PythonApp",
@@ -1564,39 +1375,6 @@
             "y": 215
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 15
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": "%{param1.param2}"
-                }
-            ]
-        },
-        {
             "category": "PythonApp",
             "categoryType": "Application",
             "isData": false,
@@ -1643,39 +1421,6 @@
             "width": 200,
             "x": 355,
             "y": 329
-        },
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "PythonApp",
-            "categoryType": "Application",
-            "collapsed": false,
-            "color": "#3498DB",
-            "description": "",
-            "drawOrderHint": 0,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "expanded": false,
-            "fields": [
-                {
-                    "description": "",
-                    "name": "execution_time",
-                    "text": "Execution Time",
-                    "value": 15
-                },
-                {
-                    "description": "",
-                    "name": "group_start",
-                    "text": "Group Start",
-                    "value": 0
-                },
-                {
-                    "text": "Arg 10",
-                    "name": "Arg10",
-                    "text": "Arg 10",
-                    "value": "%{param4.what}"
-                }
-            ]
         },
         {
             "category": "PythonApp",
