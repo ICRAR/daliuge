@@ -7,21 +7,22 @@ FROM rayproject/ray:latest-cpu
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN apt-get update && apt-get install -y gcc
+RUN sudo apt-get update && sudo apt-get install -y gcc
 
 COPY / /daliuge
 
-RUN python -m venv dlg && cd /daliuge && \
-    . /dlg/bin/activate && \
+RUN cd && python -m venv dlg && cd /daliuge && \
+    . /home/ray/dlg/bin/activate && \
     pip install numpy && \
     pip install . && \
-    apt-get remove -y gcc
+    sudo apt-get remove -y gcc
 
 
 FROM rayproject/ray:latest-cpu
-RUN apt-get update && apt-get install -y git
+RUN sudo apt-get update && sudo apt-get install -y git
 #COPY --from=0 /root/anaconda3/bin/dlg /root/anaconda3/bin/dlg 
 #COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/dlg /root/anaconda3/lib/python3.7/site-packages/dlg
 #COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info \
 #            /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info
-COPY --from=0 /dlg /dlg
+COPY --from=0 /home/ray/dlg /home/ray/dlg
+RUN sudo chown -R ray:users /home/ray/dlg

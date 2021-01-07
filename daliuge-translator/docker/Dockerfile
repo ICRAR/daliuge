@@ -6,21 +6,21 @@ FROM icrar/daliuge-common:ray
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN apt-get update && apt-get install -y gcc && apt-get clean
+RUN sudo apt-get update && sudo apt-get install -y gcc && sudo apt-get clean
 
 COPY / /daliuge
 
-RUN . /dlg/bin/activate && \
+RUN . /home/ray/dlg/bin/activate && \
     cd /daliuge && \
     pip install .
 
 # Second stage build taking what's required from first stage
 FROM icrar/daliuge-common:ray
 COPY --from=0 /daliuge/. /daliuge/.
-COPY --from=0 /dlg /dlg
+COPY --from=0 /home/ray/dlg /home/ray/dlg
 
 # enable the virtualenv path from daliuge-common
-ENV VIRTUAL_ENV=/dlg
+ENV VIRTUAL_ENV=/home/ray/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 EXPOSE 8084
