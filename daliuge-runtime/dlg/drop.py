@@ -637,6 +637,15 @@ class AbstractDROP(EventFirer):
         """
         return {'status': self._status}
 
+    def generate_recompute_data(self):
+        """
+        Provides a dictionary containing recompute data.
+        At runtime, recomputing, like repeating and rerunning, by default, only shows success or failure.
+        We anticipate that any further implemented behaviour be done at a lower class.
+        :return: A dictionary containing runtime exclusive recompute values.
+        """
+        return {'status': self._status}
+
     def generate_reproduce_data(self):
         """
         Provides a list of Reproducibility data (specifically).
@@ -659,8 +668,19 @@ class AbstractDROP(EventFirer):
     def generate_replicate_comp_data(self):
         """
         Provides a list of computational replication data.
-        This is by definition a merging of both reproduction and repetition data
+        This is by definition a merging of both reproduction and recompute data
         :return: A dictionary containing runtime exclusive computational replication data.
+        """
+        res = {}
+        res.update(self.generate_recompute_data())
+        res.update(self.generate_reproduce_data())
+        return res
+
+    def generate_replicate_total_data(self):
+        """
+        Provides a list of total replication data.
+        This is by definition a merging of reproduction and repetition data
+        :return: A dictionary containing runtime exclusive total replication data.
         """
         res = {}
         res.update(self.generate_repeat_data())
@@ -681,12 +701,16 @@ class AbstractDROP(EventFirer):
             return self.generate_rerun_data()
         elif self._reproducibility is ReproducibilityFlags.REPEAT:
             return self.generate_repeat_data()
+        elif self._reproducibility is ReproducibilityFlags.RECOMPUTE:
+            return self.generate_recompute_data()
         elif self._reproducibility is ReproducibilityFlags.REPRODUCE:
             return self.generate_reproduce_data()
         elif self._reproducibility is ReproducibilityFlags.REPLICATE_SCI:
             return self.generate_replicate_sci_data()
         elif self._reproducibility is ReproducibilityFlags.REPLICATE_COMP:
             return self.generate_replicate_comp_data()
+        elif self._reproducibility is ReproducibilityFlags.REPLICATE_TOTAL:
+            return self.generate_replicate_total_data()
         else:
             raise NotImplementedError("Currently other levels are not in development.")
 
