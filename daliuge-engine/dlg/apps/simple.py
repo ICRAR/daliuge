@@ -46,6 +46,18 @@ class NullBarrierApp(BarrierAppDROP):
         pass
 
 
+##
+# @brief A simple APP that sleeps the specified amount of time (0 by default)
+# @details This is mainly useful (and used) to test graph translation and structure 
+# without executing real algorithms. Very useful for debugging.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] sleepTime (sleep time)
+#     \~English the number of seconds to sleep\n
+
+# @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
     compontent_meta = dlg_component('SleepApp', 'Sleep App.',

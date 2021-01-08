@@ -1,0 +1,59 @@
+\hypertarget{struct__dlg__app__info}{}\section{\+\_\+dlg\+\_\+app\+\_\+info Struct Reference}
+\label{struct__dlg__app__info}\index{\_dlg\_app\_info@{\_dlg\_app\_info}}
+
+
+{\ttfamily \#include $<$dlg\+\_\+app.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a272ad9af1e8bd8b34e57be728e3d7b1d}\label{struct__dlg__app__info_a272ad9af1e8bd8b34e57be728e3d7b1d}} 
+char $\ast$ {\bfseries appname}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_abe11a72cae6f79c818b8cb0bb99f2584}\label{struct__dlg__app__info_abe11a72cae6f79c818b8cb0bb99f2584}} 
+char $\ast$ {\bfseries uid}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a54b3a693712f4ed12c5d92a1793e005a}\label{struct__dlg__app__info_a54b3a693712f4ed12c5d92a1793e005a}} 
+char $\ast$ {\bfseries oid}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a3c8469bb5bbe6640fbef5b2e5fd1ca4a}\label{struct__dlg__app__info_a3c8469bb5bbe6640fbef5b2e5fd1ca4a}} 
+int $\ast$ {\bfseries ranks}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_aa4b7eedc6ba68599ca4e3e9b37e1bdc1}\label{struct__dlg__app__info_aa4b7eedc6ba68599ca4e3e9b37e1bdc1}} 
+unsigned int {\bfseries n\+\_\+ranks}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_aacafa51420cd4c6fd8e8b6458276ea37}\label{struct__dlg__app__info_aacafa51420cd4c6fd8e8b6458276ea37}} 
+\mbox{\hyperlink{struct__dlg__input__info}{dlg\+\_\+input\+\_\+info}} $\ast$ {\bfseries inputs}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_ab3dc6b5fa7c248b24eef62564aed8379}\label{struct__dlg__app__info_ab3dc6b5fa7c248b24eef62564aed8379}} 
+unsigned int {\bfseries n\+\_\+inputs}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_afc2d14eeafd6a14fb62a61b5a4e7fb96}\label{struct__dlg__app__info_afc2d14eeafd6a14fb62a61b5a4e7fb96}} 
+\mbox{\hyperlink{struct__dlg__input__info}{dlg\+\_\+input\+\_\+info}} $\ast$ {\bfseries streaming\+\_\+inputs}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a48c5706ab177d9bd3c55ec4f7a08b5d5}\label{struct__dlg__app__info_a48c5706ab177d9bd3c55ec4f7a08b5d5}} 
+unsigned int {\bfseries n\+\_\+streaming\+\_\+inputs}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a8e1375a18abd9d7a3abc7d57bdd28d28}\label{struct__dlg__app__info_a8e1375a18abd9d7a3abc7d57bdd28d28}} 
+\mbox{\hyperlink{struct__dlg__output__info}{dlg\+\_\+output\+\_\+info}} $\ast$ {\bfseries outputs}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a01516453589f0ee89c7be67c47e30d4a}\label{struct__dlg__app__info_a01516453589f0ee89c7be67c47e30d4a}} 
+unsigned int {\bfseries n\+\_\+outputs}
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_ab2c48de1eaa4dec4f1766176d5222c67}\label{struct__dlg__app__info_ab2c48de1eaa4dec4f1766176d5222c67}} 
+void($\ast$ {\bfseries running} )()
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a84fac302770783dd3322aef0ab9c8bc5}\label{struct__dlg__app__info_a84fac302770783dd3322aef0ab9c8bc5}} 
+void($\ast$ {\bfseries done} )(app\+\_\+status status)
+\item 
+\mbox{\Hypertarget{struct__dlg__app__info_a8fad78e28731125ffdc6ccbbe1cb2eb6}\label{struct__dlg__app__info_a8fad78e28731125ffdc6ccbbe1cb2eb6}} 
+void $\ast$ {\bfseries data}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+The representation of an application instance. Apart from its U\+ID and O\+ID, an application has an array of inputs (with n\+\_\+inputs elements), streaming\+\_\+inputs (with n\+\_\+streaming\+\_\+inputs) elements, and outputs (with n\+\_\+outputs elements). If the application works in a streaming mode, then it is also given the running and done callbacks to signal the framwork that it started working, and that it is done with its work, respectively. Finally, a data pointer holds application-\/specific data. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+dlg\+\_\+app.\+h\end{DoxyCompactItemize}

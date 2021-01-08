@@ -1,0 +1,52 @@
+\hypertarget{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app}{}\section{dlg.\+apps.\+bash\+\_\+shell\+\_\+app.\+Streaming\+Input\+Bash\+App Class Reference}
+\label{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app}\index{dlg.apps.bash\_shell\_app.StreamingInputBashApp@{dlg.apps.bash\_shell\_app.StreamingInputBashApp}}
+Inheritance diagram for dlg.\+apps.\+bash\+\_\+shell\+\_\+app.\+Streaming\+Input\+Bash\+App\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.435583cm]{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app_a0d3a78123d703506b5f4f3dc22adcdde}\label{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app_a0d3a78123d703506b5f4f3dc22adcdde}} 
+def {\bfseries run} (self, data)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries compontent\+\_\+meta}
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}An app that runs a bash command that consumes data from stdin.
+
+The streaming of data that appears on stdin takes place outside the
+framework; what is streamed through the framework is the information needed
+to establish the streaming channel. This information is also used to kick
+this application off.
+\end{DoxyVerb}
+ 
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app_a63062e31fd1870b787cb1301a3a59aef}\label{classdlg_1_1apps_1_1bash__shell__app_1_1_streaming_input_bash_app_a63062e31fd1870b787cb1301a3a59aef}} 
+\index{dlg.apps.bash\_shell\_app.StreamingInputBashApp@{dlg.apps.bash\_shell\_app.StreamingInputBashApp}!compontent\_meta@{compontent\_meta}}
+\index{compontent\_meta@{compontent\_meta}!dlg.apps.bash\_shell\_app.StreamingInputBashApp@{dlg.apps.bash\_shell\_app.StreamingInputBashApp}}
+\subsubsection{\texorpdfstring{compontent\_meta}{compontent\_meta}}
+{\footnotesize\ttfamily dlg.\+apps.\+bash\+\_\+shell\+\_\+app.\+Streaming\+Input\+Bash\+App.\+compontent\+\_\+meta\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=  dlg\_component(\textcolor{stringliteral}{'StreamingInputBashApp'}, \textcolor{stringliteral}{'An app that runs a bash command that consumes data from stdin.'},}
+\DoxyCodeLine{                                    [dlg\_batch\_input(\textcolor{stringliteral}{'text/*'}, [])],}
+\DoxyCodeLine{                                    [dlg\_batch\_output(\textcolor{stringliteral}{'text/*'}, [])],}
+\DoxyCodeLine{                                    [dlg\_streaming\_input(\textcolor{stringliteral}{'text/*'})])}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+bash\+\_\+shell\+\_\+app.\+py\end{DoxyCompactItemize}
