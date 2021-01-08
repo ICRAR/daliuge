@@ -1,0 +1,77 @@
+\hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app}{}\section{dlg.\+apps.\+scp.\+Scp\+App Class Reference}
+\label{classdlg_1_1apps_1_1scp_1_1_scp_app}\index{dlg.apps.scp.ScpApp@{dlg.apps.scp.ScpApp}}
+Inheritance diagram for dlg.\+apps.\+scp.\+Scp\+App\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classdlg_1_1apps_1_1scp_1_1_scp_app}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_a9674f6bbc314dedd16384d9e9ca3f531}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_a9674f6bbc314dedd16384d9e9ca3f531}} 
+def {\bfseries initialize} (self, $\ast$$\ast$kwargs)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_a572dbf6846869e13bc2cbefc48b73b45}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_a572dbf6846869e13bc2cbefc48b73b45}} 
+def {\bfseries run} (self)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_abd5de750a84ac2c43ef685e97c1155a5}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_abd5de750a84ac2c43ef685e97c1155a5}} 
+{\bfseries node}
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries compontent\+\_\+meta}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_accb5a84a4d9c133cdf73d0373a061efb}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_accb5a84a4d9c133cdf73d0373a061efb}} 
+{\bfseries remote\+User} = dlg\+\_\+string\+\_\+param(\textquotesingle{}remote\+User\textquotesingle{}, None)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_a3eb8b7a01b4d112673c7059a6b61d707}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_a3eb8b7a01b4d112673c7059a6b61d707}} 
+{\bfseries pkey\+Path} = dlg\+\_\+string\+\_\+param(\textquotesingle{}pkey\+Path\textquotesingle{}, None)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_acda7ccdf3a0f0927eb5fe1293c1feb57}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_acda7ccdf3a0f0927eb5fe1293c1feb57}} 
+{\bfseries timeout} = dlg\+\_\+string\+\_\+param(\textquotesingle{}timeout\textquotesingle{}, None)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}A BarrierAppDROP that copies the content of its single input onto its
+single output via SSH's scp protocol.
+
+Because of the nature of the scp protocol, the input and output DROPs
+of this application must both be filesystem-based; i.e., they must be an
+instance of FileDROP or of DirectoryContainer.
+
+Depending on the physical location of each DROP (this application, and
+its input and outputs) this application will copy data FROM another host or
+TO other host. This application's node must thus coincide with one of the
+two I/O DROPs.
+\end{DoxyVerb}
+ 
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{classdlg_1_1apps_1_1scp_1_1_scp_app_a92459ac0fe6ec7b89b4d92e96463917a}\label{classdlg_1_1apps_1_1scp_1_1_scp_app_a92459ac0fe6ec7b89b4d92e96463917a}} 
+\index{dlg.apps.scp.ScpApp@{dlg.apps.scp.ScpApp}!compontent\_meta@{compontent\_meta}}
+\index{compontent\_meta@{compontent\_meta}!dlg.apps.scp.ScpApp@{dlg.apps.scp.ScpApp}}
+\subsubsection{\texorpdfstring{compontent\_meta}{compontent\_meta}}
+{\footnotesize\ttfamily dlg.\+apps.\+scp.\+Scp\+App.\+compontent\+\_\+meta\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=  dlg\_component(\textcolor{stringliteral}{'ScpApp'}, \textcolor{stringliteral}{'A BarrierAppDROP that copies the content of its single '}}
+\DoxyCodeLine{                                    \textcolor{stringliteral}{'input onto its single output via SSHs scp protocol.'},}
+\DoxyCodeLine{                                    [dlg\_batch\_input(\textcolor{stringliteral}{'binary/*'}, [ShoreDROP, NgasDROP, InMemoryDROP,}
+\DoxyCodeLine{                                                                  NullDROP, RDBMSDrop, ContainerDROP])],}
+\DoxyCodeLine{                                    [dlg\_batch\_output(\textcolor{stringliteral}{'binary/*'}, [ShoreDROP, NgasDROP, InMemoryDROP,}
+\DoxyCodeLine{                                                                   NullDROP, RDBMSDrop, ContainerDROP])],}
+\DoxyCodeLine{                                    [dlg\_streaming\_input(\textcolor{stringliteral}{'binary/*'})])}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+scp.\+py\end{DoxyCompactItemize}
