@@ -52,6 +52,8 @@ class MPIApp(BarrierAppDROP):
         self._maxprocs = self._getArg(kwargs, 'maxprocs', 1)
         self._use_wrapper = self._getArg(kwargs, 'use_wrapper', False)
         self._args = self._getArg(kwargs, 'args', [])
+        self._recompute_data = {'command': self._command,
+                                'maxprocs': self._maxprocs}
         if not self._command:
             raise InvalidDropException(self, 'No command specified, cannot create MPIApp')
 
@@ -91,6 +93,7 @@ class MPIApp(BarrierAppDROP):
 
             any_failed = False
             for rank, (stdout, stderr, code) in enumerate(children_data):
+                self._recompute_data[str(rank)] = [code, str(stdout), str(stderr)]
                 if code == 0:
                     continue
                 any_failed = True
@@ -101,6 +104,9 @@ class MPIApp(BarrierAppDROP):
                 raise Exception("One or more MPI children didn't exit cleanly")
         else:
             comm_children.barrier()
+
+    def generate_recompute_data(self):
+        return self._recompute_data
 
 
 # When we are called by the MPIApp
