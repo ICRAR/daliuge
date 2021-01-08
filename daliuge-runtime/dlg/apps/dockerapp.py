@@ -248,6 +248,10 @@ class DockerApp(BarrierAppDROP):
         self._containerIp = None
         self._containerId = None
         self._waiters = []
+        self._recompute_data = {'image': self._image,
+                                'user': self._user,
+                                'command': self._command,
+                                'ensureUserAndSwitch': self._ensureUserAndSwitch}
 
     @property
     def containerIp(self):
@@ -289,7 +293,6 @@ class DockerApp(BarrierAppDROP):
 
         cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
-
         # We bind the inputs and outputs inside the docker under the DLG_ROOT
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
@@ -306,7 +309,6 @@ class DockerApp(BarrierAppDROP):
             uid, ip = waiter.waitForIp()
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
-
         # If a user has been given, we run the container as that user. It is
         # useful to make sure that the USER environment variable is set in those
         # cases (e.g., casapy requires this to correctly operate)
@@ -335,7 +337,7 @@ class DockerApp(BarrierAppDROP):
         cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
 
         logger.debug("Command after user creation and wrapping is: %s", cmd)
-
+        self._recompute_data['command'] = cmd
         c = DockerApp._get_client()
 
         # Remove the container unless it's specified that we should keep it
@@ -366,7 +368,7 @@ class DockerApp(BarrierAppDROP):
         inspection = c.api.inspect_container(cId)
         logger.debug("Docker inspection: %r", inspection)
         self.containerIp = inspection['NetworkSettings']['IPAddress']
-
+        self._recompute_data['containerIP'] = self.containerIp
         # Wait until it finishes
         # In docker-py < 3 the .wait() method returns the exit code directly
         # In docker-py >= 3 the .wait() method returns a dictionary with the API response
@@ -378,15 +380,15 @@ class DockerApp(BarrierAppDROP):
 
         end = time.time()
         logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end - start), self._exitCode)
-
+        stdout = container.logs(stream=False, stdout=True, stderr=False)
+        stderr = container.logs(stream=False, stdout=False, stderr=True)
+        self._recompute_data['status'] = self._exitCode
+        self._recompute_data['stdout'] = str(stdout)
+        self._recompute_data['stderr'] = str(stderr)
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            stdout = container.logs(stream=False, stdout=True, stderr=False)
-            stderr = container.logs(stream=False, stdout=False, stderr=True)
             logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId,
                          stdout, stderr)
         elif self._exitCode != 0:
-            stdout = container.logs(stream=False, stdout=True, stderr=False)
-            stderr = container.logs(stream=False, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
             rm(container)
@@ -411,3 +413,6 @@ class DockerApp(BarrierAppDROP):
         if os.path.exists(config_file_name):
             return ConfigObj(config_file_name)
         return {}
+
+    def generate_recompute_data(self):
+        return self._recompute_data
