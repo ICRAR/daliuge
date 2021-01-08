@@ -207,3 +207,29 @@ class AverageArraysApp(BarrierAppDROP):
         
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
+
+class HelloWorldApp(BarrierAppDROP):
+    """
+    An App that writes 'Hello World!' or 'Hello <greet>!' to all of
+    its outputs.
+
+    Keywords:
+    greet:   string, [World], whom to greet.
+    """
+    compontent_meta = dlg_component('HelloWorldApp', 'Hello World App.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    greet = dlg_string_param('greet', 'World')
+
+    def run(self):
+        self.greeting = 'Hello %s' % self.greet
+
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output should have been added to %r' % self)
+        for o in outs:
+            o.len = len(self.greeting.encode())
+            o.write(self.greeting.encode())  # greet across all outputs
