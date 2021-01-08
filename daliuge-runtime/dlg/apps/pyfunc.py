@@ -125,6 +125,7 @@ class PyFuncApp(BarrierAppDROP):
         # Mapping between argument name and input drop uids
         self.func_arg_mapping = self._getArg(kwargs, 'func_arg_mapping', {})
         logger.debug("Input mapping: %r", self.func_arg_mapping)
+        self._recompute_data = {}
 
     def run(self):
 
@@ -147,7 +148,8 @@ class PyFuncApp(BarrierAppDROP):
 
         logger.debug("Running %s with args=%r, kwargs=%r", self.fname, args, kwargs)
         result = self.f(*args, **kwargs)
-
+        self._recompute_data['args'] = args
+        self._recompute_data['kwargs'] = kwargs
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
@@ -155,4 +157,8 @@ class PyFuncApp(BarrierAppDROP):
         if len(outputs) == 1:
             result = [result]
         for r, o in zip(result, outputs):
+            self._recompute_data[o.dataURL] = str(r)  # TODO: Revise if this is not ideal
             o.write(pickle.dumps(r))  # @UndefinedVariable
+
+    def generate_recompute_data(self):
+        return self._recompute_data
