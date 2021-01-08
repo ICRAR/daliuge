@@ -77,7 +77,7 @@ class NgasArchivingApp(ExternalStoreApp):
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
-    ngasSrv = dlg_string_param('NGAS Server', '130.95.218.221')
+    ngasSrv = dlg_string_param('NGAS Server', 'localhost')
     ngasPort = dlg_int_param('NGAS Port', 7777)
     ngasConnectTimeout = dlg_float_param('Connect Timeout', 2.)
     ngasTimeout = dlg_float_param('Timeout', 2.)

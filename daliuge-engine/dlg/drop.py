@@ -1151,6 +1151,7 @@ class NgasDROP(AbstractDROP):
     ngasPort = dlg_int_param('ngasPort', 7777)
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
     ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
+    len = dlg_int_param('len', -1)
 
     def initialize(self, **kwargs):
        pass
@@ -1158,10 +1159,10 @@ class NgasDROP(AbstractDROP):
     def getIO(self):
         try:
             ngasIO = NgasIO(self.ngasSrv, self.uid, self.ngasPort,
-                            self.ngasConnectTimeout, self.ngasTimeout)
+                            self.ngasConnectTimeout, self.ngasTimeout, self.len)
         except ImportError:
             ngasIO = NgasLiteIO(self.ngasSrv, self.uid, self.ngasPort,
-                                self.ngasConnectTimeout, self.ngasTimeout)
+                                self.ngasConnectTimeout, self.ngasTimeout, self.len)
         return ngasIO
 
     @property

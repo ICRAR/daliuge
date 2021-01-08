@@ -27,10 +27,11 @@ import six.moves.cPickle as pickle
 
 
 from dlg import droputils
+from dlg.droputils import DROPWaiterCtx
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
-from dlg.apps.simple import RandomArrayApp, AverageArraysApp
+from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import NullDROP, InMemoryDROP
+from dlg.drop import NullDROP, InMemoryDROP, FileDROP
 
 class TestSimpleApps(unittest.TestCase):
 
@@ -125,5 +126,15 @@ class TestSimpleApps(unittest.TestCase):
         average = pickle.loads(droputils.allDropContents(o))
         v = (m == average)
         self.assertEqual(v.all(), True)
+
+    def test_helloworldapp(self):
+        h = HelloWorldApp('h', 'h')
+        b = FileDROP('c', 'c')
+        h.addOutput(b)
+        b.addProducer(h)
+        h.execute()
+        self.assertEqual(six.b(h.greeting), droputils.allDropContents(b))
+
+
 
         
