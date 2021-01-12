@@ -94,6 +94,12 @@ class CDlgApp(ctypes.Structure):
         ("data", ctypes.c_void_p),
     ]
 
+    def pack_python(self):
+        out = {}
+        for key, val in self._fields_.items():
+            out[key] = six.b(str(val))
+        return out
+
 
 def _to_c_input(i):
     """
@@ -296,6 +302,9 @@ class DynlibAppBase(object):
             if self._c_outputs_set:
                 return
             prepare_c_outputs(self._c_app, self.outputs)
+
+    def generate_recompute_data(self):
+        return self._c_app.pack_python()
 
 
 class DynlibStreamApp(DynlibAppBase, AppDROP):
