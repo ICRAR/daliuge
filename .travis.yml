@@ -39,25 +39,17 @@ matrix:
     - python: "3.6"
     - python: "3.5"
     - python: "2.7"
-<<<<<<< HEAD
-    - name: doxygen
-=======
     - name: doxygencommit
->>>>>>> master
       if: branch = master   
       before_install:
       install:
         - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
       script:
-<<<<<<< HEAD
         - GIT_REPO=$(git config --get remote.origin.url) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
-=======
-        - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
->>>>>>> master
       after_success:  
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
-        - wget https://raw.githubusercontent.com/james-strauss-uwa/xml2palette/master/xml2palette.py
+        - wget https://raw.githubusercontent.com/ICRAR/EAGLE/master/tools/xml2palette/xml2palette.py 
         - python3 xml2palette.py -i daliuge.xml -o daliuge.palette
         - mv daliuge.palette ../.
         - cd ..
