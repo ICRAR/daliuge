@@ -546,8 +546,9 @@ class LGNode:
         # get the arguments from new fields dictionary in a backwards compatible way
         if 'fields' in self.jd:
             for je in self.jd['fields']:
-                self.jd[je['text']]=je['value']
-                kwargs[je['text']] = je['value']
+                # The field to be used is not the text, but the name field
+                self.jd[je['name']]=je['value']
+                kwargs[je['name']] = je['value']
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:

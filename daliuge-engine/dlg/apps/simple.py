@@ -47,15 +47,18 @@ class NullBarrierApp(BarrierAppDROP):
 
 
 ##
-# @brief A simple APP that sleeps the specified amount of time (0 by default)
-# @details This is mainly useful (and used) to test graph translation and structure 
+# @brief SleepApp\n
+# @details A simple APP that sleeps the specified amount of time (0 by default).
+# This is mainly useful (and used) to test graph translation and structure
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] sleepTime (sleep time)
+# @param[in] param/sleepTime/5/Integer/readwrite
 #     \~English the number of seconds to sleep\n
+# @param[in] param/appclass/dlg.apps.simple.SleepApp/String/readonly
+#     \~English Application class\n
 
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
@@ -74,6 +77,20 @@ class SleepApp(BarrierAppDROP):
         time.sleep(self.sleepTime)
 
 
+##
+# @brief CopyApp\n
+# @details A simple APP that copies its inputs into its outputs.
+# All inputs are copied into all outputs in the order they were declared in
+# the graph. If an input is a container (e.g. a directory) it copies the
+# content recursively.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/appclass/dlg.apps.simple.CopyApp/String/readonly
+#     \~English Application class\n
+
+# @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
     A BarrierAppDrop that copies its inputs into its outputs.
@@ -109,6 +126,29 @@ class SleepAndCopyApp(SleepApp, CopyApp):
         CopyApp.run(self)
 
 
+##
+# @brief RandomArrayApp\n
+# @details A testing APP that does not take any input and produces a random array of
+# type int64, if integer is set to True, else of type float64.
+# size indicates the number of elements ranging between the values low and high. 
+# The resulting array will be send to all connected output apps.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/size/100/Integer/readwrite
+#     \~English the siz of the array\n
+# @param[in] param/integer/True/Boolean/readwrite
+#     \~English Generate integer array?\n
+# @param[in] param/low/0/float/readwrite
+#     \~English low value of range in array [inclusive]\n
+# @param[in] param/high/1/float/readwrite
+#     \~English high value of range of array [exclusive]\n
+# @param[in] param/appclass/dlg.apps.simple.RandomArrayApp/String/readonly
+#     \~English Application class\n
+# @param[out] port/array
+#     \~English Port carrying the averaged array.
+# @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
     A BarrierAppDrop that generates an array of random numbers. It does
@@ -145,6 +185,8 @@ class RandomArrayApp(BarrierAppDROP):
                 'At least one output should have been added to %r' % self)
         self.generateRandomArray()
         for o in outs:
+            d = pickle.dumps(self.marray)
+            o.len = len(d)
             o.write(pickle.dumps(self.marray))
 
     def generateRandomArray(self):
@@ -162,6 +204,25 @@ class RandomArrayApp(BarrierAppDROP):
         return self.marray
 
 
+##
+# @brief AverageArrays\n
+# @details A testing APP that takes multiple numpy arrays on input and calculates
+# the mean or the median, depending on the value provided in the method parameter. 
+# Users can add as many producers to the input array port as required and the resulting array
+# will also be send to all connected output apps.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/method/mean/string/readwrite
+#     \~English the methd used for averaging\n
+# @param[in] param/appclass/dlg.apps.simple.AverageArraysApp/String/readonly
+#     \~English Application class\n
+# @param[in] port/array
+#     \~English Port for the input array(s).
+# @param[out] port/array
+#     \~English Port carrying the averaged array.
+# @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
     A BarrierAppDrop that averages arrays received on input. It requires
@@ -198,7 +259,9 @@ class AverageArraysApp(BarrierAppDROP):
         self.getInputArrays()
         avg = self.averageArray()
         for o in outs:
-            o.write(pickle.dumps(avg))  # average across inputs
+            d = pickle.dumps(avg)
+            o.len = len(d)
+            o.write(d)  # average across inputs
     
     def getInputArrays(self):
         """
@@ -220,6 +283,23 @@ class AverageArraysApp(BarrierAppDROP):
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
 
+##
+# @brief HelloWorldApp\n
+# @details A simple APP that implements the standard Hello World in DALiuGE.
+# It allows to change 'World' with some other string and it also permits
+# to connect the single output port to multiple sinks, which will all receive 
+# the same message. App does not require any input.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/greet/World/String/readwrite
+#     \~English What appears after 'Hello '\n
+# @param[in] param/appclass/dlg.apps.simple.HelloWorldApp/String/readonly
+#     \~English Application class\n
+# @param[out] port/hello
+#     \~English The port carrying the message produced by the app.
+# @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
     """
     An App that writes 'Hello World!' or 'Hello <greet>!' to all of
