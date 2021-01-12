@@ -303,9 +303,6 @@ class DynlibAppBase(object):
                 return
             prepare_c_outputs(self._c_app, self.outputs)
 
-    def generate_recompute_data(self):
-        return self._c_app.pack_python()
-
 
 class DynlibStreamApp(DynlibAppBase, AppDROP):
     def initialize(self, **kwargs):
@@ -341,6 +338,10 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
         self._c_app.n_streaming_inputs += 1
 
+    def generate_recompute_data(self):
+        out = {'status': self.status}
+        return out.update(self._c_app.pack_python())
+
 
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
@@ -354,6 +355,10 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         prepare_c_ranks(self._c_app, self.ranks)
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, input_closers)
+
+    def generate_recompute_data(self):
+        out = {'status': self.status}
+        return out.update(self._c_app.pack_python())
 
 
 class FinishSubprocess(Exception):
