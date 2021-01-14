@@ -165,8 +165,7 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     data = accumulate_pgt_unroll_drop_data(drop)
     # This is the only piece of new information added at the partition level
     # It is only pertinent to Repetition and Computational replication
-    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP\
-            or rmode == ReproducibilityFlags.RECOMPUTE or rmode == ReproducibilityFlags.REPLICATE_TOTAL:
+    if rmode == ReproducibilityFlags.REPLICATE_COMP or rmode == ReproducibilityFlags.RECOMPUTE:
         data['node'] = drop['node'][1:]
         data['island'] = drop['island'][1:]
     return data
@@ -184,8 +183,7 @@ def accumulate_pg_drop_data(drop: dict):
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
     data = {}
-    if rmode == ReproducibilityFlags.REPEAT or rmode == ReproducibilityFlags.REPLICATE_COMP\
-            or rmode == ReproducibilityFlags.RECOMPUTE or rmode == ReproducibilityFlags.REPLICATE_TOTAL:
+    if rmode == ReproducibilityFlags.REPLICATE_COMP or rmode == ReproducibilityFlags.RECOMPUTE:
         data['node'] = drop['node']
         data['island'] = drop['island']
     return data
