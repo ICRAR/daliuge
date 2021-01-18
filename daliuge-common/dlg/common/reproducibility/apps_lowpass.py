@@ -1,12 +1,21 @@
 import pickle
 
 import numpy as np
+import pyfftw
 from dlg import droputils
 from dlg.apps.simple import BarrierAppDROP
 from dlg.meta import dlg_batch_output, dlg_streaming_input
 from dlg.meta import dlg_component, dlg_batch_input
-from dlg.meta import dlg_int_param, dlg_list_param, dlg_float_param
+from dlg.meta import dlg_int_param, dlg_list_param, dlg_float_param, dlg_bool_param
 from merklelib import MerkleTree
+
+
+def determine_size(length):
+    """
+    :param length:
+    :return: Computes the next largest power of two needed to contain |length| elements
+    """
+    return int(2 ** np.ceil(np.log2(length))) - 1
 
 
 class LP_SignalGenerator(BarrierAppDROP):
@@ -158,3 +167,152 @@ class LP_AddNoise(BarrierAppDROP):
 
     def generate_reproduce_data(self):
         return {'data_hash', MerkleTree(self.signal).merkle_root}
+
+
+class LP_filter_fft_np(BarrierAppDROP):
+    component_meta = dlg_component('LP_filter_np', 'Filters a signal with a provided window using numpy',
+                                   [dlg_batch_input('binary/*', [])],
+                                   [dlg_batch_output('binary/*', [])],
+                                   [dlg_streaming_input('binary/*')])
+
+    PRECISIONS = {'double': {'float': np.float64, 'complex': np.complex128},
+                  'single': {'float': np.float32, 'complex': np.complex64}}
+    precision = {}
+    # default values
+    double_prec = dlg_bool_param('doublePrec', True)
+    series = []
+    output = np.zeros([1])
+
+    def initialize(self, **kwargs):
+        super(LP_filter_fft_np, self).initialize(**kwargs)
+        if self.double_prec:
+            self.precision = self.PRECISIONS['double']
+        else:
+            self.precision = self.PRECISIONS['single']
+
+    def getInputArrays(self):
+        ins = self.inputs
+        if len(ins) != 2:
+            raise Exception('Precisely two input required for %r' % self)
+
+        array = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
+        self.series = array
+
+    def filter(self):
+        nfft = int(2 ** np.ceil(np.log2(len(self.series[0] + self.series[1] - 1)))) - 1
+        sig_zero_pad = np.zeros(nfft, dtype=self.precision['float'])
+        win_zero_pad = np.zeros(nfft, dtype=self.precision['float'])
+        sig_zero_pad[0:len(self.series[0])] = self.series[0]
+        win_zero_pad[0:len(self.series[1])] = self.series[1]
+        sig_fft = np.fft.fft(sig_zero_pad)
+        win_fft = np.fft.fft(win_zero_pad)
+        out_fft = np.multiply(sig_fft, win_fft)
+        out = np.fft.ifft(out_fft)
+        return out.astype(self.precision['complex'])
+
+    def run(self):
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception('At least one output required for %r' % self)
+        self.getInputArrays()
+        self.output = self.filter()
+        data = pickle.dumps(self.output)
+        for o in outs:
+            o.len = len(data)
+            o.write(data)
+
+    def generate_recompute_data(self):
+        return {'precision_float': self.precision['float'],
+                'precision_complex': self.precision['complex']}
+
+    def generate_reproduce_data(self):
+        mtree = MerkleTree(self.series[0])
+        mtree.append(self.series[1])
+        mtree.append(self.output)
+        return {'data_hash': mtree.merkle_root}
+
+
+class LP_filter_fft_fftw(LP_filter_fft_np):
+    component_meta = dlg_component('LP_filter_fftw', 'Filters a signal with a provided window using FFTW',
+                                   [dlg_batch_input('binary/*', [])],
+                                   [dlg_batch_output('binary/*', [])],
+                                   [dlg_streaming_input('binary/*')])
+
+    def initialize(self, **kwargs):
+        super(LP_filter_fft_fftw, self).initialize(**kwargs)
+
+    def filter(self):
+        pyfftw.interfaces.cache.disable()
+        signal = self.series[0]
+        window = self.series[1]
+        nfft = determine_size(len(signal) + len(window) - 1)
+        sig_zero_pad = pyfftw.empty_aligned(len(signal), dtype=self.precision['float'])
+        win_zero_pad = pyfftw.empty_aligned(len(window), dtype=self.precision['float'])
+        sig_zero_pad[0:len(signal)] = signal
+        win_zero_pad[0:len(window)] = window
+        sig_fft = pyfftw.interfaces.numpy_fft.fft(sig_zero_pad, n=nfft)
+        win_fft = pyfftw.interfaces.numpy_fft.fft(win_zero_pad, n=nfft)
+        out_fft = np.multiply(sig_fft, win_fft)
+        out = pyfftw.interfaces.numpy_fft.ifft(out_fft, n=nfft)
+        return out.astype(self.precision['complex'])
+
+
+class LP_filter_fft_cuda(LP_filter_fft_np):
+    component_meta = dlg_component('LP_filter_fft_cuda', 'Filters a signal with a provided window using cuda',
+                                   [dlg_batch_input('binary/*', [])],
+                                   [dlg_batch_output('binary/*', [])],
+                                   [dlg_streaming_input('binary/*')])
+
+    def initialize(self, **kwargs):
+        super(LP_filter_fft_cuda, self).initialize(**kwargs)
+
+    def filter(self):
+        import pycuda.gpuarray as gpuarray
+        import skcuda.fft as cu_fft
+        import skcuda.linalg as linalg
+        signal = self.series[0]
+        window = self.series[1]
+        linalg.init()
+        nfft = determine_size(len(signal) + len(window) - 1)
+        # Move data to GPU
+        sig_zero_pad = np.zeros(nfft, dtype=self.precision['float'])
+        win_zero_pad = np.zeros(nfft, dtype=self.precision['float'])
+        sig_gpu = gpuarray.zeros(sig_zero_pad.shape, dtype=self.precision['float'])
+        win_gpu = gpuarray.zeros(win_zero_pad.shape, dtype=self.precision['float'])
+        sig_zero_pad[0:len(signal)] = signal
+        win_zero_pad[0:len(window)] = window
+        sig_gpu.set(sig_zero_pad)
+        win_gpu.set(win_zero_pad)
+
+        # Plan forwards
+        sig_fft_gpu = gpuarray.zeros(nfft, dtype=self.precision['complex'])
+        win_fft_gpu = gpuarray.zeros(nfft, dtype=self.precision['complex'])
+        sig_plan_forward = cu_fft.Plan(sig_fft_gpu.shape, self.precision['float'], self.precision['complex'])
+        win_plan_forward = cu_fft.Plan(win_fft_gpu.shape, self.precision['float'], self.precision['complex'])
+        cu_fft.fft(sig_gpu, sig_fft_gpu, sig_plan_forward)
+        cu_fft.fft(win_gpu, win_fft_gpu, win_plan_forward)
+
+        # Convolve
+        out_fft = linalg.multiply(sig_fft_gpu, win_fft_gpu, overwrite=True)
+        linalg.scale(2.0, out_fft)
+
+        # Plan inverse
+        out_gpu = gpuarray.zeros_like(out_fft)
+        plan_inverse = cu_fft.Plan(out_fft.shape, self.precision['complex'], self.precision['complex'])
+        cu_fft.ifft(out_fft, out_gpu, plan_inverse, True)
+        out_np = np.zeros(len(out_gpu), self.precision['complex'])
+        out_gpu.get(out_np)
+        return out_np
+
+
+class LP_filter_pointwise_np(LP_filter_fft_np):
+    component_meta = dlg_component('LP_filter_pointwise_np', 'Filters a signal with a provided window using cuda',
+                                   [dlg_batch_input('binary/*', [])],
+                                   [dlg_batch_output('binary/*', [])],
+                                   [dlg_streaming_input('binary/*')])
+
+    def initialize(self, **kwargs):
+        super(LP_filter_pointwise_np, self).initialize(**kwargs)
+
+    def filter(self):
+        return np.convolve(self.series[0], self.series[1], mode='full').astype(self.precision['complex'])
