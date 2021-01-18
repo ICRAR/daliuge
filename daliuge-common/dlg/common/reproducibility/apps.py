@@ -1,4 +1,13 @@
+import pickle
+
+import numpy as np
+from dlg import droputils
 from dlg.apps.pyfunc import PyFuncApp
+from dlg.apps.simple import BarrierAppDROP
+from dlg.meta import dlg_batch_output, dlg_streaming_input
+from dlg.meta import dlg_component, dlg_batch_input
+from dlg.meta import dlg_int_param, dlg_list_param
+from merklelib import MerkleTree
 
 
 def writeIn():
@@ -43,3 +52,55 @@ class MyAverage(PyFuncApp):
     def initialize(self, **kwargs):
         fname = 'dlg.common.reproducibility.apps.my_av'
         super(MyAverage, self).initialize(func_name=fname)
+
+
+class LP_SignalGenerator(BarrierAppDROP):
+    component_meta = dlg_component('LPSignalGen', 'Low-pass filter example signal generator',
+                                   [dlg_batch_input('binary/*', [])],
+                                   [dlg_batch_output('binary/*', [])],
+                                   [dlg_streaming_input('binary/*')])
+
+    # default values
+    length = dlg_int_param('length', 512)
+    srate = dlg_int_param('sample rate', 5000)
+    freqs = dlg_list_param('Frequencies(int)', [440, 800, 1000, 2000])
+    series = np.empty([1])
+
+    def initialize(self, **kwargs):
+        super(LP_SignalGenerator, self).initialize(**kwargs)
+
+    def gen_sig(self):
+        series = np.zeros(self.length, dtype=np.float64)
+        for freq in self.freqs:
+            for i in range(self.length):
+                series[i] += np.sin(2 * np.pi * i * freq / self.srate)
+        return series
+
+    def getInputArrays(self):
+        ins = self.inputs
+        if len(ins) < 1:
+            raise Exception('At least one input required for %r' % self)
+
+        freqs = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
+        self.freqs = freqs
+
+    def run(self):
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception('At least one output required for %r' % self)
+        self.getInputArrays()
+        self.series = self.gen_sig()
+        for o in outs:
+            data = pickle.dumps(self.series)
+            o.len = len(data)
+            o.write(data)
+
+    def generate_recompute_data(self):
+        # This will do for now
+        return {'length': self.length,
+                'sample_rate': self.srate,
+                'frequencies': self.freqs}
+
+    def generate_reproduce_data(self):
+        # This will do for now
+        return {'data_hash': MerkleTree(self.series).merkle_root}
