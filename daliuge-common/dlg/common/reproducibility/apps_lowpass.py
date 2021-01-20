@@ -4,10 +4,10 @@ import numpy as np
 import pyfftw
 from dlg import droputils
 from dlg.apps.simple import BarrierAppDROP
+from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.meta import dlg_batch_output, dlg_streaming_input
 from dlg.meta import dlg_component, dlg_batch_input
 from dlg.meta import dlg_int_param, dlg_list_param, dlg_float_param, dlg_bool_param
-from merklelib import MerkleTree
 
 
 def determine_size(length):
@@ -20,7 +20,7 @@ def determine_size(length):
 
 class LP_SignalGenerator(BarrierAppDROP):
     component_meta = dlg_component('LPSignalGen', 'Low-pass filter example signal generator',
-                                   [dlg_batch_input('binary/*', [])],
+                                   [None],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
 
@@ -50,20 +50,21 @@ class LP_SignalGenerator(BarrierAppDROP):
             o.len = len(data)
             o.write(data)
 
+    def generate_reproduce_data(self):
+        # This will do for now
+        return {'data_hash': common_hash(self.series)}
+
     def generate_recompute_data(self):
         # This will do for now
         return {'length': self.length,
                 'sample_rate': self.srate,
-                'frequencies': self.freqs}
-
-    def generate_reproduce_data(self):
-        # This will do for now
-        return {'data_hash': MerkleTree(self.series).merkle_root}
+                'frequencies': self.freqs,
+                'status': self.status}
 
 
 class LP_WindowGenerator(BarrierAppDROP):
     component_meta = dlg_component('LPWindowGen', 'Low-pass filter example window generator',
-                                   [dlg_batch_input('binary/*', [])],
+                                   [None],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
 
@@ -88,9 +89,9 @@ class LP_WindowGenerator(BarrierAppDROP):
     def gen_win(self):
         alpha = 2 * self.cutoff / self.srate
         win = np.zeros(self.length)
-        for i in range(self.length):
-            ham = 0.54 - 0.46 * np.cos(2 * np.pi * i / self.length)  # Hamming coefficient
-            hsupp = (i - self.length / 2)
+        for i in range(int(self.length)):
+            ham = 0.54 - 0.46 * np.cos(2 * np.pi * i / int(self.length))  # Hamming coefficient
+            hsupp = (i - int(self.length) / 2)
             win[i] = ham * alpha * self.sinc(alpha * hsupp)
         return win
 
@@ -104,13 +105,16 @@ class LP_WindowGenerator(BarrierAppDROP):
             o.len = len(data)
             o.write(data)
 
-    def generate_recompute_data(self):
-        return {'length': self.length,
-                'cutoff': self.cutoff,
-                'sample_rate': self.srate}
-
     def generate_reproduce_data(self):
-        return {'data_hash', MerkleTree(self.series).merkle_root}
+        return dict(data_hash=common_hash(self.series))
+
+    def generate_recompute_data(self):
+        output = dict()
+        output['length'] = self.length
+        output['cutoff'] = self.cutoff
+        output['sample_rate'] = self.srate
+        output['status'] = self.status
+        return output
 
 
 class LP_AddNoise(BarrierAppDROP):
@@ -158,15 +162,16 @@ class LP_AddNoise(BarrierAppDROP):
             o.len = len(data)
             o.write(data)
 
+    def generate_reproduce_data(self):
+        return {'data_hash', common_hash(self.signal)}
+
     def generate_recompute_data(self):
         return {'mean': self.mean,
                 'std': self.std,
                 'sample_rate': self.srate,
                 'seed': self.seed,
-                'alpha': self.alpha}
-
-    def generate_reproduce_data(self):
-        return {'data_hash', MerkleTree(self.signal).merkle_root}
+                'alpha': self.alpha,
+                'status': self.status}
 
 
 class LP_filter_fft_np(BarrierAppDROP):
@@ -199,11 +204,14 @@ class LP_filter_fft_np(BarrierAppDROP):
         self.series = array
 
     def filter(self):
-        nfft = int(2 ** np.ceil(np.log2(len(self.series[0] + self.series[1] - 1)))) - 1
+        signal = self.series[0]
+        window = self.series[1]
+        nfft = determine_size(len(signal) + len(window) - 1)
+        print(nfft)
         sig_zero_pad = np.zeros(nfft, dtype=self.precision['float'])
         win_zero_pad = np.zeros(nfft, dtype=self.precision['float'])
-        sig_zero_pad[0:len(self.series[0])] = self.series[0]
-        win_zero_pad[0:len(self.series[1])] = self.series[1]
+        sig_zero_pad[0:len(signal)] = signal
+        win_zero_pad[0:len(window)] = window
         sig_fft = np.fft.fft(sig_zero_pad)
         win_fft = np.fft.fft(win_zero_pad)
         out_fft = np.multiply(sig_fft, win_fft)
@@ -222,14 +230,12 @@ class LP_filter_fft_np(BarrierAppDROP):
             o.write(data)
 
     def generate_recompute_data(self):
-        return {'precision_float': self.precision['float'],
-                'precision_complex': self.precision['complex']}
+        return {'precision_float': str(self.precision['float']),
+                'precision_complex': str(self.precision['complex']),
+                'status': self.status}
 
     def generate_reproduce_data(self):
-        mtree = MerkleTree(self.series[0])
-        mtree.append(self.series[1])
-        mtree.append(self.output)
-        return {'data_hash': mtree.merkle_root}
+        return {'output_hash': common_hash(self.output)}
 
 
 class LP_filter_fft_fftw(LP_filter_fft_np):
