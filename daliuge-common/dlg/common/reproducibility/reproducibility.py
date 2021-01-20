@@ -199,7 +199,7 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproducibilityFlags):
     data = accumulate_lgt_drop_data(drop, level)
     merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
-    drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': []}
+    drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': {}}
     return drop
 
 
@@ -218,7 +218,7 @@ def init_lg_repro_drop_data(drop: dict):
     merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     drop['reprodata']['lg_data'] = data
-    drop['reprodata']['lg_parenthashes'] = []
+    drop['reprodata']['lg_parenthashes'] = {}
     return drop
 
 
@@ -226,7 +226,7 @@ def append_pgt_repro_data(drop: dict, data: dict):
     merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pgt_parenthashes'] = []
+    drop['reprodata']['pgt_parenthashes'] = {}
     drop['reprodata']['pgt_data'] = data
     return drop
 
@@ -263,7 +263,7 @@ def init_pg_repro_drop_data(drop: dict):
     merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pg_parenthashes'] = []
+    drop['reprodata']['pg_parenthashes'] = {}
     drop['reprodata']['pg_data'] = data
     return drop
 
@@ -274,7 +274,7 @@ def init_rg_repro_drop_data(drop: dict):
     :param drop:
     :return: The same drop with appended reproducibility information
     """
-    drop['reprodata']['rg_parenthashes'] = []
+    drop['reprodata']['rg_parenthashes'] = {}
     return drop
 
 
@@ -293,8 +293,6 @@ def build_lg_block_data(drop: dict):
     if 'merkleroot' in drop['reprodata']['lg_data']:
         lg_hash = drop['reprodata']['lg_data']['merkleroot']
         block_data.append(lg_hash)
-    hashset = set(drop['reprodata']['lg_parenthashes'])
-    drop['reprodata']['lg_parenthashes'] = list(hashset)
     for parenthash in sorted(drop['reprodata']['lg_parenthashes']):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -303,8 +301,6 @@ def build_lg_block_data(drop: dict):
 
 def build_pgt_block_data(drop: dict):
     block_data = [drop['reprodata']['pgt_data']['merkleroot'], drop['reprodata']['lg_blockhash']]
-    hashset = set(drop['reprodata']['pgt_parenthashes'])
-    drop['reprodata']['pgt_parenthashes'] = list(hashset)
     for parenthash in sorted(drop['reprodata']['pgt_parenthashes']):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -315,8 +311,6 @@ def build_pg_block_data(drop: dict):
     block_data = [drop['reprodata']['pg_data']['merkleroot'],
                   drop['reprodata']['pgt_blockhash'],
                   drop['reprodata']['lg_blockhash']]
-    hashset = set(drop['reprodata']['pg_parenthashes'])
-    drop['reprodata']['pg_parenthashes'] = list(hashset)
     for parenthash in sorted(drop['reprodata']['pg_parenthashes']):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -328,8 +322,6 @@ def build_rg_block_data(drop: dict):
                   drop['reprodata']['pg_blockhash'],
                   drop['reprodata']['pgt_blockhash'],
                   drop['reprodata']['lg_blockhash']]
-    hashset = set(drop['reprodata']['rg_parenthashes'])
-    drop['reprodata']['rg_parenthashes'] = list(hashset)
     for parenthash in sorted(drop['reprodata']['rg_parenthashes']):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -378,20 +370,23 @@ def lg_build_blockdag(lg: dict):
         rmode = rflag_caster(dropset[did][0]['reprodata']['rmode']).value
         for n in neighbourset[did]:
             dropset[n][1] -= 1
-            parenthash = []
+            parenthash = {}
             if rmode >= ReproducibilityFlags.REPRODUCE.value:
                 if dropset[did][0]['categoryType'] == Categories.DATA \
                         and (dropset[did][1] == 0 or dropset[did][2] == 0):
                     # Add my new hash to the parent-hash list
-                    parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
+                    if did not in parenthash.keys():
+                        parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                    # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
                 else:
                     # Add my parenthashes to the parent-hash list
-                    parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
+                    parenthash.update(dropset[did][0]['reprodata']['lg_parenthashes'])
+                    # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
             if rmode != ReproducibilityFlags.REPRODUCE.value:  # Non-compressing behaviour
-                parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
-
+                parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
             #  Add our new hash to the parent-hash list
-            dropset[n][0]['reprodata']['lg_parenthashes'].extend(parenthash)  # We deal with duplicates later
+            dropset[n][0]['reprodata']['lg_parenthashes'].update(parenthash)  # We deal with duplicates later
             if dropset[n][1] == 0:  # Add drops at the DAG-frontier
                 q.append(n)
 
@@ -466,20 +461,22 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         rmode = int(dropset[did][0]['reprodata']['rmode'])
         for n in neighbourset[did]:
             dropset[n][1] -= 1
-            parenthash = []
+            parenthash = {}
             if rmode >= ReproducibilityFlags.REPRODUCE.value:
                 # TODO: Hack! may break later, proceed with caution
                 if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA\
                         and (dropset[did][1] == 0 or dropset[did][2] == 0):
                     # Add my new hash to the parent-hash list
-                    parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                    if did not in parenthash.keys():
+                        parenthash[did] = dropset[did][0]['reprodata'][blockstr + '_blockhash']
+                    # parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
                 else:
                     # Add my parenthashes to the parent-hash list
-                    parenthash.extend(dropset[did][0]['reprodata'][parentstr])
+                    parenthash.update(dropset[did][0]['reprodata'][parentstr])
             if rmode != ReproducibilityFlags.REPRODUCE.value:
-                parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
             # Add our new hash to the parest-hash list
-            dropset[n][0]['reprodata'][parentstr].extend(parenthash)
+            dropset[n][0]['reprodata'][parentstr].update(parenthash)
             if dropset[n][1] == 0:
                 q.append(n)
 
