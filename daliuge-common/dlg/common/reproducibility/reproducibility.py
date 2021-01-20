@@ -293,7 +293,7 @@ def build_lg_block_data(drop: dict):
     if 'merkleroot' in drop['reprodata']['lg_data']:
         lg_hash = drop['reprodata']['lg_data']['merkleroot']
         block_data.append(lg_hash)
-    for parenthash in sorted(drop['reprodata']['lg_parenthashes']):
+    for parenthash in sorted(drop['reprodata']['lg_parenthashes'].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['lg_blockhash'] = mtree.merkle_root
@@ -301,7 +301,7 @@ def build_lg_block_data(drop: dict):
 
 def build_pgt_block_data(drop: dict):
     block_data = [drop['reprodata']['pgt_data']['merkleroot'], drop['reprodata']['lg_blockhash']]
-    for parenthash in sorted(drop['reprodata']['pgt_parenthashes']):
+    for parenthash in sorted(drop['reprodata']['pgt_parenthashes'].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['pgt_blockhash'] = mtree.merkle_root
@@ -311,7 +311,7 @@ def build_pg_block_data(drop: dict):
     block_data = [drop['reprodata']['pg_data']['merkleroot'],
                   drop['reprodata']['pgt_blockhash'],
                   drop['reprodata']['lg_blockhash']]
-    for parenthash in sorted(drop['reprodata']['pg_parenthashes']):
+    for parenthash in sorted(drop['reprodata']['pg_parenthashes'].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['pg_blockhash'] = mtree.merkle_root
@@ -322,7 +322,7 @@ def build_rg_block_data(drop: dict):
                   drop['reprodata']['pg_blockhash'],
                   drop['reprodata']['pgt_blockhash'],
                   drop['reprodata']['lg_blockhash']]
-    for parenthash in sorted(drop['reprodata']['rg_parenthashes']):
+    for parenthash in sorted(drop['reprodata']['rg_parenthashes'].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop['reprodata']['rg_blockhash'] = mtree.merkle_root
