@@ -276,6 +276,11 @@ class LP_filter_fft_cuda(LP_filter_fft_np):
         import pycuda.gpuarray as gpuarray
         import skcuda.fft as cu_fft
         import skcuda.linalg as linalg
+        import pycuda.driver as cuda
+        from pycuda.tools import make_default_context
+        cuda.init()
+        context = make_default_context()
+        device = context.get_device()
         signal = self.series[0]
         window = self.series[1]
         linalg.init()
@@ -308,6 +313,10 @@ class LP_filter_fft_cuda(LP_filter_fft_np):
         cu_fft.ifft(out_fft, out_gpu, plan_inverse, True)
         out_np = np.zeros(len(out_gpu), self.precision['complex'])
         out_gpu.get(out_np)
+        context.pop()
+        context = None
+        from pycuda.tools import clear_context_caches
+        clear_context_caches()
         return out_np
 
 
