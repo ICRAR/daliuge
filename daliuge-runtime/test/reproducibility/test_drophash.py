@@ -48,7 +48,7 @@ class RerunHashTests(unittest.TestCase):
         a = AbstractDROP('a', 'a')
         a.reproducibility_level = ReproducibilityFlags.RERUN
         a.setCompleted()
-        self.assertTrue(a.generate_rerun_data(), [DROPStates.COMPLETED])
+        self.assertEqual(a.generate_rerun_data(), {'status': DROPStates.COMPLETED})
 
     def test_commit_on_complete(self):
         """
