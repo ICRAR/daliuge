@@ -40,7 +40,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import six
-from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, rmode_supported, HASHING_ALG
+from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, rmode_supported
 from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
 from six import BytesIO
@@ -79,10 +79,6 @@ class ListAsDict(list):
 
 
 track_current_drop = object_tracking('drop')
-
-
-def drop_hash(value):
-    return HASHING_ALG(value).hexdigest()
 
 
 # ===============================================================================
@@ -723,7 +719,7 @@ class AbstractDROP(EventFirer):
             #  Generate the MerkleData
             self._merkleData = self.generate_merkle_data()
             # Fill MerkleTree, add data and set the MerkleRoot Value
-            self._merkleTree = MerkleTree(self._merkleData.items(), drop_hash)
+            self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
             self._merkleRoot = self._merkleTree.merkle_root
             # Set as committed
             self._committed = True
