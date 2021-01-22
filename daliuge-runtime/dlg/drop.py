@@ -607,13 +607,14 @@ class AbstractDROP(EventFirer):
         if type(new_flag) != ReproducibilityFlags:
             raise TypeError("new_flag must be a reproducibility flag enum.")
         elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
+            self._reproducibility = new_flag
             if self._committed:
                 # Current behaviour, set to un-committed again after change
                 self._committed = False
                 self._merkleRoot = None
                 self._merkleTree = None
                 self._merkleData = []
-            self._reproducibility = new_flag
+                self.commit()
         else:
             raise NotImplementedError("new_flag %d is not supported", new_flag.value)
 
