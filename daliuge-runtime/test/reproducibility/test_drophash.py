@@ -26,8 +26,9 @@ Tests the low-level functionality for drops to hash runtime data.
 import unittest
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
+from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import AbstractDROP, drop_hash
+from dlg.drop import AbstractDROP
 from merklelib import MerkleTree
 
 
@@ -49,16 +50,6 @@ class RerunHashTests(unittest.TestCase):
         a.setCompleted()
         self.assertTrue(a.generate_rerun_data(), [DROPStates.COMPLETED])
 
-    def test_unimplemented_flags(self):
-        """
-        Asserts that unimplemented but planned functionality is handled accordingly.
-        """
-        a = AbstractDROP('a', 'a')
-        a.reproducibility_level = ReproducibilityFlags.RERUN
-        with self.assertRaises(NotImplementedError):
-            a.reproducibility_level = ReproducibilityFlags.REPEAT
-            a.generate_merkle_data()
-
     def test_commit_on_complete(self):
         """
         Tests that merkle_data is generated upon set_complete status and is correct (NOTHING, RERUN)
@@ -73,8 +64,8 @@ class RerunHashTests(unittest.TestCase):
 
         # Test RERUN
         a.setCompleted()
-        test = MerkleTree([DROPStates.COMPLETED], drop_hash)
-        # 6d1be79de51c1a5846bb0498b7779802710b2452c20e1b65013ad3ebe459f51e
+        test = MerkleTree({'status': DROPStates.COMPLETED}.items(), common_hash)
+        # 689fcf0d74c42200bef177db545adc43c135dfb0d7dc85b166db3af1dcded235
         self.assertTrue(test.merkle_root == a.merkleroot)
 
         # Test NOTHING
