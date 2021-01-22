@@ -29,11 +29,11 @@ import six
 import six.moves.cPickle as pickle  # @UnresolvedImport
 from dlg import droputils
 from dlg.apps import pyfunc
+from dlg.common import Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.common import Categories
 
 from ..manager import test_dm
 
@@ -244,6 +244,41 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_defaults(561, -1, y=300, z=2)
         self._test_defaults(0, 1, 1, x=40)
         self._test_defaults(249, 1, 2, x=35)
+
+    def test_reproducibility(self):
+        from dlg.common.reproducibility.constants import ReproducibilityFlags
+        from dlg.drop import NullDROP
+        a = _PyFuncApp('a', 'a', 'func3')
+        a.run()
+        b = NullDROP('b', 'b')
+        a.reproducibility_level = ReproducibilityFlags.RERUN
+        b.reproducibility_level = ReproducibilityFlags.RERUN
+        a.setCompleted()
+        b.setCompleted()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.REPEAT
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), {'args': [], 'kwargs': {}})
+
+        a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), {})
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        self.assertEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), a.generate_rerun_data())
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), a.generate_recompute_data())
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        self.assertEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), a.generate_repeat_data())
 
 
 class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
