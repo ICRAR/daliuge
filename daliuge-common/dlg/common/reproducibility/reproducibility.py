@@ -92,8 +92,6 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             if category == Categories.MEMORY:
                 pass
             elif category == Categories.FILE:
-                # data['filepath'] = fields['filepath']
-                # data['dirname'] = fields['dirname']
                 data['check_filepath_exists'] = fields['check_filepath_exists']
             elif category == Categories.S3:
                 pass
@@ -122,6 +120,11 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             pass
     elif level == ReproducibilityFlags.REPRODUCE:
         pass
+    if level == ReproducibilityFlags.RECOMPUTE or level == ReproducibilityFlags.REPLICATE_COMP:
+        if category_type == Categories.DATA:
+            if category == Categories.FILE:
+                data['filepath'] = fields['filepath']
+                data['dirname'] = fields['dirname']
 
     return data
 
