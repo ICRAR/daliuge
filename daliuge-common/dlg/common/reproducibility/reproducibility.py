@@ -143,6 +143,11 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         drop['reprodata']['rmode'] = str(rmode.value)
     if rmode == ReproducibilityFlags.NOTHING:
         return data
+    if rmode == ReproducibilityFlags.REPRODUCE:
+        data['type'] = drop['type']
+        if drop['type'] == 'plain':
+            data['storage'] = drop['storage']
+        return data
     if rmode.value >= ReproducibilityFlags.RERUN.value:
         data['type'] = drop['type']
         if data['type'] == 'plain':
