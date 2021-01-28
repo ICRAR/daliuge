@@ -103,7 +103,6 @@ class PyFuncApp(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
-
         self.fname = fname = self._getArg(kwargs, 'func_name', None)
         fcode = self._getArg(kwargs, 'func_code', None)
         if not fname and not fcode:
@@ -153,6 +152,9 @@ class PyFuncApp(BarrierAppDROP):
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
+        self.write_results(result)
+
+    def write_results(self, result):
         outputs = self.outputs
         if len(outputs) == 1:
             result = [result]
