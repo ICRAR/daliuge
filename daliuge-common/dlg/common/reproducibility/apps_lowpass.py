@@ -4,7 +4,7 @@ import numpy as np
 import pyfftw
 from dlg import droputils
 from dlg.apps.simple import BarrierAppDROP
-from dlg.common.reproducibility.reproducibility import common_hash
+# from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.meta import dlg_batch_output, dlg_streaming_input
 from dlg.meta import dlg_component, dlg_batch_input
 from dlg.meta import dlg_int_param, dlg_list_param, dlg_float_param, dlg_bool_param
@@ -50,9 +50,11 @@ class LP_SignalGenerator(BarrierAppDROP):
             o.len = len(data)
             o.write(data)
 
+    """
     def generate_reproduce_data(self):
         # This will do for now
         return {'data_hash': common_hash(self.series)}
+    """
 
     def generate_recompute_data(self):
         # This will do for now
@@ -105,8 +107,10 @@ class LP_WindowGenerator(BarrierAppDROP):
             o.len = len(data)
             o.write(data)
 
+    """
     def generate_reproduce_data(self):
         return dict(data_hash=common_hash(self.series))
+    """
 
     def generate_recompute_data(self):
         output = dict()
@@ -162,8 +166,10 @@ class LP_AddNoise(BarrierAppDROP):
             o.len = len(data)
             o.write(data)
 
+    """
     def generate_reproduce_data(self):
         return {'data_hash', common_hash(self.signal)}
+    """
 
     def generate_recompute_data(self):
         return {'mean': self.mean,
@@ -234,8 +240,10 @@ class LP_filter_fft_np(BarrierAppDROP):
                 'precision_complex': str(self.precision['complex']),
                 'status': self.status}
 
+    """
     def generate_reproduce_data(self):
         return {'output_hash': common_hash(self.output)}
+    """
 
 
 class LP_filter_fft_fftw(LP_filter_fft_np):
