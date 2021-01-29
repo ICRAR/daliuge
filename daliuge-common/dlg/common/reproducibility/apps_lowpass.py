@@ -1,5 +1,3 @@
-import pickle
-
 import numpy as np
 import pyfftw
 from dlg import droputils
@@ -25,10 +23,10 @@ class LP_SignalGenerator(BarrierAppDROP):
                                    [dlg_streaming_input('binary/*')])
 
     # default values
-    length = dlg_int_param('length', 512)
+    length = dlg_int_param('length', 256)
     srate = dlg_int_param('sample rate', 5000)
     freqs = dlg_list_param('Frequencies(int)', [440, 800, 1000, 2000])
-    series = np.empty([1])
+    series = None
 
     def initialize(self, **kwargs):
         super(LP_SignalGenerator, self).initialize(**kwargs)
@@ -45,7 +43,7 @@ class LP_SignalGenerator(BarrierAppDROP):
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
         self.series = self.gen_sig()
-        data = pickle.dumps(self.series)
+        data = self.series.tostring()
         for o in outs:
             o.len = len(data)
             o.write(data)
@@ -71,10 +69,10 @@ class LP_WindowGenerator(BarrierAppDROP):
                                    [dlg_streaming_input('binary/*')])
 
     # default values
-    length = dlg_int_param('length', 512)
+    length = dlg_int_param('length', 256)
     cutoff = dlg_int_param('cutoff', 600)
     srate = dlg_int_param('sample_rate', 5000)
-    series = np.empty([1])
+    series = None
 
     def initialize(self, **kwargs):
         super(LP_WindowGenerator, self).initialize(**kwargs)
@@ -90,7 +88,7 @@ class LP_WindowGenerator(BarrierAppDROP):
 
     def gen_win(self):
         alpha = 2 * self.cutoff / self.srate
-        win = np.zeros(self.length)
+        win = np.zeros(self.length, dtype=np.float64)
         for i in range(int(self.length)):
             ham = 0.54 - 0.46 * np.cos(2 * np.pi * i / int(self.length))  # Hamming coefficient
             hsupp = (i - int(self.length) / 2)
@@ -102,7 +100,7 @@ class LP_WindowGenerator(BarrierAppDROP):
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
         self.series = self.gen_win()
-        data = pickle.dumps(self.series)
+        data = self.series.tostring()
         for o in outs:
             o.len = len(data)
             o.write(data)
@@ -152,8 +150,8 @@ class LP_AddNoise(BarrierAppDROP):
         if len(ins) != 1:
             raise Exception('Precisely one input required for %r' % self)
 
-        array = pickle.loads(droputils.allDropContents(ins[0]))
-        self.signal = array
+        array = np.fromstring(droputils.allDropContents(ins[0]))
+        self.signal = np.frombuffer(array)
 
     def run(self):
         outs = self.outputs
@@ -161,7 +159,7 @@ class LP_AddNoise(BarrierAppDROP):
             raise Exception('At least one output required for %r' % self)
         self.getInputArrays()
         sig = self.add_noise()
-        data = pickle.dumps(sig)
+        data = sig.tobytes()
         for o in outs:
             o.len = len(data)
             o.write(data)
@@ -206,7 +204,7 @@ class LP_filter_fft_np(BarrierAppDROP):
         if len(ins) != 2:
             raise Exception('Precisely two input required for %r' % self)
 
-        array = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
+        array = [np.fromstring(droputils.allDropContents(inp)) for inp in ins]
         self.series = array
 
     def filter(self):
@@ -230,7 +228,7 @@ class LP_filter_fft_np(BarrierAppDROP):
             raise Exception('At least one output required for %r' % self)
         self.getInputArrays()
         self.output = self.filter()
-        data = pickle.dumps(self.output)
+        data = self.output.tostring()
         for o in outs:
             o.len = len(data)
             o.write(data)
