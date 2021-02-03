@@ -29,7 +29,7 @@ from dlg.dropmake import pg_generator
 
 lg_dir = pkg_resources.resource_filename(__name__, 'logical_graphs')  # @UndefinedVariable
 
-
+# Test LGT to LG method: Filling parameter values in LG.
 class LGFillTest(unittest.TestCase):
 
     def test_fill_lg(self):
@@ -41,12 +41,12 @@ class LGFillTest(unittest.TestCase):
                 'what': 'hi'
             }
         }
-        with open(os.path.join(lg_dir, 'chiles_simple.json')) as f:
+        with open(os.path.join(lg_dir, 'cont_img.json')) as f:
             lg = pg_generator.fill(json.load(f), params)
-        for node_idx, value in zip((20, 21, 22, 23), ('1', '2', 'True', 'hi')):
+        for node_idx, value in zip((6, 13, 35, 41), ('1', '2', 'True', 'hi')):
             node = lg['nodeDataArray'][node_idx]
             found = None
             for field in node['fields']:
-                if field['name'] == 'Arg10':
+                if field['name'] == 'arg10':
                     found = field['value']
             self.assertEqual(found, value)

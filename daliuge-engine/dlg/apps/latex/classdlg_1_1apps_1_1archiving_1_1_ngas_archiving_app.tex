@@ -1,0 +1,89 @@
+\hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app}{}\section{dlg.\+apps.\+archiving.\+Ngas\+Archiving\+App Class Reference}
+\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app}\index{dlg.apps.archiving.NgasArchivingApp@{dlg.apps.archiving.NgasArchivingApp}}
+Inheritance diagram for dlg.\+apps.\+archiving.\+Ngas\+Archiving\+App\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a2667d1348a10028389c16a1d933a5702}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a2667d1348a10028389c16a1d933a5702}} 
+def {\bfseries initialize} (self, $\ast$$\ast$kwargs)
+\item 
+def \mbox{\hyperlink{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a6823199a640bdd4c5991b8728d7af490}{store}} (self, in\+Drop)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a31d193eac7d450752df236321c8c2f25}{compontent\+\_\+meta}}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_ab3e75ddc6c71ec97df248bd1ca423509}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_ab3e75ddc6c71ec97df248bd1ca423509}} 
+{\bfseries ngas\+Srv} = dlg\+\_\+string\+\_\+param(\textquotesingle{}N\+G\+AS Server\textquotesingle{}, \textquotesingle{}localhost\textquotesingle{})
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a0d4d3bdda39900d6cbda2203e05a1c4a}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a0d4d3bdda39900d6cbda2203e05a1c4a}} 
+{\bfseries ngas\+Port} = dlg\+\_\+int\+\_\+param(\textquotesingle{}N\+G\+AS Port\textquotesingle{}, 7777)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a33cded6e79b28ae159b1cd609e8063c5}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a33cded6e79b28ae159b1cd609e8063c5}} 
+{\bfseries ngas\+Connect\+Timeout} = dlg\+\_\+float\+\_\+param(\textquotesingle{}Connect Timeout\textquotesingle{}, 2.)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a4355cd020b333098f4e5d9d2c732696c}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a4355cd020b333098f4e5d9d2c732696c}} 
+{\bfseries ngas\+Timeout} = dlg\+\_\+float\+\_\+param(\textquotesingle{}Timeout\textquotesingle{}, 2.)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}An ExternalStoreApp class that takes its input DROP and archives it in
+an NGAS server. It currently deals with non-container DROPs only.
+
+The archiving to NGAS occurs through the framework and not by spawning a
+new NGAS client process. This way we can read the different storage types
+supported by the framework, and not only filesystem objects.
+\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a6823199a640bdd4c5991b8728d7af490}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a6823199a640bdd4c5991b8728d7af490}} 
+\index{dlg.apps.archiving.NgasArchivingApp@{dlg.apps.archiving.NgasArchivingApp}!store@{store}}
+\index{store@{store}!dlg.apps.archiving.NgasArchivingApp@{dlg.apps.archiving.NgasArchivingApp}}
+\subsubsection{\texorpdfstring{store()}{store()}}
+{\footnotesize\ttfamily def dlg.\+apps.\+archiving.\+Ngas\+Archiving\+App.\+store (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{input\+Drop }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Method implemented by subclasses. It should stores the contents of
+`inputDrop` into an external store.
+\end{DoxyVerb}
+ 
+
+Reimplemented from \mbox{\hyperlink{classdlg_1_1apps_1_1archiving_1_1_external_store_app_a6a41c4de0c0a291d8d7924563a592a64}{dlg.\+apps.\+archiving.\+External\+Store\+App}}.
+
+
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a31d193eac7d450752df236321c8c2f25}\label{classdlg_1_1apps_1_1archiving_1_1_ngas_archiving_app_a31d193eac7d450752df236321c8c2f25}} 
+\index{dlg.apps.archiving.NgasArchivingApp@{dlg.apps.archiving.NgasArchivingApp}!compontent\_meta@{compontent\_meta}}
+\index{compontent\_meta@{compontent\_meta}!dlg.apps.archiving.NgasArchivingApp@{dlg.apps.archiving.NgasArchivingApp}}
+\subsubsection{\texorpdfstring{compontent\_meta}{compontent\_meta}}
+{\footnotesize\ttfamily dlg.\+apps.\+archiving.\+Ngas\+Archiving\+App.\+compontent\+\_\+meta\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=  dlg\_component(\textcolor{stringliteral}{'NgasArchivingApp'}, \textcolor{stringliteral}{'An ExternalStoreApp class that takes its input DROP and archives it in '}}
+\DoxyCodeLine{                                    \textcolor{stringliteral}{'an NGAS server. It currently deals with non-container DROPs only.'},}
+\DoxyCodeLine{                                    [dlg\_batch\_input(\textcolor{stringliteral}{'binary/*'}, [])],}
+\DoxyCodeLine{                                    [dlg\_batch\_output(\textcolor{stringliteral}{'binary/*'}, [])],}
+\DoxyCodeLine{                                    [dlg\_streaming\_input(\textcolor{stringliteral}{'binary/*'})])}
+
+\end{DoxyCode}
+\begin{DoxyVerb}An ExternalStoreApp class that takes its input DROP and archives it in
+an NGAS server. It currently deals with non-container DROPs only.
+
+The archiving to NGAS occurs through the framework and not by spawning a
+new NGAS client process. This way we can read the different storage types
+supported by the framework, and not only filesystem objects.
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+archiving.\+py\end{DoxyCompactItemize}

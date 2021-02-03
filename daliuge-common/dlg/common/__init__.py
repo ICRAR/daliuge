@@ -26,6 +26,7 @@ from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .osutils import terminate_or_kill, wait_or_kill
 from .streams import ZlibCompressedStream, JSONStream
 
+
 class Categories:
     START = 'Start'
     END = 'End'
@@ -47,6 +48,7 @@ class Categories:
 
     DATA = 'Data'
     COMPONENT = 'Component'
+    PYTHON_APP = 'PythonApp'
     BASH_SHELL_APP = 'BashShellApp'
     MPI = 'Mpi'
     DYNLIB_APP = 'DynlibApp'
@@ -59,6 +61,7 @@ class Categories:
 STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
 APP_DROP_TYPES = [
     Categories.COMPONENT,
+    Categories.PYTHON_APP,
     Categories.BASH_SHELL_APP,
     Categories.MPI,
     Categories.DYNLIB_APP,

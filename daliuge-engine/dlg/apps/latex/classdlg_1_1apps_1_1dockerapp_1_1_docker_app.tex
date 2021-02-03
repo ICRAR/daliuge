@@ -1,0 +1,158 @@
+\hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app}{}\section{dlg.\+apps.\+dockerapp.\+Docker\+App Class Reference}
+\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app}\index{dlg.apps.dockerapp.DockerApp@{dlg.apps.dockerapp.DockerApp}}
+Inheritance diagram for dlg.\+apps.\+dockerapp.\+Docker\+App\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classdlg_1_1apps_1_1dockerapp_1_1_docker_app}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a9fe5578f49cd8f820c9f54fa03d0628e}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a9fe5578f49cd8f820c9f54fa03d0628e}} 
+def {\bfseries initialize} (self, $\ast$$\ast$kwargs)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a75d89b4cf076666087d2376e6d263c76}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a75d89b4cf076666087d2376e6d263c76}} 
+def {\bfseries container\+Ip} (self)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a220a96d23369c300f5ea5ea9984f672b}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a220a96d23369c300f5ea5ea9984f672b}} 
+def {\bfseries container\+Ip} (self, container\+Ip)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a84c7e6147d7f8879e25c1d310a0b30e1}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a84c7e6147d7f8879e25c1d310a0b30e1}} 
+def {\bfseries container\+Id} (self)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a584c9c33acc2ed12e02571c04b06f844}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a584c9c33acc2ed12e02571c04b06f844}} 
+def {\bfseries handle\+Interest} (self, drop)
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a0b43fc109e7140231be6669b3a7600f4}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a0b43fc109e7140231be6669b3a7600f4}} 
+def {\bfseries run} (self)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a63b019cbf7ac40c0c45d90bf53b2d10a}\label{classdlg_1_1apps_1_1dockerapp_1_1_docker_app_a63b019cbf7ac40c0c45d90bf53b2d10a}} 
+{\bfseries container\+Ip}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}A BarrierAppDROP that represents a process running in a container
+hosted by a local docker daemon. Depending on the host system, the docker
+daemon might be automatically activated when a client tries to connect to
+it via its unix socket (like with systemd) or it needs to be brought up
+prior to any client operation (upstart). In any case, if the daemon is
+not present, this class will raise exceptions whenever it tries to connect
+to the server to perform some operation.
+
+Docker containers are built from docker images, which are pulled to the host
+where the docker daemon runs either explicitly (via `docker pull`) or less
+visibly (e.g., when running `docker run` using an image that has not been
+fetched yet). This DockerApp application will explicitly pull the image at
+`initialize` time, meaning that the docker images will become available at
+the time the physical graph (which this application is part of) is deployed.
+Docker containers also need a command to be run in them, which should be
+an available program inside the image.
+
+**Input and output**
+
+The inputs and outputs used by the dockerized application are made available
+by mapping host directories and files as "data volumes". Inputs are bound
+using their full path, but outputs are bound only up to their dirnames,
+because otherwise they would be created at container creation time by
+Docker. For example, the output /a/b/c will produce a binding to /dlg/a/b
+inside the docker container, where c will have to be written by the process
+running in the container.
+
+Since the command to be run in the container receives most probably as
+arguments the paths of its inputs and outputs, and since these might not be
+known precisely until runtime, users should use placeholders for them in the
+command-line specification. Placeholders for input locations take the form
+of "%iX", where X starts from 0 and refers to the X-th filesystem-related
+input. Likewise, output locations are specified as "%oX". Alternatively,
+inputs and outputs can be referred to by their UIDs, in which case the
+placeholders will look like "%i[X]" and "%o[X]" respectively, where X is the
+UID of the input/output being referenced.
+
+Data volumes are a file-specific feature. For this reason, volumes are setup
+for file-system based input/output DROPs only, namely the FileDROP and the
+DirectoryContainer types. Other DROP types can instead pass down their
+dataURL property via the command-line by using placeholders. Placeholders
+for input DROP dataURLs take the form of "%iDataURLX", where X starts from 0
+and refers to the X-th non-filesystem related input. Likewise, output
+dataURLs are specified as "%oDataURLX". Alternatively users can refer to the
+dataURL of a specific input or output as "%iDataURL[X]" and "%oDataURL[X]"
+respectively, where X is the UID of the input/output being referenced.
+
+Additional volume bindings can be specified via the keyword arguments when
+creating the DockerApp. The host file/directories must exist at the moment
+of creating the DockerApp; otherwise it will fail to initialize.
+
+**Users**
+
+A docker container usually runs as root by default. One of the major
+drawbacks of this is that the output generated by the containerized
+application will belong also to the root user of the host system, and not to
+the user running the DALiuGE framework. This DockerApp avoids to run containers
+as the root user because of this reason. Two parameters, given at
+construction time, control this behavior:
+
+* `user`
+          If given indicates the user used to run the container. It is
+          assumed that if a user is indicated, the user already exists in
+          the docker image; otherwise the container will actually fail to
+          start. Its default value is `None`, meaning that the container
+          will run as the root user.
+* `ensureUserAndSwitch`
+          If the container is run as the root user, this
+          option indicates whether a non-root user with the same UID of the
+          user running this process should be: a) searched for, b) created
+          if it doesn't exist, and c) used to run the command inside the
+          container. This is achieved by prepending some shell commands to
+          the initial user-specified command, which will run as root first,
+          but that finally perform the switch within the container process.
+          Its default value is `True` if `user` is `None`; `False`
+          otherwise.
+
+Using these two options one can thus control the user that will run the
+command inside the container.
+
+**Communication between containers**
+
+Although some containerized applications might run on their own, there are
+cases where applications need to talk to each other in order to advance
+(like in the case of client-server applications, or in the case of MPI
+applications). All containers started in the same host (and therefore, all
+applications running in them) belong by default to the same network, and
+therefore are already visible.
+
+Applications needing to communicate with other applications should be able
+to specify the target's IP in their command-line. Since the IP is not known
+until containers are created, this specification is done using the
+%containerIp[oid]% placeholder, with 'oid' being the OID of the target
+DockerApp.
+
+This need to know other DockerApp's IP imposes a sequential order on the
+startup of the containers, since one needs to be started in order to learn
+its IP, which is used to start the second. This is handled gracefully by
+the DockerApp code, with the condition that `self.handleInterest` is invoked
+where necessary. See `self.handleInterest` for more information about this
+mechanism.
+
+**TODO**
+
+Processes in containers might not always exit by themselves, and the
+containers might need to be manually stopped. This the case for example of
+an set of MPI processes, where the master container will run the MPI
+program and the slave containers will run an SSH daemon, where the SSH
+daemon will not quit automatically once the master process has ended.
+
+Still, we probably will need to differentiate between a forced quit because
+of a timeout, and a good quit, and therefore we might impose that processes
+running in a container must quit themselves after successfully performing
+their task.
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+dockerapp.\+py\end{DoxyCompactItemize}

@@ -1,0 +1,322 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.0" xml:lang="en-US">
+  <compounddef id="classdlg_1_1apps_1_1simple_1_1_random_array_app" kind="class" language="Python" prot="public">
+    <compoundname>dlg::apps::simple::RandomArrayApp</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">BarrierAppDROP</basecompoundref>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a77c6140b456b6a845012fe145bcbd909" prot="public" static="yes" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.RandomArrayApp::compontent_meta</definition>
+        <argsstring></argsstring>
+        <name>compontent_meta</name>
+        <initializer>=  dlg_component(&apos;<ref refid="classdlg_1_1apps_1_1simple_1_1_random_array_app" kindref="compound">RandomArrayApp</ref>&apos;, &apos;Random Array App.&apos;,
+                                    [dlg_batch_input(&apos;binary/*&apos;, [])],
+                                    [dlg_batch_output(&apos;binary/*&apos;, [])],
+                                    [dlg_streaming_input(&apos;binary/*&apos;)])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="165" column="1" bodyfile="simple.py" bodystart="165" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1ac6da70efab97d63ee8e8baa703cafa2f" prot="public" static="yes" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.RandomArrayApp::integer</definition>
+        <argsstring></argsstring>
+        <name>integer</name>
+        <initializer>=  dlg_bool_param(&apos;integer&apos;, True)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="171" column="1" bodyfile="simple.py" bodystart="171" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a916ffd8cca411fb7b6c922553be0f02c" prot="public" static="yes" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.RandomArrayApp::low</definition>
+        <argsstring></argsstring>
+        <name>low</name>
+        <initializer>=  dlg_float_param(&apos;low&apos;, 0)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="172" column="1" bodyfile="simple.py" bodystart="172" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a2c859df2fda06bf576e303518bb5f92a" prot="public" static="yes" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.RandomArrayApp::high</definition>
+        <argsstring></argsstring>
+        <name>high</name>
+        <initializer>=  dlg_float_param(&apos;high&apos;, 100)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="173" column="1" bodyfile="simple.py" bodystart="173" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1af0e59d164b4e40b91fadec74ccedd9d0" prot="public" static="yes" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.RandomArrayApp::size</definition>
+        <argsstring></argsstring>
+        <name>size</name>
+        <initializer>=  dlg_int_param(&apos;size&apos;, 100)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="174" column="1" bodyfile="simple.py" bodystart="174" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a5bb05459f2650f5ffb9226747647a421" prot="public" static="yes" mutable="no">
+        <type>list</type>
+        <definition>list dlg.apps.simple.RandomArrayApp::marray</definition>
+        <argsstring></argsstring>
+        <name>marray</name>
+        <initializer>=  []</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="175" column="1" bodyfile="simple.py" bodystart="175" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1aab361830b9d1d62a0b57d00047dd713b" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.RandomArrayApp::marray</definition>
+        <argsstring></argsstring>
+        <name>marray</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="199" column="1" bodyfile="simple.py" bodystart="199" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a7af33812aa34879859acfcbc903aaab4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def dlg.apps.simple.RandomArrayApp.initialize</definition>
+        <argsstring>(self, **kwargs)</argsstring>
+        <name>initialize</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>**</type>
+          <declname>kwargs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="177" column="1" bodyfile="simple.py" bodystart="177" bodyend="179"/>
+      </memberdef>
+      <memberdef kind="function" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1abd114510ece90c24417811df5b58421e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def dlg.apps.simple.RandomArrayApp.run</definition>
+        <argsstring>(self)</argsstring>
+        <name>run</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="180" column="1" bodyfile="simple.py" bodystart="180" bodyend="189"/>
+      </memberdef>
+      <memberdef kind="function" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1ab235a46cb3f6b14b410d16250320e941" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def dlg.apps.simple.RandomArrayApp.generateRandomArray</definition>
+        <argsstring>(self)</argsstring>
+        <name>generateRandomArray</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="190" column="1" bodyfile="simple.py" bodystart="190" bodyend="200"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-func">
+      <memberdef kind="function" id="classdlg_1_1apps_1_1simple_1_1_random_array_app_1ab6bbe567136a59eedfc3589eb14e9745" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def dlg.apps.simple.RandomArrayApp._getArray</definition>
+        <argsstring>(self)</argsstring>
+        <name>_getArray</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="201" column="1" bodyfile="simple.py" bodystart="201" bodyend="204"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>RandomArrayApp<linebreak/>
+. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>A testing APP that does not take any input and produces a random array of type int64, if integer is set to True, else of type float64. size indicates the number of elements ranging between the values low and high. The resulting array will be send to all connected output apps. <simplesect kind="par"><title>EAGLE_START</title><para></para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>gitrepo</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>version</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>category</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>PythonApp </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">param/size/100/Integer/readwrite</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the siz of the array<linebreak/>
+</para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">param/integer/True/Boolean/readwrite</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Generate integer array?<linebreak/>
+</para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">param/low/0/float/readwrite</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>low value of range in array [inclusive]<linebreak/>
+</para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">param/high/1/float/readwrite</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>high value of range of array [exclusive]<linebreak/>
+</para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">param/appclass/dlg.apps.simple.RandomArrayApp/String/readonly</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Application class<linebreak/>
+</para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="out">port/array</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Port carrying the averaged array. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="par"><title>EAGLE_END</title><para></para>
+</simplesect>
+<verbatim>A BarrierAppDrop that generates an array of random numbers. It does
+not require any inputs and writes the generated array to all of its
+outputs.
+
+Keywords:
+
+integer:  bool [True], generate integer array
+low:      float, lower boundary (will be converted to int for integer arrays)
+high:     float, upper boundary (will be converted to int for integer arrays)
+size:     int, number of array elements
+</verbatim> </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>dlg.apps.simple.RandomArrayApp</label>
+        <link refid="classdlg_1_1apps_1_1simple_1_1_random_array_app"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>BarrierAppDROP</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>dlg.apps.simple.RandomArrayApp</label>
+        <link refid="classdlg_1_1apps_1_1simple_1_1_random_array_app"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>BarrierAppDROP</label>
+      </node>
+    </collaborationgraph>
+    <location file="simple.py" line="152" column="1" bodyfile="simple.py" bodystart="152" bodyend="205"/>
+    <listofallmembers>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1ab6bbe567136a59eedfc3589eb14e9745" prot="private" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>_getArray</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a77c6140b456b6a845012fe145bcbd909" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>compontent_meta</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1ab235a46cb3f6b14b410d16250320e941" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>generateRandomArray</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a2c859df2fda06bf576e303518bb5f92a" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>high</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a7af33812aa34879859acfcbc903aaab4" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>initialize</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1ac6da70efab97d63ee8e8baa703cafa2f" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>integer</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a916ffd8cca411fb7b6c922553be0f02c" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>low</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1a5bb05459f2650f5ffb9226747647a421" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>marray</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1aab361830b9d1d62a0b57d00047dd713b" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>marray</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1abd114510ece90c24417811df5b58421e" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>run</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_random_array_app_1af0e59d164b4e40b91fadec74ccedd9d0" prot="public" virt="non-virtual"><scope>dlg::apps::simple::RandomArrayApp</scope><name>size</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
