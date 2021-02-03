@@ -51,6 +51,6 @@ def wait_or_kill(proc, timeout, period=0.1):
 
     kill9 = waitLoops == max_loops
     if kill9:
-        logger.warning('Killing %s by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
+        logger.warning('Killing %d by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
         proc.kill()
     proc.wait()
