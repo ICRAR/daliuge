@@ -26,15 +26,13 @@ import json
 import logging
 import optparse
 import os
+import traceback
 import signal
 import sys
 import threading
 import time
-import traceback
 import warnings
 
-import bottle
-import pkg_resources
 from bottle import (
     route,
     request,
@@ -45,12 +43,15 @@ from bottle import (
     response,
     HTTPResponse,
 )
+import bottle
+import pkg_resources
 
+from ... import common, restutils
+from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
-from ... import common, restutils
-from ...clients import CompositeManagerClient
+from ..cwl import create_workflow
 
 
 def file_as_string(fname, enc="utf8"):
@@ -197,6 +198,38 @@ def pgtjsonbody_get():
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
+@get("/pgt_cwl")
+def pgtcwl_get():
+    """
+    Return CWL representation of the logical graph
+    """
+    pgt_name = request.query.get("pgt_name")
+
+    if pgt_exists(pgt_name):
+        # get PGT from manager
+        pgtp = pg_mgr.get_pgt(pgt_name)
+
+        # build filename for CWL file from PGT filename
+        cwl_filename = pgt_name[:-6] + ".cwl"
+        zip_filename = pgt_name[:-6] + ".zip"
+
+        # create the workflow
+        import io
+        buffer = io.BytesIO()
+        try:
+            create_workflow(pgtp.drops, cwl_filename, buffer)
+        except Exception as e:
+            response.status = 400 # HTTP 400 Bad Request
+            return e
+
+        # respond with download of ZIP file
+        response.content_type = 'application/zip'
+        response.set_header("Content-Disposition", "attachment; filename=%s" % (zip_filename))
+        return buffer.getvalue()
+
+    else:
+        response.status = 404
+        return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
 @get("/lg_editor")
 def load_lg_editor():
@@ -376,7 +409,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-                  % ("" if num_partitions == 0 else "Partitioning"),
+            % ("" if num_partitions == 0 else "Partitioning"),
         )
     except GraphException as ge:
         response.status = 500
@@ -584,7 +617,6 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # Simple and easy
     def handler(*_args):
         raise KeyboardInterrupt
-
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 

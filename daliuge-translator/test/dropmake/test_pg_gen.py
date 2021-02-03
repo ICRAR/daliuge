@@ -19,49 +19,49 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest
+import unittest, pkg_resources
 
-import pkg_resources
-from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, \
-    MinNumPartsPGTP, GPGTNoNeedMergeException
+from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP,\
+ MinNumPartsPGTP, GPGTNoNeedMergeException
+from dlg.dropmake.cwl import create_workflow
+from dlg.dropmake import pg_generator
+from dlg.translator.tool_commands import unroll
 
 """
 python -m unittest test.dropmake.test_pg_gen
 """
 
-
 def get_lg_fname(lg_name):
     return pkg_resources.resource_filename(__name__, 'logical_graphs/{0}'.format(lg_name))  # @UndefinedVariable
-
 
 class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
         fp = get_lg_fname('lofar_std.json')
-        # fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
+        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
         lg = LG(fp)
         self.assertEqual(len(lg._done_dict.keys()), 36)
         drop_list = lg.unroll_to_tpl()
-        # print json.dumps(drop_list, indent=2)
-        # pprint.pprint(drop_list)
-        # pprint.pprint(dict(lg._drop_dict))
-        # input_dict = defaultdict(list)
-        # lg.to_pg_tpl(input_dict)
+        #print json.dumps(drop_list, indent=2)
+        #pprint.pprint(drop_list)
+        #pprint.pprint(dict(lg._drop_dict))
+        #input_dict = defaultdict(list)
+        #lg.to_pg_tpl(input_dict)
 
     def test_pg_test(self):
         fp = get_lg_fname('test_grpby_gather.json')
         lg = LG(fp)
         lg.unroll_to_tpl()
-        # input_dict = defaultdict(list)
-        # lg.to_pg_tpl(input_dict)
-        # pprint.pprint(dict(lg._drop_dict))
+        #input_dict = defaultdict(list)
+        #lg.to_pg_tpl(input_dict)
+        #pprint.pprint(dict(lg._drop_dict))
 
     def test_pgt_to_json(self):
         fp = get_lg_fname('lofar_std.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
-        # print pgt.to_gojs_json()
+        #print pgt.to_gojs_json()
 
     def test_metis_pgtp(self):
         lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
@@ -82,7 +82,7 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, 3, merge_parts=True)
-            # pgtp.json
+            #pgtp.json
             pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
             # with open('/tmp/met_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
@@ -124,7 +124,7 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list, 3, merge_parts=True)
-            # pgtp.json
+            #pgtp.json
             pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
 
@@ -140,7 +140,7 @@ class TestPGGen(unittest.TestCase):
             pgtp = MySarkarPGTP(drop_list, None, merge_parts=True)
             pgtp.to_gojs_json(visual=False)
             nb_islands = 2
-            # print(lgn)
+            #print(lgn)
             try:
                 pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
             except GPGTNoNeedMergeException as ge:
@@ -150,7 +150,7 @@ class TestPGGen(unittest.TestCase):
 
     def test_minnumparts_pgtp(self):
         lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
-        # tgt_partnum = [15, 15, 10, 10, 5]
+        #tgt_partnum = [15, 15, 10, 10, 5]
         tgt_deadline = [200, 300, 90, 80, 160]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
@@ -165,3 +165,62 @@ class TestPGGen(unittest.TestCase):
             fp = get_lg_fname(lg)
             lg = LG(fp)
             lg.unroll_to_tpl()
+
+    def test_cwl_translate(self):
+        import git
+        import os
+        import shutil
+        import uuid
+        import zipfile
+        import subprocess
+        import tempfile
+
+        output_list = []
+
+        # create a temporary directory to contain files created during test
+        cwl_output = tempfile.mkdtemp()
+
+        # create a temporary directory to contain a clone of EAGLE_test_repo
+        direct = tempfile.mkdtemp()
+
+        REPO = "https://github.com/ICRAR/EAGLE_test_repo"
+        git.Git(direct).clone(REPO)
+
+        cwl_dir = os.getenv("CWL_GRAPHS", "SP-602")
+
+        graph_dir = direct + "/EAGLE_test_repo/" + cwl_dir + "/"
+        for subdir, dirs, files in os.walk(graph_dir):
+            for file in files:
+                f = os.path.join(subdir, file)
+                if not f.endswith(".graph"):
+                    continue
+                pgt = unroll(f, 1)
+                pg_generator.partition(pgt, algo='metis', num_partitions=1,
+                                            num_islands=1, partition_label='partition')
+
+                uid = str(uuid.uuid4())
+                cwl_output_dir = cwl_output + '/' + uid
+                os.mkdir(cwl_output_dir)
+                cwl_out = cwl_output_dir + '/workflow.cwl'
+                cwl_out_zip = cwl_output_dir + '/workflow.zip'
+                output_list.append((cwl_out, cwl_out_zip))
+
+                # write output
+                with open(cwl_out_zip, 'wb') as f:
+                    create_workflow(pgt, 'workflow.cwl', f)
+
+        for out, zip in output_list:
+            zip_ref = zipfile.ZipFile(zip)
+            zip_ref.extractall(os.path.dirname(zip))
+            zip_ref.close()
+
+            cmd = ['cwltool', '--validate', out]
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            self.assertEqual(p.returncode, 0, b'stdout:\n' + stdout + b'\nstderr:\n' + stderr)
+
+        # delete the clone of EAGLE_test_repo
+        shutil.rmtree(direct, ignore_errors=True)
+
+        # delete the temporary output directory
+        shutil.rmtree(cwl_output, ignore_errors=True)

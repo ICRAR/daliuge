@@ -19,14 +19,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import copy
 import os
 import threading
 import unittest
 
 import six
+
 from dlg import droputils
-from dlg.common import dropdict, Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
+from dlg.common import dropdict, Categories
 from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
@@ -34,6 +36,7 @@ try:
     from crc32c import crc32  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
+
 
 hostname = "localhost"
 
@@ -91,21 +94,22 @@ class NMTestsMixIn(object):
             nm.shutdown()
 
     def _test_runGraphInTwoNMs(
-            self,
-            g1,
-            g2,
-            rels,
-            root_data,
-            leaf_data,
-            root_oids=("A",),
-            leaf_oid="C",
-            expected_failures=[],
+        self,
+        g1,
+        g2,
+        rels,
+        root_data,
+        leaf_data,
+        root_oids=("A",),
+        leaf_oid="C",
+        expected_failures=[],
+        sessionId="s1",
+        node_managers=None
     ):
         """Utility to run a graph in two Node Managers"""
 
-        dm1, dm2 = [self._start_dm() for _ in range(2)]
+        dm1, dm2 = node_managers or [self._start_dm() for _ in range(2)]
 
-        sessionId = "s1"
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
@@ -193,6 +197,22 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         self._deploy_error_graph(event_listeners=[listener()])
         self.assertTrue(evt.wait(10), "Didn't receive events on time")
 
+    def _test_runGraphOneDOPerDOM(self, repeats=1):
+        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        g2 = [
+            {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+        ]
+        rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
+        a_data = os.urandom(32)
+        c_data = six.b(str(crc32(a_data, 0)))
+        node_managers = [self._start_dm() for _ in range(2)]
+        for n in range(repeats):
+            sessionId = 's%d' % n
+            self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
+                                        sessionId=sessionId,
+                                        node_managers=node_managers)
+
     def test_runGraphOneDOPerDOM(self):
         """
         A test that creates three DROPs in two different DMs and runs the graph.
@@ -205,16 +225,11 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
+        self._test_runGraphOneDOPerDOM()
 
-        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
-        g2 = [
-            {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
-        ]
-        rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
-        a_data = os.urandom(32)
-        c_data = six.b(str(crc32(a_data, 0)))
-        self._test_runGraphInTwoNMs(g1, g2, rels, a_data, c_data)
+    def test_runGraphOneDOPerDOMTwice(self):
+        """Like test_runGraphOneDOPerDOM but runs two sessions succesively"""
+        self._test_runGraphOneDOPerDOM(2)
 
     def test_runGraphSeveralDropsPerDM(self):
         """

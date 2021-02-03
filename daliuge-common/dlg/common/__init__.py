@@ -69,10 +69,15 @@ APP_DROP_TYPES = [
 if sys.version_info[0] > 2:
     def b2s(b, enc='utf8'):
         return b.decode(enc)
+    def u2s(u):
+        return u
 else:
     def b2s(b, enc='utf8'):
         return b
+    def u2s(u, enc='utf-8'):
+        return u.encode(enc)
 b2s.__doc__ = "Converts bytes into a string"
+u2s.__doc__ = 'Converts text into a string'
 
 
 class dropdict(dict):
