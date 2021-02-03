@@ -25,10 +25,9 @@ import threading
 import unittest
 
 import six
-
 from dlg import droputils
-from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.common import dropdict, Categories
+from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
@@ -39,17 +38,29 @@ except:
 
 
 hostname = "localhost"
+default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
+default_graph_repro = {"rmode": "1", "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+                       "merkleroot": "a", "signature": "b"}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop['reprodata'] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 def memory(uid, **kwargs):
-    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY})
+    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY,
+                         "reprodata": default_repro.copy()})
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def sleepAndCopy(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp"}
+        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp",
+         "reprodata": default_repro.copy()}
     )
     dropSpec.update(kwargs)
     return dropSpec
@@ -161,6 +172,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
+        add_test_reprodata(g)
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -203,6 +215,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
             {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
         c_data = six.b(str(crc32(a_data, 0)))
@@ -258,7 +272,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
             {"oid": "F", "type": "plain", "storage": Categories.MEMORY, "producers": ["E"]},
         ]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("B", DROPLinkType.INPUT, "E"),
@@ -341,7 +356,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             sleepAndCopy("N", inputs=["L", "M"], outputs=["O"], sleepTime=0),
             memory("O"),
         ]
-
+        for g in [g1, g2, g3, g4]:
+            add_test_reprodata(g)
         rels_12 = [DROPRel("A", DROPLinkType.INPUT, "B")]
         rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
@@ -423,7 +439,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 }
             )
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -488,7 +505,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "node": ip_addr_2,
             },
         ]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("D", DROPLinkType.INPUT, "F"),
@@ -541,6 +559,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
         e_data = six.b(str(crc32(a_data, 0)))
@@ -571,6 +591,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
         e_data = six.b(str(crc32(a_data, 0)))
