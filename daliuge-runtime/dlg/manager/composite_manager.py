@@ -296,6 +296,13 @@ class CompositeManager(DROPManager):
         # attribute set
         logger.info('Separating graph')
         perPartition = collections.defaultdict(list)
+        try:
+            if graphSpec[-1]['merkleroot'] is not None:
+                self._graph['reprodata'] = graphSpec.pop()
+                logger.debug("Composite manager found reprodata in dropspecList, rmode=%s",
+                             self._graph['reprodata']['rmode'])
+        except KeyError:
+            pass
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
                 msg = "Drop %s doesn't specify a %s attribute" % (dropSpec['oid'], self._partitionAttr)
@@ -310,7 +317,6 @@ class CompositeManager(DROPManager):
 
             # Add the drop specs to our graph
             self._graph[uid_for_drop(dropSpec)] = dropSpec
-
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
@@ -335,6 +341,11 @@ class CompositeManager(DROPManager):
         # Create the individual graphs on each DM now that they are correctly
         # separated.
         logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
+        try:
+            for part in perPartition.values():
+                part.append(self._graph['reprodata'])
+        except KeyError:
+            pass
         self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs",
                        iterable=perPartition.items())
         logger.info('Successfully added individual graphSpec of session %s to each DM', sessionId)
