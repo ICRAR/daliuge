@@ -23,6 +23,8 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
 
  intro
  installing
+ basics
+ deployment
  overview
  graph_development
  writing_an_application

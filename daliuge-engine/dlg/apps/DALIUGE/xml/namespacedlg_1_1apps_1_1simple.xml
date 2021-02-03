@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.0" xml:lang="en-US">
+  <compounddef id="namespacedlg_1_1apps_1_1simple" kind="namespace" language="Python">
+    <compoundname>dlg::apps::simple</compoundname>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_null_barrier_app" prot="public">dlg::apps::simple::NullBarrierApp</innerclass>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_sleep_app" prot="public">dlg::apps::simple::SleepApp</innerclass>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_copy_app" prot="public">dlg::apps::simple::CopyApp</innerclass>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_sleep_and_copy_app" prot="public">dlg::apps::simple::SleepAndCopyApp</innerclass>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_random_array_app" prot="public">dlg::apps::simple::RandomArrayApp</innerclass>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_average_arrays_app" prot="public">dlg::apps::simple::AverageArraysApp</innerclass>
+    <innerclass refid="classdlg_1_1apps_1_1simple_1_1_hello_world_app" prot="public">dlg::apps::simple::HelloWorldApp</innerclass>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="simple.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

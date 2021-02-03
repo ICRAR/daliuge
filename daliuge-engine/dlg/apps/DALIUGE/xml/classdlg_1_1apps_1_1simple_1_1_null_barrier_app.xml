@@ -1,0 +1,76 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.0" xml:lang="en-US">
+  <compounddef id="classdlg_1_1apps_1_1simple_1_1_null_barrier_app" kind="class" language="Python" prot="public">
+    <compoundname>dlg::apps::simple::NullBarrierApp</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">BarrierAppDROP</basecompoundref>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="classdlg_1_1apps_1_1simple_1_1_null_barrier_app_1a4d2c527e1fffdf515bbd3fced21ac190" prot="public" static="yes" mutable="no">
+        <type></type>
+        <definition>dlg.apps.simple.NullBarrierApp::compontent_meta</definition>
+        <argsstring></argsstring>
+        <name>compontent_meta</name>
+        <initializer>=  dlg_component(&apos;<ref refid="classdlg_1_1apps_1_1simple_1_1_null_barrier_app" kindref="compound">NullBarrierApp</ref>&apos;, &apos;Null Barrier.&apos;,
+                                    [dlg_batch_input(&apos;binary/*&apos;, [])],
+                                    [dlg_batch_output(&apos;binary/*&apos;, [])],
+                                    [dlg_streaming_input(&apos;binary/*&apos;)])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="39" column="1" bodyfile="simple.py" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classdlg_1_1apps_1_1simple_1_1_null_barrier_app_1ae67eda225b1f3eae9c364cef074c917f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def dlg.apps.simple.NullBarrierApp.run</definition>
+        <argsstring>(self)</argsstring>
+        <name>run</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="simple.py" line="45" column="1" bodyfile="simple.py" bodystart="45" bodyend="48"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>dlg.apps.simple.NullBarrierApp</label>
+        <link refid="classdlg_1_1apps_1_1simple_1_1_null_barrier_app"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>BarrierAppDROP</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>dlg.apps.simple.NullBarrierApp</label>
+        <link refid="classdlg_1_1apps_1_1simple_1_1_null_barrier_app"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>BarrierAppDROP</label>
+      </node>
+    </collaborationgraph>
+    <location file="simple.py" line="38" column="1" bodyfile="simple.py" bodystart="38" bodyend="49"/>
+    <listofallmembers>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_null_barrier_app_1a4d2c527e1fffdf515bbd3fced21ac190" prot="public" virt="non-virtual"><scope>dlg::apps::simple::NullBarrierApp</scope><name>compontent_meta</name></member>
+      <member refid="classdlg_1_1apps_1_1simple_1_1_null_barrier_app_1ae67eda225b1f3eae9c364cef074c917f" prot="public" virt="non-virtual"><scope>dlg::apps::simple::NullBarrierApp</scope><name>run</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
