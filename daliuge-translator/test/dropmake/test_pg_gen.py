@@ -19,12 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest, pkg_resources
+import pkg_resources
+import unittest
 
-from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP,\
- MinNumPartsPGTP, GPGTNoNeedMergeException
-from dlg.dropmake.cwl import create_workflow
 from dlg.dropmake import pg_generator
+from dlg.dropmake.cwl import create_workflow
+from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, \
+    MinNumPartsPGTP, GPGTNoNeedMergeException
 from dlg.translator.tool_commands import unroll
 
 """
@@ -37,10 +38,10 @@ def get_lg_fname(lg_name):
 class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
-        fp = get_lg_fname('lofar_std.json')
-        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/lofar_std.json'
+        fp = get_lg_fname('cont_img.json')
+        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/cont_img.json'
         lg = LG(fp)
-        self.assertEqual(len(lg._done_dict.keys()), 36)
+        self.assertEqual(len(lg._done_dict.keys()), 35)
         drop_list = lg.unroll_to_tpl()
         #print json.dumps(drop_list, indent=2)
         #pprint.pprint(drop_list)
@@ -57,14 +58,14 @@ class TestPGGen(unittest.TestCase):
         #pprint.pprint(dict(lg._drop_dict))
 
     def test_pgt_to_json(self):
-        fp = get_lg_fname('lofar_std.json')
+        fp = get_lg_fname('cont_img.json')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
         #print pgt.to_gojs_json()
 
     def test_metis_pgtp(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
@@ -74,7 +75,8 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_metis_pgtp_gen_pg(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.json',
+                   'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
         for i, lgn in enumerate(lgnames):
@@ -89,7 +91,7 @@ class TestPGGen(unittest.TestCase):
             #     f.write(pg_spec)
 
     def test_metis_pgtp_gen_pg_island(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph','cont_img.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12',
                      '10.128.0.13', '10.128.0.14',
@@ -106,7 +108,8 @@ class TestPGGen(unittest.TestCase):
             pgtp.result(lazy=False)
 
     def test_mysarkar_pgtp(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.json',
+                   'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
@@ -116,7 +119,7 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_mysarkar_pgtp_gen_pg(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.json', 'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
         for i, lgn in enumerate(lgnames):
@@ -129,7 +132,8 @@ class TestPGGen(unittest.TestCase):
             pg_spec = pgtp.to_pg_spec(node_list)
 
     def test_mysarkar_pgtp_gen_pg_island(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.json',
+                   'test_grpby_gather.json', 'chiles_simple.json']
         node_list = ['10.128.0.11', '10.128.0.12',
                      '10.128.0.13', '10.128.0.14',
                      '10.128.0.15', '10.128.0.16']
@@ -149,7 +153,8 @@ class TestPGGen(unittest.TestCase):
             pgtp.result()
 
     def test_minnumparts_pgtp(self):
-        lgnames = ['lofar_std.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.json',
+                   'test_grpby_gather.json', 'chiles_simple.json']
         #tgt_partnum = [15, 15, 10, 10, 5]
         tgt_deadline = [200, 300, 90, 80, 160]
         for i, lgn in enumerate(lgnames):
@@ -205,9 +210,7 @@ class TestPGGen(unittest.TestCase):
                 cwl_out_zip = cwl_output_dir + '/workflow.zip'
                 output_list.append((cwl_out, cwl_out_zip))
 
-                # write output
-                with open(cwl_out_zip, 'wb') as f:
-                    create_workflow(pgt, 'workflow.cwl', f)
+                create_workflow(pgt, "", cwl_out, cwl_out_zip)
 
         for out, zip in output_list:
             zip_ref = zipfile.ZipFile(zip)
