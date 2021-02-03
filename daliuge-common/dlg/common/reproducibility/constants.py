@@ -44,6 +44,8 @@ def rflag_caster(val, default=REPRO_DEFAULT):
             return ReproducibilityFlags(val)
         except(ValueError, TypeError):
             return default
+    elif type(val) is None:
+        return default
 
 
 def rmode_supported(flag: ReproducibilityFlags):
