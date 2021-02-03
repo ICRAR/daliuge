@@ -39,31 +39,56 @@ matrix:
     - python: "3.6"
     - python: "3.5"
     - python: "2.7"
+    - name: doxygencommit
+      if: branch = master   
+      before_install:
+      install:
+        - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
+      script:
+        - GIT_REPO=$(git remote -v) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
+      after_success:  
+        - cd DALIUGE/xml
+        - xsltproc combine.xslt index.xml >daliuge.xml
+        - wget https://raw.githubusercontent.com/james-strauss-uwa/xml2palette/master/xml2palette.py
+        - python3 xml2palette.py -i daliuge.xml -o daliuge.palette
+        - mv daliuge.palette ../.
+        - cd ..
+        - rm -rf xml/
+        - cd ..
+        - git config --global user.name $GITHUB_USERNAME
+        - git config --global user.email "$GITHUB_USERNAME@gmail.com"
+        - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
+        - cd EAGLE_test_repo/
+        - rm -rf DALIUGE/
+        - mv ../DALIUGE/ .
+        - git add *
+        - git diff-index --quiet HEAD || git commit -m 'doxygen commit'
+        - git push
 
 # We want to use docker during the tests
 services:
-  - docker
+ - docker
 
 # Try to speed up builds by caching our dependencies
 cache: pip
 
 before_install:
-  - pip install -U coveralls pytest pytest-cov
-  - pip install -U setuptools pip wheel
+ - pip install -U coveralls pytest pytest-cov
+ - pip install -U setuptools pip wheel
 
 install:
-  - pip install -e daliuge-common/
-  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
-  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
+ - pip install -e daliuge-common/
+ - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
+ - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-runtime/
 
 # run the tests, making sure subprocesses generate coverage information
 script:
-  - COVFILES=
-  - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
-  - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
-  - coverage combine $COVFILES
-  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
+ - COVFILES=
+ - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && pip install -r test-requirements.txt && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
+ - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-runtime && py.test --cov) && COVFILES+=" daliuge-runtime/.coverage"; }
+ - coverage combine $COVFILES
+ - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
 # Publish to coveralls (only once per commit, so only using one environment)
 after_success:
-  - coveralls
+ - coveralls
