@@ -1316,6 +1316,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         self._size = os.stat(self.path).st_size
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.COMPLETED)
+        self.completedrop()
 
     @property
     def dataURL(self):
