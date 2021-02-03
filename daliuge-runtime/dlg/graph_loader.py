@@ -32,13 +32,13 @@ from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
+from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
-from .common import Categories
 
 STORAGE_TYPES = {
     Categories.MEMORY: InMemoryDROP,
@@ -184,9 +184,11 @@ def loadDropSpecs(dropSpecList):
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
     reprodata = None
+    if dropSpecList is None:
+        raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
     if dropSpecList[-1]['merkleroot'] is not None:
-        reprodata = dropSpecList.pop()
-        logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata['rmode'])
+            reprodata = dropSpecList.pop()
+            logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata['rmode'])
     for n, dropSpec in enumerate(dropSpecList):
         # 'type' and 'oit' are mandatory
         check_dropspec(n, dropSpec)
