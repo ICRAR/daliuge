@@ -98,7 +98,6 @@ class RerunHashTests(unittest.TestCase):
         a.setCompleted()
         self.assertIsNone(a.merkleroot)
         a.reproducibility_level = ReproducibilityFlags.RERUN
-        a.commit()
         self.assertIsNotNone(a.merkleroot)
 
         self.assertIsNone(b.merkleroot)
