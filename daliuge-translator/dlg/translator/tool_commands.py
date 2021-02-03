@@ -27,10 +27,9 @@ import optparse
 import os
 import sys
 
+from dlg.common import tool
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
     init_pgt_unroll_repro_data, init_pgt_partition_repro_data, init_pg_repro_data
-
-from ..common import tool
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +84,7 @@ def partition(pgt, opts):
 
 
 def submit(pg, opts):
-    from ..deploy import common
+    from dlg.deploy import common
     session_id = common.submit(pg, host=opts.host, port=opts.port,
                                skip_deploy=opts.skip_deploy,
                                session_id=opts.session_id)
@@ -239,7 +238,7 @@ def dlg_unroll_and_partition(parser, args):
 
 
 def dlg_map(parser, args):
-    from .. import constants
+    import dlg.constants as con
 
     tool.add_logging_options(parser)
     _add_output_options(parser)
@@ -247,7 +246,7 @@ def dlg_map(parser, args):
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
                       dest='port', help='The port we connect to to deploy the graph',
-                      default=constants.ISLAND_DEFAULT_REST_PORT)
+                      default=con.ISLAND_DEFAULT_REST_PORT)
     parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
                       help='Path to the Physical Graph to submit (default: stdin)', default='-')
     parser.add_option("-N", "--nodes", action="store",
@@ -260,7 +259,7 @@ def dlg_map(parser, args):
     dump = _setup_output(opts)
 
     from ..dropmake import pg_generator
-    from ..clients import CompositeManagerClient
+    from dlg.clients import CompositeManagerClient
 
     if opts.nodes:
         nodes = [n for n in opts.nodes.split(',') if n]
@@ -282,8 +281,7 @@ def dlg_map(parser, args):
 
 
 def dlg_submit(parser, args):
-    from ..manager import constants
-
+    import dlg.constants as con
     # Submit Physical Graph
     _add_output_options(parser)
     tool.add_logging_options(parser)
@@ -291,7 +289,7 @@ def dlg_submit(parser, args):
                       dest='host', help='The host we connect to to deploy the graph', default='localhost')
     parser.add_option("-p", "--port", action="store", type="int",
                       dest='port', help='The port we connect to to deploy the graph',
-                      default=constants.ISLAND_DEFAULT_REST_PORT)
+                      default=con.ISLAND_DEFAULT_REST_PORT)
     parser.add_option('-P', '--physical-graph', action='store', dest='pg_path', type='string',
                       help='Path to the Physical Graph to submit (default: stdin)', default='-')
     parser.add_option('-s', '--session-id', action='store', dest='session_id', type='string',
