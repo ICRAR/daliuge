@@ -20,6 +20,8 @@ It originated from a prototyping activity as part of the `SDP Consortium
 <https://www.skatelescope.org/sdp/>`_ called Data Flow Management System (DFMS). DFMS aimed to 
 prototype the execution framework of the proposed SDP architecture.
 
+For more information about the installation and usage of the system please refer to the docs or to https://daliuge.readthedocs.io 
+
 
 Development and maintenance of |daliuge| is currently hosted at ICRAR_
 and is performed by the `DIA team <http://www.icrar.org/our-research/data-intensive-astronomy/>`_.
@@ -28,64 +30,7 @@ See the ``docs/`` directory for more information, or visit `our online
 documentation <https://daliuge.readthedocs.io/>`_
 
 
-Installation
-------------
 
-docker
-------
-
-The easiest way to get started is to use the docker container installation procedures provided 
-to build and run the daliuge-runtime and the daliuge-translator. Please refer to
-the README files in the subdirectories daliuge-runtime and daliuge-translator, respectively.
-Depending on what you want to deploy you may need to build and run only the runtime or the
-translator.
-
-
-PyPi
-----
-
-It is also possible to install the latest stable version of the full package using PyPi::
-
- pip install daliuge
-
-If you only want the translator engine and don't need the runtime,
-or vice-versa, you can install them separately::
-
- pip install daliuge-translator
- pip install daliuge-runtime
-
-.. You can also install each directly from GitHub::
-..
-..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-common&subdirectory=daliuge-common"
-..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-translator&subdirectory=daliuge-translator"
-..  pip install "git+https://github.com/ICRAR/daliuge#egg=daliuge-runtime&subdirectory=daliuge-runtime"
-..  pip install "git+https://github.com/ICRAR/daliuge"
-
-Or if you plan to develop |daliuge|::
-
- git clone https://github.com/ICRAR/daliuge
- cd daliuge
- pip install -e daliuge-common
- pip install -e daliuge-translator # optional
- pip install -e daliuge-runtime    # optional
-
-
-Porting from |daliuge| 0.X
---------------------------
-
-With the release of |daliuge| 1.0.0
-the code has been broken down into separate packages
-to accommodate leaner and easier installations
-when only a subset of the functionality is required.
-In doing so we tried to maintain
-as much backward compatibility as possible,
-but there are some minor exceptions:
-
- * Code doing ``from dlg import delayed`` or similar must be changed
-   to ``from dlg.runtime import delayed``.
- * Scripts finding the include directory path for daliuge headers
-   using code like ``python -c 'import dlg; print(dlg.get_include_dir())``
-   should switch to invoke ``dlg include_dir`` instead.
 
 
 .. |daliuge| replace:: DALiuGE

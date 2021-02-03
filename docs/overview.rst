@@ -1,5 +1,5 @@
-Overview
-========
+Architectural and Design Overview
+=================================
 
 The following sections give an overview of the different modules present in
 DALiuGE.

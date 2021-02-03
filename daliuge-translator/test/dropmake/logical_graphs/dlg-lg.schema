@@ -1,0 +1,353 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "modelData": {
+            "type": "object",
+            "properties": {
+                "fileType": {
+                    "type": "string"
+                },
+                "repoService": {
+                    "type": "string"
+                },
+                "repoBranch": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "filePath": {
+                    "type": "string"
+                },
+                "sha": {
+                    "type": "string"
+                },
+                "git_url": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "filePath",
+                "fileType",
+                "git_url",
+                "repo",
+                "repoBranch",
+                "repoService",
+                "sha"
+            ]
+        },
+        "nodeDataArray": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string"
+                    },
+                    "categoryType": {
+                        "type": "string"
+                    },
+                    "isData": {
+                        "type": "boolean"
+                    },
+                    "isGroup": {
+                        "type": "boolean"
+                    },
+                    "canHaveInputs": {
+                        "type": "boolean"
+                    },
+                    "canHaveOutputs": {
+                        "type": "boolean"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "drawOrderHint": {
+                        "type": "integer"
+                    },
+                    "key": {
+                        "type": "integer"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "x": {
+                        "type": "number"
+                    },
+                    "y": {
+                        "type": "number"
+                    },
+                    "width": {
+                        "type": "number"
+                    },
+                    "height": {
+                        "type": "number"
+                    },
+                    "collapsed": {
+                        "type": "boolean"
+                    },
+                    "showPorts": {
+                        "type": "boolean"
+                    },
+                    "streaming": {
+                        "type": "boolean"
+                    },
+                    "subject": {
+                        "type": "null"
+                    },
+                    "selected": {
+                        "type": "boolean"
+                    },
+                    "expanded": {
+                        "type": "boolean"
+                    },
+                    "inputApplicationName": {
+                        "type": "string"
+                    },
+                    "outputApplicationName": {
+                        "type": "string"
+                    },
+                    "exitApplicationName": {
+                        "type": "string"
+                    },
+                    "inputApplicationType": {
+                        "type": "string"
+                    },
+                    "outputApplicationType": {
+                        "type": "string"
+                    },
+                    "exitApplicationType": {
+                        "type": "string"
+                    },
+                    "inputPorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "Id": {
+                                    "type": "string"
+                                },
+                                "IdText": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "Id",
+                                "IdText"
+                            ]
+                        }
+                    },
+                    "outputPorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "Id": {
+                                    "type": "string"
+                                },
+                                "IdText": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "Id",
+                                "IdText"
+                            ]
+                        }
+                    },
+                    "inputLocalPorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "Id": {
+                                    "type": "string"
+                                },
+                                "IdText": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "Id",
+                                "IdText"
+                            ]
+                        }
+                    },
+                    "outputLocalPorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "Id": {
+                                    "type": "string"
+                                },
+                                "IdText": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "Id",
+                                "IdText"
+                            ]
+                        }
+                    },
+                    "inputAppFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "description",
+                                "name",
+                                "text",
+                                "value"
+                            ]
+                        }
+                    },
+                    "outputAppFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "description",
+                                "name",
+                                "text",
+                                "value"
+                            ]
+                        }
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "description",
+                                "name",
+                                "text",
+                                "value"
+                            ]
+                        }
+                    },
+                    "group": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "canHaveInputs",
+                    "canHaveOutputs",
+                    "category",
+                    "categoryType",
+                    "collapsed",
+                    "color",
+                    "description",
+                    "drawOrderHint",
+                    "exitApplicationName",
+                    "exitApplicationType",
+                    "expanded",
+                    "fields",
+                    "height",
+                    "inputAppFields",
+                    "inputApplicationName",
+                    "inputApplicationType",
+                    "inputLocalPorts",
+                    "inputPorts",
+                    "isData",
+                    "isGroup",
+                    "key",
+                    "outputAppFields",
+                    "outputApplicationName",
+                    "outputApplicationType",
+                    "outputLocalPorts",
+                    "outputPorts",
+                    "selected",
+                    "showPorts",
+                    "streaming",
+                    "subject",
+                    "text",
+                    "width",
+                    "x",
+                    "y"
+                ]
+            }
+        },
+        "linkDataArray": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "integer"
+                    },
+                    "fromPort": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "integer"
+                    },
+                    "toPort": {
+                        "type": "string"
+                    },
+                    "loop_aware": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "from",
+                    "fromPort",
+                    "to",
+                    "toPort"
+                ]
+            }
+        }
+    },
+    "required": [
+        "linkDataArray",
+        "modelData",
+        "nodeDataArray"
+    ]
+}

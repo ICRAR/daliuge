@@ -48,6 +48,9 @@ Examples of logical graph node JSON representation
 
 """
 
+if __name__ == '__main__':
+    __package__ = 'dlg.dropmake'
+
 import collections
 import datetime
 import json
@@ -64,20 +67,19 @@ import networkx as nx
 import numpy as np
 import six
 
-from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-from .utils.bash_parameter import BashCommand
-from ..common import dropdict
-from ..common import Categories
-from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
     get_lg_ver_type,
     convert_construct,
     convert_fields,
     convert_mkn,
     LG_VER_EAGLE,
-    LG_VER_OLD,
     LG_VER_EAGLE_CONVERTED,
 )
+from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from .utils.bash_parameter import BashCommand
+from ..common import Categories
+from ..common import STORAGE_TYPES, APP_DROP_TYPES
+from ..common import dropdict
 
 logger = logging.getLogger(__name__)
 
@@ -541,6 +543,12 @@ class LGNode:
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
+        # get the arguments from new fields dictionary in a backwards compatible way
+        if 'fields' in self.jd:
+            for je in self.jd['fields']:
+                # The field to be used is not the text, but the name field
+                self.jd[je['name']]=je['value']
+                kwargs[je['name']] = je['value']
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
@@ -603,8 +611,10 @@ class LGNode:
                 fp = self.jd.get("filepath", None)
                 if fp:
                     kwargs["filepath"] = fp
+            self._update_key_value_attributes(kwargs)
+            drop_spec.update(kwargs)
         elif (
-            drop_type == Categories.COMPONENT
+            drop_type in [Categories.COMPONENT, Categories.PYTHON_APP]
         ):  # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -2203,11 +2213,16 @@ class LG:
         return ret
 
     def _is_stream_link(self, s_type, t_type):
-        return s_type in [Categories.COMPONENT, Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP] and t_type in [
+        return s_type in [
             Categories.COMPONENT,
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
-        ]
+            Categories.PYTHON_APP] and t_type in [
+                Categories.COMPONENT,
+                Categories.DYNLIB_APP,
+                Categories.DYNLIB_PROC_APP,
+                Categories.PYTHON_APP
+                ]
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
         """
@@ -2784,3 +2799,11 @@ def resource_map(pgt, nodes, num_islands=1):
         drop_spec["island"] = dim_list[iidx]
 
     return pgt  # now it's a PG
+
+
+if __name__ == '__main__':
+    with open('/Users/awicenec/Downloads/HelloWorldBash_LG.graph') as f:
+        lgs = f.read()
+    lg = json.loads(lgs)
+    drop_list = unroll(lg)
+    print('Unrolled')

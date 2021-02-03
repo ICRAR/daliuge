@@ -1,0 +1,195 @@
+# An unique identifier for the head node and workers of this cluster.
+cluster_name: default
+
+# The minimum number of workers nodes to launch in addition to the head
+# node. This number should be >= 0.
+min_workers: 1
+
+# The maximum number of workers nodes to launch in addition to the head
+# node. This takes precedence over min_workers.
+max_workers: 2
+
+# The initial number of worker nodes to launch in addition to the head
+# node. When the cluster is first brought up (or when it is refreshed with a
+# subsequent `ray up`) this number of nodes will be started.
+initial_workers: 1
+
+# Whether or not to autoscale aggressively. If this is enabled, if at any point
+#   we would start more workers, we start at least enough to bring us to
+#   initial_workers.
+autoscaling_mode: default    
+
+# This executes all commands on all nodes in the docker container,
+# and opens all the necessary ports to support the Ray cluster.
+# Empty string means disabled.
+docker:
+    image: "icrar/dlg_ray:1.1"
+    # image: "rayproject/ray:latest-cpu" # You can change this to latest-cpu if you don't need GPU support and want a faster startup
+    container_name: "ray_container"
+    # If true, pulls latest version of image. Otherwise, `docker run` will only pull the image
+    # if no cached version is present.
+    pull_before_run: False
+    run_options: [-v /var/run/docker.sock:/var/run/docker.sock -p 8265:8265]  # Extra options to pass into "docker run"
+
+    # Example of running a GPU head with CPU workers
+    # head_image: "rayproject/ray:latest-gpu"
+    # Allow Ray to automatically detect GPUs
+
+    worker_image: "icrar/dlg_ray:1.1"
+    worker_run_options: [-v /var/run/docker.sock:/var/run/docker.sock  -p 8265:8265]
+
+# The autoscaler will scale up the cluster to this target fraction of resource
+# usage. For example, if a cluster of 10 nodes is 100% busy and
+# target_utilization is 0.8, it would resize the cluster to 13. This fraction
+# can be decreased to increase the aggressiveness of upscaling.
+# This max value allowed is 1.0, which is the most conservative setting.
+target_utilization_fraction: 0.8
+
+# If a node is idle for this many minutes, it will be removed.
+idle_timeout_minutes: 5
+
+# Cloud-provider specific configuration.
+provider:
+    type: aws
+    region: ap-southeast-2
+    # Availability zone(s), comma-separated, that nodes may be launched in.
+    # Nodes are currently spread between zones by a round-robin approach,
+    # however this implementation detail should not be relied upon.
+    availability_zone: ap-southeast-2a,ap-southeast-2b
+    # Whether to allow node reuse. If set to False, nodes will be terminated
+    # instead of stopped.
+    cache_stopped_nodes: False # If not present, the default is True.
+
+# How Ray will authenticate with newly launched nodes.
+auth:
+    ssh_user: ubuntu
+# By default Ray creates a new private keypair, but you can also use your own.
+# If you do so, make sure to also set "KeyName" in the head and worker node
+# configurations below.
+#    ssh_private_key: /path/to/your/key.pem
+
+# Provider-specific config for the head node, e.g. instance type. By default
+# Ray will auto-configure unspecified fields such as SubnetId and KeyName.
+# For more documentation on available fields, see:
+# http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
+head_node:
+    InstanceType: t3a.medium
+    # ImageId: ami-076e39b6b14e3bb20   # Amazon 64 bit
+    ImageId: ami-01bf596d1dc4da556 # Ubuntu Deep learning
+
+    # You can provision additional disk space with a conf as follows
+    BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+              VolumeSize: 100
+
+    # Additional options in the boto docs.
+
+# Provider-specific config for worker nodes, e.g. instance type. By default
+# Ray will auto-configure unspecified fields such as SubnetId and KeyName.
+# For more documentation on available fields, see:
+# http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
+worker_nodes:
+    InstanceType: t3a.medium
+    # ImageId: ami-076e39b6b14e3bb20   # Amazon 64 bit
+    ImageId: ami-01bf596d1dc4da556 # Ubuntu Deep learning
+
+    # Run workers on spot by default. Comment this out to use on-demand.
+    # InstanceMarketOptions:
+    #     MarketType: spot
+        # Additional options can be found in the boto docs, e.g.
+        #   SpotOptions:
+        #       MaxPrice: MAX_HOURLY_PRICE
+
+    # Additional options in the boto docs.
+
+# Files or directories to copy to the head and worker nodes. The format is a
+# dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
+file_mounts: {
+    "/var/dlg_home":"/var/dlg_home"
+#    "/tmp/leap_test":"/Users/awicenec/tmp/leap_test",
+#    "/tmp/current_branch_sha": "/Users/awicenec/git/daliuge/.git/refs/heads/ray_test"
+#    "/path1/on/remote/machine": "/path1/on/local/machine",
+#    "/path2/on/remote/machine": "/path2/on/local/machine",
+}
+
+# Files or directories to copy from the head node to the worker nodes. The format is a
+# list of paths. The same path on the head node will be copied to the worker node.
+# This behavior is a subset of the file_mounts behavior. In the vast majority of cases
+# you should just use file_mounts. Only use this if you know what you're doing!
+cluster_synced_files: ["/var/dlg_home/code"]
+
+# Whether changes to directories in file_mounts or cluster_synced_files in the head node
+# should sync to the worker node continuously
+file_mounts_sync_continuously: False
+
+# Patterns for files to exclude when running rsync up or rsync down
+#rsync_exclude:
+#    - "**/.git"
+#    - "**/.git/**"
+
+# Pattern files to use for filtering out files when running rsync up or rsync down. The file is searched for
+# in the source directory and recursively through all subdirectories. For example, if .gitignore is provided
+# as a value, the behavior will match git's behavior for finding and using .gitignore files.
+#rsync_filter:
+#    - ".gitignore"
+
+# List of commands that will be run before `setup_commands`. If docker is
+# enabled, these commands will run outside the container and before docker
+# is setup.
+initialization_commands: [
+    sudo ln -s /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home,
+    # curl -fsSL https://get.docker.com -o get-docker.sh,
+    # sudo apt update,
+    # sudo apt remove docker,
+    # sudo sh get-docker.sh,
+    # sudo usermod -aG docker $USER,
+    # sudo systemctl restart docker -f
+]
+    # - sudo apt install -y gcc
+
+# List of shell commands to run to set up nodes.
+setup_commands:
+    - apt update
+    - apt install -y curl
+
+# Custom commands that will be run on the head node after common setup.
+head_setup_commands: []
+
+# Custom commands that will be run on worker nodes after common setup.
+worker_setup_commands:
+    - apt update
+    - apt install -y curl
+
+# In order to get the leap_cli docker container mounting the /var/dlg_home directory correctly the leap_cli 
+# docker component needs to specify the following in the additional mounts parameter:
+#
+# /tmp/ray_tmp_mount/var/dlg_home/workspace:/var/dlg_home
+#
+# and on the ray hosts there need to be links:
+#
+# sudo ln -s /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home
+
+# Command to start ray on the head node. You don't need to change this.
+head_start_ray_commands:
+    - ray stop
+    - ulimit -n 65536; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
+    # start DALiuGE data island manager
+    - dlg dim -d -v -H 0.0.0.0
+    - dlg nm -d -v -H 0.0.0.0 --dlg-path=/var/dlg_home/code
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
+
+    # bug in registration creates two entires in DIM
+    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
+
+# Command to start ray on worker nodes. You don't need to change this.
+worker_start_ray_commands:
+    - ray stop
+    - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
+    # start DALiuGE node manager
+    - dlg nm -vd -H 0.0.0.0 --dlg-path=/var/dlg_home/code
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+    # bug in registration creates two entires in DIM
+    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+
+ 
