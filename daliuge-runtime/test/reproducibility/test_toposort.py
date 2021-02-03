@@ -28,7 +28,7 @@ Assumptions:
 import json
 import unittest
 
-from dlg.common.reproducibility.reproducibility import lg_build_blockdag
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, lg_build_blockdag
 
 
 class ToposortTests(unittest.TestCase):
@@ -50,7 +50,9 @@ class ToposortTests(unittest.TestCase):
         A
         """
         lgt = self.init_graph("topoGraphs/testSingle.graph")
-        visited = lg_build_blockdag(lgt)
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves, visited = lg_build_blockdag(lgt)
         self.assertTrue(visited == [-1])
 
     def test_lg_blockdag_twostart(self):
@@ -61,7 +63,9 @@ class ToposortTests(unittest.TestCase):
         B -->
         """
         lgt = self.init_graph("topoGraphs/testTwoStart.graph")
-        visited = lg_build_blockdag(lgt)
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves, visited = lg_build_blockdag(lgt)
         self.assertTrue(visited == [-3, -1, -2])
 
     def test_lg_blockdag_twoend(self):
@@ -72,7 +76,9 @@ class ToposortTests(unittest.TestCase):
           --> C
         """
         lgt = self.init_graph("topoGraphs/testTwoEnd.graph")
-        visited = lg_build_blockdag(lgt)
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves, visited = lg_build_blockdag(lgt)
         self.assertTrue(visited == [-1, -3, -2])
 
     def test_lg_blockdag_twolines(self):
@@ -82,31 +88,17 @@ class ToposortTests(unittest.TestCase):
         C --> D
         """
         lgt = self.init_graph("topoGraphs/testTwoLines.graph")
-        visited = lg_build_blockdag(lgt)
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves, visited = lg_build_blockdag(lgt)
         self.assertTrue(visited == [-2, -3, -1, -4])
-
-    def test_lg_blockdag_notDAG(self):
-        """
-        A graph that is not a dag. This should fail.
-        A --> B --> C --> B
-        """
-        lgt = self.init_graph("topoGraphs/testNotDAG.graph")
-        with self.assertRaises(Exception):
-            lg_build_blockdag(lgt)
-
-    def test_lg_blockdag_cycle(self):
-        """
-        A graph that is one cycle. This should fail
-        A --> B --> C --> A
-        """
-        lgt = self.init_graph("topoGraphs/testCycle.graph")
-        with self.assertRaises(Exception):
-            lg_build_blockdag(lgt)
 
     def test_lg_blockdag_empty(self):
         """
         Tests an empty graph. Should fail gracefully.
         """
         lgt = self.init_graph("topoGraphs/testEmpty.graph")
-        visited = lg_build_blockdag(lgt)
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves, visited = lg_build_blockdag(lgt)
         self.assertTrue(visited == [])
