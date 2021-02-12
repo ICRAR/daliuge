@@ -336,7 +336,14 @@
             "outputLocalPorts": [],
             "inputAppFields": [],
             "outputAppFields": [],
-            "fields": []
+            "fields": [
+                {
+                    "text": "Arg 10",
+                    "name": "arg10",
+                    "value": "1",
+                    "description": ""
+                }
+            ]
         },
         {
             "category": "Component",
@@ -485,7 +492,14 @@
             "outputLocalPorts": [],
             "inputAppFields": [],
             "outputAppFields": [],
-            "fields": []
+            "fields": [
+                {
+                    "text": "Arg 10",
+                    "name": "arg10",
+                    "value": "1",
+                    "description": ""
+                }
+            ]
         },
         {
             "category": "Component",
@@ -681,7 +695,14 @@
             "outputLocalPorts": [],
             "inputAppFields": [],
             "outputAppFields": [],
-            "fields": []
+            "fields": [                 
+                {
+                    "text": "Arg 10",
+                    "name": "arg10",
+                    "value": "2",
+                    "description": ""
+                }
+            ]
         },
         {
             "category": "Component",
@@ -1963,6 +1984,12 @@
                     "name": "group_end",
                     "value": 0,
                     "description": ""
+                },
+                {
+                    "text": "Arg 10",
+                    "name": "arg10",
+                    "value": "True",
+                    "description": ""
                 }
             ]
         },
@@ -2356,7 +2383,14 @@
                     "name": "group_end",
                     "value": 1,
                     "description": ""
+                },
+                {
+                    "text": "Arg 10",
+                    "name": "arg10",
+                    "value": "hi",
+                    "description": ""
                 }
+
             ]
         },
         {
