@@ -159,8 +159,7 @@ class TestLGWeb(unittest.TestCase):
         # new logical graph JSON
         fname = os.path.join(lg_dir, 'logical_graphs', 'simpleMKN.graph')
         with open(fname, 'rb') as infile:
-            json_data = json.load(infile)
-        js = json.dumps(json_data)
+            js = infile.read()
 
         # add 'correct' data to the form
         form_data = {
