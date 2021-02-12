@@ -2792,7 +2792,7 @@ def resource_map(pgt, nodes, num_islands=1):
     
 
 if __name__ == '__main__':
-    with open('/Users/awicenec/Downloads/HelloWorldBash_LG.graph') as f:
+    with open('/Users/awicenec/tmp/testScatterClean.graph') as f:
         lgs = f.read()
     lg = json.loads(lgs)
     drop_list = unroll(lg)

@@ -182,14 +182,14 @@ def convert_mkn(lgo):
         node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = Categories.GATHER
         node_mk["type"] = Categories.GATHER
-        ipan = node_mk.get("inputAppName", "")
+        ipan = node_mk.get("inputApplicationName", "")
         if len(ipan) == 0:
             node_mk["text"] = node_mk["text"] + "_InApp"
         else:
             node_mk["text"] = ipan
-        del node_mk["inputApplicationName"]
-        del node_mk["outputApplicationName"]
-        del node_mk["outputAppFields"]
+#        del node_mk["inputApplicationName"]
+#        del node_mk["outputApplicationName"]
+#        del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
             "text": "Number of inputs",
@@ -213,9 +213,9 @@ def convert_mkn(lgo):
         old_new_parent_map_split_1[mkn_key] = k_new
         node_kn["application"] = node_kn["outputApplicationName"]
         node_kn["inputAppFields"] = node_kn["outputAppFields"]
-        del node_kn["inputApplicationName"]
-        del node_kn["outputApplicationName"]
-        del node_kn["outputAppFields"]
+#        del node_kn["inputApplicationName"]
+#        del node_kn["outputApplicationName"]
+#        del node_kn["outputAppFields"]
 
         new_field_kn = {
             "name": "num_of_copies",
@@ -248,9 +248,9 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             n_products_map[mok] = k_new
 
-        del node_split_n["inputApplicationName"]
-        del node_split_n["outputApplicationName"]
-        del node_split_n["outputAppFields"]
+#        del node_split_n["inputApplicationName"]
+#        del node_split_n["outputApplicationName"]
+#        del node_split_n["outputAppFields"]
         # del node_split_n['intputAppFields']
 
         new_field_kn = {
@@ -416,9 +416,13 @@ def convert_construct(lgo):
             continue
         # step 1
         app_node = dict()
+        app_node[has_app] = node[has_app]
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
-        app_node["text"] = node["text"]
+        if has_app[0] == "i":
+            app_node["text"] = node["inputApplicationName"]
+        else:
+            app_node["text"] = node["onputApplicationName"]
 
         if 'mkn' in node:
             app_node['mkn'] = node['mkn']
