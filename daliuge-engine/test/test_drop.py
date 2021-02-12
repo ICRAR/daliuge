@@ -456,11 +456,10 @@ class TestDROP(unittest.TestCase):
         # Read from the DROP
         self.assertEqual(msg, droputils.allDropContents(a))
         self.assertIsNone(a.checksum)
-        self.assertIsNone(a.size)
+        self.assertEqual(9, a.size)
 
-        # We can manually set the size because the DROP wasn't able to calculate
-        # it itself; if we couldn't an exception would be thrown
-        a.size = len(msg)
+        # The drop now calculates the size thus we can't set it anymore
+        self.assertRaises(Exception, a.size, len(msg))
 
     def test_stateMachine(self):
         """
