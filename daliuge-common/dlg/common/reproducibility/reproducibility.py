@@ -380,7 +380,7 @@ def lg_build_blockdag(lg: dict):
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             parenthash = {}
-            if rmode >= ReproducibilityFlags.REPRODUCE.value:
+            if rmode == ReproducibilityFlags.REPRODUCE.value:
                 if dropset[did][0]['categoryType'] == Categories.DATA \
                         and (dropset[did][1] == 0 or dropset[did][2] == 0):
                     # Add my new hash to the parent-hash list
@@ -471,7 +471,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             parenthash = {}
-            if rmode >= ReproducibilityFlags.REPRODUCE.value:
+            if rmode == ReproducibilityFlags.REPRODUCE.value:
                 # TODO: Hack! may break later, proceed with caution
                 if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA\
                         and (dropset[did][1] == 0 or dropset[did][2] == 0):
