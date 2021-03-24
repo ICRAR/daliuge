@@ -138,7 +138,7 @@ file_mounts_sync_continuously: False
 # enabled, these commands will run outside the container and before docker
 # is setup.
 initialization_commands: [
-    sudo ln -s /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home,
+    sudo ln -Fs /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home,
     # curl -fsSL https://get.docker.com -o get-docker.sh,
     # sudo apt update,
     # sudo apt remove docker,
