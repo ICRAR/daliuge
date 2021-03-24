@@ -35,7 +35,7 @@ docker:
     # head_image: "rayproject/ray:latest-gpu"
     # Allow Ray to automatically detect GPUs
 
-    worker_image: "icrar/dlg_ray:1.1"
+    worker_image: "icrar/dlg_ray:1.2"
     worker_run_options: [-v /var/run/docker.sock:/var/run/docker.sock  -p 8265:8265]
 
 # The autoscaler will scale up the cluster to this target fraction of resource
