@@ -23,7 +23,7 @@ autoscaling_mode: default
 # and opens all the necessary ports to support the Ray cluster.
 # Empty string means disabled.
 docker:
-    image: "icrar/dlg_ray:2"
+    image: "icrar/dlg_ray:1.2"
     # image: "rayproject/ray:latest-cpu" # You can change this to latest-cpu if you don't need GPU support and want a faster startup
     container_name: "ray_container"
     # If true, pulls latest version of image. Otherwise, `docker run` will only pull the image
@@ -150,16 +150,16 @@ initialization_commands: [
 
 # List of shell commands to run to set up nodes.
 setup_commands:
-    - apt update
-    - apt install -y curl
+    - sudo apt update
+    - sudo apt install -y curl
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands:
-    - apt update
-    - apt install -y curl
+    - sudo apt update
+    - sudo apt install -y curl
 
 # In order to get the leap_cli docker container mounting the /var/dlg_home directory correctly the leap_cli 
 # docker component needs to specify the following in the additional mounts parameter:
