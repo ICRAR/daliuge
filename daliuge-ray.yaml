@@ -138,7 +138,7 @@ file_mounts_sync_continuously: False
 # enabled, these commands will run outside the container and before docker
 # is setup.
 initialization_commands: [
-    sudo ln -Fs /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home,
+    sudo ln -fs /tmp/ray_tmp_mount/default/var/dlg_home /var/dlg_home
     # curl -fsSL https://get.docker.com -o get-docker.sh,
     # sudo apt update,
     # sudo apt remove docker,
@@ -179,8 +179,8 @@ head_start_ray_commands:
     - ray stop
     - ulimit -n 65536; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
     # start DALiuGE data island manager
-    - dlg dim -d -v -H 0.0.0.0
-    - dlg nm -d -v -H 0.0.0.0 --dlg-path=/var/dlg_home/code
+    - dlg dim -d -v -H 0.0.0.0 -w /var/dlg_home/workspace
+    - dlg nm -d -v -H 0.0.0.0 --dlg-path=/var/dlg_home/code -w /var/dlg_home/workspace
     - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
 
     # bug in registration creates two entires in DIM
@@ -191,7 +191,7 @@ worker_start_ray_commands:
     - ray stop
     - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
     # start DALiuGE node manager
-    - dlg nm -vd -H 0.0.0.0 --dlg-path=/var/dlg_home/code
+    - dlg nm -vd -H 0.0.0.0 --dlg-path=/var/dlg_home/code -w /var/dlg_home/workspace
     - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
     # bug in registration creates two entires in DIM
     # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
