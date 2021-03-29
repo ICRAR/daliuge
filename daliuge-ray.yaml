@@ -1,3 +1,7 @@
+# This is the main configuration file for the DALiuGE RAY cluster deployment on AWS
+# It is using a custom build docker image combining both Ray and DALiuGE into one
+# image. 
+#
 # An unique identifier for the head node and workers of this cluster.
 cluster_name: default
 
@@ -106,6 +110,7 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
+    # NOTE: the source directory is a local directory on the machine 'ray up' is called. 
     "/var/dlg_home":"/var/dlg_home"
 }
 
