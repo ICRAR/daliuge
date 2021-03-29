@@ -49,6 +49,12 @@ def get_lg_ver_type(lgo):
     if len(nodes) == 0:
         raise Exception("Invalid LG, nodes not found")
 
+    # First check whether modelData and schemaVersion is in graph
+    if "modelData" in lgo and len(lgo["modelData"]) > 0 and \
+        "schemaVersion" in lgo["modelData"]:
+        return lgo["modelData"]["schemaVersion"]
+
+    # else do the old stuff...
     for i, node in enumerate(nodes):
         if i > 5:
             break

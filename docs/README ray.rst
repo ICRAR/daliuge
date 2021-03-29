@@ -1,5 +1,6 @@
 Notes of the merge between Data Activated 流 Graph Engine and Ray
-=============================================================
+=================================================================
+
 The objective of this activity was to investigate a feasible solution for the flexible and simple deployment of DALiuGE on various platforms. In particular the deployment of DAliuGE on AWS in an autoscaling environment is of interest to us.
 
 Ray (https://docs.ray.io/en/master/) is a pretty complete execution engine all by itself, targeting DL and ML applications and integrating a number of the major ML software packages. What we are in particular interested in is the Ray core software, which states the folloing mission:
@@ -54,8 +55,6 @@ As a workaround DALiuGE does provide a REST API call to register a NM with the D
 Bringing the cluster down by default only stops the instances and thus the next startup is quite a bit faster. There is just one 'small' issue: Ray v1.0 has a bug, which prevents the second start to work! That is why the current default setting in daliuge-ray.yaml is to terminate the instances::
 
     cache_stopped_nodes: False
-
-Submitting a second graph to already running NMs does not work either, because of a bug in DALiuGE. Thus the node managers need to be restarted. 
 
 To stop and start a node manager use the following two commands, replacing the SSH key file with the one created when creating the cluster and the IP address with the public IP address of the AWS node where the NM should be restarted::
 

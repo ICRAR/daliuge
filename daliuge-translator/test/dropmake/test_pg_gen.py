@@ -74,6 +74,15 @@ class TestPGGen(unittest.TestCase):
             pgtp = MetisPGTP(drop_list)
             pgtp.json
 
+    def test_metis_appRef(self):
+        lgnames = ['leap_cli_dir_appRef.json']
+        for i, lgn in enumerate(lgnames):
+            fp = get_lg_fname(lgn)
+            lg = LG(fp)
+            drop_list = lg.unroll_to_tpl()
+            pgtp = MetisPGTP(drop_list)
+            pgtp.json
+
     def test_metis_pgtp_gen_pg(self):
         lgnames = ['testLoop.graph', 'cont_img.json',
                    'test_grpby_gather.json', 'chiles_simple.json']
