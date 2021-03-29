@@ -1,0 +1,914 @@
+{
+    "linkDataArray": [
+        {
+            "dataType": "Config",
+            "from": -4,
+            "fromPort": "5609a2fc-8337-4861-92b6-284953a47b37",
+            "loopAware": false,
+            "to": -10,
+            "toPort": "69fccb56-33d1-471e-9673-87b1f6b1e4df"
+        },
+        {
+            "dataType": "Result",
+            "from": -10,
+            "fromPort": "a15f56ba-b8aa-4f13-9e5e-e1d0339e42b2",
+            "loopAware": false,
+            "to": -6,
+            "toPort": "c45d0e04-c447-4fd4-b00a-7cd615b6fc80"
+        },
+        {
+            "dataType": "MS_path",
+            "from": -11,
+            "fromPort": "ac835dfd-1eb4-4d22-b03f-e5fe42b25b5b",
+            "loopAware": false,
+            "to": -10,
+            "toPort": "107e37f9-8c5f-40ce-8db7-ea4e5fd45d3d"
+        },
+        {
+            "dataType": "Directions",
+            "from": -8,
+            "fromPort": "aa51cef5-4dde-453b-9435-1894d93793c0",
+            "loopAware": false,
+            "to": -1,
+            "toPort": "6c715de2-3a4e-49bc-9dfc-eb3b85b7be21"
+        },
+        {
+            "dataType": "Config",
+            "from": -1,
+            "fromPort": "a0a0ef63-617f-4135-9142-18e917559a03",
+            "loopAware": false,
+            "to": -4,
+            "toPort": "a1c8fd8c-6589-4953-8367-65efb469ea99"
+        },
+        {
+            "dataType": "Result",
+            "from": -6,
+            "fromPort": "1519b160-7827-4699-9ac3-ed8ada27fcec",
+            "loopAware": false,
+            "to": -3,
+            "toPort": "1ffa91ab-b83c-429d-a145-a5f47d5fa8ec"
+        },
+        {
+            "dataType": "Result",
+            "from": -3,
+            "fromPort": "6a0951e3-6750-494e-b38b-99164cf66cb4",
+            "loopAware": false,
+            "to": -7,
+            "toPort": "ccee6df6-1a62-4105-ac6f-bf4404476ace"
+        }
+    ],
+    "modelData": {
+        "eagleCommitHash": "aa54be7aa6b11f651cba13c22fbed4c02dfbad58",
+        "eagleVersion": "v2.8.10:eagle-299",
+        "filePath": "leap/leap_cli_dir.graph",
+        "fileType": "graph",
+        "git_url": "https://api.github.com/repos/ICRAR/EAGLE-graph-repo/git/blobs/7e02fd7ea62dfab25924920f90cd2f7361b1b223",
+        "readonly": true,
+        "repo": "ICRAR/EAGLE-graph-repo",
+        "repoBranch": "master",
+        "repoService": "GitHub",
+        "schemaVersion": "AppRef",
+        "sha": "7e02fd7ea62dfab25924920f90cd2f7361b1b223"
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "category": "Scatter",
+            "categoryType": "Group",
+            "collapsed": false,
+            "color": "#DDAD00",
+            "description": "Distribute the directions and run one LEAP instance per direction.",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": true,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "num_of_copies",
+                    "readonly": false,
+                    "text": "Number of copies",
+                    "type": "Unknown",
+                    "value": "3"
+                }
+            ],
+            "flipPorts": false,
+            "height": 304,
+            "inputApplicationRef": -1,
+            "inputPorts": [],
+            "isData": false,
+            "isGroup": true,
+            "key": -2,
+            "outputPorts": [],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Direction Scatter",
+            "width": 585,
+            "x": 924.9296252941459,
+            "y": 264.07562606720273
+        },
+        {
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "category": "Gather",
+            "categoryType": "Group",
+            "collapsed": false,
+            "color": "#D35400",
+            "description": "Merge the individual results into a single file",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": true,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "num_of_inputs",
+                    "readonly": false,
+                    "text": "Number of inputs",
+                    "type": "Unknown",
+                    "value": "3"
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputApplicationRef": -3,
+            "inputPorts": [],
+            "isData": false,
+            "isGroup": true,
+            "key": -5,
+            "outputPorts": [],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Gather",
+            "width": 200,
+            "x": 1587.8636714194383,
+            "y": 293.0596152125075
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "Unknown",
+                    "value": ""
+                },
+                {
+                    "description": "",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "Unknown",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [
+                {
+                    "Id": "c45d0e04-c447-4fd4-b00a-7cd615b6fc80",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "isData": true,
+            "isGroup": false,
+            "key": -6,
+            "outputPorts": [
+                {
+                    "Id": "1519b160-7827-4699-9ac3-ed8ada27fcec",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": -2,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "IntermediateResult",
+            "width": 200,
+            "x": 1320.7217616000235,
+            "y": 407.62928977792285
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "Unknown",
+                    "value": "final.json"
+                },
+                {
+                    "description": "",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "Unknown",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [
+                {
+                    "Id": "ccee6df6-1a62-4105-ac6f-bf4404476ace",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "isData": true,
+            "isGroup": false,
+            "key": -7,
+            "outputPorts": [
+                {
+                    "Id": "67e46a46-f754-4540-8a89-deb830304c02",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": -5,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Phase Vector",
+            "width": 200,
+            "x": 1621.275775356245,
+            "y": 370.3662662287931
+        },
+        {
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
+            "category": "Comment",
+            "categoryType": "Other",
+            "collapsed": false,
+            "color": "#799938",
+            "description": "",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "The text value of the comment",
+                    "name": "comment",
+                    "readonly": false,
+                    "text": "Comment",
+                    "type": "Unknown",
+                    "value": "This is assuming shared file system for the MS and the direction.csv files. LeapAccelerateCLI here is a docker container. Final result is a vector with a phase correction for each station."
+                }
+            ],
+            "flipPorts": false,
+            "height": 153.25323185570778,
+            "inputPorts": [],
+            "isData": false,
+            "isGroup": false,
+            "key": -9,
+            "outputPorts": [],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "",
+            "width": 199.58141986216643,
+            "x": 717.7652313216119,
+            "y": 67.19848418459365
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "Generated LEAP config file",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "Unknown",
+                    "value": ""
+                },
+                {
+                    "description": "",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "Unknown",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [
+                {
+                    "Id": "a1c8fd8c-6589-4953-8367-65efb469ea99",
+                    "IdText": "Config",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "isData": true,
+            "isGroup": false,
+            "key": -4,
+            "outputPorts": [
+                {
+                    "Id": "5609a2fc-8337-4861-92b6-284953a47b37",
+                    "IdText": "Config",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": -2,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "ConfigFile",
+            "width": 200,
+            "x": 948.807815479732,
+            "y": 379.48636624870574
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Docker",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#331C54",
+            "description": "Component to run the LEAP-accelerate docker container.",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "3"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "image",
+                    "readonly": false,
+                    "text": "Image",
+                    "type": "Unknown",
+                    "value": "icrar/leap_cli:0.8.1"
+                },
+                {
+                    "description": "",
+                    "name": "command",
+                    "readonly": false,
+                    "text": "Command",
+                    "type": "Unknown",
+                    "value": "LeapAccelerateCLI -f %i1 -c %i0 -o %o0"
+                },
+                {
+                    "description": "",
+                    "name": "user",
+                    "readonly": false,
+                    "text": "User",
+                    "type": "Unknown",
+                    "value": ""
+                },
+                {
+                    "description": "",
+                    "name": "ensureUserAndSwitch",
+                    "readonly": false,
+                    "text": "Ensure User And Switch",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "removeContainer",
+                    "readonly": false,
+                    "text": "Remove Container",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "additionalBindings",
+                    "readonly": false,
+                    "text": "Additional Bindings",
+                    "type": "Unknown",
+                    "value": "/var/dlg_home:/var/dlg_home"
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [
+                {
+                    "Id": "69fccb56-33d1-471e-9673-87b1f6b1e4df",
+                    "IdText": "Config",
+                    "event": false,
+                    "type": "Unknown"
+                },
+                {
+                    "Id": "107e37f9-8c5f-40ce-8db7-ea4e5fd45d3d",
+                    "IdText": "MS_path",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -10,
+            "outputPorts": [
+                {
+                    "Id": "a15f56ba-b8aa-4f13-9e5e-e1d0339e42b2",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": -2,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "LeapAccelerateCLI",
+            "width": 200,
+            "x": 1123.272871552052,
+            "y": 406.3805529273904
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "File containing multiple calibrator directions.",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "Unknown",
+                    "value": "/var/dlg_home/testdata/directions.csv"
+                },
+                {
+                    "description": "",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "Unknown",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -8,
+            "outputPorts": [
+                {
+                    "Id": "aa51cef5-4dde-453b-9435-1894d93793c0",
+                    "IdText": "Directions",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "directions.csv",
+            "width": 200,
+            "x": 703.7382550335572,
+            "y": 261.3045318707328
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "embedKey": null,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Unknown",
+                    "value": ""
+                },
+                {
+                    "description": "",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "Unknown",
+                    "value": "/var/dlg_home/testdata/1197638568-split.ms"
+                },
+                {
+                    "description": "",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "Unknown",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -11,
+            "outputPorts": [
+                {
+                    "Id": "ac835dfd-1eb4-4d22-b03f-e5fe42b25b5b",
+                    "IdText": "MS_path",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "MS",
+            "width": 200,
+            "x": 692.0527325023968,
+            "y": 463.4627293779236
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#3498DB",
+            "description": "",
+            "drawOrderHint": 0,
+            "embedKey": -2,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "The number of stations from the measurement set that should be processed",
+                    "name": "number_of_stations",
+                    "readonly": false,
+                    "text": "number_of_stations",
+                    "type": "Integer",
+                    "value": "1"
+                },
+                {
+                    "description": "The implementation of the LEAP algorithm to use (cpu, cuda)",
+                    "name": "implementation",
+                    "readonly": false,
+                    "text": "implementation",
+                    "type": "String",
+                    "value": "cpu"
+                },
+                {
+                    "description": "Enable auto correlation in the LEAP algorithm",
+                    "name": "auto_correlation",
+                    "readonly": false,
+                    "text": "auto_correlation",
+                    "type": "String",
+                    "value": "false"
+                },
+                {
+                    "description": "The path to the class that implements this app",
+                    "name": "appclass",
+                    "readonly": true,
+                    "text": "appclass",
+                    "type": "String",
+                    "value": "leap_drops.ProduceConfig.ProduceConfig"
+                },
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": 0
+                },
+                {
+                    "description": "",
+                    "name": "max_directions",
+                    "readonly": false,
+                    "text": "max_directions",
+                    "type": "Unknown",
+                    "value": "1"
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [
+                {
+                    "Id": "6c715de2-3a4e-49bc-9dfc-eb3b85b7be21",
+                    "IdText": "Directions",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -1,
+            "outputPorts": [
+                {
+                    "Id": "a0a0ef63-617f-4135-9142-18e917559a03",
+                    "IdText": "Config",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Produce Config.",
+            "width": 200,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "",
+            "drawOrderHint": 0,
+            "embedKey": -5,
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "description": "",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "description": "",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "Unknown",
+                    "value": "cat %i0 %i1 %i2 > %o0"
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputPorts": [
+                {
+                    "Id": "1ffa91ab-b83c-429d-a145-a5f47d5fa8ec",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -3,
+            "outputPorts": [
+                {
+                    "Id": "6a0951e3-6750-494e-b38b-99164cf66cb4",
+                    "IdText": "Result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "parentKey": null,
+            "readonly": true,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "LEAPGather",
+            "width": 200,
+            "x": 0,
+            "y": 0
+        }
+    ]
+}
