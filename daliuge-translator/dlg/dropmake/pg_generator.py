@@ -1895,6 +1895,9 @@ class LG:
             lg = convert_construct(lg)
         elif LG_VER_EAGLE_CONVERTED == lgver:
             lg = convert_construct(lg)
+        # This ensures that future schema version mods are catched early
+        else:
+            raise GraphException("Logical graph version '{0}' not supported!".format(lgver))
         self._done_dict = dict()
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
@@ -2789,11 +2792,3 @@ def resource_map(pgt, nodes, num_islands=1):
         drop_spec["island"] = dim_list[iidx]
 
     return pgt  # now it's a PG
-    
-
-if __name__ == '__main__':
-    with open('/Users/awicenec/tmp/testScatterClean.graph') as f:
-        lgs = f.read()
-    lg = json.loads(lgs)
-    drop_list = unroll(lg)
-    print('Unrolled')
