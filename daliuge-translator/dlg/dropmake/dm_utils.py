@@ -52,7 +52,8 @@ def get_lg_ver_type(lgo):
     # First check whether modelData and schemaVersion is in graph
     if "modelData" in lgo and len(lgo["modelData"]) > 0 and \
         "schemaVersion" in lgo["modelData"]:
-        return lgo["modelData"]["schemaVersion"]
+        if lgo["modelData"]["schemaVersion"] != 'OJS':
+            return lgo["modelData"]["schemaVersion"]
 
     # else do the old stuff...
     for i, node in enumerate(nodes):
