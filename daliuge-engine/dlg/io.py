@@ -259,6 +259,7 @@ class NgasIO(DataIO):
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
         self._length             = length
+        self._mimeType = mimeType
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -334,7 +335,7 @@ class NgasLiteIO(DataIO):
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
-            return ngaslite.beingArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, length=self._length)
+            return ngaslite.beginArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, length=self._length, **kwargs)
         return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
 
     def _close(self, **kwargs):
