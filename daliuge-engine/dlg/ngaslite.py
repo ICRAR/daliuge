@@ -45,7 +45,7 @@ def retrieve(host, fileId, port=7777, timeout=None):
         raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, response.status, response.msg))
     return response
 
-def beingArchive(host, fileId, port=7777, timeout=0, length=-1):
+def beginArchive(host, fileId, port=7777, timeout=0, length=-1):
     """
     Opens a connecting to the NGAS server located at `host`:`port` and sends out
     the request for archiving the given `fileId`.

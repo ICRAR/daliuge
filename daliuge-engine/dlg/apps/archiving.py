@@ -77,9 +77,11 @@ class NgasArchivingApp(ExternalStoreApp):
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
-    ngasSrv = dlg_string_param('NGAS Server', 'localhost')
-    ngasPort = dlg_int_param('NGAS Port', 7777)
-    ngasConnectTimeout = dlg_float_param('Connect Timeout', 2.)
+    ngasSrv = dlg_string_param('ngasSrv', 'localhost')
+    ngasPort = dlg_int_param('ngasPort', 7777)
+    ngasMime = dlg_string_param('NGAS mime-type', 'application/octet-stream')
+    ngasTimeout = dlg_int_param('ngasTimeout', 2)
+    ngasConnectTimeout = dlg_float_param('ngasConnectTimeout', 2.)
     ngasTimeout = dlg_float_param('Timeout', 2.)
 
     def initialize(self, **kwargs):
@@ -99,7 +101,8 @@ class NgasArchivingApp(ExternalStoreApp):
         except ImportError:
             ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
 
-        ngasIO.open(OpenMode.OPEN_WRITE)
+        # the mimeType here is required for the lite client and ignored by the full client
+        ngasIO.open(OpenMode.OPEN_WRITE, mimeType=self.ngasMime)
 
         # Copy in blocks of 4096 bytes
         with DROPFile(inDrop) as f:
@@ -108,4 +111,4 @@ class NgasArchivingApp(ExternalStoreApp):
                 ngasIO.write(buff)
                 if len(buff) != 4096:
                     break
-        ngasIO.close()
+        ngasIO.close(mimeType=self.ngasMime)  # the mimeType here is required for the full NGAS client and ignored by the lite client
