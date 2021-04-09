@@ -45,7 +45,7 @@ def retrieve(host, fileId, port=7777, timeout=None):
         raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, response.status, response.msg))
     return response
 
-def beginArchive(host, fileId, port=7777, timeout=0, length=-1):
+def beginArchive(host, fileId, port=7777, timeout=0, length=-1, mimeType='application/octet-stream'):
     """
     Opens a connecting to the NGAS server located at `host`:`port` and sends out
     the request for archiving the given `fileId`.
@@ -57,7 +57,7 @@ def beginArchive(host, fileId, port=7777, timeout=0, length=-1):
     """
     conn = httplib.HTTPConnection(host, port, timeout=timeout)
     conn.putrequest('POST', '/QARCHIVE?filename=' + fileId)
-    conn.putheader('Content-Type', 'application/octet-stream')
+    conn.putheader('Content-Type', mimeType)
     if length is not None and length >= 0:
         conn.putheader('Content-Length', length)
         # defer endheaders NGAS requires Content-Length
