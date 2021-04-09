@@ -81,7 +81,7 @@ class NgasArchivingApp(ExternalStoreApp):
     ngasPort = dlg_int_param('ngasPort', 7777)
     ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
-    ngasConnectTimeout = dlg_float_param('ngasConnectTimeout', 2.)
+    ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
 
     def initialize(self, **kwargs):
         super(NgasArchivingApp, self).initialize(**kwargs)
@@ -99,13 +99,14 @@ class NgasArchivingApp(ExternalStoreApp):
             size = inDrop.size
             logger.debug("Content-length %s", size)
         try:
-            ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
+            ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort,
+                            self.ngasConnectTimeout, self.ngasTimeout, size, mimeType=self.ngasMime)
         except ImportError:
             logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
-            ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
+            ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort,
+                                self.ngasConnectTimeout, self.ngasTimeout, size, mimeType=self.ngasMime)
 
-        # the mimeType here is required for the lite client and ignored by the full client
-        ngasIO.open(OpenMode.OPEN_WRITE, mimeType=self.ngasMime)
+        ngasIO.open(OpenMode.OPEN_WRITE)
 
         # Copy in blocks of 4096 bytes
         with DROPFile(inDrop) as f:
@@ -114,4 +115,4 @@ class NgasArchivingApp(ExternalStoreApp):
                 ngasIO.write(buff)
                 if len(buff) != 4096:
                     break
-        ngasIO.close(mimeType=self.ngasMime)  # the mimeType here is required for the full NGAS client and ignored by the lite client
+        ngasIO.close()
