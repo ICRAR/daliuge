@@ -79,10 +79,9 @@ class NgasArchivingApp(ExternalStoreApp):
 
     ngasSrv = dlg_string_param('ngasSrv', 'localhost')
     ngasPort = dlg_int_param('ngasPort', 7777)
-    ngasMime = dlg_string_param('NGAS mime-type', 'application/octet-stream')
+    ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
     ngasConnectTimeout = dlg_float_param('ngasConnectTimeout', 2.)
-    ngasTimeout = dlg_float_param('Timeout', 2.)
 
     def initialize(self, **kwargs):
         super(NgasArchivingApp, self).initialize(**kwargs)
@@ -94,11 +93,15 @@ class NgasArchivingApp(ExternalStoreApp):
         if isinstance(inDrop, ContainerDROP):
             raise Exception("ContainerDROPs are not supported as inputs for this application")
 
-        size = -1 if inDrop.size is None else inDrop.size
-        logger.debug("Content-length %s", size)
+        if inDrop.size is None or inDrop.size < 0:
+            logger.error("NGAS requires content-length to be know, but the given input does not provide a size.")
+        else:
+            size = inDrop.size
+            logger.debug("Content-length %s", size)
         try:
             ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
         except ImportError:
+            logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
             ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort, self.ngasConnectTimeout, self.ngasTimeout, size)
 
         # the mimeType here is required for the lite client and ignored by the full client
