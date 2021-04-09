@@ -243,7 +243,7 @@ class NgasIO(DataIO):
     in a file on the local filesystem and then move it to the NGAS destination
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, mimeType='application/octet-stream'):
 
         # Check that we actually have the NGAMS client libraries
         try:
@@ -259,7 +259,7 @@ class NgasIO(DataIO):
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
         self._length             = length
-        self._mimeType = mimeType
+        self._mimeType           = mimeType
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -280,7 +280,7 @@ class NgasIO(DataIO):
         if self._mode == OpenMode.OPEN_WRITE:
             reply, msg, _, _ = client._httpPost(
                      client.getHost(), client.getPort(), 'QARCHIVE',
-                     'application/octet-stream', dataRef=self._buf,
+                     self._mimeType, dataRef=self._buf,
                      pars=[['filename',self._fileId]], dataSource='BUFFER',
                      dataSize=self._writtenDataSize)
             self._buf = None
@@ -320,7 +320,8 @@ class NgasLiteIO(DataIO):
     that this class will throw an error if its `exists` method is invoked.
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, \
+        mimeType='application/octet-stream'):
         super(NgasLiteIO, self).__init__()
         self._ngasSrv            = hostname
         self._ngasPort           = port
@@ -328,6 +329,10 @@ class NgasLiteIO(DataIO):
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
         self._length             = length
+        self._mimeType           = mimeType
+
+    def _is_length_unknown(self):
+        return self._length is None or self._length < 0
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -335,7 +340,7 @@ class NgasLiteIO(DataIO):
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
-            if self._length is None or self._length < 0:
+            if self._is_length_unknown():
                 # NGAS does not support HTTP chunked writes and thus it requires the Content-length
                 # of the whole fileObject to be known and sent up-front as part of the header. Thus
                 # is size is not provided all data will be buffered IN MEMORY and only sent to NGAS
@@ -343,14 +348,14 @@ class NgasLiteIO(DataIO):
                 self._buf = b''
                 self._writtenDataSize = 0
             return ngaslite.beginArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, \
-                    length=self._length, **kwargs)
+                    length=self._length, mimeType=self._mimeType)
         else:
             return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
 
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
             conn = self._desc
-            if self._length is None or self._length < 0:
+            if self._is_length_unknown():
                 # If length wasn't known up-front we first send Content-Length and then the buffer here.
                 conn.putheader('Content-Length', len(self._buf))
                 conn.endheaders()
@@ -366,7 +371,7 @@ class NgasLiteIO(DataIO):
         self._desc.read(count)
 
     def _write(self, data, **kwargs):
-        if self._length is None or self._length < 0:
+        if self._is_length_unknown():
             self._buf += data
             return len(self._buf)
         else:
