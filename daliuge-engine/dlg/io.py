@@ -271,7 +271,7 @@ class NgasIO(DataIO):
             # request with data. Thus the only way we can currently archive data
             # into NGAS is by accumulating it all on our side and finally
             # sending it over.
-            self._buf = ''
+            self._buf = b''
             self._writtenDataSize = 0
         return self._getClient()
 
@@ -335,12 +335,27 @@ class NgasLiteIO(DataIO):
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
-            return ngaslite.beginArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, length=self._length, **kwargs)
-        return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
+            if self._length is None or self._length < 0:
+                # NGAS does not support HTTP chunked writes and thus it requires the Content-length
+                # of the whole fileObject to be known and sent up-front as part of the header. Thus
+                # is size is not provided all data will be buffered IN MEMORY and only sent to NGAS
+                # when finishArchive is called.
+                self._buf = b''
+                self._writtenDataSize = 0
+            return ngaslite.beginArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, \
+                    length=self._length, **kwargs)
+        else:
+            return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
 
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
             conn = self._desc
+            if self._length is None or self._length < 0:
+                # If length wasn't known up-front we first send Content-Length and then the buffer here.
+                conn.putheader('Content-Length', len(self._buf))
+                conn.endheaders()
+                conn.send(self._buf)
+                self._buf = None
             ngaslite.finishArchive(conn, self._fileId)
             conn.close()
         else:
@@ -351,8 +366,12 @@ class NgasLiteIO(DataIO):
         self._desc.read(count)
 
     def _write(self, data, **kwargs):
-        self._desc.send(data)
-        return len(data)
+        if self._length is None or self._length < 0:
+            self._buf += data
+            return len(self._buf)
+        else:
+            self._desc.send(data)
+            return len(data)
 
     def exists(self):
         raise NotImplementedError("This method is not supported by this class")

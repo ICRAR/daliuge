@@ -1154,7 +1154,8 @@ class NgasDROP(AbstractDROP):
     len = dlg_int_param('len', -1)
 
     def initialize(self, **kwargs):
-       pass
+        if self.len == -1:
+            self.len = self._size
 
     def getIO(self):
         try:

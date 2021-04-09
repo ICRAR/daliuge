@@ -58,9 +58,10 @@ def beginArchive(host, fileId, port=7777, timeout=0, length=-1):
     conn = httplib.HTTPConnection(host, port, timeout=timeout)
     conn.putrequest('POST', '/QARCHIVE?filename=' + fileId)
     conn.putheader('Content-Type', 'application/octet-stream')
-    if length != -1:
+    if length is not None and length >= 0:
         conn.putheader('Content-Length', length)
-    conn.endheaders()
+        # defer endheaders NGAS requires Content-Length
+        conn.endheaders()
     return conn
 
 def finishArchive(conn, fileId):
