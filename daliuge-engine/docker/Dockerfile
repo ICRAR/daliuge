@@ -14,6 +14,7 @@ FROM icrar/daliuge-common:ray
 # copy sources and virtualenv
 COPY --from=0 /daliuge/. /daliuge/.
 COPY --from=0 /home/ray/dlg /home/ray/dlg
+RUN sudo mkdir -p /var/dlg_home/workspace && sudo chown -R ray:users /var/dlg_home
 
 EXPOSE 5555
 EXPOSE 6666
