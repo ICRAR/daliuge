@@ -430,7 +430,7 @@ class AbstractDROP(EventFirer):
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
-            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (descriptor, self.status,))
+            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status,))
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
@@ -1151,6 +1151,7 @@ class NgasDROP(AbstractDROP):
     ngasPort = dlg_int_param('ngasPort', 7777)
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
     ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
+    ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
     len = dlg_int_param('len', -1)
 
     def initialize(self, **kwargs):
@@ -1160,11 +1161,11 @@ class NgasDROP(AbstractDROP):
     def getIO(self):
         try:
             ngasIO = NgasIO(self.ngasSrv, self.uid, self.ngasPort,
-                            self.ngasConnectTimeout, self.ngasTimeout, self.len)
+                            self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
         except ImportError:
             logger.warning('NgasIO not available, using NgasLiteIO instead')
             ngasIO = NgasLiteIO(self.ngasSrv, self.uid, self.ngasPort,
-                                self.ngasConnectTimeout, self.ngasTimeout, self.len)
+                                self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
         return ngasIO
 
     @property
