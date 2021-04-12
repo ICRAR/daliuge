@@ -94,7 +94,9 @@ class NgasArchivingApp(ExternalStoreApp):
             raise Exception("ContainerDROPs are not supported as inputs for this application")
 
         if inDrop.size is None or inDrop.size < 0:
-            logger.error("NGAS requires content-length to be know, but the given input does not provide a size.")
+            logger.error(
+                "NGAS requires content-length to be know, but the given input does not provide a size.")
+            size = None
         else:
             size = inDrop.size
             logger.debug("Content-length %s", size)
