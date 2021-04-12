@@ -35,11 +35,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def open(host, fileId, port=7777, timeout=None):
-    url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
-    logger.debug("Issuing RETRIEVE request: %s" % (url))
-    conn = urlrequest.urlopen(url)
-    return conn
+def open(host, fileId, port=7777, timeout=None, mode=1, mimeType='application/octet-stream'):
+    if mode == 1:
+        return retrieve(host, fileId, port=port, timeout=timeout)
+    else:
+        return beginArchive(host, fileId, port=port, timeout=timeout, mimeType=mimeType)
 
 def retrieve(host, fileId, port=7777, timeout=None):
     """
@@ -65,6 +65,7 @@ def beginArchive(host, fileId, port=7777, timeout=0, length=-1, mimeType='applic
     Once all the data has been sent, the `finishArchive` method of this module
     should be invoked to check that all went well with the archiving.
     """
+    logger.debug("Issuing ARCHIVE for file %s request to: http://%s:%d" % (fileId, host,port))
     conn = httplib.HTTPConnection(host, port, timeout=timeout)
     conn.putrequest('POST', '/QARCHIVE?filename=' + fileId)
     conn.putheader('Content-Type', mimeType)
