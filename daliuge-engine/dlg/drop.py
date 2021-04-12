@@ -1149,6 +1149,7 @@ class NgasDROP(AbstractDROP):
     '''
     ngasSrv = dlg_string_param('ngasSrv', 'localhost')
     ngasPort = dlg_int_param('ngasPort', 7777)
+    ngasFileId = dlg_string_param('ngasFileId', None)
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
     ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
     ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
@@ -1157,20 +1158,24 @@ class NgasDROP(AbstractDROP):
     def initialize(self, **kwargs):
         if self.len == -1:
             self.len = self._size
+        if self.ngasFileId:
+            self.fileId = self.ngasFileId
+        else:
+            self.fileId = self.uid
 
     def getIO(self):
         try:
-            ngasIO = NgasIO(self.ngasSrv, self.uid, self.ngasPort,
+            ngasIO = NgasIO(self.ngasSrv, self.fileId, self.ngasPort,
                             self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
         except ImportError:
             logger.warning('NgasIO not available, using NgasLiteIO instead')
-            ngasIO = NgasLiteIO(self.ngasSrv, self.uid, self.ngasPort,
+            ngasIO = NgasLiteIO(self.ngasSrv, self.fileId, self.ngasPort,
                                 self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
         return ngasIO
 
     @property
     def dataURL(self):
-        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.uid)
+        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
 
 class InMemoryDROP(AbstractDROP):

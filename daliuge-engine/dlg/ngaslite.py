@@ -29,7 +29,17 @@ still need to access NGAS from time to time.
 '''
 
 import six.moves.http_client as httplib  # @UnresolvedImport
+import six.moves.urllib.request as urlrequest
+import logging
 
+logger = logging.getLogger(__name__)
+
+
+def open(host, fileId, port=7777, timeout=None):
+    url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
+    logger.debug("Issuing RETRIEVE request: %s" % (url))
+    conn = urlrequest.urlopen(url)
+    return conn
 
 def retrieve(host, fileId, port=7777, timeout=None):
     """
@@ -38,12 +48,12 @@ def retrieve(host, fileId, port=7777, timeout=None):
     This method returns a file-like object that supports the `read` operation,
     and over which `close` must be invoked once no more data is read from it.
     """
-    conn = httplib.HTTPConnection(host, port, timeout=timeout)
-    conn.request('GET', '/RETRIEVE?file_id=' + fileId)
-    response = conn.getresponse()
-    if response.status != httplib.OK:
-        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, response.status, response.msg))
-    return response
+    url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
+    logger.debug("Issuing RETRIEVE request: %s" % (url))
+    conn = urlrequest.urlopen(url)
+    if conn.status != httplib.OK:
+        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, conn.status, conn.msg))
+    return conn
 
 def beginArchive(host, fileId, port=7777, timeout=0, length=-1, mimeType='application/octet-stream'):
     """

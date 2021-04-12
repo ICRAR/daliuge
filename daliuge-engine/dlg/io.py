@@ -25,6 +25,7 @@ import os
 
 from six import BytesIO
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
+import six.moves.urllib.request as urlrequest
 
 from . import ngaslite
 
@@ -335,8 +336,8 @@ class NgasLiteIO(DataIO):
         return self._length is None or self._length < 0
 
     def _getClient(self):
-        from ngamsPClient import ngamsPClient  # @UnresolvedImport
-        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
+        return ngaslite.open(
+            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -347,10 +348,9 @@ class NgasLiteIO(DataIO):
                 # when finishArchive is called.
                 self._buf = b''
                 self._writtenDataSize = 0
-            return ngaslite.beginArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, \
-                    length=self._length, mimeType=self._mimeType)
+            return self._getClient()
         else:
-            return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
+            return self._getClient()
 
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -367,8 +367,8 @@ class NgasLiteIO(DataIO):
             response = self._desc
             response.close()
 
-    def _read(self, count, **kwargs):
-        self._desc.read(count)
+    def _read(self, count=4096, **kwargs):
+        return self._desc.read(count)
 
     def _write(self, data, **kwargs):
         if self._is_length_unknown():
@@ -403,10 +403,11 @@ def IOForURL(url):
         networkLocation = url.netloc
         if ':' in networkLocation:
             hostname, port = networkLocation.split(':')
+            port = int(port)
         else:
             hostname = networkLocation
             port = 7777
-        fileId = url.path
+        fileId = url.path[1:]  # remove the trailing slash
         try:
             io = NgasIO(hostname, fileId, port)
         except:

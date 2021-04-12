@@ -89,7 +89,7 @@ def addCommonOptions(parser, defaultPort):
     parser.add_option(      "--cwd", action="store_true",
                       dest="cwd", help="Short for '-w .'", default=False)
     parser.add_option("-w", "--work-dir",
-                      help="Working directory, defaults to '/' in daemon mode, '.' in interactive mode", default=None)
+                      help="Working directory, defaults to '/' in daemon mode, '.' in interactive mode", default=utils.getDlgWorkDir())
     parser.add_option("-s", "--stop", action="store_true",
                       dest="stop", help="Stop an instance running as daemon", default=False)
     parser.add_option(      "--status", action="store_true",
