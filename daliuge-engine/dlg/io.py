@@ -337,7 +337,8 @@ class NgasLiteIO(DataIO):
 
     def _getClient(self):
         return ngaslite.open(
-            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
+            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout,\
+                mode=self._mode, mimeType=self._mimeType)
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -348,9 +349,7 @@ class NgasLiteIO(DataIO):
                 # when finishArchive is called.
                 self._buf = b''
                 self._writtenDataSize = 0
-            return self._getClient()
-        else:
-            return self._getClient()
+        return self._getClient()
 
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
