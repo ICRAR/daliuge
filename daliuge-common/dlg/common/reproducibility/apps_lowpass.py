@@ -25,11 +25,31 @@ class LP_SignalGenerator(BarrierAppDROP):
     # default values
     length = dlg_int_param('length', 256)
     srate = dlg_int_param('sample rate', 5000)
-    freqs = dlg_list_param('Frequencies(int)', [440, 800, 1000, 2000])
+    freqs = dlg_list_param('frequencies', [440, 800, 1000, 2000])
+    noise = dlg_list_param('noise', [])
     series = None
 
     def initialize(self, **kwargs):
         super(LP_SignalGenerator, self).initialize(**kwargs)
+
+    def add_noise(self, series: np.array, mean, std, freq, sample_rate, seed, alpha=0.1):
+        """
+        A noise to the provided signal by producing random values of a given frequency
+        :param series: The input (and output) numpy array signal series
+        :param mean: The average value
+        :param std: The standard deviation of the value
+        :param freq: The frequency of the noisy signal
+        :param sample_rate: The sample rate of the input series
+        :param seed: The random seed
+        :param alpha: The multiplier
+        :return: The input series with noisy values added
+        """
+        np.random.seed(seed)
+        samples = alpha * np.random.normal(mean, std, size=len(series))
+        for i in range(len(series)):
+            samples[i] += np.sin(2 * np.pi * i * freq / sample_rate)
+        np.add(series, samples, out=series)
+        return series
 
     def gen_sig(self):
         series = np.zeros(self.length, dtype=np.float64)
@@ -43,6 +63,11 @@ class LP_SignalGenerator(BarrierAppDROP):
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
         self.series = self.gen_sig()
+        if len(self.noise) > 0:
+            self.noise[0] = 1 / self.noise[0]
+            self.series = self.add_noise(self.series, self.noise[2], self.noise[4], self.noise[1], self.srate,
+                                         self.noise[3], self.noise[0])
+
         data = self.series.tostring()
         for o in outs:
             o.len = len(data)
@@ -320,9 +345,6 @@ class LP_filter_fft_cuda(LP_filter_fft_np):
         out_np = np.zeros(len(out_gpu), self.precision['complex'])
         out_gpu.get(out_np)
         context.pop()
-        context = None
-        from pycuda.tools import clear_context_caches
-        clear_context_caches()
         return out_np
 
 
