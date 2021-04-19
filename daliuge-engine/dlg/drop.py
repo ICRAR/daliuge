@@ -52,6 +52,8 @@ from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
 
+from pyarrow.plasma import plasma
+
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
 try:
@@ -1713,6 +1715,24 @@ class BarrierAppDROP(InputFiredAppDROP):
         # Blindly override existing value if any
         kwargs['n_effective_inputs'] = -1
         super(BarrierAppDROP, self).initialize(**kwargs)
+
+
+class PlasmaDROP(AbstractDROP):
+    '''
+    A DROP that points to data stored in a Plasma Store
+    '''
+    object_id = dlg_string_param('object_id', plasma.ObjectID.from_random().binary())
+    plasma_link = dlg_string_param('plasma_link', '/tmp/plasma')
+
+    def initialize(self, **kwargs):
+       pass
+
+    def getIO(self):
+        return PlasmaIO(plasma.ObjectID(self.object_id), plasma_link)
+
+    @property
+    def dataURL(self):
+        return "plasma://%s:%d/%s" % (plasma.ObjectID(self.object_id))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
