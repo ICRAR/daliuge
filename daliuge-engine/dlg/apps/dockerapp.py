@@ -301,6 +301,7 @@ class DockerApp(BarrierAppDROP):
         binds  = [                i.path  + ":" +                  dockerInputs[uid].path  for uid,i in fsInputs.items()]
         binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path) for uid,o in fsOutputs.items()]
         binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
+        binds = list(set(binds))   # make this a unique list else docker complains
         logger.debug("Volume bindings: %r", binds)
 
         # Wait until the DockerApps this application runtime depends on have
