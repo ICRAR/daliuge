@@ -1,0 +1,594 @@
+{
+    "modelData": {
+        "fileType": "graph",
+        "repoService": "GitHub",
+        "repoBranch": "ngasLite_mods",
+        "repo": "ICRAR/daliuge",
+        "filePath": "daliuge-translator/test/dropmake/logical_graphs/Plasma-test.graph",
+        "sha": "",
+        "git_url": "",
+        "eagleVersion": "v3.0.1",
+        "eagleCommitHash": "932a1061decbdc0412cbe07df0570614e792a160",
+        "schemaVersion": "OJS",
+        "readonly": true
+    },
+    "nodeDataArray": [
+        {
+            "category": "Plasma",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -1,
+            "text": "Plasma",
+            "description": "",
+            "x": 886,
+            "y": 464,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "flipPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [
+                {
+                    "Id": "cedb37c2-4db5-4397-a120-1ade0280d6cf",
+                    "IdText": "MS-in",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "f0aa9a05-beb0-4671-8b00-e7d34f87b8d3",
+                    "IdText": "MS-out",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Data volume",
+                    "name": "data_volume",
+                    "value": 5,
+                    "description": "Estimated size of the data contained in this node",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Group end",
+                    "name": "group_end",
+                    "value": false,
+                    "description": "Is this node the end of a group?",
+                    "readonly": false,
+                    "type": "Boolean"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -2,
+            "text": "MS-plasma-writer",
+            "description": "Component reading an MS and writing to a Plasma store",
+            "x": 664.335,
+            "y": 454.66499999999996,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": true,
+            "flipPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": true,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [
+                {
+                    "Id": "7c4a0d74-974e-4f0b-ac07-5c60c70bf576",
+                    "IdText": "MS-in",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "acb358a8-d6f8-4780-97e7-037d1730d6ef",
+                    "IdText": "MS-in",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": 1,
+                    "description": "Number of CPUs used for this application.",
+                    "readonly": false,
+                    "type": "Integer"
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": false,
+                    "description": "Is this node the start of a group?",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "Appclass",
+                    "name": "appclass",
+                    "value": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "readonly": false,
+                    "type": "String"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        },
+        {
+            "category": "File",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -3,
+            "text": "MS-in",
+            "description": "",
+            "x": 404.33500000000004,
+            "y": 449.66499999999996,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "flipPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "af6487c4-bcd7-44d5-8f0a-677f9141fcf1",
+                    "IdText": "MS-in",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Data volume",
+                    "name": "data_volume",
+                    "value": 5,
+                    "description": "Estimated size of the data contained in this node",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Group end",
+                    "name": "group_end",
+                    "value": false,
+                    "description": "Is this node the end of a group?",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "Check file path exists",
+                    "name": "check_filepath_exists",
+                    "value": false,
+                    "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "File path",
+                    "name": "filepath",
+                    "value": "",
+                    "description": "Path to the file for this node",
+                    "readonly": false,
+                    "type": "String"
+                },
+                {
+                    "text": "Directory name",
+                    "name": "dirname",
+                    "value": "",
+                    "description": "Name of the directory containing the file for this node",
+                    "readonly": false,
+                    "type": "String"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -4,
+            "text": "MS-plasma-reader",
+            "description": "Component reading an MS from a Plasma store and writing to a MS on disk",
+            "x": 1102.335,
+            "y": 454.66499999999996,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "flipPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [
+                {
+                    "Id": "f71063d9-7728-486c-b1f6-b08f4480a474",
+                    "IdText": "MS-out",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "b8e5487a-7b0d-4e04-8fc2-4b7133acf584",
+                    "IdText": "MS-out",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": 1,
+                    "description": "Number of CPUs used for this application.",
+                    "readonly": false,
+                    "type": "Integer"
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": false,
+                    "description": "Is this node the start of a group?",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "Appclass",
+                    "name": "appclass",
+                    "value": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "readonly": false,
+                    "type": "String"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        },
+        {
+            "category": "File",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -5,
+            "text": "MS-out",
+            "description": "",
+            "x": 1392.335,
+            "y": 474.66499999999996,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "flipPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [
+                {
+                    "Id": "397652a9-99de-4449-a186-9ca3c77f90fc",
+                    "IdText": "MS-out",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "16854d06-784d-4068-b1c6-1af58d4c1dfb",
+                    "IdText": "MS-out",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Data volume",
+                    "name": "data_volume",
+                    "value": 5,
+                    "description": "Estimated size of the data contained in this node",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Group end",
+                    "name": "group_end",
+                    "value": false,
+                    "description": "Is this node the end of a group?",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "Check file path exists",
+                    "name": "check_filepath_exists",
+                    "value": false,
+                    "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "File path",
+                    "name": "filepath",
+                    "value": "",
+                    "description": "Path to the file for this node",
+                    "readonly": false,
+                    "type": "String"
+                },
+                {
+                    "text": "Directory name",
+                    "name": "dirname",
+                    "value": "",
+                    "description": "Name of the directory containing the file for this node",
+                    "readonly": false,
+                    "type": "String"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        },
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -6,
+            "text": "Compare",
+            "description": "Compare the input and output MS, return 0 if the same 1 otherwise.",
+            "x": 965.335,
+            "y": 690.665,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "flipPorts": false,
+            "streaming": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [
+                {
+                    "Id": "87d4376d-639c-400b-a8c1-6958c8e6abb3",
+                    "IdText": "MS-out",
+                    "event": false,
+                    "type": "Unknown"
+                },
+                {
+                    "Id": "acd9d843-fcb3-4590-b217-a02a2f132dcd",
+                    "IdText": "MS-in",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "d9b69336-b1a3-4507-a4b3-1f442c3b5b8f",
+                    "IdText": "result",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": 5,
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": 1,
+                    "description": "Number of CPUs used for this application.",
+                    "readonly": false,
+                    "type": "Integer"
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": false,
+                    "description": "Is this node the start of a group?",
+                    "readonly": false,
+                    "type": "Boolean"
+                },
+                {
+                    "text": "Appclass",
+                    "name": "appclass",
+                    "value": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "readonly": false,
+                    "type": "String"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        }
+    ],
+    "linkDataArray": [
+        {
+            "from": -4,
+            "fromPort": "b8e5487a-7b0d-4e04-8fc2-4b7133acf584",
+            "to": -5,
+            "toPort": "397652a9-99de-4449-a186-9ca3c77f90fc",
+            "loop_aware": "0"
+        },
+        {
+            "from": -1,
+            "fromPort": "f0aa9a05-beb0-4671-8b00-e7d34f87b8d3",
+            "to": -4,
+            "toPort": "f71063d9-7728-486c-b1f6-b08f4480a474",
+            "loop_aware": "0"
+        },
+        {
+            "from": -2,
+            "fromPort": "acb358a8-d6f8-4780-97e7-037d1730d6ef",
+            "to": -1,
+            "toPort": "cedb37c2-4db5-4397-a120-1ade0280d6cf",
+            "loop_aware": "0"
+        },
+        {
+            "from": -3,
+            "fromPort": "af6487c4-bcd7-44d5-8f0a-677f9141fcf1",
+            "to": -2,
+            "toPort": "7c4a0d74-974e-4f0b-ac07-5c60c70bf576",
+            "loop_aware": "0"
+        },
+        {
+            "from": -3,
+            "fromPort": "af6487c4-bcd7-44d5-8f0a-677f9141fcf1",
+            "to": -6,
+            "toPort": "acd9d843-fcb3-4590-b217-a02a2f132dcd",
+            "loop_aware": "0"
+        },
+        {
+            "from": -5,
+            "fromPort": "16854d06-784d-4068-b1c6-1af58d4c1dfb",
+            "to": -6,
+            "toPort": "87d4376d-639c-400b-a8c1-6958c8e6abb3",
+            "loop_aware": "0"
+        }
+    ]
+}
