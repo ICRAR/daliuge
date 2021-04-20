@@ -45,6 +45,7 @@ STORAGE_TYPES = {
     Categories.NGAS  : NgasDROP,
     Categories.NULL  : NullDROP,
     Categories.JSON  : JsonDROP,
+    Categories.PLASMA: PlasmaDROP,
 }
 
 try:
