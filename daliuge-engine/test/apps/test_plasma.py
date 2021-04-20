@@ -39,6 +39,21 @@ logging.basicConfig()
 @unittest.skipIf(casa_unavailable, "python-casacore not available")
 class CRCAppTests(unittest.TestCase):
 
+    def compare_ms(self, in_file, out_file):
+        a = []
+        b = []
+        with tables.table(out_file) as t1:
+            for i in t1:
+                a.append(i['DATA'])
+
+        with tables.table(in_file) as t2:
+            for i in t2:
+                b.append(i['DATA'])
+
+        for i, j in enumerate(a):
+            comparison = j == b[i]
+            self.assertEqual(comparison.all(), True)
+
     def test_plasma(self):
         in_file = '/tmp/test.ms'
         out_file = '/tmp/copy.ms'
@@ -61,16 +76,4 @@ class CRCAppTests(unittest.TestCase):
         with droputils.DROPWaiterCtx(self, e, 5):
             a.setCompleted()
 
-        a = []
-        b = []
-        with tables.table(out_file) as t1:
-            for i in t1:
-                a.append(i['DATA'])
-
-        with tables.table(in_file) as t2:
-            for i in t2:
-                b.append(i['DATA'])
-
-        for i, j in enumerate(a):
-            comparison = j == b[i]
-            self.assertEqual(comparison.all(), True)
+        self.compare_ms(in_file, out_file)
