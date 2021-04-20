@@ -25,6 +25,7 @@ import time
 import numpy as np
 import six
 import six.moves.cPickle as pickle
+import six.moves.urllib as urllib
 
 from .. import droputils, utils
 from ..drop import BarrierAppDROP, ContainerDROP
@@ -300,6 +301,7 @@ class AverageArraysApp(BarrierAppDROP):
 # @param[out] port/hello
 #     \~English The port carrying the message produced by the app.
 # @par EAGLE_END
+
 class HelloWorldApp(BarrierAppDROP):
     """
     An App that writes 'Hello World!' or 'Hello <greet>!' to all of
@@ -325,3 +327,33 @@ class HelloWorldApp(BarrierAppDROP):
         for o in outs:
             o.len = len(self.greeting.encode())
             o.write(self.greeting.encode())  # greet across all outputs
+
+class UrlRetrieveApp(BarrierAppDROP):
+    """
+    An App that retrieves the content of a URL
+
+    Keywords:
+    URL:   string, URL to retrieve.
+    """
+    compontent_meta = dlg_component('UrlRetrieveApp', 'URL Retrieve App',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    url = dlg_string_param('url', '')
+
+    def run(self):
+        try:
+            u = urllib.request.urlopen(self.url)
+        except urllib.error.URLError as e:
+            raise e.reason
+        
+        content = u.read()
+            
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output should have been added to %r' % self)
+        for o in outs:
+            o.len = len(content)
+            o.write(content)  # send content to all outputs
