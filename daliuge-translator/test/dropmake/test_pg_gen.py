@@ -227,10 +227,3 @@ class TestPGGen(unittest.TestCase):
 
         # delete the temporary output directory
         shutil.rmtree(cwl_output, ignore_errors=True)
-
-    def test_plasma_graph(self):
-        lgs = ['Plasma-test.graph']
-        for lg in lgs:
-            fp = get_lg_fname(lg)
-            lg = LG(fp)
-            lg.unroll_to_tpl()
