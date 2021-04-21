@@ -1,12 +1,17 @@
 # We need the base image we build with the other Dockerfile
 FROM icrar/daliuge-common:ray
-RUN sudo apt-get update && sudo apt-get install -y gcc
 
-RUN pip install --upgrade pip
+# RUN sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
+#     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
+
+RUN sudo apt-get update && sudo apt-get install -y gcc &&\
+   sudo apt-get install -y python3-casacore
+
+RUN . /home/ray/dlg/bin/activate && pip install --upgrade pip
 # Get the DALiuGE sources and install them in the system
 COPY / /daliuge
 RUN . /home/ray/dlg/bin/activate && cd /daliuge && \
-    pip install .
+    pip install . && pip install python-casacore
 
 # Second stage build taking what's required from first stage
 FROM icrar/daliuge-common:ray
