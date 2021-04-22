@@ -1,7 +1,7 @@
 # We need the base image we build with the other Dockerfile
 FROM rayproject/ray:latest-cpu
 
-RUN git clone https://github.com/ICRAR/daliuge && \
+RUN git clone https://github.com/pritchardn/daliuge && \
     apt update && \
     apt install -y gcc &&\
     cd daliuge && \
