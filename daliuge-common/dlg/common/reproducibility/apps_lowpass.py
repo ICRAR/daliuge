@@ -3,6 +3,7 @@ import pyfftw
 from dlg import droputils
 from dlg.apps.simple import BarrierAppDROP
 # from dlg.common.reproducibility.reproducibility import common_hash
+from dlg.common.reproducibility.constants import system_summary
 from dlg.meta import dlg_batch_output, dlg_streaming_input
 from dlg.meta import dlg_component, dlg_batch_input
 from dlg.meta import dlg_int_param, dlg_list_param, dlg_float_param, dlg_bool_param
@@ -84,7 +85,8 @@ class LP_SignalGenerator(BarrierAppDROP):
         return {'length': self.length,
                 'sample_rate': self.srate,
                 'frequencies': self.freqs,
-                'status': self.status}
+                'status': self.status,
+                'system': system_summary()}
 
 
 class LP_WindowGenerator(BarrierAppDROP):
@@ -141,6 +143,7 @@ class LP_WindowGenerator(BarrierAppDROP):
         output['cutoff'] = self.cutoff
         output['sample_rate'] = self.srate
         output['status'] = self.status
+        output['system'] = system_summary()
         return output
 
 
@@ -200,6 +203,7 @@ class LP_AddNoise(BarrierAppDROP):
                 'sample_rate': self.srate,
                 'seed': self.seed,
                 'alpha': self.alpha,
+                'system': system_summary(),
                 'status': self.status}
 
 
@@ -261,6 +265,7 @@ class LP_filter_fft_np(BarrierAppDROP):
     def generate_recompute_data(self):
         return {'precision_float': str(self.precision['float']),
                 'precision_complex': str(self.precision['complex']),
+                'system': system_summary(),
                 'status': self.status}
 
     """
