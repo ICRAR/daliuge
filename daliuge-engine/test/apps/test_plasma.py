@@ -25,7 +25,6 @@ import tarfile
 
 from dlg.drop import FileDROP, PlasmaDROP
 from dlg import droputils
-import numpy as np
 
 casa_unavailable = True
 try:
@@ -65,7 +64,7 @@ class CRCAppTests(unittest.TestCase):
 
         a = FileDROP('a', 'a', filepath=in_file)
         b = MSPlasmaWriter('b', 'b')
-        c = PlasmaDROP('c', np.random.bytes(20))
+        c = PlasmaDROP('c', 'c')
         d = MSPlasmaReader('d', 'd')
         e = FileDROP('e', 'e', filepath=out_file)
 
@@ -79,3 +78,8 @@ class CRCAppTests(unittest.TestCase):
             a.setCompleted()
 
         self.compare_ms(in_file, out_file)
+
+        # check we can go from dataURL to plasma ID
+        client = plasma.connect("/tmp/plasma")
+        a = c.dataURL.split('//')[1].decode("hex")
+        client.get(plasma.ObjectID(a))

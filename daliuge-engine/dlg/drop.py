@@ -42,6 +42,7 @@ import inspect
 
 import six
 from six import BytesIO
+import numpy as np
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
@@ -1725,14 +1726,18 @@ class PlasmaDROP(AbstractDROP):
     plasma_link = dlg_string_param('plasma_link', '/tmp/plasma')
 
     def initialize(self, **kwargs):
-       pass
+        object_id = self.uid
+        if len(self.uid) != 20:
+            object_id = np.random.bytes(20)
+        if self.object_id is None:
+           self.object_id = object_id
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.uid), self.plasma_link)
+        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_link)
 
     @property
     def dataURL(self):
-        return "plasma://%s" % (plasma.ObjectID(self.uid))
+        return "plasma://%s" % (self.object_id.encode('hex'))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
