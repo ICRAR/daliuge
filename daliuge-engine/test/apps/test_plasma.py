@@ -25,9 +25,11 @@ import tarfile
 
 from dlg.drop import FileDROP, PlasmaDROP
 from dlg import droputils
+import numpy as np
 
 casa_unavailable = True
 try:
+    import pyarrow.plasma as plasma
     from dlg.apps.plasma import MSPlasmaWriter, MSPlasmaReader
     from casacore import tables
     casa_unavailable = False
@@ -63,7 +65,7 @@ class CRCAppTests(unittest.TestCase):
 
         a = FileDROP('a', 'a', filepath=in_file)
         b = MSPlasmaWriter('b', 'b')
-        c = PlasmaDROP('c', 'c')
+        c = PlasmaDROP('c', np.random.bytes(20))
         d = MSPlasmaReader('d', 'd')
         e = FileDROP('e', 'e', filepath=out_file)
 
