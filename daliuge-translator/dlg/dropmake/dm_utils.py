@@ -182,14 +182,14 @@ def convert_mkn(lgo):
         node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = Categories.GATHER
         node_mk["type"] = Categories.GATHER
-        ipan = node_mk.get("inputAppName", "")
+        ipan = node_mk.get("inputApplicationName", "")
         if len(ipan) == 0:
             node_mk["text"] = node_mk["text"] + "_InApp"
         else:
             node_mk["text"] = ipan
-        del node_mk["inputApplicationName"]
-        del node_mk["outputApplicationName"]
-        del node_mk["outputAppFields"]
+#        del node_mk["inputApplicationName"]
+#        del node_mk["outputApplicationName"]
+#        del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
             "text": "Number of inputs",

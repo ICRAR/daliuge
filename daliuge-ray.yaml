@@ -192,4 +192,3 @@ worker_start_ray_commands:
     # bug in registration creates two entires in DIM
     # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
 
- 

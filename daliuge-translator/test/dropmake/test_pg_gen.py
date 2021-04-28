@@ -19,9 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import pkg_resources
 import unittest
 
+import pkg_resources
 from dlg.dropmake import pg_generator
 from dlg.dropmake.cwl import create_workflow
 from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP, \
@@ -39,9 +39,9 @@ class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
         fp = get_lg_fname('cont_img.json')
-        #fp = '/Users/Chen/proj/dfms/dfms/lg/web/cont_img.json'
+#        fp = get_lg_fname('testScatter.graph')
         lg = LG(fp)
-        self.assertEqual(len(lg._done_dict.keys()), 35)
+        self.assertEqual(len(lg._done_dict.keys()), 46)
         drop_list = lg.unroll_to_tpl()
         #print json.dumps(drop_list, indent=2)
         #pprint.pprint(drop_list)
@@ -65,7 +65,8 @@ class TestPGGen(unittest.TestCase):
         #print pgt.to_gojs_json()
 
     def test_metis_pgtp(self):
-        lgnames = ['testLoop.graph', 'cont_img.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['simpleMKN.graph', 'testLoop.graph', 'cont_img.json',
+                   'test_grpby_gather.json', 'chiles_simple.json']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
@@ -210,7 +211,7 @@ class TestPGGen(unittest.TestCase):
                 cwl_out_zip = cwl_output_dir + '/workflow.zip'
                 output_list.append((cwl_out, cwl_out_zip))
 
-                create_workflow(pgt, "", cwl_out, cwl_out_zip)
+                create_workflow(pgt, 'workflow.cwl', cwl_out_zip)
 
         for out, zip in output_list:
             zip_ref = zipfile.ZipFile(zip)
