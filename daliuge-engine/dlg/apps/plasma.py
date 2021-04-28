@@ -30,7 +30,7 @@ from dlg.meta import dlg_string_param, dlg_component, dlg_batch_input, \
 
 
 class MSPlasmaReader(BarrierAppDROP):
-    '''
+    """
     A BarrierAppDROP that reads a CASA measurement from a plasma store and writes out to file.
 
     Example:
@@ -39,7 +39,7 @@ class MSPlasmaReader(BarrierAppDROP):
         c = PlasmaDROP('c', 'c')
         d = MSPlasmaReader('d', 'd')
         e = FileDROP('e', 'e', filepath=out_file)
-    '''
+    """
     compontent_meta = dlg_component('MSPlasmaWriter', 'Measurement Set Plasma Writer.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
@@ -97,7 +97,7 @@ class MSPlasmaReader(BarrierAppDROP):
 
 
 class MSPlasmaWriter(BarrierAppDROP):
-    '''
+    """
     A BarrierAppDROP that reads a CASA measurement set and writes it out to a plasma store.
 
     Example:
@@ -106,7 +106,7 @@ class MSPlasmaWriter(BarrierAppDROP):
         c = PlasmaDROP('c', 'c')
         d = MSPlasmaReader('d', 'd')
         e = FileDROP('e', 'e', filepath=out_file)
-    '''
+    """
     compontent_meta = dlg_component('MSPlasmaWriter', 'Measurement Set Plasma Writer.',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
