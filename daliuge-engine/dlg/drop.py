@@ -1952,6 +1952,9 @@ class PlasmaDROP(AbstractDROP):
     def dataURL(self):
         return "plasma://%s" % (self.object_id.encode('hex'))
 
+    def generate_recompute_data(self):
+        return {'status': self.status, 'object_id': self.object_id, 'plasma_link': self.plasma_link}
+
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
 # used to append a a DROP into a relationship collection of another
