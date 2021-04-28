@@ -23,6 +23,7 @@ import logging
 import os
 from abc import abstractmethod, ABCMeta
 
+import pyarrow.plasma as plasma
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
 from six import BytesIO
 
@@ -403,3 +404,33 @@ def IOForURL(url):
     logger.debug('I/O chosen for dataURL %s: %r', url, io)
 
     return io
+
+
+class PlasmaIO(DataIO):
+
+    def __init__(self, object_id, plasma_link='/tmp/plasma'):
+        super(PlasmaIO, self).__init__()
+        self._plasma_link = plasma_link
+        self._object_id = object_id
+
+    def _open(self, **kwargs):
+        return plasma.connect(self._plasma_link)
+
+    def _close(self, **kwargs):
+        pass
+
+    def _read(self, count, **kwargs):
+        data = self._desc.get(self._object_id)
+        return data
+
+    def _write(self, data, **kwargs):
+        self._desc.put(data, self._object_id)
+        return len(data)
+
+    def exists(self):
+        if self._object_id in self._desc.list():
+            return True
+        return False
+
+    def delete(self):
+        pass

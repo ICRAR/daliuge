@@ -134,6 +134,8 @@ install_requires = [
     "six>=1.10",
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6",
+    "pyarrow",
+    "numpy"
 ]
 # Keep alpha-sorted PLEASE!
 
