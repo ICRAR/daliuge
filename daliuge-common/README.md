@@ -9,7 +9,7 @@ Pre-requisite for building and running the docker image is to have docker runnin
 To build the base image run the script
 
 ```bash
-./build_base.sh
+./build_common.sh
 ```
 
 ## Using the daliuge-base image

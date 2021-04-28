@@ -32,7 +32,7 @@ from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
 
 lg_dir = pkg_resources.resource_filename(__name__, '.')  # @UndefinedVariable
-lgweb_port = 8000
+lgweb_port = 8084
 
 
 class TestLGWeb(unittest.TestCase):
@@ -127,7 +127,9 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
 
         # new logical graph JSON
-        with open('test/dropmake/logical_graphs/test-20190830-110556.graph', 'rb') as infile:
+        fname = os.path.join(lg_dir, 'logical_graphs',
+                             'test-20190830-110556.graph')
+        with open(fname, 'rb') as infile:
             json_data = infile.read()
 
         # add 'correct' data to the form
@@ -157,19 +159,20 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
 
         # new logical graph JSON
-        with open('test/dropmake/logical_graphs/simpleMKN.graph', 'rb') as infile:
-            json_data = infile.read()
+        fname = os.path.join(lg_dir, 'logical_graphs', 'simpleMKN.graph')
+        with open(fname, 'rb') as infile:
+            js = infile.read()
 
         # add 'correct' data to the form
         form_data = {
             'algo': 'metis',
             'lg_name': 'metis.graph',
-            'json_data': json_data,
             'num_islands': 0,
             'num_par': 1,
             'par_label': 'Partition',
             'max_load_imb': 100,
-            'max_cpu': 8
+            'max_cpu': 8,
+            'json_data': js
         }
 
         # POST form to /gen_pgt
@@ -188,7 +191,7 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
 
         # new logical graph JSON
-        with open('daliuge-translator/test/dropmake/logical_graphs/testLoop.graph', 'rb') as infile:
+        with open(os.path.join(lg_dir,'logical_graphs','testLoop.graph'), 'rb') as infile:
             json_data = infile.read()
 
         # add 'correct' data to the form
