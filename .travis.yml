@@ -33,8 +33,9 @@ matrix:
       env: NO_DLG_RUNTIME=1
     - python: "3.8"
       env: NO_DLG_TRANSLATOR=1
-    - python: "3.8"
-      env: TEST_OPENAPI=1
+    # NOTE: The OpenAPI code still needs to be removed
+    # - python: "3.8"
+    #   env: TEST_OPENAPI=1
     - python: "3.7"
     - python: "3.6"
     - python: "3.5"
