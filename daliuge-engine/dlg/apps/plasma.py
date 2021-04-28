@@ -24,6 +24,7 @@ import os
 
 import numpy as np
 from casacore import tables
+from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.drop import BarrierAppDROP
 from dlg.meta import dlg_string_param, dlg_component, dlg_batch_input, \
     dlg_batch_output, dlg_streaming_input
@@ -46,6 +47,11 @@ class MSPlasmaReader(BarrierAppDROP):
                                     [dlg_streaming_input('binary/*')])
 
     ms_output_path = dlg_string_param('ms_output_path', None)
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, uid, kwargs)
+        self.reproduce_data = {}
+        self.recompute_data = {}
 
     def initialize(self, **kwargs):
         super(MSPlasmaReader, self).initialize(**kwargs)
@@ -81,6 +87,7 @@ class MSPlasmaReader(BarrierAppDROP):
         load_bytes = io.BytesIO(in_stream)
         ms = np.load(load_bytes, allow_pickle=True).flat[0]
         self._write_table(ms, path)
+        self.reproduce_data['data_hash'] = common_hash(ms)
 
     def run(self, **kwargs):
         if len(self.inputs) != 1:
@@ -90,10 +97,19 @@ class MSPlasmaReader(BarrierAppDROP):
 
         inp = self.inputs[0]
         out = self.outputs[0].path
+        self.recompute_data['in'] = str(inp)
+        self.recompute_data['out'] = str(out)
 
         desc = inp.open()
         input_stream = inp.read(desc)
         self._deserialize_table(input_stream, out)
+
+    def generate_recompute_data(self):
+        self.recompute_data['status'] = self.status
+        return self.recompute_data
+
+    def generate_reproduce_data(self):
+        return self.reproduce_data
 
 
 class MSPlasmaWriter(BarrierAppDROP):
@@ -113,6 +129,11 @@ class MSPlasmaWriter(BarrierAppDROP):
                                     [dlg_streaming_input('binary/*')])
 
     ms_input_path = dlg_string_param('ms_input_path', None)
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, uid, kwargs)
+        self.recompute_data = {}
+        self.reproduce_data = {}
 
     def initialize(self, **kwargs):
         super(MSPlasmaWriter, self).initialize(**kwargs)
@@ -149,6 +170,16 @@ class MSPlasmaWriter(BarrierAppDROP):
 
         inp = self.inputs[0].path
         out = self.outputs[0]
+        self.recompute_data['in'] = str(inp)
+        self.recompute_data['out'] = str(out)
         out_bytes = self._serialize_table(inp)
         out.write(out_bytes)
+        self.reproduce_data['data_hash'] = common_hash(out_bytes)
+
+    def generate_recompute_data(self):
+        self.recompute_data['status'] = self.status
+        return self.recompute_data
+
+    def generate_reproduce_data(self):
+        return self.reproduce_data
 
