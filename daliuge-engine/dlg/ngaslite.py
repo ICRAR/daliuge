@@ -29,7 +29,17 @@ still need to access NGAS from time to time.
 '''
 
 import six.moves.http_client as httplib  # @UnresolvedImport
+import six.moves.urllib.request as urlrequest
+import logging
 
+logger = logging.getLogger(__name__)
+
+
+def open(host, fileId, port=7777, timeout=None, mode=1, mimeType='application/octet-stream'):
+    if mode == 1:
+        return retrieve(host, fileId, port=port, timeout=timeout)
+    else:
+        return beginArchive(host, fileId, port=port, timeout=timeout, mimeType=mimeType)
 
 def retrieve(host, fileId, port=7777, timeout=None):
     """
@@ -38,14 +48,14 @@ def retrieve(host, fileId, port=7777, timeout=None):
     This method returns a file-like object that supports the `read` operation,
     and over which `close` must be invoked once no more data is read from it.
     """
-    conn = httplib.HTTPConnection(host, port, timeout=timeout)
-    conn.request('GET', '/RETRIEVE?file_id=' + fileId)
-    response = conn.getresponse()
-    if response.status != httplib.OK:
-        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, response.status, response.msg))
-    return response
+    url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
+    logger.debug("Issuing RETRIEVE request: %s" % (url))
+    conn = urlrequest.urlopen(url)
+    if conn.status != httplib.OK:
+        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, conn.status, conn.msg))
+    return conn
 
-def beingArchive(host, fileId, port=7777, timeout=0, length=-1):
+def beginArchive(host, fileId, port=7777, timeout=0, length=-1, mimeType='application/octet-stream'):
     """
     Opens a connecting to the NGAS server located at `host`:`port` and sends out
     the request for archiving the given `fileId`.
@@ -55,12 +65,14 @@ def beingArchive(host, fileId, port=7777, timeout=0, length=-1):
     Once all the data has been sent, the `finishArchive` method of this module
     should be invoked to check that all went well with the archiving.
     """
+    logger.debug("Issuing ARCHIVE for file %s request to: http://%s:%d" % (fileId, host,port))
     conn = httplib.HTTPConnection(host, port, timeout=timeout)
     conn.putrequest('POST', '/QARCHIVE?filename=' + fileId)
-    conn.putheader('Content-Type', 'application/octet-stream')
-    if length != -1:
+    conn.putheader('Content-Type', mimeType)
+    if length is not None and length >= 0:
         conn.putheader('Content-Length', length)
-    conn.endheaders()
+        # defer endheaders NGAS requires Content-Length
+        conn.endheaders()
     return conn
 
 def finishArchive(conn, fileId):
