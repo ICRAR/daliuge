@@ -116,12 +116,16 @@ def copyDropContents(source, target, bufsize=4096):
     '''
     Manually copies data from one DROP into another, in bufsize steps
     '''
+    logger.debug("Copying from %r to %r" % (source, target))
     desc = source.open()
     read = source.read
     buf = read(desc, bufsize)
+    logger.debug("Read %d bytes from %r" % (len(buf), source))
     while buf:
         target.write(buf)
+        logger.debug("Wrote %d bytes to %r" % (len(buf), target))
         buf = read(desc, bufsize)
+        logger.debug("Read %d bytes from %r" % (len(buf), source))
     source.close(desc)
 
 def getUpstreamObjects(drop):
