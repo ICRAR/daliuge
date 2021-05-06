@@ -302,19 +302,19 @@ class AbstractDROP(EventFirer):
         for attr_name, obj in getmembers(self, lambda a: not(inspect.isfunction(a) or isinstance(a, property))):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None:
+                if value is not None and value is not '':
                     value = float(value)
             elif isinstance(obj, dlg_bool_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None:
+                if value is not None and value is not '':
                     value = bool(value)
             elif isinstance(obj, dlg_int_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None:
+                if value is not None and value is not '':
                     value = int(value)
             elif isinstance(obj, dlg_string_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None:
+                if value is not None and value is not '':
                     value = str(value)
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
@@ -432,7 +432,7 @@ class AbstractDROP(EventFirer):
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
-            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self.status,))
+            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status,))
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
@@ -1151,25 +1151,33 @@ class NgasDROP(AbstractDROP):
     '''
     ngasSrv = dlg_string_param('ngasSrv', 'localhost')
     ngasPort = dlg_int_param('ngasPort', 7777)
+    ngasFileId = dlg_string_param('ngasFileId', None)
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
     ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
+    ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
     len = dlg_int_param('len', -1)
 
     def initialize(self, **kwargs):
-       pass
+        if self.len == -1:
+            self.len = self._size
+        if self.ngasFileId:
+            self.fileId = self.ngasFileId
+        else:
+            self.fileId = self.uid
 
     def getIO(self):
         try:
-            ngasIO = NgasIO(self.ngasSrv, self.uid, self.ngasPort,
-                            self.ngasConnectTimeout, self.ngasTimeout, self.len)
+            ngasIO = NgasIO(self.ngasSrv, self.fileId, self.ngasPort,
+                            self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
         except ImportError:
-            ngasIO = NgasLiteIO(self.ngasSrv, self.uid, self.ngasPort,
-                                self.ngasConnectTimeout, self.ngasTimeout, self.len)
+            logger.warning('NgasIO not available, using NgasLiteIO instead')
+            ngasIO = NgasLiteIO(self.ngasSrv, self.fileId, self.ngasPort,
+                                self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
         return ngasIO
 
     @property
     def dataURL(self):
-        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.uid)
+        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
 
 class InMemoryDROP(AbstractDROP):
