@@ -28,6 +28,7 @@ from dlg import droputils
 
 casa_unavailable = True
 try:
+    import pyarrow.plasma as plasma
     from dlg.apps.plasma import MSPlasmaWriter, MSPlasmaReader
     from casacore import tables
     casa_unavailable = False
@@ -77,3 +78,8 @@ class CRCAppTests(unittest.TestCase):
             a.setCompleted()
 
         self.compare_ms(in_file, out_file)
+
+        # check we can go from dataURL to plasma ID
+        client = plasma.connect("/tmp/plasma")
+        a = c.dataURL.split('//')[1].decode("hex")
+        client.get(plasma.ObjectID(a))
