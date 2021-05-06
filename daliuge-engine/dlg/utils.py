@@ -179,6 +179,14 @@ def getDlgLogsDir():
     """
     return os.path.join(getDlgDir(), 'logs')
 
+def getDlgWorkDir():
+    """
+    Returns the location of the directory used by the DALiuGE framework to store
+    its logs. If `createIfMissing` is True, the directory will be created if it
+    currently doesn't exist
+    """
+    return os.path.join(getDlgDir(), 'workspace')
+
 def createDirIfMissing(path):
     """
     Creates the given directory if it doesn't exist
