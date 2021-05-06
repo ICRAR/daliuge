@@ -230,11 +230,7 @@ class TestPGGen(unittest.TestCase):
 
     def test_plasma_graph(self):
         # test loading of Plasma graph
-<<<<<<< HEAD
         lgs = ['Plasma_test.graph']
-=======
-        lgs = ['Plasma-test.graph']
->>>>>>> ngasLite_mods
         for lg in lgs:
             fp = get_lg_fname(lg)
             lg = LG(fp)
