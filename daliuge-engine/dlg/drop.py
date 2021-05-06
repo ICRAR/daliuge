@@ -42,12 +42,13 @@ import inspect
 
 import six
 from six import BytesIO
+import numpy as np
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -1729,18 +1730,22 @@ class PlasmaDROP(AbstractDROP):
     '''
     A DROP that points to data stored in a Plasma Store
     '''
-    object_id = dlg_string_param('object_id', plasma.ObjectID.from_random().binary())
+    object_id = dlg_string_param('object_id', None)
     plasma_link = dlg_string_param('plasma_link', '/tmp/plasma')
 
     def initialize(self, **kwargs):
-       pass
+        object_id = self.uid
+        if len(self.uid) != 20:
+            object_id = np.random.bytes(20)
+        if self.object_id is None:
+           self.object_id = object_id
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id), plasma_link)
+        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_link)
 
     @property
     def dataURL(self):
-        return "plasma://%s:%d/%s" % (plasma.ObjectID(self.object_id))
+        return "plasma://%s" % (self.object_id.encode('hex'))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
