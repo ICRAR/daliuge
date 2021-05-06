@@ -36,6 +36,7 @@ class Categories:
     NULL = 'null'
     JSON = 'json'
     S3 = 'S3'
+    PLASMA = 'Plasma'
 
     MKN = 'MKN'
     SCATTER = 'Scatter'
@@ -57,7 +58,14 @@ class Categories:
     COMMENT = 'Comment'
     DESCRIPTION = 'Description'
 
-STORAGE_TYPES = {Categories.MEMORY, Categories.FILE, Categories.NGAS, Categories.NULL, Categories.JSON}
+STORAGE_TYPES = {
+                 Categories.MEMORY, 
+                 Categories.FILE, 
+                 Categories.NGAS, 
+                 Categories.NULL, 
+                 Categories.JSON, 
+                 Categories.PLASMA
+                }
 APP_DROP_TYPES = [
     Categories.COMPONENT,
     Categories.PYTHON_APP,
