@@ -27,7 +27,7 @@ autoscaling_mode: default
 # and opens all the necessary ports to support the Ray cluster.
 # Empty string means disabled.
 docker:
-    image: "icrar/dlg_ray:1.3"
+    image: "icrar/dlg_ray:1.4"
     # image: "rayproject/ray:latest-cpu" # You can change this to latest-cpu if you don't need GPU support and want a faster startup
     container_name: "ray_container"
     # If true, pulls latest version of image. Otherwise, `docker run` will only pull the image
@@ -39,7 +39,7 @@ docker:
     # head_image: "rayproject/ray:latest-gpu"
     # Allow Ray to automatically detect GPUs
 
-    worker_image: "icrar/dlg_ray:1.3"
+    worker_image: "icrar/dlg_ray:1.4"
     worker_run_options: [-v /var/run/docker.sock:/var/run/docker.sock  -p 8265:8265]
 
 # The autoscaler will scale up the cluster to this target fraction of resource

@@ -3,7 +3,7 @@
 
 # First stage build and cleanup
 #FROM python:3.8-slim
-FROM rayproject/ray:latest-cpu
+FROM rayproject/ray:1.3.0-py38
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
@@ -18,7 +18,7 @@ RUN cd && python -m venv dlg && cd /daliuge && \
     sudo apt-get remove -y gcc
 
 
-FROM rayproject/ray:latest-cpu
+FROM rayproject/ray:1.3.0-py38
 RUN sudo apt-get update && sudo apt-get install -y git
 #COPY --from=0 /root/anaconda3/bin/dlg /root/anaconda3/bin/dlg 
 #COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/dlg /root/anaconda3/lib/python3.7/site-packages/dlg
