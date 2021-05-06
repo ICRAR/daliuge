@@ -31,13 +31,13 @@ from dlg.droputils import DROPWaiterCtx
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import NullDROP, InMemoryDROP, FileDROP
+from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
 
 class TestSimpleApps(unittest.TestCase):
 
-    def _test_graph_runs(self, drops, first, last):
+    def _test_graph_runs(self, drops, first, last, timeout=1):
         first = droputils.listify(first)
-        with droputils.DROPWaiterCtx(self, last, 1):
+        with droputils.DROPWaiterCtx(self, last, timeout):
             for f in first:
                 f.setCompleted()
 
@@ -134,6 +134,22 @@ class TestSimpleApps(unittest.TestCase):
         b.addProducer(h)
         h.execute()
         self.assertEqual(six.b(h.greeting), droputils.allDropContents(b))
+
+    def test_ngasio(self):
+        nd_in = NgasDROP('HelloWorld.txt', 'HelloWorld.txt')
+        nd_in.ngasSrv = 'ngas.ddns.net'
+        b = CopyApp('b', 'b')
+        nd_out = NgasDROP('HelloWorldOut.txt', 'HelloWorldOut.txt')
+        nd_out.ngasSrv = 'ngas.ddns.net'
+        i = InMemoryDROP('i', 'i')
+        b.addInput(nd_in)
+        b.addOutput(nd_out)
+        nd_out.addProducer(b)
+        i.addProducer(b)
+        b.addOutput(i)
+        self._test_graph_runs((nd_in,b,i,nd_out),nd_in, nd_out, timeout=4)
+        self.assertEqual(six.b("Hello World"), droputils.allDropContents(i))
+
 
 
 

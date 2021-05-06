@@ -19,6 +19,7 @@ FROM icrar/daliuge-common:ray
 # copy sources and virtualenv
 COPY --from=0 /daliuge/. /daliuge/.
 COPY --from=0 /home/ray/dlg /home/ray/dlg
+RUN sudo mkdir -p /var/dlg_home/workspace && sudo chown -R ray:users /var/dlg_home
 
 EXPOSE 5555
 EXPOSE 6666
@@ -30,5 +31,7 @@ EXPOSE 9000
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/home/ray/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV DLG_ROOT="/var/dlg_home"
+RUN sudo apt-get update && sudo apt-get install -y curl
 
-CMD ["dlg", "daemon", "-vv", "--no-nm"]
+CMD ["dlg", "daemon", "-vv"]
