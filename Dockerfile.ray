@@ -30,4 +30,4 @@ EXPOSE 8084
 EXPOSE 9000
 
 
-CMD ["dlg", "daemon", "-vv", "--no-nm"]
+CMD ["dlg", "daemon", "-vv"]

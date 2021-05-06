@@ -25,6 +25,7 @@ import os
 
 from six import BytesIO
 import six.moves.urllib.parse as urlparse  # @UnresolvedImport
+import six.moves.urllib.request as urlrequest
 
 from . import ngaslite
 
@@ -245,7 +246,7 @@ class NgasIO(DataIO):
     in a file on the local filesystem and then move it to the NGAS destination
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, mimeType='application/octet-stream'):
 
         # Check that we actually have the NGAMS client libraries
         try:
@@ -261,6 +262,7 @@ class NgasIO(DataIO):
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
         self._length             = length
+        self._mimeType           = mimeType
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -272,7 +274,7 @@ class NgasIO(DataIO):
             # request with data. Thus the only way we can currently archive data
             # into NGAS is by accumulating it all on our side and finally
             # sending it over.
-            self._buf = ''
+            self._buf = b''
             self._writtenDataSize = 0
         return self._getClient()
 
@@ -281,7 +283,7 @@ class NgasIO(DataIO):
         if self._mode == OpenMode.OPEN_WRITE:
             reply, msg, _, _ = client._httpPost(
                      client.getHost(), client.getPort(), 'QARCHIVE',
-                     'application/octet-stream', dataRef=self._buf,
+                     self._mimeType, dataRef=self._buf,
                      pars=[['filename',self._fileId]], dataSource='BUFFER',
                      dataSize=self._writtenDataSize)
             self._buf = None
@@ -321,7 +323,8 @@ class NgasLiteIO(DataIO):
     that this class will throw an error if its `exists` method is invoked.
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1):
+    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, \
+        mimeType='application/octet-stream'):
         super(NgasLiteIO, self).__init__()
         self._ngasSrv            = hostname
         self._ngasPort           = port
@@ -329,31 +332,52 @@ class NgasLiteIO(DataIO):
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
         self._length             = length
+        self._mimeType           = mimeType
+
+    def _is_length_unknown(self):
+        return self._length is None or self._length < 0
 
     def _getClient(self):
-        from ngamsPClient import ngamsPClient  # @UnresolvedImport
-        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
+        return ngaslite.open(
+            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout,\
+                mode=self._mode, mimeType=self._mimeType)
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
-            return ngaslite.beingArchive(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, length=self._length)
-        return ngaslite.retrieve(self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout)
+            if self._is_length_unknown():
+                # NGAS does not support HTTP chunked writes and thus it requires the Content-length
+                # of the whole fileObject to be known and sent up-front as part of the header. Thus
+                # is size is not provided all data will be buffered IN MEMORY and only sent to NGAS
+                # when finishArchive is called.
+                self._buf = b''
+                self._writtenDataSize = 0
+        return self._getClient()
 
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
             conn = self._desc
+            if self._is_length_unknown():
+                # If length wasn't known up-front we first send Content-Length and then the buffer here.
+                conn.putheader('Content-Length', len(self._buf))
+                conn.endheaders()
+                conn.send(self._buf)
+                self._buf = None
             ngaslite.finishArchive(conn, self._fileId)
             conn.close()
         else:
             response = self._desc
             response.close()
 
-    def _read(self, count, **kwargs):
-        self._desc.read(count)
+    def _read(self, count=4096, **kwargs):
+        return self._desc.read(count)
 
     def _write(self, data, **kwargs):
-        self._desc.send(data)
-        return len(data)
+        if self._is_length_unknown():
+            self._buf += data
+            return len(self._buf)
+        else:
+            self._desc.send(data)
+            return len(data)
 
     def exists(self):
         raise NotImplementedError("This method is not supported by this class")
@@ -380,10 +404,11 @@ def IOForURL(url):
         networkLocation = url.netloc
         if ':' in networkLocation:
             hostname, port = networkLocation.split(':')
+            port = int(port)
         else:
             hostname = networkLocation
             port = 7777
-        fileId = url.path
+        fileId = url.path[1:]  # remove the trailing slash
         try:
             io = NgasIO(hostname, fileId, port)
         except:
