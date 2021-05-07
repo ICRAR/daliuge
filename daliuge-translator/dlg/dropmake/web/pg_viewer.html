@@ -4,15 +4,15 @@
  <!-- Required bootstrap meta tags -->
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
- <link rel="shortcut icon" type="image/jpg" href="src/icons/translate_green.png"/>
+ <link rel="shortcut icon" type="image/jpg" href="/static/src/icons/translate_green.png"/>
 
 <!-- Bootstrap CSS -->
-<link rel="stylesheet" href="src/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
 
-<link type="text/css" rel="stylesheet" href="src/main.css" />
+<link type="text/css" rel="stylesheet" href="/static/src/main.css" />
 <script src="/static/go.js"></script>
-<script src="src/jquery-3.6.0.min.js"></script>
-<script src="src/main.js"></script>
+<script src="/static/src/jquery-3.6.0.min.js"></script>
+<script src="/static/main.js"></script>
 </head>
 
 <body onload="init()">
@@ -21,7 +21,7 @@
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
             <!-- Navbar content -->
             <a class="navbar-brand inactiveLink" href="#" disabled>
-                <img src="src/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                <img src="/static/src/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
                 <span> Physical Graph </span>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,23 +30,23 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="nav navbar-nav navbar-center">
                     <li class="nav-item">
-                        <a class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
+                        <a class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
                             <span class="tooltiptext">Zoom To Fit</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tooltip" href="#"><img src="src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
+                        <a class="nav-link tooltip" href="#"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
                             <span class="tooltiptext">Zoom Out</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tooltip" href="#"><img src="src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
+                        <a class="nav-link tooltip" href="#"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
                             <span class="tooltiptext">Zoom In</span>
                         </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link tooltip" href="#" id="GraphOrientationDropdownBtn" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <img src="src/icons/explore_white_24dp.svg" alt="Graph Orientation">
+                            <img src="/static/src/icons/explore_white_24dp.svg" alt="Graph Orientation">
                             <span class="tooltiptext">Graph Orientation</span>
                         </a>
                         <div id="oriantationDropdown" class="dropdown-menu dropdown-menu-right" aria-labelledby="GraphOrientationDropdown">
@@ -57,7 +57,7 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tooltip" data-toggle="modal" data-target="#settingsModal" href="#"><img src="src/icons/settings_white_24dp.svg" alt="Settings">
+                        <a class="nav-link tooltip" data-toggle="modal" data-target="#settingsModal" href="#"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings">
                             <span class="tooltiptext">Settings</span>
                         </a>
                     </li>
@@ -74,7 +74,7 @@
                             <span class="tooltiptext">Export physical graph template</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarExportDropdown">
-                            <span id="exportJsonBtn" class="dropdown-item dropDropDownParent" href="#">JSON <img id="exportJsonIcon" src="src/icons/arrow_right_white_24dp.svg" alt="">
+                            <span id="exportJsonBtn" class="dropdown-item dropDropDownParent" href="#">JSON <img id="exportJsonIcon" src="/static/src/icons/arrow_right_white_24dp.svg" alt="">
                                 <div class="dropDropDown">
                                     <a id="json_button" class="dropdown-item" onclick="makeJSON()">Physical Graph Template</a>
                                     <a id="Pysical graph" class="dropdown-item" href="#">Physical Graph</a>
@@ -131,6 +131,6 @@
     </div>
 
     <!--Js dependencies-->
-    <script src="src/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
