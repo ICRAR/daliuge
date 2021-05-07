@@ -50,7 +50,7 @@ matrix:
       after_success:  
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
-        - wget https://raw.githubusercontent.com/james-strauss-uwa/xml2palette/master/xml2palette.py
+        - wget https://raw.githubusercontent.com/ICRAR/EAGLE/master/tools/xml2palette/xml2palette.py 
         - python3 xml2palette.py -i daliuge.xml -o daliuge.palette
         - mv daliuge.palette ../.
         - cd ..
