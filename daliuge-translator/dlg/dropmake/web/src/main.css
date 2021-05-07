@@ -71,8 +71,9 @@
 }
 
 
-#graphCanvas{
-    margin-top: 80;
+#myDiagram{
+    width:100%;
+    height:100%;
 }
 
 .dropdown-menu{
@@ -136,7 +137,7 @@
     color:white;
 }
 
-#navDeployBtn{
+#gen_pg_button{
     color: white;
 }
 
