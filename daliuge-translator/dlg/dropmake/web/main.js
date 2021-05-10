@@ -203,26 +203,26 @@ var lastStroked = null;  // this remembers the last highlit Shape
     box.style.top = mousePt.y+20 + "px";
   }
 
-  function loadFromRemoteJson() {
-    //given a logical graph name, get its JSON from the server
-    //alert("Previous lg name = " + window.curr_lg_name);
-    //alert("Requesting " + pgtName.toString());
-    $.ajax({
-      url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
-      type: 'get',
-      error: function(XMLHttpRequest, textStatus, errorThrown) {
-          if (404 == XMLHttpRequest.status) {
-            alert('Server cannot locate physical graph file ' + pgtName.toString())
-          } else {
-            alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
-          }
-      },
-      success: function(data){
-        //console.log(data);
-        myDiagram.model = go.Model.fromJson(data);
-      }
-    });
-  }
+  // function loadFromRemoteJson() {
+  //   //given a logical graph name, get its JSON from the server
+  //   //alert("Previous lg name = " + window.curr_lg_name);
+  //   //alert("Requesting " + pgtName.toString());
+  //   $.ajax({
+  //     url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
+  //     type: 'get',
+  //     error: function(XMLHttpRequest, textStatus, errorThrown) {
+  //         if (404 == XMLHttpRequest.status) {
+  //           alert('Server cannot locate physical graph file ' + pgtName.toString())
+  //         } else {
+  //           alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+  //         }
+  //     },
+  //     success: function(data){
+  //       //console.log(data);
+  //       myDiagram.model = go.Model.fromJson(data);
+  //     }
+  //   });
+  // }
 
   function rebuildGraph() {
     var minNodes = document.getElementById("minNodes").value;
