@@ -22,17 +22,20 @@
 import unittest
 import logging
 import tarfile
+import binascii
 
-from dlg.drop import FileDROP, PlasmaDROP
+from dlg.drop import FileDROP, PlasmaDROP, InMemoryDROP
 from dlg import droputils
 
 casa_unavailable = True
 try:
     import pyarrow.plasma as plasma
     from dlg.apps.plasma import MSPlasmaWriter, MSPlasmaReader
+    from dlg.apps.plasma import MSStreamingPlasmaConsumer, MSStreamingPlasmaProducer
     from casacore import tables
     casa_unavailable = False
-except:
+except Exception as e:
+    print(e)
     pass
 
 logging.basicConfig()
@@ -54,6 +57,33 @@ class CRCAppTests(unittest.TestCase):
         for i, j in enumerate(a):
             comparison = j == b[i]
             self.assertEqual(comparison.all(), True)
+
+    def test_plasma_stream(self):
+        config = {
+            'reception': {
+                "consumer": "plasma_writer",
+                "test_entry": 5,
+                "plasma_path" : '/tmp/plasma'
+            }
+        }
+
+        in_file = '/tmp/test.ms'
+        out_file = '/tmp/copy.ms'
+
+        with tarfile.open('./data/test_ms.tar.gz', 'r') as ref:
+            ref.extractall('/tmp/')
+
+        prod = MSStreamingPlasmaProducer('1', '1', config=config, input_file=in_file)
+        cons = MSStreamingPlasmaConsumer('2', '2', config=config, output_file=out_file)
+        drop = InMemoryDROP('3', '3')
+
+        drop.addStreamingConsumer(cons)
+        prod.addOutput(drop)
+
+        with droputils.DROPWaiterCtx(self, cons, 1000):
+            prod.async_execute()
+
+        self.compare_ms(in_file, out_file)
 
     def test_plasma(self):
         in_file = '/tmp/test.ms'
@@ -81,5 +111,6 @@ class CRCAppTests(unittest.TestCase):
 
         # check we can go from dataURL to plasma ID
         client = plasma.connect("/tmp/plasma")
-        a = c.dataURL.split('//')[1].decode("hex")
+        a = c.dataURL.split('//')[1]
+        a = binascii.unhexlify(a)
         client.get(plasma.ObjectID(a))
