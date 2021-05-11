@@ -39,14 +39,15 @@ from cbf_sdp import utils, icd, msutils
 
 logger = logging.getLogger(__name__)
 
+
 ##
 # @brief MSStreamingPlasmaConsumer\n
 # @details Stream Measurement Set one correlator timestep at a time
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path//String/readwrite
-#     \~English JSON configuration for Plasma\n
+# @param[in] param/plasma_path/plasma_path//String/readwrite
+#     \~English Path to plasma store.\n
 #     \~\
 # @param[in] port/plasma_ms_input
 #     \~English Plasma MS input\n
@@ -85,7 +86,6 @@ class MSStreamingPlasmaConsumer(AppDROP):
         runner.process_timeout = 0.1
         await runner.run()
 
-
     def dataWritten(self, uid, data):
         with self.lock:
             if self.started is False:
@@ -111,14 +111,15 @@ class MSStreamingPlasmaConsumer(AppDROP):
             self._notifyAppIsFinished()
             self.thread.join()
 
+
 ##
 # @brief MSStreamingPlasmaProducer\n
 # @details Stream Measurement Set one correlator timestep at a time
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path//String/readwrite
-#     \~English JSON configuration for Plasma\n
+# @param[in] param/plasma_path/plasma_path//String/readwrite
+#     \~English Path to plasma store.\n
 #     \~
 # @param[in] port/input_file
 #     \~English MS input file\n
@@ -168,6 +169,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
         self.outputs[0].write(b'init')
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self._run_producer())
+
 
 ##
 # @brief MSPlasmaReader\n
@@ -230,6 +232,7 @@ class MSPlasmaReader(BarrierAppDROP):
         desc = inp.open()
         input_stream = inp.read(desc)
         self._deserialize_table(input_stream, out)
+
 
 ##
 # @brief MSPlasmaWriter\n
