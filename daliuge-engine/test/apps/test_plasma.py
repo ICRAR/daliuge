@@ -59,22 +59,24 @@ class CRCAppTests(unittest.TestCase):
             self.assertEqual(comparison.all(), True)
 
     def test_plasma_stream(self):
-        config = {
-            'reception': {
-                "consumer": "plasma_writer",
-                "test_entry": 5,
-                "plasma_path" : '/tmp/plasma'
-            }
-        }
-
         in_file = '/tmp/test.ms'
         out_file = '/tmp/copy.ms'
+
+        try:
+            os.rmdir(in_file)
+        except:
+            pass
+
+        try:
+            os.rmdir(out_file)
+        except:
+            pass
 
         with tarfile.open('./data/test_ms.tar.gz', 'r') as ref:
             ref.extractall('/tmp/')
 
-        prod = MSStreamingPlasmaProducer('1', '1', config=config, input_file=in_file)
-        cons = MSStreamingPlasmaConsumer('2', '2', config=config, output_file=out_file)
+        prod = MSStreamingPlasmaProducer('1', '1', input_file=in_file)
+        cons = MSStreamingPlasmaConsumer('2', '2', output_file=out_file)
         drop = InMemoryDROP('3', '3')
 
         drop.addStreamingConsumer(cons)
@@ -88,6 +90,16 @@ class CRCAppTests(unittest.TestCase):
     def test_plasma(self):
         in_file = '/tmp/test.ms'
         out_file = '/tmp/copy.ms'
+
+        try:
+            os.rmdir(in_file)
+        except:
+            pass
+
+        try:
+            os.rmdir(out_file)
+        except:
+            pass
 
         with tarfile.open('./data/test_ms.tar.gz', 'r') as ref:
             ref.extractall('/tmp/')
