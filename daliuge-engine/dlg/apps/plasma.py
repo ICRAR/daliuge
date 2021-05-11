@@ -26,8 +26,7 @@ import logging
 import asyncio
 
 from dlg.drop import BarrierAppDROP, AppDROP
-from dlg.meta import dlg_string_param, dlg_component, dlg_batch_input, \
-    dlg_batch_output, dlg_streaming_input
+from dlg.meta import dlg_string_param
 from dlg.ddap_protocol import AppDROPStates
 
 from threading import Thread
@@ -40,29 +39,34 @@ from cbf_sdp import utils, icd, msutils
 
 logger = logging.getLogger(__name__)
 
-
+##
+# @brief MSStreamingPlasmaConsumer\n
+# @details Stream Measurement Set one correlator timestep at a time
+# via Plasma.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/plasma_path//String/readwrite
+#     \~English JSON configuration for Plasma\n
+#     \~\
+# @param[in] port/plasma_ms_input
+#     \~English Plasma MS input\n
+#     \~
+# @param[out] port/output_file
+#     \~English MS output file\n
+#     \~
+# @par EAGLE_END
 class MSStreamingPlasmaConsumer(AppDROP):
-    ##
-    # @brief Stream Measurement Set via Plasma (consumer)
-    # @details Stream Measurement Set one correlator timestep at a time
-    # via Plasma.
-    # @par EAGLE_START
-    # @param gitrepo $(GIT_REPO)
-    # @param version $(PROJECT_VERSION)
-    # @param category PythonApp
-    # @param[in] port/config/ /Complex
-    #     \~English JSON configuration for Plasma\n
-    #     \~\
-    # @param[in] port/plasma_ms_input/ /Complex
-    #     \~English Plasma MS input\n
-    #     \~
-    # @param[out] port/output_file/ /Complex
-    #     \~English MS output file\n
-    #     \~
-    # @par EAGLE_END
+
+    plasma_path = dlg_string_param('plasma_path', '')
 
     def initialize(self, **kwargs):
-        self.config = kwargs.get('config')
+        self.config = {
+                 'reception': {
+                    "consumer": "plasma_writer",
+                    "test_entry": 5,
+                    "plasma_path" : '/tmp/plasma'
+                 }
+        }
         self.output_file = kwargs.get('output_file')
         self.thread = None
         self.lock = Lock()
@@ -71,6 +75,9 @@ class MSStreamingPlasmaConsumer(AppDROP):
         super(MSStreamingPlasmaConsumer, self).initialize(**kwargs)
 
     async def _run_consume(self):
+        if self.plasma_path:
+            self.config['reception']['plasma_path'] = self.plasma_path
+
         runner = plasma_processor.Runner(self.output_file,
                                          self.config['reception']['plasma_path'],
                                          max_payload_misses=30,
@@ -99,42 +106,52 @@ class MSStreamingPlasmaConsumer(AppDROP):
             move_to_finished = self.complete_called == n_inputs
 
         if move_to_finished:
+            logger.info("MSStreamingPlasmaConsumer in FINISHED State")
             self.execStatus = AppDROPStates.FINISHED
             self._notifyAppIsFinished()
             self.thread.join()
 
-
+##
+# @brief MSStreamingPlasmaProducer\n
+# @details Stream Measurement Set one correlator timestep at a time
+# via Plasma.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/plasma_path//String/readwrite
+#     \~English JSON configuration for Plasma\n
+#     \~
+# @param[in] port/input_file
+#     \~English MS input file\n
+#     \~
+# @param[out] port/plasma_ms_output
+#     \~English Plasma MS output\n
+#     \~
+# @par EAGLE_END
 class MSStreamingPlasmaProducer(BarrierAppDROP):
-    ##
-    # @brief Stream Measurement Set via Plasma (producer)
-    # @details Stream Measurement Set one correlator timestep at a time
-    # via Plasma.
-    # @par EAGLE_START
-    # @param gitrepo $(GIT_REPO)
-    # @param version $(PROJECT_VERSION)
-    # @param category PythonApp
-    # @param[in] port/config/ /Complex
-    #     \~English JSON configuration for Plasma\n
-    #     \~
-    # @param[in] port/input_file/ /Complex
-    #     \~English MS input file\n
-    #     \~
-    # @param[out] port/plasma_ms_output/ /Complex
-    #     \~English Plasma MS output\n
-    #     \~
-    # @par EAGLE_END
+
+    plasma_path = dlg_string_param('plasma_path', '')
 
     def initialize(self, **kwargs):
-        self.config = kwargs.get('config')
+        self.config = {
+                 'reception': {
+                    "consumer": "plasma_writer",
+                    "test_entry": 5,
+                    "plasma_path" : '/tmp/plasma'
+                  }
+        }
         self.input_file = kwargs.get('input_file')
         super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
 
     async def _run_producer(self):
+        if self.plasma_path:
+            self.config['reception']['plasma_path'] = self.plasma_path
+
         c = plasma_writer.consumer(self.config, utils.FakeTM(self.input_file))
         while not c.find_processors():
             await asyncio.sleep(0.1)
 
-        async for vis, ts, ts_fraction in msutils.vis_reader(self.input_file, num_timestamps=1):
+        async for vis, ts, ts_fraction in msutils.vis_reader(self.input_file,
+                                                             num_timestamps=1):
             payload = icd.Payload()
             payload.timestamp_count = ts
             payload.timestamp_fraction = ts_fraction
@@ -152,22 +169,19 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self._run_producer())
 
-
+##
+# @brief MSPlasmaReader\n
+# @details Batch read entire Measurement Set from Plamsa.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] port/plasma_ms_input
+#     \~English Plasma MS store input\n
+#     \~
+# @param[out] port/output_ms
+#     \~English Output MS file\n
+#     \~
+# @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
-    ##
-    # @brief Read entire Measurement Set from Plasma
-    # @details Batch read entire Measurement Set from Plamsa.
-    # @par EAGLE_START
-    # @param gitrepo $(GIT_REPO)
-    # @param version $(PROJECT_VERSION)
-    # @param category PythonApp
-    # @param[in] port/plasma_ms_input/ /Complex
-    #     \~English Plasma MS store input\n
-    #     \~
-    # @param[out] port/output_ms/ /Complex
-    #     \~English Output MS file\n
-    #     \~
-    # @par EAGLE_END
 
     def initialize(self, **kwargs):
         super(MSPlasmaReader, self).initialize(**kwargs)
@@ -217,22 +231,19 @@ class MSPlasmaReader(BarrierAppDROP):
         input_stream = inp.read(desc)
         self._deserialize_table(input_stream, out)
 
-
+##
+# @brief MSPlasmaWriter\n
+# @details Batch write entire Measurement Set to Plamsa.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] port/input_ms
+#     \~English Input MS file\n
+#     \~
+# @param[out] port/plasma_ms_output
+#     \~English Plasma MS store output\n
+#     \~
+# @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
-    ##
-    # @brief Write entire Measurement Set to Plasma
-    # @details Batch write entire Measurement Set to Plamsa.
-    # @par EAGLE_START
-    # @param gitrepo $(GIT_REPO)
-    # @param version $(PROJECT_VERSION)
-    # @param category PythonApp
-    # @param[in] port/input_ms/ /Complex
-    #     \~English Input MS file\n
-    #     \~
-    # @param[out] port/plasma_ms_output/ /Complex
-    #     \~English Plasma MS store output\n
-    #     \~
-    # @par EAGLE_END
 
     def initialize(self, **kwargs):
         super(MSPlasmaWriter, self).initialize(**kwargs)
