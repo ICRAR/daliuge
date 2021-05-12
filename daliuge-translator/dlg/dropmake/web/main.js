@@ -20,7 +20,25 @@ $( document ).ready(function() {
     $("#pg_form").submit();
   })
   
-  //local storage for settings
+  //get saved settings from local storage or set a default value
+  fillOutSettings()
+
+  $('#settingsModal').on('hidden.bs.modal', function () {
+    fillOutSettings()
+});
+});
+
+function saveSettings(){
+  var newPort = $("#managerPortInput").val();
+  var newHost = $("#managerHostInput").val();
+
+  window.localStorage.setItem("manager_port", newPort);
+  window.localStorage.setItem("manager_host", newHost);
+  $('#settingsModal').modal('hide')    
+}
+
+function fillOutSettings(){
+  //get setting values from local storage
   var manager_host = window.localStorage.getItem("manager_host");
   var manager_port = window.localStorage.getItem("manager_port");
 
@@ -36,16 +54,6 @@ $( document ).ready(function() {
   }else{
     $("#managerPortInput").val(manager_port);
   };
-
-});
-
-function saveSettings(){
-  var newPort = $("#managerPortInput").val();
-  var newHost = $("#managerHostInput").val();
-
-  window.localStorage.setItem("manager_port", newPort);
-  window.localStorage.setItem("manager_host", newHost);
-  $('#settingsModal').modal('hide')    
 }
 
 var lastStroked = null;  // this remembers the last highlit Shape
