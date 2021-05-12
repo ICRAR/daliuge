@@ -12,6 +12,9 @@
 <link type="text/css" rel="stylesheet" href="/static/src/main.css" />
 <script src="/static/go.js"></script>
 <script src="/static/src/jquery-3.6.0.min.js"></script>
+<script>
+    var pgtName = "{{pgt_view_json_name}}"
+</script>
 <script src="/static/main.js"></script>
 </head>
 
@@ -20,7 +23,7 @@
     <!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
             <!-- Navbar content -->
-            <a class="navbar-brand inactiveLink" href="#" disabled>
+            <a href="javascript:void(0)" class="navbar-brand inactiveLink" href="#" disabled>
                 <img src="/static/src/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
                 <span> Physical Graph </span>
             </a>
@@ -30,70 +33,72 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="nav navbar-nav navbar-center">
                     <li class="nav-item">
-                        <a class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
+                        <a href="javascript:void(0)" href="javascript:void(0)" class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
                             <span class="tooltiptext">Zoom To Fit</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tooltip" href="#"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
+                        <a href="javascript:void(0)" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
                             <span class="tooltiptext">Zoom Out</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tooltip" href="#"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
+                        <a href="javascript:void(0)" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
                             <span class="tooltiptext">Zoom In</span>
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link tooltip" href="#" id="GraphOrientationDropdownBtn" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a href="javascript:void(0)" class="nav-link tooltip" id="GraphOrientationDropdownBtn" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <img src="/static/src/icons/explore_white_24dp.svg" alt="Graph Orientation">
                             <span class="tooltiptext">Graph Orientation</span>
                         </a>
                         <div id="oriantationDropdown" class="dropdown-menu dropdown-menu-right" aria-labelledby="GraphOrientationDropdown">
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="0" checked="checked" /><a class="inactiveLink nav-link">Right (0)</a></div>
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="90" /><a class="inactiveLink nav-link">Down (90)</a></div>
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="180" /><a class="inactiveLink nav-link">Left (180)</a></div>
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="270" /><a class="inactiveLink nav-link">Up (270)</a></div>
+                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="0" checked="checked" /><a href="javascript:void(0)" class="inactiveLink nav-link">Right (0)</a></div>
+                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="90" /><a href="javascript:void(0)" class="inactiveLink nav-link">Down (90)</a></div>
+                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="180" /><a href="javascript:void(0)" class="inactiveLink nav-link">Left (180)</a></div>
+                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="270" /><a href="javascript:void(0)" class="inactiveLink nav-link">Up (270)</a></div>
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tooltip" data-toggle="modal" data-target="#settingsModal" href="#"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings">
+                        <a href="javascript:void(0)" class="nav-link tooltip" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings">
                             <span class="tooltiptext">Settings</span>
                         </a>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
                     <li class="nav-item">
-                        <a class="nav-link tooltip" id="gen_pg_button" value="Generate &amp; Deploy Physical Graph" href="#">Deploy
+                        <a href="javascript:void(0)" class="nav-link tooltip" id="gen_pg_button" value="Generate &amp; Deploy Physical Graph">Deploy
                             <span class="tooltiptext">Generate and deploy physical graph</span>
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle tooltip" href="#" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a href="javascript:void(0)" class="nav-link dropdown-toggle tooltip" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Export
-                            <span class="tooltiptext">Export physical graph template</span>
+                            <!-- <span class="tooltiptext">Export physical graph template</span> -->
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarExportDropdown">
                             <span id="exportJsonBtn" class="dropdown-item dropDropDownParent" href="#">JSON <img id="exportJsonIcon" src="/static/src/icons/arrow_right_white_24dp.svg" alt="">
                                 <div class="dropDropDown">
                                     <a id="json_button" class="dropdown-item" onclick="makeJSON()">Physical Graph Template</a>
-                                    <a id="Pysical graph" class="dropdown-item" href="#">Physical Graph</a>
+                                    <a id="Pysical_graph" class="dropdown-item" href="#">Physical Graph</a>
                                 </div>
                             </span>
                             <div class="dropdown-divider"></div>
-                            <a id="cwl_button" class="dropdown-item" onclick="makeCWL()">CWL</a>
-                            <a id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
+                            <a href="javascript:void(0)" id="cwl_button" class="dropdown-item" onclick="makeCWL()">CWL</a>
+                            <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
                         </div>
                     </li>
                 </ul>
             </div>
     </nav>
     <div id="graphNameWrapper">
-            <span id="graphName" >Graph Name</span>
+            <span id="graphName">{{pgt_view_json_name}}</span>
     </div>
     <div id="myDiagram" ></div>
     <div id="infoBoxHolder">
       <!-- Initially Empty, it is populated when updateInfoBox is called -->
+    </div>
+    <div id="SVGArea"></div>
     <div id="runinfoWrapper">
         <span id="runinfo" >{{partition_info}}</span>
     </div>
@@ -127,7 +132,7 @@
                 </div>
             </div>
         </div>
-        <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
+        <input type="hidden" name="pgt_id" value="pgtName">
     </div>
 
     <!--Js dependencies-->
