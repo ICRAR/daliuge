@@ -431,23 +431,11 @@ var lastStroked = null;  // this remembers the last highlit Shape
       });
     svg.style.border = "1px solid black";
 
-    // var link = document.createElement('a');
-    // obj = document.getElementById("SVGArea");
-    // obj.appendChild(svg);
-    // imgSrc = obj.find(img).attr(src)
-    // link.href = imgSrc;
-    // link.download = 'Download.jpg';
-    // document.body.appendChild(link);
-    // link.click();
-    // // document.body.removeChild(link);
-    // obj.replaceChild(svg, obj.children[0]);
-
-
-    // obj = document.getElementById("SVGArea");
-    // obj.appendChild(svg);
-    // if (obj.children.length > 0) {
-    //   obj.replaceChild(svg, obj.children[0]);
-    // }
+    obj = document.getElementById("SVGArea");
+    obj.appendChild(svg);
+    if (obj.children.length > 0) {
+      obj.replaceChild(svg, obj.children[0]);
+    }
   }
 
   function createZipFilename(graph_name){
