@@ -5,6 +5,15 @@ $( document ).ready(function() {
   $(".dropdown-menu").mouseleave(function(){
     $(".dropdown-menu").dropdown('hide')
   })
+
+  $("#gen_pg_button").click(function(){
+    $("#pg_form").submit();
+  })
+
+  $("#Pysical_graph").click(function(){
+    $("#pg_form").submit();
+  })
+  
 });
 
 var lastStroked = null;  // this remembers the last highlit Shape
@@ -137,16 +146,16 @@ var lastStroked = null;  // this remembers the last highlit Shape
       }
     }, false);
 
-    // add event listener to the "deploy" checkbox so that when the checkbox is used,
-    // the form submit button is updated to reflect the behaviour
-    var deployCheckbox = document.getElementById('dlg_mgr_deploy');
-    deployCheckbox.addEventListener("change", function(){
-        if (deployCheckbox.checked){
-            document.getElementById('gen_pg_button').value = "Generate &amp; Deploy Physical Graph";
-        } else {
-            document.getElementById('gen_pg_button').value = "Generate Physical Graph";
-        }
-    });
+    // // add event listener to the "deploy" checkbox so that when the checkbox is used,
+    // // the form submit button is updated to reflect the behaviour
+    // var deployCheckbox = document.getElementById('dlg_mgr_deploy');
+    // deployCheckbox.addEventListener("change", function(){
+    //     if (deployCheckbox.checked){
+    //         document.getElementById('gen_pg_button').value = "Generate &amp; Deploy Physical Graph";
+    //     } else {
+    //         document.getElementById('gen_pg_button').value = "Generate Physical Graph";
+    //     }
+    // });
   } // end init
 
   // Called when the mouse is over the diagram's background
@@ -208,11 +217,11 @@ var lastStroked = null;  // this remembers the last highlit Shape
     //alert("Previous lg name = " + window.curr_lg_name);
     //alert("Requesting " + pgtName.toString());
     $.ajax({
-      url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
+      url: "/pgt_jsonbody?pgt_name="+pgtName,
       type: 'get',
       error: function(XMLHttpRequest, textStatus, errorThrown) {
           if (404 == XMLHttpRequest.status) {
-            alert('Server cannot locate physical graph file ' + pgtName.toString())
+            alert('boop cannot locate physical graph file ' + pgtName.toString())
           } else {
             alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
           }
@@ -373,12 +382,12 @@ var lastStroked = null;  // this remembers the last highlit Shape
   }
 
   function genGanttChart() {
-    url = "/show_gantt_chart?pgt_id={{pgt_view_json_name}}"
+    url = "/show_gantt_chart?pgt_id="+pgtName
     window.open(url)
   }
 
   function genScheduleChart() {
-    url = "/show_schedule_mat?pgt_id={{pgt_view_json_name}}"
+    url = "/show_schedule_mat?pgt_id="+pgtName
     window.open(url)
   }
 
@@ -386,17 +395,17 @@ var lastStroked = null;  // this remembers the last highlit Shape
       console.log("makeJSON()");
 
       $.ajax({
-          url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
+          url: "/pgt_jsonbody?pgt_name="+pgtName,
           type: 'get',
           error: function(XMLHttpRequest, textStatus, errorThrown) {
             if (404 == XMLHttpRequest.status) {
-              console.error('Server cannot locate physical graph file {{pgt_view_json_name}}');
+              console.error('Server cannot locate physical graph file '+pgtName);
             } else {
               console.error('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
             }
           },
           success: function(data){
-            downloadText('{{pgt_view_json_name}}', data);
+            downloadText(pgtName, data);
           }
       });
   }
@@ -421,11 +430,24 @@ var lastStroked = null;  // this remembers the last highlit Shape
         details: 1.0
       });
     svg.style.border = "1px solid black";
-    obj = document.getElementById("SVGArea");
-    obj.appendChild(svg);
-    if (obj.children.length > 0) {
-      obj.replaceChild(svg, obj.children[0]);
-    }
+
+    // var link = document.createElement('a');
+    // obj = document.getElementById("SVGArea");
+    // obj.appendChild(svg);
+    // imgSrc = obj.find(img).attr(src)
+    // link.href = imgSrc;
+    // link.download = 'Download.jpg';
+    // document.body.appendChild(link);
+    // link.click();
+    // // document.body.removeChild(link);
+    // obj.replaceChild(svg, obj.children[0]);
+
+
+    // obj = document.getElementById("SVGArea");
+    // obj.appendChild(svg);
+    // if (obj.children.length > 0) {
+    //   obj.replaceChild(svg, obj.children[0]);
+    // }
   }
 
   function createZipFilename(graph_name){
@@ -465,7 +487,7 @@ var lastStroked = null;  // this remembers the last highlit Shape
   function makeCWL() {
     var error = "";
 
-    fetch('/pgt_cwl?pgt_name={{pgt_view_json_name}}')
+    fetch('/pgt_cwl?pgt_name='+pgtName)
       .then(async resp => {
         // if fetch was not successful, await the error message in the body of the response
         if (resp.status !== 200){
@@ -475,7 +497,7 @@ var lastStroked = null;  // this remembers the last highlit Shape
         return resp.blob();
       })
       .then(blob => {
-        downloadBlob(createZipFilename('{{pgt_view_json_name}}'), blob);
+        downloadBlob(createZipFilename(pgtName), blob);
       })
       .catch(() => alert(error)); // present error, if it occurred
   }
