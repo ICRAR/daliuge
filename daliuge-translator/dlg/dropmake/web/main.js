@@ -6,11 +6,15 @@ $( document ).ready(function() {
     $(".dropdown-menu").dropdown('hide')
   })
 
-  $("#gen_pg_button").click(function(){
+  $("#deploy_button").click(function(){
+    $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
+    $("#dlg_mgr_deploy").prop( "checked", true )
     $("#pg_form").submit();
   })
 
   $("#Pysical_graph").click(function(){
+    $("#gen_pg_button").val("Generate Physical Graph")
+    $("#dlg_mgr_deploy").prop( "checked", false )
     $("#pg_form").submit();
   })
   
