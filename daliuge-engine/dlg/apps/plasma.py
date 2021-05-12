@@ -65,7 +65,7 @@ class MSStreamingPlasmaConsumer(AppDROP):
                  'reception': {
                     "consumer": "plasma_writer",
                     "test_entry": 5,
-                    "plasma_path" : '/tmp/plasma'
+                    "plasma_path": '/var/dlg_home/tmp/plasma'
                  }
         }
         self.output_file = kwargs.get('output_file')
@@ -137,7 +137,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
                  'reception': {
                     "consumer": "plasma_writer",
                     "test_entry": 5,
-                    "plasma_path" : '/tmp/plasma'
+                    "plasma_path" : '/var/dlg_home/tmp/plasma'
                   }
         }
         self.input_file = kwargs.get('input_file')
