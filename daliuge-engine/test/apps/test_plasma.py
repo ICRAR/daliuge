@@ -23,9 +23,11 @@ import unittest
 import logging
 import tarfile
 import binascii
+import shutil
 
 from dlg.drop import FileDROP, PlasmaDROP, InMemoryDROP
 from dlg import droputils
+from cbf_sdp import msutils
 
 casa_unavailable = True
 try:
@@ -40,8 +42,14 @@ except Exception as e:
 
 logging.basicConfig()
 
+
 @unittest.skipIf(casa_unavailable, "python-casacore not available")
 class CRCAppTests(unittest.TestCase):
+
+    def compare_measurement_sets(self, in_file, out_file):
+        asserter = type(
+            'asserter', (msutils.MSAsserter, unittest.TestCase), {})()
+        asserter.assert_ms_equal(in_file, out_file)
 
     def compare_ms(self, in_file, out_file):
         a = []
@@ -63,16 +71,16 @@ class CRCAppTests(unittest.TestCase):
         out_file = '/tmp/copy.ms'
 
         try:
-            os.rmdir(in_file)
+            shutil.rmtree(in_file)
         except:
             pass
 
         try:
-            os.rmdir(out_file)
+            shutil.rmtree(out_file)
         except:
             pass
 
-        with tarfile.open('./data/test_ms.tar.gz', 'r') as ref:
+        with tarfile.open('/daliuge/test/apps/data/test_ms.tar.gz', 'r') as ref:
             ref.extractall('/tmp/')
 
         prod = MSStreamingPlasmaProducer('1', '1', input_file=in_file)
@@ -85,23 +93,24 @@ class CRCAppTests(unittest.TestCase):
         with droputils.DROPWaiterCtx(self, cons, 1000):
             prod.async_execute()
 
-        self.compare_ms(in_file, out_file)
+        # self.compare_ms(in_file, out_file)
+        self.compare_measurement_sets(in_file, out_file)
 
     def test_plasma(self):
         in_file = '/tmp/test.ms'
         out_file = '/tmp/copy.ms'
 
         try:
-            os.rmdir(in_file)
+            shutil.rmtree(in_file)
         except:
             pass
 
         try:
-            os.rmdir(out_file)
+            shutil.rmtree(out_file)
         except:
             pass
 
-        with tarfile.open('./data/test_ms.tar.gz', 'r') as ref:
+        with tarfile.open('/daliuge/test/apps/data/test_ms.tar.gz', 'r') as ref:
             ref.extractall('/tmp/')
 
         a = FileDROP('a', 'a', filepath=in_file)
@@ -119,7 +128,8 @@ class CRCAppTests(unittest.TestCase):
         with droputils.DROPWaiterCtx(self, e, 5):
             a.setCompleted()
 
-        self.compare_ms(in_file, out_file)
+        # self.compare_ms(in_file, out_file)
+        self.compare_measurement_sets(in_file, out_file)
 
         # check we can go from dataURL to plasma ID
         client = plasma.connect("/tmp/plasma")
