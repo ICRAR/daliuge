@@ -6,19 +6,55 @@ $( document ).ready(function() {
     $(".dropdown-menu").dropdown('hide')
   })
 
+  //deploy physical graph button listener 
   $("#deploy_button").click(function(){
     $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
     $("#dlg_mgr_deploy").prop( "checked", true )
     $("#pg_form").submit();
   })
 
+  //erport physical graph button listener
   $("#Pysical_graph").click(function(){
     $("#gen_pg_button").val("Generate Physical Graph")
     $("#dlg_mgr_deploy").prop( "checked", false )
     $("#pg_form").submit();
   })
   
+  //get saved settings from local storage or set a default value
+  fillOutSettings()
+
+  $('#settingsModal').on('hidden.bs.modal', function () {
+    fillOutSettings()
 });
+});
+
+function saveSettings(){
+  var newPort = $("#managerPortInput").val();
+  var newHost = $("#managerHostInput").val();
+
+  window.localStorage.setItem("manager_port", newPort);
+  window.localStorage.setItem("manager_host", newHost);
+  $('#settingsModal').modal('hide')    
+}
+
+function fillOutSettings(){
+  //get setting values from local storage
+  var manager_host = window.localStorage.getItem("manager_host");
+  var manager_port = window.localStorage.getItem("manager_port");
+
+  //fill settings with saved or default values
+  if (!manager_host){
+    $("#managerHostInput").val("localhost");
+  }else{
+    $("#managerHostInput").val(manager_host);
+  };
+
+  if (!manager_port){
+    $("#managerPortInput").val("8001");
+  }else{
+    $("#managerPortInput").val(manager_port);
+  };
+}
 
 var lastStroked = null;  // this remembers the last highlit Shape
   function init() {
