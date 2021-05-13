@@ -1,0 +1,238 @@
+.navbar{
+    background: rgb(0,64,133);
+    background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+}
+
+.navbar-brand span{
+    margin-left: 10px;
+}
+
+.navbar-nav.navbar-center {
+    position: absolute;
+    left: 50%;
+    transform: translatex(-50%);
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    font-size: 16px;
+    opacity: 100%;
+}
+
+.inactiveLink {
+    pointer-events: none;
+    cursor: default;
+ }
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    background-color: #0059a5;
+    opacity: 95%;
+    color: #fff;
+    text-align: center;
+    padding: 5px 2px;
+    border:solid 1px #000c1a;
+    border-radius: 6px;
+     position: absolute;
+     z-index: 1;
+    width: 120px;
+    top: 100%;
+     left: 50%; 
+     margin-left: -60px; 
+    font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+#graphNameWrapper{
+    position: absolute;
+    top: 56px;
+    display: block;
+    width: 100%;
+    background-color: #002349;
+    padding: 0px 16px;
+    position: fixed;
+    z-index: 101;
+}
+
+#graphNameWrapper span{
+    color: rgb(219, 219, 219);
+}
+
+#runinfoWrapper{
+    bottom:0px;
+    display: block;
+    width: 100%;
+    background-color: #a7a7a7;
+    border-top:solid 1px black;
+    padding: 0px 16px;
+    position: fixed;
+    z-index: 101;
+}
+
+
+#myDiagram{
+    width:auto;
+    height:auto;
+    position: absolute;
+    top: 85px;
+    bottom: 30px;
+    left:5px;
+    right:5px;
+}
+
+.dropdown-menu{
+    border:solid 1px #000c1a;
+    border-radius: 6px;
+     position: absolute;
+     z-index: 1;
+     background-color: #0059a5;
+}
+
+.dropdown-item{
+    color: white;
+}
+
+.dropdown-item:hover{
+    background-color: #001d3b;
+    color: white;
+}
+
+.nav-link{
+    color:white;
+}
+
+#exportJsonBtn{
+    display: inline-block;
+}
+
+#exportJsonIcon{
+    position: absolute;
+    right:2px;
+}
+
+.dropDropDown{
+    visibility: hidden;
+    background-color: #0059a5;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border:solid 1px #000c1a;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    width: auto;
+    height:auto;
+    font-size: 12px;
+    top: 0px;
+    transform: translateX(-110%);
+}
+
+.dropDropDownParent:hover .dropDropDown {
+    visibility: visible;
+}
+
+.dropDropDown .dropdown-item{
+    font-weight: 400;
+    font-size: 1rem;
+    text-align: left;
+}
+
+#navbarExportDropdown{
+    color:white;
+}
+
+#deploy_button{
+    color: white;
+}
+
+#settingsModal .modal-header{
+    background: rgb(0,64,133);
+    background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+}
+
+#settingsModal .modal-header h5,#settingsModal .modal-header span,#settingsModal .modal-header button{
+    color:white;
+}
+
+#settingsModal .modal-body{
+    background-color:#001d3b;
+}
+
+#settingsModal .modal-body span{
+    color: white;
+    display: block;
+}
+
+#settingsModal .modal-footer{
+   background-color:#001d3b;
+}
+
+#settingsModal .modal-footer .btn-primary{
+    background-color: #0059a5;
+    border:solid 1px white;
+}
+
+.settingsSection{
+    padding-bottom:  20px;
+}
+
+#oriantationDropdown .orientationOptionContainer a{
+    display: inline-block;
+    color: white;
+}
+
+.orientationOptionContainer {
+    display: block;
+}
+
+#oriantationDropdown{
+    padding: 2px 10px;
+}
+
+#infoBoxHolder {
+    z-index: 300;
+    position: absolute;
+    left: 5px;
+  }
+
+  #infoBox {
+    border: 1px solid #999;
+    padding: 8px;
+    background-color: whitesmoke;
+    opacity:0.9;
+    position: relative;
+    width: 170px;
+    height:100%;
+    font-family: arial, helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 11px;
+  }
+
+  /* this is known as the "clearfix" hack to allow
+     floated objects to add to the height of a div */
+  #infoBox:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+  }
+
+  div.infoTitle {
+    width: 30px;
+    font-weight: normal;
+    color:  #787878;
+    float: left;
+    margin-left: 4px;
+  }
+
+  div.infoValues {
+    width: 100px;
+    text-align: right;
+    float: right;
+  }
