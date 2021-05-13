@@ -39,6 +39,7 @@
         ]);
         require([
             '/static/src/lib/echarts.js',
+            // '/static/src/data/summit_cleaned.json'
         ], function (echarts) {
             var chart = echarts.init(document.getElementById('main'));
 
@@ -49,9 +50,30 @@
             chart.on('click', function (params) {
                 console.log(params, params.data);
             });
-            $.getJSON('/static/src/data/summit_cleaned.json')
-                    .done(function(data) {
-                data.nodes[0].itemStyle = {
+            $.ajax({
+                url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
+                dataType: "json",
+                type: 'get',
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    if (404 == XMLHttpRequest.status) {
+                    alert('Server cannot locate physical graph file ' + pgtName.toString())
+                    } else {
+                    alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+                    }
+                },
+                success: function(data){
+                    data.nodeDataArray.forEach(element => {
+                        element.name = element.key;
+                    });
+                    data.linkDataArray.forEach(element => {
+                        element.source = element.from;
+                        element.target = element.to;
+                        element.value = 20;
+                    });
+                    data.linkDataArray[0].source = data.linkDataArray[0].from
+                console.log(data.nodeDataArray[0]);
+                console.log(data.linkDataArray[0]);
+                data.nodeDataArray[0].itemStyle = {
                     normal: {
                         color: 'red'
                     }
@@ -67,8 +89,8 @@
                             type: 'sankey',
                             focusNodeAdjacency: true,
                             nodeAlign: 'right',
-                            data: data.nodes,
-                            links: data.links,
+                            data: data.nodeDataArray,
+                            links: data.linkDataArray,
                             lineStyle: {
                                 normal: {
                                     color: 'source',
@@ -78,6 +100,7 @@
                         }
                     ]
                 });
+            }
             });
         });
     </script>
