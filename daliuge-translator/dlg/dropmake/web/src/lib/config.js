@@ -54,7 +54,7 @@
         }
     }
     if (!ecDistPath) {
-        ecDistPath = 'src/lib/echarts';
+        ecDistPath = '/static/src/lib/echarts';
     }
 
     if (typeof require !== 'undefined') {
@@ -62,9 +62,10 @@
             baseUrl: baseUrl,
             paths: {
                 'jquery':'/static/src/jquery.min',
+                'bootstrap': '/static/src/bootstrap/js/bootstrap.bundle.min.js',
                 'echarts': ecDistPath,
                 'zrender': 'node_modules/zrender/dist/zrender',
-                'ecStat': 'test/li/ecStat.min',
+                'ecStat': 'test/lib/ecStat.min',
                 'ecSimpleTransform': 'test/lib/ecSimpleTransform',
                 'ecSimpleOptionPlayer': 'test/lib/ecSimpleOptionPlayer',
                 // 'ecStat': 'http://localhost:8001/echarts/echarts-stat/dist/ecStat',
@@ -73,7 +74,6 @@
                 'data': 'test/data',
                 'map': 'test/data/map',
                 'extension': 'dist/extension',
-                'bootstrap': '/static/src/bootstrap/js/bootstrap.bundle.min',
             }
             // urlArgs will prevent break point on init in debug tool.
             // urlArgs: '_v_=' + (+new Date())
