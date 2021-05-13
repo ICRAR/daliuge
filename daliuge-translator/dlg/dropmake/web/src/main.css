@@ -73,8 +73,18 @@
     z-index: 101;
 }
 
+#main{
+    width:auto;
+    height:auto;
+    position: absolute;
+    top: 85px;
+    bottom: 30px;
+    left:5px;
+    right:5px;
+}
 
 #myDiagram{
+    visibility: hidden;
     width:auto;
     height:auto;
     position: absolute;
