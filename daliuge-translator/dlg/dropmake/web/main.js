@@ -261,7 +261,7 @@ var lastStroked = null;  // this remembers the last highlit Shape
       type: 'get',
       error: function(XMLHttpRequest, textStatus, errorThrown) {
           if (404 == XMLHttpRequest.status) {
-            alert('boop cannot locate physical graph file ' + pgtName.toString())
+            alert('Server cannot locate physical graph file ' + pgtName.toString())
           } else {
             alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
           }
