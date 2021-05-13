@@ -61,12 +61,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
+                        <a href="javascript:void(0)" onclick="myDiagram.commandHandler.decreaseZoom()" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
                             <span class="tooltiptext">Zoom Out</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
+                        <a href="javascript:void(0)" onclick="myDiagram.commandHandler.increaseZoom()" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
                             <span class="tooltiptext">Zoom In</span>
                         </a>
                     </li>
@@ -141,20 +141,20 @@
                         <!-- DALiuGE Manager host:<input type="text" name="dlg_mgr_host" value="sdp-dfms.ddns.net" size="40" style="font-size:16px;"> -->
                         <div class="settingsSection">
                             <span>DALiuGE Manager host:</span> 
-                            <input type="text" name="dlg_mgr_host" value="localhost" size="40" style="font-size:16px;">
+                            <input id="managerHostInput" type="text" name="dlg_mgr_host" value="localhost" size="40" style="font-size:16px;">
                         </div>
                         <!-- DALiuGE Manager port:<input type="number" name="dlg_mgr_port" value="8097" style="font-size:16px;"> -->
                         <div class="settingsSection">
                             <span>DALiuGE Manager port:</span>
-                            <input type="number" name="dlg_mgr_port" value="8001" style="font-size:16px;">
+                            <input id="managerPortInput" type="number" name="dlg_mgr_port" value="8001" style="font-size:16px;">
                         </div>
                         <input type="checkbox" id="dlg_mgr_deploy" style="visibility:hidden;" name="dlg_mgr_deploy" value="deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                       </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button onClick="saveSettings()" type="button" class="btn btn-primary">Save changes</button>
                 </div>
             </div>
         </div>
