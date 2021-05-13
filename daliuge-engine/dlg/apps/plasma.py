@@ -62,11 +62,11 @@ class MSStreamingPlasmaConsumer(AppDROP):
 
     def initialize(self, **kwargs):
         self.config = {
-                 'reception': {
-                    "consumer": "plasma_writer",
-                    "test_entry": 5,
-                    "plasma_path": '/var/dlg_home/tmp/plasma'
-                 }
+            'reception': {
+                "consumer": "plasma_writer",
+                "test_entry": 5,
+                "plasma_path": '/tmp/plasma'
+            }
         }
         self.output_file = kwargs.get('output_file')
         self.thread = None
@@ -134,11 +134,11 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         self.config = {
-                 'reception': {
-                    "consumer": "plasma_writer",
-                    "test_entry": 5,
-                    "plasma_path" : '/var/dlg_home/tmp/plasma'
-                  }
+            'reception': {
+                "consumer": "plasma_writer",
+                "test_entry": 5,
+                "plasma_path": '/tmp/plasma'
+            }
         }
         self.input_file = kwargs.get('input_file')
         super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
@@ -151,19 +151,18 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
         while not c.find_processors():
             await asyncio.sleep(0.1)
 
-        async for vis, ts, ts_fraction in msutils.vis_reader(self.input_file,
-                                                             num_timestamps=1):
+        async for vis, ts, ts_fraction in msutils.vis_reader(self.input_file):
             payload = icd.Payload()
             payload.timestamp_count = ts
             payload.timestamp_fraction = ts_fraction
             payload.channel_count = len(vis)
             payload.visibilities = vis
-            payload.visibilities[0][0][2] = complex(1, 2)
             await c.consume(payload)
+            # await asyncio.sleep(0.01)
 
-        # For for the response to arrive
-        await asyncio.get_event_loop().run_in_executor(
-            None, c.get_response, c.output_refs.pop(0), 10)
+            # For for the response to arrive
+            await asyncio.get_event_loop().run_in_executor(
+                None, c.get_response, c.output_refs.pop(0), 10)
 
     def run(self):
         self.outputs[0].write(b'init')
