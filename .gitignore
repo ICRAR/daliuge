@@ -20,6 +20,5 @@ daliuge-engine/test/apps/dynlib_example2.o
 .idea
 daliuge.iml
 *.cwl
-*.html
-*.js
 *.xml
+.DS_Store
