@@ -212,18 +212,6 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
-
-    def test_load_lgeditor(self):
-
-        c = RestClient('localhost', lgweb_port, 10)
-
-        # doesn't exist
-        self.assertRaises(RestClientException, c._get_json, '/lg_editor?lg_name=unknown.json')
-        # Defaults to first LG
-        c._GET('/lg_editor')
-        # also fine, LG exists
-        c._GET('/lg_editor?lg_name=logical_graphs/chiles_simple.json')
-
     def test_pg_viewer(self):
 
         c = RestClient('localhost', lgweb_port, 10)
