@@ -8,8 +8,10 @@
 
  <script src="/static/go.js"></script>
  <script src="/static/src/require.js"></script>
- <script src="/static/src/lib/config.js"></script>
+ <!-- <script src="/static/src/lib/config.js"></script> -->
  <script src="/static/src/jquery.min.js"></script>
+ <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
+ <script src="/static/src/lib/echarts.js"></script>
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
 
@@ -31,7 +33,7 @@
 <body onload="init()">
     <script>
         require([
-            '/static/dist/echarts',
+            '/static/src/lib/echarts',
             '/static/src/data/summit_cleaned.json'
         ], function (echarts, data) {
             var chart = echarts.init(document.getElementById('main'));
@@ -192,6 +194,5 @@
     </div>
 
     <!--Js dependencies-->
-    <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
