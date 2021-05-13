@@ -54,7 +54,7 @@
         }
     }
     if (!ecDistPath) {
-        ecDistPath = 'dist/echarts';
+        ecDistPath = 'src/lib/echarts';
     }
 
     if (typeof require !== 'undefined') {
@@ -63,7 +63,7 @@
             paths: {
                 'echarts': ecDistPath,
                 'zrender': 'node_modules/zrender/dist/zrender',
-                'ecStat': 'test/lib/ecStat.min',
+                'ecStat': 'test/li/ecStat.min',
                 'ecSimpleTransform': 'test/lib/ecSimpleTransform',
                 'ecSimpleOptionPlayer': 'test/lib/ecSimpleOptionPlayer',
                 // 'ecStat': 'http://localhost:8001/echarts/echarts-stat/dist/ecStat',
