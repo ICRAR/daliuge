@@ -10,39 +10,78 @@
 <link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
 
 <link type="text/css" rel="stylesheet" href="/static/src/main.css" />
+<style>
+    html, body, #main {
+        width: 100%;
+        height: 100%;
+        /*border: 1px solid #000;*/
+    }
+</style>
 <script src="/static/go.js"></script>
 <script src="/static/src/jquery-3.6.0.min.js"></script>
+<script src="/static/src/lib/esl.js"></script>
+<script src="/static/src/lib/config.js"></script>
+<script src="/static/src/lib/jquery.min.js"></script>
 <script>
     var pgtName = "{{pgt_view_json_name}}"
 </script>
 <script src="/static/main.js"></script>
-<script>
-    function loadFromRemoteJson() {
-    //given a logical graph name, get its JSON from the server
-    //alert("Previous lg name = " + window.curr_lg_name);
-    //alert("Requesting " + pgtName.toString());
-    $.ajax({
-      url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
-      type: 'get',
-      error: function(XMLHttpRequest, textStatus, errorThrown) {
-          if (404 == XMLHttpRequest.status) {
-            alert('Server cannot locate physical graph file ' + pgtName.toString())
-          } else {
-            alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
-          }
-      },
-      success: function(data){
-        //console.log(data);
-        myDiagram.model = go.Model.fromJson(data);
-      }
-    });
-  }
 
-</script>
 </head>
 
 <body onload="init()">
-
+    <script>
+        require([
+            'echarts'
+            // 'echarts/chart/sankey',
+            // 'echarts/component/tooltip'
+            ], function (echarts) {
+    
+                var chart = echarts.init(document.getElementById('main'), null, {
+    
+                });
+    
+                window.onresize = function () {
+                    chart.resize();
+                };
+    
+                chart.on('click', function (params) {
+                    console.log(params, params.data);
+                });
+    
+                $.getJSON('./data/energy.json')
+                .done(function(data) {
+    
+                    data.nodes[0].itemStyle = {
+                        normal: {
+                            color: 'red'
+                        }
+                    };
+                    chart.setOption({
+                        tooltip: {
+                            trigger: 'item',
+                            triggerOn: 'mousemove'
+                        },
+                        animation: false,
+                        series: [
+                            {
+                                type: 'sankey',
+                                focusNodeAdjacency: true,
+                                nodeAlign: 'right',
+                                data: data.nodes,
+                                links: data.links,
+                                lineStyle: {
+                                    normal: {
+                                        color: 'source',
+                                        curveness: 0.5
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                });
+            });
+    </script>
     <!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
             <!-- Navbar content -->
@@ -119,6 +158,7 @@
             <span id="graphName">{{pgt_view_json_name}}</span>
     </div>
     <div id="myDiagram" ></div>
+    <div id="main"></div>
     <div id="infoBoxHolder">
       <!-- Initially Empty, it is populated when updateInfoBox is called -->
     </div>
@@ -153,7 +193,7 @@
                       </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button onClick="" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button onClick="saveSettings()" type="button" class="btn btn-primary">Save changes</button>
                 </div>
             </div>
