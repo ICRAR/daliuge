@@ -7,12 +7,11 @@
  <link rel="shortcut icon" type="image/jpg" href="/static/src/icons/translate_green.png"/>
 
  <script src="/static/go.js"></script>
- <script src="/static/src/require.js"></script>
- <!-- <script src="/static/src/lib/config.js"></script> -->
  <script src="/static/src/jquery.min.js"></script>
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
- <script src="/static/src/lib/echarts.js"></script>
-<!-- Bootstrap CSS -->
+ <script src="/static/src/require.js"></script>
+
+ <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
 
 <link type="text/css" rel="stylesheet" href="/static/src/main.css" />
@@ -26,16 +25,21 @@
 <script>
     var pgtName = "{{pgt_view_json_name}}"
 </script>
-<script src="/static/main.js"></script>
+<!-- <script src="/static/main.js"></script> -->
 
 </head>
 
-<body onload="init()">
+<body>
+    <!-- custom bootstrap navbar -->
+
+    <!-- require takes over the whole page, thus we need to load main.js with require as well -->
     <script>
         require([
-            '/static/src/lib/echarts',
-            '/static/src/data/summit_cleaned.json'
-        ], function (echarts, data) {
+            "/static/main.js",
+        ]);
+        require([
+            '/static/src/lib/echarts.js',
+        ], function (echarts) {
             var chart = echarts.init(document.getElementById('main'));
 
             window.onresize = function () {
@@ -45,37 +49,39 @@
             chart.on('click', function (params) {
                 console.log(params, params.data);
             });
-
-            data.nodes[0].itemStyle = {
-                normal: {
-                    color: 'red'
-                }
-            };
-            chart.setOption({
-                tooltip: {
-                    trigger: 'item',
-                    triggerOn: 'mousemove'
-                },
-                animation: false,
-                series: [
-                    {
-                        type: 'sankey',
-                        focusNodeAdjacency: true,
-                        nodeAlign: 'right',
-                        data: data.nodes,
-                        links: data.links,
-                        lineStyle: {
-                            normal: {
-                                color: 'source',
-                                curveness: 0.5
+            $.getJSON('/static/src/data/summit_cleaned.json')
+                    .done(function(data) {
+                data.nodes[0].itemStyle = {
+                    normal: {
+                        color: 'red'
+                    }
+                };
+                chart.setOption({
+                    tooltip: {
+                        trigger: 'item',
+                        triggerOn: 'mousemove'
+                    },
+                    animation: false,
+                    series: [
+                        {
+                            type: 'sankey',
+                            focusNodeAdjacency: true,
+                            nodeAlign: 'right',
+                            data: data.nodes,
+                            links: data.links,
+                            lineStyle: {
+                                normal: {
+                                    color: 'source',
+                                    curveness: 0.5
+                                }
                             }
                         }
-                    }
-                ]
+                    ]
+                });
             });
         });
     </script>
-    <!-- custom bootstrap navbar -->
+
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
             <!-- Navbar content -->
             <a href="javascript:void(0)" class="navbar-brand inactiveLink" href="#" disabled>
@@ -160,7 +166,7 @@
         <span id="runinfo" >{{partition_info}}</span>
     </div>
 
-    <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div onload="init();" class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -192,7 +198,7 @@
             </div>
         </div>
     </div>
-
     <!--Js dependencies-->
+    <!-- <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script> -->
 </body>
 </html>
