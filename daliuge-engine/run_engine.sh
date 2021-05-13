@@ -2,4 +2,4 @@ docker run --shm-size=1g --ipc="shareable" --rm -td --name daliuge-engine -v /va
 
 # start the plasma store. NOTE: the container has been started with shareable memory
 # which means that the plasma store is accessible across containers on the same host.
-plasma_store -m 10000000 -s /var/dlg_home/tmp/plasma -d /var/dlg_home/tmp
+plasma_store_server -m 1000000000 -s /var/dlg_home/tmp/plasma 1> /dev/null 2> /dev/null &
