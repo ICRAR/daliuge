@@ -61,6 +61,7 @@
         require.config({
             baseUrl: baseUrl,
             paths: {
+                'jquery':'/static/src/jquery.min',
                 'echarts': ecDistPath,
                 'zrender': 'node_modules/zrender/dist/zrender',
                 'ecStat': 'test/li/ecStat.min',
@@ -72,6 +73,7 @@
                 'data': 'test/data',
                 'map': 'test/data/map',
                 'extension': 'dist/extension',
+                'bootstrap': '/static/src/bootstrap/js/bootstrap.bundle.min',
             }
             // urlArgs will prevent break point on init in debug tool.
             // urlArgs: '_v_=' + (+new Date())
