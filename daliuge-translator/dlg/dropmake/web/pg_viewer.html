@@ -11,100 +11,20 @@
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/require.js"></script>
 
- <!-- Bootstrap CSS -->
+ <!-- CSS -->
 <link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
-
 <link type="text/css" rel="stylesheet" href="/static/src/main.css" />
-<style>
-    html, body {
-        width: 100%;
-        height: 100%;
-        /*border: 1px solid #000;*/
-    }
-</style>
+
 <script>
     var pgtName = "{{pgt_view_json_name}}"
 </script>
-<!-- <script src="/static/main.js"></script> -->
-
 </head>
 
 <body>
+    <!-- init script includes require, this links main js and echarts -->
+    <script src="/static/graph_init.js"></script>
+
     <!-- custom bootstrap navbar -->
-
-    <!-- require takes over the whole page, thus we need to load main.js with require as well -->
-    <script>
-        require([
-            "/static/main.js",
-        ]);
-        require([
-            '/static/src/lib/echarts.js',
-            // '/static/src/data/summit_cleaned.json'
-        ], function (echarts) {
-            var chart = echarts.init(document.getElementById('main'));
-
-            window.onresize = function () {
-                chart.resize();
-            };
-
-            chart.on('click', function (params) {
-                console.log(params, params.data);
-            });
-            $.ajax({
-                url: "/pgt_jsonbody?pgt_name={{pgt_view_json_name}}",
-                dataType: "json",
-                type: 'get',
-                error: function(XMLHttpRequest, textStatus, errorThrown) {
-                    if (404 == XMLHttpRequest.status) {
-                    alert('Server cannot locate physical graph file ' + pgtName.toString())
-                    } else {
-                    alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
-                    }
-                },
-                success: function(data){
-                    data.nodeDataArray.forEach(element => {
-                        element.name = element.key.toString();
-                    });
-                    data.linkDataArray.forEach(element => {
-                        element.source = element.from.toString();
-                        element.target = element.to.toString();
-                        element.value = 20;
-                    });
-                    
-                    console.log(data.nodeDataArray);
-                    console.log(data.linkDataArray);
-                    data.nodeDataArray[0].itemStyle = {
-                    normal: {
-                        color: 'red'
-                    }
-                };
-                chart.setOption({
-                    tooltip: {
-                        trigger: 'item',
-                        triggerOn: 'mousemove'
-                    },
-                    animation: false,
-                    series: [
-                        {
-                            type: 'sankey',
-                            focusNodeAdjacency: true,
-                            nodeAlign: 'right',
-                            data: data.nodeDataArray,
-                            links: data.linkDataArray,
-                            lineStyle: {
-                                normal: {
-                                    color: 'source',
-                                    curveness: 0.5
-                                }
-                            }
-                        }
-                    ]
-                });
-            }
-            });
-        });
-    </script>
-
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
             <!-- Navbar content -->
             <a href="javascript:void(0)" class="navbar-brand inactiveLink" href="#" disabled>
