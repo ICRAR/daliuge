@@ -56,7 +56,6 @@ function fillOutSettings(){
   };
 }
 
-
   function makeJSON() {
       console.log("makeJSON()");
 
