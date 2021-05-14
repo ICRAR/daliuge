@@ -27,43 +27,53 @@ require([
             }
         },
         success: function(data){
+            var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
+            var newElement = {};
             data.nodeDataArray.forEach(element => {
-                element.name = element.key.toString();
-            });
-            data.linkDataArray.forEach(element => {
-                element.source = element.from.toString();
-                element.target = element.to.toString();
-                element.value = 20;
-            });
-            
-            console.log(data.nodeDataArray);
-            console.log(data.linkDataArray);
-            data.nodeDataArray[0].itemStyle = {
-            normal: {
-                color: 'red'
-            }
-        };
-        chart.setOption({
-            tooltip: {
-                trigger: 'item',
-                triggerOn: 'mousemove'
-            },
-            animation: false,
-            series: [
-                {
-                    type: 'sankey',
-                    focus: 'adjacency',
-                    nodeAlign: 'right',
-                    animation: true,
-                    data: data.nodeDataArray,
-                    links: data.linkDataArray,
-                    lineStyle: {
-                        color: 'source',
-                        curveness: 0.5
-                    }
+                newElement = {};
+                console.log(element.hasOwnProperty("isGroup"));
+                if (!element.hasOwnProperty("isGroup")){
+                    newElement.name = element.key.toString();
+                    graphData.nodeDataArray.push(newElement);
                 }
-            ]
-        });
-    }
+            });
+
+            data.linkDataArray.forEach(element => {
+                newElement = {};
+                newElement.source = element.from.toString();
+                newElement.target = element.to.toString();
+                newElement.value = 20;
+                graphData.linkDataArray.push(newElement);
+            });
+
+            // don't show labels if there are too many nodes. (SETTING?)
+            var show_labels = (graphData.nodeDataArray.length > 750) ? false:true;
+
+            // console.log(graphData.nodeDataArray);
+            // console.log(graphData.linkDataArray);
+            chart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    triggerOn: 'mousemove'
+                },
+                animation: true,
+                series: [
+                    {
+                        type: 'sankey',
+                        label: {
+                            show: show_labels
+                        },
+                        focus: 'adjacency',
+                        nodeAlign: 'right',
+                        data: graphData.nodeDataArray,
+                        links: graphData.linkDataArray,
+                        lineStyle: {
+                            color: 'source',
+                            curveness: 0.5
+                        }
+                    }
+                ]
+            });
+        }
     });
 });
