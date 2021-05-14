@@ -6,11 +6,11 @@ require([
     '/static/src/lib/echarts.js',
     // '/static/src/data/summit_cleaned.json'
 ], function (echarts) {
-    var chart = echarts.init(document.getElementById('main'));
+    var chart = echarts.init(document.getElementById('main'), {renderer:'canvas'});
 
-    window.onresize = function () {
-        chart.resize();
-    };
+    // window.onresize = function () {
+    //     chart.resize();
+    // };
 
     chart.on('click', function (params) {
         console.log(params, params.data);
@@ -47,7 +47,7 @@ require([
             tooltip: {
                 trigger: 'item',
                 triggerOn: 'mousemove'
-            },
+            }, 
             animation: false,
             series: [
                 {
@@ -55,6 +55,7 @@ require([
                     focus: 'adjacency',
                     nodeAlign: 'right',
                     animation: true,
+                    roam: true,
                     data: data.nodeDataArray,
                     links: data.linkDataArray,
                     lineStyle: {
