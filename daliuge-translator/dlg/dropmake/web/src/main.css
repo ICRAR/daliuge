@@ -83,17 +83,6 @@
     right:5px;
 }
 
-#myDiagram{
-    visibility: hidden;
-    width:auto;
-    height:auto;
-    position: absolute;
-    top: 85px;
-    bottom: 30px;
-    left:5px;
-    right:5px;
-}
-
 .dropdown-menu{
     border:solid 1px #000c1a;
     border-radius: 6px;
@@ -202,47 +191,3 @@
 #oriantationDropdown{
     padding: 2px 10px;
 }
-
-#infoBoxHolder {
-    z-index: 300;
-    position: absolute;
-    left: 5px;
-  }
-
-  #infoBox {
-    border: 1px solid #999;
-    padding: 8px;
-    background-color: whitesmoke;
-    opacity:0.9;
-    position: relative;
-    width: 170px;
-    height:100%;
-    font-family: arial, helvetica, sans-serif;
-    font-weight: bold;
-    font-size: 11px;
-  }
-
-  /* this is known as the "clearfix" hack to allow
-     floated objects to add to the height of a div */
-  #infoBox:after {
-    visibility: hidden;
-    display: block;
-    font-size: 0;
-    content: " ";
-    clear: both;
-    height: 0;
-  }
-
-  div.infoTitle {
-    width: 30px;
-    font-weight: normal;
-    color:  #787878;
-    float: left;
-    margin-left: 4px;
-  }
-
-  div.infoValues {
-    width: 100px;
-    text-align: right;
-    float: right;
-  }

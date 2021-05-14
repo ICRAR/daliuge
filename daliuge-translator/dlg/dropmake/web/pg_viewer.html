@@ -6,7 +6,6 @@
  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
  <link rel="shortcut icon" type="image/jpg" href="/static/src/icons/translate_green.png"/>
 
- <script src="/static/go.js"></script>
  <script src="/static/src/jquery.min.js"></script>
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/require.js"></script>
@@ -15,6 +14,7 @@
 <link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
 <link type="text/css" rel="stylesheet" href="/static/src/main.css" />
 
+<!-- Global Variables -->
 <script>
     var pgtName = "{{pgt_view_json_name}}"
 </script>
@@ -99,11 +99,7 @@
     <div id="graphNameWrapper">
             <span id="graphName">{{pgt_view_json_name}}</span>
     </div>
-    <div id="myDiagram" ></div>
     <div id="main"></div>
-    <div id="infoBoxHolder">
-      <!-- Initially Empty, it is populated when updateInfoBox is called -->
-    </div>
     <div id="SVGArea"></div>
     <div id="runinfoWrapper">
         <span id="runinfo" >{{partition_info}}</span>
@@ -141,7 +137,5 @@
             </div>
         </div>
     </div>
-    <!--Js dependencies-->
-    <!-- <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script> -->
 </body>
 </html>
