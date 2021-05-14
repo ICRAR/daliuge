@@ -28,13 +28,17 @@ require([
         },
         success: function(data){
             var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
+            var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
             var newElement = {};
             data.nodeDataArray.forEach(element => {
                 newElement = {};
-                console.log(element.hasOwnProperty("isGroup"));
                 if (!element.hasOwnProperty("isGroup")){
                     newElement.name = element.key.toString();
                     graphData.nodeDataArray.push(newElement);
+                }
+                else {
+                    newElement.name = element.key.toString();
+                    graphDataParts.nodeDataArray.push(newElement);                  
                 }
             });
 
@@ -49,8 +53,10 @@ require([
             // don't show labels if there are too many nodes. (SETTING?)
             var show_labels = (graphData.nodeDataArray.length > 750) ? false:true;
 
-            // console.log(graphData.nodeDataArray);
-            // console.log(graphData.linkDataArray);
+            console.log(data.nodeDataArray.Category);
+            console.log(data.linkDataArray);
+            console.log(graphData.nodeDataArray);
+            console.log(graphData.linkDataArray);
             chart.setOption({
                 tooltip: {
                     trigger: 'item',
@@ -60,10 +66,13 @@ require([
                 series: [
                     {
                         type: 'sankey',
+                        roam: true,
                         label: {
                             show: show_labels
                         },
-                        focus: 'adjacency',
+                        emphasis:{
+                            focus: 'adjacency' 
+                        },
                         nodeAlign: 'right',
                         data: graphData.nodeDataArray,
                         links: graphData.linkDataArray,
