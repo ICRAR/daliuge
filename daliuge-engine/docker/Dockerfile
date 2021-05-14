@@ -26,4 +26,4 @@ EXPOSE 9000
 ENV VIRTUAL_ENV=/home/ray/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-CMD ["dlg", "daemon", "-vv", "--no-nm"]
+CMD ["dlg", "daemon", "-vv"]
