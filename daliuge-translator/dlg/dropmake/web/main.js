@@ -56,21 +56,6 @@ function fillOutSettings(){
   };
 }
 
-  function getRadioValue(name) {
-    var radio = document.getElementsByName(name);
-    for (var i = 0; i < radio.length; i++)
-      if (radio[i].checked) return radio[i].value;
-  }
-
-  function genGanttChart() {
-    url = "/show_gantt_chart?pgt_id="+pgtName
-    window.open(url)
-  }
-
-  function genScheduleChart() {
-    url = "/show_schedule_mat?pgt_id="+pgtName
-    window.open(url)
-  }
 
   function makeJSON() {
       console.log("makeJSON()");
