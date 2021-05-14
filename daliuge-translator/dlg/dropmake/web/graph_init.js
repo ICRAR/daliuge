@@ -52,15 +52,14 @@ require([
             series: [
                 {
                     type: 'sankey',
-                    focusNodeAdjacency: true,
+                    focus: 'adjacency',
                     nodeAlign: 'right',
+                    animation: true,
                     data: data.nodeDataArray,
                     links: data.linkDataArray,
                     lineStyle: {
-                        normal: {
-                            color: 'source',
-                            curveness: 0.5
-                        }
+                        color: 'source',
+                        curveness: 0.5
                     }
                 }
             ]
