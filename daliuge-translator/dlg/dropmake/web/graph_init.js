@@ -30,10 +30,20 @@ require([
             var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
             var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
             var newElement = {};
+            let keyIndex = new Map();
+            var nodeCatgColors = {'Data':'blue', 'Component': 'red'}
             data.nodeDataArray.forEach(element => {
                 newElement = {};
                 if (!element.hasOwnProperty("isGroup")){
-                    newElement.name = element.key.toString();
+                    keyIndex.set(element.key, element.text + '-' + element.key.toString());
+                    newElement.name = element.text + '-' + element.key.toString();
+                    newElement.label = {
+                        'rotate': 45,
+                        'fontSize': 10,
+                        'offset': [-10,0]
+                    };
+                    newElement.itemStyle = {};
+                    newElement.itemStyle.color = nodeCatgColors[element.category];
                     graphData.nodeDataArray.push(newElement);
                 }
                 else {
@@ -44,8 +54,8 @@ require([
 
             data.linkDataArray.forEach(element => {
                 newElement = {};
-                newElement.source = element.from.toString();
-                newElement.target = element.to.toString();
+                newElement.source = keyIndex.get(element.from);
+                newElement.target = keyIndex.get(element.to);
                 newElement.value = 20;
                 graphData.linkDataArray.push(newElement);
             });
@@ -53,10 +63,11 @@ require([
             // don't show labels if there are too many nodes. (SETTING?)
             var show_labels = (graphData.nodeDataArray.length > 750) ? false:true;
 
-            console.log(data.nodeDataArray.Category);
+            console.log(data.nodeDataArray);
             console.log(data.linkDataArray);
             console.log(graphData.nodeDataArray);
             console.log(graphData.linkDataArray);
+            console.log(keyIndex)
             chart.setOption({
                 tooltip: {
                     trigger: 'item',
