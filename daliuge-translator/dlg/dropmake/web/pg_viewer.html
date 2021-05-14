@@ -4,6 +4,7 @@
  <!-- Required bootstrap meta tags -->
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+ <meta name="viewport" content="width=device-width, maximum-scale=1.0">
  <link rel="shortcut icon" type="image/jpg" href="/static/src/icons/translate_green.png"/>
 
  <script src="/static/src/jquery.min.js"></script>
@@ -42,12 +43,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="javascript:void(0)" onclick="myDiagram.commandHandler.decreaseZoom()" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
+                        <a href="javascript:void(0)" onclick="zoomOut()" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
                             <span class="tooltiptext">Zoom Out</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="javascript:void(0)" onclick="myDiagram.commandHandler.increaseZoom()" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
+                        <a href="javascript:void(0)" onclick="zoomIn()" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
                             <span class="tooltiptext">Zoom In</span>
                         </a>
                     </li>
