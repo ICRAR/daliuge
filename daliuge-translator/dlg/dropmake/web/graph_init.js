@@ -27,6 +27,8 @@ require([
             }
         },
         success: function(data){
+            // echarts only displays the name, which is also the key for the edges, thus
+            // we need to make sure that the labels are both meaningful and unique.
             var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
             var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
             var newElement = {};
@@ -35,12 +37,13 @@ require([
             data.nodeDataArray.forEach(element => {
                 newElement = {};
                 if (!element.hasOwnProperty("isGroup")){
+                    // helper map to fix the links later
                     keyIndex.set(element.key, element.text + '-' + element.key.toString());
                     newElement.name = element.text + '-' + element.key.toString();
                     newElement.label = {
                         'rotate': 45,
                         'fontSize': 10,
-                        'offset': [-10,0]
+                        'offset': [-20,-20]
                     };
                     newElement.itemStyle = {};
                     newElement.itemStyle.color = nodeCatgColors[element.category];
@@ -61,7 +64,7 @@ require([
             });
 
             // don't show labels if there are too many nodes. (SETTING?)
-            var show_labels = (graphData.nodeDataArray.length > 750) ? false:true;
+            var show_labels = (graphData.nodeDataArray.length > 350) ? false:true;
 
             console.log(data.nodeDataArray);
             console.log(data.linkDataArray);
