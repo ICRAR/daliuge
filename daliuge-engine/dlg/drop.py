@@ -39,6 +39,7 @@ import threading
 import time
 import re
 import inspect
+import binascii
 
 import six
 from six import BytesIO
@@ -1745,7 +1746,7 @@ class PlasmaDROP(AbstractDROP):
 
     @property
     def dataURL(self):
-        return "plasma://%s" % (self.object_id.encode('hex'))
+        return "plasma://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
