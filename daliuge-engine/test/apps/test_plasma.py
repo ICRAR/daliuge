@@ -27,7 +27,14 @@ import shutil
 
 from dlg.drop import FileDROP, PlasmaDROP, InMemoryDROP
 from dlg import droputils
-from cbf_sdp import msutils
+
+cbf_unavailable = True
+try:
+    from cbf_sdp import msutils
+    cbf_unavailable = False
+except Exception as e:
+    print(e)
+    pass
 
 casa_unavailable = True
 try:
@@ -66,6 +73,7 @@ class CRCAppTests(unittest.TestCase):
             comparison = j == b[i]
             self.assertEqual(comparison.all(), True)
 
+    @unittest.skipIf(casa_unavailable, "sdp-cbf not available")
     def test_plasma_stream(self):
         in_file = '/tmp/test.ms'
         out_file = '/tmp/copy.ms'
