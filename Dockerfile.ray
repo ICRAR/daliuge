@@ -1,5 +1,6 @@
 # We need the base image we build with the other Dockerfile
-FROM rayproject/ray:latest-cpu
+# latest ray image does not work because compilation of netifaces fails
+FROM rayproject/ray:74cbf0-py38
 
 RUN git clone https://github.com/ICRAR/daliuge && \
     apt update && \
