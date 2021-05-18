@@ -164,7 +164,7 @@ def removeUnmetRelationships(dropSpecList):
 def check_dropspec(n, dropSpec):
     if 'oid' not in dropSpec:
         raise InvalidGraphException("Drop #%d is missing its 'oid' argument: %r" % (n, dropSpec))
-    if 'type' not in dropSpec:
+    if "type" not in dropSpec:
         raise InvalidGraphException("Drop %s is missing its 'type' argument" % (dropSpec['oid']))
 
 def loadDropSpecs(dropSpecList):
@@ -180,9 +180,9 @@ def loadDropSpecs(dropSpecList):
     dropSpecs = {}
     for n,dropSpec in enumerate(dropSpecList):
 
-        # 'type' and 'oit' are mandatory
+        # "type" and 'oit' are mandatory
         check_dropspec(n, dropSpec)
-        dropType = dropSpec['type']
+        dropType = dropSpec["type"]
 
         cf = __CREATION_FUNCTIONS[dropType]
         cf(dropSpec, dryRun=True)
@@ -219,7 +219,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     for n,dropSpec in enumerate(dropSpecList):
 
         check_dropspec(n, dropSpec)
-        dropType = dropSpec.pop('type')
+        dropType = dropSpec.pop("type")
 
         cf = __CREATION_FUNCTIONS[dropType]
         drop = cf(dropSpec, session=session)

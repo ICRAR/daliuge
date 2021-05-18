@@ -103,7 +103,7 @@ def compute(value, **kwargs):
     # Add one final application that will wait for all results
     # and transmit them back to us
     transmitter_oid = '-1'
-    transmitter = dropdict({'type': 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
+    transmitter = dropdict({"type": 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
     for leaf_oid in droputils.get_leaves(graph.values()):
         graph[leaf_oid].addConsumer(transmitter)
     graph[transmitter_oid] = transmitter
@@ -246,7 +246,7 @@ class _DelayedDrops(_DelayedDrop):
         return self.drops[i]
 
     def make_dropdict(self):
-        return dropdict({'type': 'app', 'app': 'dlg.dask_emulation._Listifier', 'nm': 'listifier'})
+        return dropdict({"type": 'app', 'app': 'dlg.dask_emulation._Listifier', 'nm': 'listifier'})
 
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
@@ -269,7 +269,7 @@ class _AppDrop(_DelayedDrop):
 
         self.kwarg_names = list(self.original_kwarg_names)
         self.kwarg_names.reverse()
-        my_dropdict = dropdict({'type': 'app', 'app': 'dlg.apps.pyfunc.PyFuncApp', 'func_arg_mapping': {}})
+        my_dropdict = dropdict({"type": 'app', 'app': 'dlg.apps.pyfunc.PyFuncApp', 'func_arg_mapping': {}})
         if self.fname is not None:
             simple_fname = self.fname.split('.')[-1]
             my_dropdict['func_name'] = self.fname
@@ -333,7 +333,7 @@ class _DataDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-        my_dropdict = dropdict({'type': 'plain', 'storage': Categories.MEMORY})
+        my_dropdict = dropdict({"type": 'plain', 'storage': Categories.MEMORY})
         if not self.producer:
             my_dropdict['pydata'] = pyfunc.serialize_data(self.pydata)
         return my_dropdict
