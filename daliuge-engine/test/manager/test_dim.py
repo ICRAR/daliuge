@@ -55,9 +55,9 @@ class LocalDimStarter(ManagerStarter):
 class TestDIM(LocalDimStarter, unittest.TestCase):
 
     def createSessionAndAddTypicalGraph(self, sessionId, sleepTime=0):
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':Categories.MEMORY, 'node':hostname, 'consumers':['B']},
-                     {'oid':'B', 'type':'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
-                     {'oid':'C', 'type':'plain', 'storage':Categories.MEMORY, 'node':hostname}]
+        graphSpec = [{'oid':'A', "type":'plain', 'storage':Categories.MEMORY, 'node':hostname, 'consumers':['B']},
+                     {'oid':'B', "type":'app', 'app':'dlg.apps.simple.SleepAndCopyApp', 'sleepTime':sleepTime, 'outputs':['C'], 'node':hostname},
+                     {'oid':'C', "type":'plain', 'storage':Categories.MEMORY, 'node':hostname}]
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -74,15 +74,15 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         sessionId = 'lalo'
 
         # No node specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':Categories.MEMORY}]
+        graphSpec = [{'oid':'A', "type":'plain', 'storage':Categories.MEMORY}]
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
         # Wrong node specified
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':Categories.MEMORY, 'node':'unknown_host'}]
+        graphSpec = [{'oid':'A', "type":'plain', 'storage':Categories.MEMORY, 'node':'unknown_host'}]
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
         # OK
-        graphSpec = [{'oid':'A', 'type':'plain', 'storage':Categories.MEMORY, 'node':hostname}]
+        graphSpec = [{'oid':'A', "type":'plain', 'storage':Categories.MEMORY, 'node':hostname}]
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -91,7 +91,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.assertEqual(1, len(graphFromDM))
         dropSpec = list(graphFromDM.values())[0]
         self.assertEqual('A', dropSpec['oid'])
-        self.assertEqual('plain', dropSpec['type'])
+        self.assertEqual('plain', dropSpec["type"])
         self.assertEqual('Memory', dropSpec['storage'])
 
     def test_deployGraph(self):
