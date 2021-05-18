@@ -188,7 +188,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
         var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
 		actionCells.enter().append('td').classed('actions', true)
             .append("button").attr('id', cancelBtnSessionId)
-            .attr('type', 'button').attr('class', 'btn btn-default').text('Cancel')
+            .attr("type", 'button').attr('class', 'btn btn-default').text('Cancel')
 		actionCells.select('button')
 		actionCells.exit().remove()
 
@@ -356,6 +356,7 @@ function _addNode(g, doSpec) {
 	var typeClass = doSpec.type;
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
+	// console.log('Drop type', doSpec.type)
 	if( doSpec.type == 'app' ) {
 		var nameParts = doSpec.app.split('.');
 		notes = nameParts[nameParts.length - 1];
