@@ -181,9 +181,9 @@ class GraphPlayer(object):
                         pass
 
     def get_downstream_drop_ids(self, dropspec):
-        if (dropspec['type'] == 'app'):
+        if (dropspec["type"] == 'app'):
             ds_kw = 'outputs' #down stream key word
-        elif (dropspec['type'] == 'plain'):
+        elif (dropspec["type"] == 'plain'):
             ds_kw = 'consumers'
         else:
             ds_kw = 'None'
@@ -349,17 +349,17 @@ class GraphPlayer(object):
             gid = oid_gnid_dict[dropspec['oid']]
             ip = dropspec['node']
             subgraph_dict[ip].append(gid)
-            if (dropspec['type'] == 'app'):
+            if (dropspec["type"] == 'app'):
                 G.add_node(gid, shape='rect', label='')#, fixedsize=True, hight=.05, width=.05)
-            elif (dropspec['type'] == 'plain'): #parallelogram
+            elif (dropspec["type"] == 'plain'): #parallelogram
                 G.add_node(gid, shape='circle', label='')#, fixedsize=True, hight=.05, width=.05)
         logger.info("Graph nodes added")
 
         for dropspec in self.pg_spec.itervalues():
             gid = oid_gnid_dict[dropspec['oid']]
-            if (dropspec['type'] == 'app'):
+            if (dropspec["type"] == 'app'):
                 ds_kw = 'outputs' #down stream key word
-            elif (dropspec['type'] == 'plain'):
+            elif (dropspec["type"] == 'plain'):
                 ds_kw = 'consumers'
             else:
                 ds_kw = 'None'
