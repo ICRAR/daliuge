@@ -82,13 +82,13 @@ def daliuge_aware(func):
                 eargs = {}
                 # args[1] is a dictionary of host:exception
                 for host,subex in e.args[1].items():
-                    eargs[host] = {'type': subex.__class__.__name__, 'args': subex.args}
+                    eargs[host] = {"type": subex.__class__.__name__, 'args': subex.args}
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args
             else:
                 raise
 
-            error = {'type': e.__class__.__name__, 'args': eargs}
+            error = {"type": e.__class__.__name__, 'args': eargs}
             bottle.response.status = status
             return json.dumps(error)
 
