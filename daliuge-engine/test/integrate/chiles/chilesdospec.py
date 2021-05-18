@@ -50,36 +50,36 @@ CUBE_NAME = 'cube1408~1412'
 
 
 def fileSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'plain', 'storage':Categories.FILE})
+    dropSpec = dropdict({'oid':str(uid), "type":'plain', 'storage':Categories.FILE})
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def directorySpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'container', 'container':'dlg.drop.DirectoryContainer'})
+    dropSpec = dropdict({'oid':str(uid), "type":'container', 'container':'dlg.drop.DirectoryContainer'})
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def fluxSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.SourceFlux'})
+    dropSpec = dropdict({'oid':str(uid), "type":'app', 'app':'test.integrate.chiles.chilesdo.SourceFlux'})
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def splitSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Split'})
+    dropSpec = dropdict({'oid':str(uid), "type":'app', 'app':'test.integrate.chiles.chilesdo.Split'})
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def scpSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'dlg.apps.scp.ScpApp'})
+    dropSpec = dropdict({'oid':str(uid), "type":'app', 'app':'dlg.apps.scp.ScpApp'})
     dropSpec.update(kwargs)
     return dropSpec
 
 def cleanSpec(uid, **kwargs):
-    dropSpec = dropdict({'oid':str(uid), 'type':'app', 'app':'test.integrate.chiles.chilesdo.Clean'})
+    dropSpec = dropdict({'oid':str(uid), "type":'app', 'app':'test.integrate.chiles.chilesdo.Clean'})
     dropSpec.update(kwargs)
     return dropSpec
 
