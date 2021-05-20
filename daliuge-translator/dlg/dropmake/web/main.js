@@ -30,7 +30,9 @@ $( document ).ready(function() {
 
 function saveSettings(){
   var newPort = $("#managerPortInput").val();
-  var newHost = $("#managerHostInput").val();
+  var newHost = $("#managerHostInput").val().replace(/\s+/g, '');
+  console.log("Host set to:'"+newHost+"'");
+  console.log("Port set to:'"+newPort+"'");
 
   window.localStorage.setItem("manager_port", newPort);
   window.localStorage.setItem("manager_host", newHost);
