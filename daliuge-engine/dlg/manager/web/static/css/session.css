@@ -204,7 +204,7 @@ svg {
 }
 
 #session-status{
-  color:rgb(51, 255, 0);
+  color:lime;
 }
 
 .tooltip .tooltiptext {
