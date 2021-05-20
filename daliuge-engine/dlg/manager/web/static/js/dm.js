@@ -20,6 +20,16 @@
 //    MA 02111-1307  USA
 //
 
+$( document ).ready(function() {
+	// jquery starts here
+	console.log($("#session-status").html())
+	if($("#session-status").html()==="Cancelled"){
+		$("#session-status").css("color:red;");
+	}else{
+		$("#session-status").css("color:green;");
+	}
+});
+
 var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled']
 var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled']
 var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled']
