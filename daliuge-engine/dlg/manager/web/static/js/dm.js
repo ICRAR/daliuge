@@ -20,16 +20,6 @@
 //    MA 02111-1307  USA
 //
 
-$( document ).ready(function() {
-	// jquery starts here
-	console.log($("#session-status").html())
-	if($("#session-status").html()==="Cancelled"){
-		$("#session-status").css("color:red;");
-	}else{
-		$("#session-status").css("color:green;");
-	}
-});
-
 var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled']
 var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled']
 var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled']
@@ -198,7 +188,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
         var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
 		actionCells.enter().append('td').classed('actions', true)
             .append("button").attr('id', cancelBtnSessionId)
-            .attr("type", 'button').attr('class', 'btn btn-default').text('Cancel')
+            .attr("type", 'button').attr('class', 'btn btn-secondary').text('Cancel')
 		actionCells.select('button')
 		actionCells.exit().remove()
 
@@ -206,7 +196,9 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			console.log(session)
 			var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
 			// Listeners for the cancelSession button
-			cancelSessionBtn.on('click', function() { cancel_session(serverUrl, session.sessionId, cancelSessionBtn); } );
+			cancelSessionBtn.on('click', function(){ 
+				cancel_session(serverUrl, session.sessionId, cancelSessionBtn); 
+			});
 		})
 
 		refreshBtn.attr('disabled', null);
@@ -293,6 +285,17 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 
 }
 
+function setStatusColor(status){
+	console.log(status);
+		if(status==="Cancelled"){
+			$("#session-status").css("color","grey");
+		}else if (status==="Running") {
+			$("#session-status").css("color","orange");
+		}else{
+			$("#session-status").css("color","lime");
+		}
+}
+
 /**
  * Starts a regular background task that retrieves the current graph
  * specification from the REST server until the session's status is either
@@ -328,6 +331,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			var doSpecs = sessionInfo['graph'];
 			var status  = uniqueSessionStatus(sessionInfo['status']);
 			d3.select('#session-status').text(sessionStatusToString(status));
+			setStatusColor(sessionStatusToString(status));
 
 			var oids = Object.keys(doSpecs);
 			if( oids.length > 0 ) {
@@ -464,6 +468,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 						return;
 					}
 					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
+					setStatusColor(sessionStatusToString(status));
 				});
 			}
 		})
@@ -528,4 +533,7 @@ function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
             bootbox.alert("Can't cancel " + sessionId + " unless it is RUNNING.");
         }
     })
+
+	d3.select('#session-status').text("Cancelled");
+	setStatusColor("Cancelled");
 }
