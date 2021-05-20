@@ -37,7 +37,8 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="nav navbar-nav navbar-center">
-                    <li class="nav-item">
+                    <!--    zoom not supported for this type of echart, buttons removed for now 
+                        <li class="nav-item">
                         <a href="javascript:void(0)" href="javascript:void(0)" class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
                             <span class="tooltiptext">Zoom To Fit</span>
                         </a>
@@ -51,7 +52,8 @@
                         <a href="javascript:void(0)" onclick="zoomIn()" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
                             <span class="tooltiptext">Zoom In</span>
                         </a>
-                    </li>
+                    </li> -->
+
                     <!-- unfinished, not needed until we change graph renderer -->
                     <!-- <li class="nav-item dropdown">
                         <a href="javascript:void(0)" class="nav-link tooltip" id="GraphOrientationDropdownBtn" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -65,11 +67,6 @@
                             <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="270" /><a href="javascript:void(0)" class="inactiveLink nav-link">Up (270)</a></div>
                         </div>
                     </li> -->
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings">
-                            <span class="tooltiptext">Settings</span>
-                        </a>
-                    </li>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
                     <li class="nav-item">
@@ -93,6 +90,11 @@
                             <a href="javascript:void(0)" id="cwl_button" class="dropdown-item" onclick="makeCWL()">CWL</a>
                             <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
                         </div>
+                    </li>
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link tooltip" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings">
+                            <span class="tooltiptext">Settings</span>
+                        </a>
                     </li>
                 </ul>
             </div>
