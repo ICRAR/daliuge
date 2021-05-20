@@ -10,33 +10,51 @@
 	<script src="/static/js/bootbox.min.js"></script>
 	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 	<link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+	<link  href="/static/css/dm.css" rel="stylesheet" type="text/css"/>
 	<style>
 		@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css";
 	</style>
 </head>
 
 <body>
-<div class="container">
-<h1>{{dmType}}</h1>
-
-<h2>Sessions</h2>
-	<table id="sessionsTable" class="table table-striped">
-		<thead>
-			<tr>
-				<th>Session ID</th>
-				<th>State</th>
-				<th># Drops</th>
-				<th>Details</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
-<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
-<button id="refreshListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
-<button id="resetBtn"       type="button" class="btn btn-secondary"><span class="fa fa-power-off"></span> Reset</button>
-
+	<!-- custom bootstrap navbar -->
+	<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
+		<!-- Navbar content -->
+		<a href="/" class="navbar-brand" href="#" disabled>
+			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
+			<span>{{dmType}}</span>
+		</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNav">
+			<ul class="nav navbar-nav navbar-center">
+				
+			</ul>
+			<ul class="nav navbar-nav  ml-auto">
+			</ul>
+		</div>
+	</nav>
+<div id="dimContentWrapper" class="container">
+	<div id="sessions">
+		<h2>Sessions</h2>
+			<table id="sessionsTable" class="table table-striped">
+				<thead>
+					<tr>
+						<th>Session ID</th>
+						<th>State</th>
+						<th># Drops</th>
+						<th>Details</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
+		<button id="refreshListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
+		<button id="resetBtn"       type="button" class="btn btn-secondary"><span class="fa fa-power-off"></span> Reset</button>
+	</div>
 </div>
 
 <script type="text/javascript">
