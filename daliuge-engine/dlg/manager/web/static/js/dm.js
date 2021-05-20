@@ -527,13 +527,11 @@ function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
 
                 cancelSessionBtn.attr('disabled', null);
             });
-
+			d3.select('#session-status').text("Cancelled");
+			setStatusColor("Cancelled");
         } else {
             // display an error
             bootbox.alert("Can't cancel " + sessionId + " unless it is RUNNING.");
         }
     })
-
-	d3.select('#session-status').text("Cancelled");
-	setStatusColor("Cancelled");
 }
