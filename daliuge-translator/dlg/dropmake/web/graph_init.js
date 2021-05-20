@@ -43,7 +43,12 @@ require([
                     newElement.label = {
                         'rotate': 45,
                         'fontSize': 10,
-                        'offset': [-20,-20]
+                        'offset': [-20,-20],
+                        'fontWeight' : 700,
+                        'textBorderColor' : 'white',
+                        'textBorderWidth' : 2,
+                        'textBorderType' : 'solid'
+
                     };
                     newElement.itemStyle = {};
                     newElement.itemStyle.color = nodeCatgColors[element.category];
