@@ -228,3 +228,7 @@ svg {
 .tooltip:hover .tooltiptext {
   visibility: visible;
 }
+
+#dimContentWrapper{
+  margin-top:50px;
+}
