@@ -320,7 +320,6 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 	url += '/sessions/' + sessionId;
 
 	function updateGraph() {
-
 		d3.json(url, function(error, sessionInfo) {
 
 			if (error) {
@@ -455,7 +454,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				var cur_status = get_status_name(curVal);
-				return prevVal && (cur_status == 'completed' || cur_status == 'error' || cur_status == 'cancelled');
+				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled');
 			}, true);
 			if (!allCompleted) {
 				d3.timer(updateStates, delay);
