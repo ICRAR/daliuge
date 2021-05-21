@@ -229,6 +229,10 @@ svg {
   visibility: visible;
 }
 
-#dimContentWrapper{
-  margin-top:50px;
+#graphName li{
+  list-style-type: none;
+}
+
+#graphName{
+  padding:0;
 }
