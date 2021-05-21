@@ -3,7 +3,8 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Session '{{sessionId}}'</title>
+	<title>Engine</title>
+	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
 	<script src="/static/js/d3/d3.v3.min.js"></script>
 	<script src="/static/js/d3/dagre-d3.min.js"></script>
 	<script src="/static/js/jquery-1.11.3.min.js"></script>
@@ -12,7 +13,6 @@
 	<script src="/static/js/dm.js"></script>
 	<link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
 	<link  href="/static/css/session.css" rel="stylesheet" type="text/css"/>
-	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 	<style>
 		@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css";
 	</style>
@@ -24,7 +24,8 @@
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
 		<!-- Navbar content -->
 		<a href="/" class="navbar-brand" href="#" disabled>
-			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
+			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
+			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="EngineIcon">
 			<span>{{dmType}}</span>
 		</a>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
