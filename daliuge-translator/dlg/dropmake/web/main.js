@@ -78,31 +78,19 @@ function fillOutSettings(){
   }
 
   function makePNG() {
-    //zoomToFit();
+  
+    html2canvas(document.querySelector("#main")).then(canvas => {
+      var dataURL = canvas.toDataURL( "image/png" );
+      var data = atob( dataURL.substring( "data:image/png;base64,".length ) ),
+          asArray = new Uint8Array(data.length);
 
-    //var svg = myDiagram.makeSvg({
-    var rect_w = myDiagram.viewportBounds.width;
-    var rect_h = myDiagram.viewportBounds.height;
-    var img_w = myDiagram.documentBounds.width;
-    var img_h = myDiagram.documentBounds.height;
+      for( var i = 0, len = data.length; i < len; ++i ) {
+          asArray[i] = data.charCodeAt(i);    
+      }
 
-    w_ratio = rect_w / img_w;
-    h_ratio = rect_h / img_h;
-
-    var scale_f = Math.min(1.0, Math.min(w_ratio, h_ratio));
-
-    var svg = myDiagram.makeImage({
-        scale: scale_f,
-        background: "White",
-        details: 1.0
-      });
-    svg.style.border = "1px solid black";
-
-    obj = document.getElementById("SVGArea");
-    obj.appendChild(svg);
-    if (obj.children.length > 0) {
-      obj.replaceChild(svg, obj.children[0]);
-    }
+      var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
+      saveAs(blob, pgtName+"_Template.png");
+  });
   }
 
   function createZipFilename(graph_name){
