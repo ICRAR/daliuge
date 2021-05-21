@@ -293,6 +293,7 @@ function setStatusColor(status){
 			$("#session-status").css("color","orange");
 		}else{
 			$("#session-status").css("color","lime");
+			$("#cancelBtn").hide();
 		}
 }
 
