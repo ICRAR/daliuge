@@ -236,3 +236,33 @@ svg {
 #graphName{
   padding:0;
 }
+
+#listContainer{
+  position: absolute;
+  top:80px; 
+  bottom:0px; 
+  right:0px; 
+  left:0px;
+}
+
+#listContainer div{
+  overflow: auto; 
+  height: 100%;
+}
+
+#pg-graph{
+  position: absolute;
+  top:80px; 
+  bottom:0px; 
+  right:0px; 
+  left:0px;
+}
+
+#pg-progress-bar{
+  position: absolute;
+  top:80px; 
+  bottom:0px; 
+  right:0px; 
+  left:0px;
+  padding-right:20px;
+}
