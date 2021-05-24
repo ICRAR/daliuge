@@ -21,7 +21,7 @@ case "$1" in
         echo "Running Engine development version in foreground..."
         DOCKER_OPTS+="-v ${PWD}/dlg/manager:/home/ray/dlg/lib/python3.8/site-packages/dlg/manager"
         echo "docker run -ti ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
-        docker run -ti ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+        docker run -ti ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG} bash
         exit 1;;
     *)
         echo "Usage run_engine.sh <dep|dev>"
