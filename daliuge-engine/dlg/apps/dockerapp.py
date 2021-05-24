@@ -306,6 +306,9 @@ class DockerApp(BarrierAppDROP):
                   fsOutputs.items()]
         binds += [host_path + ":" + container_path for host_path, container_path in self._additionalBindings.items()]
         logger.debug("Volume bindings: %r", binds)
+        binds = set(binds)
+        binds = list(binds)
+        logger.debug("Reduced volume bindings: %r", binds)
 
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
