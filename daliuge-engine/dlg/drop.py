@@ -1341,22 +1341,24 @@ class NgasDROP(AbstractDROP):
     ngasTimeout = dlg_int_param('ngasTimeout', 2)
     ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
     len = dlg_int_param('len', -1)
+    ngasFileId = dlg_string_param('ngasFileId', None)
 
     def initialize(self, **kwargs):
-        pass
+        if self.ngasFileId is None:
+            self.ngasFileId = self.uid
 
     def getIO(self):
         try:
-            ngasIO = NgasIO(self.ngasSrv, self.uid, self.ngasPort,
+            ngasIO = NgasIO(self.ngasSrv, self.ngasFileId, self.ngasPort,
                             self.ngasConnectTimeout, self.ngasTimeout, self.len)
         except ImportError:
-            ngasIO = NgasLiteIO(self.ngasSrv, self.uid, self.ngasPort,
+            ngasIO = NgasLiteIO(self.ngasSrv, self.ngasFileId, self.ngasPort,
                                 self.ngasConnectTimeout, self.ngasTimeout, self.len)
         return ngasIO
 
     @property
     def dataURL(self):
-        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.uid)
+        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.ngasFileId)
 
     # Override
     def generate_reproduce_data(self):

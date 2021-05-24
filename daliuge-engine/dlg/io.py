@@ -269,10 +269,12 @@ class NgasIO(DataIO):
         self._ngasTimeout        = ngasTimeout
         self._fileId             = fileId
         self._length             = length
+        self._loc                = -1
+        self._readData           = None
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
-        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
+        return ngamsPClient.ngamsPClient(host=self._ngasSrv, port=self._ngasPort, timeout=self._ngasTimeout)
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -287,27 +289,49 @@ class NgasIO(DataIO):
     def _close(self, **kwargs):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
-            reply, msg, _, _ = client._httpPost(
-                client.getHost(), client.getPort(), 'QARCHIVE',
-                'application/octet-stream', dataRef=self._buf,
-                pars=[['filename', self._fileId]], dataSource='BUFFER',
-                dataSize=self._writtenDataSize)
+            reply = client._post(
+                cmd='QARCHIVE',
+                mime_type='application/octet-stream',
+                data=self._buf,
+                pars=[['filename', self._fileId]])
             self._buf = None
-            if reply != 200:
+            if reply.http_status != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
                 # from the returning data and extract the real error message from
                 # there
-                raise Exception(msg)
+                raise Exception(reply.message)
 
         # Release the reference to _desc so the client object gets destroyed
         del self._desc
 
-    def _read(self, count, **kwargs):
+    def _read(self, count=4096, **kwargs):
         # Read data from NGAS and give it back to our reader
-        self._desc.retrieve2File(self._fileId, cmd="QRETRIEVE")
+        # self._desc.retrieve2File(self._fileId, cmd="QRETRIEVE") # NIC: This function no longer exists
+        if self._loc == -1 and self._readData is None:
+            import tempfile
+            file = tempfile.NamedTemporaryFile('w+b')
+            self._desc.retrieve(self._fileId, targetFile=file.name)
+            file.seek(0)
+            self._readData = file.read()
+            self._length = len(self._readData)
+            self._loc = 0
+        if self._loc < self._length and self._readData is not None:
+            if count is None: # Read it all then
+                count = self._length
+            num_read = min(count, self._length - self._loc)
+            end_loc = self._loc + num_read
+            data = self._readData[self._loc:end_loc]
+            self._loc = end_loc
+            return data
+        elif self._loc == self._length and self._readData is not None:
+            self._loc = 0
+            return None
 
     def _write(self, data, **kwargs):
-        self._buf += data
+        if type(data) == bytes:
+            self._buf += str(data)
+        else:
+            self._buf += data
         self._writtenDataSize += len(data)
         return len(data)
 
