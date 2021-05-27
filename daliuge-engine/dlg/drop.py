@@ -1732,7 +1732,7 @@ class PlasmaDROP(AbstractDROP):
     A DROP that points to data stored in a Plasma Store
     '''
     object_id = dlg_string_param('object_id', None)
-    plasma_link = dlg_string_param('plasma_link', '/tmp/plasma')
+    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
 
     def initialize(self, **kwargs):
         object_id = self.uid
@@ -1742,7 +1742,7 @@ class PlasmaDROP(AbstractDROP):
            self.object_id = object_id
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_link)
+        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_path)
 
     @property
     def dataURL(self):
