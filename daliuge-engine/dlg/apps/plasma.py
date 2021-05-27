@@ -64,14 +64,14 @@ class MSStreamingPlasmaConsumer(AppDROP):
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
-    plasma_path = dlg_string_param('plasma_path', '')
+    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
 
     def initialize(self, **kwargs):
         self.config = {
             'reception': {
                 "consumer": "plasma_writer",
                 "test_entry": 5,
-                "plasma_path": '/tmp/plasma'
+                "plasma_path": self.plasma_path
             }
         }
         self.thread = None
