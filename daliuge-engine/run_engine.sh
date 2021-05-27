@@ -19,7 +19,7 @@ case "$1" in
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Running Engine development version in foreground..."
-        DOCKER_OPTS+="-v ${PWD}/dlg/manager:/home/ray/dlg/lib/python3.8/site-packages/dlg/manager"
+        DOCKER_OPTS+="-v ${PWD}/dlg/manager:/root/dlg/lib/python3.8/site-packages/dlg/manager"
         echo "docker run -ti ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
         docker run -ti ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG} bash
         exit 1;;
