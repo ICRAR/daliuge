@@ -91,12 +91,15 @@ class CRCAppTests(unittest.TestCase):
         with tarfile.open('/daliuge/test/apps/data/test_ms.tar.gz', 'r') as ref:
             ref.extractall('/tmp/')
 
-        prod = MSStreamingPlasmaProducer('1', '1', input_file=in_file)
-        cons = MSStreamingPlasmaConsumer('2', '2', output_file=out_file)
+        prod = MSStreamingPlasmaProducer('1', '1')
+        cons = MSStreamingPlasmaConsumer('2', '2')
         drop = InMemoryDROP('3', '3')
-
-        drop.addStreamingConsumer(cons)
+        ms_in = FileDROP('4', '4', filepath=in_file)
+        ms_out = FileDROP('5', '5', filepath=out_file)
+        prod.addInput(ms_in)
         prod.addOutput(drop)
+        drop.addStreamingConsumer(cons)
+        cons.addOutput(ms_out)
 
         with droputils.DROPWaiterCtx(self, cons, 1000):
             prod.async_execute()
