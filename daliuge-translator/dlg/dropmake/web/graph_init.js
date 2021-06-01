@@ -3,8 +3,7 @@ require([
     "/static/main.js",
 ]);
 require([
-    '/static/src/lib/echarts.js',
-    // '/static/src/data/summit_cleaned.json'
+    'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.1/echarts.min.js',
 ], function (echarts) {
     var chart = echarts.init(document.getElementById('main'), {renderer:'canvas'});
 

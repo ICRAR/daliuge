@@ -67,12 +67,12 @@ RUN apt-get update &&  apt-get install -y curl
 # COPY --from=0 /root/dlg /root/dlg
 RUN  mkdir -p /var/dlg_home 
 
-EXPOSE 5555
-EXPOSE 6666
+EXPOSE 9000
 EXPOSE 8000
 EXPOSE 8001
 EXPOSE 8002
-EXPOSE 9000
+EXPOSE 5555
+EXPOSE 6666
 
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/root/dlg
