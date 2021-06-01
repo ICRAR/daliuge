@@ -2,7 +2,7 @@ case "$1" in
     "dep")
         VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
         echo "Running Translator deployment version in background..."
-        docker run --name daliuge-translator --rm -t -p 8084:8084 icrar/daliuge-translator:ray
+        docker run --name daliuge-translator --rm -td -p 8084:8084 icrar/daliuge-translator:ray
         exit 1;;
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD`
