@@ -65,7 +65,7 @@ RUN apt-get update &&  apt-get install -y curl
 # # copy sources and virtualenv
 # COPY --from=0 /daliuge/. /daliuge/.
 # COPY --from=0 /root/dlg /root/dlg
-RUN  mkdir -p /var/dlg_home 
+RUN  mkdir -p /tmp/.dlg/var/dlg_home 
 
 EXPOSE 9000
 EXPOSE 8000
@@ -77,6 +77,6 @@ EXPOSE 6666
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/root/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV DLG_ROOT="/var/dlg_home"
+ENV DLG_ROOT="/tmp/.dlg/var/dlg_home"
 
 CMD ["dlg", "daemon", "-vv"]
