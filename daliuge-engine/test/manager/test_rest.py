@@ -84,20 +84,20 @@ class TestRest(unittest.TestCase):
         self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{}])
 
         # invalid dropspec, app doesn't exist
-        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{'oid': 'a', 'type': 'app', 'app': 'doesnt.exist'}])
+        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{'oid': 'a', "type": 'app', 'app': 'doesnt.exist'}])
 
         # invalid state, the graph status is only queried when the session is running
         self.assertRaises(exceptions.InvalidSessionState, c.getGraphStatus, sid)
 
         # valid dropspec, but the socket listener app doesn't allow inputs
-        c.addGraphSpec(sid, [{'type': 'socket', 'oid': 'a', 'inputs': ['b']}, {'oid': 'b', 'type': 'plain', 'storage': Categories.MEMORY}])
+        c.addGraphSpec(sid, [{"type": 'socket', 'oid': 'a', 'inputs': ['b']}, {'oid': 'b', "type": 'plain', 'storage': Categories.MEMORY}])
         self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
         c.createSession(sid)
         fname = tempfile.mktemp()
-        c.addGraphSpec(sid, [{'type': 'plain', 'storage': Categories.FILE, 'oid': 'a', 'filepath': fname, 'check_filepath_exists': True}])
+        c.addGraphSpec(sid, [{"type": 'plain', 'storage': Categories.FILE, 'oid': 'a', 'filepath': fname, 'check_filepath_exists': True}])
         self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
 
     def test_recursive(self):
@@ -110,7 +110,7 @@ class TestRest(unittest.TestCase):
         # This is not checked at the DIM level but only at the NM level
         # The exception should still pass through though
         with self.assertRaises(exceptions.SubManagerException) as cm:
-            c.addGraphSpec(sid, [{'oid': 'a', 'type': 'app', 'app': 'doesnt.exist', 'node': hostname}])
+            c.addGraphSpec(sid, [{'oid': 'a', "type": 'app', 'app': 'doesnt.exist', 'node': hostname}])
         ex = cm.exception
         self.assertTrue(hostname in ex.args[0])
         self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))

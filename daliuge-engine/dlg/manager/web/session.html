@@ -3,63 +3,80 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Session '{{sessionId}}'</title>
+	<title>Engine</title>
+	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
 	<script src="/static/js/d3/d3.v3.min.js"></script>
 	<script src="/static/js/d3/dagre-d3.min.js"></script>
 	<script src="/static/js/jquery-1.11.3.min.js"></script>
-	<script src="/static/js/bootstrap.min.js"></script>
+	<script src="/static/js/bootstrap.bundle.min.js"></script>
 	<script src="/static/js/bootbox.min.js"></script>
 	<script src="/static/js/dm.js"></script>
-	<link  href="/static/css/session.css" rel="stylesheet" type="text/css"/>
 	<link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
-	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+	<link  href="/static/css/session.css" rel="stylesheet" type="text/css"/>
+	<style>
+		@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css";
+	</style>
 </head>
 
 <body>
-<div class="container">
 
-	<ol class="breadcrumb">
-		<li><a href="/">{{dmType}}</a></li>
-		<li><a id="local-manager-a"></a></li>
-		<li>Session: {{sessionId}}</li>
-	</ol>
-
-	<h4>Status: <span id="session-status"></span></h4>
-
-	<div class="btn-toolbar" role="toolbar">
-		<div class="btn-group" role="group" id="view-mode-buttons">
-			<button type="button" value="progress-bar" class="btn btn-default">Progress Bar</button>
-			<button type="button" value="graph" class="btn btn-default">Graph</button>
-			<button type="button" value="list" class="btn btn-default">List</button>
+	<!-- custom bootstrap navbar -->
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
+		<!-- Navbar content -->
+		<a href="/" class="navbar-brand" href="#" disabled>
+			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
+			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="EngineIcon">
+			<span>{{dmType}}</span>
+		</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNav">
+			<ul class="nav navbar-nav navbar-center">
+				<div class="btn-group" role="group" id="view-mode-buttons">
+					<button type="button" value="progress-bar" class="btn btn-secondary">Progress Bar</button>
+					<button type="button" value="graph" class="btn btn-secondary">Graph</button>
+					<button type="button" value="list" class="btn btn-secondary">List</button>
+				</div>
+				<div class="btn-group" role="group" id="graph-orientation-buttons">
+					<button type="button" value="LR" class="btn btn-secondary active"><span class="fa fa-arrows-h"> </span></button>
+					<button type="button" value="TB" class="btn btn-secondary"><span class="fa fa-arrows-v"> </span></button>
+				</div>
+			</ul>
+			<ul class="nav navbar-nav  ml-auto">
+			<button id="cancelBtn" type="button" class="btn btn-secondary">Cancel Session</button>
+				<button disabled class="btn btn-secondary" id="session-status-wrapper" >Status: <span id="session-status"></span></button>
+				</ul>
 		</div>
-		<div class="btn-group" role="group" id="graph-orientation-buttons">
-			<button type="button" value="LR" class="btn btn-default active"><span class="glyphicon glyphicon-resize-horizontal"> </span></button>
-			<button type="button" value="TB" class="btn btn-default"><span class="glyphicon glyphicon-resize-vertical"> </span></button>
+	</nav>
+	<div id="graphNameWrapper">
+		<ol id="graphName">
+			<li><a id="local-manager-a"></a></li>
+			<li>Session: {{sessionId}}</li>
+		</ol>
+	</div>
+	<div id="listContainer" class="container">
+		<div>
+		<table id="pg-list" class="table table-striped table-condensed" >
+			<thead>
+				<tr>
+					<th>OID</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody></tbody>
+		</table>
 		</div>
-	</div>
-	<button id="cancelBtn" type="button" class="btn btn-default">Cancel Session</button>
 
-	<div style="overflow: auto; max-height: 600px;">
-	<table id="pg-list" class="table table-striped table-condensed" >
-		<thead>
-			<tr>
-				<th>OID</th>
-				<th>Status</th>
-			</tr>
-		</thead>
-		<tbody></tbody>
-	</table>
 	</div>
 
-</div>
+	<div class="graph" id="pg-graph">
+		<svg><g/></svg>
+	</div>
 
-<div class="graph" id="pg-graph">
-	<svg><g/></svg>
-</div>
-
-<div class="progress" id="pg-progress-bar">
-	<svg></svg>
-</div>
+	<div class="progress" id="pg-progress-bar">
+		<svg></svg>
+	</div>
 
 <script>
 
@@ -69,7 +86,8 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-list').remove();
 	d3.select('#pg-graph').remove();
 
-	const width = 1000;
+	const width = $('#pg-progress-bar').innerWidth();
+	console.log(width)
 	var graph_update_handler = function(oids, dropSpecs) {};
 
 	var status_update_handler = function(statuses)
@@ -124,8 +142,11 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-list').remove()
 	d3.select('#pg-progress-bar').remove();
 
+	const heightValue = 300;
+const widthValue = 600;
 	// Set up zoom support
 	var svg = d3.select("svg");
+	
 	var inner = svg.select("g");
 	var zoom = d3.behavior.zoom().on(
 			"zoom",

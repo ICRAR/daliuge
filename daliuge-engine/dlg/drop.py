@@ -39,6 +39,7 @@ import threading
 import time
 import re
 import inspect
+import binascii
 
 import six
 from six import BytesIO
@@ -303,19 +304,19 @@ class AbstractDROP(EventFirer):
         for attr_name, obj in getmembers(self, lambda a: not(inspect.isfunction(a) or isinstance(a, property))):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value is not '':
+                if value is not None and value != '':
                     value = float(value)
             elif isinstance(obj, dlg_bool_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value is not '':
+                if value is not None and value != '':
                     value = bool(value)
             elif isinstance(obj, dlg_int_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value is not '':
+                if value is not None and value != '':
                     value = int(value)
             elif isinstance(obj, dlg_string_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value is not '':
+                if value is not None and value != '':
                     value = str(value)
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
@@ -1745,7 +1746,7 @@ class PlasmaDROP(AbstractDROP):
 
     @property
     def dataURL(self):
-        return "plasma://%s" % (self.object_id.encode('hex'))
+        return "plasma://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
