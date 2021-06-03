@@ -28,6 +28,8 @@ import asyncio
 from dlg.drop import BarrierAppDROP, AppDROP
 from dlg.meta import dlg_string_param
 from dlg.ddap_protocol import AppDROPStates
+from ..meta import dlg_component, dlg_batch_input
+from ..meta import dlg_batch_output, dlg_streaming_input
 
 from threading import Thread
 from multiprocessing import Lock
@@ -57,18 +59,21 @@ logger = logging.getLogger(__name__)
 #     \~
 # @par EAGLE_END
 class MSStreamingPlasmaConsumer(AppDROP):
+    compontent_meta = dlg_component('MSStreamingPlasmaConsumer', 'MS Plasma Consumer',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
 
-    plasma_path = dlg_string_param('plasma_path', '')
+    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
 
     def initialize(self, **kwargs):
         self.config = {
             'reception': {
                 "consumer": "plasma_writer",
                 "test_entry": 5,
-                "plasma_path": '/tmp/plasma'
+                "plasma_path": self.plasma_path
             }
         }
-        self.output_file = kwargs.get('output_file')
         self.thread = None
         self.lock = Lock()
         self.started = False
@@ -76,6 +81,11 @@ class MSStreamingPlasmaConsumer(AppDROP):
         super(MSStreamingPlasmaConsumer, self).initialize(**kwargs)
 
     async def _run_consume(self):
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output MS should have been connected to %r' % self)
+        self.output_file = outs[0]._path
         if self.plasma_path:
             self.config['reception']['plasma_path'] = self.plasma_path
 
@@ -129,19 +139,22 @@ class MSStreamingPlasmaConsumer(AppDROP):
 #     \~
 # @par EAGLE_END
 class MSStreamingPlasmaProducer(BarrierAppDROP):
+    compontent_meta = dlg_component('MSStreamingPlasmaProducer', 'MS Plasma Producer',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
 
-    plasma_path = dlg_string_param('plasma_path', '')
+    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
 
     def initialize(self, **kwargs):
+        super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
         self.config = {
             'reception': {
                 "consumer": "plasma_writer",
                 "test_entry": 5,
-                "plasma_path": '/tmp/plasma'
+                "plasma_path": self.plasma_path
             }
         }
-        self.input_file = kwargs.get('input_file')
-        super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
 
     async def _run_producer(self):
         if self.plasma_path:
@@ -165,6 +178,12 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
                 None, c.get_response, c.output_refs.pop(0), 10)
 
     def run(self):
+        # self.input_file = kwargs.get('input_file')
+        ins = self.inputs
+        if len(ins) < 1:
+            raise Exception(
+                'At least one MS should have been connected to %r' % self)
+        self.input_file = ins[0]._path
         self.outputs[0].write(b'init')
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self._run_producer())
