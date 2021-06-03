@@ -41,13 +41,13 @@ VERSION_FILE = "dlg/translator/version.py"
 
 
 def get_git_version():
-    out = subprocess.check_output(["git", "rev-parse", "HEAD"])
+    out = subprocess.check_output(["cd .. &&", "git", "rev-parse", "HEAD"])
     return out.strip().decode("ascii")
 
 
 def get_version_info():
     git_version = "Unknown"
-    if os.path.exists(".git"):
+    if os.path.exists("../.git"):
         git_version = get_git_version()
     full_version = VERSION
     if not RELEASE:
@@ -81,6 +81,18 @@ if not is_release:
 # Every time we overwrite the version file
 write_version_info()
 
+
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
+
+src_files = package_files('dlg')
+
+
 install_requires = [
     "bottle",
     "cwlgen",
@@ -107,8 +119,10 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     install_requires=install_requires,
-    include_package_data=True,
     packages=find_packages(),
+    package_data={
+        "dlg": src_files,
+    },
     entry_points = {
         'dlg.tool_commands': ['translator=dlg.translator.tool_commands']
     },
