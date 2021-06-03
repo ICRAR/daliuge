@@ -64,6 +64,18 @@ def sanitize_relations(interDMRelations, graph):
     # should probably change the requirement on the physical graphs sent by
     # users to always require an UID, and optionally an OID, and then change
     # all this code to immediately use those UIDs instead.
+    #
+    # NOTE: It seems that the comment above is the result of a misunderstasnding
+    # of the concept of OIDs and UIDs. OIDs are objectIDs provided by the 
+    # user or rather the translation system, they can't be UIDs, since those
+    # have to be created by the underlying system implementing the actual drops.
+    # The reason for that is that the UIDs are required to be unique within
+    # the system runtime, the OIDs only have to be unique for a certain object.
+    # In fact there could be multiple drops using to the same OID, but having
+    # different UIDs. The idea would be that system generates the UIDs during 
+    # generation of the drops. In fact the user does not need to and should not
+    # know about the UIDs at all and in general the system does not need to
+    # know about the OIDs.
     newDMRelations = []
     for rel in interDMRelations:
         lhs = uid_for_drop(graph[rel.lhs])
