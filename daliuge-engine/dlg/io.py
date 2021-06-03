@@ -422,13 +422,13 @@ def IOForURL(url):
 
 class PlasmaIO(DataIO):
 
-    def __init__(self, object_id, plasma_link='/tmp/plasma'):
+    def __init__(self, object_id, plasma_path='/tmp/plasma'):
         super(PlasmaIO, self).__init__()
-        self._plasma_link = plasma_link
+        self._plasma_path = plasma_path
         self._object_id = object_id
 
     def _open(self, **kwargs):
-        return plasma.connect(self._plasma_link)
+        return plasma.connect(self._plasma_path)
 
     def _close(self, **kwargs):
         pass
