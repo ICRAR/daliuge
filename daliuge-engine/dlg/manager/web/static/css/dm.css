@@ -1,0 +1,77 @@
+#dimContentWrapper{
+    margin-top:80px;
+}
+
+#sessions{
+    margin-bottom:30px;
+}
+
+#nodes{
+    margin-bottom:30px;
+}
+
+#graphNameWrapper{
+    position: absolute;
+    top: 56px;
+    display: block;
+    width: 100%;
+    height:auto;
+    background-color: #002349;
+    padding: 0px 16px;
+    position: fixed;
+    z-index: 101;
+}
+
+#graphNameWrapper li{
+color: rgb(219, 219, 219);
+}
+
+#graphName{
+margin: 0;
+}
+
+.navbar{
+background: rgb(0,64,133);
+background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+margin-bottom:100px;
+}
+
+.navbar-brand span{
+margin-left: 10px;
+text-decoration: underline;
+}
+
+.navbar-nav.navbar-center {
+position: absolute;
+left: 50%;
+transform: translatex(-50%);
+}
+
+.navbar-nav.navbar-center div {
+margin-right:10px;
+}
+
+.navbar-nav button {
+background-color: transparent;
+border:1px white solid;
+}
+
+.navbar-nav .btn.btn-secondary.active{
+background-color: white;
+border:1px white solid;
+color:rgba(0,35,73,1);
+}
+
+.navbar-nav .btn.btn-secondary:hover{
+background-color: rgb(216, 216, 216);
+border:1px rgb(216, 216, 216) solid;
+color:rgba(0,35,73,1);
+}
+
+.btn.btn.btn-secondary{
+    background-color: #0059a5;
+}
+
+.btn.btn.btn-secondary:hover{
+    background-color: rgba(0,35,73,1);
+}
