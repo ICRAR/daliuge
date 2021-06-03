@@ -10,7 +10,6 @@ body {
   background: #fff;
 }
 
-
 @-webkit-keyframes flash {
   0%, 50%, 100% {
     opacity: 1;
@@ -136,4 +135,134 @@ svg {
 
 .drop-label span {
   display: block;
+}
+
+#graphNameWrapper{
+  position: absolute;
+  top: 56px;
+  display: block;
+  width: 100%;
+  height:auto;
+  background-color: #002349;
+  padding: 0px 16px;
+  position: fixed;
+  z-index: 101;
+}
+
+#graphNameWrapper li{
+  color: rgb(219, 219, 219);
+}
+
+#graphName{
+  margin: 0;
+}
+
+.navbar{
+  background: rgb(0,64,133);
+  background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+  margin-bottom:100px;
+}
+
+.navbar-brand span{
+  margin-left: 10px;
+  text-decoration: underline;
+}
+
+.navbar-nav.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translatex(-50%);
+}
+
+.navbar-nav.navbar-center div {
+  margin-right:10px;
+}
+
+.navbar-nav button {
+  background-color: transparent;
+  border:1px white solid;
+}
+
+.navbar-nav .btn.btn-secondary.active{
+  background-color: white;
+  border:1px white solid;
+  color:rgba(0,35,73,1);
+}
+
+.navbar-nav .btn.btn-secondary:hover{
+  background-color: rgb(216, 216, 216);
+  border:1px rgb(216, 216, 216) solid;
+  color:rgba(0,35,73,1);
+}
+
+#session-status-wrapper{
+  border:none;
+  color:white;
+  background-color: transparent;
+  opacity: 100%;
+  margin-right:20px;
+}
+
+#session-status{
+  color:lime;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  background-color: #0059a5;
+  opacity: 95%;
+  color: #fff;
+  text-align: center;
+  padding: 5px 2px;
+  border:solid 1px #000c1a;
+  border-radius: 6px;
+   position: absolute;
+   z-index: 1;
+  width: 120px;
+  top: 100%;
+   left: 50%; 
+   margin-left: -60px; 
+  font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+#graphName li{
+  list-style-type: none;
+}
+
+#graphName{
+  padding:0;
+}
+
+#listContainer{
+  position: absolute;
+  top:80px; 
+  bottom:0px; 
+  right:0px; 
+  left:0px;
+}
+
+#listContainer div{
+  overflow: auto; 
+  height: 100%;
+}
+
+#pg-graph{
+  position: absolute;
+  top:80px; 
+  bottom:0px; 
+  right:0px; 
+  left:0px;
+}
+
+#pg-progress-bar{
+  position: absolute;
+  top:80px; 
+  bottom:0px; 
+  right:0px; 
+  left:0px;
+  padding-right:20px;
 }
