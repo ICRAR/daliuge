@@ -181,7 +181,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
 		    .append('a').attr('href', sessionLink)
-		    .append('span').classed('glyphicon glyphicon-share-alt', true)
+		    .append('span').classed('fa fa-share', true)
 		statusCells.select('a').attr('href', sessionLink)
 		statusCells.exit().remove()
 
