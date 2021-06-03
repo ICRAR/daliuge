@@ -100,11 +100,10 @@
 		data.sort();
 		var rows = d3.select(selector).selectAll('tr').data(data);
 		var newRow = rows.enter().append('tr');
-		var nodeName = data[0]
-		console.log(nodeName)
+		var nodeName = data[0];
 		newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 		newRow.append('td').classed('id', true)
-			.append('a').attr('href', nodeName+":8000").text(String)
+			.append('a').attr("href", "http://"+nodeName+":8000").attr("target","_blank").text(String);
 		newRow.append('td').classed('details', true)
 			.append('a').attr('href', href_function)
 			.append('span').classed('fa fa-share', true);
