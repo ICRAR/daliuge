@@ -2,26 +2,26 @@
 # the final image low.
 
 # First stage build based on daliuge-common and cleanup
-FROM icrar/daliuge-common:ray
+ARG VCS_TAG
 ARG BUILD_ID
+FROM icrar/daliuge-common:${VCS_TAG}
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN sudo apt-get update && sudo apt-get install -y gcc && sudo apt-get clean
+RUN apt-get update && apt-get install -y gcc python3-venv python3-distutils && apt-get clean
 
 COPY / /daliuge
 
-RUN . /home/ray/dlg/bin/activate && \
+RUN . /root/dlg/bin/activate && \
     cd /daliuge && \
-    pip install . 
+    pip3 install . 
 
 # Second stage build taking what's required from first stage
-FROM icrar/daliuge-common:ray
+FROM icrar/daliuge-common:${VCS_TAG}
 COPY --from=0 /daliuge/. /daliuge/.
-COPY --from=0 /home/ray/dlg /home/ray/dlg
-RUN rm -rf /home/ray/anaconda3/lib/python3.8/site-packages
+COPY --from=0 /root/dlg /root/dlg
 
 # enable the virtualenv path from daliuge-common
-ENV VIRTUAL_ENV=/home/ray/dlg
+ENV VIRTUAL_ENV=/root/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 EXPOSE 8084
