@@ -20,7 +20,7 @@
 	<!-- custom bootstrap navbar -->
 	<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
 		<!-- Navbar content -->
-		<a href="/" class="navbar-brand" href="#" disabled>
+		<a href="/" class="navbar-brand inactiveLink" href="#" disabled>
 			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
 			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
 			<span>{{dmType}}</span>
@@ -36,27 +36,30 @@
 			</ul>
 		</div>
 	</nav>
-<div id="dimContentWrapper" class="container">
-	<div id="sessions">
-		<h2>Sessions</h2>
-			<table id="sessionsTable" class="table table-striped">
-				<thead>
-					<tr>
-						<th>Session ID</th>
-						<th>State</th>
-						<th># Drops</th>
-						<th>Details</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
-		<button id="refreshListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
-		<button id="resetBtn"       type="button" class="btn btn-secondary"><span class="fa fa-power-off"></span> Reset</button>
+    <div id="graphNameWrapper">
+		<span id="graphName"> </span>
 	</div>
-</div>
+	<div id="dimContentWrapper" class="container">
+		<div id="sessions">
+			<h2>Sessions</h2>
+				<table id="sessionsTable" class="table table-striped">
+					<thead>
+						<tr>
+							<th>Session ID</th>
+							<th>State</th>
+							<th># Drops</th>
+							<th>Details</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
+			<button id="refreshListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
+			<button id="resetBtn"       type="button" class="btn btn-secondary"><span class="fa fa-power-off"></span> Reset</button>
+		</div>
+	</div>
 
 <script type="text/javascript">
 
