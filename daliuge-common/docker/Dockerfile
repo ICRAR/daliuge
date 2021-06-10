@@ -20,9 +20,5 @@ RUN cd && python -m venv dlg && cd /daliuge && \
 
 FROM rayproject/ray:74cbf0-py38
 RUN sudo apt-get update && sudo apt-get install -y git
-#COPY --from=0 /root/anaconda3/bin/dlg /root/anaconda3/bin/dlg 
-#COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/dlg /root/anaconda3/lib/python3.7/site-packages/dlg
-#COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info \
-#            /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info
 COPY --from=0 /home/ray/dlg /home/ray/dlg
 RUN sudo chown -R ray:users /home/ray/dlg

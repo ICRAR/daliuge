@@ -38,12 +38,4 @@ RUN cd /daliuge && \
     . ~/dlg/bin/activate && \
     pip3 install numpy && \
     pip3 install .
-
-# FROM kernsuite/base:7
-# RUN sudo apt-get update && sudo apt-get install -y git
-# #COPY --from=0 /root/anaconda3/bin/dlg /root/anaconda3/bin/dlg 
-# #COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/dlg /root/anaconda3/lib/python3.7/site-packages/dlg
-# #COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info \
-# #            /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info
-# COPY --from=0 /home/ray/dlg /home/ray/dlg
-# RUN sudo chown -R ray:users /home/ray/dlg
+    
