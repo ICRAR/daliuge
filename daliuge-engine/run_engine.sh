@@ -26,6 +26,7 @@ case "$1" in
         DOCKER_OPTS+=" -v /tmp/.dlg/var/dlg_home:/tmp/.dlg/var/dlg_home"
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+#        docker run -td ${DOCKER_OPTS} icrar/dlg-engine:casa
         sleep 3
         ./start_local_managers.sh
         exit 1;;
