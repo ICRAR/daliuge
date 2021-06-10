@@ -17,6 +17,6 @@ case "$1" in
         echo "Build finished!"
         exit 1;;
     *)
-        echo "Usage: build_eagle.sh <dep|dev>"
+        echo "Usage: build_engine.sh <dep|dev>"
         exit 1;;
 esac
