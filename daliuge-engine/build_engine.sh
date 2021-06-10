@@ -13,6 +13,8 @@ case "$1" in
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Building daliuge-engine development version"
+        # The complete casa and arrow installation is only required for the Plasma streaming
+        # and should not go much further.
         docker build --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.casa .
         echo "Build finished!"
         exit 1;;
