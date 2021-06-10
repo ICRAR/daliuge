@@ -1,11 +1,11 @@
+ARG VCS_TAG
 # We need the base image we build with the other Dockerfile
-FROM icrar/dlg_ray.common:test
+FROM icrar/daliuge-common:${VCS_TAG:-latest}
 
 # RUN sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc &&\
-    apt-get install -y python3-casacore curl
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc curl python3-casacore
 
 COPY / /daliuge
 RUN . ~/dlg/bin/activate && cd /daliuge && \
