@@ -13,7 +13,7 @@ case "$1" in
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Building daliuge-engine development version"
-        docker build --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.casa .
+        docker build --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished!"
         exit 1;;
     *)
