@@ -38,7 +38,6 @@ margin-bottom:100px;
 
 .navbar-brand span{
 margin-left: 10px;
-text-decoration: underline;
 }
 
 .navbar-nav.navbar-center {
@@ -75,3 +74,8 @@ color:rgba(0,35,73,1);
 .btn.btn.btn-secondary:hover{
     background-color: rgba(0,35,73,1);
 }
+
+.inactiveLink {
+    pointer-events: none;
+    cursor: default;
+ }
