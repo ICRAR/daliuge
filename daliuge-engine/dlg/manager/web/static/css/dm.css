@@ -24,6 +24,7 @@
 
 #graphNameWrapper li{
 color: rgb(219, 219, 219);
+display: inline-block;
 }
 
 #graphName{
