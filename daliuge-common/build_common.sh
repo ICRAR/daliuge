@@ -1,4 +1,24 @@
 #!/bin/bash
 
-# Go!
-docker build -t icrar/daliuge-common:ray -f docker/Dockerfile .
+#!/bin/bash
+# script builds the daliuge-common docker container either with a tag referring to the current
+# branch name or with a release tag depending whether this is a development or deployment
+# version.
+
+case "$1" in
+    "dep")
+        export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
+        echo "Building daliuge-common version ${VCS_TAG}"
+        docker build --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile .
+        echo "Build finished!"
+        exit 1 ;;
+    "dev")
+        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+        echo "Building daliuge-common development version"
+        docker build --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.dev .
+        echo "Build finished!"
+        exit 1;;
+    *)
+        echo "Usage: build_common.sh <dep|dev>"
+        exit 1;;
+esac
