@@ -468,7 +468,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 						return;
 					}
 					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
-					setStatusColor(sessionStatusToString(status));
+					setStatusColor(sessionStatusToString(uniqueSessionStatus(status)));
 				});
 			}
 		})
