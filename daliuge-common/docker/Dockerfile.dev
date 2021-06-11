@@ -20,9 +20,4 @@ RUN cd && python3 -m venv dlg && cd /daliuge && \
 
 FROM kernsuite/base:7
 RUN apt-get update && apt-get install -y git
-#COPY --from=0 /root/anaconda3/bin/dlg /root/anaconda3/bin/dlg 
-#COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/dlg /root/anaconda3/lib/python3.7/site-packages/dlg
-#COPY --from=0 /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info \
-#            /root/anaconda3/lib/python3.7/site-packages/daliuge_common-1.0.0.dist-info
 COPY --from=0 /root/dlg /root/dlg
-# RUN chown -R ray:users /home/ray/dlg
