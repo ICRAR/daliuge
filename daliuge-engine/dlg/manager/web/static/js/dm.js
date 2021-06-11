@@ -207,7 +207,10 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			if(currentStatus==="Cancelled"){
 				$(this).css("color","grey");
 				$(this).parent().find(".actions").find("button").hide();
-			}else if (currentStatus==="Running") {
+			}else if(currentStatus==="Deploying"){
+				$(this).css("color","blue");
+			}
+			else if (currentStatus==="Running") {
 				$(this).css("color","orange");
 			}else{
 				$(this).css("color","#00af28");
@@ -303,7 +306,7 @@ function setStatusColor(status){
 		if(status==="Cancelled"){
 			$("#session-status").css("color","grey");
 		}else if (status==="Running") {
-			$("#session-status").css("color","orange");
+			$("#session-status").css("color","#ecde7b");
 		}else{
 			$("#session-status").css("color","lime");
 			$("#cancelBtn").hide();
