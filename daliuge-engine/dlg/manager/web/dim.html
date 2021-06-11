@@ -37,7 +37,7 @@
 		</div>
 	</nav>
 	<div id="graphNameWrapper">
-		<li id="local-manager-li"></li>
+		<li id="local-manager-li">Island</li>
 	</div>
 	<div id="dimContentWrapper" class="container">
 		<div id="sessions">
@@ -90,7 +90,7 @@
 	// into a specific node
 	if( selectedNode ) {
 		d3.select('#nodes').remove();
-		d3.select('#local-manager-li').text("Node: " + selectedNode);
+		d3.select('#local-manager-li').text("Worker Node: " + selectedNode);
 	}
 	else {
 		d3.select('#zoom-notice').remove();
