@@ -5,7 +5,7 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 # RUN sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc curl python3-casacore
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc python3-pip curl python3-casacore
 
 COPY / /daliuge
 RUN . /root/dlg/bin/activate && cd /daliuge && \
