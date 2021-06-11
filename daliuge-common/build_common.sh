@@ -23,4 +23,3 @@ case "$1" in
         echo "Usage: build_common.sh <dep|dev>"
         exit 1;;
 esac
-
