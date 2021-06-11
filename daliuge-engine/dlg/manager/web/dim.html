@@ -24,7 +24,6 @@
 			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
 			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
 			<span>{{dmType}}</span>
-			<li id="local-manager-li"></li>
 		</a>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
@@ -37,6 +36,9 @@
 			</ul>
 		</div>
 	</nav>
+	<div id="graphNameWrapper">
+		<li id="local-manager-li"></li>
+	</div>
 	<div id="dimContentWrapper" class="container">
 		<div id="sessions">
 			<h4>Sessions</h4>
@@ -92,7 +94,6 @@
 	}
 	else {
 		d3.select('#zoom-notice').remove();
-		d3.select('#local-manager-li').remove();
 	}
 
 	// Animated filling of DropManagers and Nodes table
