@@ -27,24 +27,24 @@
 
 .tooltip .tooltiptext {
     visibility: hidden;
-    background-color: #0059a5;
-    opacity: 95%;
+    background-color: rgba(0, 0, 0, 0.9);
     color: #fff;
     text-align: center;
     padding: 5px 2px;
-    border:solid 1px #000c1a;
     border-radius: 6px;
-     position: absolute;
-     z-index: 1;
+    position: absolute;
+    z-index: 1;
     width: 120px;
     top: 100%;
-     left: 50%; 
-     margin-left: -60px; 
+    left: 50%; 
+    margin-left: -60px; 
     font-size: 12px;
+    transition: 0s visibility;
 }
 
 .tooltip:hover .tooltiptext {
     visibility: visible;
+    transition-delay: 1s;
 }
 
 #graphNameWrapper{
