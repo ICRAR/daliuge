@@ -201,6 +201,20 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			});
 		})
 
+		//update status colours and hide cancel button if finished or cancelled
+		$(".status").each(function(){
+			var currentStatus = $(this).html()
+			if(currentStatus==="Cancelled"){
+				$(this).css("color","grey");
+				$(this).parent().find(".actions").find("button").hide();
+			}else if (currentStatus==="Running") {
+				$(this).css("color","orange");
+			}else{
+				$(this).css("color","#00af28");
+				$(this).parent().find(".actions").find("button").hide();
+			}
+		})
+		
 		refreshBtn.attr('disabled', null);
 
 		if( !(typeof delay === 'undefined') ) {
@@ -286,7 +300,6 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 }
 
 function setStatusColor(status){
-	console.log(status);
 		if(status==="Cancelled"){
 			$("#session-status").css("color","grey");
 		}else if (status==="Running") {
@@ -521,6 +534,7 @@ function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
                 // We don't expect a response so ignoring it.
 
                 if( error ) {
+					console.log(response)
                     console.error(error)
                     return
                 }
