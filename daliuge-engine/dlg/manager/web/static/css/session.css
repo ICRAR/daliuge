@@ -209,19 +209,17 @@ svg {
 
 .tooltip .tooltiptext {
   visibility: hidden;
-  background-color: #0059a5;
-  opacity: 95%;
+  background-color: black;
   color: #fff;
   text-align: center;
-  padding: 5px 2px;
-  border:solid 1px #000c1a;
+  padding: 5px 0;
   border-radius: 6px;
-   position: absolute;
-   z-index: 1;
+    position: absolute;
+    z-index: 1;
   width: 120px;
   top: 100%;
-   left: 50%; 
-   margin-left: -60px; 
+    left: 50%; 
+    margin-left: -60px; 
   font-size: 12px;
 }
 
@@ -231,6 +229,8 @@ svg {
 
 #graphName li{
   list-style-type: none;
+  display: inline-block;
+  margin-right: 5px;
 }
 
 #graphName{
