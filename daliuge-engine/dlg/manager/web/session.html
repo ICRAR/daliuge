@@ -34,13 +34,15 @@
 		<div class="collapse navbar-collapse" id="navbarNav">
 			<ul class="nav navbar-nav navbar-center">
 				<div class="btn-group" role="group" id="view-mode-buttons">
-					<button type="button" value="progress-bar" class="btn btn-secondary">Progress Bar</button>
-					<button type="button" value="graph" class="btn btn-secondary">Graph</button>
-					<button type="button" value="list" class="btn btn-secondary">List</button>
+					<button type="button" value="progress-bar" class="btn btn-secondary tooltip tooltipBottom" data-text="View Session As Progress Bar" >Progress Bar</button>
+					<button type="button" value="graph" class="btn btn-secondary tooltip tooltipBottom" data-text="View Session As Graph" >Graph</button>
+					<button type="button" value="list" class="btn btn-secondary tooltip tooltipBottom" data-text="View Session As List" >List</button>
 				</div>
 				<div class="btn-group" role="group" id="graph-orientation-buttons">
-					<button type="button" value="LR" class="btn btn-secondary active"><span class="fa fa-arrows-h"> </span></button>
-					<button type="button" value="TB" class="btn btn-secondary"><span class="fa fa-arrows-v"> </span></button>
+					<button type="button" value="LR" class="btn btn-secondary active tooltip tooltipBottom" data-text="Display Graph From Left To Right">
+						<span class="fa fa-arrows-h"></span>
+					</button>
+					<button type="button" value="TB" class="btn btn-secondary tooltip tooltipBottom" data-text="Display Graph From Top to Bottom"><span class="fa fa-arrows-v"> </span></button>
 				</div>
 			</ul>
 			<ul class="nav navbar-nav  ml-auto">
