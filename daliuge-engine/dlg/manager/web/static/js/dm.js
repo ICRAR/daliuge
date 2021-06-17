@@ -139,7 +139,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	};
 
 	var cancelBtnSessionId = function(s) {
-		console.log(hashCode(s))
+		// console.log(hashCode(s))
 		return "cancelBtn" + hashCode(s);
 	};
 
@@ -158,7 +158,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		sessions.sort(function comp(a,b) {
 			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
 		});
-		console.log(sessions[0]);
+		// console.log(sessions[0]);
 		var rows = tbodyEl.selectAll('tr').data(sessions);
 		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
@@ -193,7 +193,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		actionCells.exit().remove()
 
 		sessions.forEach(function(session) {
-			console.log(session)
+			// console.log(session)
 			var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
 			// Listeners for the cancelSession button
 			cancelSessionBtn.on('click', function(){ 
