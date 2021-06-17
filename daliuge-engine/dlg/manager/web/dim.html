@@ -20,7 +20,7 @@
 	<!-- custom bootstrap navbar -->
 	<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
 		<!-- Navbar content -->
-		<a href="/" class="navbar-brand inactiveLink" href="#" disabled>
+		<a href="/" class="navbar-brand inactiveLink">
 			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
 			<img src="/static/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
 			<span>{{dmType}}</span>
@@ -37,7 +37,8 @@
 		</div>
 	</nav>
 	<div id="graphNameWrapper">
-		<li id="local-manager-li">Island</li>
+		<li id="islandDisplay"></li>
+		<li id="nodeDisplay"></li>
 	</div>
 	<div id="dimContentWrapper" class="container">
 		<div id="sessions">
@@ -86,14 +87,20 @@
 	var addSessionBtn = d3.select('#addSessionBtn');
 	var sessionsTbodyEl = d3.select('#sessionsTable tbody');
 
+	var serverIP = serverUrl.split("//").pop().split(":").shift();
+
+
 	// Show/hide parts of the UI depending on whether we're zooming in or not
 	// into a specific node
 	if( selectedNode ) {
 		d3.select('#nodes').remove();
-		d3.select('#local-manager-li').text("Worker Node: " + selectedNode);
+		d3.select('#islandDisplay').html("<a href="+serverUrl+">DIM: " + serverIP+"</a>");
+		d3.select('#nodeDisplay').text("/ Node: " + selectedNode);
 	}
 	else {
 		d3.select('#zoom-notice').remove();
+		d3.select('#nodeDisplay').remove();
+		d3.select('#islandDisplay').text("DIM: " + serverIP);
 	}
 
 	// Animated filling of DropManagers and Nodes table
@@ -104,13 +111,13 @@
 		var nodeName = String;
 		newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 		newRow.append('td').classed('id', true)
-			.append('a').attr("href", nodeHref).attr("target","_blank").text(String);
+			.append('a').attr("href", nodeHref).text(String);
 		newRow.append('td').classed('details', true)
 			.append('a').attr('href', href_function)
 			.append('span').classed('fa fa-share', true);
 	}
 	if( !selectedNode ) {
-		fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n; }, function(n){return "http://"+n+":8000"});
+		fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n; }, function(n){return "http://"+n+":8000"+"?dim_url="+serverUrl});
 	}
 
 	// Listeners for the two session-related buttons
