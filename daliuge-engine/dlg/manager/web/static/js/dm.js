@@ -305,6 +305,7 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 function setStatusColor(status){
 		if(status==="Cancelled"){
 			$("#session-status").css("color","grey");
+			$("#cancelBtn").hide();
 		}else if (status==="Running") {
 			$("#session-status").css("color","#ecde7b");
 		}else{
