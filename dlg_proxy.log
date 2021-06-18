@@ -1,0 +1,201 @@
+2021-06-14 16:41:35,248 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 20000
+2021-06-14 16:41:35,498 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:114 Identifying ourselves as d with monitor
+2021-06-14 16:42:31,074 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:42:36,337 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:42:41,341 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:42:46,347 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:42:51,353 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:42:56,358 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:01,361 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:06,366 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:11,373 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:15,323 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#run:227 Ctrl C - Stopping DALiuGE Proxy server
+2021-06-14 16:43:20,773 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:25,906 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:30,910 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:20000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 16:43:34,691 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#run:227 Ctrl C - Stopping DALiuGE Proxy server
+2021-06-14 16:43:49,137 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 20000
+2021-06-14 16:43:49,263 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:114 Identifying ourselves as d with monitor
+2021-06-14 16:44:37,779 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#run:227 Ctrl C - Stopping DALiuGE Proxy server
+2021-06-14 16:44:43,094 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 30000
+2021-06-14 16:44:43,221 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:114 Identifying ourselves as d with monitor
+2021-06-14 16:44:43,221 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:120 Identification successful!
+2021-06-14 16:44:57,794 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,854 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,857 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,863 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,864 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,867 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,871 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,895 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,951 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:57,980 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:58,022 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:44:58,253 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:45:03,112 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:45:08,134 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:45:13,390 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:19,265 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:24,327 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:29,351 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:34,379 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:39,401 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:44,433 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:49,470 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:54,497 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:46:59,529 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:47:04,562 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:47:10,279 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:47:44,830 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 30000
+2021-06-14 16:47:44,960 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:114 Identifying ourselves as d with monitor
+2021-06-14 16:48:12,821 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 30000
+2021-06-14 16:48:12,948 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:114 Identifying ourselves as 10 with monitor
+2021-06-14 16:48:12,948 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_monitor_host:120 Identification successful!
+2021-06-14 16:48:19,974 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,845 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,916 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,922 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,928 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,932 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,936 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,941 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:24,965 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:25,017 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:25,045 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:25,061 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:25,114 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:30,157 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:35,181 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:40,207 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:45,229 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:50,254 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 16:48:56,253 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:102 Connected to localhost on port 8001
+2021-06-14 20:09:19,598 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#loop:146 Socket to DALiuGE monitor is broken
+2021-06-14 20:09:19,598 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#loop:146 Socket to DALiuGE monitor is broken
+2021-06-14 20:09:19,600 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#loop:151 Try reconnecting to DALiuGE monitor...
+2021-06-14 20:09:19,600 [ INFO] [     MainThread] dlg.deploy.pawsey.dfms_proxy#loop:151 Try reconnecting to DALiuGE monitor...
+2021-06-14 20:09:19,601 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:30000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 20:09:19,601 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:30000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 20:09:24,001 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#run:227 Ctrl C - Stopping DALiuGE Proxy server
+2021-06-14 20:09:24,611 [ERROR] [     MainThread] dlg.deploy.pawsey.dfms_proxy#connect_to_host:105 Failed to connect to localhost:30000
+Traceback (most recent call last):
+  File "/Users/awicenec/git/daliuge/daliuge-engine/dlg/deploy/pawsey/dfms_proxy.py", line 100, in connect_to_host
+    the_socket = socket.create_connection((server, port))
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 808, in create_connection
+    raise err
+  File "/Users/awicenec/.pyenv/versions/3.8.7/lib/python3.8/socket.py", line 796, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 61] Connection refused
+2021-06-14 20:09:28,720 [WARNI] [     MainThread] dlg.deploy.pawsey.dfms_proxy#run:227 Ctrl C - Stopping DALiuGE Proxy server
