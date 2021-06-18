@@ -85,8 +85,8 @@ install:
 # run the tests, making sure subprocesses generate coverage information
 script:
  - COVFILES=
- - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && pip install -r test-requirements.txt && py.test --cov) && COVFILES+=" daliuge-translator/.coverage"; }
- - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-engine && py.test --cov) && COVFILES+=" daliuge-engine/.coverage"; }
+ - test -n "$NO_DLG_TRANSLATOR" || { (cd daliuge-translator && pip install -r test-requirements.txt && py.test) && COVFILES+=" daliuge-translator/.coverage"; }
+ - test -n "$NO_DLG_RUNTIME" || { (cd daliuge-engine && py.test) && COVFILES+=" daliuge-engine/.coverage"; }
  - coverage combine $COVFILES
  - test -z "$TEST_OPENAPI" || (cd OpenAPI/tests && ./test_managers_openapi.sh)
 
