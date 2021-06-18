@@ -41,7 +41,7 @@ VERSION_FILE = "dlg/translator/version.py"
 
 
 def get_git_version():
-    out = subprocess.check_output(["cd .. &&", "git", "rev-parse", "HEAD"])
+    out = subprocess.check_output(["git", "rev-parse", "HEAD"])
     return out.strip().decode("ascii")
 
 
