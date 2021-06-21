@@ -51,8 +51,8 @@ def retrieve(host, fileId, port=7777, timeout=None):
     url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
     logger.debug("Issuing RETRIEVE request: %s" % (url))
     conn = urlrequest.urlopen(url)
-    if conn.status != httplib.OK:
-        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, conn.status, conn.msg))
+    if conn.getcode() != httplib.OK:
+        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, conn.getcode(), conn.msg))
     return conn
 
 def beginArchive(host, fileId, port=7777, timeout=0, length=-1, mimeType='application/octet-stream'):
