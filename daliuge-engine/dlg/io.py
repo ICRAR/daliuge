@@ -246,6 +246,61 @@ class FileIO(DataIO):
         os.unlink(self._fnm)
 
 
+class DirectoryIO(DataIO):
+    """
+    Implements a recursive walk of a directory structure as a drop.
+    This is not a production-ready approach
+    To be used sparingly where operations on what is logically a file, but practically a directory are needed
+
+    Opening traverses the directory and sub-directory structure storing the roots, dirs and files in an internal
+    representation. Serializing the entire contents to a
+
+    Reading will progress `count` bytes through the next file. The output of reading until null will be a single byte-
+    stream of all discovered files in their depth-first ordering. This is very basic but should be exhaustive
+
+    Closing will delete all the internal structure.
+
+    Writing will not be supported
+    """
+
+    def __init__(self, dirname, **kwargs):
+        from six import BytesIO
+        super(DirectoryIO, self).__init__()
+        self._dir = dirname
+        self._contents = []
+        self._data = BytesIO()
+
+    def _open(self, **kwargs):
+        for (root, dirs, files) in os.walk(self._dir, topdown=True):
+            self._contents.append((root, dirs, files))
+            for file in files:
+                try:
+                    open(file)
+                    self._data.write(file.read())
+                except FileNotFoundError:
+                    logger.error("File %s not found", file)
+
+    def _read(self, count=4096, **kwargs):
+        return self._data.read(count)
+
+    def _write(self, data, **kwargs):
+        return NotImplementedError("Do not write to a directory, use a container or file.")
+
+    def _close(self, **kwargs):
+        self._contents = []
+        self._data = BytesIO()
+
+    def getDirName(self):
+        return self._dir
+
+    def exists(self):
+        return os.path.isdir(self._dir)
+
+    def delete(self):
+        from shutil import rmtree
+        rmtree(self._dir)
+
+
 class NgasIO(DataIO):
     '''
     A DROP whose data is finally stored into NGAS. Since NGAS doesn't
