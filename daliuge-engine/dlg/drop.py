@@ -51,7 +51,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, DirectoryIO
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
@@ -1286,6 +1286,8 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         self._wio = None
 
     def getIO(self):
+        if os.path.isdir(self._path):
+            return DirectoryIO(self._path)
         return FileIO(self._path)
 
     def delete(self):
