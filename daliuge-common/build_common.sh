@@ -19,7 +19,16 @@ case "$1" in
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 1;;
+    "casa")
+        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+        # export VCS_TAG="casa"
+        echo "Building daliuge-common development version using tag ${VCS_TAG}"
+        # The complete casa and arrow installation is only required for the Plasma streaming
+        # and thus we do that only in the engine, not in the translator
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG}-casa -f docker/Dockerfile.dev .
+        echo "Build finished!"
+        exit 1;;
     *)
-        echo "Usage: build_common.sh <dep|dev>"
+        echo "Usage: build_common.sh <dep|dev|casa>"
         exit 1;;
 esac
