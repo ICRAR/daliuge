@@ -1,28 +1,24 @@
 Graphs
 ------
 
-A processing pipeline in |daliuge| is described by a Directed Graph where the nodes
-denote both task (application DROPs) and data (data DROPs). The edges denote
-execution dependencies between DROPs. Section :ref:`dlg_functions` has briefly
+A processing pipeline or workflow in |daliuge| is described by a Directed Graph where the nodes
+denote both task (application components) and data (data components). The edges denote
+execution dependencies between components. Section :ref:`dlg_functions` has briefly
 introduced graph-based functions in |daliuge|. This section provides implementation
-details in the |daliuge| prototype.
+details in |daliuge|.
 
 Logical Graph
 ^^^^^^^^^^^^^
 
-A |lg| is a compact representation of the logical operations in a processing
-pipeline without concerning underlying hardware resources. Such operations are
-referred to as *construct* in a |lg|. The relationship between a DROP
-and a construct resembles the one between and object and a class in Object
-Oriented programming languages. In other words, most constructs are DROP
-templates and multiple DROPs correspond to a single construct.
+A |lg| is a compact representation of the logical operations and data flow in a processing
+pipeline without being concerned about the underlying hardware resources. There are a number of different application and data components available to design logical graphs. In addition to simple components |daliuge| also supports a number of complex components to support the encoding of higher level language constructs like loop, scatter, gather and group-by. In particular the scatter component allows users to encode possible paralellisation of operations and whole sections of the graph. It should be noted though, whether those parts are really executed in parallel or serial depends on the actual deployment and availability of resources capable of the desired parallelism.  Such complex components are also referred to as a *construct* in a |lg|. 
 
 .. _graphs.figs.scatter:
 
 .. figure:: images/scatter_example.png
 
-   An example of a |lg| with data constructs (e.g. Data1 - Data5),
-   component constructs (i.e. Component1 - Component5), and control flow constructs
+   An example of a |lg| with data components (e.g. Data1 - Data5),
+   application components (i.e. Component1 - Component5), and control flow complex components (constructs)
    (Scatter, Gather, and Group-By). This example can be viewed
    `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in the |daliuge| prototype.
 
@@ -47,7 +43,7 @@ the following flow constructs:
   In the example in :numref:`graphs.figs.scatter`, if the ``num_of_copies`` for
   ``Scatter1``
   and ``Scatter2`` are 5 and 4 respectively, the generated |pg|
-  will have in total 20 ``Data1``/``Component1``/``Data3`` DROPs, but only 5 DROPs for the
+  will have in total 20 ``Data1``/``Component1``/``Data3`` Drops, but only 5 Drops for the
   construct ``Component 5``,
   which is inside the ``Scatter1`` construct but outside ``Scatter2``.
 
@@ -64,9 +60,9 @@ the following flow constructs:
 
 * **Group By** indicates data resorting (e.g. `corner turning <https://mnras.oxfordjournals.org/content/410/3/2075.full>`_ in radio astronomy).
   The semantic is analogous to the ``GROUP BY`` construct used in SQL statement for relational
-  databases, but applied to data DROPs. The current |daliuge| prototype requires that
+  databases, but applied to data Drops. The current |daliuge| prototype requires that
   *Group By* is used in
-  conjunction with a nested *Scatter* such that data DROPs that are originally sorted
+  conjunction with a nested *Scatter* such that data Drops that are originally sorted
   in the order of ``[outer_partition_id][inner_partition_id]`` are resorted as ``[inner_partition_id][outer_partition_id]``.
   In terms of parallelism, *Group By*
   is comparable to the `"static" MapReduce <http://openmymind.net/2011/1/20/Understanding-Map-Reduce/>`_,
@@ -80,7 +76,7 @@ the following flow constructs:
   determined at |lg| development time, and that determines the number of
   times the loop is "unrolled". In other words, a
   ``num_of_iterations``
-  number of DROPs for each construct inside a *Loop* will be statically generated
+  number of Drops for each construct inside a *Loop* will be statically generated
   in the |pg|. An example is shown in :numref:`graphs.figs.loop`.
 
   .. _graphs.figs.loop:
@@ -123,7 +119,7 @@ While a |lg| provides a compact way to express complex processing logic,
 it contains high level control flow specifications that are not directly usable
 by the underlying graph execution engine and DROP managers. To achieve that,
 logical graphs are translated into physical graphs. The translation process essentially
-creates all DROPs and is implemented in the :doc:`api/dropmake` module.
+creates all Drops and is implemented in the :doc:`api/dropmake` module.
 
 Basic steps
 """""""""""
@@ -136,9 +132,9 @@ Basic steps
   as shown in :numref:`graphs.figs.scatter`. Any validity errors
   will be displayed as exceptions on the |lg| editor.
 
-* **Construct unrolling**. Unrolls the |lg| by (1) creating all necessary DROPs
-  (including "artifact" DROPs that do not appear in the original |lg|),
-  and (2) establishing directed edges amongst all newly generated DROPs. This step
+* **Construct unrolling**. Unrolls the |lg| by (1) creating all necessary Drops
+  (including "artifact" Drops that do not appear in the original |lg|),
+  and (2) establishing directed edges amongst all newly generated Drops. This step
   produces the **Physical Graph Template**.
 
 * **Graph partitioning**. Decomposes the *Physical Graph Template* into a set of
@@ -156,7 +152,7 @@ Basic steps
   near real-time resource usage information from the COMP platform or the Local Monitor & Control (LMC).
   It also needs DROP managers to coordinate the DROP deployment.
   In some cases, this mapping step is merged with the previous *Graph partitioning* step
-  to directly map DROPs to resources. This step produces the **Physical Graph**.
+  to directly map Drops to resources. This step produces the **Physical Graph**.
 
 Under the assumption of uniform resources (e.g. each node has identical capabilities),
 graph partitioning is equivalent to resource mapping since mapping involves simple
@@ -226,11 +222,11 @@ Physical Graph
 
 The `Translation`_ process produces the *physical graph specification*, which, once
 deployed and instantiated "live", becomes the |pg|, a
-collection of inter-connected DROPs in a distributed
+collection of inter-connected Drops in a distributed
 execution plan across multiple resource units. The nodes of a |pg| are
-DROPs representing either data or applications. The two DROP nodes connected by
+Drops representing either data or applications. The two DROP nodes connected by
 an edge always have different types from each other. This establishes a set of
-reciprocal relationships between DROPs:
+reciprocal relationships between Drops:
 
 * A data DROP is the *input* of an application DROP; on the other hand
   the application is a *consumer* of the data DROP.
@@ -247,7 +243,7 @@ prescribed in the |pg| specification such as partitioning information
 (produced during the `Translation`_) that allows different managers to distribute
 graph partitions (i.e. DropIslands) across different nodes and Data Islands by
 setting up proper :ref:`drop.channels`. The fact that physical graphs are made
-of DROPs means that they describe exactly what an :ref:`graph.execution` consists
+of Drops means that they describe exactly what an :ref:`graph.execution` consists
 of. In this sense, the |pg| is the graph execution engine.
 
 In addition to DROP managers, the |daliuge| prototype also includes a *Physical Graph Manager*,
@@ -270,14 +266,14 @@ execution. This is internally implemented via the DROP event mechanism as follow
   execution depending on their nature and configuration. A specific type of
   application is the ``BarrierAppDROP``, which waits until all its inputs are in
   the **COMPLETED** state to start its execution.
-* On the other hand, data DROPs receive an even every time their producers
+* On the other hand, data Drops receive an even every time their producers
   finish their execution. Once all the producers of a DROP have finished, the
   DROP moves itself to the **COMPLETED** state, notifying its consumers, and so
   on.
 
-Failures on applications and data DROPs are transmitted likewise automatically
-via events. Data DROPs move to **ERROR** if any of its producers move to
-**ERROR**, and application DROPs move the **ERROR** if a given input error
+Failures on applications and data Drops are transmitted likewise automatically
+via events. Data Drops move to **ERROR** if any of its producers move to
+**ERROR**, and application Drops move the **ERROR** if a given input error
 threshold (defaults to 0) is passed (i.e., when more than a given percentage of
 inputs move to **ERROR**) or if their execution fails. This way whole branches of execution might fail, but
 after reaching a gathering point the execution might still resume if enough
