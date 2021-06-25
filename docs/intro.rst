@@ -26,7 +26,7 @@ sources (mostly *Python*!) such as `Luigi <http://luigi.readthedocs.io/>`_,
 Nevertheless, we believe |daliuge| has some unique features well suited
 for data-intensive applications:
 
-* Completely data-activated, by promoting data DROPs to become graph "nodes" (no longer just edges)
+* Completely data-activated, by promoting data Drops to become graph "nodes" (no longer just edges)
   that has persistent states and can consume and raise events
 * Integration of data-lifecycle management within the data processing framework
 * Separation of concerns between logical graphs (high level workflows) and physical graphs (execution recipes)

@@ -41,7 +41,7 @@ class LGFillTest(unittest.TestCase):
                 'what': 'hi'
             }
         }
-        with open(os.path.join(lg_dir, 'cont_img.json')) as f:
+        with open(os.path.join(lg_dir, 'cont_img.graph')) as f:
             lg = pg_generator.fill(json.load(f), params)
         for node_idx, value in zip((6, 13, 35, 41), ('1', '2', 'True', 'hi')):
             node = lg['nodeDataArray'][node_idx]

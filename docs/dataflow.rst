@@ -43,12 +43,12 @@ Concretely, we have made the following changes to the existing dataflow model:
   elevating them as actors who have autonomy to manage their own lifecycles and
   trigger appropriate "consumer" applications based on their own internal
   (persistent) states. In our graph model, both application (task) and data nodes
-  are termed as **DROPs**. What are really moving on the edge are
+  are termed as **Drops**. What are really moving on the edge are
   :ref:`Drop Events <drop.events>`.
 
 * While nodes/actors in the traditional dataflow are stateless functions, we
-  express both computation and data nodes as stateful DROPs. Statefulness not only
-  allows us to manage DROPs through persistent checkpointing, versioning and recovery
+  express both computation and data nodes as stateful Drops. Statefulness not only
+  allows us to manage Drops through persistent checkpointing, versioning and recovery
   after restart, etc., but also enables data sharing amongst multiple processing
   pipelines in situations like re-processing or commensal observations.
   All the state information is kept in the Drop wrapper, while the payload of the
@@ -59,7 +59,7 @@ Concretely, we have made the following changes to the existing dataflow model:
   nodes allow pipeline developers to systematically express complex data
   partitioning and event flow patterns based on various requirements and science
   processing goals. More importantly, we transform these control nodes into
-  ordinary DROPs at the physical level. Thus they are nearly transparent to the
+  ordinary Drops at the physical level. Thus they are nearly transparent to the
   underlying graph/dataflow execution engine, which focuses solely on exploring
   parallelisms orthogonal to these control nodes placed by applications. In this
   way, the Data-Driven framework enjoys the best from both worlds - expressivity
@@ -68,7 +68,7 @@ Concretely, we have made the following changes to the existing dataflow model:
 * Finally, we differentiate between two kinds of dataflow graphs - **Logical Graph** and
   **Physical Graph**. While the former provides a higher level of computation
   abstraction in a resource-independent manner, the latter represents the actual
-  execution plan consisting of inter-connected DROPs mapped onto a given set of
+  execution plan consisting of inter-connected Drops mapped onto a given set of
   hardware resources in order to meet performance requirements at minimum cost
   (e.g. power consumption).
 
@@ -99,21 +99,21 @@ Here we briefly discuss how they work together in our data-driven framework.
   is then filled with scheduling block parameters. This generates a *Logical Graph*, expressing a pipeline with resource-oblivious dataflow constructs.
 
 * Using profiling information of pipeline components and COMP hardware resources, the |daliuge| prototype
-  then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes a manifest of ALL DROPs without specifying their physical locations.
+  then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes a manifest of ALL Drops without specifying their physical locations.
 
 * Once the information on resource availability (e.g. compute node, storage, etc.) is presented,
-  |daliuge| associates each DROP in the physical graph template with an available resource unit
+  |daliuge| associates each Drop in the physical graph template with an available resource unit
   in order to meet pre-defined requirements such as performance, cost, etc.
   Doing so essentially transforms the physical graph template into a *Physical Graph*,
-  consisting of inter-connected DROPs mapped onto a given set of resources.
+  consisting of inter-connected Drops mapped onto a given set of resources.
 
-* Before an observation starts, |daliuge| deploys all the DROPs onto these resources as per the
+* Before an observation starts, |daliuge| deploys all the Drops onto these resources as per the
   location information stated in the physical graph. The deployment process is
-  facilitated through :doc:`managers`, which are daemon processes managing deployed DROPs
+  facilitated through :doc:`managers`, which are daemon processes managing deployed Drops
   on designated resources.
 
-* Once an observation starts, the graph :ref:`graph.execution` cascades down the graph edges through either data DROPs that triggers its next consumers or application DROPs
-  that produces its next outputs. When all DROPs are in the **COMPLETED** state, some data DROPs
+* Once an observation starts, the graph :ref:`graph.execution` cascades down the graph edges through either data Drops that triggers its next consumers or application Drops
+  that produces its next outputs. When all Drops are in the **COMPLETED** state, some data Drops
   are persistently preserved as Science Products by using an explicit persist
   consumer, which very likely will be specifically dedicated to a certain
   science data product.
