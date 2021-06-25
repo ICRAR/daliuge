@@ -116,7 +116,7 @@ def _repo_contents(root_dir):
 
         # Not great yet -- we should do a full second step pruning branches
         # of the tree that are empty
-        files = [f for f in fnames if f.endswith(".json")]
+        files = [f for f in fnames if f.endswith(".graph")]
         if files:
             contents[b(dirpath)] = files
 
@@ -166,9 +166,13 @@ def jsonbody_get():
     lg_name = request.query.get("lg_name")
     if lg_name is None or len(lg_name) == 0:
         all_lgs = lg_repo_contents()
-        first_dir = next(iter(all_lgs))
-        first_lg = first_dir + "/" + all_lgs[first_dir][0]
-        lg_name = first_lg
+        try:
+            first_dir = next(iter(all_lgs))
+            first_lg = first_dir + "/" + all_lgs[first_dir][0]
+            lg_name = first_lg
+        except StopIteration:
+            return "Nothing found in dir {0}\n".format(lg_path)
+            lg_name = None
 
     if lg_exists(lg_name):
         # print "Loading {0}".format(lg_name)
@@ -239,9 +243,13 @@ def load_pg_viewer():
     pgt_name = request.query.get("pgt_view_name")
     if pgt_name is None or len(pgt_name) == 0:
         all_pgts = pgt_repo_contents()
-        print(all_pgts)
-        first_dir = next(iter(all_pgts))
-        pgt_name = first_dir + "/" + all_pgts[first_dir][0]
+        # print(all_pgts)
+        try:
+            first_dir = next(iter(all_pgts))
+            pgt_name = first_dir + "/" + all_pgts[first_dir][0]
+        except StopIteration:
+            pgt_name = None
+        
 
     if pgt_exists(pgt_name):
         tpl = file_as_string("pg_viewer.html")
@@ -253,8 +261,8 @@ def load_pg_viewer():
         )
     else:
         response.status = 404
-        return "{0}: physical graph template (view) {1} not found\n".format(
-            err_prefix, pgt_name
+        return "{0}: physical graph template (view) {1} not found {2}\n".format(
+            err_prefix, pgt_name, pgt_dir
         )
 
 
@@ -342,7 +350,7 @@ def gen_pg():
         if deploy:
             dt = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S.%f")
             ssid = "{0}_{1}".format(
-                pgt_id.split(".json")[0].split("_pgt")[0].split("/")[-1], dt
+                pgt_id.split(".graph")[0].split("_pgt")[0].split("/")[-1], dt
             )
             mgr_client.create_session(ssid)
             # print "session created"
