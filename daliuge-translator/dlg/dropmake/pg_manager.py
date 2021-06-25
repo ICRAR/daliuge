@@ -94,7 +94,7 @@ class PGManager(object):
         self._pgt_fn_count += 1
         if self._pgt_fn_count == MAX_PGT_FN_CNT + 1:
             self._pgt_fn_count = 0
-        pgt_id = lg_name.replace(".json", "{0}_pgt.json".format(self._pgt_fn_count))
+        pgt_id = lg_name.replace(".graph", "{0}_pgt.graph".format(self._pgt_fn_count))
         pgt_path = "{0}/{1}".format(self._root_dir, pgt_id)
 
         try:

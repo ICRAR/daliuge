@@ -27,7 +27,7 @@
     $.ajax({
       //url: "/pgt_gantt_chart?pgt_id={{pgt_view_json_name}}",
       url: "/" + action.toString() + "?pgt_id={{pgt_view_json_name}}",
-      //url: "/pgt_gantt_chart?pgt_id=lofar_cal1_pgt.json",
+      //url: "/pgt_gantt_chart?pgt_id=lofar_cal1_pgt.graph",
       type: 'get',
       error: function(XMLHttpRequest, textStatus, errorThrown) {
         alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);

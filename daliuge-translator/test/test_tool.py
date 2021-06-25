@@ -34,7 +34,7 @@ class TestTool(unittest.TestCase):
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
         lg = pkg_resources.resource_filename( # @UndefinedVariable
-            'test.dropmake', 'logical_graphs/cont_img.json')
+            'test.dropmake', 'logical_graphs/cont_img.graph')
 
         fill = tool.start_process('fill', ['-L', lg], stdout=subprocess.PIPE)
         unroll = tool.start_process('unroll', ['-z', '--app', '1'], stdin=fill.stdout, stdout=subprocess.PIPE)

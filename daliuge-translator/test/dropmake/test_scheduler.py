@@ -58,13 +58,13 @@ class TestScheduler(unittest.TestCase):
         assert l == r, "l = {0}, r = {1}".format(l, r)
 
     def test_basic_scheduler(self):
-        fp = get_lg_fname('cont_img.json')
+        fp = get_lg_fname('cont_img.graph')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         Scheduler(drop_list)
 
     def test_minnumparts_scheduler(self):
-        lgs = {'cont_img.json': 500, 'cont_img.json': 200, 'test_grpby_gather.json': 90, 'chiles_simple.json': 160}
+        lgs = {'cont_img.graph': 500, 'cont_img.graph': 200, 'test_grpby_gather.graph': 90, 'chiles_simple.graph': 160}
         mdp = 8
         ofa = 0.5
         for lgn, deadline in lgs.items():
@@ -75,7 +75,7 @@ class TestScheduler(unittest.TestCase):
             mps.partition_dag()
 
     def test_mysarkar_scheduler(self):
-        lgs = {'cont_img.json': 20, 'cont_img.json': 15, 'test_grpby_gather.json': 10, 'chiles_simple.json': 5}
+        lgs = {'cont_img.graph': 20, 'cont_img.graph': 15, 'test_grpby_gather.graph': 10, 'chiles_simple.graph': 5}
         mdp = 8
         for lgn, numparts in lgs.items():
             fp = get_lg_fname(lgn)
@@ -94,7 +94,7 @@ class TestScheduler(unittest.TestCase):
 
     @unittest.skipIf(skip_long_tests, "Skipping because they take too long. Chen to eventually shorten them")
     def test_pso_scheduler(self):
-        lgs = {'cont_img.json': 540, 'cont_img.json': 450, 'test_grpby_gather.json': 70, 'chiles_simple.json': 160}
+        lgs = {'cont_img.graph': 540, 'cont_img.graph': 450, 'test_grpby_gather.graph': 70, 'chiles_simple.graph': 160}
         mdp = 2
         for lgn, deadline in lgs.items():
             fp = get_lg_fname(lgn)
