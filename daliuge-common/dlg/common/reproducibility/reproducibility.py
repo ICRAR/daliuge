@@ -102,7 +102,8 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             elif category == Categories.NULL:
                 pass
         elif category_type == 'Group':
-            data['exitAppName'] = drop['exitAppName']
+            data['inputApplicationName'] = drop['inputApplicationName']
+            data['inputApplicationType'] = drop['inputApplicationType']
             if category == Categories.GROUP_BY:
                 data['group_key'] = fields['group_key']
                 data['group_axis'] = fields['group_axis']
