@@ -115,7 +115,7 @@
             "readonly": true,
             "inputPorts": [
                 {
-                    "Id": "d4b93000-3ce8-4f0a-8091-9729d8caadf1",
+                    "Id": "58fb434f-60c5-4bd7-9a06-3d8ea588334c",
                     "IdText": "ms",
                     "event": false,
                     "type": "Complex"
@@ -124,7 +124,7 @@
             "outputPorts": [],
             "inputLocalPorts": [
                 {
-                    "Id": "1568ea19-7cb1-4d87-ad4f-5b2eb204b443",
+                    "Id": "e9fc2e55-5af7-42fe-8051-19f7e088c299",
                     "IdText": "ms",
                     "event": false,
                     "type": "Complex"
@@ -151,43 +151,51 @@
             ],
             "inputAppFields": [
                 {
+                    "text": "sleepTime",
+                    "name": "sleepTime",
+                    "value": 5,
+                    "description": "the number of seconds to sleep",
+                    "readonly": false,
+                    "type": "Integer"
+                },
+                {
+                    "text": "appclass",
+                    "name": "appclass",
+                    "value": "dlg.apps.simple.SleepApp",
+                    "description": "Application class",
+                    "readonly": true,
+                    "type": "String"
+                },
+                {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": "5",
-                    "description": "",
+                    "value": 5,
+                    "description": "Estimated execution time",
                     "readonly": false,
-                    "type": "Unknown"
+                    "type": "Float"
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
-                    "value": "1",
-                    "description": "",
+                    "value": 1,
+                    "description": "Number of cores used",
                     "readonly": false,
-                    "type": "Unknown"
+                    "type": "Integer"
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
-                    "value": "0",
-                    "description": "",
+                    "value": false,
+                    "description": "Component is start of a group",
                     "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Arg01",
-                    "name": "Arg01",
-                    "value": "mstransform.sh",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
+                    "type": "Boolean"
                 }
             ],
             "outputAppFields": [],
             "exitAppFields": [],
-            "inputApplicationName": "",
-            "inputApplicationType": "BashShellApp",
-            "inputApplicationKey": -1,
+            "inputApplicationName": "msTransform",
+            "inputApplicationType": "PythonApp",
+            "inputApplicationKey": -17,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "outputApplicationKey": null,
@@ -1369,20 +1377,6 @@
             "loop_aware": "0"
         },
         {
-            "from": -6,
-            "fromPort": "06b6d8bb-575b-4785-a667-1e510d7545fb",
-            "to": -20,
-            "toPort": "d4b93000-3ce8-4f0a-8091-9729d8caadf1",
-            "loop_aware": "0"
-        },
-        {
-            "from": -20,
-            "fromPort": "1568ea19-7cb1-4d87-ad4f-5b2eb204b443",
-            "to": -4,
-            "toPort": "1edf16b8-aff7-41fd-9cb2-211684eef474",
-            "loop_aware": "0"
-        },
-        {
             "from": -4,
             "fromPort": "55ce101c-4db1-476f-9e13-541ba7c3c7ad",
             "to": -12,
@@ -1394,6 +1388,20 @@
             "fromPort": "2c0f4a09-d9d7-4349-8632-ff315288d68d",
             "to": -5,
             "toPort": "4c8d1567-4b02-414b-a6b3-5eb61b8945e6",
+            "loop_aware": "0"
+        },
+        {
+            "from": -6,
+            "fromPort": "06b6d8bb-575b-4785-a667-1e510d7545fb",
+            "to": -20,
+            "toPort": "58fb434f-60c5-4bd7-9a06-3d8ea588334c",
+            "loop_aware": "0"
+        },
+        {
+            "from": -20,
+            "fromPort": "e9fc2e55-5af7-42fe-8051-19f7e088c299",
+            "to": -4,
+            "toPort": "1edf16b8-aff7-41fd-9cb2-211684eef474",
             "loop_aware": "0"
         }
     ]
