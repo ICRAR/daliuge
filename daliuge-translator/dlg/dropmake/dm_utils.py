@@ -420,6 +420,9 @@ def convert_construct(lgo):
         app_node["category"] = node[has_app]  # node['application']
         app_node["text"] = node["text"]
 
+        # Adding Reprodaya
+        app_node['reprodata'] = node['reprodata'].copy()
+
         if 'mkn' in node:
             app_node['mkn'] = node['mkn']
 
