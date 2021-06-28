@@ -135,7 +135,7 @@
                 {
                     "text": "Number of copies",
                     "name": "num_of_copies",
-                    "value": "192",
+                    "value": "4",
                     "description": "",
                     "readonly": false,
                     "type": "Unknown"
@@ -409,7 +409,7 @@
                 {
                     "text": "Check file path exists",
                     "name": "check_filepath_exists",
-                    "value": "1",
+                    "value": "false",
                     "description": "",
                     "readonly": false,
                     "type": "Unknown"
@@ -417,7 +417,7 @@
                 {
                     "text": "File path",
                     "name": "filepath",
-                    "value": "",
+                    "value": "/tmp/.dlg/var/dlg_home/testdata/test.empty.ms",
                     "description": "",
                     "readonly": false,
                     "type": "Unknown"
@@ -509,7 +509,7 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": 5,
+                    "value": 2,
                     "description": "Estimate of execution time (in seconds) for this application.",
                     "readonly": false,
                     "type": "Float"
@@ -533,7 +533,7 @@
                 {
                     "text": "Appclass",
                     "name": "appclass",
-                    "value": "test.graphsRepository",
+                    "value": "dlg.apps.simple.SleepApp",
                     "description": "The python class that implements this application",
                     "readonly": false,
                     "type": "String"
@@ -715,8 +715,8 @@
             "description": "Placeholder 'gather' description",
             "x": 954.5066835910266,
             "y": 610.0823017064903,
-            "width": 251.85550833788975,
-            "height": 193.89935196024823,
+            "width": 200,
+            "height": 117.86789896476209,
             "collapsed": false,
             "showPorts": false,
             "flipPorts": false,
@@ -728,7 +728,7 @@
             "readonly": false,
             "inputPorts": [
                 {
-                    "Id": "b9c7f505-39da-4488-9304-b577aca5c868",
+                    "Id": "5959870d-803d-49fa-9faa-d5d85124e8c9",
                     "IdText": "string",
                     "event": false,
                     "type": "Unknown"
@@ -737,7 +737,7 @@
             "outputPorts": [],
             "inputLocalPorts": [
                 {
-                    "Id": "4201555b-a7b4-41bb-9663-ffbf7be35ba8",
+                    "Id": "24dc87c6-7b35-40a5-acdb-741c949b7909",
                     "IdText": "string",
                     "event": false,
                     "type": "Unknown"
@@ -788,19 +788,19 @@
                     "type": "Boolean"
                 },
                 {
-                    "text": "Appclass",
-                    "name": "appclass",
-                    "value": "test.graphsRepository",
-                    "description": "The python class that implements this application",
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "touch %o0",
+                    "description": "The command line to be executed",
                     "readonly": false,
                     "type": "String"
                 }
             ],
             "outputAppFields": [],
             "exitAppFields": [],
-            "inputApplicationName": "gatherStat",
-            "inputApplicationType": "PythonApp",
-            "inputApplicationKey": -2,
+            "inputApplicationName": "statConcat",
+            "inputApplicationType": "BashShellApp",
+            "inputApplicationKey": -16,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "outputApplicationKey": null,
@@ -820,8 +820,8 @@
             "key": -10,
             "text": "Stats",
             "description": "",
-            "x": 989.9745875637228,
-            "y": 718.121773891442,
+            "x": 1012.0126898812553,
+            "y": 742.3636864407262,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -833,7 +833,6 @@
             "selected": false,
             "expanded": false,
             "readonly": false,
-            "group": -3,
             "inputPorts": [
                 {
                     "Id": "1a3462b0-cde3-4746-a526-b4f6c0d59ab3",
@@ -873,7 +872,7 @@
                 {
                     "text": "File path",
                     "name": "filepath",
-                    "value": "cleanStats",
+                    "value": "cleanStats.empty",
                     "description": "Path to the file for this node",
                     "readonly": false,
                     "type": "String"
@@ -964,7 +963,7 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": 5,
+                    "value": 1,
                     "description": "Estimated execution time",
                     "readonly": false,
                     "type": "Float"
@@ -1069,7 +1068,7 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": 5,
+                    "value": 1,
                     "description": "Estimated execution time",
                     "readonly": false,
                     "type": "Float"
@@ -1116,10 +1115,10 @@
             "key": -13,
             "text": "CubeConcat",
             "description": "Placeholder 'gather' description",
-            "x": 1252.9182523273307,
-            "y": 479.34340429755827,
-            "width": 200,
-            "height": 196.74431188435457,
+            "x": 1259.5296830225905,
+            "y": 483.7510247610647,
+            "width": 203.3057153476298,
+            "height": 118.73238696990235,
             "collapsed": false,
             "showPorts": false,
             "flipPorts": false,
@@ -1131,7 +1130,7 @@
             "readonly": false,
             "inputPorts": [
                 {
-                    "Id": "0189bc4e-361e-491f-8e31-27974e302e65",
+                    "Id": "f97989fb-0c55-4504-8bce-703bb4ff428a",
                     "IdText": "img",
                     "event": false,
                     "type": "Complex"
@@ -1140,7 +1139,7 @@
             "outputPorts": [],
             "inputLocalPorts": [
                 {
-                    "Id": "2c0f4a09-d9d7-4349-8632-ff315288d68d",
+                    "Id": "c5dbe8c7-13d9-43e7-bef3-886a9994094a",
                     "IdText": "img",
                     "event": false,
                     "type": "Complex"
@@ -1167,26 +1166,10 @@
             ],
             "inputAppFields": [
                 {
-                    "text": "sleepTime",
-                    "name": "sleepTime",
-                    "value": 5,
-                    "description": "the number of seconds to sleep",
-                    "readonly": false,
-                    "type": "Integer"
-                },
-                {
-                    "text": "appclass",
-                    "name": "appclass",
-                    "value": "dlg.apps.simple.SleepApp",
-                    "description": "Application class",
-                    "readonly": true,
-                    "type": "String"
-                },
-                {
                     "text": "Execution time",
                     "name": "execution_time",
                     "value": 5,
-                    "description": "Estimated execution time",
+                    "description": "Estimate of execution time (in seconds) for this application.",
                     "readonly": false,
                     "type": "Float"
                 },
@@ -1194,7 +1177,7 @@
                     "text": "Num CPUs",
                     "name": "num_cpus",
                     "value": 1,
-                    "description": "Number of cores used",
+                    "description": "Number of CPUs used for this application.",
                     "readonly": false,
                     "type": "Integer"
                 },
@@ -1202,16 +1185,24 @@
                     "text": "Group start",
                     "name": "group_start",
                     "value": false,
-                    "description": "Component is start of a group",
+                    "description": "Is this node the start of a group?",
                     "readonly": false,
                     "type": "Boolean"
+                },
+                {
+                    "text": "Arg01",
+                    "name": "Arg01",
+                    "value": "touch %o0",
+                    "description": "The command line to be executed",
+                    "readonly": false,
+                    "type": "String"
                 }
             ],
             "outputAppFields": [],
             "exitAppFields": [],
-            "inputApplicationName": "gatherImg",
-            "inputApplicationType": "PythonApp",
-            "inputApplicationKey": -16,
+            "inputApplicationName": "cubeConcat",
+            "inputApplicationType": "BashShellApp",
+            "inputApplicationKey": -1,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "outputApplicationKey": null,
@@ -1231,8 +1222,8 @@
             "key": -5,
             "text": "Cube",
             "description": "",
-            "x": 1253.126225408177,
-            "y": 597.6828619354933,
+            "x": 1471.3034383517468,
+            "y": 510.63235778124067,
             "width": 200,
             "height": 200,
             "collapsed": false,
@@ -1244,7 +1235,6 @@
             "selected": false,
             "expanded": false,
             "readonly": false,
-            "group": -13,
             "inputPorts": [
                 {
                     "Id": "4c8d1567-4b02-414b-a6b3-5eb61b8945e6",
@@ -1284,7 +1274,7 @@
                 {
                     "text": "File path",
                     "name": "filepath",
-                    "value": "",
+                    "value": "cube.empty",
                     "description": "Path to the file for this node",
                     "readonly": false,
                     "type": "String"
@@ -1313,20 +1303,6 @@
         }
     ],
     "linkDataArray": [
-        {
-            "from": -8,
-            "fromPort": "39891be9-f800-49fc-8e0c-2b595c921ba3",
-            "to": -3,
-            "toPort": "b9c7f505-39da-4488-9304-b577aca5c868",
-            "loop_aware": "0"
-        },
-        {
-            "from": -3,
-            "fromPort": "4201555b-a7b4-41bb-9663-ffbf7be35ba8",
-            "to": -10,
-            "toPort": "1a3462b0-cde3-4746-a526-b4f6c0d59ab3",
-            "loop_aware": "0"
-        },
         {
             "from": -12,
             "fromPort": "cb8581ec-e420-4106-9ad5-c9220558b955",
@@ -1370,24 +1346,10 @@
             "loop_aware": "0"
         },
         {
-            "from": -15,
-            "fromPort": "0aa9a01d-09dd-4364-b648-b488bea398a7",
-            "to": -13,
-            "toPort": "0189bc4e-361e-491f-8e31-27974e302e65",
-            "loop_aware": "0"
-        },
-        {
             "from": -4,
             "fromPort": "55ce101c-4db1-476f-9e13-541ba7c3c7ad",
             "to": -12,
             "toPort": "58080aec-4bfd-4924-b2ba-e2ce45f77db6",
-            "loop_aware": "0"
-        },
-        {
-            "from": -13,
-            "fromPort": "2c0f4a09-d9d7-4349-8632-ff315288d68d",
-            "to": -5,
-            "toPort": "4c8d1567-4b02-414b-a6b3-5eb61b8945e6",
             "loop_aware": "0"
         },
         {
@@ -1402,6 +1364,34 @@
             "fromPort": "e9fc2e55-5af7-42fe-8051-19f7e088c299",
             "to": -4,
             "toPort": "1edf16b8-aff7-41fd-9cb2-211684eef474",
+            "loop_aware": "0"
+        },
+        {
+            "from": -15,
+            "fromPort": "0aa9a01d-09dd-4364-b648-b488bea398a7",
+            "to": -13,
+            "toPort": "f97989fb-0c55-4504-8bce-703bb4ff428a",
+            "loop_aware": "0"
+        },
+        {
+            "from": -13,
+            "fromPort": "c5dbe8c7-13d9-43e7-bef3-886a9994094a",
+            "to": -5,
+            "toPort": "4c8d1567-4b02-414b-a6b3-5eb61b8945e6",
+            "loop_aware": "0"
+        },
+        {
+            "from": -8,
+            "fromPort": "39891be9-f800-49fc-8e0c-2b595c921ba3",
+            "to": -3,
+            "toPort": "5959870d-803d-49fa-9faa-d5d85124e8c9",
+            "loop_aware": "0"
+        },
+        {
+            "from": -3,
+            "fromPort": "24dc87c6-7b35-40a5-acdb-741c949b7909",
+            "to": -10,
+            "toPort": "1a3462b0-cde3-4746-a526-b4f6c0d59ab3",
             "loop_aware": "0"
         }
     ]
