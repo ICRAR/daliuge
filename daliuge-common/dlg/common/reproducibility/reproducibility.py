@@ -467,8 +467,8 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     while q:
         did = q.pop()
         block_builder(dropset[did][0])
-        visited += 1
         rmode = int(dropset[did][0]['reprodata']['rmode'])
+        visited += 1
         for n in neighbourset[did]:
             dropset[n][1] -= 1
             parenthash = {}
@@ -485,8 +485,9 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
                     parenthash.update(dropset[did][0]['reprodata'][parentstr])
             if rmode != ReproducibilityFlags.REPRODUCE.value:
                 parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
-            # Add our new hash to the parest-hash list
-            dropset[n][0]['reprodata'][parentstr].update(parenthash)
+            # Add our new hash to the parent-hash list if on the critical path
+            if rmode != ReproducibilityFlags.RERUN.value and dropset[did][0]['iid'] == '0/0':
+                dropset[n][0]['reprodata'][parentstr].update(parenthash)
             if dropset[n][1] == 0:
                 q.append(n)
 
