@@ -39,6 +39,7 @@ DALiuGE Monitor that runs in a public network.
 
 import collections
 import errno
+import http.server
 import json
 import logging
 import select
@@ -47,9 +48,6 @@ import struct
 import sys
 import threading
 import time
-
-import six
-import six.moves.BaseHTTPServer as BaseHTTPServer  # @UnresolvedImport
 
 from ...utils import b2s
 
@@ -88,9 +86,9 @@ def recv_from_proxy(sock):
     return recvall(sock, length)
 
 # HTTP support to get the list of available proxies
-class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
+class Handler(http.server.BaseHTTPRequestHandler):
     def setup(self):
-        BaseHTTPServer.BaseHTTPRequestHandler.setup(self)
+        http.server.BaseHTTPRequestHandler.setup(self)
         self.monitor = self.server.monitor
 
     def do_GET(self):
@@ -114,7 +112,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host,b2s(proxyId),client_port) for proxyId, client_port in self.monitor.proxy_ids.items()]
             html = '</li><li>'.join(aEls)
             html = '<ul><li>' + html + '</li></ul>'
-            self.wfile.write(six.b(html))
+            self.wfile.write(html.encode('utf8'))
             return
 
         # Else print as JSON
@@ -122,10 +120,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(self.monitor.proxy_ids, indent=2))
 
-class Server(BaseHTTPServer.HTTPServer):
+class Server(http.server.HTTPServer):
     def __init__(self, monitor):
         self.monitor = monitor
-        BaseHTTPServer.HTTPServer.__init__(self, (monitor.host, monitor.publication_port), Handler)
+        http.server.HTTPServer.__init__(self, (monitor.host, monitor.publication_port), Handler)
 
 sockandaddr = collections.namedtuple('sockandaddr', 'sock addr')
 

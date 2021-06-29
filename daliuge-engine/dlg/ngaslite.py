@@ -28,9 +28,9 @@ still need to access NGAS from time to time.
 @author: rtobar
 '''
 
-import six.moves.http_client as httplib  # @UnresolvedImport
-import six.moves.urllib.request as urlrequest
+import http.client
 import logging
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ def retrieve(host, fileId, port=7777, timeout=None):
     """
     url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
     logger.debug("Issuing RETRIEVE request: %s" % (url))
-    conn = urlrequest.urlopen(url)
-    if conn.getcode() != httplib.OK:
+    conn = urllib.request.urlopen(url)
+    if conn.getcode() != http.HTTPStatus.OK:
         raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, conn.getcode(), conn.msg))
     return conn
 
@@ -66,7 +66,7 @@ def beginArchive(host, fileId, port=7777, timeout=0, length=-1, mimeType='applic
     should be invoked to check that all went well with the archiving.
     """
     logger.debug("Issuing ARCHIVE for file %s request to: http://%s:%d" % (fileId, host,port))
-    conn = httplib.HTTPConnection(host, port, timeout=timeout)
+    conn = http.client.HTTPConnection(host, port, timeout=timeout)
     conn.putrequest('POST', '/QARCHIVE?filename=' + fileId)
     conn.putheader('Content-Type', mimeType)
     if length is not None and length >= 0:
@@ -80,5 +80,5 @@ def finishArchive(conn, fileId):
     Checks that an archiving started by `beginArchive` went on successfully.
     """
     response = conn.getresponse()
-    if response.status != httplib.OK:
+    if response.status != http.HTTPStatus.OK:
         raise Exception("Error while QARCHIVE-ing %s to %s:%d: %d %s" % (fileId, conn.host, conn.port, response.status, response.msg))

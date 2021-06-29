@@ -38,7 +38,6 @@ import tempfile
 import threading
 import time
 import types
-import six
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -88,7 +87,7 @@ def prepare_output_channel(this_node, out_drop):
         # the pipe needs to be opened after the data is sent to the other
         # application because open() blocks until the other end is also
         # opened
-        data = six.b("pipe://%s" % (pipe_name,))
+        data = ("pipe://%s" % (pipe_name,)).encode('utf8')
         out_drop.write(data)
         return open(pipe_name, 'wb')
 
@@ -102,7 +101,7 @@ def prepare_output_channel(this_node, out_drop):
 
         # to get a connection from the other side we have to write the data
         # into the output drop first so the other side connects to us
-        out_drop.write(six.b("tcp://%s:%d" % (host, port)))
+        out_drop.write(("tcp://%s:%d" % (host, port)).encode('utf8'))
         with contextlib.closing(sock):
             csock, csockaddr = sock.accept()
             csock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 1000))

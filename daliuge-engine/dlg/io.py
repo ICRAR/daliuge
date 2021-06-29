@@ -20,12 +20,10 @@
 #    MA 02111-1307  USA
 #
 from abc import abstractmethod, ABCMeta
+import io
 import logging
 import os
-
-from six import BytesIO
-import six.moves.urllib.parse as urlparse  # @UnresolvedImport
-import six.moves.urllib.request as urlrequest
+import urllib.parse
 
 from . import ngaslite
 
@@ -187,7 +185,7 @@ class MemoryIO(DataIO):
         if self._mode == OpenMode.OPEN_WRITE:
             return self._buf
         else:
-            return BytesIO(self._buf.getvalue())
+            return io.BytesIO(self._buf.getvalue())
 
     def _write(self, data, **kwargs):
         self._desc.write(data)
@@ -390,7 +388,7 @@ def IOForURL(url):
     Returns a DataIO instance that handles the given URL for reading. If no
     suitable DataIO class can be found to handle the URL, `None` is returned.
     """
-    url = urlparse.urlparse(url)
+    url = urllib.parse.urlparse(url)
     io = None
     if url.scheme == 'file':
         hostname = url.netloc

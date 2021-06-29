@@ -27,8 +27,6 @@ Created on 20 Jul 2015
 
 import unittest
 
-import six
-
 from dlg import droputils
 from dlg.common import dropdict, Categories
 from dlg.drop import InMemoryDROP, FileDROP, BarrierAppDROP
