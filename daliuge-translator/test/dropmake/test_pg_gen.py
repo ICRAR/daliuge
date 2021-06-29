@@ -37,7 +37,7 @@ def get_lg_fname(lg_name):
 class TestPGGen(unittest.TestCase):
 
     def test_pg_generator(self):
-        fp = get_lg_fname('cont_img.json')
+        fp = get_lg_fname('cont_img.graph')
 #        fp = get_lg_fname('testScatter.graph')
         lg = LG(fp)
         self.assertEqual(len(lg._done_dict.keys()), 46)
@@ -49,7 +49,7 @@ class TestPGGen(unittest.TestCase):
         #lg.to_pg_tpl(input_dict)
 
     def test_pg_test(self):
-        fp = get_lg_fname('test_grpby_gather.json')
+        fp = get_lg_fname('test_grpby_gather.graph')
         lg = LG(fp)
         lg.unroll_to_tpl()
         #input_dict = defaultdict(list)
@@ -57,15 +57,15 @@ class TestPGGen(unittest.TestCase):
         #pprint.pprint(dict(lg._drop_dict))
 
     def test_pgt_to_json(self):
-        fp = get_lg_fname('cont_img.json')
+        fp = get_lg_fname('cont_img.graph')
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
         #print pgt.to_gojs_json()
 
     def test_metis_pgtp(self):
-        lgnames = ['simpleMKN.graph', 'testLoop.graph', 'cont_img.json',
-                   'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['simpleMKN.graph', 'testLoop.graph', 'cont_img.graph',
+                   'test_grpby_gather.graph', 'chiles_simple.graph']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
@@ -75,8 +75,8 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_metis_pgtp_gen_pg(self):
-        lgnames = ['testLoop.graph', 'cont_img.json',
-                   'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.graph',
+                   'test_grpby_gather.graph', 'chiles_simple.graph']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
         for i, lgn in enumerate(lgnames):
@@ -87,11 +87,11 @@ class TestPGGen(unittest.TestCase):
             #pgtp.json
             pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
-            # with open('/tmp/met_{0}_pgspec.json'.format(lgn.split('.')[0]), 'w') as f:
+            # with open('/tmp/met_{0}_pgspec.graph'.format(lgn.split('.')[0]), 'w') as f:
             #     f.write(pg_spec)
 
     def test_metis_pgtp_gen_pg_island(self):
-        lgnames = ['testLoop.graph','cont_img.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph','cont_img.graph', 'test_grpby_gather.graph', 'chiles_simple.graph']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12',
                      '10.128.0.13', '10.128.0.14',
@@ -108,8 +108,8 @@ class TestPGGen(unittest.TestCase):
             pgtp.result(lazy=False)
 
     def test_mysarkar_pgtp(self):
-        lgnames = ['testLoop.graph', 'cont_img.json',
-                   'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.graph',
+                   'test_grpby_gather.graph', 'chiles_simple.graph']
         tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
@@ -119,7 +119,7 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_mysarkar_pgtp_gen_pg(self):
-        lgnames = ['testLoop.graph', 'cont_img.json', 'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.graph', 'test_grpby_gather.graph', 'chiles_simple.graph']
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ['10.128.0.11', '10.128.0.12', '10.128.0.13']
         for i, lgn in enumerate(lgnames):
@@ -132,8 +132,8 @@ class TestPGGen(unittest.TestCase):
             pg_spec = pgtp.to_pg_spec(node_list)
 
     def test_mysarkar_pgtp_gen_pg_island(self):
-        lgnames = ['testLoop.graph', 'cont_img.json',
-                   'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.graph',
+                   'test_grpby_gather.graph', 'chiles_simple.graph']
         node_list = ['10.128.0.11', '10.128.0.12',
                      '10.128.0.13', '10.128.0.14',
                      '10.128.0.15', '10.128.0.16']
@@ -153,8 +153,8 @@ class TestPGGen(unittest.TestCase):
             pgtp.result()
 
     def test_minnumparts_pgtp(self):
-        lgnames = ['testLoop.graph', 'cont_img.json',
-                   'test_grpby_gather.json', 'chiles_simple.json']
+        lgnames = ['testLoop.graph', 'cont_img.graph',
+                   'test_grpby_gather.graph', 'chiles_simple.graph']
         #tgt_partnum = [15, 15, 10, 10, 5]
         tgt_deadline = [200, 300, 90, 80, 160]
         for i, lgn in enumerate(lgnames):
@@ -165,7 +165,7 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_pg_eagle(self):
-        lgs = ['eagle_gather_simple.json', 'eagle_gather_empty.json', 'eagle_gather.json']
+        lgs = ['eagle_gather_simple.graph', 'eagle_gather_empty.graph', 'eagle_gather.graph']
         for lg in lgs:
             fp = get_lg_fname(lg)
             lg = LG(fp)

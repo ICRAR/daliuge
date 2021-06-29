@@ -20,32 +20,9 @@
 #    MA 02111-1307  USA
 #
 """
-https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.2+DFM+Resource+Manager
-
-DFM resource managr uses the requested logical graphs, the available resources and
+The DALiuGE resource manager uses the requested logical graphs, the available resources and
 the profiling information and turns it into the partitioned physical graph,
 which will then be deployed and monitored by the Physical Graph Manager
-
-Examples of logical graph node JSON representation
-
-{ u'category': u'Memory',
-  u'data_volume': 25,
-  u'group': -58,
-  u'key': -59,
-  u'loc': u'40.96484375000006 -250.53115793863992',
-  u'text': u'Channel @ \nAll Day'},
-
-{ u'Arg01': u'',
-  u'Arg02': u'',
-  u'Arg03': u'',
-  u'Arg04': u'',
-  u'category': u'Component',
-  u'execution_time': 20,
-  u'group': -60,
-  u'key': -56,
-  u'loc': u'571.6718750000005 268.0000000000004',
-  u'text': u'DD Calibration'}
-
 """
 
 if __name__ == '__main__':
