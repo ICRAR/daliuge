@@ -68,6 +68,8 @@ installed on the system:
 Installing
 ##########
 
+|daliuge| requires python 3.
+
 |daliuge| is based on setuptools, and thus it follows the standard python installation
 procedures.
 The preferred way of installing the latest stable version of |daliuge|
