@@ -131,10 +131,9 @@ def create_command_line_tool(node):
 
     # TODO: find a better way of specifying command line program + arguments
     base_command = base_command[:base_command.index(" ")]
-    base_command = common.u2s(base_command)
 
     # cwlgen's Serializer class doesn't support python 2.7's unicode types
-    cwl_tool = cwlgen.CommandLineTool(tool_id=common.u2s(node['app']), label=common.u2s(node['nm']), base_command=base_command, cwl_version='v1.0')
+    cwl_tool = cwlgen.CommandLineTool(tool_id=node['app'], label=node['nm'], base_command=base_command, cwl_version='v1.0')
 
     # add inputs
     for index, input in enumerate(inputs):
