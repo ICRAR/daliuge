@@ -37,8 +37,6 @@ matrix:
     # - python: "3.8"
     #   env: TEST_OPENAPI=1
     - python: "3.7"
-    - python: "3.6"
-    - python: "3.5"
     - name: doxygen
       if: branch = master
       before_install:
