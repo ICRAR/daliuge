@@ -639,6 +639,6 @@ def convert_eagle_to_daliuge_json(lg_name):
 
 
 if __name__ == "__main__":
-    lg_name = "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.json"
+    lg_name = "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.graph"
     # convert_eagle_to_daliuge_json(lg_name)
     print(get_lg_ver_type(lg_name))
