@@ -28,12 +28,11 @@ technologies we support.
 
 import collections
 import logging
+import queue
 import threading
 
 import gevent
 import zerorpc
-
-from six.moves import queue as Queue  # @UnresolvedImport
 
 from . import utils
 
@@ -120,7 +119,7 @@ class ZeroRPCClient(RPCClientBase):
 
             # We start the new client on its own thread so it uses gevent, etc.
             # In this thread we create simply enqueue requests
-            req_queue = Queue.Queue()
+            req_queue = queue.Queue()
             tname_tpl, args = "zrpc(%s:%d)", (host, port)
             t = threading.Thread(target=self.run_zrpcclient, args=(host, port, req_queue),
                                  name=tname_tpl % args)
@@ -128,7 +127,7 @@ class ZeroRPCClient(RPCClientBase):
 
             class QueueingClient(object):
                 def __make_call(self, method, *args):
-                    res_queue = Queue.Queue()
+                    res_queue = queue.Queue()
                     req_queue.put(ZeroRPCClient.request(method, args, res_queue))
                     x = res_queue.get()
                     if x.is_exception:
@@ -160,7 +159,7 @@ class ZeroRPCClient(RPCClientBase):
             try:
                 req = req_queue.get_nowait()
                 gevent.spawn(self.queue_request, client, req)
-            except Queue.Empty:
+            except queue.Empty:
                 gevent.sleep(0.005)
 
     def process_response(self, req, async_response):

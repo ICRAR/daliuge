@@ -19,37 +19,36 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import http.client
 import json
-
-import six.moves.http_client as httplib  # @UnresolvedImport
 
 from dlg import utils
 import codecs
 
 
 def get(test, url, port):
-    conn = httplib.HTTPConnection('localhost', port, timeout=3)
+    conn = http.client.HTTPConnection('localhost', port, timeout=3)
     conn.request('GET', '/api' + url)
     res = conn.getresponse()
-    test.assertEqual(httplib.OK, res.status)
+    test.assertEqual(http.HTTPStatus.OK, res.status)
     jsonRes = json.load(codecs.getreader('utf-8')(res))
     res.close()
     conn.close()
     return jsonRes
 
 def post(test, url, port, content=None, mimeType=None):
-    conn = httplib.HTTPConnection('localhost', port, timeout=3)
+    conn = http.client.HTTPConnection('localhost', port, timeout=3)
     headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
     conn.request('POST', '/api' + url, content, headers)
     res = conn.getresponse()
-    test.assertEqual(httplib.OK, res.status)
+    test.assertEqual(http.HTTPStatus.OK, res.status)
     conn.close()
 
 def delete(test, url, port):
-    conn = httplib.HTTPConnection('localhost', port, timeout=3)
+    conn = http.client.HTTPConnection('localhost', port, timeout=3)
     conn.request('DELETE', '/api' + url)
     res = conn.getresponse()
-    test.assertEqual(httplib.OK, res.status)
+    test.assertEqual(http.HTTPStatus.OK, res.status)
     conn.close()
 
 class terminating(object):
