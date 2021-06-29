@@ -21,7 +21,5 @@
 #
 
 """
-Prototypical implementation of DataFlow Manager
-https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4+Data+Flow+Manager
-The sub-modules are based on the proposed (latest) product tree as of 8 Dec 2015
+Implementation of a DataFlow Manager based on the original SKA SDP architecture.
 """

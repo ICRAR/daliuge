@@ -328,6 +328,22 @@ class HelloWorldApp(BarrierAppDROP):
             o.len = len(self.greeting.encode())
             o.write(self.greeting.encode())  # greet across all outputs
 
+##
+# @brief UrlRetrieveApp\n
+# @details A simple APP that retrieves the content of a URL and writes.
+# it to all outputs.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/url/https://eagle.icrar.org/String/readwrite
+#     \~English The URL to retrieve '\n
+# @param[in] param/appclass/dlg.apps.simple.UrlRetrieveApp/String/readonly
+#     \~English Application class\n
+# @param[out] port/content
+#     \~English The port carrying the content read from the URL.
+# @par EAGLE_END
+
 class UrlRetrieveApp(BarrierAppDROP):
     """
     An App that retrieves the content of a URL
