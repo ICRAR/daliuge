@@ -27,7 +27,6 @@ import unittest
 
 import configobj
 import docker
-import six
 
 from dlg import droputils, utils
 from dlg.apps.dockerapp import DockerApp
@@ -139,7 +138,7 @@ class DockerTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEqual(six.b(msg), droputils.allDropContents(b))
+            self.assertEqual(msg.encode('utf8'), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -169,7 +168,7 @@ class DockerTests(unittest.TestCase):
         b.addOutput(c)
         with DROPWaiterCtx(self, c, 100):
             a.setCompleted()
-        self.assertEqual(six.b(a.dataURL), droputils.allDropContents(c))
+        self.assertEqual(a.dataURL.encode('utf8'), droputils.allDropContents(c))
 
 
     def test_additional_bindings(self):

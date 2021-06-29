@@ -22,7 +22,6 @@
 
 import logging
 import os
-import six
 from zipfile import ZipFile
 
 import cwlgen
@@ -109,8 +108,8 @@ def create_workflow(drops, cwl_filename, buffer):
     # put workflow and command line tool description files all together in a zip
     zipObj = ZipFile(buffer, 'w')
     for step_file in step_files:
-        zipObj.writestr(step_file["filename"], six.b(step_file["contents"]))
-    zipObj.writestr(cwl_filename, six.b(cwl_workflow.export_string()))
+        zipObj.writestr(step_file["filename"], step_file["contents"].encode('utf8'))
+    zipObj.writestr(cwl_filename, cwl_workflow.export_string().encode('utf8'))
     zipObj.close()
 
 

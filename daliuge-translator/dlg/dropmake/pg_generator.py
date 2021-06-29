@@ -42,7 +42,6 @@ from itertools import product
 
 import networkx as nx
 import numpy as np
-import six
 
 from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 from .utils.bash_parameter import BashCommand
@@ -1846,7 +1845,7 @@ class LG:
         parse JSON into LG object graph first
         """
         self._g_var = []
-        if isinstance(f, six.string_types):
+        if isinstance(f, str):
             if not os.path.exists(f):
                 raise GraphException("Logical graph {0} not found".format(f))
             with open(f) as f:
@@ -2592,7 +2591,7 @@ def fill(lg, params):
     flat_params = _flatten_dict(params)
     if hasattr(lg, "read"):
         lg = lg.read()
-    elif not isinstance(lg, six.string_types):
+    elif not isinstance(lg, str):
         lg = json.dumps(lg)
     lg = _LGTemplate(lg).substitute(flat_params)
     return json.loads(lg)
@@ -2641,7 +2640,7 @@ _known_algos = {
 
 
 def known_algorithms():
-    return [x for x in _known_algos.keys() if isinstance(x, six.string_types)]
+    return [x for x in _known_algos.keys() if isinstance(x, str)]
 
 
 def partition(
@@ -2655,7 +2654,7 @@ def partition(
 ):
     """Partitions a Physical Graph Template"""
 
-    if isinstance(algo, six.string_types):
+    if isinstance(algo, str):
         if algo not in _known_algos:
             raise ValueError(
                 "Unknown partitioning algorithm: %s. Known algorithms are: %r"

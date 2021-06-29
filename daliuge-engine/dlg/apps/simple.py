@@ -20,12 +20,12 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import pickle
+import urllib.error
+import urllib.request
 
 import time
 import numpy as np
-import six
-import six.moves.cPickle as pickle
-import six.moves.urllib as urllib
 
 from .. import droputils, utils
 from ..drop import BarrierAppDROP, ContainerDROP

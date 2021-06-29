@@ -106,8 +106,6 @@ install_requires = [
     "psutil",
     "pyswarm",
     "ruamel.yaml.clib<=0.2.2",
-    # 1.10 contains an important race-condition fix on lazy-loaded modules
-    "six>=1.10",
 ]
 
 setup(
