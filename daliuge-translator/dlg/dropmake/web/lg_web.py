@@ -249,8 +249,6 @@ def load_pg_viewer():
             pgt_name = first_dir + "/" + all_pgts[first_dir][0]
         except StopIteration:
             pgt_name = None
-        
-
     if pgt_exists(pgt_name):
         tpl = file_as_string("pg_viewer.html")
         return template(
