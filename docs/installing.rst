@@ -68,7 +68,7 @@ installed on the system:
 Installing
 ##########
 
-|daliuge| requires python 3.
+|daliuge| requires python 3.7 or later.
 
 |daliuge| is based on setuptools, and thus it follows the standard python installation
 procedures.
