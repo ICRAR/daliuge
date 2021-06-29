@@ -212,7 +212,7 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
-    def test_pg_viewer(self):
+    def test_pg_viewerer(self):
 
         c = RestClient('localhost', lgweb_port, 10)
         self._generate_pgt(c)
