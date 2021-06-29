@@ -30,6 +30,7 @@ import contextlib
 import errno
 import heapq
 import importlib
+import io
 import logging
 import math
 import os
@@ -41,8 +42,6 @@ import re
 import inspect
 import binascii
 
-import six
-from six import BytesIO
 import numpy as np
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
@@ -390,7 +389,7 @@ class AbstractDROP(EventFirer):
 
         # Save the IO object in the dictionary and return its descriptor instead
         while True:
-            descriptor = random.SystemRandom().randint(-six.MAXSIZE - 1, six.MAXSIZE)
+            descriptor = random.SystemRandom().randint(-(2 ** 31), 2 ** 31 - 1)
             if descriptor not in self._rios:
                 break
         self._rios[descriptor] = io
@@ -461,7 +460,7 @@ class AbstractDROP(EventFirer):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if not isinstance(data, six.binary_type):
+        if not isinstance(data, bytes):
             raise Exception("Data type not of binary type: %s", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
@@ -1191,10 +1190,10 @@ class InMemoryDROP(AbstractDROP):
         args = []
         if 'pydata' in kwargs:
             pydata = kwargs.pop('pydata')
-            if isinstance(pydata, six.string_types):
-                pydata = six.b(pydata)
+            if isinstance(pydata, str):
+                pydata = pydata.encode('utf8')
             args.append(base64.b64decode(pydata))
-        self._buf = BytesIO(*args)
+        self._buf = io.BytesIO(*args)
 
     def getIO(self):
         return MemoryIO(self._buf)

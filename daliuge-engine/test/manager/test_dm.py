@@ -24,8 +24,6 @@ import os
 import threading
 import unittest
 
-import six
-
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.common import dropdict, Categories
@@ -205,7 +203,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = six.b(str(crc32(a_data, 0)))
+        c_data = str(crc32(a_data, 0)).encode('utf8')
         node_managers = [self._start_dm() for _ in range(2)]
         for n in range(repeats):
             sessionId = 's%d' % n
@@ -543,7 +541,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = six.b(str(crc32(a_data, 0)))
+        e_data = str(crc32(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -573,5 +571,5 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = six.b(str(crc32(a_data, 0)))
+        e_data = str(crc32(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")

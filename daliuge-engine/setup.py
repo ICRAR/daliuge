@@ -129,8 +129,6 @@ install_requires = [
     "python-daemon",
     "pyzmq",
     "scp",
-    # 1.10 contains an important race-condition fix on lazy-loaded modules
-    "six>=1.10",
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6",
     "pyarrow",

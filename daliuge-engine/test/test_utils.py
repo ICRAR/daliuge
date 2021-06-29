@@ -20,13 +20,12 @@
 #    MA 02111-1307  USA
 #
 import functools
+import io
 import json
 import os
 import tempfile
 import unittest
 import zlib
-
-import six
 
 from dlg import utils
 
@@ -62,7 +61,7 @@ class TestUtils(unittest.TestCase):
             compressed_bytes = zlib.compress(original_bytes)
 
             # Try first with whole reads
-            compressed_stream = six.BytesIO(compressed_bytes)
+            compressed_stream = io.BytesIO(compressed_bytes)
             uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
             b = uncompressed_stream.read()
             self.assertEqual(size, len(b))
@@ -71,7 +70,7 @@ class TestUtils(unittest.TestCase):
             # Now read little by little
             read_size = min(size//4, 1024);
             b = b''
-            compressed_stream = six.BytesIO(compressed_bytes)
+            compressed_stream = io.BytesIO(compressed_bytes)
             uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
             for u in iter(functools.partial(uncompressed_stream.read, read_size), b''):
                 b += u
@@ -85,7 +84,7 @@ class TestUtils(unittest.TestCase):
 
         # Read parts from the beginning
         for x in range(1, len(compressed_ref)):
-            bytesio = six.BytesIO(b'abcd')
+            bytesio = io.BytesIO(b'abcd')
             s = utils.ZlibCompressedStream(bytesio)
             compressed = s.read(x)
             self.assertEqual(x, len(compressed))
@@ -98,7 +97,7 @@ class TestUtils(unittest.TestCase):
             compressed_bytes = zlib.compress(original_bytes)
 
             # Try first with whole reads
-            uncompressed_stream = six.BytesIO(original_bytes)
+            uncompressed_stream = io.BytesIO(original_bytes)
             compressed_stream = utils.ZlibCompressedStream(uncompressed_stream)
             b = compressed_stream.read()
             self.assertEqual(len(compressed_bytes), len(b), "Incorrect size when compressing %d bytes" % (size))
@@ -106,7 +105,7 @@ class TestUtils(unittest.TestCase):
 
             # Now read little by little
             read_size = min(size//4, 1024)
-            uncompressed_stream = six.BytesIO(original_bytes)
+            uncompressed_stream = io.BytesIO(original_bytes)
             compressed_stream = utils.ZlibCompressedStream(uncompressed_stream)
             b = b''
             for c in iter(functools.partial(compressed_stream.read, read_size), b''):
@@ -128,7 +127,7 @@ class TestUtils(unittest.TestCase):
             original_bytes = gen_bytes(size)
 
             # Read the whole thing
-            original_stream = six.BytesIO(original_bytes)
+            original_stream = io.BytesIO(original_bytes)
             compressed_stream = utils.ZlibCompressedStream(original_stream)
             uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
             b = uncompressed_stream.read()
@@ -144,7 +143,7 @@ class TestUtils(unittest.TestCase):
 
                 these_bytes = original_bytes[0:n]
 
-                original_stream = six.BytesIO(these_bytes)
+                original_stream = io.BytesIO(these_bytes)
                 compressed_stream = utils.ZlibCompressedStream(original_stream)
                 uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
 
