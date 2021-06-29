@@ -23,12 +23,11 @@
 import os
 import shutil
 import tempfile
+import urllib.parse
 import unittest
 import json
 
 import pkg_resources
-
-import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
 from dlg import common
 from dlg.common import tool
@@ -144,7 +143,7 @@ class TestLGWeb(unittest.TestCase):
 
         # POST form to /gen_pgt
         try:
-            content = urllib.urlencode(form_data)
+            content = urllib.parse.urlencode(form_data)
             c._POST('/gen_pgt', content, content_type='application/x-www-form-urlencoded')
         except RestClientException as e:
             self.fail(e)
@@ -175,7 +174,7 @@ class TestLGWeb(unittest.TestCase):
 
         # POST form to /gen_pgt
         try:
-            content = urllib.urlencode(form_data)
+            content = urllib.parse.urlencode(form_data)
             c._POST('/gen_pgt', content,
                     content_type='application/x-www-form-urlencoded')
         except RestClientException as e:
@@ -206,7 +205,7 @@ class TestLGWeb(unittest.TestCase):
 
         # POST form to /gen_pgt
         try:
-            content = urllib.urlencode(form_data)
+            content = urllib.parse.urlencode(form_data)
             c._POST('/gen_pgt', content,
                     content_type='application/x-www-form-urlencoded')
         except RestClientException as e:

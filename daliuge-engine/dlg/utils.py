@@ -26,6 +26,7 @@ Module containing miscellaneous utility classes and functions.
 import errno
 import functools
 import importlib
+import io
 import logging
 import os
 import signal
@@ -35,7 +36,6 @@ import time
 import zlib
 
 import netifaces
-import six
 
 from . import common
 
@@ -317,7 +317,7 @@ class ZlibUncompressedStream(object):
             return b''
 
         content = self.content
-        response = six.BytesIO()
+        response = io.BytesIO()
         decompressor = self.decompressor
 
         blocksize = 8192

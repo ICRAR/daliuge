@@ -20,11 +20,10 @@
 #    MA 02111-1307  USA
 #
 import functools
+import io
 import os
 import time
 import unittest
-
-import six
 
 from .setp_up import build_shared_library
 from ..manager import test_dm
@@ -81,7 +80,7 @@ class DynlibAppTest(unittest.TestCase):
 
         # ~100 MBs of data should be copied over from a to c and d via b, etc
         data = os.urandom(1024 * 1024) * 100
-        reader = six.BytesIO(data)
+        reader = io.BytesIO(data)
         with droputils.DROPWaiterCtx(self, (c, d, f, g), 10):
             if streaming:
                 # Write the data in chunks so we actually exercise multiple calls

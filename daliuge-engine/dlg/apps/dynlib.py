@@ -24,10 +24,8 @@ import ctypes
 import functools
 import logging
 import multiprocessing
+import queue
 import threading
-
-import six
-from six.moves import queue  # @UnresolvedImport
 
 from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
@@ -110,7 +108,7 @@ def _to_c_input(i):
 
     desc = i.open()
     r = _read_cb_type(functools.partial(_read, desc))
-    c_input = CDlgInput(six.b(i.uid), six.b(i.oid), six.b(i.name), i.status, r)
+    c_input = CDlgInput(i.uid.encode('utf8'), i.oid.encode('utf8'), i.name.encode('utf8'), i.status, r)
     return desc, c_input
 
 
@@ -123,7 +121,7 @@ def _to_c_output(o):
         return _o.write(buf[:n])
 
     w = _write_cb_type(functools.partial(_write, o))
-    return CDlgOutput(six.b(o.uid), six.b(o.oid), six.b(o.name), w)
+    return CDlgOutput(o.uid.encode('utf8'), o.oid.encode('utf8'), o.name.encode('utf8'), w)
 
 
 def prepare_c_inputs(c_app, inputs):
@@ -222,8 +220,8 @@ def load_and_init(libname, oid, uid, params):
     # The running and done callbacks are also NULLs
     c_app = CDlgApp(
         None,
-        six.b(uid),
-        six.b(oid),
+        uid.encode('utf8'),
+        oid.encode('utf8'),
         None,
         0,
         None,
@@ -252,7 +250,7 @@ def load_and_init(libname, oid, uid, params):
         # Collect the rest of the parameters to pass them down to the library
         # We need to keep them in a local variable so when we expose them to
         # the app later on via pointers we still have their contents
-        local_params = [(six.b(str(k)), six.b(str(v))) for k, v in params.items()]
+        local_params = [(str(k).encode('utf8'), str(v).encode('utf8')) for k, v in params.items()]
         logger.debug("Extra parameters passed to application: %r", local_params)
 
         # Wrap in ctypes
@@ -318,12 +316,12 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
     def dataWritten(self, uid, data):
         self._ensure_c_outputs_are_set()
         app_p = ctypes.pointer(self._c_app)
-        self.lib.data_written(app_p, six.b(uid), data, len(data))
+        self.lib.data_written(app_p, uid.encode('utf8'), data, len(data))
 
     def dropCompleted(self, uid, drop_state):
         self._ensure_c_outputs_are_set()
         app_p = ctypes.pointer(self._c_app)
-        self.lib.drop_completed(app_p, six.b(uid), drop_state)
+        self.lib.drop_completed(app_p, uid.encode('utf8'), drop_state)
 
     def addInput(self, inputDrop, back=True):
         super(DynlibStreamApp, self).addInput(inputDrop, back)

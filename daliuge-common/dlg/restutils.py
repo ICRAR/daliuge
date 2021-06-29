@@ -20,14 +20,13 @@
 #    MA 02111-1307  USA
 #
 import codecs
+import http.client
+import io
 import json
 import logging
+import socketserver
+import urllib.parse
 import wsgiref.simple_server
-
-import six
-import six.moves.http_client as httplib  # @UnresolvedImport
-import six.moves.socketserver as SocketServer  # @UnresolvedImport
-import six.moves.urllib_parse as urllib  # @UnresolvedImport
 
 from . import common
 from . import exceptions
@@ -37,7 +36,7 @@ from .exceptions import DaliugeException, SubManagerException
 logger = logging.getLogger(__name__)
 
 
-class ThreadingWSGIServer(SocketServer.ThreadingMixIn, wsgiref.simple_server.WSGIServer):
+class ThreadingWSGIServer(socketserver.ThreadingMixIn, wsgiref.simple_server.WSGIServer):
     daemon_threads = True
     allow_reuse_address = True
 
@@ -126,12 +125,12 @@ class RestClient(object):
 
     def _post_form(self, url, content=None):
         if content is not None:
-            content = urllib.urlencode(content)
+            content = urllib.parse.urlencode(content)
         ret = self._POST(url, content, content_type='application/x-www-form-urlencoded')
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
-        if not isinstance(content, (six.text_type, six.binary_type)):
+        if not isinstance(content, (str, bytes)):
             content = common.JSONStream(content)
         ret = self._POST(url, content, content_type='application/json', compress=compress)
         return json.load(ret) if ret else None
@@ -145,10 +144,10 @@ class RestClient(object):
             headers['Content-Type'] = content_type
         if compress and content:
             headers['Content-Encoding'] = 'gzip'
-            if isinstance(content, six.text_type):
+            if isinstance(content, str):
                 content = codecs.getencoder('utf8')(content)[0]
             if not hasattr(content, 'read'):
-                content = six.BytesIO(content)
+                content = io.BytesIO(content)
             content = common.ZlibCompressedStream(content)
         return self._request(url, 'POST', content, headers)
 
@@ -167,12 +166,12 @@ class RestClient(object):
             headers['Transfer-Encoding'] = 'chunked'
             content = chunked(content)
 
-        self._conn = httplib.HTTPConnection(self.host, self.port)
+        self._conn = http.client.HTTPConnection(self.host, self.port)
         self._conn.request(method, url, content, headers)
         self._resp = self._conn.getresponse()
 
         # Server errors are encoded in the body as json content
-        if self._resp.status != httplib.OK:
+        if self._resp.status != http.HTTPStatus.OK:
 
             msg = 'Error on remote %s@%s:%s%s (status %d): ' % \
                   (method, self.host, self.port, url, self._resp.status)

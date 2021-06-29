@@ -22,11 +22,9 @@
 import base64
 import logging
 import os
+import pickle
 import random
 import unittest
-
-import six
-import six.moves.cPickle as pickle  # @UnresolvedImport
 
 from ..manager import test_dm
 from dlg import droputils
@@ -58,7 +56,7 @@ def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
 def _PyFuncApp(oid, uid, f, **kwargs):
 
     fname = None
-    if isinstance(f, six.string_types):
+    if isinstance(f, str):
         fname = f = "test.apps.test_pyfunc." + f
 
     fcode, fdefaults = pyfunc.serialize_func(f)

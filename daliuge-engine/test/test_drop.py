@@ -21,14 +21,12 @@
 #
 
 import contextlib
+import io
 import os, unittest
 import random
 import shutil
 import sqlite3
 import tempfile
-
-import six
-from six import BytesIO
 
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
@@ -71,7 +69,7 @@ class SumupContainerChecksum(BarrierAppDROP):
             if inputDrop.status == DROPStates.COMPLETED:
                 crcSum += inputDrop.checksum
         outputDrop = self.outputs[0]
-        outputDrop.write(six.b(str(crcSum)))
+        outputDrop.write(str(crcSum).encode('utf8'))
 
 class TestDROP(unittest.TestCase):
 
@@ -149,7 +147,7 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                allLines = BytesIO(droputils.allDropContents(drop)).readlines()
+                allLines = io.BytesIO(droputils.allDropContents(drop)).readlines()
                 for line in allLines:
                     if self._substring in line:
                         output.write(line)
@@ -158,7 +156,7 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                sortedLines = BytesIO(droputils.allDropContents(drop)).readlines()
+                sortedLines = io.BytesIO(droputils.allDropContents(drop)).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
                     output.write(line)
@@ -168,14 +166,14 @@ class TestDROP(unittest.TestCase):
                 drop = self.inputs[0]
                 output = self.outputs[0]
                 allbytes = droputils.allDropContents(drop)
-                buf = BytesIO()
-                for c in six.iterbytes(allbytes):
-                    if c == six.byte2int(b' ') or c == six.byte2int(b'\n'):
+                buf = io.BytesIO()
+                for c in allbytes:
+                    if c == b' ' or c == b'\n':
                         output.write(buf.getvalue()[::-1])
-                        output.write(six.int2byte(c))
-                        buf = BytesIO()
+                        output.write(bytes([c]))
+                        buf = io.BytesIO()
                     else:
-                        buf.write(six.int2byte(c))
+                        buf.write(bytes([c]))
 
         a = InMemoryDROP('oid:A', 'uid:A')
         b = GrepResult('oid:B', 'uid:B', substring=b"a")
@@ -397,7 +395,7 @@ class TestDROP(unittest.TestCase):
                 output = self.outputs[0]
                 howMany = int(droputils.allDropContents(inputDrop))
                 for i in range(howMany):
-                    output.write(six.b(str(i)) + b" ")
+                    output.write(str(i).encode('utf8') + b" ")
 
         # This is used as "D"
         class OddAndEvenContainerApp(BarrierAppDROP):

@@ -19,12 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import functools
 import json
 import os
 import unittest
 
 import numpy as np
-from six.moves import reduce  # @UnresolvedImport
 
 from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.dask_emulation import compute as dlg_compute
@@ -42,13 +42,13 @@ def add(x, y):
     return x + y
 
 def add_list(numbers):
-    return reduce(add, numbers)
+    return functools.reduce(add, numbers)
 
 def subtract(x, y):
     return x - y
 
 def subtract_list(numbers):
-    return reduce(subtract, numbers)
+    return functools.reduce(subtract, numbers)
 
 def multiply(x, y):
     return x * y
