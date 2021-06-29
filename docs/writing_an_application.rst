@@ -1,14 +1,32 @@
-Application development
-=======================
+Application Component Development
+=================================
 
 This section describes what developers need to do
-to write a new class that can be used
-as an Application Drop in |daliuge|.
+to write a new application component that can be used
+as an Application Drop during the execution of a |daliuge| graph.
+
+Types of Application Components
+===============================
+
+|daliuge| supports four main types of Application Components.
+
+* Python application components
+* Dynamic Library application components
+* Docker application components
+* Bash shell application components
+
+as an extension to Dynamic Library components |daliuge| supports application components using MPI internally. In future we are planning to also support Singularity containers.
+
+The first two application component types offer the highest integration with the framework itself, since they provide the most efficient way of communication and data transfer between components. Bash components only allow the usage of intermediate files. On the other hand using bash components is by far the easiest way to get things up and running. Essentially anything that can be called on the bash command line can also be used as an application component in |daliuge|.
+
+Since |daliuge| itself is written in Python, Python is also the first language of choice when it comes to writing application components. The Dynamic Library application components make use of the extensibility of Python to call compiled dynamic library functions directly. Docker components are running docker containers within the execution framework and are the preferred way to isolate runtime environments from the framework. |daliuge| does support the usage of Apache Plasma as a shared memory store between application components, including docker components.
+
+This wide range of supported types of application components provides a very high potential of re-useability of existing software, while still offering the ability to tightly integrate and optimize newly developed components.
 
 .. default-domain:: py
 
-Class
------
+Python Application Component Class
+----------------------------------
 
 Developers need to write a new python class
 that derives from the :class:`dlg.drop.BarrierAppDROP` class.
@@ -53,9 +71,9 @@ Application authors need only call one or more times the
 with the data that needs to be written.
 
 Automatic EAGLE Component Generation
-------------------------------
+------------------------------------
 
-When writing an application, developers should add specific custom
+In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system includes a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom
 `Doxygen <https://www.doxygen.nl/>`_ comments to the source code.
 These comments describe the application and can
 be used to automatically generate a DALiuGE component so that the
@@ -64,7 +82,7 @@ application can be used in the *EAGLE* Logical Graph Editor.
 The comments should be contained within a *EAGLE_START* and *EAGLE_END*
 pair.
 
-The *category* param is should be set to *DynlibApp* for C/C++ code,
+The *category* param should be set to *DynlibApp* for C/C++ code,
 and *PythonApp* for Python code.
 
 These comments describe both the input/output ports for a component,
@@ -150,7 +168,8 @@ Python
 
 
 Once the comments are added to the source code and pushed to a repository
-a continuous integration step should process the source code.
+a continuous integration step can then use the tools provided by the |daliuge| system to process the source code and produce the component descriptions readable by EAGLE.
+
 The processing will:
 
 * combine the Doxygen output XML into a single XML file
