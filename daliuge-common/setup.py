@@ -45,11 +45,6 @@ def do_versioning():
     exec(code, _globals)
     return _globals['write_version_info'](VERSION, VERSION_FILE, RELEASE)
 
-install_requires = [
-    # 1.10 contains an important race-condition fix on lazy-loaded modules
-    "six>=1.10",
-]
-
 setup(
     name="daliuge-common",
     version=do_versioning(),
@@ -60,7 +55,6 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     packages=find_packages(),
-    install_requires=install_requires,
     test_suite="test",
     entry_points={"console_scripts": ["dlg=dlg.common.tool:run"]},  # One tool to rule them all
 )

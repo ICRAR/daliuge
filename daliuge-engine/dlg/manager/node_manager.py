@@ -29,12 +29,10 @@ import collections
 import logging
 import multiprocessing.pool
 import os
+import queue
 import sys
 import threading
 import time
-
-import six
-from six.moves import queue as Queue  # @UnresolvedImport
 
 from . import constants
 from .drop_manager import DROPManager
@@ -83,7 +81,7 @@ def _load(obj, callable_attr):
     Returns object (a python object or a string denoting a class within a
     python module only if it has the indicated attribute and it is callable.
     """
-    if isinstance(obj, six.string_types):
+    if isinstance(obj, str):
         obj = utils.get_symbol(obj)()
     if not hasattr(obj, callable_attr) or not callable(getattr(obj, callable_attr)):
         raise ValueError("%r doesn't contain an %s attribute that can be called" % (obj, callable_attr))
@@ -337,9 +335,9 @@ class ZMQPubSubMixIn(object):
     def start(self):
         self._pubsub_running = True
         super(ZMQPubSubMixIn, self).start()
-        self._events_in = Queue.Queue()
-        self._events_out = Queue.Queue()
-        self._subscriptions = Queue.Queue()
+        self._events_in = queue.Queue()
+        self._events_out = queue.Queue()
+        self._subscriptions = queue.Queue()
 
         # Starts background threads, but wait until their sockets are created
         timeout = 30
@@ -390,7 +388,7 @@ class ZMQPubSubMixIn(object):
 
             try:
                 obj = self._events_out.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 time.sleep(0.01)
                 continue
 
@@ -409,7 +407,7 @@ class ZMQPubSubMixIn(object):
             try:
                 evt = self._events_in.get_nowait()
                 self.deliver_event(evt)
-            except Queue.Empty:
+            except queue.Empty:
                 time.sleep(0.01)
 
     def _receive_events(self, sock_created):
@@ -418,7 +416,7 @@ class ZMQPubSubMixIn(object):
 
         sub = self._context.socket(zmq.SUB)  # @UndefinedVariable
         sub_endpoints = set()
-        sub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
+        sub.setsockopt(zmq.SUBSCRIBE, b'')  # @UndefinedVariable
         sub_monitor = sub.get_monitor_socket()
         sock_created.set()
 
@@ -433,7 +431,7 @@ class ZMQPubSubMixIn(object):
                 else:
                     sub.connect(subscription.endpoint)
                     pending_connections[subscription.endpoint] = subscription.finished_evt
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
             try:

@@ -19,12 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import http.client#
 import json
 import threading
 import time
 import unittest
-
-from six.moves import http_client as httplib  # @UnresolvedImport
 
 from dlg import utils, restutils
 from dlg.manager import constants
@@ -96,7 +95,7 @@ class TestDaemon(unittest.TestCase):
         self.create_daemon(master=False, noNM=False, disable_zeroconf=True)
 
         # Check that the master starts
-        self._start('master', httplib.OK)
+        self._start('master', http.HTTPStatus.OK)
         self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
 
     def test_zeroconf_discovery(self):
@@ -122,11 +121,11 @@ class TestDaemon(unittest.TestCase):
         self.assertEqual(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
 
         # Check that the DataIsland starts with the given nodes
-        self._start('dataisland', httplib.OK, {'nodes': nodes})
+        self._start('dataisland', http.HTTPStatus.OK, {'nodes': nodes})
         self.assertTrue(utils.portIsOpen('localhost', constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT), 'The DIM did not start successfully')
 
     def _start(self, manager_name, expected_code, payload=None):
-        conn = httplib.HTTPConnection('localhost', 9000)
+        conn = http.client.HTTPConnection('localhost', 9000)
         headers = {}
         if payload:
             payload = json.dumps(payload)

@@ -23,8 +23,6 @@
 Module containing an example application that calculates a CRC value
 """
 
-import six
-
 from ..drop import BarrierAppDROP, AppDROP
 from dlg.ddap_protocol import AppDROPStates
 from ..meta import dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
@@ -68,7 +66,7 @@ class CRCApp(BarrierAppDROP):
 
         # Rely on whatever implementation we decide to use
         # for storing our data
-        outputDrop.write(six.b(str(crc)))
+        outputDrop.write(str(crc).encode('utf8'))
 
 
 class CRCStreamApp(AppDROP):
@@ -91,6 +89,6 @@ class CRCStreamApp(AppDROP):
 
     def dropCompleted(self, uid, status):
         outputDrop = self.outputs[0]
-        outputDrop.write(six.b(str(self._crc)))
+        outputDrop.write(str(self._crc).encode('utf8'))
         self.execStatus = AppDROPStates.FINISHED
         self._notifyAppIsFinished()

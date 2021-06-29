@@ -42,8 +42,6 @@ import struct
 import sys, logging
 import time
 
-import six
-
 from ...utils import b2s
 
 BUFF_SIZE = 16384
@@ -110,7 +108,7 @@ class ProxyServer:
     def connect_monitor_host(self):
         # After connecting we identify ourselves using our ID with the monitor
         the_socket = self.connect_to_host(self._monitor_host, self._monitor_port)
-        the_socket.sendall(b"%-80s" % six.b(self._proxy_id))
+        the_socket.sendall(b"%-80s" % self._proxy_id.encode('utf8'))
         logger.info('Identifying ourselves as %s with monitor', self._proxy_id)
         ok = int(recvall(the_socket, 1))
         if not ok:

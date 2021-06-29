@@ -24,11 +24,10 @@
 import base64
 import contextlib
 import logging
+import pickle
 import socket
 import struct
 import time
-
-import six.moves.cPickle as pickle  # @UnresolvedImport
 
 from . import utils, droputils
 from .apps import pyfunc

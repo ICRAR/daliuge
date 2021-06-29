@@ -24,12 +24,11 @@ Utility methods and classes to be used when interacting with DROPs
 '''
 
 import collections
+import io
 import logging
 import re
 import threading
 import traceback
-
-import six
 
 from .ddap_protocol import DROPStates
 from .drop import AppDROP
@@ -100,7 +99,7 @@ def allDropContents(drop, bufsize=4096):
     '''
     Returns all the data contained in a given DROP
     '''
-    buf = six.BytesIO()
+    buf = io.BytesIO()
     desc = drop.open()
     read = drop.read
 

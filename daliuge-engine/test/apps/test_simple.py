@@ -20,10 +20,9 @@
 #    MA 02111-1307  USA
 #
 import os
+import pickle
 import unittest
 from numpy import random, mean, array
-import six
-import six.moves.cPickle as pickle
 
 
 from dlg import droputils
@@ -133,7 +132,7 @@ class TestSimpleApps(unittest.TestCase):
         h.addOutput(b)
         b.addProducer(h)
         h.execute()
-        self.assertEqual(six.b(h.greeting), droputils.allDropContents(b))
+        self.assertEqual(h.greeting.encode('utf8'), droputils.allDropContents(b))
 
     def test_ngasio(self):
         nd_in = NgasDROP('HelloWorld.txt', 'HelloWorld.txt')
@@ -148,7 +147,7 @@ class TestSimpleApps(unittest.TestCase):
         i.addProducer(b)
         b.addOutput(i)
         self._test_graph_runs((nd_in,b,i,nd_out),nd_in, nd_out, timeout=4)
-        self.assertEqual(six.b("Hello World"), droputils.allDropContents(i))
+        self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
 
 

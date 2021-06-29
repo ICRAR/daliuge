@@ -28,8 +28,6 @@ import shutil
 import tempfile
 import unittest
 
-import six
-
 from dlg import droputils
 from dlg.apps.bash_shell_app import BashShellApp, StreamingInputBashApp,\
     StreamingOutputBashApp, StreamingInputOutputBashApp
@@ -76,7 +74,7 @@ class BashAppTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.async_execute()
-            self.assertEqual(six.b(message), droputils.allDropContents(b))
+            self.assertEqual(message.encode('utf8'), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -101,7 +99,7 @@ class BashAppTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.async_execute()
-            self.assertEqual(six.b(value), droputils.allDropContents(b))
+            self.assertEqual(value.encode('utf8'), droputils.allDropContents(b))
 
         assert_envvar_is_there('DLG_UID', app_uid)
         assert_envvar_is_there('DLG_SESSION_ID', session_id)
@@ -144,7 +142,7 @@ class StreamingBashAppTests(unittest.TestCase):
         # The application executed, finished, and its output was recorded
         for drop in (a,b,c,d):
             self.assertEqual(DROPStates.COMPLETED, drop.status, "Drop %r not COMPLETED: %d" % (drop, drop.status))
-        self.assertEqual([5,4,3,2,1], [int(x) for x in droputils.allDropContents(d).split(six.b('\n'))])
+        self.assertEqual([5,4,3,2,1], [int(x) for x in droputils.allDropContents(d).split(b'\n')])
 
         # Clean up and go
         os.remove(output_fname)
@@ -190,7 +188,7 @@ class StreamingBashAppTests(unittest.TestCase):
         # The application executed, finished, and its output was recorded
         for drop in (a,b,c,d,e,f):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual([1,2,3,4,5], [int(x) for x in droputils.allDropContents(f).strip().split(six.b('\n'))])
+        self.assertEqual([1,2,3,4,5], [int(x) for x in droputils.allDropContents(f).strip().split(b'\n')])
 
         # Clean up and go
         os.remove(output_fname)

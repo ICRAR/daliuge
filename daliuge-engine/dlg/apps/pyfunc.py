@@ -26,17 +26,14 @@ import collections
 import importlib
 import inspect
 import logging
+import pickle
 
 import dill
-import six
-import six.moves.cPickle as pickle  # @UnresolvedImport
 
 from .. import droputils, utils
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-
-_getargsspec = inspect.getargspec if six.PY2 else inspect.getfullargspec
 
 logger = logging.getLogger(__name__)
 
@@ -44,17 +41,17 @@ def serialize_data(d):
     return utils.b2s(base64.b64encode(pickle.dumps(d)))
 
 def deserialize_data(d):
-    return pickle.loads(base64.b64decode(six.b(d)))
+    return pickle.loads(base64.b64decode(d.encode('latin1')))
 
 def serialize_func(f):
 
-    if isinstance(f, six.string_types):
+    if isinstance(f, str):
         parts = f.split('.')
         f = getattr(importlib.import_module('.'.join(parts[:-1])), parts[-1])
 
     fser = dill.dumps(f)
     fdefaults = {}
-    a = _getargsspec(f)
+    a = inspect.getfullargspec(f)
     if a.defaults:
         fdefaults = dict(zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults]))
     logger.debug("Defaults for function %r: %r", f, fdefaults)
@@ -109,8 +106,8 @@ class PyFuncApp(BarrierAppDROP):
         if not fcode:
             self.f = import_using_name(self, fname)
         else:
-            if not isinstance(fcode, six.binary_type):
-                fcode = base64.b64decode(six.b(fcode))
+            if not isinstance(fcode, bytes):
+                fcode = base64.b64decode(fcode.encode('utf8'))
             self.f = import_using_code(fcode)
 
         # Mapping from argname to default value. Should match only the last part
@@ -134,7 +131,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Keyword arguments are made up by the default values plus the inputs
         # that match one of the keyword argument names
-        argnames = _getargsspec(self.f).args
+        argnames = inspect.getfullargspec(self.f).args
         kwargs = {name: inputs.pop(uid)
                   for name, uid in self.func_arg_mapping.items()
                   if name in self.fdefaults or name not in argnames}

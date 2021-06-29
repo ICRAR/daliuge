@@ -21,8 +21,7 @@
 #
 import logging
 import os
-
-from six.moves import urllib_parse as urllib  # @UnresolvedImport
+import urllib.parse
 
 from . import constants
 from .restutils import RestClient
@@ -30,6 +29,8 @@ from .restutils import RestClient
 
 logger = logging.getLogger(__name__)
 compress = os.environ.get('DALIUGE_COMPRESSED_JSON', True)
+
+quote = urllib.parse.quote
 
 class BaseDROPManagerClient(RestClient):
     """
@@ -47,7 +48,7 @@ class BaseDROPManagerClient(RestClient):
         self._POST('/stop')
 
     def cancelSession(self, sessionId):
-        self._POST('/sessions/%s/cancel' % urllib.quote(sessionId))
+        self._POST('/sessions/%s/cancel' % quote(sessionId))
 
     def create_session(self, sessionId):
         """
@@ -64,7 +65,7 @@ class BaseDROPManagerClient(RestClient):
         content = None
         if completed_uids:
             content = {'completed': ','.join(completed_uids)}
-        self._post_form('/sessions/%s/deploy' % (urllib.quote(sessionId),), content)
+        self._post_form('/sessions/%s/deploy' % (quote(sessionId),), content)
         logger.debug('Successfully deployed session %s on %s:%s', sessionId, self.host, self.port)
 
     def append_graph(self, sessionId, graphSpec):
@@ -72,14 +73,14 @@ class BaseDROPManagerClient(RestClient):
         Appends a graph to session `sessionId`, without creating its DROPs yet,
         but checking that the graph looks correct
         """
-        self._post_json('/sessions/%s/graph/append' % (urllib.quote(sessionId),), graphSpec, compress=compress)
+        self._post_json('/sessions/%s/graph/append' % (quote(sessionId),), graphSpec, compress=compress)
         logger.debug('Successfully appended graph to session %s on %s:%s', sessionId, self.host, self.port)
 
     def destroy_session(self, sessionId):
         """
         Destroys session `sessionId`
         """
-        self._DELETE('/sessions/%s' % (urllib.quote(sessionId),))
+        self._DELETE('/sessions/%s' % (quote(sessionId),))
         logger.debug('Successfully deleted session %s on %s:%s', sessionId, self.host, self.port)
 
     def graph_status(self, sessionId):
@@ -87,7 +88,7 @@ class BaseDROPManagerClient(RestClient):
         Returns a dictionary where the keys are DROP UIDs and the values are
         their corresponding status.
         """
-        ret = self._get_json('/sessions/%s/graph/status' % (urllib.quote(sessionId),))
+        ret = self._get_json('/sessions/%s/graph/status' % (quote(sessionId),))
         logger.debug('Successfully read graph status from session %s on %s:%s', sessionId, self.host, self.port)
         return ret
 
@@ -96,7 +97,7 @@ class BaseDROPManagerClient(RestClient):
         Returns a dictionary where the key are the DROP UIDs, and the values are
         the DROP specifications.
         """
-        graph = self._get_json('/sessions/%s/graph' % (urllib.quote(sessionId),))
+        graph = self._get_json('/sessions/%s/graph' % (quote(sessionId),))
         logger.debug('Successfully read graph (%d nodes) from session %s on %s:%s', len(graph), sessionId, self.host, self.port)
         return graph
 
@@ -112,7 +113,7 @@ class BaseDROPManagerClient(RestClient):
         """
         Returns the details of sessions `sessionId`
         """
-        session = self._get_json('/sessions/%s' % (urllib.quote(sessionId),))
+        session = self._get_json('/sessions/%s' % (quote(sessionId),))
         logger.debug('Successfully read session %s from %s:%s', sessionId, self.host, self.port)
         return session
 
@@ -120,7 +121,7 @@ class BaseDROPManagerClient(RestClient):
         """
         Returns the status of session `sessionId`
         """
-        status = self._get_json('/sessions/%s/status' % (urllib.quote(sessionId),))
+        status = self._get_json('/sessions/%s/status' % (quote(sessionId),))
         logger.debug('Successfully read session %s status (%s) from %s:%s', sessionId, status, self.host, self.port)
         return status
 
@@ -128,7 +129,7 @@ class BaseDROPManagerClient(RestClient):
         """
         Returns the size of the graph of session `sessionId`
         """
-        count = self._get_json('/sessions/%s/graph/size' % (urllib.quote(sessionId)))
+        count = self._get_json('/sessions/%s/graph/size' % (quote(sessionId)))
         logger.debug('Successfully read session %s graph size (%d) from %s:%s', sessionId, count, self.host, self.port)
         return count
 
@@ -150,10 +151,10 @@ class NodeManagerClient(BaseDROPManagerClient):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def add_node_subscriptions(self, sessionId, node_subscriptions):
-        self._post_json('/sessions/%s/subscriptions' % (urllib.quote(sessionId),), node_subscriptions)
+        self._post_json('/sessions/%s/subscriptions' % (quote(sessionId),), node_subscriptions)
 
     def trigger_drops(self, sessionId, drop_uids):
-        self._post_json('/sessions/%s/trigger' % (urllib.quote(sessionId),), drop_uids)
+        self._post_json('/sessions/%s/trigger' % (quote(sessionId),), drop_uids)
 
     def shutdown_node_manager(self):
         self._GET('/shutdown')
@@ -184,4 +185,4 @@ class MasterManagerClient(CompositeManagerClient):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def create_island(self, island_host, nodes):
-        self._post_json('/managers/%s/dataisland' % (urllib.quote(island_host)), {'nodes': nodes})
+        self._post_json('/managers/%s/dataisland' % (quote(island_host)), {'nodes': nodes})
