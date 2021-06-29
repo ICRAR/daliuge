@@ -98,10 +98,8 @@ install_requires = [
     "cwlgen",
     "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
-    # Python 3.6 is only supported in NetworkX 2 and above
-    # But we are not compatible with 2.4 yet, so we need to constrain that
-    "networkx<2.4; python_version<'3.6'",
-    "networkx<2.4,>= 2.0; python_version>='3.6.0'",
+    # We are not compatible with networkx 2.4 yet, so we need to constrain that
+    "networkx<2.4",
     "numpy",
     "psutil",
     "pyswarm",
