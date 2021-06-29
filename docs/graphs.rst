@@ -1,26 +1,20 @@
 Graphs
 ------
 
-A processing pipeline or workflow in |daliuge| is described by a Directed Graph where the nodes
-denote both task (application components) and data (data components). The edges denote
-execution dependencies between components. Section :ref:`dlg_functions` has briefly
-introduced graph-based functions in |daliuge|. This section provides implementation
-details in |daliuge|.
+A processing pipeline or workflow in |daliuge| is described by a Directed Graph where the nodes denote both task (application components) and data (data components). The edges denote execution dependencies between components. Section :ref:`dlg_functions` has introduced graph-based functions in |daliuge|. This section provides a more detailed overview of the internals of |daliuge| graphs.
 
 Logical Graph
 ^^^^^^^^^^^^^
 
 A |lg| is a compact representation of the logical operations and data flow in a processing
-pipeline without being concerned about the underlying hardware resources. There are a number of different application and data components available to design logical graphs. In addition to simple components |daliuge| also supports a number of complex components to support the encoding of higher level language operations like loop, scatter, gather and group-by. In particular the scatter complex component allows users to encode possible paralellisation of operations and whole sections of the graph. It should be noted though, whether those parts are really executed in parallel or serial depends on the actual deployment and availability of resources capable of the desired parallelism.  Such complex components are also referred to as *constructs* in a |lg|. 
+workflow without being concerned about the underlying hardware resources. Logical graphs are constructed by domain experts who have a clear idea about the steps required to generate the desired science prducts. Many of the components are very domain specific and there are a number of different radio astronomy application and data components available to design logical graphs representing radio astronomy workflows. In addition to simple components |daliuge| also provides a number of complex components to support the encoding of higher level language operations like loop, scatter, gather and group-by. In particular the scatter complex component allows users to encode possible paralellisation of operations and whole sections of the graph. It should be noted though, whether those parts are really executed in parallel or serial depends on the actual deployment and availability of resources capable of the desired parallelism.  Such complex components are also referred to as *constructs* in a |lg|. *Constructs* are not domain specific, but internally they do refer to simple components, which in turn might be domain specific. For instance a scatter construct might need a very domain specific way of splitting up and preparing the data for every single branch of the scatter.
 
 .. _graphs.figs.scatter:
 
 .. figure:: images/scatter_example.png
 
-   An example of a |lg| with data components (e.g. Data1 - Data5),
-   application components (i.e. Component1 - Component5), and control flow complex components (constructs)
-   (Scatter, Gather, and Group-By). This example can be viewed
-   `online <http://sdp-dfms.ddns.net/lg_editor?lg_name=lofar_cal.json>`_ in |daliuge|.
+   An example of a |lg| with various types of data components as well as simple and complex application components. The graph uses two types of data components, *File* and *Memory*, depicted by respective icons. The titles shown with the icons, e.g. MeasurementSet, buffer, SubCube and Stats, refer to the actual content of those data components. There are two simple application components used in this graph, both are refering to the same application called *Clean*. In addition there are four complex components, one scatter construct (ms-transform) and three gather constructs (ImageConcat, CubeConcat and StatsGather). This example can be viewed
+   `online <https://eagle.icrar.org/?service=GitHub&repository=ICRAR/EAGLE_test_repo&branch=master&path=.&filename=eagle_gather_simple.graph>`_ in EAGLE. (Note: this requires that you have setup EAGLE with a valid gitHUB access token, see `EAGLE help <https://eagle.icrar.org/static/docs/build/html/helloWorld.html#saving-a-graph-to-github>`_)
    
 |Lgs| will be translated into |pgs| and at that point the component descriptions will be turned into *Drop* descriptions (see :ref:`drops`). At execution time these *Drop* descriptions will be instantiated by the execution engine managers.
 
@@ -84,8 +78,8 @@ the following flow constructs:
 
   .. figure:: images/loop_example.png
 
-     A nested-Loop (minor and major cycle) example of |lg| for
-     a continuous imaging pipeline. This example can be `viewed online <http://sdp-dfms.ddns.net/lg_editor?lg_name=cont_img.json>`_ in |daliuge|.
+     A nested-Loop (outer and inner) example of |lg| for
+     a continuous imaging pipeline. This example can be `viewed online <https://eagle.icrar.org/?service=GitHub&repository=ICRAR/EAGLE_test_repo&branch=master&path=loop&filename=nested_loop.graph>`_ in |daliuge|.
 
 * **Branch** indicates conditional execution of sections of a |pg|. Branching (as well as loops) are, maybe surprisingly, tricky cases to deal with in a dataflow and DAG environment. Both of them are either explicitly (loop) or potentially (branch) producing cycles and are thus not directly representable as a DAG and thus it is hard to construct a |pg|. *Branch* constructs have the additional issue that one side of the branch, depending on the condition, might never be executed. Since the condition result in general is only known at runtime, the |pg| that will actually be executed can't be computed upfront and thus scheduling as well as resource planning can only be done as an upper (or lower) limit. Although branches do work in |daliuge|, currently in most of the cases the graph execution will not finish, since the engine can't discard whole |pg| sections based on a runtime condition and thus the graph will never reach the FINISHED state. We will tackle this issue in a future release.
   
@@ -116,7 +110,7 @@ Translation
 While a |lg| provides a compact way to express complex processing logic,
 the complex components or constructs are not directly usable
 by the underlying graph execution engine and Drop managers. To achieve that,
-|lgs| are translated into |pgs|. The translation process makes the parallelism explicit and unrolls loops and creates all Drop descriptions. It is implemented in the :doc:`api/dropmake` module.
+|lgs| are translated into |pgs|. The translation process makes the parallelism explicit and unrolls loops and creates all Drop descriptions. Drops are essentially instances of the components. It is implemented in the :doc:`api/dropmake` module.
 
 Basic steps
 """""""""""
@@ -171,7 +165,7 @@ both *Graph partitioning* and *Resource mapping*.
 
 Scheduling Algorithms
 """""""""""""""""""""
-Scheduling an Acyclic Directed Graph (DAG) that involves graph partitioning and resource mapping as stated in `Basic steps`_
+Optimally scheduling an Acyclic Directed Graph (DAG) that involves graph partitioning and resource mapping as stated in `Basic steps`_
 is known to be an `NP-hard problem <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=210815>`_.
 |daliuge| has tailored several heuristics-based algorithms from previous research on `DAG scheduling <http://dl.acm.org/citation.cfm?id=344618>`_
 and `graph partitioning <http://www.sciencedirect.com/science/article/pii/S0743731597914040>`_ to perform these two steps. These algorithms are currently configured by |daliuge| to utilise uniform hardware resources.
