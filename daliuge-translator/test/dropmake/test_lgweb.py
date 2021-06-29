@@ -53,14 +53,14 @@ class TestLGWeb(unittest.TestCase):
         unittest.TestCase.tearDown(self)
 
     def _generate_pgt(self, c):
-        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
 
     def test_get_lgjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
 
         # a specific one
-        lg = c._get_json('/jsonbody?lg_name=logical_graphs/chiles_simple.json')
+        lg = c._get_json('/jsonbody?lg_name=logical_graphs/chiles_simple.graph')
         self.assertIsNotNone(lg)
 
         # by default the first one found by the lg_web should be returned
@@ -68,26 +68,26 @@ class TestLGWeb(unittest.TestCase):
         self.assertIsNotNone(lg)
 
         # doesn't exist
-        self.assertRaises(RestClientException, c._get_json, '/jsonbody?lg_name=doesnt_exist.json')
+        self.assertRaises(RestClientException, c._get_json, '/jsonbody?lg_name=doesnt_exist.graph')
 
     def test_post_lgjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
 
         # new graphs cannot currently be added
-        form_data = {'lg_name': 'new.json', 'lg_content': '{"id": 1, "name": "example"}'}
+        form_data = {'lg_name': 'new.graph', 'lg_content': '{"id": 1, "name": "example"}'}
         self.assertRaises(RestClientException, c._post_form, '/jsonbody', form_data)
 
         # Replace the contents of an existing one
         # (but replace it back with original after the test)
-        original_fname = os.path.join(lg_dir, 'logical_graphs', 'chiles_simple.json')
+        original_fname = os.path.join(lg_dir, 'logical_graphs', 'chiles_simple.graph')
         copy_fname = tempfile.mktemp()
         shutil.copy(original_fname, copy_fname)
 
         try:
-            form_data['lg_name'] = 'logical_graphs/chiles_simple.json'
+            form_data['lg_name'] = 'logical_graphs/chiles_simple.graph'
             c._post_form('/jsonbody', form_data)
-            new = c._get_json('/jsonbody?lg_name=logical_graphs/chiles_simple.json')
+            new = c._get_json('/jsonbody?lg_name=logical_graphs/chiles_simple.graph')
             self.assertIsNotNone(new)
             self.assertIn('id', new)
             self.assertIn('name', new)
@@ -98,24 +98,24 @@ class TestLGWeb(unittest.TestCase):
 
     def test_gen_pgt(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('127.0.0.1', lgweb_port, 10)
 
         # doesn't exist!
         self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
         # unknown algorithm
-        self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=noidea')
+        self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=noidea')
         # this should work now
         self._generate_pgt(c)
 
     def test_get_pgtjson(self):
 
         c = RestClient('localhost', lgweb_port, 10)
-        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
+        c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
 
         # doesn't exist
         self.assertRaises(RestClientException, c._get_json, '/pgt_jsonbody?pgt_name=unknown.json')
         # good!
-        c._get_json('/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.json')
+        c._get_json('/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph')
 
     def test_get_pgt_post(self):
 
@@ -212,7 +212,7 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
-    def test_pg_viewer(self):
+    def test_pg_viewerer(self):
 
         c = RestClient('localhost', lgweb_port, 10)
         self._generate_pgt(c)
@@ -222,7 +222,7 @@ class TestLGWeb(unittest.TestCase):
         # Defaults to first PGT
         c._GET('/pg_viewer')
         # also fine, PGT exists
-        c._GET('/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.json')
+        c._GET('/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.graph')
 
 
     def _test_pgt_action(self, path, unknown_fails):
@@ -237,7 +237,7 @@ class TestLGWeb(unittest.TestCase):
             c._GET('/' + path + '?pgt_id=unknown.json')
 
         # exists
-        c._GET('/' + path + '?pgt_id=logical_graphs/chiles_simple1_pgt.json')
+        c._GET('/' + path + '?pgt_id=logical_graphs/chiles_simple1_pgt.graph')
 
     def test_show_gantt_chart(self):
         self._test_pgt_action('show_gantt_chart', False)
