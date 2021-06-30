@@ -5,7 +5,7 @@ dlg
 .. contents::
 
 dlg.ddap_protocol
-^^^^^^^^
+^^^^^^^^^^^^^^^^^
 .. automodule:: dlg.ddap_protocol
    :members:
 
@@ -37,7 +37,7 @@ dlg.io
 .. _api.dlg.drop:
 
 dlg.json_drop
-^^^^^^^^^^^
+^^^^^^^^^^^^^
 .. automodule:: dlg.json_drop
    :members:
 
