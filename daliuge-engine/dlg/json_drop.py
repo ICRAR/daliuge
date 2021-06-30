@@ -31,6 +31,9 @@ LOG = logging.getLogger(__name__)
 
 
 class JsonDROP(FileDROP):
+    """
+    Very simple implementation derived from the :class:`FileDROP <dlg.drop.FileDROP>` class
+    """
     def __init__(self, oid, uid, **kwargs):
         self._data = None
         super(JsonDROP, self).__init__(oid, uid, **kwargs)
