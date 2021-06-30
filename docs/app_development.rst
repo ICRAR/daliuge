@@ -6,7 +6,7 @@ to write a new application component that can be used
 as an Application Drop during the execution of a |daliuge| graph.
 
 Types of Application Components
-===============================
+-------------------------------
 
 |daliuge| supports four main types of Application Components.
 
