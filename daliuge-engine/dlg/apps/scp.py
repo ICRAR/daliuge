@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 from ..remote import copyTo, copyFrom
-from ..drop import BarrierAppDROP, ShoreDROP, NgasDROP, InMemoryDROP, \
+from ..drop import BarrierAppDROP, NgasDROP, InMemoryDROP, \
     NullDROP, RDBMSDrop, ContainerDROP
 from ..meta import dlg_string_param, dlg_component, dlg_batch_input, \
     dlg_batch_output, dlg_streaming_input
@@ -42,9 +42,9 @@ class ScpApp(BarrierAppDROP):
     """
     compontent_meta = dlg_component('ScpApp', 'A BarrierAppDROP that copies the content of its single '
                                     'input onto its single output via SSHs scp protocol.',
-                                    [dlg_batch_input('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,
+                                    [dlg_batch_input('binary/*', [NgasDROP, InMemoryDROP,
                                                                   NullDROP, RDBMSDrop, ContainerDROP])],
-                                    [dlg_batch_output('binary/*', [ShoreDROP, NgasDROP, InMemoryDROP,
+                                    [dlg_batch_output('binary/*', [NgasDROP, InMemoryDROP,
                                                                    NullDROP, RDBMSDrop, ContainerDROP])],
                                     [dlg_streaming_input('binary/*')])
 
