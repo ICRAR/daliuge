@@ -147,6 +147,8 @@ if sys.version_info[:2] == (2, 7):
     install_requires.append("zeroconf == 0.19.1")
 elif sys.version_info[:2] <= (3, 4):
     install_requires.append("zeroconf != 0.21.0")
+elif sys.version_info[:2] == (3, 5):
+    install_requires.append("zeroconf < 0.32.0")
 else:
     install_requires.append("zeroconf >= 0.19.1")
 

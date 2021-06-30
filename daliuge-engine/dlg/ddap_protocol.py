@@ -25,14 +25,14 @@ import collections
 class DROPLinkType:
     """
     An enumeration of the different relationships that can exist between DROPs.
-    
+
     Although not explicitly stated in this enumeration, each link type has a
     corresponding inverse. This way, if X is a consumer of Y, Y is an input of
     X. The full list is:
-     * CONSUMER           / INPUT
-     * STREAMING_CONSUMER / STREAMING_INPUT
-     * PRODUCER           / OUTPUT
-     * PARENT             / CHILD
+    * CONSUMER           / INPUT
+    * STREAMING_CONSUMER / STREAMING_INPUT
+    * PRODUCER           / OUTPUT
+    * PARENT             / CHILD
     """
     CONSUMER, STREAMING_CONSUMER, PRODUCER, PARENT, CHILD, INPUT, STREAMING_INPUT, OUTPUT = range(8)
 
