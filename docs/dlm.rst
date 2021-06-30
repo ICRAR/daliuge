@@ -8,13 +8,13 @@ account how and when it is used. This includes, for instance, placing medium-
 and long-term persistent data into the optimal storage media, and to remove
 data that is not used anymore.
 
-The current |daliuge| implementation contains a Data Lifecycle Manager (DLM)
-prototype.  Because of the high coupling that is needed with all the Drops the
+The current |daliuge| implementation contains a Data Lifecycle Manager (DLM).  
+Because of the high coupling that is needed with all the Drops the
 DLM is contained within the :ref:`node_drop_manager` processes, and thus shares
 the same memory space with the Drops it manages. By subscribing to events sent
 by individual Drops it can track their state and react accordingly.
 
-The DLM functionalities currently implemented in the |daliuge| prototype are:
+The DLM functionalities currently implemented in |daliuge| are:
 
 * Automatically expire Drops; i.e., moves them from the **COMPLETED** state
   into the **EXPIRED** state, after which they are not readable anymore.

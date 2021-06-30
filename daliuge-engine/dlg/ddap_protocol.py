@@ -25,7 +25,7 @@ import collections
 class DROPLinkType:
     """
     An enumeration of the different relationships that can exist between DROPs.
-
+    
     Although not explicitly stated in this enumeration, each link type has a
     corresponding inverse. This way, if X is a consumer of Y, Y is an input of
     X. The full list is:
