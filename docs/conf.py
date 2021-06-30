@@ -45,10 +45,34 @@ class Mock(MagicMock):
     def __getattr__(cls, _):
         return MagicMock()
 
-MOCK_MODULES = ("boto3", "botocore", "bottle", "configobj", "crc32c", "dill",
-    "docker", "lockfile", "metis", "netifaces", "networkx", "numpy",
-    "paramiko", "paramiko.client", "paramiko.rsakey", "psutil",
-    "pyswarm", "python-daemon", "pyzmq", "scp", "zeroconf", "zerorpc")
+MOCK_MODULES = (
+ "boto3",
+ "botocore",
+ "bottle",
+ "configobj",
+ "crc32c",
+ "cwlgen",
+ "dill",
+ "docker",
+ "gevent",
+ "lockfile",
+ "metis",
+ "netifaces",
+ "networkx",
+ "numpy",
+ "paramiko",
+ "paramiko.client",
+ "paramiko.rsakey",
+ "psutil",
+ "pyarrow",
+ "pyarrow.plasma",
+ "pyswarm",
+ "python-daemon",
+ "pyzmq",
+ "scp",
+ "zeroconf",
+ "zerorpc"
+)
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
@@ -184,7 +208,7 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
