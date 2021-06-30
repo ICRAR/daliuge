@@ -118,3 +118,5 @@ but there are some minor exceptions:
  * Scripts finding the include directory path for daliuge headers
    using code like ``python -c 'import dlg; print(dlg.get_include_dir())``
    should switch to invoke ``dlg include_dir`` instead.
+
+.. include:: README ray.rst

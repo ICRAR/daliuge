@@ -19,7 +19,7 @@ Setup
 -----
 
 Pre-requisites
-______________
+--------------
 
 First you need to install Ray into your local python virtualenv::
 
@@ -30,7 +30,7 @@ Ray uses a YAML file to configure a deployment and allows to run additional setu
 The rest is then straight forward and just requires to configure a few AWS autoscale specific settings, which includes AWS region, type of head node and type and (maximum and minimum) number of worker nodes as well as whether this is using the Spot market or not. In addition it is required to specify the virtual machine AMI ID, which is a pain to get and different for the various AWS regions. 
 
 Starting the DALiuGE Ray cluster
-________________________________
+--------------------------------
 
 To get DALiuGE up and running in addition to Ray requires just two additional lines for the HEAD and the worker nodes in the YAML file, but there are some caveats as outlined below. With the provided ray configuration YAML file starting a cluster running DALiuGE on AWS is super easy (provided you have your AWS environment set up in place)::
 
