@@ -463,11 +463,11 @@ class Scheduler(object):
     """
     Static Scheduling consists of three steps:
     1. partition the DAG into an optimal number (M) of partitions
-        goal - minimising execution time while maintaining intra-partition DoP
+    goal - minimising execution time while maintaining intra-partition DoP
     2. merge partitions into a given number (N) of partitions (if M > N)
-        goal - minimise logical communication cost while maintaining load balancing
+    goal - minimise logical communication cost while maintaining load balancing
     3. map each merged partition to a resource unit
-        goal - minimise physical communication cost amongst resource units
+    goal - minimise physical communication cost amongst resource units
     """
 
     def __init__(self, drop_list, max_dop=8, dag=None):
@@ -581,14 +581,7 @@ class MySarkarScheduler(Scheduler):
 
     def is_time_critical(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
         """
-        This is called ONLY IF override_cannot_add has returned "True"
-        Parameters:
-            u - node u, v - node v, uw - weight of node u, vw - weight of node v
-            curr_lpl - current longest path length, ow - current edge weight
-            rem_el - remainig edges to be zeroed
-            ow - original edge length
-        Returns:
-            Boolean
+        :return: True
 
         MySarkarScheduler always returns False
         """
@@ -799,10 +792,10 @@ class PSOScheduler(Scheduler):
     The idea is to let "edgezeroing" becomes the search variable X
     The number of dimensions of X is the number of edges in DAG
     Possible values for each dimension is a discrete set {1, 2, 3}
-    where
-        10 - no zero (2 in base10) + 1
-        00 - zero w/o linearisation (0 in base10) + 1
-        01 - zero with linearisation (1 in base10) + 1
+    where:
+    * 10 - no zero (2 in base10) + 1
+    * 00 - zero w/o linearisation (0 in base10) + 1
+    * 01 - zero with linearisation (1 in base10) + 1
 
     if (deadline is present):
         the objective function sets up a partition scheme such that
@@ -990,21 +983,11 @@ class DAGUtil(object):
 
         Returns the longest path in a DAG
         If G has edges with 'weight' attribute the edge data are used as weight values.
-        Parameters
-        ----------
-        G : NetworkX DiGraph
-            Graph
-        weight : string (default 'weight')
-            Edge data key to use for weight
-        default_weight : integer (default 1)
-            The weight of edges that do not have a weight attribute
-        Returns a tuple with two elements
-        -------
-        path : list
-            Longest path
-        path_length : float
-            The length of the longest path
-
+        :param: G Graph (NetworkX DiGraph)
+        :param: weight Edge data key to use for weight (string)
+        :param: default_weight The weight of edges that do not have a weight attribute (integer)
+        :return: a tuple with two elements: `path` (list), the longest path, and
+        `path_length` (float) the length of the longest path.
         """
         dist = {} # stores {v : (length, u)}
         if (topo_sort is None):
@@ -1168,13 +1151,12 @@ class DAGUtil(object):
     def build_dag_from_drops(drop_list, embed_drop=True, fake_super_root=False):
         """
         return a networkx Digraph (DAG)
-        fake_super_root:    whether to create a fake super root node in the DAG
-                            If set to True, it enables edge zero-based
-                            scheduling agorithms to make more aggressive merging
-
-        tw - task weight
-        dw - data weight / volume
+        :param: fake_super_root whether to create a fake super root node in the DAG
+        If set to True, it enables edge zero-based scheduling agorithms to make
+        more aggressive merging
         """
+        # tw - task weight
+        # dw - data weight / volume
         key_dict = dict() # {oid : node_id}
         drop_dict = dict() # {oid : drop}
         out_bound_keys = ['streamingConsumers', 'consumers', 'outputs']
