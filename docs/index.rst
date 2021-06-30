@@ -27,7 +27,8 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  deployment
  overview
  graph_development
- writing_an_application
+ app_development
+ data_development
  examples
  api-index
 
