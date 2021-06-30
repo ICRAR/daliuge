@@ -66,6 +66,16 @@ matrix:
         - git diff-index --quiet HEAD || git commit -m 'doxygen commit'
         - git push
 
+    # Build documentation similarly to how RTD does
+    - name: documentation
+      python: "3.8"
+      before_install:
+      install:
+        - pip install sphinx sphinx-rtd-theme
+      script:
+        - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
+
+
 # We want to use docker during the tests
 services:
  - docker
