@@ -982,9 +982,9 @@ class PGT(object):
             We assume that the MasterDropManager's node is NOT in the node_list
 
         num_islands:
-            >1  - Partitions are "conceptually" clustered into Islands
-            1   - Partitions MAY BE physically merged without generating islands
-                depending on the length of node_list
+            - >1 Partitions are "conceptually" clustered into Islands
+            - 1 Partitions MAY BE physically merged without generating islands
+              depending on the length of node_list
 
         """
         if tpl_nodes_len > 0:  # generate pg_spec template
