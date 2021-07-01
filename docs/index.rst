@@ -11,7 +11,7 @@ Welcome to the Data Activated 流 [#f1]_ Graph Engine (|daliuge|).
 |daliuge|
 is a workflow graph execution framework, specifically designed to support very large scale processing graphs for the reduction of interferometric radio astronomy data sets. DALiuGE has already been used for processing large astronomical datasets in existing radio astronomy projects. It originated from a prototyping activity as part of the SDP Consortium called Data Flow Management System (DFMS). DFMS aimed to prototype the execution framework of the proposed SDP architecture.
 For a complete tour of |daliuge| please read
-our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_.
+our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_. DALiuGE has been used in a project running a `full-scale simulation <http://dx.doi.org/10.1109/SC41405.2020.00006>`_ of the Square Kilometre Array dataflow on the ORNL Summit supercomputer.
 
 .. figure:: images/DALiuGE_naming_rationale.png
 
@@ -27,7 +27,8 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  deployment
  overview
  graph_development
- writing_an_application
+ app_development
+ data_development
  examples
  api-index
 
