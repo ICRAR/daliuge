@@ -48,3 +48,7 @@ References
     Parallel and Distributed Systems, IEEE Transactions on, 25(4), pp.993-1002.
 #.  Bokhari, S.H., 2012. Assignment problems in parallel and distributed
     computing (Vol. 32). Springer Science & Business Media
+#.  R. Wang, et al., "Processing Full-Scale Square Kilometre Array Data on the 
+    Summit Supercomputer," in 2020 SC20: International Conference for High Performance 
+    Computing, Networking, Storage and Analysis (SC), Atlanta, GA, US, 2020 pp. 11-22. 
+    doi: 10.1109/SC41405.2020.00006

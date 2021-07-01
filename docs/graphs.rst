@@ -87,12 +87,11 @@ the following flow constructs:
   
 Repositories
 """"""""""""
-|daliuge| uses EAGLE as a Web-based |lg| editor as the default user interface
-to underlying *logical graph repositories*. Repositories can reside on a local file system, on GitHub or on GitLab. Each |lg| is physically stored in those repositories as a
-JSON-formatted textual file. For example, the JSON file for the continuous
-imaging pipeline as shown partially in :numref:`graphs.figs.loop` can be accessed 
+|daliuge| uses EAGLE, a Web-based |lg| editor as the default user interface
+to underlying logical graph and component repositories. Repositories can reside on a local file system, on GitHub or on GitLab. Each |lg| is physically stored in those repositories as a
+JSON-formatted text file. The JSON format is based on a JSON schema and validated against that as well. The JSON file contains the description of the application and data components used in the graph as nodes, a description of the connection between the nodes (edges and connection ports) and also the description of some of the representation properties required to draw the graph. 
 
-`through HTTP GET <http://sdp-dfms.ddns.net/jsonbody?lg_name=cont_img.json>`_.
+The repositories also contain so-called *palettes*, which represent a collection of components. Users can pick from those components in EAGLE to draw |lgts|. The differentiation between graphs and palettes is somewhat blurry, since any graph can also be used as a collection of components. However, palettes usually contain a superset of components used in any graph derived from them and thus the distinction is still relevant.
 
 
 Usage of |Lgts| and |Lgs|
