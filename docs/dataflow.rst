@@ -1,8 +1,8 @@
 Concepts and Background
 -----------------------
 
-This section briefly introduces key concepts and motivations underpinning
-|daliuge|.
+This section introduces key concepts and motivations underpinning
+the |daliuge| system.
 
 Dataflow
 ^^^^^^^^
@@ -85,10 +85,10 @@ Concretely, we have made the following changes to the existing dataflow model:
 
 .. _dlg_functions:
 
-|daliuge| Functions
-^^^^^^^^^^^^^^^^^^^
-|daliuge| provides eight Graph-based functions as shown in
-:numref:`dataflow.fig.funcs`.
+|daliuge| operational concepts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+As mentioned above, |daliuge| has been developed to enable processing of data from the future Square Kilometre Array (SKA) observatory. To support the SKA operational environment |daliuge| provides eight Graph-based functions as shown in
+:numref:`dataflow.fig.funcs`. The implementation of these operational concepts in general does not restrict the usage of |daliuge| for other use cases, but it is still taylored to meet the SKA requirements.
 
 .. _dataflow.fig.funcs:
 
@@ -96,18 +96,18 @@ Concretely, we have made the following changes to the existing dataflow model:
 
    Graph-based Functions of the |daliuge| Prototype
 
-The :doc:`graphs` section will go through implementation details for each function.
-Here we briefly discuss how they work together in our data-driven framework.
+The :doc:`graphs` section describes the implementation details for each function.
+Here we briefly discuss how they work together to fullfill the SKA requirements.
 
 * First of all, the *Logical Graph Template* (topleft in
   :numref:`dataflow.fig.funcs`) represents high-level
-  data processing capabilities. In the case of SDP, they could be, for example,
+  data processing capabilities. In the case of the SKA Data Processor, they could be, for example,
   "Process Visibility Data" or "Stage Data Products".
 
 * Logical Graph Templates are managed by *LogicalGraph Template
   Repositories* (bottomleft in :numref:`dataflow.fig.funcs`).
   The logical graph template is first selected from this repository for a specific pipeline and
-  is then filled with scheduling block parameters. This generates a *Logical Graph*, expressing a workflow with resource-oblivious dataflow constructs.
+  is then populated with parameters derived from the detailed description of the scheduled science observation. This generates a *Logical Graph*, expressing a workflow with resource-oblivious dataflow constructs.
 
 * Using profiling information of pipeline components executed on specific hardware resources, |daliuge|
   then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes a manifest of all Drops without specifying their physical locations.
