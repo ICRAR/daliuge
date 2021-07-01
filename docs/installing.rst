@@ -49,7 +49,7 @@ Direct Installation
 **NOTE: For most use cases the docker installation described above is recommended.** 
 
 Requirements
-############
+^^^^^^^^^^^^
 
 
 The |daliuge| framework requires no packages apart from those listed in its
@@ -66,7 +66,7 @@ installed on the system:
 * gcc >= 4.8
 
 Installing
-##########
+^^^^^^^^^^
 
 |daliuge| is based on setuptools, and thus it follows the standard python installation
 procedures.
