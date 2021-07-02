@@ -138,6 +138,16 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		return url;
 	};
 
+	var DimSessionLink = function(s) {
+		var url = 'session?sessionId=' + s;
+		if( selectedNode ) { url += '&node=' + selectedNode; }
+		var dimUrlQuery = new URL(window.location.href);
+		var dimUrl = dimUrlQuery.searchParams.get("dim_url");
+		console.log(dimUrl)
+		url+="&dim_url="+dimUrl;
+		return url;
+	};
+
 	var cancelBtnSessionId = function(s) {
 		// console.log(hashCode(s))
 		return "cancelBtn" + hashCode(s);
@@ -178,11 +188,14 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		sizeCells.text(String)
 		sizeCells.exit().remove()
 
+		
+		console.log(DimSessionLink)
+
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
-		    .append('a').attr('href', sessionLink)
+		    .append('a').attr('href', DimSessionLink)
 		    .append('span').classed('fa fa-share', true)
-		statusCells.select('a').attr('href', sessionLink)
+		statusCells.select('a').attr('href', DimSessionLink)
 		statusCells.exit().remove()
 
         var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
