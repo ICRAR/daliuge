@@ -142,12 +142,15 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
 var dimUrlQuery = new URL(window.location.href);
 var dimUrl = dimUrlQuery.searchParams.get("dim_url");
-var dimIP = dimUrl.split("//").pop().split(":").shift();
-var nodeIP = window.location.href.split("http://").slice(1).join('http://').split(":").shift(1);
 
-if(dimUrl){
+if (dimUrl === "null" || !dimUrl){
+	d3.select('#islandDisplay').remove();
+	d3.select('#nodeDisplay').remove();
+}else if(dimUrl){
+	var dimIP = dimUrl.split("//").pop().split(":").shift();
+	var nodeIP = window.location.href.split("http://").slice(1).join('http://').split(":").shift(1);
 	d3.select('#islandDisplay').html("<a href="+dimUrl+">DIM: " + dimIP+"</a>");
-		d3.select('#nodeDisplay').text("/ Node: " + nodeIP + " /");
+	d3.select('#nodeDisplay').text("/ Node: " + nodeIP + " /");
 }
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
