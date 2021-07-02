@@ -54,6 +54,8 @@
 	<div id="graphNameWrapper">
 		<ol id="graphName">
 			<li><a id="local-manager-a"></a></li>
+			<li id="islandDisplay"></li>
+			<li id="nodeDisplay"></li>
 			<li>Session: {{sessionId}}</li>
 		</ol>
 	</div>
@@ -136,6 +138,19 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 	}
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
 	                 status_update_handler, 1000);
+}
+
+var dimUrlQuery = new URL(window.location.href);
+var dimUrl = dimUrlQuery.searchParams.get("dim_url");
+
+if (dimUrl === "null" || !dimUrl){
+	d3.select('#islandDisplay').remove();
+	d3.select('#nodeDisplay').remove();
+}else if(dimUrl){
+	var dimIP = dimUrl.split("//").pop().split(":").shift();
+	var nodeIP = window.location.href.split("http://").slice(1).join('http://').split(":").shift(1);
+	d3.select('#islandDisplay').html("<a href="+dimUrl+">DIM: " + dimIP+"</a>");
+	d3.select('#nodeDisplay').text("/ Node: " + nodeIP + " /");
 }
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
