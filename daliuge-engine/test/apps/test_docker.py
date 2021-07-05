@@ -200,3 +200,15 @@ class DockerTests(unittest.TestCase):
         # Cleanup
         os.unlink(tempFile)
         shutil.rmtree(tempDir)
+
+    def _test_working_dir(self, ensureUserAndSwitch):
+        a = DockerApp('a', 'a', workingDir='/mydir', image='ubuntu:14.04', command='pwd > %o0', ensureUserAndSwitch=ensureUserAndSwitch)
+        b = FileDROP('b', 'b')
+        a.addOutput(b)
+        with DROPWaiterCtx(self, b, 100):
+            a.execute()
+        self.assertEqual(b'/mydir', droputils.allDropContents(b).strip())
+
+    def test_working_dir(self):
+        self._test_working_dir(True)
+        self._test_working_dir(False)

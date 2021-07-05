@@ -82,7 +82,9 @@ class DockerApp(BarrierAppDROP):
     `initialize` time, meaning that the docker images will become available at
     the time the physical graph (which this application is part of) is deployed.
     Docker containers also need a command to be run in them, which should be
-    an available program inside the image.
+    an available program inside the image. Optionally, users can provide a
+    working directory (in the container) under which the command will run
+    via the `workingDir` parameter.
 
     **Input and output**
 
@@ -247,6 +249,15 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Took %.2f [s] to pull image '%s'", (end-start), self._image)
         else:
             logger.debug("Image '%s' found, no need to pull it", self._image)
+
+        # Check if the image specifies a working directory
+        # If it doesn't use the one provided by the user
+        inspection = c.api.inspect_image(self._image)
+        logger.debug("Docker Image inspection: %r", inspection)
+        self.workdir = inspection.get('ContainerConfig', {}).get('WorkingDir', None)
+        if not self.workdir:
+            self.workdir = self._getArg(kwargs, 'workingDir', '/')
+
         c.api.close()
 
         self._containerIp = None
@@ -328,7 +339,7 @@ class DockerApp(BarrierAppDROP):
             createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(uid)
             for dirname in set([os.path.dirname(x.path) for x in dockerOutputs.values()]):
                 createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
-            createUserAndGo += "cd; su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c '{1}'".format(uid, utils.escapeQuotes(cmd, doubleQuotes=False))
+            createUserAndGo += "su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c 'cd {1}; {2}'".format(uid, self.workdir, utils.escapeQuotes(cmd, doubleQuotes=False))
 
             cmd = createUserAndGo
 
@@ -352,6 +363,7 @@ class DockerApp(BarrierAppDROP):
                 volumes=binds,
                 user=user,
                 environment=env,
+                working_dir=self.workdir
         )
         self._containerId = cId = container.id
         logger.info("Created container %s for %r", cId, self)
