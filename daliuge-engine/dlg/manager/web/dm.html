@@ -73,10 +73,10 @@ var resetBtn = d3.select('#resetBtn');
 
 var dimUrlQuery = new URL(window.location.href);
 var dimUrl = dimUrlQuery.searchParams.get("dim_url");
-var dimIP = dimUrl.split("//").pop().split(":").shift();
 var nodeIP = window.location.href.split("http://").slice(1).join('http://').split(":").shift(1);
 
 if(dimUrl){
+	var dimIP = dimUrl.split("//").pop().split(":").shift();
 	d3.select('#islandDisplay').html("<a href="+dimUrl+">DIM: " + dimIP+"</a>");
 		d3.select('#nodeDisplay').text("/ Node: " + nodeIP);
 }
