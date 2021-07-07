@@ -21,6 +21,7 @@
 #
 import unittest
 
+from dlg import runtime
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.manager.session import Session, SessionStates
 from dlg.exceptions import InvalidGraphException
