@@ -127,24 +127,6 @@ function fillOutSettings(){
     document.body.removeChild(element);
   }
 
-  function makeCWL() {
-    var error = "";
-
-    fetch('/pgt_cwl?pgt_name='+pgtName)
-      .then(async resp => {
-        // if fetch was not successful, await the error message in the body of the response
-        if (resp.status !== 200){
-            error = await resp.text();
-            return;
-        }
-        return resp.blob();
-      })
-      .then(blob => {
-        downloadBlob(createZipFilename(pgtName), blob);
-      })
-      .catch(() => alert(error)); // present error, if it occurred
-  }
-
   function zoomToFit() {
     myDiagram.zoomToFit()
     // console.log(myDiagram.viewportBounds.width.toString());
