@@ -27,6 +27,7 @@ import collections
 import inspect
 import logging
 import threading
+import time
 
 from . import constants
 from .. import droputils
@@ -96,6 +97,30 @@ class Session(object):
         self._error_status_listener = None
         self._nm = nm
         self._dropsubs = {}
+
+        class SessionFilter(logging.Filter):
+            def __init__(self, sessionId):
+                self.sessionId = sessionId
+
+            def filter(self, record):
+                if hasattr(record, 'session_id'):
+                    return record.session_id == self.sessionId
+                return False
+
+        fmt = '%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] '
+        fmt += '[%(session_id)10.10s] [%(drop_uid)10.10s] '
+        fmt += '%(name)s#%(funcName)s:%(lineno)s %(message)s'
+        fmt = logging.Formatter(fmt)
+        fmt.converter = time.gmtime
+
+        logdir = utils.getDlgLogsDir()
+        if self._nm is not None:
+            logdir = self._nm.logdir
+        logfile = '%s/dlg_%s' % (logdir, self.sessionId,)
+        self.file_handler = logging.FileHandler(logfile)
+        self.file_handler.setFormatter(fmt)
+        self.file_handler.addFilter(SessionFilter(self.sessionId))
+        logging.root.addHandler(self.file_handler)
 
     @property
     def sessionId(self):
@@ -389,7 +414,8 @@ class Session(object):
         return dict(self._graph)
 
     def destroy(self):
-        pass
+        self.file_handler.close()
+        logging.root.removeHandler(self.file_handler)
 
     __del__ = destroy
 
