@@ -23,7 +23,6 @@ import unittest, pkg_resources
 
 from dlg.dropmake.pg_generator import LG, PGT, MetisPGTP, MySarkarPGTP,\
  MinNumPartsPGTP, GPGTNoNeedMergeException
-from dlg.dropmake.cwl import create_workflow
 from dlg.dropmake import pg_generator
 from dlg.translator.tool_commands import unroll
 
@@ -171,62 +170,6 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             lg.unroll_to_tpl()
 
-    def test_cwl_translate(self):
-        import git
-        import os
-        import shutil
-        import uuid
-        import zipfile
-        import subprocess
-        import tempfile
-
-        output_list = []
-
-        # create a temporary directory to contain files created during test
-        cwl_output = tempfile.mkdtemp()
-
-        # create a temporary directory to contain a clone of EAGLE_test_repo
-        direct = tempfile.mkdtemp()
-
-        REPO = "https://github.com/ICRAR/EAGLE_test_repo"
-        git.Git(direct).clone(REPO)
-
-        cwl_dir = os.getenv("CWL_GRAPHS", "SP-602")
-
-        graph_dir = direct + "/EAGLE_test_repo/" + cwl_dir + "/"
-        for subdir, dirs, files in os.walk(graph_dir):
-            for file in files:
-                f = os.path.join(subdir, file)
-                if not f.endswith(".graph"):
-                    continue
-                pgt = unroll(f, 1)
-                pg_generator.partition(pgt, algo='metis', num_partitions=1,
-                                            num_islands=1, partition_label='partition')
-
-                uid = str(uuid.uuid4())
-                cwl_output_dir = cwl_output + '/' + uid
-                os.mkdir(cwl_output_dir)
-                cwl_out = cwl_output_dir + '/workflow.cwl'
-                cwl_out_zip = cwl_output_dir + '/workflow.zip'
-                output_list.append((cwl_out, cwl_out_zip))
-
-                create_workflow(pgt, 'workflow.cwl', cwl_out_zip)
-
-        for out, zip in output_list:
-            zip_ref = zipfile.ZipFile(zip)
-            zip_ref.extractall(os.path.dirname(zip))
-            zip_ref.close()
-
-            cmd = ['cwltool', '--validate', out]
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            self.assertEqual(p.returncode, 0, b'stdout:\n' + stdout + b'\nstderr:\n' + stderr)
-
-        # delete the clone of EAGLE_test_repo
-        shutil.rmtree(direct, ignore_errors=True)
-
-        # delete the temporary output directory
-        shutil.rmtree(cwl_output, ignore_errors=True)
 
     def test_plasma_graph(self):
         # test loading of Plasma graph
