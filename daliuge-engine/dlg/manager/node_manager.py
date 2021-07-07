@@ -109,10 +109,12 @@ class NodeManagerBase(DROPManager):
                  dlgPath=None,
                  error_listener=None,
                  event_listeners=[],
-                 max_threads = 0):
+                 max_threads=0,
+                 logdir=utils.getDlgLogsDir()):
 
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
+        self.logdir = logdir
 
         # dlgPath contains code added by the user with possible
         # DROP applications
@@ -472,6 +474,7 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer): pass
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
 
     def __init__(self, useDLM=True, dlgPath=None, error_listener=None, event_listeners=[], max_threads=0,
+                 logdir=utils.getDlgLogsDir(),
                  host=None, rpc_port=constants.NODE_DEFAULT_RPC_PORT,
                  events_port=constants.NODE_DEFAULT_EVENTS_PORT):
         # We "just know" that our RpcMixIn will have a create_context static
@@ -480,7 +483,7 @@ class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
         host = host or '127.0.0.1'
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
-        NodeManagerBase.__init__(self, useDLM, dlgPath, error_listener, event_listeners, max_threads)
+        NodeManagerBase.__init__(self, useDLM, dlgPath, error_listener, event_listeners, max_threads, logdir)
 
     def shutdown(self):
         super(NodeManager, self).shutdown()
