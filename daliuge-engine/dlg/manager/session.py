@@ -103,12 +103,10 @@ class Session(object):
                 self.sessionId = sessionId
 
             def filter(self, record):
-                if hasattr(record, 'session_id'):
-                    return record.session_id == self.sessionId
-                return False
+                return getattr(record, 'session_id', None) == self.sessionId
 
         fmt = '%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] '
-        fmt += '[%(session_id)10.10s] [%(drop_uid)10.10s] '
+        fmt += '[%(drop_uid)10.10s] '
         fmt += '%(name)s#%(funcName)s:%(lineno)s %(message)s'
         fmt = logging.Formatter(fmt)
         fmt.converter = time.gmtime
