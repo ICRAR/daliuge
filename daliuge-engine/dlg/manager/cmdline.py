@@ -264,7 +264,8 @@ def dlgNM(parser, args):
                         'host': options.host,
                         'error_listener': options.errorListener,
                         'event_listeners': list(filter(None, options.event_listeners.split(":"))),
-                        'max_threads': options.max_threads}
+                        'max_threads': options.max_threads,
+                        'logdir': options.logdir}
     options.dmAcronym = 'NM'
     options.restType = NMRestServer
 
@@ -290,7 +291,8 @@ def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
     # Add DIM-specific options
     options.dmType = dmType
     options.dmArgs = ([s for s in options.nodes.split(',') if s],)
-    options.dmKwargs = {'pkeyPath': options.pkeyPath, 'dmCheckTimeout': options.dmCheckTimeout}
+    options.dmKwargs = {'pkeyPath': options.pkeyPath,
+                        'dmCheckTimeout': options.dmCheckTimeout}
     options.dmAcronym = acronym
     options.restType = dmRestServer
 
