@@ -109,7 +109,7 @@
 		var rows = d3.select(selector).selectAll('tr').data(data);
 		var newRow = rows.enter().append('tr');
 		var nodeName = String;
-		newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
+		newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0)
 		newRow.append('td').classed('id', true)
 			.append('a').attr("href", nodeHref).text(String);
 		newRow.append('td').classed('details', true)
