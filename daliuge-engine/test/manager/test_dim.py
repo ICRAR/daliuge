@@ -27,6 +27,7 @@ import unittest
 
 import pkg_resources
 
+from dlg import runtime
 from dlg import droputils
 from dlg import utils
 from dlg.common import tool, Categories
