@@ -353,6 +353,7 @@ class LGNode:
                 )
 
     def is_branch(self):
+        # This is the only special thing required for a branch
         return self._jd["category"] == Categories.BRANCH
 
     @property
@@ -477,7 +478,7 @@ class LGNode:
                             self._dop = int(self.jd[kw])
                             break
                     if self._dop is None:
-                        self._dop = 4  # dummy impl.
+                        self._dop = 4  # dummy impl. TODO: Why is this here?
                 elif self.is_gather():
                     try:
                         tlgn = self.inputs[0]
@@ -590,7 +591,7 @@ class LGNode:
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
         elif (
-            drop_type in [Categories.COMPONENT, Categories.PYTHON_APP]
+            drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]
         ):  # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -763,32 +764,10 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(drop_spec)
-        elif drop_type == Categories.BRANCH:
-            # create an App first
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": "app",
-                    "app": "dlg.apps.simple.SleepApp",
-                    "rank": rank,
-                }
-            )
-            dropSpec_null = dropdict(
-                {
-                    "oid": "{0}-null_drop".format(oid),
-                    "type": "plain",
-                    "storage": Categories.NULL,
-                    "nm": "null",
-                    "dw": 0,
-                    "rank": rank,
-                }
-            )
-            kwargs["null_drop"] = dropSpec_null
-            kwargs["tw"] = 0
-            kwargs["sleepTime"] = 1
-            drop_spec.addOutput(dropSpec_null)
-            dropSpec_null.addProducer(drop_spec)
+        # elif drop_type == Categories.BRANCH:
+        # Branches are now dealt with like any other application and essentially ignored by the translator.
         elif drop_type in [Categories.START, Categories.END]:
+            # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
                 {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
             )
@@ -988,7 +967,8 @@ class PGT(object):
         """
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
-            # TODO proper branch
+            # TODO proper 
+            # Looks like we don't need too much anymore
 
         if node_list is None or 0 == len(node_list):
             raise GPGTException("Node list is empty!")
@@ -1953,12 +1933,6 @@ class LG:
                     )
                 )
             # raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
-        elif src.is_branch():
-            if tgt.jd["category"] not in APP_DROP_TYPES and (not tgt.is_end_node()):
-                raise GInvalidLink(
-                    "Branch {0}'s output {1} must be Component".format(src.id, tgt.id)
-                )
-
         if tgt.is_groupby():
             if src.is_group():
                 raise GInvalidLink(
@@ -1983,11 +1957,6 @@ class LG:
                         tgt.id, src.id
                     )
                 )
-        elif tgt.is_branch():
-            if not src.jd["category"] in STORAGE_TYPES:
-                raise GInvalidLink(
-                    "Branch {0}'s input {1} should be Data".format(tgt.id, src.id)
-                )
 
         if src.is_groupby() and not tgt.is_gather():
             raise GInvalidLink(
@@ -1995,17 +1964,6 @@ class LG:
                     src.id, tgt.id
                 )
             )
-
-        elif src.is_branch():
-            o = src.outputs
-            if len(o) < 2:
-                pass
-            else:
-                raise GInvalidLink(
-                    "Branch {0} must have two outputs, but it has {1} now".format(
-                        src.id, len(o)
-                    )
-                )
 
         if not src.h_related(tgt):
             ll = src.group
@@ -2147,9 +2105,7 @@ class LG:
             # TODO !!
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
-            if lgn.is_branch():
-                self._drop_dict["new_added"].append(src_drop["null_drop"])
-            elif lgn.is_start_listener():
+            if lgn.is_start_listener():
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
 
     @staticmethod
@@ -2201,9 +2157,7 @@ class LG:
         """
         """
         sdrop = None
-        if slgn.is_branch():
-            sdrop = src_drop["null_drop"]
-        elif slgn.is_gather():
+        if slgn.is_gather():
             # sdrop = src_drop['gather-data_drop']
             pass
         elif slgn.is_groupby():
@@ -2533,10 +2487,6 @@ class LG:
         for lid, lgn in self._done_dict.items():
             if (lgn.is_start_node() or lgn.is_end_node()) and lid in self._drop_dict:
                 del self._drop_dict[lid]
-            elif lgn.is_branch():
-                for branch_drop in self._drop_dict[lid]:
-                    if "null_drop" in branch_drop:
-                        del branch_drop["null_drop"]
             elif lgn.is_start_listener():
                 for sl_drop in self._drop_dict[lid]:
                     if "listener_drop" in sl_drop:
