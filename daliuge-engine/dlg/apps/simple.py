@@ -28,7 +28,7 @@ import time
 import numpy as np
 
 from .. import droputils, utils
-from ..drop import BarrierAppDROP, ContainerDROP
+from ..drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
 from ..meta import dlg_float_param, dlg_string_param
 from ..meta import dlg_bool_param, dlg_int_param
 from ..meta import dlg_component, dlg_batch_input
@@ -373,3 +373,16 @@ class UrlRetrieveApp(BarrierAppDROP):
         for o in outs:
             o.len = len(content)
             o.write(content)  # send content to all outputs
+
+class SimpleBranch(BranchAppDrop, NullBarrierApp):
+    """Simple branch app that is told the result of its condition"""
+
+    def initialize(self, **kwargs):
+        self.result = self._getArg(kwargs, 'result', True)
+        BranchAppDrop.initialize(self, **kwargs)
+
+    def run(self):
+        pass
+
+    def condition(self):
+        return self.result
