@@ -26,6 +26,7 @@ import os, unittest
 import random
 import shutil
 import sqlite3
+import string
 import tempfile
 
 from dlg import droputils
@@ -35,6 +36,7 @@ from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
+from dlg.apps.simple import NullBarrierApp, SimpleBranch
 
 
 try:
@@ -780,5 +782,125 @@ class TestDROP(unittest.TestCase):
         finally:
             os.unlink(dbfile)
 
-if __name__ == '__main__':
-    unittest.main()
+class BranchAppDropTests(unittest.TestCase):
+    """Tests for the BranchAppDrop class"""
+
+    def _simple_branch_with_outputs(self, result, uids):
+        a = SimpleBranch(uids[0], uids[0], result=result)
+        b, c = (InMemoryDROP(x, x) for x in uids[1:])
+        a.addOutput(b)
+        a.addOutput(c)
+        return a, b, c
+
+    def _assert_drop_in_status(self, drop, status, execStatus):
+        self.assertEqual(drop.status, status, f'{drop} has status {drop.status} != {status}')
+        if isinstance(drop, AppDROP):
+            self.assertEqual(drop.execStatus, execStatus, f'{drop} has execStatus {drop.execStatus} != {execStatus}')
+
+    def _assert_drop_complete_or_skipped(self, drop, complete_expected):
+        if complete_expected:
+            self._assert_drop_in_status(drop, DROPStates.COMPLETED, AppDROPStates.FINISHED)
+        else:
+            self._assert_drop_in_status(drop, DROPStates.SKIPPED, AppDROPStates.SKIPPED)
+
+    def _test_single_branch_graph(self, result, levels):
+        """
+        Test this graph, where each level appends one drop to each branch
+
+            ,-- true --> B --> ...
+        A ---- false --> C --> ...
+        """
+        a, b, c = self._simple_branch_with_outputs(result, 'abc')
+        last_true = b
+        last_false = c
+        all_drops = [a, b, c]
+
+        # all_uids is ['de', 'fg', 'hi', ....]
+        all_uids = [string.ascii_lowercase[i: i + 2]
+                    for i in range(3, len(string.ascii_lowercase), 2)]
+
+        for level, uids in zip(range(levels), all_uids):
+            if level % 2:
+                x, y = (InMemoryDROP(uid, uid) for uid in uids)
+                last_true.addOutput(x)
+                last_false.addOutput(y)
+            else:
+                x, y  = (NullBarrierApp(uid, uid) for uid in uids)
+                last_true.addConsumer(x)
+                last_false.addConsumer(y)
+            all_drops += [x, y]
+            last_true = x
+            last_false = y
+
+        with DROPWaiterCtx(self, [last_true, last_false], 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]):
+                a.async_execute()
+
+        # Depending on "result", the "true" branch will be run or skipped
+        self._assert_drop_complete_or_skipped(last_true, result)
+        self._assert_drop_complete_or_skipped(last_false, not result)
+
+    def test_simple_branch(self):
+        """Check that simple branch event transmission wroks"""
+        self._test_single_branch_graph(True, 0)
+        self._test_single_branch_graph(False, 0)
+
+    def test_simple_branch_one_level(self):
+        """Like test_simple_branch_app, but events propagate downstream one level"""
+        self._test_single_branch_graph(True, 1)
+        self._test_single_branch_graph(False, 1)
+
+    def test_simple_branch_two_levels(self):
+        """Like test_skipped_propagates, but events propagate more levels"""
+        self._test_single_branch_graph(True, 2)
+        self._test_single_branch_graph(False, 2)
+
+    def test_simple_branch_more_levels(self):
+        for levels in (3, 4, 5, 6, 7):
+            self._test_single_branch_graph(True, levels)
+            self._test_single_branch_graph(False, levels)
+
+    def _test_multi_branch_graph(self, *results):
+        """
+        Test this graph, each level appends a new branch to the first output
+        of the previous branch.
+
+            ,- false --> C         ,- false --> F
+        A ----- true --> B --> D ----- true --> E --> ...
+        """
+
+        a, b, c = self._simple_branch_with_outputs(results[0], 'abc')
+        all_drops = [a, b, c]
+        last_first_output = b
+
+        # all_uids is ['de', 'fg', 'hi', ....]
+        all_uids = [string.ascii_lowercase[i: i + 3]
+                    for i in range(4, len(string.ascii_lowercase), 3)]
+
+        for uids, result in zip(all_uids, results[1:]):
+            x, y, z = self._simple_branch_with_outputs(result, uids)
+            all_drops += [x, y, z]
+            last_first_output.addConsumer(x)
+            last_first_output = y
+
+        with DROPWaiterCtx(self, all_drops, 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]):
+                a.async_execute()
+
+        # TODO: Checking each individual drop depending on "results" would be a
+        # tricky business, so we are skipping that check for now.
+
+    def test_multi_branch_one_level(self):
+        """Check that simple branch event transmission wroks"""
+        self._test_multi_branch_graph(True)
+        self._test_multi_branch_graph(False)
+
+    def test_multi_branch_two_levels(self):
+        """Like test_simple_branch_app, but events propagate downstream one level"""
+        self._test_multi_branch_graph(True, True)
+        self._test_multi_branch_graph(True, False)
+        self._test_multi_branch_graph(False, False)
+
+    def test_multi_branch_more_levels(self):
+        """Like test_skipped_propagates, but events propagate more levels"""
+        for levels in (3, 4, 5, 6, 7):
+            self._test_multi_branch_graph(True, levels)
+            self._test_multi_branch_graph(False, levels)
