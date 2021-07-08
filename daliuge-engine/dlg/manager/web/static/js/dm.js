@@ -21,8 +21,8 @@
 //
 
 var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled']
-var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled']
-var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled']
+var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled', 'skipped']
+var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled', 'skipped']
 var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
 var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
@@ -485,7 +485,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				var cur_status = get_status_name(curVal);
-				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled');
+				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled' || cur_status == 'skipped');
 			}, true);
 			if (!allCompleted) {
 				d3.timer(updateStates, delay);
