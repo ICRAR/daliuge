@@ -82,6 +82,10 @@ svg {
   color: #700000;
 }
 
+.node.skipped :first-child, rect.skipped {
+  fill: #53c4f6;
+}
+
 /* AppDROP states */
 .node.not_run :first-child, rect.not_run {
   fill: #ffe;
