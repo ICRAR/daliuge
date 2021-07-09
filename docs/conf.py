@@ -51,7 +51,6 @@ MOCK_MODULES = (
  "bottle",
  "configobj",
  "crc32c",
- "cwlgen",
  "dill",
  "docker",
  "gevent",
