@@ -11,11 +11,13 @@ case "$1" in
         echo "Build finished!"
         exit 1 ;;
     "dev")
+        C_TAG="master"
+        [[ ! -z "$2" ]] && C_TAG=$2
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        echo "Building daliuge-translator development version using daliuge-common:master"
+        echo "Building daliuge-translator development version using daliuge-common:${C_TAG}"
         # The complete casa and arrow installation is only required for the Plasma streaming
         # and should not go much further.
-        docker build --build-arg VCS_TAG=master --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished!"
         exit 1;;
     "casa")
