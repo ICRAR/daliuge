@@ -21,8 +21,8 @@
 //
 
 var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled']
-var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled']
-var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled']
+var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled', 'skipped']
+var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled', 'skipped']
 var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
 var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
 
@@ -165,7 +165,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		var sessions = response;
 		sessions.sort(function comp(a,b) {
-			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
+			return (a.sessionId > b.sessionId) ? -1 : (a.sessionId < b.sessionId);
 		});
 		// console.log(sessions[0]);
 		var rows = tbodyEl.selectAll('tr').data(sessions);
@@ -179,9 +179,13 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
 		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
-		statusCells.text(function(s) {return sessionStatusToString(s)});
-		statusCells.append('svg');
+		statusCells.text(function(s) {return sessionStatusToString(s)})
 		statusCells.exit().remove()
+
+		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
+		sizeCells.enter().append('td').classed('size', true).text(String)
+		sizeCells.text(String)
+		sizeCells.exit().remove()
 
 		//WIP statusbars in dim
 
@@ -230,16 +234,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
 			rects.exit().remove();
 		};
-		
-
-		startStatusQuery(serverUrl, sessions[0].sessionId, selectedNode, graph_update_handler,
-			status_update_handler, 1000);
-			
-
-		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
-		sizeCells.enter().append('td').classed('size', true).text(String)
-		sizeCells.text(String)
-		sizeCells.exit().remove()
 
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
@@ -264,6 +258,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			});
 		})
 
+		
 		//update status colours and hide cancel button if finished or cancelled
 		$(".status").each(function(){
 			var currentStatus = $(this).html()
@@ -274,10 +269,15 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				$(this).css("color","blue");
 			}
 			else if (currentStatus==="Running") {
-				$(this).css("color","orange");
-			}else{
+				$(this).text("");
+				$(this).append("<svg>")
+				startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
+					status_update_handler, 1000);
+			}else if (currentStatus==="Finished"){
 				$(this).css("color","#00af28");
 				$(this).parent().find(".actions").find("button").hide();
+			}else{
+				$(this).css("color","purple");
 			}
 		})
 		
@@ -428,9 +428,6 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			if (status == 3 || status == 4 || status == 5) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				                        status_update_handler);
-
-
-									//WIP this?
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
@@ -538,7 +535,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				var cur_status = get_status_name(curVal);
-				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled');
+				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled' || cur_status == 'skipped');
 			}, true);
 			if (!allCompleted) {
 				d3.timer(updateStates, delay);
