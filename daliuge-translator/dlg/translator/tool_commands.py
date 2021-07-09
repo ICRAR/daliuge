@@ -285,25 +285,6 @@ def dlg_submit(parser, args):
         submit(json.load(f), opts)
 
 
-def cwl(parser, args):
-    tool.add_logging_options(parser)
-    _add_output_options(parser)
-    parser.add_option('-P', '--physical-graph-template', action='store', dest='pgt_path', type='string',
-                      help='Path to the Physical Graph Template (default: stdin)', default='-')
-    (opts, args) = parser.parse_args(args)
-    tool.setup_logging(opts)
-
-    # load the pgt
-    with _open_i(opts.pgt_path) as fi:
-        pgt = json.load(fi)
-
-    # create the CWL workflow
-    from ..dropmake.cwl import create_workflow
-
-    # write to file
-    with _open_o(opts.output, "wb") as f:
-        create_workflow(pgt, "workflow.cwl", f)
-
 def register_commands():
     tool.cmdwrap('lgweb', 'A Web server for the Logical Graph Editor', 'dlg.dropmake.web.lg_web:run')
     tool.cmdwrap('submit', 'Submits a Physical Graph to a Drop Manager', dlg_submit)
@@ -312,4 +293,3 @@ def register_commands():
     tool.cmdwrap('partition', 'Divides a Physical Graph Template into N logical partitions', dlg_partition)
     tool.cmdwrap('unroll-and-partition', 'unroll + partition', dlg_unroll_and_partition)
     tool.cmdwrap('fill', 'Fill a Logical Graph with parameters', fill)
-    tool.cmdwrap('cwl', 'Translate a Logical Graph into a Common Workflow Language (CWL) workflow', cwl)

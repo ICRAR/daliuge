@@ -13,9 +13,7 @@ RUN git clone https://github.com/ICRAR/daliuge && \
     pip install .  && \
     cd ../daliuge-translator  && \
     pip install .  && \
-    pip uninstall -y cwlgen && \
     rm -rf /root/anaconda3/lib/python3.7/site-packages/ruamel_yaml* && \
-    pip install cwlgen && \
     apt remove -y gcc  && \
     apt install -y vim && \
     rm -rf /usr/lib/gcc  && \
