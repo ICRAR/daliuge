@@ -109,10 +109,12 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
                 data['group_axis'] = fields['group_axis']
             elif category == Categories.GATHER:
                 data['num_of_inputs'] = fields['num_of_inputs']
-                data['gather_axis'] = fields['gather_axis']
+                if 'gather_axis' in fields.keys():
+                    data['gather_axis'] = fields['gather_axis']
             elif category == Categories.SCATTER:
                 data['num_of_copies'] = fields['num_of_copies']
-                data['scatter_axis'] = fields['scatter_axis']
+                if 'scatter_axis' in fields.keys():
+                    data['scatter_axis'] = fields['scatter_axis']
             elif category == Categories.LOOP:
                 data['num_of_iter'] = fields['num_of_iter']
         elif category_type == 'Control':
