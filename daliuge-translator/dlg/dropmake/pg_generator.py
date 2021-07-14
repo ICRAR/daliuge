@@ -306,7 +306,7 @@ class LGNode:
             gs = self.jd["group_start"]
             if type(gs) == type(True):
                 result = gs
-            elif type(gs == type(1)):
+            elif type(gs) == type(1):
                 result = (1 == gs)
             elif type(gs) == type("s"):
                 result = gs.lower() in ("true")        
