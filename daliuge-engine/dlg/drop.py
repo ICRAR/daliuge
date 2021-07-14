@@ -1143,8 +1143,15 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
 
-        # here we set the size
-        self._size = os.stat(self.path).st_size
+        # here we set the size. It could happen that nothing is written into
+        # this file, in which case we create an empty file so applications
+        # downstream don't fail to read
+        try:
+            self._size = os.stat(self.path).st_size
+        except FileNotFoundError:
+            with open(self.path, 'wb'):
+                pass
+            self._size = 0
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.COMPLETED)
 
