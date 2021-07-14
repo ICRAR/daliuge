@@ -36,7 +36,7 @@ from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, SimpleBranch
+from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 
 try:
@@ -131,6 +131,17 @@ class TestDROP(unittest.TestCase):
         self.assertNotEqual(a.checksum, 0)
         self.assertEqual(a.checksum, test_crc)
         self.assertEqual(cChecksum, test_crc)
+
+    def test_no_write_to_file_drop(self):
+        """Check that FileDrops can be *not* written"""
+        a = FileDROP('a', 'a')
+        b = SleepAndCopyApp('b', 'b')
+        c = InMemoryDROP('c', 'c')
+        a.addConsumer(b)
+        b.addOutput(c)
+        with DROPWaiterCtx(self, c):
+            a.setCompleted()
+        self.assertEqual(droputils.allDropContents(c), b'')
 
     def test_simple_chain(self):
         '''
