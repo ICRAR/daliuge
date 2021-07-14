@@ -306,10 +306,10 @@ class LGNode:
             gs = self.jd["group_start"]
             if type(gs) == type(True):
                 result = gs
-            elif type(gs) == type(1):
+            elif type(gs) in [type(1), type(1.)]:
                 result = (1 == gs)
             elif type(gs) == type("s"):
-                result = gs.lower() in ("true")        
+                result = gs.lower() in ("true", "1")        
         return result
 
 
@@ -320,10 +320,10 @@ class LGNode:
             ge = self.jd["group_end"]
             if type(ge) == type(True):
                 result = ge
-            elif type(ge) == type(1):
+            elif type(ge) in [type(1), type(1.)]:
                 result = (1 == ge)
             elif type(ge) == type("s"):
-                result = ge.lower() in ("true")
+                result = ge.lower() in ("true", "1")
         return result
     
     def is_group(self):
