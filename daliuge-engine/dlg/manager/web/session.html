@@ -97,7 +97,6 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
 	var status_update_handler = function(statuses)
 	{
-			console.log("status_counts");
 
 		var states = ['completed', 'finished',
 		              'running', 'writing',
@@ -162,7 +161,7 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-progress-bar').remove();
 
 	const heightValue = 300;
-const widthValue = 600;
+	const widthValue = 600;
 	// Set up zoom support
 	var svg = d3.select("svg");
 	
