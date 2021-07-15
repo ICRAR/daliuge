@@ -159,6 +159,9 @@ class NodeManagerClient(BaseDROPManagerClient):
     def shutdown_node_manager(self):
         self._GET('/shutdown')
 
+    def get_log_file(self, sessionId):
+        return self._request(f'/sessions/{sessionId}/logs', 'GET')
+
 class CompositeManagerClient(BaseDROPManagerClient):
 
     def nodes(self):
