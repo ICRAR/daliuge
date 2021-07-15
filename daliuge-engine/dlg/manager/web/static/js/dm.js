@@ -260,24 +260,31 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		//update status colours and hide cancel button if finished or cancelled
 		$(".status").each(function(){
 			var currentStatus = $(this).html()
+
 			if(currentStatus==="Cancelled"){
 				$(this).css("color","grey");
 				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().removeClass("progressRunning")
 			}else if(currentStatus==="Deploying"){
 				$(this).css("color","blue");
+				$(this).parent().removeClass("progressRunning")
 			}
 			else if (currentStatus==="Running") {
-				console.log("hi")
 				$(this).text("");
 				$(this).parent().find(".actions").find("button").show();
 				$(this).append("<svg>")
-				startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
-					status_update_handler, 1000);
+				if(!$(this).parent().hasClass('progressRunning')){
+					startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
+						status_update_handler, 1000);
+					$(this).parent().addClass("progressRunning")
+				}
 			}else if (currentStatus==="Finished"){
 				$(this).css("color","#00af28");
 				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().removeClass("progressRunning")
 			}else{
 				$(this).css("color","purple");
+				$(this).parent().removeClass("progressRunning")
 			}
 		})
 		
