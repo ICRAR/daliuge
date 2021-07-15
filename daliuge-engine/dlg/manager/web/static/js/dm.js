@@ -194,7 +194,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		
 		console.log(width)
 		var status_update_handler = function(statuses){
-			//doesnt enter
 			console.log("status_counts");
 			var states = ['completed', 'finished',
 						'running', 'writing',
@@ -224,7 +223,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			});
 			var rects = d3.select('#sessionsTable .status svg').selectAll('rect').data(status_counts);
 			rects.enter().append('rect')
-				.style('height', 20).style('width', 0).style('x', 0).style('y', 20)
+				.style('height', 20).style('width', 0).style('x', 0).style('y', 0)
 				.transition().delay(0).duration(500)
 				.style('x', function(d) { return d[0] + 20; })
 				.style('width', function(d) { return d[1]; })
@@ -257,7 +256,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				cancel_session(serverUrl, session.sessionId, cancelSessionBtn); 
 			});
 		})
-
 		
 		//update status colours and hide cancel button if finished or cancelled
 		$(".status").each(function(){
@@ -269,7 +267,9 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				$(this).css("color","blue");
 			}
 			else if (currentStatus==="Running") {
+				console.log("hi")
 				$(this).text("");
+				$(this).parent().find(".actions").find("button").show();
 				$(this).append("<svg>")
 				startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
 					status_update_handler, 1000);
