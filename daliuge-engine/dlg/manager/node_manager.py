@@ -217,6 +217,9 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].getGraph()
 
+    def getLogDir(self):
+        return self.logdir
+
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
