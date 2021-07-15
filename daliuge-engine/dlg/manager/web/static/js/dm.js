@@ -187,14 +187,12 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		sizeCells.text(String)
 		sizeCells.exit().remove()
 
-		//WIP statusbars in dim
+		//progressbars in dim
 
 		const width = $('#sessionsTable').find('.status').innerWidth();
 		var graph_update_handler = function(oids, dropSpecs) {};
 		
-		console.log(width)
 		var status_update_handler = function(statuses){
-			console.log("status_counts");
 			var states = ['completed', 'finished',
 						'running', 'writing',
 						'error', 'expired', 'deleted',
