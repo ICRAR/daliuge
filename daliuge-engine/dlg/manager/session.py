@@ -28,6 +28,7 @@ import inspect
 import logging
 import threading
 import time
+import socket
 
 from . import constants
 from .. import droputils
@@ -66,6 +67,13 @@ class LeavesCompletionListener(object):
 
 
 track_current_session = utils.object_tracking('session')
+
+
+def generateLogFileName(logdir, sessionId):
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
+    return f'{logdir}/dlg_{ip}_{sessionId}.log'
+
 
 class Session(object):
     """
@@ -114,7 +122,7 @@ class Session(object):
         logdir = utils.getDlgLogsDir()
         if self._nm is not None:
             logdir = self._nm.logdir
-        logfile = '%s/dlg_%s' % (logdir, self.sessionId,)
+        logfile = generateLogFileName(logdir, self.sessionId)
         self.file_handler = logging.FileHandler(logfile)
         self.file_handler.setFormatter(fmt)
         self.file_handler.addFilter(SessionFilter(self.sessionId))
