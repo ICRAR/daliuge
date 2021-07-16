@@ -41,9 +41,9 @@ class Categories:
     GATHER = 'Gather'
     GROUP_BY = 'GroupBy'
     LOOP = 'Loop'
-    BRANCH = 'Branch'
     VARIABLES = 'Variables'
 
+    BRANCH = 'Branch'
     DATA = 'Data'
     COMPONENT = 'Component'
     PYTHON_APP = 'PythonApp'
@@ -67,6 +67,7 @@ STORAGE_TYPES = {
 APP_DROP_TYPES = [
     Categories.COMPONENT,
     Categories.PYTHON_APP,
+    Categories.BRANCH,
     Categories.BASH_SHELL_APP,
     Categories.MPI,
     Categories.DYNLIB_APP,
