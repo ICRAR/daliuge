@@ -2356,7 +2356,7 @@
                 {
                     "text": "Group Start",
                     "name": "group_start",
-                    "value": 1,
+                    "value": true,
                     "description": ""
                 },
                 {
@@ -2556,7 +2556,7 @@
                 {
                     "text": "Group End",
                     "name": "group_end",
-                    "value": 1,
+                    "value": true,
                     "description": ""
                 }
             ]
