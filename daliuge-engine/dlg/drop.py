@@ -923,7 +923,7 @@ class AbstractDROP(EventFirer):
         Moves this DROP to the ERROR state.
         '''
 
-        if self.status == DROPStates.CANCELLED:
+        if self.status in (DROPStates.CANCELLED, DROPStates.SKIPPED):
             return
 
         self._closeWriters()
@@ -945,7 +945,10 @@ class AbstractDROP(EventFirer):
         status = self.status
         if status == DROPStates.CANCELLED:
             return
-        if status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+        elif status == DROPStates.SKIPPED:
+            self._fire('dropCompleted', status=status)
+            return
+        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
 
         self._closeWriters()
@@ -968,6 +971,11 @@ class AbstractDROP(EventFirer):
         '''Moves this drop to the CANCELLED state closing any writers we opened'''
         self._closeWriters()
         self.status = DROPStates.CANCELLED
+
+    def skip(self):
+        '''Moves this drop to the SKIPPED state closing any writers we opened'''
+        self._closeWriters()
+        self.status = DROPStates.SKIPPED
 
     @property
     def node(self):
@@ -1560,6 +1568,14 @@ class AppDROP(ContainerDROP):
         super(AppDROP, self).cancel()
         self.execStatus = AppDROPStates.CANCELLED
 
+    def skip(self):
+        '''Moves this application drop to its SKIPPED state'''
+        super().skip()
+        self.execStatus = AppDROPStates.SKIPPED
+        for o in self._outputs.values():
+            o.skip()
+        self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+
 
 class InputFiredAppDROP(AppDROP):
     """
@@ -1594,6 +1610,7 @@ class InputFiredAppDROP(AppDROP):
         super(InputFiredAppDROP, self).initialize(**kwargs)
         self._completedInputs = []
         self._errorInputs = []
+        self._skippedInputs = []
 
         # Error threshold must be within 0 and 100
         if self.input_error_threshold < 0 or self.input_error_threshold > 100:
@@ -1634,13 +1651,18 @@ class InputFiredAppDROP(AppDROP):
             self._errorInputs.append(uid)
         elif drop_state == DROPStates.COMPLETED:
             self._completedInputs.append(uid)
+        elif drop_state == DROPStates.SKIPPED:
+            self._skippedInputs.append(uid)
         else:
             raise Exception('Invalid DROP state in dropCompleted: %s' % drop_state)
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
+        skipped_len = len(self._skippedInputs)
 
-        if (error_len + ok_len) == n_eff_inputs:
+        # We have enough inputs to proceed
+        if (skipped_len + error_len + ok_len) == n_eff_inputs:
+
             # calculate the number of errors that have already occurred
             percent_failed = math.floor((error_len/float(n_eff_inputs)) * 100)
 
@@ -1654,6 +1676,8 @@ class InputFiredAppDROP(AppDROP):
                 self.execStatus = AppDROPStates.ERROR
                 self.status =  DROPStates.ERROR
                 self._notifyAppIsFinished()
+            elif skipped_len == n_eff_inputs:
+                self.skip()
             else:
                 self.async_execute()
 
@@ -1668,7 +1692,7 @@ class InputFiredAppDROP(AppDROP):
             t.start()
 
     @track_current_drop
-    def execute(self):
+    def execute(self, _send_notifications=True):
         """
         Manually trigger the execution of this application.
 
@@ -1703,7 +1727,8 @@ class InputFiredAppDROP(AppDROP):
             drop_state = DROPStates.ERROR
 
         self.status = drop_state
-        self._notifyAppIsFinished()
+        if _send_notifications:
+            self._notifyAppIsFinished()
 
     def run(self):
         """
@@ -1725,6 +1750,22 @@ class BarrierAppDROP(InputFiredAppDROP):
         kwargs['n_effective_inputs'] = -1
         super(BarrierAppDROP, self).initialize(**kwargs)
 
+
+class BranchAppDrop(BarrierAppDROP):
+    """
+    A special kind of application with exactly two outputs. After normal
+    execution, the application decides whether a certain condition is met.
+    If the condition is met, the first output is considered as COMPLETED,
+    while the other is moved to SKIPPED state, and vice-versa.
+    """
+
+    @track_current_drop
+    def execute(self, _send_notifications=True):
+        if len(self._outputs) != 2:
+            raise InvalidDropException(self, f'BranchAppDrops should have exactly 2 outputs, not {len(self._outputs)}')
+        BarrierAppDROP.execute(self, _send_notifications=False)
+        self.outputs[1 if self.condition() else 0].skip()
+        self._notifyAppIsFinished()
 
 class PlasmaDROP(AbstractDROP):
     '''
