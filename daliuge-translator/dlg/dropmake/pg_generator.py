@@ -300,19 +300,32 @@ class LGNode:
         )
 
     def is_group_start(self):
-        return (
-            self.has_group()
-            and "group_start" in self.jd
-            and 1 == int(self.jd["group_start"])
-        )
+        result = False
+        if self.has_group() \
+            and "group_start" in self.jd:
+            gs = self.jd["group_start"]
+            if type(gs) == type(True):
+                result = gs
+            elif type(gs) in [type(1), type(1.)]:
+                result = (1 == gs)
+            elif type(gs) == type("s"):
+                result = gs.lower() in ("true", "1")        
+        return result
+
 
     def is_group_end(self):
-        return (
-            self.has_group()
-            and "group_end" in self.jd
-            and 1 == int(self.jd["group_end"])
-        )
-
+        result = False
+        if self.has_group() \
+                and "group_end" in self.jd:
+            ge = self.jd["group_end"]
+            if type(ge) == type(True):
+                result = ge
+            elif type(ge) in [type(1), type(1.)]:
+                result = (1 == ge)
+            elif type(ge) == type("s"):
+                result = ge.lower() in ("true", "1")
+        return result
+    
     def is_group(self):
         return self._isgrp
 
