@@ -165,7 +165,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		var sessions = response;
 		sessions.sort(function comp(a,b) {
-			return (a.sessionId < b.sessionId) ? -1 : (a.sessionId > b.sessionId);
+			return (a.sessionId > b.sessionId) ? -1 : (a.sessionId < b.sessionId);
 		});
 		// console.log(sessions[0]);
 		var rows = tbodyEl.selectAll('tr').data(sessions);
@@ -179,19 +179,20 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
 		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
-		statusCells.text(function(s) {return sessionStatusToString(s)});
-		statusCells.append('svg');
+		statusCells.text(function(s) {return sessionStatusToString(s)})
 		statusCells.exit().remove()
 
-		//WIP statusbars in dim
+		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
+		sizeCells.enter().append('td').classed('size', true).text(String)
+		sizeCells.text(String)
+		sizeCells.exit().remove()
+
+		//progressbars in dim
 
 		const width = $('#sessionsTable').find('.status').innerWidth();
 		var graph_update_handler = function(oids, dropSpecs) {};
 		
-		console.log(width)
 		var status_update_handler = function(statuses){
-			//doesnt enter
-			console.log("status_counts");
 			var states = ['completed', 'finished',
 						'running', 'writing',
 						'error', 'expired', 'deleted',
@@ -220,7 +221,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			});
 			var rects = d3.select('#sessionsTable .status svg').selectAll('rect').data(status_counts);
 			rects.enter().append('rect')
-				.style('height', 20).style('width', 0).style('x', 0).style('y', 20)
+				.style('height', 20).style('width', 0).style('x', 0).style('y', 0)
 				.transition().delay(0).duration(500)
 				.style('x', function(d) { return d[0] + 20; })
 				.style('width', function(d) { return d[1]; })
@@ -230,16 +231,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
 			rects.exit().remove();
 		};
-		
-
-		startStatusQuery(serverUrl, sessions[0].sessionId, selectedNode, graph_update_handler,
-			status_update_handler, 1000);
-			
-
-		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
-		sizeCells.enter().append('td').classed('size', true).text(String)
-		sizeCells.text(String)
-		sizeCells.exit().remove()
 
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
@@ -263,21 +254,35 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				cancel_session(serverUrl, session.sessionId, cancelSessionBtn); 
 			});
 		})
-
+		
 		//update status colours and hide cancel button if finished or cancelled
 		$(".status").each(function(){
 			var currentStatus = $(this).html()
+
 			if(currentStatus==="Cancelled"){
 				$(this).css("color","grey");
 				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().removeClass("progressRunning")
 			}else if(currentStatus==="Deploying"){
 				$(this).css("color","blue");
+				$(this).parent().removeClass("progressRunning")
 			}
 			else if (currentStatus==="Running") {
-				$(this).css("color","orange");
-			}else{
+				$(this).text("");
+				$(this).parent().find(".actions").find("button").show();
+				$(this).append("<svg>")
+				if(!$(this).parent().hasClass('progressRunning')){
+					startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
+						status_update_handler, 1000);
+					$(this).parent().addClass("progressRunning")
+				}
+			}else if (currentStatus==="Finished"){
 				$(this).css("color","#00af28");
 				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().removeClass("progressRunning")
+			}else{
+				$(this).css("color","purple");
+				$(this).parent().removeClass("progressRunning")
 			}
 		})
 		
@@ -428,9 +433,6 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			if (status == 3 || status == 4 || status == 5) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				                        status_update_handler);
-
-
-									//WIP this?
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
