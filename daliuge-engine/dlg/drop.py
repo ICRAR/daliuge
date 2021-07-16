@@ -1132,10 +1132,15 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         '''
         Override this method in order to get the size of the drop set once it is completed.
         '''
+        # TODO: This implementation is almost a verbatim copy of the base class'
+        # so we should look into merging them
         status = self.status
         if status == DROPStates.CANCELLED:
             return
-        if status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+        elif status == DROPStates.SKIPPED:
+            self._fire('dropCompleted', status=status)
+            return
+        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
 
         self._closeWriters()
@@ -1143,8 +1148,15 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
 
-        # here we set the size
-        self._size = os.stat(self.path).st_size
+        # here we set the size. It could happen that nothing is written into
+        # this file, in which case we create an empty file so applications
+        # downstream don't fail to read
+        try:
+            self._size = os.stat(self.path).st_size
+        except FileNotFoundError:
+            with open(self.path, 'wb'):
+                pass
+            self._size = 0
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.COMPLETED)
 
