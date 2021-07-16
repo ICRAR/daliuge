@@ -96,11 +96,13 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
 	var status_update_handler = function(statuses)
 	{
-
+		// This is the order in which blocks are drawn in the progress bar,
+		// so we want "done" states first and "nothing happened yet" states
+		// towards the end
 		var states = ['completed', 'finished',
 		              'running', 'writing',
 		              'error', 'expired', 'deleted',
-		              'cancelled',
+		              'cancelled', 'skipped',
 		              'not_run', 'initialized'];
 		var states_idx = d3.scale.ordinal().domain(states).rangePoints([0, states.length - 1]);
 
@@ -110,7 +112,7 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
 		/* Get total and per-status counts, then normalize to 0-100% */
 		var total = statuses.length;
-		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		statuses.reduce(function(status_counts, s) {
 			var idx = states_idx(get_status_name(s));
 			status_counts[idx] = status_counts[idx] + 1;
