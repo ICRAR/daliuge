@@ -143,7 +143,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		if( selectedNode ) { url += '&node=' + selectedNode; }
 		var dimUrlQuery = new URL(window.location.href);
 		var dimUrl = dimUrlQuery.searchParams.get("dim_url");
-		console.log(dimUrl)
 		url+="&dim_url="+dimUrl;
 		return url;
 	};
@@ -180,16 +179,67 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
 		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
-		statusCells.text(function(s) {return sessionStatusToString(s)})
+		statusCells.text(function(s) {return sessionStatusToString(s)});
+		statusCells.append('svg');
 		statusCells.exit().remove()
+
+		//WIP statusbars in dim
+
+		const width = $('#sessionsTable').find('.status').innerWidth();
+		var graph_update_handler = function(oids, dropSpecs) {};
+		
+		console.log(width)
+		var status_update_handler = function(statuses){
+			//doesnt enter
+			console.log("status_counts");
+			var states = ['completed', 'finished',
+						'running', 'writing',
+						'error', 'expired', 'deleted',
+						'cancelled',
+						'not_run', 'initialized'];
+			var states_idx = d3.scale.ordinal().domain(states).rangePoints([0, states.length - 1]);
+		
+			var scale = function(x) {
+				return Math.round(x * width / statuses.length);
+			};
+		
+			/* Get total and per-status counts, then normalize to 0-100% */
+			var total = statuses.length;
+			var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+			statuses.reduce(function(status_counts, s) {
+				var idx = states_idx(get_status_name(s));
+				status_counts[idx] = status_counts[idx] + 1;
+				return status_counts;
+			}, status_counts);
+		
+			for (var cumsum = [0], i = 0; i < status_counts.length - 1; i++)
+				cumsum[i + 1] = cumsum[i] + status_counts[i];
+		
+			status_counts = status_counts.map(function(x, i) {
+				return [scale(cumsum[i]), scale(x)];
+			});
+			var rects = d3.select('#sessionsTable .status svg').selectAll('rect').data(status_counts);
+			rects.enter().append('rect')
+				.style('height', 20).style('width', 0).style('x', 0).style('y', 20)
+				.transition().delay(0).duration(500)
+				.style('x', function(d) { return d[0] + 20; })
+				.style('width', function(d) { return d[1]; })
+				.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+			rects.style('x', function(d) { return d[0] + 20; })
+				.style('width', function(d) { return d[1]; })
+				.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+			rects.exit().remove();
+		};
+		
+
+		startStatusQuery(serverUrl, sessions[0].sessionId, selectedNode, graph_update_handler,
+			status_update_handler, 1000);
+			
 
 		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
 		sizeCells.enter().append('td').classed('size', true).text(String)
 		sizeCells.text(String)
 		sizeCells.exit().remove()
-
-		
-		console.log(DimSessionLink)
 
 		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 		statusCells.enter().append('td').classed('details', true)
@@ -378,6 +428,9 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			if (status == 3 || status == 4 || status == 5) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				                        status_update_handler);
+
+
+									//WIP this?
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
