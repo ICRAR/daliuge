@@ -13,6 +13,7 @@
 	<script src="/static/js/dm.js"></script>
 	<link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
 	<link  href="/static/css/session.css" rel="stylesheet" type="text/css"/>
+	<link  href="/static/css/progressBar.css" rel="stylesheet" type="text/css"/>
 	<style>
 		@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css";
 	</style>
@@ -162,7 +163,7 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-progress-bar').remove();
 
 	const heightValue = 300;
-const widthValue = 600;
+	const widthValue = 600;
 	// Set up zoom support
 	var svg = d3.select("svg");
 	
