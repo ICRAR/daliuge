@@ -460,11 +460,11 @@ function _addNode(g, doSpec) {
 		var nameParts = doSpec.app.split('.');
 		notes = nameParts[nameParts.length - 1];
 	}
-	else if( doSpec.type == 'plain' ) {
-		notes = 'storage: ' + doSpec.storage;
-	}
 	else if( doSpec.type == 'socket' ) {
 		notes = 'port: ' + doSpec.port;
+	}
+	else if( doSpec.type == 'plain' ) {
+		notes = 'storage: ' + doSpec.storage;
 	}
 	if( doSpec.nm ) {
 		notes += '<br/>' + doSpec.nm
@@ -472,8 +472,8 @@ function _addNode(g, doSpec) {
 
 	var oid = doSpec.oid;
 	var html = '<div class="drop-label" id="id_' + oid + '">';
-	html += '<span>' + oid + '</span>';
 	html += '<span class="notes">' + notes + '</span>';
+	html += '<span style="font-size: 13px;">' + oid + '</span>';
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",
