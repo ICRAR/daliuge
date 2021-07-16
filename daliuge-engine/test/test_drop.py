@@ -36,7 +36,7 @@ from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, SimpleBranch
+from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 
 try:
@@ -131,6 +131,17 @@ class TestDROP(unittest.TestCase):
         self.assertNotEqual(a.checksum, 0)
         self.assertEqual(a.checksum, test_crc)
         self.assertEqual(cChecksum, test_crc)
+
+    def test_no_write_to_file_drop(self):
+        """Check that FileDrops can be *not* written"""
+        a = FileDROP('a', 'a')
+        b = SleepAndCopyApp('b', 'b')
+        c = InMemoryDROP('c', 'c')
+        a.addConsumer(b)
+        b.addOutput(c)
+        with DROPWaiterCtx(self, c):
+            a.setCompleted()
+        self.assertEqual(droputils.allDropContents(c), b'')
 
     def test_simple_chain(self):
         '''
@@ -782,12 +793,12 @@ class TestDROP(unittest.TestCase):
         finally:
             os.unlink(dbfile)
 
-class BranchAppDropTests(unittest.TestCase):
+class BranchAppDropTestsBase(object):
     """Tests for the BranchAppDrop class"""
 
     def _simple_branch_with_outputs(self, result, uids):
         a = SimpleBranch(uids[0], uids[0], result=result)
-        b, c = (InMemoryDROP(x, x) for x in uids[1:])
+        b, c = (self.DataDropType(x, x) for x in uids[1:])
         a.addOutput(b)
         a.addOutput(c)
         return a, b, c
@@ -821,7 +832,7 @@ class BranchAppDropTests(unittest.TestCase):
 
         for level, uids in zip(range(levels), all_uids):
             if level % 2:
-                x, y = (InMemoryDROP(uid, uid) for uid in uids)
+                x, y = (self.DataDropType(uid, uid) for uid in uids)
                 last_true.addOutput(x)
                 last_false.addOutput(y)
             else:
@@ -904,3 +915,10 @@ class BranchAppDropTests(unittest.TestCase):
         for levels in (3, 4, 5, 6, 7):
             self._test_multi_branch_graph(True, levels)
             self._test_multi_branch_graph(False, levels)
+
+
+class BranchAppDropTestsWithMemoryDrop(BranchAppDropTestsBase, unittest.TestCase):
+    DataDropType = InMemoryDROP
+
+class BranchAppDropTestsWithFileDrop(BranchAppDropTestsBase, unittest.TestCase):
+    DataDropType = FileDROP
