@@ -136,7 +136,8 @@ class RestClient(object):
         return json.load(ret) if ret else None
 
     def _GET(self, url):
-        return self._request(url, 'GET')
+        stream, _ = self._request(url, 'GET')
+        return stream
 
     def _POST(self, url, content=None, content_type=None, compress=False):
         headers = {}
@@ -149,10 +150,12 @@ class RestClient(object):
             if not hasattr(content, 'read'):
                 content = io.BytesIO(content)
             content = common.ZlibCompressedStream(content)
-        return self._request(url, 'POST', content, headers)
+        stream, _ = self._request(url, 'POST', content, headers)
+        return stream
 
     def _DELETE(self, url):
-        return self._request(url, 'DELETE')
+        stream, _ = self._request(url, 'DELETE')
+        return stream
 
     def _request(self, url, method, content=None, headers={}):
 
@@ -197,5 +200,5 @@ class RestClient(object):
             raise ex
 
         if not self._resp.length:
-            return None
-        return codecs.getreader('utf-8')(self._resp)
+            return None, None
+        return codecs.getreader('utf-8')(self._resp), self._resp
