@@ -24,14 +24,14 @@ Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
-import io
-import os
 import cgi
 import functools
+import io
 import json
 import logging
-import threading
+import os
 import tarfile
+import threading
 
 import bottle
 import pkg_resources
@@ -61,10 +61,7 @@ def daliuge_aware(func):
         try:
             res = func(*args, **kwargs)
 
-            if isinstance(res, bytes):
-                return res
-
-            if isinstance(res, bottle.HTTPResponse):
+            if isinstance(res, (bytes, bottle.HTTPResponse)):
                 return res
 
             if res is not None:
@@ -389,6 +386,7 @@ class CompositeManagerRestServer(ManagerRestServer):
             content.append(buffer)
 
         tar.addfile(info, io.BytesIO(initial_bytes=''.join(content).encode()))
+
 
     @daliuge_aware
     def getLogFile(self, sessionId):
