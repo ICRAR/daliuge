@@ -1,15 +1,30 @@
+"""
+This module handles the building of reproducibility information for worklfow components and graphs
+at all stages of unrolling and execution.
+
+Functions are organized top-to-bottom as per-drop to whole-graph operations.
+Within each level of detail there are several functions to deal with different graph abstractions
+arranged top-to-bottom as logical to physical to runtime.
+"""
+import collections
 import logging
 
-from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
+from dlg.common import Categories
+from dlg.common.reproducibility.constants import ReproducibilityFlags, \
+    REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported, rflag_caster
 from merklelib import MerkleTree
-
-from .. import Categories
 
 logger = logging.getLogger(__name__)
 
 
-def common_hash(value):  # TODO: check type
+def common_hash(value: bytes):
+    """
+    Produces a hex digest of the `value` provided.
+    Assumes standard hashlib algorithm functionality.
+    :param value: Bytes to be hashed
+    :return: Hex-digest of the value
+    """
     return HASHING_ALG(value).hexdigest()
 
 
@@ -66,9 +81,8 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
     if level == ReproducibilityFlags.RERUN:
         pass
-    elif level == ReproducibilityFlags.REPEAT or level == ReproducibilityFlags.REPLICATE_COMP \
-            or level == ReproducibilityFlags.RECOMPUTE \
-            or level == ReproducibilityFlags.REPLICATE_TOTAL:
+    elif level in (ReproducibilityFlags.REPEAT, ReproducibilityFlags.REPLICATE_COMP,
+                   ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_TOTAL):
         if category_type == 'Application':
             data['execution_time'] = fields['execution_time']
             data['num_cpus'] = fields['num_cpus']
@@ -123,7 +137,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             pass
     elif level == ReproducibilityFlags.REPRODUCE:
         pass
-    if level == ReproducibilityFlags.RECOMPUTE or level == ReproducibilityFlags.REPLICATE_COMP:
+    if level in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
         if category_type == Categories.DATA:
             if category == Categories.FILE:
                 data['filepath'] = fields['filepath']
@@ -156,8 +170,9 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         if data['type'] == 'plain':
             data['storage'] = drop['storage']
         else:
-            data['dt'] = drop['dt']  # WARNING: Added to differentiate between subtle component differences.
-    if rmode == ReproducibilityFlags.RECOMPUTE or rmode == ReproducibilityFlags.REPLICATE_COMP:
+            data['dt'] = drop['dt']
+            # WARNING: Added to differentiate between subtle component differences.
+    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
         data['rank'] = drop['rank']
 
     return data
@@ -177,7 +192,7 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     data = accumulate_pgt_unroll_drop_data(drop)
     # This is the only piece of new information added at the partition level
     # It is only pertinent to Repetition and Computational replication
-    if rmode == ReproducibilityFlags.REPLICATE_COMP or rmode == ReproducibilityFlags.RECOMPUTE:
+    if rmode in (ReproducibilityFlags.REPLICATE_COMP, ReproducibilityFlags.RECOMPUTE):
         data['node'] = drop['node'][1:]
         data['island'] = drop['island'][1:]
     return data
@@ -195,7 +210,7 @@ def accumulate_pg_drop_data(drop: dict):
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
     data = {}
-    if rmode == ReproducibilityFlags.REPLICATE_COMP or rmode == ReproducibilityFlags.RECOMPUTE:
+    if rmode in (ReproducibilityFlags.REPLICATE_COMP, ReproducibilityFlags.RECOMPUTE):
         data['node'] = drop['node']
         data['island'] = drop['island']
     return data
@@ -235,6 +250,12 @@ def init_lg_repro_drop_data(drop: dict):
 
 
 def append_pgt_repro_data(drop: dict, data: dict):
+    """
+    Adds provided data dictionary to drop description at PGT level.
+    :param drop: The drop description
+    :param data: The data to be added - arbitrary dictionary
+    :return:
+    """
     merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
     #  Separated so chaining can happen on independent elements (or both later)
@@ -245,8 +266,9 @@ def append_pgt_repro_data(drop: dict, data: dict):
 
 def init_pgt_unroll_repro_drop_data(drop: dict):
     """
-    Creates and appends per-drop reproducibility information at the physical graph template stage when unrolling.
-    :param drop:
+    Creates and appends per-drop reproducibility information
+    at the physical graph template stage when unrolling.
+    :param drop: The drop description
     :return: The same drop with appended reproducibility information
     """
     data = accumulate_pgt_unroll_drop_data(drop)
@@ -256,8 +278,9 @@ def init_pgt_unroll_repro_drop_data(drop: dict):
 
 def init_pgt_partition_repro_drop_data(drop: dict):
     """
-    Creates and appends per-drop reproducibility information at the physical graph template stage when partitioning.
-    :param drop:
+    Creates and appends per-drop reproducibility information
+    at the physical graph template stage when partitioning.
+    :param drop: The drop description
     :return: The same drop with appended reproducibility information
     """
     data = accumulate_pgt_partition_drop_data(drop)
@@ -268,7 +291,7 @@ def init_pgt_partition_repro_drop_data(drop: dict):
 def init_pg_repro_drop_data(drop: dict):
     """
     Creates and appends per-drop reproducibility information at the physical graph stage.
-    :param drop:
+    :param drop: The drop description
     :return: The same drop with appended reproducibility information
     """
     data = accumulate_pg_drop_data(drop)
@@ -301,6 +324,11 @@ def accumulate_meta_data():
 
 
 def build_lg_block_data(drop: dict):
+    """
+    Builds the logical graph reprodata entry for a processed drop description
+    :param drop: The drop description
+    :return:
+    """
     block_data = [drop['reprodata']['lgt_data']['merkleroot']]
     if 'merkleroot' in drop['reprodata']['lg_data']:
         lg_hash = drop['reprodata']['lg_data']['merkleroot']
@@ -312,6 +340,11 @@ def build_lg_block_data(drop: dict):
 
 
 def build_pgt_block_data(drop: dict):
+    """
+    Builds the physical graph template reprodata entry for a processed drop description
+    :param drop: The drop description
+    :return:
+    """
     block_data = [drop['reprodata']['pgt_data']['merkleroot'], drop['reprodata']['lg_blockhash']]
     for parenthash in sorted(drop['reprodata']['pgt_parenthashes'].values()):
         block_data.append(parenthash)
@@ -320,6 +353,11 @@ def build_pgt_block_data(drop: dict):
 
 
 def build_pg_block_data(drop: dict):
+    """
+    Builds the physical graph reprodata entry for a processed drop description
+    :param drop: The drop description
+    :return:
+    """
     block_data = [drop['reprodata']['pg_data']['merkleroot'],
                   drop['reprodata']['pgt_blockhash'],
                   drop['reprodata']['lg_blockhash']]
@@ -330,6 +368,11 @@ def build_pg_block_data(drop: dict):
 
 
 def build_rg_block_data(drop: dict):
+    """
+    Builds the runtime graph reprodata entry for a processed drop description.
+    :param drop: The drop description
+    :return:
+    """
     block_data = [drop['reprodata']['rg_data']['merkleroot'],
                   drop['reprodata']['pg_blockhash'],
                   drop['reprodata']['pgt_blockhash'],
@@ -340,27 +383,26 @@ def build_rg_block_data(drop: dict):
     drop['reprodata']['rg_blockhash'] = mtree.merkle_root
 
 
-def lg_build_blockdag(lg: dict):
+def lg_build_blockdag(logical_graph: dict):
     """
     Uses Kahn's algorithm to topologically sort a logical graph dictionary.
     Exploits that a DAG contains at least one node with in-degree 0.
     Processes drops in-order.
     O(V + E) time complexity.
-    :param lg:
-    :return:
+    :param logical_graph: The logical graph description (template or actual)
+    :return: leaves set and the list of visited components (in order).
     """
-    from collections import deque
     dropset = {}  # Also contains in-degree information
     neighbourset = {}
     leaves = []
     visited = []
-    q = deque()
-    for drop in lg['nodeDataArray']:
+    queue = collections.deque()
+    for drop in logical_graph['nodeDataArray']:
         did = int(drop['key'])
         dropset[did] = [drop, 0, 0]
         neighbourset[did] = []
 
-    for edge in lg['linkDataArray']:
+    for edge in logical_graph['linkDataArray']:
         src = int(edge['from'])
         dest = int(edge['to'])
         dropset[dest][1] += 1
@@ -370,18 +412,18 @@ def lg_build_blockdag(lg: dict):
     #  did == 'drop id'
     for did in dropset:
         if dropset[did][1] == 0:
-            q.append(did)
+            queue.append(did)
         if not neighbourset[did]:  # Leaf node
             leaves.append(did)
 
-    while q:
-        did = q.pop()
+    while queue:
+        did = queue.pop()
         # Process
         build_lg_block_data(dropset[did][0])
         visited.append(did)
         rmode = rflag_caster(dropset[did][0]['reprodata']['rmode']).value
-        for n in neighbourset[did]:
-            dropset[n][1] -= 1
+        for neighbour in neighbourset[did]:
+            dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode == ReproducibilityFlags.REPRODUCE.value:
                 if dropset[did][0]['categoryType'] == Categories.DATA \
@@ -398,9 +440,10 @@ def lg_build_blockdag(lg: dict):
                 parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
                 # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
             #  Add our new hash to the parent-hash list
-            dropset[n][0]['reprodata']['lg_parenthashes'].update(parenthash)  # We deal with duplicates later
-            if dropset[n][1] == 0:  # Add drops at the DAG-frontier
-                q.append(n)
+            # We deal with duplicates later
+            dropset[neighbour][0]['reprodata']['lg_parenthashes'].update(parenthash)
+            if dropset[neighbour][1] == 0:  # Add drops at the DAG-frontier
+                queue.append(neighbour)
 
     if len(visited) != len(dropset):
         raise Exception("Untraversed graph")
@@ -435,12 +478,11 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         parentstr = 'rg_parenthashes'
         block_builder = build_rg_block_data
 
-    from collections import deque
     dropset = {}
     neighbourset = {}
     leaves = []
     visited = 0
-    q = deque()
+    queue = collections.deque()
 
     for drop in drops:
         did = drop['oid']
@@ -449,7 +491,8 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         did = drop['oid']
         neighbourset[did] = []
         if 'outputs' in drop:
-            # Assumes the model where all edges are defined from source to destination. This may not always be the case.
+            # Assumes the model where all edges are defined from source to destination.
+            # This may not always be the case.
             for dest in drop['outputs']:
                 dropset[dest][1] += 1
                 dropset[did][2] += 1
@@ -462,21 +505,21 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
 
     for did in dropset:
         if dropset[did][1] == 0:
-            q.append(did)
+            queue.append(did)
         if not neighbourset[did]:  # Leaf node
             leaves.append(did)
 
-    while q:
-        did = q.pop()
+    while queue:
+        did = queue.pop()
         block_builder(dropset[did][0])
         rmode = int(dropset[did][0]['reprodata']['rmode'])
         visited += 1
-        for n in neighbourset[did]:
-            dropset[n][1] -= 1
+        for neighbour in neighbourset[did]:
+            dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode == ReproducibilityFlags.REPRODUCE.value:
-                # TODO: Hack! may break later, proceed with caution
-                if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA\
+                # WARNING: Hack! may break later, proceed with caution
+                if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA \
                         and (dropset[did][1] == 0 or dropset[did][2] == 0):
                     # Add my new hash to the parent-hash list
                     if did not in parenthash.keys():
@@ -489,9 +532,9 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
                 parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
             # Add our new hash to the parent-hash list if on the critical path
             if rmode != ReproducibilityFlags.RERUN.value and dropset[did][0]['iid'] == '0/0':
-                dropset[n][0]['reprodata'][parentstr].update(parenthash)
-            if dropset[n][1] == 0:
-                q.append(n)
+                dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+            if dropset[neighbour][1] == 0:
+                queue.append(neighbour)
 
     if visited != len(dropset):
         raise Exception("Not a DAG")
@@ -569,7 +612,8 @@ def init_pgt_unroll_repro_data(pgt: list):
 
 def init_pgt_partition_repro_data(pgt: list):
     """
-    Handles adding reproducibility data at the physical graph template level after resource partitioning.
+    Handles adding reproducibility data at the physical graph template level
+    after resource partitioning.
     :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
     :return: The same pgt object with new information recorded
     """
