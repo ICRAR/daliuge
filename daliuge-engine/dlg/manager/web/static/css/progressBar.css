@@ -2,7 +2,6 @@
   .node rect, .node polygon {
     stroke-width: 2.0px;
     stroke: #bbb;
-    height:100%;
   }
   
   /* DROP states */
