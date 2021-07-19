@@ -1,8 +1,11 @@
+"""
+Implements several DALiuGE drops to build low-pass filters with various methods.
+"""
+
 import numpy as np
 import pyfftw
 from dlg import droputils
 from dlg.apps.simple import BarrierAppDROP
-# from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.common.reproducibility.constants import system_summary
 from dlg.meta import dlg_batch_output, dlg_streaming_input
 from dlg.meta import dlg_component, dlg_batch_input
@@ -18,6 +21,9 @@ def determine_size(length):
 
 
 class LP_SignalGenerator(BarrierAppDROP):
+    """
+    Generates a noisy sine signal for filtering. Effectively an input generator.
+    """
     component_meta = dlg_component('LPSignalGen', 'Low-pass filter example signal generator',
                                    [None],
                                    [dlg_batch_output('binary/*', [])],
@@ -29,9 +35,6 @@ class LP_SignalGenerator(BarrierAppDROP):
     freqs = dlg_list_param('frequencies', [440, 800, 1000, 2000])
     noise = dlg_list_param('noise', [])
     series = None
-
-    def initialize(self, **kwargs):
-        super(LP_SignalGenerator, self).initialize(**kwargs)
 
     def add_noise(self, series: np.array, mean, std, freq, sample_rate, seed, alpha=0.1):
         """
@@ -53,6 +56,10 @@ class LP_SignalGenerator(BarrierAppDROP):
         return series
 
     def gen_sig(self):
+        """
+        Generates an initial signal
+        :return: Numpy array of signal values.
+        """
         series = np.zeros(self.length, dtype=np.float64)
         for freq in self.freqs:
             for i in range(self.length):
@@ -60,25 +67,23 @@ class LP_SignalGenerator(BarrierAppDROP):
         return series
 
     def run(self):
+        """
+        Called by DALiuGE to start signal generation. Conditionally adds noise if parameters are set
+        :return: Writes signal to output ports.
+        """
         outs = self.outputs
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
         self.series = self.gen_sig()
         if len(self.noise) > 0:
             self.noise[0] = 1 / self.noise[0]
-            self.series = self.add_noise(self.series, self.noise[2], self.noise[4], self.noise[1], self.srate,
-                                         self.noise[3], self.noise[0])
+            self.series = self.add_noise(self.series, self.noise[2], self.noise[4], self.noise[1],
+                                         self.srate, self.noise[3], self.noise[0])
 
         data = self.series.tostring()
-        for o in outs:
-            o.len = len(data)
-            o.write(data)
-
-    """
-    def generate_reproduce_data(self):
-        # This will do for now
-        return {'data_hash': common_hash(self.series)}
-    """
+        for output in outs:
+            output.len = len(data)
+            output.write(data)
 
     def generate_recompute_data(self):
         # This will do for now
@@ -90,6 +95,9 @@ class LP_SignalGenerator(BarrierAppDROP):
 
 
 class LP_WindowGenerator(BarrierAppDROP):
+    """
+    Generates a Hann window for low-pass filtering.
+    """
     component_meta = dlg_component('LPWindowGen', 'Low-pass filter example window generator',
                                    [None],
                                    [dlg_batch_output('binary/*', [])],
@@ -101,9 +109,6 @@ class LP_WindowGenerator(BarrierAppDROP):
     srate = dlg_int_param('sample_rate', 5000)
     series = None
 
-    def initialize(self, **kwargs):
-        super(LP_WindowGenerator, self).initialize(**kwargs)
-
     def sinc(self, x_val: np.float64):
         """
         Computes the sin_c value for the input float
@@ -114,6 +119,10 @@ class LP_WindowGenerator(BarrierAppDROP):
         return np.sin(np.pi * x_val) / (np.pi * x_val)
 
     def gen_win(self):
+        """
+        Generates the window values.
+        :return: Numpy array of window series.
+        """
         alpha = 2 * self.cutoff / self.srate
         win = np.zeros(self.length, dtype=np.float64)
         for i in range(int(self.length)):
@@ -123,19 +132,18 @@ class LP_WindowGenerator(BarrierAppDROP):
         return win
 
     def run(self):
+        """
+        Called by DALiuGE to start drop execution
+        :return:
+        """
         outs = self.outputs
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
         self.series = self.gen_win()
         data = self.series.tostring()
-        for o in outs:
-            o.len = len(data)
-            o.write(data)
-
-    """
-    def generate_reproduce_data(self):
-        return dict(data_hash=common_hash(self.series))
-    """
+        for output in outs:
+            output.len = len(data)
+            output.write(data)
 
     def generate_recompute_data(self):
         output = dict()
@@ -148,7 +156,11 @@ class LP_WindowGenerator(BarrierAppDROP):
 
 
 class LP_AddNoise(BarrierAppDROP):
-    component_meta = dlg_component('LPAddNoise', 'Adds noise to a signal generated for the low-pass filter example',
+    """
+    Component to add additional noise to a signal array.
+    """
+    component_meta = dlg_component('LPAddNoise', 'Adds noise to a signal generated '
+                                                 'for the low-pass filter example',
                                    [dlg_batch_input('binary/*', [])],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
@@ -162,10 +174,11 @@ class LP_AddNoise(BarrierAppDROP):
     alpha = dlg_float_param('noise_multiplier', 0.1)
     signal = np.empty([1])
 
-    def initialize(self, **kwargs):
-        super(LP_AddNoise).initialize(**kwargs)
-
     def add_noise(self):
+        """
+        Adds noise at a specified frequency.
+        :return: Modified signal
+        """
         np.random.seed(self.seed)
         samples = self.alpha * np.random.normal(self.mean, self.std, size=len(self.signal))
         for i in range(len(self.signal)):
@@ -173,7 +186,11 @@ class LP_AddNoise(BarrierAppDROP):
         np.add(self.signal, samples, out=self.signal)
         return self.signal
 
-    def getInputArrays(self):
+    def get_inputs(self):
+        """
+        Reads input data into a numpy array.
+        :return:
+        """
         ins = self.inputs
         if len(ins) != 1:
             raise Exception('Precisely one input required for %r' % self)
@@ -182,20 +199,19 @@ class LP_AddNoise(BarrierAppDROP):
         self.signal = np.frombuffer(array)
 
     def run(self):
+        """
+        Called by DALiuGE to start drop execution.
+        :return:
+        """
         outs = self.outputs
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
-        self.getInputArrays()
+        self.get_inputs()
         sig = self.add_noise()
         data = sig.tobytes()
-        for o in outs:
-            o.len = len(data)
-            o.write(data)
-
-    """
-    def generate_reproduce_data(self):
-        return {'data_hash', common_hash(self.signal)}
-    """
+        for output in outs:
+            output.len = len(data)
+            output.write(data)
 
     def generate_recompute_data(self):
         return {'mean': self.mean,
@@ -208,7 +224,11 @@ class LP_AddNoise(BarrierAppDROP):
 
 
 class LP_filter_fft_np(BarrierAppDROP):
-    component_meta = dlg_component('LP_filter_np', 'Filters a signal with a provided window using numpy',
+    """
+    Uses numpy to filter a nosiy signal.
+    """
+    component_meta = dlg_component('LP_filter_np', 'Filters a signal with '
+                                                   'a provided window using numpy',
                                    [dlg_batch_input('binary/*', [])],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
@@ -222,13 +242,17 @@ class LP_filter_fft_np(BarrierAppDROP):
     output = np.zeros([1])
 
     def initialize(self, **kwargs):
-        super(LP_filter_fft_np, self).initialize(**kwargs)
+        super().initialize(**kwargs)
         if self.double_prec:
             self.precision = self.PRECISIONS['double']
         else:
             self.precision = self.PRECISIONS['single']
 
-    def getInputArrays(self):
+    def get_inputs(self):
+        """
+        Reads input arrays into numpy array
+        :return: Sets class series variable.
+        """
         ins = self.inputs
         if len(ins) != 2:
             raise Exception('Precisely two input required for %r' % self)
@@ -237,6 +261,10 @@ class LP_filter_fft_np(BarrierAppDROP):
         self.series = array
 
     def filter(self):
+        """
+        Actually performs the filtering
+        :return: Numpy array of filtered signal.
+        """
         signal = self.series[0]
         window = self.series[1]
         nfft = determine_size(len(signal) + len(window) - 1)
@@ -252,15 +280,19 @@ class LP_filter_fft_np(BarrierAppDROP):
         return out.astype(self.precision['complex'])
 
     def run(self):
+        """
+        Called by DALiuGE to start execution
+        :return:
+        """
         outs = self.outputs
         if len(outs) < 1:
             raise Exception('At least one output required for %r' % self)
-        self.getInputArrays()
+        self.get_inputs()
         self.output = self.filter()
         data = self.output.tostring()
-        for o in outs:
-            o.len = len(data)
-            o.write(data)
+        for output in outs:
+            output.len = len(data)
+            output.write(data)
 
     def generate_recompute_data(self):
         return {'precision_float': str(self.precision['float']),
@@ -268,22 +300,22 @@ class LP_filter_fft_np(BarrierAppDROP):
                 'system': system_summary(),
                 'status': self.status}
 
-    """
-    def generate_reproduce_data(self):
-        return {'output_hash': common_hash(self.output)}
-    """
-
 
 class LP_filter_fft_fftw(LP_filter_fft_np):
-    component_meta = dlg_component('LP_filter_fftw', 'Filters a signal with a provided window using FFTW',
+    """
+    Uses fftw to implement a low-pass filter
+    """
+    component_meta = dlg_component('LP_filter_fftw', 'Filters a signal with '
+                                                     'a provided window using FFTW',
                                    [dlg_batch_input('binary/*', [])],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
 
-    def initialize(self, **kwargs):
-        super(LP_filter_fft_fftw, self).initialize(**kwargs)
-
     def filter(self):
+        """
+        Actually performs the filtering
+        :return: Filtered signal as numpy array.
+        """
         pyfftw.interfaces.cache.disable()
         signal = self.series[0]
         window = self.series[1]
@@ -300,15 +332,20 @@ class LP_filter_fft_fftw(LP_filter_fft_np):
 
 
 class LP_filter_fft_cuda(LP_filter_fft_np):
-    component_meta = dlg_component('LP_filter_fft_cuda', 'Filters a signal with a provided window using cuda',
+    """
+    Uses pycuda to implement a low-pass filter
+    """
+    component_meta = dlg_component('LP_filter_fft_cuda', 'Filters a signal with '
+                                                         'a provided window using cuda',
                                    [dlg_batch_input('binary/*', [])],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
 
-    def initialize(self, **kwargs):
-        super(LP_filter_fft_cuda, self).initialize(**kwargs)
-
     def filter(self):
+        """
+        Actually performs the filtering
+        :return:
+        """
         import pycuda.gpuarray as gpuarray
         import skcuda.fft as cu_fft
         import skcuda.linalg as linalg
@@ -334,8 +371,12 @@ class LP_filter_fft_cuda(LP_filter_fft_np):
         # Plan forwards
         sig_fft_gpu = gpuarray.zeros(nfft, dtype=self.precision['complex'])
         win_fft_gpu = gpuarray.zeros(nfft, dtype=self.precision['complex'])
-        sig_plan_forward = cu_fft.Plan(sig_fft_gpu.shape, self.precision['float'], self.precision['complex'])
-        win_plan_forward = cu_fft.Plan(win_fft_gpu.shape, self.precision['float'], self.precision['complex'])
+        sig_plan_forward = cu_fft.Plan(sig_fft_gpu.shape,
+                                       self.precision['float'],
+                                       self.precision['complex'])
+        win_plan_forward = cu_fft.Plan(win_fft_gpu.shape,
+                                       self.precision['float'],
+                                       self.precision['complex'])
         cu_fft.fft(sig_gpu, sig_fft_gpu, sig_plan_forward)
         cu_fft.fft(win_gpu, win_fft_gpu, win_plan_forward)
 
@@ -345,7 +386,9 @@ class LP_filter_fft_cuda(LP_filter_fft_np):
 
         # Plan inverse
         out_gpu = gpuarray.zeros_like(out_fft)
-        plan_inverse = cu_fft.Plan(out_fft.shape, self.precision['complex'], self.precision['complex'])
+        plan_inverse = cu_fft.Plan(out_fft.shape,
+                                   self.precision['complex'],
+                                   self.precision['complex'])
         cu_fft.ifft(out_fft, out_gpu, plan_inverse, True)
         out_np = np.zeros(len(out_gpu), self.precision['complex'])
         out_gpu.get(out_np)
@@ -354,13 +397,15 @@ class LP_filter_fft_cuda(LP_filter_fft_np):
 
 
 class LP_filter_pointwise_np(LP_filter_fft_np):
-    component_meta = dlg_component('LP_filter_pointwise_np', 'Filters a signal with a provided window using cuda',
+    """
+    Uses raw numpy to implement a low-pass filter
+    """
+    component_meta = dlg_component('LP_filter_pointwise_np', 'Filters a signal with '
+                                                             'a provided window using cuda',
                                    [dlg_batch_input('binary/*', [])],
                                    [dlg_batch_output('binary/*', [])],
                                    [dlg_streaming_input('binary/*')])
 
-    def initialize(self, **kwargs):
-        super(LP_filter_pointwise_np, self).initialize(**kwargs)
-
     def filter(self):
-        return np.convolve(self.series[0], self.series[1], mode='full').astype(self.precision['complex'])
+        return np.convolve(self.series[0], self.series[1], mode='full')\
+            .astype(self.precision['complex'])
