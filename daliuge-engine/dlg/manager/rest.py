@@ -24,23 +24,29 @@ Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
+import cgi
 import functools
+import io
 import json
 import logging
+import os
+import tarfile
 import threading
 
 import bottle
 import pkg_resources
 
+from bottle import static_file
+
 from . import constants
-from .client import NodeManagerClient
+from .client import NodeManagerClient, DataIslandManagerClient
 from .. import utils
 from ..exceptions import InvalidGraphException, InvalidSessionState, \
     DaliugeException, NoSessionException, SessionAlreadyExistsException, \
     InvalidDropException, InvalidRelationshipException, SubManagerException
 from ..restserver import RestServer
 from ..restutils import RestClient, RestClientException
-
+from .session import generateLogFileName
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +60,10 @@ def daliuge_aware(func):
     def fwrapper(*args, **kwargs):
         try:
             res = func(*args, **kwargs)
+
+            if isinstance(res, (bytes, bottle.HTTPResponse)):
+                return res
+
             if res is not None:
                 bottle.response.content_type = 'application/json'
                 return json.dumps(res)
@@ -120,6 +130,7 @@ class ManagerRestServer(RestServer):
         app.get(   '/api/sessions',                          callback=self.getSessions)
         app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
         app.delete('/api/sessions/<sessionId>',              callback=self.destroySession)
+        app.get(   '/api/sessions/<sessionId>/logs',         callback=self.getLogFile)
         app.get(   '/api/sessions/<sessionId>/status',       callback=self.getSessionStatus)
         app.post(  '/api/sessions/<sessionId>/deploy',       callback=self.deploySession)
         app.post(  '/api/sessions/<sessionId>/cancel',       callback=self.cancelSession)
@@ -270,6 +281,14 @@ class NMRestServer(ManagerRestServer):
         return {'sessions': self.sessions()}
 
     @daliuge_aware
+    def getLogFile(self, sessionId):
+        logdir = self.dm.getLogDir()
+        logfile = generateLogFileName(logdir, sessionId)
+        if not os.path.isfile(logfile):
+            raise NoSessionException(sessionId, 'Log file not found.')
+        return static_file(os.path.basename(logfile), root=logdir, download=os.path.basename(logfile))
+
+    @daliuge_aware
     def linkGraphParts(self, sessionId):
         params = bottle.request.params
         lhOID = params['lhOID']
@@ -333,6 +352,9 @@ class CompositeManagerRestServer(ManagerRestServer):
     def getCMNodes(self):
         return self.dm.nodes
 
+    def getAllCMNodes(self):
+        return self.dm.nodes
+
     @daliuge_aware
     def addCMNode(self, node):
         self.dm.add_node(node)
@@ -347,6 +369,45 @@ class CompositeManagerRestServer(ManagerRestServer):
             raise Exception("%s not in current list of nodes" % (node,))
         with NodeManagerClient(host=node) as dm:
             return dm.sessions()
+
+    def _tarfile_write(self, tar, headers, stream):
+        file_header = headers.getheader('Content-Disposition')
+        length = headers.getheader('Content-Length')
+        _, params = cgi.parse_header(file_header)
+        filename = params['filename']
+        info = tarfile.TarInfo(filename)
+        info.size = int(length)
+
+        content = []
+        while True:
+            buffer = stream.read()
+            if not buffer:
+                break
+            content.append(buffer)
+
+        tar.addfile(info, io.BytesIO(initial_bytes=''.join(content).encode()))
+
+
+    @daliuge_aware
+    def getLogFile(self, sessionId):
+        fh = io.BytesIO()
+        with tarfile.open(fileobj=fh, mode='w:gz') as tar:
+            for node in self.getAllCMNodes():
+                with NodeManagerClient(host=node) as dm:
+                    try:
+                        stream, resp = dm.get_log_file(sessionId)
+                        self._tarfile_write(tar, resp, stream)
+                    except NoSessionException:
+                        pass
+
+
+        data = fh.getvalue()
+        size = len(data)
+        bottle.response.set_header('Content-type', 'application/x-tar')
+        bottle.response['Content-Disposition'] = f'attachment; ' \
+                                                 f'filename=dlg_{sessionId}.tar'
+        bottle.response['Content-Length'] = size
+        return data
 
     @daliuge_aware
     def getNodeSessionInformation(self, node, sessionId):
@@ -405,3 +466,10 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
             c._post_json('/managers/dataisland', bottle.request.body.read())
         self.dm.addDmHost(host)
+
+    def getAllCMNodes(self):
+        nodes = []
+        for node in self.dm.dmHosts:
+            with DataIslandManagerClient(host=node) as dm:
+                nodes += dm.nodes()
+        return nodes
