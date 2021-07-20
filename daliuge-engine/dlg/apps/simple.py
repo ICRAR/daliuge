@@ -374,6 +374,56 @@ class UrlRetrieveApp(BarrierAppDROP):
             o.len = len(content)
             o.write(content)  # send content to all outputs
 
+##
+# @brief GenericSplitApp\n
+# @details An APP that splits about any object that can be converted to a numpy array
+# into as many parts as the app has outputs, provided that the initially converted numpy 
+# array has enough elements. The return will be a numpy array of arrays, where the first 
+# axis is of length len(outputs). The modulo remainder of the length of the original array and 
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the 
+# resulting array.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/appclass/dlg.apps.simple.GenericSplitApp/String/readonly
+#     \~English Application class\n
+# @param[out] port/content
+#     \~English The port carrying the content read from the URL.
+# @par EAGLE_END
+
+
+class GenericScatterApp(BarrierAppDROP):
+    """
+    An APP that splits an object that has a len attribute into <numSplit> parts and
+    returns a numpy array of arrays, where the first axis is of length <numSplit>.
+    """
+    compontent_meta = dlg_component('GenericScatterApp', 'Scatter an array like object into numSplit parts',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    def initialize(self, **kwargs):
+        super(GenericScatterApp, self).initialize(**kwargs)
+
+    def run(self):
+        # split it as many times as we have outputs
+        numSplit = len(self.outputs)
+        inpArray = pickle.loads(droputils.allDropContents(self.inputs[0]))
+        try:  # just checking whether the object is some object that can be used as an array
+            nObj = np.array(inpArray)
+        except:
+            raise
+        try:
+            result = np.array_split(nObj, numSplit)
+        except IndexError as err:
+            raise err
+        for i in range(numSplit):
+            o = self.outputs[i]
+            d = pickle.dumps(result[i])
+            o.len = len(d)
+            o.write(d)  # average across inputs
+
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
     """Simple branch app that is told the result of its condition"""
 
