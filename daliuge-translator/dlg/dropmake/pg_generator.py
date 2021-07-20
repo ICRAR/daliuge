@@ -683,6 +683,8 @@ class LGNode:
                 v = self.jd[k]
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
+            # add more arguments - this is the new method of adding arguments in EAGLE
+            # the method above (Arg**) is retained for compatibility, but eventually should be removed
             for k in ["command", "input_redirection", "output_redirection", "command_line_arguments"]:
                 if k in self.jd:
                     cmds.append(self.jd[k])
