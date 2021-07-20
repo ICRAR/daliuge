@@ -53,15 +53,15 @@ svg {
 }
 
 .node g div {
-  width: 180px;
-  height: 60px;
   color: #000;
+  padding: 4px 30px;
   overflow: hidden;
 }
 
 .node polygon+g div div {
-	padding-left: 20%
+	padding-left: 13%
 }
+
 
 .node rect+g div div {
 	padding-left: 2%
@@ -79,7 +79,12 @@ svg {
 }
 
 .notes {
-  font-size: 90%;
+  font-size: 15px;
+}
+
+.notes span {
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .drop-label span {
