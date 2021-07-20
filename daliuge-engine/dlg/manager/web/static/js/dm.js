@@ -368,6 +368,7 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 	var time3 = new Date().getTime();
 	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
+    zoomFit(0.95, 500)
 }
 
 function setStatusColor(status){
@@ -456,24 +457,24 @@ function _addNode(g, doSpec) {
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
 	// console.log('Drop type', doSpec.type)
+	if( doSpec.nm ) {
+		notes = "<span>" + doSpec.nm + "</span>"
+	}
 	if( doSpec.type == 'app' ) {
 		var nameParts = doSpec.app.split('.');
-		notes = nameParts[nameParts.length - 1];
-	}
-	else if( doSpec.type == 'plain' ) {
-		notes = 'storage: ' + doSpec.storage;
+		notes += nameParts[nameParts.length - 1];
 	}
 	else if( doSpec.type == 'socket' ) {
-		notes = 'port: ' + doSpec.port;
+		notes += 'port: ' + doSpec.port;
 	}
-	if( doSpec.nm ) {
-		notes += '<br/>' + doSpec.nm
+	else if( doSpec.type == 'plain' ) {
+		notes += 'storage: ' + doSpec.storage;
 	}
 
 	var oid = doSpec.oid;
 	var html = '<div class="drop-label" id="id_' + oid + '">';
-	html += '<span>' + oid + '</span>';
 	html += '<span class="notes">' + notes + '</span>';
+	html += '<span style="font-size: 13px;">' + oid + '</span>';
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",
