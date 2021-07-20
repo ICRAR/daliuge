@@ -22,12 +22,12 @@
 import os
 import pickle
 import unittest
-from numpy import random, mean, array
+from numpy import random, mean, array, concatenate
 
 
 from dlg import droputils
 from dlg.droputils import DROPWaiterCtx
-from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
+from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
@@ -149,6 +149,22 @@ class TestSimpleApps(unittest.TestCase):
         self._test_graph_runs((nd_in,b,i,nd_out),nd_in, nd_out, timeout=4)
         self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
+    def test_genericScatter(self):
+        data_in = random.randint(0, 100, size=100)
+        b = InMemoryDROP('b', 'b')
+        b.write(pickle.dumps(data_in))
+        s = GenericScatterApp('s', 's')
+        s.addInput(b)
+        o1 = InMemoryDROP('o1', 'o1')
+        o2 = InMemoryDROP('o2', 'o2')
+        for x in o1, o2:
+            s.addOutput(x)
+        self._test_graph_runs((b, s, o1, o2), b, (o1, o2), timeout=4)
+
+        data1 = pickle.loads(droputils.allDropContents(o1))
+        data2 = pickle.loads(droputils.allDropContents(o2))
+        data_out = concatenate([data1, data2])
+        self.assertEqual(data_in.all(), data_out.all())
 
 
 
