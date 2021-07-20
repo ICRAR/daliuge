@@ -456,18 +456,18 @@ function _addNode(g, doSpec) {
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
 	// console.log('Drop type', doSpec.type)
+	if( doSpec.nm ) {
+		notes = "<span>" + doSpec.nm + "</span>"
+	}
 	if( doSpec.type == 'app' ) {
 		var nameParts = doSpec.app.split('.');
-		notes = nameParts[nameParts.length - 1];
+		notes += nameParts[nameParts.length - 1];
 	}
 	else if( doSpec.type == 'socket' ) {
-		notes = 'port: ' + doSpec.port;
+		notes += 'port: ' + doSpec.port;
 	}
 	else if( doSpec.type == 'plain' ) {
-		notes = 'storage: ' + doSpec.storage;
-	}
-	if( doSpec.nm ) {
-		notes += '<br/>' + doSpec.nm
+		notes += 'storage: ' + doSpec.storage;
 	}
 
 	var oid = doSpec.oid;
