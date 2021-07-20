@@ -76,7 +76,7 @@
 	</div>
 
 	<div class="graph" id="pg-graph">
-		<svg id="root"><g/></svg>
+		<svg><g id="root"/></svg>
 	</div>
 
 	<div class="progress" id="pg-progress-bar">
@@ -190,6 +190,11 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	function drawGraph() {
 		inner.call(render, g);
 	}
+	//zoom WIP
+	// var initialScale = 0.75;
+	// svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+
+	// svg.attr('height', g.graph().height * initialScale + 40);
 
 	var orientButtons = d3.selectAll('#graph-orientation-buttons button');
 	orientButtons.on('click', function() {
@@ -200,6 +205,7 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 		g.graph().rankdir = direction;
 		drawGraph();
 		orientButtons.attr("disabled", null);
+		status_update_handler()
 	});
 
 	// This works assuming that the status list comes in the same order
@@ -216,46 +222,41 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
 	                 status_update_handler, 1000);
+
 }
+	
+	//zoom WIP
+function zoomFit(paddingPercent, transitionDuration) {
+	// var zoom = d3.behavior.zoom().scaleExtent([1/4, 4]).on('zoom', function () {
+	// 	console.trace("zoom.zoom", d3.event.translate, d3.event.scale);
+	// 	root.attr('transform',
+	// 		'translate(' + d3.event.translate + ')'
+	// 		+   'scale('+d3.event.scale+')');
+	// });
 
-// zoomFit(0.95, 500)
-// function zoomFit(paddingPercent, transitionDuration) {
+	// var svg = d3
+	// 	.select('svg')
+	// 	.call(zoom)
+	// ;
 
-// 	var zoom = d3.behavior
-// 	.zoom()
-// 	.scaleExtent([1/4, 4])
-// 	.on('zoom.zoom', function () {
-// 		console.trace("zoom", d3.event.translate, d3.event.scale);
-// 		root.attr('transform',
-// 			'translate(' + d3.event.translate + ')'
-// 			+   'scale(0.95)');
-// 	})
-// ;
+	// var root = svg.select('#root');
+	// var bounds = root.node().getBBox();
+	// var parent = root.node().parentElement;
+	// var fullWidth = parent.clientWidth,
+	//     fullHeight = parent.clientHeight;
+	// var width = bounds.width,
+	//     height = bounds.height;
+	// console.log("boom"+width+"ah"+height)
+	// var midX = bounds.x + width / 2,
+	//     midY = bounds.y + height / 2;
+	// if (width == 0 || height == 0) return; // nothing to fit
+	// var scale = (paddingPercent || 0.75) / Math.max(width / fullWidth, height / fullHeight);
+	// var translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
 
-// var svg = d3
-// 	.select('svg')
-// 	.call(zoom)
-// ;
-
-// 	var root = svg.select('g');
-// 	var bounds = root.node().getBBox();
-// 	var parent = root.node().parentElement;
-// 	var fullWidth = parent.clientWidth,
-// 	    fullHeight = parent.clientHeight;
-// 	var width = bounds.width,
-// 	    height = bounds.height;
-// 	var midX = bounds.x + width / 2,
-// 	    midY = bounds.y + height / 2;
-// 	if (width == 0 || height == 0) return; // nothing to fit
-// 	var scale = (paddingPercent || 0.75) / Math.max(width / fullWidth, height / fullHeight);
-// 	var translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
-
-// 	console.trace("zoomFit", translate, scale);
-// 	root
-// 		.transition()
-// 		.duration(transitionDuration || 0) // milliseconds
-// 		.call(zoom.translate(translate).scale(scale).event);
-// }
+	// console.trace("zoomFit", translate, scale);
+	// root.call(zoom.translate(translate).scale(scale).event);
+	// 	console.log("root");
+}
 
 function view_as_list(sessionId, selectedNode, serverUrl) {
 
