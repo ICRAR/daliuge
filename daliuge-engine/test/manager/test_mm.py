@@ -34,6 +34,7 @@ from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
+from dlg.exceptions import NoSessionException
 from test.manager import testutils
 
 
@@ -272,3 +273,11 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             testutils.delete(self, '/sessions/%s' % (sessionId), restPort)
             sessions = testutils.get(self, '/sessions', restPort)
             self.assertEqual(0, len(sessions))
+
+            # Check log should not exist
+            resp, _ = testutils._get('/sessions/not_exist/logs', 8000)
+            self.assertEqual(resp.status, 404)
+
+            # Check logs exist and there is content
+            resp, _ = testutils._get('/sessions/{sessionId}/logs', restPort)
+            self.assertGreater(int(resp.getheader('Content-Length')), 0)
