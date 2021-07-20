@@ -25,11 +25,13 @@ import json
 from dlg import utils
 import codecs
 
-
-def get(test, url, port):
+def _get(url, port):
     conn = http.client.HTTPConnection('localhost', port, timeout=3)
     conn.request('GET', '/api' + url)
-    res = conn.getresponse()
+    return conn.getresponse(), conn
+
+def get(test, url, port):
+    res, conn = _get(url, port)
     test.assertEqual(http.HTTPStatus.OK, res.status)
     jsonRes = json.load(codecs.getreader('utf-8')(res))
     res.close()
