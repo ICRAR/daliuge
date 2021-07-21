@@ -481,7 +481,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     dropset = {}
     neighbourset = {}
     leaves = []
-    visited = 0
+    visited = []
     queue = collections.deque()
 
     for drop in drops:
@@ -501,7 +501,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
             for dest in drop['consumers']:
                 dropset[dest][1] += 1
                 dropset[did][2] += 1
-                neighbourset[did].append(dest)
+                neighbourset[did].append(dest)  # TODO: Appending may not be correct behaviour
 
     for did in dropset:
         if dropset[did][1] == 0:
@@ -513,7 +513,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         did = queue.pop()
         block_builder(dropset[did][0])
         rmode = int(dropset[did][0]['reprodata']['rmode'])
-        visited += 1
+        visited.append(did)
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
@@ -536,7 +536,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
             if dropset[neighbour][1] == 0:
                 queue.append(neighbour)
 
-    if visited != len(dropset):
+    if len(visited) != len(dropset):
         raise Exception("Not a DAG")
 
     for i in range(len(leaves)):
