@@ -1,0 +1,405 @@
+{
+    "linkDataArray": [
+        {
+            "from": -1,
+            "fromPort": "45afbec3-ab42-4f45-bdfb-35e4b96a3d12",
+            "loop_aware": "0",
+            "to": -2,
+            "toPort": "1bef30a1-6493-497f-b904-ba07b44ed128"
+        },
+        {
+            "from": -3,
+            "fromPort": "385a5774-0057-4f2d-9b7c-bc1553afcc66",
+            "loop_aware": "0",
+            "to": -2,
+            "toPort": "78b040e6-2cab-4532-a4ef-77b599d61e17"
+        },
+        {
+            "from": -2,
+            "fromPort": "eadc0bd3-09c2-4e3a-ac2c-54f48c132caf",
+            "loop_aware": "0",
+            "to": -4,
+            "toPort": "57018c1c-cf3d-4e41-8ef6-514a3f009e99"
+        }
+    ],
+    "modelData": {
+        "eagleCommitHash": "9dffb2c3f02e3f230247356191a5ca4e8e2c11a1",
+        "eagleVersion": "v3.0.4",
+        "filePath": "dataFunnel.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "readonly": true,
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "schemaVersion": "OJS",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "Path to the file for this node",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "String",
+                    "value": ""
+                },
+                {
+                    "description": "Name of the directory containing the file for this node",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "String",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "45afbec3-ab42-4f45-bdfb-35e4b96a3d12",
+                    "IdText": "first",
+                    "event": false,
+                    "type": "String"
+                }
+            ],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "File",
+            "width": 200,
+            "x": 406,
+            "y": 379
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "color": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "String",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "1bef30a1-6493-497f-b904-ba07b44ed128",
+                    "IdText": "first",
+                    "event": false,
+                    "type": "String"
+                },
+                {
+                    "Id": "78b040e6-2cab-4532-a4ef-77b599d61e17",
+                    "IdText": "second",
+                    "event": false,
+                    "type": "String"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "eadc0bd3-09c2-4e3a-ac2c-54f48c132caf",
+                    "IdText": "third",
+                    "event": false,
+                    "type": "String"
+                }
+            ],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "Bash Shell App",
+            "width": 200,
+            "x": 633,
+            "y": 386
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "Path to the file for this node",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "String",
+                    "value": ""
+                },
+                {
+                    "description": "Name of the directory containing the file for this node",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "String",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -3,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "385a5774-0057-4f2d-9b7c-bc1553afcc66",
+                    "IdText": "second",
+                    "event": false,
+                    "type": "String"
+                }
+            ],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "File",
+            "width": 200,
+            "x": 425,
+            "y": 539
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "color": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
+            "fields": [
+                {
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "name": "check_filepath_exists",
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "Path to the file for this node",
+                    "name": "filepath",
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "String",
+                    "value": ""
+                },
+                {
+                    "description": "Name of the directory containing the file for this node",
+                    "name": "dirname",
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "String",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "57018c1c-cf3d-4e41-8ef6-514a3f009e99",
+                    "IdText": "third",
+                    "event": false,
+                    "type": "String"
+                }
+            ],
+            "isData": true,
+            "isGroup": false,
+            "key": -4,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
+            "streaming": false,
+            "subject": null,
+            "text": "File",
+            "width": 200,
+            "x": 893,
+            "y": 421
+        }
+    ]
+}
