@@ -425,23 +425,24 @@ def lg_build_blockdag(logical_graph: dict):
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
-            if rmode == ReproducibilityFlags.REPRODUCE.value:
-                if dropset[did][0]['categoryType'] == Categories.DATA \
-                        and (dropset[did][1] == 0 or dropset[did][2] == 0):
-                    # Add my new hash to the parent-hash list
-                    if did not in parenthash.keys():
-                        parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+            if rmode != ReproducibilityFlags.NOTHING:
+                if rmode == ReproducibilityFlags.REPRODUCE.value:
+                    if dropset[did][0]['categoryType'] == Categories.DATA \
+                            and (dropset[did][1] == 0 or dropset[did][2] == 0):
+                        # Add my new hash to the parent-hash list
+                        if did not in parenthash.keys():
+                            parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                        # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
+                    else:
+                        # Add my parenthashes to the parent-hash list
+                        parenthash.update(dropset[did][0]['reprodata']['lg_parenthashes'])
+                        # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
+                if rmode != ReproducibilityFlags.REPRODUCE.value:  # Non-compressing behaviour
+                    parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
                     # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
-                else:
-                    # Add my parenthashes to the parent-hash list
-                    parenthash.update(dropset[did][0]['reprodata']['lg_parenthashes'])
-                    # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
-            if rmode != ReproducibilityFlags.REPRODUCE.value:  # Non-compressing behaviour
-                parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
-                # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
-            #  Add our new hash to the parent-hash list
-            # We deal with duplicates later
-            dropset[neighbour][0]['reprodata']['lg_parenthashes'].update(parenthash)
+                #  Add our new hash to the parent-hash list
+                # We deal with duplicates later
+                dropset[neighbour][0]['reprodata']['lg_parenthashes'].update(parenthash)
             if dropset[neighbour][1] == 0:  # Add drops at the DAG-frontier
                 queue.append(neighbour)
 
@@ -517,22 +518,23 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
-            if rmode == ReproducibilityFlags.REPRODUCE.value:
-                # WARNING: Hack! may break later, proceed with caution
-                if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA \
-                        and (dropset[did][1] == 0 or dropset[did][2] == 0):
-                    # Add my new hash to the parent-hash list
-                    if did not in parenthash.keys():
-                        parenthash[did] = dropset[did][0]['reprodata'][blockstr + '_blockhash']
-                    # parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
-                else:
-                    # Add my parenthashes to the parent-hash list
-                    parenthash.update(dropset[did][0]['reprodata'][parentstr])
-            if rmode != ReproducibilityFlags.REPRODUCE.value:
-                parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
-            # Add our new hash to the parent-hash list if on the critical path
-            if rmode != ReproducibilityFlags.RERUN.value and dropset[did][0]['iid'] == '0/0':
-                dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+            if rmode != ReproducibilityFlags.NOTHING:
+                if rmode == ReproducibilityFlags.REPRODUCE.value:
+                    # WARNING: Hack! may break later, proceed with caution
+                    if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA \
+                            and (dropset[did][1] == 0 or dropset[did][2] == 0):
+                        # Add my new hash to the parent-hash list
+                        if did not in parenthash.keys():
+                            parenthash[did] = dropset[did][0]['reprodata'][blockstr + '_blockhash']
+                        # parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                    else:
+                        # Add my parenthashes to the parent-hash list
+                        parenthash.update(dropset[did][0]['reprodata'][parentstr])
+                if rmode != ReproducibilityFlags.REPRODUCE.value:
+                    parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
+                # Add our new hash to the parent-hash list if on the critical path
+                if rmode != ReproducibilityFlags.RERUN.value and dropset[did][0]['iid'] == '0/0':
+                    dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
             if dropset[neighbour][1] == 0:
                 queue.append(neighbour)
 
