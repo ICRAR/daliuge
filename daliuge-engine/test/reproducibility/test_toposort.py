@@ -307,3 +307,112 @@ class ToposortTests(unittest.TestCase):
         rg = []
         visited = build_blockdag(rg, 'rg')[1]
         self.assertTrue(visited == [])
+
+
+class LogicalBlockdagRerunTests(unittest.TestCase):
+    """
+    Tests the logical blockdag construction behaviour when rerunning.
+    In all cases all drops should be included at this stage.
+    """
+
+    def test_single(self):
+        """
+        Tests a single drop
+        A
+        """
+        lgt = _init_graph("topoGraphs/testSingle.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves = lg_build_blockdag(lgt)[0]
+        self.assertTrue(len(leaves) == 1)
+
+    def test_twostart(self):
+        """
+        A graph with two starts
+        A -->
+             C
+        B -->
+        """
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves = lg_build_blockdag(lgt)[0]
+        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
+        self.assertTrue(len(leaves) == 1 and
+                        len(parenthashes) == 2 and
+                        parenthashes[0] == parenthashes[1])
+
+    def test_twoend(self):
+        """
+        A graph with two ends
+          --> B
+        A
+          --> C
+        """
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves = lg_build_blockdag(lgt)[0]
+        self.assertTrue(leaves[0] == leaves[1])
+
+    def test_twolines(self):
+        """
+        A graph with two starts and two ends
+        A --> B
+        C --> D
+        """
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        leaves = lg_build_blockdag(lgt)[0]
+        self.assertTrue(leaves[0] == leaves[1])
+
+    def test_data_fan(self):
+        """
+        Tests that a single data source scatters its signature to downstream data drops.
+        """
+        lgt = _init_graph("topoGraphs/dataFan.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        lg_build_blockdag(lgt)
+        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
+        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
+
+    def test_data_funnel(self):
+        """
+        Tests that two data sources are collected in a single downstream data drop
+        """
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        lg_build_blockdag(lgt)
+        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
+        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+
+    def test_data_sandwich(self):
+        """
+        Tests two data drops with an interim computing drop
+        :return:
+        """
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        lg_build_blockdag(lgt)
+        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
+        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+
+    def test_computation_sandwich(self):
+        """
+        Tests that an internal data drop surrounded by computing drops is handled correctly.
+        """
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
+        init_lgt_repro_data(lgt, "1")
+        init_lg_repro_data(lgt)
+        lg_build_blockdag(lgt)
+        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
+        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
