@@ -160,7 +160,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
 
 class LogicalBlockdagRepeatTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when repeating.
     In all cases all drops should be included at this stage.
     """
 
@@ -271,7 +271,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
 
 class LogicalBlockdagRecomputeTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when recomputing.
     In all cases all drops should be included at this stage.
     """
 
@@ -382,7 +382,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
 
 class LogicalBlockdagReproduceTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when reproducing.
     Computing drops should be truncated out of the blockdag construction.
     This means that the data tests will be very different.
     """
@@ -498,7 +498,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
 
 class LogicalBlockdagReplicateSciTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when replicating scientifically.
     In all cases all drops should be included at this stage.
     """
 
@@ -609,7 +609,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
 
 class LogicalBlockdagReplicateCompTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when replicating computationally.
     In all cases all drops should be included at this stage.
     """
 
@@ -720,7 +720,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
 
 class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when replicating totally.
     In all cases all drops should be included at this stage.
     """
 
