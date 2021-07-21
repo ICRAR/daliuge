@@ -555,11 +555,16 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
                 if rmode != ReproducibilityFlags.REPRODUCE.value:
                     parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
                 # Add our new hash to the parent-hash list if on the critical path
-                if rmode != ReproducibilityFlags.RERUN.value and dropset[did][0]['iid'] == '0/0':
+                if rmode == ReproducibilityFlags.RERUN.value:
+                    if 'iid' in dropset[did][0].keys():
+                        if dropset[did][0]['iid'] == '0/0':
+                            dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+                    else:
+                        dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+                elif rmode != ReproducibilityFlags.RERUN.value:
                     dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
             if dropset[neighbour][1] == 0:
                 queue.append(neighbour)
-
     if len(visited) != len(dropset):
         raise Exception("Not a DAG")
 
