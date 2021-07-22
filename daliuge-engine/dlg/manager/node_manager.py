@@ -476,7 +476,7 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer): pass
 # Final NodeManager class
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
 
-    def __init__(self, useDLM=True, dlgPath=None, error_listener=None, event_listeners=[], max_threads=0,
+    def __init__(self, useDLM=True, dlgPath=utils.getDlgPath(), error_listener=None, event_listeners=[], max_threads=0,
                  logdir=utils.getDlgLogsDir(),
                  host=None, rpc_port=constants.NODE_DEFAULT_RPC_PORT,
                  events_port=constants.NODE_DEFAULT_EVENTS_PORT):
