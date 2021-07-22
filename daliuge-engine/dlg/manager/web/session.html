@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<title>DIM Session</title>
 	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
-	<script src="/static/js/d3/d3.v3.min.js"></script>
+	<script src="/static/js/d3/d3.v5.min.js"></script>
 	<script src="/static/js/d3/dagre-d3.min.js"></script>
 	<script src="/static/js/jquery-1.11.3.min.js"></script>
 	<script src="/static/js/bootstrap.bundle.min.js"></script>
@@ -95,17 +95,17 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 	console.log(width)
 	var graph_update_handler = function(oids, dropSpecs) {};
 
-	var status_update_handler = function(statuses)
-	{
+	var status_update_handler = function(statuses){
 		// This is the order in which blocks are drawn in the progress bar,
 		// so we want "done" states first and "nothing happened yet" states
 		// towards the end
+		console.log("start update handler started")
 		var states = ['completed', 'finished',
 		              'running', 'writing',
 		              'error', 'expired', 'deleted',
 		              'cancelled', 'skipped',
 		              'not_run', 'initialized'];
-		var states_idx = d3.scale.ordinal().domain(states).rangePoints([0, states.length - 1]);
+		var states_idx = d3.scalePoint().domain(states).range([0, states.length - 1]);
 
 		var scale = function(x) {
 			return Math.round(x * width / statuses.length);
@@ -115,6 +115,7 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 		var total = statuses.length;
 		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		statuses.reduce(function(status_counts, s) {
+			console.log("status counts reduce")
 			var idx = states_idx(get_status_name(s));
 			status_counts[idx] = status_counts[idx] + 1;
 			return status_counts;
@@ -124,9 +125,10 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 			cumsum[i + 1] = cumsum[i] + status_counts[i];
 
 		status_counts = status_counts.map(function(x, i) {
+			
+			console.log("cumsum ran")
 			return [scale(cumsum[i]), scale(x)];
 		});
-
 		var rects = d3.select('#pg-progress-bar svg').selectAll('rect').data(status_counts);
 		rects.enter().append('rect')
 		     .style('height', 20).style('width', 0).style('x', 0).style('y', 20)
@@ -168,14 +170,19 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	var svg = d3.select("svg");
 	
 	var inner = svg.select("g");
-	var zoom = d3.behavior.zoom().on(
-			"zoom",
-			function() {
-				inner.attr("transform", "translate(" + d3.event.translate + ")"
-						+ "scale(" + d3.event.scale + ")");
-			});
-	svg.call(zoom);
+	// var zoom = d3.behavior.zoom().on(
+	// 		"zoom",
+	// 		function() {
+	// 			inner.attr("transform", "translate(" + d3.event.translate + ")"
+	// 					+ "scale(" + d3.event.scale + ")");
+	// 		});
 
+	// svg.call(zoom);
+
+	svg.call(d3.zoom().on("zoom", function () {
+		inner.attr("transform", "translate(" + d3.event.translate + ")"
+				+ "scale(" + d3.event.scale + ")");
+	}))
 
 	var render = getRender();
 	var g = new dagreD3.graphlib.Graph();
