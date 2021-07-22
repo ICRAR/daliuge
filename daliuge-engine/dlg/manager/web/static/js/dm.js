@@ -289,9 +289,10 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		refreshBtn.attr('disabled', null);
 
 		if( !(typeof delay === 'undefined') ) {
-			d3.timer(function(){
+			var loadSessionTimer = d3.timer(function(){
 				loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay);
-				return true;
+				loadSessionTimer.stop()
+                return;
 			}, delay);
 		}
 	});
@@ -398,7 +399,7 @@ function setStatusColor(status){
  */
 function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
                           status_update_handler, delay) {
-
+    console.log("start status query started")
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
@@ -407,13 +408,14 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 	url += '/sessions/' + sessionId;
 
 	function updateGraph() {
-		d3.json(url, function(error, sessionInfo) {
-
+		d3.json(url).then( function(sessionInfo,error) {
+            console.log("d3.json function in update graph started")
 			if (error) {
+                console.log("error")
 				console.error(error);
 				return;
 			}
-
+            
 			var doSpecs = sessionInfo['graph'];
 			var status  = uniqueSessionStatus(sessionInfo['status']);
 			d3.select('#session-status').text(sessionStatusToString(status));
@@ -432,19 +434,28 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if (status == 3 || status == 4 || status == 5) {
+                console.log("update graph: status 1")
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				                        status_update_handler);
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
-				d3.timer(updateGraph, delay);
+                console.log("update graph: status 2")
+				var updateGraphDelayTimer = d3.timer(updateGraph, delay);
 			}
 
 		})
 		// This makes d3.timer invoke us only once
-		return true;
+		// return true;
+        if(!(typeof updateGraphDelayTimer === 'undefined')){
+            updateGraphDelayTimer.stop();
+            alert("update status delay loop stopped")
+        };
+        updateGraphTimer.stop();
+        console.log("update status loop stopped")
+        return;
 	}
-	d3.timer(updateGraph);
+	var updateGraphTimer = d3.timer(updateGraph);
 }
 
 function _addNode(g, doSpec) {
@@ -512,7 +523,7 @@ function _addEdge(g, fromOid, toOid) {
  */
 function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
                                  status_update_handler) {
-
+    console.log("update states started")
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
@@ -521,19 +532,19 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 	url += '/sessions/' + sessionId + '/graph/status';
 
 	function updateStates() {
-		d3.json(url, function(error, response) {
+		d3.json(url).then( function(response,error) {
 			if (error) {
 				console.error(error);
 				return;
 			}
-
+            console.log("updatestatesTriggered")
 			// Change from {B:{status:2,execStatus:0}, A:{status:1}, ...}
 			//          to [{status:1},{status:2,execStatus:0}...]
 			// (i.e., sort by key and get values only)
 			var keys = Object.keys(response);
 			keys.sort();
 			var statuses = keys.map(function(k) {return response[k]});
-
+            console.log(statuses)
 			// This works assuming that the status list comes in the same order
 			// that the graph was created, which is true
 			// Anyway, we could double-check in the future
@@ -544,7 +555,8 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled' || cur_status == 'skipped');
 			}, true);
 			if (!allCompleted) {
-				d3.timer(updateStates, delay);
+				var updateStatesDelayTimer = d3.timer(updateStates, delay);
+                console.log("not all completed in update states")
 			}
 			else {
 				// A final update on the session's status
@@ -553,14 +565,24 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 						console.error(error);
 						return;
 					}
+                    if(!(typeof updateStatesDelayTimer === 'undefined')){
+                        updateStatesDelayTimer.stop();
+                        alert("update states delay stopped");
+                    };
 					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
 					setStatusColor(sessionStatusToString(uniqueSessionStatus(status)));
 				});
 			}
 		})
-		return true;
+        if(!(typeof updateStatesDelayTimer === 'undefined')){
+            updateStatesDelayTimer.stop();
+            alert("update states delay stopped");
+        };
+        stateUpdateTimer.stop();
+        console.log("update states stopped");
+        return;
 	}
-	d3.timer(updateStates);
+	var stateUpdateTimer = d3.timer(updateStates);
 }
 
 /**
