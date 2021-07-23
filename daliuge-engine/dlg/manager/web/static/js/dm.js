@@ -406,6 +406,8 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 		url += '/nodes/' + selectedNode;
 	}
 	url += '/sessions/' + sessionId;
+    var updateGraphDelayTimerActive = false;
+    var updateGraphDelayTimer;
 
 	function updateGraph() {
 		d3.json(url).then( function(sessionInfo,error) {
@@ -441,15 +443,17 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
                 console.log("update graph: status 2")
-				var updateGraphDelayTimer = d3.timer(updateGraph, delay);
+				updateGraphDelayTimer = d3.timer(updateGraph, delay);
+                updateGraphDelayTimerActive = true;
 			}
 
 		})
 		// This makes d3.timer invoke us only once
 		// return true;
-        if(!(typeof updateGraphDelayTimer === 'undefined')){
+        if(updateGraphDelayTimerActive === true){
             updateGraphDelayTimer.stop();
-            alert("update status delay loop stopped")
+            updateGraphDelayTimerActive = false;
+            console.log("update status delay loop stopped")
         };
         updateGraphTimer.stop();
         console.log("update status loop stopped")
@@ -530,6 +534,8 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 		url += '/nodes/' + selectedNode;
 	}
 	url += '/sessions/' + sessionId + '/graph/status';
+    var updateStatesDelayTimerActive = false;
+    var updateStatesDelayTimer;
 
 	function updateStates() {
 		d3.json(url).then( function(response,error) {
@@ -555,7 +561,8 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled' || cur_status == 'skipped');
 			}, true);
 			if (!allCompleted) {
-				var updateStatesDelayTimer = d3.timer(updateStates, delay);
+				updateStatesDelayTimer = d3.timer(updateStates, delay);
+                updateStatesDelayTimerActive = true
                 console.log("not all completed in update states")
 			}
 			else {
@@ -565,18 +572,16 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 						console.error(error);
 						return;
 					}
-                    if(!(typeof updateStatesDelayTimer === 'undefined')){
-                        updateStatesDelayTimer.stop();
-                        alert("update states delay stopped");
-                    };
 					d3.select('#session-status').text(sessionStatusToString(uniqueSessionStatus(status)));
 					setStatusColor(sessionStatusToString(uniqueSessionStatus(status)));
 				});
 			}
 		})
-        if(!(typeof updateStatesDelayTimer === 'undefined')){
+        
+        if(updateStatesDelayTimerActive === true){
             updateStatesDelayTimer.stop();
-            alert("update states delay stopped");
+            updateStatesDelayTimerActive = false;
+            console.log("update states delay stopped");
         };
         stateUpdateTimer.stop();
         console.log("update states stopped");

@@ -130,15 +130,16 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 			return [scale(cumsum[i]), scale(x)];
 		});
 		var rects = d3.select('#pg-progress-bar svg').selectAll('rect').data(status_counts);
+
+		console.log(status_counts)
 		rects.enter().append('rect')
-		     .style('height', 20).style('width', 0).style('x', 0).style('y', 20)
-		     .transition().delay(0).duration(500)
-		     .style('x', function(d) { return d[0] + 20; })
-		     .style('width', function(d) { return d[1]; })
-		     .attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+			.style('height', 20).style('width', 0).style('x', 0).style('y', 20)
+			.style('x', function(d) { return d[0] + 20; })
+			.style('width', function(d) { return d[1]; })
+			.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
 		rects.style('x', function(d) { return d[0] + 20; })
-		     .style('width', function(d) { return d[1]; })
-		     .attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+			.style('width', function(d) { return d[1]; })
+			.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
 		rects.exit().remove();
 	}
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
