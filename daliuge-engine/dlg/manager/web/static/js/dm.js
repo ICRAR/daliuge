@@ -190,7 +190,8 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		//progressbars in dim
 
 		const width = $('#sessionsTable').find('.status').innerWidth();
-		var graph_update_handler = function(oids, dropSpecs) {};
+        //WIP whats this?
+		// var graph_update_handler = function(oids, dropSpecs) {};
 		
 		var status_update_handler = function(statuses){
 			var states = ['completed', 'finished',
@@ -426,6 +427,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			var oids = Object.keys(doSpecs);
 			if( oids.length > 0 ) {
 				// Get sorted oids
+                console.log("get sorted oids")
 				oids.sort();
 				graph_update_handler(oids, doSpecs);
 			}
@@ -550,7 +552,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 			var keys = Object.keys(response);
 			keys.sort();
 			var statuses = keys.map(function(k) {return response[k]});
-            console.log(statuses)
+            // console.log(statuses)
 			// This works assuming that the status list comes in the same order
 			// that the graph was created, which is true
 			// Anyway, we could double-check in the future
