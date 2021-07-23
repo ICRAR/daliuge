@@ -279,12 +279,17 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 		for(var idx in oids) {
 			dropSpecList[idx] = dropSpecs[oids[idx]];
 		}
-
+		console.log("dropSpecList")
+		console.log(dropSpecList)
+		//transitions
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
-		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
-		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
-
-		var oidCells = rows.selectAll('td.oid').data(function values(d) { return [d.oid]; });
+		rows.enter().append('tr');
+		rows.exit().remove();
+		// rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
+		// rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
+		var oidCells = rows.selectAll('td.oid').data(function value(d) { return [d.oid]; });
+		console.log("oidCells")
+		console.log(oidCells)
 		oidCells.enter().append('td').classed('oid', true).text(String)
 		oidCells.text(String)
 		oidCells.exit().remove()
