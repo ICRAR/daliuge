@@ -1149,5 +1149,231 @@ class AccumulatePGReproduceData(unittest.TestCase):
         self.assertEqual(True, False)
 
 
+class AccumulateLGTReplicateSciData(unittest.TestCase):
+    """
+    Tests the rerun standard at the logical graph template level.
+    """
+
+    rmode = ReproducibilityFlags.REPLICATE_SCI
+    expected = {'category_type', 'category', 'numInputPorts', 'numOutputPorts', 'streaming'}
+
+    file = open('reproGraphs/apps.graph')
+    lgt_node_data = json.load(file)['nodeDataArray']
+    file.close()
+    file = open('reproGraphs/files.graph')
+    lgt_files_data = json.load(file)['nodeDataArray']
+    file.close()
+    file = open('reproGraphs/groups.graph')
+    lgt_groups_data = json.load(file)['nodeDataArray']
+    file.close()
+    file = open('reproGraphs/misc.graph')
+    lgt_misc_data = json.load(file)['nodeDataArray']
+    file.close()
+
+    def test_app_accumulate(self):
+        """
+        Tests that lgt rerun data is collected for application types
+        """
+        for drop in enumerate(self.lgt_node_data):
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
+            self.assertEqual(self.expected, hash_data.keys())
+
+    def test_data_accumulate(self):
+        """
+        Tests that lgt rerun data is collected for file types
+        """
+        for drop in enumerate(self.lgt_files_data):
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
+            self.assertEqual(self.expected, hash_data.keys())
+
+    def test_group_accumulate(self):
+        """
+        Tests that lgt rerun data is collected for group types
+        """
+        for drop in enumerate(self.lgt_groups_data):
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
+            self.assertEqual(self.expected, hash_data.keys())
+
+    def test_other_accumulate(self):
+        """
+        Tests that lgt rerun data is collected for other types
+        """
+        for drop in enumerate(self.lgt_misc_data):
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
+            self.assertEqual(self.expected, hash_data.keys())
+
+
+class AccumulateLGReplicateSciData(unittest.TestCase):
+    """
+    Tests the repeat standard at the logical graph level.
+    """
+
+    rmode = ReproducibilityFlags.REPLICATE_SCI
+    expected = {}
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def _cleanup(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'groups', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'misc', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'LG.graph')
+        self.lg_node_data = json.load(file)['nodeDataArray']
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'LG.graph')
+        self.lg_files_data = json.load(file)['nodeDataArray']
+        file.close()
+        file = open(self.temp_out.name + 'groups' + 'LG.graph')
+        self.lg_group_data = json.load(file)['nodeDataArray']
+        file.close()
+        file = open(self.temp_out.name + 'misc' + 'LG.graph')
+        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file.close()
+
+    def test_all_accumulate(self):
+        self._setup()
+        for drop in enumerate(
+                self.lg_node_data + self.lg_files_data + self.lg_group_data + self.lg_misc_data):
+            hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
+            self.assertEqual(self.expected, dict(hash_data.keys()))
+        self._cleanup()
+
+
+class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
+    """
+    Tests the rerun standard at the physical graph template level.
+    Can currently only test apps.graph and files.graph, the translator cannot deal with groups
+    or comments easily.
+    """
+
+    rmode = ReproducibilityFlags.REPLICATE_SCI
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def __del__(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'PGS.graph')
+        self.pgs_node_data = json.load(file)[0:-1]
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'PGS.graph')
+        self.pgs_file_data = json.load(file)[0:-1]
+        file.close()
+
+    def test_app_accumulate(self):
+        expected = {'type', 'dt'}
+        self._setup()
+        for drop in enumerate(self.pgs_node_data):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            self.assertEqual(expected, hash_data.keys())
+
+    def test_data_accumulate(self):
+        expected = {'type', 'storage'}
+        self._setup()
+        for drop in enumerate(self.pgs_file_data):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            self.assertEqual(expected, hash_data.keys())
+
+    def test_group_accumulate(self):
+        self.assertEqual(True, False)
+
+    def test_control_accumulate(self):
+        self.assertEqual(True, False)
+
+    def test_other_accumulate(self):
+        self.assertEqual(True, False)
+
+
+class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
+    rmode = ReproducibilityFlags.REPLICATE_SCI
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def __del__(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'PGT.graph')
+        self.pgt_node_data = json.load(file)[0:-1]
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'PGT.graph')
+        self.pgt_file_data = json.load(file)[0:-1]
+        file.close()
+
+    def test_app_accumulate(self):
+        expected = {'type', 'dt'}
+        self._setup()
+        for drop in enumerate(self.pgt_node_data):
+            hash_data = accumulate_pgt_partition_drop_data(drop[1])
+            self.assertEqual(expected, hash_data.keys())
+
+    def test_data_accumulate(self):
+        expected = {'type', 'storage'}
+        self._setup()
+        for drop in enumerate(self.pgt_file_data):
+            hash_data = accumulate_pgt_partition_drop_data(drop[1])
+            self.assertEqual(expected, hash_data.keys())
+
+    def test_group_accumulate(self):
+        self.assertEqual(True, False)
+
+    def test_control_accumulate(self):
+        self.assertEqual(True, False)
+
+    def test_other_accumulate(self):
+        self.assertEqual(True, False)
+
+
+class AccumulatePGReplicateSciData(unittest.TestCase):
+    rmode = ReproducibilityFlags.REPLICATE_SCI
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def __del__(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'PGT.graph')
+        self.pg_node_data = json.load(file)[0:-1]
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'PGT.graph')
+        self.pg_file_data = json.load(file)[0:-1]
+        file.close()
+
+    def test_app_accumulate(self):
+        expected = {}
+        self._setup()
+        for drop in enumerate(self.pg_node_data):
+            hash_data = accumulate_pg_drop_data(drop[1])
+            self.assertEqual(expected, dict(hash_data.keys()))
+
+    def test_data_accumulate(self):
+        expected = {}
+        self._setup()
+        for drop in enumerate(self.pg_node_data):
+            hash_data = accumulate_pg_drop_data(drop[1])
+            self.assertEqual(expected, dict(hash_data.keys()))
+
+    def test_group_accumulate(self):
+        self.assertEqual(True, False)
+
+    def test_control_accumulate(self):
+        self.assertEqual(True, False)
+
+    def test_other_accumulate(self):
+        self.assertEqual(True, False)
+
+
 if __name__ == '__main__':
     unittest.main()
