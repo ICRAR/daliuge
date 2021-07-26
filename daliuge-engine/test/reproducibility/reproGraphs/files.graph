@@ -12,7 +12,7 @@
         {
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "category": "memory",
+            "category": "Memory",
             "categoryType": "Data",
             "collapsed": false,
             "colour": "#394BB2",
@@ -56,7 +56,7 @@
         {
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "category": "file",
+            "category": "File",
             "categoryType": "Data",
             "collapsed": false,
             "colour": "#394BB2",
@@ -115,51 +115,7 @@
         {
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "category": "s3",
-            "categoryType": "Data",
-            "collapsed": false,
-            "colour": "#394BB2",
-            "description": "",
-            "exitAppName": "",
-            "fields": [
-                {
-                    "name": "data_volume",
-                    "text": "Data volume",
-                    "value": "5"
-                },
-                {
-                    "name": "group_end",
-                    "text": "Group end",
-                    "value": "0"
-                }
-            ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
-            "inputLocalPorts": [],
-            "inputPorts": [],
-            "isData": true,
-            "isGroup": false,
-            "key": -3,
-            "loc": "430 259",
-            "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
-            "outputLocalPorts": [],
-            "outputPorts": [
-                {
-                    "Id": "736cc3d7-8b3a-4752-8dc1-d71b5fb01911",
-                    "IdText": "event"
-                }
-            ],
-            "streaming": false,
-            "subject": null,
-            "text": "S3"
-        },
-        {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "ngas",
+            "category": "NGAS",
             "categoryType": "Data",
             "collapsed": false,
             "colour": "#394BB2",

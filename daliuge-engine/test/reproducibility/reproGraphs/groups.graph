@@ -1,260 +1,406 @@
 {
     "linkDataArray": [],
     "modelData": {
+        "eagleCommitHash": "9dffb2c3f02e3f230247356191a5ca4e8e2c11a1",
+        "eagleVersion": "v3.0.4",
         "filePath": "groups.graph",
         "fileType": "graph",
         "git_url": "",
+        "readonly": true,
         "repo": "",
+        "repoBranch": "",
         "repoService": "Unknown",
+        "schemaVersion": "OJS",
         "sha": ""
     },
     "nodeDataArray": [
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
             "category": "GroupBy",
             "categoryType": "Group",
             "collapsed": false,
-            "colour": "#7F8C8D",
+            "color": "#7F8C8D",
             "description": "Placeholder 'group by' description",
-            "desiredSize": {
-                "height": 200,
-                "width": 200
-            },
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
             "fields": [
                 {
+                    "description": "",
                     "name": "group_key",
+                    "readonly": false,
                     "text": "Group key",
+                    "type": "String",
                     "value": "None"
                 },
                 {
+                    "description": "",
                     "name": "group_axis",
+                    "readonly": false,
                     "text": "Group axis",
+                    "type": "String",
                     "value": "frequency"
                 }
             ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "",
-            "inputLocalPorts": [
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [
                 {
-                    "Id": "f21dd6fd-08ae-4955-bb05-6466dfa884f6",
-                    "IdText": "event"
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "String",
+                    "value": ""
                 }
             ],
+            "inputApplicationKey": -6,
+            "inputApplicationName": "Bash Shell App",
+            "inputApplicationType": "BashShellApp",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
-                    "Id": "c4f1785d-2427-42ef-ad3e-b4ed2428c5b4",
-                    "IdText": "event"
+                    "Id": "d92ad23a-b146-4e1a-a06d-dbedcd54042a",
+                    "IdText": "in",
+                    "event": false,
+                    "type": "String"
                 }
             ],
             "isData": false,
             "isGroup": true,
             "key": -1,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "",
-            "outputLocalPorts": [
-                {
-                    "Id": "ff77c691-624b-471e-ac7e-c0f25cf86559",
-                    "IdText": "event"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "8ac46084-6e76-4223-8ff7-a352488368d4",
-                    "IdText": "event"
-                }
-            ],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "text": "Group By"
+            "text": "Group By",
+            "width": 200,
+            "x": 613.6213734460798,
+            "y": 461.02769856795413
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
             "category": "Gather",
             "categoryType": "Group",
             "collapsed": false,
-            "colour": "#D35400",
+            "color": "#D35400",
             "description": "Placeholder 'gather' description",
-            "desiredSize": {
-                "height": 200,
-                "width": 200
-            },
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
             "fields": [
                 {
+                    "description": "The number of inputs that will be gathered together by this construct.",
                     "name": "num_of_inputs",
+                    "readonly": false,
                     "text": "Number of inputs",
-                    "value": "2"
+                    "type": "Integer",
+                    "value": 2
                 },
                 {
+                    "description": "The axis by which to gather the inputs together",
                     "name": "gather_axis",
+                    "readonly": false,
                     "text": "Gather axis",
+                    "type": "String",
                     "value": "frequency"
                 }
             ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
-            "inputLocalPorts": [
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [
                 {
-                    "Id": "4694e4c6-c6ba-42f7-bad6-a2943d369ce6",
-                    "IdText": "event"
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "String",
+                    "value": ""
                 }
             ],
+            "inputApplicationKey": -7,
+            "inputApplicationName": "Bash Shell App",
+            "inputApplicationType": "BashShellApp",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
-                    "Id": "0bdb44ea-123d-42ff-825d-cb939175586a",
-                    "IdText": "event"
+                    "Id": "6d8579c9-d27b-48ae-9875-89b1429e40a9",
+                    "IdText": "in",
+                    "event": false,
+                    "type": "String"
                 }
             ],
             "isData": false,
             "isGroup": true,
             "key": -2,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "",
-            "outputLocalPorts": [
-                {
-                    "Id": "5fcb853a-efa5-4c48-aa72-e803f6d96cb7",
-                    "IdText": "event"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "237f5a78-5bd6-412f-8a8b-70e2f4ea4af1",
-                    "IdText": "event"
-                }
-            ],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "text": "Gather"
+            "text": "Gather",
+            "width": 200,
+            "x": 662.321482449737,
+            "y": 20.56226824598862
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
             "category": "Scatter",
             "categoryType": "Group",
             "collapsed": false,
-            "colour": "#DDAD00",
+            "color": "#DDAD00",
             "description": "Placeholder 'scatter' description",
-            "desiredSize": {
-                "height": 200,
-                "width": 200
-            },
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
             "fields": [
                 {
+                    "description": "The number of outputs generated by this construct",
                     "name": "num_of_copies",
+                    "readonly": false,
                     "text": "Number of copies",
-                    "value": "4"
+                    "type": "Integer",
+                    "value": 4
                 },
                 {
+                    "description": "The axis used to split the input into multiple outputs",
                     "name": "scatter_axis",
+                    "readonly": false,
                     "text": "Scatter axis",
+                    "type": "String",
                     "value": "time"
                 }
             ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
-            "inputLocalPorts": [
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [
                 {
-                    "Id": "88f46618-57ac-4e9c-99a7-f9cf2d682852",
-                    "IdText": "event"
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "String",
+                    "value": ""
                 }
             ],
+            "inputApplicationKey": -8,
+            "inputApplicationName": "Bash Shell App",
+            "inputApplicationType": "BashShellApp",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
-                    "Id": "b8cc69ef-de0c-4c6a-bba2-df12aff17a8b",
-                    "IdText": "event"
+                    "Id": "801298bd-3618-4dd8-8373-a5f31e268a3a",
+                    "IdText": "in",
+                    "event": false,
+                    "type": "String"
                 }
             ],
             "isData": false,
             "isGroup": true,
             "key": -3,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "",
-            "outputLocalPorts": [
-                {
-                    "Id": "c29554bd-8003-410a-9cce-c0d4376bb1ef",
-                    "IdText": "event"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "a8e147cb-065c-49ee-8c52-25c53cf36a07",
-                    "IdText": "event"
-                }
-            ],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "text": "Scatter"
+            "text": "Scatter",
+            "width": 200,
+            "x": 261.8983639752229,
+            "y": -6.493347867154186
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "canHaveInputs": false,
+            "canHaveOutputs": false,
             "category": "Loop",
             "categoryType": "Group",
             "collapsed": false,
-            "colour": "#512E5F",
+            "color": "#512E5F",
             "description": "Placeholder 'loop' description",
-            "desiredSize": {
-                "height": 200,
-                "width": 200
-            },
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "exitAppFields": [],
+            "exitApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "expanded": false,
             "fields": [
                 {
+                    "description": "The number of iterations performed by this loop construct",
                     "name": "num_of_iter",
+                    "readonly": false,
                     "text": "Number loops",
-                    "value": "5"
+                    "type": "Integer",
+                    "value": 5
                 }
             ],
-            "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "",
-            "inputLocalPorts": [
+            "flipPorts": false,
+            "height": 200,
+            "inputAppFields": [
                 {
-                    "Id": "cf7081c4-4950-4ec8-b81c-634e1317d51f",
-                    "IdText": "event"
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "String",
+                    "value": ""
                 }
             ],
+            "inputApplicationKey": -5,
+            "inputApplicationName": "Bash Shell App",
+            "inputApplicationType": "BashShellApp",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
-                    "Id": "cb2023bd-4f82-4574-9be5-d9bdbe5a8960",
-                    "IdText": "event"
+                    "Id": "7c1a04d0-0009-463e-bf91-ae79c328f89a",
+                    "IdText": "in",
+                    "event": false,
+                    "type": "String"
                 }
             ],
             "isData": false,
             "isGroup": true,
             "key": -4,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "",
-            "outputLocalPorts": [
-                {
-                    "Id": "a71caf3a-3c4a-43b6-9732-275cc7e4e41a",
-                    "IdText": "event"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "355e0ec9-a0be-47f3-9257-a402be15c957",
-                    "IdText": "event"
-                }
-            ],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "readonly": false,
+            "selected": false,
+            "showPorts": false,
             "streaming": false,
             "subject": null,
-            "text": "Loop"
+            "text": "Loop",
+            "width": 200,
+            "x": 153.6758995226514,
+            "y": 330.0785165803428
         }
     ]
 }
