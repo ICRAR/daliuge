@@ -32,7 +32,8 @@ import unittest
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import accumulate_lgt_drop_data, \
-    accumulate_lg_drop_data, accumulate_pgt_unroll_drop_data
+    accumulate_lg_drop_data, accumulate_pgt_unroll_drop_data, accumulate_pgt_partition_drop_data, \
+    accumulate_pg_drop_data
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
 
@@ -208,11 +209,36 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
 
 
 class AccumulatePGTPartitionRerunData(unittest.TestCase):
+    rmode = ReproducibilityFlags.RERUN
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def __del__(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'PGT.graph')
+        self.pgt_node_data = json.load(file)[0:-1]
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'PGT.graph')
+        self.pgt_file_data = json.load(file)[0:-1]
+        file.close()
+
     def test_app_accumulate(self):
-        self.assertEqual(True, False)
+        expected = ['type', 'dt']
+        self._setup()
+        for drop in enumerate(self.pgt_node_data):
+            hash_data = accumulate_pgt_partition_drop_data(drop[1])
+            self.assertEqual(expected, list(hash_data.keys()))
 
     def test_data_accumulate(self):
-        self.assertEqual(True, False)
+        expected = ['type', 'storage']
+        self._setup()
+        for drop in enumerate(self.pgt_file_data):
+            hash_data = accumulate_pgt_partition_drop_data(drop[1])
+            self.assertEqual(expected, list(hash_data.keys()))
 
     def test_group_accumulate(self):
         self.assertEqual(True, False)
@@ -225,11 +251,36 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
 
 
 class AccumulatePGRerunData(unittest.TestCase):
+    rmode = ReproducibilityFlags.RERUN
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def __del__(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'PGT.graph')
+        self.pg_node_data = json.load(file)[0:-1]
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'PGT.graph')
+        self.pg_file_data = json.load(file)[0:-1]
+        file.close()
+
     def test_app_accumulate(self):
-        self.assertEqual(True, False)
+        expected = []
+        self._setup()
+        for drop in enumerate(self.pg_node_data):
+            hash_data = accumulate_pg_drop_data(drop[1])
+            self.assertEqual(expected, list(hash_data.keys()))
 
     def test_data_accumulate(self):
-        self.assertEqual(True, False)
+        expected = []
+        self._setup()
+        for drop in enumerate(self.pg_file_data):
+            hash_data = accumulate_pg_drop_data(drop[1])
+            self.assertEqual(expected, list(hash_data.keys()))
 
     def test_group_accumulate(self):
         self.assertEqual(True, False)
