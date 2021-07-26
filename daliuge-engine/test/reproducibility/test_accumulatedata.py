@@ -69,7 +69,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.RERUN
-    expected = ['category_type', 'category', 'numInputPorts', 'numOutputPorts', 'streaming']
+    expected = {'category_type', 'category', 'numInputPorts', 'numOutputPorts', 'streaming'}
 
     file = open('reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -90,7 +90,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
     def test_data_accumulate(self):
         """
@@ -98,7 +98,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
     def test_group_accumulate(self):
         """
@@ -106,7 +106,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
     def test_other_accumulate(self):
         """
@@ -114,7 +114,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
 
 class AccumulateLGRerunData(unittest.TestCase):
@@ -123,7 +123,7 @@ class AccumulateLGRerunData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.RERUN
-    expected = []
+    expected = {}
     temp_out = tempfile.TemporaryDirectory('out')
 
     def _cleanup(self):
@@ -156,7 +156,7 @@ class AccumulateLGRerunData(unittest.TestCase):
         for drop in enumerate(
                 self.lg_node_data + self.lg_files_data + self.lg_group_data + self.lg_misc_data):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, dict(hash_data.keys()))
         self._cleanup()
 
 
@@ -185,18 +185,18 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
-        expected = ['type', 'dt']
+        expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
-        expected = ['type', 'storage']
+        expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, hash_data.keys())
 
     def test_group_accumulate(self):
         self.assertEqual(True, False)
@@ -227,18 +227,18 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
-        expected = ['type', 'dt']
+        expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
-        expected = ['type', 'storage']
+        expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, hash_data.keys())
 
     def test_group_accumulate(self):
         self.assertEqual(True, False)
@@ -269,18 +269,18 @@ class AccumulatePGRerunData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
-        expected = []
+        expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_data_accumulate(self):
-        expected = []
+        expected = {}
         self._setup()
         for drop in enumerate(self.pg_file_data):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_group_accumulate(self):
         self.assertEqual(True, False)
@@ -298,7 +298,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPEAT
-    expected = ['category_type', 'category', 'numInputPorts', 'numOutputPorts', 'streaming']
+    expected = {'category_type', 'category', 'numInputPorts', 'numOutputPorts', 'streaming'}
 
     file = open('reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -319,7 +319,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
     def test_data_accumulate(self):
         """
@@ -327,7 +327,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
     def test_group_accumulate(self):
         """
@@ -335,7 +335,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
     def test_other_accumulate(self):
         """
@@ -343,7 +343,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
-            self.assertEqual(self.expected, list(hash_data.keys()))
+            self.assertEqual(self.expected, hash_data.keys())
 
 
 class AccumulateLGRepeatData(unittest.TestCase):
