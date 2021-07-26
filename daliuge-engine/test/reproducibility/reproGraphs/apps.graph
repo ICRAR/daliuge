@@ -130,7 +130,7 @@
         {
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "category": "mpi",
+            "category": "Mpi",
             "categoryType": "Application",
             "collapsed": false,
             "colour": "#1E90FF",
@@ -189,7 +189,7 @@
         {
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "category": "docker",
+            "category": "Docker",
             "categoryType": "Application",
             "collapsed": false,
             "colour": "#331C54",
