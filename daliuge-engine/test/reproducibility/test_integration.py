@@ -34,11 +34,11 @@ from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dl
 
 def _run_full_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./',
                        scratch_loc='./'):
-    lgt = workflow_loc + workflow + ".graph"
-    lgr = scratch_loc + workflow + "LG.graph"
-    pgs = scratch_loc + workflow + "PGS.graph"
-    pgt = scratch_loc + workflow + "PGT.graph"
-    pgr = scratch_loc + workflow + "PG.graph"
+    lgt = workflow_loc + '/' + workflow + ".graph"
+    lgr = scratch_loc + '/' + workflow + "LG.graph"
+    pgs = scratch_loc + '/' + workflow + "PGS.graph"
+    pgt = scratch_loc + '/' + workflow + "PGT.graph"
+    pgr = scratch_loc + '/' + workflow + "PG.graph"
 
     rmodes = str(rmode.value)
 
@@ -78,7 +78,7 @@ class IntegrationNothingTest(unittest.TestCase):
         graph_loc = 'topoGraphs/'
         _run_full_workflow(rmode=ReproducibilityFlags.NOTHING, workflow=graph_name,
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
-        pgr = self.temp_out.name + graph_name + "PG.graph"
+        pgr = self.temp_out.name + '/' + graph_name + "PG.graph"
 
         graph = _read_graph(pgr)
         graph = graph[0:-1]
