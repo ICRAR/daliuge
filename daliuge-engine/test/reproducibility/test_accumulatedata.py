@@ -32,7 +32,7 @@ import unittest
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import accumulate_lgt_drop_data, \
-    accumulate_lg_drop_data
+    accumulate_lg_drop_data, accumulate_pgt_unroll_drop_data
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
 
@@ -66,13 +66,8 @@ class AccumulateLGTRerunData(unittest.TestCase):
     """
     Tests the rerun standard at the logical graph template level.
     """
-    # Locations in apps.graph for various application types
-    bash_app = 0
-    dyn_lib = 1
-    mpi = 2
-    docker = 3
-    python = 4
 
+    rmode = ReproducibilityFlags.RERUN
     expected = ['category_type', 'category', 'numInputPorts', 'numOutputPorts', 'streaming']
 
     file = open('reproGraphs/apps.graph')
@@ -93,7 +88,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         Tests that lgt rerun data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
-            hash_data = accumulate_lgt_drop_data(drop[1], ReproducibilityFlags.RERUN)
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, list(hash_data.keys()))
 
     def test_data_accumulate(self):
@@ -101,7 +96,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         Tests that lgt rerun data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
-            hash_data = accumulate_lgt_drop_data(drop[1], ReproducibilityFlags.RERUN)
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, list(hash_data.keys()))
 
     def test_group_accumulate(self):
@@ -109,7 +104,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         Tests that lgt rerun data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
-            hash_data = accumulate_lgt_drop_data(drop[1], ReproducibilityFlags.RERUN)
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, list(hash_data.keys()))
 
     def test_other_accumulate(self):
@@ -117,7 +112,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         Tests that lgt rerun data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
-            hash_data = accumulate_lgt_drop_data(drop[1], ReproducibilityFlags.RERUN)
+            hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, list(hash_data.keys()))
 
 
@@ -125,6 +120,8 @@ class AccumulateLGRerunData(unittest.TestCase):
     """
     Tests the rerun standard at the logical graph level.
     """
+
+    rmode = ReproducibilityFlags.RERUN
     expected = []
     temp_out = tempfile.TemporaryDirectory('out')
 
@@ -132,10 +129,10 @@ class AccumulateLGRerunData(unittest.TestCase):
         self.temp_out.cleanup()
 
     def _setup(self):
-        _fill_workflow(ReproducibilityFlags.RERUN, 'apps', 'reproGraphs/', self.temp_out.name)
-        _fill_workflow(ReproducibilityFlags.RERUN, 'files', 'reproGraphs/', self.temp_out.name)
-        _fill_workflow(ReproducibilityFlags.RERUN, 'groups', 'reproGraphs/', self.temp_out.name)
-        _fill_workflow(ReproducibilityFlags.RERUN, 'misc', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'groups', 'reproGraphs/', self.temp_out.name)
+        _fill_workflow(self.rmode, 'misc', 'reproGraphs/', self.temp_out.name)
 
         file = open(self.temp_out.name + 'apps' + 'LG.graph')
         self.lg_node_data = json.load(file)['nodeDataArray']
@@ -157,8 +154,9 @@ class AccumulateLGRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(
                 self.lg_node_data + self.lg_files_data + self.lg_group_data + self.lg_misc_data):
-            hash_data = accumulate_lg_drop_data(drop[1], ReproducibilityFlags.RERUN)
+            hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, list(hash_data.keys()))
+        self._cleanup()
 
 
 class AccumulatePGTUnrollRerunData(unittest.TestCase):
@@ -167,11 +165,37 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
+
+    rmode = ReproducibilityFlags.RERUN
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def __del__(self):
+        self.temp_out.cleanup()
+
+    def _setup(self):
+        _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
+        _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
+
+        file = open(self.temp_out.name + 'apps' + 'PGS.graph')
+        self.pgs_node_data = json.load(file)[0:-1]
+        file.close()
+        file = open(self.temp_out.name + 'files' + 'PGS.graph')
+        self.pgs_file_data = json.load(file)[0:-1]
+        file.close()
+
     def test_app_accumulate(self):
-        self.assertEqual(True, False)
+        expected = ['type', 'dt']
+        self._setup()
+        for drop in enumerate(self.pgs_node_data):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            self.assertEqual(expected, list(hash_data.keys()))
 
     def test_data_accumulate(self):
-        self.assertEqual(True, False)
+        expected = ['type', 'storage']
+        self._setup()
+        for drop in enumerate(self.pgs_file_data):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            self.assertEqual(expected, list(hash_data.keys()))
 
     def test_group_accumulate(self):
         self.assertEqual(True, False)
