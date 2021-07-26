@@ -37,11 +37,11 @@ from dlg.translator.tool_commands import dlg_fill, dlg_partition, dlg_map, dlg_u
 
 def _run_full_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./',
                        scratch_loc='./'):
-    lgt = workflow_loc + workflow + ".graph"
-    lgr = scratch_loc + workflow + "LG.graph"
-    pgs = scratch_loc + workflow + "PGS.graph"
-    pgt = scratch_loc + workflow + "PGT.graph"
-    pgr = scratch_loc + workflow + "PG.graph"
+    lgt = workflow_loc + '/' + workflow + ".graph"
+    lgr = scratch_loc + '/' + workflow + "LG.graph"
+    pgs = scratch_loc + '/' + workflow + "PGS.graph"
+    pgt = scratch_loc + '/' + workflow + "PGT.graph"
+    pgr = scratch_loc + '/' + workflow + "PG.graph"
 
     rmodes = str(rmode.value)
 
@@ -115,8 +115,8 @@ class ScatterTest(unittest.TestCase):
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
         _run_full_workflow(rmode=ReproducibilityFlags.RERUN, workflow=noscatter,
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
-        pgr_scatter = self.temp_out.name + scatter + "PG.graph"
-        pgr_noscatter = self.temp_out.name + noscatter + "PG.graph"
+        pgr_scatter = self.temp_out.name + '/' + scatter + "PG.graph"
+        pgr_noscatter = self.temp_out.name + '/' + noscatter + "PG.graph"
 
         scatter_graph = _read_graph(pgr_scatter)
         scatter_graph = scatter_graph[0:-1]
