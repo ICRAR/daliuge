@@ -125,6 +125,10 @@ class AccumulateLGRerunData(unittest.TestCase):
     rmode = ReproducibilityFlags.RERUN
     expected = {}
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -165,6 +169,8 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -178,6 +184,9 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        The the application type matters for rerunning
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -185,6 +194,9 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only the storage type matters for rerunning
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -193,19 +205,34 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only the drop type and input app type matters for rerunning
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only the drop type matters for rerunning
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Nothing should matter for rerunning
+        """
         self.assertEqual(True, False)
 
+
 class AccumulatePGTPartitionRerunData(unittest.TestCase):
+    """
+    Tests the rerun standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -219,6 +246,9 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only application type matters for rerunning.
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -226,6 +256,9 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only storage type matters for rerunning.
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -234,33 +267,50 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only drop type matters for rerunning.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only drop type matters for rerunning.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Should not  matter for rerunning.
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGRerunData(unittest.TestCase):
+    """
+    Tests the rerun standard at the physical graph level
+    """
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
         _run_full_workflow(self.rmode, 'files', 'reproGraphs/', self.temp_out.name)
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + '/' + 'apps' + 'PG.graph')
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + '/' + 'files' + 'PG.graph')
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Nothing matters for rerunning.
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -268,6 +318,9 @@ class AccumulatePGRerunData(unittest.TestCase):
             self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Nothing matters for rerunning.
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_file_data):
@@ -276,20 +329,29 @@ class AccumulatePGRerunData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Nothing matters for rerunning.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Nothing matters for rerunning.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Nothing matters for rerunning.
+        """
         self.assertEqual(True, False)
 
 
 class AccumulateLGTRepeatData(unittest.TestCase):
     """
-    Tests the rerun standard at the logical graph template level.
+    Tests the repeat standard at the logical graph template level.
     """
 
     rmode = ReproducibilityFlags.REPEAT
@@ -310,7 +372,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
 
     def test_app_accumulate(self):
         """
-        Tests that lgt rerun data is collected for application types
+        Tests that lgt repeat data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -318,7 +380,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
 
     def test_data_accumulate(self):
         """
-        Tests that lgt rerun data is collected for file types
+        Tests that lgt repeat data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -326,7 +388,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
 
     def test_group_accumulate(self):
         """
-        Tests that lgt rerun data is collected for group types
+        Tests that lgt repeat data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -334,7 +396,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Tests that lgt rerun data is collected for other types
+        Tests that lgt repeat data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -349,6 +411,10 @@ class AccumulateLGRepeatData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPEAT
     expected = []
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -426,6 +492,9 @@ class AccumulateLGRepeatData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def test_all_accumulate(self):
+        """
+        We make the data expected for each accounted for drop type explicit.
+        """
         self._setup()
         self._bash(self.lg_node_data[0])
         self._dynlib(self.lg_node_data[1])
@@ -439,13 +508,15 @@ class AccumulateLGRepeatData(unittest.TestCase):
 
 class AccumulatePGTUnrollRepeatData(unittest.TestCase):
     """
-    Tests the rerun standard at the physical graph template level.
+    Tests the repeat standard at the physical graph template level.
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
 
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -459,6 +530,9 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -466,6 +540,9 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -474,20 +551,34 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGTPartitionRepeatData(unittest.TestCase):
+    """
+    Tests the repeat standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -501,6 +592,9 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters when repeating.
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -508,6 +602,9 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only type matters when repeating.
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -516,20 +613,34 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters when repeating.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters when repeating.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Should not matter when repeating.
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGRepeatData(unittest.TestCase):
+    """
+    Tests the repeat standard  at the physical graph level
+    """
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -543,6 +654,9 @@ class AccumulatePGRepeatData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Nothing matters for repeating.
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -550,6 +664,9 @@ class AccumulatePGRepeatData(unittest.TestCase):
             self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Nothing matters for repeating.
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_file_data):
@@ -558,20 +675,29 @@ class AccumulatePGRepeatData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Nothing matters for repeating.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Nothing matters for repeating.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulateLGTRecomputeData(unittest.TestCase):
     """
-    Tests the rerun standard at the logical graph template level.
+    Tests the recompute standard at the logical graph template level.
     """
 
     rmode = ReproducibilityFlags.RECOMPUTE
@@ -592,7 +718,7 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
 
     def test_app_accumulate(self):
         """
-        Tests that lgt rerun data is collected for application types
+        Tests that lgt recompute data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -600,7 +726,7 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
 
     def test_data_accumulate(self):
         """
-        Tests that lgt rerun data is collected for file types
+        Tests that lgt recompute data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -608,7 +734,7 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
 
     def test_group_accumulate(self):
         """
-        Tests that lgt rerun data is collected for group types
+        Tests that lgt recompute data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -616,7 +742,7 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Tests that lgt rerun data is collected for other types
+        Tests that lgt recompute data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -625,12 +751,16 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
 
 class AccumulateLGRecomputeData(unittest.TestCase):
     """
-    Tests the repeat standard at the logical graph level.
+    Tests the recompute standard at the logical graph level.
     """
 
     rmode = ReproducibilityFlags.RECOMPUTE
     expected = {}
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -708,6 +838,9 @@ class AccumulateLGRecomputeData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def test_all_accumulate(self):
+        """
+        We make the data expected for each accounted for drop type explicit.
+        """
         self._setup()
         self._bash(self.lg_node_data[0])
         self._dynlib(self.lg_node_data[1])
@@ -721,13 +854,15 @@ class AccumulateLGRecomputeData(unittest.TestCase):
 
 class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
     """
-    Tests the rerun standard at the physical graph template level.
+    Tests the recompute standard at the physical graph template level.
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
 
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -741,6 +876,9 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Type and rank matters.
+        """
         expected = {'type', 'dt', 'rank'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -748,6 +886,9 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Type and rank matters.
+        """
         expected = {'type', 'storage', 'rank'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -756,20 +897,34 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Type and rank matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Type and rank matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Should not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
+    """
+    Tests the recompute standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -783,6 +938,9 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Type, rank and machine information matters
+        """
         expected = ['type', 'dt', 'rank', 'node', 'island']
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -790,6 +948,9 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
             self.assertEqual(expected, list(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Type, rank and machine information matters
+        """
         expected = ['type', 'storage', 'rank', 'node', 'island']
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -798,20 +959,34 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Type, rank and machine information matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Type, rank and machine information matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Should not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGRecomputeData(unittest.TestCase):
+    """
+    Tests the recompute standard at the physical graph level
+    """
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -825,6 +1000,9 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Machine information matters when recomputing
+        """
         expected = {'node', 'island'}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -832,6 +1010,9 @@ class AccumulatePGRecomputeData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Machine information matters when recomputing
+        """
         expected = {'node', 'island'}
         self._setup()
         for drop in enumerate(self.pg_file_data):
@@ -840,20 +1021,29 @@ class AccumulatePGRecomputeData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Machine information matters when recomputing
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Machine information matters when recomputing
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Should not matter.
+        """
         self.assertEqual(True, False)
 
 
 class AccumulateLGTReproduceData(unittest.TestCase):
     """
-    Tests the rerun standard at the logical graph template level.
+    Tests the reproduce standard at the logical graph template level.
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
@@ -874,7 +1064,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
 
     def test_app_accumulate(self):
         """
-        Tests that lgt rerun data is collected for application types
+        Tests that lgt reproduce data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -882,7 +1072,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
 
     def test_data_accumulate(self):
         """
-        Tests that lgt rerun data is collected for file types
+        Tests that lgt reproduce data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -890,7 +1080,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
 
     def test_group_accumulate(self):
         """
-        Tests that lgt rerun data is collected for group types
+        Tests that lgt reproduce data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -898,7 +1088,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Tests that lgt rerun data is collected for other types
+        Tests that lgt reproduce data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -907,12 +1097,16 @@ class AccumulateLGTReproduceData(unittest.TestCase):
 
 class AccumulateLGReproduceData(unittest.TestCase):
     """
-    Tests the repeat standard at the logical graph level.
+    Tests the reproduce standard at the logical graph level.
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
     expected = {}
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -989,6 +1183,9 @@ class AccumulateLGReproduceData(unittest.TestCase):
         self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_all_accumulate(self):
+        """
+        We make the data expected for each accounted for drop type explicit.
+        """
         self._setup()
         self._bash(self.lg_node_data[0])
         self._dynlib(self.lg_node_data[1])
@@ -1002,13 +1199,15 @@ class AccumulateLGReproduceData(unittest.TestCase):
 
 class AccumulatePGTUnrollReproduceData(unittest.TestCase):
     """
-    Tests the rerun standard at the physical graph template level.
+    Tests the reproduce standard at the physical graph template level.
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1022,6 +1221,9 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -1029,6 +1231,9 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -1037,20 +1242,34 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGTPartitionReproduceData(unittest.TestCase):
+    """
+    Tests the reproduce standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1064,6 +1283,9 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters
+        """
         expected = ['type']
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -1071,6 +1293,9 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
             self.assertEqual(expected, list(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Only type matters
+        """
         expected = ['type', 'storage']
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -1079,19 +1304,34 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
+
 class AccumulatePGReproduceData(unittest.TestCase):
+    """
+    Tests the reproduce standard at the physical graph level
+    """
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1105,6 +1345,9 @@ class AccumulatePGReproduceData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        App information does not matter when reproducing
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -1112,6 +1355,9 @@ class AccumulatePGReproduceData(unittest.TestCase):
             self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Only data information matters, not the type of drop
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_file_data):
@@ -1120,20 +1366,29 @@ class AccumulatePGReproduceData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Group information does not matter when reproducing
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Control information does not matter when reproducing
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulateLGTReplicateSciData(unittest.TestCase):
     """
-    Tests the rerun standard at the logical graph template level.
+    Tests the replicate-sci standard at the logical graph template level.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
@@ -1154,7 +1409,7 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
 
     def test_app_accumulate(self):
         """
-        Tests that lgt rerun data is collected for application types
+        Tests that lgt replicate-sci data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1162,7 +1417,7 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
 
     def test_data_accumulate(self):
         """
-        Tests that lgt rerun data is collected for file types
+        Tests that lgt replicate-sci data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1170,7 +1425,7 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
 
     def test_group_accumulate(self):
         """
-        Tests that lgt rerun data is collected for group types
+        Tests that lgt replicate-sci data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1178,7 +1433,7 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Tests that lgt rerun data is collected for other types
+        Tests that lgt replicate-sci data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1187,12 +1442,16 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
 
 class AccumulateLGReplicateSciData(unittest.TestCase):
     """
-    Tests the repeat standard at the logical graph level.
+    Tests the replicate-sci standard at the logical graph level.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
     expected = {}
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1214,6 +1473,9 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
         file.close()
 
     def test_all_accumulate(self):
+        """
+        Similar to rerunning. Nothing matters
+        """
         self._setup()
         for drop in enumerate(
                 self.lg_node_data + self.lg_files_data + self.lg_group_data + self.lg_misc_data):
@@ -1223,13 +1485,15 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
 
 class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
     """
-    Tests the rerun standard at the physical graph template level.
+    Tests the replicate-sci standard at the physical graph template level.
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1243,6 +1507,9 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -1250,6 +1517,9 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -1258,20 +1528,34 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
+    """
+    Tests the replicate-sci standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1285,6 +1569,9 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -1292,6 +1579,9 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -1300,20 +1590,34 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGReplicateSciData(unittest.TestCase):
+    """
+    Tests the replicate-sci standard at the physical graph level
+    """
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1327,6 +1631,9 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Nothing matters.
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -1334,6 +1641,9 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
             self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Nothing matters.
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -1342,20 +1652,29 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Nothing matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Nothing matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter.
+        """
         self.assertEqual(True, False)
 
 
 class AccumulateLGTReplicateCompData(unittest.TestCase):
     """
-    Tests the rerun standard at the logical graph template level.
+    Tests the replicate-comp standard at the logical graph template level.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
@@ -1376,7 +1695,7 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
 
     def test_app_accumulate(self):
         """
-        Tests that lgt rerun data is collected for application types
+        Tests that lgt replicate-comp data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1384,7 +1703,7 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
 
     def test_data_accumulate(self):
         """
-        Tests that lgt rerun data is collected for file types
+        Tests that lgt replicate-comp data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1392,7 +1711,7 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
 
     def test_group_accumulate(self):
         """
-        Tests that lgt rerun data is collected for group types
+        Tests that lgt replicate-comp data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1400,7 +1719,7 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Tests that lgt rerun data is collected for other types
+        Tests that lgt replicate-comp data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1409,12 +1728,16 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
 
 class AccumulateLGReplicateCompData(unittest.TestCase):
     """
-    Tests the repeat standard at the logical graph level.
+    Tests the replicate-comp standard at the logical graph level.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
     expected = {}
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1492,6 +1815,9 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def test_all_accumulate(self):
+        """
+        We make the data expected for each accounted for drop type explicit.
+        """
         self._setup()
         self._bash(self.lg_node_data[0])
         self._dynlib(self.lg_node_data[1])
@@ -1505,13 +1831,15 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
 
 class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
     """
-    Tests the rerun standard at the physical graph template level.
+    Tests the replicate-comp standard at the physical graph template level.
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1525,6 +1853,9 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Type and rank matter
+        """
         expected = {'type', 'dt', 'rank'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -1532,6 +1863,9 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Type and rank matter
+        """
         expected = {'type', 'storage', 'rank'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -1540,20 +1874,34 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Type and rank matter
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Type and rank matter
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
+    """
+    Tests the replicate-comp standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1567,6 +1915,9 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Type, rank and machine information matters.
+        """
         expected = {'type', 'dt', 'rank', 'node', 'island'}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -1574,6 +1925,9 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Type, rank and machine information matters.
+        """
         expected = {'type', 'storage', 'rank', 'node', 'island'}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -1582,20 +1936,34 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Type, rank and machine information matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Type, rank and machine information matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGReplicateCompData(unittest.TestCase):
+    """
+    Tests the replicate-comp standard at the physical graph level
+    """
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1609,6 +1977,9 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Machine information matters.
+        """
         expected = {'node', 'island'}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -1616,6 +1987,9 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Machine information matters.
+        """
         expected = {'node', 'island'}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -1624,20 +1998,29 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Machine information matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Machine information matters.
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter.
+        """
         self.assertEqual(True, False)
 
 
 class AccumulateLGTReplicateTotalData(unittest.TestCase):
     """
-    Tests the rerun standard at the logical graph template level.
+    Tests the replicate-total standard at the logical graph template level.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
@@ -1658,7 +2041,7 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
 
     def test_app_accumulate(self):
         """
-        Tests that lgt rerun data is collected for application types
+        Tests that lgt replicate-total data is collected for application types
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1666,7 +2049,7 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
 
     def test_data_accumulate(self):
         """
-        Tests that lgt rerun data is collected for file types
+        Tests that lgt replicate-total data is collected for file types
         """
         for drop in enumerate(self.lgt_files_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1674,7 +2057,7 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
 
     def test_group_accumulate(self):
         """
-        Tests that lgt rerun data is collected for group types
+        Tests that lgt replicate-total data is collected for group types
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1682,7 +2065,7 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Tests that lgt rerun data is collected for other types
+        Tests that lgt replicate-total data is collected for other types
         """
         for drop in enumerate(self.lgt_misc_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
@@ -1691,12 +2074,16 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
 
 class AccumulateLGReplicateTotalData(unittest.TestCase):
     """
-    Tests the repeat standard at the logical graph level.
+    Tests the replicate-total standard at the logical graph level.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     expected = []
     temp_out = tempfile.TemporaryDirectory()
+    lg_node_data = None
+    lg_files_data = None
+    lg_group_data = None
+    lg_misc_data = None
 
     def _setup(self):
         _fill_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1774,6 +2161,9 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def test_all_accumulate(self):
+        """
+        We make the data expected for each accounted for drop type explicit.
+        """
         self._setup()
         self._bash(self.lg_node_data[0])
         self._dynlib(self.lg_node_data[1])
@@ -1787,13 +2177,15 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
 
 class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
     """
-    Tests the rerun standard at the physical graph template level.
+    Tests the replicate-total standard at the physical graph template level.
     Can currently only test apps.graph and files.graph, the translator cannot deal with groups
     or comments easily.
     """
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
+    pgs_node_data = None
+    pgs_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1807,6 +2199,9 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Type matters
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
@@ -1814,6 +2209,9 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Type matters
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
@@ -1822,20 +2220,34 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
+    """
+    Tests the replicate-total standard at the physical graph template level.
+    """
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
+    pgt_node_data = None
+    pgt_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1849,6 +2261,9 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'dt'}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
@@ -1856,6 +2271,9 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
             self.assertEqual(expected, hash_data.keys())
 
     def test_data_accumulate(self):
+        """
+        Only type matters
+        """
         expected = {'type', 'storage'}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
@@ -1864,20 +2282,34 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Only type matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 
 class AccumulatePGReplicateTotalData(unittest.TestCase):
+    """
+    Tests the replicate-total standard at the physical graph level
+    """
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
+    pg_node_data = None
+    pg_file_data = None
 
     def _setup(self):
         _run_full_workflow(self.rmode, 'apps', 'reproGraphs/', self.temp_out.name)
@@ -1891,6 +2323,9 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         file.close()
 
     def test_app_accumulate(self):
+        """
+        Nothing matters
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_node_data):
@@ -1898,6 +2333,9 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
             self.assertEqual(expected, dict(hash_data.keys()))
 
     def test_data_accumulate(self):
+        """
+        Nothing matters
+        """
         expected = {}
         self._setup()
         for drop in enumerate(self.pg_file_data):
@@ -1906,14 +2344,23 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
+        """
+        Nothing matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
+        """
+        Nothing matters
+        """
         self.assertEqual(True, False)
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
+        """
+        Does not matter
+        """
         self.assertEqual(True, False)
 
 if __name__ == '__main__':
