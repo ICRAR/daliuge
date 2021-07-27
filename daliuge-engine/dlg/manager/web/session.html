@@ -271,23 +271,24 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 		for(var idx in oids) {
 			dropSpecList[idx] = dropSpecs[oids[idx]];
 		}
-
+		console.log(dropSpecList);
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
 		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 
-		var oidCells = rows.selectAll('td.oid').data(function values(d) { return [d.oid]; });
-		oidCells.enter().append('td').classed('oid', true).text(String)
-		oidCells.text(String)
-		oidCells.exit().remove()
+		var oidCells = rows.selectAll('td.oid').data(function (d) { return [d.oid]; });
+		console.log(oidCells);
+		oidCells.enter().append('td').classed('oid', true).text(String);
+		oidCells.text(String);
+		oidCells.exit().remove();
 	};
 
 	var status_update_handler = function (statuses) {
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(statuses);
 		var uidCells = rows.selectAll('td.status').data(function values(s) { return [get_status_name(s)]; });
-		uidCells.enter().append('td').classed('status', true).text(String)
-		uidCells.text(String)
-		uidCells.exit().remove()
+		uidCells.enter().append('td').classed('status', true).text(String);
+		uidCells.text(String);
+		uidCells.exit().remove();
 	};
 
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
