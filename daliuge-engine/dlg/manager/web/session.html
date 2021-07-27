@@ -65,6 +65,9 @@
 		<table id="pg-list" class="table table-striped table-condensed" >
 			<thead>
 				<tr>
+					<th>Name</th>
+					<th>Type</th>
+					<th>App</th>
 					<th>OID</th>
 					<th>Status</th>
 				</tr>
@@ -274,27 +277,67 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-progress-bar').remove();
 
 	var graph_update_handler = function(oids, dropSpecs) {
-
+		//getting the data ready
 		var dropSpecList = [];
 		for(var idx in oids) {
 			dropSpecList[idx] = dropSpecs[oids[idx]];
 		}
-		console.log("dropSpecList")
-		console.log(dropSpecList)
-		//transitions
+
+		//sort table WIP
+		// var sortAscending = true;
+		// var headers = d3.select('#pg-list thead').on('click', function (d) {
+		//                 	   headers.attr('class', 'header');
+								
+		//                 	   if (sortAscending) {
+		//                 	     rows.sort(function(a, b) { return b[d] < a[d]; });
+		//                 	     sortAscending = false;
+		//                 	     this.className = 'aes';
+		//                 	   } else {
+		//                 		 rows.sort(function(a, b) { return b[d] > a[d]; });
+		//                 		 sortAscending = true;
+		//                 		 this.className = 'des';
+		//                 	   }
+		// 					});
+
+		//adding the appropriate number of rows into the table from the array
+		//rows is defined and assigned the array in the data attribute
+		//this line is comparing the existing list from the select all with the array in the data attribute and will add or remove rows to make the table equal to the array
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
-		rows.enter().append('tr');
-		rows.exit().remove();
-		// rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
-		// rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
-		var oidCells = rows.selectAll('td.oid').data(function value(d) { return [d.oid]; });
-		console.log("oidCells")
-		console.log(oidCells)
+		//enter is used if the above statement wants to add a row
+		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
+		//enter is used if the above statement wants to remove a row
+		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
+		//i have made the fill table its own function because it wasnt doing anything when it was here for some reason
+		fillTable(dropSpecList);
+	};
+
+	//all of the information that doesnt require updates is added into the graph
+	var fillTable = function (dropSpecList){
+		//data is bound to the rows and can be accessed later
+		//this line is comparing the existing list from the select all with the array in the data attribute and will add or remove td cells to make the table equal to the array
+		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
+		//the "function value(d)" function is using the data linked above to get data for this field it works similarly to a for loop
+		var nameCells = rows.selectAll('td.nName').data(function value(d) { return [d.nm] });
+		//enter is used if the above statement wants to add something
+		nameCells.enter().append('td').classed('nName', true).text(String)
+		//enter is used if the above statement wants to remove something
+		nameCells.text(String)
+		nameCells.exit().remove()
+		var typeCells = rows.selectAll('td.nType').data(function value(d) { return [d.dt] });
+		typeCells.enter().append('td').classed('nType', true).text(String)
+		typeCells.text(String)
+		typeCells.exit().remove()
+		var appCells = rows.selectAll('td.nApp').data(function value(d) { return [d.app] });
+		appCells.enter().append('td').classed('nApp', true).text(String)
+		appCells.text(String)
+		appCells.exit().remove()
+		var oidCells = rows.selectAll('td.oid').data(function value(d) { return [d.oid] });
 		oidCells.enter().append('td').classed('oid', true).text(String)
 		oidCells.text(String)
 		oidCells.exit().remove()
-	};
+	}
 
+	//states are added into the graph, this is called whenever there is a state change to update the table
 	var status_update_handler = function (statuses) {
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(statuses);
 		var uidCells = rows.selectAll('td.status').data(function values(s) { return [get_status_name(s)]; });
