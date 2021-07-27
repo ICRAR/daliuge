@@ -471,6 +471,7 @@ function _addNode(g, doSpec) {
 	}
 
 	var typeClass = doSpec.type;
+    console.log(doSpec)
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
 	// console.log('Drop type', doSpec.type)
