@@ -35,13 +35,12 @@ from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dl
 def _run_full_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./',
                        scratch_loc='./'):
     lgt = workflow_loc + '/' + workflow + ".graph"
-    lgr = scratch_loc + '/' + workflow + "LG.graph"
-    pgs = scratch_loc + '/' + workflow + "PGS.graph"
-    pgt = scratch_loc + '/' + workflow + "PGT.graph"
-    pgr = scratch_loc + '/' + workflow + "PG.graph"
+    lgr = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "LG.graph"
+    pgs = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "PGS.graph"
+    pgt = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "PGT.graph"
+    pgr = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "PG.graph"
 
     rmodes = str(rmode.value)
-
     parser = optparse.OptionParser()
     dlg_fill(parser, ['-L', lgt, '-R', rmodes, '-o', lgr, '-f', 'newline'])
     parser = optparse.OptionParser()
@@ -66,9 +65,6 @@ class IntegrationNothingTest(unittest.TestCase):
     """
     temp_out = tempfile.TemporaryDirectory('out')
 
-    def _cleanup(self):
-        self.temp_out.cleanup()
-
     def test_computation_sandwich(self):
         """
         Opens a simple computationSandwich graph in a temporary directory
@@ -76,9 +72,10 @@ class IntegrationNothingTest(unittest.TestCase):
         """
         graph_name = 'computationSandwich'
         graph_loc = 'topoGraphs/'
-        _run_full_workflow(rmode=ReproducibilityFlags.NOTHING, workflow=graph_name,
+        rmode = ReproducibilityFlags.NOTHING
+        _run_full_workflow(rmode=rmode, workflow=graph_name,
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
-        pgr = self.temp_out.name + '/' + graph_name + "PG.graph"
+        pgr = self.temp_out.name + '/' + graph_name + "_" + str(rmode.value) + "PG.graph"
 
         graph = _read_graph(pgr)
         graph = graph[0:-1]
@@ -88,4 +85,255 @@ class IntegrationNothingTest(unittest.TestCase):
             self.assertIsNone(drop['reprodata']['lg_data']['merkleroot'])
             self.assertIsNone(drop['reprodata']['pgt_data']['merkleroot'])
             self.assertIsNone(drop['reprodata']['pg_data']['merkleroot'])
-        self._cleanup()
+
+
+class IntegrationHelloWorldTest(unittest.TestCase):
+    """
+    An example running multiple 'hello world' style workflows, comparing their hash-values.
+    This test is the first actual reproducibility test.
+
+    For now, until I can find a way to launch a daliuge from the test and shut it down when finished
+    we will just go to the physical graph level.
+    Until that point arrives, it will be difficult to test Reproduce and beyond fairly.
+    TODO: Actually run full graphs as a test.
+
+    We initalize the test by processing every graph for every level tested.
+
+    HelloSPython and HelloSPython2 differ only in their input file arguments.
+
+    """
+    temp_out = tempfile.TemporaryDirectory('out')
+    graph_loc = 'reproGraphs/'
+    graphs = {'HelloWorldBash': {}, 'HelloSBash': {}, 'HelloWorldFile': {}, 'HelloSPython': {},
+              'HelloSPython2': {}}
+
+    def _process_graphs(self, rmode: ReproducibilityFlags):
+        for graph in list(self.graphs.keys()):
+            _run_full_workflow(rmode=rmode, workflow=graph,
+                               workflow_loc=self.graph_loc, scratch_loc=self.temp_out.name)
+            self.graphs[graph][rmode.value] = \
+                _read_graph(self.temp_out.name + '/' + graph + '_' + str(
+                    rmode.value) + 'PG.graph')[-1]['signature']
+
+    def test_integration_rerun(self):
+        """
+        Compares the four hello world graphs by their signatures when rerunning
+        HelloWorldBash RR-> HelloSBash
+        HelloWorldBash !RR-> HelloWorldFile
+        HelloWorldBash !RR-> HelloSPython
+        HelloSBash !RR-> HelloWorldFile
+        HelloSBash !RR-> HelloSPython
+        HelloWorldFile !RR-> HelloSPython
+        HelloSPython RR-> HelloSPython2
+        """
+        rmode = ReproducibilityFlags.RERUN
+        self._process_graphs(rmode)
+        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
+                         self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
+                         self.graphs['HelloSPython2'][rmode.value])
+
+    def test_integration_repeat(self):
+        """
+        Compares the four hello world graphs by their signatures when repeating
+        HelloWorldBash !RT-> HelloSBash
+        HelloWorldBash !RT-> HelloWorldFile
+        HelloWorldBash !RT-> HelloSPython
+        HelloSBash !RT-> HelloWorldFile
+        HelloSBash !RT-> HelloSPython
+        HelloWorldFile !RT-> HelloSPython
+        HelloSPython RT-> HelloSPython2
+        """
+        rmode = ReproducibilityFlags.REPEAT
+        self._process_graphs(rmode)
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
+                         self.graphs['HelloSPython2'][rmode.value])
+
+    def test_integration_recompute(self):
+        """
+        Compares the four hello world graphs by their signatures when recomputing
+        HelloWorldBash !RC-> HelloSBash
+        HelloWorldBash !RC-> HelloWorldFile
+        HelloWorldBash !RC-> HelloSPython
+        HelloSBash !RC-> HelloWorldFile
+        HelloSBash !RC-> HelloSPython
+        HelloWorldFile !RC-> HelloSPython
+        HelloSPython !RC-> HelloSPython2
+        """
+        rmode = ReproducibilityFlags.RECOMPUTE
+        self._process_graphs(rmode)
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSPython'][rmode.value],
+                            self.graphs['HelloSPython2'][rmode.value])
+
+    def test_integration_reproduce(self):
+        """
+        Compares the four hello world graphs by their signatures when reproducing
+        HelloWorldBash RP-> HelloSBash
+        HelloWorldBash !RP-> HelloWorldFile
+        HelloWorldBash RP-> HelloSPython
+        HelloSBash !RP-> HelloWorldFile
+        HelloSBash RP-> HelloSPython
+        HelloWorldFile !RP-> HelloSPython
+        HelloSPython RP-> HelloSPython2
+
+        HelloWorldFile is different to all others since it is a single file, the others have an
+        input and output file.
+        HelloSPython and HelloSPython2 differ in input filename only
+        """
+        rmode = ReproducibilityFlags.REPRODUCE
+        self._process_graphs(rmode)
+        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
+                         self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+
+        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
+                         self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertEqual(self.graphs['HelloSBash'][rmode.value],
+                         self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
+                         self.graphs['HelloSPython2'][rmode.value])
+
+    def test_integration_replicate_sci(self):
+        """
+        Compares the four hello world graphs by their signatures when replicating scientifically
+        HelloWorldBash RPLS-> HelloSBash
+        HelloWorldBash !RPLS-> HelloWorldFile
+        HelloWorldBash !RPLS-> HelloSPython
+        HelloSBash !RPLS-> HelloWorldFile
+        HelloSBash !RPLS-> HelloSPython
+        HelloWorldFile !RPLS-> HelloSPython
+        HelloSPython RPLS-> HelloSPython2
+        """
+        rmode = ReproducibilityFlags.REPLICATE_SCI
+        self._process_graphs(rmode)
+        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
+                         self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
+                         self.graphs['HelloSPython2'][rmode.value])
+
+    def test_integration_replicate_comp(self):
+        """
+        Compares the four hello world graphs by their signatures when replicating computationally
+        HelloWorldBash !RPLC-> HelloSBash
+        HelloWorldBash !RPLC-> HelloWorldFile
+        HelloWorldBash !RPLC-> HelloSPython
+        HelloSBash !RPLC-> HelloWorldFile
+        HelloSBash !RPLC-> HelloSPython
+        HelloWorldFile !RPLC-> HelloSPython
+        HelloSPython !RPLC-> HelloSPython2
+        """
+        rmode = ReproducibilityFlags.REPLICATE_COMP
+        self._process_graphs(rmode)
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSPython'][rmode.value],
+                            self.graphs['HelloSPython2'][rmode.value])
+
+    def test_integration_replicate_total(self):
+        """
+        Compares the four hello world graphs by their signatures when replicating totally
+        HelloWorldBash !RPLT-> HelloSBash
+        HelloWorldBash !RPLT-> HelloWorldFile
+        HelloWorldBash !RPLT-> HelloSPython
+        HelloSBash !RPLT-> HelloWorldFile
+        HelloSBash !RPLT-> HelloSPython
+        HelloWorldFile !RPLT-> HelloSPython
+        HelloSPython RPLT-> HelloSPython2
+        """
+        rmode = ReproducibilityFlags.REPLICATE_TOTAL
+        self._process_graphs(rmode)
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSBash'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
+                            self.graphs['HelloSPython'][rmode.value])
+
+        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
+                         self.graphs['HelloSPython2'][rmode.value])
