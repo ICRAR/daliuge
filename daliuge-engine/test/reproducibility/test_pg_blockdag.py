@@ -125,7 +125,7 @@ def _init_pgraph_twolines(rmode: ReproducibilityFlags):
 def _init_pgraph_data_fan(rmode: ReproducibilityFlags):
     pgt = [_generate_dummy_data(rmode), _generate_dummy_compute(rmode), _generate_dummy_data(rmode),
            _generate_dummy_data(rmode)]
-    for i in range(len(pgt)):
+    for i in enumerate(pgt):
         pgt[i]['oid'] = i
         pgt[i]['reprodata']['rmode'] = str(rmode.value)
     pgt[0]['outputs'] = [1]
@@ -136,7 +136,7 @@ def _init_pgraph_data_fan(rmode: ReproducibilityFlags):
 def _init_pgraph_data_funnel(rmode: ReproducibilityFlags):
     pgt = [_generate_dummy_data(rmode), _generate_dummy_data(rmode), _generate_dummy_compute(rmode),
            _generate_dummy_data(rmode)]
-    for i in range(len(pgt)):
+    for i in enumerate(pgt):
         pgt[i]['oid'] = i
         pgt[i]['reprodata']['rmode'] = str(rmode.value)
     pgt[0]['outputs'] = [2]
@@ -147,7 +147,7 @@ def _init_pgraph_data_funnel(rmode: ReproducibilityFlags):
 
 def _init_pgraph_data_sandwich(rmode: ReproducibilityFlags):
     pgt = [_generate_dummy_data(rmode), _generate_dummy_compute(rmode), _generate_dummy_data(rmode)]
-    for i in range(len(pgt)):
+    for i in enumerate(pgt):
         pgt[i]['oid'] = i
         pgt[i]['reprodata']['rmode'] = str(rmode.value)
     pgt[0]['outputs'] = [1]
@@ -158,7 +158,7 @@ def _init_pgraph_data_sandwich(rmode: ReproducibilityFlags):
 def _init_pgraph_computation_sandwich(rmode: ReproducibilityFlags):
     pgt = [_generate_dummy_compute(rmode), _generate_dummy_data(rmode),
            _generate_dummy_compute(rmode)]
-    for i in range(len(pgt)):
+    for i in enumerate(pgt):
         pgt[i]['oid'] = i
         pgt[i]['reprodata']['rmode'] = str(rmode.value)
     pgt[0]['outputs'] = [1]
