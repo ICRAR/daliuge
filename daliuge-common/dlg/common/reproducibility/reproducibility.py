@@ -245,6 +245,10 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproducibilityFlags):
     :param level:
     :return: The same drop with appended reproducibility information.
     """
+    # Catch pre-set per-drop rmode
+    if 'reprodata' in drop.keys():
+        if 'rmode' in drop['reprodata'].keys():
+            level = rflag_caster(drop['reprodata']['rmode'])
     data = accumulate_lgt_drop_data(drop, level)
     merkletree = MerkleTree(data.items(), common_hash)
     data['merkleroot'] = merkletree.merkle_root
