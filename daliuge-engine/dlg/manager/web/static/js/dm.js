@@ -117,7 +117,7 @@ function getRender() {
 
 		return shapeSvg;
 	};
-
+	console.log("returning render")
 	return render;
 }
 
@@ -467,11 +467,11 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 function _addNode(g, doSpec) {
 
 	if( g.hasNode(g) ) {
+		console.log("has node g already")
 		return false;
 	}
 
 	var typeClass = doSpec.type;
-    console.log(doSpec)
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
 	// console.log('Drop type', doSpec.type)
