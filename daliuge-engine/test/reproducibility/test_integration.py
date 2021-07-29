@@ -337,3 +337,54 @@ class IntegrationHelloWorldTest(unittest.TestCase):
 
         self.assertEqual(self.graphs['HelloSPython'][rmode.value],
                          self.graphs['HelloSPython2'][rmode.value])
+
+
+class IntegrationSplitRmode(unittest.TestCase):
+    """
+    It is not unreasonable for different reproducibility standards enforced on different drops in
+    a single workflow.
+    This test class tests this functionality.
+    """
+
+    temp_out = tempfile.TemporaryDirectory('out')
+
+    def test_split_lgt(self):
+        """
+        Tests a simple 'hello world' graph (HelloWorldBash) where a single component has
+        a pre-existing rmode in the graph file set (Replicate Computationally).
+        The rest are run with a NOTHING standard.
+        We should be able to tell:
+          - This graph's signature should be different to the standard graph run completely in
+            RERUN and NOTHING standards
+          - The reprodata of the set component should contain values while the rest do not
+        """
+        graph_name = 'HelloWorldBashSplit'
+        control_graph_name = 'HelloWorldBash'
+        graph_loc = 'reproGraphs/'
+        rmode = ReproducibilityFlags.NOTHING
+        _run_full_workflow(rmode=rmode, workflow=graph_name, workflow_loc=graph_loc,
+                           scratch_loc=self.temp_out.name)
+        pgr = self.temp_out.name + '/' + graph_name + "_" + str(rmode.value) + "PG.graph"
+        _run_full_workflow(rmode=rmode, workflow=control_graph_name, workflow_loc=graph_loc,
+                           scratch_loc=self.temp_out.name)
+        pgr_2 = self.temp_out.name + '/' + control_graph_name + "_" + str(rmode.value) + "PG.graph"
+
+        graph = _read_graph(pgr)
+        graph_reprodata = graph[-1]
+        graph = graph[0:-1]
+        control_graph = _read_graph(pgr_2)
+        control_signature = control_graph[-1]['signature']
+        self.assertEqual(ReproducibilityFlags.NOTHING.value, int(graph_reprodata['rmode']))
+        self.assertNotEqual(control_signature, graph_reprodata['signature'])
+
+        for drop in graph:
+            if drop['reprodata']['rmode'] == str(ReproducibilityFlags.NOTHING.value):
+                self.assertIsNone(drop['reprodata']['lgt_data']['merkleroot'])
+                self.assertIsNone(drop['reprodata']['lg_data']['merkleroot'])
+                self.assertIsNone(drop['reprodata']['pgt_data']['merkleroot'])
+                self.assertIsNone(drop['reprodata']['pg_data']['merkleroot'])
+            else:
+                self.assertIsNotNone(drop['reprodata']['lgt_data']['merkleroot'])
+                self.assertIsNotNone(drop['reprodata']['lg_data']['merkleroot'])
+                self.assertIsNotNone(drop['reprodata']['pgt_data']['merkleroot'])
+                self.assertIsNotNone(drop['reprodata']['pg_data']['merkleroot'])
