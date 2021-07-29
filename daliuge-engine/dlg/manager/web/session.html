@@ -201,16 +201,12 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 		inner.call(render, g);
 		// render(inner,g)
 	}
-
-
-	// Center the graph
-	// var xCenterOffset = (svg.attr("width") - g.graph().width) / 2;
-	// svgGroup.attr("transform", "translate(" + xCenterOffset + ", 20)");
-	// svg.attr("height", g.graph().height + 40);
+	
+	
 
 	//zoom WIP
-	// var initialScale = 0.75;
-	// svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+	// var initialScale = 0.30;
+	// root.call(zoom.transform, d3.zoomIdentity.translate((fullWidth - width * initialScale) / 2, 20).scale(initialScale));
 
 	// svg.attr('height', g.graph().height * initialScale + 40);
 
@@ -241,39 +237,40 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
 	                 status_update_handler, 1000);
 
-}
 	
-	//zoom WIP
-function zoomFit(paddingPercent, transitionDuration) {
-	// var zoom = d3.behavior.zoom().scaleExtent([1/4, 4]).on('zoom', function () {
-	// 	console.trace("zoom.zoom", d3.event.translate, d3.event.scale);
-	// 	root.attr('transform',
-	// 		'translate(' + d3.event.translate + ')'
-	// 		+   'scale('+d3.event.scale+')');
-	// });
+}
+function zoomFit() {
 
-	// var svg = d3
-	// 	.select('svg')
-	// 	.call(zoom)
-	// ;
-
-	// var root = svg.select('#root');
-	// var bounds = root.node().getBBox();
-	// var parent = root.node().parentElement;
-	// var fullWidth = parent.clientWidth,
-	//     fullHeight = parent.clientHeight;
-	// var width = bounds.width,
-	//     height = bounds.height;
-	// console.log("boom"+width+"ah"+height)
-	// var midX = bounds.x + width / 2,
-	//     midY = bounds.y + height / 2;
-	// if (width == 0 || height == 0) return; // nothing to fit
-	// var scale = (paddingPercent || 0.75) / Math.max(width / fullWidth, height / fullHeight);
-	// var translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
-
-	// console.trace("zoomFit", translate, scale);
-	// root.call(zoom.translate(translate).scale(scale).event);
-	// 	console.log("root");
+	// Center the graph
+	var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
+      inner.attr("transform", d3.event.transform);
+    });
+	var svg = d3
+		.select('svg')
+	;
+	
+	var root = svg.select('#root');
+	var boot = $(".output");
+	var bounds = root.node().getBBox();
+	var parent = root.node().parentElement;
+	var fullWidth = parent.clientWidth,
+	    fullHeight = parent.clientHeight;
+	var width = bounds.width,
+	    height = bounds.height,
+		initialScale;
+	var widthScale = (fullWidth/width);
+	var heightScale = (fullHeight/height)
+	if (heightScale<widthScale){
+		initialScale = heightScale;
+	}else {
+		initialScale = widthScale;
+	};
+	initialScale = initialScale - .02
+	console.log(widthScale)
+	console.log(heightScale)
+	console.log(initialScale)
+	var xCenterOffset = -(fullWidth - fullWidth) / 2;
+	boot.attr("transform", "translate(" + (fullWidth-(width*initialScale))/2 + ", " + ((fullHeight-80)-(height*initialScale))/2 + ")"+' scale('+initialScale+')');
 }
 
 function view_as_list(sessionId, selectedNode, serverUrl) {
