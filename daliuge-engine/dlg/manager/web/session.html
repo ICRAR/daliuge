@@ -258,17 +258,14 @@ function zoomFit() {
 	var width = bounds.width,
 	    height = bounds.height,
 		initialScale;
-	var widthScale = (fullWidth/width);
-	var heightScale = (fullHeight/height)
+	var widthScale = ((fullWidth-80)/width);
+	var heightScale = ((fullHeight-200)/height)
 	if (heightScale<widthScale){
 		initialScale = heightScale;
 	}else {
 		initialScale = widthScale;
 	};
-	initialScale = initialScale - .02
-	console.log(widthScale)
-	console.log(heightScale)
-	console.log(initialScale)
+	initialScale = initialScale
 	var xCenterOffset = -(fullWidth - fullWidth) / 2;
 	boot.attr("transform", "translate(" + (fullWidth-(width*initialScale))/2 + ", " + ((fullHeight-80)-(height*initialScale))/2 + ")"+' scale('+initialScale+')');
 }
