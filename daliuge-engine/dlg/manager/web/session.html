@@ -95,14 +95,12 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-graph').remove();
 
 	const width = $('#pg-progress-bar').innerWidth();
-	console.log(width)
 	var graph_update_handler = function(oids, dropSpecs) {};
 
 	var status_update_handler = function(statuses){
 		// This is the order in which blocks are drawn in the progress bar,
 		// so we want "done" states first and "nothing happened yet" states
 		// towards the end
-		console.log("start update handler started")
 		var states = ['completed', 'finished',
 		              'running', 'writing',
 		              'error', 'expired', 'deleted',
@@ -118,7 +116,6 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 		var total = statuses.length;
 		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		statuses.reduce(function(status_counts, s) {
-			console.log("status counts reduce")
 			var idx = states_idx(get_status_name(s));
 			status_counts[idx] = status_counts[idx] + 1;
 			return status_counts;
@@ -129,12 +126,10 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
 		status_counts = status_counts.map(function(x, i) {
 			
-			console.log("cumsum ran")
 			return [scale(cumsum[i]), scale(x)];
 		});
 		var rects = d3.select('#pg-progress-bar svg').selectAll('rect').data(status_counts);
 
-		console.log(status_counts)
 		rects.enter().append('rect')
 			.style('height', 20).style('width', 0).style('x', 0).style('y', 20)
 			.style('x', function(d) { return d[0] + 20; })
@@ -174,7 +169,6 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	var svg = d3.select("svg"),
     svgGroup = svg.append("g");
 	var inner = svg.select("g");
-	inner.classed("boop", true)
 
 	// svg.call(d3.zoom().on("zoom", function () {
 	// 	inner.attr("transform", "translate(" + d3.event.translate + ")"
