@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<title>{{dmType}}</title>
 	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
-	<script src="/static/js/d3/d3.v3.min.js"></script>
+	<script src="/static/js/d3/d3.v5.min.js"></script>
 	<script src="/static/js/dm.js"></script>
 	<script src="/static/js/jquery.min.js"></script>
 	<script src="/static/js/bootstrap.min.js"></script>
@@ -51,7 +51,7 @@
 							<th>State</th>
 							<th># Drops</th>
 							<th>Details</th>
-							<th>Actions</th>
+							<th></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -103,9 +103,10 @@ else {
 }
 
 // Start loading the list of sessions periodically
-d3.timer(function(){
+var loadSessionsDmTimer = d3.timer(function(){
 	loadSessions(serverUrl, tbodyEl, refreshBtn, null, 5000);
-	return true;
+	loadSessionsDmTimer.stop()
+	return;
 });
 
 </script>
