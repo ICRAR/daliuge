@@ -629,7 +629,7 @@ function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
     var url = serverUrl + '/api';
     url += '/sessions/' + sessionId;
 
-    d3.json(url, function(error, sessionInfo) {
+	d3.json(url).then( function(sessionInfo, error) {
 
         if (error) {
             //bootbox.alert(error);
@@ -642,17 +642,24 @@ function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
             url += '/cancel';
             cancelSessionBtn.attr('disabled', null);
 
-            d3.json(url).post(function (error, response) {
-                // We don't expect a response so ignoring it.
+			d3.json(url, {
+				method: 'POST',
+				headers: {
+					"Content-type": "application/json; charset=UTF-8"
+				},
+				body: JSON.stringify(function (response, error) {
+					// We don't expect a response so ignoring it.
+	
+					if( error ) {
+						console.log(response)
+						console.error(error)
+						return
+					}
+	
+					cancelSessionBtn.attr('disabled', null);
+				})
+			});
 
-                if( error ) {
-					console.log(response)
-                    console.error(error)
-                    return
-                }
-
-                cancelSessionBtn.attr('disabled', null);
-            });
 			d3.select('#session-status').text("Cancelled");
 			setStatusColor("Cancelled");
         } else {
