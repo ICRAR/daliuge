@@ -309,7 +309,7 @@ class LGNode:
             elif type(gs) in [type(1), type(1.)]:
                 result = (1 == gs)
             elif type(gs) == type("s"):
-                result = gs.lower() in ("true", "1")        
+                result = gs.lower() in ("true", "1")
         return result
 
 
@@ -325,7 +325,7 @@ class LGNode:
             elif type(ge) == type("s"):
                 result = ge.lower() in ("true", "1")
         return result
-    
+
     def is_group(self):
         return self._isgrp
 
@@ -683,6 +683,11 @@ class LGNode:
                 v = self.jd[k]
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
+            # add more arguments - this is the new method of adding arguments in EAGLE
+            # the method above (Arg**) is retained for compatibility, but eventually should be removed
+            for k in ["command", "input_redirection", "output_redirection", "command_line_arguments"]:
+                if k in self.jd:
+                    cmds.append(self.jd[k])
             # kwargs['command'] = ' '.join(cmds)
             kwargs["command"] = BashCommand(cmds)
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
@@ -980,7 +985,7 @@ class PGT(object):
         """
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
-            # TODO proper 
+            # TODO proper
             # Looks like we don't need too much anymore
 
         if node_list is None or 0 == len(node_list):
@@ -2156,8 +2161,8 @@ class LG:
 
     def _is_stream_link(self, s_type, t_type):
         return s_type in [
-            Categories.COMPONENT, 
-            Categories.DYNLIB_APP, 
+            Categories.COMPONENT,
+            Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
             Categories.PYTHON_APP] and t_type in [
                 Categories.COMPONENT,
