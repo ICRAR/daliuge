@@ -156,74 +156,64 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
 	}
 
-	d3.json(url, function (error, response){
+	d3.json(url).then( function(response,error) {
+	
 		if( error ) {
 			console.error(error)
 			refreshBtn.attr('disabled', null);
 			return
 		}
-
 		var sessions = response;
 		sessions.sort(function comp(a,b) {
 			return (a.sessionId > b.sessionId) ? -1 : (a.sessionId < b.sessionId);
 		});
-		// console.log(sessions[0]);
 		var rows = tbodyEl.selectAll('tr').data(sessions);
+		rows.exit().remove();
+		rows.enter().append('tr');
 		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 
-		var idCells = rows.selectAll('td.id').data(function values(s) { return [s.sessionId]; });
-		idCells.enter().append('td').classed('id', true).text(String)
-		idCells.text(String)
-		idCells.exit().remove()
-
-		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
-		statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
-		statusCells.text(function(s) {return sessionStatusToString(s)})
-		statusCells.exit().remove()
-
-		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
-		sizeCells.enter().append('td').classed('size', true).text(String)
-		sizeCells.text(String)
-		sizeCells.exit().remove()
-
+		fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, hashCode);
 		//progressbars in dim
 
 		const width = $('#sessionsTable').find('.status').innerWidth();
-        //WIP whats this?
-		// var graph_update_handler = function(oids, dropSpecs) {};
+        
+
+		var graph_update_handler = function(oids, dropSpecs) {};
 		
 		var status_update_handler = function(statuses){
 			var states = ['completed', 'finished',
-						'running', 'writing',
-						'error', 'expired', 'deleted',
-						'cancelled',
-						'not_run', 'initialized'];
-			var states_idx = d3.scale.ordinal().domain(states).rangePoints([0, states.length - 1]);
-		
-			var scale = function(x) {
-				return Math.round(x * width / statuses.length);
-			};
-		
-			/* Get total and per-status counts, then normalize to 0-100% */
-			var total = statuses.length;
-			var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-			statuses.reduce(function(status_counts, s) {
-				var idx = states_idx(get_status_name(s));
-				status_counts[idx] = status_counts[idx] + 1;
-				return status_counts;
-			}, status_counts);
-		
-			for (var cumsum = [0], i = 0; i < status_counts.length - 1; i++)
-				cumsum[i + 1] = cumsum[i] + status_counts[i];
-		
-			status_counts = status_counts.map(function(x, i) {
-				return [scale(cumsum[i]), scale(x)];
-			});
+		              'running', 'writing',
+		              'error', 'expired', 'deleted',
+		              'cancelled', 'skipped',
+		              'not_run', 'initialized'];
+		var states_idx = d3.scalePoint().domain(states).range([0, states.length - 1]);
+
+		var scale = function(x) {
+			return Math.round(x * width / statuses.length);
+		};
+
+		/* Get total and per-status counts, then normalize to 0-100% */
+		var total = statuses.length;
+		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		statuses.reduce(function(status_counts, s) {
+			console.log("status counts reduce")
+			var idx = states_idx(get_status_name(s));
+			status_counts[idx] = status_counts[idx] + 1;
+			return status_counts;
+		}, status_counts);
+
+		for (var cumsum = [0], i = 0; i < status_counts.length - 1; i++)
+			cumsum[i + 1] = cumsum[i] + status_counts[i];
+
+		status_counts = status_counts.map(function(x, i) {
+			
+			return [scale(cumsum[i]), scale(x)];
+		});
 			var rects = d3.select('#sessionsTable .status svg').selectAll('rect').data(status_counts);
 			rects.enter().append('rect')
 				.style('height', 20).style('width', 0).style('x', 0).style('y', 0)
-				.transition().delay(0).duration(500)
+				// .transition().delay(0).duration(500)
 				.style('x', function(d) { return d[0] + 20; })
 				.style('width', function(d) { return d[1]; })
 				.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
@@ -233,28 +223,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			rects.exit().remove();
 		};
 
-		statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
-		statusCells.enter().append('td').classed('details', true)
-		    .append('a').attr('href', DimSessionLink)
-		    .append('span').classed('fa fa-share', true)
-		statusCells.select('a').attr('href', DimSessionLink)
-		statusCells.exit().remove()
-
-        var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
-		actionCells.enter().append('td').classed('actions', true)
-            .append("button").attr('id', cancelBtnSessionId)
-            .attr("type", 'button').attr('class', 'btn btn-secondary').text('Cancel')
-		actionCells.select('button')
-		actionCells.exit().remove()
-
-		sessions.forEach(function(session) {
-			// console.log(session)
-			var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
-			// Listeners for the cancelSession button
-			cancelSessionBtn.on('click', function(){ 
-				cancel_session(serverUrl, session.sessionId, cancelSessionBtn); 
-			});
-		})
 		
 		//update status colours and hide cancel button if finished or cancelled
 		$(".status").each(function(){
@@ -299,6 +267,47 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	});
 }
 
+function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, hashCode){
+	var rows = tbodyEl.selectAll('tr').data(sessions);
+	var idCells = rows.selectAll('td.id').data(function values(s) { return [s.sessionId]; });
+	idCells.enter().append('td').classed('id', true).text(String)
+	idCells.text(String)
+	idCells.exit().remove()
+
+	var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
+	statusCells.enter().append('td').classed('status', true).text(function(s) { return sessionStatusToString(s); })
+	statusCells.text(function(s) {return sessionStatusToString(s)})
+	statusCells.exit().remove()
+
+	var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
+	sizeCells.enter().append('td').classed('size', true).text(String)
+	sizeCells.text(String)
+	sizeCells.exit().remove()
+
+
+
+	statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
+	statusCells.enter().append('td').classed('details', true)
+		.append('a').attr('href', DimSessionLink)
+		.append('span').classed('fa fa-share', true)
+	statusCells.select('a').attr('href', DimSessionLink)
+	statusCells.exit().remove()
+
+	var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
+	actionCells.enter().append('td').classed('actions', true)
+		.append("button").attr('id', cancelBtnSessionId)
+		.attr("type", 'button').attr('class', 'btn btn-secondary').text('Cancel')
+	actionCells.select('button')
+	actionCells.exit().remove()
+	sessions.forEach(function(session) {
+		// console.log(session)
+		var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
+		// Listeners for the cancelSession button
+		cancelSessionBtn.on('click', function(){
+			cancel_session(serverUrl, session.sessionId, cancelSessionBtn); 
+		});
+	})
+}
 function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 	bootbox.prompt("Session ID", function(sessionId) {
 		if( sessionId == null ) {
@@ -370,7 +379,7 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 	var time3 = new Date().getTime();
 	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
-    zoomFit(0.95, 500)
+    zoomFit()
 }
 
 function setStatusColor(status){
