@@ -296,17 +296,9 @@ function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSe
 	var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
 	actionCells.enter().append('td').classed('actions', true)
 		.append("button").attr('id', cancelBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary').text('Cancel')
+		.attr("type", 'button').attr('class', 'btn btn-secondary').attr('onclick', '(cancel_session(serverUrl,this.id))').text('Cancel')
 	actionCells.select('button')
 	actionCells.exit().remove()
-	sessions.forEach(function(session) {
-		// console.log(session)
-		var cancelSessionBtn = d3.select("#cancelBtn" + hashCode(session.sessionId));
-		// Listeners for the cancelSession button
-		cancelSessionBtn.on('click', function(){
-			cancel_session(serverUrl, session.sessionId, cancelSessionBtn); 
-		});
-	})
 }
 function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 	bootbox.prompt("Session ID", function(sessionId) {
@@ -625,8 +617,15 @@ function does_status_allow_cancel(status) {
  * @param sessionId to cancel
  * @param cancelSessionBtn that initiated the cancel
  */
-function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
-
+//  function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
+	function cancel_session(serverUrl, buttonId) {
+	//getting session id from sibling in table using js
+	button = "#"+buttonId
+	sessionId = $(button).parent().parent().find("td.details").find('a').attr("href")
+	sessionId = sessionId.split("=")
+	sessionId = sessionId[1].split("&")
+	sessionId = sessionId[0]
+	cancelSessionBtn = $(button)
     var url = serverUrl + '/api';
     url += '/sessions/' + sessionId;
 
