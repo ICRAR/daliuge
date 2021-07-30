@@ -197,7 +197,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		var total = statuses.length;
 		var status_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		statuses.reduce(function(status_counts, s) {
-			console.log("status counts reduce")
 			var idx = states_idx(get_status_name(s));
 			status_counts[idx] = status_counts[idx] + 1;
 			return status_counts;
@@ -296,7 +295,7 @@ function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSe
 	var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
 	actionCells.enter().append('td').classed('actions', true)
 		.append("button").attr('id', cancelBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary').attr('onclick', '(cancel_session(serverUrl,this.id))').text('Cancel')
+		.attr("type", 'button').attr('class', 'btn btn-secondary').attr('onclick', '(cancel_session(serverUrl,"false",this.id))').text('Cancel')
 	actionCells.select('button')
 	actionCells.exit().remove()
 }
@@ -401,7 +400,6 @@ function setStatusColor(status){
  */
 function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
                           status_update_handler, delay) {
-    console.log("start status query started")
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
@@ -413,7 +411,6 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 
 	function updateGraph() {
 		d3.json(url).then( function(sessionInfo,error) {
-            console.log("d3.json function in update graph started")
 			if (error) {
                 console.log("error")
 				console.error(error);
@@ -428,7 +425,6 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			var oids = Object.keys(doSpecs);
 			if( oids.length > 0 ) {
 				// Get sorted oids
-                console.log("get sorted oids")
 				oids.sort();
 				graph_update_handler(oids, doSpecs);
 			}
@@ -439,13 +435,11 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if (status == 3 || status == 4 || status == 5) {
-                console.log("update graph: status 1")
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				                        status_update_handler);
 			}
 			else if( status == 0 || status == 1 || status == 2 || status == -1 ){
 				// schedule a new JSON request
-                console.log("update graph: status 2")
 				updateGraphDelayTimer = d3.timer(updateGraph, delay);
                 updateGraphDelayTimerActive = true;
 			}
@@ -456,10 +450,8 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
         if(updateGraphDelayTimerActive === true){
             updateGraphDelayTimer.stop();
             updateGraphDelayTimerActive = false;
-            console.log("update status delay loop stopped")
         };
         updateGraphTimer.stop();
-        console.log("update status loop stopped")
         return;
 	}
 	var updateGraphTimer = d3.timer(updateGraph);
@@ -468,7 +460,6 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 function _addNode(g, doSpec) {
 
 	if( g.hasNode(g) ) {
-		console.log("has node g already")
 		return false;
 	}
 
@@ -531,7 +522,6 @@ function _addEdge(g, fromOid, toOid) {
  */
 function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
                                  status_update_handler) {
-    console.log("update states started")
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
@@ -547,7 +537,6 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				console.error(error);
 				return;
 			}
-            console.log("updatestatesTriggered")
 			// Change from {B:{status:2,execStatus:0}, A:{status:1}, ...}
 			//          to [{status:1},{status:2,execStatus:0}...]
 			// (i.e., sort by key and get values only)
@@ -567,11 +556,9 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 			if (!allCompleted) {
 				updateStatesDelayTimer = d3.timer(updateStates, delay);
                 updateStatesDelayTimerActive = true
-                console.log("not all completed in update states")
 			}
 			else {
 				// A final update on the session's status
-				console.log("bom")
 				d3.json(serverUrl + '/api/sessions/' + sessionId + '/status').then(function(status, error) {
 					if (error) {
 						console.error(error);
@@ -586,10 +573,8 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
         if(updateStatesDelayTimerActive === true){
             updateStatesDelayTimer.stop();
             updateStatesDelayTimerActive = false;
-            console.log("update states delay stopped");
         };
         stateUpdateTimer.stop();
-        console.log("update states stopped");
         return;
 	}
 	var stateUpdateTimer = d3.timer(updateStates);
@@ -618,14 +603,19 @@ function does_status_allow_cancel(status) {
  * @param cancelSessionBtn that initiated the cancel
  */
 //  function cancel_session(serverUrl, sessionId, cancelSessionBtn) {
-	function cancel_session(serverUrl, buttonId) {
-	//getting session id from sibling in table using js
-	button = "#"+buttonId
-	sessionId = $(button).parent().parent().find("td.details").find('a').attr("href")
-	sessionId = sessionId.split("=")
-	sessionId = sessionId[1].split("&")
-	sessionId = sessionId[0]
-	cancelSessionBtn = $(button)
+function cancel_session(serverUrl,sessionId, buttonId) {
+	if (sessionId === "false"){
+		//getting session id from sibling in table using js
+		button = "#"+buttonId
+		sessionId = $(button).parent().parent().find("td.details").find('a').attr("href")
+		sessionId = sessionId.split("=")
+		sessionId = sessionId[1].split("&")
+		sessionId = sessionId[0]
+		cancelSessionBtn = $(button)
+	}else{
+		cancelSessionBtn = buttonId
+	}
+	
     var url = serverUrl + '/api';
     url += '/sessions/' + sessionId;
 
