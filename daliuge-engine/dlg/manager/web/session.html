@@ -7,7 +7,7 @@
 	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
 	<script src="/static/js/d3/d3.v5.min.js"></script>
 	<script src="/static/js/d3/dagre-d3.min.js"></script>
-	<script src="/static/js/jquery.min.js"></script>
+	<script src="/static/js/jquery-3.6.0.min.js"></script>
 	<script src="/static/js/bootstrap.bundle.min.js"></script>
 	<script src="/static/js/bootbox.min.js"></script>
 	<script src="/static/js/dm.js"></script>
@@ -211,7 +211,7 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	// svg.attr('height', g.graph().height * initialScale + 40);
 
 	var orientButtons = d3.selectAll('#graph-orientation-buttons button');
-	orientButtons.on('click', function() {
+		orientButtons.on('click', function() {
 		direction = d3.event.currentTarget.value;
 		orientButtons.attr("disabled", "disabled");
 		orientButtons.filter("[value=" + direction + "]").classed("active", true);
@@ -235,10 +235,9 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	};
 
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
-	                 status_update_handler, 1000);
-
-	
+	                 status_update_handler, 1000);	
 }
+
 function zoomFit() {
 
 	// Center the graph
