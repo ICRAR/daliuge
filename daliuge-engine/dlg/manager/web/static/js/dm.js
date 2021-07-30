@@ -579,7 +579,8 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 			}
 			else {
 				// A final update on the session's status
-				d3.json(serverUrl + '/api/sessions/' + sessionId + '/status', function(error, status) {
+				console.log("bom")
+				d3.json(serverUrl + '/api/sessions/' + sessionId + '/status').then(function(status, error) {
 					if (error) {
 						console.error(error);
 						return;
