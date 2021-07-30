@@ -10,6 +10,9 @@
     margin-bottom:30px;
 }
 
+.bootbox-close-button{
+  display: none;
+}
 
 #graphNameWrapper{
     position: absolute;
