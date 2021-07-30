@@ -431,8 +431,16 @@ def gen_pgt_post():
 
 
 def unroll_and_partition_with_params(lg_path, algo_params_source):
+    # Get the 'test' parameter
+    # NB: the test parameter is a string, so convert to boolean
+    test = algo_params_source.get("test", "false")
+    test = test.lower() == "true"
+
+    # Based on 'test' parameter, decide whether to use a replacement app
+    app = "dlg.apps.simple.SleepApp" if test else None
+
     # Unrolling LG to PGT.
-    pgt = unroll(lg_path)
+    pgt = unroll(lg_path, app=app)
 
     # Define partitioning parameters.
     algo = algo_params_source.get("algo", "none")
