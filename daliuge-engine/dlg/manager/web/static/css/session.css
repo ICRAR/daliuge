@@ -91,6 +91,10 @@ svg {
   display: block;
 }
 
+.bootbox-close-button{
+  display: none;
+}
+
 #graphNameWrapper{
   position: absolute;
   top: 56px;
