@@ -49,10 +49,13 @@ from ..common import dropdict
 from ..common import Categories
 from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
+    LG_APPREF,
+    getNodesKeyDict,
     get_lg_ver_type,
     convert_construct,
     convert_fields,
     convert_mkn,
+    getAppRefInputs,
     LG_VER_EAGLE,
     LG_VER_OLD,
     LG_VER_EAGLE_CONVERTED,
@@ -1864,6 +1867,9 @@ class LG:
             lg = convert_construct(lg)
         elif LG_VER_EAGLE_CONVERTED == lgver:
             lg = convert_construct(lg)
+        elif LG_APPREF == lgver:
+            lg = convert_fields(lg)
+            lgk = getNodesKeyDict(lg)
         # This ensures that future schema version mods are catched early
         else:
             raise GraphException("Logical graph version '{0}' not supported!".format(lgver))
@@ -1905,6 +1911,15 @@ class LG:
             self.validate_link(src, tgt)
             src.add_output(tgt)
             tgt.add_input(src)
+            # duplicate link from referenced APP into Gathers
+            # if LG_APPREF == lgver and lgk[tgt]['category'] == 'Gather' and \
+            #     'inputApplicationRef' in lgk[tgt].keys():
+            #     if lgk[lk]['inputApplicationRef']:
+            #         ak = lgk[lk]['inputApplicationRef']
+            #         portId = lgk[ak]['inputPorts']
+
+
+
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
