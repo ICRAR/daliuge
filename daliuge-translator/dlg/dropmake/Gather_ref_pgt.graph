@@ -1,0 +1,204 @@
+[
+    {
+        "oid": "1_-2_0/0",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0,
+            0
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "data_volume": 5,
+        "group_end": false,
+        "iid": "0/0",
+        "lg_key": -2,
+        "dt": "Memory",
+        "nm": "Memory",
+        "consumers": [
+            "1_-6_0"
+        ],
+        "producers": [
+            "1_-7_0"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-2_0/1",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0,
+            1
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "data_volume": 5,
+        "group_end": false,
+        "iid": "0/1",
+        "lg_key": -2,
+        "dt": "Memory",
+        "nm": "Memory",
+        "consumers": [
+            "1_-6_0"
+        ],
+        "producers": [
+            "1_-7_0"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-2_0/2",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0,
+            2
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "data_volume": 5,
+        "group_end": false,
+        "iid": "0/2",
+        "lg_key": -2,
+        "dt": "Memory",
+        "nm": "Memory",
+        "consumers": [
+            "1_-6_0"
+        ],
+        "producers": [
+            "1_-7_0"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-2_0/3",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0,
+            3
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "data_volume": 5,
+        "group_end": false,
+        "iid": "0/3",
+        "lg_key": -2,
+        "dt": "Memory",
+        "nm": "Memory",
+        "consumers": [
+            "1_-6_0"
+        ],
+        "producers": [
+            "1_-7_0"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-5_0/0",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0,
+            0
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "data_volume": 5,
+        "group_end": false,
+        "iid": "0/0",
+        "lg_key": -5,
+        "dt": "Memory",
+        "nm": "Memory",
+        "producers": [
+            "1_-6_0"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-5_0/1",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0,
+            1
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "data_volume": 5,
+        "group_end": false,
+        "iid": "0/1",
+        "lg_key": -5,
+        "dt": "Memory",
+        "nm": "Memory",
+        "producers": [
+            "1_-6_0"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-7_0",
+        "type": "app",
+        "app": "dlg.apps.simple.HelloWorldApp",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "tw": 5,
+        "num_cpus": 1,
+        "greet": "World",
+        "appclass": "dlg.apps.simple.HelloWorldApp",
+        "execution_time": 5,
+        "group_start": false,
+        "iid": "0",
+        "lg_key": -7,
+        "dt": "PythonApp",
+        "nm": "HelloWorldApp",
+        "outputs": [
+            "1_-2_0/0",
+            "1_-2_0/1",
+            "1_-2_0/2",
+            "1_-2_0/3"
+        ],
+        "node": "#0",
+        "island": "#0"
+    },
+    {
+        "oid": "1_-6_0",
+        "type": "app",
+        "app": "dlg.apps.simple.AverageArraysApp",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "tw": 5,
+        "num_cpus": 1,
+        "method": "mean",
+        "appclass": "dlg.apps.simple.AverageArraysApp",
+        "execution_time": 5,
+        "group_start": false,
+        "iid": "0",
+        "lg_key": -6,
+        "dt": "PythonApp",
+        "nm": "AverageArrays",
+        "inputs": [
+            "1_-2_0/0",
+            "1_-2_0/1",
+            "1_-2_0/2",
+            "1_-2_0/3"
+        ],
+        "outputs": [
+            "1_-5_0/0",
+            "1_-5_0/1"
+        ],
+        "node": "#0",
+        "island": "#0"
+    }
+]
