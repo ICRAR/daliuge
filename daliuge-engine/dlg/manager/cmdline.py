@@ -245,7 +245,7 @@ def dlgNM(parser, args):
     parser.add_option("--no-dlm", action="store_true",
                       dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=False)
     parser.add_option("--dlg-path", action="store", type="string",
-                      dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default="~/.dlg/lib")
+                      dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default=utils.getDlgPath())
     parser.add_option("--error-listener", action="store", type="string",
                       dest="errorListener", help="The error listener class to be used", default=None)
     parser.add_option("--event-listeners", action="store", type="string",
