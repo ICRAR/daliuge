@@ -25,7 +25,10 @@ import logging
 import os
 import urllib.parse
 
+from typing import Optional
+
 from . import ngaslite
+from .apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow.plasma as plasma
 
@@ -426,14 +429,20 @@ class PlasmaIO(DataIO):
         self._object_id = object_id
 
     def _open(self, **kwargs):
+        self._done = False
         return plasma.connect(self._plasma_path)
 
     def _close(self, **kwargs):
         pass
 
     def _read(self, count, **kwargs):
-        data = self._desc.get(self._object_id)
-        return data
+        if not self._done:
+            # basic API will encapsulate the entire transfer
+            data = self._desc.get(self._object_id)
+            self._done = True
+            return data
+        else:
+            return []
 
     def _write(self, data, **kwargs):
         self._desc.put(data, self._object_id)
@@ -443,6 +452,41 @@ class PlasmaIO(DataIO):
         if self._object_id in self._desc.list():
             return True
         return False
+
+    def delete(self):
+        pass
+
+
+class PlasmaFlightIO(DataIO):
+
+    def __init__(self, object_id, plasma_path='/tmp/plasma', flight_path: Optional[str] = None):
+        super(PlasmaFlightIO, self).__init__()
+        self._object_id = object_id
+        self._plasma_path = plasma_path
+        self._flight_path = flight_path
+
+    def _open(self, **kwargs):
+        self._done = False
+        return PlasmaFlightClient(socket=self._plasma_path)
+
+    def _close(self, **kwargs):
+        pass
+
+    def _read(self, count, **kwargs):
+        if not self._done:
+            # basic API will encapsulate the entire transfer
+            data = self._desc.get(self._object_id, self._flight_path)
+            self._done = True
+            return data
+        else:
+            return []
+
+    def _write(self, data, **kwargs):
+        self._desc.put(data, self._object_id)
+        return len(data)
+
+    def exists(self):
+        return self._desc.exists(self._object_id, self._flight_path)
 
     def delete(self):
         pass
