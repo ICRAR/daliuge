@@ -201,6 +201,9 @@ class DockerApp(BarrierAppDROP):
             raise InvalidDropException(
                 self, "No command specified, cannot create DockerApp")
 
+        # The container name
+        self._name = self._getArg(kwargs, 'name', None)
+
         # The user used to run the process in the docker container
         # By default docker containers run as root, but we don't want to run
         # a process using a different user because otherwise anything that that
@@ -354,16 +357,19 @@ class DockerApp(BarrierAppDROP):
         # (used below)
         def rm(container):
             if self._removeContainer:
-                container.remove()
+                container.stop()
+                container.remove(force=True)
 
         # Create container
         container = c.containers.create(
                 self._image,
                 cmd,
+                #name=name, # TODO: use container name
                 volumes=binds,
                 user=user,
                 environment=env,
-                working_dir=self.workdir
+                working_dir=self.workdir,
+                auto_remove=self._removeContainer
         )
         self._containerId = cId = container.id
         logger.info("Created container %s for %r", cId, self)
