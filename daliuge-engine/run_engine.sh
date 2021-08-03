@@ -10,20 +10,22 @@ DOCKER_OPTS="\
 
 case "$1" in
     "dep")
+        DLG_ROOT="/var/dlg_home"
         VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-        DOCKER_OPTS+="-v /var/dlg_home:/var/dlg_home"
+        DOCKER_OPTS+="-v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT} "
         echo "Running Engine deployment version in background..."
         echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
         exit 1;;
     "dev")
+        DLG_ROOT="/tmp/.dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Running Engine development version in background..."
-        mkdir -p /tmp/.dlg/var/dlg_home/workspace
-        mkdir -p /tmp/.dlg/var/dlg_home/testdata
-        mkdir -p /tmp/.dlg/var/dlg_home/code
+        mkdir -p ${DLG_ROOT}/workspace
+        mkdir -p ${DLG_ROOT}/testdata
+        mkdir -p ${DLG_ROOT}/code
         DOCKER_OPTS+="-v ${PWD}/dlg/manager:/root/dlg/lib/python3.8/site-packages/dlg/manager"
-        DOCKER_OPTS+=" -v /tmp/.dlg/var/dlg_home:/tmp/.dlg/var/dlg_home"
+        DOCKER_OPTS+=" -v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT}"
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
 #        docker run -td ${DOCKER_OPTS} icrar/dlg-engine:casa
@@ -31,15 +33,17 @@ case "$1" in
         ./start_local_managers.sh
         exit 1;;
     "casa")
+        DLG_ROOT="/tmp/.dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Running Engine development version in background..."
-        mkdir -p /tmp/.dlg/var/dlg_home/workspace
-        mkdir -p /tmp/.dlg/var/dlg_home/testdata
-        mkdir -p /tmp/.dlg/var/dlg_home/code
+        mkdir -p ${DLG_ROOT}/workspace
+        mkdir -p ${DLG_ROOT}/testdata
+        mkdir -p ${DLG_ROOT}/code
         DOCKER_OPTS+="-v ${PWD}/dlg/manager:/root/dlg/lib/python3.8/site-packages/dlg/manager"
-        DOCKER_OPTS+=" -v /tmp/.dlg/var/dlg_home:/tmp/.dlg/var/dlg_home"
-        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}-casa"
-        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}-casa
+        DOCKER_OPTS+=" -v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT}"
+        CONTAINER_NM="icrar/daliuge-engine:${VCS_TAG}-casa"
+        echo "docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}"
+        docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
         sleep 3
         ./start_local_managers.sh
         exit 1;;

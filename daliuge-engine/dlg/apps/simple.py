@@ -375,7 +375,7 @@ class UrlRetrieveApp(BarrierAppDROP):
             o.write(content)  # send content to all outputs
 
 ##
-# @brief GenericSplitApp\n
+# @brief GenericScatterApp\n
 # @details An APP that splits about any object that can be converted to a numpy array
 # into as many parts as the app has outputs, provided that the initially converted numpy 
 # array has enough elements. The return will be a numpy array of arrays, where the first 
@@ -409,7 +409,12 @@ class GenericScatterApp(BarrierAppDROP):
     def run(self):
         # split it as many times as we have outputs
         numSplit = len(self.outputs)
-        inpArray = pickle.loads(droputils.allDropContents(self.inputs[0]))
+        cont = droputils.allDropContents(self.inputs[0])
+        # if the data is of type string it is not pickled, but stored as a binary string.
+        try:
+            inpArray = pickle.loads(cont)
+        except:
+            inpArray = cont.decode()
         try:  # just checking whether the object is some object that can be used as an array
             nObj = np.array(inpArray)
         except:
