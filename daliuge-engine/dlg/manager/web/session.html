@@ -335,9 +335,9 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	var status_update_handler = function (statuses) {
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(statuses);
 		var uidCells = rows.selectAll('td.status').data(function values(s) { return [get_status_name(s)]; });
-		uidCells.enter().append('td').classed('status', true).text(String)
-		uidCells.text(String)
-		uidCells.exit().remove()
+		uidCells.enter().append('td').classed('status', true).text(String);
+		uidCells.text(String);
+		uidCells.exit().remove();
 	};
 
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
