@@ -5,9 +5,9 @@
 	<meta charset="utf-8">
 	<title>DIM Session</title>
 	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
-	<script src="/static/js/d3/d3.v3.min.js"></script>
-	<script src="/static/js/d3/dagre-d3.js"></script>
-	<script src="/static/js/jquery-1.11.3.min.js"></script>
+	<script src="/static/js/d3/d3.v5.min.js"></script>
+	<script src="/static/js/d3/dagre-d3.min.js"></script>
+	<script src="/static/js/jquery-3.6.0.min.js"></script>
 	<script src="/static/js/bootstrap.bundle.min.js"></script>
 	<script src="/static/js/bootbox.min.js"></script>
 	<script src="/static/js/dm.js"></script>
@@ -46,10 +46,10 @@
 					<button type="button" value="TB" class="btn btn-secondary tooltip tooltipBottom" data-text="Display Graph From Top to Bottom"><span class="fa fa-arrows-v"> </span></button>
 				</div>
 			</ul>
-			<ul class="nav navbar-nav  ml-auto">
-			<button id="cancelBtn" type="button" class="btn btn-secondary">Cancel Session</button>
+			<ul class="nav navbar-nav navbar-right">
+				<button id="cancelBtn" type="button" class="btn btn-secondary">Cancel Session</button>
 				<button disabled class="btn btn-secondary" id="session-status-wrapper" >Status: <span id="session-status"></span></button>
-				</ul>
+			</ul>
 		</div>
 	</nav>
 	<div id="graphNameWrapper">
@@ -65,6 +65,9 @@
 		<table id="pg-list" class="table table-striped table-condensed" >
 			<thead>
 				<tr>
+					<th>Name</th>
+					<th>Type</th>
+					<th>App</th>
 					<th>OID</th>
 					<th>Status</th>
 				</tr>
@@ -92,11 +95,9 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-graph').remove();
 
 	const width = $('#pg-progress-bar').innerWidth();
-	console.log(width)
 	var graph_update_handler = function(oids, dropSpecs) {};
 
-	var status_update_handler = function(statuses)
-	{
+	var status_update_handler = function(statuses){
 		// This is the order in which blocks are drawn in the progress bar,
 		// so we want "done" states first and "nothing happened yet" states
 		// towards the end
@@ -105,7 +106,7 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 		              'error', 'expired', 'deleted',
 		              'cancelled', 'skipped',
 		              'not_run', 'initialized'];
-		var states_idx = d3.scale.ordinal().domain(states).rangePoints([0, states.length - 1]);
+		var states_idx = d3.scalePoint().domain(states).range([0, states.length - 1]);
 
 		var scale = function(x) {
 			return Math.round(x * width / statuses.length);
@@ -124,19 +125,19 @@ function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 			cumsum[i + 1] = cumsum[i] + status_counts[i];
 
 		status_counts = status_counts.map(function(x, i) {
+			
 			return [scale(cumsum[i]), scale(x)];
 		});
-
 		var rects = d3.select('#pg-progress-bar svg').selectAll('rect').data(status_counts);
+
 		rects.enter().append('rect')
-		     .style('height', 20).style('width', 0).style('x', 0).style('y', 20)
-		     .transition().delay(0).duration(500)
-		     .style('x', function(d) { return d[0] + 20; })
-		     .style('width', function(d) { return d[1]; })
-		     .attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+			.style('height', 20).style('width', 0).style('x', 0).style('y', 20)
+			.style('x', function(d) { return d[0] + 20; })
+			.style('width', function(d) { return d[1]; })
+			.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
 		rects.style('x', function(d) { return d[0] + 20; })
-		     .style('width', function(d) { return d[1]; })
-		     .attr('class', function(d) { return states[status_counts.indexOf(d)]; });
+			.style('width', function(d) { return d[1]; })
+			.attr('class', function(d) { return states[status_counts.indexOf(d)]; });
 		rects.exit().remove();
 	}
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
@@ -165,39 +166,46 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	const heightValue = 300;
 	const widthValue = 600;
 	// Set up zoom support
-	var svg = d3.select("svg");
-	
+	var svg = d3.select("svg"),
+    svgGroup = svg.append("g");
 	var inner = svg.select("g");
-	var zoom = d3.behavior.zoom().on(
-			"zoom",
-			function() {
-				inner.attr("transform", "translate(" + d3.event.translate + ")"
-						+ "scale(" + d3.event.scale + ")");
-			});
-	svg.call(zoom);
 
+	// svg.call(d3.zoom().on("zoom", function () {
+	// 	inner.attr("transform", "translate(" + d3.event.translate + ")"
+	// 			+ "scale(" + d3.event.scale + ")");
+	// }))
 
-	var render = getRender();
-	var g = new dagreD3.graphlib.Graph();
-	g.setGraph({
+	var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
+      inner.attr("transform", d3.event.transform);
+    });
+    svg.call(zoom);
+
+	var g = new dagreD3.graphlib.Graph({compound:true})
+	.setGraph({
 		nodesep : 70,
 		ranksep : 50,
 		rankdir : "LR", // Left-to-right layout
 		marginx : 20,
 		marginy : 20
-	});
+	})
+	.setDefaultEdgeLabel(function () { return {}; });
 
+	var render = getRender();
 	function drawGraph() {
 		inner.call(render, g);
+		// render(inner,g)
 	}
+	
+	
+
 	//zoom WIP
-	// var initialScale = 0.75;
-	// svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+	// var initialScale = 0.30;
+	// root.call(zoom.transform, d3.zoomIdentity.translate((fullWidth - width * initialScale) / 2, 20).scale(initialScale));
 
 	// svg.attr('height', g.graph().height * initialScale + 40);
 
 	var orientButtons = d3.selectAll('#graph-orientation-buttons button');
-	orientButtons.on('click', function() {
+		orientButtons.on('click', function() {
 		direction = d3.event.currentTarget.value;
 		orientButtons.attr("disabled", "disabled");
 		orientButtons.filter("[value=" + direction + "]").classed("active", true);
@@ -221,41 +229,38 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	};
 
 	startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
-	                 status_update_handler, 1000);
-
+	                 status_update_handler, 1000);	
 }
+
+function zoomFit() {
+
+	// Center the graph
+	var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
+      inner.attr("transform", d3.event.transform);
+    });
+	var svg = d3
+		.select('svg')
+	;
 	
-	//zoom WIP
-function zoomFit(paddingPercent, transitionDuration) {
-	// var zoom = d3.behavior.zoom().scaleExtent([1/4, 4]).on('zoom', function () {
-	// 	console.trace("zoom.zoom", d3.event.translate, d3.event.scale);
-	// 	root.attr('transform',
-	// 		'translate(' + d3.event.translate + ')'
-	// 		+   'scale('+d3.event.scale+')');
-	// });
-
-	// var svg = d3
-	// 	.select('svg')
-	// 	.call(zoom)
-	// ;
-
-	// var root = svg.select('#root');
-	// var bounds = root.node().getBBox();
-	// var parent = root.node().parentElement;
-	// var fullWidth = parent.clientWidth,
-	//     fullHeight = parent.clientHeight;
-	// var width = bounds.width,
-	//     height = bounds.height;
-	// console.log("boom"+width+"ah"+height)
-	// var midX = bounds.x + width / 2,
-	//     midY = bounds.y + height / 2;
-	// if (width == 0 || height == 0) return; // nothing to fit
-	// var scale = (paddingPercent || 0.75) / Math.max(width / fullWidth, height / fullHeight);
-	// var translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
-
-	// console.trace("zoomFit", translate, scale);
-	// root.call(zoom.translate(translate).scale(scale).event);
-	// 	console.log("root");
+	var root = svg.select('#root');
+	var boot = $(".output");
+	var bounds = root.node().getBBox();
+	var parent = root.node().parentElement;
+	var fullWidth = parent.clientWidth,
+	    fullHeight = parent.clientHeight;
+	var width = bounds.width,
+	    height = bounds.height,
+		initialScale;
+	var widthScale = ((fullWidth-80)/width);
+	var heightScale = ((fullHeight-200)/height)
+	if (heightScale<widthScale){
+		initialScale = heightScale;
+	}else {
+		initialScale = widthScale;
+	};
+	initialScale = initialScale
+	var xCenterOffset = -(fullWidth - fullWidth) / 2;
+	boot.attr("transform", "translate(" + (fullWidth-(width*initialScale))/2 + ", " + ((fullHeight-80)-(height*initialScale))/2 + ")"+' scale('+initialScale+')');
 }
 
 function view_as_list(sessionId, selectedNode, serverUrl) {
@@ -266,23 +271,67 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 	d3.select('#pg-progress-bar').remove();
 
 	var graph_update_handler = function(oids, dropSpecs) {
-
+		//getting the data ready
 		var dropSpecList = [];
 		for(var idx in oids) {
 			dropSpecList[idx] = dropSpecs[oids[idx]];
 		}
-		console.log(dropSpecList);
-		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
-		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
-		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 
-		var oidCells = rows.selectAll('td.oid').data(function (d) { return [d.oid]; });
-		console.log(oidCells);
-		oidCells.enter().append('td').classed('oid', true).text(String);
-		oidCells.text(String);
-		oidCells.exit().remove();
+		//sort table WIP
+		// var sortAscending = true;
+		// var headers = d3.select('#pg-list thead').on('click', function (d) {
+		//                 	   headers.attr('class', 'header');
+								
+		//                 	   if (sortAscending) {
+		//                 	     rows.sort(function(a, b) { return b[d] < a[d]; });
+		//                 	     sortAscending = false;
+		//                 	     this.className = 'aes';
+		//                 	   } else {
+		//                 		 rows.sort(function(a, b) { return b[d] > a[d]; });
+		//                 		 sortAscending = true;
+		//                 		 this.className = 'des';
+		//                 	   }
+		// 					});
+
+		//adding the appropriate number of rows into the table from the array
+		//rows is defined and assigned the array in the data attribute
+		//this line is comparing the existing list from the select all with the array in the data attribute and will add or remove rows to make the table equal to the array
+		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
+		//enter is used if the above statement wants to add a row
+		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
+		//enter is used if the above statement wants to remove a row
+		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
+		//i have made the fill table its own function because it wasnt doing anything when it was here for some reason
+		fillTable(dropSpecList);
 	};
 
+	//all of the information that doesnt require updates is added into the graph
+	var fillTable = function (dropSpecList){
+		//data is bound to the rows and can be accessed later
+		//this line is comparing the existing list from the select all with the array in the data attribute and will add or remove td cells to make the table equal to the array
+		var rows = d3.select('#pg-list tbody').selectAll('tr').data(dropSpecList);
+		//the "function value(d)" function is using the data linked above to get data for this field it works similarly to a for loop
+		var nameCells = rows.selectAll('td.nName').data(function value(d) { return [d.nm] });
+		//enter is used if the above statement wants to add something
+		nameCells.enter().append('td').classed('nName', true).text(String)
+		//enter is used if the above statement wants to remove something
+		nameCells.text(String)
+		nameCells.exit().remove()
+		var typeCells = rows.selectAll('td.nType').data(function value(d) { return [d.dt] });
+		typeCells.enter().append('td').classed('nType', true).text(String)
+		typeCells.text(String)
+		typeCells.exit().remove()
+		var appCells = rows.selectAll('td.nApp').data(function value(d) { return [d.app] });
+		appCells.enter().append('td').classed('nApp', true).text(String)
+		appCells.text(String)
+		appCells.exit().remove()
+		var oidCells = rows.selectAll('td.oid').data(function value(d) { return [d.oid] });
+		oidCells.enter().append('td').classed('oid', true).text(String)
+		oidCells.text(String)
+		oidCells.exit().remove()
+	}
+
+	//states are added into the graph, this is called whenever there is a state change to update the table
 	var status_update_handler = function (statuses) {
 		var rows = d3.select('#pg-list tbody').selectAll('tr').data(statuses);
 		var uidCells = rows.selectAll('td.status').data(function values(s) { return [get_status_name(s)]; });
