@@ -25,7 +25,11 @@
   .node.cancelled :first-child, rect.cancelled {
     fill: #cccccc;
   }
-  
+
+  .node.skipped :first-child, rect.skipped {
+    fill: #53c4f6;
+  }
+
   .node.deleted :first-child, rect.deleted {
     color: #700000;
   }

@@ -90,7 +90,7 @@ function fillOutSettings(){
 
       var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
       saveAs(blob, pgtName+"_Template.png");
-  });
+    });
   }
 
   function createZipFilename(graph_name){
@@ -129,11 +129,4 @@ function fillOutSettings(){
 
   function zoomToFit() {
     myDiagram.zoomToFit()
-    // console.log(myDiagram.viewportBounds.width.toString());
-    // console.log('\n');
-    // console.log(myDiagram.viewportBounds.height.toString());
-    // console.log('\n -----');
-    // console.log(myDiagram.documentBounds.width.toString());
-    // console.log('\n');
-    // console.log(myDiagram.documentBounds.height.toString());
   }
