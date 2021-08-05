@@ -11,6 +11,8 @@
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/html2canvas.min.js"></script>
  <script src="/static/src/FileSaver.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.1/echarts.min.js"></script>
+ <script src="/static/src/echarts-dagre.min.js"></script>
  <script src="/static/src/require.js"></script>
 
  <!-- CSS -->
@@ -24,8 +26,7 @@
 </head>
 
 <body>
-    <!-- init script includes require, this links main js and echarts -->
-    <script src="/static/graph_init.js"></script>
+    
 
     <!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
@@ -137,5 +138,8 @@
             </div>
         </div>
     </div>
+    
+    <!-- init script includes require, this links main js and echarts -->
+    <script src="/static/graph_init.js"></script>
 </body>
 </html>
