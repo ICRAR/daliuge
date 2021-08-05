@@ -1,11 +1,13 @@
 //require takes over the whole page, thus we need to load main.js with require as well
 require([
     "/static/main.js",
+    // "/static/src/index.min.js"
 ]);
-require([
-    'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.1/echarts.min.js',
-], function (echarts) {
-    var chart = echarts.init(document.getElementById('main'), {renderer:'canvas'});
+// require([
+//     'https://cdnjs.cloudflare.com/ajax/libs/echarts/3.1.10/echarts.js'
+// ], function (echarts) {
+
+    var chart = echarts.init(document.getElementById('main'));
 
     // window.onresize = function () {
     //     chart.resize();
@@ -47,10 +49,11 @@ require([
                         'textBorderColor' : 'white',
                         'textBorderWidth' : 2,
                         'textBorderType' : 'solid'
-
                     };
                     newElement.itemStyle = {};
                     newElement.itemStyle.color = nodeCatgColors[element.category];
+                    newElement.symbol = "diamond",
+                    // newElement.symbolSize = [80, 40]
                     graphData.nodeDataArray.push(newElement);
                 }
                 else {
@@ -76,6 +79,7 @@ require([
             console.log(graphData.linkDataArray);
             console.log(keyIndex)
             chart.setOption({
+                layout: "dagre",
                 tooltip: {
                     trigger: 'item',
                     triggerOn: 'mousemove'
@@ -83,15 +87,22 @@ require([
                 animation: true,
                 series: [
                     {
-                        type: 'sankey',
+                        type: 'graph',
                         roam: true,
-                        label: {
-                            show: show_labels
-                        },
+                        symbolSize: 20,
+                        roam: true,
+                        // label: {
+                        //     normal: {
+                        //         show: true,
+                        //         position: 'right'
+                        //     }
+                        // },
+                        
                         emphasis:{
                             focus: 'adjacency' 
                         },
                         nodeAlign: 'right',
+                        
                         data: graphData.nodeDataArray,
                         links: graphData.linkDataArray,
                         lineStyle: {
@@ -103,4 +114,4 @@ require([
             });
         }
     });
-});
+// });
