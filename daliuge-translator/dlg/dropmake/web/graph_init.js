@@ -1,22 +1,24 @@
 //require takes over the whole page, thus we need to load main.js with require as well
 require([
     "/static/main.js",
-    // "/static/src/index.min.js"
 ]);
-// require([
-//     'https://cdnjs.cloudflare.com/ajax/libs/echarts/3.1.10/echarts.js'
-// ], function (echarts) {
 
-    var chart = echarts.init(document.getElementById('main'));
+//initial initialisation of graphs
+$(document).ready(function(){
+    var type = "default"
+    graphInit(type)
+});
 
-    // window.onresize = function () {
-    //     chart.resize();
-    // };
+//event listener for graph buttons
+$(".graphChanger").click(function(){
+    var type = $(this).val()
+    $(this).addClass("active")
+    graphInit(type)
+})
 
-    chart.on('click', function (params) {
-        console.log(params, params.data);
-    });
+function graphInit(type){
     $.ajax({
+        //get data
         url: "/pgt_jsonbody?pgt_name="+pgtName,
         dataType: "json",
         type: 'get',
@@ -28,18 +30,24 @@ require([
             }
         },
         success: function(data){
+ 
             // echarts only displays the name, which is also the key for the edges, thus
             // we need to make sure that the labels are both meaningful and unique.
+            //all nodes and edges
             var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
+            //partitions 
             var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
             var newElement = {};
             let keyIndex = new Map();
-            var nodeCatgColors = {'Data':'blue', 'Component': 'red'}
+            //shapes and colors for different node types 
+            var nodeCatgColors = {'Data':'#195aa0', 'Component': '#002349'}
+            var nodeCatgShape = {'Data':'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component':'rect'}
             data.nodeDataArray.forEach(element => {
                 newElement = {};
                 if (!element.hasOwnProperty("isGroup")){
                     // helper map to fix the links later
                     keyIndex.set(element.key, element.text + '-' + element.key.toString());
+                    //data options
                     newElement.name = element.text + '-' + element.key.toString();
                     newElement.label = {
                         'rotate': 45,
@@ -52,8 +60,8 @@ require([
                     };
                     newElement.itemStyle = {};
                     newElement.itemStyle.color = nodeCatgColors[element.category];
-                    newElement.symbol = "diamond",
-                    // newElement.symbolSize = [80, 40]
+                    newElement.symbol = nodeCatgShape[element.category];
+                    newElement.symbolSize = [80, 30]
                     graphData.nodeDataArray.push(newElement);
                 }
                 else {
@@ -70,14 +78,35 @@ require([
                 graphData.linkDataArray.push(newElement);
             });
 
-            // don't show labels if there are too many nodes. (SETTING?)
-            var show_labels = (graphData.nodeDataArray.length > 350) ? false:true;
+            //pick initial graph depending on node amount
+            if(type==="default"){
+                if(graphData.nodeDataArray.length<100){
+                    type="graph"
+                }else{
+                    type="sankey"
+                }
+            }
 
-            console.log(data.nodeDataArray);
-            console.log(data.linkDataArray);
-            console.log(graphData.nodeDataArray);
-            console.log(graphData.linkDataArray);
-            console.log(keyIndex)
+            //remove previous graph and active button, if any
+            $("#main").empty();
+            $(".graphChanger").removeClass("active")
+            //add new div depending on type
+            $("#main").append("<div id='"+type+"'></div>")
+            $("#"+type+"Button").addClass("active")
+            //re-initialise new graph
+            var chart = echarts.init(document.getElementById(type),null, {renderer:'canvas'});
+            graphSetup(type, chart, graphData, graphDataParts)
+
+        }
+    });
+}
+
+function graphSetup(type, chart, graphData,graphDataParts){
+  
+            // don't show labels if there are too many nodes. (SETTING?)
+            
+            var show_labels = (graphData.nodeDataArray.length > 350) ? false:true;
+         
             chart.setOption({
                 layout: "dagre",
                 tooltip: {
@@ -85,19 +114,21 @@ require([
                     triggerOn: 'mousemove'
                 },
                 animation: true,
+                dataZoom:{
+                    zoomOnMouseWheel:true,
+                    filtermode: 'none'
+                },
                 series: [
                     {
-                        type: 'graph',
-                        roam: true,
+                        type: type,
+                        // roam: true,
                         symbolSize: 20,
                         roam: true,
-                        // label: {
-                        //     normal: {
-                        //         show: true,
-                        //         position: 'right'
-                        //     }
-                        // },
-                        
+                        zoom:0.9,
+                        label: {
+                            show:show_labels
+                        },
+        
                         emphasis:{
                             focus: 'adjacency' 
                         },
@@ -112,6 +143,7 @@ require([
                     }
                 ]
             });
-        }
+    chart.on('click', function (params) {
+        console.log(params, params.data);
     });
-// });
+}
