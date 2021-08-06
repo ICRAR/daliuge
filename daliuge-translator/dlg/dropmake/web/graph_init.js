@@ -54,16 +54,7 @@ function graphInit(type){
                     //data options
                     newElement.name = element.text + '-' + element.key.toString();
 
-                    if(type==="graph"){
-                        newElement.label = {
-                            'fontSize': 10,
-                            'fontWeight' : 500,
-                            'color':'white',
-                            "position":"inside",
-                            'textBorderWidth' : 2,
-                            'textBorderColor':nodeCatgColors[element.category]
-                        };
-                    }else{
+                    if(type==="sankey"){
                         newElement.label = {
                             'rotate': 45,
                             'fontSize': 10,
@@ -72,6 +63,15 @@ function graphInit(type){
                             'textBorderColor' : 'white',
                             'textBorderWidth' : 2,
                             'textBorderType' : 'solid'
+                        };
+                    }else{
+                        newElement.label = {
+                            'fontSize': 10,
+                            'fontWeight' : 500,
+                            'color':'white',
+                            "position":"inside",
+                            'textBorderWidth' : 2,
+                            'textBorderColor':nodeCatgColors[element.category]
                         };
                     }
                     
