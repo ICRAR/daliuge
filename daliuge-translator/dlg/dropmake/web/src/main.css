@@ -13,6 +13,24 @@
     transform: translatex(-50%);
 }
 
+
+.navbar-nav button {
+  background-color: transparent;
+  border:1px white solid;
+}
+
+.navbar-nav .btn.btn-secondary.active{
+  background-color: white;
+  border:1px white solid;
+  color:rgba(0,35,73,1);
+}
+
+.navbar-nav .btn.btn-secondary:hover{
+  background-color: rgb(216, 216, 216);
+  border:1px rgb(216, 216, 216) solid;
+  color:rgba(0,35,73,1);
+}
+
 .tooltip {
     position: relative;
     display: inline-block;
@@ -342,10 +360,20 @@
     width:auto;
     height:auto;
     position: absolute;
-    top: 85px;
-    bottom: 30px;
-    left:5px;
-    right:5px;
+    top: 80px;
+    bottom: 25px;
+    left:0px;
+    right:0px;
+}
+
+#graph{
+  width:100%;
+  height:100%;
+}
+
+#sankey{
+  width:100%;
+  height:100%;
 }
 
 .dropdown-menu{
