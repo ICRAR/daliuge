@@ -6,6 +6,7 @@ require([
 //initial initialisation of graphs
 $(document).ready(function(){
     var type = "default"
+    var initBtn = false
     graphInit(type)
 });
 
@@ -13,6 +14,7 @@ $(document).ready(function(){
 $(".graphChanger").click(function(){
     var type = $(this).val()
     $(this).addClass("active")
+    var initBtn = true
     graphInit(type)
 })
 
@@ -35,6 +37,8 @@ function graphInit(type){
             // we need to make sure that the labels are both meaningful and unique.
             //all nodes and edges
             var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
+
+
             //partitions 
             var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
             var newElement = {};
@@ -49,19 +53,32 @@ function graphInit(type){
                     keyIndex.set(element.key, element.text + '-' + element.key.toString());
                     //data options
                     newElement.name = element.text + '-' + element.key.toString();
-                    newElement.label = {
-                        'rotate': 45,
-                        'fontSize': 10,
-                        'offset': [-20,-20],
-                        'fontWeight' : 700,
-                        'textBorderColor' : 'white',
-                        'textBorderWidth' : 2,
-                        'textBorderType' : 'solid'
-                    };
+
+                    if(type==="graph"){
+                        newElement.label = {
+                            'fontSize': 10,
+                            'fontWeight' : 500,
+                            'color':'white',
+                            "position":"inside",
+                            'textBorderWidth' : 2,
+                            'textBorderColor':nodeCatgColors[element.category]
+                        };
+                    }else{
+                        newElement.label = {
+                            'rotate': 45,
+                            'fontSize': 10,
+                            'offset': [-20,-20],
+                            'fontWeight' : 700,
+                            'textBorderColor' : 'white',
+                            'textBorderWidth' : 2,
+                            'textBorderType' : 'solid'
+                        };
+                    }
+                    
                     newElement.itemStyle = {};
                     newElement.itemStyle.color = nodeCatgColors[element.category];
                     newElement.symbol = nodeCatgShape[element.category];
-                    newElement.symbolSize = [80, 30]
+                    newElement.symbolSize = [60, 30]
                     graphData.nodeDataArray.push(newElement);
                 }
                 else {
@@ -78,6 +95,7 @@ function graphInit(type){
                 graphData.linkDataArray.push(newElement);
             });
 
+
             //pick initial graph depending on node amount
             if(type==="default"){
                 if(graphData.nodeDataArray.length<100){
@@ -86,13 +104,13 @@ function graphInit(type){
                     type="sankey"
                 }
             }
-
             //remove previous graph and active button, if any
             $("#main").empty();
             $(".graphChanger").removeClass("active")
             //add new div depending on type
             $("#main").append("<div id='"+type+"'></div>")
             $("#"+type+"Button").addClass("active")
+            
             //re-initialise new graph
             var chart = echarts.init(document.getElementById(type),null, {renderer:'canvas'});
             graphSetup(type, chart, graphData, graphDataParts)
@@ -114,17 +132,13 @@ function graphSetup(type, chart, graphData,graphDataParts){
                     triggerOn: 'mousemove'
                 },
                 animation: true,
-                dataZoom:{
-                    zoomOnMouseWheel:true,
-                    filtermode: 'none'
-                },
                 series: [
                     {
                         type: type,
-                        // roam: true,
+                        roam: true,
                         symbolSize: 20,
                         roam: true,
-                        zoom:0.9,
+                        zoom:1.15,
                         label: {
                             show:show_labels
                         },
