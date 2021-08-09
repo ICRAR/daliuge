@@ -229,10 +229,10 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         args = ['--port', str(restPort), '-N',hostname, '-qqq']
         dimProcess = tool.start_process('dim', args)
 
-        with testutils.terminating(dimProcess, 10):
+        with testutils.terminating(dimProcess, timeout=10):
 
             # Wait until the REST server becomes alive
-            self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
+            self.assertTrue(utils.portIsOpen('localhost', restPort, timeout=10), "REST server didn't come up in time")
 
             # The DIM is still empty
             sessions = testutils.get(self, '/sessions', restPort)
