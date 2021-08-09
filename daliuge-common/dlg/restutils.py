@@ -97,9 +97,10 @@ class RestClient(object):
     The base class for our REST clients
     """
 
-    def __init__(self, host, port, timeout=None):
+    def __init__(self, host, port, url_prefix='', timeout=None):
         self.host = host
         self.port = port
+        self.url_prefix = url_prefix
         self.timeout = timeout
         self._conn = None
         self._resp = None
@@ -120,7 +121,7 @@ class RestClient(object):
 
 
     def _get_json(self, url):
-        ret = self._GET(url)
+        ret = self._GET(self.url_prefix + url)
         return json.load(ret) if ret else None
 
     def _post_form(self, url, content=None):
@@ -160,7 +161,8 @@ class RestClient(object):
     def _request(self, url, method, content=None, headers={}):
 
         # Do the HTTP stuff...
-        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
+        logger.debug("Sending %s request to %s:%d%s%s", method,
+                     self.host, self.port, self.url_prefix, url)
 
         if not common.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
@@ -170,14 +172,15 @@ class RestClient(object):
             content = chunked(content)
 
         self._conn = http.client.HTTPConnection(self.host, self.port)
-        self._conn.request(method, url, content, headers)
+        self._conn.request(method, self.url_prefix + url, content, headers)
         self._resp = self._conn.getresponse()
 
         # Server errors are encoded in the body as json content
         if self._resp.status != http.HTTPStatus.OK:
 
-            msg = 'Error on remote %s@%s:%s%s (status %d): ' % \
-                  (method, self.host, self.port, url, self._resp.status)
+            msg = 'Error on remote %s@%s:%s%s%s (status %d): ' % \
+                  (method, self.host, self.port,
+                   self.url_prefix, url, self._resp.status)
 
             try:
                 error = json.loads(self._resp.read().decode('utf-8'))
