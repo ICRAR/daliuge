@@ -306,7 +306,11 @@ def gen_pg():
         return "Must specify DALiUGE manager host"
     try:
         mport = int(request.query.get("dlg_mgr_port"))
-        mgr_client = CompositeManagerClient(host=mhost, port=mport, timeout=30)
+        try:
+            mprefix = request.query.get("dlg_mgr_prefix")
+        except:
+            mprefix = ''
+        mgr_client = CompositeManagerClient(host=mhost, port=mport, url_prefix=mprefix, timeout=30)
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
         # 2. mapping PGTP to resources (node list)
@@ -326,7 +330,7 @@ def gen_pg():
             # mgr_client.deploy_session(ssid, completed_uids=[])
             # print "session deployed"
             # 3. redirect to the master drop manager
-            redirect("http://{0}:{1}/session?sessionId={2}".format(mhost, mport, ssid))
+            redirect("http://{0}:{1}{2}/session?sessionId={3}".format(mhost, mport, mprefix, ssid))
         else:
             response.content_type = 'application/json'
             response.set_header("Content-Disposition", "attachment; filename=%s" % (pgt_id))
