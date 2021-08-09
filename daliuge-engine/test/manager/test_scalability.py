@@ -88,18 +88,19 @@ class TestBigGraph(unittest.TestCase):
         n_drops = drops_per_branch * branches * 2 + 1
         graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
         self.assertEqual(n_drops, len(graph))
-        self._run_graph(graph, completed_uids, 5)
+        self._run_graph(graph, completed_uids, timeout=5)
 
-    def _run_graph(self, graph, completed_uids, timeout):
+    def _run_graph(self, graph, completed_uids, timeout=5):
 
         sessionId = 'lala'
         restPort  = 8888
         args = ['--port', str(restPort), '-N', hostname, '-qq']
 
+        logger.debug("Starting NM on port %d" % restPort)
         c = client.NodeManagerClient(port=restPort)
         dimProcess = tool.start_process('dim', args)
 
-        with testutils.terminating(dimProcess, timeout):
+        with testutils.terminating(dimProcess, timeout=timeout):
             c.create_session(sessionId)
             logger.info("Appending graph")
             c.append_graph(sessionId, graph)
