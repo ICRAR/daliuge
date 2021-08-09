@@ -224,7 +224,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
         with testutils.terminating(mmProcess, 10):
 
             # Wait until the REST server becomes alive
-            self.assertTrue(utils.portIsOpen('localhost', restPort, 10), "REST server didn't come up in time")
+            self.assertTrue(utils.portIsOpen('localhost', restPort, timeout=10), "REST server didn't come up in time")
 
             # The DIM is still empty
             sessions = testutils.get(self, '/sessions', restPort)
