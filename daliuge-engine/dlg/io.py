@@ -459,7 +459,7 @@ class PlasmaIO(DataIO):
 
 class PlasmaFlightIO(DataIO):
 
-    def __init__(self, object_id, plasma_path='/tmp/plasma', flight_path: Optional[str] = None):
+    def __init__(self, object_id: plasma.ObjectID, plasma_path='/tmp/plasma', flight_path: Optional[str] = None):
         super(PlasmaFlightIO, self).__init__()
         self._object_id = object_id
         self._plasma_path = plasma_path
