@@ -64,7 +64,7 @@ class TestRest(unittest.TestCase):
 
     def test_index(self):
         # Just check that the HTML pages load properly
-        with RestClient(hostname, constants.NODE_DEFAULT_REST_PORT, 10) as c:
+        with RestClient(hostname, constants.NODE_DEFAULT_REST_PORT, timeout=10) as c:
             c._GET('/')
             c._GET('/session')
 
