@@ -28,11 +28,12 @@ import shutil
 import sqlite3
 import string
 import tempfile
+import subprocess
 
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
-from dlg.drop import FileDROP, AppDROP, InMemoryDROP, \
-    NullDROP, BarrierAppDROP, \
+from dlg.drop import FileDROP, AppDROP, InMemoryDROP, PlasmaDROP, \
+    PlasmaFlightDROP, NullDROP, BarrierAppDROP, \
     DirectoryContainer, ContainerDROP, InputFiredAppDROP, RDBMSDrop
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
@@ -108,6 +109,34 @@ class TestDROP(unittest.TestCase):
         Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
         """
         self._test_write_withDropType(InMemoryDROP)
+
+    def test_write_plasmaDROP(self):
+        """
+        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
+        """
+        self._test_drop_sz = 16 # MB
+        self._test_block_sz =  16 # MB
+        self._test_num_blocks = self._test_drop_sz // self._test_block_sz
+        self._test_block = os.urandom(self._test_block_sz * ONE_MB)
+        try:
+            store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
+            self._test_write_withDropType(PlasmaDROP)
+        finally:
+            store.terminate()
+
+    def test_write_plasmaFlightDROP(self):
+        """
+        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
+        """
+        self._test_drop_sz = 16 # MB
+        self._test_block_sz =  16 # MB
+        self._test_num_blocks = self._test_drop_sz // self._test_block_sz
+        self._test_block = os.urandom(self._test_block_sz * ONE_MB)
+        try:
+            store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
+            self._test_write_withDropType(PlasmaFlightDROP)
+        finally:
+            store.terminate()
 
     def _test_write_withDropType(self, dropType):
         """
