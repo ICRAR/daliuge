@@ -44,8 +44,28 @@ function graphInit(type){
             var newElement = {};
             let keyIndex = new Map();
             //shapes and colors for different node types 
-            var nodeCatgColors = {'Data':'#195aa0', 'Component': '#002349'}
+            var nodeCatgColors = {'Data':'#c59a1a', 'Component': '#002349'}
             var nodeCatgShape = {'Data':'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component':'rect'}
+            var nodeCount = 0
+            data.nodeDataArray.forEach(element => {
+                nodeCount++
+            })
+            console.log(nodeCount)
+            //pick initial graph depending on node amount
+            if(type==="default"){
+                if(nodeCount<100){
+                    type="graph"
+                }else{
+                    type="sankey"
+                }
+            }
+            //hide other graph option when it doesnt make sense
+            if(nodeCount<50){
+                $(".graphChanger").hide();
+            }else if(nodeCount>150){
+                $(".graphChanger").hide();
+            }
+            console.log(type)
             data.nodeDataArray.forEach(element => {
                 newElement = {};
                 if (!element.hasOwnProperty("isGroup")){
@@ -74,7 +94,7 @@ function graphInit(type){
                             'textBorderColor':nodeCatgColors[element.category]
                         };
                     }
-                    
+
                     newElement.itemStyle = {};
                     newElement.itemStyle.color = nodeCatgColors[element.category];
                     newElement.symbol = nodeCatgShape[element.category];
@@ -86,7 +106,7 @@ function graphInit(type){
                     graphDataParts.nodeDataArray.push(newElement);                  
                 }
             });
-
+            
             data.linkDataArray.forEach(element => {
                 newElement = {};
                 newElement.source = keyIndex.get(element.from);
@@ -96,14 +116,6 @@ function graphInit(type){
             });
 
 
-            //pick initial graph depending on node amount
-            if(type==="default"){
-                if(graphData.nodeDataArray.length<100){
-                    type="graph"
-                }else{
-                    type="sankey"
-                }
-            }
             //remove previous graph and active button, if any
             $("#main").empty();
             $(".graphChanger").removeClass("active")
@@ -121,10 +133,9 @@ function graphInit(type){
 
 function graphSetup(type, chart, graphData,graphDataParts){
   
-            // don't show labels if there are too many nodes. (SETTING?)
-            
+            // don't show labels if there are too many nodes. 
             var show_labels = (graphData.nodeDataArray.length > 350) ? false:true;
-         
+
             chart.setOption({
                 layout: "dagre",
                 tooltip: {
@@ -135,7 +146,6 @@ function graphSetup(type, chart, graphData,graphDataParts){
                 series: [
                     {
                         type: type,
-                        roam: true,
                         symbolSize: 20,
                         roam: true,
                         zoom:1.15,
@@ -151,7 +161,7 @@ function graphSetup(type, chart, graphData,graphDataParts){
                         data: graphData.nodeDataArray,
                         links: graphData.linkDataArray,
                         lineStyle: {
-                            color: 'source',
+                            color: 'grey',
                             curveness: 0.5
                         }
                     }
