@@ -17,18 +17,21 @@
 .navbar-nav button {
   background-color: transparent;
   border:1px white solid;
+  box-shadow: none !important;
 }
 
 .navbar-nav .btn.btn-secondary.active{
   background-color: white;
   border:1px white solid;
   color:rgba(0,35,73,1);
+  box-shadow: none !important;
 }
 
 .navbar-nav .btn.btn-secondary:hover{
   background-color: rgb(216, 216, 216);
   border:1px rgb(216, 216, 216) solid;
   color:rgba(0,35,73,1);
+  box-shadow: none !important;
 }
 
 .tooltip {
