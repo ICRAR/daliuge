@@ -460,7 +460,7 @@ class AbstractDROP(EventFirer):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if not isinstance(data, (bytes, memoryview)):  # TODO: support memoryview
+        if not isinstance(data, (bytes, memoryview)):
             raise Exception("Data type not of binary type: %s", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
@@ -1830,6 +1830,7 @@ class PlasmaFlightDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
+
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
 # used to append a a DROP into a relationship collection of another

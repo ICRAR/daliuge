@@ -179,20 +179,25 @@ class RestClient(object):
             msg = 'Error on remote %s@%s:%s%s (status %d): ' % \
                   (method, self.host, self.port, url, self._resp.status)
 
-            error = json.loads(self._resp.read().decode('utf-8'))
-            etype = getattr(exceptions, error['type'])
-            eargs = error['args']
+            try:
+                error = json.loads(self._resp.read().decode('utf-8'))
+                etype = getattr(exceptions, error['type'])
+                eargs = error['args']
 
-            if etype == SubManagerException:
-                for host,args in eargs.items():
-                    subetype = getattr(exceptions, args['type'])
-                    subargs = args['args']
-                    eargs[host] = subetype(*subargs)
-                ex = etype(eargs)
-            else:
-                ex = etype(*eargs)
-            if hasattr(ex, 'msg'):
-                ex.msg = msg + ex.msg
+                if etype == SubManagerException:
+                    for host,args in eargs.items():
+                        subetype = getattr(exceptions, args['type'])
+                        subargs = args['args']
+                        eargs[host] = subetype(*subargs)
+                    ex = etype(eargs)
+                else:
+                    ex = etype(*eargs)
+                if hasattr(ex, 'msg'):
+                    ex.msg = msg + ex.msg
+            except Exception:
+                ex = RestClientException(msg + "Unknown")
+
+            raise ex
 
         if not self._resp.length:
             return None, None
