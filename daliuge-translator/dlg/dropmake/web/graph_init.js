@@ -80,8 +80,9 @@ function graphInit(type){
                             'fontSize': 10,
                             'offset': [-20,-20],
                             'fontWeight' : 700,
-                            'textBorderColor' : 'white',
-                            'textBorderWidth' : 2,
+                            'color':'white',
+                            'textBorderColor':'black',
+                            'textBorderWidth' : 2.5,
                             'textBorderType' : 'solid'
                         };
                     }else{
@@ -90,8 +91,8 @@ function graphInit(type){
                             'fontWeight' : 500,
                             'color':'white',
                             "position":"inside",
-                            'textBorderWidth' : 2,
-                            'textBorderColor':nodeCatgColors[element.category]
+                            'textBorderColor':'black',
+                            'textBorderWidth' : 2.5,
                         };
                     }
 
