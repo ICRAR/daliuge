@@ -63,7 +63,7 @@ class TestDaemon(unittest.TestCase):
         # in the daemon's hand
         #self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
         try:
-            restutils.RestClient('localhost', 9000, 10)._GET('/anything')
+            restutils.RestClient('localhost', 9000, timeout=10)._GET('/anything')
         except restutils.RestClientException:
             # We don't care about the result
             pass

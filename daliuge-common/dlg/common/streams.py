@@ -136,7 +136,7 @@ class JSONStream(object):
             raise ValueError("n must be positive")
 
         if self.buflen >= n:
-            self.buflen -= n;
+            self.buflen -= n
             data = b''.join(self.buf)
             self.buf = [data[n:]]
             return data[:n]

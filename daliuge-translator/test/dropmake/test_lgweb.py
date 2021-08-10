@@ -56,7 +56,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_lgjson(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
 
         # a specific one
         lg = c._get_json('/jsonbody?lg_name=logical_graphs/chiles_simple.graph')
@@ -71,7 +71,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_post_lgjson(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
 
         # new graphs cannot currently be added
         form_data = {'lg_name': 'new.graph', 'lg_content': '{"id": 1, "name": "example"}'}
@@ -97,7 +97,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_gen_pgt(self):
 
-        c = RestClient('127.0.0.1', lgweb_port, 10)
+        c = RestClient('127.0.0.1', lgweb_port, timeout=10)
 
         # doesn't exist!
         self.assertRaises(RestClientException, c._GET, '/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
@@ -108,7 +108,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_pgtjson(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
         c._GET('/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100')
 
         # doesn't exist
@@ -118,7 +118,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_pgt_post(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
@@ -150,7 +150,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_mkn_pgt_post(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
@@ -182,7 +182,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_loop_pgt_post(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c._POST, '/gen_pgt')
@@ -213,7 +213,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_pg_viewerer(self):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
         self._generate_pgt(c)
 
         # doesn't exist
@@ -226,7 +226,7 @@ class TestLGWeb(unittest.TestCase):
 
     def _test_pgt_action(self, path, unknown_fails):
 
-        c = RestClient('localhost', lgweb_port, 10)
+        c = RestClient('localhost', lgweb_port, timeout=10)
         self._generate_pgt(c)
 
         # doesn't exist
