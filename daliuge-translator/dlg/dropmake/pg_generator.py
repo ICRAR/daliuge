@@ -713,12 +713,9 @@ class LGNode:
             kwargs["image"] = image
             kwargs["command"] = command
             kwargs["user"] = str(self.jd.get("user", ""))
-            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-                str(self.jd.get("ensureUserAndSwitch", "0"))
-            )
-            kwargs["removeContainer"] = self.str_to_bool(
-                str(self.jd.get("removeContainer", "1"))
-            )
+            kwargs["ensureUserAndSwitch"] = self.str_to_bool(str(self.jd.get("ensureUserAndSwitch", "0")))
+            kwargs["removeContainer"] = self.str_to_bool(str(self.jd.get("removeContainer", "1")))
+            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             drop_spec.update(kwargs)
 

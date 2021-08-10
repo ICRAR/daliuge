@@ -1808,6 +1808,7 @@ class PlasmaFlightDROP(AbstractDROP):
     '''
     object_id = dlg_string_param('object_id', None)
     plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
+    flight_path = dlg_string_param('flight_path', None)
 
     def initialize(self, **kwargs):
         object_id = self.uid
@@ -1817,7 +1818,14 @@ class PlasmaFlightDROP(AbstractDROP):
            self.object_id = object_id
 
     def getIO(self):
-        return PlasmaFlightIO(plasma.ObjectID(self.object_id), self.plasma_path)
+        if isinstance(self.object_id, str):
+            object_id = plasma.ObjectID(self.object_id.encode('ascii'))
+        elif isinstance(self.object_id, bytes):
+            object_id = plasma.ObjectID(self.object_id)
+        else:
+            raise Exception("Invalid argument " + str(self.object_id) + " expected str, got" + str(type(self.object_id)))
+        logger.debug(f"object_id {object_id}")
+        return PlasmaFlightIO(object_id, self.plasma_path, flight_path=self.flight_path)
 
     @property
     def dataURL(self):

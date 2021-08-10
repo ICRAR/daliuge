@@ -21,18 +21,14 @@
 #
 import hashlib
 from io import BytesIO
+import logging
 from typing import Optional
 
 import pyarrow
 import pyarrow.flight as paf
 import pyarrow.plasma as plasma
 
-
-def generate_sha1_object_id(path: bytes) -> plasma.ObjectID:
-    m = hashlib.sha1()
-    m.update(path)
-    id = m.digest()[0:20]
-    return plasma.ObjectID(id)
+logger = logging.getLogger(__name__)
 
 
 class PlasmaFlightClient():
@@ -55,18 +51,20 @@ class PlasmaFlightClient():
     def get_flight(self, object_id: plasma.ObjectID, location: Optional[str]) -> paf.FlightStreamReader:
         descriptor = paf.FlightDescriptor.for_path(object_id.binary().hex().encode('utf-8'))
         if location is not None:
+            logger.debug(f"connecting to {self._scheme}://{location} with descriptor {descriptor}")
             flight_client = paf.FlightClient(f"{self._scheme}://{location}", **self._connection_args)
             info = flight_client.get_flight_info(descriptor)
             for endpoint in info.endpoints:
-                for location in endpoint.locations:
-                    return flight_client.do_get(endpoint.ticket)
+                logger.debug(f"using endpoint locations {endpoint.locations}")
+                return flight_client.do_get(endpoint.ticket)
         else:
-            raise Exception()
+            raise Exception("Location required")
 
     def put(self, data: memoryview, object_id: plasma.ObjectID):
         self.plasma_client.put_raw_buffer(data, object_id)
 
     def get(self, object_id: plasma.ObjectID, owner: Optional[str] = None) -> memoryview:
+        logger.debug(f"PlasmaFlightClient Get {object_id}")
         if self.plasma_client.contains(object_id):
             # first check if the local store contains the object
             [buf] = self.plasma_client.get_buffers([object_id])
@@ -76,7 +74,7 @@ class PlasmaFlightClient():
             reader = self.get_flight(object_id, owner)
             table = reader.read_all()
             output = BytesIO(table.column(0)[0].as_py()).getbuffer()
-            #cache output
+            # cache output
             self.put(output, object_id)
             return output
         else:
