@@ -132,6 +132,7 @@ class ManagerRestServer(RestServer):
         # Mappings
         app = self.app
         app.post(  '/api/stop',                              callback=self.stop_manager)
+        app.route( '/api/sessions', method='OPTIONS',        callback=self.acceptPreflight)
         app.post(  '/api/sessions',                          callback=self.createSession)
         app.get(   '/api/sessions',                          callback=self.getSessions)
         app.get(   '/api/sessions/<sessionId>',              callback=self.getSessionInformation)
@@ -174,6 +175,11 @@ class ManagerRestServer(RestServer):
         newSession = bottle.request.json
         sessionId = newSession['sessionId']
         self.dm.createSession(sessionId)
+        return {'sessionId':sessionId}
+
+    @daliuge_aware
+    def acceptPreflight(self):
+        return {}
 
     def sessions(self):
         sessions = []
