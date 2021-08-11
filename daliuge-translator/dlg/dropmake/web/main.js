@@ -6,7 +6,9 @@ $( document ).ready(function() {
     $(".dropdown-menu").dropdown('hide')
   })
 
-  //deploy physical graph button listener 
+  $('#rest_deploy_button').click(restDeploy);
+
+  //deploy physical graph button listener
   $("#deploy_button").click(function(){
     $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
     $("#dlg_mgr_deploy").prop( "checked", true )
@@ -19,7 +21,7 @@ $( document ).ready(function() {
     $("#dlg_mgr_deploy").prop( "checked", false )
     $("#pg_form").submit();
   })
-  
+
   //get saved settings from local storage or set a default value
   fillOutSettings()
 
@@ -39,7 +41,7 @@ function saveSettings(){
   window.localStorage.setItem("manager_port", newPort);
   window.localStorage.setItem("manager_host", newHost);
   window.localStorage.setItem("manager_prefix", newPrefix);
-  $('#settingsModal').modal('hide')    
+  $('#settingsModal').modal('hide')
 }
 
 function fillOutSettings(){
@@ -69,7 +71,7 @@ function fillOutSettings(){
 
   function makeJSON() {
       console.log("makeJSON()");
-    
+
       $.ajax({
           url: "/pgt_jsonbody?pgt_name="+pgtName,
           type: 'get',
@@ -87,14 +89,14 @@ function fillOutSettings(){
   }
 
   function makePNG() {
-  
+
     html2canvas(document.querySelector("#main")).then(canvas => {
       var dataURL = canvas.toDataURL( "image/png" );
       var data = atob( dataURL.substring( "data:image/png;base64,".length ) ),
           asArray = new Uint8Array(data.length);
 
       for( var i = 0, len = data.length; i < len; ++i ) {
-          asArray[i] = data.charCodeAt(i);    
+          asArray[i] = data.charCodeAt(i);
       }
 
       var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
@@ -138,4 +140,47 @@ function fillOutSettings(){
 
   function zoomToFit() {
     myDiagram.zoomToFit()
+  }
+
+  async function restDeploy(){
+    // fetch manager host and port from HTML
+    const manager_host = $('#managerHostInput').val();
+    const manager_port = $('#managerPortInput').val();
+
+    const node_list_url      = "http://" + manager_host + ":" + manager_port + "/api/nodes";
+    const create_session_url = "http://" + manager_host + ":" + manager_port + "/api/sessions";
+    const append_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/testSession/graph/append";
+    const deploy_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/testSession/deploy";
+
+    // sessionId must be unique or the request will fail
+    const sessionId = pgtName + Date.now();
+
+    // fetch the nodelist
+    const node_list = await fetch(node_list_url).then(response => response.json());
+    console.log("node_list", node_list);
+
+    // create session
+    const session_data = {sessionId: sessionId};
+    const create_session = await fetch(create_session_url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(session_data)
+    }).then(response => response.json());
+    console.log("create session response", create_session);
+
+    // TODO: gzip the graph
+    gzipped_graph = null;
+
+    // append graph
+    const append_graph = await fetch(append_graph_url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Encoding': 'gzip'
+      },
+      body: gzipped_graph
+    }).then(response => response.json());
+    console.log("append graph response", append_graph);
   }
