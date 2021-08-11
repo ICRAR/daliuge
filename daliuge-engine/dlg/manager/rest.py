@@ -66,7 +66,13 @@ def daliuge_aware(func):
 
             if res is not None:
                 bottle.response.content_type = 'application/json'
-                return json.dumps(res)
+                # set CORS headers
+                bottle.response.headers['Access-Control-Allow-Origin'] = '*'
+                bottle.response.headers['Access-Control-Allow-Methods'] = \
+                    'GET, POST, PUT, OPTIONS'
+                bottle.response.headers['Access-Control-Allow-Headers'] = \
+                    'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+            return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
 
