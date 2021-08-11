@@ -7,7 +7,9 @@ require([
 $(document).ready(function(){
     var type = "default"
     var initBtn = false
-    graphInit(type)
+    if(pgtName.toString() !== 'None'){
+        graphInit(type)
+    }
 });
 
 //event listener for graph buttons

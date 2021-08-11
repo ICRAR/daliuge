@@ -69,7 +69,7 @@ function fillOutSettings(){
 
   function makeJSON() {
       console.log("makeJSON()");
-
+    
       $.ajax({
           url: "/pgt_jsonbody?pgt_name="+pgtName,
           type: 'get',
