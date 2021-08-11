@@ -147,19 +147,25 @@ function fillOutSettings(){
     const manager_host = $('#managerHostInput').val();
     const manager_port = $('#managerPortInput').val();
 
+    // sessionId must be unique or the request will fail
+    const sessionId = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph")) + "-" + Date.now();
+    console.log("sessionId", sessionId);
+
+    // build urls
     const node_list_url      = "http://" + manager_host + ":" + manager_port + "/api/nodes";
     const create_session_url = "http://" + manager_host + ":" + manager_port + "/api/sessions";
-    const append_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/testSession/graph/append";
-    const deploy_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/testSession/deploy";
+    const append_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/graph/append";
+    const deploy_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/deploy";
 
-    // sessionId must be unique or the request will fail
-    const sessionId = pgtName + Date.now();
+    // fetch the graph from this server
+    const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
+    console.log("graph", graph);
 
-    // fetch the nodelist
+    // fetch the nodelist from engine
     const node_list = await fetch(node_list_url).then(response => response.json());
     console.log("node_list", node_list);
 
-    // create session
+    // create session on engine
     const session_data = {sessionId: sessionId};
     const create_session = await fetch(create_session_url, {
       method: 'POST',
@@ -170,17 +176,19 @@ function fillOutSettings(){
     }).then(response => response.json());
     console.log("create session response", create_session);
 
-    // TODO: gzip the graph
-    gzipped_graph = null;
+    // gzip the graph
+    const buf = fflate.strToU8(JSON.stringify(graph));
+    const compressed_graph = fflate.zlibSync(buf);
+    console.log("compressed_graph", compressed_graph);
 
-    // append graph
+    // append graph to session on engine
     const append_graph = await fetch(append_graph_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Encoding': 'gzip'
       },
-      body: gzipped_graph
+      body: new Blob([compressed_graph])
     }).then(response => response.json());
     console.log("append graph response", append_graph);
   }
