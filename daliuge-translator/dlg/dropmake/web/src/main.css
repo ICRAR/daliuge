@@ -58,15 +58,15 @@
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
-  
+
   /* move to left */
   left:100%;
   margin-left:15px; /* and add a small right margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -87,19 +87,19 @@
 .tooltipRight:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   left:100%;
   margin-left:-4px;
- 
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent rgba(0,0,0,0.94) transparent transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -107,22 +107,22 @@
 .tooltipRight:hover:before, .tooltipRight:hover:after {
   visibility: visible;
   transition-delay: 1s;
-  
+
 }
 
 .tooltipTop:before {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* center */
   Left:50%;
   transform:translateX(-50%);
-  
+
   /* move to top */
   bottom:100%;
   margin-bottom:15px; /* and add a small bottom margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -143,42 +143,42 @@
 .tooltipTop:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   bottom:100%;
   margin-bottom:-4px;
- 
+
   /* vertically center */
   left: 50%;
   bottom:100%;
   transform:translateX(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: rgba(0,0,0,0.94) transparent transparent transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
 
 .tooltipTop:hover:before, .tooltipTop:hover:after {
   visibility: visible;
-  transition-delay: 1s; 
+  transition-delay: 1s;
 }
 
 .tooltipLeft:before {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
-  
+
   /* move to left */
   right:100%;
   margin-right:15px; /* and add a small right margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -199,19 +199,19 @@
 .tooltipLeft:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   right:100%;
   margin-right:-4px;
- 
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent transparent transparent rgba(0,0,0,0.94);
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -225,15 +225,15 @@
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* center */
   Left:50%;
   transform:translateX(-50%);
-  
+
   /* move to bottom */
   top:100%;
   margin-top:15px; /* and add a small top margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -254,20 +254,20 @@
 .tooltipBottom:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   top:100%;
   margin-top:-4px;
- 
+
   /* vertically center */
   left: 50%;
   top:100%;
   transform:translateX(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent transparent rgba(0,0,0,0.94) transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -281,15 +281,15 @@
     content: attr(data-text); /* here's the magic */
     position:absolute;
     font-size: 14px;
-    
+
     /* center */
     Left:50%;
     transform:translateX(-90%);
-    
+
     /* move to bottom */
     top:100%;
     margin-top:15px; /* and add a small top margin */
-    
+
     /* basic styles */
     width:200px;
     padding:10px;
@@ -310,7 +310,7 @@
 .tooltipBottomLeft:after {
     content: "";
     position:absolute;
-    
+
     /* position tooltip correctly */
     top:100%;
     margin-top:-4px;
@@ -323,7 +323,7 @@
     /* the arrow */
     border:10px solid rgba(0,0,0,0.94);
     border-color: transparent transparent rgba(0,0,0,0.94) transparent;
-    
+
     visibility:hidden;
     transition: 0s visibility;
 }
@@ -331,7 +331,7 @@
 .tooltipBottomLeft:hover:before, .tooltipBottomLeft:hover:after {
     visibility: visible;
     transition-delay: 1s;
-} 
+}
 
 #graphNameWrapper{
     position: absolute;
@@ -440,7 +440,7 @@
     color:white;
 }
 
-#deploy_button{
+#deploy_button, #rest_deploy_button{
     color: white;
 }
 
