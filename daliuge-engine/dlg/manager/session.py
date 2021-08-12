@@ -25,10 +25,13 @@ Module containing the logic of a session -- a given graph execution
 
 import collections
 import inspect
+import json
 import logging
+import os
 import threading
 
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
+from dlg.utils import createDirIfMissing
 
 from . import constants
 from .. import droputils
@@ -82,6 +85,7 @@ class ReproFinishedListener(object):
             logger.debug("Building Reproducibility BlockDAG")
             init_runtime_repro_data(self._session._graph, self._session._graphreprodata)
             self._session.reprostatus = True
+            self._session.write_reprodata()
 
 
 track_current_session = utils.object_tracking('session')
@@ -154,6 +158,15 @@ class Session(object):
     def reprostatus(self, status):
         with self._statusLock:  # TODO: Consider creating another lock
             self._reprofinished = status
+
+    def write_reprodata(self):
+        parts = ['.', self._sessionId]
+        the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+        createDirIfMissing(the_dir)
+        the_path = os.path.join(the_dir, 'reprodata.out')
+        with open(the_path, 'w+') as file:
+            json.dump(self._graphreprodata, open(the_path, 'w+'), indent=4)
+
 
     @track_current_session
     def addGraphSpec(self, graphSpec):
