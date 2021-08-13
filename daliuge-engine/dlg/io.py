@@ -471,25 +471,31 @@ class PlasmaFlightIO(DataIO):
         self._object_id = object_id
         self._plasma_path = plasma_path
         self._flight_path = flight_path
+        self._reader = None
+        self._writer = None
 
     def _open(self, **kwargs):
         self._done = False
         return PlasmaFlightClient(socket=self._plasma_path)
 
     def _close(self, **kwargs):
-        pass
+        if self._writer:
+            self._desc.put(self._writer.getvalue(), self._object_id)
+            self._writer.close()
+        if self._reader:
+            self._reader.close()
 
     def _read(self, count, **kwargs):
-        if not self._done:
-            # basic API will encapsulate the entire transfer
+        if not self._reader:
             data = self._desc.get(self._object_id, self._flight_path)
-            self._done = True
-            return data
-        else:
-            return []
+            self._reader = pyarrow.BufferReader(data)
+        return self._reader.read1(count)
 
     def _write(self, data, **kwargs):
-        self._desc.put(data, self._object_id)
+        if not self._writer:
+            # use client.create and FixedSizeBufferWriter
+            self._writer = pyarrow.BufferOutputStream()
+        self._writer.write(data)
         return len(data)
 
     def exists(self):
