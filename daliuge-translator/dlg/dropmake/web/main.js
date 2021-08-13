@@ -144,27 +144,49 @@ function fillOutSettings(){
 
   async function restDeploy(){
     // fetch manager host and port from HTML
-    const manager_host = $('#managerHostInput').val();
-    const manager_port = $('#managerPortInput').val();
+    const manager_host   = $('#managerHostInput').val();
+    const manager_port   = $('#managerPortInput').val();
+    const manager_prefix = $('#managerPrefixInput').val();
+    const pgt_id         = $("#pg_form input[name='pgt_id']").val();
 
     // sessionId must be unique or the request will fail
     const sessionId = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph")) + "-" + Date.now();
     console.log("sessionId", sessionId);
 
     // build urls
+    const pg_spec_url        = "/gen_pg_spec";
     const node_list_url      = "http://" + manager_host + ":" + manager_port + "/api/nodes";
     const create_session_url = "http://" + manager_host + ":" + manager_port + "/api/sessions";
     const append_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/graph/append";
     const deploy_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/deploy";
 
     // fetch the graph from this server
-    const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
-    console.log("graph", graph);
+    //const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
+    //console.log("graph", graph);
 
     // fetch the nodelist from engine
-    const node_list = await fetch(node_list_url).then(response => response.json());
-    console.log("node_list", node_list);
+    //const node_list = await fetch(node_list_url).then(response => response.json());
+    //console.log("node_list", node_list);
 
+    // build object containing manager data
+    const pg_spec_request_data = {
+        manager_host: manager_host,
+        manager_port: manager_port,
+        manager_prefix: manager_prefix,
+        pgt_id: pgt_id
+    }
+
+    // request pg_spec from translator
+    const pg_spec = await fetch(pg_spec_url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(pg_spec_request_data)
+    }).then(response => response.json());
+    console.log("pg_spec response", pg_spec);
+
+/*
     // create session on engine
     const session_data = {sessionId: sessionId};
     const create_session = await fetch(create_session_url, {
@@ -191,4 +213,5 @@ function fillOutSettings(){
       body: new Blob([compressed_graph])
     }).then(response => response.json());
     console.log("append graph response", append_graph);
+*/
   }
