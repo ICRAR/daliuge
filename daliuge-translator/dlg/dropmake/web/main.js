@@ -177,14 +177,14 @@ function fillOutSettings(){
     }
 
     // request pg_spec from translator
-    const pg_spec = await fetch(pg_spec_url, {
+    const pg_spec_response = await fetch(pg_spec_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(pg_spec_request_data)
     }).then(response => response.json());
-    console.log("pg_spec response", pg_spec);
+    console.log("pg_spec response", pg_spec_response);
 
     // create session on engine
     const session_data = {sessionId: sessionId};
@@ -198,7 +198,7 @@ function fillOutSettings(){
     console.log("create session response", create_session);
 
     // gzip the pg_spec
-    const buf = fflate.strToU8(JSON.stringify(pg_spec));
+    const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
     const compressed_pg_spec = fflate.zlibSync(buf);
     console.log("compressed_pg_spec", compressed_pg_spec);
 
@@ -213,6 +213,15 @@ function fillOutSettings(){
     }).then(response => response.json());
     console.log("append graph response", append_graph);
 
-    // TODO: deploy graph
+    // deploy graph
+    // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
+    const deploy_graph = await fetch(deploy_graph_url, {
+      method: 'POST',
+      body: new URLSearchParams({
+        'completed': pg_spec_response.root_uids,
+      })
+    }).then(response => response.json());
+    console.log("deploy graph response", deploy_graph);
+
 
   }
