@@ -37,6 +37,7 @@ from bottle import (
     route,
     request,
     get,
+    post,
     static_file,
     template,
     redirect,
@@ -344,6 +345,52 @@ def gen_pg():
         response.status = 500
         print(traceback.format_exc())
         return "Fail to deploy physical graph: {0}".format(ex)
+
+
+@post("/gen_pg_spec")
+def gen_pg_spec():
+    """
+    RESTful interface to convert a PGT(P) into pg_spec
+    """
+    pgt_id         = request.json.get("pgt_id");
+    manager_host   = request.json.get("manager_host");
+    manager_port   = request.json.get("manager_port");
+    manager_prefix = request.json.get("manager_prefix");
+    print("pgt_id:" + str(pgt_id))
+    print("manager_host:" + str(manager_host))
+    print("manager_port:" + str(manager_port))
+    print("manager_prefix:" + str(manager_prefix))
+
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    if manager_host is None:
+        response.status = 500
+        return "Must specify DALiUGE manager host"
+    try:
+        mgr_client = CompositeManagerClient(host=manager_host, port=manager_port, url_prefix=manager_prefix, timeout=30)
+        # 1. get a list of nodes
+        node_list = mgr_client.nodes()
+        # 2. mapping PGTP to resources (node list)
+        pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
+
+        response.content_type = 'application/json'
+        #response.set_header("Content-Disposition", "attachment; filename=%s" % (pgt_id))
+        return json.dumps(pg_spec)
+
+    except restutils.RestClientException as re:
+        response.status = 500
+        return "Fail to interact with DALiUGE Drop Manager: {0}".format(re)
+    except HTTPResponse:
+        raise
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to generate pg_spec: {0}".format(ex)
 
 
 @get("/gen_pgt")
