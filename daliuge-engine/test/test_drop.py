@@ -114,10 +114,6 @@ class TestDROP(unittest.TestCase):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
-        self._test_drop_sz = 16 # MB
-        self._test_block_sz =  16 # MB
-        self._test_num_blocks = self._test_drop_sz // self._test_block_sz
-        self._test_block = os.urandom(self._test_block_sz * ONE_MB)
         try:
             store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
             self._test_write_withDropType(PlasmaDROP)
@@ -128,10 +124,6 @@ class TestDROP(unittest.TestCase):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
-        self._test_drop_sz = 16 # MB
-        self._test_block_sz =  16 # MB
-        self._test_num_blocks = self._test_drop_sz // self._test_block_sz
-        self._test_block = os.urandom(self._test_block_sz * ONE_MB)
         try:
             store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
             self._test_write_withDropType(PlasmaFlightDROP)
