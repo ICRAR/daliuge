@@ -352,14 +352,19 @@ def gen_pg_spec():
     """
     RESTful interface to convert a PGT(P) into pg_spec
     """
-    pgt_id         = request.json.get("pgt_id");
-    manager_host   = request.json.get("manager_host");
-    manager_port   = request.json.get("manager_port");
-    manager_prefix = request.json.get("manager_prefix");
-    print("pgt_id:" + str(pgt_id))
-    print("manager_host:" + str(manager_host))
-    print("manager_port:" + str(manager_port))
-    print("manager_prefix:" + str(manager_prefix))
+    try:
+        pgt_id         = request.json.get("pgt_id");
+        manager_host   = request.json.get("manager_host");
+        manager_port   = int(request.json.get("manager_port"));
+        manager_prefix = request.json.get("manager_prefix");
+        print("pgt_id:" + str(pgt_id))
+        print("manager_host:" + str(manager_host))
+        print("manager_port:" + str(manager_port))
+        print("manager_prefix:" + str(manager_prefix))
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Unable to parse json body of request for pg_spec: {0}".format(ex)
 
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
