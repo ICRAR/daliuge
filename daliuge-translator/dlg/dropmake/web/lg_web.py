@@ -382,10 +382,11 @@ def gen_pg_spec():
         node_list = mgr_client.nodes()
         # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
+        # 3. get list of root nodes
+        root_uids = common.get_roots(pg_spec)
 
         response.content_type = 'application/json'
-        #response.set_header("Content-Disposition", "attachment; filename=%s" % (pgt_id))
-        return json.dumps(pg_spec)
+        return json.dumps({'pg_spec':pg_spec,'root_uids':list(root_uids)})
 
     except restutils.RestClientException as re:
         response.status = 500

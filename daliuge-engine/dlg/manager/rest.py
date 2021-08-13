@@ -217,6 +217,7 @@ class ManagerRestServer(RestServer):
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
         self.dm.deploySession(sessionId,completedDrops=completedDrops)
+        return {}
 
     @daliuge_aware
     def cancelSession(self, sessionId):
