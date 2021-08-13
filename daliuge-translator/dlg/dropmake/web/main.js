@@ -186,7 +186,6 @@ function fillOutSettings(){
     }).then(response => response.json());
     console.log("pg_spec response", pg_spec);
 
-/*
     // create session on engine
     const session_data = {sessionId: sessionId};
     const create_session = await fetch(create_session_url, {
@@ -198,10 +197,10 @@ function fillOutSettings(){
     }).then(response => response.json());
     console.log("create session response", create_session);
 
-    // gzip the graph
-    const buf = fflate.strToU8(JSON.stringify(graph));
-    const compressed_graph = fflate.zlibSync(buf);
-    console.log("compressed_graph", compressed_graph);
+    // gzip the pg_spec
+    const buf = fflate.strToU8(JSON.stringify(pg_spec));
+    const compressed_pg_spec = fflate.zlibSync(buf);
+    console.log("compressed_pg_spec", compressed_pg_spec);
 
     // append graph to session on engine
     const append_graph = await fetch(append_graph_url, {
@@ -210,8 +209,10 @@ function fillOutSettings(){
         'Content-Type': 'application/json',
         'Content-Encoding': 'gzip'
       },
-      body: new Blob([compressed_graph])
+      body: new Blob([compressed_pg_spec])
     }).then(response => response.json());
     console.log("append graph response", append_graph);
-*/
+
+    // TODO: deploy graph
+
   }
