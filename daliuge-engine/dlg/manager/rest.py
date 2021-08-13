@@ -251,8 +251,6 @@ class ManagerRestServer(RestServer):
 
         graph_parts = bottle.json_loads(json_content.read())
 
-        logger.info("graph_parts:" + str(graph_parts))
-
         self.dm.addGraphSpec(sessionId, graph_parts)
         return {'graph_parts': graph_parts}
 
