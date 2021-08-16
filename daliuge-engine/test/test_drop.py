@@ -196,6 +196,7 @@ class TestDROP(unittest.TestCase):
             for _ in range(self._test_num_blocks):
                 a.write(self._test_block)
                 test_crc = crc32(self._test_block, test_crc)
+            a.setCompleted()
 
         # Read the checksum from c
         cChecksum = int(droputils.allDropContents(c))
