@@ -34,6 +34,7 @@ from ..common import Categories
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
 LG_VER_EAGLE = 3
+LG_APPREF = 'AppRef'
 
 TEMP_FILE_FOLDER = "/tmp"
 
@@ -88,6 +89,12 @@ def get_lg_ver_type(lgo):
 def get_keyset(lgo):
     return set([x["key"] for x in lgo["nodeDataArray"]])
 
+def getNodesKeyDict(lgo):
+    """
+    Return a dictionary of all nodes with the key attribute value as the key
+    and the complete node as the value.
+    """
+    return dict([(x["key"], x) for x in lgo["nodeDataArray"]])
 
 def convert_fields(lgo):
     nodes = lgo["nodeDataArray"]
@@ -386,6 +393,17 @@ def convert_mkn_all_share_m(lgo):
     #    json.dump(lgo, f)
     return lgo
 
+def getAppRefInputs(lgo):
+    """
+    Function to retrieve the inputs from an App node referenced by a group.
+    Used to recover the Gather node inputs for AppRef format graphs.
+    """
+    for node in lgo["nodeDataArray"]:
+        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
+            continue
+        has_app = None
+
+    pass
 
 def convert_construct(lgo):
     """
@@ -429,7 +447,7 @@ def convert_construct(lgo):
         if has_app[0] == "i":
             app_node["text"] = node["inputApplicationName"]
         else:
-            app_node["text"] = node["onputApplicationName"]
+            app_node["text"] = node["outputApplicationName"]
 
         if 'mkn' in node:
             app_node['mkn'] = node['mkn']

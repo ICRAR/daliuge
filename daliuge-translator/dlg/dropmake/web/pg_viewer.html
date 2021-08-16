@@ -11,6 +11,8 @@
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/html2canvas.min.js"></script>
  <script src="/static/src/FileSaver.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.1/echarts.min.js"></script>
+ <script src="/static/src/echarts-dagre.min.js"></script>
  <script src="/static/src/require.js"></script>
 
  <!-- CSS -->
@@ -24,8 +26,7 @@
 </head>
 
 <body>
-    <!-- init script includes require, this links main js and echarts -->
-    <script src="/static/graph_init.js"></script>
+    
 
     <!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
@@ -70,6 +71,10 @@
                             <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="270" /><a href="javascript:void(0)" class="inactiveLink nav-link">Up (270)</a></div>
                         </div>
                     </li> -->
+                    <div class="btn-group" role="group" id="view-mode-buttons">
+                        <button type="button" id="graphButton" value="graph" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dagre</button>
+                        <button type="button" id="sankeyButton" value="sankey" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
+                   </div>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
                     <li class="nav-item">
@@ -126,6 +131,11 @@
                             <span>DALiuGE Manager port:</span>
                             <input id="managerPortInput" type="number" name="dlg_mgr_port" value="8001" style="font-size:16px;">
                         </div>
+                        <!-- DALiuGE Manager port:<input type="text" name="dlg_mgr_prefix" value="" style="font-size:16px;"> -->
+                        <div class="settingsSection">
+                            <span>DALiuGE Manager prefix:</span>
+                            <input id="managerPrefixInput" type="text" name="dlg_mgr_prefix" value="" style="font-size:16px;">
+                        </div>
                         <input type="checkbox" id="dlg_mgr_deploy" style="visibility:hidden;" name="dlg_mgr_deploy" value="deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                       </form>
@@ -137,5 +147,8 @@
             </div>
         </div>
     </div>
+    
+    <!-- init script includes require, this links main js and echarts -->
+    <script src="/static/graph_init.js"></script>
 </body>
 </html>
