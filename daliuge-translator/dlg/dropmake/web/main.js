@@ -31,11 +31,14 @@ $( document ).ready(function() {
 function saveSettings(){
   var newPort = $("#managerPortInput").val();
   var newHost = $("#managerHostInput").val().replace(/\s+/g, '');
+  var newPrefix = $("#managerPrefixInput").val().replace(/\s+/g, '');
   console.log("Host set to:'"+newHost+"'");
   console.log("Port set to:'"+newPort+"'");
+  console.log("Prefix set to:'"+newPrefix+"'");
 
   window.localStorage.setItem("manager_port", newPort);
   window.localStorage.setItem("manager_host", newHost);
+  window.localStorage.setItem("manager_prefix", newPrefix);
   $('#settingsModal').modal('hide')    
 }
 
@@ -43,6 +46,7 @@ function fillOutSettings(){
   //get setting values from local storage
   var manager_host = window.localStorage.getItem("manager_host");
   var manager_port = window.localStorage.getItem("manager_port");
+  var manager_prefix = window.localStorage.getItem("manager_prefix");
 
   //fill settings with saved or default values
   if (!manager_host){
@@ -55,6 +59,11 @@ function fillOutSettings(){
     $("#managerPortInput").val("8001");
   }else{
     $("#managerPortInput").val(manager_port);
+  };
+  if (!manager_prefix){
+    $("#managerPrefixInput").val("");
+  }else{
+    $("#managerPrefixInput").val(manager_prefix);
   };
 }
 
@@ -90,7 +99,7 @@ function fillOutSettings(){
 
       var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
       saveAs(blob, pgtName+"_Template.png");
-  });
+    });
   }
 
   function createZipFilename(graph_name){
@@ -129,11 +138,4 @@ function fillOutSettings(){
 
   function zoomToFit() {
     myDiagram.zoomToFit()
-    // console.log(myDiagram.viewportBounds.width.toString());
-    // console.log('\n');
-    // console.log(myDiagram.viewportBounds.height.toString());
-    // console.log('\n -----');
-    // console.log(myDiagram.documentBounds.width.toString());
-    // console.log('\n');
-    // console.log(myDiagram.documentBounds.height.toString());
   }
