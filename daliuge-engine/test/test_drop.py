@@ -179,7 +179,7 @@ class TestDROP(unittest.TestCase):
         self.assertEqual(a.checksum, test_crc)
         self.assertEqual(cChecksum, test_crc)
 
-    def _test_dynamic_write_withDrop(self, dropType):
+    def _test_dynamic_write_withDropType(self, dropType):
         """
         Test an AbstractDROP and a simple AppDROP (for checksum calculation)
         without an expected drop size (for app compatibility and not
