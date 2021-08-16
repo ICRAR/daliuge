@@ -110,6 +110,12 @@ class TestDROP(unittest.TestCase):
         """
         self._test_write_withDropType(InMemoryDROP)
 
+    def test_dynamic_write_InMemoryDROP(self):
+        """
+        Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
+        """
+        self._test_dynamic_write_withDropType(InMemoryDROP)
+
     def test_write_plasmaDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
@@ -117,6 +123,16 @@ class TestDROP(unittest.TestCase):
         try:
             store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
             self._test_write_withDropType(PlasmaDROP)
+        finally:
+            store.terminate()
+    
+    def test_dynamic_write_plasmaDROP(self):
+        """
+        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
+        """
+        try:
+            store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
+            self._test_dynamic_write_withDropType(PlasmaDROP)
         finally:
             store.terminate()
 
@@ -130,11 +146,46 @@ class TestDROP(unittest.TestCase):
         finally:
             store.terminate()
 
+    def test__dynamic_write_plasmaFlightDROP(self):
+        """
+        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
+        """
+        try:
+            store = subprocess.Popen(["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"])
+            self._test_dynamic_write_withDropType(PlasmaFlightDROP)
+        finally:
+            store.terminate()
+
     def _test_write_withDropType(self, dropType):
         """
         Test an AbstractDROP and a simple AppDROP (for checksum calculation)
         """
         a = dropType('oid:A', 'uid:A', expectedSize = self._test_drop_sz * ONE_MB)
+        b = SumupContainerChecksum('oid:B', 'uid:B')
+        c = InMemoryDROP('oid:C', 'uid:C')
+        b.addInput(a)
+        b.addOutput(c)
+
+        test_crc = 0
+        with DROPWaiterCtx(self, c):
+            for _ in range(self._test_num_blocks):
+                a.write(self._test_block)
+                test_crc = crc32(self._test_block, test_crc)
+
+        # Read the checksum from c
+        cChecksum = int(droputils.allDropContents(c))
+
+        self.assertNotEqual(a.checksum, 0)
+        self.assertEqual(a.checksum, test_crc)
+        self.assertEqual(cChecksum, test_crc)
+
+    def _test_dynamic_write_withDrop(self, dropType):
+        """
+        Test an AbstractDROP and a simple AppDROP (for checksum calculation)
+        without an expected drop size (for app compatibility and not
+        recommended in production)
+        """
+        a = dropType('oid:A', 'uid:A', expectedSize = -1)
         b = SumupContainerChecksum('oid:B', 'uid:B')
         c = InMemoryDROP('oid:C', 'uid:C')
         b.addInput(a)
