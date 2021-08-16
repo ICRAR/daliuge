@@ -10,6 +10,9 @@
     margin-bottom:30px;
 }
 
+.bootbox-close-button{
+  display: none;
+}
 
 #graphNameWrapper{
     position: absolute;
@@ -18,7 +21,7 @@
     width: 100%;
     height:auto;
     background-color: #002349;
-    padding: 0px 16px;
+    padding: 0px 20px;
     position: fixed;
     z-index: 101;
 }
@@ -36,6 +39,10 @@ margin: 0;
 background: rgb(0,64,133);
 background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
 margin-bottom:100px;
+}
+
+.navbar-brand{
+  margin-left: 20px;
 }
 
 .navbar-brand span{

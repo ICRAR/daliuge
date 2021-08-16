@@ -97,9 +97,10 @@ class RestClient(object):
     The base class for our REST clients
     """
 
-    def __init__(self, host, port, timeout=None):
+    def __init__(self, host, port, url_prefix='', timeout=None):
         self.host = host
         self.port = port
+        self.url_prefix = url_prefix
         self.timeout = timeout
         self._conn = None
         self._resp = None
@@ -160,7 +161,9 @@ class RestClient(object):
     def _request(self, url, method, content=None, headers={}):
 
         # Do the HTTP stuff...
-        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
+        url = self.url_prefix + url
+        logger.debug("Sending %s request to %s:%d%s", method,
+                     self.host, self.port, url)
 
         if not common.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
@@ -177,7 +180,8 @@ class RestClient(object):
         if self._resp.status != http.HTTPStatus.OK:
 
             msg = 'Error on remote %s@%s:%s%s (status %d): ' % \
-                  (method, self.host, self.port, url, self._resp.status)
+                  (method, self.host, self.port,
+                   url, self._resp.status)
 
             try:
                 error = json.loads(self._resp.read().decode('utf-8'))

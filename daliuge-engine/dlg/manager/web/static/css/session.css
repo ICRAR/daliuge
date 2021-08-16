@@ -91,6 +91,10 @@ svg {
   display: block;
 }
 
+.bootbox-close-button{
+  display: none;
+}
+
 #graphNameWrapper{
   position: absolute;
   top: 56px;
@@ -98,7 +102,7 @@ svg {
   width: 100%;
   height:auto;
   background-color: #002349;
-  padding: 0px 16px;
+  padding: 0px 20px;
   position: fixed;
   z-index: 101;
 }
@@ -117,6 +121,10 @@ svg {
   margin-bottom:100px;
 }
 
+.navbar-brand{
+  margin-left: 20px;
+}
+
 .navbar-brand span{
   margin-left: 10px;
   text-decoration: underline;
@@ -130,6 +138,11 @@ svg {
 
 .navbar-nav.navbar-center div {
   margin-right:10px;
+}
+
+.navbar-nav.navbar-right {
+  position: absolute;
+  right:10px;
 }
 
 .navbar-nav button {
@@ -154,7 +167,6 @@ svg {
   color:white;
   background-color: transparent;
   opacity: 100%;
-  margin-right:20px;
 }
 
 #session-status{
