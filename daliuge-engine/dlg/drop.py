@@ -1824,8 +1824,7 @@ class PlasmaFlightDROP(AbstractDROP):
             object_id = plasma.ObjectID(self.object_id)
         else:
             raise Exception("Invalid argument " + str(self.object_id) + " expected str, got" + str(type(self.object_id)))
-        logger.debug(f"object_id {object_id}")
-        return PlasmaFlightIO(object_id, self.plasma_path, flight_path=self.flight_path)
+        return PlasmaFlightIO(object_id, self.plasma_path, flight_path=self.flight_path, size=self._expectedSize)
 
     @property
     def dataURL(self):
