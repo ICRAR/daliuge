@@ -363,7 +363,8 @@ class DockerApp(BarrierAppDROP):
                 volumes=binds,
                 user=user,
                 environment=env,
-                working_dir=self.workdir
+                working_dir=self.workdir,
+                auto_remove=True
         )
         self._containerId = cId = container.id
         logger.info("Created container %s for %r", cId, self)
