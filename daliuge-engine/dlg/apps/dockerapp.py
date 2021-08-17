@@ -219,6 +219,11 @@ class DockerApp(BarrierAppDROP):
         # handle, but for the time being we do it here
         self._removeContainer = self._getArg(kwargs, 'removeContainer', True)
 
+        # Ports - a comma seperated list of the host port mappings of form:
+        # "hostport1:containerport1, hostport2:containerport2"
+        self._portMappings = self._getArg(kwargs, 'portMappings', "")
+        logger.info(f"portMappings: {self._portMappings}")
+
         # Additional volume bindings can be specified for existing files/dirs
         # on the host system. They are given either as a list or as a
         # comma-separated string
@@ -316,6 +321,20 @@ class DockerApp(BarrierAppDROP):
         binds = list(set(binds))   # make this a unique list else docker complains
         logger.debug("Volume bindings: %r", binds)
 
+        portMappings = {}  # = {'5005/tcp': 5005, '5006/tcp': 5006}
+        for mapping in self._portMappings.split(','):
+            if mapping:
+                if mapping.find(':') == -1:
+                    host_port = container_port = mapping
+                else:
+                    host_port, container_port = mapping.split(':')
+                if host_port not in portMappings:
+                    logger.debug(f"mapping port {host_port} -> {container_port}")
+                    portMappings[host_port] = int(container_port)
+                else:
+                    raise Exception(f"Duplicate port {host_port} in container port mappings")
+        logger.debug(f"port mappings: {portMappings}")
+
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
         for waiter in self._waiters:
@@ -356,6 +375,7 @@ class DockerApp(BarrierAppDROP):
                 self._image,
                 cmd,
                 volumes=binds,
+                ports=portMappings,
                 user=user,
                 environment=env,
                 working_dir=self.workdir,
