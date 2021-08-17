@@ -354,13 +354,17 @@ def gen_pg_spec():
     """
     try:
         pgt_id         = request.json.get("pgt_id");
+        node_list      = request.json.get("node_list");
         manager_host   = request.json.get("manager_host");
-        manager_port   = int(request.json.get("manager_port"));
-        manager_prefix = request.json.get("manager_prefix");
+        # try:
+        #     manager_port   = int(request.json.get("manager_port"));
+        # except:
+        #     manager_port = None
+        # manager_prefix = request.json.get("manager_prefix");
         print("pgt_id:" + str(pgt_id))
-        print("manager_host:" + str(manager_host))
-        print("manager_port:" + str(manager_port))
-        print("manager_prefix:" + str(manager_prefix))
+        print("node_list:" + str(node_list))
+        # print("manager_port:" + str(manager_port))
+        # print("manager_prefix:" + str(manager_prefix))
     except Exception as ex:
         response.status = 500
         print(traceback.format_exc())
@@ -373,26 +377,19 @@ def gen_pg_spec():
             pgt_id
         )
 
-    if manager_host is None:
+    if node_list is None:
         response.status = 500
-        return "Must specify DALiUGE manager host"
+        return "Must specify DALiUGE nodes list"
     try:
-        mgr_client = CompositeManagerClient(host=manager_host, port=manager_port, url_prefix=manager_prefix, timeout=30)
-        # 1. get a list of nodes
-        node_list = mgr_client.nodes()
-        # 2. mapping PGTP to resources (node list)
+        # mgr_client = CompositeManagerClient(host=manager_host, port=manager_port, url_prefix=manager_prefix, timeout=30)
+        # # 1. get a list of nodes
+        # node_list = mgr_client.nodes()
+        # # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
         # 3. get list of root nodes
         root_uids = common.get_roots(pg_spec)
-
         response.content_type = 'application/json'
         return json.dumps({'pg_spec':pg_spec,'root_uids':list(root_uids)})
-
-    except restutils.RestClientException as re:
-        response.status = 500
-        return "Fail to interact with DALiUGE Drop Manager: {0}".format(re)
-    except HTTPResponse:
-        raise
     except Exception as ex:
         response.status = 500
         print(traceback.format_exc())
