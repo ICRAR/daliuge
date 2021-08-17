@@ -813,7 +813,7 @@ class LGNode:
 
     @staticmethod
     def str_to_bool(value, default_value=False):
-        res = True if value in ["1", "true", "yes"] else default_value
+        res = True if value in ["1", "true", "True", "yes"] else default_value
         return res
 
     @staticmethod
