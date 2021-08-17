@@ -31,41 +31,34 @@ $( document ).ready(function() {
 });
 
 function saveSettings(){
-  var newPort = $("#managerPortInput").val();
-  var newHost = $("#managerHostInput").val().replace(/\s+/g, '');
-  var newPrefix = $("#managerPrefixInput").val().replace(/\s+/g, '');
+  var newUrl = new URL($("#managerUrlInput").val());
+  var newPort = newUrl.port;
+  var newHost = newUrl.hostname;
+  var newPrefix = newUrl.pathname;
+  var newProtocol = newUrl.protocol;
+  console.log("URL set to:'"+newUrl+"'");
+  console.log("Protocol set to:'"+newProtocol+"'");
   console.log("Host set to:'"+newHost+"'");
   console.log("Port set to:'"+newPort+"'");
   console.log("Prefix set to:'"+newPrefix+"'");
 
-  window.localStorage.setItem("manager_port", newPort);
+  window.localStorage.setItem("manager_url", newUrl);
+  window.localStorage.setItem("manager_protocol", newProtocol);
   window.localStorage.setItem("manager_host", newHost);
+  window.localStorage.setItem("manager_port", newPort);
   window.localStorage.setItem("manager_prefix", newPrefix);
   $('#settingsModal').modal('hide')
 }
 
 function fillOutSettings(){
   //get setting values from local storage
-  var manager_host = window.localStorage.getItem("manager_host");
-  var manager_port = window.localStorage.getItem("manager_port");
-  var manager_prefix = window.localStorage.getItem("manager_prefix");
+  var manager_url = window.localStorage.getItem("manager_url");
 
   //fill settings with saved or default values
-  if (!manager_host){
-    $("#managerHostInput").val("localhost");
+  if (!manager_url){
+    $("#managerUrlInput").val("http://localhost:8001");
   }else{
-    $("#managerHostInput").val(manager_host);
-  };
-
-  if (!manager_port){
-    $("#managerPortInput").val("8001");
-  }else{
-    $("#managerPortInput").val(manager_port);
-  };
-  if (!manager_prefix){
-    $("#managerPrefixInput").val("");
-  }else{
-    $("#managerPrefixInput").val(manager_prefix);
+    $("#managerUrlInput").val(manager_url);
   };
 }
 
@@ -144,30 +137,43 @@ function fillOutSettings(){
 
   async function restDeploy(){
     // fetch manager host and port from HTML
-    const manager_host   = $('#managerHostInput').val();
-    const manager_port   = $('#managerPortInput').val();
-    const manager_prefix = $('#managerPrefixInput').val();
+    var manager_url = new URL(window.localStorage.getItem("manager_url"));
+    // const manager_protocol = $('#managerProtocolInput').val();
+    const manager_host   = manager_url.hostname;
+    const manager_port   = manager_url.port;
+    var manager_prefix = manager_url.pathname;
     const pgt_id         = $("#pg_form input[name='pgt_id']").val();
+    manager_url = manager_url.toString();
+    if (manager_url.endsWith('/')){
+      manager_url = manager_url.substring(0, manager_url.length - 1);
+    }
+    if (manager_prefix.endsWith('/')){
+      manager_prefix = manager_prefix.substring(0, manager_prefix.length -1);
+    }
+    console.log("Manager URL:'"+manager_url+"'");
+    console.log("Manager host:'"+manager_host+"'");
+    console.log("Manager port:'"+manager_port+"'");
+    console.log("Manager prefix:'"+manager_prefix+"'");
 
     // sessionId must be unique or the request will fail
     const sessionId = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph")) + "-" + Date.now();
-    console.log("sessionId", sessionId);
+    console.log("sessionId:'"+sessionId+"'");
 
     // build urls
     const pg_spec_url        = "/gen_pg_spec";
-    const node_list_url      = "http://" + manager_host + ":" + manager_port + "/api/nodes";
-    const create_session_url = "http://" + manager_host + ":" + manager_port + "/api/sessions";
-    const append_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/graph/append";
-    const deploy_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/deploy";
-    const mgr_url            = "http://" + manager_host + ":" + manager_port + "/session?sessionId=" + sessionId
+    const node_list_url      = manager_url + "/api/nodes";
+    const create_session_url = manager_url + "/api/sessions";
+    const append_graph_url   = manager_url + "/api/sessions/" + sessionId + "/graph/append";
+    const deploy_graph_url   = manager_url + "/api/sessions/" + sessionId + "/deploy";
+    const mgr_url            = manager_url + "/session?sessionId=" + sessionId;
 
     // fetch the graph from this server
-    const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
-    console.log("graph", graph);
+    // const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
+    // console.log("graph", graph);
 
     // fetch the nodelist from engine
-    const node_list = await fetch(node_list_url).then(response => response.json());
-    console.log("node_list", node_list);
+    // const node_list = await fetch(node_list_url).then(response => response.json());
+    // console.log("node_list", node_list);
 
     // build object containing manager data
     const pg_spec_request_data = {
@@ -177,6 +183,7 @@ function fillOutSettings(){
         pgt_id: pgt_id
     }
 
+    console.log(pg_spec_request_data);
     // request pg_spec from translator
     const pg_spec_response = await fetch(pg_spec_url, {
       method: 'POST',
@@ -223,6 +230,7 @@ function fillOutSettings(){
       })
     }).then(response => response.json());
     console.log("deploy graph response", deploy_graph);
+    // Open DIM session page in new tab
     window.open(mgr_url, '_blank').focus();
 
   }
