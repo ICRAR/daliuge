@@ -48,7 +48,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -460,7 +460,7 @@ class AbstractDROP(EventFirer):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if not isinstance(data, bytes):
+        if not isinstance(data, (bytes, memoryview)):
             raise Exception("Data type not of binary type: %s", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
@@ -1779,6 +1779,7 @@ class BranchAppDrop(BarrierAppDROP):
         self.outputs[1 if self.condition() else 0].skip()
         self._notifyAppIsFinished()
 
+
 class PlasmaDROP(AbstractDROP):
     '''
     A DROP that points to data stored in a Plasma Store
@@ -1799,6 +1800,35 @@ class PlasmaDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
+
+
+class PlasmaFlightDROP(AbstractDROP):
+    '''
+    A DROP that points to data stored in a Plasma Store
+    '''
+    object_id = dlg_string_param('object_id', None)
+    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
+    flight_path = dlg_string_param('flight_path', None)
+
+    def initialize(self, **kwargs):
+        object_id = self.uid
+        if len(self.uid) != 20:
+            object_id = np.random.bytes(20)
+        if self.object_id is None:
+           self.object_id = object_id
+
+    def getIO(self):
+        if isinstance(self.object_id, str):
+            object_id = plasma.ObjectID(self.object_id.encode('ascii'))
+        elif isinstance(self.object_id, bytes):
+            object_id = plasma.ObjectID(self.object_id)
+        else:
+            raise Exception("Invalid argument " + str(self.object_id) + " expected str, got" + str(type(self.object_id)))
+        return PlasmaFlightIO(object_id, self.plasma_path, flight_path=self.flight_path, size=self._expectedSize)
+
+    @property
+    def dataURL(self):
+        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
