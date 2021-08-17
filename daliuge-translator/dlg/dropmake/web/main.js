@@ -172,14 +172,13 @@ function fillOutSettings(){
     // console.log("graph", graph);
 
     // fetch the nodelist from engine
-    // const node_list = await fetch(node_list_url).then(response => response.json());
-    // console.log("node_list", node_list);
+    const node_list = await fetch(node_list_url).then(response => response.json());
+    console.log("node_list", node_list);
 
     // build object containing manager data
     const pg_spec_request_data = {
         manager_host: manager_host,
-        manager_port: manager_port,
-        manager_prefix: manager_prefix,
+        node_list: node_list,
         pgt_id: pgt_id
     }
 
