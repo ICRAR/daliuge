@@ -159,14 +159,15 @@ function fillOutSettings(){
     const create_session_url = "http://" + manager_host + ":" + manager_port + "/api/sessions";
     const append_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/graph/append";
     const deploy_graph_url   = "http://" + manager_host + ":" + manager_port + "/api/sessions/" + sessionId + "/deploy";
+    const mgr_url            = "http://" + manager_host + ":" + manager_port + "/session?sessionId=" + sessionId
 
     // fetch the graph from this server
-    //const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
-    //console.log("graph", graph);
+    const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
+    console.log("graph", graph);
 
     // fetch the nodelist from engine
-    //const node_list = await fetch(node_list_url).then(response => response.json());
-    //console.log("node_list", node_list);
+    const node_list = await fetch(node_list_url).then(response => response.json());
+    console.log("node_list", node_list);
 
     // build object containing manager data
     const pg_spec_request_data = {
@@ -222,6 +223,6 @@ function fillOutSettings(){
       })
     }).then(response => response.json());
     console.log("deploy graph response", deploy_graph);
-
+    window.open(mgr_url, '_blank').focus();
 
   }
