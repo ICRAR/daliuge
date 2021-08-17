@@ -25,8 +25,12 @@ import logging
 import os
 import urllib.parse
 
-from . import ngaslite
+from typing import Optional
 
+from . import ngaslite
+from .apps.plasmaflight import PlasmaFlightClient
+
+import pyarrow
 import pyarrow.plasma as plasma
 
 
@@ -178,7 +182,7 @@ class MemoryIO(DataIO):
     construction time
     """
 
-    def __init__(self, buf, **kwargs):
+    def __init__(self, buf: io.BytesIO, **kwargs):
         self._buf = buf
 
     def _open(self, **kwargs):
@@ -424,25 +428,91 @@ class PlasmaIO(DataIO):
         super(PlasmaIO, self).__init__()
         self._plasma_path = plasma_path
         self._object_id = object_id
+        self._reader = None
+        self._writer = None
 
     def _open(self, **kwargs):
         return plasma.connect(self._plasma_path)
 
     def _close(self, **kwargs):
-        pass
+        if self._writer:
+            self._desc.put_raw_buffer(self._writer.getvalue(), self._object_id)
+            self._writer.close()
+        if self._reader:
+            self._reader.close()
 
     def _read(self, count, **kwargs):
-        data = self._desc.get(self._object_id)
-        return data
+        if not self._reader:
+            [data] = self._desc.get_buffers([self._object_id])
+            self._reader = pyarrow.BufferReader(data)
+        return self._reader.read1(count)
 
     def _write(self, data, **kwargs):
-        self._desc.put(data, self._object_id)
+        if not self._writer:
+            # use client.create and FixedSizeBufferWriter
+            self._writer = pyarrow.BufferOutputStream()
+        self._writer.write(data)
         return len(data)
 
     def exists(self):
-        if self._object_id in self._desc.list():
-            return True
-        return False
+        return self._object_id in self._desc.list()
+
+    def delete(self):
+        pass
+
+
+class PlasmaFlightIO(DataIO):
+    def __init__(
+            self,
+            object_id: plasma.ObjectID,
+            plasma_path='/tmp/plasma',
+            flight_path: Optional[str] = None,
+            size: int = -1):
+        super(PlasmaFlightIO, self).__init__()
+        assert size >= -1
+        self._object_id = object_id
+        self._plasma_path = plasma_path
+        self._flight_path = flight_path
+        self._size = size
+        self._reader = None
+        self._writer = None
+
+    def _open(self, **kwargs):
+        self._done = False
+        return PlasmaFlightClient(socket=self._plasma_path)
+
+    def _close(self, **kwargs):
+        if self._writer:
+            if self._size == -1:
+                self._desc.put(self._writer.getvalue(), self._object_id)
+                self._writer.close()
+            else:
+                assert self._size == self._writer.tell()
+                self._desc.seal(self._object_id)
+        if self._reader:
+            self._reader.close()
+
+    def _read(self, count, **kwargs):
+        if not self._reader:
+            data = self._desc.get(self._object_id, self._flight_path)
+            self._reader = pyarrow.BufferReader(data)
+        return self._reader.read1(count)
+
+    def _write(self, data, **kwargs):
+        if not self._writer:
+            if self._size == -1:
+                # stream into resizeable buffer
+                logger.warning("Using dynamically sized Plasma buffer. Performance may be reduced.")
+                self._writer = pyarrow.BufferOutputStream()
+            else:
+                # optimally write directly to fixed size plasma buffer
+                self._buffer = self._desc.create(self._object_id, self._size)
+                self._writer = pyarrow.FixedSizeBufferWriter(self._buffer)
+        self._writer.write(data)
+        return len(data)
+
+    def exists(self):
+        return self._desc.exists(self._object_id, self._flight_path)
 
     def delete(self):
         pass
