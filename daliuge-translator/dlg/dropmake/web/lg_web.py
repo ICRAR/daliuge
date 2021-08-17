@@ -501,9 +501,6 @@ def root():
         partition_info=None,
         title="Physical Graph Template"
     )
-    # TODO: This should be replaced
-    raise GraphException(
-        "No graph specified!")
 
 
 def run(parser, args):
