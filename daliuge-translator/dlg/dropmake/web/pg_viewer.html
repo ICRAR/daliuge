@@ -13,6 +13,7 @@
  <script src="/static/src/FileSaver.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.1/echarts.min.js"></script>
  <script src="/static/src/echarts-dagre.min.js"></script>
+ <script src="/static/src/lib/fflate/index.js"></script>
  <script src="/static/src/require.js"></script>
 
  <!-- CSS -->
@@ -26,7 +27,7 @@
 </head>
 
 <body>
-    
+
 
     <!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
@@ -41,7 +42,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="nav navbar-nav navbar-center">
-                    <!--    zoom not supported for this type of echart, buttons removed for now 
+                    <!--    zoom not supported for this type of echart, buttons removed for now
                         <li class="nav-item">
                         <a href="javascript:void(0)" href="javascript:void(0)" class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
                             <span class="tooltiptext">Zoom To Fit</span>
@@ -77,6 +78,9 @@
                    </div>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
+                    </li>
                     <li class="nav-item">
                         <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
                     </li>
@@ -123,7 +127,7 @@
                     <form action="/gen_pg" method="get" id="pg_form" target="_blank">
                         <!-- DALiuGE Manager host:<input type="text" name="dlg_mgr_host" value="sdp-dfms.ddns.net" size="40" style="font-size:16px;"> -->
                         <div class="settingsSection">
-                            <span>DALiuGE Manager host:</span> 
+                            <span>DALiuGE Manager host:</span>
                             <input id="managerHostInput" type="text" name="dlg_mgr_host" value="localhost" size="40" style="font-size:16px;">
                         </div>
                         <!-- DALiuGE Manager port:<input type="number" name="dlg_mgr_port" value="8097" style="font-size:16px;"> -->
@@ -147,7 +151,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- init script includes require, this links main js and echarts -->
     <script src="/static/graph_init.js"></script>
 </body>
