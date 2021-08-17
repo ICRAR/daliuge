@@ -350,12 +350,6 @@ class DockerApp(BarrierAppDROP):
 
         c = DockerApp._get_client()
 
-        # Remove the container unless it's specified that we should keep it
-        # (used below)
-        def rm(container):
-            if self._removeContainer:
-                container.remove()
-
         # Create container
         container = c.containers.create(
                 self._image,
@@ -402,10 +396,13 @@ class DockerApp(BarrierAppDROP):
             stderr = container.logs(stream=False, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
-            rm(container)
+            
+            if not self._removeContainer:
+                container.remove()
             raise Exception(msg)
 
-        rm(container)
+        if not self._removeContainer:
+            container.remove()
         c.api.close()
 
     @classmethod
