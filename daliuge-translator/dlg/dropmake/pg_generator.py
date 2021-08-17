@@ -560,7 +560,7 @@ class LGNode:
     def _create_test_drop_spec(self, oid, rank, kwargs):
         """
         TODO
-        This is a test funciton only
+        This is a test function only
         should be replaced by LGNode class specific methods
         """
         drop_spec = None
@@ -696,7 +696,7 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        elif drop_type == Categories.DOCKER:
+        elif drop_type in [Categories.DOCKER, Categories.DOCKER_SERVICE]:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
             typ = "app"
