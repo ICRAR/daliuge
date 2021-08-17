@@ -60,11 +60,14 @@ class PlasmaFlightClient():
         else:
             raise Exception("Location required")
 
-    def put(self, data: memoryview, object_id: plasma.ObjectID):
-        self.plasma_client.put_raw_buffer(data, object_id)
-
     def create(self, object_id: plasma.ObjectID, size: int):
         return self.plasma_client.create(object_id, size)
+
+    def seal(self, object_id: plasma.ObjectID):
+        self.plasma_client.seal(object_id)
+
+    def put(self, data: memoryview, object_id: plasma.ObjectID):
+        self.plasma_client.put_raw_buffer(data, object_id)
 
     def get(self, object_id: plasma.ObjectID, owner: Optional[str] = None) -> memoryview:
         logger.debug(f"PlasmaFlightClient Get {object_id}")
