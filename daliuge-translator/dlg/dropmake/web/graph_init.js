@@ -34,18 +34,18 @@ function graphInit(type){
             }
         },
         success: function(data){
- 
+
             // echarts only displays the name, which is also the key for the edges, thus
             // we need to make sure that the labels are both meaningful and unique.
             //all nodes and edges
             var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
 
 
-            //partitions 
+            //partitions
             var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
             var newElement = {};
             let keyIndex = new Map();
-            //shapes and colors for different node types 
+            //shapes and colors for different node types
             var nodeCatgColors = {'Data':'#c59a1a', 'Component': '#002349'}
             var nodeCatgShape = {'Data':'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component':'rect'}
             var nodeCount = 0
@@ -106,10 +106,10 @@ function graphInit(type){
                 }
                 else {
                     newElement.name = element.key.toString();
-                    graphDataParts.nodeDataArray.push(newElement);                  
+                    graphDataParts.nodeDataArray.push(newElement);
                 }
             });
-            
+
             data.linkDataArray.forEach(element => {
                 newElement = {};
                 newElement.source = keyIndex.get(element.from);
@@ -125,7 +125,7 @@ function graphInit(type){
             //add new div depending on type
             $("#main").append("<div id='"+type+"'></div>")
             $("#"+type+"Button").addClass("active")
-            
+
             //re-initialise new graph
             var chart = echarts.init(document.getElementById(type),null, {renderer:'canvas'});
             graphSetup(type, chart, graphData, graphDataParts)
@@ -135,8 +135,8 @@ function graphInit(type){
 }
 
 function graphSetup(type, chart, graphData,graphDataParts){
-  
-            // don't show labels if there are too many nodes. 
+
+            // don't show labels if there are too many nodes.
             var show_labels = (graphData.nodeDataArray.length > 350) ? false:true;
 
             chart.setOption({
@@ -155,12 +155,12 @@ function graphSetup(type, chart, graphData,graphDataParts){
                         label: {
                             show:show_labels
                         },
-        
+
                         emphasis:{
-                            focus: 'adjacency' 
+                            focus: 'adjacency'
                         },
                         nodeAlign: 'right',
-                        
+
                         data: graphData.nodeDataArray,
                         links: graphData.linkDataArray,
                         lineStyle: {

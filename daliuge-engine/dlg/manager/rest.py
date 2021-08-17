@@ -71,7 +71,7 @@ def daliuge_aware(func):
                 bottle.response.headers['Access-Control-Allow-Methods'] = \
                     'GET, POST, PUT, OPTIONS'
                 bottle.response.headers['Access-Control-Allow-Headers'] = \
-                    'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+                    'Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token'
             return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
@@ -145,6 +145,9 @@ class ManagerRestServer(RestServer):
         app.get(   '/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
         app.post(  '/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
 
+        app.route( '/api/sessions', method='OPTIONS',        callback=self.acceptPreflight)
+        app.route( '/api/sessions/<sessionId>/graph/append', method='OPTIONS',        callback=self.acceptPreflight2)
+
         # The non-REST mappings that serve HTML-related content
         app.route('/static/<filepath:path>', callback=self.server_static)
         app.get(  '/session', callback=self.visualizeSession)
@@ -174,6 +177,15 @@ class ManagerRestServer(RestServer):
         newSession = bottle.request.json
         sessionId = newSession['sessionId']
         self.dm.createSession(sessionId)
+        return {'sessionId':sessionId}
+
+    @daliuge_aware
+    def acceptPreflight(self):
+        return {}
+
+    @daliuge_aware
+    def acceptPreflight2(self, sessionId):
+        return {}
 
     def sessions(self):
         sessions = []
@@ -205,6 +217,7 @@ class ManagerRestServer(RestServer):
         if 'completed' in bottle.request.forms:
             completedDrops = bottle.request.forms['completed'].split(',')
         self.dm.deploySession(sessionId,completedDrops=completedDrops)
+        return {}
 
     @daliuge_aware
     def cancelSession(self, sessionId):
@@ -237,7 +250,9 @@ class ManagerRestServer(RestServer):
             json_content = bottle.request.body
 
         graph_parts = bottle.json_loads(json_content.read())
+
         self.dm.addGraphSpec(sessionId, graph_parts)
+        return {'graph_parts': graph_parts}
 
     #===========================================================================
     # non-REST methods
