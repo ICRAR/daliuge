@@ -379,10 +379,12 @@ class DockerApp(BarrierAppDROP):
                 user=user,
                 environment=env,
                 working_dir=self.workdir,
+                init=True,
                 auto_remove=self._removeContainer
         )
         self._containerId = cId = self.container.id
         logger.info("Created container %s for %r", cId, self)
+        logger.debug(f"autoremove container {self._removeContainer}")
 
         # Start it
         start = time.time()
