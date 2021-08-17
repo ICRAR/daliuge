@@ -46,7 +46,7 @@ import numpy as np
 from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 from .utils.bash_parameter import BashCommand
 from ..common import dropdict
-from ..common import Categories
+from ..common import Categories, DropType
 from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
     LG_APPREF,
@@ -699,7 +699,9 @@ class LGNode:
         elif drop_type in [Categories.DOCKER, Categories.DOCKER_SERVICE]:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = "app"
+            typ = DropType.APP
+            if drop_type == Categories.DOCKER_SERVICE:
+                typ = DropType.SERVICE_APP
             drop_spec = dropdict(
                 {"oid": oid, "type": typ, "app": app_class, "rank": rank}
             )
