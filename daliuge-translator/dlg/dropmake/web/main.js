@@ -15,7 +15,7 @@ $( document ).ready(function() {
     $("#pg_form").submit();
   })
 
-  //erport physical graph button listener
+  //export physical graph button listener
   $("#Pysical_graph").click(function(){
     $("#gen_pg_button").val("Generate Physical Graph")
     $("#dlg_mgr_deploy").prop( "checked", false )
@@ -172,7 +172,15 @@ function fillOutSettings(){
     // console.log("graph", graph);
 
     // fetch the nodelist from engine
-    const node_list = await fetch(node_list_url).then(response => response.json());
+    console.log("sending request to ", node_list_url);
+    const node_list = await fetch(node_list_url, {
+      method: 'GET',
+      credentials: 'include', 
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }}
+//      mode: 'cors'}
+      ).then(response => response.json());
     console.log("node_list", node_list);
 
     // build object containing manager data
@@ -194,11 +202,14 @@ function fillOutSettings(){
     console.log("pg_spec response", pg_spec_response);
 
     // create session on engine
-    const session_data = {sessionId: sessionId};
+    const session_data = {"sessionId": sessionId};
     const create_session = await fetch(create_session_url, {
+      credentials: 'include',
+//      mode: 'cors',
       method: 'POST',
+      referrerPolicy: 'no-referrer',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: JSON.stringify(session_data)
     }).then(response => response.json());
@@ -211,18 +222,23 @@ function fillOutSettings(){
 
     // append graph to session on engine
     const append_graph = await fetch(append_graph_url, {
+      credentials: 'include', 
+//      mode: 'cors',
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Encoding': 'gzip'
+        'Content-Type': 'application/x-www-form-urlencoded'
+//        'Content-Encoding': 'gzip'
       },
-      body: new Blob([compressed_pg_spec])
+//      body: new Blob([compressed_pg_spec])
+      body: new Blob([buf])
     }).then(response => response.json());
     console.log("append graph response", append_graph);
 
     // deploy graph
     // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
     const deploy_graph = await fetch(deploy_graph_url, {
+      credentials: 'include', 
+      mode: 'cors',
       method: 'POST',
       body: new URLSearchParams({
         'completed': pg_spec_response.root_uids,
