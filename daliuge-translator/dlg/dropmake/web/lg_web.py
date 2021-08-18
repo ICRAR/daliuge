@@ -42,10 +42,15 @@ from bottle import (
     template,
     redirect,
     response,
-    HTTPResponse,
+    HTTPResponse
 )
 import bottle
 import pkg_resources
+
+from urllib.parse import (
+    parse_qs,
+    urlparse
+)
 
 from ... import common, restutils
 from ...clients import CompositeManagerClient
@@ -53,6 +58,7 @@ from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
 
+logger = logging.getLogger(__name__)
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
@@ -292,7 +298,7 @@ def gen_pg():
     """
     # if the 'deploy' checkbox is not checked, then the form submission will NOT contain a 'dlg_mgr_deploy' field
     deploy = request.query.get("dlg_mgr_deploy") is not None
-
+    mprefix = ''
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -300,17 +306,37 @@ def gen_pg():
         return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
             pgt_id
         )
+    surl = urlparse(request.url)
 
-    mhost = request.query.get("dlg_mgr_host")
+    q = parse_qs(surl.query)
+    if 'dlg_mgr_url' in q:
+        murl = q['dlg_mgr_url'][0]
+        mparse = urlparse(murl)
+        try:
+            (mhost, mport) = mparse.netloc.split(':')
+            mport = int(mport)
+        except:
+            mhost = mparse.netloc
+            if mparse.scheme == 'http':
+                mport = 80
+            elif mparse.scheme == 'https':
+                mport = 443            
+        mprefix = mparse.path
+        if mprefix[-1] == '/':
+            mprefix = mprefix[:-1]
+    else:
+        mhost = request.query.get("dlg_mgr_host")
+        if request.query.get("dlg_mgr_port"):
+            mport = int(request.query.get("dlg_mgr_port"))
+
+    logger.debug("Manager host: %s" % mhost)
+    logger.debug("Manager port: %s" % mport)
+    logger.debug("Manager prefix: %s" % mprefix)
+
     if mhost is None:
         response.status = 500
         return "Must specify DALiUGE manager host"
     try:
-        mport = int(request.query.get("dlg_mgr_port"))
-        try:
-            mprefix = request.query.get("dlg_mgr_prefix")
-        except:
-            mprefix = ''
         mgr_client = CompositeManagerClient(host=mhost, port=mport, url_prefix=mprefix, timeout=30)
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
