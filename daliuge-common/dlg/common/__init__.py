@@ -86,8 +86,9 @@ APP_DROP_TYPES = [
 class DropType:
     PLAIN = 'plain'
     SOCKET = 'socket'
-    APP = 'app'
-    SERVICE_APP = 'serviceapp'
+    APP = 'app'  # Application drop that terminates onces executed
+    SERVICE_APP = 'serviceapp',  # App drop that runs continously
+    CONTAINER = 'container'  # Drop that contains other drops
 
 
 def b2s(b, enc='utf8'):
