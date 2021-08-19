@@ -31,7 +31,8 @@ import threading
 import traceback
 
 from .ddap_protocol import DROPStates
-from .drop import AppDROP
+from .drop import AppDROP, AbstractDROP
+from .apps.dockerapp import DockerApp
 from .io import IOForURL, OpenMode
 from . import common
 
@@ -150,7 +151,7 @@ def getUpstreamObjects(drop):
 def getDownstreamObjects(drop):
     """
     Returns a list of all direct "downstream" DROPs for the given
-    DROP. An DROP A is "downstream" with respect to DROP B if
+    DROP. A DROP A is "downstream" with respect to DROP B if
     any of the following conditions are true:
     * A is an output of B (therefore B is an AppDROP)
     * A is a normal or streaming consumer of B (and A is therefore an AppDROP)
@@ -166,15 +167,15 @@ def getDownstreamObjects(drop):
         downObjs += drop.streamingConsumers
     return downObjs
 
-def getLeafNodes(nodes):
+def getLeafNodes(drops):
     """
-    Returns a list of all the "leaf nodes" of the graph pointed by `nodes`.
-    `nodes` is either a single DROP, or a list of DROPs.
+    Returns a list of all the "leaf nodes" of the graph pointed by `drops`.
+    `drops` is either a single DROP, or a list of DROPs.
     """
-    nodes = listify(nodes)
-    return [drop for drop,_ in breadFirstTraverse(nodes) if not getDownstreamObjects(drop)]
+    drops = listify(drops)
+    return [drop for drop,_ in breadFirstTraverse(drops) if not getDownstreamObjects(drop) and not isinstance(drop, DockerApp)]  # TODO: hack for service
 
-def depthFirstTraverse(node, visited = []):
+def depthFirstTraverse(node: AbstractDROP, visited = []):
     """
     Depth-first iterator for a DROP graph.
 
