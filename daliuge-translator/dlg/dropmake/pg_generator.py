@@ -573,12 +573,12 @@ class LGNode:
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
-                    {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
+                    {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
                 )
                 dropSpec_socket = dropdict(
                     {
                         "oid": "{0}-s".format(oid),
-                        "type": "app",
+                        "type": DropType.APP,
                         "app": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
                         "tw": 5,
@@ -592,7 +592,7 @@ class LGNode:
                 dropSpec_socket.addOutput(drop_spec)
             else:
                 drop_spec = dropdict(
-                    {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
+                    {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
                 )
             if drop_type == Categories.FILE:
                 dn = self.jd.get("dirname", None)
@@ -633,7 +633,7 @@ class LGNode:
 
             kwargs["tw"] = execTime
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": app_class, "rank": rank}
+                {"oid": oid, "type": DropType.APP, "app": app_class, "rank": rank}
             )
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
@@ -646,7 +646,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
@@ -666,7 +666,7 @@ class LGNode:
             else:
                 app_str = "dlg.apps.bash_shell_app.BashShellApp"
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": app_str, "rank": rank}
+                {"oid": oid, "type": DropType.APP, "app": app_str, "rank": rank}
             )
             if "execution_time" in self.jd:
                 kwargs["tw"] = int(self.jd["execution_time"])
@@ -699,7 +699,9 @@ class LGNode:
         elif drop_type in [Categories.DOCKER, Categories.DOCKER_SERVICE]:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = DropType.APP
+            
+            if drop_type == Categories.DOCKER:
+                typ = DropType.APP
             if drop_type == Categories.DOCKER_SERVICE:
                 typ = DropType.SERVICE_APP
             drop_spec = dropdict(
@@ -733,7 +735,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -747,7 +749,7 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.MEMORY,
                     "nm": "grpdata",
                     "dw": dw,
@@ -763,7 +765,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -777,7 +779,7 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.MEMORY,
                     "nm": "gthrdt",
                     "dw": dw,
@@ -794,7 +796,7 @@ class LGNode:
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
-                {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
+                {"oid": oid, "type": DropType.PLAIN, "storage": Categories.NULL, "rank": rank}
             )
         elif drop_type == Categories.LOOP:
             pass
@@ -1082,9 +1084,9 @@ class PGT(object):
             key_dict[oid] = i + 1
             node["oid"] = oid
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 node["category"] = Categories.DATA
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
@@ -1100,7 +1102,7 @@ class PGT(object):
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
-                    from_dt = 0 if drop["type"] == "plain" else 1
+                    from_dt = 0 if drop["type"] == DropType.PLAIN else 1
                     to_dt = G.node[oup]["dt"]
                     if from_dt == to_dt:
                         to_drop = G.node[oup]["drop_spec"]
@@ -1110,7 +1112,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": "app",
+                                    "type": DropType.APP,
                                     "app": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
                                     "tw": 1,
@@ -1128,7 +1130,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": "plain",
+                                    "type": DropType.PLAIN,
                                     "storage": Categories.MEMORY,
                                     "nm": "go_data",
                                     "dw": 1,
@@ -1180,9 +1182,9 @@ class PGT(object):
             node["key"] = (i + 1) * -1
             node["oid"] = oid
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 node["category"] = Categories.DATA
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
@@ -1275,12 +1277,12 @@ class MetisPGTP(PGT):
             oid = drop["oid"]
             myk = i + 1
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
                 sz = drop.get("dw", 1)  # size
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 dst = "outputs"
                 ust = "inputs"
                 tw = drop["tw"]
@@ -1293,9 +1295,9 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                if "plain" == tt:
+                if DropType.PLAIN == tt:
                     lw = drop["dw"]
-                elif "app" == tt:
+                elif DropType.APP == tt:
                     # lw = drop_dict[inp].get('dw', 1)
                     lw = droplist[key_dict[inp] - 1].get("dw", 1)
                 if lw <= 0:
@@ -2229,7 +2231,7 @@ class LG:
                     "oid": "{0}-{1}-stream".format(
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.NULL,
                     "nm": "StreamNull",
                     "dw": 0,
@@ -2549,7 +2551,7 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            if drop["type"] == "app" and drop["app"].endswith(Categories.BASH_SHELL_APP):
+            if drop["type"] == DropType.APP and drop["app"].endswith(Categories.BASH_SHELL_APP):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 

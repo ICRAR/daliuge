@@ -61,11 +61,11 @@ class Categories:
     DESCRIPTION = 'Description'
 
 STORAGE_TYPES = {
-                 Categories.MEMORY, 
-                 Categories.FILE, 
-                 Categories.NGAS, 
-                 Categories.NULL, 
-                 Categories.JSON, 
+                 Categories.MEMORY,
+                 Categories.FILE,
+                 Categories.NGAS,
+                 Categories.NULL,
+                 Categories.JSON,
                  Categories.PLASMA,
                  Categories.PLASMAFLIGHT
                 }
@@ -87,7 +87,7 @@ class DropType:
     PLAIN = 'plain'
     SOCKET = 'socket'
     APP = 'app'  # Application drop that terminates onces executed
-    SERVICE_APP = 'serviceapp',  # App drop that runs continously
+    SERVICE_APP = 'serviceapp'  # App drop that runs continously
     CONTAINER = 'container'  # Drop that contains other drops
 
 
