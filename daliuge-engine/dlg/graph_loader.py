@@ -310,7 +310,7 @@ def _createSocket(dropSpec, dryRun=False, session=None):
 def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs   = _getKwargs(dropSpec)
-    del kwargs[DropType.APP]
+    del kwargs['app']
 
     appName = dropSpec[DropType.APP]
     parts   = appName.split('.')
@@ -332,9 +332,9 @@ def _createApp(dropSpec, dryRun=False, session=None):
 def _createServiceApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs   = _getKwargs(dropSpec)
-    del kwargs[DropType.SERVICE_APP]
+    del kwargs['app']
 
-    appName = dropSpec[DropType.SERVICE_APP]
+    appName = dropSpec['app']
     parts   = appName.split('.')
 
     # Support old "dfms..." package names (pre-Oct2017)
