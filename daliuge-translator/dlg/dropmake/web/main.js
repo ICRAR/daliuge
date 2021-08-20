@@ -144,9 +144,18 @@ function handleFetchErrors(response) {
 
 
 async function restDeploy(){
-  // fetch manager host and port from HTML
-  var manager_url = new URL(window.localStorage.getItem("manager_url"));
-  // const manager_protocol = $('#managerProtocolInput').val();
+  // fetch manager host and port from local storage
+  murl = window.localStorage.getItem("manager_url");
+  if (!murl){
+    saveSettings();
+    $('#settingsModal').modal('show');
+    $('#settingsModal').on('hidden.bs.modal', function () {
+      fillOutSettings()
+      murl = window.localStorage.getItem("manager_url");
+    })};
+  var manager_url = new URL(murl);
+  console.log("Already here")
+  
   const manager_host   = manager_url.hostname;
   const manager_port   = manager_url.port;
   var manager_prefix = manager_url.pathname;
@@ -224,11 +233,11 @@ async function restDeploy(){
   const session_data = {"sessionId": sessionId};
   const create_session = await fetch(create_session_url, {
     credentials: 'include',
-//      mode: 'cors',
+    cache: 'no-cache',
     method: 'POST',
     referrerPolicy: 'no-referrer',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(session_data)
   })
@@ -248,14 +257,13 @@ async function restDeploy(){
   // append graph to session on engine
   const append_graph = await fetch(append_graph_url, {
     credentials: 'include', 
-//      mode: 'cors',
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-//        'Content-Encoding': 'gzip'
+      'Content-Type': 'application/json',
+      'Content-Encoding': 'gzip'
     },
-//      body: new Blob([compressed_pg_spec])
-    body: new Blob([buf])
+    body: new Blob([compressed_pg_spec])
+    // body: new Blob([buf])
   })
   .then(handleFetchErrors)
   .then(response => response.json())
@@ -268,7 +276,6 @@ async function restDeploy(){
   // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
   const deploy_graph = await fetch(deploy_graph_url, {
     credentials: 'include', 
-    mode: 'cors',
     method: 'POST',
     body: new URLSearchParams({
       'completed': pg_spec_response.root_uids,
