@@ -67,7 +67,8 @@ def daliuge_aware(func):
             if res is not None:
                 bottle.response.content_type = 'application/json'
                 # set CORS headers
-                bottle.response.headers['Access-Control-Allow-Origin'] = '*'
+                bottle.response.headers['Access-Control-Allow-Origin'] = 'http://localhost:8084'
+                bottle.response.headers['Access-Control-Allow-Credentials'] = 'true'
                 bottle.response.headers['Access-Control-Allow-Methods'] = \
                     'GET, POST, PUT, OPTIONS'
                 bottle.response.headers['Access-Control-Allow-Headers'] = \
