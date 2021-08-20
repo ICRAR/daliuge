@@ -332,7 +332,7 @@ def gen_pg():
     logger.debug("Manager host: %s" % mhost)
     logger.debug("Manager port: %s" % mport)
     logger.debug("Manager prefix: %s" % mprefix)
-
+    
     if mhost is None:
         response.status = 500
         return "Must specify DALiUGE manager host"
