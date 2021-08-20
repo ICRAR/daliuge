@@ -61,14 +61,14 @@ class Categories:
     DESCRIPTION = 'Description'
 
 STORAGE_TYPES = {
-                 Categories.MEMORY,
-                 Categories.FILE,
-                 Categories.NGAS,
-                 Categories.NULL,
-                 Categories.JSON,
-                 Categories.PLASMA,
-                 Categories.PLASMAFLIGHT
-                }
+    Categories.MEMORY,
+    Categories.FILE,
+    Categories.NGAS,
+    Categories.NULL,
+    Categories.JSON,
+    Categories.PLASMA,
+    Categories.PLASMAFLIGHT
+}
 APP_DROP_TYPES = [
     Categories.COMPONENT,
     Categories.PYTHON_APP,
