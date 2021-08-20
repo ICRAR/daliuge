@@ -35,6 +35,7 @@ from .drop import AppDROP, AbstractDROP
 from .apps.dockerapp import DockerApp
 from .io import IOForURL, OpenMode
 from . import common
+from .common import DropType
 
 
 logger = logging.getLogger(__name__)
@@ -173,7 +174,7 @@ def getLeafNodes(drops):
     `drops` is either a single DROP, or a list of DROPs.
     """
     drops = listify(drops)
-    return [drop for drop,_ in breadFirstTraverse(drops) if not getDownstreamObjects(drop) and not isinstance(drop, DockerApp)]  # TODO: hack for service
+    return [drop for drop,_ in breadFirstTraverse(drops) if not getDownstreamObjects(drop) and drop.type != DropType.SERVICE_APP]
 
 def depthFirstTraverse(node: AbstractDROP, visited = []):
     """
