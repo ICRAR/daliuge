@@ -151,6 +151,10 @@ class AbstractDROP(EventFirer):
         self._oid = str(oid)
         self._uid = str(uid)
 
+        # The physical graph drop type. This is determined
+        # by the drop category when generating the drop spec
+        self._type = self._getArg(kwargs, 'type', None)
+
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
         # general it cannot be assumed it will (e.g., unit tests create drops
@@ -602,6 +606,10 @@ class AbstractDROP(EventFirer):
         point to.
         """
         return self._uid
+
+    @property
+    def type(self):
+        return self._type
 
     @property
     def executionMode(self):
