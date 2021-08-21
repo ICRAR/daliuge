@@ -216,9 +216,9 @@ async function restDeploy(){
   // request pg_spec from translator
   const pg_spec_response = await fetch(pg_spec_url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    // headers: {
+    //   'Content-Type': 'application/json',
+    // },
     body: JSON.stringify(pg_spec_request_data)
   })
   .then(handleFetchErrors)
