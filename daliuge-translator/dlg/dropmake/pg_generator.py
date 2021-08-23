@@ -721,12 +721,7 @@ class LGNode:
             kwargs["command"] = command
             kwargs["user"] = str(self.jd.get("user", ""))
             kwargs["ensureUserAndSwitch"] = self.str_to_bool(str(self.jd.get("ensureUserAndSwitch", "0")))
-            
-            rmc = str(self.jd.get("removeContainer", "1"))
-            logger.debug(f"rmc string: {rmc}")
-            kwargs["removeContainer"] = self.str_to_bool(rmc)
-            logger.debug(f"removeContainer: {kwargs['removeContainer']}")
-
+            kwargs["removeContainer"] = self.str_to_bool(str(self.jd.get("removeContainer", "1")))
             kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             drop_spec.update(kwargs)
