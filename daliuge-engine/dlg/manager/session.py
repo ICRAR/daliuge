@@ -387,7 +387,7 @@ class Session(object):
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
             if drop.status not in (DROPStates.ERROR, DROPStates.COMPLETED, DROPStates.CANCELLED):
-                drop.skip()
+                drop.setCompleted()
 
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED, SessionStates.CANCELLED):
