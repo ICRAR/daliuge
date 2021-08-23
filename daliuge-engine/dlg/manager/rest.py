@@ -201,10 +201,13 @@ class ManagerRestServer(RestServer):
     @daliuge_aware
     def getSessionInformation(self, sessionId):
         status = self.dm.getSessionStatus(sessionId)
-        if status[list(status.keys())[0]] > 0: # Pristine state sessions don't have a graph, yet.
+        if type(status) is dict:
             graphDict = self.dm.getGraph(sessionId)
-        else:
+        elif type(status) is int:
+            graphDict = self.dm.getGraph(sessionId)
+        elif type(status[list(status.keys())[0]]) is int: # Pristine state sessions don't have a graph, yet.
             graphDict = {}
+            status = 0
         return {'status': status, 'graph': graphDict}
 
     @daliuge_aware
