@@ -455,16 +455,18 @@ def convert_construct(lgo):
         if 'group' in node:
             app_node["group"] = node["group"]
 
-        if node['category'] == Categories.SERVICE:
-            app_node['isService'] = True
-
         for app_fd_name in ["appFields", "inputAppFields"]:
             if app_fd_name in node:
                 for afd in node[app_fd_name]:
                     app_node[afd["name"]] = afd["value"]
                 break
-        if Categories.GATHER == node["category"]:
+
+        if node["category"] == Categories.GATHER:
             app_node["group_start"] = 1
+
+        if node['category'] == Categories.SERVICE:
+            app_node['isService'] = True
+
         new_nodes.append(app_node)
 
         # step 2
