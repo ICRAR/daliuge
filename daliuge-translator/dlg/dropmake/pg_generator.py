@@ -122,9 +122,6 @@ class LGNode:
             else:
                 group_q[grp_id].append(self)
 
-        if "isService" in jd:
-            logger.debug("found service app")
-
         done_dict[self.id] = self
 
     @property
@@ -521,7 +518,6 @@ class LGNode:
                 elif self.is_service():
                     self._dop = 1  # TODO: number of compute nodes
                 else:
-                    logger.debug(f"jd: {self._jd}")
                     raise GInvalidNode(
                         "Unrecognised (Group) Logical Graph Node: '{0}'".format(
                             self._jd["category"]
@@ -730,12 +726,7 @@ class LGNode:
             kwargs["command"] = command
             kwargs["user"] = str(self.jd.get("user", ""))
             kwargs["ensureUserAndSwitch"] = self.str_to_bool(str(self.jd.get("ensureUserAndSwitch", "0")))
-            
-            rmc = str(self.jd.get("removeContainer", "1"))
-            logger.debug(f"rmc string: {rmc}")
-            kwargs["removeContainer"] = self.str_to_bool(rmc)
-            logger.debug(f"removeContainer: {kwargs['removeContainer']}")
-
+            kwargs["removeContainer"] = self.str_to_bool(str(self.jd.get("removeContainer", "1")))
             kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             drop_spec.update(kwargs)
@@ -833,7 +824,6 @@ class LGNode:
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
         dropSpec.update(kwargs)
-        logger.debug(f"dropspec: {dropSpec}")
         return dropSpec
 
     @staticmethod
@@ -1889,7 +1879,6 @@ class LG:
 
         lgver = get_lg_ver_type(lg)
 
-        logger.debug(f"lg: {lg}")
         if LG_VER_EAGLE == lgver:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
@@ -1902,7 +1891,6 @@ class LG:
         # This ensures that future schema version mods are catched early
         else:
             raise GraphException("Logical graph version '{0}' not supported!".format(lgver))
-        logger.debug(f"lg converted: {lg}")
         self._done_dict = dict()
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
@@ -1963,7 +1951,6 @@ class LG:
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
         self._lgn_list = all_list
-        logger.debug(f"all_list: {all_list}")
 
     def validate_link(self, src, tgt):
         #print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
@@ -2159,23 +2146,18 @@ class LG:
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_cxt=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
-                logger.debug(f"src_drop: {src_drop}")
         elif lgn.is_service():
-            logger.debug(f"making service drop!")
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             src_drop["type"] = DropType.SERVICE_APP
             self._drop_dict[lgn.id].append(src_drop)
             if lgn.is_start_listener():
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
-            logger.debug(f"src_drop: {src_drop}")
         else:
             # TODO !!
-            logger.debug(f"making other drop!")
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
             if lgn.is_start_listener():
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
-            logger.debug(f"src_drop: {src_drop}")
 
     @staticmethod
     def _split_list(l, n):
@@ -2311,7 +2293,6 @@ class LG:
         # each pg node needs to be taggged with iid
         # based purely on its h-level
         for lgn in self._start_list:
-            logger.debug(f"lgn: {lgn}")
             self.lgn_to_pgn(lgn)
 
         logger.info(
@@ -2523,8 +2504,10 @@ class LG:
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
                     )
                 elif tlgn.is_service():
-                    assert tlgn['type'] == 'app' 
-                    tlgn['type'] = 'serviceapp'
+                    # Only the service node's inputApplication will be translated
+                    # to the physical graph as a node of type SERVICE_APP instead of APP
+                    # per compute instance
+                    tlgn['type'] = DropType.SERVICE_APP
                 else:
                     raise GraphException("Unsupported target group {0}".format(tlgn.jd["category"]))
 
@@ -2623,10 +2606,8 @@ def fill(lg, params):
 def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     """Unrolls a logical graph"""
     start = time.time()
-    logger.debug(f"rolled: {lg}")
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    logger.debug(f"unrolled: {drop_list}")
     logger.info(
         "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
         (time.time() - start),
