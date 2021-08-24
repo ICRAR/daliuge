@@ -266,7 +266,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				$(this).css("color","#b93a46");
 				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
 				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
-				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",true)
 				$(this).parent().removeClass("progressRunning")
 			}else{
 				$(this).css("color","purple");
