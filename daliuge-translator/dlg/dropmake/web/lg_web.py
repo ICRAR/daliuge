@@ -493,8 +493,15 @@ def save(lg_name, logical_graph):
 
 
 @get("/")
+@get("/")
 def root():
-    redirect("/lg_editor")
+    tpl = file_as_string("pg_viewer.html")
+    return template(
+        tpl,
+        pgt_view_json_name=None,
+        partition_info=None,
+        title="Physical Graph Template"
+    )
 
 
 def run(parser, args):
