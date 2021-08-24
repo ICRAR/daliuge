@@ -28,6 +28,7 @@ import logging
 import os
 import threading
 import time
+from overrides import overrides
 
 from configobj import ConfigObj
 import docker
@@ -350,27 +351,22 @@ class DockerApp(BarrierAppDROP):
 
         c = DockerApp._get_client()
 
-        # Remove the container unless it's specified that we should keep it
-        # (used below)
-        def rm(container):
-            if self._removeContainer:
-                container.remove()
-
         # Create container
-        container = c.containers.create(
+        self.container = c.containers.create(
                 self._image,
                 cmd,
                 volumes=binds,
                 user=user,
                 environment=env,
-                working_dir=self.workdir
+                working_dir=self.workdir,
+                auto_remove=self._removeContainer
         )
-        self._containerId = cId = container.id
+        self._containerId = cId = self.container.id
         logger.info("Created container %s for %r", cId, self)
 
         # Start it
         start = time.time()
-        container.start()
+        self.container.start()
         logger.info("Started container %s", cId)
 
         # Figure out the container's IP and save it
@@ -383,7 +379,7 @@ class DockerApp(BarrierAppDROP):
         # Wait until it finishes
         # In docker-py < 3 the .wait() method returns the exit code directly
         # In docker-py >= 3 the .wait() method returns a dictionary with the API response
-        x = container.wait()
+        x = self.container.wait()
         if isinstance(x, dict) and 'StatusCode' in x:
             self._exitCode = x['StatusCode']
         else:
@@ -401,11 +397,29 @@ class DockerApp(BarrierAppDROP):
             stderr = container.logs(stream=False, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
             logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
-            rm(container)
             raise Exception(msg)
 
-        rm(container)
         c.api.close()
+
+    @overrides
+    def setCompleted(self):
+        super(BarrierAppDROP, self).setCompleted()
+        self.container.stop()
+
+    @overrides
+    def setError(self):
+        super(BarrierAppDROP, self).setError()
+        self.container.stop()
+
+    @overrides
+    def cancel(self):
+        super(BarrierAppDROP, self).cancel()
+        self.container.stop()
+
+    @overrides
+    def skip(self):
+        super(BarrierAppDROP, self).skip()
+        self.container.stop()
 
     @classmethod
     def _get_client(cls):
