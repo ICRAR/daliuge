@@ -796,13 +796,7 @@ class LGNode:
             )
         elif drop_type == Categories.LOOP:
             pass
-        # elif drop_type == Categories.SERVICE:
-        #     # app_class = "dlg.apps.dockerapp.DockerApp"
-        #     drop_spec = dropdict(
-        #          {"oid": oid, "type": DropType.SERVICE_APP, "app": "dlg.apps.simple.SleepApp", "rank": rank}
-        #     )
-        #     kwargs["tw"] = int(self.jd.get("execution_time", "5"))
-        # else:
+        else:
             raise GraphException("Unknown DROP type: '{0}'".format(drop_type))
         return drop_spec
 
