@@ -234,18 +234,22 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 			if(currentStatus==="Cancelled"){
 				$(this).css("color","grey");
-				$(this).parent().find(".actions").find("button").hide();
-				$(this).parent().find(".d_actions").find("d_button").show();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
 				$(this).parent().removeClass("progressRunning")
 			}else if(currentStatus==="Deploying"){
 				$(this).css("color","blue");
 				$(this).parent().removeClass("progressRunning")
-				$(this).parent().find(".d_actions").find("d_button").show();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",true)
 			}
 			else if (currentStatus==="Running") {
 				$(this).text("");
-				$(this).parent().find(".actions").find("button").show();
-				$(this).parent().find(".d_actions").find("d_button").hide();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",true)
 				$(this).append("<svg>")
 				if(!$(this).parent().hasClass('progressRunning')){
 					startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
@@ -254,18 +258,21 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				}
 			}else if (currentStatus==="Finished"){
 				$(this).css("color","#00af28");
-				$(this).parent().find(".actions").find("button").hide();
-				$(this).parent().find(".d_actions").find("d_button").show();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
 				$(this).parent().removeClass("progressRunning")
 			}else if (currentStatus==="Pristine"){
 				$(this).css("color","#b93a46");
-				$(this).parent().find(".actions").find("button").hide();
-				$(this).parent().find(".d_actions").find("d_button").show();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
 				$(this).parent().removeClass("progressRunning")
 			}else{
 				$(this).css("color","purple");
-				$(this).parent().find(".actions").find("button").hide();
-				$(this).parent().find(".d_actions").find("d_button").show();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
 				$(this).parent().removeClass("progressRunning")
 			}
 		})
@@ -310,17 +317,30 @@ function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSe
 
 	var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
 	actionCells.enter().append('td').classed('actions', true)
+	// .html('<button id="'+cancelBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">cancel</button>')
+	// .html('<button id="'+deleteBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">delete</button>')
 		.append("button").attr('id', cancelBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary').attr('onclick', '(cancel_session(serverUrl,"false",this.id))').text('Cancel')
-	actionCells.select('button')
+		.attr("type", 'button').attr('class', 'btn btn-secondary cancelSession fa fa-ban').attr('onclick', '(cancel_session(serverUrl,"false",this.id))')
+		.attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','cancel ongoing session')
+		.select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+		.attr('id', deleteBtnSessionId)
+		.attr("type", 'button').attr('class', 'btn btn-secondary deleteSession fa fa-trash').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
+		.attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','Delete session')
+		//log button ready for linking
+		// .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+		// .attr('id', "logs")
+		// .attr("type", 'button').attr('class', 'btn btn-secondary sessionLogs fa fa-file-text').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
+		// .attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','Show session logs')
+	actionCells.selectAll('button')
 	actionCells.exit().remove()
 
-	var d_actionCells = rows.selectAll('td.d_actions').data(function values(s) { return [s.sessionId]; });
-	d_actionCells.enter().append('td').classed('d_actions', true)
-		.append("d_button").attr('id', deleteBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary').attr('onclick', '(delete_session(serverUrl,"false",this.id))').text('Delete')
-	d_actionCells.select('d_button')
-	d_actionCells.exit().remove()
+
+$("button").tooltip({
+
+	boundary: 'window',
+	trigger : 'hover',
+	delay: { "show": 800, "hide": 100 }
+});
 }
 
 function handleFetchErrors(response) {

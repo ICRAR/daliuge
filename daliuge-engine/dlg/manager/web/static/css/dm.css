@@ -95,22 +95,23 @@ color:rgba(0,35,73,1);
 
 tr td.actions button{
   padding: 1px 4px;
-  font-size:16px;  
+  font-size:18px;
+  background-color: transparent !important;
+  border: none;
+  color: #0d6efd;
+  display: inline-block;
 }
 
-tr td.actions{
-  padding:6px 12px;
-  width: 0px;
+tr td.actions button:hover{
+  color: #092650;
 }
 
-tr td.d_actions{
-  padding:6px 12px;
-  width: 0px;
+tr td.actions button:disabled{
+  color: #535353;
 }
 
-tr td.d_actions d_button{
-  padding: 1px 4px; 
-  font-size: 16px;
+tr td.details a:hover{
+  color: #092650;
 }
 
 .status svg {
@@ -123,4 +124,22 @@ tr td.d_actions d_button{
   width: 150px;
   height:30px;
   overflow: hidden;
+}
+
+
+.tooltip-inner h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0px;
+}
+
+.tooltip-inner p {
+  font-size: .85rem;
+  font-weight: 300;
+  margin-bottom: 10px;
+}
+
+.tooltip-inner{
+  transition: 0s visibility;
+  visibility: visible;
 }
