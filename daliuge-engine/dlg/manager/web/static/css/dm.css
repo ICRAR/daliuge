@@ -94,12 +94,23 @@ color:rgba(0,35,73,1);
 }
 
 tr td.actions button{
-  padding: 2px 4px;
+  padding: 1px 4px;
   font-size:16px;  
 }
 
 tr td.actions{
-  padding:9px 12px;
+  padding:6px 12px;
+  width: 0px;
+}
+
+tr td.d_actions{
+  padding:6px 12px;
+  width: 0px;
+}
+
+tr td.d_actions d_button{
+  padding: 1px 4px; 
+  font-size: 16px;
 }
 
 .status svg {
