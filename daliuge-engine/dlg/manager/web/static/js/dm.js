@@ -240,6 +240,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			}else if(currentStatus==="Deploying"){
 				$(this).css("color","blue");
 				$(this).parent().removeClass("progressRunning")
+				$(this).parent().find(".d_actions").find("d_button").show();
 			}
 			else if (currentStatus==="Running") {
 				$(this).text("");
@@ -253,6 +254,11 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				}
 			}else if (currentStatus==="Finished"){
 				$(this).css("color","#00af28");
+				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().find(".d_actions").find("d_button").show();
+				$(this).parent().removeClass("progressRunning")
+			}else if (currentStatus==="Pristine"){
+				$(this).css("color","#b93a46");
 				$(this).parent().find(".actions").find("button").hide();
 				$(this).parent().find(".d_actions").find("d_button").show();
 				$(this).parent().removeClass("progressRunning")
