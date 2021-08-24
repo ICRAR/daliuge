@@ -55,7 +55,6 @@ class Categories:
     DYNLIB_PROC_APP = 'DynlibProcApp'
 
     SERVICE = 'Service'
-    DOCKER_SERVICE = 'DockerService'
 
     COMMENT = 'Comment'
     DESCRIPTION = 'Description'
@@ -79,7 +78,6 @@ APP_DROP_TYPES = [
     Categories.DOCKER,
     Categories.DYNLIB_PROC_APP,
     Categories.SERVICE,
-    Categories.DOCKER_SERVICE
 ]
 
 

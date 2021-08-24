@@ -701,14 +701,10 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        elif drop_type in [Categories.DOCKER, Categories.DOCKER_SERVICE]:
+        elif drop_type == Categories.DOCKER:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
-            
-            if drop_type == Categories.DOCKER:
-                typ = DropType.APP
-            if drop_type == Categories.DOCKER_SERVICE:
-                typ = DropType.SERVICE_APP
+            typ = DropType.APP
             drop_spec = dropdict(
                 {"oid": oid, "type": typ, "app": app_class, "rank": rank}
             )
