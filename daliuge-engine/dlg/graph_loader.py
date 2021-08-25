@@ -33,7 +33,8 @@ from .apps.socket_listener import SocketListenerApp
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
-    LINKTYPE_1TON_APPEND_METHOD, NullDROP, PlasmaDROP, PlasmaFlightDROP
+    LINKTYPE_1TON_APPEND_METHOD, NullDROP, EndDROP, \
+    PlasmaDROP, PlasmaFlightDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
 from .common import Categories, DropType
@@ -44,6 +45,7 @@ STORAGE_TYPES = {
     Categories.FILE: FileDROP,
     Categories.NGAS: NgasDROP,
     Categories.NULL: NullDROP,
+    Categories.END: EndDROP,
     Categories.JSON: JsonDROP,
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP
@@ -312,28 +314,6 @@ def _createApp(dropSpec, dryRun=False, session=None):
     kwargs   = _getKwargs(dropSpec)
     del kwargs['app']
 
-    appName = dropSpec[DropType.APP]
-    parts   = appName.split('.')
-
-    # Support old "dfms..." package names (pre-Oct2017)
-    if parts[0] == 'dfms':
-        parts[0] = 'dlg'
-
-    try:
-        module  = importlib.import_module('.'.join(parts[:-1]))
-        appType = getattr(module, parts[-1])
-    except (ImportError, AttributeError):
-        raise InvalidGraphException("drop %s specifies non-existent application: %s" % (oid, appName,))
-
-    if dryRun:
-        return
-    return appType(oid, uid, dlg_session=session, **kwargs)
-
-def _createServiceApp(dropSpec, dryRun=False, session=None):
-    oid, uid = _getIds(dropSpec)
-    kwargs   = _getKwargs(dropSpec)
-    del kwargs['app']
-
     appName = dropSpec['app']
     parts   = appName.split('.')
 
@@ -371,6 +351,6 @@ __CREATION_FUNCTIONS = {
     DropType.PLAIN: _createPlain,
     DropType.CONTAINER: _createContainer,
     DropType.APP: _createApp,
-    DropType.SERVICE_APP: _createServiceApp,
+    DropType.SERVICE_APP: _createApp,
     DropType.SOCKET: _createSocket
 }
