@@ -10,9 +10,13 @@ dist
 .settings
 .pytest_cache
 .vscode
+daliuge-translator/dlg/translator/dropmake/web/VERSION
+daliuge-translator/dlg/translator/dropmake/web/LICENSE
 daliuge-engine/dlg/runtime/version.py
 daliuge-common/dlg/common/version.py
 daliuge-translator/dlg/translator/version.py
+daliuge-engine/dlg/manager/web/VERSION
+daliuge-engine/dlg/manager/web/LICENSE
 daliuge-engine/test/apps/libdynlib_example.so
 daliuge-engine/test/apps/dynlib_example.o
 daliuge-engine/test/apps/libdynlib_example2.so
