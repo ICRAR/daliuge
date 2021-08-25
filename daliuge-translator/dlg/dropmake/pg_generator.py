@@ -612,7 +612,7 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]: 
+        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -792,7 +792,7 @@ class LGNode:
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
-                {"oid": oid, "type": DropType.PLAIN, "storage": Categories.NULL, "rank": rank}
+                {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
             )
         elif drop_type == Categories.LOOP:
             pass
@@ -2349,9 +2349,10 @@ class LG:
                     slgn, tlgn, sdrops, tdrops, chunk_size, lk
                 )
             elif not slgn.is_group() and (not tlgn.is_group()):
-                if slgn.is_start_node() or tlgn.is_end_node():
-                    continue
-                elif (
+                logger.debug("parsing non group link")
+                #if slgn.is_start_node() or tlgn.is_end_node():
+                #    continue
+                if (
                     (slgn.group is not None)
                     and slgn.group.is_loop()
                     and slgn.gid == tlgn.gid
@@ -2531,7 +2532,7 @@ class LG:
 
         # clean up extra drops
         for lid, lgn in self._done_dict.items():
-            if (lgn.is_start_node() or lgn.is_end_node()) and lid in self._drop_dict:
+            if (lgn.is_start_node()) and lid in self._drop_dict:
                 del self._drop_dict[lid]
             elif lgn.is_start_listener():
                 for sl_drop in self._drop_dict[lid]:
@@ -2596,8 +2597,10 @@ def fill(lg, params):
 def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     """Unrolls a logical graph"""
     start = time.time()
+    logger.debug(f"rolled: {lg}")
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
+    logger.debug(f"unrolled: {drop_list}")
     logger.info(
         "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
         (time.time() - start),
