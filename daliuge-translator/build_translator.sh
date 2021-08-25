@@ -24,7 +24,7 @@ case "$1" in
         cp ../LICENSE dlg/dropmake/web/.
         # The complete casa and arrow installation is only required for the Plasma streaming
         # and should not go much further.
-        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 1;;
     "casa")
@@ -35,7 +35,7 @@ case "$1" in
         cp ../LICENSE dlg/dropmake/web/.
         # The complete casa and arrow installation is only required for the Plasma streaming
         # and should not go much further.
-        docker build --build-arg VCS_TAG=${VCS_TAG}-casa --no-cache -t icrar/daliuge-translator:${VCS_TAG}-casa -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${VCS_TAG}-casa --no-cache -t icrar/daliuge-translator:${VCS_TAG}-casa -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 1;;
     *)
