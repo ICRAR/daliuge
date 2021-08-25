@@ -21,7 +21,7 @@ case "$1" in
         echo "$VERSION:$VCS_TAG" > dlg/manager/web/VERSION
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
-        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 1;;
     "casa")
