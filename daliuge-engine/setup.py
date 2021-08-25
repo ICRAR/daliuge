@@ -124,6 +124,7 @@ install_requires = [
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
+    "overrides",
     "paramiko",
     "psutil",
     "python-daemon",

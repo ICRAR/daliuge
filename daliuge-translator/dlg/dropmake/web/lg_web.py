@@ -569,6 +569,7 @@ def save(lg_name, logical_graph):
 
 
 @get("/")
+@get("/")
 def root():
     tpl = file_as_string("pg_viewer.html")
     return template(
