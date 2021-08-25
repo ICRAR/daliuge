@@ -15,7 +15,7 @@ case "$1" in
         [[ ! -z $2 ]] && C_TAG=$2
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Building daliuge-engine development version using daliuge-common:${C_TAG}"
-        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 1;;
     "casa")
