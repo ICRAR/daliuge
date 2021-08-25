@@ -1245,6 +1245,11 @@ class NullDROP(AbstractDROP):
         return "null://"
 
 
+class EndDROP(NullDROP):
+    """
+    A DROP that ends the session when reached
+    """
+
 class RDBMSDrop(AbstractDROP):
     """
     A Drop that stores data in a table of a relational database
