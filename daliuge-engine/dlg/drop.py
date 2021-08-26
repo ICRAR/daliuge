@@ -33,6 +33,7 @@ import importlib
 import io
 import logging
 import math
+import multiprocessing
 import os
 import random
 import shutil
@@ -1722,7 +1723,12 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
-                self.run()
+                if hasattr(self, '_tp'):
+                    proc = multiprocessing.Process(target=self.run, daemon=True)
+                    proc.start()
+                    proc.join()
+                else:
+                    self.run()
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
