@@ -2351,7 +2351,7 @@ class LG:
             elif not slgn.is_group() and (not tlgn.is_group()):
                 if slgn.is_start_node():
                     continue
-                if (
+                elif (
                     (slgn.group is not None)
                     and slgn.group.is_loop()
                     and slgn.gid == tlgn.gid
