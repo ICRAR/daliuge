@@ -21,6 +21,7 @@
 #
 """Applications used as examples, for testing, or in simple situations"""
 import pickle
+import random
 import urllib.error
 import urllib.request
 
@@ -429,6 +430,7 @@ class GenericScatterApp(BarrierAppDROP):
             o.len = len(d)
             o.write(d)  # average across inputs
 
+
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
     """Simple branch app that is told the result of its condition"""
 
@@ -441,3 +443,63 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 
     def condition(self):
         return self.result
+
+
+
+##
+# @brief ListAppendThrashingApp\n
+# @details A testing APP that appends a random integer to a list num times.
+# This is a CPU intensive operation and can thus be used to provide a test for application threading
+# since this operation will not yield.
+# The resulting array will be sent to all connected output apps.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/size/100/Integer/readwrite
+#     \~English the size of the array\n
+# @param[in] param/appclass/dlg.apps.simple.ListAppendThrashingApp/String/readonly
+#     \~English Application class\n
+# @param[out] port/array
+#     \~English Port carrying the random array.
+# @par EAGLE_END
+class ListAppendThrashingApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that appends random integers to a list N times. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
+
+    Keywords:
+
+    size:     int, number of array elements
+    """
+    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    # default values
+    size = dlg_int_param('size', 100)
+    marray = []
+
+    def initialize(self, **kwargs):
+        super(ListAppendThrashingApp, self).initialize(**kwargs)
+
+    def run(self):
+        # At least one output should have been added
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output should have been added to %r' % self)
+        self.generateArray()
+        for o in outs:
+            d = pickle.dumps(self.marray)
+            o.len = len(d)
+            o.write(pickle.dumps(self.marray))
+
+    def generateArray(self):
+        for i in range(int(self.size)):
+            self.marray.append(random.random())
+
+    def _getArray(self):
+        return self.marray
