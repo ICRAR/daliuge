@@ -329,28 +329,6 @@ def _createApp(dropSpec, dryRun=False, session=None):
         return
     return appType(oid, uid, dlg_session=session, **kwargs)
 
-def _createServiceApp(dropSpec, dryRun=False, session=None):
-    oid, uid = _getIds(dropSpec)
-    kwargs   = _getKwargs(dropSpec)
-    del kwargs['app']
-
-    appName = dropSpec['app']
-    parts   = appName.split('.')
-
-    # Support old "dfms..." package names (pre-Oct2017)
-    if parts[0] == 'dfms':
-        parts[0] = 'dlg'
-
-    try:
-        module  = importlib.import_module('.'.join(parts[:-1]))
-        appType = getattr(module, parts[-1])
-    except (ImportError, AttributeError):
-        raise InvalidGraphException("drop %s specifies non-existent application: %s" % (oid, appName,))
-
-    if dryRun:
-        return
-    return appType(oid, uid, dlg_session=session, **kwargs)
-
 def _getIds(dropSpec):
     # uid is copied from oid if not explicitly given
     oid = dropSpec['oid']
@@ -371,6 +349,6 @@ __CREATION_FUNCTIONS = {
     DropType.PLAIN: _createPlain,
     DropType.CONTAINER: _createContainer,
     DropType.APP: _createApp,
-    DropType.SERVICE_APP: _createServiceApp,
+    DropType.SERVICE_APP: _createApp,
     DropType.SOCKET: _createSocket
 }
