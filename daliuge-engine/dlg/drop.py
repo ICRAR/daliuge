@@ -977,13 +977,15 @@ class AbstractDROP(EventFirer):
 
     def cancel(self):
         '''Moves this drop to the CANCELLED state closing any writers we opened'''
-        self._closeWriters()
-        self.status = DROPStates.CANCELLED
+        if self.status not in [DROPStates.CANCELLED, DROPStates.SKIPPED, DROPStates.COMPLETED]:
+            self._closeWriters()
+            self.status = DROPStates.CANCELLED
 
     def skip(self):
         '''Moves this drop to the SKIPPED state closing any writers we opened'''
-        self._closeWriters()
-        self.status = DROPStates.SKIPPED
+        if self.status not in [DROPStates.CANCELLED, DROPStates.SKIPPED, DROPStates.COMPLETED]:
+            self._closeWriters()
+            self.status = DROPStates.SKIPPED
 
     @property
     def node(self):
@@ -1599,7 +1601,7 @@ class AppDROP(ContainerDROP):
         self.execStatus = AppDROPStates.SKIPPED
         for o in self._outputs.values():
             o.skip()
-        self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+        logger.debug(f'Moving {self.__repr__()} to SKIPPED')
 
 
 class InputFiredAppDROP(AppDROP):
