@@ -2349,9 +2349,8 @@ class LG:
                     slgn, tlgn, sdrops, tdrops, chunk_size, lk
                 )
             elif not slgn.is_group() and (not tlgn.is_group()):
-                logger.debug("parsing non group link")
-                #if slgn.is_start_node() or tlgn.is_end_node():
-                #    continue
+                if slgn.is_start_node():
+                    continue
                 if (
                     (slgn.group is not None)
                     and slgn.group.is_loop()
@@ -2597,10 +2596,8 @@ def fill(lg, params):
 def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     """Unrolls a logical graph"""
     start = time.time()
-    logger.debug(f"rolled: {lg}")
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    logger.debug(f"unrolled: {drop_list}")
     logger.info(
         "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
         (time.time() - start),
