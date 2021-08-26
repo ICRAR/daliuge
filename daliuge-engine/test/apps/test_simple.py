@@ -27,7 +27,8 @@ from numpy import random, mean, array, concatenate
 
 from dlg import droputils
 from dlg.droputils import DROPWaiterCtx
-from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp
+from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp, \
+    ListAppendThrashingApp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
@@ -166,6 +167,16 @@ class TestSimpleApps(unittest.TestCase):
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
 
+    def test_listappendthrashing(self):
+        a = InMemoryDROP('a', 'a')
+        b = ListAppendThrashingApp('b', 'b', size=1000)
+        self.assertEqual(b.size, 1000)
+        c = InMemoryDROP('c', 'c')
+        b.addInput(a)
+        b.addOutput(c)
+        self._test_graph_runs((a, b, c), a, c, timeout=4)
+        data_out = pickle.loads(droputils.allDropContents(c))
+        self.assertEqual(b.marray, data_out)
 
 
         
