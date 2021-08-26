@@ -281,6 +281,8 @@ class Session(object):
         leaves = droputils.getLeafNodes(self._roots)
         logger.info("Adding completion listener to leaf drops")
         
+        # The leaves completion listener will trigger session completed
+        # when all leaf nodes are completed
         leavesListener = LeavesCompletionListener(leaves, self)
         for leaf in leaves:
             if isinstance(leaf, AppDROP):
@@ -288,11 +290,12 @@ class Session(object):
             else:
                 leaf.subscribe(leavesListener, 'dropCompleted')
 
+        # The end listener will trigger session end when an end
+        # node is completed (end nodes are always a leaf nodes)
         endListener = EndListener(self)
         for leaf in leaves:
             if isinstance(leaf, EndDROP):
                 leaf.subscribe(endListener, 'dropCompleted')
-        
         logger.info("Listener added to leaf drops")
 
         # Foreach
@@ -404,7 +407,7 @@ class Session(object):
         logger.info("Session %s finished", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
-            if drop.status not in (DROPStates.ERROR, DROPStates.COMPLETED, DROPStates.CANCELLED):
+            if drop.status not in (DROPStates.ERROR, DROPStates.CANCELLED, DROPStates.SKIPPED, DROPStates.COMPLETED):
                 drop.setCompleted()
 
     @track_current_session
@@ -413,7 +416,7 @@ class Session(object):
         logger.info("Session %s ended", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
-            if drop.status not in (DROPStates.ERROR, DROPStates.COMPLETED, DROPStates.CANCELLED):
+            if drop.status not in (DROPStates.ERROR, DROPStates.CANCELLED, DROPStates.SKIPPED, DROPStates.COMPLETED):
                 drop.skip()
 
     def getGraphStatus(self):
