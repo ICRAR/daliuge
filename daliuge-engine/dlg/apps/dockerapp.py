@@ -321,7 +321,7 @@ class DockerApp(BarrierAppDROP):
         binds = list(set(binds))   # make this a unique list else docker complains
         logger.debug("Volume bindings: %r", binds)
 
-        portMappings = {}  # = {'5005/tcp': 5005, '5006/tcp': 5006}
+        portMappings = {}
         for mapping in self._portMappings.split(','):
             if mapping:
                 if mapping.find(':') == -1:
