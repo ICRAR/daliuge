@@ -66,6 +66,7 @@ MOCK_MODULES = (
  "psutil",
  "pyarrow",
  "pyarrow.plasma",
+ "pyarrow.flight",
  "pyswarm",
  "python-daemon",
  "pyzmq",
