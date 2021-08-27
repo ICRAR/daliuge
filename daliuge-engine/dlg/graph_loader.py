@@ -314,7 +314,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
     kwargs   = _getKwargs(dropSpec)
     del kwargs['app']
 
-    appName = dropSpec['app']
+    appName = dropSpec[DropType.APP]
     parts   = appName.split('.')
 
     # Support old "dfms..." package names (pre-Oct2017)
