@@ -191,7 +191,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 
 ##
 # @brief MSPlasmaReader\n
-# @details Batch read entire Measurement Set from Plamsa.
+# @details Batch read entire Measurement Set from Plasma.
 # @par EAGLE_START
 # @param category PythonApp
 # @param[in] port/plasma_ms_input

@@ -35,6 +35,7 @@ class Categories:
     JSON = 'json'
     S3 = 'S3'
     PLASMA = 'Plasma'
+    PLASMAFLIGHT = 'PlasmaFlight'
 
     MKN = 'MKN'
     SCATTER = 'Scatter'
@@ -62,7 +63,8 @@ STORAGE_TYPES = {
                  Categories.NGAS, 
                  Categories.NULL, 
                  Categories.JSON, 
-                 Categories.PLASMA
+                 Categories.PLASMA,
+                 Categories.PLASMAFLIGHT
                 }
 APP_DROP_TYPES = [
     Categories.COMPONENT,
