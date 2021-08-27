@@ -407,7 +407,7 @@ class Session(object):
         logger.info("Session %s finished", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
-            if drop.status not in (DROPStates.ERROR, DROPStates.CANCELLED, DROPStates.SKIPPED, DROPStates.COMPLETED):
+            if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.setCompleted()
 
     @track_current_session
@@ -416,7 +416,7 @@ class Session(object):
         logger.info("Session %s ended", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
-            if drop.status not in (DROPStates.ERROR, DROPStates.CANCELLED, DROPStates.SKIPPED, DROPStates.COMPLETED):
+            if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.skip()
 
     def getGraphStatus(self):
