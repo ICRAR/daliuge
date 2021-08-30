@@ -36,7 +36,7 @@ from .drop import ContainerDROP, InMemoryDROP, \
     LINKTYPE_1TON_APPEND_METHOD, NullDROP, PlasmaDROP, PlasmaFlightDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
-from .common import Categories
+from .common import Categories, DropType
 
 
 STORAGE_TYPES = {
@@ -281,8 +281,8 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     kwargs   = _getKwargs(dropSpec)
 
     # if no 'container' is specified, we default to ContainerDROP
-    if 'container' in dropSpec:
-        containerTypeName = dropSpec['container']
+    if DropType.CONTAINER in dropSpec:
+        containerTypeName = dropSpec[DropType.CONTAINER]
         parts = containerTypeName.split('.')
 
         # Support old "dfms..." package names (pre-Oct2017)
@@ -312,7 +312,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
     kwargs   = _getKwargs(dropSpec)
     del kwargs['app']
 
-    appName = dropSpec['app']
+    appName = dropSpec[DropType.APP]
     parts   = appName.split('.')
 
     # Support old "dfms..." package names (pre-Oct2017)
@@ -344,9 +344,11 @@ def _getKwargs(dropSpec):
         del kwargs['uid']
     return kwargs
 
+
 __CREATION_FUNCTIONS = {
-    'plain': _createPlain,
-    'container': _createContainer,
-    'app': _createApp,
-    'socket': _createSocket
+    DropType.PLAIN: _createPlain,
+    DropType.CONTAINER: _createContainer,
+    DropType.APP: _createApp,
+    DropType.SERVICE_APP: _createApp,
+    DropType.SOCKET: _createSocket
 }
