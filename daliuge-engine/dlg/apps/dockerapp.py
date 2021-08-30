@@ -379,10 +379,12 @@ class DockerApp(BarrierAppDROP):
                 user=user,
                 environment=env,
                 working_dir=self.workdir,
+                init=True,
                 auto_remove=self._removeContainer
         )
         self._containerId = cId = self.container.id
         logger.info("Created container %s for %r", cId, self)
+        logger.debug(f"autoremove container {self._removeContainer}")
 
         # Start it
         start = time.time()
@@ -395,6 +397,10 @@ class DockerApp(BarrierAppDROP):
         inspection = c.api.inspect_container(cId)
         logger.debug("Docker inspection: %r", inspection)
         self.containerIp = inspection['NetworkSettings']['IPAddress']
+
+        # Capture output
+        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
+        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
 
         # Wait until it finishes
         # In docker-py < 3 the .wait() method returns the exit code directly
@@ -409,15 +415,16 @@ class DockerApp(BarrierAppDROP):
         logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            stdout = container.logs(stream=False, stdout=True, stderr=False)
-            stderr = container.logs(stream=False, stdout=False, stderr=True)
             logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
         elif self._exitCode != 0:
-            stdout = container.logs(stream=False, stdout=True, stderr=False)
-            stderr = container.logs(stream=False, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
-            logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
-            raise Exception(msg)
+
+            if self._exitCode == 137 or self._exitCode == 139 or self._exitCode == 143:
+                # termination via SIGKILL, SIGSEGV, and SIGTERM is expected for some services
+                logger.warning(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+            else:
+                logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+                raise Exception(msg)
 
         c.api.close()
 

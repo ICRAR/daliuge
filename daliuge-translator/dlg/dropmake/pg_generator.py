@@ -46,7 +46,7 @@ import numpy as np
 from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
 from .utils.bash_parameter import BashCommand
 from ..common import dropdict
-from ..common import Categories
+from ..common import Categories, DropType
 from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
     LG_APPREF,
@@ -341,6 +341,10 @@ class LGNode:
     def is_loop(self):
         return self.is_group() and self._jd["category"] == Categories.LOOP
 
+    def is_service(self):
+        # services nodes are replaced with the input application in the logical graph
+        return ("isService" in self._jd and self._jd["isService"]) or self._jd["category"] == Categories.SERVICE
+
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
 
@@ -511,6 +515,8 @@ class LGNode:
                     self._dop = self.group_by_scatter_layers[0]
                 elif self.is_loop():
                     self._dop = int(self.jd.get("num_of_iter", 1))
+                elif self.is_service():
+                    self._dop = 1  # TODO: number of compute nodes
                 else:
                     raise GInvalidNode(
                         "Unrecognised (Group) Logical Graph Node: '{0}'".format(
@@ -560,7 +566,7 @@ class LGNode:
     def _create_test_drop_spec(self, oid, rank, kwargs):
         """
         TODO
-        This is a test funciton only
+        This is a test function only
         should be replaced by LGNode class specific methods
         """
         drop_spec = None
@@ -573,12 +579,12 @@ class LGNode:
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
-                    {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
+                    {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
                 )
                 dropSpec_socket = dropdict(
                     {
                         "oid": "{0}-s".format(oid),
-                        "type": "app",
+                        "type": DropType.APP,
                         "app": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
                         "tw": 5,
@@ -592,7 +598,7 @@ class LGNode:
                 dropSpec_socket.addOutput(drop_spec)
             else:
                 drop_spec = dropdict(
-                    {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
+                    {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
                 )
             if drop_type == Categories.FILE:
                 dn = self.jd.get("dirname", None)
@@ -606,9 +612,8 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif (
-            drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]
-        ):  # default generic component becomes "sleep and copy"
+        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]: 
+            # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
             else:
@@ -633,7 +638,7 @@ class LGNode:
 
             kwargs["tw"] = execTime
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": app_class, "rank": rank}
+                {"oid": oid, "type": DropType.APP, "app": app_class, "rank": rank}
             )
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
@@ -646,7 +651,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
@@ -666,7 +671,7 @@ class LGNode:
             else:
                 app_str = "dlg.apps.bash_shell_app.BashShellApp"
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": app_str, "rank": rank}
+                {"oid": oid, "type": DropType.APP, "app": app_str, "rank": rank}
             )
             if "execution_time" in self.jd:
                 kwargs["tw"] = int(self.jd["execution_time"])
@@ -699,7 +704,7 @@ class LGNode:
         elif drop_type == Categories.DOCKER:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = "app"
+            typ = DropType.APP
             drop_spec = dropdict(
                 {"oid": oid, "type": typ, "app": app_class, "rank": rank}
             )
@@ -726,7 +731,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -740,7 +745,7 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.MEMORY,
                     "nm": "grpdata",
                     "dw": dw,
@@ -756,7 +761,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -770,7 +775,7 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.MEMORY,
                     "nm": "gthrdt",
                     "dw": dw,
@@ -787,7 +792,7 @@ class LGNode:
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
-                {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
+                {"oid": oid, "type": DropType.PLAIN, "storage": Categories.NULL, "rank": rank}
             )
         elif drop_type == Categories.LOOP:
             pass
@@ -1075,9 +1080,9 @@ class PGT(object):
             key_dict[oid] = i + 1
             node["oid"] = oid
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 node["category"] = Categories.DATA
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
@@ -1093,7 +1098,7 @@ class PGT(object):
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
-                    from_dt = 0 if drop["type"] == "plain" else 1
+                    from_dt = 0 if drop["type"] == DropType.PLAIN else 1
                     to_dt = G.node[oup]["dt"]
                     if from_dt == to_dt:
                         to_drop = G.node[oup]["drop_spec"]
@@ -1103,7 +1108,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": "app",
+                                    "type": DropType.APP,
                                     "app": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
                                     "tw": 1,
@@ -1121,7 +1126,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": "plain",
+                                    "type": DropType.PLAIN,
                                     "storage": Categories.MEMORY,
                                     "nm": "go_data",
                                     "dw": 1,
@@ -1173,9 +1178,9 @@ class PGT(object):
             node["key"] = (i + 1) * -1
             node["oid"] = oid
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 node["category"] = Categories.DATA
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
@@ -1268,12 +1273,12 @@ class MetisPGTP(PGT):
             oid = drop["oid"]
             myk = i + 1
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
                 sz = drop.get("dw", 1)  # size
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 dst = "outputs"
                 ust = "inputs"
                 tw = drop["tw"]
@@ -1286,9 +1291,9 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                if "plain" == tt:
+                if DropType.PLAIN == tt:
                     lw = drop["dw"]
-                elif "app" == tt:
+                elif DropType.APP == tt:
                     # lw = drop_dict[inp].get('dw', 1)
                     lw = droplist[key_dict[inp] - 1].get("dw", 1)
                 if lw <= 0:
@@ -1863,6 +1868,7 @@ class LG:
         self._gather_cache = dict()
 
         lgver = get_lg_ver_type(lg)
+
         if LG_VER_EAGLE == lgver:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
@@ -2039,7 +2045,7 @@ class LG:
         lpcxt:  Loop context
         """
         if lgn.is_group():
-            extra_links_drops = not lgn.is_scatter()
+            extra_links_drops = not lgn.is_scatter() and not lgn.is_service()
             if extra_links_drops:
                 non_inputs = []
                 grp_starts = []
@@ -2114,16 +2120,15 @@ class LG:
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
 
-                if (
-                    extra_links_drops and not lgn.is_loop()
-                ):  # make GroupBy and Gather drops
-                    src_gdrop = lgn.make_single_drop(miid)
-                    self._drop_dict[lgn.id].append(src_gdrop)
+                if extra_links_drops and not lgn.is_loop():
+                    # make GroupBy and Gather drops
+                    src_drop = lgn.make_single_drop(miid)
+                    self._drop_dict[lgn.id].append(src_drop)
                     if lgn.is_groupby():
-                        self._drop_dict["new_added"].append(src_gdrop["grp-data_drop"])
+                        self._drop_dict["new_added"].append(src_drop["grp-data_drop"])
                     elif lgn.is_gather():
                         pass
-                        # self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
+                        # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 for child in lgn.children:
                     self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
         elif lgn.is_mpi():
@@ -2131,6 +2136,12 @@ class LG:
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_cxt=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
+        elif lgn.is_service():
+            src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
+            src_drop["type"] = DropType.SERVICE_APP
+            self._drop_dict[lgn.id].append(src_drop)
+            if lgn.is_start_listener():
+                self._drop_dict["new_added"].append(src_drop["listener_drop"])
         else:
             # TODO !!
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
@@ -2222,7 +2233,7 @@ class LG:
                     "oid": "{0}-{1}-stream".format(
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.NULL,
                     "nm": "StreamNull",
                     "dw": 0,
@@ -2482,8 +2493,13 @@ class LG:
                     self._unroll_gather_as_output(
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
                     )
+                elif tlgn.is_service():
+                    # Only the service node's inputApplication will be translated
+                    # to the physical graph as a node of type SERVICE_APP instead of APP
+                    # per compute instance
+                    tlgn['type'] = DropType.SERVICE_APP
                 else:
-                    raise GraphException("Unsupported target group {0}".format(tlgn.id))
+                    raise GraphException("Unsupported target group {0}".format(tlgn.jd["category"]))
 
         for _, v in self._gather_cache.items():
             input_list = v[1]
@@ -2542,7 +2558,7 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            if drop["type"] == "app" and drop["app"].endswith(Categories.BASH_SHELL_APP):
+            if drop["type"] == DropType.APP and drop["app"].endswith(Categories.BASH_SHELL_APP):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 
