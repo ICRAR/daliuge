@@ -54,18 +54,20 @@ class Categories:
     DOCKER = 'Docker'
     DYNLIB_PROC_APP = 'DynlibProcApp'
 
+    SERVICE = 'Service'
+
     COMMENT = 'Comment'
     DESCRIPTION = 'Description'
 
 STORAGE_TYPES = {
-                 Categories.MEMORY, 
-                 Categories.FILE, 
-                 Categories.NGAS, 
-                 Categories.NULL, 
-                 Categories.JSON, 
-                 Categories.PLASMA,
-                 Categories.PLASMAFLIGHT
-                }
+    Categories.MEMORY,
+    Categories.FILE,
+    Categories.NGAS,
+    Categories.NULL,
+    Categories.JSON,
+    Categories.PLASMA,
+    Categories.PLASMAFLIGHT
+}
 APP_DROP_TYPES = [
     Categories.COMPONENT,
     Categories.PYTHON_APP,
@@ -75,7 +77,17 @@ APP_DROP_TYPES = [
     Categories.DYNLIB_APP,
     Categories.DOCKER,
     Categories.DYNLIB_PROC_APP,
+    Categories.SERVICE,
 ]
+
+
+class DropType:
+    PLAIN = 'plain'
+    SOCKET = 'socket'
+    APP = 'app'  # Application drop that terminates onces executed
+    SERVICE_APP = 'serviceapp'  # App drop that runs continously
+    CONTAINER = 'container'  # Drop that contains other drops
+
 
 def b2s(b, enc='utf8'):
     "Converts bytes into a string"
@@ -139,12 +151,12 @@ def get_roots(pg_spec):
         oid = dropspec['oid']
         all_oids.add(oid)
 
-        if dropspec["type"] in ('app', 'socket'):
+        if dropspec["type"] in (DropType.APP, DropType.SOCKET):
             if dropspec.get('inputs', None) or dropspec.get('streamingInputs', None):
                 nonroots.add(oid)
             if dropspec.get('outputs', None):
                 nonroots |= set(dropspec['outputs'])
-        elif dropspec["type"] == 'plain':
+        elif dropspec["type"] == DropType.PLAIN:
             if dropspec.get('producers', None):
                 nonroots.add(oid)
             if dropspec.get('consumers', None):
@@ -170,14 +182,20 @@ def get_leaves(pg_spec):
         oid = dropspec['oid']
         all_oids.add(oid)
 
-        if dropspec["type"] == 'app':
+        if dropspec["type"] == DropType.APP:
             if dropspec.get('outputs', None):
                 nonleaves.add(oid)
             if dropspec.get('streamingInputs', None):
                 nonleaves |= set(dropspec['streamingInputs'])
             if dropspec.get('inputs', None):
                 nonleaves |= set(dropspec['inputs'])
-        elif dropspec["type"] == 'plain':
+        if dropspec["type"] == DropType.SERVICE_APP:
+            nonleaves.add(oid)  # services are never leaves
+            if dropspec.get('streamingInputs', None):
+                nonleaves |= set(dropspec['streamingInputs'])
+            if dropspec.get('inputs', None):
+                nonleaves |= set(dropspec['inputs'])
+        elif dropspec["type"] == DropType.PLAIN:
             if dropspec.get('producers', None):
                 nonleaves |= set(dropspec['producers'])
             if dropspec.get('consumers', None) or dropspec.get('streamingConsumers', None):

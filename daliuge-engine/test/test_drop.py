@@ -669,7 +669,7 @@ class TestDROP(unittest.TestCase):
             if lastByte is not None:
                 self.assertEqual(lastByte, b._lastByte)
 
-        checkDropStates(DROPStates.INITIALIZED , DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
+        checkDropStates(DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, None)
         a.write(b'abcde')
         checkDropStates(DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b'e')
         a.write(b'fghij')
