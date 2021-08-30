@@ -423,11 +423,11 @@ def convert_construct(lgo):
     # application drop if a gather has internal input, which will result in
     # a cycle that is not allowed in DAG during graph translation
 
-# CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
-#    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
+    # CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
+    #    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
     app_keywords = ["inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
-        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
+        if node["category"] not in [Categories.SCATTER, Categories.GATHER, Categories.SERVICE]:
             continue
         has_app = None
 
@@ -452,7 +452,7 @@ def convert_construct(lgo):
         if 'mkn' in node:
             app_node['mkn'] = node['mkn']
 
-        if "group" in node:
+        if 'group' in node:
             app_node["group"] = node["group"]
 
         for app_fd_name in ["appFields", "inputAppFields"]:
@@ -460,8 +460,13 @@ def convert_construct(lgo):
                 for afd in node[app_fd_name]:
                     app_node[afd["name"]] = afd["value"]
                 break
-        if Categories.GATHER == node["category"]:
+
+        if node["category"] == Categories.GATHER:
             app_node["group_start"] = 1
+
+        if node['category'] == Categories.SERVICE:
+            app_node['isService'] = True
+
         new_nodes.append(app_node)
 
         # step 2
