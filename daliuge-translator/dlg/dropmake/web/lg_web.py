@@ -510,7 +510,7 @@ def gen_pgt_post():
         # return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 
-def unroll_and_partition_with_params(logical_graph, algo_params_source):
+def unroll_and_partition_with_params(lg_path, algo_params_source):
     # Get the 'test' parameter
     # NB: the test parameter is a string, so convert to boolean
     test = algo_params_source.get("test", "false")
@@ -520,7 +520,7 @@ def unroll_and_partition_with_params(logical_graph, algo_params_source):
     app = "dlg.apps.simple.SleepApp" if test else None
 
     # Unrolling LG to PGT.
-    pgt = unroll(logical_graph, app=app)
+    pgt = unroll(lg_path, app=app)
 
     # Define partitioning parameters.
     algo = algo_params_source.get("algo", "none")
