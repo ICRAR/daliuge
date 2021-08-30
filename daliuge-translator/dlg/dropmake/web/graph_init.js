@@ -46,7 +46,7 @@ function graphInit(type){
             var newElement = {};
             let keyIndex = new Map();
             //shapes and colors for different node types
-            var nodeCatgColors = {'Data':'#c59a1a', 'Component': '#002349'}
+            var nodeCatgColors = {'Data':'#9ab4d0', 'Component': '#7f9cbb'}
             var nodeCatgShape = {'Data':'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component':'rect'}
             var nodeCount = 0
             data.nodeDataArray.forEach(element => {
@@ -81,20 +81,21 @@ function graphInit(type){
                             'rotate': 45,
                             'fontSize': 10,
                             'offset': [-20,-20],
-                            'fontWeight' : 700,
-                            'color':'white',
-                            'textBorderColor':'black',
-                            'textBorderWidth' : 2.5,
-                            'textBorderType' : 'solid'
+                            'fontWeight' : 400,
+                            'color':'black',
+                            // 'textBorderColor':'black',
+                            // 'textBorderWidth' : 2.5,
+                            // 'textBorderType' : 'solid'
                         };
                     }else{
                         newElement.label = {
                             'fontSize': 10,
-                            'fontWeight' : 500,
-                            'color':'white',
+                            'fontWeight' : 900,
+                            'fontStyle' : 'bold',
+                            'color':'black',
                             "position":"inside",
-                            'textBorderColor':'black',
-                            'textBorderWidth' : 2.5,
+                            // 'textBorderColor':'black',
+                            // 'textBorderWidth' : 2.5,
                         };
                     }
 
