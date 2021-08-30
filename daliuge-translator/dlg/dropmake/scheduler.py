@@ -34,8 +34,7 @@ from pyswarm import pso
 from collections import defaultdict
 
 from .utils.antichains import get_max_weighted_antichain
-from ..common import dropdict, get_roots
-
+from ..common import dropdict, get_roots, DropType
 
 logger = logging.getLogger(__name__)
 
@@ -1169,15 +1168,18 @@ class DAGUtil(object):
             oid = drop['oid']
             myk = i + 1
             tt = drop["type"]
-            if ('plain' == tt):
+            if (DropType.PLAIN == tt):
                 # if (drop['nm'] == 'StreamNull'):
                 #     obk = 'streamingConsumers'
                 # else:
                 #     obk = 'consumers' # outbound keyword
                 tw = 0
                 dtp = 0
-            elif ('app' == tt):
+            elif (DropType.APP == tt):
                 #obk = 'outputs'
+                tw = int(drop['tw'])
+                dtp = 1
+            elif DropType.SERVICE_APP == tt:
                 tw = int(drop['tw'])
                 dtp = 1
             else:
@@ -1193,13 +1195,13 @@ class DAGUtil(object):
             for obk in out_bound_keys:
                 if obk in drop:
                     for oup in drop[obk]:
-                        if ('plain' == tt):
+                        if (DropType.PLAIN == tt):
                             G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
-                        elif ('app' == tt):
+                        elif (DropType.APP == tt):
                             G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
 
         if (fake_super_root):
-            super_root = dropdict({'oid':'-92', "type":'plain', 'storage':'null'})
+            super_root = dropdict({'oid':'-92', "type": DropType.PLAIN, 'storage':'null'})
             super_k = len(drop_list) + 1
             G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root,
                        num_cpus=0, text='fake_super_root')
