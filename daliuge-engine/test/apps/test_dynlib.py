@@ -102,14 +102,16 @@ class DynlibAppTest(unittest.TestCase):
         """Checks that we can cancel a long-running dynlib proc app"""
 
         a = DynlibProcApp("a", "a", lib=_libpath, sleep_seconds=10)
+        a._rpc_server = True
         with droputils.DROPWaiterCtx(self, (), timeout=0):
             a.async_execute()
-            time.sleep(1)
-            t0 = time.time()
-            a.cancel()
-            self.assertLess(
-                time.time() - t0, 1, "Cancelled dynlibprocapp in less than a second"
-            )
+
+        time.sleep(1)
+        t0 = time.time()
+        a.cancel()
+        self.assertLess(
+            time.time() - t0, 1, "Cancelled dynlibprocapp in less than a second"
+        )
         self.assertEqual(DROPStates.CANCELLED, a.status)
 
 
