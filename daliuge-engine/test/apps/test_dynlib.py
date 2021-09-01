@@ -104,14 +104,13 @@ class DynlibAppTest(unittest.TestCase):
         a = DynlibProcApp("a", "a", lib=_libpath, sleep_seconds=10)
         with droputils.DROPWaiterCtx(self, (), timeout=0):
             a.async_execute()
-
-        time.sleep(1)
-        # t0 = time.time()
-        # a.cancel()
-        # self.assertLess(
-        #     time.time() - t0, 1, "Cancelled dynlibprocapp in less than a second"
-        # )
-        # self.assertEqual(DROPStates.CANCELLED, a.status)
+            time.sleep(1)
+            t0 = time.time()
+            a.cancel()
+            self.assertLess(
+                time.time() - t0, 1, "Cancelled dynlibprocapp in less than a second"
+            )
+        self.assertEqual(DROPStates.CANCELLED, a.status)
 
 
 class IntraNMMixIng(test_dm.NMTestsMixIn):
