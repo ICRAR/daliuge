@@ -4,7 +4,7 @@
 # The resulting image should allow to run leap-plasma as well.
 
 # We need the base image we built with the other Dockerfile
-FROM icrar/dlg_ray.common:test
+FROM icrar/daliuge-common:master-casa
 
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata \
     gnupg2 software-properties-common wget git git-lfs gcc g++ make tmux python3-pip cmake libboost1.71-all-dev
@@ -51,7 +51,7 @@ RUN pip3 install pyarrow==3.0.0
 RUN mkdir -p /code && cd /code &&\
     git clone --recursive https://gitlab.com/ska-telescope/cbf-sdp-emulator.git &&\
     cd cbf-sdp-emulator &&\
-    . ~/dlg/bin/activate && pip3 install --extra-index-url=https://nexus.engageska-portugal.pt/repository/pypi/simple -e .[plasma]
+    . ~/dlg/bin/activate && pip3 install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple -e .[plasma]
 
 COPY / /daliuge
 RUN . ~/dlg/bin/activate && cd /daliuge && \
