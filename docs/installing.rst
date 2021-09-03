@@ -20,27 +20,27 @@ rather to its requirements (mainly to the spead2 communication protocol).
 
 The *daliuge-engine* image by default runs a generic daemon, which allows to then start the Master Manager, Node Manager or DataIsland Manager. This approach allows to change the actual manager deployment configuration in a more dynamic way and adjusted to the actual requirements of the environment.
 
+**NOTE: This guide is meant for people who are experimenting with the system. It does not cover specific needs of operational deployments.**
+
 Building the three images is easy, just start with the daliuge-common image by running::
 
-  cd daliuge-common && ./build_common.sh && cd ..
+  cd daliuge-common && ./build_common.sh dev && cd ..
 
 then build the runtime::
 
-  cd daliuge-engine&& ./build_engine.sh && cd ..
+  cd daliuge-engine&& ./build_engine.sh dev && cd ..
 
 and last build the translator::
 
-  cd daliuge-translator && ./build_translator.sh && cd ..
+  cd daliuge-translator && ./build_translator.sh dev && cd ..
 
 running the engine and the translator is equally simple::
 
-  cd daliuge-engine && ./run_engine.sh && cd ..
+  cd daliuge-engine && ./run_engine.sh dev && cd ..
 
 and::
 
-  cd daliuge-translator && ./run_translator.sh && cd ..
-
-Note that the commands above will launch the images in interactive mode, which means that the output of the logging is routed to the terminal where the commands are executed. Also note that the containers will be removed after termination.
+  cd daliuge-translator && ./run_translator.sh dev && cd ..
 
 
 Direct Installation

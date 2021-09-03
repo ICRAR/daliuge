@@ -202,10 +202,12 @@ class DockerTests(unittest.TestCase):
         shutil.rmtree(tempDir)
 
     def _test_working_dir(self, ensureUserAndSwitch):
-        a = DockerApp('a', 'a', workingDir='/mydir', image='ubuntu:14.04', command='pwd > %o0', ensureUserAndSwitch=ensureUserAndSwitch)
+        # the sleep is required to make sure that the docker container exists long enough for
+        # DALiuGE to get the required information (2 lines of Python code after starting the container!)
+        a = DockerApp('a', 'a', workingDir='/mydir', image='ubuntu:14.04', command='pwd > %o0 && sleep 0.05', ensureUserAndSwitch=ensureUserAndSwitch)
         b = FileDROP('b', 'b')
         a.addOutput(b)
-        with DROPWaiterCtx(self, b, 100):
+        with DROPWaiterCtx(self, b, 10):
             a.execute()
         self.assertEqual(b'/mydir', droputils.allDropContents(b).strip())
 
