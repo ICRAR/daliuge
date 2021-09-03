@@ -792,7 +792,7 @@ class LGNode:
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
-                {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
+                {"oid": oid, "type": DropType.PLAIN, "storage": Categories.NULL, "rank": rank}
             )
         elif drop_type == Categories.LOOP:
             pass
