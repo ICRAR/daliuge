@@ -80,7 +80,7 @@ class DefaultConfig(object):
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
-        super(GalaxyMWAConfig, self).__init__()
+        super(GalaxyMWAConfig, self).__init__()P
 
     def init_list(self):
         return ['mwaops', '/group/mwaops/cwu/dfms/logs']
