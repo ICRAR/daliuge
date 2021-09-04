@@ -10,6 +10,7 @@ dist
 .settings
 .pytest_cache
 .vscode
+.venv
 daliuge-translator/dlg/translator/dropmake/web/VERSION
 daliuge-translator/dlg/translator/dropmake/web/LICENSE
 daliuge-engine/dlg/runtime/version.py
