@@ -1,4 +1,4 @@
 .. _wrap_existing:
 
-Wrap Existing
-=============
+Wrap Existing Code
+==================
