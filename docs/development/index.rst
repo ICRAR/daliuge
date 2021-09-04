@@ -6,10 +6,9 @@
 Welcome to the |daliuge| Component Developers Guide (DCDG).
 
 The |daliuge| workflow graph execution framework enables an almost complete separation of concerns between graph development and component development. This guide specifically addresses the concern of component development. 
-Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to the entire system, and read our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_. DALiuGE has been used in a project running a `full-scale simulation <http://dx.doi.org/10.1109/SC41405.2020.00006>`_ of the Square Kilometre Array dataflow on the ORNL Summit supercomputer.
+Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to the entire system, and read our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_.
 
-Development and maintenance of |daliuge| is currently hosted at ICRAR_
-and is performed by the `DIA team <http://www.icrar.org/our-research/data-intensive-astronomy/>`_.
+
 
 *NOTE: The DCDG is work in progress!*
 
