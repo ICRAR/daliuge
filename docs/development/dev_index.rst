@@ -1,4 +1,4 @@
-.. _index:
+.. _dev_index:
 
 |daliuge| Component Developers Guide
 ####################################
@@ -15,9 +15,10 @@ Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to th
 .. toctree::
  :maxdepth: 2
 
- intro
+ dev_intro
  bash_components
  python_components
+ python_function_components
  dynlib_components
  docker_components
  service_components
@@ -39,4 +40,3 @@ DALiuGE: A Graph Execution Framework for Harnessing the Astronomical Data Deluge
 Astronomy and Computing, 20, pp.1-15. (2017) <https://arxiv.org/pdf/1702.07617.pdf>`_
 
 .. _ICRAR: http://www.icrar.org
-.. [#f1] 流 (pronounced Liu) is the Chinese character for "flow".

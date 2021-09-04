@@ -1,4 +1,4 @@
-.. _intro:
+.. _dev_intro:
 
 What are *Components*?
 ======================
