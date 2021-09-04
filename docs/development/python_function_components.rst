@@ -1,4 +1,4 @@
-.. _python_components:
+.. _python_function_components:
 
 Python Function Components
 ==========================
