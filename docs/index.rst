@@ -30,6 +30,7 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  app_development
  data_development
  examples
+ development/dev_index
  api-index
 
 Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
