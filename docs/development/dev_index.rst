@@ -24,7 +24,6 @@ Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to th
  service_components
  wrap_existing
  test_and_debug
- component_binding
  eagle_integration
  deployment_testing
 
