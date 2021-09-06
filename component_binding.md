@@ -1,8 +1,10 @@
-# Install Doxygen 
+# Component Binding Guide
+
+## Install Doxygen 
 
 http://www.doxygen.nl/ 
 
-# Configure the configuration file (Doxyfile as default) 
+## Configure the configuration file (Doxyfile as default) 
 
 ```python
 # Doxyfile 1.8.# Doxyfile 1.8.17 
@@ -150,11 +152,11 @@ ENABLE_PREPROCESSING   = NO
 # The default value is: YES. 
 CLASS_DIAGRAMS         = NO 
 ```
-# Add comments  in the source code files 
+## Add comments  in the source code files 
 
-## Source Files 
+### Source Files 
 
-### **Filename** 
+#### **Filename** 
 
 The name of the source file 
 
@@ -168,7 +170,7 @@ or
 /## 
  # \file LoadVis.h 
 ```
-### **Description** 
+#### **Description** 
 
 A brief description of the purpose of this component. A detailed description is also included here. 
 
@@ -183,7 +185,7 @@ A brief description of the purpose of this component. A detailed description is
 # \brief Load Visibility 
 # \details Load a CASA Measurement Set in the DaliugeApplication Framework. We will build on the LoadParset structure - but use the contents of the parset to load a measurement set. 
 ```
-### Location 
+#### Location 
 
 The location of the file that generated this component description. Contains repository location, file path within repository and git commit hash. 
 
@@ -196,14 +198,14 @@ Note: the value of $(GITLAB_REPO) will be substituted at run-time.
 * \par EAGLE_END 
 */ 
 ```
-### 
+#### 
 ```python
 /## 
  # \par EAGLE_START 
  # \param gitrepo $(GIT_REPO) 
  # \par EAGLE_END 
 ```
-### **Version** 
+#### **Version** 
 
 The version of the code file. 
 
@@ -222,7 +224,7 @@ Note: the value of $(PROJECT_VERSION) will be substituted at run-time, and also 
  # \param version $(PROJECT_VERSION) 
  # \par EAGLE_END 
 ```
-### **Category** 
+#### **Category** 
 
 DynlibApp, DynlibProcApp, PythonApp, BashShellApp 
 
@@ -233,16 +235,16 @@ DynlibApp, DynlibProcApp, PythonApp, BashShellApp
 * \par EAGLE_END 
 */ 
 ```
-## 
+### 
 ```python
 /## 
  # \par EAGLE_START 
  # \param category DynlibApp 
  # \par EAGLE_END 
 ```
-## Parameters (Fields) 
+### Parameters (Fields) 
 
-### **Name, Description, Direction, Default Value, Data Type** 
+#### **Name, Description, Direction, Default Value, Data Type** 
 
 The pattern is: 
 
@@ -272,7 +274,7 @@ The pattern is:
 * \par EAGLE_END 
 */ 
 ```
-## 
+### 
 ```python
  /## 
  # \par EAGLE_START 
@@ -290,9 +292,9 @@ The pattern is:
  #              \~ 
  # \par EAGLE_END 
 ```
-## Ports/Local Ports 
+### Ports/Local Ports 
 
-### **Name, Description, Direction** 
+#### **Name, Description, Direction** 
 
 The pattern is: 
 
@@ -344,7 +346,7 @@ The pattern is:
  #              \~ 
  # \par EAGLE_END 
 ```
-# Run Doxygen 
+## Run Doxygen 
 
 If  do not need the location and version of the current cod e , could just run  
 
