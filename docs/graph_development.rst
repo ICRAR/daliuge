@@ -40,7 +40,7 @@ for users to creates graphs and submit them for execution:
 Using the Logical Graph Editor EAGLE
 ------------------------------------
 
-Please refer to the `EAGLE documentation <https://eagle.icrar.org/static/docs/build/html/index.html>`__ for detailed information.
+Please refer to the `EAGLE documentation <https://eagle-dlg.readthedocs.io>`__ for detailed information.
 
 .. _graph_dev.pg:
 
