@@ -59,7 +59,7 @@ matrix:
         - rm -rf DALIUGE/
         - mv ../DALIUGE/ .
         - git add *
-        - git diff-index --quiet HEAD || git commit -m 'doxygen commit'
+        - git diff-index --quiet HEAD || git commit -m 'DALiuGE palette ($(git rev-parse --short HEAD))'
         - git push
 
     # Build documentation similarly to how RTD does
