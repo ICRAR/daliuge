@@ -45,6 +45,7 @@ matrix:
       script:
         - GIT_REPO=$(git config --get remote.origin.url) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
       after_success:
+        - PROJECT_VERSION=$(git rev-parse --short HEAD)
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
         - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge.palette
