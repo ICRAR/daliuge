@@ -47,8 +47,7 @@ matrix:
       after_success:
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
-        - wget https://raw.githubusercontent.com/james-strauss-uwa/xml2palette/master/xml2palette.py
-        - python3 xml2palette.py -i daliuge.xml -o daliuge.palette
+        - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge.palette
         - mv daliuge.palette ../.
         - cd ..
         - rm -rf xml/
