@@ -924,7 +924,7 @@ class BranchAppDropTestsBase(object):
         self._assert_drop_complete_or_skipped(last_false, not result)
 
     def test_simple_branch(self):
-        """Check that simple branch event transmission wroks"""
+        """Check that simple branch event transmission works"""
         self._test_single_branch_graph(True, 0)
         self._test_single_branch_graph(False, 0)
 

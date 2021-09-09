@@ -36,7 +36,7 @@ from .. import graph_loader
 from .. import rpc
 from .. import utils
 from ..ddap_protocol import DROPLinkType, DROPRel, DROPStates
-from ..drop import AbstractDROP, AppDROP, InputFiredAppDROP, \
+from ..drop import AbstractDROP, AppDROP, EndDROP, InputFiredAppDROP, \
     LINKTYPE_1TON_APPEND_METHOD, LINKTYPE_1TON_BACK_APPEND_METHOD
 from ..exceptions import InvalidSessionState, InvalidGraphException, \
     NoDropException, DaliugeException
@@ -64,6 +64,17 @@ class LeavesCompletionListener(object):
         logger.debug("%d/%d leaf drops completed on session %s", self._completed, self._nexpected, self._session.sessionId)
         if self._completed == self._nexpected:
             self._session.finish()
+
+
+class EndListener(object):
+    """
+    Listener for an EndDROP that will end the session when complete
+    """
+    def __init__(self, session):
+        self._session = session
+
+    def handleEvent(self, evt):
+        self._session.end()
 
 
 track_current_session = utils.object_tracking('session')
@@ -269,12 +280,22 @@ class Session(object):
         # Add listeners that will move the session to FINISHED state
         leaves = droputils.getLeafNodes(self._roots)
         logger.info("Adding completion listener to leaf drops")
-        listener = LeavesCompletionListener(leaves, self)
+        
+        # The leaves completion listener will trigger session completed
+        # when all leaf nodes are completed
+        leavesListener = LeavesCompletionListener(leaves, self)
         for leaf in leaves:
             if isinstance(leaf, AppDROP):
-                leaf.subscribe(listener, 'producerFinished')
+                leaf.subscribe(leavesListener, 'producerFinished')
             else:
-                leaf.subscribe(listener, 'dropCompleted')
+                leaf.subscribe(leavesListener, 'dropCompleted')
+
+        # The end listener will trigger session end when an end
+        # node is completed (end nodes are always a leaf nodes)
+        endListener = EndListener(self)
+        for leaf in leaves:
+            if isinstance(leaf, EndDROP):
+                leaf.subscribe(endListener, 'dropCompleted')
         logger.info("Listener added to leaf drops")
 
         # Foreach
@@ -386,8 +407,17 @@ class Session(object):
         logger.info("Session %s finished", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
-            if drop.status not in (DROPStates.ERROR, DROPStates.COMPLETED, DROPStates.CANCELLED):
+            if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.setCompleted()
+
+    @track_current_session
+    def end(self):
+        self.status = SessionStates.FINISHED
+        logger.info("Session %s ended", self._sessionId)
+        for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
+            downStreamDrops[:] = [dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)]
+            if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
+                drop.skip()
 
     def getGraphStatus(self):
         if self.status not in (SessionStates.RUNNING, SessionStates.FINISHED, SessionStates.CANCELLED):
