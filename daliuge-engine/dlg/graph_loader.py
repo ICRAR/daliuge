@@ -33,7 +33,8 @@ from .apps.socket_listener import SocketListenerApp
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import ContainerDROP, InMemoryDROP, \
     FileDROP, NgasDROP, LINKTYPE_NTO1_PROPERTY, \
-    LINKTYPE_1TON_APPEND_METHOD, NullDROP, PlasmaDROP, PlasmaFlightDROP
+    LINKTYPE_1TON_APPEND_METHOD, NullDROP, EndDROP, \
+    PlasmaDROP, PlasmaFlightDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
 from .common import Categories, DropType
@@ -44,6 +45,7 @@ STORAGE_TYPES = {
     Categories.FILE: FileDROP,
     Categories.NGAS: NgasDROP,
     Categories.NULL: NullDROP,
+    Categories.END: EndDROP,
     Categories.JSON: JsonDROP,
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP
