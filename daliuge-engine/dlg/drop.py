@@ -977,13 +977,15 @@ class AbstractDROP(EventFirer):
 
     def cancel(self):
         '''Moves this drop to the CANCELLED state closing any writers we opened'''
-        self._closeWriters()
-        self.status = DROPStates.CANCELLED
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            self._closeWriters()
+            self.status = DROPStates.CANCELLED
 
     def skip(self):
         '''Moves this drop to the SKIPPED state closing any writers we opened'''
-        self._closeWriters()
-        self.status = DROPStates.SKIPPED
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            self._closeWriters()
+            self.status = DROPStates.SKIPPED
 
     @property
     def node(self):
@@ -1244,6 +1246,11 @@ class NullDROP(AbstractDROP):
     def dataURL(self):
         return "null://"
 
+
+class EndDROP(NullDROP):
+    """
+    A DROP that ends the session when reached
+    """
 
 class RDBMSDrop(AbstractDROP):
     """
@@ -1591,10 +1598,15 @@ class AppDROP(ContainerDROP):
     def skip(self):
         '''Moves this application drop to its SKIPPED state'''
         super().skip()
+
+        prev_execStatus = self.execStatus
         self.execStatus = AppDROPStates.SKIPPED
         for o in self._outputs.values():
             o.skip()
-        self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+
+        logger.debug(f'Moving {self.__repr__()} to SKIPPED')
+        if prev_execStatus in [AppDROPStates.NOT_RUN]:
+            self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
 
 class InputFiredAppDROP(AppDROP):
