@@ -53,7 +53,6 @@ class Categories:
     DYNLIB_APP = 'DynlibApp'
     DOCKER = 'Docker'
     DYNLIB_PROC_APP = 'DynlibProcApp'
-
     SERVICE = 'Service'
 
     COMMENT = 'Comment'
@@ -64,6 +63,7 @@ STORAGE_TYPES = {
     Categories.FILE,
     Categories.NGAS,
     Categories.NULL,
+    Categories.END,
     Categories.JSON,
     Categories.PLASMA,
     Categories.PLASMAFLIGHT
