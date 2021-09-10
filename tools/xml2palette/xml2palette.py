@@ -164,7 +164,7 @@ def create_palette_node_from_params(params):
                 (port, name, type) = key.split("/")
             else:
                 print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got", key)
-            
+
             # add a port
             if port == "port":
                 if direction == "in":
@@ -239,7 +239,6 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
 
 
 def process_compounddef(compounddef):
-    #print("compounddef: " + compounddef.attrib['id'])
     result = []
 
     # get child of compounddef called "briefdescription"
@@ -274,10 +273,7 @@ def process_compounddef(compounddef):
 
     # check that detailed description was found
     if detaileddescription is None:
-        #print("No detaileddescription")
         return result
-
-    #print("detaileddescription" + str(detaileddescription))
 
     # search children of detaileddescription node for a para node with "simplesect" children, who have "title" children with text "EAGLE_START" and "EAGLE_END"
     para = None
@@ -296,25 +292,21 @@ def process_compounddef(compounddef):
 
     # check that we found the correct para
     if para is None:
-        #print("No para")
         return result
 
     # find parameterlist child of para
     parameterlist = None
     for pchild in para:
-        #print("pchild tag " + pchild.tag)
         if pchild.tag == "parameterlist":
             parameterlist = pchild
             break
 
     # check that we found a parameterlist
     if parameterlist is None:
-        #print("No parameterlist")
         return result
 
     # read the parameters from the parameter list
     for parameteritem in parameterlist:
-        #print("process parameteritem")
         key = None
         direction = None
         value = None
@@ -335,7 +327,7 @@ def process_compounddef(compounddef):
                         value = ""
                     else:
                         value = pichild[0].text.strip()
-        #print("key: " + key + " direction: " + str(direction) + " value: " + value)
+
         result.append({"key":key,"direction":direction,"value":value})
 
     return result
@@ -343,9 +335,6 @@ def process_compounddef(compounddef):
 
 if __name__ == "__main__":
     (inputfile, outputfile) = get_filenames_from_command_line(sys.argv[1:])
-
-    #print('Input file: ' + inputfile)
-    #print('Output file: ' + outputfile)
 
     gitrepo = ""
     version = ""
@@ -356,7 +345,6 @@ if __name__ == "__main__":
     # load the input xml file
     tree = ET.parse(inputfile)
     xml_root = tree.getroot()
-    #print(xml_root.tag)
 
     for compounddef in xml_root:
         params = process_compounddef(compounddef)
@@ -378,17 +366,6 @@ if __name__ == "__main__":
                 gitrepo = value
             elif key == "version":
                 version = value
-
-    # debug : add a sample node
-    #n0 = create_palette_node("text", "description", "DynlibApp", "Application", ["event"], ["event"])
-    #n1 = create_palette_node("text", "description", "DynlibApp", "Application", ["event"], ["event"])
-
-    #nodes.append(n0)
-    #nodes.append(n1)
-
-    # debug
-    #print("add node: " + str(n0['key']))
-    #print("add node: " + str(n1['key']))
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
