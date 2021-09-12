@@ -16,12 +16,8 @@ Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to th
  :maxdepth: 2
 
  dev_intro
- bash_components
- python_components
- python_function_components
- dynlib_components
- docker_components
- service_components
+ app_development
+ data_development
  wrap_existing
  test_and_debug
  eagle_integration
