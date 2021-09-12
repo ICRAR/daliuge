@@ -22,16 +22,15 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  :maxdepth: 2
 
  intro
- installing
  basics
- deployment
- overview
+ installing
+ usage/index
+ architecture/index
  graph_development
- app_development
- data_development
- examples
+ eagle
  development/dev_index
  api-index
+ deployment
 
 Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
 
