@@ -9,9 +9,11 @@ Nomenclature
 The following chapters and sections will use some terms in a specific meaning. The definitions are given below.
 
 #. Component: *Component* refers to a |daliuge| compliant implementation of some functionality used in the execution of a workflow. A component consists of the |daliuge| interface wrapper and the code implementing the desired functionality. In some cases the actual functional code is not integrated with the interface, but just executed by the interface. There are three main types of components:
+
     * Application Component: |daliuge| interface wrapper and application code.
     * Data Component: |daliuge| interface wrapper around an I/O channel. Examples are standard files, memory, S3 and Apache Plasma.
     * Service Component: A *Service Component* is a special component, providing access to services like a database or some other client/server system used within a workflow.
+
 #. Construct: A *Construct* is a complex *Component*, which may contain other *Components*.
 #. Node: *Graph Node* or *Palette Node* refers to a JSON representation of a *Component* in a |daliuge| graph or palette.
 #. Drop: *Drop* is a |daliuge| specific term used to describe instances of data, application or service components at execution time. In general developers don't have to dive into the Drop level.
@@ -25,7 +27,7 @@ The |daliuge| system has been designed with the separation of concerns in mind. 
 * the logic of a workflow (graph), 
 * the detailed definition of a Node, and a collection of nodes (Palette)
 * the interface Component code and 
-* the actual functional implementation of the required algorithm of a component. P
+* the actual functional implementation of the required algorithm of a component.
   
 In fact it is possible to create logical workflows and run them, without having any substantial functional code at all. On the opposite side it is also possible to develop software without considering |daliuge| at all. This feature also allows developers to write wrapper components around existing software without the need to change that package. Whatever can be called on a \*NIX bash command line, in a docker container, or can be loaded as a python function can also run as part of a |daliuge| workflow. 
 
