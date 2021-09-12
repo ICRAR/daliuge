@@ -1,5 +1,7 @@
-Deployment
-==========
+.. _deployment:
+
+Deployment Scenarios
+====================
 
 The three components described in the :ref:`basics` section allow for a very flexible deployment. In a real world deployment there will always be one data island manager, zero or one master managers, and as many node managers as there are computing nodes available to the |daliuge| execution engine. In very small deployments one node manager can take over the role of the master manager as well. For extremely large deployments |daliuge| supports a hierarchy of island managers to be deployed, although even with 10s of millions of tasks we have not seen the actual need to do this. Note that the managers are only deploying the graph, the execution is completely asynchronous and does not require any of the higher level managers to run. Even the *manager functionality* of the node manager is not required at run-time.
 
