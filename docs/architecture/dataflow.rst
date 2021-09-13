@@ -92,7 +92,7 @@ As mentioned above, |daliuge| has been developed to enable processing of data fr
 
 .. _dataflow.fig.funcs:
 
-.. figure:: images/dfms_func_as_graphs.jpg
+.. figure:: ../images/dfms_func_as_graphs.jpg
 
    Graph-based Functions of the |daliuge| Prototype
 
