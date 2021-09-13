@@ -41,7 +41,7 @@ from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 
 try:
-    from crc32c import crc32
+    from crc32c import crc32c as crc32
 except:
     from binascii import crc32
 
