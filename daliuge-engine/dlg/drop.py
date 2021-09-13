@@ -59,7 +59,7 @@ import pyarrow.plasma as plasma
 # Opt into using per-drop checksum calculation
 checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
 try:
-    from crc32c import crc32  # @UnusedImport
+    from crc32c import crc32c as crc32  # @UnusedImport
     _checksumType = ChecksumTypes.CRC_32C
 except:
     from binascii import crc32  # @Reimport
