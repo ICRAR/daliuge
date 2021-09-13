@@ -37,14 +37,20 @@ from bottle import (
     route,
     request,
     get,
+    post,
     static_file,
     template,
     redirect,
     response,
-    HTTPResponse,
+    HTTPResponse
 )
 import bottle
 import pkg_resources
+
+from urllib.parse import (
+    parse_qs,
+    urlparse
+)
 
 from ... import common, restutils
 from ...clients import CompositeManagerClient
@@ -52,6 +58,7 @@ from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
 
+logger = logging.getLogger(__name__)
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
@@ -291,7 +298,7 @@ def gen_pg():
     """
     # if the 'deploy' checkbox is not checked, then the form submission will NOT contain a 'dlg_mgr_deploy' field
     deploy = request.query.get("dlg_mgr_deploy") is not None
-
+    mprefix = ''
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -299,17 +306,37 @@ def gen_pg():
         return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
             pgt_id
         )
+    surl = urlparse(request.url)
 
-    mhost = request.query.get("dlg_mgr_host")
+    q = parse_qs(surl.query)
+    if 'dlg_mgr_url' in q:
+        murl = q['dlg_mgr_url'][0]
+        mparse = urlparse(murl)
+        try:
+            (mhost, mport) = mparse.netloc.split(':')
+            mport = int(mport)
+        except:
+            mhost = mparse.netloc
+            if mparse.scheme == 'http':
+                mport = 80
+            elif mparse.scheme == 'https':
+                mport = 443            
+        mprefix = mparse.path
+        if mprefix[-1] == '/':
+            mprefix = mprefix[:-1]
+    else:
+        mhost = request.query.get("dlg_mgr_host")
+        if request.query.get("dlg_mgr_port"):
+            mport = int(request.query.get("dlg_mgr_port"))
+
+    logger.debug("Manager host: %s" % mhost)
+    logger.debug("Manager port: %s" % mport)
+    logger.debug("Manager prefix: %s" % mprefix)
+    
     if mhost is None:
         response.status = 500
         return "Must specify DALiUGE manager host"
     try:
-        mport = int(request.query.get("dlg_mgr_port"))
-        try:
-            mprefix = request.query.get("dlg_mgr_prefix")
-        except:
-            mprefix = ''
         mgr_client = CompositeManagerClient(host=mhost, port=mport, url_prefix=mprefix, timeout=30)
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
@@ -344,6 +371,55 @@ def gen_pg():
         response.status = 500
         print(traceback.format_exc())
         return "Fail to deploy physical graph: {0}".format(ex)
+
+
+@post("/gen_pg_spec")
+def gen_pg_spec():
+    """
+    RESTful interface to convert a PGT(P) into pg_spec
+    """
+    try:
+        pgt_id         = request.json.get("pgt_id");
+        node_list      = request.json.get("node_list");
+        manager_host   = request.json.get("manager_host");
+        # try:
+        #     manager_port   = int(request.json.get("manager_port"));
+        # except:
+        #     manager_port = None
+        # manager_prefix = request.json.get("manager_prefix");
+        print("pgt_id:" + str(pgt_id))
+        print("node_list:" + str(node_list))
+        # print("manager_port:" + str(manager_port))
+        # print("manager_prefix:" + str(manager_prefix))
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Unable to parse json body of request for pg_spec: {0}".format(ex)
+
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    if node_list is None:
+        response.status = 500
+        return "Must specify DALiUGE nodes list"
+    try:
+        # mgr_client = CompositeManagerClient(host=manager_host, port=manager_port, url_prefix=manager_prefix, timeout=30)
+        # # 1. get a list of nodes
+        # node_list = mgr_client.nodes()
+        # # 2. mapping PGTP to resources (node list)
+        pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
+        # 3. get list of root nodes
+        root_uids = common.get_roots(pg_spec)
+        response.content_type = 'application/json'
+        return json.dumps({'pg_spec':pg_spec,'root_uids':list(root_uids)})
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to generate pg_spec: {0}".format(ex)
 
 
 @get("/gen_pgt")
@@ -493,8 +569,15 @@ def save(lg_name, logical_graph):
 
 
 @get("/")
+@get("/")
 def root():
-    redirect("/lg_editor")
+    tpl = file_as_string("pg_viewer.html")
+    return template(
+        tpl,
+        pgt_view_json_name=None,
+        partition_info=None,
+        title="Physical Graph Template"
+    )
 
 
 def run(parser, args):
