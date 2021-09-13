@@ -22,6 +22,9 @@
 import os
 import pickle
 import unittest
+import time
+from psutil import cpu_count
+from multiprocessing.pool import ThreadPool
 from numpy import random, mean, array, concatenate
 
 
@@ -167,16 +170,59 @@ class TestSimpleApps(unittest.TestCase):
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
 
-    def test_listappendthrashing(self):
+    def test_listappendthrashing(self, size=1000):
         a = InMemoryDROP('a', 'a')
-        b = ListAppendThrashingApp('b', 'b', size=1000)
-        self.assertEqual(b.size, 1000)
+        b = ListAppendThrashingApp('b', 'b', size=size)
+        self.assertEqual(b.size, size)
         c = InMemoryDROP('c', 'c')
         b.addInput(a)
         b.addOutput(c)
         self._test_graph_runs((a, b, c), a, c, timeout=4)
         data_out = pickle.loads(droputils.allDropContents(c))
         self.assertEqual(b.marray, data_out)
+
+    def test_multi_listappendthrashing(self, size=1000000, parallel=True):
+        max_threads = cpu_count(logical=False)
+        drop_ids = [chr(97+x) for x in range(max_threads)]
+        threadpool = ThreadPool(processes=max_threads)
+
+        S = InMemoryDROP('S', 'S')
+        X = AverageArraysApp('X', 'X')
+        Z = InMemoryDROP('Z', 'Z')
+        drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
+
+        if parallel:
+            # a bit of magic to get the app drops using the processes
+            _ = [drop.__setattr__('_tp',threadpool) for drop in drops]
+            X.__setattr__('_tp',threadpool)
+        mdrops = [InMemoryDROP(chr(65+x),chr(65+x)) for x in range(max_threads)]
+        _ = [d.addInput(S) for d in drops]
+        _ = [d.addOutput(m) for d,m in zip(drops,mdrops)]
+        _ = [X.addInput(m) for m in mdrops]
+        X.addOutput(Z)
+        self._test_graph_runs([S,X,Z]+drops+mdrops, S, Z, timeout=20)
+        # TODO: need to check result is correct
+        #data_out = pickle.loads(droputils.allDropContents(mdrops[0]))
+        #self.assertEqual(b.marray, data_out)
+
+    def test_speedup(self):
+        """
+        Run serial and parallel test and report speedup.
+        NOTE: In order to get the stdout you need to run pyest with
+        --capture=tee-sys
+        """
+        size = 1000000
+        st = time.time()
+        self.test_multi_listappendthrashing(size=size, parallel=False)
+        t1 = time.time() - st
+        print("Starting parallel test..")
+        st = time.time()
+        self.test_multi_listappendthrashing(size=size)
+        t2 = time.time() - st
+        print(f"Speedup: {t1/t2:.2f}")
+        # TODO: This is unpredictable, but maybe we can do something meaningful.
+        self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
+
 
 
         

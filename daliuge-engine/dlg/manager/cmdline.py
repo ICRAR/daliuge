@@ -251,7 +251,7 @@ def dlgNM(parser, args):
     parser.add_option("--event-listeners", action="store", type="string",
                       dest="event_listeners", help="A colon-separated list of event listener classes to be used", default='')
     parser.add_option("-t", "--max-threads", action="store", type="int",
-                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means no pool.", default=0)
+                      dest="max_threads", help="Max thread pool size used for executing drops. 0 (default) means use all CPUs. -1 means no threads.", default=0)
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
