@@ -438,9 +438,8 @@ class DynlibProcApp(BarrierAppDROP):
             inputs,
             outputs,
         )
-        proc = multiprocessing.Process(target=_run_in_proc, args=args)
-        proc.start()
-        self.proc = proc
+        self.proc = multiprocessing.Process(target=_run_in_proc, args=args)
+        self.proc.start()
 
         try:
             steps = (
@@ -450,12 +449,12 @@ class DynlibProcApp(BarrierAppDROP):
             )
             for step in steps:
                 logger.info("Subprocess %s", step)
-                error = get_from_subprocess(proc, queue)
+                error = get_from_subprocess(self.proc, queue)
                 if error is not None:
                     logger.error("Error in sub-process when " + step)
                     raise error
         finally:
-            proc.join(self.timeout)
+            self.proc.join(self.timeout)
 
     def _get_proxy_info(self, x):
         if isinstance(x, rpc.DropProxy):
