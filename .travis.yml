@@ -45,10 +45,10 @@ matrix:
       script:
         - GIT_REPO=$(git config --get remote.origin.url) PROJECT_VERSION=$(git rev-parse --short HEAD) doxygen
       after_success:
+        - PROJECT_VERSION=$(git rev-parse --short HEAD)
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
-        - wget https://raw.githubusercontent.com/james-strauss-uwa/xml2palette/master/xml2palette.py
-        - python3 xml2palette.py -i daliuge.xml -o daliuge.palette
+        - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge.palette
         - mv daliuge.palette ../.
         - cd ..
         - rm -rf xml/
@@ -60,7 +60,7 @@ matrix:
         - rm -rf DALIUGE/
         - mv ../DALIUGE/ .
         - git add *
-        - git diff-index --quiet HEAD || git commit -m 'doxygen commit'
+        - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (DALiuGE version $PROJECT_VERSION)"
         - git push
 
     # Build documentation similarly to how RTD does

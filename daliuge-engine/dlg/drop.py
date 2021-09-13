@@ -49,7 +49,7 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -151,6 +151,10 @@ class AbstractDROP(EventFirer):
         # So far only these three are mandatory
         self._oid = str(oid)
         self._uid = str(uid)
+
+        # The physical graph drop type. This is determined
+        # by the drop category when generating the drop spec
+        self._type = self._getArg(kwargs, 'type', None)
 
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
@@ -461,7 +465,7 @@ class AbstractDROP(EventFirer):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if not isinstance(data, bytes):
+        if not isinstance(data, (bytes, memoryview)):
             raise Exception("Data type not of binary type: %s", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
@@ -603,6 +607,10 @@ class AbstractDROP(EventFirer):
         point to.
         """
         return self._uid
+
+    @property
+    def type(self):
+        return self._type
 
     @property
     def executionMode(self):
@@ -970,13 +978,15 @@ class AbstractDROP(EventFirer):
 
     def cancel(self):
         '''Moves this drop to the CANCELLED state closing any writers we opened'''
-        self._closeWriters()
-        self.status = DROPStates.CANCELLED
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            self._closeWriters()
+            self.status = DROPStates.CANCELLED
 
     def skip(self):
         '''Moves this drop to the SKIPPED state closing any writers we opened'''
-        self._closeWriters()
-        self.status = DROPStates.SKIPPED
+        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            self._closeWriters()
+            self.status = DROPStates.SKIPPED
 
     @property
     def node(self):
@@ -1237,6 +1247,11 @@ class NullDROP(AbstractDROP):
     def dataURL(self):
         return "null://"
 
+
+class EndDROP(NullDROP):
+    """
+    A DROP that ends the session when reached
+    """
 
 class RDBMSDrop(AbstractDROP):
     """
@@ -1584,10 +1599,15 @@ class AppDROP(ContainerDROP):
     def skip(self):
         '''Moves this application drop to its SKIPPED state'''
         super().skip()
+
+        prev_execStatus = self.execStatus
         self.execStatus = AppDROPStates.SKIPPED
         for o in self._outputs.values():
             o.skip()
-        self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+
+        logger.debug(f'Moving {self.__repr__()} to SKIPPED')
+        if prev_execStatus in [AppDROPStates.NOT_RUN]:
+            self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
 
 
 class InputFiredAppDROP(AppDROP):
@@ -1785,6 +1805,7 @@ class BranchAppDrop(BarrierAppDROP):
         self.outputs[1 if self.condition() else 0].skip()
         self._notifyAppIsFinished()
 
+
 class PlasmaDROP(AbstractDROP):
     '''
     A DROP that points to data stored in a Plasma Store
@@ -1805,6 +1826,35 @@ class PlasmaDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
+
+
+class PlasmaFlightDROP(AbstractDROP):
+    '''
+    A DROP that points to data stored in a Plasma Store
+    '''
+    object_id = dlg_string_param('object_id', None)
+    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
+    flight_path = dlg_string_param('flight_path', None)
+
+    def initialize(self, **kwargs):
+        object_id = self.uid
+        if len(self.uid) != 20:
+            object_id = np.random.bytes(20)
+        if self.object_id is None:
+           self.object_id = object_id
+
+    def getIO(self):
+        if isinstance(self.object_id, str):
+            object_id = plasma.ObjectID(self.object_id.encode('ascii'))
+        elif isinstance(self.object_id, bytes):
+            object_id = plasma.ObjectID(self.object_id)
+        else:
+            raise Exception("Invalid argument " + str(self.object_id) + " expected str, got" + str(type(self.object_id)))
+        return PlasmaFlightIO(object_id, self.plasma_path, flight_path=self.flight_path, size=self._expectedSize)
+
+    @property
+    def dataURL(self):
+        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
