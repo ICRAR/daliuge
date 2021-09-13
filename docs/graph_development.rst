@@ -7,7 +7,7 @@ This section describes the different ways
 users can develop graphs (either Logical or Physical)
 to work with |daliuge|.
 
-As explained in :doc:`graphs`,
+As explained in :doc:`architecture/graphs`,
 |daliuge| describes computations
 in terms of Directed Graphs.
 Two different types of graphs are used

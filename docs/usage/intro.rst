@@ -10,6 +10,6 @@ Hopefully you will be able to identify yourself with one (or more) of the four u
 * Developers who want to develop new components.
 * Developers who want to develop a new algorithm.
 
-This guide will not cover the last two user groups, since those are covered by the :ref:`development` chapter.
+This guide will not cover the last two user groups, since those are covered by the :ref:`dev_index` chapter.
 
 This guide will not cover the usage of the EAGLE editor in any more detail than required, since that is covered in the `EAGLE documentation <https://eagle-dlg.readthedocs.io>`_.
