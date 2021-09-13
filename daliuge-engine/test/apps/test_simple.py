@@ -183,7 +183,7 @@ class TestSimpleApps(unittest.TestCase):
         data_out = pickle.loads(droputils.allDropContents(c))
         self.assertEqual(b.marray, data_out)
 
-    def test_multi_listappendthrashing(self, size=1000000, parallel=True):
+    def test_multi_listappendthrashing(self, size=100000, parallel=True):
         max_threads = cpu_count(logical=False)
         drop_ids = [chr(97+x) for x in range(max_threads)]
         threadpool = ThreadPool(processes=max_threads)
@@ -214,7 +214,7 @@ class TestSimpleApps(unittest.TestCase):
         NOTE: In order to get the stdout you need to run pyest with
         --capture=tee-sys
         """
-        size = 1000000
+        size = 100000
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=False)
         t1 = time.time() - st

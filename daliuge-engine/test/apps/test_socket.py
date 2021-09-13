@@ -32,7 +32,7 @@ import os
 
 
 try:
-    from crc32c import crc32  # @UnusedImport
+    from crc32c import crc32c as crc32  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
