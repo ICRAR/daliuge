@@ -28,7 +28,7 @@ from dlg.ddap_protocol import AppDROPStates
 from ..meta import dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
 try:
-    from crc32c import crc32  # @UnusedImport
+    from crc32c import crc32c as crc32  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
