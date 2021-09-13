@@ -139,7 +139,7 @@ class NodeManagerBase(DROPManager):
             max_threads = cpu_count(logical=False)
         else:                  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
-        if max_threads:
+        if max_threads != 0:
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
 
