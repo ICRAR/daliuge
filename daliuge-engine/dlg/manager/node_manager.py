@@ -131,10 +131,12 @@ class NodeManagerBase(DROPManager):
         self._error_listener = _load(error_listener, 'on_error') if error_listener else None
         self._event_listeners = [_load(l, 'handleEvent') for l in event_listeners]
 
-        # Start our thread pool
-        if max_threads == 0:
+        # Start thread pool 
+        if max_threads == -1: # no thread pool
             self._threadpool = None
-        else:
+        elif max_threads == 0: # default use all CPU cores
+            max_threads = multiprocessing.cpu_count()
+        else:                  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)

@@ -482,6 +482,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
     size = dlg_int_param('size', 100)
     marray = []
 
+
     def initialize(self, **kwargs):
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
