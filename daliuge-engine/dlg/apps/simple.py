@@ -275,8 +275,15 @@ class AverageArraysApp(BarrierAppDROP):
         if len(ins) < 1:
             raise Exception(
                 'At least one input should have been added to %r' % self)
-
-        marray = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
+        marray = []
+        for inp in ins:
+            sarray = droputils.allDropContents(inp)
+            if len(sarray) == 0:
+                print(f"Input does not contain data!")
+            else:
+                sarray = pickle.loads(sarray)
+                print(f"Input has {len(sarray)} elements and id {id(sarray)}!")
+                marray.append(sarray)
         self.marray = marray
 
 
@@ -473,17 +480,18 @@ class ListAppendThrashingApp(BarrierAppDROP):
 
     size:     int, number of array elements
     """
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
+    compontent_meta = dlg_component('ListAppendThrashingApp', 'List Append Thrashing',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
     # default values
-    size = dlg_int_param('size', 100)
-    marray = []
+#    size = dlg_int_param('size', 100)
 
 
     def initialize(self, **kwargs):
+        self.size = self._getArg(kwargs, 'size', 100)
+        self.marray = []
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
     def run(self):
@@ -492,15 +500,17 @@ class ListAppendThrashingApp(BarrierAppDROP):
         if len(outs) < 1:
             raise Exception(
                 'At least one output should have been added to %r' % self)
-        self.generateArray()
+        self.marray = self.generateArray()
         for o in outs:
             d = pickle.dumps(self.marray)
             o.len = len(d)
             o.write(pickle.dumps(self.marray))
 
     def generateArray(self):
+        marray = []
         for i in range(int(self.size)):
-            self.marray.append(random.random())
+            marray.append(random.random())
+        return marray
 
     def _getArray(self):
         return self.marray
