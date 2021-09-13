@@ -27,6 +27,7 @@ thus represents the bottom of the DROP management hierarchy.
 import abc
 import collections
 import logging
+from psutil import cpu_count
 import multiprocessing.pool
 import os
 import queue
@@ -132,14 +133,16 @@ class NodeManagerBase(DROPManager):
         self._event_listeners = [_load(l, 'handleEvent') for l in event_listeners]
 
         # Start thread pool 
-        if max_threads == -1: # no thread pool
+        if max_threads == 0: # no thread pool
             self._threadpool = None
-        elif max_threads == 0: # default use all CPU cores
-            max_threads = multiprocessing.cpu_count()
+        elif max_threads == -1: # default use all CPU cores
+            max_threads = cpu_count(logical=False)
         else:                  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
+        if max_threads:
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
