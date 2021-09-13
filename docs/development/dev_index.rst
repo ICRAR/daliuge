@@ -16,6 +16,7 @@ Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to th
  :maxdepth: 2
 
  dev_intro
+ app_development
  bash_components
  python_components
  python_function_components
@@ -26,6 +27,7 @@ Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to th
  test_and_debug
  eagle_integration
  deployment_testing
+ data_development
 
 Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
 
