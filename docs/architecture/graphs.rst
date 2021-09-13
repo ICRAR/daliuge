@@ -11,7 +11,7 @@ workflow without being concerned about the underlying hardware resources. Logica
 
 .. _graphs.figs.scatter:
 
-.. figure:: images/scatter_example.png
+.. figure:: ../images/scatter_example.png
 
    An example of a |lg| with various types of data components as well as simple and complex application components. The graph uses two types of data components, *File* and *Memory*, depicted by respective icons. The titles shown with the icons, e.g. MeasurementSet, buffer, SubCube and Stats, refer to the actual content of those data components. There are two simple application components used in this graph, both are refering to the same application called *Clean*. In addition there are four complex components, one scatter construct (ms-transform) and three gather constructs (ImageConcat, CubeConcat and StatsGather). This example can be viewed
    `online <https://eagle.icrar.org/?service=GitHub&repository=ICRAR/EAGLE_test_repo&branch=master&path=.&filename=eagle_gather_simple.graph>`_ in EAGLE. (Note: this requires that you have setup EAGLE with a valid gitHUB access token, see `EAGLE help <https://eagle.icrar.org/static/docs/build/html/helloWorld.html#saving-a-graph-to-github>`_)
@@ -76,7 +76,7 @@ the following flow constructs:
 
   .. _graphs.figs.loop:
 
-  .. figure:: images/loop_example.png
+  .. figure:: ../images/loop_example.png
 
      A nested-Loop (outer and inner) example of |lg| for
      a continuous imaging pipeline. This example can be `viewed online <https://eagle.icrar.org/?service=GitHub&repository=ICRAR/EAGLE_test_repo&branch=master&path=loop&filename=nested_loop.graph>`_ in |daliuge|.
@@ -109,7 +109,7 @@ Translation
 While a |lg| provides a compact way to express complex processing logic,
 the complex components or constructs are not directly usable
 by the underlying graph execution engine and Drop managers. To achieve that,
-|lgs| are translated into |pgs|. The translation process makes the parallelism explicit and unrolls loops and creates all Drop descriptions. Drops are essentially instances of the components. It is implemented in the :doc:`api/dropmake` module.
+|lgs| are translated into |pgs|. The translation process makes the parallelism explicit and unrolls loops and creates all Drop descriptions. Drops are essentially instances of the components. It is implemented in the :doc:`../api/dropmake` module.
 
 Basic steps
 """""""""""
