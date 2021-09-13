@@ -28,6 +28,7 @@ import logging
 import os
 import threading
 import time
+from overrides import overrides
 
 from configobj import ConfigObj
 import docker
@@ -218,6 +219,11 @@ class DockerApp(BarrierAppDROP):
         # handle, but for the time being we do it here
         self._removeContainer = self._getArg(kwargs, 'removeContainer', True)
 
+        # Ports - a comma seperated list of the host port mappings of form:
+        # "hostport1:containerport1, hostport2:containerport2"
+        self._portMappings = self._getArg(kwargs, 'portMappings', "")
+        logger.info(f"portMappings: {self._portMappings}")
+
         # Additional volume bindings can be specified for existing files/dirs
         # on the host system. They are given either as a list or as a
         # comma-separated string
@@ -315,6 +321,20 @@ class DockerApp(BarrierAppDROP):
         binds = list(set(binds))   # make this a unique list else docker complains
         logger.debug("Volume bindings: %r", binds)
 
+        portMappings = {}
+        for mapping in self._portMappings.split(','):
+            if mapping:
+                if mapping.find(':') == -1:
+                    host_port = container_port = mapping
+                else:
+                    host_port, container_port = mapping.split(':')
+                if host_port not in portMappings:
+                    logger.debug(f"mapping port {host_port} -> {container_port}")
+                    portMappings[host_port] = int(container_port)
+                else:
+                    raise Exception(f"Duplicate port {host_port} in container port mappings")
+        logger.debug(f"port mappings: {portMappings}")
+
         # Wait until the DockerApps this application runtime depends on have
         # started, and replace their IP placeholders by the real IPs
         for waiter in self._waiters:
@@ -350,27 +370,25 @@ class DockerApp(BarrierAppDROP):
 
         c = DockerApp._get_client()
 
-        # Remove the container unless it's specified that we should keep it
-        # (used below)
-        def rm(container):
-            if self._removeContainer:
-                container.remove()
-
         # Create container
-        container = c.containers.create(
+        self.container = c.containers.create(
                 self._image,
                 cmd,
                 volumes=binds,
+                ports=portMappings,
                 user=user,
                 environment=env,
-                working_dir=self.workdir
+                working_dir=self.workdir,
+                init=True,
+                auto_remove=self._removeContainer
         )
-        self._containerId = cId = container.id
+        self._containerId = cId = self.container.id
         logger.info("Created container %s for %r", cId, self)
+        logger.debug(f"autoremove container {self._removeContainer}")
 
         # Start it
         start = time.time()
-        container.start()
+        self.container.start()
         logger.info("Started container %s", cId)
 
         # Figure out the container's IP and save it
@@ -380,10 +398,14 @@ class DockerApp(BarrierAppDROP):
         logger.debug("Docker inspection: %r", inspection)
         self.containerIp = inspection['NetworkSettings']['IPAddress']
 
+        # Capture output
+        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
+        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
+
         # Wait until it finishes
         # In docker-py < 3 the .wait() method returns the exit code directly
         # In docker-py >= 3 the .wait() method returns a dictionary with the API response
-        x = container.wait()
+        x = self.container.wait()
         if isinstance(x, dict) and 'StatusCode' in x:
             self._exitCode = x['StatusCode']
         else:
@@ -393,19 +415,38 @@ class DockerApp(BarrierAppDROP):
         logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            stdout = container.logs(stream=False, stdout=True, stderr=False)
-            stderr = container.logs(stream=False, stdout=False, stderr=True)
             logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
         elif self._exitCode != 0:
-            stdout = container.logs(stream=False, stdout=True, stderr=False)
-            stderr = container.logs(stream=False, stdout=False, stderr=True)
             msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
-            logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
-            rm(container)
-            raise Exception(msg)
 
-        rm(container)
+            if self._exitCode == 137 or self._exitCode == 139 or self._exitCode == 143:
+                # termination via SIGKILL, SIGSEGV, and SIGTERM is expected for some services
+                logger.warning(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+            else:
+                logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+                raise Exception(msg)
+
         c.api.close()
+
+    @overrides
+    def setCompleted(self):
+        super(BarrierAppDROP, self).setCompleted()
+        self.container.stop()
+
+    @overrides
+    def setError(self):
+        super(BarrierAppDROP, self).setError()
+        self.container.stop()
+
+    @overrides
+    def cancel(self):
+        super(BarrierAppDROP, self).cancel()
+        self.container.stop()
+
+    @overrides
+    def skip(self):
+        super(BarrierAppDROP, self).skip()
+        self.container.stop()
 
     @classmethod
     def _get_client(cls):

@@ -102,6 +102,7 @@ class DynlibAppTest(unittest.TestCase):
         """Checks that we can cancel a long-running dynlib proc app"""
 
         a = DynlibProcApp("a", "a", lib=_libpath, sleep_seconds=10)
+        a._rpc_server = True
         with droputils.DROPWaiterCtx(self, (), timeout=0):
             a.async_execute()
 

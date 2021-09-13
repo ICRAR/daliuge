@@ -123,8 +123,8 @@ function getRender() {
 
 function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
+	// console.log("Inside loadSessions");
 	refreshBtn.attr('disabled');
-
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
@@ -152,6 +152,11 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		return "cancelBtn" + hashCode(s);
 	};
 
+	var deleteBtnSessionId = function(s) {
+		// console.log(hashCode(s))
+		return "deleteBtn" + hashCode(s);
+	};
+
 	var hashCode = function(s){
 		return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
 	}
@@ -173,7 +178,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		rows.exit().transition().delay(0).duration(500).style('opacity',0.0).remove();
 		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0);
 
-		fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, hashCode);
+		fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, deleteBtnSessionId, hashCode);
 		//progressbars in dim
 
 		const width = $('#sessionsTable').find('.status').innerWidth();
@@ -229,15 +234,22 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 			if(currentStatus==="Cancelled"){
 				$(this).css("color","grey");
-				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
 				$(this).parent().removeClass("progressRunning")
 			}else if(currentStatus==="Deploying"){
 				$(this).css("color","blue");
 				$(this).parent().removeClass("progressRunning")
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",true)
 			}
 			else if (currentStatus==="Running") {
 				$(this).text("");
-				$(this).parent().find(".actions").find("button").show();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",true)
 				$(this).append("<svg>")
 				if(!$(this).parent().hasClass('progressRunning')){
 					startStatusQuery(serverUrl, $(this).parent().find(".id").text(), selectedNode, graph_update_handler,
@@ -246,10 +258,21 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				}
 			}else if (currentStatus==="Finished"){
 				$(this).css("color","#00af28");
-				$(this).parent().find(".actions").find("button").hide();
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
+				$(this).parent().removeClass("progressRunning")
+			}else if (currentStatus==="Pristine"){
+				$(this).css("color","#b93a46");
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",true)
 				$(this).parent().removeClass("progressRunning")
 			}else{
 				$(this).css("color","purple");
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled",true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled",false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled",false)
 				$(this).parent().removeClass("progressRunning")
 			}
 		})
@@ -266,7 +289,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	});
 }
 
-function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, hashCode){
+function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, deleteBtnSessionId, hashCode){
 	var rows = tbodyEl.selectAll('tr').data(sessions);
 	var idCells = rows.selectAll('td.id').data(function values(s) { return [s.sessionId]; });
 	idCells.enter().append('td').classed('id', true).text(String)
@@ -294,26 +317,60 @@ function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSe
 
 	var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
 	actionCells.enter().append('td').classed('actions', true)
+	// .html('<button id="'+cancelBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">cancel</button>')
+	// .html('<button id="'+deleteBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">delete</button>')
 		.append("button").attr('id', cancelBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary').attr('onclick', '(cancel_session(serverUrl,"false",this.id))').text('Cancel')
-	actionCells.select('button')
+		.attr("type", 'button').attr('class', 'btn btn-secondary cancelSession fa fa-ban').attr('onclick', '(cancel_session(serverUrl,"false",this.id))')
+		.attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','cancel ongoing session')
+		.select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+		.attr('id', deleteBtnSessionId)
+		.attr("type", 'button').attr('class', 'btn btn-secondary deleteSession fa fa-trash').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
+		.attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','Delete session')
+		//log button ready for linking
+		// .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+		// .attr('id', "logs")
+		// .attr("type", 'button').attr('class', 'btn btn-secondary sessionLogs fa fa-file-text').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
+		// .attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','Show session logs')
+	actionCells.selectAll('button')
 	actionCells.exit().remove()
+
+
+$("button").tooltip({
+
+	boundary: 'window',
+	trigger : 'hover',
+	delay: { "show": 800, "hide": 100 }
+});
 }
+
+function handleFetchErrors(response) {
+    if (!response.ok) {
+        throw Error(response.statusText);
+    }
+    return response;
+}
+
 function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 	bootbox.prompt("Session ID", function(sessionId) {
 		if( sessionId == null ) {
 			return;
 		}
-		var xhr = d3.xhr(serverUrl + '/api/sessions');
-		xhr.header("Content-Type", "application/json");
-		xhr.post(JSON.stringify({sessionId: sessionId}), function(error, data) {
-			if( error != null ) {
-				console.error(error)
-				bootbox.alert('An error occurred while creating session ' + sessionId + ': ' + error.responseText)
-				return
-			}
-			loadSessions(serverUrl, tbodyEl, refreshBtn, null)
-		});
+		fetch(serverUrl + '/api/sessions', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({sessionId: sessionId})
+		})
+		.then(handleFetchErrors)
+		.then(function(response){
+				response => response.json()
+				loadSessions(serverUrl, tbodyEl, refreshBtn, null)
+		})
+		.catch(function(error){
+			console.error(error)
+			bootbox.alert('An error occurred while creating session ' + sessionId + ': ' + error.responseText)
+			return});
 	});
 }
 
@@ -595,6 +652,16 @@ function does_status_allow_cancel(status) {
     }
 }
 
+function sessionId_from_buttonId(buttonId) {
+	//getting session id from sibling in table using js
+	button = "#"+buttonId
+	sessionId = $(button).parent().parent().find("td.details").find('a').attr("href")
+	sessionId = sessionId.split("=")
+	sessionId = sessionId[1].split("&")
+	sessionId = sessionId[0]
+	return sessionId
+}
+
 /**
  * Cancel the given sessionId using the provided information.
  *
@@ -607,10 +674,7 @@ function cancel_session(serverUrl,sessionId, buttonId) {
 	if (sessionId === "false"){
 		//getting session id from sibling in table using js
 		button = "#"+buttonId
-		sessionId = $(button).parent().parent().find("td.details").find('a').attr("href")
-		sessionId = sessionId.split("=")
-		sessionId = sessionId[1].split("&")
-		sessionId = sessionId[0]
+		sessionId = sessionId_from_buttonId(buttonId)
 		cancelSessionBtn = $(button)
 	}else{
 		cancelSessionBtn = buttonId
@@ -621,7 +685,7 @@ function cancel_session(serverUrl,sessionId, buttonId) {
 
 	d3.json(url).then( function(sessionInfo, error) {
 
-        if (error) {
+		if (error) {
             //bootbox.alert(error);
             console.error(error);
             return;
@@ -655,6 +719,65 @@ function cancel_session(serverUrl,sessionId, buttonId) {
         } else {
             // display an error
             bootbox.alert("Can't cancel " + sessionId + " unless it is RUNNING.");
+        }
+    })
+}
+
+/**
+ * Delete the given sessionId using the provided information.
+ *
+ * @param serverUrl to use for the REST API
+ * @param sessionId to delete
+ * @param deleteSessionBtn that initiated the delete
+ */
+//  function delete_session(serverUrl, sessionId, deleteSessionBtn) {
+function delete_session(serverUrl,sessionId, buttonId) {
+	if (sessionId === "false"){
+		//getting session id from sibling in table using js
+		button = "#"+buttonId
+		sessionId = sessionId_from_buttonId(buttonId)
+		deleteSessionBtn = $(button)
+	}else{
+		deleteSessionBtn = buttonId
+	}
+	
+    var url = serverUrl + '/api';
+    url += '/sessions/' + sessionId;
+
+	d3.json(url).then( function(sessionInfo, error) {
+
+		if (error) {
+            //bootbox.alert(error);
+            console.error(error);
+            return;
+        }
+
+        if (!does_status_allow_cancel(sessionInfo['status'])) {
+			bootbox.confirm("Do you really want to delete this session?", function(result){ 
+				if (result){
+
+					deleteSessionBtn.attr('disabled', null);
+
+					d3.json(url, {
+						method: 'DELETE',
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						},
+						body: JSON.stringify(function (response, error) {
+							// We don't expect a response so ignoring it.
+			
+							if( error ) {
+								console.log(response)
+								console.error(error)
+								return
+							}	
+						})
+					});
+				}
+			});
+        } else {
+            // display an error
+            bootbox.alert("Can't delete " + sessionId + "! It is still RUNNING.");
         }
     })
 }
