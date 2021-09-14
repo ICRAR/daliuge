@@ -31,15 +31,15 @@ C/C++
   * \param gitrepo $(GIT_REPO)
   * \param version $(PROJECT_VERSION)
   * \param category DynlibApp
-  * \param[in] param/start_frequency/500/Integer
+  * \param[in] param/start_frequency/500/Integer/readwrite
   *     \~English the start frequency to read from\n
   *     \~Chinese 要读取的起始频率\n
   *     \~
-  * \param[in] param/end_frequency/500/Integer
+  * \param[in] param/end_frequency/500/Integer/readwrite
   *     \~English the end frequency to read from\n
   *     \~Chinese 要读取的结束频率\n
   *     \~
-  * \param[in] param/channels/64/Integer
+  * \param[in] param/channels/64/Integer/readonly
   *     \~English how many channels to load\n
   *     \~Chinese 需要加载的通道数量\n
   *     \~
@@ -70,15 +70,15 @@ Python
   # @param gitrepo $(GIT_REPO)
   # @param version $(PROJECT_VERSION)
   # @param category PythonApp
-  # @param[in] param/start_frequency/500/Integer
+  # @param[in] param/start_frequency/500/Integer/readwrite
   #     \~English the start frequency to read from\n
   #     \~Chinese 要读取的起始频率\n
   #     \~
-  # @param[in] param/end_frequency/500/Integer
+  # @param[in] param/end_frequency/500/Integer/readwrite
   #     \~English the end frequency to read from\n
   #     \~Chinese 要读取的结束频率\n
   #     \~
-  # @param[in] param/channels/64/Integer
+  # @param[in] param/channels/64/Integer/readonly
   #     \~English how many channels to load\n
   #     \~Chinese 需要加载的通道数量\n
   #     \~
