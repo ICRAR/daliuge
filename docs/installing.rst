@@ -65,44 +65,30 @@ installed on the system:
 * boost-devel
 * gcc >= 4.8
 
-Installing
-^^^^^^^^^^
+Installing into host Python
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-|daliuge| requires python 3.7 or later.
+NOTE: |daliuge| requires python 3.7 or later. It is always recommended to install |daliuge| inside a python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning. Thus first run::
 
-|daliuge| is based on setuptools, and thus it follows the standard python installation
-procedures.
-The preferred way of installing the latest stable version of |daliuge|
-is by using ``pip``::
+  pip install --uprgade pip
 
- pip install --process-dependency-links daliuge
-
-If you want to build from the latest sources you can get them from here::
+|daliuge| is under heavy development and we are not regularily updating the version on PyPi right now. The currently best way to get going is to install and build from the latest sources which you can get them from here::
 
  git clone https://github.com/ICRAR/daliuge
  cd daliuge
 
-If a system-wide installation is required, then the following
-commands can be issued::
+Like for the docker installation the local installation also follows the same pattern.
+First install the daliuge-common part::
 
- sudo pip --process-dependency-links install .
+ cd daliuge-common && pip install -e .
 
-If ``pip`` is not available, you can also use a different approach with::
+then install the daliuge-engine::
 
- python setup.py build
- sudo python setup.py install
+ cd ../daliuge-engine && pip install -e .
 
-If a virtualenv is loaded, then |daliuge| can be installed on it by simply running::
+and finally, if required also install the daliuge-translator::
 
- pip install --process-dependency-links .
-
-Again, if ``pip`` is not available, you can use the simpler form::
-
- python setup.py install
-
-There is a known issue in some systems
-when installing the ``python-daemon`` dependency,
-which **needs** to be installed via ``pip``.
+ cd ../daliuge-translator && pip install -e .
 
 Porting from |daliuge| 0.X
 --------------------------
