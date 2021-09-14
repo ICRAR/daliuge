@@ -70,7 +70,7 @@ Installing into host Python
 
 NOTE: |daliuge| requires python 3.7 or later. It is always recommended to install |daliuge| inside a python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning. Thus first run::
 
-  pip install --uprgade pip
+  pip install --upgrade pip
 
 |daliuge| is under heavy development and we are not regularily updating the version on PyPi right now. The currently best way to get going is to install and build from the latest sources which you can get them from here::
 
