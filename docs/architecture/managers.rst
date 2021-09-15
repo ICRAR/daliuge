@@ -52,7 +52,7 @@ running the system.
 The Node Drop Manager works mainly as a collection of sessions that are created,
 populated and run. Whenever a graph is received, it checks that it's valid
 before accepting it, but delays the creation of the Drops until deployment time.
-Once the Drops are created, the Node Drop Manager exposes them via Pyro to allow
+Once the Drops are created, the Node Drop Manager exposes them via a proxy to allow
 remote method executions on them.
 
 Data Island Drop Manager
@@ -68,7 +68,7 @@ When receiving a physical graph, the Data Island Drop Manager will first check
 that the nodes of the graph contain all the necessary information to route them
 to the correct Node Drop Managers. At deployment time it will also make sure that
 the inter-node Drop relationships (which are invisible from the Node Drop
-Managers' point of view) are satisfied by obtaining Drop Pyro proxies and
+Managers' point of view) are satisfied by obtaining Drop proxies (using remote procedure calls) and
 linking them correspondingly.
 
 Master Drop Manager
