@@ -27,7 +27,6 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  architecture/index
  deployment
  graph_development
- examples
  development/dev_index
  usage/index
  api-index
