@@ -1,7 +1,7 @@
 Data Lifecycle Manager
 ----------------------
 
-As mentioned in :ref:`intro` and :ref:`dataflow.datadriven` |daliuge| also integrates
+As mentioned in :ref:`intro` and :ref:`dataflow.data-activated` |daliuge| also integrates
 a data lifecycle management within the data processing framework. Its purpose is
 to make sure the data is dealt with correctly in terms of storage, taking into
 account how and when it is used. This includes, for instance, placing medium-

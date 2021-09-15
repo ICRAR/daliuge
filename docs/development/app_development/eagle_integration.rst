@@ -1,13 +1,13 @@
 .. _eagle_integration:
 
-Automatic EAGLE Component Description Generation
-------------------------------------------------
+Automatic EAGLE Palette Generation
+----------------------------------
 
-In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system includes a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom
+In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom
 `Doxygen <https://www.doxygen.nl/>`_ comments to the source code.
 These comments describe the application and can
-be used to automatically generate a DALiuGE component so that the
-application can be used in the *EAGLE* Logical Graph Editor.
+be used to automatically generate a JSON DALiuGE component description
+which can be used in the *EAGLE* Logical Graph Editor.
 
 The comments should be contained within a *EAGLE_START* and *EAGLE_END*
 pair.
@@ -103,5 +103,5 @@ a continuous integration step can then use the tools provided by the |daliuge| s
 The processing will:
 
 * combine the Doxygen output XML into a single XML file
-* transform the XML into an EAGLE palette file
-* push the palette file to the *ICRAR/EAGLE_test_repo* repository.
+* transform the XML into an EAGLE palette file (JSON)
+* push the palette file to a GitHub/GitLab repository (optional).
