@@ -4,14 +4,14 @@ Graph development
 .. default-domain:: py
 
 This section describes the different ways
-users can develop graphs (either Logical or Physical)
+users can develop workflows (either Logical or Physical)
 to work with |daliuge|.
 
 As explained in :doc:`architecture/graphs`,
 |daliuge| describes computations
 in terms of Directed Graphs.
-Two different types of graphs are used
-throughout application development:
+Two different classes of graphs are used
+in the |daliuge| workflow development:
 
   * *Logical Graphs*, a high-level, compact representation
     of the application logic. Logical Graphs are directed graphs, but not acyclic.
@@ -57,7 +57,7 @@ it can be partitioned and mapped
 either via the |daliuge| utilities,
 or by the user directly.
 Finally, the Physical Graph can be sent
-to one of the Drop Managers
+to a Drop Island Manager
 for execution.
 
 .. _graph_dev.delayed:
