@@ -171,6 +171,7 @@ setup(
             "web/static/fonts/*",
             "web/static/js/*.js",
             "web/static/js/d3/*",
+            "web/static/icons/*",
         ],
         "dlg.dropmake": [
             "web/lg_editor.html",
@@ -182,6 +183,7 @@ setup(
             "web/pg_viewer.html",
             "web/matrix_vis.html",
             "lib/libmetis.*",
+            "web/static/icons/*",
         ],
         "test.dropmake": ["logical_graphs/*.json"],
         "test.apps": ["dynlib_example.c", "dynlib_example2.c"],

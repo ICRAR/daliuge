@@ -29,13 +29,13 @@ formalism to describe parallel computation, early efforts in developing
 had to introduce control flow operators (e.g.  switch and merge) and data
 storage mechanism in order to put dataflow models into practice.
 
-.. _dataflow.datadriven:
+.. _dataflow.data-activated:
 
-Data-driven
-^^^^^^^^^^^
+Data-activated
+^^^^^^^^^^^^^^
 In developing |daliuge|, we have extended the "traditional" dataflow
 model by integrating data lifecycle management, graph execution engine, and
-cost-optimal resource allocation into a coherent data-driven framework.
+cost-optimal resource allocation into a coherent *data-activated* framework.
 Concretely, we have made the following changes to the existing dataflow model:
 
 * Unlike traditional dataflow models that characterise data as "tokens" moving
@@ -52,7 +52,7 @@ Concretely, we have made the following changes to the existing dataflow model:
   after restart, etc., but also enables data sharing amongst multiple processing
   pipelines in situations like re-processing or commensal observations.
   All the state information is kept in the Drop wrapper, while the payload of the
-  Drops, i.e. pipeline component algorithms and data, are stateless.
+  Drops, i.e. pipeline component algorithms and data, remain stateless.
 
 * We introduced a small number of control flow graph nodes at the logical level
   such as *Scatter*, *Gather*, *GroupBy*, *Loop*, etc. These additional control
@@ -62,7 +62,7 @@ Concretely, we have made the following changes to the existing dataflow model:
   ordinary Drops at the physical level. Thus they are nearly transparent to the
   underlying graph/dataflow execution engine, which focuses solely on exploring
   parallelisms orthogonal to these control nodes placed by applications. In this
-  way, the Data-Driven framework enjoys the best from both worlds - expressivity
+  way, the data-activated framework enjoys the best from both worlds - expressivity
   at the application level and flexibility at the dataflow system level.
 
 * Finally, we differentiate between two kinds of dataflow graphs - **Logical Graph** and
