@@ -41,7 +41,7 @@ all events sent by all Drops and make use of them.
 Relationships
 ^^^^^^^^^^^^^
 
-Drops are connected between them and create a graph representing an execution
+Drops are connected and create a dependency graph representing an execution
 plan, where inputs and outputs are connected to applications, establishing the
 following possible relationships:
 
@@ -79,7 +79,7 @@ responsibility of the application to ensure that the I/O is occurring in the
 correct location and using the expected format for storage or subsequent
 upstream processing by other application Drops.
 
-|daliuge| provides various commonly used data Drops with their associated I/O
+|daliuge| provides various commonly used :ref:`data components <data_index>` with their associated I/O
 storage classes, including in-memory, file-base and S3 storages.
 
 .. _drop.channels:
