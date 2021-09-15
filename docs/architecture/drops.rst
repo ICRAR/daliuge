@@ -87,7 +87,9 @@ storage classes, including in-memory, file-base and S3 storages.
 Drop Channels
 ^^^^^^^^^^^^^
 
-Drops that are connected by an edge in a physical graph but are deployed on separate nodes or islands from each other are automatically given a Pyro stub (remote method invocation interface) to allow them to communicate with each other. It's the job of the Master Drop and Island Managers to generate and exchange stubs between Drop instances before the graph is deployed to the various data islands and nodes within islands respectively. If there is no Drop separation within a physical graph partition then its implied that the Drops are going to be executed within a single address space, as a result, basic method calls are used between Drop instances.
+In a |daliuge| workflow one application drop produces the data of a data drop, which in turn is consumed by another applicaiton drop. That means that data drops are essentially providing the data transfer methods between applications. The |daliuge| translator tries to minimise data movement and thus in many cases no transfer is actually happening, but the data drop transfers to COMPLETED state once it has received all data and passes that event on to the consumer application(s). The consumer applications in turn will use the provided read method to access the data directly.
+
+In cases when data drops are accessed from separate nodes or islands the managers automatically produce a drop proxy on the remote nodes providing a remote method invocation (RMI) interface to allow the producers or consumers to execute the required I/O methods. It's the job of the Master Drop and Island Managers to generate and exchange these proxies and connect them to the correct Drop instances when the graph is deployed to potentially multiple data islands and nodes. If there is no Drop separation within a physical graph partition then its implied that the Drops are going to be executed within a single address space, and, as a result, basic method calls are used between Drop instances.
 
 
 .. _drop.component.iface:
