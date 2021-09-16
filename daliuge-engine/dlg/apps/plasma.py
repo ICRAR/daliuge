@@ -127,7 +127,7 @@ class MSStreamingPlasmaConsumer(AppDROP):
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path Plasma Path//String/readwrite
+# @param[in] param/plasma_path Plasma Path//String/readwrite/
 #     \~English Path to plasma store
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
 #     \~English Application class
