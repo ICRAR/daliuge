@@ -170,21 +170,24 @@ def create_palette_node_from_params(params):
         elif key == "text":
             text = value
         elif key == "description":
-            if "\n" in value:
-                print("description (" + value + ") contains a newline character, removing.")
-                value = value.replace("\n", " ")
-            description = parse_description(value)
+            description = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_param_key(key)
             (name, default_value, type, access) = parse_param_value(value)
+
+            # parse desscription
+            if "\n" in value:
+                print("description (" + value + ") contains a newline character, removing.")
+                value = value.replace("\n", " ")
+            param_description = parse_description(value)
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 print("ERROR: Unknown access: " + access)
 
             # add a field
-            fields.append(create_field(internal_name, name, default_value, value, access, type))
+            fields.append(create_field(internal_name, name, default_value, param_description, access, type))
             pass
         elif key.startswith("port/"):
             # parse the port into data
