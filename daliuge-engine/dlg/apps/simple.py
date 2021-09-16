@@ -48,7 +48,7 @@ class NullBarrierApp(BarrierAppDROP):
 
 
 ##
-# @brief SleepApp\n
+# @brief SleepApp
 # @details A simple APP that sleeps the specified amount of time (0 by default).
 # This is mainly useful (and used) to test graph translation and structure
 # without executing real algorithms. Very useful for debugging.
@@ -79,7 +79,7 @@ class SleepApp(BarrierAppDROP):
 
 
 ##
-# @brief CopyApp\n
+# @brief CopyApp
 # @details A simple APP that copies its inputs into its outputs.
 # All inputs are copied into all outputs in the order they were declared in
 # the graph. If an input is a container (e.g. a directory) it copies the
@@ -89,7 +89,7 @@ class SleepApp(BarrierAppDROP):
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
-#     \~English Application class\n
+#     \~English Application class
 
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
@@ -128,7 +128,7 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 
 
 ##
-# @brief RandomArrayApp\n
+# @brief RandomArrayApp
 # @details A testing APP that does not take any input and produces a random array of
 # type int64, if integer is set to True, else of type float64.
 # size indicates the number of elements ranging between the values low and high.
@@ -206,7 +206,7 @@ class RandomArrayApp(BarrierAppDROP):
 
 
 ##
-# @brief AverageArrays\n
+# @brief AverageArrays
 # @details A testing APP that takes multiple numpy arrays on input and calculates
 # the mean or the median, depending on the value provided in the method parameter.
 # Users can add as many producers to the input array port as required and the resulting array
@@ -285,7 +285,7 @@ class AverageArraysApp(BarrierAppDROP):
         return method_to_call(self.marray, axis=0)
 
 ##
-# @brief HelloWorldApp\n
+# @brief HelloWorldApp
 # @details A simple APP that implements the standard Hello World in DALiuGE.
 # It allows to change 'World' with some other string and it also permits
 # to connect the single output port to multiple sinks, which will all receive
@@ -375,7 +375,7 @@ class UrlRetrieveApp(BarrierAppDROP):
             o.write(content)  # send content to all outputs
 
 ##
-# @brief GenericScatterApp\n
+# @brief GenericScatterApp
 # @details An APP that splits about any object that can be converted to a numpy array
 # into as many parts as the app has outputs, provided that the initially converted numpy
 # array has enough elements. The return will be a numpy array of arrays, where the first
@@ -386,7 +386,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.simple.GenericSplitApp/String/readonly/
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
 #     \~English Application class
 # @param[out] port/content
 #     \~English The port carrying the content read from the URL.
