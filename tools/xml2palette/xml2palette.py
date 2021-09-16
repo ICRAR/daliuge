@@ -176,7 +176,7 @@ def create_palette_node_from_params(params):
 
             # parse desscription
             if "\n" in value:
-                print("description (" + value + ") contains a newline character, removing.")
+                print("param description (" + value + ") contains a newline character, removing.")
                 value = value.replace("\n", " ")
             param_description = parse_description(value).strip()
 
@@ -191,7 +191,7 @@ def create_palette_node_from_params(params):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
-                print("port (" + name + ") has no 'type' descriptor, using default (Unknown) : " + key)
+                print("port " + name + " on " + text + " component has no 'type' descriptor, using default (Unknown) : " + key)
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
