@@ -43,20 +43,19 @@ logger = logging.getLogger(__name__)
 
 
 ##
-# @brief MSStreamingPlasmaConsumer\n
+# @brief MSStreamingPlasmaConsumer
 # @details Stream Measurement Set one correlator timestep at a time
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path/plasma_path//String/readwrite
-#     \~English Path to plasma store.\n
-#     \~\
+# @param[in] param/plasma_path Plasma Path//String/readwrite/
+#     \~English Path to plasma store.
+# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/
+#     \~English Application class
 # @param[in] port/plasma_ms_input
-#     \~English Plasma MS input\n
-#     \~
+#     \~English Plasma MS input
 # @param[out] port/output_file
-#     \~English MS output file\n
-#     \~
+#     \~English MS output file
 # @par EAGLE_END
 class MSStreamingPlasmaConsumer(AppDROP):
     compontent_meta = dlg_component('MSStreamingPlasmaConsumer', 'MS Plasma Consumer',
@@ -123,20 +122,19 @@ class MSStreamingPlasmaConsumer(AppDROP):
 
 
 ##
-# @brief MSStreamingPlasmaProducer\n
+# @brief MSStreamingPlasmaProducer
 # @details Stream Measurement Set one correlator timestep at a time
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path/plasma_path//String/readwrite
-#     \~English Path to plasma store.\n
-#     \~
+# @param[in] param/plasma_path Plasma Path//String/readwrite
+#     \~English Path to plasma store
+# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
+#     \~English Application class
 # @param[in] port/input_file
-#     \~English MS input file\n
-#     \~
+#     \~English MS input file
 # @param[out] port/plasma_ms_output
-#     \~English Plasma MS output\n
-#     \~
+#     \~English Plasma MS output
 # @par EAGLE_END
 class MSStreamingPlasmaProducer(BarrierAppDROP):
     compontent_meta = dlg_component('MSStreamingPlasmaProducer', 'MS Plasma Producer',
@@ -190,16 +188,16 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 
 
 ##
-# @brief MSPlasmaReader\n
+# @brief MSPlasmaReader
 # @details Batch read entire Measurement Set from Plasma.
 # @par EAGLE_START
 # @param category PythonApp
+# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/
+#     \~English Application class
 # @param[in] port/plasma_ms_input
-#     \~English Plasma MS store input\n
-#     \~
+#     \~English Plasma MS store input
 # @param[out] port/output_ms
-#     \~English Output MS file\n
-#     \~
+#     \~English Output MS file
 # @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
 
@@ -253,16 +251,16 @@ class MSPlasmaReader(BarrierAppDROP):
 
 
 ##
-# @brief MSPlasmaWriter\n
-# @details Batch write entire Measurement Set to Plamsa.
+# @brief MSPlasmaWriter
+# @details Batch write entire Measurement Set to Plasma.
 # @par EAGLE_START
 # @param category PythonApp
+# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/
+#     \~English Application class
 # @param[in] port/input_ms
-#     \~English Input MS file\n
-#     \~
+#     \~English Input MS file
 # @param[out] port/plasma_ms_output
-#     \~English Plasma MS store output\n
-#     \~
+#     \~English Plasma MS store output
 # @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
 
