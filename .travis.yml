@@ -57,7 +57,7 @@ matrix:
         - git config --global user.email "$GITHUB_USERNAME@gmail.com"
         - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
         - cd EAGLE_test_repo/
-        - mv ../DALIUGE/ .
+        - mv ../DALIUGE/* DALIUGE/
         - git add *
         - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (DALiuGE version $PROJECT_VERSION)"
         - git push
