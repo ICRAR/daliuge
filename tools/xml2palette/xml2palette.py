@@ -62,7 +62,7 @@ def add_required_fields_for_category(fields, category):
         if find_field_by_name(fields, "num_cpus") is None:
             fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", 0, "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
         if find_field_by_name(fields, "libpath") is None:
             fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String"))
     elif category == "PythonApp":
@@ -71,7 +71,7 @@ def add_required_fields_for_category(fields, category):
         if find_field_by_name(fields, "num_cpus") is None:
             fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", 0, "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
         if find_field_by_name(fields, "appclass") is None:
             fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String"))
 
@@ -180,7 +180,7 @@ def create_palette_node_from_params(params):
             if "\n" in value:
                 print("description (" + value + ") contains a newline character, removing.")
                 value = value.replace("\n", " ")
-            param_description = parse_description(value)
+            param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
