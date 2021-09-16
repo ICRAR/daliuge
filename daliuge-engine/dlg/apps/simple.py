@@ -131,21 +131,21 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @brief RandomArrayApp\n
 # @details A testing APP that does not take any input and produces a random array of
 # type int64, if integer is set to True, else of type float64.
-# size indicates the number of elements ranging between the values low and high. 
+# size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/size/100/Integer/readwrite
+# @param[in] param/size Size/100/Integer/readwrite
 #     \~English the siz of the array\n
-# @param[in] param/integer/True/Boolean/readwrite
+# @param[in] param/integer Integer/True/Boolean/readwrite
 #     \~English Generate integer array?\n
-# @param[in] param/low/0/float/readwrite
+# @param[in] param/low Low/0/float/readwrite
 #     \~English low value of range in array [inclusive]\n
-# @param[in] param/high/1/float/readwrite
+# @param[in] param/high High/1/float/readwrite
 #     \~English high value of range of array [exclusive]\n
-# @param[in] param/appclass/dlg.apps.simple.RandomArrayApp/String/readonly
+# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly
 #     \~English Application class\n
 # @param[out] port/array
 #     \~English Port carrying the averaged array.
@@ -167,7 +167,7 @@ class RandomArrayApp(BarrierAppDROP):
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
-    
+
     # default values
     integer = dlg_bool_param('integer', True)
     low = dlg_float_param('low', 0)
@@ -200,7 +200,7 @@ class RandomArrayApp(BarrierAppDROP):
             # self.low and self.high
             marray = (np.random.random(size=self.size) + self.low) * self.high
         self.marray = marray
-    
+
     def _getArray(self):
         return self.marray
 
@@ -208,7 +208,7 @@ class RandomArrayApp(BarrierAppDROP):
 ##
 # @brief AverageArrays\n
 # @details A testing APP that takes multiple numpy arrays on input and calculates
-# the mean or the median, depending on the value provided in the method parameter. 
+# the mean or the median, depending on the value provided in the method parameter.
 # Users can add as many producers to the input array port as required and the resulting array
 # will also be send to all connected output apps.
 # @par EAGLE_START
@@ -263,7 +263,7 @@ class AverageArraysApp(BarrierAppDROP):
             d = pickle.dumps(avg)
             o.len = len(d)
             o.write(d)  # average across inputs
-    
+
     def getInputArrays(self):
         """
         Create the input array from all inputs received. Shape is
@@ -280,7 +280,7 @@ class AverageArraysApp(BarrierAppDROP):
 
 
     def averageArray(self):
-        
+
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
 
@@ -288,7 +288,7 @@ class AverageArraysApp(BarrierAppDROP):
 # @brief HelloWorldApp\n
 # @details A simple APP that implements the standard Hello World in DALiuGE.
 # It allows to change 'World' with some other string and it also permits
-# to connect the single output port to multiple sinks, which will all receive 
+# to connect the single output port to multiple sinks, which will all receive
 # the same message. App does not require any input.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
@@ -363,9 +363,9 @@ class UrlRetrieveApp(BarrierAppDROP):
             u = urllib.request.urlopen(self.url)
         except urllib.error.URLError as e:
             raise e.reason
-        
+
         content = u.read()
-            
+
         outs = self.outputs
         if len(outs) < 1:
             raise Exception(
@@ -377,10 +377,10 @@ class UrlRetrieveApp(BarrierAppDROP):
 ##
 # @brief GenericScatterApp\n
 # @details An APP that splits about any object that can be converted to a numpy array
-# into as many parts as the app has outputs, provided that the initially converted numpy 
-# array has enough elements. The return will be a numpy array of arrays, where the first 
-# axis is of length len(outputs). The modulo remainder of the length of the original array and 
-# the number of outputs will be distributed across the first len(outputs)-1 elements of the 
+# into as many parts as the app has outputs, provided that the initially converted numpy
+# array has enough elements. The return will be a numpy array of arrays, where the first
+# axis is of length len(outputs). The modulo remainder of the length of the original array and
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the
 # resulting array.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
