@@ -56,10 +56,10 @@ class NullBarrierApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/sleepTime/5/Integer/readwrite
-#     \~English the number of seconds to sleep\n
-# @param[in] param/appclass/dlg.apps.simple.SleepApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
+#     \~English the number of seconds to sleep
+# @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
+#     \~English Application class
 
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
@@ -215,9 +215,9 @@ class RandomArrayApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/method/mean/string/readwrite
+# @param[in] param/method Method/mean/string/readwrite/
 #     \~English The method used for averaging
-# @param[in] param/appclass/dlg.apps.simple.AverageArraysApp/String/readonly
+# @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
 #     \~English Application class
 # @param[in] port/array
 #     \~English Port for the input array(s)
@@ -294,10 +294,10 @@ class AverageArraysApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/greet/World/String/readwrite
-#     \~English What appears after 'Hello '\n
-# @param[in] param/appclass/dlg.apps.simple.HelloWorldApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/greet Greet/World/String/readwrite/
+#     \~English What appears after 'Hello '
+# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+#     \~English Application class
 # @param[out] port/hello
 #     \~English The port carrying the message produced by the app.
 # @par EAGLE_END
@@ -329,17 +329,17 @@ class HelloWorldApp(BarrierAppDROP):
             o.write(self.greeting.encode())  # greet across all outputs
 
 ##
-# @brief UrlRetrieveApp\n
+# @brief UrlRetrieveApp
 # @details A simple APP that retrieves the content of a URL and writes.
 # it to all outputs.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/url/https://eagle.icrar.org/String/readwrite
-#     \~English The URL to retrieve '\n
-# @param[in] param/appclass/dlg.apps.simple.UrlRetrieveApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/url URL/https://eagle.icrar.org/String/readwrite/
+#     \~English The URL to retrieve
+# @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
+#     \~English Application class
 # @param[out] port/content
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
@@ -386,8 +386,8 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass/dlg.apps.simple.GenericSplitApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericSplitApp/String/readonly/
+#     \~English Application class
 # @param[out] port/content
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
