@@ -46,6 +46,7 @@ matrix:
       after_success:
         - PROJECT_VERSION=$(git rev-parse --short HEAD)
         - BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+        - echo $PROJECT_VERSION $BRANCH_NAME
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
         - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge-$BRANCH_NAME.palette
