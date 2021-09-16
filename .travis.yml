@@ -38,7 +38,6 @@ matrix:
     #   env: TEST_OPENAPI=1
     - python: "3.7"
     - name: doxygen
-      if: branch = master
       before_install:
       install:
         - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
