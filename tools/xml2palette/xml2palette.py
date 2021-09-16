@@ -168,6 +168,9 @@ def create_palette_node_from_params(params):
         elif key == "text":
             text = value
         elif key == "description":
+            if "\n" in value:
+                print("description (" + value + ") contains a newline character, removing.")
+                value = value.replace("\n", " ")
             description = parse_description(value)
         elif key.startswith("param/"):
             # parse the param key into name, type etc
