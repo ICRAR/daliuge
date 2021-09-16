@@ -137,15 +137,15 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/size Size/100/Integer/readwrite
-#     \~English the siz of the array\n
-# @param[in] param/integer Integer/True/Boolean/readwrite
+# @param[in] param/size Size/100/Integer/readwrite/
+#     \~English The size of the array\n
+# @param[in] param/integer Integer/True/Boolean/readwrite/
 #     \~English Generate integer array?\n
-# @param[in] param/low Low/0/float/readwrite
-#     \~English low value of range in array [inclusive]\n
-# @param[in] param/high High/1/float/readwrite
-#     \~English high value of range of array [exclusive]\n
-# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly
+# @param[in] param/low Low/0/float/readwrite/
+#     \~English Low value of range in array [inclusive]\n
+# @param[in] param/high High/1/float/readwrite/
+#     \~English High value of range of array [exclusive]\n
+# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
 #     \~English Application class\n
 # @param[out] port/array
 #     \~English Port carrying the averaged array.
