@@ -135,6 +135,16 @@ def parse_param_value(value):
     return (external_name, default_value, type, access)
 
 
+def parse_description(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    return parts[-1]
+
+
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
 def create_palette_node_from_params(params):
     text = ""
@@ -158,7 +168,7 @@ def create_palette_node_from_params(params):
         elif key == "text":
             text = value
         elif key == "description":
-            description = value
+            description = parse_description(value)
         elif key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_param_key(key)
@@ -175,26 +185,20 @@ def create_palette_node_from_params(params):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
+                print("port (" + name + ") has no 'type' descriptor, using default (Unknown) : " + key)
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
-                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got", key)
+                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got " + key)
 
-            # add a port
-            if port == "port":
-                if direction == "in":
-                    inputPorts.append(create_port(name))
-                elif direction == "out":
-                    outputPorts.append(create_port(name))
-                else:
-                    print("ERROR: Unknown port direction: " + direction)
+            # add the port
+            if direction == "in":
+                inputPorts.append(create_port(name))
+            elif direction == "out":
+                outputPorts.append(create_port(name))
             else:
-                if direction == "in":
-                    inputLocalPorts.append(create_port(name))
-                elif direction == "out":
-                    outputLocalPorts.append(create_port(name))
-                else:
-                    print("ERROR: Unknown local-port direction: " + direction)
+                print("ERROR: Unknown port direction: " + direction)
+
 
     # add extra fields that must be included for the category
     add_required_fields_for_category(fields, category)
