@@ -142,8 +142,6 @@ def parse_description(value):
     for row in reader:
         parts = row
 
-    print("parse_description():" + str(parts))
-    print(str(parts[-1]))
     return parts[-1]
 
 
