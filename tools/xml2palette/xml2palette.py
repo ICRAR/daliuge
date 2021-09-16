@@ -97,28 +97,42 @@ def parse_param_key(key):
     # init attributes of the param
     param = ""
     internal_name = ""
-    name = ""
-    default_value = ""
-    type = "String"
-    access = "readwrite"
 
     # assign attributes (if present)
     if len(parts) > 0:
         param = parts[0]
     if len(parts) > 1:
         internal_name = parts[1]
-    if len(parts) > 2:
-        name = parts[2]
-    if len(parts) > 3:
-        default_value = parts[3]
-    if len(parts) > 4:
-        type = parts[4]
-    if len(parts) > 5:
-        access = parts[5]
-    else:
-        print("param (" + name + ") has no 'access' descriptor, using default (readwrite) : " + key)
 
-    return (param, internal_name, name, default_value, type, access)
+    return (param, internal_name)
+
+
+def parse_param_value(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    # init attributes of the param
+    external_name = ""
+    default_value = ""
+    type = "String"
+    access = "readwrite"
+
+    # assign attributes (if present)
+    if len(parts) > 0:
+        external_name = parts[0]
+    if len(parts) > 1:
+        default_value = parts[1]
+    if len(parts) > 2:
+        type = parts[2]
+    if len(parts) > 3:
+        access = parts[3]
+    else:
+        print("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+
+    return (external_name, default_value, type, access)
 
 
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
@@ -147,7 +161,8 @@ def create_palette_node_from_params(params):
             description = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
-            (param, internal_name, name, default_value, type, access) = parse_param_key(key)
+            (param, internal_name) = parse_param_key(key)
+            (name, default_value, type, access) = parse_param_value(value)
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
@@ -156,7 +171,7 @@ def create_palette_node_from_params(params):
             # add a field
             fields.append(create_field(internal_name, name, default_value, value, access, type))
             pass
-        elif key.startswith("port/") or key.startswith("local-port/"):
+        elif key.startswith("port/"):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
