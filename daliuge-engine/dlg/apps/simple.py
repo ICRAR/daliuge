@@ -57,7 +57,7 @@ class NullBarrierApp(BarrierAppDROP):
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
-#     \~English the number of seconds to sleep
+#     \~English The number of seconds to sleep
 # @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
 #     \~English Application class
 
@@ -88,7 +88,7 @@ class SleepApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass/dlg.apps.simple.CopyApp/String/readonly
+# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
 #     \~English Application class\n
 
 # @par EAGLE_END
@@ -215,7 +215,7 @@ class RandomArrayApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/method Method/mean/string/readwrite/
+# @param[in] param/method Method/mean/String/readwrite/
 #     \~English The method used for averaging
 # @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
 #     \~English Application class
