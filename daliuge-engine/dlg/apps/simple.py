@@ -138,17 +138,17 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/size Size/100/Integer/readwrite/
-#     \~English The size of the array\n
+#     \~English The size of the array
 # @param[in] param/integer Integer/True/Boolean/readwrite/
-#     \~English Generate integer array?\n
+#     \~English Generate integer array?
 # @param[in] param/low Low/0/float/readwrite/
-#     \~English Low value of range in array [inclusive]\n
+#     \~English Low value of range in array [inclusive]
 # @param[in] param/high High/1/float/readwrite/
-#     \~English High value of range of array [exclusive]\n
+#     \~English High value of range of array [exclusive]
 # @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
-#     \~English Application class\n
+#     \~English Application class
 # @param[out] port/array
-#     \~English Port carrying the averaged array.
+#     \~English Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
@@ -216,13 +216,13 @@ class RandomArrayApp(BarrierAppDROP):
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/method/mean/string/readwrite
-#     \~English the methd used for averaging\n
+#     \~English The method used for averaging
 # @param[in] param/appclass/dlg.apps.simple.AverageArraysApp/String/readonly
-#     \~English Application class\n
+#     \~English Application class
 # @param[in] port/array
-#     \~English Port for the input array(s).
+#     \~English Port for the input array(s)
 # @param[out] port/array
-#     \~English Port carrying the averaged array.
+#     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
