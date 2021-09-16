@@ -336,7 +336,7 @@ class HelloWorldApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/url URL/https://eagle.icrar.org/String/readwrite/
+# @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
 #     \~English The URL to retrieve
 # @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
 #     \~English Application class
