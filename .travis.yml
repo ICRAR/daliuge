@@ -38,7 +38,6 @@ matrix:
     #   env: TEST_OPENAPI=1
     - python: "3.7"
     - name: doxygen
-      if: branch = master
       before_install:
       install:
         - sudo apt-get update && sudo apt-get install -y doxygen && sudo apt-get install -y xsltproc
@@ -48,8 +47,8 @@ matrix:
         - PROJECT_VERSION=$(git rev-parse --short HEAD)
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
-        - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge.palette
-        - mv daliuge.palette ../.
+        - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge-$TRAVIS_BRANCH.palette
+        - mv daliuge-$TRAVIS_BRANCH.palette ../.
         - cd ..
         - rm -rf xml/
         - cd ..
@@ -57,10 +56,9 @@ matrix:
         - git config --global user.email "$GITHUB_USERNAME@gmail.com"
         - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
         - cd EAGLE_test_repo/
-        - rm -rf DALIUGE/
-        - mv ../DALIUGE/ .
+        - mv ../DALIUGE/* DALIUGE/
         - git add *
-        - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (DALiuGE version $PROJECT_VERSION)"
+        - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $TRAVIS_BRANCH, commit $PROJECT_VERSION)"
         - git push
 
     # Build documentation similarly to how RTD does
