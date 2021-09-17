@@ -62,7 +62,7 @@ def add_required_fields_for_category(fields, category):
         if find_field_by_name(fields, "num_cpus") is None:
             fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", 0, "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
         if find_field_by_name(fields, "libpath") is None:
             fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String"))
     elif category == "PythonApp":
@@ -71,7 +71,7 @@ def add_required_fields_for_category(fields, category):
         if find_field_by_name(fields, "num_cpus") is None:
             fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", 0, "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
         if find_field_by_name(fields, "appclass") is None:
             fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String"))
 
@@ -97,28 +97,52 @@ def parse_param_key(key):
     # init attributes of the param
     param = ""
     internal_name = ""
-    name = ""
-    default_value = ""
-    type = "String"
-    access = "readwrite"
 
     # assign attributes (if present)
     if len(parts) > 0:
         param = parts[0]
     if len(parts) > 1:
         internal_name = parts[1]
-    if len(parts) > 2:
-        name = parts[2]
-    if len(parts) > 3:
-        default_value = parts[3]
-    if len(parts) > 4:
-        type = parts[4]
-    if len(parts) > 5:
-        access = parts[5]
-    else:
-        print("param (" + name + ") has no 'access' descriptor, using default (readwrite) : " + key)
 
-    return (param, internal_name, name, default_value, type, access)
+    return (param, internal_name)
+
+
+def parse_param_value(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    # init attributes of the param
+    external_name = ""
+    default_value = ""
+    type = "String"
+    access = "readwrite"
+
+    # assign attributes (if present)
+    if len(parts) > 0:
+        external_name = parts[0]
+    if len(parts) > 1:
+        default_value = parts[1]
+    if len(parts) > 2:
+        type = parts[2]
+    if len(parts) > 3:
+        access = parts[3]
+    else:
+        print("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+
+    return (external_name, default_value, type, access)
+
+
+def parse_description(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    return parts[-1]
 
 
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
@@ -147,39 +171,40 @@ def create_palette_node_from_params(params):
             description = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
-            (param, internal_name, name, default_value, type, access) = parse_param_key(key)
+            (param, internal_name) = parse_param_key(key)
+            (name, default_value, type, access) = parse_param_value(value)
+
+            # parse desscription
+            if "\n" in value:
+                print("param description (" + value + ") contains a newline character, removing.")
+                value = value.replace("\n", " ")
+            param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 print("ERROR: Unknown access: " + access)
 
             # add a field
-            fields.append(create_field(internal_name, name, default_value, value, access, type))
+            fields.append(create_field(internal_name, name, default_value, param_description, access, type))
             pass
-        elif key.startswith("port/") or key.startswith("local-port/"):
+        elif key.startswith("port/"):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
+                print("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
-                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got", key)
+                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got " + key)
 
-            # add a port
-            if port == "port":
-                if direction == "in":
-                    inputPorts.append(create_port(name))
-                elif direction == "out":
-                    outputPorts.append(create_port(name))
-                else:
-                    print("ERROR: Unknown port direction: " + direction)
+            # add the port
+            if direction == "in":
+                inputPorts.append(create_port(name))
+            elif direction == "out":
+                outputPorts.append(create_port(name))
             else:
-                if direction == "in":
-                    inputLocalPorts.append(create_port(name))
-                elif direction == "out":
-                    outputLocalPorts.append(create_port(name))
-                else:
-                    print("ERROR: Unknown local-port direction: " + direction)
+                print("ERROR: Unknown port direction: " + direction)
+
 
     # add extra fields that must be included for the category
     add_required_fields_for_category(fields, category)
