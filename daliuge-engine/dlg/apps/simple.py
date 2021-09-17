@@ -246,7 +246,10 @@ class AverageArraysApp(BarrierAppDROP):
     # default values
     methods = ['mean', 'median']
     method = dlg_string_param('method', methods[0])
-    marray = []
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, kwargs)
+        self.marray = []
 
     def initialize(self, **kwargs):
         super(AverageArraysApp, self).initialize(**kwargs)
@@ -259,12 +262,12 @@ class AverageArraysApp(BarrierAppDROP):
             raise Exception(
                 'At least one output should have been added to %r' % self)
         self.getInputArrays()
-        avg = self.averageArray()
+        self._avg = self.averageArray()
         for o in outs:
-            d = pickle.dumps(avg)
+            d = pickle.dumps(self._avg)
             o.len = len(d)
             o.write(d)  # average across inputs
-    
+
     def getInputArrays(self):
         """
         Create the input array from all inputs received. Shape is
@@ -282,13 +285,11 @@ class AverageArraysApp(BarrierAppDROP):
                 print(f"Input does not contain data!")
             else:
                 sarray = pickle.loads(sarray)
-                print(f"Input has {len(sarray)} elements and id {id(sarray)}!")
-                marray.append(sarray)
+                marray.extend(sarray)
         self.marray = marray
 
 
     def averageArray(self):
-        
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
 

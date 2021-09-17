@@ -22,7 +22,7 @@
 """
 Module containing the core DROP classes.
 """
-
+import pickle
 from abc import ABCMeta, abstractmethod
 import base64
 import collections
@@ -42,14 +42,16 @@ import time
 import re
 import inspect
 import binascii
+from multiprocessing import shared_memory
 
 import numpy as np
+from dlg import droputils
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO, SharedMemoryIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -461,7 +463,6 @@ class AbstractDROP(EventFirer):
         The underlying storage mechanism is responsible for implementing the
         final writing logic via the `self.writeMeta()` method.
         '''
-
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
@@ -474,7 +475,6 @@ class AbstractDROP(EventFirer):
             self._wio = self.getIO()
             self._wio.open(OpenMode.OPEN_WRITE)
         nbytes = self._wio.write(data)
-
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
@@ -507,7 +507,6 @@ class AbstractDROP(EventFirer):
                 self.setCompleted()
         else:
             self.status = DROPStates.WRITING
-
         return nbytes
 
     @abstractmethod
@@ -1227,7 +1226,10 @@ class InMemoryDROP(AbstractDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        return MemoryIO(self._buf)
+        if hasattr(self, '_tp'):
+            return SharedMemoryIO(self.oid)
+        else:
+            return MemoryIO(self._buf)
 
     @property
     def dataURL(self):
