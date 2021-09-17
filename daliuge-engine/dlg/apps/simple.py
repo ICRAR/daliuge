@@ -48,7 +48,7 @@ class NullBarrierApp(BarrierAppDROP):
 
 
 ##
-# @brief SleepApp\n
+# @brief SleepApp
 # @details A simple APP that sleeps the specified amount of time (0 by default).
 # This is mainly useful (and used) to test graph translation and structure
 # without executing real algorithms. Very useful for debugging.
@@ -56,10 +56,10 @@ class NullBarrierApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/sleepTime/5/Integer/readwrite
-#     \~English the number of seconds to sleep\n
-# @param[in] param/appclass/dlg.apps.simple.SleepApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
+#     \~English The number of seconds to sleep
+# @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
+#     \~English Application class
 
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
@@ -79,7 +79,7 @@ class SleepApp(BarrierAppDROP):
 
 
 ##
-# @brief CopyApp\n
+# @brief CopyApp
 # @details A simple APP that copies its inputs into its outputs.
 # All inputs are copied into all outputs in the order they were declared in
 # the graph. If an input is a container (e.g. a directory) it copies the
@@ -88,8 +88,8 @@ class SleepApp(BarrierAppDROP):
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass/dlg.apps.simple.CopyApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
+#     \~English Application class
 
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
@@ -128,27 +128,27 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 
 
 ##
-# @brief RandomArrayApp\n
+# @brief RandomArrayApp
 # @details A testing APP that does not take any input and produces a random array of
 # type int64, if integer is set to True, else of type float64.
-# size indicates the number of elements ranging between the values low and high. 
+# size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/size/100/Integer/readwrite
-#     \~English the siz of the array\n
-# @param[in] param/integer/True/Boolean/readwrite
-#     \~English Generate integer array?\n
-# @param[in] param/low/0/float/readwrite
-#     \~English low value of range in array [inclusive]\n
-# @param[in] param/high/1/float/readwrite
-#     \~English high value of range of array [exclusive]\n
-# @param[in] param/appclass/dlg.apps.simple.RandomArrayApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/size Size/100/Integer/readwrite/
+#     \~English The size of the array
+# @param[in] param/integer Integer/True/Boolean/readwrite/
+#     \~English Generate integer array?
+# @param[in] param/low Low/0/float/readwrite/
+#     \~English Low value of range in array [inclusive]
+# @param[in] param/high High/1/float/readwrite/
+#     \~English High value of range of array [exclusive]
+# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
+#     \~English Application class
 # @param[out] port/array
-#     \~English Port carrying the averaged array.
+#     \~English Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
@@ -167,7 +167,7 @@ class RandomArrayApp(BarrierAppDROP):
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
-    
+
     # default values
     integer = dlg_bool_param('integer', True)
     low = dlg_float_param('low', 0)
@@ -200,29 +200,29 @@ class RandomArrayApp(BarrierAppDROP):
             # self.low and self.high
             marray = (np.random.random(size=self.size) + self.low) * self.high
         self.marray = marray
-    
+
     def _getArray(self):
         return self.marray
 
 
 ##
-# @brief AverageArrays\n
+# @brief AverageArrays
 # @details A testing APP that takes multiple numpy arrays on input and calculates
-# the mean or the median, depending on the value provided in the method parameter. 
+# the mean or the median, depending on the value provided in the method parameter.
 # Users can add as many producers to the input array port as required and the resulting array
 # will also be send to all connected output apps.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/method/mean/string/readwrite
-#     \~English the methd used for averaging\n
-# @param[in] param/appclass/dlg.apps.simple.AverageArraysApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/method Method/mean/String/readwrite/
+#     \~English The method used for averaging
+# @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
+#     \~English Application class
 # @param[in] port/array
-#     \~English Port for the input array(s).
+#     \~English Port for the input array(s)
 # @param[out] port/array
-#     \~English Port carrying the averaged array.
+#     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
@@ -263,7 +263,7 @@ class AverageArraysApp(BarrierAppDROP):
             d = pickle.dumps(avg)
             o.len = len(d)
             o.write(d)  # average across inputs
-    
+
     def getInputArrays(self):
         """
         Create the input array from all inputs received. Shape is
@@ -280,24 +280,24 @@ class AverageArraysApp(BarrierAppDROP):
 
 
     def averageArray(self):
-        
+
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
 
 ##
-# @brief HelloWorldApp\n
+# @brief HelloWorldApp
 # @details A simple APP that implements the standard Hello World in DALiuGE.
 # It allows to change 'World' with some other string and it also permits
-# to connect the single output port to multiple sinks, which will all receive 
+# to connect the single output port to multiple sinks, which will all receive
 # the same message. App does not require any input.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/greet/World/String/readwrite
-#     \~English What appears after 'Hello '\n
-# @param[in] param/appclass/dlg.apps.simple.HelloWorldApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/greet Greet/World/String/readwrite/
+#     \~English What appears after 'Hello '
+# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+#     \~English Application class
 # @param[out] port/hello
 #     \~English The port carrying the message produced by the app.
 # @par EAGLE_END
@@ -329,17 +329,17 @@ class HelloWorldApp(BarrierAppDROP):
             o.write(self.greeting.encode())  # greet across all outputs
 
 ##
-# @brief UrlRetrieveApp\n
+# @brief UrlRetrieveApp
 # @details A simple APP that retrieves the content of a URL and writes.
 # it to all outputs.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/url/https://eagle.icrar.org/String/readwrite
-#     \~English The URL to retrieve '\n
-# @param[in] param/appclass/dlg.apps.simple.UrlRetrieveApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
+#     \~English The URL to retrieve
+# @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
+#     \~English Application class
 # @param[out] port/content
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
@@ -363,9 +363,9 @@ class UrlRetrieveApp(BarrierAppDROP):
             u = urllib.request.urlopen(self.url)
         except urllib.error.URLError as e:
             raise e.reason
-        
+
         content = u.read()
-            
+
         outs = self.outputs
         if len(outs) < 1:
             raise Exception(
@@ -375,19 +375,19 @@ class UrlRetrieveApp(BarrierAppDROP):
             o.write(content)  # send content to all outputs
 
 ##
-# @brief GenericScatterApp\n
+# @brief GenericScatterApp
 # @details An APP that splits about any object that can be converted to a numpy array
-# into as many parts as the app has outputs, provided that the initially converted numpy 
-# array has enough elements. The return will be a numpy array of arrays, where the first 
-# axis is of length len(outputs). The modulo remainder of the length of the original array and 
-# the number of outputs will be distributed across the first len(outputs)-1 elements of the 
+# into as many parts as the app has outputs, provided that the initially converted numpy
+# array has enough elements. The return will be a numpy array of arrays, where the first
+# axis is of length len(outputs). The modulo remainder of the length of the original array and
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the
 # resulting array.
 # @par EAGLE_START
 # @param gitrepo $(GIT_REPO)
 # @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass/dlg.apps.simple.GenericSplitApp/String/readonly
-#     \~English Application class\n
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
+#     \~English Application class
 # @param[out] port/content
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
