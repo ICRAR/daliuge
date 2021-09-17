@@ -19,25 +19,28 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import abstractmethod, ABCMeta
 import io
 import logging
 import os
+import pickle
 import urllib.parse
-
+from abc import abstractmethod, ABCMeta
+from multiprocessing.shared_memory import SharedMemory
+from multiprocessing import Lock, resource_tracker
 from typing import Optional
-
-from . import ngaslite
-from .apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow
 import pyarrow.plasma as plasma
 
+from . import ngaslite
+from .apps.plasmaflight import PlasmaFlightClient
 
 logger = logging.getLogger(__name__)
 
+
 class OpenMode:
     OPEN_WRITE, OPEN_READ = range(2)
+
 
 class DataIO(object):
     """
@@ -119,16 +122,21 @@ class DataIO(object):
         """
 
     @abstractmethod
-    def _open(self, **kwargs): pass
+    def _open(self, **kwargs):
+        pass
 
     @abstractmethod
-    def _read(self, count, **kwargs): pass
+    def _read(self, count, **kwargs):
+        pass
 
     @abstractmethod
-    def _write(self, data, **kwargs): pass
+    def _write(self, data, **kwargs):
+        pass
 
     @abstractmethod
-    def _close(self, **kwargs): pass
+    def _close(self, **kwargs):
+        pass
+
 
 class NullIO(DataIO):
     """
@@ -153,6 +161,7 @@ class NullIO(DataIO):
     def delete(self):
         pass
 
+
 class ErrorIO(DataIO):
     """
     An DataIO method that throws exceptions if any of its methods is invoked
@@ -176,6 +185,7 @@ class ErrorIO(DataIO):
     def delete(self):
         raise NotImplementedError()
 
+
 class MemoryIO(DataIO):
     """
     A DataIO class that reads/write from/into the BytesIO object given at
@@ -183,6 +193,7 @@ class MemoryIO(DataIO):
     """
 
     def __init__(self, buf: io.BytesIO, **kwargs):
+        super().__init__()
         self._buf = buf
 
     def _open(self, **kwargs):
@@ -209,6 +220,73 @@ class MemoryIO(DataIO):
 
     def delete(self):
         self._buf.close()
+
+
+class SharedMemoryIO(DataIO):
+    """
+    A DataIO class that writes to a shared memory buffer
+    """
+
+    def __init__(self, uid, **kwargs):
+        super().__init__()
+        self._name = uid
+        # self._buf = SharedMemory(name=self._name, create=True, size=10000)
+        self._written = 0
+        self._pos = 0
+        self._lock = Lock()
+
+    def _open(self, **kwargs):
+        self._pos = 0
+        if self._mode == OpenMode.OPEN_WRITE:
+            self._buf = SharedMemory(name=self._name, create=True, size=4096)
+            self._written = 0
+        else:
+            try:
+                self._buf = SharedMemory(name=self._name)
+            except FileNotFoundError:
+                self._buf = SharedMemory(name=self._name, create=True, size=4096)
+        return self._buf
+
+    def _write(self, data, **kwargs):
+        self._lock.acquire()
+        total_size = len(data) + self._written
+        if total_size > self._buf.size:
+            # Re-allocate and copy - TODO: consider doubling for amortized writes
+            # I assume we write few times but read multiple times
+            # TODO: Handle giving the new block the same name
+            second = SharedMemory(create=True, size=total_size)
+            second.buf[0:self._written] = self._buf.buf[0:self._written]
+            second.buf[self._written:total_size] = data
+            print(second)
+            self._written = total_size
+            self._buf = second
+        else:
+            self._buf.buf[self._written:total_size] = data
+            self._written += total_size
+        self._lock.release()
+        return len(data)
+
+    def _read(self, count=4096, **kwargs):
+        start = self._pos
+        end = self._pos + count
+        end = min(end, self._buf.size)
+        out = self._buf.buf[start:end]
+        self._pos = end
+        return out
+
+    def _close(self, **kwargs):
+        pass
+        # self._buf.close()
+        # If we're writing we don't close the descriptor because it's our
+        # self._buf, which won't be readable afterwards
+
+    def exists(self):
+        return self._buf is not None
+
+    def delete(self):
+        pass
+        #self._buf.close()
+
 
 class FileIO(DataIO):
 
@@ -248,7 +326,8 @@ class NgasIO(DataIO):
     in a file on the local filesystem and then move it to the NGAS destination
     '''
 
-    def __init__(self, hostname, fileId, port = 7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, mimeType='application/octet-stream'):
+    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1,
+                 mimeType='application/octet-stream'):
 
         # Check that we actually have the NGAMS client libraries
         try:
@@ -258,13 +337,13 @@ class NgasIO(DataIO):
             raise
 
         super(NgasIO, self).__init__()
-        self._ngasSrv            = hostname
-        self._ngasPort           = port
+        self._ngasSrv = hostname
+        self._ngasPort = port
         self._ngasConnectTimeout = ngasConnectTimeout
-        self._ngasTimeout        = ngasTimeout
-        self._fileId             = fileId
-        self._length             = length
-        self._mimeType           = mimeType
+        self._ngasTimeout = ngasTimeout
+        self._fileId = fileId
+        self._length = length
+        self._mimeType = mimeType
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
@@ -284,10 +363,10 @@ class NgasIO(DataIO):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
             reply, msg, _, _ = client._httpPost(
-                     client.getHost(), client.getPort(), 'QARCHIVE',
-                     self._mimeType, dataRef=self._buf,
-                     pars=[['filename',self._fileId]], dataSource='BUFFER',
-                     dataSize=self._writtenDataSize)
+                client.getHost(), client.getPort(), 'QARCHIVE',
+                self._mimeType, dataRef=self._buf,
+                pars=[['filename', self._fileId]], dataSource='BUFFER',
+                dataSize=self._writtenDataSize)
             self._buf = None
             if reply != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
@@ -313,7 +392,8 @@ class NgasIO(DataIO):
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
     def delete(self):
-        pass # We never delete stuff from NGAS
+        pass  # We never delete stuff from NGAS
+
 
 class NgasLiteIO(DataIO):
     '''
@@ -326,23 +406,23 @@ class NgasLiteIO(DataIO):
     '''
 
     def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, \
-        mimeType='application/octet-stream'):
+                 mimeType='application/octet-stream'):
         super(NgasLiteIO, self).__init__()
-        self._ngasSrv            = hostname
-        self._ngasPort           = port
+        self._ngasSrv = hostname
+        self._ngasPort = port
         self._ngasConnectTimeout = ngasConnectTimeout
-        self._ngasTimeout        = ngasTimeout
-        self._fileId             = fileId
-        self._length             = length
-        self._mimeType           = mimeType
+        self._ngasTimeout = ngasTimeout
+        self._fileId = fileId
+        self._length = length
+        self._mimeType = mimeType
 
     def _is_length_unknown(self):
         return self._length is None or self._length < 0
 
     def _getClient(self):
         return ngaslite.open(
-            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout,\
-                mode=self._mode, mimeType=self._mimeType)
+            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, \
+            mode=self._mode, mimeType=self._mimeType)
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -385,7 +465,8 @@ class NgasLiteIO(DataIO):
         raise NotImplementedError("This method is not supported by this class")
 
     def delete(self):
-        pass # We never delete stuff from NGAS
+        pass  # We never delete stuff from NGAS
+
 
 def IOForURL(url):
     """
@@ -398,7 +479,7 @@ def IOForURL(url):
         hostname = url.netloc
         filename = url.path
         if hostname == 'localhost' or hostname == '127.0.0.1' or \
-           hostname == os.uname()[1]:
+                hostname == os.uname()[1]:
             io = FileIO(filename)
     elif url.scheme == 'null':
         io = NullIO()
