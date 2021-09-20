@@ -3,8 +3,11 @@
 Automatic EAGLE Palette Generation
 ----------------------------------
 
-In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom
-`Doxygen <https://www.doxygen.nl/>`_ comments to the source code.
+In order to support the direct usage of newly written application components
+in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen
+directives and tools. When writing an application component, developers
+can add specific custom `Doxygen <https://www.doxygen.nl/>`_ comments to the
+source code.
 These comments describe the application and can
 be used to automatically generate a JSON DALiuGE component description
 which can be used in the *EAGLE* Logical Graph Editor.
@@ -31,27 +34,27 @@ C/C++
   * \param gitrepo $(GIT_REPO)
   * \param version $(PROJECT_VERSION)
   * \param category DynlibApp
-  * \param[in] param/start_frequency/500/Integer/readwrite
+  * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
   *     \~English the start frequency to read from\n
   *     \~Chinese 要读取的起始频率\n
   *     \~
-  * \param[in] param/end_frequency/500/Integer/readwrite
+  * \param[in] param/end_frequency End Frequency/500/Integer/readwrite/
   *     \~English the end frequency to read from\n
   *     \~Chinese 要读取的结束频率\n
   *     \~
-  * \param[in] param/channels/64/Integer/readonly
+  * \param[in] param/channels Channels/64/Integer/readonly/
   *     \~English how many channels to load\n
   *     \~Chinese 需要加载的通道数量\n
   *     \~
-  * \param[in] port/config
+  * \param[in] port/config/String
   *     \~English the configuration of the input_port\n
   *     \~Chinese 输入端口的设置\n
   *     \~
-  * \param[in] port/event
+  * \param[in] port/event/Event
   *     \~English the event of the input_port\n
   *     \~Chinese 输入端口的事件\n
   *     \~
-  * \param[out] port/File
+  * \param[out] port/File/File
   *     \~English the file of the output_port \n
   *     \~Chinese 输出端口的文件\n
   *     \~
@@ -70,27 +73,27 @@ Python
   # @param gitrepo $(GIT_REPO)
   # @param version $(PROJECT_VERSION)
   # @param category PythonApp
-  # @param[in] param/start_frequency/500/Integer/readwrite
+  # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
   #     \~English the start frequency to read from\n
   #     \~Chinese 要读取的起始频率\n
   #     \~
-  # @param[in] param/end_frequency/500/Integer/readwrite
+  # @param[in] param/end_frequency End Frequency/500/Integer/readwrite/
   #     \~English the end frequency to read from\n
   #     \~Chinese 要读取的结束频率\n
   #     \~
-  # @param[in] param/channels/64/Integer/readonly
+  # @param[in] param/channels Channels/64/Integer/readonly/
   #     \~English how many channels to load\n
   #     \~Chinese 需要加载的通道数量\n
   #     \~
-  # @param[in] port/config
+  # @param[in] port/config/String
   #     \~English the configuration of the input_port\n
   #     \~Chinese 输入端口的设置\n
   #     \~
-  # @param[in] port/event
+  # @param[in] port/event/Event
   #     \~English the event of the input_port\n
   #     \~Chinese 输入端口的事件\n
   #     \~
-  # @param[out] port/File
+  # @param[out] port/File/File
   #     \~English the file of the output_port \n
   #     \~Chinese 输出端口的文件\n
   #     \~
