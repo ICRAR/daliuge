@@ -7,6 +7,7 @@ import json
 import uuid
 import csv
 import logging
+import random
 
 next_key = -1
 
@@ -41,11 +42,30 @@ def get_next_key():
 
     return next_key + 1
 
+def create_uuid(seed):
+    rnd = random.Random()
+    rnd.seed(seed)
 
-def create_port(name):
+    new_uuid = uuid.UUID(int=rnd.getrandbits(128), version=4)
+    return new_uuid
+
+
+def create_port(component_name, port_name, direction, event, type):
+    seed = {
+        "component_name": component_name,
+        "port_name": port_name,
+        "direction": direction,
+        "event": event,
+        "type": type
+    }
+
+    port_uuid = create_uuid(str(seed))
+
     return {
-        "Id": str(uuid.uuid4()),
-        "IdText": name
+        "Id": str(port_uuid),
+        "IdText": port_name,
+        "event": event,
+        "type": type
     }
 
 
@@ -192,6 +212,7 @@ def create_palette_node_from_params(params):
             if key.count("/") == 1:
                 (port, name) = key.split("/")
                 logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
+                type = "Unknown"
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
@@ -200,9 +221,9 @@ def create_palette_node_from_params(params):
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(name))
+                inputPorts.append(create_port(text, name, direction, False, type))
             elif direction == "out":
-                outputPorts.append(create_port(name))
+                outputPorts.append(create_port(text, name, direction, False, type))
             else:
                 logging.warning("Unknown port direction: " + direction)
 
@@ -342,14 +363,17 @@ def process_compounddef(compounddef):
                 direction = pichild[0].attrib.get("direction", "").strip()
             elif pichild.tag == "parameterdescription":
                 if key == "gitrepo":
-                    if pichild[0].text is None:
-                        print("No gitrepo text")
+                    # the gitrepo is a URL, so is contained within a <ulink> element,
+                    # therefore we need to use pichild[0][0] here to look one level deeper
+                    # in the hierarchy
+                    if pichild[0][0] is None or pichild[0][0].text is None:
+                        logging.warning("No gitrepo text")
                         value = ""
                     else:
-                        value = pichild[0].text.strip()
+                        value = pichild[0][0].text.strip()
                 else:
                     if pichild[0].text is None:
-                        print("No key text (key: " + key + ")")
+                        logging.warning("No key text (key: " + key + ")")
                         value = ""
                     else:
                         value = pichild[0].text.strip()
