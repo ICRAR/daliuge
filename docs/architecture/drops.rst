@@ -80,16 +80,25 @@ correct location and using the expected format for storage or subsequent
 upstream processing by other application Drops.
 
 |daliuge| provides various commonly used :ref:`data components <data_index>` with their associated I/O
-storage classes, including in-memory, file-base and S3 storages.
+storage classes, including in-memory, `Apache Arrow Plasma <https://arrow.apache.org/docs/python/plasma.html>`_/`Flight <https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/>`_, file-base, S3 and `NGAS <https://ngas.readthedocs.io/>`_ storages. It is also possible to access the contant of a plain URL and use that as a data source.
+
+When using and developing a |daliuge| workflow the details of the I/O mechanisms are completely hidden, but users just need to be aware of the differences and limitations of using either of them. Memory and Files or remote data objects are just not really the same in terms of I/O capabilities and performance. The most important difference is between memory and all the other methods, since plain memory really only works for Python and dynamic library based components. A bash component for example simply does not know how to deal with some memory block handed over to it. That is why EAGLE does prevent such connections between components in the first place.
+
+When developing *application* components most of these details are also transparent, as long as the application component is using the provided POSIX-like access mechanisms. It is possible though to bypass those inside a component and perform all I/O independently of the framework. Even on that level there are still two ways, one is to use the provided data url from the framework, but not use the I/O methods. The even more extreme way is to just open some named file or channel without |daliuge| knowing anything about it. This latter way is strongly discouraged, since it will create unpredictable side-effects, which are almost impossible to identify in a large distributed environment. How to use the provided I/O methods from an *application* component is detailed in the :ref:`app_index` chapter.
+
+When developing a new *data* component the developer needs to implement the interface between the |daliuge| POSIX-like methods of the underlying data storage method. This is detailed in the :ref:`data_index` chapter.
+
 
 .. _drop.channels:
 
 Drop Channels
 ^^^^^^^^^^^^^
 
-In a |daliuge| workflow one application drop produces the data of a data drop, which in turn is consumed by another applicaiton drop. That means that data drops are essentially providing the data transfer methods between applications. The |daliuge| translator tries to minimise data movement and thus in many cases no transfer is actually happening, but the data drop transfers to COMPLETED state once it has received all data and passes that event on to the consumer application(s). The consumer applications in turn will use the provided read method to access the data directly.
+During a |daliuge| workflow execution one application drop produces the data of a data drop, which in turn is consumed by another application drop. That means that data drops are essentially providing the data transfer methods between applications. The |daliuge| translator tries to minimise data movement and thus in many cases no transfer is actually happening, but the data drop transfers to COMPLETED state once it has received all data and passes that event on to the consumer application(s). The consumer applications in turn will use the provided read method to access the data directly.
 
 In cases when data drops are accessed from separate nodes or islands the managers automatically produce a drop proxy on the remote nodes providing a remote method invocation (RMI) interface to allow the producers or consumers to execute the required I/O methods. It's the job of the Master Drop and Island Managers to generate and exchange these proxies and connect them to the correct Drop instances when the graph is deployed to potentially multiple data islands and nodes. If there is no Drop separation within a physical graph partition then its implied that the Drops are going to be executed within a single address space, and, as a result, basic method calls are used between Drop instances.
+
+In addition to the hand-over of the handle to the consumer once the data drop is COMPLETED |daliuge| also supports streaming data directly from one application drop to another during run-time. Like for most streaming applications this is based on the completion of a block of bytes transferred, thus the intermediate data drop still has a meaning and could in priciple be any standard data drop. In practice the only viable solutions are memory based drops, like plain memory, shared memory or Plasma.
 
 
 .. _drop.component.iface:
