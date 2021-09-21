@@ -48,7 +48,6 @@ matrix:
         - cd DALIUGE/xml
         - xsltproc combine.xslt index.xml >daliuge.xml
         - python3 ../../tools/xml2palette/xml2palette.py -i daliuge.xml -o daliuge-$TRAVIS_BRANCH.palette
-        - mv daliuge.xml ../.
         - mv daliuge-$TRAVIS_BRANCH.palette ../.
         - cd ..
         - rm -rf xml/
