@@ -177,6 +177,8 @@ def create_palette_node_from_params(params):
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
+    gitrepo = ""
+    version = ""
 
     # process the params
     for param in params:
@@ -190,6 +192,10 @@ def create_palette_node_from_params(params):
             text = value
         elif key == "description":
             description = value
+        elif key == "gitrepo":
+            gitrepo = value
+        elif key == "version":
+            version = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_param_key(key)
@@ -261,7 +267,9 @@ def create_palette_node_from_params(params):
         "outputLocalPorts": outputLocalPorts,
         "inputAppFields": [],
         "outputAppFields": [],
-        "fields": fields
+        "fields": fields,
+        "git_url": gitrepo,
+        "sha": version
     }
 
 
