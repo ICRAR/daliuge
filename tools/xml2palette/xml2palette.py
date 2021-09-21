@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import json
 import uuid
 import csv
+import logging
 
 next_key = -1
 
@@ -130,7 +131,7 @@ def parse_param_value(value):
     if len(parts) > 3:
         access = parts[3]
     else:
-        print("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+        logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
 
     return (external_name, default_value, type, access)
 
@@ -176,26 +177,26 @@ def create_palette_node_from_params(params):
 
             # parse desscription
             if "\n" in value:
-                print("param description (" + value + ") contains a newline character, removing.")
+                logging.info("param description (" + value + ") contains a newline character, removing.")
                 value = value.replace("\n", " ")
             param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
-                print("ERROR: Unknown access: " + access)
+                logging.warning("param '" + name + "' has unknown 'access' descriptor: " + access)
 
             # add a field
             fields.append(create_field(internal_name, name, default_value, param_description, access, type))
-            pass
         elif key.startswith("port/"):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
-                print("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
+                logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
-                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got " + key)
+                logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
+                continue
 
             # add the port
             if direction == "in":
@@ -203,7 +204,7 @@ def create_palette_node_from_params(params):
             elif direction == "out":
                 outputPorts.append(create_port(name))
             else:
-                print("ERROR: Unknown port direction: " + direction)
+                logging.warning("Unknown port direction: " + direction)
 
 
     # add extra fields that must be included for the category
@@ -276,7 +277,7 @@ def process_compounddef(compounddef):
     if briefdescription is not None:
         if len(briefdescription) > 0:
             if briefdescription[0].text is None:
-                print("No brief description text")
+                logging.warning("No brief description text")
                 result.append({
                     "key":"text",
                     "direction":None,
@@ -359,6 +360,8 @@ def process_compounddef(compounddef):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
     (inputfile, outputfile) = get_filenames_from_command_line(sys.argv[1:])
 
     gitrepo = ""
