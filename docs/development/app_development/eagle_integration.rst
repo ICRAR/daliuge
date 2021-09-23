@@ -6,7 +6,7 @@ In order to present graph developers with well defined components for their work
 
 Manual EAGLE Palette Generation
 -------------------------------
-The *palette* and *logical graph* JSON formats are interchangable. In fact one can save a graph as a palette. Defining a component in EAGLE requires the activation of the *palette mode*. More details can be found in the `EAGLE <https://eagle-dlg.readthedocs.io>`_ documentation.
+The *palette* and *logical graph* JSON formats are interchangable. In fact one can save a graph as a palette. Defining a component in EAGLE requires the activation of the *palette mode*. More details can be found in the `EAGLE <https://eagle-dlg.readthedocs.io/en/latest/palettes.html>`_ documentation.
 
 TODO
 
