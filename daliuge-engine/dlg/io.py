@@ -22,15 +22,13 @@
 import io
 import logging
 import os
-import pickle
 import urllib.parse
 from abc import abstractmethod, ABCMeta
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing import Lock, resource_tracker
 from typing import Optional
 
 import pyarrow
 import pyarrow.plasma as plasma
+from dlg.manager.memory_manager import SharedMemoryManager
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient
@@ -227,43 +225,33 @@ class SharedMemoryIO(DataIO):
     A DataIO class that writes to a shared memory buffer
     """
 
-    def __init__(self, uid, **kwargs):
+    def __init__(self, uid, memory_manager: SharedMemoryManager, **kwargs):
         super().__init__()
         self._name = uid
-        # self._buf = SharedMemory(name=self._name, create=True, size=10000)
+        self._mm = memory_manager
         self._written = 0
         self._pos = 0
-        self._lock = Lock()
+        self._buf = None
 
     def _open(self, **kwargs):
         self._pos = 0
-        if self._mode == OpenMode.OPEN_WRITE:
-            self._buf = SharedMemory(name=self._name, create=True, size=4096)
-            self._written = 0
-        else:
-            try:
-                self._buf = SharedMemory(name=self._name)
-            except FileNotFoundError:
-                self._buf = SharedMemory(name=self._name, create=True, size=4096)
+        if self._buf is None:
+            if self._mode == OpenMode.OPEN_WRITE:
+                self._buf = self._mm.open_write(self._name)
+                self._written = 0
+            elif self._mode == OpenMode.OPEN_READ:
+                self._buf = self._mm.open_read(self._name)
         return self._buf
 
     def _write(self, data, **kwargs):
-        self._lock.acquire()
         total_size = len(data) + self._written
         if total_size > self._buf.size:
-            # Re-allocate and copy - TODO: consider doubling for amortized writes
-            # I assume we write few times but read multiple times
-            # TODO: Handle giving the new block the same name
-            second = SharedMemory(create=True, size=total_size)
-            second.buf[0:self._written] = self._buf.buf[0:self._written]
-            second.buf[self._written:total_size] = data
-            print(second)
+            self._buf = self._mm.resize(self._name, total_size)
+            self._buf.buf[self._written:total_size] = data
             self._written = total_size
-            self._buf = second
         else:
             self._buf.buf[self._written:total_size] = data
-            self._written += total_size
-        self._lock.release()
+            self._written = total_size
         return len(data)
 
     def _read(self, count=4096, **kwargs):
@@ -275,17 +263,15 @@ class SharedMemoryIO(DataIO):
         return out
 
     def _close(self, **kwargs):
-        pass
-        # self._buf.close()
-        # If we're writing we don't close the descriptor because it's our
-        # self._buf, which won't be readable afterwards
+        self._buf = None
+        self._mm.close(self._name)
 
     def exists(self):
         return self._buf is not None
 
     def delete(self):
-        pass
-        #self._buf.close()
+        self._buf = None
+        self._mm.close(self._name)
 
 
 class FileIO(DataIO):
