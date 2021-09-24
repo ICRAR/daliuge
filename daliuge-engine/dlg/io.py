@@ -28,7 +28,7 @@ from typing import Optional
 
 import pyarrow
 import pyarrow.plasma as plasma
-from dlg.manager.memory_manager import SharedMemoryManager
+from dlg.manager.memory_manager import DlgSharedMemory
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient
@@ -225,10 +225,9 @@ class SharedMemoryIO(DataIO):
     A DataIO class that writes to a shared memory buffer
     """
 
-    def __init__(self, uid, memory_manager: SharedMemoryManager, **kwargs):
+    def __init__(self, uid, **kwargs):
         super().__init__()
-        self._name = uid
-        self._mm = memory_manager
+        self._name = str(uid)
         self._written = 0
         self._pos = 0
         self._buf = None
@@ -237,16 +236,14 @@ class SharedMemoryIO(DataIO):
         self._pos = 0
         if self._buf is None:
             if self._mode == OpenMode.OPEN_WRITE:
-                self._buf = self._mm.open_write(self._name)
                 self._written = 0
-            elif self._mode == OpenMode.OPEN_READ:
-                self._buf = self._mm.open_read(self._name)
+            self._buf = DlgSharedMemory(self._name)
         return self._buf
 
     def _write(self, data, **kwargs):
         total_size = len(data) + self._written
         if total_size > self._buf.size:
-            self._buf = self._mm.resize(self._name, total_size)
+            self._buf.resize(total_size)
             self._buf.buf[self._written:total_size] = data
             self._written = total_size
         else:
@@ -263,15 +260,14 @@ class SharedMemoryIO(DataIO):
         return out
 
     def _close(self, **kwargs):
+        self._buf.close()
         self._buf = None
-        self._mm.close(self._name)
 
     def exists(self):
         return self._buf is not None
 
     def delete(self):
-        self._buf = None
-        self._mm.close(self._name)
+        self._close()
 
 
 class FileIO(DataIO):
