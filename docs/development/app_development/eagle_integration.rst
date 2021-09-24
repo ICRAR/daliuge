@@ -6,9 +6,7 @@ In order to present graph developers with well defined components for their work
 
 Manual EAGLE Palette Generation
 -------------------------------
-The *palette* and *logical graph* JSON formats are interchangable. In fact one can save a graph as a palette. Defining a component in EAGLE requires the activation of the *palette mode*. More details can be found in the `EAGLE <https://eagle-dlg.readthedocs.io/en/latest/palettes.html>`_ documentation.
-
-TODO
+The *palette* and *logical graph* JSON formats are almost interchangable. The two formats differ only by filename extension and by a single attribute in the JSON contents (modelData.fileType is "graph" versus "palette"). In fact one can save a graph as a palette. Defining a component in EAGLE requires the activation of the *palette mode*. More details can be found in the `EAGLE <https://eagle-dlg.readthedocs.io/en/latest/palettes.html>`_ documentation.
 
 Automatic EAGLE Palette Generation
 ----------------------------------
@@ -23,23 +21,13 @@ The last three steps can be integrated into a CI build system and would then be 
 
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In order to support the direct usage of newly written application components in
-the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives
-and tools. When writing an application component, developers can add specific custom
-`Doxygen <https://www.doxygen.nl/>`_ comments to the source code.
-These comments describe the component and can
-be used to automatically generate a JSON DALiuGE component description
-which in turn can be used in the *EAGLE*.
+In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom `Doxygen <https://www.doxygen.nl/>`_ comments to the source code. These comments describe the component and can be used to automatically generate a JSON DALiuGE component description which in turn can be used in the *EAGLE*.
 
-The comments should be contained within a *EAGLE_START* and *EAGLE_END*
-pair.
+The comments should be contained within a *EAGLE_START* and *EAGLE_END* pair.
 
-The *category* param should be set to *DynlibApp* for C/C++ code,
-and *PythonApp* for Python code.
+The *category* param should be set to *DynlibApp* for C/C++ code, and *PythonApp* for Python code.
 
-These comments describe both the input/output ports for a component,
-and the parameters of a component. Shown below are example comments
-for C/C++ and Python applications.
+These comments describe both the input/output ports for a component, and the parameters of a component. Shown below are example comments for C/C++ and Python applications.
 
 C/C++
 
