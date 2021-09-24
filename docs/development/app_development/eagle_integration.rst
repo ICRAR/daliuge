@@ -29,7 +29,38 @@ The *category* param should be set to *DynlibApp* for C/C++ code, and *PythonApp
 
 These comments describe both the input/output ports for a component, and the parameters of a component. Shown below are example comments for C/C++ and Python applications.
 
-C/C++
+Parameters
+""""""""""
+
+Component Parameters are specified using the "param" command from doxygen. The command is followed by the name of the parameter, followed by a description. We encode multiple pieces of information within the name and description. The name must begin with "param/". This is used to disambiguate from ports, described later. The "param/" prefix will be removed during processing and only the remainder of the name will appear in the component. Names may not contain spaces. The description contains four pieces of information, separated by '/' characters: a user-facing name, the default value, the parameter type, and an access descriptor (readonly/readwrite). Note that the first line of the description must end with a '/' character.
+
+.. code-block:: python
+
+  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/
+  #
+  # e.g.
+  #
+  # @param param/start_frequency Start Frequency/500/Integer/readwrite/
+  #     \~English the start frequency to read from
+  #     \~Chinese 要读取的起始频率
+
+Ports
+"""""
+
+Component ports are (somewhat confusingly) also specified using the "param" from doxygen. However in this case the following text must begin with "port/". The port name and data type follow the "port/" prefix, separated by '/' characters.
+
+.. code-block:: python
+
+  # @param[<direction>] port/<name>/<type>
+  #
+  # e.g.
+  #
+  # @param[in] port/config/String
+  #     \~English the configuration of the input_port
+  #     \~Chinese 输入端口的设置
+
+Complete example for C/C++
+""""""""""""""""""""""""""
 
 .. code-block:: c
 
@@ -42,33 +73,28 @@ C/C++
   * \param version $(PROJECT_VERSION)
   * \param category DynlibApp
   * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
-  *     \~English the start frequency to read from\n
-  *     \~Chinese 要读取的起始频率\n
-  *     \~
+  *     \~English the start frequency to read from
+  *     \~Chinese 要读取的起始频率
   * \param[in] param/end_frequency End Frequency/500/Integer/readwrite/
-  *     \~English the end frequency to read from\n
-  *     \~Chinese 要读取的结束频率\n
-  *     \~
+  *     \~English the end frequency to read from
+  *     \~Chinese 要读取的结束频率
   * \param[in] param/channels Channels/64/Integer/readonly/
-  *     \~English how many channels to load\n
-  *     \~Chinese 需要加载的通道数量\n
-  *     \~
+  *     \~English how many channels to load
+  *     \~Chinese 需要加载的通道数量
   * \param[in] port/config/String
-  *     \~English the configuration of the input_port\n
-  *     \~Chinese 输入端口的设置\n
-  *     \~
+  *     \~English the configuration of the input_port
+  *     \~Chinese 输入端口的设置
   * \param[in] port/event/Event
-  *     \~English the event of the input_port\n
-  *     \~Chinese 输入端口的事件\n
-  *     \~
+  *     \~English the event of the input_port
+  *     \~Chinese 输入端口的事件
   * \param[out] port/File/File
-  *     \~English the file of the output_port \n
-  *     \~Chinese 输出端口的文件\n
-  *     \~
+  *     \~English the file of the output_port
+  *     \~Chinese 输出端口的文件
   * \par EAGLE_END
   */
 
-Python
+Complete example for Python
+"""""""""""""""""""""""""""
 
 .. code-block:: python
 
@@ -107,8 +133,7 @@ Python
   # @par EAGLE_END
 
 
-Once the comments are added to the source code and pushed to a repository
-a continuous integration step can then use the tools provided by the |daliuge| system to process the source code and produce the component descriptions readable by EAGLE.
+Once the comments are added to the source code and pushed to a repository a continuous integration step can then use the tools provided by the |daliuge| system to process the source code and produce the component descriptions readable by EAGLE.
 
 The processing will:
 
