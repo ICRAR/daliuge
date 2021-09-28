@@ -132,14 +132,3 @@ Complete example for Python
   #     \~
   # @par EAGLE_END
 
-<<<<<<< HEAD
-
-Once the comments are added to the source code and pushed to a repository a continuous integration step can then use the tools provided by the |daliuge| system to process the source code and produce the component descriptions readable by EAGLE.
-
-The processing will:
-
-* combine the Doxygen output XML into a single XML file
-* transform the XML into an EAGLE palette file (JSON)
-* push the palette file to a GitHub/GitLab repository (optional).
-=======
->>>>>>> yan-759
