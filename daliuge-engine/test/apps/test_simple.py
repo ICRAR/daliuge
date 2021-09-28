@@ -198,10 +198,10 @@ class TestSimpleApps(unittest.TestCase):
         if parallel:
             # a bit of magic to get the app drops using the processes
             _ = [drop.__setattr__('_tp', threadpool) for drop in drops]
-            _ = [drop.__setattr__('_mm', True) for drop in mdrops]
+            _ = [drop.__setattr__('_tp', threadpool) for drop in mdrops]
             _ = [memory_manager.register_drop(str(drop.uid)) for drop in mdrops]
             X.__setattr__('_tp', threadpool)
-            Z.__setattr__('_mm', True)
+            Z.__setattr__('_tp', threadpool)
             memory_manager.register_drop(str(Z.uid))
 
         _ = [d.addInput(S) for d in drops]

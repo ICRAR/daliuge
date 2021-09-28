@@ -1226,7 +1226,7 @@ class InMemoryDROP(AbstractDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        if hasattr(self, '_mm'):
+        if hasattr(self, '_tp'):
             return SharedMemoryIO(self.oid)
         else:
             return MemoryIO(self._buf)
