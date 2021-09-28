@@ -104,6 +104,10 @@ class DlgSharedMemory:
                     self._flags,
                     mode=self._mode
                 )
+                # Find the size of the written file
+                size = os.lseek(self._fd, 0, os.SEEK_END)
+                # Return to start for operations
+                os.lseek(self._fd, 0, os.SEEK_SET)
             self._name = name
         try:
             os.ftruncate(self._fd, size)
