@@ -486,10 +486,6 @@ class ListAppendThrashingApp(BarrierAppDROP):
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
-    # default values
-#    size = dlg_int_param('size', 100)
-
-
     def initialize(self, **kwargs):
         self.size = self._getArg(kwargs, 'size', 100)
         self.marray = []
@@ -508,9 +504,12 @@ class ListAppendThrashingApp(BarrierAppDROP):
             o.write(pickle.dumps(self.marray))
 
     def generateArray(self):
+        # This operation is wasteful to simulate an N^2 operation.
         marray = []
-        for i in range(int(self.size)):
-            marray.append(random.random())
+        for _ in range(int(self.size)):
+            marray = []
+            for i in range(int(self.size)):
+                marray.append(random.random())
         return marray
 
     def _getArray(self):
