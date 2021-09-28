@@ -180,6 +180,12 @@ class DlgSharedMemory:
         self._buf[0:len(old_data)] = old_data
 
 
+def _cleanup_block(session_id, name):
+    mem = DlgSharedMemory(f'{session_id}_{name}')
+    mem.close()
+    mem.unlink()  # It is unlinking that is critical to freeing resources from the OS
+
+
 class DlgSharedMemoryManager:
     """
     Lite class used by a NodeManager to log the existance of sharedmemory objects.
@@ -187,19 +193,30 @@ class DlgSharedMemoryManager:
     """
 
     def __init__(self):
-        self.drop_names = set()  # Handles accidental duplicates
+        self.drop_names = {}
 
-    def register_drop(self, name: str):
+    def register_session(self, name):
+        # TODO: handle duplicate sessions
+        self.drop_names[str(name)] = set()  # Handles duplicates
+
+    def register_drop(self, name, session_id):
         """
         Adds a drop to the list of known shared memory blocks
         """
-        self.drop_names.add(name)
+        # TODO: Handle unregistered session
+        self.drop_names[str(session_id)].add(str(name))
 
-    def shutdown(self):
+    def shutdown_session(self, session_id):
+        """
+        Unlinks all memory blocks associated with a particular session.
+        """
+        if session_id in self.drop_names.keys():
+            for drop in self.drop_names[session_id]:
+                _cleanup_block(session_id, drop)
+
+    def shutdown_all(self):
         """
         Unlinks all shared memory blocks associated with this memory manager
         """
-        for drop in self.drop_names:
-            mem = DlgSharedMemory(drop)
-            mem.close()
-            mem.unlink()  # Unlinking is the critical step that frees the resource from the OS
+        for session_id in self.drop_names.keys():
+            self.shutdown_session(session_id)
