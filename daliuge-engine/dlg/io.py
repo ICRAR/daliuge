@@ -225,9 +225,9 @@ class SharedMemoryIO(DataIO):
     A DataIO class that writes to a shared memory buffer
     """
 
-    def __init__(self, uid, **kwargs):
+    def __init__(self, uid, session_id, **kwargs):
         super().__init__()
-        self._name = str(uid)
+        self._name = f'{session_id}_{uid}'
         self._written = 0
         self._pos = 0
         self._buf = None
