@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 import json
 import uuid
 import csv
+import logging
+import random
 
 next_key = -1
 
@@ -40,11 +42,30 @@ def get_next_key():
 
     return next_key + 1
 
+def create_uuid(seed):
+    rnd = random.Random()
+    rnd.seed(seed)
 
-def create_port(name):
+    new_uuid = uuid.UUID(int=rnd.getrandbits(128), version=4)
+    return new_uuid
+
+
+def create_port(component_name, port_name, direction, event, type):
+    seed = {
+        "component_name": component_name,
+        "port_name": port_name,
+        "direction": direction,
+        "event": event,
+        "type": type
+    }
+
+    port_uuid = create_uuid(str(seed))
+
     return {
-        "Id": str(uuid.uuid4()),
-        "IdText": name
+        "Id": str(port_uuid),
+        "IdText": port_name,
+        "event": event,
+        "type": type
     }
 
 
@@ -130,7 +151,7 @@ def parse_param_value(value):
     if len(parts) > 3:
         access = parts[3]
     else:
-        print("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+        logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
 
     return (external_name, default_value, type, access)
 
@@ -156,6 +177,8 @@ def create_palette_node_from_params(params):
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
+    gitrepo = ""
+    version = ""
 
     # process the params
     for param in params:
@@ -169,6 +192,10 @@ def create_palette_node_from_params(params):
             text = value
         elif key == "description":
             description = value
+        elif key == "gitrepo":
+            gitrepo = value
+        elif key == "version":
+            version = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_param_key(key)
@@ -176,34 +203,35 @@ def create_palette_node_from_params(params):
 
             # parse desscription
             if "\n" in value:
-                print("param description (" + value + ") contains a newline character, removing.")
+                logging.info("param description (" + value + ") contains a newline character, removing.")
                 value = value.replace("\n", " ")
             param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
-                print("ERROR: Unknown access: " + access)
+                logging.warning("param '" + name + "' has unknown 'access' descriptor: " + access)
 
             # add a field
             fields.append(create_field(internal_name, name, default_value, param_description, access, type))
-            pass
         elif key.startswith("port/"):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
-                print("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
+                logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
+                type = "Unknown"
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
-                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got " + key)
+                logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
+                continue
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(name))
+                inputPorts.append(create_port(text, name, direction, False, type))
             elif direction == "out":
-                outputPorts.append(create_port(name))
+                outputPorts.append(create_port(text, name, direction, False, type))
             else:
-                print("ERROR: Unknown port direction: " + direction)
+                logging.warning("Unknown port direction: " + direction)
 
 
     # add extra fields that must be included for the category
@@ -239,7 +267,9 @@ def create_palette_node_from_params(params):
         "outputLocalPorts": outputLocalPorts,
         "inputAppFields": [],
         "outputAppFields": [],
-        "fields": fields
+        "fields": fields,
+        "git_url": gitrepo,
+        "sha": version
     }
 
 
@@ -265,6 +295,7 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
 
 def process_compounddef(compounddef):
     result = []
+    found_eagle_start = False
 
     # get child of compounddef called "briefdescription"
     briefdescription = None
@@ -276,7 +307,7 @@ def process_compounddef(compounddef):
     if briefdescription is not None:
         if len(briefdescription) > 0:
             if briefdescription[0].text is None:
-                print("No brief description text")
+                logging.warning("No brief description text")
                 result.append({
                     "key":"text",
                     "direction":None,
@@ -309,11 +340,20 @@ def process_compounddef(compounddef):
                 description += ddchild.text + "\n"
             for pchild in ddchild:
                 if pchild.tag == "simplesect":
+                    for sschild in pchild:
+                        if sschild.tag == "title":
+                            if sschild.text.strip() == "EAGLE_START":
+                                found_eagle_start = True
+
                     para = ddchild
 
     # add description
     if description != "":
         result.append({"key":"description", "direction":None, "value":description.strip()})
+
+    # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
+    if not found_eagle_start:
+        return []
 
     # check that we found the correct para
     if para is None:
@@ -341,14 +381,17 @@ def process_compounddef(compounddef):
                 direction = pichild[0].attrib.get("direction", "").strip()
             elif pichild.tag == "parameterdescription":
                 if key == "gitrepo":
-                    if pichild[0].text is None:
-                        print("No gitrepo text")
+                    # the gitrepo is a URL, so is contained within a <ulink> element,
+                    # therefore we need to use pichild[0][0] here to look one level deeper
+                    # in the hierarchy
+                    if pichild[0][0] is None or pichild[0][0].text is None:
+                        logging.warning("No gitrepo text")
                         value = ""
                     else:
-                        value = pichild[0].text.strip()
+                        value = pichild[0][0].text.strip()
                 else:
                     if pichild[0].text is None:
-                        print("No key text (key: " + key + ")")
+                        logging.warning("No key text (key: " + key + ")")
                         value = ""
                     else:
                         value = pichild[0].text.strip()
@@ -359,6 +402,8 @@ def process_compounddef(compounddef):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
     (inputfile, outputfile) = get_filenames_from_command_line(sys.argv[1:])
 
     gitrepo = ""
@@ -376,7 +421,7 @@ if __name__ == "__main__":
 
         # if no params were found, or only the name and description were found, then don't bother creating a node
         if len(params) > 2:
-            # print("params: " + str(params))
+            #print("params (" + str(len(params)) + "): " + str(params))
 
             # create a node
             n = create_palette_node_from_params(params)
@@ -394,3 +439,4 @@ if __name__ == "__main__":
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
+    logging.info("Wrote " + str(len(nodes)) + " component(s)")
