@@ -38,9 +38,10 @@ import time
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
+from .memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..drop import AppDROP
+from ..drop import AppDROP, InMemoryDROP
 from ..exceptions import NoSessionException, SessionAlreadyExistsException,\
     DaliugeException
 from ..lifecycle.dlm import DataLifecycleManager
@@ -142,6 +143,7 @@ class NodeManagerBase(DROPManager):
         if max_threads != 0:
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+            self._memoryManager = DlgSharedMemoryManager()
 
 
         # Event handler that only logs status changes
@@ -228,10 +230,15 @@ class NodeManagerBase(DROPManager):
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
+        if hasattr(self, '_memoryManager'):
+            self._memoryManager.register_session(sessionId)
 
         def foreach(drop):
             if self._threadpool is not None:
                 drop._tp = self._threadpool
+                if isinstance(drop, InMemoryDROP):
+                    drop._sessID = sessionId
+                    self._memoryManager.register_drop(drop.uid, sessionId)
             if self._dlm:
                 self._dlm.addDrop(drop)
 
@@ -263,6 +270,8 @@ class NodeManagerBase(DROPManager):
     def destroySession(self, sessionId):
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
+        if hasattr(self, '_memoryManager'):
+            self._memoryManager.shutdown_session(sessionId)
         session.destroy()
 
     def getSessionIds(self):
