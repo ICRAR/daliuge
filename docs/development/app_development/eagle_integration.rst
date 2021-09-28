@@ -1,37 +1,33 @@
 .. _eagle_integration:
 
-EAGLE Palette Generation
-------------------------
+Component Description Generation
+================================
+In order to present graph developers with well defined components for their workflow development, EAGLE uses descriptions of the components based on a JSON schema. Typically a number of these component descriptions are saved and used together in a so-called *palette*. The |daliuge| system provides two ways to create such palettes. One internal to EAGLE and another one by using special `Doxygen <https://www.doxygen.nl/>`_ markup inline with the component code. The latter method allows the component developer to keep everything required to describe a component in a single place, together with the code itself. The manual one allows graph developers to define and use components, which are otherwise not available, like for example bash components.
 
-Overview
-^^^^^^^^
-EAGLE is working with component descriptions based on a JSON schema for the palettes and the graphs (see `EAGLE documentation <https://eagle-dlg.readthedocs.io>`_ for more details on graphs and palettes). EAGLE does support the generation of such a description through the UI. However, this is a quite tedious and error prone process when trying to create many such descriptions. Obviously the person who knows best what a component is all about and which parameters are required to run it, is the developer of the component itself. Also, when a component is further developed, the JSON signature might need to be changed as well and then having to remember to update these JSON descriptions through EAGLE is just not very practical. Thus we have developed a method to allow Python and C/C++ component developers to add special EAGLE related doxygen tags in-line into the code. We have also generated a doxygen configuration file extracting those entries into xml files. In addition there is also a tool to parse the XML and convert it into the JSON required by EAGLE. As described below, this can be run manually, but it is also possible to integrate it into a continuous integration workflow like e.g. Travis to trigger it automatically when changes are committed to the repository. The following paragraphs describe the manual and the automatic usage and there is also a section detailing the markup requirements for both Python and C/C++.
+Manual EAGLE Palette Generation
+-------------------------------
+The *palette* and *logical graph* JSON formats are interchangable. In fact one can save a graph as a palette. Defining a component in EAGLE requires the activation of the *palette mode*. More details can be found in the `EAGLE <https://eagle-dlg.readthedocs.io>`_ documentation.
 
-Manual Usage
-^^^^^^^^^^^^
 TODO
 
-Integration with Continuous Integration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Once the comments are added to the source code and pushed to a repository
-a continuous integration step can then use the tools provided by the |daliuge| system to process the source code and produce the component descriptions readable by EAGLE.
+Automatic EAGLE Palette Generation
+----------------------------------
+The automatic generation of a *palette* involves four steps:
 
-The processing will:
+* Markup of code
+* Running of doxygen using a provided config file
+* Running of xml2palette.py, which is a small tool to convert the XML files generated in the step above into the required JSON format.
+* (optional) commit the resulting palette file to a graph repository.
+  
+The last three steps can be integrated into a CI build system and would then be executed automatically with any commit of the component source code. Very often one directory of source code contains multiple source files, each of which contain multiple components. The resulting palette will include descriptions of all the components found in a directory.
 
-* combine the Doxygen output XML into a single XML file
-* transform the XML into an EAGLE palette file (JSON)
-* push the palette file to a GitHub/GitLab repository (optional).
-
-TODO: The above is not complete and needs updates.
-
-Doxygen markup
-^^^^^^^^^^^^^^
-
+Component Doxygen Markup Guide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom
 `Doxygen <https://www.doxygen.nl/>`_ comments to the source code.
-These comments describe the application and can
+These comments describe the component and can
 be used to automatically generate a JSON DALiuGE component description
-which can be used in the *EAGLE* Logical Graph Editor.
+which in turn can be used in the *EAGLE*.
 
 The comments should be contained within a *EAGLE_START* and *EAGLE_END*
 pair.
