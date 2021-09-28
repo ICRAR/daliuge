@@ -189,6 +189,8 @@ class TestSimpleApps(unittest.TestCase):
         drop_ids = [chr(97 + x) for x in range(max_threads)]
         threadpool = ThreadPool(processes=max_threads)
         memory_manager = DlgSharedMemoryManager()
+        session_id = 1
+        memory_manager.register_session(session_id)
         S = InMemoryDROP('S', 'S')
         X = AverageArraysApp('X', 'X')
         Z = InMemoryDROP('Z', 'Z')
@@ -199,10 +201,12 @@ class TestSimpleApps(unittest.TestCase):
             # a bit of magic to get the app drops using the processes
             _ = [drop.__setattr__('_tp', threadpool) for drop in drops]
             _ = [drop.__setattr__('_tp', threadpool) for drop in mdrops]
-            _ = [memory_manager.register_drop(str(drop.uid)) for drop in mdrops]
+            _ = [drop.__setattr__('_sessID', session_id) for drop in mdrops]
+            _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
             X.__setattr__('_tp', threadpool)
             Z.__setattr__('_tp', threadpool)
-            memory_manager.register_drop(str(Z.uid))
+            Z.__setattr__('_sessID', session_id)
+            memory_manager.register_drop(Z.uid, session_id)
 
         _ = [d.addInput(S) for d in drops]
         _ = [d.addOutput(m) for d, m in zip(drops, mdrops)]
@@ -222,7 +226,7 @@ class TestSimpleApps(unittest.TestCase):
         graph_result = pickle.loads(graph_result)
         self.assertEqual(graph_result, average)
         # Must be called to unlink all shared memory
-        memory_manager.shutdown()
+        memory_manager.shutdown_all()
 
     def test_speedup(self):
         """
