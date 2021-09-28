@@ -186,8 +186,6 @@ def create_palette_node_from_params(params):
         direction = param['direction']
         value = param['value']
 
-        #print("key " + key + " value " + value)
-
         if key == "category":
             category = value
         elif key == "text":
@@ -342,10 +340,8 @@ def process_compounddef(compounddef):
                 description += ddchild.text + "\n"
             for pchild in ddchild:
                 if pchild.tag == "simplesect":
-                    #print("Simplesect:" + str(pchild))
                     for sschild in pchild:
                         if sschild.tag == "title":
-                            #print("sschild:" + str(sschild) + "::" + sschild.text)
                             if sschild.text.strip() == "EAGLE_START":
                                 found_eagle_start = True
 
@@ -357,7 +353,6 @@ def process_compounddef(compounddef):
 
     # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
     if not found_eagle_start:
-        #print("NO EAGLE_START")
         return []
 
     # check that we found the correct para
