@@ -184,7 +184,7 @@ class TestSimpleApps(unittest.TestCase):
         data_out = pickle.loads(droputils.allDropContents(c))
         self.assertEqual(b.marray, data_out)
 
-    def test_multi_listappendthrashing(self, size=100, parallel=True):
+    def test_multi_listappendthrashing(self, size=1000, parallel=True):
         max_threads = cpu_count(logical=False)
         drop_ids = [chr(97 + x) for x in range(max_threads)]
         threadpool = ThreadPool(processes=max_threads)
@@ -218,9 +218,10 @@ class TestSimpleApps(unittest.TestCase):
         X.marray = num_array
         average = X.averageArray()
         # Load actual results
-        data = droputils.allDropContents(Z)
-        data = pickle.loads(data)
-        self.assertEqual(data, average)
+        graph_result = droputils.allDropContents(Z)
+        graph_result = pickle.loads(graph_result)
+        self.assertEqual(graph_result, average)
+        # Must be called to unlink all shared memory
         memory_manager.shutdown()
 
     def test_speedup(self):
@@ -229,7 +230,8 @@ class TestSimpleApps(unittest.TestCase):
         NOTE: In order to get the stdout you need to run pyest with
         --capture=tee-sys
         """
-        size = 10000
+        size = 2000
+        print("Starting serial test..")
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=False)
         t1 = time.time() - st
@@ -237,7 +239,12 @@ class TestSimpleApps(unittest.TestCase):
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=True)
         t2 = time.time() - st
-        print(f"Speedup: {t1 / t2:.2f}")
+        print(f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores")
         # TODO: This is unpredictable, but maybe we can do something meaningful.
         # self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
-        self.assertEqual(t1, t1)
+        # How about this? We only need to see some type of speedup
+        if cpu_count(logical=False) > 1 and size > 500:
+            self.assertGreater(t1/t2, 1)
+        else:
+            # Ensure that multi-threading overhead doesn't ruin serial performance?
+            self.assertAlmostEqual(t1, t2, delta=0.5)
