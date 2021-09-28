@@ -186,6 +186,8 @@ def create_palette_node_from_params(params):
         direction = param['direction']
         value = param['value']
 
+        #print("key " + key + " value " + value)
+
         if key == "category":
             category = value
         elif key == "text":
@@ -295,6 +297,7 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
 
 def process_compounddef(compounddef):
     result = []
+    found_eagle_start = False
 
     # get child of compounddef called "briefdescription"
     briefdescription = None
@@ -339,11 +342,23 @@ def process_compounddef(compounddef):
                 description += ddchild.text + "\n"
             for pchild in ddchild:
                 if pchild.tag == "simplesect":
+                    #print("Simplesect:" + str(pchild))
+                    for sschild in pchild:
+                        if sschild.tag == "title":
+                            #print("sschild:" + str(sschild) + "::" + sschild.text)
+                            if sschild.text.strip() == "EAGLE_START":
+                                found_eagle_start = True
+
                     para = ddchild
 
     # add description
     if description != "":
         result.append({"key":"description", "direction":None, "value":description.strip()})
+
+    # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
+    if not found_eagle_start:
+        #print("NO EAGLE_START")
+        return []
 
     # check that we found the correct para
     if para is None:
@@ -411,7 +426,7 @@ if __name__ == "__main__":
 
         # if no params were found, or only the name and description were found, then don't bother creating a node
         if len(params) > 2:
-            # print("params: " + str(params))
+            #print("params (" + str(len(params)) + "): " + str(params))
 
             # create a node
             n = create_palette_node_from_params(params)
@@ -429,3 +444,4 @@ if __name__ == "__main__":
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
+    logging.info("Wrote " + str(len(nodes)) + " component(s)")
