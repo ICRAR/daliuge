@@ -28,7 +28,7 @@ from typing import Optional
 
 import pyarrow
 import pyarrow.plasma as plasma
-from dlg.manager.memory_manager import DlgSharedMemory
+from dlg.shared_memory import DlgSharedMemory
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient
