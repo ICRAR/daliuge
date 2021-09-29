@@ -76,7 +76,7 @@ class TestSharedMemory(unittest.TestCase):
         block_a.close()
         block_b = DlgSharedMemory('A')
         self.assertEqual(block_b.size, old_size)
-        self.assertEqual(block_b.name, 'A')
+        self.assertEqual(block_b.name, '/A')
         self.assertEqual(block_b.buf[:], data)
         block_b.close()
         block_b.unlink()
@@ -112,7 +112,7 @@ class TestSharedMemory(unittest.TestCase):
         block_a.close()
         block_b.close()
         block_a.unlink()
-        with self.assertRaises(FileNotFoundError):
+        with self.assertWarns(RuntimeWarning):
             block_b.unlink()
 
     def test_long_name(self):
@@ -121,7 +121,7 @@ class TestSharedMemory(unittest.TestCase):
         """
         filename = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         block_a = DlgSharedMemory(filename)
-        self.assertEqual(block_a.name, filename[:_MAXNAMELENGTH-1])
+        self.assertEqual(block_a.name, '/'+filename[:_MAXNAMELENGTH-1])
         block_a.close()
         block_a.unlink()
 
@@ -132,6 +132,6 @@ class TestSharedMemory(unittest.TestCase):
         """
         filename = '/memory'
         block_a = DlgSharedMemory(filename)
-        self.assertEqual(block_a.name, filename[1:])
+        self.assertEqual(block_a.name, filename)
         block_a.close()
         block_a.unlink()
