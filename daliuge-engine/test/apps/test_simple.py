@@ -32,7 +32,7 @@ from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyAp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
-from dlg.manager.memory_manager import DlgSharedMemory, DlgSharedMemoryManager
+from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 from numpy import random, mean, array, concatenate
 from psutil import cpu_count
 
