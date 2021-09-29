@@ -21,8 +21,10 @@
 #
 
 """
-Module contains shared memory manager which handles shared memory for a multi-threaded NodeManager.
+Module contains shared memory class which creates shared memory blocks for use by drops or other
+DALiuGE components.
 """
+
 import mmap
 import os
 import logging
@@ -178,45 +180,3 @@ class DlgSharedMemory:
         self.unlink()
         self.__init__(self._name, new_size)
         self._buf[0:len(old_data)] = old_data
-
-
-def _cleanup_block(session_id, name):
-    mem = DlgSharedMemory(f'{session_id}_{name}')
-    mem.close()
-    mem.unlink()  # It is unlinking that is critical to freeing resources from the OS
-
-
-class DlgSharedMemoryManager:
-    """
-    Lite class used by a NodeManager to log the existance of sharedmemory objects.
-    Unlinks all objects when requested
-    """
-
-    def __init__(self):
-        self.drop_names = {}
-
-    def register_session(self, name):
-        # TODO: handle duplicate sessions
-        self.drop_names[str(name)] = set()  # Handles duplicates
-
-    def register_drop(self, name, session_id):
-        """
-        Adds a drop to the list of known shared memory blocks
-        """
-        # TODO: Handle unregistered session
-        self.drop_names[str(session_id)].add(str(name))
-
-    def shutdown_session(self, session_id):
-        """
-        Unlinks all memory blocks associated with a particular session.
-        """
-        if session_id in self.drop_names.keys():
-            for drop in self.drop_names[session_id]:
-                _cleanup_block(session_id, drop)
-
-    def shutdown_all(self):
-        """
-        Unlinks all shared memory blocks associated with this memory manager
-        """
-        for session_id in self.drop_names.keys():
-            self.shutdown_session(session_id)
