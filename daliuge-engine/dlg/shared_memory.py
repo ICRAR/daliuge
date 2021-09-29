@@ -25,20 +25,20 @@ Module contains shared memory class which creates shared memory blocks for use b
 DALiuGE components.
 """
 
+import _posixshmem  # Does not work on Windows
+import logging
 import mmap
 import os
-import logging
-import _posixshmem  # Does not work on Windows
 import secrets
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 _O_CREX = os.O_CREAT | os.O_EXCL
-_MAXNAMELENGTH = 14  # Apparently FreeBSD have this limitation
+_MAXNAMELENGTH = 14  # Apparently FreeBSD has this limitation
 
 
 def _make_filename(name):
-    if type(name) is not str:
+    if isinstance(name, str):
         name = str(name)
     if name[0] != '/':
         name = '/' + name
@@ -60,6 +60,7 @@ class DlgSharedMemory:
     A re-implementation of multiprocessing.shared_memory for more direct usage in daliuge.
     Writes directly to shared-memory, automatically handles resizing and fetching of pre-existing
     blocks.
+    If given a name, will attempt to create a new file or return a pre-existing one.
     Based heavily on Python's own shared memory implementation
     (https://github.com/python/cpython/blob/3.9/Lib/multiprocessing/shared_memory.py)
     """
@@ -75,10 +76,11 @@ class DlgSharedMemory:
         Tries to create a file with name provided. If this file exists, returns existing file.
         If name is not provided, a random name is created.
         """
-        if not size > 0:
+        if size <= 0:
             raise ValueError("'size' must be positive")
         if name is None:
             while True:
+                # Try make a random shared file
                 name = _make_random_filename()
                 try:
                     self._fd = _posixshmem.shm_open(
@@ -86,11 +88,12 @@ class DlgSharedMemory:
                         self._flags,
                         mode=self._mode
                     )
-                except FileExistsError:
+                except FileExistsError:  # Collision with other name
                     continue
                 self._name = name
                 break
         else:
+            # Attempt to create a named file
             name = _make_filename(name)
             self._flags = _O_CREX | os.O_RDWR
             try:
@@ -100,6 +103,7 @@ class DlgSharedMemory:
                     mode=self._mode
                 )
             except FileExistsError:
+                # File already exists, attempt to open in read/write mode
                 self._flags = os.O_RDWR
                 self._fd = _posixshmem.shm_open(
                     name,
@@ -107,6 +111,7 @@ class DlgSharedMemory:
                     mode=self._mode
                 )
                 # Find the size of the written file
+                # Needs to be set so that the file is truncated down to the correct size.
                 size = os.lseek(self._fd, 0, os.SEEK_END)
                 # Return to start for operations
                 os.lseek(self._fd, 0, os.SEEK_SET)
@@ -157,7 +162,11 @@ class DlgSharedMemory:
         if self._mmap is not None:
             try:
                 self._mmap.close()
-            except BufferError:  # TODO: Possibly quite dodge
+            except BufferError:
+                # WARNING: Possibly quite dodge but I cannot see a way around this.
+                # If a child process creates a memory block then closes it, there will be a
+                # buffer error as the parent process (child in the view of the memory) will still
+                # have access.
                 pass
             self._mmap = None
         if self._fd > -1:
