@@ -75,3 +75,8 @@ class DlgSharedMemoryManager:
         """
         for session_id in self.drop_names:
             self.shutdown_session(session_id)
+        self.drop_names = {}
+
+    def __del__(self):
+        if len(self.drop_names) > 0:
+            self.shutdown_all()
