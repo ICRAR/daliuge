@@ -85,7 +85,7 @@ class DlgSharedMemory:
                 try:
                     self._fd = _posixshmem.shm_open(
                         name,
-                        self._flags,
+                        self._flags | _O_CREX,
                         mode=self._mode
                     )
                 except FileExistsError:  # Collision with other name
@@ -178,7 +178,10 @@ class DlgSharedMemory:
         Requests destruction of this memory block.
         Unlink should be called once and only once across all processes
         """
-        _posixshmem.shm_unlink(self._name)
+        try:
+            _posixshmem.shm_unlink(self._name)
+        except FileNotFoundError:
+            LOGGER.debug(f"{self.name} tried to unlink twice")
 
     def resize(self, new_size):
         """
