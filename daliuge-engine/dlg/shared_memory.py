@@ -30,6 +30,7 @@ import logging
 import mmap
 import os
 import secrets
+import warnings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -182,6 +183,7 @@ class DlgSharedMemory:
             _posixshmem.shm_unlink(self._name)
         except FileNotFoundError:
             LOGGER.debug(f"{self.name} tried to unlink twice")
+            warnings.warn("Cannot unlink a shared block twice", RuntimeWarning)
 
     def resize(self, new_size):
         """
@@ -192,6 +194,7 @@ class DlgSharedMemory:
         self.unlink()
         self.__init__(self._name, new_size)
         if new_size < len(old_data):
+            warnings.warn("Shrinking shared block, may lose data", BytesWarning)
             self._buf[:] = old_data[0:new_size]
         else:
             self._buf[0:len(old_data)] = old_data
