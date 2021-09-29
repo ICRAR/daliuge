@@ -380,7 +380,7 @@ def process_compounddef(compounddef):
                 key = pichild[0].text.strip()
                 direction = pichild[0].attrib.get("direction", "").strip()
             elif pichild.tag == "parameterdescription":
-                if key == "gitrepo":
+                if key == "gitrepo" and isinstance(pichild[0], list):
                     # the gitrepo is a URL, so is contained within a <ulink> element,
                     # therefore we need to use pichild[0][0] here to look one level deeper
                     # in the hierarchy
