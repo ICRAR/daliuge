@@ -27,7 +27,7 @@ import logging
 
 from dlg.shared_memory import DlgSharedMemory
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def _cleanup_block(session_id, name):
@@ -46,6 +46,9 @@ class DlgSharedMemoryManager:
         self.drop_names = {}
 
     def register_session(self, name):
+        """
+        Registers a session with this memory manager
+        """
         if str(name) in self.drop_names.keys():
             return
         self.drop_names[str(name)] = set()  # Handles duplicates
@@ -70,5 +73,5 @@ class DlgSharedMemoryManager:
         """
         Unlinks all shared memory blocks associated with this memory manager
         """
-        for session_id in self.drop_names.keys():
+        for session_id in self.drop_names:
             self.shutdown_session(session_id)
