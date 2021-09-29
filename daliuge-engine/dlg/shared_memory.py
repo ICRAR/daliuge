@@ -188,4 +188,7 @@ class DlgSharedMemory:
         self.close()
         self.unlink()
         self.__init__(self._name, new_size)
-        self._buf[0:len(old_data)] = old_data
+        if new_size < len(old_data):
+            self._buf[:] = old_data[0:new_size]
+        else:
+            self._buf[0:len(old_data)] = old_data
