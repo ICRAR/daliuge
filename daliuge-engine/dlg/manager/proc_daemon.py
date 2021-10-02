@@ -84,7 +84,8 @@ class DlgDaemon(RestServer):
 
         # Starting managers
         app = self.app
-        app.post('/managers/node',       callback=self.rest_startNM)
+        app.post('/managers/node/start',       callback=self.rest_startNM)
+        app.post('/managers/node/stop',       callback=self.rest_stopNM)
         app.post('/managers/dataisland', callback=self.rest_startDIM)
         app.post('/managers/master',     callback=self.rest_startMM)
 
@@ -106,10 +107,10 @@ class DlgDaemon(RestServer):
         """
         self._shutting_down = True
         super(DlgDaemon, self).stop(timeout)
-        self._stop_zeroconf()
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
+        self._stop_zeroconf()
         logger.info('DALiuGE Daemon stopped')
 
     def _stop_zeroconf(self):
@@ -121,9 +122,8 @@ class DlgDaemon(RestServer):
         if self._mm_browser:
             self._mm_browser.cancel()
             self._mm_browser.join()
-        if self._nm_info:
-            utils.deregister_service(self._zeroconf, self._nm_info)
         self._zeroconf.close()
+        logger.info('Zeroconf stopped')
 
     def _stop_rest_server(self, timeout):
         if self._ioloop:
@@ -149,15 +149,19 @@ class DlgDaemon(RestServer):
         proc = getattr(self, name)
         if proc:
             utils.terminate_or_kill(proc, timeout)
+            pid = proc.pid
             setattr(self, name, None)
+            return {'terminated':pid}
 
-    def stopNM(self, timeout=None):
-        self._stop_manager('_nm_proc', timeout)
+    def stopNM(self, timeout=10):
+        if self._nm_info:
+            utils.deregister_service(self._zeroconf, self._nm_info)
+        return self._stop_manager('_nm_proc', timeout)
 
-    def stopDIM(self, timeout=None):
+    def stopDIM(self, timeout=10):
         self._stop_manager('_dim_proc', timeout)
 
-    def stopMM(self, timeout=None):
+    def stopMM(self, timeout=10):
         self._stop_manager('_mm_proc', timeout)
 
     # Methods to start and stop the individual managers
@@ -173,6 +177,7 @@ class DlgDaemon(RestServer):
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
+            logger.info('Registering this NM with zeroconf: %s' % addrs)
             self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
 
     def startDIM(self, nodes):
@@ -220,6 +225,7 @@ class DlgDaemon(RestServer):
                             del node_managers[name]
 
             self._mm_browser = utils.browse_service(self._zeroconf, 'NodeManager', 'tcp', nm_callback)
+            logger.info('Zeroconf started')
 
     def _verbosity_as_cmdline(self):
         if self._verbosity > 0:
@@ -234,14 +240,23 @@ class DlgDaemon(RestServer):
             bottle.abort(409, 'The Drop Manager is already running') # Conflict
         start_method()
 
+    def _rest_stop_manager(self, proc, stop_method):
+        if proc is None:
+            bottle.abort(409, 'The Drop Manager is not running') # Conflict
+        return json.dumps(stop_method())
+
     def _rest_get_manager_info(self, proc):
         if proc:
             bottle.response.content_type = 'application/json'
+            logger.info("Sending response: %s" % json.dumps({'pid': proc.pid}))
             return json.dumps({'pid': proc.pid})
         bottle.abort(404, 'The Drop Manager is not running')
 
     def rest_startNM(self):
         self._rest_start_manager(self._nm_proc, self.startNM)
+
+    def rest_stopNM(self):
+        self._rest_stop_manager(self._nm_proc, self.stopNM)
 
     def rest_startDIM(self):
         body = bottle.request.json
@@ -251,6 +266,9 @@ class DlgDaemon(RestServer):
             return
         nodes = body['nodes']
         self._rest_start_manager(self._dim_proc, functools.partial(self.startDIM, nodes))
+
+    def rest_stopDIM(self):
+        self._rest_stop_manager(self._dim_proc, self.stopDIM)
 
     def rest_startMM(self):
         self._rest_start_manager(self._mm_proc, self.startMM)
