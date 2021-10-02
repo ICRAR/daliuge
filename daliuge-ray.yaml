@@ -181,10 +181,7 @@ head_start_ray_commands:
     # start DALiuGE data island manager
     - dlg dim -d -vvv -H 0.0.0.0 -w /var/dlg_home/workspace
     - dlg nm -d -vvv -H 0.0.0.0 --dlg-path=/var/dlg_home/code -w /var/dlg_home/workspace
-    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
-
-    # bug in registration creates two entires in DIM
-    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
@@ -192,7 +189,5 @@ worker_start_ray_commands:
     - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
     # start DALiuGE node manager
     - dlg nm -vvvd -H 0.0.0.0 --dlg-path=/var/dlg_home/code -w /var/dlg_home/workspace
-    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
-    # bug in registration creates two entires in DIM
-    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
  
