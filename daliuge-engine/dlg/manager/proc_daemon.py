@@ -85,14 +85,17 @@ class DlgDaemon(RestServer):
         # Starting managers
         app = self.app
         app.post('/managers/node/start',       callback=self.rest_startNM)
-        app.post('/managers/node/stop',       callback=self.rest_stopNM)
-        app.post('/managers/dataisland', callback=self.rest_startDIM)
-        app.post('/managers/master',     callback=self.rest_startMM)
+        app.post('/managers/node/stop',        callback=self.rest_stopNM)
+        app.post('/managers/island/start',     callback=self.rest_startDIM)
+        app.post('/managers/island/stop',      callback=self.rest_stopDIM)
+        app.post('/managers/master/start',     callback=self.rest_startMM)
+        app.post('/managers/master/stop',      callback=self.rest_stopMM)
 
         # Querying about managers
-        app.get('/managers/node',       callback=self.rest_getNMInfo)
-        app.get('/managers/dataisland', callback=self.rest_getDIMInfo)
+        app.get('/managers',            callback=self.rest_getMgrs)
         app.get('/managers/master',     callback=self.rest_getMMInfo)
+        app.get('/managers/island',     callback=self.rest_getDIMInfo)
+        app.get('/managers/node',       callback=self.rest_getNMInfo)
 
         # Automatically start those that we need
         if master:
@@ -178,7 +181,9 @@ class DlgDaemon(RestServer):
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
             logger.info('Registering this NM with zeroconf: %s' % addrs)
-            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', \
+                socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+        return
 
     def startDIM(self, nodes):
         tool = get_tool()
@@ -189,6 +194,7 @@ class DlgDaemon(RestServer):
         logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
         self._dim_proc = tool.start_process('dim', args)
         logger.info("Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid))
+        return
 
     def startMM(self):
         tool = get_tool()
@@ -226,6 +232,7 @@ class DlgDaemon(RestServer):
 
             self._mm_browser = utils.browse_service(self._zeroconf, 'NodeManager', 'tcp', nm_callback)
             logger.info('Zeroconf started')
+            return
 
     def _verbosity_as_cmdline(self):
         if self._verbosity > 0:
@@ -239,6 +246,7 @@ class DlgDaemon(RestServer):
         if proc is not None:
             bottle.abort(409, 'The Drop Manager is already running') # Conflict
         start_method()
+        return
 
     def _rest_stop_manager(self, proc, stop_method):
         if proc is None:
@@ -250,10 +258,25 @@ class DlgDaemon(RestServer):
             bottle.response.content_type = 'application/json'
             logger.info("Sending response: %s" % json.dumps({'pid': proc.pid}))
             return json.dumps({'pid': proc.pid})
-        bottle.abort(404, 'The Drop Manager is not running')
+        else:
+            return json.dumps({'pid':None})
+
+    def rest_getMgrs(self):
+        mgrs = {
+            'master': self._mm_proc,
+            'island': self._dim_proc,
+            'node':   self._nm_proc
+        }
+        if mgrs['master']: mgrs['master'] = self._mm_proc.pid
+        if mgrs['island']: mgrs['island'] = self._dim_proc.pid
+        if mgrs['node']: mgrs['node'] = self._nm_proc.pid
+
+        logger.info("Sending response: %s" % json.dumps(mgrs))
+        return json.dumps(mgrs)
 
     def rest_startNM(self):
         self._rest_start_manager(self._nm_proc, self.startNM)
+        return self.rest_getNMInfo()
 
     def rest_stopNM(self):
         self._rest_stop_manager(self._nm_proc, self.stopNM)
@@ -261,17 +284,22 @@ class DlgDaemon(RestServer):
     def rest_startDIM(self):
         body = bottle.request.json
         if not body or 'nodes' not in body:
-            bottle.response.status = 400
-            bottle.response.body = 'JSON content is expected with a "nodes" list in it'
-            return
-        nodes = body['nodes']
+            # if nothing else is specified we simply add this host
+            nodes = {'localhost'}
+        else:
+            nodes = body['nodes']
         self._rest_start_manager(self._dim_proc, functools.partial(self.startDIM, nodes))
+        return self.rest_getDIMInfo()
 
     def rest_stopDIM(self):
         self._rest_stop_manager(self._dim_proc, self.stopDIM)
 
     def rest_startMM(self):
         self._rest_start_manager(self._mm_proc, self.startMM)
+        return self.rest_getMMInfo()
+
+    def rest_stopMM(self):
+        self._rest_stop_manager(self._mm_proc, self.stopMM)
 
     def rest_getNMInfo(self):
         return self._rest_get_manager_info(self._nm_proc)
