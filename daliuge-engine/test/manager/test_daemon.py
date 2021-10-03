@@ -90,14 +90,6 @@ class TestDaemon(unittest.TestCase):
         self.assertFalse(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, 0), 'NM started but it should not have')
         self.assertFalse(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, 0), 'NM started but it should not have')
 
-    def test_start_master_via_rest(self):
-
-        self.create_daemon(master=False, noNM=False, disable_zeroconf=True)
-
-        # Check that the master starts
-        self._start('master', http.HTTPStatus.OK)
-        self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
-
     def test_zeroconf_discovery(self):
 
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
@@ -121,8 +113,57 @@ class TestDaemon(unittest.TestCase):
         self.assertEqual(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
 
         # Check that the DataIsland starts with the given nodes
-        self._start('dataisland', http.HTTPStatus.OK, {'nodes': nodes})
+        self._start('island', http.HTTPStatus.OK, {'nodes': nodes})
         self.assertTrue(utils.portIsOpen('localhost', constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT), 'The DIM did not start successfully')
+
+    def test_stop_dataisland_via_rest(self):
+
+        # start master and island manager
+        self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
+        nodes = self._get_nodes_from_master(_TIMEOUT)
+        self._start('island', http.HTTPStatus.OK, {'nodes': nodes})
+
+        # Both managers started fine. If they zeroconf themselves correctly then
+        # if we query the MM it should know about its nodes, which should have
+        # one element
+        nodes = self._get_nodes_from_master(_TIMEOUT)
+        self.assertIsNotNone(nodes)
+        self.assertEqual(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
+
+        # Check that the DataIsland stopped 
+        self._stop('island', http.HTTPStatus.OK, '')
+        self.assertFalse(utils.portIsOpen('localhost', constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT), 'The DIM did not stop successfully')
+
+    def test_stop_start_node_via_rest(self):
+
+        # test both stop and start of NM via REST
+        self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
+
+        # Both managers started fine. If they zeroconf themselves correctly then
+        # if we query the MM it should know about its nodes, which should have
+        # one element
+        nodes = self._get_nodes_from_master(_TIMEOUT)
+        self.assertIsNotNone(nodes)
+        self.assertEqual(1, len(nodes), "MasterManager didn't find the NodeManager running on the same node")
+
+        # Check that the NM stops
+        self._stop('node', http.HTTPStatus.OK, '')
+        self.assertFalse(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT), 'The node did not stop successfully')
+        # Check that the NM starts
+        self._start('node', http.HTTPStatus.OK, {'pid':nodes})
+        self.assertTrue(utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT), 'The node did not start successfully')
+
+    def test_start_stop_master_via_rest(self):
+        # test both stop and start of MASTER via REST
+        self.create_daemon(master=False, noNM=False, disable_zeroconf=True)
+
+        # Check that the MM starts
+        self._start('master', http.HTTPStatus.OK)
+        self.assertTrue(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not start successfully')
+
+        # Check that the MM stops
+        self._stop('master', http.HTTPStatus.OK, '')
+        self.assertFalse(utils.portIsOpen('localhost', constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT), 'The MM did not stop successfully')
 
     def _start(self, manager_name, expected_code, payload=None):
         conn = http.client.HTTPConnection('localhost', 9000)
@@ -130,7 +171,19 @@ class TestDaemon(unittest.TestCase):
         if payload:
             payload = json.dumps(payload)
             headers['Content-Type'] = 'application/json'
-        conn.request('POST', '/managers/%s' % (manager_name,), body=payload, headers=headers)
+        conn.request('POST', '/managers/%s/start' % (manager_name,), body=payload, headers=headers)
+        response = conn.getresponse()
+        self.assertEqual(expected_code, response.status, response.read())
+        response.close()
+        conn.close()
+
+    def _stop(self, manager_name, expected_code, payload=None):
+        conn = http.client.HTTPConnection('localhost', 9000)
+        headers = {}
+        if payload:
+            payload = json.dumps(payload)
+            headers['Content-Type'] = 'application/json'
+        conn.request('POST', '/managers/%s/stop' % (manager_name,), body=payload, headers=headers)
         response = conn.getresponse()
         self.assertEqual(expected_code, response.status, response.read())
         response.close()
