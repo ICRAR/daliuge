@@ -489,9 +489,9 @@ class MasterManagerRestServer(CompositeManagerRestServer):
 
         # Query forwarding to daemons
 
-        app.post('/api/managers/<host>/dataisland', callback=self.createDataIsland)
-        app.post('/api/managers/<host>/node/start',       callback=self.startNM)
-        app.post('/api/managers/<host>/node/stop',       callback=self.stopNM)
+        app.post('/api/managers/<host>/dataisland',     callback=self.createDataIsland)
+        app.post('/api/managers/<host>/node/start',     callback=self.startNM)
+        app.post('/api/managers/<host>/node/stop',      callback=self.stopNM)
         # Querying about managers
         app.get('/api/islands',                    callback=self.getDIMs)
         app.get('/api/nodes',                      callback=self.getNMs)
