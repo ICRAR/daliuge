@@ -38,7 +38,7 @@ import time
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
-from .memory_manager import DlgSharedMemoryManager
+from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
 from ..drop import AppDROP, InMemoryDROP
