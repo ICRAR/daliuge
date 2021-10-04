@@ -252,6 +252,8 @@ class SharedMemoryIO(DataIO):
         return len(data)
 
     def _read(self, count=4096, **kwargs):
+        if self._pos == self._buf.size:
+            return None
         start = self._pos
         end = self._pos + count
         end = min(end, self._buf.size)

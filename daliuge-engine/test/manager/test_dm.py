@@ -81,6 +81,7 @@ class NMTestsMixIn(object):
             host=host,
             events_port=events_port,
             rpc_port=rpc_port,
+            max_threads=1,
             **kwargs
         )
         self._dms.append(nm)

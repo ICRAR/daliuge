@@ -55,7 +55,7 @@ from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO,
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
-
+from dlg.process import DlgProcess
 import pyarrow.plasma as plasma
 
 # Opt into using per-drop checksum calculation
@@ -1746,9 +1746,11 @@ class InputFiredAppDROP(AppDROP):
         while tries < self.n_tries:
             try:
                 if hasattr(self, '_tp'):
-                    proc = multiprocessing.Process(target=self.run, daemon=True)
+                    proc = DlgProcess(target=self.run, daemon=True)
                     proc.start()
                     proc.join()
+                    if proc.exception:
+                        raise proc.exception
                 else:
                     self.run()
                 if self.execStatus == AppDROPStates.CANCELLED:
