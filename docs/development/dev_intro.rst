@@ -10,9 +10,9 @@ The following chapters and sections will use some terms in a specific meaning. T
 
 #. Component: *Component* refers to a |daliuge| compliant implementation of some functionality used in the execution of a workflow. A component consists of the |daliuge| interface wrapper and the code implementing the desired functionality. In some cases the actual functional code is not integrated with the interface, but just executed by the interface. There are three main types of components:
 
-    * Application Component: |daliuge| interface wrapper and application code.
-    * Data Component: |daliuge| interface wrapper around an I/O channel. Examples are standard files, memory, S3 and Apache Plasma.
-    * Service Component: A *Service Component* is a special component, providing access to services like a database or some other client/server system used within a workflow.
+   * Application Component: |daliuge| interface wrapper and application code.
+   * Data Component: |daliuge| interface wrapper around an I/O channel. Examples are standard files, memory, S3 and Apache Plasma.
+   * Service Component: A *Service Component* is a special component, providing access to services like a database or some other client/server system used within a workflow.
 
 #. Construct: A *Construct* is a complex *Component*, which may contain other *Components*.
 #. Node: *Graph Node* or *Palette Node* refers to a JSON representation of a *Component* in a |daliuge| graph or palette.
@@ -37,9 +37,9 @@ Integration of Layers
 ---------------------
 The |daliuge| system consists of three main parts:
 
-* EAGLE for graph development
-* Translator to translate logical graphs to physical graphs and partition and statically schedule them.
-* Execution Engine to execute physical graphs on small or very large compute clusters.
+#. EAGLE for graph development
+#. Translator to translate logical graphs to physical graphs and partition and statically schedule them.
+#. Execution Engine to execute physical graphs on small or very large compute clusters.
 
 All three of them are essentially independent and can be used without the others running. The EAGLE visual graph editor is a web application, which deals with *Nodes*, i.e. with JSON descriptions of *Components*. It also allows users to define these descriptions starting from node templates. Users can group and store sets of defined nodes as *palettes*. The nodes of one or multiple palettes are then used to construct a workflow graph. Graphs and Palettes are stored as JSON files and they are essentially the same, except for the additional arrangement and visual information in a graph file. A graph can be stored as a palette and then used to create other graphs.
 
