@@ -18,7 +18,6 @@ next_key = -1
 #       make sure to retrieve some of these from environment variables
 DOXYGEN_SETTINGS = [
     ("PROJECT_NAME",         "DALIUGE"),
-    ("OUTPUT_DIRECTORY",     "DALIUGE"),
     ("OPTIMIZE_OUTPUT_JAVA", "YES"),
     ("AUTOLINK_SUPPORT",     "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
@@ -461,8 +460,15 @@ if __name__ == "__main__":
 
     (inputdir, outputfile) = get_filenames_from_command_line(sys.argv[1:])
 
+    # create a temp directory for the output of doxygen
+    output_directory = tempfile.TemporaryDirectory()
+
     # read environment variables
     read_environment_variables()
+
+    # add extra doxygen setting for input and output locations
+    DOXYGEN_SETTINGS.append(("INPUT", inputdir))
+    DOXYGEN_SETTINGS.append(("OUTPUT_DIRECTORY", output_directory.name))
 
     # create a temp file to contain the Doxyfile
     doxygen_file = tempfile.NamedTemporaryFile()
@@ -475,10 +481,12 @@ if __name__ == "__main__":
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
 
+    # run doxygen
     os.system("doxygen " + doxygen_filename)
 
-
-    sys.exit()
+    # run xsltproc
+    output_xml_filename = output_directory.name + "/xml/doxygen.xml"
+    os.system("xsltproc " + output_directory.name + "/xml/combine.xslt " + output_directory.name + "/xml/index.xml > " + output_xml_filename)
 
 
     gitrepo = ""
@@ -488,7 +496,7 @@ if __name__ == "__main__":
     nodes = []
 
     # load the input xml file
-    tree = ET.parse(inputfile)
+    tree = ET.parse(output_xml_filename)
     xml_root = tree.getroot()
 
     for compounddef in xml_root:
@@ -515,3 +523,6 @@ if __name__ == "__main__":
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
+
+    # cleanup the output directory
+    output_directory.cleanup()
