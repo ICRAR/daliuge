@@ -74,7 +74,7 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 needs_sphinx = '1.3'
 extensions = [
-    'sphinx_rtd_theme',
+    'sphinx_rtd_theme==0.5.2',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
