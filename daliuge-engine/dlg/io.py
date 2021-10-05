@@ -219,7 +219,11 @@ class FileIO(DataIO):
     def _open(self, **kwargs):
         flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
         flag += 'b'
-        return open(self._fnm, flag)
+        try:
+            return open(self._fnm, flag)
+        except FileNotFoundError:
+            # let the higher layer deal with this.
+            pass
 
     def _read(self, count=4096, **kwargs):
         return self._desc.read(count)
