@@ -1,5 +1,7 @@
-Installation
-============
+.. _installation:
+
+Installation Guide
+==================
 
 Docker images
 -------------
