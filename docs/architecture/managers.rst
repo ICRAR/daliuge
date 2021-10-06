@@ -15,8 +15,7 @@ enough to add more intermediate levels if necessary in the future. The
 hierarchy levels currently present are:
 
 #. A *Node Drop Manager* is started on every compute node in the cluster.
-#. Compute nodes are grouped into *Data Islands*, and thus a *Data Island Drop Manager*
-  exists at the Data Island level.
+#. Compute nodes are grouped into *Data Islands*, and thus a *Data Island Drop Manager* exists at the Data Island level.
 #. On top of the Data Islands a *Master Drop Manager* can be deployed.
 
 Sessions
@@ -28,10 +27,8 @@ Managers introduce the concept of a *Session*. Sessions represent a physical gra
 execution, which are completely isolated from one another. This has two main
 consequences:
 
-#. Submitting the same physical graph to a Drop Manager will create two different
-  sessions
-#. Two physical graph executions can run at the same time in a given Drop
-  Manager.
+#. Submitting the same physical graph to a Drop Manager will create two different sessions
+#. Two physical graph executions can run at the same time in a given Drop Manager.
 
 Sessions have a simple lifecycle: they are first created, then a physical graph
 is attached into them (optionally by parts, or all in one go), after which the
