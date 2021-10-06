@@ -5,11 +5,11 @@ The |daliuge| system can and has been used on a huge range of different size sys
 
 Hopefully you will be able to identify yourself with one (or more) of the five user groups:
 
-* Scientists who want to reduce their data using a existing workflows.
-* Scientists/developers who want to design a new workflow using existing components.
-* Scientists/developers who want to develop new component descriptions.
-* Developers who want to develop new components.
-* Developers who want to develop a new algorithm.
+#. Scientists who want to reduce their data using a existing workflows.
+#. Scientists/developers who want to design a new workflow using existing components.
+#. Scientists/developers who want to develop new component descriptions.
+#. Developers who want to develop new components.
+#. Developers who want to develop a new algorithm.
 
 This guide covers only the frist two groups, the last three are covered in the :ref:`dev_index` chapter. There is also a :ref:`running` section to explain how to use the system in small deployments.
 
