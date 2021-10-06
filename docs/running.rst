@@ -13,23 +13,9 @@ As a developer the following two commands will start both the translator and the
     cd daliuge-translator ; ./run_translator dev ; cd ..
     cd daliuge-engine ; ./run_engine dev ; cd ..
 
-This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https:/eagle.icrar.org and point the EAGLE configuration for the translator to http://localhost:8084.
+This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Now you have access to a complete |daliuge| system! 
 
-For the independent: Build and run EAGLE
-----------------------------------------
-If necessary it is also possible to start the EAGLE locally in addition as well. This requires to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
-
-    git clone https://github.com/ICRAR/EAGLE
-    cd EAGLE
-    ./build_eagle dep
-
-To start EAGLE::
-
-    ./run_eagle dep dep
-
-This will start the EAGLE docker image built in the previous step and try to open a browser tab.
-
-(NOTE: The usage of the EAGLE visual graph editor is covered in its own `documentation <https://eagle-dlg.readthedocs.io>`_).
+The following paragraphs are providing more detailed guidelines to enable people to start the system on multiple nodes to cover the specific local requirements.
 
 Starting the docker containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -46,7 +32,7 @@ Similarly starting the engine::
 The main difference between the development and the deployment version is that the development version is automatically strating a data island manager, while the deployment version is not doing that. Both are starting a Node Manager by default (see below).
 
 Starting and stopping the managers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 |daliuge| is using three different kinds of managers:
 
 #. Node Manager (NM), one per compute node participating in the |daliuge| cluster. The NMs are running all the component wrappers for a single node.
@@ -74,6 +60,22 @@ which returns something like::
     {"master": null, "island": null, "node": 18}
 
 In this example there is just a Node Manager running with process ID 18.
+
+For the independent: Build and run EAGLE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If necessary, it is also possible to start the EAGLE locally in addition as well. This requires to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
+
+    git clone https://github.com/ICRAR/EAGLE
+    cd EAGLE
+    ./build_eagle dep
+
+To start EAGLE::
+
+    ./run_eagle dep dep
+
+This will start the EAGLE docker image built in the previous step and try to open a browser tab.
+
+(NOTE: The usage of the EAGLE visual graph editor is covered in its own `documentation <https://eagle-dlg.readthedocs.io>`_).
 
 Starting and stopping using CLI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

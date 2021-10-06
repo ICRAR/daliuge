@@ -2,6 +2,11 @@
 
 Installation Guide
 ==================
+NOTE: |daliuge| is under heavy development and we are not regularily updating the version on PyPi and DockerHub right now. The currently best way to get going is to install and build from the latest sources which you can get from here::
+
+ git clone https://github.com/ICRAR/daliuge
+ cd daliuge
+
 
 Docker images
 -------------
@@ -22,6 +27,8 @@ The *daliuge-engine* image by default runs a generic daemon, which allows to the
 
 **NOTE: This guide is meant for people who are experimenting with the system. It does not cover specific needs of operational deployments.**
 
+Creating the images
+^^^^^^^^^^^^^^^^^^^
 Building the three images is easy, just start with the daliuge-common image by running::
 
   cd daliuge-common && ./build_common.sh dev && cd ..
@@ -34,7 +41,10 @@ and last build the translator::
 
   cd daliuge-translator && ./build_translator.sh dev && cd ..
 
-running the engine and the translator is equally simple::
+
+Running the images
+^^^^^^^^^^^^^^^^^^
+Running the engine and the translator is equally simple::
 
   cd daliuge-engine && ./run_engine.sh dev && cd ..
 
@@ -42,6 +52,7 @@ and::
 
   cd daliuge-translator && ./run_translator.sh dev && cd ..
 
+You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Congratulations! You now have access to a complete |daliuge| system on your local computer! 
 
 Direct Installation
 -------------------
@@ -68,11 +79,6 @@ Installing into host Python
 NOTE: |daliuge| requires python 3.7 or later. It is always recommended to install |daliuge| inside a python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning. Thus first run::
 
   pip install --upgrade pip
-
-|daliuge| is under heavy development and we are not regularily updating the version on PyPi right now. The currently best way to get going is to install and build from the latest sources which you can get them from here::
-
- git clone https://github.com/ICRAR/daliuge
- cd daliuge
 
 Like for the docker installation the local installation also follows the same pattern. First install the daliuge-common part::
 
