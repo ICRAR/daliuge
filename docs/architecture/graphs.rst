@@ -219,11 +219,11 @@ Drops representing either data or applications, which represent the two base typ
 an edge must have different base types, i.e. Drops along a |Pg| *Instance* will have alternating base types. This establishes a set of
 reciprocal relationships between Drops:
 
-* A data Drop is the *input* of an application Drop; on the other hand
+#. A data Drop is the *input* of an application Drop; on the other hand
   the application is a *consumer* of the data Drop.
-* Likewise, a data Drop can be the *output* of an application Drop, in
+#. Likewise, a data Drop can be the *output* of an application Drop, in
   which case the application is the *producer* of the data Drop.
-* Similarly, a data Drop can be a *streaming input* of an application
+#. Similarly, a data Drop can be a *streaming input* of an application
   Drop (see :ref:`drop.relationships`) in which case the application is seen as
   a *streaming consumer* from the data Drop's point of view.
 
@@ -244,12 +244,12 @@ Execution
 One of the unique features of |daliuge| is the complete decentralisation of the execution. A |PgI| has the ability to advance its own
 execution. This is internally implemented via the Drop event mechanism as follows:
 
-* Once a data Drop moves to the COMPLETED state it will fire an event
+#. Once a data Drop moves to the COMPLETED state it will fire an event
   to all its consumers. Consumers (applications) will then assert if they can start their
   execution depending on their nature and configuration. A specific type of
   application is the ``BarrierAppDROP``, which waits until all its inputs are in
   the **COMPLETED** state to start its execution.
-* On the other hand, data Drops receive an event every time their producers
+#. On the other hand, data Drops receive an event every time their producers
   finish their execution. Once all the producers of a Drop have finished, the
   Drop moves itself to the **COMPLETED** state, notifying its consumers, and so
   on.
