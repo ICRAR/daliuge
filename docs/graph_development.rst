@@ -13,10 +13,8 @@ in terms of Directed Graphs.
 Two different classes of graphs are used
 in the |daliuge| workflow development:
 
-#. *Logical Graphs*, a high-level, compact representation
-    of the application logic. Logical Graphs are directed graphs, but not acyclic.
-#. *Physical Graphs*, a detailed description
-    of each individual processing step. Physical Graphs are Directed Acyclic Graphs (DAG)
+#. *Logical Graphs*, a high-level, compact representation of the application logic. Logical Graphs are directed graphs, but not acyclic.
+#. *Physical Graphs*, a detailed description of each individual processing step. Physical Graphs are Directed Acyclic Graphs (DAG)
 
 When submitting a graph for execution,
 users submit |pgs| to the runtime component of |daliuge|.
