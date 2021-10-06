@@ -5,9 +5,9 @@ Basics
 
 The |daliuge| system consists of three main components: 
 
-    * the EAGLE visual workflow editor,
-    * the translator, partitioning and scheduling service (short just *Translator*) and
-    * the execution engine (*Engine* for short).
+#. the EAGLE visual workflow editor,
+#. the translator, partitioning and scheduling service (short just *Translator*) and
+#. the execution engine (*Engine* for short).
 
 Each of these components can be deployed, run and used independently. The most convenient way of using the system is to drive it from EAGLE. EAGLE is a web application, while the *Translator* service as well as the execution *Engine* services expose RESTful interfaces, which can be used programatically or using command line tools like *curl*. In addition there is a web monitoring tool exposed by the execution engine available as well. 
 
@@ -31,8 +31,8 @@ Execution Engine
 
 The *Engine* consists of three kinds of RESTful services in order to be able to deal with very large *Physical Graphs* produced by the *Translator*:
 
-    * Master manager
-    * Data Island manager
-    * Node manager
+#. Master manager
+#. Data Island manager
+#. Node manager
  
 In addition there is also a small web application, which allows to monitor the progress of |daliuge| execution sessions. The managers are only involved in the deployment of the *Physical Graph*, the execution, once started does not require any central control. During runtime the managers are just monitoring the progress. They also allow to stop or terminate a running workflow. During deployment the master manager uses the partitioning information produced by the *Translator* to split up the *Physical Graph* and send those partitions to node managers. In general each partition will be send to a different compute node, but that is not a rigid mapping. 
