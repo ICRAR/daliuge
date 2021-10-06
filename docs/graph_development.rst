@@ -13,9 +13,9 @@ in terms of Directed Graphs.
 Two different classes of graphs are used
 in the |daliuge| workflow development:
 
-  * *Logical Graphs*, a high-level, compact representation
+#. *Logical Graphs*, a high-level, compact representation
     of the application logic. Logical Graphs are directed graphs, but not acyclic.
-  * *Physical Graphs*, a detailed description
+#. *Physical Graphs*, a detailed description
     of each individual processing step. Physical Graphs are Directed Acyclic Graphs (DAG)
 
 When submitting a graph for execution,
@@ -29,10 +29,10 @@ Given all the above,
 the following graph development techniques are available
 for users to creates graphs and submit them for execution:
 
- * :ref:`Use the Logical Graph Editor EAGLE <graph_dev.lge>`
+#. :ref:`Use the Logical Graph Editor EAGLE <graph_dev.lge>`
    to create a |lg|, which can then be translated into a |pg|.
- * Manually, or automatically, :ref:`create a Physical Graph from scratch <graph_dev.pg>`.
- * :ref:`Use the delayed function <graph_dev.delayed>` to generate a |pg|.
+#. Manually, or automatically, :ref:`create a Physical Graph from scratch <graph_dev.pg>`.
+#. :ref:`Use the delayed function <graph_dev.delayed>` to generate a |pg|.
 
 
 .. _graph_dev.lge:
