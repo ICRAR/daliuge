@@ -12,22 +12,22 @@ Automatic EAGLE Palette Generation
 ----------------------------------
 The automatic generation of a *palette* involves four steps:
 
-* Markup of code
-* Running of doxygen using a provided config file
-* Running of xml2palette.py, which is a small tool to convert the XML files generated in the step above into the required JSON format.
-* (optional) commit the resulting palette file to a graph repository.
+#. Markup of code
+#. Running of doxygen using a provided config file
+#. Running of xml2palette.py, which is a small tool to convert the XML files generated in the step above into the required JSON format.
+#. (optional) commit the resulting palette file to a graph repository.
 
 The last three steps can be integrated into a CI build system and would then be executed automatically with any commit of the component source code. Very often one directory of source code contains multiple source files, each of which contain multiple components. The resulting palette will include descriptions of all the components found in a directory.
 
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom `Doxygen <https://www.doxygen.nl/>`_ comments to the source code. These comments describe the component and can be used to automatically generate a JSON DALiuGE component description which in turn can be used in the *EAGLE*.
+In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom `Doxygen <https://www.doxygen.nl/>`_ comments to the source code. These comments describe the component and can be used to automatically generate a JSON DALiuGE component description which in turn can be used in the *EAGLE*. A few basic rules to remember:
 
-The comments should be contained within a *EAGLE_START* and *EAGLE_END* pair.
+#. The |daliuge| specific comments should be contained within a *EAGLE_START* and *EAGLE_END* pair.
 
-The *category* param should be set to *DynlibApp* for C/C++ code, and *PythonApp* for Python code.
+#. The *category* param should be set to *DynlibApp* for C/C++ code, and *PythonApp* for Python code.
 
-These comments describe both the input/output ports for a component, and the parameters of a component. Shown below are example comments for C/C++ and Python applications.
+The additional comments describe both the input/output ports for a component, and the parameters of a component. Shown below are example comments for C/C++ and Python applications.
 
 Parameters
 """"""""""
