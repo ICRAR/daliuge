@@ -2,9 +2,34 @@
 
 Startup and Shutdown Guide
 ==========================
-The translator and the engine are separate services and can be installed and run independently. (NOTE: The EAGLE visual graph editor is covered in its own `documentation <https://eagle-dlg.readthedocs.io>`_).
+The translator and the engine are separate services and can be installed and run independently. 
 
 Depending on how you are intending to run the system startup and shutdown is slightly different. 
+
+For the impatient: Single node |daliuge|
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+As a developer the following two commands will start both the translator and the engine, including a DIM and a NM::
+
+    cd daliuge-translator ; ./run_translator dev ; cd ..
+    cd daliuge-engine ; ./run_engine dev ; cd ..
+
+This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https:/eagle.icrar.org and point the EAGLE configuration for the translator to http://localhost:8084.
+
+For the independent: Build and run EAGLE
+----------------------------------------
+If necessary it is also possible to start the EAGLE locally in addition as well. This requires to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
+
+    git clone https://github.com/ICRAR/EAGLE
+    cd EAGLE
+    ./build_eagle dep
+
+To start EAGLE::
+
+    ./run_eagle dep dep
+
+This will start the EAGLE docker image built in the previous step and try to open a browser tab.
+
+(NOTE: The usage of the EAGLE visual graph editor is covered in its own `documentation <https://eagle-dlg.readthedocs.io>`_).
 
 Starting the docker containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,13 +74,6 @@ which returns something like::
     {"master": null, "island": null, "node": 18}
 
 In this example there is just a Node Manager running with process ID 18.
-
-Single node |daliuge|
-^^^^^^^^^^^^^^^^^^^^^
-As a developer the following two commands will start both the translator and the engine, including a DIM and a NM and will then allow to start deploying workflows::
-
-    cd daliuge-translator ; ./run_translator dev ; cd ..
-    cd daliuge-engine ; ./run_engine dev ; cd ..
 
 Starting and stopping using CLI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -107,7 +125,7 @@ More details about the usage of the CLI can be found in the :ref:`cli` chapter.
 
 Zeroconf
 ^^^^^^^^
-The Master Manager also opens a zeroconf service, which allows the Node Managers to register and deregister and thus the MM is always up to date with the node available in the cluster. NOTE: This mechanism is currently not implemented for the DIMs, i.e. a DIM does not register with the MM automatically. Since it is not possible to guess which NM should belong to which DIM, the NMs also do not register with a DIM. When starting the development version of the image the single NM is automatically assigned to the DIM on localhost.
+The Master Manager also opens a zeroconf service, which allows the Node Managers to register and deregister and thus the MM is always up to date with the node available in the cluster. NOTE: This mechanism is currently not implemented for the DIMs, i.e. a DIM does not register with the MM automatically. Since it is not possible to guess which NM should belong to which DIM, the NMs also do not register with a DIM. For convenience and as an exception to this rule, when starting the development version of the daliuge-engine image, the single NM is automatically assigned to the DIM on localhost.
 
 .. [1] The daemon process is listening on port 9000 by default.
 
