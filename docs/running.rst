@@ -109,5 +109,5 @@ Zeroconf
 ^^^^^^^^
 The Master Manager also opens a zeroconf service, which allows the Node Managers to register and deregister and thus the MM is always up to date with the node available in the cluster. NOTE: This mechanism is currently not implemented for the DIMs, i.e. a DIM does not register with the MM automatically. Since it is not possible to guess which NM should belong to which DIM, the NMs also do not register with a DIM. When starting the development version of the image the single NM is automatically assigned to the DIM on localhost.
 
-
 .. [1] The daemon process is listening on port 9000 by default.
+

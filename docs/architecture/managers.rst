@@ -4,15 +4,9 @@
 Drop Managers
 -------------
 
-The runtime environment of |daliuge| consists on a hierarchy of *Drop Managers*.
-Drop Managers offer a standard interface to external entities to interact with
-the runtime system, allowing users to submit physical graphs, deploy them, let
-them run and query their status.
+The runtime environment of |daliuge| consists on a hierarchy of *Drop Managers*. Drop Managers offer a standard interface to external entities to interact with the runtime system, allowing users to submit physical graphs, deploy them, let them run and query their status.
 
-Drop Managers are organized hierarchically, mirroring the topology of the
-environment hosting them, and thus enabling scalable solutions. The current design is flexible
-enough to add more intermediate levels if necessary in the future. The
-hierarchy levels currently present are:
+Drop Managers are organized hierarchically, mirroring the topology of the environment hosting them, and thus enabling scalable solutions. The current design is flexible enough to add more intermediate levels if necessary in the future. The hierarchy levels currently present are:
 
 #. A *Node Drop Manager* is started on every compute node in the cluster.
 #. Compute nodes are grouped into *Data Islands*, and thus a *Data Island Drop Manager* exists at the Data Island level.
