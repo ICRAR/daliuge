@@ -24,10 +24,10 @@ Seperation of concerns
 ----------------------
 The |daliuge| system has been designed with the separation of concerns in mind. People or groups of people can work independently on the development of 
 
-   * the logic of a workflow (graph), 
-   *  the detailed definition of a Node, and a collection of nodes (Palette)
-   * the interface Component code and 
-   * the actual functional implementation of the required algorithm of a component.
+#. the logic of a workflow (graph), 
+#.  the detailed definition of a Node, and a collection of nodes (Palette)
+#. the interface Component code and 
+#. the actual functional implementation of the required algorithm of a component.
   
 In fact it is possible to create logical workflows and run them, without having any substantial functional code at all. On the opposite side it is also possible to develop the functional software without considering |daliuge| at all. This feature also allows developers to write wrapper components around existing software without the need to change that package. Whatever can be called on a \*NIX bash command line, in a docker container, or can be loaded as a python function can also run as part of a |daliuge| workflow. 
 
