@@ -8,11 +8,9 @@ Docker images
 
 The recommended and easiest way to get started is to use the docker container installation procedures provided to build and run the daliuge-engine and the daliuge-translator. We currently build the system in three images:
 
-* *icrar/daliuge-common* contains all the basic |daliuge| libraries and dependencies.
-* *icrar/daliuge-engine* is built on top of the :base image and includes the installation 
-  of the DALiuGE execution engine.
-* *icrar/daliuge-translator* is also built on top of the :base image and includes the installation 
-  of the DALiuGE translator.
+#. *icrar/daliuge-common* contains all the basic |daliuge| libraries and dependencies.
+#. *icrar/daliuge-engine* is built on top of the :base image and includes the installation of the DALiuGE execution engine.
+#. *icrar/daliuge-translator* is also built on top of the :base image and includes the installation of the DALiuGE translator.
 
 
 This way we try to separate the pre-requirements of the daliuge engine and translator from the rest of the framework, which is has a more dynamic development cycle. The idea is then to rebuild only the daliuge-engine image as needed when new versions of the framework need to be deployed, and not build it from scratch each time.
@@ -53,19 +51,16 @@ Direct Installation
 Requirements
 ^^^^^^^^^^^^
 
-
 The |daliuge| framework requires no packages apart from those listed in its
 
 ``setup.py``
 
-file, which are automatically retrieved when running it. The spead2 library
-(one of the |daliuge| optional requirements) however requires a number of libraries
-installed on the system:
+file, which are automatically retrieved when running it. The spead2 library (one of the |daliuge| optional requirements) however requires a number of libraries installed on the system:
 
-* boost-python
-* boost-system
-* boost-devel
-* gcc >= 4.8
+#. boost-python
+#. boost-system
+#. boost-devel
+#. gcc >= 4.8
 
 Installing into host Python
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -79,8 +74,7 @@ NOTE: |daliuge| requires python 3.7 or later. It is always recommended to instal
  git clone https://github.com/ICRAR/daliuge
  cd daliuge
 
-Like for the docker installation the local installation also follows the same pattern.
-First install the daliuge-common part::
+Like for the docker installation the local installation also follows the same pattern. First install the daliuge-common part::
 
  cd daliuge-common && pip install -e .
 
@@ -95,18 +89,9 @@ and finally, if required also install the daliuge-translator::
 Porting from |daliuge| 0.X
 --------------------------
 
-With the release of |daliuge| 1.0.0
-the code has been broken down into separate packages
-to accommodate leaner and easier installations
-when only a subset of the functionality is required.
-In doing so we tried to maintain
-as much backward compatibility as possible,
-but there are some minor exceptions:
+With the release of |daliuge| 1.0.0 the code has been broken down into separate packages to accommodate leaner and easier installations when only a subset of the functionality is required. In doing so we tried to maintain as much backward compatibility as possible, but there are some minor exceptions:
 
- * Code doing ``from dlg import delayed`` or similar must be changed
-   to ``from dlg.runtime import delayed``.
- * Scripts finding the include directory path for daliuge headers
-   using code like ``python -c 'import dlg; print(dlg.get_include_dir())``
-   should switch to invoke ``dlg include_dir`` instead.
+#. Code doing ``from dlg import delayed`` or similar must be changed to ``from dlg.runtime import delayed``.
+#. Scripts finding the include directory path for daliuge headers using code like ``python -c 'import dlg; print(dlg.get_include_dir())`` should switch to invoke ``dlg include_dir`` instead.
 
 .. include:: README ray.rst

@@ -5,11 +5,9 @@ The objective of this activity was to investigate a feasible solution for the fl
 
 Ray (https://docs.ray.io/en/master/) is a pretty complete execution engine all by itself, targeting DL and ML applications and integrating a number of the major ML software packages. What we are in particular interested in is the Ray core software, which states the folloing mission:
  
-  - Providing simple primitives for building and running distributed applications.
-
-  - Enabling end users to parallelize single machine code, with little to zero code changes.
-
-  - Including a large ecosystem of applications, libraries, and tools on top of the core Ray to enable complex applications.
+#. Providing simple primitives for building and running distributed applications.
+#. Enabling end users to parallelize single machine code, with little to zero code changes.
+#. Including a large ecosystem of applications, libraries, and tools on top of the core Ray to enable complex applications.
 
 Internally Ray is using a number of technologies we are also using or evaluating within DALiuGE and/or the SKA. The way Ray is managing and distributing computing is done very well and essentially covers a number of our target platforms including AWS, SLURM, Kubernetes, Azure and GC.
 
