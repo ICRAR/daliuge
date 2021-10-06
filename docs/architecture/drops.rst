@@ -45,15 +45,10 @@ Drops are connected and create a dependency graph representing an execution
 plan, where inputs and outputs are connected to applications, establishing the
 following possible relationships:
 
-* None or many data Drop(s) can be the *input* of an application Drop; and
-  the application is the *consumer* of the data Drop(s).
-* A data Drop can be a *streaming input* of an application
-  Drop in which case the application is seen as a *streaming consumer* from
-  the data Drop's point of view.
-* None or many Drop(s) can be the *output* of an application Drop, in
-  which case the application is the *producer* of the data Drop(s).
-* An application is never a consumer or producer of another application; 
-  conversely a data Drop never produces or consumes another data Drop. 
+#. None or many data Drop(s) can be the *input* of an application Drop; and the application is the *consumer* of the data Drop(s).
+#. A data Drop can be a *streaming input* of an application Drop in which case the application is seen as a *streaming consumer* from the data Drop's point of view.
+#. None or many Drop(s) can be the *output* of an application Drop, in which case the application is the *producer* of the data Drop(s).
+#. An application is never a consumer or producer of another application;  conversely a data Drop never produces or consumes another data Drop. 
 
 The difference between *normal* inputs/consumers and their *streaming*
 counterpart is their granularity. In the normal case, inputs only notify their
@@ -108,10 +103,10 @@ Drop Component Interface
 
 The |daliuge| framework uses Docker containers as its primary interface to 3rd party applications. Docker containers have the following benefits over traditional tools management:
 
-* Portability.
-* Versioning and component reuse.
-* Lightweight footprint.
-* Simple maintenance.
+#. Portability.
+#. Versioning and component reuse.
+#. Lightweight footprint.
+#. Simple maintenance.
 
 The application programmer can make use of the :ref:`DockerApp
 <api.dlg.apps.dockerapp>` which is the interface between a Docker container and
