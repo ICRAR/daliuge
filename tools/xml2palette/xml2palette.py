@@ -1,38 +1,100 @@
 #!/usr/bin/python
 
-import sys
-import getopt
-import xml.etree.ElementTree as ET
-import json
-import uuid
 import csv
+import getopt
+import json
 import logging
 import random
+import os
+import subprocess
+import sys
+import tempfile
+import uuid
+import xml.etree.ElementTree as ET
 
 next_key = -1
 
+# NOTE: not sure if all of these are actually required
+#       make sure to retrieve some of these from environment variables
+DOXYGEN_SETTINGS = [
+    ("PROJECT_NAME",         "DALIUGE"),
+    ("OPTIMIZE_OUTPUT_JAVA", "YES"),
+    ("AUTOLINK_SUPPORT",     "NO"),
+    ("IDL_PROPERTY_SUPPORT", "NO"),
+    ("RECURSIVE",            "YES"),
+    ("EXCLUDE_PATTERNS",     "*/web/*"),
+    ("VERBATIM_HEADERS",     "NO"),
+    ("GENERATE_HTML",        "NO"),
+    ("GENERATE_LATEX",       "NO"),
+    ("GENERATE_XML",         "YES"),
+    ("XML_PROGRAMLISTING",   "NO"),
+    ("ENABLE_PREPROCESSING", "NO"),
+    ("CLASS_DIAGRAMS",       "NO")
+]
+
+
 def get_filenames_from_command_line(argv):
-    inputfile = ''
+    inputdir = ''
     outputfile = ''
     try:
-        opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
+        opts, args = getopt.getopt(argv,"hi:o:",["idir=","ofile="])
     except getopt.GetoptError:
-        print("xml2palette.py -i <inputfile> -o <outputfile>")
+        print("xml2palette.py -i <input_directory> -o <output_file>")
         sys.exit(2)
 
     if len(opts) < 2:
-        print("xml2palette.py -i <inputfile> -o <outputfile>")
+        print("xml2palette.py -i <input_directory> -o <output_file>")
         sys.exit()
 
     for opt, arg in opts:
         if opt == '-h':
-            print("xml2palette.py -i <inputfile> -o <outputfile>")
+            print("xml2palette.py -i <input_directory> -o <output_file>")
             sys.exit()
-        elif opt in ("-i", "--ifile"):
-            inputfile = arg
+        elif opt in ("-i", "--idir"):
+            inputdir = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-    return inputfile, outputfile
+    return inputdir, outputfile
+
+
+def check_environment_variables():
+    required_environment_variables = ["PROJECT_VERSION", "GIT_REPO"]
+
+    for variable in required_environment_variables:
+        value = os.environ.get(variable)
+
+        if value is None:
+            logging.error("No " + variable + " environment variable.")
+            return False
+
+    return True
+
+
+def modify_doxygen_options(doxygen_filename, options):
+    with open(doxygen_filename, 'r') as dfile:
+        contents = dfile.readlines()
+
+    #print(contents)
+
+    with open(doxygen_filename, 'w') as dfile:
+        for index, line in enumerate(contents):
+            if line[0] == '#':
+                continue
+            if len(line) <= 1:
+                continue
+
+            parts = line.split('=')
+            first_part = parts[0].strip()
+            written = False
+
+            for key, value in options:
+                if first_part == key:
+                    dfile.write(key + " = " + value + "\n")
+                    written = True
+                    break
+
+            if not written:
+                dfile.write(line)
 
 
 def get_next_key():
@@ -404,7 +466,37 @@ def process_compounddef(compounddef):
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
-    (inputfile, outputfile) = get_filenames_from_command_line(sys.argv[1:])
+    (inputdir, outputfile) = get_filenames_from_command_line(sys.argv[1:])
+
+    # create a temp directory for the output of doxygen
+    output_directory = tempfile.TemporaryDirectory()
+
+    # read environment variables
+    if not check_environment_variables():
+        sys.exit(1)
+
+    # add extra doxygen setting for input and output locations
+    DOXYGEN_SETTINGS.append(("INPUT", inputdir))
+    DOXYGEN_SETTINGS.append(("OUTPUT_DIRECTORY", output_directory.name))
+
+    # create a temp file to contain the Doxyfile
+    doxygen_file = tempfile.NamedTemporaryFile()
+    doxygen_filename = doxygen_file.name
+    doxygen_file.close()
+
+    # create a default Doxyfile
+    os.system("doxygen -g " + doxygen_filename)
+
+    # modify options in the Doxyfile
+    modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
+
+    # run doxygen
+    os.system("doxygen " + doxygen_filename)
+
+    # run xsltproc
+    output_xml_filename = output_directory.name + "/xml/doxygen.xml"
+    os.system("xsltproc " + output_directory.name + "/xml/combine.xslt " + output_directory.name + "/xml/index.xml > " + output_xml_filename)
+
 
     gitrepo = ""
     version = ""
@@ -413,7 +505,7 @@ if __name__ == "__main__":
     nodes = []
 
     # load the input xml file
-    tree = ET.parse(inputfile)
+    tree = ET.parse(output_xml_filename)
     xml_root = tree.getroot()
 
     for compounddef in xml_root:
@@ -440,3 +532,6 @@ if __name__ == "__main__":
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
+
+    # cleanup the output directory
+    output_directory.cleanup()
