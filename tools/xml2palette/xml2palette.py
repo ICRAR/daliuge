@@ -17,7 +17,6 @@ next_key = -1
 # NOTE: not sure if all of these are actually required
 #       make sure to retrieve some of these from environment variables
 DOXYGEN_SETTINGS = [
-    ("PROJECT_NAME",         "DALIUGE"),
     ("OPTIMIZE_OUTPUT_JAVA", "YES"),
     ("AUTOLINK_SUPPORT",     "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
@@ -58,7 +57,7 @@ def get_filenames_from_command_line(argv):
 
 
 def check_environment_variables():
-    required_environment_variables = ["PROJECT_VERSION", "GIT_REPO"]
+    required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
 
     for variable in required_environment_variables:
         value = os.environ.get(variable)
@@ -476,6 +475,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # add extra doxygen setting for input and output locations
+    DOXYGEN_SETTINGS.append(("PROJECT_NAME", os.environ.get("PROJECT_NAME")))
     DOXYGEN_SETTINGS.append(("INPUT", inputdir))
     DOXYGEN_SETTINGS.append(("OUTPUT_DIRECTORY", output_directory.name))
 
