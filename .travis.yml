@@ -42,15 +42,17 @@ matrix:
       install:
         - sudo apt-get update && sudo apt-get install -y doxygen xsltproc
       before_script:
+        - export PROJECT_NAME=daliuge
         - export PROJECT_VERSION=$(git rev-parse --short HEAD)
         - export GIT_REPO=$(git config --get remote.origin.url)
         - git config --global user.name $GITHUB_USERNAME
         - git config --global user.email "$GITHUB_USERNAME@gmail.com"
       script:
-        - python3 tools/xml2palette/xml2palette.py -i ./ -o daliuge-$TRAVIS_BRANCH.palette
+        - python3 tools/xml2palette/xml2palette.py -i ./ -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
       after_success:
         - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
-        - mv daliuge-$TRAVIS_BRANCH.palette EAGLE_test_repo/DALIUGE/
+        - mkdir -p EAGLE_test_repo/$PROJECT_NAME
+        - mv $PROJECT_NAME-$TRAVIS_BRANCH.palette EAGLE_test_repo/$PROJECT_NAME/
         - cd EAGLE_test_repo
         - git add *
         - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $TRAVIS_BRANCH, commit $PROJECT_VERSION)"
