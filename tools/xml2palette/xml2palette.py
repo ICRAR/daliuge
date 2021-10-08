@@ -491,7 +491,8 @@ if __name__ == "__main__":
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
 
     # run doxygen
-    os.system("doxygen " + doxygen_filename)
+    #os.system("doxygen " + doxygen_filename)
+    subprocess.call(['doxygen', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # run xsltproc
     output_xml_filename = output_directory.name + "/xml/doxygen.xml"
