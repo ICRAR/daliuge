@@ -57,9 +57,17 @@ def get_filenames_from_command_line(argv):
     return inputdir, outputfile
 
 
-# TODO
-def read_environment_variables():
-    pass
+def check_environment_variables():
+    required_environment_variables = ["PROJECT_VERSION", "GIT_REPO"]
+
+    for variable in required_environment_variables:
+        value = os.environ.get(variable)
+
+        if value is None:
+            logging.error("No " + variable + " environment variable.")
+            return False
+
+    return True
 
 
 def modify_doxygen_options(doxygen_filename, options):
@@ -464,7 +472,8 @@ if __name__ == "__main__":
     output_directory = tempfile.TemporaryDirectory()
 
     # read environment variables
-    read_environment_variables()
+    if not check_environment_variables():
+        sys.exit(1)
 
     # add extra doxygen setting for input and output locations
     DOXYGEN_SETTINGS.append(("INPUT", inputdir))
