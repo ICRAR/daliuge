@@ -132,29 +132,29 @@ Complete example for Python
   # @par EAGLE_END
 
 
-  Generate palette using xml2palette.py
-  """""""""""""""""""""""""""""""""""""
+Generate palette using xml2palette.py
+"""""""""""""""""""""""""""""""""""""
 
-  The xml2palette.py script is located in the tools directory within the DALiuGE repository. It is designed to generate a single palette file for a input directory containing doscumented code. The script has the following dependencies:
+The xml2palette.py script is located in the tools directory within the DALiuGE repository. It is designed to generate a single palette file for a input directory containing doscumented code. The script has the following dependencies:
 
-  #. Doxygen
-  #. xsltproc
+#. Doxygen
+#. xsltproc
 
-  The xml2palette.py script can be run using this command line:
+The xml2palette.py script can be run using this command line:
 
-  .. code-block:: none
+.. code-block:: none
 
-    python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
+  python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
 
 
-  The xml2palette.py script expects several enviroment variables to be present:
+The xml2palette.py script expects several enviroment variables to be present:
 
-  #. PROJECT_NAME
-  #. PROJECT_NAME
-  #. GIT_REPO
+#. PROJECT_NAME
+#. PROJECT_NAME
+#. GIT_REPO
 
-  These requirements can all be combined together on a single command line:
+These requirements can all be combined together on a single command line:
 
-  .. code-block:: none
+.. code-block:: none
 
-    PROJECT_NAME=<project_name> PROJECT_VERSION=$(git rev-parse --short HEAD) GIT_REPO=$(git config --get remote.origin.url) python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
+  PROJECT_NAME=<project_name> PROJECT_VERSION=$(git rev-parse --short HEAD) GIT_REPO=$(git config --get remote.origin.url) python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
