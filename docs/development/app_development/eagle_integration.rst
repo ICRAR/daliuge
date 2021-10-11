@@ -137,8 +137,8 @@ Generate palette using xml2palette.py
 
 The xml2palette.py script is located in the tools directory within the DALiuGE repository. It is designed to generate a single palette file for a input directory containing doscumented code. The script has the following dependencies:
 
-#. Doxygen
-#. xsltproc
+* Doxygen
+* xsltproc
 
 The xml2palette.py script can be run using this command line:
 
@@ -149,9 +149,9 @@ The xml2palette.py script can be run using this command line:
 
 The xml2palette.py script expects several enviroment variables to be present:
 
-#. PROJECT_NAME
-#. PROJECT_NAME
-#. GIT_REPO
+* PROJECT_NAME (e.g. "leap")
+* PROJECT_VERSION (e.g. "abcd1234")
+* GIT_REPO (e.g. "https://gitlab.com/ska-telescope/icrar-leap-accelerate.git")
 
 These requirements can all be combined together on a single command line:
 
