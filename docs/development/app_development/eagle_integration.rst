@@ -10,14 +10,13 @@ The *palette* and *logical graph* JSON formats are almost interchangable. The tw
 
 Automatic EAGLE Palette Generation
 ----------------------------------
-The automatic generation of a *palette* involves four steps:
+The automatic generation of a *palette* involves three steps:
 
-#. Markup of code
-#. Running of doxygen using a provided config file
-#. Running of xml2palette.py, which is a small tool to convert the XML files generated in the step above into the required JSON format.
+#. Markup of code using custom Doxygen comments
+#. Running of xml2palette.py, which is a small python script that uses the Doxygen documentation comments to generate a EAGLE palette with the required JSON format.
 #. (optional) commit the resulting palette file to a graph repository.
 
-The last three steps can be integrated into a CI build system and would then be executed automatically with any commit of the component source code. Very often one directory of source code contains multiple source files, each of which contain multiple components. The resulting palette will include descriptions of all the components found in a directory.
+The last two steps can be integrated into a CI build system and would then be executed automatically with any commit of the component source code. Very often one directory of source code contains multiple source files, each of which contain multiple components. The resulting palette will include descriptions of all the components found in a directory.
 
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -132,3 +131,30 @@ Complete example for Python
   #     \~
   # @par EAGLE_END
 
+
+  Generate palette using xml2palette.py
+  """""""""""""""""""""""""""""""""""""
+
+  The xml2palette.py script is located in the tools directory within the DALiuGE repository. It is designed to generate a single palette file for a input directory containing doscumented code. The script has the following dependencies:
+
+  #. Doxygen
+  #. xsltproc
+
+  The xml2palette.py script can be run using this command line:
+
+  .. code-block:: none
+
+    python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
+
+
+  The xml2palette.py script expects several enviroment variables to be present:
+
+  #. PROJECT_NAME
+  #. PROJECT_NAME
+  #. GIT_REPO
+
+  These requirements can all be combined together on a single command line:
+
+  .. code-block:: none
+
+    PROJECT_NAME=<project_name> PROJECT_VERSION=$(git rev-parse --short HEAD) GIT_REPO=$(git config --get remote.origin.url) python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
