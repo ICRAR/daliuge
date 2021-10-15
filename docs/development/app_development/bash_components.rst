@@ -28,7 +28,7 @@ Do we believe that this is actually really working? Well, probably not. Thus let
 
 Assuming you have a translator and an engine running you can actually translate and execute this, pretty useless, graph. If you have the engine running locally in development mode, you can even see the output in the session log file::
 
-    cd /tmp/dlg/logs
+    cd /tmp/.dlg/logs
     ls -ltra dlg_*
 
 The output of the ls command looks like::
