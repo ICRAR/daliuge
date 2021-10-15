@@ -71,7 +71,7 @@ class ExternalStoreApp(BarrierAppDROP):
 #     \~English URL of the NGAS Server
 # @param[in] param/ngasPort NGAS Server Port/7777/Integer/readwrite/
 #     \~English TCP/IP Port on the NGAS Server
-# @param[in] param/ngasMime NGAS Mime Type/application/octet-stream/String/readwrite/
+# @param[in] param/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/
 #     \~English Mime-type of the NGAS payload
 # @param[in] param/ngasTimeout NGAS Server Timeout/2/Integer/readonly/
 #     \~English Archiving request timeout
