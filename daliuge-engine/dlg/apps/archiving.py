@@ -67,6 +67,8 @@ class ExternalStoreApp(BarrierAppDROP):
 # @details Takes an input and archives it in an NGAS server.
 # @par EAGLE_START
 # @param category PythonApp
+# @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
+#     \~English Application class
 # @param[in] param/ngasSrv NGAS Server URL/localhost/String/readwrite/
 #     \~English URL of the NGAS Server
 # @param[in] param/ngasPort NGAS Server Port/7777/Integer/readwrite/
@@ -77,8 +79,6 @@ class ExternalStoreApp(BarrierAppDROP):
 #     \~English Archiving request timeout
 # @param[in] param/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/
 #     \~English NGAS Server connection timeout
-# @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
-#     \~English Application class
 # @param[in] port/fileObject
 #     \~English Input File Object
 # @par EAGLE_END
