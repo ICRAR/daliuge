@@ -62,6 +62,26 @@ class ExternalStoreApp(BarrierAppDROP):
         `inputDrop` into an external store.
         """
 
+##
+# @brief NgasArchivingApp
+# @details Takes an input and archives it in an NGAS server.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
+#     \~English Application class
+# @param[in] param/ngasSrv NGAS Server URL/localhost/String/readwrite/
+#     \~English URL of the NGAS Server
+# @param[in] param/ngasPort NGAS Server Port/7777/Integer/readwrite/
+#     \~English TCP/IP Port on the NGAS Server
+# @param[in] param/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/
+#     \~English Mime-type of the NGAS payload
+# @param[in] param/ngasTimeout NGAS Server Timeout/2/Integer/readonly/
+#     \~English Archiving request timeout
+# @param[in] param/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/
+#     \~English NGAS Server connection timeout
+# @param[in] port/fileObject
+#     \~English Input File Object
+# @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
     '''
     An ExternalStoreApp class that takes its input DROP and archives it in
