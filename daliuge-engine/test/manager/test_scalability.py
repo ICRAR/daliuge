@@ -93,7 +93,7 @@ class TestBigGraph(unittest.TestCase):
     def _run_graph(self, graph, completed_uids, timeout=5):
 
         sessionId = 'lala'
-        restPort  = 8888
+        restPort  = 8989
         args = ['--port', str(restPort), '-N', hostname, '-qq']
 
         logger.debug("Starting NM on port %d" % restPort)
