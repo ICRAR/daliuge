@@ -216,7 +216,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
         """
 
         sessionId = 'lala'
-        restPort  = 8888
+        restPort  = 8989
 
         args = ['--port', str(restPort), '-N',hostname, '-qqq']
         mmProcess = tool.start_process('mm', args)
