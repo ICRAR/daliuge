@@ -18,14 +18,11 @@ The recommended and easiest way to get started is to use the docker container in
 #. *icrar/daliuge-translator* is also built on top of the :base image and includes the installation of the DALiuGE translator.
 
 
-This way we try to separate the pre-requirements of the daliuge engine and translator from the rest of the framework, which is has a more dynamic development cycle. The idea is then to rebuild only the daliuge-engine image as needed when new versions of the framework need to be deployed, and not build it from scratch each time.
-
-Most of the dependencies included in daliuge-common do not belong to the DALiuGE framework itself, but 
-rather to its requirements (mainly to the spead2 communication protocol).
+This way we are trying to separate the requirements of the daliuge engine and translator from the rest of the framework, which has a less dynamic development cycle.
 
 The *daliuge-engine* image by default runs a generic daemon, which allows to then start the Master Manager, Node Manager or DataIsland Manager. This approach allows to change the actual manager deployment configuration in a more dynamic way and adjusted to the actual requirements of the environment.
 
-**NOTE: This guide is meant for people who are experimenting with the system. It does not cover specific needs of operational deployments.**
+**NOTE: This guide is meant for people who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.**
 
 Creating the images
 ^^^^^^^^^^^^^^^^^^^
@@ -54,14 +51,14 @@ and::
 
 You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Congratulations! You now have access to a complete |daliuge| system on your local computer! 
 
+More detailed information about running and controlling the |daliuge| system can be found in the :ref:`running`.
+
 Direct Installation
 -------------------
-
 **NOTE: For most use cases the docker installation described above is recommended.** 
 
 Requirements
 ^^^^^^^^^^^^
-
 The |daliuge| framework requires no packages apart from those listed in its
 
 ``setup.py``
@@ -75,7 +72,6 @@ file, which are automatically retrieved when running it. The spead2 library (one
 
 Installing into host Python
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 NOTE: |daliuge| requires python 3.7 or later. It is always recommended to install |daliuge| inside a python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning. Thus first run::
 
   pip install --upgrade pip
@@ -91,13 +87,5 @@ then install the daliuge-engine::
 and finally, if required also install the daliuge-translator::
 
  cd ../daliuge-translator && pip install -e .
-
-Porting from |daliuge| 0.X
---------------------------
-
-With the release of |daliuge| 1.0.0 the code has been broken down into separate packages to accommodate leaner and easier installations when only a subset of the functionality is required. In doing so we tried to maintain as much backward compatibility as possible, but there are some minor exceptions:
-
-#. Code doing ``from dlg import delayed`` or similar must be changed to ``from dlg.runtime import delayed``.
-#. Scripts finding the include directory path for daliuge headers using code like ``python -c 'import dlg; print(dlg.get_include_dir())`` should switch to invoke ``dlg include_dir`` instead.
 
 .. include:: README ray.rst

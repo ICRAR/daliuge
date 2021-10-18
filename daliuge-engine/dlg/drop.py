@@ -389,6 +389,7 @@ class AbstractDROP(EventFirer):
             raise Exception("%r is in state %s (!=COMPLETED), cannot be opened for reading" % (self, self.status,))
 
         io = self.getIO()
+        logger.debug("Opening drop %s" % (self.oid))
         io.open(OpenMode.OPEN_READ, **kwargs)
 
         # Save the IO object in the dictionary and return its descriptor instead
@@ -427,7 +428,7 @@ class AbstractDROP(EventFirer):
             try:
                 self._wio.close()
             except:
-                pass # this will make sure that a pprevious issue does not cause the grpah to hang!
+                pass # this will make sure that a previous issue does not cause the graph to hang!
                 # raise Exception("Problem closing file!")
             self._wio = None
 
@@ -1203,6 +1204,7 @@ class NgasDROP(AbstractDROP):
 
     def initialize(self, **kwargs):
         if self.len == -1:
+            # TODO: For writing the len field should be set to the size of the input drop
             self.len = self._size
         if self.ngasFileId:
             self.fileId = self.ngasFileId
@@ -1212,12 +1214,55 @@ class NgasDROP(AbstractDROP):
     def getIO(self):
         try:
             ngasIO = NgasIO(self.ngasSrv, self.fileId, self.ngasPort,
-                            self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
+                            self.ngasConnectTimeout, self.ngasTimeout, length=self.len, mimeType=self.ngasMime)
         except ImportError:
             logger.warning('NgasIO not available, using NgasLiteIO instead')
             ngasIO = NgasLiteIO(self.ngasSrv, self.fileId, self.ngasPort,
-                                self.ngasConnectTimeout, self.ngasTimeout, self.len, mimeType=self.ngasMime)
+                                self.ngasConnectTimeout, self.ngasTimeout, length=self.len, mimeType=self.ngasMime)
         return ngasIO
+
+    @track_current_drop
+    def setCompleted(self):
+        '''
+        Override this method in order to get the size of the drop set once it is completed.
+        '''
+        # TODO: This implementation is almost a verbatim copy of the base class'
+        # so we should look into merging them
+        status = self.status
+        if status == DROPStates.CANCELLED:
+            return
+        elif status == DROPStates.SKIPPED:
+            self._fire('dropCompleted', status=status)
+            return
+        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
+
+        self._closeWriters()
+
+
+        # here we set the size. It could happen that nothing is written into
+        # this file, in which case we create an empty file so applications
+        # downstream don't fail to read
+        logger.debug("Trying to set size of NGASDrop")
+        try:
+            stat = self.getIO().fileStatus()
+            logger.debug("Setting size of NGASDrop %s to %s" % (self.fileId, stat['FileSize']))
+            self._size = int(stat['FileSize'])
+        except:
+            # we''ll try this again in case there is some other issue
+            # try:
+            #     with open(self.path, 'wb'):
+            #         pass
+            # except:
+            #     self.status = DROPStates.ERROR
+            #     logger.error("Path not accessible: %s" % self.path)
+            raise
+            logger.debug("Setting size of NGASDrop to %s", 0)
+            self._size = 0
+        # Signal our subscribers that the show is over
+        logger.debug("Moving %r to COMPLETED", self)
+        self.status = DROPStates.COMPLETED
+        self._fire('dropCompleted', status=DROPStates.COMPLETED)
 
     @property
     def dataURL(self):
