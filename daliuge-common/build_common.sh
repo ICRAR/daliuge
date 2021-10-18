@@ -9,7 +9,7 @@ case "$1" in
         echo "Building daliuge-common version using tag ${VCS_TAG}"
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished!"
-        exit 1 ;;
+        exit 0 ;;
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         # export VCS_TAG="casa"
@@ -18,7 +18,7 @@ case "$1" in
         # and should not go much further.
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
-        exit 1;;
+        exit 0;;
     "casa")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         # export VCS_TAG="casa"
@@ -27,8 +27,8 @@ case "$1" in
         # and thus we do that only in the engine, not in the translator
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG}-casa -f docker/Dockerfile.dev .
         echo "Build finished!"
-        exit 1;;
+        exit 0;;
     *)
         echo "Usage: build_common.sh <dep|dev|casa>"
-        exit 1;;
+        exit 0;;
 esac
