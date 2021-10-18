@@ -225,7 +225,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         """
 
         sessionId = 'lala'
-        restPort  = 8888
+        restPort  = 8989   # don't interfere with EAGLE default port
         args = ['--port', str(restPort), '-N',hostname, '-qqq']
         dimProcess = tool.start_process('dim', args)
 

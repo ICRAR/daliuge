@@ -22,6 +22,7 @@
 import os
 import pickle
 import unittest
+import time
 from numpy import random, mean, array, concatenate
 
 
@@ -138,15 +139,20 @@ class TestSimpleApps(unittest.TestCase):
         nd_in = NgasDROP('HelloWorld.txt', 'HelloWorld.txt')
         nd_in.ngasSrv = 'ngas.ddns.net'
         b = CopyApp('b', 'b')
-        nd_out = NgasDROP('HelloWorldOut.txt', 'HelloWorldOut.txt')
+        did = 'HelloWorld-%f' % time.time()
+        nd_out = NgasDROP(did, did, len=11)
         nd_out.ngasSrv = 'ngas.ddns.net'
+        nd_out.len = nd_in.size
+        d = CopyApp('d', 'd')
         i = InMemoryDROP('i', 'i')
-        b.addInput(nd_in)
-        b.addOutput(nd_out)
+        # b.addInput(nd_in)
+        # b.addOutput(nd_out)
+        nd_in.addConsumer(b)
         nd_out.addProducer(b)
-        i.addProducer(b)
-        b.addOutput(i)
-        self._test_graph_runs((nd_in,b,i,nd_out),nd_in, nd_out, timeout=4)
+        d.addInput(nd_out)
+        i.addProducer(d)
+        # b.addOutput(i)
+        self._test_graph_runs((nd_in,b,nd_out,i,d),nd_in, i, timeout=10)
         self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
     def test_genericScatter(self):
