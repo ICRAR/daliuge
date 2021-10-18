@@ -158,10 +158,11 @@ class DockerTests(unittest.TestCase):
         UIDs (in addition to their position in the list of inputs or outputs)
         in the command-line.
         """
-        self._ngas_and_fs_io("echo -n '%iDataURL[a]' > %o[c]")
+        self._ngas_and_fs_io("echo -n '%iDataURL[HelloWorld.txt]' > %o[c]")
 
     def _ngas_and_fs_io(self, command):
-        a = NgasDROP('a', 'a') # not a filesystem-related DROP, we can reference its URL in the command-line
+        a = NgasDROP('HelloWorld.txt', 'HelloWorld.txt') # not a filesystem-related DROP, we can reference its URL in the command-line
+        a.ngasSrv ='ngas.ddns.net'
         b = DockerApp('b', 'b', image="ubuntu:14.04", command=command)
         c = FileDROP('c', 'c')
         b.addInput(a)
