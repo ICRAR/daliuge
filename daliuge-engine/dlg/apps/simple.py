@@ -219,9 +219,9 @@ class RandomArrayApp(BarrierAppDROP):
 #     \~English The method used for averaging
 # @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
 #     \~English Application class
-# @param[in] port/array
+# @param[in] port/array Array/array/
 #     \~English Port for the input array(s)
-# @param[out] port/array
+# @param[out] port/array Array/array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
