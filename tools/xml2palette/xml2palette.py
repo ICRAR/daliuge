@@ -276,15 +276,18 @@ def create_palette_node_from_params(params):
             fields.append(create_field(internal_name, name, default_value, param_description, access, type))
         elif key.startswith("port/"):
             # parse the port into data
-            if key.count("/") == 1:
-                (port, name) = key.split("/")
-                logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
-                type = "Unknown"
-            elif key.count("/") == 2:
-                (port, name, type) = key.split("/")
-            else:
-                logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
-                continue
+            #if key.count("/") == 1:
+            #    (port, name) = key.split("/")
+            #    logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
+            #    type = "Unknown"
+            #elif key.count("/") == 2:
+            #    (port, name, type) = key.split("/")
+            #else:
+            #    logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
+            #    continue
+            (port, internal_name) = parse_port_key(key)
+            (name, type) = parse_port_value(value)
+            port_description = parse_description(value)
 
             # add the port
             if direction == "in":
