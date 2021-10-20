@@ -70,7 +70,8 @@ class SumupContainerChecksum(BarrierAppDROP):
         crcSum = 0
         for inputDrop in self.inputs:
             if inputDrop.status == DROPStates.COMPLETED:
-                crcSum += inputDrop.checksum
+                if inputDrop.checksum:
+                    crcSum += inputDrop.checksum
         outputDrop = self.outputs[0]
         outputDrop.write(str(crcSum).encode('utf8'))
 
