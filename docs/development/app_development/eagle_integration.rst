@@ -91,8 +91,6 @@ Complete example for C/C++
   * \details We will build on the LoadParset structure - but use the contents
   * of the parset to load a measurement set.
   * \par EAGLE_START
-  * \param gitrepo $(GIT_REPO)
-  * \param version $(PROJECT_VERSION)
   * \param category DynlibApp
   * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
   *     \~English the start frequency to read from
@@ -125,8 +123,6 @@ Complete example for Python
   # @details We will build on the LoadParset structure - but use the contents
   # of the parset to load a measurement set.
   # @par EAGLE_START
-  # @param gitrepo $(GIT_REPO)
-  # @param version $(PROJECT_VERSION)
   # @param category PythonApp
   # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
   #     \~English the start frequency to read from\n
