@@ -236,7 +236,7 @@ def parse_port_value(value):
     if len(parts) > 1:
         type = parts[1]
     else:
-        logging.warning("port (" + name + ") has no 'type' descriptor, using default (String) : " + value)
+        logging.warning("port (" + name + ") has no 'type' descriptor, using default (String) : " + value + " " + str(len(parts)) + " " + str(parts))
 
     return (name, type)
 
