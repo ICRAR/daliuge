@@ -370,7 +370,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param category PythonApp
 # @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
 #     \~English Application class
-# @param[out] port/array Array/Array
+# @param[out] port/array Array/Array/
 #     \~English A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
