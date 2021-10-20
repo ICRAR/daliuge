@@ -306,9 +306,9 @@ def create_palette_node_from_params(params):
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(text, name, direction, False, type, description))
+                inputPorts.append(create_port(text, name, direction, False, type, port_description))
             elif direction == "out":
-                outputPorts.append(create_port(text, name, direction, False, type, description))
+                outputPorts.append(create_port(text, name, direction, False, type, port_description))
             else:
                 logging.warning("Unknown port direction: " + direction)
 
