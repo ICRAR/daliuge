@@ -262,8 +262,8 @@ def create_palette_node_from_params(params):
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
-    gitrepo = ""
-    version = ""
+    gitrepo = os.environ.get("GIT_REPO")
+    version = os.environ.get("PROJECT_VERSION")
 
     # process the params
     for param in params:
@@ -507,7 +507,8 @@ if __name__ == "__main__":
     doxygen_file.close()
 
     # create a default Doxyfile
-    os.system("doxygen -g " + doxygen_filename)
+    subprocess.call(['doxygen', '-g', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    logging.info("Wrote doxygen configuration file (Doxyfile) to " + doxygen_filename)
 
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
@@ -518,11 +519,13 @@ if __name__ == "__main__":
 
     # run xsltproc
     output_xml_filename = output_directory.name + "/xml/doxygen.xml"
-    os.system("xsltproc " + output_directory.name + "/xml/combine.xslt " + output_directory.name + "/xml/index.xml > " + output_xml_filename)
 
+    with open(output_xml_filename, 'w') as outfile:
+        subprocess.call(['xsltproc', output_directory.name + "/xml/combine.xslt", output_directory.name + "/xml/index.xml"], stdout=outfile, stderr=subprocess.DEVNULL)
 
-    gitrepo = ""
-    version = ""
+    # get environment variables
+    gitrepo = os.environ.get("GIT_REPO")
+    version = os.environ.get("PROJECT_VERSION")
 
     # init nodes array
     nodes = []
