@@ -277,10 +277,6 @@ def create_palette_node_from_params(params):
             text = value
         elif key == "description":
             description = value
-        elif key == "gitrepo":
-            gitrepo = value
-        elif key == "version":
-            version = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
