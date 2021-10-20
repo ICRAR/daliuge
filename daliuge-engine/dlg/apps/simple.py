@@ -340,7 +340,7 @@ class HelloWorldApp(BarrierAppDROP):
 #     \~English The URL to retrieve
 # @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
 #     \~English Application class
-# @param[out] port/content
+# @param[out] port/content Content/String/
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
 
@@ -388,8 +388,8 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param category PythonApp
 # @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
 #     \~English Application class
-# @param[out] port/content
-#     \~English The port carrying the content read from the URL.
+# @param[out] port/array Array/array
+#     \~English A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
 
 
