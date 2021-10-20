@@ -33,7 +33,6 @@ import importlib
 import io
 import logging
 import math
-import multiprocessing
 import os
 import random
 import shutil
@@ -42,10 +41,8 @@ import time
 import re
 import inspect
 import binascii
-from multiprocessing import shared_memory
 
 import numpy as np
-from dlg import droputils
 
 from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
