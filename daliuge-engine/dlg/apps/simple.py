@@ -53,14 +53,11 @@ class NullBarrierApp(BarrierAppDROP):
 # This is mainly useful (and used) to test graph translation and structure
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
 #     \~English The number of seconds to sleep
 # @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
 #     \~English Application class
-
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
@@ -85,12 +82,9 @@ class SleepApp(BarrierAppDROP):
 # the graph. If an input is a container (e.g. a directory) it copies the
 # content recursively.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
 #     \~English Application class
-
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -134,8 +128,6 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/size Size/100/Integer/readwrite/
 #     \~English The size of the array
@@ -147,7 +139,7 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 #     \~English High value of range of array [exclusive]
 # @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
 #     \~English Application class
-# @param[out] port/array
+# @param[out] port/array Array/Array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
@@ -212,8 +204,6 @@ class RandomArrayApp(BarrierAppDROP):
 # Users can add as many producers to the input array port as required and the resulting array
 # will also be send to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/method Method/mean/String/readwrite/
 #     \~English The method used for averaging
@@ -221,7 +211,7 @@ class RandomArrayApp(BarrierAppDROP):
 #     \~English Application class
 # @param[in] port/array Array/array/
 #     \~English Port for the input array(s)
-# @param[out] port/array Array/array/
+# @param[out] port/array Array/Array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
@@ -291,17 +281,14 @@ class AverageArraysApp(BarrierAppDROP):
 # to connect the single output port to multiple sinks, which will all receive
 # the same message. App does not require any input.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/greet Greet/World/String/readwrite/
 #     \~English What appears after 'Hello '
 # @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
 #     \~English Application class
-# @param[out] port/hello
+# @param[out] port/hello Hello/String/
 #     \~English The port carrying the message produced by the app.
 # @par EAGLE_END
-
 class HelloWorldApp(BarrierAppDROP):
     """
     An App that writes 'Hello World!' or 'Hello <greet>!' to all of
@@ -333,8 +320,6 @@ class HelloWorldApp(BarrierAppDROP):
 # @details A simple APP that retrieves the content of a URL and writes.
 # it to all outputs.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
 #     \~English The URL to retrieve
@@ -343,7 +328,6 @@ class HelloWorldApp(BarrierAppDROP):
 # @param[out] port/content Content/String/
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
-
 class UrlRetrieveApp(BarrierAppDROP):
     """
     An App that retrieves the content of a URL
@@ -383,16 +367,12 @@ class UrlRetrieveApp(BarrierAppDROP):
 # the number of outputs will be distributed across the first len(outputs)-1 elements of the
 # resulting array.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
 # @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
 #     \~English Application class
-# @param[out] port/array Array/array
+# @param[out] port/array Array/Array
 #     \~English A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
-
-
 class GenericScatterApp(BarrierAppDROP):
     """
     An APP that splits an object that has a len attribute into <numSplit> parts and
