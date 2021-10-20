@@ -249,6 +249,11 @@ class SharedMemoryIO(DataIO):
         else:
             self._buf.buf[self._written:total_size] = data
             self._written = total_size
+            self._buf.resize(total_size)
+            """
+            It may be inefficient to resize many times, but assuming data is written 'once' this is
+            might be tolerable and guarantees that the size of the underlying buffer is tight.
+            """
         return len(data)
 
     def _read(self, count=4096, **kwargs):
@@ -262,6 +267,8 @@ class SharedMemoryIO(DataIO):
         return out
 
     def _close(self, **kwargs):
+        if self._mode == OpenMode.OPEN_WRITE:
+            self._buf.resize(self._written)
         self._buf.close()
         self._buf = None
 
