@@ -126,7 +126,8 @@ def copyDropContents(source, target, bufsize=4096):
         target.write(buf)
         logger.debug("Wrote %d bytes to %r" % (len(buf), target))
         buf = read(desc, bufsize)
-        logger.debug("Read %d bytes from %r" % (len(buf), source))
+        if buf is not None:
+            logger.debug("Read %d bytes from %r" % (len(buf), source))
     source.close(desc)
 
 def getUpstreamObjects(drop):
