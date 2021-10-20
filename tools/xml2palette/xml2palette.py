@@ -111,13 +111,14 @@ def create_uuid(seed):
     return new_uuid
 
 
-def create_port(component_name, port_name, direction, event, type):
+def create_port(component_name, port_name, direction, event, type, description):
     seed = {
         "component_name": component_name,
         "port_name": port_name,
         "direction": direction,
         "event": event,
-        "type": type
+        "type": type,
+        "description": description
     }
 
     port_uuid = create_uuid(str(seed))
@@ -126,7 +127,8 @@ def create_port(component_name, port_name, direction, event, type):
         "Id": str(port_uuid),
         "IdText": port_name,
         "event": event,
-        "type": type
+        "type": type,
+        "description": description
     }
 
 
@@ -169,24 +171,24 @@ def create_field(internal_name, name, value, description, access, type):
     }
 
 
-def parse_param_key(key):
+def parse_key(key):
     # parse the key as csv (delimited by '/')
     parts = []
     reader = csv.reader([key], delimiter='/', quotechar='"')
     for row in reader:
         parts = row
 
-    # init attributes of the param
-    param = ""
+    # init attributes of the param/port
+    object = ""
     internal_name = ""
 
     # assign attributes (if present)
     if len(parts) > 0:
-        param = parts[0]
+        object = parts[0]
     if len(parts) > 1:
         internal_name = parts[1]
 
-    return (param, internal_name)
+    return (object, internal_name)
 
 
 def parse_param_value(value):
@@ -215,6 +217,28 @@ def parse_param_value(value):
         logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
 
     return (external_name, default_value, type, access)
+
+
+def parse_port_value(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    # init attributes of the param
+    name = ""
+    type = "String"
+
+    # assign attributes (if present)
+    if len(parts) > 0:
+        name = parts[0]
+    if len(parts) > 1:
+        type = parts[1]
+    else:
+        logging.warning("port (" + name + ") has no 'type' descriptor, using default (String) : " + value)
+
+    return (name, type)
 
 
 def parse_description(value):
@@ -259,10 +283,10 @@ def create_palette_node_from_params(params):
             version = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
-            (param, internal_name) = parse_param_key(key)
+            (param, internal_name) = parse_key(key)
             (name, default_value, type, access) = parse_param_value(value)
 
-            # parse desscription
+            # parse description
             if "\n" in value:
                 logging.info("param description (" + value + ") contains a newline character, removing.")
                 value = value.replace("\n", " ")
@@ -275,25 +299,20 @@ def create_palette_node_from_params(params):
             # add a field
             fields.append(create_field(internal_name, name, default_value, param_description, access, type))
         elif key.startswith("port/"):
-            # parse the port into data
-            #if key.count("/") == 1:
-            #    (port, name) = key.split("/")
-            #    logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
-            #    type = "Unknown"
-            #elif key.count("/") == 2:
-            #    (port, name, type) = key.split("/")
-            #else:
-            #    logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
-            #    continue
-            (port, internal_name) = parse_port_key(key)
+            (port, internal_name) = parse_key(key)
             (name, type) = parse_port_value(value)
+
+            # parse description
+            if "\n" in value:
+                logging.info("port description (" + value + ") contains a newline character, removing.")
+                value = value.replace("\n", " ")
             port_description = parse_description(value)
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(text, name, direction, False, type))
+                inputPorts.append(create_port(text, name, direction, False, type, description))
             elif direction == "out":
-                outputPorts.append(create_port(text, name, direction, False, type))
+                outputPorts.append(create_port(text, name, direction, False, type, description))
             else:
                 logging.warning("Unknown port direction: " + direction)
 
