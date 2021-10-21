@@ -97,6 +97,10 @@ class ZeroRPCClient(RPCClientBase):
         self._zrpcclientthreads = []
         logger.debug("RPC Client created")
 
+    def __del__(self):
+        if self._context:
+            self._context.term()
+
     def start(self):
         super(ZeroRPCClient, self).start()
 
@@ -227,6 +231,7 @@ class ZeroRPCServer(RPCServerBase):
         self._zrpcserverthread.join()
 
 RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
+
 
 class DropProxy(object):
     """
