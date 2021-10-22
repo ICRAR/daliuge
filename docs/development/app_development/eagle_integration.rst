@@ -58,7 +58,7 @@ Component Parameters are specified using the "param" command from doxygen. The c
 
 .. code-block:: python
 
-  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/
+  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<description>
   #
   # e.g.
   #
@@ -73,11 +73,11 @@ Component ports are (somewhat confusingly) also specified using the "param" from
 
 .. code-block:: python
 
-  # @param[<direction>] port/<name>/<type>
+  # @param[<direction>] port/<internal_name> <user-facing name>/<type>/<description>
   #
   # e.g.
   #
-  # @param[in] port/config/String
+  # @param[in] port/config Config/String/
   #     \~English the configuration of the input_port
   #     \~Chinese 输入端口的设置
 
@@ -91,8 +91,6 @@ Complete example for C/C++
   * \details We will build on the LoadParset structure - but use the contents
   * of the parset to load a measurement set.
   * \par EAGLE_START
-  * \param gitrepo $(GIT_REPO)
-  * \param version $(PROJECT_VERSION)
   * \param category DynlibApp
   * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
   *     \~English the start frequency to read from
@@ -103,13 +101,13 @@ Complete example for C/C++
   * \param[in] param/channels Channels/64/Integer/readonly/
   *     \~English how many channels to load
   *     \~Chinese 需要加载的通道数量
-  * \param[in] port/config/String
+  * \param[in] port/config Config/String/
   *     \~English the configuration of the input_port
   *     \~Chinese 输入端口的设置
-  * \param[in] port/event/Event
+  * \param[in] port/event Event/Event/
   *     \~English the event of the input_port
   *     \~Chinese 输入端口的事件
-  * \param[out] port/File/File
+  * \param[out] port/File File/File/
   *     \~English the file of the output_port
   *     \~Chinese 输出端口的文件
   * \par EAGLE_END
@@ -125,33 +123,25 @@ Complete example for Python
   # @details We will build on the LoadParset structure - but use the contents
   # of the parset to load a measurement set.
   # @par EAGLE_START
-  # @param gitrepo $(GIT_REPO)
-  # @param version $(PROJECT_VERSION)
   # @param category PythonApp
   # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
-  #     \~English the start frequency to read from\n
-  #     \~Chinese 要读取的起始频率\n
-  #     \~
+  #     \~English the start frequency to read from
+  #     \~Chinese 要读取的起始频率
   # @param[in] param/end_frequency End Frequency/500/Integer/readwrite/
-  #     \~English the end frequency to read from\n
-  #     \~Chinese 要读取的结束频率\n
-  #     \~
+  #     \~English the end frequency to read from
+  #     \~Chinese 要读取的结束频率
   # @param[in] param/channels Channels/64/Integer/readonly/
-  #     \~English how many channels to load\n
-  #     \~Chinese 需要加载的通道数量\n
-  #     \~
-  # @param[in] port/config/String
-  #     \~English the configuration of the input_port\n
-  #     \~Chinese 输入端口的设置\n
-  #     \~
-  # @param[in] port/event/Event
-  #     \~English the event of the input_port\n
-  #     \~Chinese 输入端口的事件\n
-  #     \~
-  # @param[out] port/File/File
-  #     \~English the file of the output_port \n
-  #     \~Chinese 输出端口的文件\n
-  #     \~
+  #     \~English how many channels to load
+  #     \~Chinese 需要加载的通道数量
+  # @param[in] port/config Config/String/
+  #     \~English the configuration of the input_port
+  #     \~Chinese 输入端口的设置
+  # @param[in] port/event Event/Event/
+  #     \~English the event of the input_port
+  #     \~Chinese 输入端口的事件
+  # @param[out] port/File File/File/
+  #     \~English the file of the output_port
+  #     \~Chinese 输出端口的文件
   # @par EAGLE_END
 
 
