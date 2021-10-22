@@ -52,9 +52,9 @@ logger = logging.getLogger(__name__)
 #     \~English Path to plasma store.
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/
 #     \~English Application class
-# @param[in] port/plasma_ms_input
+# @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
-# @param[out] port/output_file
+# @param[out] port/output_file Output File/File/
 #     \~English MS output file
 # @par EAGLE_END
 class MSStreamingPlasmaConsumer(AppDROP):
@@ -131,9 +131,9 @@ class MSStreamingPlasmaConsumer(AppDROP):
 #     \~English Path to plasma store
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
 #     \~English Application class
-# @param[in] port/input_file
+# @param[in] port/input_file Input File/File/
 #     \~English MS input file
-# @param[out] port/plasma_ms_output
+# @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
 #     \~English Plasma MS output
 # @par EAGLE_END
 class MSStreamingPlasmaProducer(BarrierAppDROP):
@@ -194,9 +194,9 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @param category PythonApp
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/
 #     \~English Application class
-# @param[in] port/plasma_ms_input
+# @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
-# @param[out] port/output_ms
+# @param[out] port/output_ms Output MS/Measurement Set/
 #     \~English Output MS file
 # @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
@@ -257,9 +257,9 @@ class MSPlasmaReader(BarrierAppDROP):
 # @param category PythonApp
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/
 #     \~English Application class
-# @param[in] port/input_ms
+# @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file
-# @param[out] port/plasma_ms_output
+# @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
 #     \~English Plasma MS store output
 # @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
