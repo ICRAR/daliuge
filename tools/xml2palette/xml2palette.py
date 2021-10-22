@@ -127,7 +127,7 @@ def create_port(component_name, internal_name, external_name, direction, event, 
     return {
         "Id": str(port_uuid),
         "IdText": internal_name,
-        "external_name": external_name,
+        "text": external_name,
         "event": event,
         "type": type,
         "description": description
