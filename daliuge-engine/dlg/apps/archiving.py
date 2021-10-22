@@ -79,7 +79,7 @@ class ExternalStoreApp(BarrierAppDROP):
 #     \~English Archiving request timeout
 # @param[in] param/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/
 #     \~English NGAS Server connection timeout
-# @param[in] port/fileObject
+# @param[in] port/fileObject File Object/File/
 #     \~English Input File Object
 # @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
