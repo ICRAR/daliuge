@@ -111,10 +111,11 @@ def create_uuid(seed):
     return new_uuid
 
 
-def create_port(component_name, port_name, direction, event, type, description):
+def create_port(component_name, internal_name, external_name, direction, event, type, description):
     seed = {
         "component_name": component_name,
-        "port_name": port_name,
+        "internal_name": internal_name,
+        "external_name": external_name,
         "direction": direction,
         "event": event,
         "type": type,
@@ -125,7 +126,8 @@ def create_port(component_name, port_name, direction, event, type, description):
 
     return {
         "Id": str(port_uuid),
-        "IdText": port_name,
+        "IdText": internal_name,
+        "external_name": external_name,
         "event": event,
         "type": type,
         "description": description
@@ -306,9 +308,9 @@ def create_palette_node_from_params(params):
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(text, name, direction, False, type, port_description))
+                inputPorts.append(create_port(text, internal_name, name, direction, False, type, port_description))
             elif direction == "out":
-                outputPorts.append(create_port(text, name, direction, False, type, port_description))
+                outputPorts.append(create_port(text, internal_name, name, direction, False, type, port_description))
             else:
                 logging.warning("Unknown port direction: " + direction)
 
