@@ -48,7 +48,7 @@ The test ``daliuge-engine/test/manager/test_scalability`` contains an example of
 
 Simple Hello World graph
 ^^^^^^^^^^^^^^^^^^^^^^^^
-.. highlight:: ipython
+.. highlight:: python
    :linenothreshold: 5
 
 Like every software framework project we need to describe a Hello World example. This one is straight from the |daliuge| test in ``daliuge-engine/test/apps/test_simple.py``::
