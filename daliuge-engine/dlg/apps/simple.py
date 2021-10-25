@@ -318,7 +318,15 @@ class HelloWorldApp(BarrierAppDROP):
     greet = dlg_string_param('greet', 'World')
 
     def run(self):
-        self.greeting = 'Hello %s' % self.greet
+        ins = self.inputs
+        # if no inputs use the parameter else use the input
+        if len(ins) == 0:
+            self.greeting = 'Hello %s' % self.greet
+        elif len(ins) != 1:
+            raise Exception(
+                'Only one input expected for %r' % self)
+        else: # the input is expected to be a vector. We'll use the first element
+            self.greeting = 'Hello %s' % str(pickle.loads(droputils.allDropContents(ins[0]))[0])
 
         outs = self.outputs
         if len(outs) < 1:
