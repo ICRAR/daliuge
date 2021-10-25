@@ -48,10 +48,11 @@ The test ``daliuge-engine/test/manager/test_scalability`` contains an example of
 
 Simple Hello World graph
 ^^^^^^^^^^^^^^^^^^^^^^^^
-.. highlight:: ipython
-   :linenothreshold: 5
 
-Like every software framework project we need to describe a Hello World example. This one is straight from the |daliuge| test in ``daliuge-engine/test/apps/test_simple.py``::
+Like every software framework project we need to describe a Hello World example. This one is straight from the |daliuge| test in ``daliuge-engine/test/apps/test_simple.py``:
+
+.. code-block:: python
+   :linenos:
 
    from dlg.apps.simple import HelloWorldApp
    from dlg.drop import FileDROP
@@ -61,6 +62,7 @@ Like every software framework project we need to describe a Hello World example.
    h.addOutput(f)
    f.addProducer(h)
    h.execute()
+
 
 Let's look at this in detail. Lines 1 and 2 import the HelloWorldApp and the FileDROP classes, respectively, both of them are part of the |daliuge| code base. Line 4 instanciates an object from the HelloWorldApp class and assigns an object ID (oid) and a unique ID (uid) to the resulting object. In our example both of them are simply the string ``'h'``. We then instantiate the FileDROP with ``oid = uid = 'f'`` in line 5. In line 6 we add the instance of the FileDROP (f) as an output to the HelloWorldApp drop (h). In line 7 we add the HelloWorldApp drop (h) as a producer for the FileDROP (f). NOTE: It would have been sufficient to have either line 6 or line 7, but just to show the calls we do both here (and it does not break things either). Finally in line 8 we call the execute method of the HelloWorldApp (h). This will trigger the execution of the rest of the graph as well. Note that there was no need to care about any detail at all. In fact it is not even obvious whether anything happend at all when executed. In order to check that let's have a look where the file had been written to::
 
@@ -79,7 +81,10 @@ Seems to be what is expected!
 Parallel Hello World graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now that was fun, but kind of boring. |daliuge| is all about paralellism, thus we'll add a bit of that::
+Now that was fun, but kind of boring. |daliuge| is all about paralellism, thus we'll add a bit of that:
+
+.. code-block:: python
+   :linenos:
 
    from dlg.apps.simple import HelloWorldApp, GenericScatterApp
    from dlg.drop import FileDROP, InMemoryDROP
