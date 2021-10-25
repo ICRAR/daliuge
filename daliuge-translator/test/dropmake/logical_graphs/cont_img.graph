@@ -2102,11 +2102,11 @@
                 },
                 {
                     "description": "",
-                    "name": "Arg10",
+                    "name": "arg10",
                     "readonly": false,
                     "text": "Arg 10",
                     "type": "Unknown",
-                    "value": ""
+                    "value": "True"
                 }
             ],
             "flipPorts": true,
@@ -2689,7 +2689,7 @@
                     "readonly": false,
                     "text": "Arg 10",
                     "type": "Unknown",
-                    "value": "True"
+                    "value": "hi"
                 }
             ],
             "flipPorts": false,
