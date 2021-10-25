@@ -31,7 +31,7 @@ from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
 try:
-    from crc32c import crc32  # @UnusedImport
+    from crc32c import crc32c  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
@@ -203,7 +203,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = str(crc32(a_data, 0)).encode('utf8')
+        c_data = str(crc32c(a_data, 0)).encode('utf8')
         node_managers = [self._start_dm() for _ in range(2)]
         for n in range(repeats):
             sessionId = 's%d' % n
@@ -541,7 +541,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -571,5 +571,5 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
