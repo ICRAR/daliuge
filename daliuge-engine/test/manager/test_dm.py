@@ -119,7 +119,7 @@ class NMTestsMixIn(object):
         drops.update(dm2._sessions[sessionId].drops)
 
         leaf_drop = drops[leaf_oid]
-        with droputils.DROPWaiterCtx(self, leaf_drop, 5):
+        with droputils.DROPWaiterCtx(self, leaf_drop, 10):
             for oid in root_oids:
                 drop = drops[oid]
                 drop.write(root_data)
