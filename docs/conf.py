@@ -79,6 +79,8 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
     'sphinx_rtd_theme',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
 ]
 templates_path = ['_templates']
 source_suffix = ['.rst', '.md']
