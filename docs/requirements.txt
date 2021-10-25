@@ -4,3 +4,4 @@ livereload
 sphinx_rtd_theme
 sphinx-autobuild
 myst-parser
+ipython
