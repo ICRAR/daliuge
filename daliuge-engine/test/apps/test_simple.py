@@ -135,6 +135,30 @@ class TestSimpleApps(unittest.TestCase):
         h.execute()
         self.assertEqual(h.greeting.encode('utf8'), droputils.allDropContents(b))
 
+    def test_parallelHelloWorld(self):
+        m0 = InMemoryDROP('m0','m0')
+        s = GenericScatterApp('s', 's')
+        greets = ['World', 'Solar system', 'Galaxy', 'Universe']
+        m0.write(pickle.dumps(greets))
+        s.addInput(m0)
+        m = []
+        h = []
+        f = []
+        for i in range(1, len(greets)+1, 1):
+            m.append(InMemoryDROP('m%d' % i, 'm%d' % i))
+            h.append(HelloWorldApp('h%d' % i, 'h%d' % i))
+            f.append(FileDROP('f%d' % i, 'f%d' % i))
+            s.addOutput(m[-1])
+            h[-1].addInput(m[-1])
+            h[-1].addOutput(f[-1])
+        ad = [m0, s]
+        ad.extend(m)
+        ad.extend(h)
+        ad.extend(f)
+        self._test_graph_runs(ad, m0, f)
+        for i in range(len(f)):
+            self.assertEqual(('Hello %s' % greets[i]).encode('utf8'), droputils.allDropContents(f[i]))
+
     def test_ngasio(self):
         nd_in = NgasDROP('HelloWorld.txt', 'HelloWorld.txt')
         nd_in.ngasSrv = 'ngas.ddns.net'
