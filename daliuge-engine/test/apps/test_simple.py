@@ -127,11 +127,10 @@ class TestSimpleApps(unittest.TestCase):
         data2 = random.randint(0, 100, size=100)
         i1.write(pickle.dumps(data1))
         i2.write(pickle.dumps(data2))
-        m = mean([array(data1), array(data2)], axis=0)
+        big_mean = mean(mean([array(data1), array(data2)], axis=0))
         self._test_graph_runs((i1, i2, c, o), (i1, i2), o)
         average = pickle.loads(droputils.allDropContents(o))
-        v = (m == average)
-        self.assertEqual(v, True)
+        self.assertEqual(big_mean, average)
 
     def test_helloworldapp(self):
         h = HelloWorldApp('h', 'h')
