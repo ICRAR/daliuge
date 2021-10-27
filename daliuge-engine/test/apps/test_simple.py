@@ -131,7 +131,7 @@ class TestSimpleApps(unittest.TestCase):
         self._test_graph_runs((i1, i2, c, o), (i1, i2), o)
         average = pickle.loads(droputils.allDropContents(o))
         v = (m == average)
-        self.assertEqual(v.all(), True)
+        self.assertEqual(v, True)
 
     def test_helloworldapp(self):
         h = HelloWorldApp('h', 'h')
