@@ -557,7 +557,7 @@ class AbstractDROP(EventFirer):
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
             data = io.read(4096)
-            while data is not None:
+            while data is not None and len(data) > 0:
                 self._updateChecksum(data)
                 data = io.read(4096)
             io.close()
