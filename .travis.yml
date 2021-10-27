@@ -85,6 +85,8 @@ before_install:
  - pip install -U setuptools pip wheel
 
 install:
+ # https://github.com/travis-ci/travis-cookbooks/issues/155
+ - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
  - pip install -e daliuge-common/
  - test -n "$NO_DLG_TRANSLATOR" || pip install -e daliuge-translator/
  - test -n "$NO_DLG_RUNTIME" || pip install -e daliuge-engine/
