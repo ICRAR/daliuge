@@ -36,6 +36,11 @@ def _cleanup_block(session_id, name):
     mem.unlink()  # It is unlinking that is critical to freeing resources from the OS
 
 
+def _close_block(session_id, name):
+    mem = DlgSharedMemory(f'{session_id}_{name}')
+    mem.close()
+
+
 class DlgSharedMemoryManager:
     """
     Light class used by a NodeManager to log the existence of sharedmemory blocks.
@@ -67,6 +72,11 @@ class DlgSharedMemoryManager:
         """
         if session_id in self.drop_names.keys():
             for drop in self.drop_names[session_id]:
+                _close_block(session_id, drop)
+
+    def destroy_session(self, session_id):
+        if session_id in self.drop_names.keys():
+            for drop in self.drop_names[session_id]:
                 _cleanup_block(session_id, drop)
 
     def shutdown_all(self):
@@ -74,7 +84,7 @@ class DlgSharedMemoryManager:
         Unlinks all shared memory blocks associated with this memory manager
         """
         for session_id in self.drop_names:
-            self.shutdown_session(session_id)
+            self.destroy_session(session_id)
         self.drop_names = {}
 
     def __del__(self):
