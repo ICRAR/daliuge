@@ -636,7 +636,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
         c_data = str(crc32(a_data, 0)).encode('utf8')
-        node_managers = [self._start_dm(threads=multiprocessing.cpu_count()//2) for _ in range(2)]
+        node_managers = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
         for n in range(repeats):
             sessionId = 's%d' % n
             self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
@@ -675,7 +675,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()//2) for _ in range(2)]
+        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
 
         sessionId = "s1"
         g1 = [
@@ -833,7 +833,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         =======    ====================
         """
 
-        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()//2) for _ in range(2)]
+        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
 
         sessionId = "s1"
         N = 100
