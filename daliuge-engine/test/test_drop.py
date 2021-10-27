@@ -540,7 +540,7 @@ class TestDROP(unittest.TestCase):
 
         # Read from the DROP
         self.assertEqual(msg, droputils.allDropContents(a))
-        self.assertIsNone(a.checksum)
+        self.assertIsNotNone(a.checksum)
         self.assertEqual(9, a.size)
 
         # The drop now calculates the size thus we can't set it anymore
