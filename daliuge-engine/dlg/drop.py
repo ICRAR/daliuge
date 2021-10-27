@@ -552,6 +552,15 @@ class AbstractDROP(EventFirer):
 
         :see: `self.checksumType`
         """
+        if self.status == DROPStates.COMPLETED and self._checksum is None:
+            # Generate on the fly
+            io = self.getIO()
+            io.open(OpenMode.OPEN_READ)
+            data = io.read(4096)
+            while data is not None:
+                self._updateChecksum(data)
+                data = io.read(4096)
+            io.close()
         return self._checksum
 
     @checksum.setter
