@@ -286,7 +286,6 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 drop.status,
                 "DROP %s is not COMPLETED" % (drop.uid),
             )
-
         self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
         self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
 
@@ -715,7 +714,6 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
                 drop.status,
                 "DROP %s is not COMPLETED" % (drop.uid),
             )
-
         self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
         self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
 
