@@ -31,6 +31,7 @@ for data-intensive applications:
 * Integration of data-lifecycle management within the data processing framework
 * Separation of concerns between logical graphs (high level workflows) and physical graphs (execution recipes)
 * Flexible pipeline component interface, including Docker containers.
+* Native multi-core execution out of the box
 
 In :doc:`architecture/index` we give a glimpse to the main concepts present in |daliuge|.
 Later sections of the documentation describe more in detail how |daliuge| works. Enjoy!
