@@ -262,6 +262,17 @@ inputs move to **ERROR**) or if their execution fails. This way whole branches o
 after reaching a gathering point the execution might still resume if enough
 inputs are present.
 
+
+Parallelism
+^^^^^^^^^^^
+
+Speaking about execution, |daliuge| also exhibits multiprocessing of drops using Python's native
+`multiprocessing library <https://docs.python.org/3.8/library/multiprocessing.html>`_.
+If enabled, drops are launched for execution on their own threads and all memory-drops become
+shared-memory-drops which write to ``/dev/shm``. While relatively robust, one should be careful
+to ensure safe-access to memory-drops in this case, opting to use scatter/gather or other explicit
+aggregation stages where necessary.
+
 .. |lgt| replace:: *logical graph template*
 .. |lg| replace:: *logical graph*
 .. |pgt| replace:: *physical graph template*
