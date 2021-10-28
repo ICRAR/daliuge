@@ -106,11 +106,14 @@ class DlgSharedMemory:
             except FileExistsError:
                 # File already exists, attempt to open in read/write mode
                 self._flags = os.O_RDWR
-                self._fd = _posixshmem.shm_open(
+                try:
+                    self._fd = _posixshmem.shm_open(
                     name,
                     self._flags,
                     mode=self._mode
-                )
+                    )
+                except FileNotFoundError:
+                    self.__init__(name, size)
                 # Find the size of the written file
                 # Needs to be set so that the file is truncated down to the correct size.
                 size = os.lseek(self._fd, 0, os.SEEK_END)
