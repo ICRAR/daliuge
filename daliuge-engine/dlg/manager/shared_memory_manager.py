@@ -72,7 +72,7 @@ class DlgSharedMemoryManager:
         """
         if session_id in self.drop_names.keys():
             for drop in self.drop_names[session_id]:
-                _close_block(session_id, drop)
+                _cleanup_block(session_id, drop)
 
     def destroy_session(self, session_id):
         if session_id in self.drop_names.keys():
