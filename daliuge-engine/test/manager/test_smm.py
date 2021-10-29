@@ -23,11 +23,14 @@
 Module tests shared memory manager.
 """
 
+import sys
 import unittest
 
-from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
+if sys.version_info >= (3, 8):
+    from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 
 
+@unittest.skipIf(sys.version_info < (3, 8), "Shared memory does not work < python 3.8")
 class TestSharedMemoryManager(unittest.TestCase):
     """
     Tests the DlgSharedMemory Manager in typical and atypical usecases
