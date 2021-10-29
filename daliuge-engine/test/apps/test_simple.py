@@ -22,6 +22,7 @@
 import logging
 import os
 import pickle
+import sys
 import time
 import unittest
 from multiprocessing.pool import ThreadPool
@@ -32,7 +33,9 @@ from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyAp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
-from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
+
+if sys.version_info >= (3, 8):
+    from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 from numpy import random, mean, array, concatenate
 from psutil import cpu_count
 
@@ -183,6 +186,7 @@ class TestSimpleApps(unittest.TestCase):
         data_out = pickle.loads(droputils.allDropContents(c))
         self.assertEqual(b.marray, data_out)
 
+    @unittest.skipIf(sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8")
     def test_multi_listappendthrashing(self, size=1000, parallel=True):
         max_threads = cpu_count(logical=False)
         drop_ids = [chr(97 + x) for x in range(max_threads)]
@@ -195,7 +199,6 @@ class TestSimpleApps(unittest.TestCase):
         Z = InMemoryDROP('Z', 'Z')
         drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
         mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
-        from multiprocessing import shared_memory
         if parallel:
             # a bit of magic to get the app drops using the processes
             _ = [drop.__setattr__('_tp', threadpool) for drop in drops]
@@ -227,6 +230,7 @@ class TestSimpleApps(unittest.TestCase):
         # Must be called to unlink all shared memory
         memory_manager.shutdown_all()
 
+    @unittest.skipIf(sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8")
     def test_speedup(self):
         """
         Run serial and parallel test and report speedup.
@@ -247,7 +251,7 @@ class TestSimpleApps(unittest.TestCase):
         # self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
         # How about this? We only need to see some type of speedup
         if cpu_count(logical=False) > 1 and size > 500:
-            self.assertGreater(t1/t2, 1)
+            self.assertGreater(t1 / t2, 1)
         else:
             # Ensure that multi-threading overhead doesn't ruin serial performance?
             self.assertAlmostEqual(t1, t2, delta=0.5)
