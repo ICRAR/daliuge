@@ -22,12 +22,15 @@
 """
 Module tests the shared memory primitive.
 """
-import unittest
 import pickle
+import sys
+import unittest
 
-from dlg.shared_memory import DlgSharedMemory, _MAXNAMELENGTH
+if sys.version_info >= (3, 8):
+    from dlg.shared_memory import DlgSharedMemory, _MAXNAMELENGTH
 
 
+@unittest.skipIf(sys.version_info < (3, 8), "Shared memory does not work < python 3.8")
 class TestSharedMemory(unittest.TestCase):
     """
     Tests the shared memory primitive for atypical and typical uses.

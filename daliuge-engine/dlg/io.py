@@ -22,13 +22,15 @@
 import io
 import logging
 import os
+import sys
 import urllib.parse
 from abc import abstractmethod, ABCMeta
 from typing import Optional
 
 import pyarrow
 import pyarrow.plasma as plasma
-from dlg.shared_memory import DlgSharedMemory
+if sys.version_info >= (3, 8):
+    from dlg.shared_memory import DlgSharedMemory
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient

@@ -25,12 +25,13 @@ Module contains shared memory class which creates shared memory blocks for use b
 DALiuGE components.
 """
 
-import _posixshmem  # Does not work on Windows
 import logging
 import mmap
 import os
 import secrets
 import warnings
+
+import _posixshmem  # Does not work on Windows
 
 LOGGER = logging.getLogger(__name__)
 
@@ -108,9 +109,9 @@ class DlgSharedMemory:
                 self._flags = os.O_RDWR
                 try:
                     self._fd = _posixshmem.shm_open(
-                    name,
-                    self._flags,
-                    mode=self._mode
+                        name,
+                        self._flags,
+                        mode=self._mode
                     )
                 except FileNotFoundError:
                     self.__init__(name, size)
