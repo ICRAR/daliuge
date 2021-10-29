@@ -38,7 +38,8 @@ import time
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
-from .shared_memory_manager import DlgSharedMemoryManager
+if sys.version_info >= (3, 8):
+    from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
 from ..drop import AppDROP, InMemoryDROP
@@ -139,7 +140,7 @@ class NodeManagerBase(DROPManager):
             max_threads = cpu_count(logical=False)
         else:                  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
-        if max_threads > 1:
+        if max_threads > 1 and sys.version_info >= (3, 8):
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
             self._memoryManager = DlgSharedMemoryManager()

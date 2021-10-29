@@ -39,6 +39,7 @@ import shutil
 import threading
 import time
 import re
+import sys
 import inspect
 import binascii
 
@@ -48,7 +49,9 @@ from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
     DROPLinkType, DROPPhases, DROPStates, DROPRel
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO, SharedMemoryIO
+from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO
+if sys.version_info >= (3, 8):
+    from .io import SharedMemoryIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
 from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
     dlg_string_param, dlg_bool_param, dlg_dict_param
@@ -1232,7 +1235,7 @@ class InMemoryDROP(AbstractDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        if hasattr(self, '_tp') and hasattr(self, '_sessID'):
+        if hasattr(self, '_tp') and hasattr(self, '_sessID') and sys.version_info >= (3, 8):
             return SharedMemoryIO(self.oid, self._sessID)
         else:
             return MemoryIO(self._buf)
