@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 import json
 import uuid
 import csv
+import logging
+import random
 
 next_key = -1
 
@@ -40,11 +42,30 @@ def get_next_key():
 
     return next_key + 1
 
+def create_uuid(seed):
+    rnd = random.Random()
+    rnd.seed(seed)
 
-def create_port(name):
+    new_uuid = uuid.UUID(int=rnd.getrandbits(128), version=4)
+    return new_uuid
+
+
+def create_port(component_name, port_name, direction, event, type):
+    seed = {
+        "component_name": component_name,
+        "port_name": port_name,
+        "direction": direction,
+        "event": event,
+        "type": type
+    }
+
+    port_uuid = create_uuid(str(seed))
+
     return {
-        "Id": str(uuid.uuid4()),
-        "IdText": name
+        "Id": str(port_uuid),
+        "IdText": port_name,
+        "event": event,
+        "type": type
     }
 
 
@@ -62,7 +83,7 @@ def add_required_fields_for_category(fields, category):
         if find_field_by_name(fields, "num_cpus") is None:
             fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", 0, "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
         if find_field_by_name(fields, "libpath") is None:
             fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String"))
     elif category == "PythonApp":
@@ -71,7 +92,7 @@ def add_required_fields_for_category(fields, category):
         if find_field_by_name(fields, "num_cpus") is None:
             fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", 0, "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
         if find_field_by_name(fields, "appclass") is None:
             fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String"))
 
@@ -97,28 +118,52 @@ def parse_param_key(key):
     # init attributes of the param
     param = ""
     internal_name = ""
-    name = ""
-    default_value = ""
-    type = "String"
-    access = "readwrite"
 
     # assign attributes (if present)
     if len(parts) > 0:
         param = parts[0]
     if len(parts) > 1:
         internal_name = parts[1]
-    if len(parts) > 2:
-        name = parts[2]
-    if len(parts) > 3:
-        default_value = parts[3]
-    if len(parts) > 4:
-        type = parts[4]
-    if len(parts) > 5:
-        access = parts[5]
-    else:
-        print("param (" + name + ") has no 'access' descriptor, using default (readwrite) : " + key)
 
-    return (param, internal_name, name, default_value, type, access)
+    return (param, internal_name)
+
+
+def parse_param_value(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    # init attributes of the param
+    external_name = ""
+    default_value = ""
+    type = "String"
+    access = "readwrite"
+
+    # assign attributes (if present)
+    if len(parts) > 0:
+        external_name = parts[0]
+    if len(parts) > 1:
+        default_value = parts[1]
+    if len(parts) > 2:
+        type = parts[2]
+    if len(parts) > 3:
+        access = parts[3]
+    else:
+        logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+
+    return (external_name, default_value, type, access)
+
+
+def parse_description(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    return parts[-1]
 
 
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
@@ -132,6 +177,8 @@ def create_palette_node_from_params(params):
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
+    gitrepo = ""
+    version = ""
 
     # process the params
     for param in params:
@@ -145,41 +192,47 @@ def create_palette_node_from_params(params):
             text = value
         elif key == "description":
             description = value
+        elif key == "gitrepo":
+            gitrepo = value
+        elif key == "version":
+            version = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
-            (param, internal_name, name, default_value, type, access) = parse_param_key(key)
+            (param, internal_name) = parse_param_key(key)
+            (name, default_value, type, access) = parse_param_value(value)
+
+            # parse desscription
+            if "\n" in value:
+                logging.info("param description (" + value + ") contains a newline character, removing.")
+                value = value.replace("\n", " ")
+            param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
-                print("ERROR: Unknown access: " + access)
+                logging.warning("param '" + name + "' has unknown 'access' descriptor: " + access)
 
             # add a field
-            fields.append(create_field(internal_name, name, default_value, value, access, type))
-            pass
-        elif key.startswith("port/") or key.startswith("local-port/"):
+            fields.append(create_field(internal_name, name, default_value, param_description, access, type))
+        elif key.startswith("port/"):
             # parse the port into data
             if key.count("/") == 1:
                 (port, name) = key.split("/")
+                logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
+                type = "Unknown"
             elif key.count("/") == 2:
                 (port, name, type) = key.split("/")
             else:
-                print("ERROR: port expects format `param[Direction] port/Name/Data Type`: got", key)
+                logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
+                continue
 
-            # add a port
-            if port == "port":
-                if direction == "in":
-                    inputPorts.append(create_port(name))
-                elif direction == "out":
-                    outputPorts.append(create_port(name))
-                else:
-                    print("ERROR: Unknown port direction: " + direction)
+            # add the port
+            if direction == "in":
+                inputPorts.append(create_port(text, name, direction, False, type))
+            elif direction == "out":
+                outputPorts.append(create_port(text, name, direction, False, type))
             else:
-                if direction == "in":
-                    inputLocalPorts.append(create_port(name))
-                elif direction == "out":
-                    outputLocalPorts.append(create_port(name))
-                else:
-                    print("ERROR: Unknown local-port direction: " + direction)
+                logging.warning("Unknown port direction: " + direction)
+
 
     # add extra fields that must be included for the category
     add_required_fields_for_category(fields, category)
@@ -214,7 +267,9 @@ def create_palette_node_from_params(params):
         "outputLocalPorts": outputLocalPorts,
         "inputAppFields": [],
         "outputAppFields": [],
-        "fields": fields
+        "fields": fields,
+        "git_url": gitrepo,
+        "sha": version
     }
 
 
@@ -240,6 +295,7 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
 
 def process_compounddef(compounddef):
     result = []
+    found_eagle_start = False
 
     # get child of compounddef called "briefdescription"
     briefdescription = None
@@ -251,7 +307,7 @@ def process_compounddef(compounddef):
     if briefdescription is not None:
         if len(briefdescription) > 0:
             if briefdescription[0].text is None:
-                print("No brief description text")
+                logging.warning("No brief description text")
                 result.append({
                     "key":"text",
                     "direction":None,
@@ -284,11 +340,20 @@ def process_compounddef(compounddef):
                 description += ddchild.text + "\n"
             for pchild in ddchild:
                 if pchild.tag == "simplesect":
+                    for sschild in pchild:
+                        if sschild.tag == "title":
+                            if sschild.text.strip() == "EAGLE_START":
+                                found_eagle_start = True
+
                     para = ddchild
 
     # add description
     if description != "":
         result.append({"key":"description", "direction":None, "value":description.strip()})
+
+    # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
+    if not found_eagle_start:
+        return []
 
     # check that we found the correct para
     if para is None:
@@ -315,15 +380,18 @@ def process_compounddef(compounddef):
                 key = pichild[0].text.strip()
                 direction = pichild[0].attrib.get("direction", "").strip()
             elif pichild.tag == "parameterdescription":
-                if key == "gitrepo":
-                    if pichild[0].text is None:
-                        print("No gitrepo text")
+                if key == "gitrepo" and isinstance(pichild[0], list):
+                    # the gitrepo is a URL, so is contained within a <ulink> element,
+                    # therefore we need to use pichild[0][0] here to look one level deeper
+                    # in the hierarchy
+                    if pichild[0][0] is None or pichild[0][0].text is None:
+                        logging.warning("No gitrepo text")
                         value = ""
                     else:
-                        value = pichild[0].text.strip()
+                        value = pichild[0][0].text.strip()
                 else:
                     if pichild[0].text is None:
-                        print("No key text (key: " + key + ")")
+                        logging.warning("No key text (key: " + key + ")")
                         value = ""
                     else:
                         value = pichild[0].text.strip()
@@ -334,6 +402,8 @@ def process_compounddef(compounddef):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
     (inputfile, outputfile) = get_filenames_from_command_line(sys.argv[1:])
 
     gitrepo = ""
@@ -351,7 +421,7 @@ if __name__ == "__main__":
 
         # if no params were found, or only the name and description were found, then don't bother creating a node
         if len(params) > 2:
-            # print("params: " + str(params))
+            #print("params (" + str(len(params)) + "): " + str(params))
 
             # create a node
             n = create_palette_node_from_params(params)
@@ -369,3 +439,4 @@ if __name__ == "__main__":
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
+    logging.info("Wrote " + str(len(nodes)) + " component(s)")
