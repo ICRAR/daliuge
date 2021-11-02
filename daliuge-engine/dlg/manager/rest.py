@@ -298,6 +298,7 @@ class NMRestServer(ManagerRestServer):
 
     @daliuge_aware
     def shutdown_node_manager(self):
+        logger.debug("Shutting down node manager")
         self.dm.shutdown()
 
     @daliuge_aware
@@ -383,10 +384,12 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def addCMNode(self, node):
+        logger.debug("Adding node %s" % node)
         self.dm.add_node(node)
 
     @daliuge_aware
     def removeCMNode(self, node):
+        logger.debug("Removing node %s" % node)
         self.dm.remove_node(node)
 
     @daliuge_aware
@@ -485,13 +488,61 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         CompositeManagerRestServer.initializeSpecifics(self, app)
 
         # Query forwarding to daemons
-        app.post('/api/managers/<host>/dataisland', callback=self.createDataIsland)
+
+        app.post('/api/managers/<host>/dataisland',     callback=self.createDataIsland)
+        app.post('/api/managers/<host>/node/start',     callback=self.startNM)
+        app.post('/api/managers/<host>/node/stop',      callback=self.stopNM)
+        # Querying about managers
+        app.get('/api/islands',                    callback=self.getDIMs)
+        app.get('/api/nodes',                      callback=self.getNMs)
+        app.get('/api/managers/<host>/node',       callback=self.getNMInfo)
+        app.get('/api/managers/<host>/dataisland', callback=self.getDIMInfo)
+        app.get('/api/managers/<host>/master',     callback=self.getMMInfo)
 
     @daliuge_aware
     def createDataIsland(self, host):
         with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
             c._post_json('/managers/dataisland', bottle.request.body.read())
         self.dm.addDmHost(host)
+
+    @daliuge_aware
+    def getDIMs(self):
+        return {'islands': self.dm.dmHosts}
+
+    @daliuge_aware
+    def getNMs(self):
+        return {'nodes': self.dm.nodes}
+
+    @daliuge_aware
+    def startNM(self, host):
+        port = constants.DAEMON_DEFAULT_REST_PORT
+        logger.debug("Sending NM start request to %s:%s" % (host,port))
+        with RestClient(host=host, port=port, timeout=10) as c:
+            return json.loads(c._POST('/managers/node/start').read())
+
+    @daliuge_aware
+    def stopNM(self, host):
+        port = constants.DAEMON_DEFAULT_REST_PORT
+        logger.debug("Sending NM stop request to %s:%s" % (host,port))
+        with RestClient(host=host, port=port, timeout=10) as c:
+            return json.loads(c._POST('/managers/node/stop').read())
+
+    @daliuge_aware
+    def getNMInfo(self, host):
+        port = constants.DAEMON_DEFAULT_REST_PORT
+        logger.debug("Sending request %s:%s/managers/node" % (host,port))
+        with RestClient(host=host, port=port, timeout=10) as c:
+            return json.loads(c._GET('/managers/node').read())
+
+    @daliuge_aware
+    def getDIMInfo(self, host):
+        with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
+            return json.loads(c._GET('/managers/dataisland').read())
+
+    @daliuge_aware
+    def getMMInfo(self, host):
+       with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
+            return json.loads(c._GET('/managers/master').read())
 
     def getAllCMNodes(self):
         nodes = []

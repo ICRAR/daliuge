@@ -1,8 +1,8 @@
-|daliuge| Architecture and Design
-=================================
+Architecture and Design
+=======================
 
 The following sections give an overview of the architecture and design considerations
-behind DALiuGE.
+behind |daliuge|.
 
 .. toctree::
  :maxdepth: 3

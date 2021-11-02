@@ -20,7 +20,7 @@ case "$1" in
             DOCKER_OPTS=${DOCKER_OPTS}"-v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT} "
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
-            docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+            docker run --net=host -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
             exit 1
         fi;;
     "dev")
