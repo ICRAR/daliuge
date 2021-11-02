@@ -108,7 +108,7 @@ class NodeManagerBase(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self,
-                 useDLM=True,
+                 useDLM=False,
                  dlgPath=None,
                  error_listener=None,
                  event_listeners=[],
