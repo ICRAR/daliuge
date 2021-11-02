@@ -163,6 +163,7 @@ class CompositeManager(DROPManager):
     def shutdown(self):
         self.stopDMChecker()
         self._tp.close()
+        self._tp.terminate()
         self._tp.join()
 
     def _checkDM(self):
@@ -366,6 +367,7 @@ class CompositeManager(DROPManager):
                            port=constants.NODE_DEFAULT_REST_PORT,
                            iterable=self._drop_rels[sessionId].items())
             logger.info("Delivered node subscription list to node managers")
+            logger.debug("Number of subscriptions: %s" % len(self._drop_rels[sessionId].items()))
 
         logger.info('Deploying Session %s in all hosts', sessionId)
         self.replicate(sessionId, self._deploySession, "deploying session")
@@ -441,10 +443,6 @@ class DataIslandManager(CompositeManager):
         # In the case of the Data Island the dmHosts are the final nodes as well
         self._nodes = dmHosts
         logger.info('Created DataIslandManager for hosts: %r', self._dmHosts)
-
-    def add_node(self, node):
-        CompositeManager.add_node(self, node)
-        self._dmHosts.append(node)
 
 class MasterManager(CompositeManager):
     """

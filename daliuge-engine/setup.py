@@ -135,7 +135,7 @@ install_requires = [
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6",
     "pyarrow",
-    "numpy"
+    "numpy==1.20.3"
 ]
 # Keep alpha-sorted PLEASE!
 
@@ -171,6 +171,7 @@ setup(
             "web/static/fonts/*",
             "web/static/js/*.js",
             "web/static/js/d3/*",
+            "web/static/icons/*",
         ],
         "dlg.dropmake": [
             "web/lg_editor.html",
@@ -182,6 +183,7 @@ setup(
             "web/pg_viewer.html",
             "web/matrix_vis.html",
             "lib/libmetis.*",
+            "web/static/icons/*",
         ],
         "test.dropmake": ["logical_graphs/*.json"],
         "test.apps": ["dynlib_example.c", "dynlib_example2.c"],

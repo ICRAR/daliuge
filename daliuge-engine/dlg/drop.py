@@ -427,7 +427,11 @@ class AbstractDROP(EventFirer):
         If written externally, self._wio will have remained None
         """
         if self._wio:
-            self._wio.close()
+            try:
+                self._wio.close()
+            except:
+                pass # this will make sure that a pprevious issue does not cause the grpah to hang!
+                # raise Exception("Problem closing file!")
             self._wio = None
 
     def read(self, descriptor, count=4096, **kwargs):
@@ -473,7 +477,11 @@ class AbstractDROP(EventFirer):
         # DROP might not be written through this DROP
         if not self._wio:
             self._wio = self.getIO()
-            self._wio.open(OpenMode.OPEN_WRITE)
+            try:
+                self._wio.open(OpenMode.OPEN_WRITE)
+            except:
+                self.status = DROPStates.ERROR
+                raise Exception("Problem opening drop for write!")
         nbytes = self._wio.write(data)
         dataLen = len(data)
         if nbytes != dataLen:
@@ -1173,8 +1181,13 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         try:
             self._size = os.stat(self.path).st_size
         except FileNotFoundError:
-            with open(self.path, 'wb'):
-                pass
+            # we''ll try this again in case there is some other issue
+            try:
+                with open(self.path, 'wb'):
+                    pass
+            except:
+                self.status = DROPStates.ERROR
+                logger.error("Path not accessible: %s" % self.path)
             self._size = 0
         # Signal our subscribers that the show is over
         self._fire('dropCompleted', status=DROPStates.COMPLETED)

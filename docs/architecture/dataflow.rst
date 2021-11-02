@@ -29,13 +29,13 @@ formalism to describe parallel computation, early efforts in developing
 had to introduce control flow operators (e.g.  switch and merge) and data
 storage mechanism in order to put dataflow models into practice.
 
-.. _dataflow.datadriven:
+.. _dataflow.data-activated:
 
-Data-driven
-^^^^^^^^^^^
+Data-activated
+^^^^^^^^^^^^^^
 In developing |daliuge|, we have extended the "traditional" dataflow
 model by integrating data lifecycle management, graph execution engine, and
-cost-optimal resource allocation into a coherent data-driven framework.
+cost-optimal resource allocation into a coherent *data-activated* framework.
 Concretely, we have made the following changes to the existing dataflow model:
 
 * Unlike traditional dataflow models that characterise data as "tokens" moving
@@ -52,7 +52,7 @@ Concretely, we have made the following changes to the existing dataflow model:
   after restart, etc., but also enables data sharing amongst multiple processing
   pipelines in situations like re-processing or commensal observations.
   All the state information is kept in the Drop wrapper, while the payload of the
-  Drops, i.e. pipeline component algorithms and data, are stateless.
+  Drops, i.e. pipeline component algorithms and data, remain stateless.
 
 * We introduced a small number of control flow graph nodes at the logical level
   such as *Scatter*, *Gather*, *GroupBy*, *Loop*, etc. These additional control
@@ -62,7 +62,7 @@ Concretely, we have made the following changes to the existing dataflow model:
   ordinary Drops at the physical level. Thus they are nearly transparent to the
   underlying graph/dataflow execution engine, which focuses solely on exploring
   parallelisms orthogonal to these control nodes placed by applications. In this
-  way, the Data-Driven framework enjoys the best from both worlds - expressivity
+  way, the data-activated framework enjoys the best from both worlds - expressivity
   at the application level and flexibility at the dataflow system level.
 
 * Finally, we differentiate between two kinds of dataflow graphs - **Logical Graph** and
@@ -82,51 +82,3 @@ Concretely, we have made the following changes to the existing dataflow model:
   the structure of the derived **Logical Graph** at all, it can dramatically change the structure of the 
   associated **Physical Graph Template** and **Physical Graph**. For example a scatter construct in a **Logical Graph Template** has 
   exactly the same strcuture for 2 and for 100,000 splits, but the **Physical Graph** will show either 2 or 100,000 branches.
-
-.. _dlg_functions:
-
-|daliuge| operational concepts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-As mentioned above, |daliuge| has been developed to enable processing of data from the future Square Kilometre Array (SKA) observatory. To support the SKA operational environment |daliuge| provides eight Graph-based functions as shown in
-:numref:`dataflow.fig.funcs`. The implementation of these operational concepts in general does not restrict the usage of |daliuge| for other use cases, but it is still taylored to meet the SKA requirements.
-
-.. _dataflow.fig.funcs:
-
-.. figure:: ../images/dfms_func_as_graphs.jpg
-
-   Graph-based Functions of the |daliuge| Prototype
-
-The :doc:`graphs` section describes the implementation details for each function.
-Here we briefly discuss how they work together to fullfill the SKA requirements.
-
-* First of all, the *Logical Graph Template* (topleft in
-  :numref:`dataflow.fig.funcs`) represents high-level
-  data processing capabilities. In the case of the SKA Data Processor, they could be, for example,
-  "Process Visibility Data" or "Stage Data Products".
-
-* Logical Graph Templates are managed by *LogicalGraph Template
-  Repositories* (bottomleft in :numref:`dataflow.fig.funcs`).
-  The logical graph template is first selected from this repository for a specific pipeline and
-  is then populated with parameters derived from the detailed description of the scheduled science observation. This generates a *Logical Graph*, expressing a workflow with resource-oblivious dataflow constructs.
-
-* Using profiling information of pipeline components executed on specific hardware resources, |daliuge|
-  then "translates" a Logical Graph into a *Physical Graph Template*, which prescribes a manifest of all Drops without specifying their physical locations.
-
-* Once the information on resource availability (e.g. compute node, storage, etc.) is presented,
-  |daliuge| associates each Drop in the physical graph template with an available resource unit
-  in order to meet pre-defined requirements such as performance, cost, etc.
-  Doing so essentially transforms the physical graph template into a *Physical Graph*,
-  consisting of inter-connected Drops mapped onto a given set of resources.
-
-* All four graph varieties are serializable as JSON strings, that is also how graphs are stored in repositories and transferred.
-
-* Before an observation starts, the |daliuge| engine de-serializes a physical graph JSON string and turns all the nodes into Drop objects and then deploys all the Drops onto the allocated resources as per the
-  location information stated in the physical graph. The deployment process is
-  facilitated through :doc:`managers`, which are daemon processes managing the deployment of Drops
-  onto the designated resources. Note that the :doc:`managers` do _not_ control the Drops or the execution, but they do monitor the state of them during the execution.
-
-* Once an observation starts, the graph :ref:`graph.execution` cascades down the graph edges through either data Drops that triggers its next consumers or application Drops
-  that produces its next outputs. When all Drops are in the **COMPLETED** state, some data Drops
-  are persistently preserved as Science Products by using an explicit persist
-  consumer, which very likely will be specifically dedicated to a certain
-  science data product.
