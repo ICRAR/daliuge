@@ -633,46 +633,6 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         self._deploy_error_graph(event_listeners=[listener()])
         self.assertTrue(evt.wait(10), "Didn't receive events on time")
 
-    def _test_runGraphOneDOPerDOM(self, repeats=1):
-        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
-        g2 = [
-            {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
-        ]
-        rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
-        a_data = os.urandom(32)
-        c_data = str(crc32(a_data, 0)).encode('utf8')
-        node_managers = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
-
-        ids = [0] * repeats
-        for n in range(repeats):
-            choice = 0
-            while choice in ids:
-                choice = random.randint(0, 1000)
-            ids[n] = choice
-            sessionId = f"s{choice}"
-            self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
-                                        sessionId=sessionId,
-                                        node_managers=node_managers)
-
-    def test_runGraphOneDOPerDOM(self):
-        """
-        A test that creates three DROPs in two different DMs and runs the graph.
-        For this the graphs that are fed into the DMs must *not* express the
-        inter-DM relationships, although they are still passed down
-        separately. The graph looks like:
-
-        DM #1      DM #2
-        =======    =============
-        | A --|----|-> B --> C |
-        =======    =============
-        """
-        self._test_runGraphOneDOPerDOM()
-
-    def test_runGraphOneDOPerDOMTwice(self):
-        """Like test_runGraphOneDOPerDOM but runs two sessions succesively"""
-        self._test_runGraphOneDOPerDOM(2)
-
     def test_runGraphSeveralDropsPerDM(self):
         """
         A test that creates several DROPs in two different DMs and  runs
