@@ -24,6 +24,7 @@ import os
 import threading
 import unittest
 import multiprocessing
+import random
 
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
@@ -36,6 +37,7 @@ try:
 except:
     from binascii import crc32  # @Reimport
 
+random.seed(42)
 
 hostname = "localhost"
 
@@ -103,7 +105,7 @@ class NMTestsMixIn(object):
         root_oids=("A",),
         leaf_oid="C",
         expected_failures=[],
-        sessionId="s1",
+        sessionId=f"s{random.randint(0, 1000)}",
         node_managers=None,
         threads=0
     ):
@@ -151,7 +153,7 @@ class NMTestsMixIn(object):
 
 class TestDMParallel(NMTestsMixIn, unittest.TestCase):
     def _deploy_error_graph(self, **kwargs):
-        sessionId = "lala"
+        sessionId = f"s{random.randint(0, 1000)}"
         g = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
             {
@@ -208,8 +210,14 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         a_data = os.urandom(32)
         c_data = str(crc32(a_data, 0)).encode('utf8')
         node_managers = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
+
+        ids = [0] * repeats
         for n in range(repeats):
-            sessionId = 's%d' % n
+            choice = 0
+            while choice in ids:
+                choice = random.randint(0, 1000)
+            ids[n] = choice
+            sessionId = f"s{choice}"
             self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
                                         sessionId=sessionId,
                                         node_managers=node_managers)
@@ -248,7 +256,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         """
         dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
             {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
@@ -319,7 +327,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2, dm3, dm4 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(4)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         g1 = [memory("A", expectedSize=1)]
         g2 = [
             sleepAndCopy("B", outputs=["C", "D", "E"], sleepTime=0),
@@ -405,7 +413,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         N = 100
         g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [{"oid": "C", "type": "plain", "storage": Categories.MEMORY}]
@@ -463,7 +471,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()//2) for _ in range(2)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
             {
@@ -579,7 +587,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
 class TestDM(NMTestsMixIn, unittest.TestCase):
     def _deploy_error_graph(self, **kwargs):
-        sessionId = "lala"
+        sessionId = f"s{random.randint(0, 1000)}"
         g = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
             {
@@ -636,8 +644,13 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         a_data = os.urandom(32)
         c_data = str(crc32(a_data, 0)).encode('utf8')
         node_managers = [self._start_dm() for _ in range(2)]
+        ids = [0] * repeats
         for n in range(repeats):
-            sessionId = 's%d' % n
+            choice = 0
+            while choice in ids:
+                choice = random.randint(0, 1000)
+            ids[n] = choice
+            sessionId = f"s{choice}"
             self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
                                         sessionId=sessionId,
                                         node_managers=node_managers)
@@ -747,7 +760,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2, dm3, dm4 = [self._start_dm() for _ in range(4)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         g1 = [memory("A", expectedSize=1)]
         g2 = [
             sleepAndCopy("B", outputs=["C", "D", "E"], sleepTime=0),
@@ -833,7 +846,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         N = 100
         g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [{"oid": "C", "type": "plain", "storage": Categories.MEMORY}]
@@ -891,7 +904,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         dm1, dm2 = [self._start_dm() for _ in range(2)]
 
-        sessionId = "s1"
+        sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
             {
