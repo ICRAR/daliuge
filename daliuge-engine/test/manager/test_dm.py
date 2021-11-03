@@ -584,6 +584,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
 
+@unittest.skipIf(multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing")
 class TestDMParallel(NMTestsMixIn, unittest.TestCase):
     def _deploy_error_graph(self, **kwargs):
         sessionId = f"s{random.randint(0, 1000)}"
@@ -602,7 +603,6 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         dm.addGraphSpec(sessionId, g)
         dm.deploySession(sessionId, ["A"])
 
-    @unittest.skip
     def test_error_listener(self):
 
         evt = threading.Event()
@@ -617,7 +617,6 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         self._deploy_error_graph(error_listener=listener())
         self.assertTrue(evt.wait(10), "Didn't receive errors on time")
 
-    @unittest.skip
     def test_event_listener(self):
         """Tests that user-provided event listeners work"""
 
