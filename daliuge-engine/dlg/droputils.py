@@ -79,7 +79,7 @@ class DROPWaiterCtx(object):
     def __init__(self, test, drops, timeout=1, expected_states=[]):
         self._drops = listify(drops)
         self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
-        self._test = test
+        self._test = test if hasattr(test, 'assertTrue') else None
         self._timeout = timeout
         self._evts = []
     def __enter__(self):
@@ -91,10 +91,11 @@ class DROPWaiterCtx(object):
     def __exit__(self, typ, value, tb):
         if typ is not None:
             traceback.print_tb(tb)
-            self._test.fail('%r' % (value,))
+            if self._test: self._test.fail('%r' % (value,))
         to = self._timeout
-        for evt in self._evts:
-            self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
+        if self._test:
+            for evt in self._evts:
+                self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
 
 
 def allDropContents(drop, bufsize=4096):

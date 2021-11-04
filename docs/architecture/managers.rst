@@ -4,20 +4,13 @@
 Drop Managers
 -------------
 
-The runtime environment of |daliuge| consists on a hierarchy of *Drop Managers*.
-Drop Managers offer a standard interface to external entities to interact with
-the runtime system, allowing users to submit physical graphs, deploy them, let
-them run and query their status.
+The runtime environment of |daliuge| consists on a hierarchy of *Drop Managers*. Drop Managers offer a standard interface to external entities to interact with the runtime system, allowing users to submit physical graphs, deploy them, let them run and query their status.
 
-Drop Managers are organized hierarchically, mirroring the topology of the
-environment hosting them, and thus enabling scalable solutions. The current design is flexible
-enough to add more intermediate levels if necessary in the future. The
-hierarchy levels currently present are:
+Drop Managers are organized hierarchically, mirroring the topology of the environment hosting them, and thus enabling scalable solutions. The current design is flexible enough to add more intermediate levels if necessary in the future. The hierarchy levels currently present are:
 
-* A *Node Drop Manager* exists for every node in the system.
-* Nodes are grouped into *Data Islands*, and thus a *Data Island Drop Manager*
-  exists at the Data Island level.
-* On top of the Data Islands is the *Master Drop Manager*.
+#. A *Node Drop Manager* is started on every compute node in the cluster.
+#. Compute nodes are grouped into *Data Islands*, and thus a *Data Island Drop Manager* exists at the Data Island level.
+#. On top of the Data Islands a *Master Drop Manager* can be deployed.
 
 Sessions
 ^^^^^^^^
@@ -28,10 +21,8 @@ Managers introduce the concept of a *Session*. Sessions represent a physical gra
 execution, which are completely isolated from one another. This has two main
 consequences:
 
-* Submitting the same physical graph to a Drop Manager will create two different
-  sessions
-* Two physical graph executions can run at the same time in a given Drop
-  Manager.
+#. Submitting the same physical graph to a Drop Manager will create two different sessions
+#. Two physical graph executions can run at the same time in a given Drop Manager.
 
 Sessions have a simple lifecycle: they are first created, then a physical graph
 is attached into them (optionally by parts, or all in one go), after which the

@@ -33,7 +33,7 @@ from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
 try:
-    from crc32c import crc32c as crc32  # @UnusedImport
+    from crc32c import crc32c  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
@@ -124,7 +124,7 @@ class NMTestsMixIn(object):
         drops.update(dm2._sessions[sessionId].drops)
 
         leaf_drop = drops[leaf_oid]
-        with droputils.DROPWaiterCtx(self, leaf_drop, 5):
+        with droputils.DROPWaiterCtx(self, leaf_drop, 10):
             for oid in root_oids:
                 drop = drops[oid]
                 drop.write(root_data)
@@ -208,7 +208,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = str(crc32(a_data, 0)).encode('utf8')
+        c_data = str(crc32c(a_data, 0)).encode('utf8')
         node_managers = [self._start_dm() for _ in range(2)]
         ids = [0] * repeats
         for n in range(repeats):
@@ -550,7 +550,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -580,7 +580,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
 
@@ -642,7 +642,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = str(crc32(a_data, 0)).encode('utf8')
+        c_data = str(crc32c(a_data, 0)).encode('utf8')
         node_managers = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
 
         ids = [0] * repeats
@@ -985,7 +985,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -1015,5 +1015,5 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
