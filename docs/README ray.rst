@@ -1,26 +1,23 @@
-Notes of the merge between |daliuge| and Ray
---------------------------------------------
+Notes of the merge project between |daliuge| and Ray
+----------------------------------------------------
 
 The objective of this activity was to investigate a feasible solution for the flexible and simple deployment of DALiuGE on various platforms. In particular the deployment of DAliuGE on AWS in an autoscaling environment is of interest to us.
 
-Ray (https://docs.ray.io/en/master/) is a pretty complete execution engine all by itself, targeting DL and ML applications and integrating a number of the major ML software packages. What we are in particular interested in is the Ray core software, which states the folloing mission:
+Ray (https://docs.ray.io/en/master/) is a pretty complete execution engine all by itself, targeting DL and ML applications and integrating a number of the major ML software packages. What we are in particular interested in is the Ray core software, which states the following:
  
-  - Providing simple primitives for building and running distributed applications.
-
-  - Enabling end users to parallelize single machine code, with little to zero code changes.
-
-  - Including a large ecosystem of applications, libraries, and tools on top of the core Ray to enable complex applications.
+#. Providing simple primitives for building and running distributed applications.
+#. Enabling end users to parallelize single machine code, with little to zero code changes.
+#. Including a large ecosystem of applications, libraries, and tools on top of the core Ray to enable complex applications.
 
 Internally Ray is using a number of technologies we are also using or evaluating within DALiuGE and/or the SKA. The way Ray is managing and distributing computing is done very well and essentially covers a number of our target platforms including AWS, SLURM, Kubernetes, Azure and GC.
 
-The idea thus was to use Ray to distribute DALiuGE on those platforms and on AWS to start with, but leave the rest of the two systems essentially independent.
+The idea thus was to use Ray to distribute DALiuGE on those platforms and on AWS to start with, but leave the rest of the two systems essentially independent. In future we may look into a tighter integration between the two.
 
 Setup
 ^^^^^
 
 Pre-requisites
 """"""""""""""
-
 First you need to install Ray into your local python virtualenv::
 
     pip install ray
@@ -31,7 +28,6 @@ The rest is then straight forward and just requires to configure a few AWS autos
 
 Starting the DALiuGE Ray cluster
 """"""""""""""""""""""""""""""""
-
 To get DALiuGE up and running in addition to Ray requires just two additional lines for the HEAD and the worker nodes in the YAML file, but there are some caveats as outlined below. With the provided ray configuration YAML file starting a cluster running DALiuGE on AWS is super easy (provided you have your AWS environment set up in place)::
 
     cd <path_to_daliuge_git_clone>
@@ -49,9 +45,6 @@ More specifically the command above actually opens a shell inside to the docker 
 
 Issues
 """"""
-The basic idea is to start up a Data Island Manager (and possibly also a Node Manager) on the Ray Head node and a Node Manager on each of the worker nodes. Starting them is trivial, but the issue is to correctly register the NMs with the DIM. DALiuGE is usually doing this the other way around, by telling the DIM at startup which NMs it is responsible for. This is not possible in a autoscaling setup, since the NMs don't exist yet. 
-As a workaround DALiuGE does provide a REST API call to register a NM with the DIM, but that currently has a bug, registering the node twice.
-
 Bringing the cluster down by default only stops the instances and thus the next startup is quite a bit faster. There is just one 'small' issue: Ray v1.0 has a bug, which prevents the second start to work! That is why the current default setting in daliuge-ray.yaml is to terminate the instances::
 
     cache_stopped_nodes: False

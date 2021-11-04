@@ -1,38 +1,99 @@
 #!/usr/bin/python
 
-import sys
-import getopt
-import xml.etree.ElementTree as ET
-import json
-import uuid
 import csv
+import getopt
+import json
 import logging
 import random
+import os
+import subprocess
+import sys
+import tempfile
+import uuid
+import xml.etree.ElementTree as ET
 
 next_key = -1
 
+# NOTE: not sure if all of these are actually required
+#       make sure to retrieve some of these from environment variables
+DOXYGEN_SETTINGS = [
+    ("OPTIMIZE_OUTPUT_JAVA", "YES"),
+    ("AUTOLINK_SUPPORT",     "NO"),
+    ("IDL_PROPERTY_SUPPORT", "NO"),
+    ("RECURSIVE",            "YES"),
+    ("EXCLUDE_PATTERNS",     "*/web/*"),
+    ("VERBATIM_HEADERS",     "NO"),
+    ("GENERATE_HTML",        "NO"),
+    ("GENERATE_LATEX",       "NO"),
+    ("GENERATE_XML",         "YES"),
+    ("XML_PROGRAMLISTING",   "NO"),
+    ("ENABLE_PREPROCESSING", "NO"),
+    ("CLASS_DIAGRAMS",       "NO")
+]
+
+
 def get_filenames_from_command_line(argv):
-    inputfile = ''
+    inputdir = ''
     outputfile = ''
     try:
-        opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
+        opts, args = getopt.getopt(argv,"hi:o:",["idir=","ofile="])
     except getopt.GetoptError:
-        print("xml2palette.py -i <inputfile> -o <outputfile>")
+        print("xml2palette.py -i <input_directory> -o <output_file>")
         sys.exit(2)
 
     if len(opts) < 2:
-        print("xml2palette.py -i <inputfile> -o <outputfile>")
+        print("xml2palette.py -i <input_directory> -o <output_file>")
         sys.exit()
 
     for opt, arg in opts:
         if opt == '-h':
-            print("xml2palette.py -i <inputfile> -o <outputfile>")
+            print("xml2palette.py -i <input_directory> -o <output_file>")
             sys.exit()
-        elif opt in ("-i", "--ifile"):
-            inputfile = arg
+        elif opt in ("-i", "--idir"):
+            inputdir = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-    return inputfile, outputfile
+    return inputdir, outputfile
+
+
+def check_environment_variables():
+    required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
+
+    for variable in required_environment_variables:
+        value = os.environ.get(variable)
+
+        if value is None:
+            logging.error("No " + variable + " environment variable.")
+            return False
+
+    return True
+
+
+def modify_doxygen_options(doxygen_filename, options):
+    with open(doxygen_filename, 'r') as dfile:
+        contents = dfile.readlines()
+
+    #print(contents)
+
+    with open(doxygen_filename, 'w') as dfile:
+        for index, line in enumerate(contents):
+            if line[0] == '#':
+                continue
+            if len(line) <= 1:
+                continue
+
+            parts = line.split('=')
+            first_part = parts[0].strip()
+            written = False
+
+            for key, value in options:
+                if first_part == key:
+                    dfile.write(key + " = " + value + "\n")
+                    written = True
+                    break
+
+            if not written:
+                dfile.write(line)
 
 
 def get_next_key():
@@ -50,22 +111,26 @@ def create_uuid(seed):
     return new_uuid
 
 
-def create_port(component_name, port_name, direction, event, type):
+def create_port(component_name, internal_name, external_name, direction, event, type, description):
     seed = {
         "component_name": component_name,
-        "port_name": port_name,
+        "internal_name": internal_name,
+        "external_name": external_name,
         "direction": direction,
         "event": event,
-        "type": type
+        "type": type,
+        "description": description
     }
 
     port_uuid = create_uuid(str(seed))
 
     return {
         "Id": str(port_uuid),
-        "IdText": port_name,
+        "IdText": internal_name,
+        "text": external_name,
         "event": event,
-        "type": type
+        "type": type,
+        "description": description
     }
 
 
@@ -108,24 +173,24 @@ def create_field(internal_name, name, value, description, access, type):
     }
 
 
-def parse_param_key(key):
+def parse_key(key):
     # parse the key as csv (delimited by '/')
     parts = []
     reader = csv.reader([key], delimiter='/', quotechar='"')
     for row in reader:
         parts = row
 
-    # init attributes of the param
-    param = ""
+    # init attributes of the param/port
+    object = ""
     internal_name = ""
 
     # assign attributes (if present)
     if len(parts) > 0:
-        param = parts[0]
+        object = parts[0]
     if len(parts) > 1:
         internal_name = parts[1]
 
-    return (param, internal_name)
+    return (object, internal_name)
 
 
 def parse_param_value(value):
@@ -156,6 +221,28 @@ def parse_param_value(value):
     return (external_name, default_value, type, access)
 
 
+def parse_port_value(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter='/', quotechar='"')
+    for row in reader:
+        parts = row
+
+    # init attributes of the param
+    name = ""
+    type = "String"
+
+    # assign attributes (if present)
+    if len(parts) > 0:
+        name = parts[0]
+    if len(parts) > 1:
+        type = parts[1]
+    else:
+        logging.warning("port (" + name + ") has no 'type' descriptor, using default (String) : " + value + " " + str(len(parts)) + " " + str(parts))
+
+    return (name, type)
+
+
 def parse_description(value):
     # parse the value as csv (delimited by '/')
     parts = []
@@ -177,8 +264,8 @@ def create_palette_node_from_params(params):
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
-    gitrepo = ""
-    version = ""
+    gitrepo = os.environ.get("GIT_REPO")
+    version = os.environ.get("PROJECT_VERSION")
 
     # process the params
     for param in params:
@@ -192,16 +279,12 @@ def create_palette_node_from_params(params):
             text = value
         elif key == "description":
             description = value
-        elif key == "gitrepo":
-            gitrepo = value
-        elif key == "version":
-            version = value
         elif key.startswith("param/"):
             # parse the param key into name, type etc
-            (param, internal_name) = parse_param_key(key)
+            (param, internal_name) = parse_key(key)
             (name, default_value, type, access) = parse_param_value(value)
 
-            # parse desscription
+            # parse description
             if "\n" in value:
                 logging.info("param description (" + value + ") contains a newline character, removing.")
                 value = value.replace("\n", " ")
@@ -214,22 +297,20 @@ def create_palette_node_from_params(params):
             # add a field
             fields.append(create_field(internal_name, name, default_value, param_description, access, type))
         elif key.startswith("port/"):
-            # parse the port into data
-            if key.count("/") == 1:
-                (port, name) = key.split("/")
-                logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
-                type = "Unknown"
-            elif key.count("/") == 2:
-                (port, name, type) = key.split("/")
-            else:
-                logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
-                continue
+            (port, internal_name) = parse_key(key)
+            (name, type) = parse_port_value(value)
+
+            # parse description
+            if "\n" in value:
+                logging.info("port description (" + value + ") contains a newline character, removing.")
+                value = value.replace("\n", " ")
+            port_description = parse_description(value)
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(text, name, direction, False, type))
+                inputPorts.append(create_port(text, internal_name, name, direction, False, type, port_description))
             elif direction == "out":
-                outputPorts.append(create_port(text, name, direction, False, type))
+                outputPorts.append(create_port(text, internal_name, name, direction, False, type, port_description))
             else:
                 logging.warning("Unknown port direction: " + direction)
 
@@ -404,16 +485,51 @@ def process_compounddef(compounddef):
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
-    (inputfile, outputfile) = get_filenames_from_command_line(sys.argv[1:])
+    (inputdir, outputfile) = get_filenames_from_command_line(sys.argv[1:])
 
-    gitrepo = ""
-    version = ""
+    # create a temp directory for the output of doxygen
+    output_directory = tempfile.TemporaryDirectory()
+
+    # read environment variables
+    if not check_environment_variables():
+        sys.exit(1)
+
+    # add extra doxygen setting for input and output locations
+    DOXYGEN_SETTINGS.append(("PROJECT_NAME", os.environ.get("PROJECT_NAME")))
+    DOXYGEN_SETTINGS.append(("INPUT", inputdir))
+    DOXYGEN_SETTINGS.append(("OUTPUT_DIRECTORY", output_directory.name))
+
+    # create a temp file to contain the Doxyfile
+    doxygen_file = tempfile.NamedTemporaryFile()
+    doxygen_filename = doxygen_file.name
+    doxygen_file.close()
+
+    # create a default Doxyfile
+    subprocess.call(['doxygen', '-g', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    logging.info("Wrote doxygen configuration file (Doxyfile) to " + doxygen_filename)
+
+    # modify options in the Doxyfile
+    modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
+
+    # run doxygen
+    #os.system("doxygen " + doxygen_filename)
+    subprocess.call(['doxygen', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # run xsltproc
+    output_xml_filename = output_directory.name + "/xml/doxygen.xml"
+
+    with open(output_xml_filename, 'w') as outfile:
+        subprocess.call(['xsltproc', output_directory.name + "/xml/combine.xslt", output_directory.name + "/xml/index.xml"], stdout=outfile, stderr=subprocess.DEVNULL)
+
+    # get environment variables
+    gitrepo = os.environ.get("GIT_REPO")
+    version = os.environ.get("PROJECT_VERSION")
 
     # init nodes array
     nodes = []
 
     # load the input xml file
-    tree = ET.parse(inputfile)
+    tree = ET.parse(output_xml_filename)
     xml_root = tree.getroot()
 
     for compounddef in xml_root:
@@ -440,3 +556,6 @@ if __name__ == "__main__":
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
+
+    # cleanup the output directory
+    output_directory.cleanup()
