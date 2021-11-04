@@ -32,7 +32,7 @@ import os
 
 
 try:
-    from crc32c import crc32c as crc32  # @UnusedImport
+    from crc32c import crc32c  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
@@ -75,7 +75,7 @@ class TestSocketListener(unittest.TestCase):
         bContents = droputils.allDropContents(b)
         dContents = int(droputils.allDropContents(d))
         self.assertEqual(data, bContents)
-        self.assertEqual(crc32(data, 0), dContents)
+        self.assertEqual(crc32c(data, 0), dContents)
 
     def test_socket_listener(self):
         self._test_socket_listener()

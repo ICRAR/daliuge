@@ -19,11 +19,11 @@ Types of Data Components
 
 |daliuge| out of the box includes the following five main Data Components:
 
-* Posix file data components
-* Memory data components
-* S3 data components
-* NGAS data components
-* Apache Plasma data components
+#. Posix file data components
+#. Memory data components
+#. S3 data components
+#. NGAS data components
+#. Apache Plasma data components
 
 This range covers most of the use cases in workflows we have encountered sofar, and thus in most cases it is likely not required to develop additional ones. 
 

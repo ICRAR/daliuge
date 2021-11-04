@@ -172,41 +172,11 @@ Support for heterogenous resources using the `list scheduling <https://en.wikipe
 algorithm will be implemented in a later release. With these algorithms, |daliuge|
 currently attempts to address the following optimisation goals:
 
-* **Minimise the total cost of data movement** but subject to a given **degree of load balancing**.
-  In this problem, a number `N` of available resource units (e.g. a number of compute nodes)
-  are given, the translation process aims to produce `M` DataIslands (`M <= N`)
-  from the *physical graph template* such that (1) the total volume of data traveling
-  between two distinct DataIslands is minimised, and (2) the workload variations
-  measured in aggregated **execution time** (Drop property) between a pair of DataIslands is less than a given
-  percentage `p` %. To solve this problem, graph partitioning and resource mapping steps are merged into one.
+* **Minimise the total cost of data movement** but subject to a given **degree of load balancing**. In this problem, a number `N` of available resource units (e.g. a number of compute nodes) are given, the translation process aims to produce `M` DataIslands (`M <= N`) from the *physical graph template* such that (1) the total volume of data traveling between two distinct DataIslands is minimised, and (2) the workload variations measured in aggregated **execution time** (Drop property) between a pair of DataIslands is less than a given percentage `p` %. To solve this problem, graph partitioning and resource mapping steps are merged into one.
 
-* **Minimise the total completion time** but subject to a given **degree of parallelism** (DoP)
-  (e.g. number of cores per node) that each DataIsland is allowed to take advantage of.
-  In the first version of this problem, no information regarding resources is given.
-  |daliuge| simply strives to come up with the optimal number of DataIslands such that
-  (1) the total completion time of the pipeline (which depends on both execution time
-  and the cost of data movement on the graph critical path) is minimised, and (2)
-  the maximum degree of parallelism within each DataIsland is
-  never greater than the given *DoP*. In the second version of this problem,
-  a number of resources of identical performance capability are also given in addition
-  to the *DoP*. This practical problem is a natural extension of version 1,
-  and is solved in |daliuge| by using the
-  `"two-phase" method <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=580873>`_.
+* **Minimise the total completion time** but subject to a given **degree of parallelism** (DoP) (e.g. number of cores per node) that each DataIsland is allowed to take advantage of. In the first version of this problem, no information regarding resources is given. |daliuge| simply strives to come up with the optimal number of DataIslands such that (1) the total completion time of the pipeline (which depends on both execution time and the cost of data movement on the graph critical path) is minimised, and (2) the maximum degree of parallelism within each DataIsland is never greater than the given *DoP*. In the second version of this problem, a number of resources of identical performance capability are also given in addition to the *DoP*. This practical problem is a natural extension of version 1, and is solved in |daliuge| by using the `"two-phase" method <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=580873>`_.
 
-* **Minimise the number of DataIslands** but subject to (1) a given **completion time deadline**,
-  and (2) a given *DoP* (e.g. number of cores per node)
-  that each DataIsland is allowed to take advantage of. In this problem, both completion
-  time and resource footprint become the minimisation goals. The motivation of this problem
-  is clear. In an scenario where two different schedules can complete the processing pipeline
-  within, say, 5 minutes, the schedule that consumes less resources is preferred. Since a DataIsland
-  is mapped onto resources, and its capacity is already constrained by a given DoP,
-  the number of DataIslands is proportional to the amount of resources needed.
-  Consequently, schedules that require less number of DataIslands are superior.
-  Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design,
-  |daliuge| uses a "look-ahead" strategy at each optimisation step to adaptively
-  choose from two conflicting objective functions (deadline or resource) for
-  local optimisation, which is more likely to lead to the global optimum than
-  greedy strategies.
+* **Minimise the number of DataIslands** but subject to (1) a given **completion time deadline**, and (2) a given *DoP* (e.g. number of cores per node) that each DataIsland is allowed to take advantage of. In this problem, both completion time and resource footprint become the minimisation goals. The motivation of this problem is clear. In an scenario where two different schedules can complete the processing pipelinewithin, say, 5 minutes, the schedule that consumes less resources is preferred. Since a DataIsland is mapped onto resources, and its capacity is already constrained by a given DoP, the number of DataIslands is proportional to the amount of resources needed. Consequently, schedules that require less number of DataIslands are superior. Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design, |daliuge| uses a "look-ahead" strategy at each optimisation step to adaptively choose from two conflicting objective functions (deadline or resource) for local optimisation, which is more likely to lead to the global optimum than greedy strategies.
 
 Physical Graph
 ^^^^^^^^^^^^^^
@@ -219,13 +189,9 @@ Drops representing either data or applications, which represent the two base typ
 an edge must have different base types, i.e. Drops along a |Pg| *Instance* will have alternating base types. This establishes a set of
 reciprocal relationships between Drops:
 
-* A data Drop is the *input* of an application Drop; on the other hand
-  the application is a *consumer* of the data Drop.
-* Likewise, a data Drop can be the *output* of an application Drop, in
-  which case the application is the *producer* of the data Drop.
-* Similarly, a data Drop can be a *streaming input* of an application
-  Drop (see :ref:`drop.relationships`) in which case the application is seen as
-  a *streaming consumer* from the data Drop's point of view.
+#. A data Drop is the *input* of an application Drop; on the other hand the application is a *consumer* of the data Drop.
+#. Likewise, a data Drop can be the *output* of an application Drop, in which case the application is the *producer* of the data Drop.
+#. Similarly, a data Drop can be a *streaming input* of an application Drop (see :ref:`drop.relationships`) in which case the application is seen as a *streaming consumer* from the data Drop's point of view.
 
 |Pgs| are the final (and only) graph products that will be submitted
 to the :ref:`drop.managers`. Once Drop managers accept a |pg|,
@@ -244,15 +210,8 @@ Execution
 One of the unique features of |daliuge| is the complete decentralisation of the execution. A |PgI| has the ability to advance its own
 execution. This is internally implemented via the Drop event mechanism as follows:
 
-* Once a data Drop moves to the COMPLETED state it will fire an event
-  to all its consumers. Consumers (applications) will then assert if they can start their
-  execution depending on their nature and configuration. A specific type of
-  application is the ``BarrierAppDROP``, which waits until all its inputs are in
-  the **COMPLETED** state to start its execution.
-* On the other hand, data Drops receive an event every time their producers
-  finish their execution. Once all the producers of a Drop have finished, the
-  Drop moves itself to the **COMPLETED** state, notifying its consumers, and so
-  on.
+#. Once a data Drop moves to the COMPLETED state it will fire an event to all its consumers. Consumers (applications) will then assert if they can start their execution depending on their nature and configuration. A specific type of application is the ``BarrierAppDROP``, which waits until all its inputs are in the **COMPLETED** state to start its execution.
+#. On the other hand, data Drops receive an event every time their producers finish their execution. Once all the producers of a Drop have finished, the Drop moves itself to the **COMPLETED** state, notifying its consumers, and so on.
 
 Failures on applications and data Drops are transmitted likewise automatically
 via events. Data Drops move to **ERROR** if any of its producers move to
