@@ -23,12 +23,14 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
 
  intro
  installing
+ running
  basics
  architecture/index
  deployment
  graph_development
  development/dev_index
  usage/index
+ cli
  api-index
 
 Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com

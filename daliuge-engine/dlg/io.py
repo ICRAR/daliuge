@@ -105,6 +105,13 @@ class DataIO(object):
         self._close()
         self._mode = None
 
+    def size(self, **kwargs):
+        """
+        Returns the current total size of the underlying stored object. If the
+        storage class does not support this it is supposed to return -1.
+        """
+        return _size(self)
+
     def isOpened(self):
         return self._mode is not None
 
@@ -138,6 +145,11 @@ class DataIO(object):
         pass
 
 
+    @abstractmethod
+    def _size(self, **kwargs):
+        pass
+
+
 class NullIO(DataIO):
     """
     A DataIO that stores no data
@@ -154,6 +166,12 @@ class NullIO(DataIO):
 
     def _close(self, **kwargs):
         pass
+
+    def _size(self, **kwargs):
+        """
+        Size is always 0 for this storage class
+        """
+        return 0
 
     def exists(self):
         return True
@@ -177,6 +195,9 @@ class ErrorIO(DataIO):
         raise NotImplementedError()
 
     def _close(self, **kwargs):
+        raise NotImplementedError()
+
+    def _size(self, **kwargs):
         raise NotImplementedError()
 
     def exists(self):
@@ -214,6 +235,12 @@ class MemoryIO(DataIO):
             self._desc.close()
         # If we're writing we don't close the descriptor because it's our
         # self._buf, which won't be readable afterwards
+
+    def _size(self, **kwargs):
+        """
+        Return actual size of user data rather than the whole Python object
+        """
+        return self._buf.getbuffer().nbytes
 
     def exists(self):
         return not self._buf.closed
@@ -290,7 +317,11 @@ class FileIO(DataIO):
     def _open(self, **kwargs):
         flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
         flag += 'b'
-        return open(self._fnm, flag)
+        try:
+            return open(self._fnm, flag)
+        except FileNotFoundError:
+            # let the higher layer deal with this.
+            pass
 
     def _read(self, count=4096, **kwargs):
         return self._desc.read(count)
@@ -301,6 +332,9 @@ class FileIO(DataIO):
 
     def _close(self, **kwargs):
         self._desc.close()
+
+    def _size(self, **kwargs):
+        return os.path.getsize(self._fnm)
 
     def getFileName(self):
         return self._fnm
@@ -384,6 +418,16 @@ class NgasIO(DataIO):
         status = self._getClient().sendCmd('STATUS', pars=[['fileId', self._fileId]])
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
+    def fileStatus(self):
+        import ngamsLib  # @UnresolvedImport
+        #status = self._getClient().sendCmd('STATUS', pars=[['fileId', self._fileId]])
+        status = self._getClient.fileStatus('STATUS?file_id=%s' % self._fileId)
+        if status.getStatus() != ngamsLib.ngamsCore.NGAMS_SUCCESS:
+            raise FileNotFoundError
+        fs = dict(status.getDiskStatusList()[0].getFileObjList()[0].genXml().attributes.items())
+        return fs
+
+
     def delete(self):
         pass  # We never delete stuff from NGAS
 
@@ -414,8 +458,8 @@ class NgasLiteIO(DataIO):
 
     def _getClient(self):
         return ngaslite.open(
-            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout, \
-            mode=self._mode, mimeType=self._mimeType)
+            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout,\
+                mode=self._mode, mimeType=self._mimeType, length=self._length)
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -435,8 +479,11 @@ class NgasLiteIO(DataIO):
                 # If length wasn't known up-front we first send Content-Length and then the buffer here.
                 conn.putheader('Content-Length', len(self._buf))
                 conn.endheaders()
+                logger.debug("Sending data for file %s to NGAS" % (self._fileId))
                 conn.send(self._buf)
                 self._buf = None
+            else:
+                logger.debug("Length is known, assuming data has been sent (%s, %s)" % (self.fileId, self._length))
             ngaslite.finishArchive(conn, self._fileId)
             conn.close()
         else:
@@ -449,13 +496,17 @@ class NgasLiteIO(DataIO):
     def _write(self, data, **kwargs):
         if self._is_length_unknown():
             self._buf += data
-            return len(self._buf)
         else:
             self._desc.send(data)
-            return len(data)
+        logger.debug("Wrote %s bytes" % len(data))
+        return len(data)
 
     def exists(self):
         raise NotImplementedError("This method is not supported by this class")
+
+    def fileStatus(self):
+        logger.debug("Getting status of file %s" % self._fileId)
+        return ngaslite.fileStatus(self._ngasSrv, self._ngasPort, self._fileId)
 
     def delete(self):
         pass  # We never delete stuff from NGAS
