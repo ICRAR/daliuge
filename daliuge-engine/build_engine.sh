@@ -11,7 +11,7 @@ case "$1" in
         cp ../LICENSE dlg/manager/web/.
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished!"
-        exit 1 ;;
+        exit 0 ;;
     "dev")
         C_TAG="master"
         [[ ! -z $2 ]] && C_TAG=$2
@@ -23,14 +23,14 @@ case "$1" in
         cp ../LICENSE dlg/manager/web/.
         docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
-        exit 1;;
+        exit 0;;
     "casa")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Building daliuge-engine development version"
         docker build --build-arg VCS_TAG=${VCS_TAG}-casa --no-cache -t icrar/daliuge-engine:${VCS_TAG}-casa -f docker/Dockerfile.casa .
         echo "Build finished!"
-        exit 1;;
+        exit 0;;
     *)
         echo "Usage: build_engine.sh <dep|dev>"
-        exit 1;;
+        exit 0;;
 esac

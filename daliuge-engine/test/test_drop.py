@@ -41,7 +41,7 @@ from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 
 try:
-    from crc32c import crc32c as crc32
+    from crc32c import crc32c
 except:
     from binascii import crc32
 
@@ -171,7 +171,7 @@ class TestDROP(unittest.TestCase):
         with DROPWaiterCtx(self, c):
             for _ in range(self._test_num_blocks):
                 a.write(self._test_block)
-                test_crc = crc32(self._test_block, test_crc)
+                test_crc = crc32c(self._test_block, test_crc)
 
         # Read the checksum from c
         cChecksum = int(droputils.allDropContents(c))
@@ -196,7 +196,7 @@ class TestDROP(unittest.TestCase):
         with DROPWaiterCtx(self, c):
             for _ in range(self._test_num_blocks):
                 a.write(self._test_block)
-                test_crc = crc32(self._test_block, test_crc)
+                test_crc = crc32c(self._test_block, test_crc)
             a.setCompleted()
 
         # Read the checksum from c
