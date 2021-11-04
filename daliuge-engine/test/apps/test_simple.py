@@ -26,6 +26,8 @@ import sys
 import time
 import unittest
 from multiprocessing.pool import ThreadPool
+from numpy import random, mean, array, concatenate
+
 
 from dlg import droputils
 from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp, \
@@ -143,19 +145,48 @@ class TestSimpleApps(unittest.TestCase):
         h.execute()
         self.assertEqual(h.greeting.encode('utf8'), droputils.allDropContents(b))
 
+    def test_parallelHelloWorld(self):
+        m0 = InMemoryDROP('m0','m0')
+        s = GenericScatterApp('s', 's')
+        greets = ['World', 'Solar system', 'Galaxy', 'Universe']
+        m0.write(pickle.dumps(greets))
+        s.addInput(m0)
+        m = []
+        h = []
+        f = []
+        for i in range(1, len(greets)+1, 1):
+            m.append(InMemoryDROP('m%d' % i, 'm%d' % i))
+            h.append(HelloWorldApp('h%d' % i, 'h%d' % i))
+            f.append(FileDROP('f%d' % i, 'f%d' % i))
+            s.addOutput(m[-1])
+            h[-1].addInput(m[-1])
+            h[-1].addOutput(f[-1])
+        ad = [m0, s]
+        ad.extend(m)
+        ad.extend(h)
+        ad.extend(f)
+        self._test_graph_runs(ad, m0, f)
+        for i in range(len(f)):
+            self.assertEqual(('Hello %s' % greets[i]).encode('utf8'), droputils.allDropContents(f[i]))
+
     def test_ngasio(self):
         nd_in = NgasDROP('HelloWorld.txt', 'HelloWorld.txt')
         nd_in.ngasSrv = 'ngas.ddns.net'
         b = CopyApp('b', 'b')
-        nd_out = NgasDROP('HelloWorldOut.txt', 'HelloWorldOut.txt')
+        did = 'HelloWorld-%f' % time.time()
+        nd_out = NgasDROP(did, did, len=11)
         nd_out.ngasSrv = 'ngas.ddns.net'
+        nd_out.len = nd_in.size
+        d = CopyApp('d', 'd')
         i = InMemoryDROP('i', 'i')
-        b.addInput(nd_in)
-        b.addOutput(nd_out)
+        # b.addInput(nd_in)
+        # b.addOutput(nd_out)
+        nd_in.addConsumer(b)
         nd_out.addProducer(b)
-        i.addProducer(b)
-        b.addOutput(i)
-        self._test_graph_runs((nd_in, b, i, nd_out), nd_in, nd_out, timeout=4)
+        d.addInput(nd_out)
+        i.addProducer(d)
+        # b.addOutput(i)
+        self._test_graph_runs((nd_in,b,nd_out,i,d),nd_in, i, timeout=10)
         self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
     def test_genericScatter(self):

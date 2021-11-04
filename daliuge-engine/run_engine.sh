@@ -20,8 +20,8 @@ case "$1" in
             DOCKER_OPTS=${DOCKER_OPTS}"-v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT} "
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
-            docker run --net=host -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
-            exit 1
+            docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+            exit 0
         fi;;
     "dev")
         DLG_ROOT="/tmp/.dlg"
@@ -37,7 +37,7 @@ case "$1" in
 #        docker run -td ${DOCKER_OPTS} icrar/dlg-engine:casa
         sleep 3
         ./start_local_managers.sh
-        exit 1;;
+        exit 0;;
     "casa")
         DLG_ROOT="/tmp/.dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
@@ -52,8 +52,8 @@ case "$1" in
         docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
         sleep 3
         ./start_local_managers.sh
-        exit 1;;
+        exit 0;;
     *)
         echo "Usage run_engine.sh <dep|dev>"
-        exit 1;;
+        exit 0;;
 esac
