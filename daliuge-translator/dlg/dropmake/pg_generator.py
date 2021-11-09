@@ -714,8 +714,9 @@ class LGNode:
                 raise GraphException("Missing image for Construct '%s'" % self.text)
 
             command = str(self.jd.get("command"))
-            if command == "":
-                raise GraphException("Missing command for Construct '%s'" % self.text)
+            # There ARE containers which don't need/want a command
+            # if command == "":
+            #     raise GraphException("Missing command for Construct '%s'" % self.text)
 
             kwargs["tw"] = int(self.jd.get("execution_time", "5"))
             kwargs["image"] = image
