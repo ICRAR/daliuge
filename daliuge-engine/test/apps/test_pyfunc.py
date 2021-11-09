@@ -248,7 +248,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         =======    =============
         """
         g1 = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY}]
-        g2 = [{"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'},
+        g2 = [{"oid":"B", "type":"app", "app":"dlg.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'},
               {"oid":"C", "type":"plain", "storage": Categories.MEMORY, "producers":["B"]}]
         rels = [DROPRel('A', DROPLinkType.INPUT, 'B')]
         a_data = os.urandom(32)
@@ -266,7 +266,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         =============    =======
         """
         g1 = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY, "consumers": ['B']},
-              {"oid":"B", "type":"app", "app":"dfms.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'}]
+              {"oid":"B", "type":"app", "app":"dlg.apps.pyfunc.PyFuncApp", "func_name": __name__ + '.func1'}]
         g2 = [{"oid":"C", "type":"plain", "storage": Categories.MEMORY}]
         rels = [DROPRel('B', DROPLinkType.PRODUCER, 'C')]
         a_data = os.urandom(32)
