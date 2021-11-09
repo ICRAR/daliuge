@@ -199,8 +199,10 @@ class DockerApp(BarrierAppDROP):
 
         self._command = self._getArg(kwargs, 'command', None)
         if not self._command:
-            raise InvalidDropException(
-                self, "No command specified, cannot create DockerApp")
+            logger.warning(
+                "No command specified. Assume that a default command is executed in the container")
+            # raise InvalidDropException(
+            #     self, "No command specified, cannot create DockerApp")
 
         # The user used to run the process in the docker container
         # By default docker containers run as root, but we don't want to run
@@ -308,8 +310,11 @@ class DockerApp(BarrierAppDROP):
         dataURLInputs  = {uid: i for uid,i in iitems if not droputils.has_path(i)}
         dataURLOutputs = {uid: o for uid,o in oitems if not droputils.has_path(o)}
 
-        cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
-        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+        if self._command:
+            cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
+            cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+        else:
+            cmd = ''
 
         # We bind the inputs and outputs inside the docker under the DLG_ROOT
         # directory, maintaining the rest of their original paths.
@@ -317,8 +322,11 @@ class DockerApp(BarrierAppDROP):
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
         binds  = [                i.path  + ":" +                  dockerInputs[uid].path  for uid,i in fsInputs.items()]
         binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path) for uid,o in fsOutputs.items()]
-        binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
+        if len(self._additionalBindings.items()) > 0: # else we end up with a ':' in the mounts list
+            binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
         binds = list(set(binds))   # make this a unique list else docker complains
+        if binds == [':']:
+            binds = []
         logger.debug("Volume bindings: %r", binds)
 
         portMappings = {}
@@ -364,9 +372,11 @@ class DockerApp(BarrierAppDROP):
             cmd = createUserAndGo
 
         # Wrap everything inside bash
-        cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
-
-        logger.debug("Command after user creation and wrapping is: %s", cmd)
+        if len(cmd) > 0:
+            cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
+            logger.debug("Command after user creation and wrapping is: %s", cmd)
+        else:
+            logger.debug("No command specified, executing container without!")
 
         c = DockerApp._get_client()
 
@@ -380,7 +390,8 @@ class DockerApp(BarrierAppDROP):
                 environment=env,
                 working_dir=self.workdir,
                 init=True,
-                auto_remove=self._removeContainer
+                # auto_remove=self._removeContainer,
+                detach = True
         )
         self._containerId = cId = self.container.id
         logger.info("Created container %s for %r", cId, self)
@@ -391,16 +402,16 @@ class DockerApp(BarrierAppDROP):
         self.container.start()
         logger.info("Started container %s", cId)
 
+        # Capture output
+        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
+        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
+
         # Figure out the container's IP and save it
         # Setting self.containerIp will trigger an event being sent to the
         # registered listeners
         inspection = c.api.inspect_container(cId)
         logger.debug("Docker inspection: %r", inspection)
         self.containerIp = inspection['NetworkSettings']['IPAddress']
-
-        # Capture output
-        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
-        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
 
         # Wait until it finishes
         # In docker-py < 3 the .wait() method returns the exit code directly
@@ -426,6 +437,8 @@ class DockerApp(BarrierAppDROP):
                 logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
                 raise Exception(msg)
 
+        if self._removeContainer:
+            self.container.remove()
         c.api.close()
 
     @overrides
