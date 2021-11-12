@@ -124,9 +124,11 @@ install_requires = [
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
+    "numpy==1.20.3"
     "overrides",
     "paramiko",
     "psutil",
+    "pyarrow",
     "python-daemon",
     "pyzmq",
     "scp",
@@ -134,8 +136,6 @@ install_requires = [
     "zeroconf >= 0.19.1",
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6",
-    "pyarrow",
-    "numpy==1.20.3"
 ]
 # Keep alpha-sorted PLEASE!
 
