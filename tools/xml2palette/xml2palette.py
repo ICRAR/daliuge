@@ -144,32 +144,34 @@ def find_field_by_name(fields, name):
 def add_required_fields_for_category(fields, category):
     if category == "DynlibApp":
         if find_field_by_name(fields, "execution_time") is None:
-            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float"))
+            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float", False))
         if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
+            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer", False))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean", False))
         if find_field_by_name(fields, "libpath") is None:
-            fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String"))
+            fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String", False))
     elif category == "PythonApp":
         if find_field_by_name(fields, "execution_time") is None:
-            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float"))
+            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float", False))
         if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
+            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer", False))
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
+            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean", False))
         if find_field_by_name(fields, "appclass") is None:
-            fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String"))
+            fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String", False))
 
 
-def create_field(internal_name, name, value, description, access, type):
+def create_field(internal_name, name, value, description, access, type, precious):
     return {
         "text": name,
         "name": internal_name,
         "value": value,
+        "default": value,
         "description": description,
         "readonly": access == "readonly",
-        "type": type
+        "type": type,
+        "precious": precious
     }
 
 
@@ -205,6 +207,7 @@ def parse_param_value(value):
     default_value = ""
     type = "String"
     access = "readwrite"
+    precious = False
 
     # assign attributes (if present)
     if len(parts) > 0:
@@ -217,8 +220,12 @@ def parse_param_value(value):
         access = parts[3]
     else:
         logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+    if len(parts) > 4:
+        precious = parts[4].lower() == "true"
+    else:
+        logging.warning("param (" + external_name + ") has no 'precious' descriptor, using default (False) : " + value)
 
-    return (external_name, default_value, type, access)
+    return (external_name, default_value, type, access, precious)
 
 
 def parse_port_value(value):
@@ -282,7 +289,7 @@ def create_palette_node_from_params(params):
         elif key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
-            (name, default_value, type, access) = parse_param_value(value)
+            (name, default_value, type, access, precious) = parse_param_value(value)
 
             # parse description
             if "\n" in value:
@@ -295,7 +302,7 @@ def create_palette_node_from_params(params):
                 logging.warning("param '" + name + "' has unknown 'access' descriptor: " + access)
 
             # add a field
-            fields.append(create_field(internal_name, name, default_value, param_description, access, type))
+            fields.append(create_field(internal_name, name, default_value, param_description, access, type, precious))
         elif key.startswith("port/"):
             (port, internal_name) = parse_key(key)
             (name, type) = parse_port_value(value)
