@@ -124,7 +124,7 @@ install_requires = [
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
-    "numpy==1.20.3"
+    "numpy==1.20.3",
     "overrides",
     "paramiko",
     "psutil",
