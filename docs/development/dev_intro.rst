@@ -20,7 +20,7 @@ The following chapters and sections will use some terms in a specific meaning. T
 #. Node: *Graph Node* or *Palette Node* refers to a JSON representation of a *Component* in a |daliuge| graph or palette.
 #. Drop: *Drop* is a |daliuge| specific term used to describe instances of data, application or service components at execution time. In general developers don't have to dive into the Drop level.
 
-In practice the component interface wrapper code is written in Python. |daliuge| provides generic wrappers and base classes to make the development of components more straight forward and hide most of the |daliuge| specifics. In some cases the generic wrappers can be used directly to develop functioning Graph and Palette Nodes using EAGLE, without writing any code. Examples are bash and Python function nodes (:doc:`app_development/bash_components` and :doc:`app_development/python_function_components`).
+In practice the component interface wrapper code is written in Python. |daliuge| provides generic wrappers and base classes to make the development of components more straight forward and hide most of the |daliuge| specifics. In some cases the generic wrappers can be used directly to develop functioning Graph and Palette Nodes using EAGLE, without writing any code. Examples are bash nodes (:doc:`app_development/bash_components`).
 
 Seperation of concerns
 ~~~~~~~~~~~~~~~~~~~~~~
