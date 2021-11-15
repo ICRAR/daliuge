@@ -3,8 +3,8 @@
 
 .. _app_index:
 
-|daliuge| Application Component Developers Guide
-################################################
+|daliuge| *Application* Component Developers Guide
+##################################################
 
 This chapter describes what developers need to do
 to write a new application component that can be used
