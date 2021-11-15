@@ -1,11 +1,13 @@
 .. _dev_intro:
 
+Introduction to Component development
+=====================================
+
 What are *Components*?
-======================
+----------------------
 
 Nomenclature
-------------
-
+~~~~~~~~~~~~
 The following chapters and sections will use some terms in a specific meaning. The definitions are given below.
 
 #. Component: *Component* refers to a |daliuge| compliant implementation of some functionality used in the execution of a workflow. A component consists of the |daliuge| interface wrapper and the code implementing the desired functionality. In some cases the actual functional code is not integrated with the interface, but just executed by the interface. There are three main types of components:
@@ -21,7 +23,7 @@ The following chapters and sections will use some terms in a specific meaning. T
 In practice the component interface wrapper code is written in Python. |daliuge| provides generic wrappers and base classes to make the development of components more straight forward and hide most of the |daliuge| specifics. In some cases the generic wrappers can be used directly to develop functioning Graph and Palette Nodes using EAGLE, without writing any code. Examples are bash and Python function nodes (:doc:`app_development/bash_components` and :doc:`app_development/python_function_components`).
 
 Seperation of concerns
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 The |daliuge| system has been designed with the separation of concerns in mind. People or groups of people can work independently on the development of 
 
 #. the logic of a workflow (graph), 
@@ -34,7 +36,7 @@ In fact it is possible to create logical workflows and run them, without having 
 The Component code has been designed to be as non-intrusive as possible, while still allowing for highly optimized integration of code, down to the memory level. With a bit of care developers can fairly easily also run and test each of these layers independently. 
 
 Integration of Layers
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 The |daliuge| system consists of three main parts:
 
 #. EAGLE for graph development
@@ -47,7 +49,7 @@ In addition to constructing the nodes manually in EAGLE it is also possible to g
 
 Component development
 ---------------------
-Simple bash and python application components as well as data components can be developed completely inside EAGLE and, since EAGLE interfaces with gitHub and gitLab, it even provides some kind of development workflow. However, for more complex and serious component development it is strongle recommended to use the `component development template <https://github.com/ICRAR/daliuge-component-template>`_ we are providing. The template covers application and data components and provides everything to get you started, including project setup, testing, format compliance, build, documentation and release, continuous integration and more. Although it is meant to be used to develop a whole set of components, it is quite useful even for just a single one. We are still actively developing the template itself and thus a few things are still missing:
+Simple bash and python application components as well as data components can be developed completely inside EAGLE and, since EAGLE interfaces with gitHub and gitLab, it even provides some kind of development workflow. However, for more complex and serious component development it is strongly recommended to use the `component development template <https://github.com/ICRAR/daliuge-component-template>`_ we are providing. The template covers application and data components and provides everything to get you started, including project setup, testing, format compliance, build, documentation and release, continuous integration and more. Although it is meant to be used to develop a whole set of components, it is quite useful even for just a single one. We are still actively developing the template itself and thus a few things are still missing:
 
 #. Installation into the |daliuge| runtime is possible, but not the way we would like to have it.
 #. Automatic palette generation is not yet integrated.
