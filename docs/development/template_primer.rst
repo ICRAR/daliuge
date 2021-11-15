@@ -7,7 +7,7 @@ We are providing a GitHUB `component development template <https://github.com/IC
 
 Using the GitHUB template
 -------------------------
-The `template GitHUB page <https://github.com/ICRAR/daliuge-component-template>`_ contains usage information and the GitHUB documentation contains general information about `template usage <https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template>`_ as well. Here we provide some additional information about our template in particular. When generating a |daliuge| component project from the template, this will generate a complete GitHUB project structure including code and documentation templates as well as setup release and make scripts. Once cloned, the first thing you should do is execute ``make virtualenv`` to create a sandboxed environment for you component development. You should then execute ``source .venv/bin/activate`` to enter the virtualenv. 
+The `template GitHUB page <https://github.com/ICRAR/daliuge-component-template>`_ contains usage information and the GitHUB documentation contains general information about `template usage <https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template>`_ as well. Here we provide some additional information about our template in particular. When generating a |daliuge| component project from the template, this will generate a complete GitHUB project structure including code and documentation templates as well as setup release and make scripts. Once cloned, the first thing you should do is execute ``make virtualenv`` to create a sandboxed environment for your component development. You should then execute ``source .venv/bin/activate`` to enter the virtualenv. 
 
 Component project directory structure
 -------------------------------------
@@ -37,3 +37,4 @@ After using the template and cloning the my_components project you will have a d
 #. The ``requirements-test.txt`` file contains a list of all required packages for testing the components. This will be used when executing ``make install``.
 #. The ``requirements.txt`` file contains a list of all required packages for testing the components. This will be used when executing ``pip install .``.
 #. The file ``setup.py`` is used when installing the component package using pip.
+#. 
