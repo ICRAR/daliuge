@@ -31,7 +31,7 @@ All good! Now change to the tests directory and load the file ``test_components.
 .. _graphs.figs.tmpl_test_py:
 .. figure:: ../../images/tmpl_test_py.png
 
-and replace the string ``MyAppDROP`` with ``MyFirstAppDROP`` everywhere. There are three occurances, thus this can be done manually. Save the file and execute the test again.\:
+and replace the string ``MyAppDROP`` with ``MyFirstAppDROP`` everywhere. Save the file and execute the test again.\:
 
 .. _graphs.figs.tmpl_test_py_error:
 .. figure:: ../../images/tmpl_test_py_error.png
@@ -41,12 +41,18 @@ Alright, that looks pretty serious (as expected)! It actually states that it fai
 .. _graphs.figs.tmpl_test_py_error2:
 .. figure:: ../../images/tmpl_test_py_error2.png
 
-Oops, that still fails! This time in the actual `appComponents.py`` file. Let's do the same replace there and run pytest again:
+Oops, that still fails! This time in the actual `appComponents.py`` file. Let's do the same replace in that file and run pytest again:
 
 .. _graphs.figs.tmpl_test_py_fixed:
 .. figure:: ../../images/tmpl_test_py_fixed.png
 
 GREAT! In exactly the same manner you can work along to change the functionality of your component and always keep the tests up-to-date.
 
+Using parameters
+----------------
+TODO!
 
+Adding input and output ports
+-----------------------------
+TODO!
 
