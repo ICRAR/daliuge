@@ -19,6 +19,8 @@ Steps
 
 * Now save your new toy graph (Graph --> Local Storage --> Save Graph).
 
+Please note that the *Hello World* example is also described (with videos) as part of the `EAGLE documentation <https://eagle-dlg.readthedocs.io/en/master/helloWorld.html>`_.
+
 That should give you the idea how to use bash commands as |daliuge| components. Seems not a lot? Well, actually this is allowing you to execute whatever can be executed on the command line where the engine is running as part of a |daliuge| graph. That includes all bash commands, but also every other executable available on the PATH of the engine. Now that is a bit more exciting, but the excitement stops as soon as you think about real world (not Hello World) examples: Really useful commands will require inputs and outputs in the form of command line parameters and files or pipes. This is discussed in the :ref:`advanced_bash` chapter. 
 
 Verification

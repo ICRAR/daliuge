@@ -21,7 +21,7 @@ integration and testing during component development. As mentioned already, for 
 
  bash_components
  python_components
- python_function_components
+ special_components
  dynlib_components
  docker_components
  service_components

@@ -37,4 +37,4 @@ After using the template and cloning the my_components project you will have a d
 #. The ``requirements-test.txt`` file contains a list of all required packages for testing the components. This will be used when executing ``make install``.
 #. The ``requirements.txt`` file contains a list of all required packages for testing the components. This will be used when executing ``pip install .``.
 #. The file ``setup.py`` is used when installing the component package using pip.
-#. 
+
