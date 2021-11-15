@@ -2,7 +2,7 @@
 
 Bash Components
 ===============
-These are probably the easiest components to implement and for simple ones it is possible to do all the 'development' in EAGLE.
+This type of components are probably the easiest to implement and for simple ones it is possible to do all the 'development' in EAGLE.
 
 'Hello World' in Bash through EAGLE
 -----------------------------------
@@ -37,7 +37,7 @@ The output of the ls command looks like::
     -rw-r--r-- 1 root root 6991 Sep 14 16:46 dlg_172.17.0.3_Diagram-2021-09-14-16-41-284_2021-09-14T08-46-52.618798.log
     -rw-r--r-- 1 root root 6991 Sep 14 16:47 dlg_172.17.03_Diagram-2021-09-14-16-41-284_2021-09-14T08-47-28.890072.log
 
-There could be a lot more lines on top, but the important one os the last line, which is the log-file of the session last executed on the engine. Just dump the content to the screen in a terminal::
+There could be a lot more lines on top, but the important one is the last line, which is the log-file of the session last executed on the engine. Just dump the content to the screen in a terminal::
 
     cat dlg_172.17.03_Diagram-2021-09-14-16-41-284_2021-09-14T08-47-28.890072.log
 
