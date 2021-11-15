@@ -44,3 +44,12 @@ The |daliuge| system consists of three main parts:
 All three of them are essentially independent and can be used without the others running. The EAGLE visual graph editor is a web application, which deals with *Nodes*, i.e. with JSON descriptions of *Components*. It also allows users to define these descriptions starting from node templates. Users can group and store sets of defined nodes as *palettes*. The nodes of one or multiple palettes are then used to construct a workflow graph. Graphs and Palettes are stored as JSON files and they are essentially the same, except for the additional arrangement and visual information in a graph file. A graph can be stored as a palette and then used to create other graphs.
 
 In addition to constructing the nodes manually in EAGLE it is also possible to generate the JSON description of the nodes in a palette from the component interface code by means of special in-line doxygen documentation tags. This procedure is described in detail in :doc:`app_development/eagle_integration`. The idea here is that the developers of the component can stay within their normal development environment and just provide some additional in-line code documentation to allow people to use their new component in their workflows. 
+
+Component development
+---------------------
+Simple bash and python application components as well as data components can be developed completely inside EAGLE and, since EAGLE interfaces with gitHub and gitLab, it even provides some kind of development workflow. However, for more complex and serious component development it is strongle recommended to use the `component development template <https://github.com/ICRAR/daliuge-component-template>`_ we are providing. The template covers application and data components and provides everything to get you started, including project setup, testing, format compliance, build, documentation and release, continuous integration and more. Although it is meant to be used to develop a whole set of components, it is quite useful even for just a single one. We are still actively developing the template itself and thus a few things are still missing:
+
+#. Installation into the |daliuge| runtime is possible, but not the way we would like to have it.
+#. Automatic palette generation is not yet integrated.
+
+Please note that most of the Components Developers Guide is based on using the template.
