@@ -257,6 +257,11 @@ def parse_description(value):
     for row in reader:
         parts = row
 
+    # if parts is empty
+    if len(parts) == 0:
+        logging.warning("unable to parse description from: " + value)
+        return "";
+
     return parts[-1]
 
 
