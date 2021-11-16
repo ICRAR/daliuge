@@ -94,13 +94,13 @@ Complete example for C/C++
   * of the parset to load a measurement set.
   * \par EAGLE_START
   * \param category DynlibApp
-  * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
+  * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/False/
   *     \~English the start frequency to read from
   *     \~Chinese 要读取的起始频率
-  * \param[in] param/end_frequency End Frequency/500/Integer/readwrite/
+  * \param[in] param/end_frequency End Frequency/500/Integer/readwrite/False/
   *     \~English the end frequency to read from
   *     \~Chinese 要读取的结束频率
-  * \param[in] param/channels Channels/64/Integer/readonly/
+  * \param[in] param/channels Channels/64/Integer/readonly/False/
   *     \~English how many channels to load
   *     \~Chinese 需要加载的通道数量
   * \param[in] port/config Config/String/
@@ -126,13 +126,13 @@ Complete example for Python
   # of the parset to load a measurement set.
   # @par EAGLE_START
   # @param category PythonApp
-  # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/
+  # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
-  # @param[in] param/end_frequency End Frequency/500/Integer/readwrite/
+  # @param[in] param/end_frequency End Frequency/500/Integer/readwrite/False/
   #     \~English the end frequency to read from
   #     \~Chinese 要读取的结束频率
-  # @param[in] param/channels Channels/64/Integer/readonly/
+  # @param[in] param/channels Channels/64/Integer/readonly/False/
   #     \~English how many channels to load
   #     \~Chinese 需要加载的通道数量
   # @param[in] port/config Config/String/
