@@ -216,11 +216,11 @@ def parse_param_value(value):
         default_value = parts[1]
     if len(parts) > 2:
         type = parts[2]
-    if len(parts) > 3:
+    if len(parts) > 4: # NOTE: correct that we start looking for >4, but access element 3
         access = parts[3]
     else:
         logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
-    if len(parts) > 4:
+    if len(parts) > 5:
         precious = parts[4].lower() == "true"
     else:
         logging.warning("param (" + external_name + ") has no 'precious' descriptor, using default (False) : " + value)
