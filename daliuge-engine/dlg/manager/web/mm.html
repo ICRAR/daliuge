@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>{{dmType}}+mm</title>
+	<title>{{dmType}}</title>
 	<link rel="shortcut icon" type="image/svg" href="static/icons/liuFavIcon.svg"/>
 	<script src="/static/js/d3/d3.v5.min.js"></script>
 	<script src="/static/js/dm.js"></script>
@@ -43,6 +43,23 @@
 		<li id="nodeDisplay"></li>
 	</div>
 	<div id="contentWrapper" class="container">
+		
+		<div id="dims">
+			<h4>Sessions</h4>
+			<table id="dimsTable" class="table table-striped">
+				<thead>
+					<tr>
+						<th>Dim ID</th>
+						<th>node count</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+			<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
+			<button id="refreshSessionListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
+		</div>
 		<div id="sessions">
 			<h4>Sessions</h4>
 			<table id="sessionsTable" class="table table-striped">
@@ -86,12 +103,20 @@
 	var serverUrl = '{{serverUrl}}';
 	var dmPort = {{dmPort}};
 	var nodes = {{!nodes}};
+	var dmHosts = {{!dmHosts}};
 	var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
 	var addSessionBtn = d3.select('#addSessionBtn');
 	var sessionsTbodyEl = d3.select('#sessionsTable tbody');
 
 	var serverIP = serverUrl.split("//").pop().split(":").shift();
 
+
+	// for(const dmHost in dmHosts){
+	// 	console.log(dmHost)
+	// }
+	console.log(dmHosts)
+
+	console.log(dmHosts[0])
 
 	// Show/hide parts of the UI depending on whether we're zooming in or not
 	// into a specific node
@@ -124,6 +149,21 @@
 		fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n; }, function(n){return "http://"+n+":8000"+"?dim_url="+serverUrl});
 	}
 
+	function fillDimTable(selector, data){
+		var rows = d3.select(selector).selectAll('tr').data(data);
+		// rows.enter().append('tr');
+		var newRow = rows.enter().append('tr');
+		var nodeName = String;
+		newRow.style('opacity', 0.0).transition().delay(0).duration(500).style('opacity',1.0)
+		newRow.append('td').classed('id', true)
+			.append('a').attr("href", nodeHref).text(data[0]);
+		newRow.append('td').classed('number', true)
+			.append('a').attr("href", "#").text(String);
+		newRow.append('td').classed('actions', true)
+			.append('a').attr('href', href_function)
+			.append('span').classed('fa fa-share', true);
+	}
+
 	// Listeners for the two session-related buttons
 	if( !selectedNode ) {
 		addSessionBtn.on('click', function(){ promptNewSession(serverUrl, sessionsTbodyEl, refreshSessionListBtn); } );
@@ -136,6 +176,7 @@
 	//Start loading the list of sessions periodically
 	var loadSessionTimer = d3.timer(function(){
 		loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode, 5000);
+		fillTable("dimsTable tbody", dmHosts)
 		loadSessionTimer.stop()
 		return;
 	});

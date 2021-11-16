@@ -188,4 +188,4 @@ class MasterManagerClient(CompositeManagerClient):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def create_island(self, island_host, nodes):
-        self._post_json('/managers/%s/dataisland' % (quote(island_host)), {'nodes': nodes})
+        self._post_json('/managers/%s/island/start' % (quote(island_host)), {'nodes': nodes})
