@@ -489,7 +489,8 @@ class MasterManagerRestServer(CompositeManagerRestServer):
 
         # Query forwarding to daemons
 
-        app.post('/api/managers/<host>/dataisland',     callback=self.createDataIsland)
+        app.post('/api/managers/<host>/island/start',     callback=self.startDataIsland)
+        app.post('/api/managers/<host>/island/stop',     callback=self.stopDataIsland)
         app.post('/api/managers/<host>/node/start',     callback=self.startNM)
         app.post('/api/managers/<host>/node/stop',      callback=self.stopNM)
         # Querying about managers
@@ -500,10 +501,16 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         app.get('/api/managers/<host>/master',     callback=self.getMMInfo)
 
     @daliuge_aware
-    def createDataIsland(self, host):
+    def startDataIsland(self, host):
         with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
-            c._post_json('/managers/dataisland', bottle.request.body.read())
+            c._post_json('/managers/island/start', bottle.request.body.read())
         self.dm.addDmHost(host)
+
+    @daliuge_aware
+    def stopDataIsland(self, host):
+        with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
+            c._post_json('/managers/island/stop', bottle.request.body.read())
+        self.dm.removeDmHost(host)
 
     @daliuge_aware
     def getDIMs(self):
@@ -550,3 +557,19 @@ class MasterManagerRestServer(CompositeManagerRestServer):
             with DataIslandManagerClient(host=node) as dm:
                 nodes += dm.nodes()
         return nodes
+
+    #===========================================================================
+    # non-REST methods
+    #===========================================================================
+    def visualizeDIM(self):
+        tpl = file_as_string('web/mm.html')
+        urlparts = bottle.request.urlparts
+        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
+        serverUrl = urlparts.scheme + '://' + urlparts.netloc
+        return bottle.template(tpl,
+                        dmType=self.dm.__class__.__name__,
+                        dmPort=self.dm.dmPort,
+                        serverUrl=serverUrl,
+                        dmHosts=json.dumps(self.dm.dmHosts),
+                        nodes=json.dumps(self.dm.nodes),
+                        selectedNode=selectedNode)

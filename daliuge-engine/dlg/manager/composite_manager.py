@@ -183,6 +183,9 @@ class CompositeManager(DROPManager):
     def addDmHost(self, host):
         self._dmHosts.append(host)
 
+    def removeDmHost(self, host):
+        self._dmHosts.remove(host)
+
     @property
     def nodes(self):
         return self._nodes[:]
