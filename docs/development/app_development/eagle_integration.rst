@@ -54,17 +54,19 @@ The additional comments describe both the input/output ports for a component, an
 Parameters
 """"""""""
 
-Component Parameters are specified using the "param" command from doxygen. The command is followed by the name of the parameter, followed by a description. We encode multiple pieces of information within the name and description. The name must begin with "param/". This is used to disambiguate from ports, described later. The "param/" prefix will be removed during processing and only the remainder of the name will appear in the component. Names may not contain spaces. The description contains four pieces of information, separated by '/' characters: a user-facing name, the default value, the parameter type, and an access descriptor (readonly/readwrite). Note that the first line of the description must end with a '/' character.
+Component Parameters are specified using the "param" command from doxygen. The command is followed by the name of the parameter, followed by a description. We encode multiple pieces of information within the name and description. The name must begin with "param/". This is used to disambiguate from ports, described later. The "param/" prefix will be removed during processing and only the remainder of the name will appear in the component. Names may not contain spaces. The description contains five pieces of information, separated by '/' characters: a user-facing name, the default value, the parameter type, an access descriptor (readonly/readwrite), and a "precious" flag. Note that the first line of the description must end with a '/' character.
 
 .. code-block:: python
 
-  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<description>
+  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<description>
   #
   # e.g.
   #
-  # @param param/start_frequency Start Frequency/500/Integer/readwrite/
+  # @param param/start_frequency Start Frequency/500/Integer/readwrite/False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
+
+The **precious** flag indicates that the value of the parameter should always be shown to the user, even when the parameter contains its default value. The flag also enforces that the parameter will always end-up on the command line, regardless of whether it contains the default value.
 
 Ports
 """""
