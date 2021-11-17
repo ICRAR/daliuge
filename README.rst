@@ -14,8 +14,8 @@ Data Activated 流 Graph Engine
     :target: https://daliuge.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://www.gnu.org/licenses/lgpl-2.1
-    :target: https://img.shields.io/badge/License-LGPL_v2-blue.svg
+.. image:: https://img.shields.io/badge/License-LGPL_v2-blue.svg
+    :target: https://www.gnu.org/licenses/lgpl-2.1
     :alt: License: LGPL v2.1
 
 |daliuge|
