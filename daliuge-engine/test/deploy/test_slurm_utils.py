@@ -24,12 +24,16 @@ import unittest
 
 from dlg.deploy.pawsey import slurm_utils
 
-class TestSlurmUtils(unittest.TestCase):
 
+class TestSlurmUtils(unittest.TestCase):
     def assert_list_as_string(self, s, expected_list):
         slurm_list = slurm_utils.list_as_string(s)
         self.assertEqual(expected_list, slurm_list)
 
     def test_list_as_string(self):
-        self.assert_list_as_string('a008,b[072-073,076]', ['a008', 'b072', 'b073', 'b076'])
-        self.assert_list_as_string('pleiades[03-05]', ['pleiades03', 'pleiades04', 'pleiades05'])
+        self.assert_list_as_string(
+            "a008,b[072-073,076]", ["a008", "b072", "b073", "b076"]
+        )
+        self.assert_list_as_string(
+            "pleiades[03-05]", ["pleiades03", "pleiades04", "pleiades05"]
+        )

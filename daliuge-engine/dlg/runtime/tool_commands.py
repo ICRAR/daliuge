@@ -22,16 +22,35 @@
 
 from ..common import tool
 
+
 def include_dir(_parser, _args):
     from . import get_include_dir
+
     print(get_include_dir())
 
+
 def register_commands():
-    tool.cmdwrap('nm', 'Starts a Node Manager', 'dlg.manager.cmdline:dlgNM')
-    tool.cmdwrap('dim', 'Starts a Drop Island Manager', 'dlg.manager.cmdline:dlgDIM')
-    tool.cmdwrap('mm', 'Starts a Master Manager', 'dlg.manager.cmdline:dlgMM')
-    tool.cmdwrap('replay', 'Starts a Replay Manager', 'dlg.manager.cmdline:dlgReplay')
-    tool.cmdwrap('daemon', 'Starts a DALiuGE Daemon process', 'dlg.manager.proc_daemon:run_with_cmdline')
-    tool.cmdwrap('proxy', 'A reverse proxy to be used in restricted environments to contact the Drop Managers', 'dlg.deploy.pawsey.dfms_proxy:run')
-    tool.cmdwrap('monitor', 'A proxy to be used in conjunction with the dlg proxy in restricted environments', 'dlg.deploy.pawsey.dfms_monitor:run')
-    tool.cmdwrap('include_dir', 'Print the directory where C header files can be found', include_dir)
+    tool.cmdwrap("nm", "Starts a Node Manager", "dlg.manager.cmdline:dlgNM")
+    tool.cmdwrap("dim", "Starts a Drop Island Manager", "dlg.manager.cmdline:dlgDIM")
+    tool.cmdwrap("mm", "Starts a Master Manager", "dlg.manager.cmdline:dlgMM")
+    tool.cmdwrap("replay", "Starts a Replay Manager", "dlg.manager.cmdline:dlgReplay")
+    tool.cmdwrap(
+        "daemon",
+        "Starts a DALiuGE Daemon process",
+        "dlg.manager.proc_daemon:run_with_cmdline",
+    )
+    tool.cmdwrap(
+        "proxy",
+        "A reverse proxy to be used in restricted environments to contact the Drop Managers",
+        "dlg.deploy.pawsey.dfms_proxy:run",
+    )
+    tool.cmdwrap(
+        "monitor",
+        "A proxy to be used in conjunction with the dlg proxy in restricted environments",
+        "dlg.deploy.pawsey.dfms_monitor:run",
+    )
+    tool.cmdwrap(
+        "include_dir",
+        "Print the directory where C header files can be found",
+        include_dir,
+    )

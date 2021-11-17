@@ -28,13 +28,16 @@ from dlg.testutils import ManagerStarter
 
 
 class TestTool(ManagerStarter, unittest.TestCase):
-
     def test_cmdhelp(self):
         """Checks that all dlg commands have a help"""
         for cmd in tool.commands:
-            p = tool.start_process(cmd, ['-h'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = tool.start_process(
+                cmd, ["-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             out, err = p.communicate()
             common.wait_or_kill(p, timeout=10)
-            self.assertEqual(0, p.returncode, 'cmd: %s, out: %s' % (
-                cmd + ' -h', common.b2s(out + err)))
+            self.assertEqual(
+                0,
+                p.returncode,
+                "cmd: %s, out: %s" % (cmd + " -h", common.b2s(out + err)),
+            )
