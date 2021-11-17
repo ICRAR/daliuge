@@ -86,16 +86,16 @@ def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(os.path.join('..', path, filename))
+            paths.append(os.path.join("..", path, filename))
     return paths
 
 
-src_files = package_files('dlg')
+src_files = package_files("dlg")
 
 
 install_requires = [
     "bottle",
-   "daliuge-common==%s" % (VERSION,),
+    "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
     # We are not compatible with networkx 2.4 yet, so we need to constrain that
     "networkx<2.4",
@@ -119,8 +119,6 @@ setup(
     package_data={
         "dlg": src_files,
     },
-    entry_points = {
-        'dlg.tool_commands': ['translator=dlg.translator.tool_commands']
-    },
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

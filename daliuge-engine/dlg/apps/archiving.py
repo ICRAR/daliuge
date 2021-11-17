@@ -23,10 +23,19 @@ import logging
 from ..drop import BarrierAppDROP, ContainerDROP
 from ..droputils import DROPFile
 from ..io import NgasIO, OpenMode, NgasLiteIO
-from ..meta import dlg_string_param, dlg_float_param, dlg_int_param, \
-    dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
+from ..meta import (
+    dlg_string_param,
+    dlg_float_param,
+    dlg_int_param,
+    dlg_component,
+    dlg_batch_input,
+    dlg_batch_output,
+    dlg_streaming_input,
+)
 
 logger = logging.getLogger(__name__)
+
+
 class ExternalStoreApp(BarrierAppDROP):
     """
     An application that takes its input DROP (which must be one, and only
@@ -37,12 +46,16 @@ class ExternalStoreApp(BarrierAppDROP):
     shouldn't contain any output, making it a leaf node of the physical graph
     where it resides.
     """
-    compontent_meta = dlg_component('ExternalStoreApp', 'An application that takes its input DROP (which must be one, and only one) '
-                                    'and creates a copy of it in a completely external store, from the point '
-                                    'of view of the DALiuGE framework.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "ExternalStoreApp",
+        "An application that takes its input DROP (which must be one, and only one) "
+        "and creates a copy of it in a completely external store, from the point "
+        "of view of the DALiuGE framework.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def run(self):
 
@@ -61,6 +74,7 @@ class ExternalStoreApp(BarrierAppDROP):
         Method implemented by subclasses. It should stores the contents of
         `inputDrop` into an external store.
         """
+
 
 ##
 # @brief NgasArchivingApp
@@ -83,25 +97,29 @@ class ExternalStoreApp(BarrierAppDROP):
 #     \~English Input File Object
 # @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
-    '''
+    """
     An ExternalStoreApp class that takes its input DROP and archives it in
     an NGAS server. It currently deals with non-container DROPs only.
 
     The archiving to NGAS occurs through the framework and not by spawning a
     new NGAS client process. This way we can read the different storage types
     supported by the framework, and not only filesystem objects.
-    '''
-    compontent_meta = dlg_component('NgasArchivingApp', 'An ExternalStoreApp class that takes its input DROP and archives it in '
-                                    'an NGAS server. It currently deals with non-container DROPs only.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    """
 
-    ngasSrv = dlg_string_param('ngasSrv', 'localhost')
-    ngasPort = dlg_int_param('ngasPort', 7777)
-    ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
-    ngasTimeout = dlg_int_param('ngasTimeout', 2)
-    ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
+    compontent_meta = dlg_component(
+        "NgasArchivingApp",
+        "An ExternalStoreApp class that takes its input DROP and archives it in "
+        "an NGAS server. It currently deals with non-container DROPs only.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    ngasSrv = dlg_string_param("ngasSrv", "localhost")
+    ngasPort = dlg_int_param("ngasPort", 7777)
+    ngasMime = dlg_string_param("ngasMime", "application/octet-stream")
+    ngasTimeout = dlg_int_param("ngasTimeout", 2)
+    ngasConnectTimeout = dlg_int_param("ngasConnectTimeout", 2)
 
     def initialize(self, **kwargs):
         super(NgasArchivingApp, self).initialize(**kwargs)
@@ -111,22 +129,39 @@ class NgasArchivingApp(ExternalStoreApp):
         logger.debug("NGAS Port %s", self.ngasPort)
 
         if isinstance(inDrop, ContainerDROP):
-            raise Exception("ContainerDROPs are not supported as inputs for this application")
+            raise Exception(
+                "ContainerDROPs are not supported as inputs for this application"
+            )
 
         if inDrop.size is None or inDrop.size < 0:
             logger.error(
-                "NGAS requires content-length to be know, but the given input does not provide a size.")
+                "NGAS requires content-length to be know, but the given input does not provide a size."
+            )
             size = None
         else:
             size = inDrop.size
             logger.debug("Content-length %s", size)
         try:
-            ngasIO = NgasIO(self.ngasSrv, inDrop.uid, self.ngasPort,
-                            self.ngasConnectTimeout, self.ngasTimeout, size, mimeType=self.ngasMime)
+            ngasIO = NgasIO(
+                self.ngasSrv,
+                inDrop.uid,
+                self.ngasPort,
+                self.ngasConnectTimeout,
+                self.ngasTimeout,
+                size,
+                mimeType=self.ngasMime,
+            )
         except ImportError:
             logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
-            ngasIO = NgasLiteIO(self.ngasSrv, inDrop.uid, self.ngasPort,
-                                self.ngasConnectTimeout, self.ngasTimeout, size, mimeType=self.ngasMime)
+            ngasIO = NgasLiteIO(
+                self.ngasSrv,
+                inDrop.uid,
+                self.ngasPort,
+                self.ngasConnectTimeout,
+                self.ngasTimeout,
+                size,
+                mimeType=self.ngasMime,
+            )
 
         ngasIO.open(OpenMode.OPEN_WRITE)
 

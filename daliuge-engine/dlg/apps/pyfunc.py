@@ -37,45 +37,54 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
+
 def serialize_data(d):
     return utils.b2s(base64.b64encode(pickle.dumps(d)))
 
+
 def deserialize_data(d):
-    return pickle.loads(base64.b64decode(d.encode('latin1')))
+    return pickle.loads(base64.b64decode(d.encode("latin1")))
+
 
 def serialize_func(f):
 
     if isinstance(f, str):
-        parts = f.split('.')
-        f = getattr(importlib.import_module('.'.join(parts[:-1])), parts[-1])
+        parts = f.split(".")
+        f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
 
     fser = dill.dumps(f)
     fdefaults = {}
     a = inspect.getfullargspec(f)
     if a.defaults:
-        fdefaults = dict(zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults]))
+        fdefaults = dict(
+            zip(a.args[-len(a.defaults) :], [serialize_data(d) for d in a.defaults])
+        )
     logger.debug("Defaults for function %r: %r", f, fdefaults)
     return fser, fdefaults
 
 
 def import_using_name(app, fname):
     # The name has the form pack1.pack2.mod.func
-    parts = fname.split('.')
+    parts = fname.split(".")
     if len(parts) < 2:
-        msg = '%s does not contain a module name' % fname
+        msg = "%s does not contain a module name" % fname
         raise InvalidDropException(app, msg)
 
-    modname, fname = '.'.join(parts[:-1]), parts[-1]
+    modname, fname = ".".join(parts[:-1]), parts[-1]
     try:
         mod = importlib.import_module(modname, __name__)
         return getattr(mod, fname)
     except ImportError as e:
-        raise InvalidDropException(app, 'Error when loading module %s: %s' % (modname, str(e)))
+        raise InvalidDropException(
+            app, "Error when loading module %s: %s" % (modname, str(e))
+        )
     except AttributeError:
-        raise InvalidDropException(app, 'Module %s has no member %s' % (modname, fname))
+        raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
+
 
 def import_using_code(code):
     return dill.loads(code)
+
 
 class PyFuncApp(BarrierAppDROP):
     """
@@ -98,26 +107,28 @@ class PyFuncApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
 
-        self.fname = fname = self._getArg(kwargs, 'func_name', None)
-        fcode = self._getArg(kwargs, 'func_code', None)
+        self.fname = fname = self._getArg(kwargs, "func_name", None)
+        fcode = self._getArg(kwargs, "func_code", None)
         if not fname and not fcode:
-            raise InvalidDropException(self, 'No function specified (either via name or code)')
+            raise InvalidDropException(
+                self, "No function specified (either via name or code)"
+            )
 
         if not fcode:
             self.f = import_using_name(self, fname)
         else:
             if not isinstance(fcode, bytes):
-                fcode = base64.b64decode(fcode.encode('utf8'))
+                fcode = base64.b64decode(fcode.encode("utf8"))
             self.f = import_using_code(fcode)
 
         # Mapping from argname to default value. Should match only the last part
         # of the argnames list
-        fdefaults = self._getArg(kwargs, 'func_defaults', {}) or {}
+        fdefaults = self._getArg(kwargs, "func_defaults", {}) or {}
         self.fdefaults = {name: deserialize_data(d) for name, d in fdefaults.items()}
         logger.debug("Default values for function %s: %r", self.fname, self.fdefaults)
 
         # Mapping between argument name and input drop uids
-        self.func_arg_mapping = self._getArg(kwargs, 'func_arg_mapping', {})
+        self.func_arg_mapping = self._getArg(kwargs, "func_arg_mapping", {})
         logger.debug("Input mapping: %r", self.func_arg_mapping)
 
     def run(self):
@@ -132,9 +143,11 @@ class PyFuncApp(BarrierAppDROP):
         # Keyword arguments are made up by the default values plus the inputs
         # that match one of the keyword argument names
         argnames = inspect.getfullargspec(self.f).args
-        kwargs = {name: inputs.pop(uid)
-                  for name, uid in self.func_arg_mapping.items()
-                  if name in self.fdefaults or name not in argnames}
+        kwargs = {
+            name: inputs.pop(uid)
+            for name, uid in self.func_arg_mapping.items()
+            if name in self.fdefaults or name not in argnames
+        }
 
         # The rest of the inputs are the positional arguments
         args = list(inputs.values())

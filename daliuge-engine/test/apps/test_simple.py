@@ -33,8 +33,8 @@ from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
 
-class TestSimpleApps(unittest.TestCase):
 
+class TestSimpleApps(unittest.TestCase):
     def _test_graph_runs(self, drops, first, last, timeout=1):
         first = droputils.listify(first)
         with droputils.DROPWaiterCtx(self, last, timeout):
@@ -47,19 +47,19 @@ class TestSimpleApps(unittest.TestCase):
     def test_sleepapp(self):
 
         # Nothing fancy, just run it and be done with it
-        a = NullDROP('a', 'a')
-        b = SleepApp('b', 'b')
-        c = NullDROP('c', 'c')
+        a = NullDROP("a", "a")
+        b = SleepApp("b", "b")
+        c = NullDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
 
-        a = NullDROP('a', 'a')
+        a = NullDROP("a", "a")
 
     def _test_copyapp_simple(self, app):
 
         # Again, not foo fancy, simple apps require simple tests
-        a, c = (InMemoryDROP(x, x) for x in ('a', 'c'))
-        b = app('b', 'b')
+        a, c = (InMemoryDROP(x, x) for x in ("a", "c"))
+        b = app("b", "b")
         b.addInput(a)
         b.addOutput(c)
 
@@ -72,8 +72,8 @@ class TestSimpleApps(unittest.TestCase):
     def _test_copyapp_order_preserved(self, app):
 
         # Inputs are copied in the order they are added
-        a, b, d = (InMemoryDROP(x, x) for x in ('a', 'b', 'd'))
-        c = app('c', 'c')
+        a, b, d = (InMemoryDROP(x, x) for x in ("a", "b", "d"))
+        c = app("c", "c")
         for x in a, b:
             c.addInput(x)
         c.addOutput(d)
@@ -97,9 +97,9 @@ class TestSimpleApps(unittest.TestCase):
         self._test_copyapp(SleepAndCopyApp)
 
     def test_randomarrayapp(self):
-        i = NullDROP('i', 'i')
-        c = RandomArrayApp('c', 'c')
-        o = InMemoryDROP('o', 'o')
+        i = NullDROP("i", "i")
+        c = RandomArrayApp("c", "c")
+        o = InMemoryDROP("o", "o")
         c.addInput(i)
         c.addOutput(o)
         self._test_graph_runs((i, c, o), i, o)
@@ -109,9 +109,9 @@ class TestSimpleApps(unittest.TestCase):
         self.assertEqual(v.all(), True)
 
     def test_averagearraysapp(self):
-        a = AverageArraysApp('a', 'a')
-        i1, i2, o = (InMemoryDROP(x, x) for x in ('i1', 'i2', 'o'))
-        c = AverageArraysApp('c', 'c')
+        a = AverageArraysApp("a", "a")
+        i1, i2, o = (InMemoryDROP(x, x) for x in ("i1", "i2", "o"))
+        c = AverageArraysApp("c", "c")
         c.addInput(i1)
         c.addInput(i2)
         c.addOutput(o)
@@ -124,30 +124,30 @@ class TestSimpleApps(unittest.TestCase):
         m = mean([array(data1), array(data2)], axis=0)
         self._test_graph_runs((i1, i2, c, o), (i1, i2), o)
         average = pickle.loads(droputils.allDropContents(o))
-        v = (m == average)
+        v = m == average
         self.assertEqual(v.all(), True)
 
     def test_helloworldapp(self):
-        h = HelloWorldApp('h', 'h')
-        b = FileDROP('c', 'c')
+        h = HelloWorldApp("h", "h")
+        b = FileDROP("c", "c")
         h.addOutput(b)
         b.addProducer(h)
         h.execute()
-        self.assertEqual(h.greeting.encode('utf8'), droputils.allDropContents(b))
+        self.assertEqual(h.greeting.encode("utf8"), droputils.allDropContents(b))
 
     def test_parallelHelloWorld(self):
-        m0 = InMemoryDROP('m0','m0')
-        s = GenericScatterApp('s', 's')
-        greets = ['World', 'Solar system', 'Galaxy', 'Universe']
+        m0 = InMemoryDROP("m0", "m0")
+        s = GenericScatterApp("s", "s")
+        greets = ["World", "Solar system", "Galaxy", "Universe"]
         m0.write(pickle.dumps(greets))
         s.addInput(m0)
         m = []
         h = []
         f = []
-        for i in range(1, len(greets)+1, 1):
-            m.append(InMemoryDROP('m%d' % i, 'm%d' % i))
-            h.append(HelloWorldApp('h%d' % i, 'h%d' % i))
-            f.append(FileDROP('f%d' % i, 'f%d' % i))
+        for i in range(1, len(greets) + 1, 1):
+            m.append(InMemoryDROP("m%d" % i, "m%d" % i))
+            h.append(HelloWorldApp("h%d" % i, "h%d" % i))
+            f.append(FileDROP("f%d" % i, "f%d" % i))
             s.addOutput(m[-1])
             h[-1].addInput(m[-1])
             h[-1].addOutput(f[-1])
@@ -157,18 +157,20 @@ class TestSimpleApps(unittest.TestCase):
         ad.extend(f)
         self._test_graph_runs(ad, m0, f)
         for i in range(len(f)):
-            self.assertEqual(('Hello %s' % greets[i]).encode('utf8'), droputils.allDropContents(f[i]))
+            self.assertEqual(
+                ("Hello %s" % greets[i]).encode("utf8"), droputils.allDropContents(f[i])
+            )
 
     def test_ngasio(self):
-        nd_in = NgasDROP('HelloWorld.txt', 'HelloWorld.txt')
-        nd_in.ngasSrv = 'ngas.ddns.net'
-        b = CopyApp('b', 'b')
-        did = 'HelloWorld-%f' % time.time()
+        nd_in = NgasDROP("HelloWorld.txt", "HelloWorld.txt")
+        nd_in.ngasSrv = "ngas.ddns.net"
+        b = CopyApp("b", "b")
+        did = "HelloWorld-%f" % time.time()
         nd_out = NgasDROP(did, did, len=11)
-        nd_out.ngasSrv = 'ngas.ddns.net'
+        nd_out.ngasSrv = "ngas.ddns.net"
         nd_out.len = nd_in.size
-        d = CopyApp('d', 'd')
-        i = InMemoryDROP('i', 'i')
+        d = CopyApp("d", "d")
+        i = InMemoryDROP("i", "i")
         # b.addInput(nd_in)
         # b.addOutput(nd_out)
         nd_in.addConsumer(b)
@@ -176,17 +178,17 @@ class TestSimpleApps(unittest.TestCase):
         d.addInput(nd_out)
         i.addProducer(d)
         # b.addOutput(i)
-        self._test_graph_runs((nd_in,b,nd_out,i,d),nd_in, i, timeout=10)
+        self._test_graph_runs((nd_in, b, nd_out, i, d), nd_in, i, timeout=10)
         self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
     def test_genericScatter(self):
         data_in = random.randint(0, 100, size=100)
-        b = InMemoryDROP('b', 'b')
+        b = InMemoryDROP("b", "b")
         b.write(pickle.dumps(data_in))
-        s = GenericScatterApp('s', 's')
+        s = GenericScatterApp("s", "s")
         s.addInput(b)
-        o1 = InMemoryDROP('o1', 'o1')
-        o2 = InMemoryDROP('o2', 'o2')
+        o1 = InMemoryDROP("o1", "o1")
+        o2 = InMemoryDROP("o2", "o2")
         for x in o1, o2:
             s.addOutput(x)
         self._test_graph_runs((b, s, o1, o2), b, (o1, o2), timeout=4)
@@ -195,7 +197,3 @@ class TestSimpleApps(unittest.TestCase):
         data2 = pickle.loads(droputils.allDropContents(o2))
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
-
-
-
-        
