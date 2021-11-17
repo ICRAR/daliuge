@@ -19,7 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Module containing the base class and a simple implementation of the registry
 used by the DLM to keep track of which DROPs are where, and therefore in which
 phase they currently are
@@ -29,7 +29,7 @@ The registry simply (for the time being) keeps a record of:
  * For each DROP, which instances(i.e., which uids) are out there
 
 @author: rtobar
-'''
+"""
 
 from abc import abstractmethod, ABCMeta
 import importlib
@@ -42,23 +42,25 @@ from ..utils import prepare_sql
 
 logger = logging.getLogger(__name__)
 
+
 class DROP(object):
-    oid         = None
-    phase       = DROPPhases.GAS
-    instances   = []
+    oid = None
+    phase = DROPPhases.GAS
+    instances = []
     accessTimes = []
 
+
 class DROPInstance(object):
-    oid     = None
-    uid     = None
+    oid = None
+    uid = None
     storage = None
 
 
-class Registry():
-    '''
+class Registry:
+    """
     Base class that imposes a given structure, subclasses should implement all
     NotImplementedError methods. Is this the
-    '''
+    """
 
     __metaclass__ = ABCMeta
 
@@ -104,32 +106,34 @@ class Registry():
 
     def _checkDropIsInRegistry(self, oid):
         if not oid in self._drops:
-            raise Exception('DROP %s is not present in the registry' % (oid))
+            raise Exception("DROP %s is not present in the registry" % (oid))
+
 
 class InMemoryRegistry(Registry):
-
     def __init__(self):
         super(InMemoryRegistry, self).__init__()
-        self._drops= {}
+        self._drops = {}
 
     def addDrop(self, drop):
-        '''
+        """
         :param dlg.drop.AbstractDROP drop:
-        '''
+        """
         # Check that the DROP is not in the registry
         dropRow = DROP()
-        dropRow.oid       = drop.oid
-        dropRow.phase     = drop.phase
+        dropRow.oid = drop.oid
+        dropRow.phase = drop.phase
         dropRow.instances = {drop.uid: drop}
         self._drops[dropRow.oid] = dropRow
 
     def addDropInstance(self, drop):
-        '''
+        """
         :param dlg.drop.AbstractDROP drop:
-        '''
+        """
         self._checkDropIsInRegistry(drop.oid)
         if drop.uid in self._drops[drop.oid].instances:
-            raise Exception('DROP %s/%s already present in registry' % (drop.oid, drop.uid))
+            raise Exception(
+                "DROP %s/%s already present in registry" % (drop.oid, drop.uid)
+            )
         self._drops[drop.oid].instances[drop.uid] = drop
 
     def getDropUids(self, drop):
@@ -150,15 +154,17 @@ class InMemoryRegistry(Registry):
         else:
             return -1
 
-class RDBMSRegistry(Registry):
 
+class RDBMSRegistry(Registry):
     def __init__(self, dbModuleName, *connArgs):
         try:
             self._dbmod = importlib.import_module(dbModuleName)
             self._paramstyle = self._dbmod.paramstyle
             self._connArgs = connArgs
         except:
-            logger.error("Cannot import module %s, RDBMSRegistry cannot start" % (dbModuleName))
+            logger.error(
+                "Cannot import module %s, RDBMSRegistry cannot start" % (dbModuleName)
+            )
             raise
 
     def _connect(self):
@@ -182,7 +188,6 @@ class RDBMSRegistry(Registry):
     # A small helper class to make all methods transactional, and to create
     # connections when needed
     class transactional(object):
-
         def __init__(self, registry, conn):
             self._connect = registry._connect
             self._conn = conn
@@ -212,20 +217,30 @@ class RDBMSRegistry(Registry):
     def addDrop(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, "INSERT INTO dlg_drop (oid, phase) VALUES ({0},{1})", (drop.oid, drop.phase))
+            self.execute(
+                cur,
+                "INSERT INTO dlg_drop (oid, phase) VALUES ({0},{1})",
+                (drop.oid, drop.phase),
+            )
             self.addDropInstance(drop, conn)
             cur.close()
 
     def addDropInstance(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'INSERT INTO dlg_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})', (drop.oid, drop.uid, drop.dataURL))
+            self.execute(
+                cur,
+                "INSERT INTO dlg_dropinstance (oid, uid, dataRef) VALUES ({0},{1},{2})",
+                (drop.oid, drop.uid, drop.dataURL),
+            )
             cur.close()
 
     def getDropUids(self, drop, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'SELECT uid FROM dlg_dropinstance WHERE oid = {0}', (drop.oid,))
+            self.execute(
+                cur, "SELECT uid FROM dlg_dropinstance WHERE oid = {0}", (drop.oid,)
+            )
             rows = cur.fetchall()
             cur.close()
             return [r[0] for r in rows]
@@ -233,19 +248,31 @@ class RDBMSRegistry(Registry):
     def setDropPhase(self, drop, phase, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'UPDATE dlg_drop SET phase = {0} WHERE oid = {1}', (drop.oid, drop.phase))
+            self.execute(
+                cur,
+                "UPDATE dlg_drop SET phase = {0} WHERE oid = {1}",
+                (drop.oid, drop.phase),
+            )
             cur.close()
 
     def recordNewAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})', (oid, self._dbmod.TimestampFromTicks(time.time())))
+            self.execute(
+                cur,
+                "INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})",
+                (oid, self._dbmod.TimestampFromTicks(time.time())),
+            )
             cur.close()
 
     def getLastAccess(self, oid, conn=None):
         with self.transactional(self, conn) as conn:
             cur = conn.cursor()
-            self.execute(cur, 'SELECT accessTime FROM dlg_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1', (oid,))
+            self.execute(
+                cur,
+                "SELECT accessTime FROM dlg_dropaccesstime WHERE oid = {0} ORDER BY accessTime DESC LIMIT 1",
+                (oid,),
+            )
             row = cur.fetchone()
             cur.close()
             if row is None:

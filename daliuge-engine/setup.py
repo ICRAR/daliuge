@@ -156,8 +156,13 @@ extra_requires = {
 setup(
     name="daliuge-engine",
     version=get_version_info()[0],
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Runtime",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
+    description=u"Data Activated \uF9CA (flow) Graph Engine - Execution Engine",
+    long_description="""
+        The element of the DALiuGE system executing the workflows. This replaces
+        the former 'runtime' package (up to version 1.0). For more information 
+        see the [Basics section(https://daliuge.readthedocs.io/en/latest/basics.html)]
+        of the DALiuGE documentation.
+        """,
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
     url="https://github.com/ICRAR/daliuge",

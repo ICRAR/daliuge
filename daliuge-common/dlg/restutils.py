@@ -36,22 +36,30 @@ from .exceptions import DaliugeException, SubManagerException
 logger = logging.getLogger(__name__)
 
 
-class ThreadingWSGIServer(socketserver.ThreadingMixIn, wsgiref.simple_server.WSGIServer):
+class ThreadingWSGIServer(
+    socketserver.ThreadingMixIn, wsgiref.simple_server.WSGIServer
+):
     daemon_threads = True
     allow_reuse_address = True
+
 
 class LoggingWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
     def log_message(self, fmt, *args):
         logger.debug(fmt, *args)
 
+
 class RestServerWSGIServer:
-    def __init__(self, wsgi_app, listen = '127.0.0.1', port = 8080):
+    def __init__(self, wsgi_app, listen="127.0.0.1", port=8080):
         self.wsgi_app = wsgi_app
         self.listen = listen
         self.port = port
-        self.server = wsgiref.simple_server.make_server(self.listen,
-            self.port, self.wsgi_app, server_class=ThreadingWSGIServer,
-            handler_class=LoggingWSGIRequestHandler)
+        self.server = wsgiref.simple_server.make_server(
+            self.listen,
+            self.port,
+            self.wsgi_app,
+            server_class=ThreadingWSGIServer,
+            handler_class=LoggingWSGIRequestHandler,
+        )
 
     def serve_forever(self):
         self.server.serve_forever()
@@ -60,10 +68,12 @@ class RestServerWSGIServer:
         self.server.shutdown()
         self.server.server_close()
 
+
 class RestClientException(DaliugeException):
     """
     Exception thrown by the RestClient
     """
+
 
 def hexdigits(n):
     digits = 0
@@ -72,19 +82,23 @@ def hexdigits(n):
         n //= 16
     return digits
 
+
 def chunk(data):
-    return ("%x" % len(data)).encode('ascii') + b'\r\n' + data + b'\r\n'
+    return ("%x" % len(data)).encode("ascii") + b"\r\n" + data + b"\r\n"
+
 
 class chunked(object):
     """
     A reader that returns chunked HTTP content
     """
+
     def __init__(self, content):
         self.content = content
         self.finished = False
+
     def read(self, n):
         if self.finished:
-            return b''
+            return b""
         n = n - hexdigits(n) - 4
         data = self.content.read(n)
         if not data:
@@ -92,12 +106,13 @@ class chunked(object):
             return b"0\r\n\r\n"
         return chunk(data)
 
+
 class RestClient(object):
     """
     The base class for our REST clients
     """
 
-    def __init__(self, host, port, url_prefix='', timeout=None):
+    def __init__(self, host, port, url_prefix="", timeout=None):
         self.host = host
         self.port = port
         self.url_prefix = url_prefix
@@ -112,13 +127,14 @@ class RestClient(object):
             self._conn.close()
 
     __del__ = _close
+
     def __enter__(self):
         return self
+
     def __exit__(self, typ, value, traceback):
         self._close()
         if typ:
             raise value
-
 
     def _get_json(self, url):
         ret = self._GET(url)
@@ -127,49 +143,53 @@ class RestClient(object):
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.parse.urlencode(content)
-        ret = self._POST(url, content, content_type='application/x-www-form-urlencoded')
+        ret = self._POST(url, content, content_type="application/x-www-form-urlencoded")
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
         if not isinstance(content, (str, bytes)):
             content = common.JSONStream(content)
-        ret = self._POST(url, content, content_type='application/json', compress=compress)
+        ret = self._POST(
+            url, content, content_type="application/json", compress=compress
+        )
         return json.load(ret) if ret else None
 
     def _GET(self, url):
-        stream, _ = self._request(url, 'GET')
+        stream, _ = self._request(url, "GET")
         return stream
 
     def _POST(self, url, content=None, content_type=None, compress=False):
         headers = {}
         if content_type:
-            headers['Content-Type'] = content_type
+            headers["Content-Type"] = content_type
         if compress and content:
-            headers['Content-Encoding'] = 'gzip'
+            headers["Content-Encoding"] = "gzip"
             if isinstance(content, str):
-                content = codecs.getencoder('utf8')(content)[0]
-            if not hasattr(content, 'read'):
+                content = codecs.getencoder("utf8")(content)[0]
+            if not hasattr(content, "read"):
                 content = io.BytesIO(content)
             content = common.ZlibCompressedStream(content)
-        stream, _ = self._request(url, 'POST', content, headers)
+        stream, _ = self._request(url, "POST", content, headers)
         return stream
 
     def _DELETE(self, url):
-        stream, _ = self._request(url, 'DELETE')
+        stream, _ = self._request(url, "DELETE")
         return stream
 
     def _request(self, url, method, content=None, headers={}):
 
         # Do the HTTP stuff...
         url = self.url_prefix + url
-        logger.debug("Sending %s request to %s:%d%s", method,
-                     self.host, self.port, url)
+        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
 
         if not common.portIsOpen(self.host, self.port, self.timeout):
-            raise RestClientException("Cannot connect to %s:%d after %.2f [s]" % (self.host, self.port, self.timeout))
+            raise RestClientException(
+                "Cannot connect to %s:%d after %.2f [s]"
+                % (self.host, self.port, self.timeout)
+            )
 
-        if content and hasattr(content, 'read'):
-            headers['Transfer-Encoding'] = 'chunked'
+        if content and hasattr(content, "read"):
+            headers["Transfer-Encoding"] = "chunked"
             content = chunked(content)
 
         self._conn = http.client.HTTPConnection(self.host, self.port)
@@ -179,24 +199,28 @@ class RestClient(object):
         # Server errors are encoded in the body as json content
         if self._resp.status != http.HTTPStatus.OK:
 
-            msg = 'Error on remote %s@%s:%s%s (status %d): ' % \
-                  (method, self.host, self.port,
-                   url, self._resp.status)
+            msg = "Error on remote %s@%s:%s%s (status %d): " % (
+                method,
+                self.host,
+                self.port,
+                url,
+                self._resp.status,
+            )
 
             try:
-                error = json.loads(self._resp.read().decode('utf-8'))
-                etype = getattr(exceptions, error['type'])
-                eargs = error['args']
+                error = json.loads(self._resp.read().decode("utf-8"))
+                etype = getattr(exceptions, error["type"])
+                eargs = error["args"]
 
                 if etype == SubManagerException:
-                    for host,args in eargs.items():
-                        subetype = getattr(exceptions, args['type'])
-                        subargs = args['args']
+                    for host, args in eargs.items():
+                        subetype = getattr(exceptions, args["type"])
+                        subargs = args["args"]
                         eargs[host] = subetype(*subargs)
                     ex = etype(eargs)
                 else:
                     ex = etype(*eargs)
-                if hasattr(ex, 'msg'):
+                if hasattr(ex, "msg"):
                     ex.msg = msg + ex.msg
             except Exception:
                 ex = RestClientException(msg + "Unknown")
@@ -205,4 +229,4 @@ class RestClient(object):
 
         if not self._resp.length:
             return None, None
-        return codecs.getreader('utf-8')(self._resp), self._resp
+        return codecs.getreader("utf-8")(self._resp), self._resp
