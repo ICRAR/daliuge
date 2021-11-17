@@ -102,7 +102,7 @@ class NMTestsMixIn(object):
         leaf_oid="C",
         expected_failures=[],
         sessionId="s1",
-        node_managers=None
+        node_managers=None,
     ):
         """Utility to run a graph in two Node Managers"""
 
@@ -157,7 +157,12 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "app": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
@@ -199,17 +204,28 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [
             {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = str(crc32c(a_data, 0)).encode('utf8')
+        c_data = str(crc32c(a_data, 0)).encode("utf8")
         node_managers = [self._start_dm() for _ in range(2)]
         for n in range(repeats):
-            sessionId = 's%d' % n
-            self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
-                                        sessionId=sessionId,
-                                        node_managers=node_managers)
+            sessionId = "s%d" % n
+            self._test_runGraphInTwoNMs(
+                copy.deepcopy(g1),
+                copy.deepcopy(g2),
+                rels,
+                a_data,
+                c_data,
+                sessionId=sessionId,
+                node_managers=node_managers,
+            )
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -247,14 +263,29 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = "s1"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
             {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
-            {"oid": "F", "type": "plain", "storage": Categories.MEMORY, "producers": ["E"]},
+            {
+                "oid": "F",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["E"],
+            },
         ]
 
         rels = [
@@ -463,14 +494,24 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = "s1"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {
                 "oid": "C",
                 "type": "app",
                 "app": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {
@@ -541,7 +582,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -571,5 +612,5 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")

@@ -57,33 +57,40 @@ outstanding_conn = 20
 default_publication_port = 20000
 default_proxy_port = 30000
 default_client_base_port = 30001
-FORMAT = "%(asctime)-15s [%(levelname)5.5s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+FORMAT = (
+    "%(asctime)-15s [%(levelname)5.5s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+)
 
 logger = logging.getLogger(__name__)
-delimit = b'@#%!$'
+delimit = b"@#%!$"
 dl = len(delimit)
 
+
 def recvall(sock, count):
-    buf = b''
+    buf = b""
     while count:
         # this will block
         newbuf = sock.recv(count)
-        if not newbuf: return None
+        if not newbuf:
+            return None
         buf += newbuf
         count -= len(newbuf)
     return buf
 
+
 def send_to_proxy(sock, data):
     length = len(data)
-    sock.sendall(struct.pack('!I', length))
+    sock.sendall(struct.pack("!I", length))
     sock.sendall(data)
+
 
 def recv_from_proxy(sock):
     lengthbuf = recvall(sock, 4)
-    if (lengthbuf is None):
+    if lengthbuf is None:
         return None
-    length, = struct.unpack('!I', lengthbuf)
+    (length,) = struct.unpack("!I", lengthbuf)
     return recvall(sock, length)
+
 
 # HTTP support to get the list of available proxies
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -92,44 +99,59 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.monitor = self.server.monitor
 
     def do_GET(self):
-        if self.path not in ('/', ''):
+        if self.path not in ("/", ""):
             self.send_error(404)
             return
 
-        host = 'localhost'
-        if 'Host' in self.headers:
-            host = self.headers['Host']
-            host = host if ":" not in host else host.split(':')[0]
+        host = "localhost"
+        if "Host" in self.headers:
+            host = self.headers["Host"]
+            host = host if ":" not in host else host.split(":")[0]
 
         self.send_response(200)
-        if 'Accept' in self.headers and 'text/html' in self.headers['Accept']:
-            self.send_header('Content-Type', 'text/html')
+        if "Accept" in self.headers and "text/html" in self.headers["Accept"]:
+            self.send_header("Content-Type", "text/html")
             self.end_headers()
             if not self.monitor.proxy_ids:
                 self.wfile.write(b"No proxies available yet")
                 return
 
-            aEls = ['<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(host,b2s(proxyId),client_port) for proxyId, client_port in self.monitor.proxy_ids.items()]
-            html = '</li><li>'.join(aEls)
-            html = '<ul><li>' + html + '</li></ul>'
-            self.wfile.write(html.encode('utf8'))
+            aEls = [
+                '<a href="http://{0}:{2}">{1} @ {0}:{2}</a>'.format(
+                    host, b2s(proxyId), client_port
+                )
+                for proxyId, client_port in self.monitor.proxy_ids.items()
+            ]
+            html = "</li><li>".join(aEls)
+            html = "<ul><li>" + html + "</li></ul>"
+            self.wfile.write(html.encode("utf8"))
             return
 
         # Else print as JSON
-        self.send_header('Content-Type', 'application/json')
+        self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(self.monitor.proxy_ids, indent=2))
+
 
 class Server(http.server.HTTPServer):
     def __init__(self, monitor):
         self.monitor = monitor
-        http.server.HTTPServer.__init__(self, (monitor.host, monitor.publication_port), Handler)
+        http.server.HTTPServer.__init__(
+            self, (monitor.host, monitor.publication_port), Handler
+        )
 
-sockandaddr = collections.namedtuple('sockandaddr', 'sock addr')
+
+sockandaddr = collections.namedtuple("sockandaddr", "sock addr")
+
 
 class Monitor:
-
-    def __init__(self, host='0.0.0.0', proxy_port=default_proxy_port, client_base_port=default_client_base_port, publication_port=default_publication_port):
+    def __init__(
+        self,
+        host="0.0.0.0",
+        proxy_port=default_proxy_port,
+        client_base_port=default_client_base_port,
+        publication_port=default_publication_port,
+    ):
         """
         host:             listening host (string)
         proxy_port:       port exposed to the DALiuGE proxy  (int)
@@ -153,7 +175,7 @@ class Monitor:
         self.client_port_to_proxy_port = {}
 
         # To save the tags we attach to each client socket
-        self.tag_dict = {} # k - socket hash, v - socket tag
+        self.tag_dict = {}  # k - socket hash, v - socket tag
 
         # Proxy IDs to client ports. We publish that information in publication_port
         self.proxy_ids = {}
@@ -166,14 +188,14 @@ class Monitor:
         sock.listen(outstanding_conn)
         self.proxy_listener_socket = sock
         self.ifds = [self.proxy_listener_socket]
-        logger.info('Listening for proxies at %s:%d', self.host, proxy_port)
+        logger.info("Listening for proxies at %s:%d", self.host, proxy_port)
 
     def tag_for_socket(self, sock, create=True):
         hashcode = hash(sock)
         if not create:
             return self.tag_dict[hashcode]
 
-        tag = b'%d_%f' % (hashcode, time.time() - 1E9)
+        tag = b"%d_%f" % (hashcode, time.time() - 1e9)
         self.tag_dict[hashcode] = tag
         return tag
 
@@ -195,7 +217,9 @@ class Monitor:
 
         http_server = Server(self)
         try:
-            logger.info("Starting up HTTP server on %s:%d", self.host, self.publication_port)
+            logger.info(
+                "Starting up HTTP server on %s:%d", self.host, self.publication_port
+            )
             http_server.serve_forever()
         except KeyboardInterrupt:
             self.stop_ioloop()
@@ -229,7 +253,9 @@ class Monitor:
                     break
                 raise
             except Exception:
-                logger.exception("Unexpected exception, some communications might have been lost")
+                logger.exception(
+                    "Unexpected exception, some communications might have been lost"
+                )
 
     def add_client_listener(self):
 
@@ -242,7 +268,7 @@ class Monitor:
             try:
                 client_listener_socket.bind((self.host, port))
                 self.next_client_port += 1
-                logger.info('Listening for clients at %s:%d', self.host, port)
+                logger.info("Listening for clients at %s:%d", self.host, port)
                 bound = True
             except socket.error as e:
                 if e.errno != errno.EADDRINUSE:
@@ -266,12 +292,17 @@ class Monitor:
             try:
                 sock.shutdown(socket.SHUT_RDWR)
             except socket.error:
-                logger.exception("Error while shutting down socket %r, continuing anyway", sock.getsockname())
+                logger.exception(
+                    "Error while shutting down socket %r, continuing anyway",
+                    sock.getsockname(),
+                )
 
         try:
             sock.close()
         except socket.error:
-            logger.exception("Error while closing socket %r, continuing anyway", sock.getsockname())
+            logger.exception(
+                "Error while closing socket %r, continuing anyway", sock.getsockname()
+            )
 
     def remove_client_socket(self, sock):
         tag = self.tag_for_socket(sock, create=False)
@@ -283,7 +314,7 @@ class Monitor:
 
     def remove_proxy_socket(self, sock):
 
-        for proxyport,saa in self.proxy_sockets.items():
+        for proxyport, saa in self.proxy_sockets.items():
             if saa.sock == sock:
                 break
 
@@ -331,7 +362,10 @@ class Monitor:
         proxyport = proxyaddr[1]
         self.proxy_sockets[proxyport] = sockandaddr(proxysock, proxyaddr)
         self.ifds.append(proxysock)
-        logger.info('Received new connection from DALiuGE_proxy at %r, reading identification', proxyaddr)
+        logger.info(
+            "Received new connection from DALiuGE_proxy at %r, reading identification",
+            proxyaddr,
+        )
 
         # Read the proxy ID and check we don't have duplicates
         # We've been receiving HTTP requests on this socket from time to time,
@@ -344,15 +378,18 @@ class Monitor:
 
         proxy_id = proxy_id.strip()
         proxy_id_str = b2s(proxy_id)
-        if proxy_id in self.proxy_ids or \
-           proxy_id.startswith(b'GET ') or proxy_id.startswith(b'POST '):
-            logger.info('Proxy identified as %s, rejecting', proxy_id_str)
-            proxysock.sendall(b'0')
+        if (
+            proxy_id in self.proxy_ids
+            or proxy_id.startswith(b"GET ")
+            or proxy_id.startswith(b"POST ")
+        ):
+            logger.info("Proxy identified as %s, rejecting", proxy_id_str)
+            proxysock.sendall(b"0")
             self.close_socket(proxysock, True)
             return
 
-        proxysock.sendall(b'1')
-        logger.info('Proxy identified as %s, fine', proxy_id_str)
+        proxysock.sendall(b"1")
+        logger.info("Proxy identified as %s, fine", proxy_id_str)
 
         client_listener_socket = self.add_client_listener()
         clientport = client_listener_socket.getsockname()[1]
@@ -369,7 +406,9 @@ class Monitor:
 
         if len(self.proxy_sockets) == 0:
             # This shouldn't happen though...
-            logger.debug("Received client connection, but no proxy connections ready yet, ignoring")
+            logger.debug(
+                "Received client connection, but no proxy connections ready yet, ignoring"
+            )
             clientsock.shutdown()
             clientsock.close()
             return
@@ -382,7 +421,12 @@ class Monitor:
 
         # Check for incoming data
         self.ifds.append(clientsock)
-        logger.info('Received new client connection %r -> %s (%s)', clientaddr, sock.getsockname(), b2s(tag))
+        logger.info(
+            "Received new client connection %r -> %s (%s)",
+            clientaddr,
+            sock.getsockname(),
+            b2s(tag),
+        )
 
     def on_proxy_data(self, sock):
 
@@ -400,7 +444,7 @@ class Monitor:
 
         at = data.find(delimit)
         if at == -1:
-            logger.error('No tag id from DALiuGE proxy, discard the message')
+            logger.error("No tag id from DALiuGE proxy, discard the message")
             return
 
         tag = data[0:at]
@@ -408,21 +452,31 @@ class Monitor:
         logger.debug("Received %s from DALiuGE proxy", tag)
 
         if tag not in self.client_sockets:
-            logger.warning("Client %s has already disconnected, discarding data from proxy", tag_str)
+            logger.warning(
+                "Client %s has already disconnected, discarding data from proxy",
+                tag_str,
+            )
             return
 
         client_sockandaddr = self.client_sockets[tag]
         if client_sockandaddr is None:
-            logger.warning("Couldn't find client for tag '%s' of proxy %r", tag_str, sock.getsockname())
+            logger.warning(
+                "Couldn't find client for tag '%s' of proxy %r",
+                tag_str,
+                sock.getsockname(),
+            )
             return
         client_sock = client_sockandaddr.sock
 
-        to_send = data[at + dl:]
+        to_send = data[at + dl :]
         try:
             client_sock.sendall(to_send)
             logger.debug("Sent data to client %s", tag_str)
         except socket.error:
-            logger.warning("Error while writing to client %r, we'll probably detect it later", client_sockandaddr.addr)
+            logger.warning(
+                "Error while writing to client %r, we'll probably detect it later",
+                client_sockandaddr.addr,
+            )
 
     def on_client_data(self, sock):
 
@@ -445,7 +499,7 @@ class Monitor:
         logger.debug("Received data from client %s", tag_str)
         proxy_port = self.client_port_to_proxy_port[sock.getsockname()[1]]
         proxy_socket = None
-        for port,proxy_sock in self.proxy_sockets.items():
+        for port, proxy_sock in self.proxy_sockets.items():
             if port == proxy_port:
                 proxy_socket = proxy_sock.sock
                 break
@@ -457,35 +511,72 @@ class Monitor:
             send_to_proxy(proxy_socket, delimit.join([tag, data]))
             logger.debug("Sent data from client %s to proxy", tag_str)
         except socket.error:
-            logger.warning("Error while sending data to proxy, closing proxy connection")
+            logger.warning(
+                "Error while sending data to proxy, closing proxy connection"
+            )
             self.close_socket(proxy_socket)
 
 
 def run(parser, args):
 
-    parser.add_option("-H", "--host", action="store", type="string",
-                    dest="host", help="The network interface the monitor is bind",
-                    default='0.0.0.0')
-    parser.add_option("-o", "--monitor_port", action="store", type="int",
-                    dest="monitor_port", help = "The monitor port exposed to the DALiuGE proxy",
-                    default=default_proxy_port)
-    parser.add_option("-c", "--client_port", action="store", type="int",
-                    dest="client_port", help = "The proxy port exposed to the client",
-                    default=default_client_base_port)
-    parser.add_option("-p", "--publication_port", action="store", type="int",
-                      dest="publication_port", help="Port used to publish the list of proxies for clients to look at", default=default_publication_port)
-    parser.add_option("-d", "--debug",
-                  action="store_true", dest="debug", default=False,
-                  help="Whether to log debug info")
+    parser.add_option(
+        "-H",
+        "--host",
+        action="store",
+        type="string",
+        dest="host",
+        help="The network interface the monitor is bind",
+        default="0.0.0.0",
+    )
+    parser.add_option(
+        "-o",
+        "--monitor_port",
+        action="store",
+        type="int",
+        dest="monitor_port",
+        help="The monitor port exposed to the DALiuGE proxy",
+        default=default_proxy_port,
+    )
+    parser.add_option(
+        "-c",
+        "--client_port",
+        action="store",
+        type="int",
+        dest="client_port",
+        help="The proxy port exposed to the client",
+        default=default_client_base_port,
+    )
+    parser.add_option(
+        "-p",
+        "--publication_port",
+        action="store",
+        type="int",
+        dest="publication_port",
+        help="Port used to publish the list of proxies for clients to look at",
+        default=default_publication_port,
+    )
+    parser.add_option(
+        "-d",
+        "--debug",
+        action="store_true",
+        dest="debug",
+        default=False,
+        help="Whether to log debug info",
+    )
     (options, args) = parser.parse_args(args)
 
-    if (options.debug):
+    if options.debug:
         ll = logging.DEBUG
     else:
         ll = logging.INFO
     logging.basicConfig(stream=sys.stdout, level=ll, format=FORMAT)
 
-    server = Monitor(options.host, options.monitor_port, options.client_port, publication_port=options.publication_port)
+    server = Monitor(
+        options.host,
+        options.monitor_port,
+        options.client_port,
+        publication_port=options.publication_port,
+    )
     try:
         server.main_loop()
     except KeyboardInterrupt:
