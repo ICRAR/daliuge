@@ -7,12 +7,19 @@ Data Activated 流 Graph Engine
 .. image:: https://coveralls.io/repos/github/ICRAR/daliuge/badge.svg?branch=master
     :target: https://coveralls.io/github/ICRAR/daliuge?branch=master
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
+
 .. image:: https://readthedocs.org/projects/daliuge/badge/?version=latest
     :target: https://daliuge.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://www.gnu.org/licenses/lgpl-2.1
+    :target: https://img.shields.io/badge/License-LGPL_v2-blue.svg
+    :alt: License: LGPL v2.1
+
 |daliuge|
-is a workflow graph execution framework, specifically designed to support very large
+is a workflow graph development, management and execution framework, specifically designed to support very large
 scale processing graphs for the reduction of interferometric radio astronomy data sets.
 |daliuge| has already been used for `processing large astronomical datasets 
 <https://arxiv.org/abs/1702.07617>`_ in existing radio astronomy projects.
@@ -20,7 +27,7 @@ It originated from a prototyping activity as part of the `SDP Consortium
 <https://www.skatelescope.org/sdp/>`_ called Data Flow Management System (DFMS). DFMS aimed to 
 prototype the execution framework of the proposed SDP architecture.
 
-For more information about the installation and usage of the system please refer to the docs or to https://daliuge.readthedocs.io 
+For more information about the installation and usage of the system please refer to the `documentation <https://daliuge.readthedocs.io>`_
 
 
 Development and maintenance of |daliuge| is currently hosted at ICRAR_

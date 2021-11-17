@@ -19,9 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Utility methods and classes to be used when interacting with DROPs
-'''
+"""
 
 import collections
 import io
@@ -42,20 +42,26 @@ logger = logging.getLogger(__name__)
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output
-indexed_ipath_pattern    = re.compile(r".*%i\[.+\].*")
-indexed_opath_pattern    = re.compile(r".*%o\[.+\].*")
+indexed_ipath_pattern = re.compile(r".*%i\[.+\].*")
+indexed_opath_pattern = re.compile(r".*%o\[.+\].*")
 indexed_idataurl_pattern = re.compile(r".*%iDataURL\[.+\].*")
 indexed_odataurl_pattern = re.compile(r".*%oDataURL\[.+\].*")
 
+
 class EvtConsumer(object):
-    '''
+    """
     Small utility class that sets the internal flag of the given threading.Event
     object when consuming a DROP. Used throughout the tests as a barrier to wait
     until all DROPs of a given graph have executed.
-    '''
+    """
+
     def __init__(self, evt, expected_states=[]):
         self._evt = evt
-        self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
+        self._expected_states = expected_states or (
+            DROPStates.COMPLETED,
+            DROPStates.ERROR,
+        )
+
     def handleEvent(self, e):
         if e.status in self._expected_states:
             self._evt.set()
@@ -78,30 +84,40 @@ class DROPWaiterCtx(object):
 
     def __init__(self, test, drops, timeout=1, expected_states=[]):
         self._drops = listify(drops)
-        self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
-        self._test = test if hasattr(test, 'assertTrue') else None
+        self._expected_states = expected_states or (
+            DROPStates.COMPLETED,
+            DROPStates.ERROR,
+        )
+        self._test = test if hasattr(test, "assertTrue") else None
         self._timeout = timeout
         self._evts = []
+
     def __enter__(self):
         for drop in self._drops:
             evt = threading.Event()
-            drop.subscribe(EvtConsumer(evt, expected_states=self._expected_states), 'status')
+            drop.subscribe(
+                EvtConsumer(evt, expected_states=self._expected_states), "status"
+            )
             self._evts.append(evt)
         return self
+
     def __exit__(self, typ, value, tb):
         if typ is not None:
             traceback.print_tb(tb)
-            if self._test: self._test.fail('%r' % (value,))
+            if self._test:
+                self._test.fail("%r" % (value,))
         to = self._timeout
         if self._test:
             for evt in self._evts:
-                self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
+                self._test.assertTrue(
+                    evt.wait(to), "Waiting for DROP failed with timeout %d" % to
+                )
 
 
 def allDropContents(drop, bufsize=4096):
-    '''
+    """
     Returns all the data contained in a given DROP
-    '''
+    """
     buf = io.BytesIO()
     desc = drop.open()
     read = drop.read
@@ -114,10 +130,11 @@ def allDropContents(drop, bufsize=4096):
     drop.close(desc)
     return buf.getvalue()
 
+
 def copyDropContents(source, target, bufsize=4096):
-    '''
+    """
     Manually copies data from one DROP into another, in bufsize steps
-    '''
+    """
     logger.debug("Copying from %r to %r" % (source, target))
     desc = source.open()
     read = source.read
@@ -129,6 +146,7 @@ def copyDropContents(source, target, bufsize=4096):
         buf = read(desc, bufsize)
         logger.debug("Read %d bytes from %r" % (len(buf), source))
     source.close(desc)
+
 
 def getUpstreamObjects(drop):
     """
@@ -150,6 +168,7 @@ def getUpstreamObjects(drop):
         upObjs += drop.producers
     return upObjs
 
+
 def getDownstreamObjects(drop):
     """
     Returns a list of all direct "downstream" DROPs for the given
@@ -169,15 +188,21 @@ def getDownstreamObjects(drop):
         downObjs += drop.streamingConsumers
     return downObjs
 
+
 def getLeafNodes(drops):
     """
     Returns a list of all the "leaf nodes" of the graph pointed by `drops`.
     `drops` is either a single DROP, or a list of DROPs.
     """
     drops = listify(drops)
-    return [drop for drop,_ in breadFirstTraverse(drops) if not getDownstreamObjects(drop) and drop.type != DropType.SERVICE_APP]
+    return [
+        drop
+        for drop, _ in breadFirstTraverse(drops)
+        if not getDownstreamObjects(drop) and drop.type != DropType.SERVICE_APP
+    ]
 
-def depthFirstTraverse(node: AbstractDROP, visited = []):
+
+def depthFirstTraverse(node: AbstractDROP, visited=[]):
     """
     Depth-first iterator for a DROP graph.
 
@@ -196,6 +221,7 @@ def depthFirstTraverse(node: AbstractDROP, visited = []):
     for drop in [d for d in dependencies if d not in visited]:
         for x in depthFirstTraverse(drop, visited):
             yield x
+
 
 def breadFirstTraverse(toVisit):
     """
@@ -226,6 +252,7 @@ def breadFirstTraverse(toVisit):
         visited.update(next_visits)
         toVisit += next_visits
 
+
 def listify(o):
     """
     If `o` is already a list return it as is; if `o` is a tuple returns a list
@@ -237,6 +264,7 @@ def listify(o):
     if isinstance(o, tuple):
         return list(o)
     return [o]
+
 
 class DROPFile(object):
     """
@@ -255,6 +283,7 @@ class DROPFile(object):
 
     Objects of this class can also be used in a `with` context.
     """
+
     def __init__(self, drop):
         self._drop = drop
         self._io = IOForURL(drop.dataURL)
@@ -302,6 +331,7 @@ class DROPFile(object):
     def __enter__(self):
         self.open()
         return self
+
     def __exit__(self, typ, value, traceback):
         self.close()
 
@@ -309,13 +339,15 @@ class DROPFile(object):
         if not self._isClosed:
             self.close()
 
+
 def has_path(x):
     """Returns `True` if `x` has a `path` attribute"""
     try:
-        getattr(x, 'path')
+        getattr(x, "path")
         return True
     except:
         return False
+
 
 def replace_path_placeholders(cmd, inputs, outputs):
     """
@@ -329,14 +361,18 @@ def replace_path_placeholders(cmd, inputs, outputs):
       ``%o[X]``.
     """
 
-    logger.debug('Replacing cmd %s with placeholders with I/O uids: %r, %r',
-                 cmd, inputs.keys(), outputs.keys())
+    logger.debug(
+        "Replacing cmd %s with placeholders with I/O uids: %r, %r",
+        cmd,
+        inputs.keys(),
+        outputs.keys(),
+    )
 
-    for x,i in enumerate(inputs.values()):
+    for x, i in enumerate(inputs.values()):
         pathRef = "%%i%d" % (x,)
         if pathRef in cmd:
             cmd = cmd.replace(pathRef, i.path)
-    for x,o in enumerate(outputs.values()):
+    for x, o in enumerate(outputs.values()):
         pathRef = "%%o%d" % (x)
         if pathRef in cmd:
             cmd = cmd.replace(pathRef, o.path)
@@ -354,6 +390,7 @@ def replace_path_placeholders(cmd, inputs, outputs):
 
     return cmd
 
+
 def replace_dataurl_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the dataURL property of the
@@ -370,20 +407,20 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     # bind their data via volumes into the docker container. Instead they
     # communicate their dataURL via command-line replacement
 
-    for x,i in enumerate(inputs.values()):
+    for x, i in enumerate(inputs.values()):
         dataUrlRef = "%%iDataURL%d" % (x,)
         if dataUrlRef in cmd:
             cmd = cmd.replace(dataUrlRef, i.dataURL)
-    for x,o in enumerate(outputs.values()):
+    for x, o in enumerate(outputs.values()):
         dataUrlRef = "%%oDataURL%d" % (x,)
         if dataUrlRef in cmd:
             cmd = cmd.replace(dataUrlRef, o.dataURL)
 
-    for uid,i in inputs.items():
+    for uid, i in inputs.items():
         dataURLRef = "%%iDataURL[%s]" % (uid,)
         if dataURLRef in cmd:
             cmd = cmd.replace(dataURLRef, i.dataURL)
-    for uid,o in outputs.items():
+    for uid, o in outputs.items():
         dataURLRef = "%%oDataURL[%s]" % (uid,)
         if dataURLRef in cmd:
             cmd = cmd.replace(dataUrlRef, o.dataURL)
@@ -391,6 +428,7 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     logger.debug("Command after data URL placeholder replacement is: %s", cmd)
 
     return cmd
+
 
 # Easing the transition from single- to multi-package
 get_leaves = common.get_leaves

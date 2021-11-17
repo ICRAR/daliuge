@@ -42,15 +42,12 @@ from bottle import (
     template,
     redirect,
     response,
-    HTTPResponse
+    HTTPResponse,
 )
 import bottle
 import pkg_resources
 
-from urllib.parse import (
-    parse_qs,
-    urlparse
-)
+from urllib.parse import parse_qs, urlparse
 
 from ... import common, restutils
 from ...clients import CompositeManagerClient
@@ -59,6 +56,7 @@ from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
 
 logger = logging.getLogger(__name__)
+
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
@@ -298,7 +296,7 @@ def gen_pg():
     """
     # if the 'deploy' checkbox is not checked, then the form submission will NOT contain a 'dlg_mgr_deploy' field
     deploy = request.query.get("dlg_mgr_deploy") is not None
-    mprefix = ''
+    mprefix = ""
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -309,20 +307,20 @@ def gen_pg():
     surl = urlparse(request.url)
 
     q = parse_qs(surl.query)
-    if 'dlg_mgr_url' in q:
-        murl = q['dlg_mgr_url'][0]
+    if "dlg_mgr_url" in q:
+        murl = q["dlg_mgr_url"][0]
         mparse = urlparse(murl)
         try:
-            (mhost, mport) = mparse.netloc.split(':')
+            (mhost, mport) = mparse.netloc.split(":")
             mport = int(mport)
         except:
             mhost = mparse.netloc
-            if mparse.scheme == 'http':
+            if mparse.scheme == "http":
                 mport = 80
-            elif mparse.scheme == 'https':
-                mport = 443            
+            elif mparse.scheme == "https":
+                mport = 443
         mprefix = mparse.path
-        if mprefix[-1] == '/':
+        if mprefix[-1] == "/":
             mprefix = mprefix[:-1]
     else:
         mhost = request.query.get("dlg_mgr_host")
@@ -332,12 +330,14 @@ def gen_pg():
     logger.debug("Manager host: %s" % mhost)
     logger.debug("Manager port: %s" % mport)
     logger.debug("Manager prefix: %s" % mprefix)
-    
+
     if mhost is None:
         response.status = 500
         return "Must specify DALiUGE manager host"
     try:
-        mgr_client = CompositeManagerClient(host=mhost, port=mport, url_prefix=mprefix, timeout=30)
+        mgr_client = CompositeManagerClient(
+            host=mhost, port=mport, url_prefix=mprefix, timeout=30
+        )
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
         # 2. mapping PGTP to resources (node list)
@@ -357,10 +357,16 @@ def gen_pg():
             # mgr_client.deploy_session(ssid, completed_uids=[])
             # print "session deployed"
             # 3. redirect to the master drop manager
-            redirect("http://{0}:{1}{2}/session?sessionId={3}".format(mhost, mport, mprefix, ssid))
+            redirect(
+                "http://{0}:{1}{2}/session?sessionId={3}".format(
+                    mhost, mport, mprefix, ssid
+                )
+            )
         else:
-            response.content_type = 'application/json'
-            response.set_header("Content-Disposition", "attachment; filename=%s" % (pgt_id))
+            response.content_type = "application/json"
+            response.set_header(
+                "Content-Disposition", "attachment; filename=%s" % (pgt_id)
+            )
             return json.dumps(pg_spec)
     except restutils.RestClientException as re:
         response.status = 500
@@ -379,9 +385,9 @@ def gen_pg_spec():
     RESTful interface to convert a PGT(P) into pg_spec
     """
     try:
-        pgt_id         = request.json.get("pgt_id");
-        node_list      = request.json.get("node_list");
-        manager_host   = request.json.get("manager_host");
+        pgt_id = request.json.get("pgt_id")
+        node_list = request.json.get("node_list")
+        manager_host = request.json.get("manager_host")
         # try:
         #     manager_port   = int(request.json.get("manager_port"));
         # except:
@@ -414,8 +420,8 @@ def gen_pg_spec():
         pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
         # 3. get list of root nodes
         root_uids = common.get_roots(pg_spec)
-        response.content_type = 'application/json'
-        return json.dumps({'pg_spec':pg_spec,'root_uids':list(root_uids)})
+        response.content_type = "application/json"
+        return json.dumps({"pg_spec": pg_spec, "root_uids": list(root_uids)})
     except Exception as ex:
         response.status = 500
         print(traceback.format_exc())
@@ -495,7 +501,9 @@ def gen_pgt_post():
             tpl,
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
-            title="Physical Graph Template {}".format("" if par_algo == "none" else "Partitioning"),
+            title="Physical Graph Template {}".format(
+                "" if par_algo == "none" else "Partitioning"
+            ),
         )
     except GraphException as ge:
         trace_msg = traceback.format_exc()
@@ -576,12 +584,14 @@ def root():
         tpl,
         pgt_view_json_name=None,
         partition_info=None,
-        title="Physical Graph Template"
+        title="Physical Graph Template",
     )
 
 
 def run(parser, args):
-    warnings.warn("Running the translator from daliuge is deprecated", DeprecationWarning)
+    warnings.warn(
+        "Running the translator from daliuge is deprecated", DeprecationWarning
+    )
     epilog = """
 If you have no Logical Graphs yet and want to see some you can grab a copy
 of those maintained at:
@@ -674,6 +684,7 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # Simple and easy
     def handler(*_args):
         raise KeyboardInterrupt
+
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
