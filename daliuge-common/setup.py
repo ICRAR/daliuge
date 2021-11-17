@@ -37,13 +37,15 @@ VERSION = (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/common/version.py"
 RELEASE = True
 
+
 def do_versioning():
     # Avoid importing, the package doesn't exist as such yet
-    with open(os.path.join('dlg', 'version_helper.py')) as f:
+    with open(os.path.join("dlg", "version_helper.py")) as f:
         code = f.read()
     _globals = {}
     exec(code, _globals)
-    return _globals['write_version_info'](VERSION, VERSION_FILE, RELEASE)
+    return _globals["write_version_info"](VERSION, VERSION_FILE, RELEASE)
+
 
 setup(
     name="daliuge-common",
@@ -56,5 +58,7 @@ setup(
     license="LGPLv2+",
     packages=find_packages(),
     test_suite="test",
-    entry_points={"console_scripts": ["dlg=dlg.common.tool:run"]},  # One tool to rule them all
+    entry_points={
+        "console_scripts": ["dlg=dlg.common.tool:run"]
+    },  # One tool to rule them all
 )

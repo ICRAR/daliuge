@@ -108,7 +108,9 @@ def _to_c_input(i):
 
     desc = i.open()
     r = _read_cb_type(functools.partial(_read, desc))
-    c_input = CDlgInput(i.uid.encode('utf8'), i.oid.encode('utf8'), i.name.encode('utf8'), i.status, r)
+    c_input = CDlgInput(
+        i.uid.encode("utf8"), i.oid.encode("utf8"), i.name.encode("utf8"), i.status, r
+    )
     return desc, c_input
 
 
@@ -121,7 +123,9 @@ def _to_c_output(o):
         return _o.write(buf[:n])
 
     w = _write_cb_type(functools.partial(_write, o))
-    return CDlgOutput(o.uid.encode('utf8'), o.oid.encode('utf8'), o.name.encode('utf8'), w)
+    return CDlgOutput(
+        o.uid.encode("utf8"), o.oid.encode("utf8"), o.name.encode("utf8"), w
+    )
 
 
 def prepare_c_inputs(c_app, inputs):
@@ -176,7 +180,9 @@ def run(lib, c_app, input_closers):
             if isinstance(result, Exception):
                 raise result
             if result:
-                raise Exception("Invocation of {}:run2 returned with status {}".format(lib, result))
+                raise Exception(
+                    "Invocation of {}:run2 returned with status {}".format(lib, result)
+                )
 
         elif lib.run(ctypes.pointer(c_app)):
             raise Exception("Invocation of %r:run returned with status != 0" % lib)
@@ -212,7 +218,9 @@ def load_and_init(libname, oid, uid, params):
                 break
 
         if not found_one:
-            raise InvalidLibrary("{} doesn't have one of the functions {}".format(libname, functions))
+            raise InvalidLibrary(
+                "{} doesn't have one of the functions {}".format(libname, functions)
+            )
 
     # Create the initial contents of the C dlg_app_info structure
     # We pass no inputs because we don't know them (and don't need them)
@@ -220,8 +228,8 @@ def load_and_init(libname, oid, uid, params):
     # The running and done callbacks are also NULLs
     c_app = CDlgApp(
         None,
-        uid.encode('utf8'),
-        oid.encode('utf8'),
+        uid.encode("utf8"),
+        oid.encode("utf8"),
         None,
         0,
         None,
@@ -244,13 +252,17 @@ def load_and_init(libname, oid, uid, params):
         if isinstance(result, Exception):
             raise result
         if result:
-            raise InvalidLibrary("{} failed during initialization (init2)".format(libname))
+            raise InvalidLibrary(
+                "{} failed during initialization (init2)".format(libname)
+            )
 
     elif hasattr(lib, "init"):
         # Collect the rest of the parameters to pass them down to the library
         # We need to keep them in a local variable so when we expose them to
         # the app later on via pointers we still have their contents
-        local_params = [(str(k).encode('utf8'), str(v).encode('utf8')) for k, v in params.items()]
+        local_params = [
+            (str(k).encode("utf8"), str(v).encode("utf8")) for k, v in params.items()
+        ]
         logger.debug("Extra parameters passed to application: %r", local_params)
 
         # Wrap in ctypes
@@ -263,10 +275,14 @@ def load_and_init(libname, oid, uid, params):
         # Let the shared library initialize this app
         # If we have a list of key/value pairs that are all strings
         if lib.init(ctypes.pointer(c_app), params):
-            raise InvalidLibrary("{} failed during initialization (init)".format(libname))
+            raise InvalidLibrary(
+                "{} failed during initialization (init)".format(libname)
+            )
 
     else:
-        raise InvalidLibrary("{} failed during initialization. No init or init2".format(libname))
+        raise InvalidLibrary(
+            "{} failed during initialization. No init or init2".format(libname)
+        )
 
     return lib, c_app
 
@@ -316,12 +332,12 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
     def dataWritten(self, uid, data):
         self._ensure_c_outputs_are_set()
         app_p = ctypes.pointer(self._c_app)
-        self.lib.data_written(app_p, uid.encode('utf8'), data, len(data))
+        self.lib.data_written(app_p, uid.encode("utf8"), data, len(data))
 
     def dropCompleted(self, uid, drop_state):
         self._ensure_c_outputs_are_set()
         app_p = ctypes.pointer(self._c_app)
-        self.lib.drop_completed(app_p, uid.encode('utf8'), drop_state)
+        self.lib.drop_completed(app_p, uid.encode("utf8"), drop_state)
 
     def addInput(self, inputDrop, back=True):
         super(DynlibStreamApp, self).addInput(inputDrop, back)
@@ -334,9 +350,10 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
+
     def initialize(self, **kwargs):
         super(DynlibApp, self).initialize(**kwargs)
-        self.ranks = self._getArg(kwargs, 'rank', None)
+        self.ranks = self._getArg(kwargs, "rank", None)
 
     def run(self):
         input_closers = prepare_c_inputs(self._c_app, self.inputs)

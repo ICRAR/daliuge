@@ -44,43 +44,71 @@ import binascii
 
 import numpy as np
 
-from .ddap_protocol import ExecutionMode, ChecksumTypes, AppDROPStates, \
-    DROPLinkType, DROPPhases, DROPStates, DROPRel
+from .ddap_protocol import (
+    ExecutionMode,
+    ChecksumTypes,
+    AppDROPStates,
+    DROPLinkType,
+    DROPPhases,
+    DROPStates,
+    DROPRel,
+)
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import OpenMode, FileIO, MemoryIO, NgasIO, NgasLiteIO, ErrorIO, NullIO, PlasmaIO, PlasmaFlightIO
+from .io import (
+    OpenMode,
+    FileIO,
+    MemoryIO,
+    NgasIO,
+    NgasLiteIO,
+    ErrorIO,
+    NullIO,
+    PlasmaIO,
+    PlasmaFlightIO,
+)
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
-from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
-    dlg_string_param, dlg_bool_param, dlg_dict_param
+from .meta import (
+    dlg_float_param,
+    dlg_int_param,
+    dlg_list_param,
+    dlg_string_param,
+    dlg_bool_param,
+    dlg_dict_param,
+)
 
 import pyarrow.plasma as plasma
 
 # Opt into using per-drop checksum calculation
-checksum_disabled = 'DLG_DISABLE_CHECKSUM' in os.environ
+checksum_disabled = "DLG_DISABLE_CHECKSUM" in os.environ
 try:
     from crc32c import crc32c  # @UnusedImport
+
     _checksumType = ChecksumTypes.CRC_32C
 except:
     from binascii import crc32  # @Reimport
+
     _checksumType = ChecksumTypes.CRC_32
 
 
 logger = logging.getLogger(__name__)
 
+
 class ListAsDict(list):
     """A list that adds drop UIDs to a set as they get appended to the list"""
+
     def __init__(self, my_set):
         self.set = my_set
+
     def append(self, drop):
         super(ListAsDict, self).append(drop)
         self.set.add(drop.uid)
 
 
-track_current_drop = object_tracking('drop')
+track_current_drop = object_tracking("drop")
 
-#===============================================================================
+# ===============================================================================
 # DROP classes follow
-#===============================================================================
+# ===============================================================================
 
 
 class AbstractDROP(EventFirer):
@@ -153,24 +181,24 @@ class AbstractDROP(EventFirer):
 
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
-        self._type = self._getArg(kwargs, 'type', None)
+        self._type = self._getArg(kwargs, "type", None)
 
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
         # general it cannot be assumed it will (e.g., unit tests create drops
         # directly outside the context of a session).
-        self._dlg_session = self._getArg(kwargs, 'dlg_session', None)
+        self._dlg_session = self._getArg(kwargs, "dlg_session", None)
 
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._getArg(kwargs, 'nm', "")
+        self.name = self._getArg(kwargs, "nm", "")
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
         # physical graph was generated (or if this drop is being created as part
         # of a graph, to begin with), so we default it to an empty value
-        self.lg_key = self._getArg(kwargs, 'lg_key', '')
+        self.lg_key = self._getArg(kwargs, "lg_key", "")
 
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
@@ -202,10 +230,10 @@ class AbstractDROP(EventFirer):
         self._streamingConsumers = ListAsDict(self._streamingConsumers_uids)
 
         self._refCount = 0
-        self._refLock  = threading.Lock()
+        self._refLock = threading.Lock()
         self._location = None
-        self._parent   = None
-        self._status   = None
+        self._parent = None
+        self._status = None
         self._statusLock = threading.RLock()
 
         # Current and target phases.
@@ -214,7 +242,7 @@ class AbstractDROP(EventFirer):
         # support. A target phase is also set to hint the Data Lifecycle Manager
         # about the level of resilience that this DROP should achieve.
         self._phase = DROPPhases.PLASMA
-        self._targetPhase = self._getArg(kwargs, 'targetPhase', DROPPhases.GAS)
+        self._targetPhase = self._getArg(kwargs, "targetPhase", DROPPhases.GAS)
 
         # Calculating the checksum and maintaining the data size internally
         # implies that the data represented by this DROP is written
@@ -225,9 +253,9 @@ class AbstractDROP(EventFirer):
         # this information.
         # Note also that the setters of these two properties also allow to set
         # a value on them, but only if they are None
-        self._checksum     = None
+        self._checksum = None
         self._checksumType = None
-        self._size         = None
+        self._size = None
 
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
@@ -250,53 +278,57 @@ class AbstractDROP(EventFirer):
         # in the state they currently are. In this case an external entity must
         # listen to the events and decide when to trigger the execution of the
         # applications.
-        self._executionMode = self._getArg(kwargs, 'executionMode', ExecutionMode.DROP)
+        self._executionMode = self._getArg(kwargs, "executionMode", ExecutionMode.DROP)
 
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
         # graph via the DataIslandManager, but in simpler scenarios such as
         # tests or graph submissions via the NodeManager it might be
         # missing.
-        self._node = self._getArg(kwargs, 'node', None)
+        self._node = self._getArg(kwargs, "node", None)
 
         # The host representing the Data Island where this DROP resides
         # This piece of information is mandatory when submitting the physical
         # graph via the MasterManager, but in simpler scenarios such as tests or
         # graphs submissions via the DataIslandManager or NodeManager it might
         # missing.
-        self._dataIsland = self._getArg(kwargs, 'island', None)
+        self._dataIsland = self._getArg(kwargs, "island", None)
 
         # DROP expiration.
         # Expiration can be time-driven or usage-driven, which are mutually
         # exclusive methods. If time-driven, a relative lifespan is assigned to
         # the DROP.
         # Expected lifespan for this object, used by to expire them
-        if 'lifespan' in kwargs and 'expireAfterUse' in kwargs:
-            raise InvalidDropException(self, "%r specifies both `lifespan` and `expireAfterUse`" \
-                             "but they are mutually exclusive" % (self,))
+        if "lifespan" in kwargs and "expireAfterUse" in kwargs:
+            raise InvalidDropException(
+                self,
+                "%r specifies both `lifespan` and `expireAfterUse`"
+                "but they are mutually exclusive" % (self,),
+            )
 
-        self._expireAfterUse = self._getArg(kwargs, 'expireAfterUse', False)
+        self._expireAfterUse = self._getArg(kwargs, "expireAfterUse", False)
         self._expirationDate = -1
         if not self._expireAfterUse:
-            lifespan = float(self._getArg(kwargs, 'lifespan', -1))
+            lifespan = float(self._getArg(kwargs, "lifespan", -1))
             if lifespan != -1:
                 self._expirationDate = time.time() + lifespan
 
         # Expected data size, used to automatically move the DROP to COMPLETED
         # after successive calls to write()
         self._expectedSize = -1
-        if 'expectedSize' in kwargs and kwargs['expectedSize']:
-            self._expectedSize = int(kwargs.pop('expectedSize'))
+        if "expectedSize" in kwargs and kwargs["expectedSize"]:
+            self._expectedSize = int(kwargs.pop("expectedSize"))
 
         # All DROPs are precious unless stated otherwise; used for replication
-        self._precious = self._getArg(kwargs, 'precious', True)
+        self._precious = self._getArg(kwargs, "precious", True)
 
         # Sub-class initialization; mark ourselves as INITIALIZED after that
         self.initialize(**kwargs)
-        self._status = DROPStates.INITIALIZED # no need to use synchronised self.status here
+        self._status = (
+            DROPStates.INITIALIZED
+        )  # no need to use synchronised self.status here
 
     def _extract_attributes(self, **kwargs):
-
         def getmembers(object, predicate=None):
             for cls in object.__class__.__mro__[:-1]:
                 for k, v in vars(cls).items():
@@ -304,31 +336,41 @@ class AbstractDROP(EventFirer):
                         yield k, v
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
-        for attr_name, obj in getmembers(self, lambda a: not(inspect.isfunction(a) or isinstance(a, property))):
+        for attr_name, obj in getmembers(
+            self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
+        ):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value != '':
+                if value is not None and value != "":
                     value = float(value)
             elif isinstance(obj, dlg_bool_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value != '':
+                if value is not None and value != "":
                     value = bool(value)
             elif isinstance(obj, dlg_int_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value != '':
+                if value is not None and value != "":
                     value = int(value)
             elif isinstance(obj, dlg_string_param):
                 value = kwargs.get(attr_name, obj.default_value)
-                if value is not None and value != '':
+                if value is not None and value != "":
                     value = str(value)
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None and not isinstance(value, list):
-                    raise Exception("dlg_list_param {} is not a list. It is a {}".format(attr_name, type(value)))
+                    raise Exception(
+                        "dlg_list_param {} is not a list. It is a {}".format(
+                            attr_name, type(value)
+                        )
+                    )
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None and not isinstance(value, dict):
-                    raise Exception("dlg_dict_param {} is not a dict. It is a {}".format(attr_name, type(value)))
+                    raise Exception(
+                        "dlg_dict_param {} is not a dict. It is a {}".format(
+                            attr_name, type(value)
+                        )
+                    )
             else:
                 continue
             setattr(self, attr_name, value)
@@ -386,7 +428,13 @@ class AbstractDROP(EventFirer):
         getting deleted.
         """
         if self.status != DROPStates.COMPLETED:
-            raise Exception("%r is in state %s (!=COMPLETED), cannot be opened for reading" % (self, self.status,))
+            raise Exception(
+                "%r is in state %s (!=COMPLETED), cannot be opened for reading"
+                % (
+                    self,
+                    self.status,
+                )
+            )
 
         io = self.getIO()
         logger.debug("Opening drop %s" % (self.oid))
@@ -401,7 +449,7 @@ class AbstractDROP(EventFirer):
 
         # This occurs only after a successful opening
         self.incrRefCount()
-        self._fire('open')
+        self._fire("open")
 
         return descriptor
 
@@ -428,7 +476,7 @@ class AbstractDROP(EventFirer):
             try:
                 self._wio.close()
             except:
-                pass # this will make sure that a previous issue does not cause the graph to hang!
+                pass  # this will make sure that a previous issue does not cause the graph to hang!
                 # raise Exception("Problem closing file!")
             self._wio = None
 
@@ -442,11 +490,19 @@ class AbstractDROP(EventFirer):
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
-            raise Exception("%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status,))
+            raise Exception(
+                "%r is in state %s (!=COMPLETED), cannot be read"
+                % (
+                    self,
+                    self.status,
+                )
+            )
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
-            raise Exception("Illegal descriptor %d given, remember to open() first" % (descriptor))
+            raise Exception(
+                "Illegal descriptor %d given, remember to open() first" % (descriptor)
+            )
 
     def isBeingRead(self):
         """
@@ -458,13 +514,13 @@ class AbstractDROP(EventFirer):
 
     @track_current_drop
     def write(self, data, **kwargs):
-        '''
+        """
         Writes the given `data` into this DROP. This method is only meant
         to be called while the DROP is in INITIALIZED or WRITING state;
         once the DROP is COMPLETE or beyond only reading is allowed.
         The underlying storage mechanism is responsible for implementing the
         final writing logic via the `self.writeMeta()` method.
-        '''
+        """
 
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
@@ -486,7 +542,10 @@ class AbstractDROP(EventFirer):
         dataLen = len(data)
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
-            logger.warning('Not all data was correctly written by %s (%d/%d bytes written)' % (self, nbytes, dataLen))
+            logger.warning(
+                "Not all data was correctly written by %s (%d/%d bytes written)"
+                % (self, nbytes, dataLen)
+            )
 
         # see __init__ for the initialization to None
         if self._size is None:
@@ -510,8 +569,14 @@ class AbstractDROP(EventFirer):
                 self.status = DROPStates.WRITING
             else:
                 if remaining < 0:
-                    logger.warning("Received and wrote more bytes than expected: " + str(-remaining))
-                logger.debug("Automatically moving %r to COMPLETED, all expected data arrived" % (self,))
+                    logger.warning(
+                        "Received and wrote more bytes than expected: "
+                        + str(-remaining)
+                    )
+                logger.debug(
+                    "Automatically moving %r to COMPLETED, all expected data arrived"
+                    % (self,)
+                )
                 self.setCompleted()
         else:
             self.status = DROPStates.WRITING
@@ -569,9 +634,15 @@ class AbstractDROP(EventFirer):
     @checksum.setter
     def checksum(self, value):
         if self._checksum is not None:
-            raise Exception("The checksum for DROP %s is already calculated, cannot overwrite with new value" % (self))
+            raise Exception(
+                "The checksum for DROP %s is already calculated, cannot overwrite with new value"
+                % (self)
+            )
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("DROP %s is still not fully written, cannot manually set a checksum yet" % (self))
+            raise Exception(
+                "DROP %s is still not fully written, cannot manually set a checksum yet"
+                % (self)
+            )
         self._checksum = value
 
     @property
@@ -591,9 +662,15 @@ class AbstractDROP(EventFirer):
     @checksumType.setter
     def checksumType(self, value):
         if self._checksumType is not None:
-            raise Exception("The checksum type for DROP %s is already set, cannot overwrite with new value" % (self))
+            raise Exception(
+                "The checksum type for DROP %s is already set, cannot overwrite with new value"
+                % (self)
+            )
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("DROP %s is still not fully written, cannot manually set a checksum type yet" % (self))
+            raise Exception(
+                "DROP %s is still not fully written, cannot manually set a checksum type yet"
+                % (self)
+            )
         self._checksumType = value
 
     @property
@@ -657,11 +734,11 @@ class AbstractDROP(EventFirer):
         the event being sent. On top of that, the `uid` and `oid` attributes are
         also added, carrying the uid and oid of the current DROP, respectively.
         """
-        kwargs['oid'] = self.oid
-        kwargs['uid'] = self.uid
-        kwargs['session_id'] = self._dlg_session.sessionId if self._dlg_session else ''
-        kwargs['name'] = self.name
-        kwargs['lg_key'] = self.lg_key
+        kwargs["oid"] = self.oid
+        kwargs["uid"] = self.uid
+        kwargs["session_id"] = self._dlg_session.sessionId if self._dlg_session else ""
+        kwargs["name"] = self.name
+        kwargs["lg_key"] = self.lg_key
         self._fireEvent(eventType, **kwargs)
 
     @property
@@ -701,9 +778,15 @@ class AbstractDROP(EventFirer):
     @size.setter
     def size(self, size):
         if self._size is not None:
-            raise Exception("The size of DROP %s is already calculated, cannot overwrite with new value" % (self))
+            raise Exception(
+                "The size of DROP %s is already calculated, cannot overwrite with new value"
+                % (self)
+            )
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("DROP %s is still not fully written, cannot manually set a size yet" % (self))
+            raise Exception(
+                "DROP %s is still not fully written, cannot manually set a size yet"
+                % (self)
+            )
         self._size = size
 
     @property
@@ -729,7 +812,7 @@ class AbstractDROP(EventFirer):
                 return
             self._status = value
 
-        self._fire('status', status = value)
+        self._fire("status", status=value)
 
     @property
     def parent(self):
@@ -744,11 +827,13 @@ class AbstractDROP(EventFirer):
     @track_current_drop
     def parent(self, parent):
         if self._parent and parent:
-            logger.warning("A parent is already set in %r, overwriting with new value" % (self,))
+            logger.warning(
+                "A parent is already set in %r, overwriting with new value" % (self,)
+            )
         if parent:
             prevParent = self._parent
-            self._parent = parent # a parent is a container
-            if hasattr(parent, 'addChild') and self not in parent.children:
+            self._parent = parent  # a parent is a container
+            if hasattr(parent, "addChild") and self not in parent.children:
                 try:
                     parent.addChild(self)
                 except:
@@ -758,8 +843,9 @@ class AbstractDROP(EventFirer):
         """
         Gets the physical node address(s) of the consumer of this drop.
         """
-        return [cons.node for cons in self._consumers] +\
-               [cons.node for cons in self._streamingConsumers]
+        return [cons.node for cons in self._consumers] + [
+            cons.node for cons in self._streamingConsumers
+        ]
 
     @property
     def consumers(self):
@@ -790,14 +876,16 @@ class AbstractDROP(EventFirer):
         # see the comment in the __init__ method
         cuid = consumer.uid
         if cuid in self._streamingConsumers_uids:
-            raise InvalidRelationshipException(DROPRel(consumer, DROPLinkType.CONSUMER, self),
-                                               "Consumer already registered as a streaming consumer")
+            raise InvalidRelationshipException(
+                DROPRel(consumer, DROPLinkType.CONSUMER, self),
+                "Consumer already registered as a streaming consumer",
+            )
 
         # Add if not already present
         # Add the reverse reference too automatically
         if cuid in self._consumers_uids:
             return
-        logger.debug('Adding new consumer %r to %r', consumer, self)
+        logger.debug("Adding new consumer %r to %r", consumer, self)
         self._consumers.append(consumer)
 
         # Subscribe the consumer to events sent when this DROP moves to
@@ -807,10 +895,10 @@ class AbstractDROP(EventFirer):
         # an external entity will trigger the execution of the consumer at the
         # right time
         if self.executionMode == ExecutionMode.DROP:
-            self.subscribe(consumer, 'dropCompleted')
+            self.subscribe(consumer, "dropCompleted")
 
         # Automatic back-reference
-        if back and hasattr(consumer, 'addInput'):
+        if back and hasattr(consumer, "addInput"):
             logger.debug("Adding back %r as input of %r", self, consumer)
             consumer.addInput(self, False)
 
@@ -843,7 +931,7 @@ class AbstractDROP(EventFirer):
         self._producers.append(producer)
 
         # Automatic back-reference
-        if back and hasattr(producer, 'addOutput'):
+        if back and hasattr(producer, "addOutput"):
             producer.addOutput(self, False)
 
     @track_current_drop
@@ -852,7 +940,7 @@ class AbstractDROP(EventFirer):
         Handles the arrival of a new event. Events are delivered from those
         objects this DROP is subscribed to.
         """
-        if e.type == 'producerFinished':
+        if e.type == "producerFinished":
             self.producerFinished(e.uid, e.status)
 
     @track_current_drop
@@ -876,7 +964,10 @@ class AbstractDROP(EventFirer):
             nProd = len(self._producers)
 
             if nFinished > nProd:
-                raise Exception("More producers finished that registered in DROP %r: %d > %d" % (self, nFinished, nProd))
+                raise Exception(
+                    "More producers finished that registered in DROP %r: %d > %d"
+                    % (self, nFinished, nProd)
+                )
             elif nFinished == nProd:
                 finished = True
 
@@ -912,17 +1003,22 @@ class AbstractDROP(EventFirer):
         # see the comment in the __init__ method
         scuid = streamingConsumer.uid
         if scuid in self._consumers_uids:
-            raise InvalidRelationshipException(DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
-                                               "Consumer is already registered as a normal consumer")
+            raise InvalidRelationshipException(
+                DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
+                "Consumer is already registered as a normal consumer",
+            )
 
         # Add if not already present
         if scuid in self._streamingConsumers_uids:
             return
-        logger.debug('Adding new streaming streaming consumer for %r: %s' %(self, streamingConsumer))
+        logger.debug(
+            "Adding new streaming streaming consumer for %r: %s"
+            % (self, streamingConsumer)
+        )
         self._streamingConsumers.append(streamingConsumer)
 
         # Automatic back-reference
-        if back and hasattr(streamingConsumer, 'addStreamingInput'):
+        if back and hasattr(streamingConsumer, "addStreamingInput"):
             streamingConsumer.addStreamingInput(self, False)
 
         # Subscribe the streaming consumer to events sent when this DROP moves
@@ -932,13 +1028,13 @@ class AbstractDROP(EventFirer):
         # an external entity will trigger the execution of the consumer at the
         # right time
         if self.executionMode == ExecutionMode.DROP:
-            self.subscribe(streamingConsumer, 'dropCompleted')
+            self.subscribe(streamingConsumer, "dropCompleted")
 
     @track_current_drop
     def setError(self):
-        '''
+        """
         Moves this DROP to the ERROR state.
-        '''
+        """
 
         if self.status in (DROPStates.CANCELLED, DROPStates.SKIPPED):
             return
@@ -949,24 +1045,27 @@ class AbstractDROP(EventFirer):
         self.status = DROPStates.ERROR
 
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.ERROR)
+        self._fire("dropCompleted", status=DROPStates.ERROR)
 
     @track_current_drop
     def setCompleted(self):
-        '''
+        """
         Moves this DROP to the COMPLETED state. This can be used when not all the
         expected data has arrived for a given DROP, but it should still be moved
         to COMPLETED, or when the expected amount of data held by a DROP
         is not known in advanced.
-        '''
+        """
         status = self.status
         if status == DROPStates.CANCELLED:
             return
         elif status == DROPStates.SKIPPED:
-            self._fire('dropCompleted', status=status)
+            self._fire("dropCompleted", status=status)
             return
         elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
+            raise Exception(
+                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
+                % (self, self.status)
+            )
 
         self._closeWriters()
 
@@ -974,24 +1073,24 @@ class AbstractDROP(EventFirer):
         self.status = DROPStates.COMPLETED
 
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.COMPLETED)
+        self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     def isCompleted(self):
-        '''
+        """
         Checks whether this DROP is currently in the COMPLETED state or not
-        '''
+        """
         # Mind you we're not accessing _status, but status. This way we use the
         # lock in status() to access _status
-        return (self.status == DROPStates.COMPLETED)
+        return self.status == DROPStates.COMPLETED
 
     def cancel(self):
-        '''Moves this drop to the CANCELLED state closing any writers we opened'''
+        """Moves this drop to the CANCELLED state closing any writers we opened"""
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.CANCELLED
 
     def skip(self):
-        '''Moves this drop to the SKIPPED state closing any writers we opened'''
+        """Moves this drop to the SKIPPED state closing any writers we opened"""
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.SKIPPED
@@ -1003,6 +1102,7 @@ class AbstractDROP(EventFirer):
     @property
     def dataIsland(self):
         return self._dataIsland
+
 
 class PathBasedDrop(object):
     """Base class for data drops that handle paths (i.e., file and directory drops)"""
@@ -1022,10 +1122,10 @@ class PathBasedDrop(object):
         # have one only during testing)
         parts = []
         if self._dlg_session:
-            parts.append('.')
+            parts.append(".")
             parts.append(self._dlg_session.sessionId)
         else:
-            parts.append('/tmp/daliuge_tfiles')
+            parts.append("/tmp/daliuge_tfiles")
         if dirname:
             parts.append(dirname)
 
@@ -1036,6 +1136,7 @@ class PathBasedDrop(object):
     @property
     def path(self):
         return self._path
+
 
 class FileDROP(AbstractDROP, PathBasedDrop):
     """
@@ -1074,10 +1175,10 @@ class FileDROP(AbstractDROP, PathBasedDrop):
     this drop's session, namelly ``/the/cwd/$session_id``.
     """
 
-    filepath = dlg_string_param('filepath', None)
-    dirname = dlg_string_param('dirname', None)
-    delete_parent_directory = dlg_bool_param('delete_parent_directory', False)
-    check_filepath_exists = dlg_bool_param('check_filepath_exists', False)
+    filepath = dlg_string_param("filepath", None)
+    dirname = dlg_string_param("dirname", None)
+    delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
+    check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
     def sanitize_paths(self, filepath, dirname):
 
@@ -1096,7 +1197,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
             filepath_d = os.path.join(dirname, filepath_d)
         return filepath_b, filepath_d
 
-    non_fname_chars = re.compile(r':|%s' % os.sep)
+    non_fname_chars = re.compile(r":|%s" % os.sep)
 
     def initialize(self, **kwargs):
         """
@@ -1107,7 +1208,9 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 
         # Duh!
         if isabs(self.filepath) and self.dirname:
-            raise InvalidDropException(self, 'An absolute filepath does not allow a dirname to be specified')
+            raise InvalidDropException(
+                self, "An absolute filepath does not allow a dirname to be specified"
+            )
 
         # Sanitize filepath/dirname into proper directories-only and
         # filename-only components (e.g., dirname='lala' and filename='1/2'
@@ -1123,13 +1226,15 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 
         # Default filepath to drop UID and dirname to per-session directory
         if not filepath:
-            filepath = self.non_fname_chars.sub('_', self.uid)
+            filepath = self.non_fname_chars.sub("_", self.uid)
         dirname = self.get_dir(dirname)
 
         self._root = dirname
         self._path = os.path.join(dirname, filepath)
         if check and not os.path.isfile(self._path):
-            raise InvalidDropException(self, 'File does not exist or is not a file: %s' % self._path)
+            raise InvalidDropException(
+                self, "File does not exist or is not a file: %s" % self._path
+            )
 
         self._wio = None
 
@@ -1148,19 +1253,22 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 
     @track_current_drop
     def setCompleted(self):
-        '''
+        """
         Override this method in order to get the size of the drop set once it is completed.
-        '''
+        """
         # TODO: This implementation is almost a verbatim copy of the base class'
         # so we should look into merging them
         status = self.status
         if status == DROPStates.CANCELLED:
             return
         elif status == DROPStates.SKIPPED:
-            self._fire('dropCompleted', status=status)
+            self._fire("dropCompleted", status=status)
             return
         elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
+            raise Exception(
+                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
+                % (self, self.status)
+            )
 
         self._closeWriters()
 
@@ -1175,32 +1283,33 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         except FileNotFoundError:
             # we''ll try this again in case there is some other issue
             try:
-                with open(self.path, 'wb'):
+                with open(self.path, "wb"):
                     pass
             except:
                 self.status = DROPStates.ERROR
                 logger.error("Path not accessible: %s" % self.path)
             self._size = 0
         # Signal our subscribers that the show is over
-        self._fire('dropCompleted', status=DROPStates.COMPLETED)
+        self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     @property
     def dataURL(self):
-        hostname = os.uname()[1] # TODO: change when necessary
+        hostname = os.uname()[1]  # TODO: change when necessary
         return "file://" + hostname + self._path
 
 
 class NgasDROP(AbstractDROP):
-    '''
+    """
     A DROP that points to data stored in an NGAS server
-    '''
-    ngasSrv = dlg_string_param('ngasSrv', 'localhost')
-    ngasPort = dlg_int_param('ngasPort', 7777)
-    ngasFileId = dlg_string_param('ngasFileId', None)
-    ngasTimeout = dlg_int_param('ngasTimeout', 2)
-    ngasConnectTimeout = dlg_int_param('ngasConnectTimeout', 2)
-    ngasMime = dlg_string_param('ngasMime', 'application/octet-stream')
-    len = dlg_int_param('len', -1)
+    """
+
+    ngasSrv = dlg_string_param("ngasSrv", "localhost")
+    ngasPort = dlg_int_param("ngasPort", 7777)
+    ngasFileId = dlg_string_param("ngasFileId", None)
+    ngasTimeout = dlg_int_param("ngasTimeout", 2)
+    ngasConnectTimeout = dlg_int_param("ngasConnectTimeout", 2)
+    ngasMime = dlg_string_param("ngasMime", "application/octet-stream")
+    len = dlg_int_param("len", -1)
 
     def initialize(self, **kwargs):
         if self.len == -1:
@@ -1213,32 +1322,48 @@ class NgasDROP(AbstractDROP):
 
     def getIO(self):
         try:
-            ngasIO = NgasIO(self.ngasSrv, self.fileId, self.ngasPort,
-                            self.ngasConnectTimeout, self.ngasTimeout, length=self.len, mimeType=self.ngasMime)
+            ngasIO = NgasIO(
+                self.ngasSrv,
+                self.fileId,
+                self.ngasPort,
+                self.ngasConnectTimeout,
+                self.ngasTimeout,
+                length=self.len,
+                mimeType=self.ngasMime,
+            )
         except ImportError:
-            logger.warning('NgasIO not available, using NgasLiteIO instead')
-            ngasIO = NgasLiteIO(self.ngasSrv, self.fileId, self.ngasPort,
-                                self.ngasConnectTimeout, self.ngasTimeout, length=self.len, mimeType=self.ngasMime)
+            logger.warning("NgasIO not available, using NgasLiteIO instead")
+            ngasIO = NgasLiteIO(
+                self.ngasSrv,
+                self.fileId,
+                self.ngasPort,
+                self.ngasConnectTimeout,
+                self.ngasTimeout,
+                length=self.len,
+                mimeType=self.ngasMime,
+            )
         return ngasIO
 
     @track_current_drop
     def setCompleted(self):
-        '''
+        """
         Override this method in order to get the size of the drop set once it is completed.
-        '''
+        """
         # TODO: This implementation is almost a verbatim copy of the base class'
         # so we should look into merging them
         status = self.status
         if status == DROPStates.CANCELLED:
             return
         elif status == DROPStates.SKIPPED:
-            self._fire('dropCompleted', status=status)
+            self._fire("dropCompleted", status=status)
             return
         elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("%r not in INITIALIZED or WRITING state (%s), cannot setComplete()" % (self, self.status))
+            raise Exception(
+                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
+                % (self, self.status)
+            )
 
         self._closeWriters()
-
 
         # here we set the size. It could happen that nothing is written into
         # this file, in which case we create an empty file so applications
@@ -1246,8 +1371,10 @@ class NgasDROP(AbstractDROP):
         logger.debug("Trying to set size of NGASDrop")
         try:
             stat = self.getIO().fileStatus()
-            logger.debug("Setting size of NGASDrop %s to %s" % (self.fileId, stat['FileSize']))
-            self._size = int(stat['FileSize'])
+            logger.debug(
+                "Setting size of NGASDrop %s to %s" % (self.fileId, stat["FileSize"])
+            )
+            self._size = int(stat["FileSize"])
         except:
             # we''ll try this again in case there is some other issue
             # try:
@@ -1262,7 +1389,7 @@ class NgasDROP(AbstractDROP):
         # Signal our subscribers that the show is over
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
-        self._fire('dropCompleted', status=DROPStates.COMPLETED)
+        self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     @property
     def dataURL(self):
@@ -1276,10 +1403,10 @@ class InMemoryDROP(AbstractDROP):
 
     def initialize(self, **kwargs):
         args = []
-        if 'pydata' in kwargs:
-            pydata = kwargs.pop('pydata')
+        if "pydata" in kwargs:
+            pydata = kwargs.pop("pydata")
             if isinstance(pydata, str):
-                pydata = pydata.encode('utf8')
+                pydata = pydata.encode("utf8")
             args.append(base64.b64decode(pydata))
         self._buf = io.BytesIO(*args)
 
@@ -1310,27 +1437,30 @@ class EndDROP(NullDROP):
     A DROP that ends the session when reached
     """
 
+
 class RDBMSDrop(AbstractDROP):
     """
     A Drop that stores data in a table of a relational database
     """
-    dbparams = dlg_dict_param('dbparams', {})
+
+    dbparams = dlg_dict_param("dbparams", {})
 
     def initialize(self, **kwargs):
         AbstractDROP.initialize(self, **kwargs)
 
-        if 'dbmodule' not in kwargs:
-            raise InvalidDropException(self, '%r needs a "dbmodule" parameter' % (self,))
-        if 'dbtable' not in kwargs:
+        if "dbmodule" not in kwargs:
+            raise InvalidDropException(
+                self, '%r needs a "dbmodule" parameter' % (self,)
+            )
+        if "dbtable" not in kwargs:
             raise InvalidDropException(self, '%r needs a "dbtable" parameter' % (self,))
 
         # The DB-API 2.0 module
-        dbmodname = kwargs.pop('dbmodule')
+        dbmodname = kwargs.pop("dbmodule")
         self._db_drv = importlib.import_module(dbmodname)
 
         # The table this Drop points at
-        self._db_table = kwargs.pop('dbtable')
-
+        self._db_table = kwargs.pop("dbtable")
 
     def getIO(self):
         # This Drop cannot be accessed directly
@@ -1352,9 +1482,15 @@ class RDBMSDrop(AbstractDROP):
 
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
-                sql = "INSERT into %s (%s) VALUES (%s)" % (self._db_table, ','.join(vals.keys()), ','.join(['{}']*len(vals)))
-                sql, vals = prepare_sql(sql, self._db_drv.paramstyle, list(vals.values()))
-                logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
+                sql = "INSERT into %s (%s) VALUES (%s)" % (
+                    self._db_table,
+                    ",".join(vals.keys()),
+                    ",".join(["{}"] * len(vals)),
+                )
+                sql, vals = prepare_sql(
+                    sql, self._db_drv.paramstyle, list(vals.values())
+                )
+                logger.debug("Executing SQL with parameters: %s / %r", sql, vals)
                 cur.execute(sql, vals)
                 c.commit()
 
@@ -1371,14 +1507,20 @@ class RDBMSDrop(AbstractDROP):
 
                 # Build up SQL with optional columns and conditions
                 columns = columns or ("*",)
-                sql = ["SELECT %s FROM %s" % (','.join(columns), self._db_table,)]
+                sql = [
+                    "SELECT %s FROM %s"
+                    % (
+                        ",".join(columns),
+                        self._db_table,
+                    )
+                ]
                 if condition:
                     sql.append(" WHERE ")
                     sql.append(condition)
 
                 # Go, go, go!
-                sql, vals = prepare_sql(''.join(sql), self._db_drv.paramstyle, vals)
-                logger.debug('Executing SQL with parameters: %s / %r', sql, vals)
+                sql, vals = prepare_sql("".join(sql), self._db_drv.paramstyle, vals)
+                logger.debug("Executing SQL with parameters: %s / %r", sql, vals)
                 cur.execute(sql, vals)
                 if cur.description:
                     return cur.fetchall()
@@ -1386,7 +1528,11 @@ class RDBMSDrop(AbstractDROP):
 
     @property
     def dataURL(self):
-        return "rdbms://%s/%s/%r" % (self._db_drv.__name__, self._db_table, self._db_params)
+        return "rdbms://%s/%s/%r" % (
+            self._db_drv.__name__,
+            self._db_table,
+            self._db_params,
+        )
 
 
 class ContainerDROP(AbstractDROP):
@@ -1404,9 +1550,9 @@ class ContainerDROP(AbstractDROP):
         super(ContainerDROP, self).initialize(**kwargs)
         self._children = []
 
-    #===========================================================================
+    # ===========================================================================
     # No data-related operations should actually be called in Container DROPs
-    #===========================================================================
+    # ===========================================================================
     def getIO(self):
         return ErrorIO()
 
@@ -1417,8 +1563,9 @@ class ContainerDROP(AbstractDROP):
 
         # Avoid circular dependencies between Containers
         if child == self.parent:
-            raise InvalidRelationshipException(DROPRel(child, DROPLinkType.CHILD, self),
-                                               "Circular dependency found")
+            raise InvalidRelationshipException(
+                DROPRel(child, DROPLinkType.CHILD, self), "Circular dependency found"
+            )
 
         logger.debug("Adding new child for %r: %r", self, child)
 
@@ -1448,7 +1595,7 @@ class ContainerDROP(AbstractDROP):
         if self._children:
             # TODO: Or should it be all()? Depends on what the exact contract of
             #       "exists" is
-            return any([c.exists() for c in  self._children])
+            return any([c.exists() for c in self._children])
         return True
 
 
@@ -1459,19 +1606,22 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
     can only be added if they are placed directly within the directory
     represented by this DirectoryContainer.
     """
-    check_exists = dlg_bool_param('check_exists', True)
+
+    check_exists = dlg_bool_param("check_exists", True)
 
     def initialize(self, **kwargs):
         ContainerDROP.initialize(self, **kwargs)
 
-        if 'dirname' not in kwargs:
-            raise InvalidDropException(self, 'DirectoryContainer needs a "dirname" parameter')
+        if "dirname" not in kwargs:
+            raise InvalidDropException(
+                self, 'DirectoryContainer needs a "dirname" parameter'
+            )
 
-        directory = kwargs['dirname']
+        directory = kwargs["dirname"]
 
         if self.check_exists is True:
             if not os.path.isdir(directory):
-                raise InvalidDropException(self, '%s is not a directory' % (directory))
+                raise InvalidDropException(self, "%s is not a directory" % (directory))
 
         self._path = self.get_dir(directory)
 
@@ -1479,11 +1629,13 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
         if isinstance(child, (FileDROP, DirectoryContainer)):
             path = child.path
             if os.path.dirname(path) != self.path:
-                raise InvalidRelationshipException(DROPRel(child, DROPLinkType.CHILD, self),
-                                                   'Child DROP is not under %s' % (self.path))
+                raise InvalidRelationshipException(
+                    DROPRel(child, DROPLinkType.CHILD, self),
+                    "Child DROP is not under %s" % (self.path),
+                )
             ContainerDROP.addChild(self, child)
         else:
-            raise TypeError('Child DROP is not of type FileDROP or DirectoryContainer')
+            raise TypeError("Child DROP is not of type FileDROP or DirectoryContainer")
 
     def delete(self):
         shutil.rmtree(self._path)
@@ -1491,14 +1643,15 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
     def exists(self):
         return os.path.isdir(self._path)
 
-#===============================================================================
+
+# ===============================================================================
 # AppDROP classes follow
-#===============================================================================
+# ===============================================================================
 
 
 class AppDROP(ContainerDROP):
 
-    '''
+    """
     An AppDROP is a DROP representing an application that reads data
     from one or more DROPs (its inputs), and writes data onto one or more
     DROPs (its outputs).
@@ -1520,7 +1673,7 @@ class AppDROP(ContainerDROP):
     `dataWritten`. A common scenario anyway is to start an application only
     after all its inputs have moved to COMPLETED (implying that none of them is
     an streaming input); for these cases see the `BarrierAppDROP`.
-    '''
+    """
 
     def initialize(self, **kwargs):
 
@@ -1534,12 +1687,12 @@ class AppDROP(ContainerDROP):
         # Input and output objects are later referenced by their *index*
         # (relative to the order in which they were added to this object)
         # Therefore we use an ordered dict to keep the insertion order.
-        self._inputs  = collections.OrderedDict()
+        self._inputs = collections.OrderedDict()
         self._outputs = collections.OrderedDict()
 
         # Same as above, only that these correspond to the 'streaming' version
         # of the consumers
-        self._streamingInputs  = collections.OrderedDict()
+        self._streamingInputs = collections.OrderedDict()
 
         # An AppDROP has a second, separate state machine indicating its
         # execution status.
@@ -1563,8 +1716,10 @@ class AppDROP(ContainerDROP):
     @track_current_drop
     def addOutput(self, outputDrop, back=True):
         if outputDrop is self:
-            raise InvalidRelationshipException(DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
-                                               'Cannot add an AppConsumer as its own output')
+            raise InvalidRelationshipException(
+                DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
+                "Cannot add an AppConsumer as its own output",
+            )
         uid = outputDrop.uid
         if uid not in self._outputs:
             self._outputs[uid] = outputDrop
@@ -1574,7 +1729,7 @@ class AppDROP(ContainerDROP):
 
             # Subscribe the output DROP to events sent by this AppDROP when it
             # finishes its execution.
-            self.subscribe(outputDrop, 'producerFinished')
+            self.subscribe(outputDrop, "producerFinished")
 
     @property
     def outputs(self):
@@ -1602,7 +1757,7 @@ class AppDROP(ContainerDROP):
         Handles the arrival of a new event. Events are delivered from those
         objects this DROP is subscribed to.
         """
-        if e.type == 'dropCompleted':
+        if e.type == "dropCompleted":
             self.dropCompleted(e.uid, e.status)
 
     def dropCompleted(self, uid, drop_state):
@@ -1631,7 +1786,7 @@ class AppDROP(ContainerDROP):
         if self._execStatus == execStatus:
             return
         self._execStatus = execStatus
-        self._fire('execStatus', execStatus=execStatus)
+        self._fire("execStatus", execStatus=execStatus)
 
     def _notifyAppIsFinished(self):
         """
@@ -1646,15 +1801,15 @@ class AppDROP(ContainerDROP):
         else:
             self.status = DROPStates.COMPLETED
         logger.debug("Moving %r to %s", self, "FINISHED" if not is_error else "ERROR")
-        self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+        self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
 
     def cancel(self):
-        '''Moves this application drop to its CANCELLED state'''
+        """Moves this application drop to its CANCELLED state"""
         super(AppDROP, self).cancel()
         self.execStatus = AppDROPStates.CANCELLED
 
     def skip(self):
-        '''Moves this application drop to its SKIPPED state'''
+        """Moves this application drop to its SKIPPED state"""
         super().skip()
 
         prev_execStatus = self.execStatus
@@ -1662,9 +1817,11 @@ class AppDROP(ContainerDROP):
         for o in self._outputs.values():
             o.skip()
 
-        logger.debug(f'Moving {self.__repr__()} to SKIPPED')
+        logger.debug(f"Moving {self.__repr__()} to SKIPPED")
         if prev_execStatus in [AppDROPStates.NOT_RUN]:
-            self._fire('producerFinished', status=self.status, execStatus=self.execStatus)
+            self._fire(
+                "producerFinished", status=self.status, execStatus=self.execStatus
+            )
 
 
 class InputFiredAppDROP(AppDROP):
@@ -1692,9 +1849,10 @@ class InputFiredAppDROP(AppDROP):
     to erroneous effective inputs, and after which the application will not be
     run but moved to the ERROR state itself instead.
     """
-    input_error_threshold = dlg_int_param('Input error threshold (0 and 100)', 0)
-    n_effective_inputs = dlg_int_param('Number of effective inputs', -1)
-    n_tries = dlg_int_param('Number of tries', 1)
+
+    input_error_threshold = dlg_int_param("Input error threshold (0 and 100)", 0)
+    n_effective_inputs = dlg_int_param("Number of effective inputs", -1)
+    n_tries = dlg_int_param("Number of tries", 1)
 
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
@@ -1704,27 +1862,39 @@ class InputFiredAppDROP(AppDROP):
 
         # Error threshold must be within 0 and 100
         if self.input_error_threshold < 0 or self.input_error_threshold > 100:
-            raise InvalidDropException(self, "%r: input_error_threshold not within [0,100]" % (self,))
+            raise InvalidDropException(
+                self, "%r: input_error_threshold not within [0,100]" % (self,)
+            )
 
         # Amount of effective inputs
-        if 'n_effective_inputs' not in kwargs:
-            raise InvalidDropException(self, "%r: n_effective_inputs is mandatory" % (self,))
+        if "n_effective_inputs" not in kwargs:
+            raise InvalidDropException(
+                self, "%r: n_effective_inputs is mandatory" % (self,)
+            )
 
         if self.n_effective_inputs < -1 or self.n_effective_inputs == 0:
-            raise InvalidDropException(self, "%r: n_effective_inputs must be > 0 or equals to -1" % (self,))
+            raise InvalidDropException(
+                self, "%r: n_effective_inputs must be > 0 or equals to -1" % (self,)
+            )
 
         # Number of tries
         if self.n_tries < 1:
-            raise InvalidDropException(self, 'Invalid n_tries, must be a positive number')
+            raise InvalidDropException(
+                self, "Invalid n_tries, must be a positive number"
+            )
 
     def addStreamingInput(self, streamingInputDrop, back=True):
-        raise InvalidRelationshipException(DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
-                                           "InputFiredAppDROPs don't accept streaming inputs")
+        raise InvalidRelationshipException(
+            DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
+            "InputFiredAppDROPs don't accept streaming inputs",
+        )
 
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
 
-        logger.debug("Received notification from input drop: uid=%s, state=%d", uid, drop_state)
+        logger.debug(
+            "Received notification from input drop: uid=%s, state=%d", uid, drop_state
+        )
 
         # A value of -1 means all inputs
         n_inputs = len(self._inputs)
@@ -1734,8 +1904,10 @@ class InputFiredAppDROP(AppDROP):
 
         # More effective inputs than inputs, this is a horror
         if n_eff_inputs > n_inputs:
-            raise Exception("%r: More effective inputs (%d) than inputs (%d)" % \
-                            (self, self.n_effective_inputs, n_inputs))
+            raise Exception(
+                "%r: More effective inputs (%d) than inputs (%d)"
+                % (self, self.n_effective_inputs, n_inputs)
+            )
 
         if drop_state == DROPStates.ERROR:
             self._errorInputs.append(uid)
@@ -1744,7 +1916,7 @@ class InputFiredAppDROP(AppDROP):
         elif drop_state == DROPStates.SKIPPED:
             self._skippedInputs.append(uid)
         else:
-            raise Exception('Invalid DROP state in dropCompleted: %s' % drop_state)
+            raise Exception("Invalid DROP state in dropCompleted: %s" % drop_state)
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
@@ -1754,17 +1926,26 @@ class InputFiredAppDROP(AppDROP):
         if (skipped_len + error_len + ok_len) == n_eff_inputs:
 
             # calculate the number of errors that have already occurred
-            percent_failed = math.floor((error_len/float(n_eff_inputs)) * 100)
+            percent_failed = math.floor((error_len / float(n_eff_inputs)) * 100)
 
-            logger.debug("Error on inputs for %r: %d/%d", self, percent_failed, self.input_error_threshold)
+            logger.debug(
+                "Error on inputs for %r: %d/%d",
+                self,
+                percent_failed,
+                self.input_error_threshold,
+            )
 
             # if we hit the input error threshold then ERROR the drop and move on
             if percent_failed > self.input_error_threshold:
-                logger.info("Error threshold reached on %r, not executing it: %d/%d",
-                            self, percent_failed, self.input_error_threshold)
+                logger.info(
+                    "Error threshold reached on %r, not executing it: %d/%d",
+                    self,
+                    percent_failed,
+                    self.input_error_threshold,
+                )
 
                 self.execStatus = AppDROPStates.ERROR
-                self.status =  DROPStates.ERROR
+                self.status = DROPStates.ERROR
                 self._notifyAppIsFinished()
             elif skipped_len == n_eff_inputs:
                 self.skip()
@@ -1774,7 +1955,7 @@ class InputFiredAppDROP(AppDROP):
     def async_execute(self):
         # Return immediately, but schedule the execution of this app
         # If we have been given a thread pool use that
-        if hasattr(self, '_tp'):
+        if hasattr(self, "_tp"):
             self._tp.apply_async(self.execute)
         else:
             t = threading.Thread(target=self.execute)
@@ -1809,7 +1990,9 @@ class InputFiredAppDROP(AppDROP):
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 tries += 1
-                logger.exception('Error while executing %r (try %d/%d)' % (self, tries, self.n_tries))
+                logger.exception(
+                    "Error while executing %r (try %d/%d)" % (self, tries, self.n_tries)
+                )
 
         # We gave up running the application, go to error
         if tries == self.n_tries:
@@ -1830,14 +2013,16 @@ class InputFiredAppDROP(AppDROP):
     def exists(self):
         return True
 
+
 class BarrierAppDROP(InputFiredAppDROP):
     """
     A BarrierAppDROP is an InputFireAppDROP that waits for all its inputs to
     complete, effectively blocking the flow of the graph execution.
     """
+
     def initialize(self, **kwargs):
         # Blindly override existing value if any
-        kwargs['n_effective_inputs'] = -1
+        kwargs["n_effective_inputs"] = -1
         super(BarrierAppDROP, self).initialize(**kwargs)
 
 
@@ -1852,61 +2037,76 @@ class BranchAppDrop(BarrierAppDROP):
     @track_current_drop
     def execute(self, _send_notifications=True):
         if len(self._outputs) != 2:
-            raise InvalidDropException(self, f'BranchAppDrops should have exactly 2 outputs, not {len(self._outputs)}')
+            raise InvalidDropException(
+                self,
+                f"BranchAppDrops should have exactly 2 outputs, not {len(self._outputs)}",
+            )
         BarrierAppDROP.execute(self, _send_notifications=False)
         self.outputs[1 if self.condition() else 0].skip()
         self._notifyAppIsFinished()
 
 
 class PlasmaDROP(AbstractDROP):
-    '''
+    """
     A DROP that points to data stored in a Plasma Store
-    '''
-    object_id = dlg_string_param('object_id', None)
-    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
+    """
+
+    object_id = dlg_string_param("object_id", None)
+    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
 
     def initialize(self, **kwargs):
         object_id = self.uid
         if len(self.uid) != 20:
             object_id = np.random.bytes(20)
         if self.object_id is None:
-           self.object_id = object_id
+            self.object_id = object_id
 
     def getIO(self):
         return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_path)
 
     @property
     def dataURL(self):
-        return "plasma://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
+        return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
 class PlasmaFlightDROP(AbstractDROP):
-    '''
+    """
     A DROP that points to data stored in a Plasma Store
-    '''
-    object_id = dlg_string_param('object_id', None)
-    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
-    flight_path = dlg_string_param('flight_path', None)
+    """
+
+    object_id = dlg_string_param("object_id", None)
+    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
+    flight_path = dlg_string_param("flight_path", None)
 
     def initialize(self, **kwargs):
         object_id = self.uid
         if len(self.uid) != 20:
             object_id = np.random.bytes(20)
         if self.object_id is None:
-           self.object_id = object_id
+            self.object_id = object_id
 
     def getIO(self):
         if isinstance(self.object_id, str):
-            object_id = plasma.ObjectID(self.object_id.encode('ascii'))
+            object_id = plasma.ObjectID(self.object_id.encode("ascii"))
         elif isinstance(self.object_id, bytes):
             object_id = plasma.ObjectID(self.object_id)
         else:
-            raise Exception("Invalid argument " + str(self.object_id) + " expected str, got" + str(type(self.object_id)))
-        return PlasmaFlightIO(object_id, self.plasma_path, flight_path=self.flight_path, size=self._expectedSize)
+            raise Exception(
+                "Invalid argument "
+                + str(self.object_id)
+                + " expected str, got"
+                + str(type(self.object_id))
+            )
+        return PlasmaFlightIO(
+            object_id,
+            self.plasma_path,
+            flight_path=self.flight_path,
+            size=self._expectedSize,
+        )
 
     @property
     def dataURL(self):
-        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode('ascii'))
+        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
@@ -1914,31 +2114,27 @@ class PlasmaFlightDROP(AbstractDROP):
 # (e.g., one uses `addConsumer` to add a DROPLinkeType.CONSUMER DROP into
 # another)
 LINKTYPE_1TON_APPEND_METHOD = {
-    DROPLinkType.CONSUMER:           'addConsumer',
-    DROPLinkType.STREAMING_CONSUMER: 'addStreamingConsumer',
-    DROPLinkType.INPUT:              'addInput',
-    DROPLinkType.STREAMING_INPUT:    'addStreamingInput',
-    DROPLinkType.OUTPUT:             'addOutput',
-    DROPLinkType.CHILD:              'addChild',
-    DROPLinkType.PRODUCER:           'addProducer'
+    DROPLinkType.CONSUMER: "addConsumer",
+    DROPLinkType.STREAMING_CONSUMER: "addStreamingConsumer",
+    DROPLinkType.INPUT: "addInput",
+    DROPLinkType.STREAMING_INPUT: "addStreamingInput",
+    DROPLinkType.OUTPUT: "addOutput",
+    DROPLinkType.CHILD: "addChild",
+    DROPLinkType.PRODUCER: "addProducer",
 }
 
 # Same as above, but for N-to-1 relationships, in which case we indicate not a
 # method but a property
-LINKTYPE_NTO1_PROPERTY = {
-    DROPLinkType.PARENT: 'parent'
-}
+LINKTYPE_NTO1_PROPERTY = {DROPLinkType.PARENT: "parent"}
 
 LINKTYPE_1TON_BACK_APPEND_METHOD = {
-    DROPLinkType.CONSUMER:           'addInput',
-    DROPLinkType.STREAMING_CONSUMER: 'addStreamingInput',
-    DROPLinkType.INPUT:              'addConsumer',
-    DROPLinkType.STREAMING_INPUT:    'addStreamingConsumer',
-    DROPLinkType.OUTPUT:             'addProducer',
-    DROPLinkType.CHILD:              'setParent',
-    DROPLinkType.PRODUCER:           'addOutput'
+    DROPLinkType.CONSUMER: "addInput",
+    DROPLinkType.STREAMING_CONSUMER: "addStreamingInput",
+    DROPLinkType.INPUT: "addConsumer",
+    DROPLinkType.STREAMING_INPUT: "addStreamingConsumer",
+    DROPLinkType.OUTPUT: "addProducer",
+    DROPLinkType.CHILD: "setParent",
+    DROPLinkType.PRODUCER: "addOutput",
 }
 
-LINKTYPE_NTO1_BACK_APPEND_METHOD = {
-    DROPLinkType.PARENT: 'addChild'
-}
+LINKTYPE_NTO1_BACK_APPEND_METHOD = {DROPLinkType.PARENT: "addChild"}

@@ -36,13 +36,18 @@ from ..meta import dlg_batch_output, dlg_streaming_input
 
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
+
 class NullBarrierApp(BarrierAppDROP):
-    compontent_meta = dlg_component('NullBarrierApp', 'Null Barrier.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    compontent_meta = dlg_component(
+        "NullBarrierApp",
+        "Null Barrier.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     """A BarrierAppDrop that doesn't perform any work"""
+
     def run(self):
         pass
 
@@ -61,12 +66,16 @@ class NullBarrierApp(BarrierAppDROP):
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
-    compontent_meta = dlg_component('SleepApp', 'Sleep App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    sleepTime = dlg_float_param('sleep time', 0)
+    compontent_meta = dlg_component(
+        "SleepApp",
+        "Sleep App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    sleepTime = dlg_float_param("sleep time", 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
@@ -92,10 +101,14 @@ class CopyApp(BarrierAppDROP):
     All inputs are copied into all outputs in the order they were declared in
     the graph.
     """
-    compontent_meta = dlg_component('CopyApp', 'Copy App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "CopyApp",
+        "Copy App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def run(self):
         self.copyAll()
@@ -155,16 +168,20 @@ class RandomArrayApp(BarrierAppDROP):
     high:     float, upper boundary (will be converted to int for integer arrays)
     size:     int, number of array elements
     """
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "RandomArrayApp",
+        "Random Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     # default values
-    integer = dlg_bool_param('integer', True)
-    low = dlg_float_param('low', 0)
-    high = dlg_float_param('high', 100)
-    size = dlg_int_param('size', 100)
+    integer = dlg_bool_param("integer", True)
+    low = dlg_float_param("low", 0)
+    high = dlg_float_param("high", 100)
+    size = dlg_int_param("size", 100)
     marray = []
 
     def initialize(self, **kwargs):
@@ -174,8 +191,7 @@ class RandomArrayApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.generateRandomArray()
         for o in outs:
             d = pickle.dumps(self.marray)
@@ -226,15 +242,20 @@ class AverageArraysApp(BarrierAppDROP):
 
     method:  string <['mean']|'median'>, use mean or median as method.
     """
+
     from numpy import mean, median
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "RandomArrayApp",
+        "Random Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     # default values
-    methods = ['mean', 'median']
-    method = dlg_string_param('method', methods[0])
+    methods = ["mean", "median"]
+    method = dlg_string_param("method", methods[0])
     marray = []
 
     def initialize(self, **kwargs):
@@ -245,8 +266,7 @@ class AverageArraysApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.getInputArrays()
         avg = self.averageArray()
         for o in outs:
@@ -262,17 +282,16 @@ class AverageArraysApp(BarrierAppDROP):
         """
         ins = self.inputs
         if len(ins) < 1:
-            raise Exception(
-                'At least one input should have been added to %r' % self)
+            raise Exception("At least one input should have been added to %r" % self)
 
         marray = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
         self.marray = marray
-
 
     def averageArray(self):
 
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
+
 
 ##
 # @brief HelloWorldApp
@@ -297,31 +316,36 @@ class HelloWorldApp(BarrierAppDROP):
     Keywords:
     greet:   string, [World], whom to greet.
     """
-    compontent_meta = dlg_component('HelloWorldApp', 'Hello World App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    greet = dlg_string_param('greet', 'World')
+    compontent_meta = dlg_component(
+        "HelloWorldApp",
+        "Hello World App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    greet = dlg_string_param("greet", "World")
 
     def run(self):
         ins = self.inputs
         # if no inputs use the parameter else use the input
         if len(ins) == 0:
-            self.greeting = 'Hello %s' % self.greet
+            self.greeting = "Hello %s" % self.greet
         elif len(ins) != 1:
-            raise Exception(
-                'Only one input expected for %r' % self)
-        else: # the input is expected to be a vector. We'll use the first element
-            self.greeting = 'Hello %s' % str(pickle.loads(droputils.allDropContents(ins[0]))[0])
+            raise Exception("Only one input expected for %r" % self)
+        else:  # the input is expected to be a vector. We'll use the first element
+            self.greeting = "Hello %s" % str(
+                pickle.loads(droputils.allDropContents(ins[0]))[0]
+            )
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
             o.len = len(self.greeting.encode())
             o.write(self.greeting.encode())  # greet across all outputs
+
 
 ##
 # @brief UrlRetrieveApp
@@ -343,12 +367,16 @@ class UrlRetrieveApp(BarrierAppDROP):
     Keywords:
     URL:   string, URL to retrieve.
     """
-    compontent_meta = dlg_component('UrlRetrieveApp', 'URL Retrieve App',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    url = dlg_string_param('url', '')
+    compontent_meta = dlg_component(
+        "UrlRetrieveApp",
+        "URL Retrieve App",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    url = dlg_string_param("url", "")
 
     def run(self):
         try:
@@ -360,11 +388,11 @@ class UrlRetrieveApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
             o.len = len(content)
             o.write(content)  # send content to all outputs
+
 
 ##
 # @brief GenericScatterApp
@@ -386,10 +414,14 @@ class GenericScatterApp(BarrierAppDROP):
     An APP that splits an object that has a len attribute into <numSplit> parts and
     returns a numpy array of arrays, where the first axis is of length <numSplit>.
     """
-    compontent_meta = dlg_component('GenericScatterApp', 'Scatter an array like object into numSplit parts',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "GenericScatterApp",
+        "Scatter an array like object into numSplit parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
@@ -417,11 +449,12 @@ class GenericScatterApp(BarrierAppDROP):
             o.len = len(d)
             o.write(d)  # average across inputs
 
+
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
     """Simple branch app that is told the result of its condition"""
 
     def initialize(self, **kwargs):
-        self.result = self._getArg(kwargs, 'result', True)
+        self.result = self._getArg(kwargs, "result", True)
         BranchAppDrop.initialize(self, **kwargs)
 
     def run(self):

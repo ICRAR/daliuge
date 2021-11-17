@@ -34,17 +34,20 @@ except:
 
 
 class CRCApp(BarrierAppDROP):
-    '''
+    """
     An BarrierAppDROP that calculates the CRC of the single DROP it
     consumes. It assumes the DROP being consumed is not a container.
     This is a simple example of an BarrierAppDROP being implemented, and
     not something really intended to be used in a production system
-    '''
-    compontent_meta = dlg_component('CRCApp', 'A BarrierAppDROP that calculates the '
-                                    'CRC of the single DROP it consumes',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    """
+
+    compontent_meta = dlg_component(
+        "CRCApp",
+        "A BarrierAppDROP that calculates the " "CRC of the single DROP it consumes",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def run(self):
         if len(self.inputs) != 1:
@@ -66,7 +69,7 @@ class CRCApp(BarrierAppDROP):
 
         # Rely on whatever implementation we decide to use
         # for storing our data
-        outputDrop.write(str(crc).encode('utf8'))
+        outputDrop.write(str(crc).encode("utf8"))
 
 
 class CRCStreamApp(AppDROP):
@@ -74,10 +77,14 @@ class CRCStreamApp(AppDROP):
     Calculate CRC in the streaming mode
     i.e. A "streamingConsumer" of its predecessor in the graph
     """
-    compontent_meta = dlg_component('CRCStreamApp', 'Calculate CRC in the streaming mode.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "CRCStreamApp",
+        "Calculate CRC in the streaming mode.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def initialize(self, **kwargs):
         super(CRCStreamApp, self).initialize(**kwargs)
@@ -89,6 +96,6 @@ class CRCStreamApp(AppDROP):
 
     def dropCompleted(self, uid, status):
         outputDrop = self.outputs[0]
-        outputDrop.write(str(self._crc).encode('utf8'))
+        outputDrop.write(str(self._crc).encode("utf8"))
         self.execStatus = AppDROPStates.FINISHED
         self._notifyAppIsFinished()

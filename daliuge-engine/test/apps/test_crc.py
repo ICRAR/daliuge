@@ -37,8 +37,10 @@ from .test_dynlib import _libname, _libpath
 
 
 class CRCAppTests(unittest.TestCase):
-
-    @unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+    @unittest.skipUnless(
+        build_shared_library(_libname, _libpath),
+        "Example dynamic library not available",
+    )
     def test_with_dynlib(self):
         """
         We test the following graph:
@@ -60,10 +62,10 @@ class CRCAppTests(unittest.TestCase):
         """
 
         # Build drops and wire them together
-        a, c = (FileDROP(x, x) for x in ('a', 'c'))
-        b = DynlibApp('b', 'b', lib=test_dynlib._libpath)
-        d, g, i = (CRCApp(x, x) for x in ('d', 'g', 'i'))
-        f, e, h, j = (InMemoryDROP(x, x) for x in ('f', 'e', 'h', 'j'))
+        a, c = (FileDROP(x, x) for x in ("a", "c"))
+        b = DynlibApp("b", "b", lib=test_dynlib._libpath)
+        d, g, i = (CRCApp(x, x) for x in ("d", "g", "i"))
+        f, e, h, j = (InMemoryDROP(x, x) for x in ("f", "e", "h", "j"))
 
         for data, app in (a, b), (c, d), (f, g), (a, i):
             app.addInput(data)
@@ -72,7 +74,7 @@ class CRCAppTests(unittest.TestCase):
 
         # The crc32 is the same used by the CRCApp, see the imports
         data = os.urandom(1024)
-        crc = str(crc32c(data)).encode('utf8')
+        crc = str(crc32c(data)).encode("utf8")
 
         # Execute the graph and check results
         with droputils.DROPWaiterCtx(self, (e, h, j), 5):

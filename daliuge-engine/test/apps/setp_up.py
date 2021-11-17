@@ -33,8 +33,8 @@ def build_shared_library(libname, libpath):
         # No need to rebuild
         srcname = libname + ".c"
         if (
-                os.path.isfile(libpath)
-                and os.stat(srcname).st_ctime <= os.stat(libpath).st_ctime
+            os.path.isfile(libpath)
+            and os.stat(srcname).st_ctime <= os.stat(libpath).st_ctime
         ):
             return True
 

@@ -19,13 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Implementation of the different storage layers that are then used by the HSM to
 store data. Each layer keeps track of its used space, and knows how to create
 DROPs that use that layer as its storage mechanism.
 
 @author: rtobar
-'''
+"""
 
 from abc import ABCMeta, abstractmethod
 import json
@@ -38,6 +38,7 @@ from ...drop import FileDROP, InMemoryDROP, NgasDROP
 
 
 logger = logging.getLogger(__name__)
+
 
 class AbstractStore(object):
     """
@@ -58,8 +59,11 @@ class AbstractStore(object):
         if logger.isEnabledFor(logging.DEBUG):
             avail = self.getAvailableSpace()
             total = self.getTotalSpace()
-            perc  = avail*100./total
-            logger.debug("Available/Total space on %s: %d/%d (%.2f %%)" % (self, avail, total, perc))
+            perc = avail * 100.0 / total
+            logger.debug(
+                "Available/Total space on %s: %d/%d (%.2f %%)"
+                % (self, avail, total, perc)
+            )
         pass
 
     def _setTotalSpace(self, totalSpace):
@@ -88,6 +92,7 @@ class AbstractStore(object):
     def _updateSpaces(self):
         pass
 
+
 class FileSystemStore(AbstractStore):
     """
     A filesystem store implementation. It requires a mount point at construction
@@ -95,6 +100,7 @@ class FileSystemStore(AbstractStore):
     device fully. It creates FileDROPs that live directly in the root of
     the filesystem, and monitors the usage of the filesystem.
     """
+
     def __init__(self, mountPoint, savingDir=None):
         super(FileSystemStore, self).__init__()
 
@@ -121,16 +127,17 @@ class FileSystemStore(AbstractStore):
         fragmentSize = stat.f_bsize
 
         totalSpace = blocks * fragmentSize
-        availableSpace=freeBlocks * blockSize
+        availableSpace = freeBlocks * blockSize
         self._setTotalSpace(totalSpace)
         self._setAvailableSpace(availableSpace)
 
     def createDrop(self, oid, uid, **kwargs):
-        kwargs['dirname'] = self._savingDir
+        kwargs["dirname"] = self._savingDir
         return FileDROP(oid, uid, **kwargs)
 
     def __str__(self):
         return self._mountPoint
+
 
 class MemoryStore(AbstractStore):
     """
@@ -151,13 +158,15 @@ class MemoryStore(AbstractStore):
         return InMemoryDROP(oid, uid, **kwargs)
 
     def __str__(self):
-        return 'Memory'
+        return "Memory"
+
 
 class NgasStore(AbstractStore):
     """
     A store that a given NGAS server as its storage mechanism. It creates
     NgasDROPs and monitors the disks usage of the NGAS system.
     """
+
     def __init__(self, host=None, port=None, initialCheck=True):
 
         try:
@@ -168,11 +177,11 @@ class NgasStore(AbstractStore):
 
         # Some sane defaults
         if not host:
-            host = 'localhost'
-            logger.debug('Defaulting NGAS host to %s', host)
+            host = "localhost"
+            logger.debug("Defaulting NGAS host to %s", host)
         if not port:
             port = 7777
-            logger.debug('Defaulting NGAS port to %d', port)
+            logger.debug("Defaulting NGAS port to %d", port)
 
         self._host = host
         self._port = port
@@ -181,16 +190,18 @@ class NgasStore(AbstractStore):
 
     def _updateSpaces(self):
         client = self._getClient()
-        data = client.sendCmd("QUERY", pars=[['query', 'disks_list'], ['format', 'json']]).getData()
-        disks = json.loads(data)['disks_list']
+        data = client.sendCmd(
+            "QUERY", pars=[["query", "disks_list"], ["format", "json"]]
+        ).getData()
+        disks = json.loads(data)["disks_list"]
         totalAvailable = 0
         totalStored = 0
         for disk in disks:
             # col13 = available_mb
             # col14 = bytes_stored
-            totalAvailable += float(disk['col13'])
-            totalStored += int(disk['col14'])
-        totalAvailable *= 1024**2 # to bytes
+            totalAvailable += float(disk["col13"])
+            totalStored += int(disk["col14"])
+        totalAvailable *= 1024 ** 2  # to bytes
 
         # TODO: Check if these computations are correct, I'm not sure if the
         #       quantities stored by NGAS should be interpreted like this, or
@@ -199,16 +210,18 @@ class NgasStore(AbstractStore):
         self._setAvailableSpace(totalAvailable)
 
     def createDrop(self, oid, uid, **kwargs):
-        kwargs['ngasSrv']  = self._host
-        kwargs['ngasPort'] = self._port
+        kwargs["ngasSrv"] = self._host
+        kwargs["ngasPort"] = self._port
         return NgasDROP(oid, uid, **kwargs)
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient
+
         return ngamsPClient.ngamsPClient(self._host, self._port)
 
     def __str__(self):
         return "NGAS@%s:%d" % (self._host, self._port)
+
 
 class DirectoryStore(AbstractStore):
     """
@@ -222,7 +235,7 @@ class DirectoryStore(AbstractStore):
     This store creates FileDROPs that live inside the store's directory.
     """
 
-    __SIZE_FILE = 'SIZE'
+    __SIZE_FILE = "SIZE"
 
     def __init__(self, dirName, initialize=False):
 
@@ -234,11 +247,18 @@ class DirectoryStore(AbstractStore):
 
         sizeFile = os.path.join(dirName, self.__SIZE_FILE)
         if not initialize and not os.path.isfile(sizeFile):
-            raise Exception("No %s file under %s, cannot determine available space for DirectoryStore" % (self.__SIZE_FILE, dirName))
+            raise Exception(
+                "No %s file under %s, cannot determine available space for DirectoryStore"
+                % (self.__SIZE_FILE, dirName)
+            )
         else:
             # Should be used only for testing
-            size = 1024**3
-            logger.info('Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING', sizeFile, size)
+            size = 1024 ** 3
+            logger.info(
+                "Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING",
+                sizeFile,
+                size,
+            )
             self.prepareDirectory(dirName, size)
 
         with open(sizeFile) as f:
@@ -248,7 +268,7 @@ class DirectoryStore(AbstractStore):
         self.updateSpaces()
 
     def createDrop(self, oid, uid, **kwargs):
-        kwargs['dirname'] = self._dirName
+        kwargs["dirname"] = self._dirName
         return FileDROP(oid, uid, **kwargs)
 
     def _updateSpaces(self):

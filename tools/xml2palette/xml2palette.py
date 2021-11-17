@@ -18,25 +18,25 @@ next_key = -1
 #       make sure to retrieve some of these from environment variables
 DOXYGEN_SETTINGS = [
     ("OPTIMIZE_OUTPUT_JAVA", "YES"),
-    ("AUTOLINK_SUPPORT",     "NO"),
+    ("AUTOLINK_SUPPORT", "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
-    ("RECURSIVE",            "YES"),
-    ("EXCLUDE_PATTERNS",     "*/web/*"),
-    ("VERBATIM_HEADERS",     "NO"),
-    ("GENERATE_HTML",        "NO"),
-    ("GENERATE_LATEX",       "NO"),
-    ("GENERATE_XML",         "YES"),
-    ("XML_PROGRAMLISTING",   "NO"),
+    ("RECURSIVE", "YES"),
+    ("EXCLUDE_PATTERNS", "*/web/*"),
+    ("VERBATIM_HEADERS", "NO"),
+    ("GENERATE_HTML", "NO"),
+    ("GENERATE_LATEX", "NO"),
+    ("GENERATE_XML", "YES"),
+    ("XML_PROGRAMLISTING", "NO"),
     ("ENABLE_PREPROCESSING", "NO"),
-    ("CLASS_DIAGRAMS",       "NO")
+    ("CLASS_DIAGRAMS", "NO"),
 ]
 
 
 def get_filenames_from_command_line(argv):
-    inputdir = ''
-    outputfile = ''
+    inputdir = ""
+    outputfile = ""
     try:
-        opts, args = getopt.getopt(argv,"hi:o:",["idir=","ofile="])
+        opts, args = getopt.getopt(argv, "hi:o:", ["idir=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -o <output_file>")
         sys.exit(2)
@@ -46,7 +46,7 @@ def get_filenames_from_command_line(argv):
         sys.exit()
 
     for opt, arg in opts:
-        if opt == '-h':
+        if opt == "-h":
             print("xml2palette.py -i <input_directory> -o <output_file>")
             sys.exit()
         elif opt in ("-i", "--idir"):
@@ -70,19 +70,19 @@ def check_environment_variables():
 
 
 def modify_doxygen_options(doxygen_filename, options):
-    with open(doxygen_filename, 'r') as dfile:
+    with open(doxygen_filename, "r") as dfile:
         contents = dfile.readlines()
 
-    #print(contents)
+    # print(contents)
 
-    with open(doxygen_filename, 'w') as dfile:
+    with open(doxygen_filename, "w") as dfile:
         for index, line in enumerate(contents):
-            if line[0] == '#':
+            if line[0] == "#":
                 continue
             if len(line) <= 1:
                 continue
 
-            parts = line.split('=')
+            parts = line.split("=")
             first_part = parts[0].strip()
             written = False
 
@@ -103,6 +103,7 @@ def get_next_key():
 
     return next_key + 1
 
+
 def create_uuid(seed):
     rnd = random.Random()
     rnd.seed(seed)
@@ -111,7 +112,9 @@ def create_uuid(seed):
     return new_uuid
 
 
-def create_port(component_name, internal_name, external_name, direction, event, type, description):
+def create_port(
+    component_name, internal_name, external_name, direction, event, type, description
+):
     seed = {
         "component_name": component_name,
         "internal_name": internal_name,
@@ -119,7 +122,7 @@ def create_port(component_name, internal_name, external_name, direction, event, 
         "direction": direction,
         "event": event,
         "type": type,
-        "description": description
+        "description": description,
     }
 
     port_uuid = create_uuid(str(seed))
@@ -130,13 +133,13 @@ def create_port(component_name, internal_name, external_name, direction, event, 
         "text": external_name,
         "event": event,
         "type": type,
-        "description": description
+        "description": description,
     }
 
 
 def find_field_by_name(fields, name):
     for field in fields:
-        if field['name'] == name:
+        if field["name"] == name:
             return field
     return None
 
@@ -144,22 +147,96 @@ def find_field_by_name(fields, name):
 def add_required_fields_for_category(fields, category):
     if category == "DynlibApp":
         if find_field_by_name(fields, "execution_time") is None:
-            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float", False))
+            fields.append(
+                create_field(
+                    "execution_time",
+                    "Execution time",
+                    5,
+                    "Estimated execution time",
+                    "readwrite",
+                    "Float",
+                    False,
+                )
+            )
         if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer", False))
+            fields.append(
+                create_field(
+                    "num_cpus",
+                    "Num CPUs",
+                    1,
+                    "Number of cores used",
+                    "readwrite",
+                    "Integer",
+                    False,
+                )
+            )
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean", False))
+            fields.append(
+                create_field(
+                    "group_start",
+                    "Group start",
+                    "false",
+                    "Component is start of a group",
+                    "readwrite",
+                    "Boolean",
+                    False,
+                )
+            )
         if find_field_by_name(fields, "libpath") is None:
-            fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String", False))
+            fields.append(
+                create_field(
+                    "libpath", "Library path", "", "", "readwrite", "String", False
+                )
+            )
     elif category == "PythonApp":
         if find_field_by_name(fields, "execution_time") is None:
-            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float", False))
+            fields.append(
+                create_field(
+                    "execution_time",
+                    "Execution time",
+                    5,
+                    "Estimated execution time",
+                    "readwrite",
+                    "Float",
+                    False,
+                )
+            )
         if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer", False))
+            fields.append(
+                create_field(
+                    "num_cpus",
+                    "Num CPUs",
+                    1,
+                    "Number of cores used",
+                    "readwrite",
+                    "Integer",
+                    False,
+                )
+            )
         if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean", False))
+            fields.append(
+                create_field(
+                    "group_start",
+                    "Group start",
+                    "false",
+                    "Component is start of a group",
+                    "readwrite",
+                    "Boolean",
+                    False,
+                )
+            )
         if find_field_by_name(fields, "appclass") is None:
-            fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String", False))
+            fields.append(
+                create_field(
+                    "appclass",
+                    "Appclass",
+                    "dlg.apps.simple.SleepApp",
+                    "Application class",
+                    "readwrite",
+                    "String",
+                    False,
+                )
+            )
 
 
 def create_field(internal_name, name, value, description, access, type, precious):
@@ -171,14 +248,14 @@ def create_field(internal_name, name, value, description, access, type, precious
         "description": description,
         "readonly": access == "readonly",
         "type": type,
-        "precious": precious
+        "precious": precious,
     }
 
 
 def parse_key(key):
     # parse the key as csv (delimited by '/')
     parts = []
-    reader = csv.reader([key], delimiter='/', quotechar='"')
+    reader = csv.reader([key], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
 
@@ -198,7 +275,7 @@ def parse_key(key):
 def parse_param_value(value):
     # parse the value as csv (delimited by '/')
     parts = []
-    reader = csv.reader([value], delimiter='/', quotechar='"')
+    reader = csv.reader([value], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
 
@@ -216,14 +293,26 @@ def parse_param_value(value):
         default_value = parts[1]
     if len(parts) > 2:
         type = parts[2]
-    if len(parts) > 4: # NOTE: correct that we start looking for >4, but access element 3
+    if (
+        len(parts) > 4
+    ):  # NOTE: correct that we start looking for >4, but access element 3
         access = parts[3]
     else:
-        logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+        logging.warning(
+            "param ("
+            + external_name
+            + ") has no 'access' descriptor, using default (readwrite) : "
+            + value
+        )
     if len(parts) > 5:
         precious = parts[4].lower() == "true"
     else:
-        logging.warning("param (" + external_name + ") has no 'precious' descriptor, using default (False) : " + value)
+        logging.warning(
+            "param ("
+            + external_name
+            + ") has no 'precious' descriptor, using default (False) : "
+            + value
+        )
 
     return (external_name, default_value, type, access, precious)
 
@@ -231,7 +320,7 @@ def parse_param_value(value):
 def parse_port_value(value):
     # parse the value as csv (delimited by '/')
     parts = []
-    reader = csv.reader([value], delimiter='/', quotechar='"')
+    reader = csv.reader([value], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
 
@@ -245,7 +334,16 @@ def parse_port_value(value):
     if len(parts) > 1:
         type = parts[1]
     else:
-        logging.warning("port (" + name + ") has no 'type' descriptor, using default (String) : " + value + " " + str(len(parts)) + " " + str(parts))
+        logging.warning(
+            "port ("
+            + name
+            + ") has no 'type' descriptor, using default (String) : "
+            + value
+            + " "
+            + str(len(parts))
+            + " "
+            + str(parts)
+        )
 
     return (name, type)
 
@@ -253,14 +351,14 @@ def parse_port_value(value):
 def parse_description(value):
     # parse the value as csv (delimited by '/')
     parts = []
-    reader = csv.reader([value], delimiter='/', quotechar='"')
+    reader = csv.reader([value], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
 
     # if parts is empty
     if len(parts) == 0:
         logging.warning("unable to parse description from: " + value)
-        return "";
+        return ""
 
     return parts[-1]
 
@@ -281,9 +379,9 @@ def create_palette_node_from_params(params):
 
     # process the params
     for param in params:
-        key = param['key']
-        direction = param['direction']
-        value = param['value']
+        key = param["key"]
+        direction = param["direction"]
+        value = param["value"]
 
         if key == "category":
             category = value
@@ -298,34 +396,73 @@ def create_palette_node_from_params(params):
 
             # parse description
             if "\n" in value:
-                logging.info("param description (" + value + ") contains a newline character, removing.")
+                logging.info(
+                    "param description ("
+                    + value
+                    + ") contains a newline character, removing."
+                )
                 value = value.replace("\n", " ")
             param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
-                logging.warning("param '" + name + "' has unknown 'access' descriptor: " + access)
+                logging.warning(
+                    "param '" + name + "' has unknown 'access' descriptor: " + access
+                )
 
             # add a field
-            fields.append(create_field(internal_name, name, default_value, param_description, access, type, precious))
+            fields.append(
+                create_field(
+                    internal_name,
+                    name,
+                    default_value,
+                    param_description,
+                    access,
+                    type,
+                    precious,
+                )
+            )
         elif key.startswith("port/"):
             (port, internal_name) = parse_key(key)
             (name, type) = parse_port_value(value)
 
             # parse description
             if "\n" in value:
-                logging.info("port description (" + value + ") contains a newline character, removing.")
+                logging.info(
+                    "port description ("
+                    + value
+                    + ") contains a newline character, removing."
+                )
                 value = value.replace("\n", " ")
             port_description = parse_description(value)
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(text, internal_name, name, direction, False, type, port_description))
+                inputPorts.append(
+                    create_port(
+                        text,
+                        internal_name,
+                        name,
+                        direction,
+                        False,
+                        type,
+                        port_description,
+                    )
+                )
             elif direction == "out":
-                outputPorts.append(create_port(text, internal_name, name, direction, False, type, port_description))
+                outputPorts.append(
+                    create_port(
+                        text,
+                        internal_name,
+                        name,
+                        direction,
+                        False,
+                        type,
+                        port_description,
+                    )
+                )
             else:
                 logging.warning("Unknown port direction: " + direction)
-
 
     # add extra fields that must be included for the category
     add_required_fields_for_category(fields, category)
@@ -362,7 +499,7 @@ def create_palette_node_from_params(params):
         "outputAppFields": [],
         "fields": fields,
         "git_url": gitrepo,
-        "sha": version
+        "sha": version,
     }
 
 
@@ -376,13 +513,13 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
             "readonly": True,
             "filePath": outputfile,
             "sha": version,
-            "git_url": gitrepo
+            "git_url": gitrepo,
         },
         "nodeDataArray": nodes,
-        "linkDataArray": []
+        "linkDataArray": [],
     }
 
-    with open(outputfile, 'w') as outfile:
+    with open(outputfile, "w") as outfile:
         json.dump(palette, outfile, indent=4)
 
 
@@ -401,17 +538,15 @@ def process_compounddef(compounddef):
         if len(briefdescription) > 0:
             if briefdescription[0].text is None:
                 logging.warning("No brief description text")
-                result.append({
-                    "key":"text",
-                    "direction":None,
-                    "value":""
-                })
+                result.append({"key": "text", "direction": None, "value": ""})
             else:
-                result.append({
-                    "key":"text",
-                    "direction":None,
-                    "value":briefdescription[0].text.strip(" .")
-                })
+                result.append(
+                    {
+                        "key": "text",
+                        "direction": None,
+                        "value": briefdescription[0].text.strip(" ."),
+                    }
+                )
 
     # get child of compounddef called "detaileddescription"
     detaileddescription = None
@@ -442,7 +577,9 @@ def process_compounddef(compounddef):
 
     # add description
     if description != "":
-        result.append({"key":"description", "direction":None, "value":description.strip()})
+        result.append(
+            {"key": "description", "direction": None, "value": description.strip()}
+        )
 
     # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
     if not found_eagle_start:
@@ -489,13 +626,13 @@ def process_compounddef(compounddef):
                     else:
                         value = pichild[0].text.strip()
 
-        result.append({"key":key,"direction":direction,"value":value})
+        result.append({"key": key, "direction": direction, "value": value})
 
     return result
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S")
 
     (inputdir, outputfile) = get_filenames_from_command_line(sys.argv[1:])
 
@@ -517,21 +654,37 @@ if __name__ == "__main__":
     doxygen_file.close()
 
     # create a default Doxyfile
-    subprocess.call(['doxygen', '-g', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.call(
+        ["doxygen", "-g", doxygen_filename],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     logging.info("Wrote doxygen configuration file (Doxyfile) to " + doxygen_filename)
 
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
 
     # run doxygen
-    #os.system("doxygen " + doxygen_filename)
-    subprocess.call(['doxygen', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # os.system("doxygen " + doxygen_filename)
+    subprocess.call(
+        ["doxygen", doxygen_filename],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
     # run xsltproc
     output_xml_filename = output_directory.name + "/xml/doxygen.xml"
 
-    with open(output_xml_filename, 'w') as outfile:
-        subprocess.call(['xsltproc', output_directory.name + "/xml/combine.xslt", output_directory.name + "/xml/index.xml"], stdout=outfile, stderr=subprocess.DEVNULL)
+    with open(output_xml_filename, "w") as outfile:
+        subprocess.call(
+            [
+                "xsltproc",
+                output_directory.name + "/xml/combine.xslt",
+                output_directory.name + "/xml/index.xml",
+            ],
+            stdout=outfile,
+            stderr=subprocess.DEVNULL,
+        )
 
     # get environment variables
     gitrepo = os.environ.get("GIT_REPO")
@@ -549,7 +702,7 @@ if __name__ == "__main__":
 
         # if no params were found, or only the name and description were found, then don't bother creating a node
         if len(params) > 2:
-            #print("params (" + str(len(params)) + "): " + str(params))
+            # print("params (" + str(len(params)) + "): " + str(params))
 
             # create a node
             n = create_palette_node_from_params(params)
@@ -557,8 +710,8 @@ if __name__ == "__main__":
 
         # check if gitrepo and version params were found and cache the values
         for param in params:
-            key = param['key']
-            value = param['value']
+            key = param["key"]
+            value = param["value"]
 
             if key == "gitrepo":
                 gitrepo = value
