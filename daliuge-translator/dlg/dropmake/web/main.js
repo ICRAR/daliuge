@@ -159,6 +159,7 @@ async function restDeploy(){
   const manager_host   = manager_url.hostname;
   const manager_port   = manager_url.port;
   var manager_prefix = manager_url.pathname;
+  var request_mode = "cors";
   const pgt_id         = $("#pg_form input[name='pgt_id']").val();
   manager_url = manager_url.toString();
   if (manager_url.endsWith('/')){
@@ -171,6 +172,7 @@ async function restDeploy(){
   console.log("Manager host:'"+manager_host+"'");
   console.log("Manager port:'"+manager_port+"'");
   console.log("Manager prefix:'"+manager_prefix+"'");
+  console.log("Request mode:'"+request_mode+"'");
 
   // sessionId must be unique or the request will fail
   const sessionId = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph")) + "-" + Date.now();
@@ -192,19 +194,20 @@ async function restDeploy(){
   console.log("sending request to ", node_list_url);
   const node_list = await fetch(node_list_url, {
     method: 'GET',
-    credentials: 'include', 
+    // mode: request_mode,
+    // credentials: 'include', 
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-    }
-  })
+      'Origin': 'http://localhost:8084'
+    },
+})
   .then(handleFetchErrors)
   .then(response => response.json())
   .catch(function(error){
-    alert(error + "\nUnable to contiune!");
+    alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
   });
 
   console.log("node_list", node_list);
-
   // build object containing manager data
   const pg_spec_request_data = {
       manager_host: manager_host,
@@ -216,6 +219,7 @@ async function restDeploy(){
   // request pg_spec from translator
   const pg_spec_response = await fetch(pg_spec_url, {
     method: 'POST',
+    mode: request_mode,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -224,7 +228,7 @@ async function restDeploy(){
   .then(handleFetchErrors)
   .then(response => response.json())
   .catch(function(error){
-    alert(error + "\nUnable to contiune!");
+    alert(error + "\nGetting pg_spec unsuccessful: Unable to contiune!");
   });
 
   console.log("pg_spec response", pg_spec_response);
@@ -235,6 +239,7 @@ async function restDeploy(){
     credentials: 'include',
     cache: 'no-cache',
     method: 'POST',
+    mode: request_mode,
     referrerPolicy: 'no-referrer',
     headers: {
       'Content-Type': 'application/json',
@@ -244,7 +249,7 @@ async function restDeploy(){
   .then(handleFetchErrors)
   .then(response => response.json())
   .catch(function(error){
-    alert(error + "\nUnable to contiune!");
+    alert(error + "\nCreating session unsuccessful: Unable to contiune!");
   });
 
   console.log("create session response", create_session);
@@ -258,6 +263,7 @@ async function restDeploy(){
   const append_graph = await fetch(append_graph_url, {
     credentials: 'include', 
     method: 'POST',
+    mode: request_mode,
     headers: {
       'Content-Type': 'application/json',
       'Content-Encoding': 'gzip'
@@ -277,6 +283,7 @@ async function restDeploy(){
   const deploy_graph = await fetch(deploy_graph_url, {
     credentials: 'include', 
     method: 'POST',
+    mode: request_mode,
     body: new URLSearchParams({
       'completed': pg_spec_response.root_uids,
     })
