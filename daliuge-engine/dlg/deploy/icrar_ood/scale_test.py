@@ -145,8 +145,8 @@ class PawseyClient(object):
         self,
         log_root=None,
         acc=None,
-        pg=None,
-        lg=None,
+        physical_graph=None,
+        logical_graph=None,
         job_dur=30,
         num_nodes=5,
         run_proxy=False,
@@ -168,13 +168,13 @@ class PawseyClient(object):
         )
         self._num_nodes = num_nodes
         self._job_dur = job_dur
-        self._lg = lg
-        self._pg = pg
-        self._graph_vis = False
+        self._logical_graph = logical_graph
+        self._physical_graph = physical_graph
+        self._visualise_graph = False
         self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
-        self._pip_name = utils.fname_to_pipname(lg or pg) if lg or pg else "None"
+        self._pip_name = utils.fname_to_pipname(logical_graph or physical_graph) if logical_graph or physical_graph else "None"
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
@@ -212,9 +212,9 @@ class PawseyClient(object):
         return "%02d:%02d:%02d" % (h, m, s)
 
     def submit_job(self):
-        lgdir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
-        if not os.path.exists(lgdir):
-            os.makedirs(lgdir)
+        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
 
         pardict = dict()
         pardict["NUM_NODES"] = str(self._num_nodes)
@@ -222,18 +222,18 @@ class PawseyClient(object):
         pardict["JOB_DURATION"] = self.label_job_dur()
         pardict["ACCOUNT"] = self._acc
         pardict["PY_BIN"] = sys.executable
-        pardict["LOG_DIR"] = lgdir
+        pardict["LOG_DIR"] = log_dir
         pardict["GRAPH_PAR"] = (
-            '-L "{0}"'.format(self._lg)
-            if self._lg
-            else '-P "{0}"'.format(self._pg)
-            if self._pg
+            '-L "{0}"'.format(self._logical_graph)
+            if self._logical_graph
+            else '-P "{0}"'.format(self._physical_graph)
+            if self._physical_graph
             else ""
         )
         pardict["PROXY_PAR"] = (
             "-m %s -o %d" % (self._mon_host, self._mon_port) if self._run_proxy else ""
         )
-        pardict["GRAPH_VIS_PAR"] = "-d" if self._graph_vis else ""
+        pardict["GRAPH_VIS_PAR"] = "-d" if self._visualise_graph else ""
         pardict["LOGV_PAR"] = "-v %d" % self._logv
         pardict["ZERORUN_PAR"] = "-z" if self._zerorun else ""
         pardict["MAXTHREADS_PAR"] = "-t %d" % (self._max_threads)
@@ -243,14 +243,14 @@ class PawseyClient(object):
         pardict["CHECK_WITH_SESSION"] = "-S" if self._check_with_session else ""
 
         job_desc = sub_tpl.safe_substitute(pardict)
-        job_file = "{0}/jobsub.sh".format(lgdir)
+        job_file = "{0}/jobsub.sh".format(log_dir)
         with open(job_file, "w") as jf:
             jf.write(job_desc)
 
-        with open(os.path.join(lgdir, "git_commit.txt"), "w") as gf:
+        with open(os.path.join(log_dir, "git_commit.txt"), "w") as gf:
             gf.write(git_commit)
 
-        os.chdir(lgdir)  # so that slurm logs will be dumped here
+        os.chdir(log_dir)  # so that slurm logs will be dumped here
         print(subprocess.check_output(["sbatch", job_file]))
 
 
@@ -646,9 +646,9 @@ if __name__ == "__main__":
     )
     parser.add_option(
         "-i",
-        "--graph_vis",
+        "--visualise_graph",
         action="store_true",
-        dest="graph_vis",
+        dest="visualise_graph",
         help="Whether to visualise graph (poll status)",
         default=False,
     )
@@ -766,22 +766,22 @@ if __name__ == "__main__":
                     df = os.path.join(log_root, df)
                     if os.path.isdir(df):
                         try:
-                            lg = LogParser(df)
-                            lg.parse(out_csv=opts.csv_output)
+                            log_parser = LogParser(df)
+                            log_parser.parse(out_csv=opts.csv_output)
                         except Exception as exp:
                             print("Fail to parse {0}: {1}".format(df, exp))
         else:
-            lg = LogParser(opts.log_dir)
-            lg.parse(out_csv=opts.csv_output)
+            log_parser = LogParser(opts.log_dir)
+            log_parser.parse(out_csv=opts.csv_output)
     elif opts.action == 1:
 
         if opts.logical_graph and opts.physical_graph:
             parser.error(
                 "Either a logical graph or physical graph filename must be specified"
             )
-        for p in (opts.logical_graph, opts.physical_graph):
-            if p and not os.path.exists(p):
-                parser.error("Cannot locate graph file at '{0}'".format(p))
+        for path_to_graph_file in (opts.logical_graph, opts.physical_graph):
+            if path_to_graph_file and not os.path.exists(path_to_graph_file):
+                parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
 
         pc = PawseyClient(
             job_dur=opts.job_dur,
@@ -795,10 +795,10 @@ if __name__ == "__main__":
             num_islands=opts.num_islands,
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
-            lg=opts.logical_graph,
-            pg=opts.physical_graph,
+            logical_graph=opts.logical_graph,
+            physical_graph=opts.physical_graph,
         )
-        pc._graph_vis = opts.graph_vis
+        pc._visualise_graph = opts.visualise_graph
         pc.submit_job()
     else:
         parser.error("Invalid action -a")
