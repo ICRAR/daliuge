@@ -44,7 +44,8 @@ import uuid
 
 from . import dfms_proxy, remotes
 from .. import common
-from ... import utils, tool
+from ... import utils
+from ...common import tool
 from ...dropmake import pg_generator
 from ...manager import cmdline
 from ...manager.client import NodeManagerClient
