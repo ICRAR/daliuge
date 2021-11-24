@@ -20,12 +20,13 @@
 #    MA 02111-1307  USA
 #
 from abc import abstractmethod, ABCMeta
+from overrides import overrides
 import io
 import logging
 import os
 import urllib.parse
 
-from typing import Optional
+from typing import Optional, Union
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient
@@ -128,6 +129,14 @@ class DataIO(object):
         """
 
     @abstractmethod
+    def buffer(self) -> Union[memoryview, bytes, bytearray, pyarrow.Buffer]:
+        """
+        Gets a buffer protocol compatible object of the drop data.
+        This may be a zero-copy view of the data or a copy depending
+        on whether the drop stores data in cpu memory or not.
+        """
+
+    @abstractmethod
     def _open(self, **kwargs):
         pass
 
@@ -210,6 +219,7 @@ class MemoryIO(DataIO):
     A DataIO class that reads/write from/into the BytesIO object given at
     construction time
     """
+    _desc: io.BytesIO
 
     def __init__(self, buf: io.BytesIO, **kwargs):
         self._buf = buf
@@ -245,8 +255,12 @@ class MemoryIO(DataIO):
     def delete(self):
         self._buf.close()
 
+    def buffer(self):
+        return self._open().getbuffer()
+
 
 class FileIO(DataIO):
+    _desc: io.BufferedReader
     def __init__(self, filename, **kwargs):
         super(FileIO, self).__init__()
         self._fnm = filename
@@ -281,6 +295,10 @@ class FileIO(DataIO):
 
     def delete(self):
         os.unlink(self._fnm)
+
+    @overrides
+    def buffer(self) -> bytes:
+        return self._desc.read(-1)
 
 
 class NgasIO(DataIO):
@@ -562,6 +580,10 @@ class PlasmaIO(DataIO):
 
     def delete(self):
         pass
+
+    def buffer(self):
+        [data] = self._desc.get_buffers([self._object_id])
+        return memoryview(data)
 
 
 class PlasmaFlightIO(DataIO):
