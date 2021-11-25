@@ -255,7 +255,8 @@ class MemoryIO(DataIO):
     def delete(self):
         self._buf.close()
 
-    def buffer(self):
+    @overrides
+    def buffer(self) -> memoryview:
         return self._open().getbuffer()
 
 
@@ -265,9 +266,9 @@ class FileIO(DataIO):
         super(FileIO, self).__init__()
         self._fnm = filename
 
-    def _open(self, **kwargs):
-        flag = "r" if self._mode is OpenMode.OPEN_READ else "w"
-        flag += "b"
+    def _open(self, **kwargs) -> io.BufferedReader:
+        flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
+        flag += 'b'
         try:
             return open(self._fnm, flag)
         except FileNotFoundError:
@@ -581,7 +582,8 @@ class PlasmaIO(DataIO):
     def delete(self):
         pass
 
-    def buffer(self):
+    @overrides
+    def buffer(self) -> memoryview:
         [data] = self._desc.get_buffers([self._object_id])
         return memoryview(data)
 
@@ -644,3 +646,7 @@ class PlasmaFlightIO(DataIO):
 
     def delete(self):
         pass
+
+    @overrides
+    def buffer(self) -> memoryview:
+        return self._desc.get(self._object_id, self._flight_path)
