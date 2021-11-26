@@ -37,8 +37,8 @@ import subprocess
 import sys
 import time
 
-from ... import utils
-from ...runtime import __git_version__ as git_commit
+from dlg import utils
+from dlg.runtime import __git_version__ as git_commit
 
 
 sub_tpl_str = """#!/bin/bash --login
@@ -111,6 +111,14 @@ class TianHe2Config(DefaultConfig):
     def init_list(self):  # TODO please fill in
         return ["SHAO", "/group/shao/daliuge_logs"]
 
+class ICRARoodConfig(DefaultConfig):
+    def __init__(self):
+        super(ICRARoodConfig, self).__init__()
+
+    def init_list(self):  # TODO please fill in
+        HOME_DIR = os.environ['HOME']
+        return ["OOD", f"{HOME_DIR}/dlg/daliuge_logs"]
+
 
 class ConfigFactory:
     mapping = {
@@ -118,6 +126,7 @@ class ConfigFactory:
         "galaxy_askap": GalaxyASKAPConfig,
         "magnus": MagnusConfig,
         "galaxy": GalaxyASKAPConfig,
+        "awicenec": ICRARoodConfig,
     }
 
     @staticmethod
