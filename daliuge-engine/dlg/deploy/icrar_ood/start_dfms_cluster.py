@@ -298,7 +298,8 @@ def get_pg(opts, nms, dims):
 
     # modify the PG as necessary
     for modifier in opts.pg_modifiers.split(":"):
-        modify_pg(pgt, modifier)
+        if modifier is not None and modifier != "":
+            modify_pg(pgt, modifier)
 
     # Check that which NMs are up and use only those form now on
     nms = check_hosts(
