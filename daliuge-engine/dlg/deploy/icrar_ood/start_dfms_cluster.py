@@ -42,14 +42,14 @@ import threading
 import time
 import uuid
 
-from . import dfms_proxy, remotes
-from .. import common
-from ... import utils
-from ...common import tool
-from ...dropmake import pg_generator
-from ...manager import cmdline
-from ...manager.client import NodeManagerClient
-from ...manager.constants import (
+from dlg.deploy.icrar_ood import dfms_proxy, remotes
+from dlg.deploy import common
+from dlg import utils
+from dlg.common import tool
+from dlg.dropmake import pg_generator
+from dlg.manager import cmdline
+from dlg.manager.client import NodeManagerClient
+from dlg.manager.constants import (
     NODE_DEFAULT_REST_PORT,
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
