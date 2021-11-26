@@ -984,7 +984,7 @@ class PGT(object):
                 return None
         if app_drop_only:
             lp = DAGUtil.get_longest_path(G, show_path=True)[0]
-            return sum(G.node[u].get(wk, 0) for u in lp)
+            return sum(G.nodes[u].get(wk, 0) for u in lp)
         else:
             return DAGUtil.get_longest_path(G, show_path=False)[1]
 
@@ -1129,9 +1129,9 @@ class PGT(object):
                     link = dict()
                     link["from"] = myk
                     from_dt = 0 if drop["type"] == DropType.PLAIN else 1
-                    to_dt = G.node[oup]["dt"]
+                    to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
-                        to_drop = G.node[oup]["drop_spec"]
+                        to_drop = G.nodes[oup]["drop_spec"]
                         if from_dt == 0:
                             # add an extra app DROP
                             extra_oid = "{0}_TransApp_{1}".format(oid, i)
@@ -1177,7 +1177,7 @@ class PGT(object):
                         # global graph updates
                         # the new drop must have the same gid as the to_drop
                         add_nodes.append(
-                            (lid, 1, mydt, dropSpec, G.node[oup].get("gid", None))
+                            (lid, 1, mydt, dropSpec, G.nodes[oup].get("gid", None))
                         )
                         remove_edges.append((myk, oup))
                         add_edges.append((myk, lid))
@@ -1491,8 +1491,8 @@ class MetisPGTP(PGT):
         GG = self._G
         part_edges = defaultdict(int)  # k: from_gid + to_gid, v: sum_of_weight
         for e in GG.edges(data=True):
-            from_gid = GG.node[e[0]]["gid"]
-            to_gid = GG.node[e[1]]["gid"]
+            from_gid = GG.nodes[e[0]]["gid"]
+            to_gid = GG.nodes[e[1]]["gid"]
             k = "{0}**{1}".format(from_gid, to_gid)
             part_edges[k] += e[2]["weight"]
 
@@ -1767,7 +1767,7 @@ class MySarkarPGTP(PGT):
 
             node_list = jsobj["nodeDataArray"]
             for node in node_list:
-                gid = G.node[node["key"]]["gid"]  # gojs group_id
+                gid = G.nodes[node["key"]]["gid"]  # gojs group_id
                 if gid is None:
                     raise GPGTException(
                         "Node {0} does not have a Partition".format(node["key"])
