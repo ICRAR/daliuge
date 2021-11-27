@@ -536,6 +536,14 @@ def main():
         default="mpi",
     )
 
+    parser.add_option(
+        "--co-host-dim",
+        action="store_true",
+        dest="co_host_dim",
+        help="Start DIM on first NM node",
+        default=False,
+    )
+
     (options, _) = parser.parse_args()
 
     if options.check_interfaces:
@@ -620,13 +628,13 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         else:
+            nm_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
             pg = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
                 pg, options, ISLAND_DEFAULT_REST_PORT
             )
-            nm_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
             monitoring_thread.join()
-            stop_dims(["127.0.0.1"])
+            stop_dims(remote.dim_ips)
             stop_nms(remote.nm_ips)
         if nm_proc is not None:
             # Stop DALiuGE.
