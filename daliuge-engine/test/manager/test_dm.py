@@ -23,6 +23,7 @@ import copy
 import os
 import threading
 import unittest
+from time import sleep
 
 from dlg import droputils
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
@@ -55,6 +56,7 @@ def sleepAndCopy(uid, **kwargs):
 
 def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.createSession(sessionId)
+    sleep(0.3)
     nm.addGraphSpec(sessionId, graphSpec)
     nm.add_node_subscriptions(sessionId, node_subscriptions)
     nm.deploySession(sessionId)
