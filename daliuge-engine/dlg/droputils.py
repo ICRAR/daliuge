@@ -110,7 +110,7 @@ class DROPWaiterCtx(object):
         if self._test:
             for evt in self._evts:
                 self._test.assertTrue(
-                    evt.wait(to), "Waiting for DROP failed with timeout %d" % to
+                    evt.wait(to), "Waiting for DROP failed with timeout %d %s" % (to, evt)
                 )
 
 
