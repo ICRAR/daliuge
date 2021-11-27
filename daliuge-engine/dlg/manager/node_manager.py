@@ -206,7 +206,7 @@ class NodeManagerBase(DROPManager):
         """
         if not evt.session_id in self._sessions:
             logger.warning(
-                "No session %s found, event will be dropped" % (evt.session_id)
+                "No session %s found, event (%s) will be dropped" % (evt.session_id, evt.type)
             )
             return
         self._sessions[evt.session_id].deliver_event(evt)
@@ -278,10 +278,12 @@ class NodeManagerBase(DROPManager):
         )
 
     def cancelSession(self, sessionId):
+        logger.info("Cancelling session: %s", sessionId)
         self._check_session_id(sessionId)
         self._sessions[sessionId].cancel()
 
     def destroySession(self, sessionId):
+        logger.info("Destroying session: %s", sessionId)
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
         session.destroy()
