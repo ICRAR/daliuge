@@ -56,7 +56,6 @@ def sleepAndCopy(uid, **kwargs):
 
 def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
     nm.createSession(sessionId)
-    sleep(0.3)
     nm.addGraphSpec(sessionId, graphSpec)
     nm.add_node_subscriptions(sessionId, node_subscriptions)
     nm.deploySession(sessionId)
@@ -143,6 +142,7 @@ class NMTestsMixIn(object):
                 self.assertEqual(len(leaf_data), len(leaf_drop_data))
                 self.assertEqual(leaf_data, leaf_drop_data)
 
+        sleep(0.1) # just make sure all events have been processed.
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         return leaf_drop_data
