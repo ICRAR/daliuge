@@ -42,7 +42,7 @@ import threading
 import time
 import uuid
 
-from dlg.deploy import dfms_proxy, remotes
+from dlg.deploy import dlg_proxy, remotes
 from dlg.deploy import common
 from dlg import utils
 from dlg.common import tool
@@ -254,7 +254,7 @@ def start_proxy(dlg_host, dlg_port, monitor_host, monitor_port):
     Start the DALiuGE proxy server
     """
     proxy_id = socket.gethostname() + "%.3f" % time.time()
-    server = dfms_proxy.ProxyServer(
+    server = dlg_proxy.ProxyServer(
         proxy_id, dlg_host, monitor_host, dlg_port, monitor_port
     )
     try:
@@ -363,7 +363,7 @@ def main():
         type="int",
         dest="monitor_port",
         help="Monitor port",
-        default=dfms_proxy.default_dlg_monitor_port,
+        default=dlg_proxy.default_dlg_monitor_port,
     )
     parser.add_option(
         "-v",
