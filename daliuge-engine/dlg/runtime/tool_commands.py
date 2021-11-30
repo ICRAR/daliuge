@@ -42,12 +42,12 @@ def register_commands():
     tool.cmdwrap(
         "proxy",
         "A reverse proxy to be used in restricted environments to contact the Drop Managers",
-        "dlg.deploy.pawsey.dfms_proxy:run",
+        "dlg.deploy.dlg_proxy:run",
     )
     tool.cmdwrap(
         "monitor",
         "A proxy to be used in conjunction with the dlg proxy in restricted environments",
-        "dlg.deploy.pawsey.dfms_monitor:run",
+        "dlg.deploy.dlg_monitor:run",
     )
     tool.cmdwrap(
         "include_dir",
