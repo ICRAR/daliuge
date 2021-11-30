@@ -42,7 +42,7 @@ import struct
 import sys, logging
 import time
 
-from ...utils import b2s
+from ..utils import b2s
 
 BUFF_SIZE = 16384
 conn_retry_timeout = 5
