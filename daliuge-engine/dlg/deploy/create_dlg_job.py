@@ -42,26 +42,26 @@ from dlg.deploy.configs import *   # get all available configurations
 from dlg.runtime import __git_version__ as git_commit
 
 
-sub_tpl_str = """#!/bin/bash --login
+# sub_tpl_str = """#!/bin/bash --login
 
-#SBATCH --nodes=$NUM_NODES
-#SBATCH --ntasks-per-node=1
-#SBATCH --job-name=DALiuGE-$PIP_NAME
-#SBATCH --time=$JOB_DURATION
-#SBATCH --account=$ACCOUNT
-#SBATCH --error=err-%j.log
+# #SBATCH --nodes=$NUM_NODES
+# #SBATCH --ntasks-per-node=1
+# #SBATCH --job-name=DALiuGE-$PIP_NAME
+# #SBATCH --time=$JOB_DURATION
+# #SBATCH --account=$ACCOUNT
+# #SBATCH --error=err-%j.log
 
-module swap PrgEnv-cray PrgEnv-gnu
-module load python/2.7.10
-module load mpi4py
+# module swap PrgEnv-cray PrgEnv-gnu
+# module load python/2.7.10
+# module load mpi4py
 
-aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
-"""
-
-sub_tpl = string.Template(sub_tpl_str)
+# aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
+# """
 
 default_aws_mon_host = "sdp-dfms.ddns.net"
 default_aws_mon_port = 8898
+
+facilities = ConfigFactory.available()
 
 class SlurmClient(object):
     """
@@ -90,19 +90,21 @@ class SlurmClient(object):
         mon_host=default_aws_mon_host,
         mon_port=default_aws_mon_port,
         logv=1,
-        facility=socket.gethostname().split("-")[0],
+        facility=None,
         zerorun=False,
         max_threads=0,
         sleepncopy=False,
         num_islands=1,
         all_nics=False,
         check_with_session=False,
+        submit=True,
     ):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar("acc") if (acc is None) else acc
         self._log_root = (
             self._config.getpar("log_root") if (log_root is None) else log_root
         )
+        self.modules = self._config.getpar("modules")
         self._num_nodes = num_nodes
         self._job_dur = job_dur
         self._logical_graph = logical_graph
@@ -119,6 +121,7 @@ class SlurmClient(object):
         self._num_islands = num_islands
         self._all_nics = all_nics
         self._check_with_session = check_with_session
+        self._submit = submit
 
     @property
     def num_daliuge_nodes(self):
@@ -178,17 +181,20 @@ class SlurmClient(object):
         pardict["NUM_ISLANDS_PAR"] = "-s %d" % (self._num_islands)
         pardict["ALL_NICS"] = "-u" if self._all_nics else ""
         pardict["CHECK_WITH_SESSION"] = "-S" if self._check_with_session else ""
+        pardict["MODULES"] = self.modules
 
-        job_desc = sub_tpl.safe_substitute(pardict)
+        job_desc = init_tpl.safe_substitute(pardict)
         job_file = "{0}/jobsub.sh".format(log_dir)
         with open(job_file, "w") as jf:
             jf.write(job_desc)
 
         with open(os.path.join(log_dir, "git_commit.txt"), "w") as gf:
             gf.write(git_commit)
-
-        os.chdir(log_dir)  # so that slurm logs will be dumped here
-        print(subprocess.check_output(["sbatch", job_file]))
+        if self._submit:
+            os.chdir(log_dir)  # so that slurm logs will be dumped here
+            print(subprocess.check_output(["sbatch", job_file]))
+        else:
+            print(f"Created job submission script {job_file}")
 
 
 class LogEntryPair(object):
@@ -520,7 +526,7 @@ class LogParser(object):
 
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(usage='\n%prog -a [1|2] -f <facility> [options]\n\n%prog -h for further help')
 
     parser.add_option(
         "-a",
@@ -529,7 +535,7 @@ if __name__ == "__main__":
         type="int",
         dest="action",
         help="1 - submit job, 2 - analyse log",
-        default=1,
+        default=None,
     )
     parser.add_option(
         "-l",
@@ -684,19 +690,40 @@ if __name__ == "__main__":
     parser.add_option(
         "-C",
         "--configs",
-        action="info",
+        dest="configs",
+        action="store_true",
         help="Display the available configurations  and exit",
         default=False,
     )
+    parser.add_option(
+        "-f",
+        "--facility",
+        dest="facility",
+        choices=facilities,
+        action="store",
+        help=f"The facility for which to create a submission job\nValid options: {facilities}",
+        default=None,
+    )
+    parser.add_option(
+        "--submit",
+        dest="submit",
+        action="store_true",
+        help=f"If set to False, the job is not submitted, but the script is generated",
+        default=True,
+    )
 
     (opts, args) = parser.parse_args(sys.argv)
+    if not (opts.action and opts.facility) and not opts.configs:
+        parser.error("Missing required parameters!")
+    if opts.facility not in facilities:
+        parser.error(f"Unknown facility provided. Please choose from {facilities}")
+        
     if opts.action == 2:
         if opts.log_dir is None:
             # you can specify:
             # either a single directory
             if opts.log_root is None:
-                facility = socket.gethostname().split("-")[0]
-                config = ConfigFactory.create_config(facility=facility)
+                config = ConfigFactory.create_config(facility=opts.facility)
                 log_root = config.getpar("log_root")
             else:
                 log_root = opts.log_root
@@ -728,6 +755,7 @@ if __name__ == "__main__":
                 parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
 
         pc = SlurmClient(
+            facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
             logv=opts.verbose_level,
@@ -741,11 +769,12 @@ if __name__ == "__main__":
             check_with_session=opts.check_with_session,
             logical_graph=opts.logical_graph,
             physical_graph=opts.physical_graph,
+            submit=True if opts.submit in ['True','true'] else False,
         )
         pc._visualise_graph = opts.visualise_graph
         pc.submit_job()
-    elif opts.action == 3:
-        if opts.configs:
-            print(ConfigFactory.available())
+    elif opts.configs == True:
+        print(f"Available facilities: {facilities}")
     else:
-        parser.error("Invalid action -a")
+        parser.print_help()
+        parser.error("Invalid input!")
