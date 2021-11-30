@@ -19,14 +19,32 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import os
+import os, string
+
+__sub_tpl_str = """#!/bin/bash --login
+
+#SBATCH --nodes=$NUM_NODES
+#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=DALiuGE-$PIP_NAME
+#SBATCH --time=$JOB_DURATION
+#SBATCH --account=$ACCOUNT
+#SBATCH --error=err-%j.log
+
+$MODULES
+
+aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
+"""
+init_tpl = string.Template(__sub_tpl_str)
+
 
 class DefaultConfig(object):
+    MODULES = ""
     def __init__(self):
         self._dict = dict()
         l = self.init_list()
         self.setpar("acc", l[0])
         self.setpar("log_root", l[1])
+        self.setpar("modules",l[2])
 
     def init_list(self):
         pass
@@ -40,12 +58,16 @@ class DefaultConfig(object):
 #############################
 
 class ICRARoodConfig(DefaultConfig):
+    MODULES = """
+module load python/3.8.10
+module load mpi4py
+"""
     def __init__(self):
         super(ICRARoodConfig, self).__init__()
 
     def init_list(self):  # TODO please fill in
         HOME_DIR = os.environ['HOME']
-        return ["OOD", f"{HOME_DIR}/dlg/daliuge_logs"]
+        return ["OOD", f"{HOME_DIR}/dlg/daliuge_logs", self.MODULES]
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
@@ -56,11 +78,16 @@ class GalaxyMWAConfig(DefaultConfig):
 
 
 class GalaxyASKAPConfig(DefaultConfig):
+    MODULES = """
+module swap PrgEnv-cray PrgEnv-gnu
+module load python/2.7.10
+module load mpi4py
+"""
     def __init__(self):
         super(GalaxyASKAPConfig, self).__init__()
 
     def init_list(self):
-        return ["astronomy856", "/group/astronomy856/cwu/dfms/logs"]
+        return ["astronomy856", "/group/astronomy856/cwu/dfms/logs", self.MODULES]
 
 
 class MagnusConfig(DefaultConfig):
