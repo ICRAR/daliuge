@@ -30,6 +30,7 @@ from dlg.testutils import ManagerStarter
 class TestTool(ManagerStarter, unittest.TestCase):
     def test_cmdhelp(self):
         """Checks that all dlg commands have a help"""
+        tool._load_commands()
         for cmd in tool.commands:
             p = tool.start_process(
                 cmd, ["-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
