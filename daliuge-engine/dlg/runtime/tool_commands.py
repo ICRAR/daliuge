@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 
-from ..common import tool
+from dlg.common import tool
 
 
 def include_dir(_parser, _args):
