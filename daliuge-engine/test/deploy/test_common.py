@@ -26,6 +26,8 @@ import unittest
 from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates
+
+
 from dlg.testutils import ManagerStarter
 from dlg.common import Categories
 
