@@ -51,9 +51,10 @@ from urllib.parse import parse_qs, urlparse
 
 from ... import common, restutils
 from ...clients import CompositeManagerClient
-from ..pg_generator import unroll, partition, GraphException
-from ..pg_manager import PGManager
-from ..scheduler import SchedulerException
+from dlg.dropmake.pg_generator import unroll, partition
+from dlg.dropmake.lg import GraphException
+from dlg.dropmake.pg_manager import PGManager
+from dlg.dropmake.scheduler import SchedulerException
 
 logger = logging.getLogger(__name__)
 
