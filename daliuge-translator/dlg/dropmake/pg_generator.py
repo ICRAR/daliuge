@@ -340,10 +340,10 @@ class LGNode:
         return self.is_group() and self._jd["category"] == Categories.LOOP
 
     def is_service(self):
-        # services nodes are replaced with the input application in the logical graph
-        return ("isService" in self._jd and self._jd["isService"]) or self._jd[
-            "category"
-        ] == Categories.SERVICE
+        """
+        Determines whether a node the parent service node (not the input application)
+        """
+        return self._jd["category"] == Categories.SERVICE
 
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
@@ -565,7 +565,7 @@ class LGNode:
                         else:
                             kwargs[k_v[0]] = k_v[1]
 
-    def _create_test_drop_spec(self, oid, rank, kwargs):
+    def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
         TODO
         This is a test function only
@@ -624,11 +624,7 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in [
-            Categories.COMPONENT,
-            Categories.PYTHON_APP,
-            Categories.BRANCH,
-        ]:
+        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -656,11 +652,13 @@ class LGNode:
             drop_spec = dropdict(
                 {"oid": oid, "type": DropType.APP, "app": app_class, "rank": rank}
             )
+
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
+
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
             if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
@@ -813,8 +811,21 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(drop_spec)
+        elif drop_type == Categories.SERVICE:
+            raise GraphException(f"DROP type: {drop_type} should not appear in physical graph")
+            # drop_spec = dropdict(
+            #     {
+            #         "oid": oid,
+            #         "type": DropType.SERVICE_APP,
+            #         "app": "dlg.apps.simple.SleepApp",
+            #         "rank": rank
+            #     }
+            # )
+            # kwargs["tw"] = 1
+
         # elif drop_type == Categories.BRANCH:
         # Branches are now dealt with like any other application and essentially ignored by the translator.
+
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
@@ -844,6 +855,8 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
+        if "isService" in self.jd and self.jd["isService"]:
+            kwargs["type"] = DropType.SERVICE_APP
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -2102,7 +2115,8 @@ class LG:
         lpcxt:  Loop context
         """
         if lgn.is_group():
-            extra_links_drops = not lgn.is_scatter() and not lgn.is_service()
+            # services nodes are replaced with the input application in the logical graph
+            extra_links_drops = not lgn.is_scatter()
             if extra_links_drops:
                 non_inputs = []
                 grp_starts = []
@@ -2194,13 +2208,9 @@ class LG:
                 src_drop = lgn.make_single_drop(miid, loop_cxt=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
         elif lgn.is_service():
-            src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
-            src_drop["type"] = DropType.SERVICE_APP
-            self._drop_dict[lgn.id].append(src_drop)
-            if lgn.is_start_listener():
-                self._drop_dict["new_added"].append(src_drop["listener_drop"])
+            # no action required, inputapp node aleady created and marked with "isService"
+            pass
         else:
-            # TODO !!
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
             if lgn.is_start_listener():
