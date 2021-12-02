@@ -312,7 +312,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
     StreamingOutputBashApp for those cases.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "BashShellApp",
         "An app that runs a bash command in batch mode",
         [dlg_batch_input("text/*", [])],
@@ -330,7 +330,7 @@ class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
     next application.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "StreamingOutputBashApp",
         "Like BashShellApp, but its stdout is a stream "
         "of data that is fed into the next application.",
@@ -357,7 +357,7 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
     this application off.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "StreamingInputBashApp",
         "An app that runs a bash command that consumes data from stdin.",
         [dlg_batch_input("text/*", [])],
@@ -377,7 +377,7 @@ class StreamingInputOutputBashApp(StreamingInputBashAppBase):
     fed into the next application.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "StreamingInputOutputBashApp",
         "Like StreamingInputBashApp, but its stdout is also a "
         "stream of data that is fed into the next application.",

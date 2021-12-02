@@ -47,7 +47,7 @@ class ExternalStoreApp(BarrierAppDROP):
     where it resides.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "ExternalStoreApp",
         "An application that takes its input DROP (which must be one, and only one) "
         "and creates a copy of it in a completely external store, from the point "
@@ -106,7 +106,7 @@ class NgasArchivingApp(ExternalStoreApp):
     supported by the framework, and not only filesystem objects.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "NgasArchivingApp",
         "An ExternalStoreApp class that takes its input DROP and archives it in "
         "an NGAS server. It currently deals with non-container DROPs only.",
