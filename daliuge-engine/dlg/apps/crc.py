@@ -41,7 +41,7 @@ class CRCApp(BarrierAppDROP):
     not something really intended to be used in a production system
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "CRCApp",
         "A BarrierAppDROP that calculates the " "CRC of the single DROP it consumes",
         [dlg_batch_input("binary/*", [])],
