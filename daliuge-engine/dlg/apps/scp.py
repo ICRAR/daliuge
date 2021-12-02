@@ -52,7 +52,7 @@ class ScpApp(BarrierAppDROP):
     two I/O DROPs.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "ScpApp",
         "A BarrierAppDROP that copies the content of its single "
         "input onto its single output via SSHs scp protocol.",
