@@ -86,6 +86,27 @@ def import_using_code(code):
     return dill.loads(code)
 
 
+#
+# @brief PyFuncApp
+# @details An application that wraps a simple python function.
+# The inputs of the application are treated as the arguments of the function.
+# Conversely, the output of the function is treated as the output of the
+# application. If the application has more than one output, the result of
+# calling the function is treated as an iterable, with each individual object
+# being written to its corresponding output.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/
+#     \~English Application class
+# @param[in] param/func_name Function Name//String/readwrite/
+#     \~English Python fuction name
+# @param[in] param/func_code Function Code//String/readwrite/
+#     \~English Python fuction code, e.g. 'def fuction_name(args): pass'
+# @param[in] param/func_defaults Function Defaults//String/readwrite/
+#     \~English Dictionary of keyword arg names to default values
+# @param[in] param/func_arg_mapping Function Arguments Mapping//String/readwrite/
+#     \~English Dictionary of keyword arg names to input drop uid
+# @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
     """
     An application that wraps a simple python function.
