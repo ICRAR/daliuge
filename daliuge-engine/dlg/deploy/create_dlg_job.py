@@ -58,7 +58,7 @@ from dlg.runtime import __git_version__ as git_commit
 # aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
 # """
 
-default_aws_mon_host = "sdp-dfms.ddns.net"
+default_aws_mon_host = "sdp-dfms.ddns.net"  # TODO: need to change this
 default_aws_mon_port = 8898
 
 facilities = ConfigFactory.available()
@@ -67,7 +67,7 @@ class SlurmClient(object):
     """
     parameters we can control:
 
-    1. usser group / account name (Required)
+    1. user group / account name (Required)
     2. whether to submit a graph, and if so provide graph path
     3. # of nodes (of Drop Managers)
     4. how long to run
@@ -151,11 +151,7 @@ class SlurmClient(object):
         h, m = divmod(m, 60)
         return "%02d:%02d:%02d" % (h, m, s)
 
-    def submit_job(self):
-        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-
+    def create_job_desc(self):
         pardict = dict()
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
@@ -184,7 +180,16 @@ class SlurmClient(object):
         pardict["MODULES"] = self.modules
 
         job_desc = init_tpl.safe_substitute(pardict)
+        return job_desc
+
+
+    def submit_job(self):
+        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
         job_file = "{0}/jobsub.sh".format(log_dir)
+        job_desc = self.create_job_desc()
         with open(job_file, "w") as jf:
             jf.write(job_desc)
 
@@ -579,6 +584,7 @@ if __name__ == "__main__":
         default=30,
     )
     parser.add_option(
+        # TODO: num_nodes needs to be >= #partitions in PGT, if provided
         "-n",
         "--num_nodes",
         action="store",
