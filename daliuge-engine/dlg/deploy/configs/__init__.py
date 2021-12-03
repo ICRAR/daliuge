@@ -67,7 +67,8 @@ module load mpi4py
 
     def init_list(self):  # TODO please fill in
         HOME_DIR = os.environ['HOME']
-        return ["OOD", f"{HOME_DIR}/dlg/daliuge_logs", self.MODULES]
+        ACCOUNT = os.environ['USER']
+        return [ACCOUNT, f"{HOME_DIR}/dlg/daliuge_logs", self.MODULES]
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
