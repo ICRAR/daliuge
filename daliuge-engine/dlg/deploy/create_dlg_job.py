@@ -152,6 +152,7 @@ class SlurmClient(object):
         return "%02d:%02d:%02d" % (h, m, s)
 
     def create_job_desc(self):
+        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
         pardict = dict()
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
