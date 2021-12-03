@@ -305,7 +305,7 @@ def get_pg(opts, nms, dims):
         if modifier is not None and modifier != "":
             modify_pg(pgt, modifier)
 
-    # Check that which NMs are up and use only those form now on
+    # Check which NMs are up and use only those form now on
     nms = check_hosts(
         nms,
         NODE_DEFAULT_REST_PORT,
