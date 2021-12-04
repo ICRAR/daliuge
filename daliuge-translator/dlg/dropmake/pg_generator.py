@@ -39,6 +39,7 @@ import random
 import string
 import time
 from itertools import product
+from typing import ValuesView
 
 import networkx as nx
 import numpy as np
@@ -1004,59 +1005,68 @@ class PGT(object):
     ):
         raise Exception("Not implemented. Call sub-class")
 
-    def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0):
+    def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0,
+        co_host_dim=True):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
         node_list:
             A list of nodes (list), whose length == (num_islands + num_node_mgrs)
+            if co_locate_islands = False.
             We assume that the MasterDropManager's node is NOT in the node_list
 
         num_islands:
             - >1 Partitions are "conceptually" clustered into Islands
             - 1 Partitions MAY BE physically merged without generating islands
               depending on the length of node_list
+            - num_islands can't be < 1
 
+        tpl_nodes_len: if this is given we generate a pg_spec template
+            The pg_spec template is what needs to be send to a deferred deployemnt
+            where the daliuge system is started up afer submission (e.g. SLURM)
         """
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
-            # TODO proper
-            # Looks like we don't need too much anymore
+
+        if 0 == self._num_parts_done:
+            raise GPGTException("The graph has not been partitioned yet")
 
         if node_list is None or 0 == len(node_list):
             raise GPGTException("Node list is empty!")
+        nodes_len = len(node_list)
 
         try:
             num_islands = int(num_islands)
         except:
-            raise GPGTException("Invalid num_islands: {0}".format(num_islands))
+            raise GPGTException("Invalid num_islands spec: {0}".format(num_islands))
         if num_islands < 1:
-            num_islands = 1
-
+            num_islands = 1 # need at least one island manager
+        if num_islands > nodes_len:
+            raise GPGTException("Number of islands must be <= number of specified nodes!")
         form_island = num_islands > 1
-        if 0 == self._num_parts_done:
-            raise GPGTException("The graph has not been partitioned yet")
-        nodes_len = len(node_list)
-        if nodes_len < 2:  # enough for at least 1 dim and 1 nm
+        if nodes_len < 1:  # we allow to run everything on a single node now!
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
+
         num_parts = self._num_parts_done
         drop_list = self._drop_list + self._extra_drops
-        logger.info(
-            "Drops count: {0}, partitions count: {1}, nodes count: {2}".format(
-                len(drop_list), num_parts, nodes_len
+        
+        # deal with the co-hosting of DIMs
+        if not co_host_dim:
+            if form_island and num_parts > nodes_len:
+                raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+            is_list = node_list[0:num_islands+1]
+            nm_list = node_list[num_islands:] 
+        else:
+            if form_island and num_islands + num_parts > nodes_len:
+                raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+            is_list = node_list
+            nm_list = node_list
+        nm_len = len(nm_list)
+        logger.info(    
+            "Drops count: {0}, partitions count: {1}, nodes count: {2}, island count: {3}".format(
+                len(drop_list), num_parts, nodes_len, len(is_list)
             )
         )
-
-        if form_island and num_islands + num_parts > nodes_len:
-            # if form_island, each part should already be guaranteed
-            # to occupy one physical node
-            # i.e. nodes_len - num_islands >= num_parts (Eq.1)
-            # otherwise
-            raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
-
-        is_list = node_list[0:num_islands]
-        nm_list = node_list[num_islands:]
-        nm_len = len(nm_list)
 
         if form_island:
             self.merge_partitions(num_islands, form_island=True)
@@ -1068,12 +1078,24 @@ class PGT(object):
 
         lm = self._oid_gid_map
         lm2 = self._gid_island_id_map
+        # when #partitions < #nodes the lm values are spread around range(#nodes)
+        # which leads to index out of range errors (TODO: find how _oid_gid_map is
+        # constructed). The next three lines are fixing this.
+        values = set(dict(lm).values()) # old unique values
+        values = dict(zip(values,range(len(values)))) # dict with new values
+        lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
+
+        # same for lm2
+        values = set(dict(lm2).values()) # old unique values
+        values = dict(zip(values,range(len(values)))) # dict with new values
+        lm2 = {k:values[v] for (k, v) in lm2.items()} # replace old values with new
         if tpl_nodes_len:
             nm_list = ["#%s" % x for x in range(nm_len)]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
+        logger.info("nm_list: %s, is_list: %s, lm: %s, lm2: %s" % (nm_list, is_list, lm, lm2))
         for drop in drop_list:
             oid = drop["oid"]
             # For now, simply round robin, but need to consider
@@ -2788,15 +2810,19 @@ def partition(
     return pgt
 
 
-def resource_map(pgt, nodes, num_islands=1):
+def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     """Maps a Physical Graph Template `pgt` to `nodes`"""
 
     if not nodes:
         err_info = "Empty node_list, cannot map the PG template"
         raise ValueError(err_info)
 
-    dim_list = nodes[0:num_islands]
-    nm_list = nodes[num_islands:]
+    if co_host_dim:
+        dim_list = nodes
+        nm_list = nodes
+    else:
+        dim_list = nodes[0:num_islands]
+        nm_list = nodes[num_islands:]
     for drop_spec in pgt:
         nidx = int(drop_spec["node"][1:])  # skip '#'
         drop_spec["node"] = nm_list[nidx]

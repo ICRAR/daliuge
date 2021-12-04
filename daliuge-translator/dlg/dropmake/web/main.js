@@ -154,7 +154,7 @@ async function restDeploy(){
       murl = window.localStorage.getItem("manager_url");
     })};
   var manager_url = new URL(murl);
-  console.log("Already here")
+  console.log("In REST Deploy")
   
   const manager_host   = manager_url.hostname;
   const manager_port   = manager_url.port;
@@ -175,126 +175,163 @@ async function restDeploy(){
   console.log("Request mode:'"+request_mode+"'");
 
   // sessionId must be unique or the request will fail
-  const sessionId = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph")) + "-" + Date.now();
+  const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
+  const sessionId = lgName + "-" + Date.now();
   console.log("sessionId:'"+sessionId+"'");
 
   // build urls
-  const pg_spec_url        = "/gen_pg_spec";
-  const node_list_url      = manager_url + "/api/nodes";
-  const create_session_url = manager_url + "/api/sessions";
-  const append_graph_url   = manager_url + "/api/sessions/" + sessionId + "/graph/append";
-  const deploy_graph_url   = manager_url + "/api/sessions/" + sessionId + "/deploy";
-  const mgr_url            = manager_url + "/session?sessionId=" + sessionId;
+  // the manager_url in this case has to point to daliuge_ood
+  const create_slurm_url   = manager_url + "/api/slurm/script";  
+  const pgt_url            = "/gen_pg?tpl_nodes_len=1&pgt_id=" + pgtName; // TODO: tpl_nodes_len >= nodes in LG
+  // const pg_spec_url        = "/gen_pg_spec";
+  // const node_list_url      = manager_url + "/api/nodes";
+  // const create_session_url = manager_url + "/api/sessions";
+  // const append_graph_url   = manager_url + "/api/sessions/" + sessionId + "/graph/append";
+  // const deploy_graph_url   = manager_url + "/api/sessions/" + sessionId + "/deploy";
+  // const mgr_url            = manager_url + "/session?sessionId=" + sessionId;
 
-  // fetch the graph from this server
-  // const graph = await fetch("/pgt_jsonbody?pgt_name="+pgtName).then(response => response.json());
-  // console.log("graph", graph);
-
-  // fetch the nodelist from engine
-  console.log("sending request to ", node_list_url);
-  const node_list = await fetch(node_list_url, {
+  // fetch the PGT from this server
+  console.log("sending request to ", pgt_url);
+  console.log("graph name:", pgtName);
+  const pgt = await fetch(pgt_url, {
     method: 'GET',
-    // mode: request_mode,
-    // credentials: 'include', 
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Origin': 'http://localhost:8084'
-    },
-})
-  .then(handleFetchErrors)
-  .then(response => response.json())
-  .catch(function(error){
-    alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
-  });
-
-  console.log("node_list", node_list);
-  // build object containing manager data
-  const pg_spec_request_data = {
-      manager_host: manager_host,
-      node_list: node_list,
-      pgt_id: pgt_id
-  }
-
-  console.log(pg_spec_request_data);
-  // request pg_spec from translator
-  const pg_spec_response = await fetch(pg_spec_url, {
-    method: 'POST',
-    mode: request_mode,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(pg_spec_request_data)
   })
   .then(handleFetchErrors)
   .then(response => response.json())
   .catch(function(error){
-    alert(error + "\nGetting pg_spec unsuccessful: Unable to contiune!");
+    alert(error + "\nGetting PGT unsuccessful: Unable to contiune!");
   });
 
-  console.log("pg_spec response", pg_spec_response);
-
-  // create session on engine
-  const session_data = {"sessionId": sessionId};
-  const create_session = await fetch(create_session_url, {
+  // This is for a deferred start of daliuge, e.g. on SLURM
+  console.log("sending request to ", create_slurm_url);
+  var body = [pgtName, pgt]; // we send the name in the body with the pgt
+  // console.log("Sending PGT with name:", body);
+  const slurm_script = await fetch(create_slurm_url, {
+    method: 'POST',
     credentials: 'include',
     cache: 'no-cache',
-    method: 'POST',
     mode: request_mode,
     referrerPolicy: 'no-referrer',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(session_data)
+    body: JSON.stringify(body)
   })
   .then(handleFetchErrors)
   .then(response => response.json())
   .catch(function(error){
-    alert(error + "\nCreating session unsuccessful: Unable to contiune!");
+    alert(error + "\nSending PGT to backend unsuccessfull!");
   });
 
-  console.log("create session response", create_session);
 
-  // gzip the pg_spec
-  const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
-  const compressed_pg_spec = fflate.zlibSync(buf);
-  console.log("compressed_pg_spec", compressed_pg_spec);
+// All the rest here is when the managers are actually running
+// TODO: need to enable this again.
 
-  // append graph to session on engine
-  const append_graph = await fetch(append_graph_url, {
-    credentials: 'include', 
-    method: 'POST',
-    mode: request_mode,
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Encoding': 'gzip'
-    },
-    body: new Blob([compressed_pg_spec])
-    // body: new Blob([buf])
-  })
-  .then(handleFetchErrors)
-  .then(response => response.json())
-  .catch(function(error){
-    alert(error + "\nUnable to contiune!");
-  });
-  console.log("append graph response", append_graph);
+//   // fetch the nodelist from engine
+//   console.log("sending request to ", node_list_url);
+//   const node_list = await fetch(node_list_url, {
+//     method: 'GET',
+//     // mode: request_mode,
+//     // credentials: 'include', 
+//     headers: {
+//       'Content-Type': 'application/x-www-form-urlencoded',
+//       'Origin': 'http://localhost:8084'
+//     },
+//   })
+//   .then(handleFetchErrors)
+//   .then(response => response.json())
+//   .catch(function(error){
+//     alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
+//   });
 
-  // deploy graph
-  // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
-  const deploy_graph = await fetch(deploy_graph_url, {
-    credentials: 'include', 
-    method: 'POST',
-    mode: request_mode,
-    body: new URLSearchParams({
-      'completed': pg_spec_response.root_uids,
-    })
-  })
-  .then(handleFetchErrors)
-  .then(response => response.json())
-  .catch(function(error){
-    alert(error + "\nUnable to contiune!");
-  });
+//   console.log("node_list", node_list);
+//   // build object containing manager data
+//   const pg_spec_request_data = {
+//       manager_host: manager_host,
+//       node_list: node_list,
+//       pgt_id: pgt_id
+//   }
 
-  console.log("deploy graph response", deploy_graph);
-  // Open DIM session page in new tab
-  window.open(mgr_url, '_blank').focus();
+//   console.log(pg_spec_request_data);
+//   // request pg_spec from translator
+//   const pg_spec_response = await fetch(pg_spec_url, {
+//     method: 'POST',
+//     mode: request_mode,
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify(pg_spec_request_data)
+//   })
+//   .then(handleFetchErrors)
+//   .then(response => response.json())
+//   .catch(function(error){
+//     alert(error + "\nGetting pg_spec unsuccessful: Unable to contiune!");
+//   });
+
+//   console.log("pg_spec response", pg_spec_response);
+
+//   // create session on engine
+//   const session_data = {"sessionId": sessionId};
+//   const create_session = await fetch(create_session_url, {
+//     credentials: 'include',
+//     cache: 'no-cache',
+//     method: 'POST',
+//     mode: request_mode,
+//     referrerPolicy: 'no-referrer',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify(session_data)
+//   })
+//   .then(handleFetchErrors)
+//   .then(response => response.json())
+//   .catch(function(error){
+//     alert(error + "\nCreating session unsuccessful: Unable to contiune!");
+//   });
+
+//   console.log("create session response", create_session);
+
+//   // gzip the pg_spec
+//   const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
+//   const compressed_pg_spec = fflate.zlibSync(buf);
+//   console.log("compressed_pg_spec", compressed_pg_spec);
+
+//   // append graph to session on engine
+//   const append_graph = await fetch(append_graph_url, {
+//     credentials: 'include', 
+//     method: 'POST',
+//     mode: request_mode,
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'Content-Encoding': 'gzip'
+//     },
+//     body: new Blob([compressed_pg_spec])
+//     // body: new Blob([buf])
+//   })
+//   .then(handleFetchErrors)
+//   .then(response => response.json())
+//   .catch(function(error){
+//     alert(error + "\nUnable to contiune!");
+//   });
+//   console.log("append graph response", append_graph);
+
+//   // deploy graph
+//   // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
+//   const deploy_graph = await fetch(deploy_graph_url, {
+//     credentials: 'include', 
+//     method: 'POST',
+//     mode: request_mode,
+//     body: new URLSearchParams({
+//       'completed': pg_spec_response.root_uids,
+//     })
+//   })
+//   .then(handleFetchErrors)
+//   .then(response => response.json())
+//   .catch(function(error){
+//     alert(error + "\nUnable to contiune!");
+//   });
+
+//   console.log("deploy graph response", deploy_graph);
+//   // Open DIM session page in new tab
+//   window.open(mgr_url, '_blank').focus();
 }

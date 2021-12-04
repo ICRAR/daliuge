@@ -94,6 +94,7 @@ src_files = package_files("dlg")
 
 
 install_requires = [
+    "wheel",
     "bottle",
     "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
