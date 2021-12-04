@@ -373,6 +373,13 @@ def dlg_map(parser, args):
         help="Number of islands to use during the partitioning",
         default=1,
     )
+    parser.add_option(
+        "--co-host-dim",
+        action="store_true",
+        dest="co_host_dim",
+        help="co-host DIMs with NM during the partitioning",
+        default=True,
+    )
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
     dump = _setup_output(opts)
@@ -396,7 +403,8 @@ def dlg_map(parser, args):
     with _open_i(opts.pgt_path) as f:
         pgt = json.load(f)
 
-    dump(pg_generator.resource_map(pgt, nodes, opts.islands))
+    dump(pg_generator.resource_map(pgt, nodes, opts.islands, 
+        co_host_dim=opts.co_host_dim))
 
 
 def dlg_submit(parser, args):
