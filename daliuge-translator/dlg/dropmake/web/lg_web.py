@@ -304,8 +304,16 @@ def gen_pg():
         return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
             pgt_id
         )
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = 0
+    num_partitions = len(list(filter(lambda n:'isGroup' in n, pgtpj['nodeDataArray'])))
     surl = urlparse(request.url)
 
+    mhost = ""
+    mport = -1
+    mprefix = ""
     q = parse_qs(surl.query)
     if "dlg_mgr_url" in q:
         murl = q["dlg_mgr_url"][0]
@@ -327,13 +335,24 @@ def gen_pg():
         if request.query.get("dlg_mgr_port"):
             mport = int(request.query.get("dlg_mgr_port"))
 
-    logger.debug("Manager host: %s" % mhost)
-    logger.debug("Manager port: %s" % mport)
-    logger.debug("Manager prefix: %s" % mprefix)
+    # logger.debug("Manager host: %s" % mhost)
+    # logger.debug("Manager port: %s" % mport)
+    # logger.debug("Manager prefix: %s" % mprefix)
 
     if mhost is None:
-        response.status = 500
-        return "Must specify DALiUGE manager host"
+        if request.query.get("tpl_nodes_len"):
+            nnodes = int(request.query.get("tpl_nodes_len"))
+            nnodes = num_partitions
+        else:
+            response.status = 500
+            return "Must specify DALiUGE manager host or tpl_nodes_len"
+
+        pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
+        response.content_type = "application/json"
+        response.set_header(
+            "Content-Disposition", 'attachment; filename="%s"' % (pgt_id)
+        )
+        return json.dumps(pg_spec)
     try:
         mgr_client = CompositeManagerClient(
             host=mhost, port=mport, url_prefix=mprefix, timeout=30
@@ -364,9 +383,6 @@ def gen_pg():
             )
         else:
             response.content_type = "application/json"
-            response.set_header(
-                "Content-Disposition", "attachment; filename=%s" % (pgt_id)
-            )
             return json.dumps(pg_spec)
     except restutils.RestClientException as re:
         response.status = 500

@@ -313,7 +313,8 @@ def get_pg(opts, nms, dims):
         timeout=MM_WAIT_TIME,
         retry=3,
     )
-    pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims)
+    pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
+        co_host_dim=opts.co_host_dim)
     with open(os.path.join(opts.log_dir, "pg.json"), "wt") as f:
         json.dump(pg, f)
     return pg
@@ -463,7 +464,7 @@ def main():
     )
 
     parser.add_option(
-        "--ssid", type="string", dest="ssid", help="session id", default="1"
+        "--ssid", type="string", dest="ssid", help="session id", default=""
     )
 
     parser.add_option(
@@ -579,6 +580,9 @@ def main():
 
     if options.monitor_host is not None and options.num_islands > 1:
         parser.error("We do not support proxy monitor multiple islands yet")
+
+    # if options.ssid == "":
+    #     options.ssid = time.
 
     remote = get_remote(options)
 

@@ -13,6 +13,7 @@ COPY / /daliuge
 
 RUN . /root/dlg/bin/activate && \
     cd /daliuge && \
+    pip3 install wheel && \
     pip3 install . 
 
 # Second stage build taking what's required from first stage
