@@ -98,7 +98,6 @@ install_requires = [
     "bottle",
     "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
-    # We are not compatible with networkx 2.4 yet, so we need to constrain that
     "networkx",
     "numpy",
     "psutil",
