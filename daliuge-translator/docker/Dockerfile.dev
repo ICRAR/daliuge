@@ -7,7 +7,9 @@ ARG BUILD_ID
 FROM icrar/daliuge-common:${VCS_TAG}
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN apt-get update && apt-get install -y gcc python3-venv python3-distutils && apt-get clean
+RUN apt-get update && \
+    apt-get clean && \
+    apt install -y gcc python3-venv python3-distutils
 
 COPY / /daliuge
 
