@@ -456,9 +456,9 @@ def convert_construct(lgo):
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":
-            app_node["text"] = node["inputApplicationName"]
+            app_node["text"] = node["text"]
         else:
-            app_node["text"] = node["outputApplicationName"]
+            app_node["text"] = node["text"]
 
         if "mkn" in node:
             app_node["mkn"] = node["mkn"]
