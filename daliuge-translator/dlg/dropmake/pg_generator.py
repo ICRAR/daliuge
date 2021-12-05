@@ -1080,15 +1080,13 @@ class PGT(object):
         lm2 = self._gid_island_id_map
         # when #partitions < #nodes the lm values are spread around range(#nodes)
         # which leads to index out of range errors (TODO: find how _oid_gid_map is
-        # constructed). The next three lines are fixing this.
-        values = set(dict(lm).values()) # old unique values
-        values = dict(zip(values,range(len(values)))) # dict with new values
-        lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
+        # constructed). The next three lines are attempting to fix this, however
+        # then the test_metis_pgtp_gen_pg_island fails. This needs more investigation
+        # but is a corner case.
+        # values = set(dict(lm).values()) # old unique values
+        # values = dict(zip(values,range(len(values)))) # dict with new values
+        # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
-        # same for lm2
-        values = set(dict(lm2).values()) # old unique values
-        values = dict(zip(values,range(len(values)))) # dict with new values
-        lm2 = {k:values[v] for (k, v) in lm2.items()} # replace old values with new
         if tpl_nodes_len:
             nm_list = ["#%s" % x for x in range(nm_len)]  # so that nm_list[i] == '#i'
             is_list = [
