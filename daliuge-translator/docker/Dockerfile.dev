@@ -20,6 +20,7 @@ RUN . /root/dlg/bin/activate && \
 FROM icrar/daliuge-common:${VCS_TAG}
 COPY --from=0 /daliuge/. /daliuge/.
 COPY --from=0 /root/dlg /root/dlg
+RUN apt-get update && apt-get install -y libmetis-dev
 
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/root/dlg
