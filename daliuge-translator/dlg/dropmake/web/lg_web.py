@@ -335,9 +335,9 @@ def gen_pg():
         if request.query.get("dlg_mgr_port"):
             mport = int(request.query.get("dlg_mgr_port"))
 
-    # logger.debug("Manager host: %s" % mhost)
-    # logger.debug("Manager port: %s" % mport)
-    # logger.debug("Manager prefix: %s" % mprefix)
+    logger.debug("Manager host: %s" % mhost)
+    logger.debug("Manager port: %s" % mport)
+    logger.debug("Manager prefix: %s" % mprefix)
 
     if mhost is None:
         if request.query.get("tpl_nodes_len"):
@@ -360,7 +360,7 @@ def gen_pg():
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
         # 2. mapping PGTP to resources (node list)
-        pg_spec = pgtp.to_pg_spec([mhost] + node_list, ret_str=False)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
         if deploy:
             dt = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S.%f")
