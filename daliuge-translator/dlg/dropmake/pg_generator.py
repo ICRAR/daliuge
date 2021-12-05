@@ -1025,6 +1025,7 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
+        logger.debug("tpl_nodes_len: %s, node_list: %s" % (tpl_nodes_len, node_list))
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
 
@@ -1054,7 +1055,7 @@ class PGT(object):
         if not co_host_dim:
             if form_island and num_parts > nodes_len:
                 raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
-            is_list = node_list[0:num_islands+1]
+            is_list = node_list[0:num_islands]
             nm_list = node_list[num_islands:] 
         else:
             if form_island and num_islands + num_parts > nodes_len:
