@@ -187,17 +187,18 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.fdefaults = self.func_defaults
 
-<<<<<<< HEAD
         logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
-=======
         print(f"Default values for function {self.func_name}: {self.fdefaults}")
 
         # Mapping between argument name and input drop uids
         print(f"Input mapping: {self.func_arg_mapping}")
->>>>>>> d5fc1e62 (pyfunc component running without pickle)
+        logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
+
+        # Mapping between argument name and input drop uids
+        logger.debug(f"Input mapping: {self.func_arg_mapping}")
 
     def run(self):
 
@@ -221,16 +222,11 @@ class PyFuncApp(BarrierAppDROP):
             for name, uid in self.func_arg_mapping.items()
             if name in self.fdefaults or name not in argnames
         }
-        kwargs.merge(self.fdefaults)
 
         # The rest of the inputs are the positional arguments
         args = list(inputs.values())
 
-<<<<<<< HEAD
         logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
-=======
-        print(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
->>>>>>> d5fc1e62 (pyfunc component running without pickle)
         result = self.f(*args, **kwargs)
 
         # Depending on how many outputs we have we treat our result
