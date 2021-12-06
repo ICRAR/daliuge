@@ -97,7 +97,7 @@ def import_using_code(code):
     return dill.loads(code)
 
 
-#
+##
 # @brief PyFuncApp
 # @details An application that wraps a simple python function.
 # The inputs of the application are treated as the arguments of the function.
@@ -187,10 +187,10 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.fdefaults = self.func_defaults
 
-        print(f"Default values for function {self.func_name}: {self.fdefaults}")
+        logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
 
         # Mapping between argument name and input drop uids
-        print(f"Input mapping: {self.func_arg_mapping}")
+        logger.debug(f"Input mapping: {self.func_arg_mapping}")
 
     def run(self):
 
@@ -214,12 +214,11 @@ class PyFuncApp(BarrierAppDROP):
             for name, uid in self.func_arg_mapping.items()
             if name in self.fdefaults or name not in argnames
         }
-        kwargs.merge(self.fdefaults)
 
         # The rest of the inputs are the positional arguments
         args = list(inputs.values())
 
-        print(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
+        logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
         result = self.f(*args, **kwargs)
 
         # Depending on how many outputs we have we treat our result
