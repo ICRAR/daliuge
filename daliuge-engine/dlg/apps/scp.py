@@ -19,8 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from ..remote import copyTo, copyFrom
-from ..drop import (
+from dlg.remote import copyTo, copyFrom
+from dlg.drop import (
     BarrierAppDROP,
     NgasDROP,
     InMemoryDROP,
@@ -28,7 +28,7 @@ from ..drop import (
     RDBMSDrop,
     ContainerDROP,
 )
-from ..meta import (
+from dlg.meta import (
     dlg_string_param,
     dlg_float_param,
     dlg_component,
@@ -38,7 +38,7 @@ from ..meta import (
 )
 
 
-#
+##
 # @brief ScpApp
 # @details A BarrierAppDROP that copies the content of its single input onto its
 # single output via SSH's scp protocol.

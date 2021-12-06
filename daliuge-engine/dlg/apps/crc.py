@@ -72,7 +72,7 @@ class CRCApp(BarrierAppDROP):
         outputDrop.write(str(crc).encode("utf8"))
 
 
-#
+##
 # @brief CRCStreamApp
 # @details Calculate CRC in the streaming mode
 # i.e. A "streamingConsumer" of its predecessor in the graph
