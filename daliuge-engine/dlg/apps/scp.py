@@ -38,7 +38,7 @@ from dlg.meta import (
 )
 
 
-#
+##
 # @brief ScpApp
 # @details A BarrierAppDROP that copies the content of its single input onto its
 # single output via SSH's scp protocol.
