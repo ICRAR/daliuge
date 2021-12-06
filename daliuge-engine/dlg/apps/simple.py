@@ -27,12 +27,12 @@ import urllib.request
 import time
 import numpy as np
 
-from .. import droputils, utils
-from ..drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
-from ..meta import dlg_float_param, dlg_string_param
-from ..meta import dlg_bool_param, dlg_int_param
-from ..meta import dlg_component, dlg_batch_input
-from ..meta import dlg_batch_output, dlg_streaming_input
+from dlg import droputils, utils
+from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
+from dlg.meta import dlg_float_param, dlg_string_param
+from dlg.meta import dlg_bool_param, dlg_int_param
+from dlg.meta import dlg_component, dlg_batch_input
+from dlg.meta import dlg_batch_output, dlg_streaming_input
 
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
