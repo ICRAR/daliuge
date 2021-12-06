@@ -119,10 +119,9 @@ def allDropContents(drop, bufsize=4096):
     """
     buf = io.BytesIO()
     desc = drop.open()
-    read = drop.read
 
     while True:
-        data = read(desc, bufsize)
+        data = drop.read(desc, bufsize)
         if not data:
             break
         buf.write(data)
@@ -134,22 +133,21 @@ def copyDropContents(source, target, bufsize=4096):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug("Copying from %r to %r" % (source, target))
+    logger.debug(f"Copying from {repr(source)} to {repr(target)}")
     desc = source.open()
-    read = source.read
-    buf = read(desc, bufsize)
-    logger.debug("Read %d bytes from %r" % (len(buf), source))
+    buf = source.read(desc, bufsize)
+    logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
     while buf:
         target.write(buf)
-        logger.debug("Wrote %d bytes to %r" % (len(buf), target))
-        buf = read(desc, bufsize)
-        logger.debug("Read %d bytes from %r" % (len(buf), source))
+        logger.debug(f"Wrote {len(buf)} bytes to {repr(target)}")
+        buf = source.read(desc, bufsize)
+        logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
     source.close(desc)
 
 
 def getUpstreamObjects(drop):
     """
-    Returns a list of all direct "upstream" DROPs for the given
+    Returns a list of all direct "upstream" DROPs for the given+
     DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
 
