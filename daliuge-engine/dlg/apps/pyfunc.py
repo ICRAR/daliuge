@@ -112,11 +112,14 @@ def import_using_code(code):
 # @param[in] param/func_name Function Name//String/readwrite/
 #     \~English Python fuction name
 # @param[in] param/func_code Function Code//String/readwrite/
-#     \~English Python fuction code, e.g. 'def fuction_name(args): pass'
+#     \~English Python fuction code, e.g. 'def fuction_name(args): return args'
+# @param[in] param/pickle Pickle//bool/readwrite/
+#     \~English Whether the python arguments are pickled.
 # @param[in] param/func_defaults Function Defaults//String/readwrite/
-#     \~English Dictionary of keyword arg names to default values
+#     \~English Mapping from argname to default value. Should match only the last part
+#               of the argnames list
 # @param[in] param/func_arg_mapping Function Arguments Mapping//String/readwrite/
-#     \~English Dictionary of keyword arg names to input drop uid
+#     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
     """
@@ -184,10 +187,17 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.fdefaults = self.func_defaults
 
+<<<<<<< HEAD
         logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
+=======
+        print(f"Default values for function {self.func_name}: {self.fdefaults}")
+
+        # Mapping between argument name and input drop uids
+        print(f"Input mapping: {self.func_arg_mapping}")
+>>>>>>> d5fc1e62 (pyfunc component running without pickle)
 
     def run(self):
 
@@ -211,11 +221,16 @@ class PyFuncApp(BarrierAppDROP):
             for name, uid in self.func_arg_mapping.items()
             if name in self.fdefaults or name not in argnames
         }
+        kwargs.merge(self.fdefaults)
 
         # The rest of the inputs are the positional arguments
         args = list(inputs.values())
 
+<<<<<<< HEAD
         logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
+=======
+        print(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
+>>>>>>> d5fc1e62 (pyfunc component running without pickle)
         result = self.f(*args, **kwargs)
 
         # Depending on how many outputs we have we treat our result
