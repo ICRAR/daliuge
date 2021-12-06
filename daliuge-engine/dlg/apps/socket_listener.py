@@ -45,7 +45,7 @@ from ..meta import (
 logger = logging.getLogger(__name__)
 
 
-#
+##
 # @brief SocketListenerApp
 # @details A BarrierAppDROP that listens on a socket for data. The server-side
 # socket expects only one client, and assumes that the client will close the
