@@ -116,7 +116,7 @@ function graphInit(type) {
             var spread = 255 / Math.ceil((numGroups / 3));
             var ind = 0;
             graphDataParts.nodeDataArray.forEach(element => {
-                var icol = Math.floor((256 ** (ind / (numGroups / 3)) - 1) * spread);
+                var icol =  Math.floor((256**(ind/(numGroups/3)) -1) * spread);
                 element.color = "#" + icol.toString(16).padStart(6, '0');
                 ind += 1;
             })
@@ -125,7 +125,13 @@ function graphInit(type) {
                     function(item) {
                         return item.name == element.label.color
                     });
-                element.label.color = group[0].color
+
+                // if graph was generated without partitions, then group[0] is undefined
+                if (typeof group[0] !== 'undefined'){
+                    element.label.color = group[0].color;
+                } else {
+                    element.label.color = 'black';
+                }
             })
             data.linkDataArray.forEach(element => {
                 newElement = {};
