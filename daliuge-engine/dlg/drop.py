@@ -2057,7 +2057,7 @@ class PlasmaDROP(AbstractDROP):
     """
 
     object_id = dlg_string_param("object_id", None)
-    plasma_path = dlg_string_param("plasma_path", "/tmp/.dlg/workspace/plasma")
+    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
 
     def initialize(self, **kwargs):
         object_id = self.uid
