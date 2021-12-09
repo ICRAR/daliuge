@@ -445,7 +445,7 @@ def convert_construct(lgo):
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
         for ak in app_keywords:
-            if ak in node and node[ak] != "None":
+            if ak in node and node[ak] != "None" and node[ak] != "UnknownApplication":
                 has_app = ak
                 break
         if has_app is None:
