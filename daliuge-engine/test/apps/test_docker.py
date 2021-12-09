@@ -35,10 +35,11 @@ from dlg.droputils import DROPWaiterCtx
 
 docker_unavailable = True
 try:
-    docker.from_env(version='auto').ping()
+    docker.from_env(version="auto").ping()
     docker_unavailable = False
 except:
     pass
+
 
 @unittest.skipIf(docker_unavailable, "Docker daemon not available")
 class DockerTests(unittest.TestCase):
@@ -48,16 +49,16 @@ class DockerTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        config_file_name = os.path.join(utils.getDlgDir(), 'dlg.settings')
+        config_file_name = os.path.join(utils.getDlgDir(), "dlg.settings")
         if os.path.exists(config_file_name):
             config = configobj.ConfigObj(config_file_name)
-            cls._temp = config.get('OS_X_TEMP')
+            cls._temp = config.get("OS_X_TEMP")
 
             if not os.path.exists(DockerTests._temp):
                 os.makedirs(DockerTests._temp)
 
         if cls._temp is None:
-            cls._temp = '/tmp/daliuge_tfiles'
+            cls._temp = "/tmp/daliuge_tfiles"
 
     def tearDown(self):
         shutil.rmtree("/tmp/daliuge_tfiles", True)
@@ -70,9 +71,9 @@ class DockerTests(unittest.TestCase):
         actually owned by our process.
         """
 
-        a = FileDROP('a', 'a')
-        b = DockerApp('b', 'b', image='ubuntu:14.04', command='cp %i0 %o0')
-        c = FileDROP('c', 'c')
+        a = FileDROP("a", "a")
+        b = DockerApp("b", "b", image="ubuntu:14.04", command="cp %i0 %o0")
+        c = FileDROP("c", "c")
 
         b.addInput(a)
         b.addOutput(c)
@@ -105,10 +106,15 @@ class DockerTests(unittest.TestCase):
         finish before proceeding.
         """
 
-        a = FileDROP('a', 'a')
-        b = DockerApp('b', 'b', image='ubuntu:14.04', command='cat %i0 > /dev/tcp/%containerIp[c]%/8000')
-        c = DockerApp('c', 'c', image='ubuntu:14.04', command='nc -l 8000 > %o0')
-        d = FileDROP('d', 'd')
+        a = FileDROP("a", "a")
+        b = DockerApp(
+            "b",
+            "b",
+            image="ubuntu:14.04",
+            command="cat %i0 > /dev/tcp/%containerIp[c]%/8000",
+        )
+        c = DockerApp("c", "c", image="ubuntu:14.04", command="nc -l 8000 > %o0")
+        d = FileDROP("d", "d")
 
         b.addInput(a)
         b.addOutput(d)
@@ -133,12 +139,12 @@ class DockerTests(unittest.TestCase):
         """
 
         def assertMsgIsCorrect(msg, command):
-            a = DockerApp('a', 'a', image='ubuntu:14.04', command=command)
-            b = FileDROP('b','b')
+            a = DockerApp("a", "a", image="ubuntu:14.04", command=command)
+            b = FileDROP("b", "b")
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.execute()
-            self.assertEqual(msg.encode('utf8'), droputils.allDropContents(b))
+            self.assertEqual(msg.encode("utf8"), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -161,42 +167,43 @@ class DockerTests(unittest.TestCase):
         self._ngas_and_fs_io("echo -n '%iDataURL[HelloWorld.txt]' > %o[c]")
 
     def _ngas_and_fs_io(self, command):
-        a = NgasDROP('HelloWorld.txt', 'HelloWorld.txt') # not a filesystem-related DROP, we can reference its URL in the command-line
-        a.ngasSrv ='ngas.ddns.net'
-        b = DockerApp('b', 'b', image="ubuntu:14.04", command=command)
-        c = FileDROP('c', 'c')
+        a = NgasDROP(
+            "HelloWorld.txt", "HelloWorld.txt"
+        )  # not a filesystem-related DROP, we can reference its URL in the command-line
+        a.ngasSrv = "ngas.ddns.net"
+        b = DockerApp("b", "b", image="ubuntu:14.04", command=command)
+        c = FileDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
         with DROPWaiterCtx(self, c, 100):
             a.setCompleted()
-        self.assertEqual(a.dataURL.encode('utf8'), droputils.allDropContents(c))
-
+        self.assertEqual(a.dataURL.encode("utf8"), droputils.allDropContents(c))
 
     def test_additional_bindings(self):
 
         # Some additional stuff to bind into docker
-        tempDir  = tempfile.mkdtemp()
+        tempDir = tempfile.mkdtemp()
         tempFile = tempfile.mktemp()
-        with open(tempFile, 'w') as f:
-            f.write('data')
+        with open(tempFile, "w") as f:
+            f.write("data")
 
         # One binding specifies the target path in the container, the other doesn't
         # so it defaults to the same path
         a = DockerApp(
-                'a',
-                'a',
-                image='ubuntu:14.04',
-                command="cp /opt/file %s" % (tempDir,),
-                additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)]
+            "a",
+            "a",
+            image="ubuntu:14.04",
+            command="cp /opt/file %s" % (tempDir,),
+            additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)],
         )
         a.execute()
 
         # We copied the file into the directory, but since in the container the
         # file was called "file" we'll see it with that name in tempDir
         self.assertEqual(1, len(os.listdir(tempDir)))
-        with open(os.path.join(tempDir, 'file')) as f:
+        with open(os.path.join(tempDir, "file")) as f:
             data = f.read()
-        self.assertEqual('data', data)
+        self.assertEqual("data", data)
 
         # Cleanup
         os.unlink(tempFile)
@@ -205,12 +212,19 @@ class DockerTests(unittest.TestCase):
     def _test_working_dir(self, ensureUserAndSwitch):
         # the sleep is required to make sure that the docker container exists long enough for
         # DALiuGE to get the required information (2 lines of Python code after starting the container!)
-        a = DockerApp('a', 'a', workingDir='/mydir', image='ubuntu:14.04', command='pwd > %o0 && sleep 0.05', ensureUserAndSwitch=ensureUserAndSwitch)
-        b = FileDROP('b', 'b')
+        a = DockerApp(
+            "a",
+            "a",
+            workingDir="/mydir",
+            image="ubuntu:14.04",
+            command="pwd > %o0 && sleep 0.05",
+            ensureUserAndSwitch=ensureUserAndSwitch,
+        )
+        b = FileDROP("b", "b")
         a.addOutput(b)
         with DROPWaiterCtx(self, b, 10):
             a.execute()
-        self.assertEqual(b'/mydir', droputils.allDropContents(b).strip())
+        self.assertEqual(b"/mydir", droputils.allDropContents(b).strip())
 
     def test_working_dir(self):
         self._test_working_dir(True)

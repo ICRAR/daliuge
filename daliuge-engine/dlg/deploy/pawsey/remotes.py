@@ -30,8 +30,8 @@ from . import slurm_utils
 
 logger = logging.getLogger(__name__)
 
-class Remote(object):
 
+class Remote(object):
     def __init__(self, options, my_ip):
         self.options = options
         self.my_ip = my_ip
@@ -47,10 +47,12 @@ class Remote(object):
         self.size = size
         self.sorted_peers = sorted_peers
         if len(set(self.sorted_peers)) != self.size:
-            raise RuntimeError('More than one task started per node, cannot continue')
+            raise RuntimeError("More than one task started per node, cannot continue")
         nm_range = self._nm_range()
         if nm_range[0] == nm_range[1]:
-            raise RuntimeError('No nodes left for Node Managers with the requested setup')
+            raise RuntimeError(
+                "No nodes left for Node Managers with the requested setup"
+            )
 
     def _dim_range(self):
         first = 0
@@ -72,7 +74,7 @@ class Remote(object):
         dim_nodes = collections.defaultdict(set)
         ranks = {ip: rank for rank, ip in enumerate(self.sorted_peers)}
         for drop in pg:
-            nm, dim = drop['node'], drop['island']
+            nm, dim = drop["node"], drop["island"]
             dim_nodes[dim].add(nm)
         for dim in self.dim_ips:
             r = ranks[dim]
@@ -113,18 +115,19 @@ class Remote(object):
     @property
     def proxy_ip(self):
         if not self.run_proxy:
-            raise RuntimeError('proxy_ip requested when not running with proxy enabled')
+            raise RuntimeError("proxy_ip requested when not running with proxy enabled")
         return self.sorted_peers[1]
 
 
 class MPIRemote(Remote):
-
     def __init__(self, options, my_ip):
         super(MPIRemote, self).__init__(options, my_ip)
         from mpi4py import MPI  # @UnresolvedImport
+
         self.comm = MPI.COMM_WORLD  # @UndefinedVariable
-        self._set_world(self.comm.Get_rank(), self.comm.Get_size(),
-                        self.comm.allgather(self.my_ip))
+        self._set_world(
+            self.comm.Get_rank(), self.comm.Get_size(), self.comm.allgather(self.my_ip)
+        )
 
     def send_dim_nodes(self, pg):
         for dim_rank, nms in self._dim_nms(pg):
@@ -135,32 +138,32 @@ class MPIRemote(Remote):
 
 
 class FilesystemBasedRemote(Remote):
-
     def send_dim_nodes(self, pg):
         basedir = self.options.log_dir
         for dim_rank, nms in self._dim_nms(pg):
-            fname = 'dim_%d_nodes.pickle' % dim_rank
-            stage1_fname = os.path.join(basedir, '.%s' % fname)
-            stage2_fname = os.path.join(basedir, '%s' % fname)
-            with open(stage1_fname, 'wb') as f:
+            fname = "dim_%d_nodes.pickle" % dim_rank
+            stage1_fname = os.path.join(basedir, ".%s" % fname)
+            stage2_fname = os.path.join(basedir, "%s" % fname)
+            with open(stage1_fname, "wb") as f:
                 pickle.dump(nms, f)
             os.rename(stage1_fname, stage2_fname)
 
     def recv_dim_nodes(self):
-        fname = os.path.join(self.options.log_dir, 'dim_%d_nodes.pickle' % self.rank)
+        fname = os.path.join(self.options.log_dir, "dim_%d_nodes.pickle" % self.rank)
         while not os.path.exists(fname):
             time.sleep(1)
-        with open(fname, 'rb') as f:
+        with open(fname, "rb") as f:
             return pickle.load(f)
 
 
 class SlurmRemote(FilesystemBasedRemote):
-
     def __init__(self, options, my_ip):
         super(SlurmRemote, self).__init__(options, my_ip)
         self._set_world(
-            int(os.environ['SLURM_PROCID']), int(os.environ['SLURM_NTASKS']),
-            slurm_utils.list_as_string(os.environ['SLURM_NODELIST']))
+            int(os.environ["SLURM_PROCID"]),
+            int(os.environ["SLURM_NTASKS"]),
+            slurm_utils.list_as_string(os.environ["SLURM_NODELIST"]),
+        )
 
 
 class DALiuGERemote(FilesystemBasedRemote):
@@ -168,13 +171,15 @@ class DALiuGERemote(FilesystemBasedRemote):
 
     def __init__(self, options, my_ip):
         super(DALiuGERemote, self).__init__(options, my_ip)
-        ips = os.environ['DALIUGE_CLUSTER_IPS'].split()
+        ips = os.environ["DALIUGE_CLUSTER_IPS"].split()
         rank = ips.index(my_ip)
         self._set_world(rank, len(ips), ips)
+
 
 class DALiuGEHybridRemote(DALiuGERemote):
     """Like DALiuGERemote, but initializes MPI as well"""
 
     def __init__(self, options, my_ip):
         from mpi4py import MPI  # @UnusedImport
+
         super(DALiuGEHybridRemote, self).__init__(options, my_ip)

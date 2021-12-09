@@ -35,10 +35,20 @@ logger = logging.getLogger(__name__)
 
 
 def add_logging_options(parser):
-    parser.add_option("-v", "--verbose", action="count",
-                      dest="verbose", help="Become more verbose. The more flags, the more verbose")
-    parser.add_option("-q", "--quiet", action="count",
-                      dest="quiet", help="Be less verbose. The more flags, the quieter")
+    parser.add_option(
+        "-v",
+        "--verbose",
+        action="count",
+        dest="verbose",
+        help="Become more verbose. The more flags, the more verbose",
+    )
+    parser.add_option(
+        "-q",
+        "--quiet",
+        action="count",
+        dest="quiet",
+        help="Be less verbose. The more flags, the quieter",
+    )
 
 
 def setup_logging(opts):
@@ -49,7 +59,7 @@ def setup_logging(opts):
         logging.INFO,
         logging.WARNING,
         logging.ERROR,
-        logging.CRITICAL
+        logging.CRITICAL,
     ]
 
     # Default is WARNING
@@ -63,7 +73,9 @@ def setup_logging(opts):
     # Let's configure logging now
     # We use stderr for loggin because stdout is the default output file
     # for several operations
-    fmt = logging.Formatter("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s")
+    fmt = logging.Formatter(
+        "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
+    )
     fmt.converter = time.gmtime
     streamHdlr = logging.StreamHandler(sys.stderr)
     streamHdlr.setFormatter(fmt)
@@ -72,6 +84,8 @@ def setup_logging(opts):
 
 
 commands = {}
+
+
 def cmdwrap(cmdname, desc, f):
 
     # If it's not a callable we assume it's a string
@@ -81,34 +95,48 @@ def cmdwrap(cmdname, desc, f):
 
         class Importer(object):
             def __call__(self, *args, **kwargs):
-                modname, fname = orig_f.split(':')
+                modname, fname = orig_f.split(":")
                 module = importlib.import_module(modname)
                 return getattr(module, fname)(*args, **kwargs)
+
         f = Importer()
 
     def wrapped(*args, **kwargs):
         parser = optparse.OptionParser(description=desc)
         f(parser, *args, **kwargs)
+
     commands[cmdname] = (desc, wrapped)
 
 
 def version(parser, args):
     from .version import version, git_version
+
     print("Version: %s" % version)
     print("Git version: %s" % git_version)
 
-cmdwrap('version', 'Reports the DALiuGE version and exits', version)
+
+cmdwrap("version", "Reports the DALiuGE version and exits", version)
+
 
 def _load_commands():
-    for entry_point in pkg_resources.iter_entry_points('dlg.tool_commands'):
+    for entry_point in pkg_resources.iter_entry_points("dlg.tool_commands"):
         entry_point.load().register_commands()
 
+
 def print_usage(prgname):
-    print('Usage: %s [command] [options]' % (prgname))
-    print('')
-    print('\n'.join(['Commands are:'] + ['\t%-25.25s%s' % (cmdname,desc_and_f[0]) for cmdname,desc_and_f in sorted(commands.items())]))
-    print('')
-    print('Try %s [command] --help for more details' % (prgname))
+    print("Usage: %s [command] [options]" % (prgname))
+    print("")
+    print(
+        "\n".join(
+            ["Commands are:"]
+            + [
+                "\t%-25.25s%s" % (cmdname, desc_and_f[0])
+                for cmdname, desc_and_f in sorted(commands.items())
+            ]
+        )
+    )
+    print("")
+    print("Try %s [command] --help for more details" % (prgname))
 
 
 def run(args=sys.argv):
@@ -126,7 +154,7 @@ def run(args=sys.argv):
     cmd = sys.argv[1]
     sys.argv.pop(0)
 
-    if cmd in ['-h', '--help', 'help']:
+    if cmd in ["-h", "--help", "help"]:
         print_usage(prgname)
         sys.exit(0)
 
@@ -150,10 +178,11 @@ def start_process(cmd, args=(), **subproc_args):
     _load_commands()
 
     from ..exceptions import DaliugeException
+
     if cmd not in commands:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
-    cmdline = ['dlg', cmd]
+    cmdline = ["dlg", cmd]
     if args:
         cmdline.extend(args)
     logger.debug("Launching %s", cmdline)
@@ -161,5 +190,5 @@ def start_process(cmd, args=(), **subproc_args):
 
 
 # We can also be executed as a module
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

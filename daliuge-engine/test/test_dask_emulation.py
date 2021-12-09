@@ -41,51 +41,66 @@ except ImportError:
 def add(x, y):
     return x + y
 
+
 def add_list(numbers):
     return functools.reduce(add, numbers)
+
 
 def subtract(x, y):
     return x - y
 
+
 def subtract_list(numbers):
     return functools.reduce(subtract, numbers)
+
 
 def multiply(x, y):
     return x * y
 
+
 def divide(x, y):
     return x / y
 
+
 def partition(x):
     return x / 2, x - x / 2
+
 
 def sum_with_args(a, *args):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
     return a + sum(args)
 
+
 def sum_with_kwargs(a, **kwargs):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
-    b = kwargs.pop('b', 0)
+    b = kwargs.pop("b", 0)
     return a + b
+
 
 def sum_with_args_and_kwarg(a, *args, **kwargs):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
-    b = kwargs.pop('b', 0)
+    b = kwargs.pop("b", 0)
     return a + sum(args) + b
+
 
 class MyType(object):
     """A type that is serializable but not convertible to JSON"""
+
     def __init__(self, x):
         self.x = x
         self.array = np.zeros(1)
+
+
 try:
     json.dumps(MyType(1))
     assert False, "Should fail to serialize to JSON"
 except:
     pass
 
+
 def sum_with_user_defined_default(a, b=MyType(10)):
     return a + b.x
+
 
 class _TestDelayed(object):
     """Test definitions run under non-delayed, dlg_delayed and possibly dask_delayed contexts"""
@@ -104,35 +119,35 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        the_sum = delayed(add)(1., 2.)
-        the_sub = delayed(subtract)(4., 3.)
+        the_sum = delayed(add)(1.0, 2.0)
+        the_sub = delayed(subtract)(4.0, 3.0)
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
         result = compute(delayed(add)(*parts))
-        self.assertEqual(3., result)
+        self.assertEqual(3.0, result)
 
     def test_args_as_lists(self):
         """Like test_simple, but some arguments are passed down as lists"""
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = delayed(1.), delayed(2.), delayed(3.), delayed(4.)
+        one, two, three, four = delayed(1.0), delayed(2.0), delayed(3.0), delayed(4.0)
         the_sum = delayed(add_list)([one, two])
         the_sub = delayed(subtract_list)([four, three])
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
         result = compute(delayed(add)(*parts))
-        self.assertEqual(3., result)
+        self.assertEqual(3.0, result)
 
     def test_compute_with_lists(self):
         """Make sure we can call compute() directly on the list objects"""
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = delayed(1.), delayed(2.), delayed(3.), delayed(4.)
+        one, two, three, four = delayed(1.0), delayed(2.0), delayed(3.0), delayed(4.0)
         doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
         result = compute(doubles)
-        self.assertEqual([2., 4., 6., 8.], result)
+        self.assertEqual([2.0, 4.0, 6.0, 8.0], result)
 
     def test_none_arg(self):
         """Test that calling delayed(f)(None) works"""
@@ -164,8 +179,12 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_args_and_kwarg)(1)), 1)
-        self.assertEqual(compute(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000)), 121)
-        self.assertEqual(compute(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000)), 151)
+        self.assertEqual(
+            compute(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000)), 121
+        )
+        self.assertEqual(
+            compute(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000)), 151
+        )
 
     def test_with_user_defined_default(self):
         """Tests that delayed() works with default values that are not json-dumpable"""
@@ -173,7 +192,9 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_user_defined_default)(1)), 11)
-        self.assertEqual(compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21)
+        self.assertEqual(
+            compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21
+        )
 
     def test_with_noniterable_nout_1(self):
         """Tests that using nout=1 works as expected with non-iterable objects"""
@@ -204,30 +225,40 @@ class _TestDelayed(object):
 
 class TestNoDelayed(unittest.TestCase, _TestDelayed):
     """Non-delayed tests"""
+
     def delayed(self, f, *_, **__):
         return f
+
     def compute(self, val):
         return val
 
+
 class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     """dlg-base tests, they start/stop the node manager and use dlg_delayed"""
+
     def delayed(self, f, *args, **kwargs):
         return dlg_delayed(f, *args, **kwargs)
+
     def setUp(self):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
-        env['PYTHONPATH'] = env.get('PYTHONPATH', '') + ":" + os.getcwd()
-        self.dmProcess = tool.start_process('nm', env=env)
+        env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.getcwd()
+        self.dmProcess = tool.start_process("nm", env=env)
+
     def compute(self, val):
         return dlg_compute(val)
+
     def tearDown(self):
         terminate_or_kill(self.dmProcess, 5)
         unittest.TestCase.tearDown(self)
 
-@unittest.skipIf(dask_delayed is None, 'dask is not available')
+
+@unittest.skipIf(dask_delayed is None, "dask is not available")
 class TestDaskDelayed(_TestDelayed, unittest.TestCase):
     """dask-base tests, they use dask_delayed"""
+
     def delayed(self, f, *args, **kwargs):
         return dask_delayed(f, *args, **kwargs)
+
     def compute(self, val):
         return dask_compute(val)[0]

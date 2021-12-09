@@ -19,13 +19,44 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from ..remote import copyTo, copyFrom
-from ..drop import BarrierAppDROP, NgasDROP, InMemoryDROP, \
-    NullDROP, RDBMSDrop, ContainerDROP
-from ..meta import dlg_string_param, dlg_component, dlg_batch_input, \
-    dlg_batch_output, dlg_streaming_input
+from dlg.remote import copyTo, copyFrom
+from dlg.drop import (
+    BarrierAppDROP,
+    NgasDROP,
+    InMemoryDROP,
+    NullDROP,
+    RDBMSDrop,
+    ContainerDROP,
+)
+from dlg.meta import (
+    dlg_string_param,
+    dlg_float_param,
+    dlg_component,
+    dlg_batch_input,
+    dlg_batch_output,
+    dlg_streaming_input,
+)
 
 
+##
+# @brief ScpApp
+# @details A BarrierAppDROP that copies the content of its single input onto its
+# single output via SSH's scp protocol.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.scp.ScpApp/String/readonly/
+#     \~English Application class
+# @param[in] param/remoteUser Remote User//String/readwrite/
+#     \~English Remote user address
+# @param[in] param/pkeyPath Private Key Path//String/readwrite/
+#     \~English Private key path
+# @param[in] param/timeout Timeout//Float/readwrite/
+#     \~English Connection timeout in seconds
+# @param[in] port/file File/PathBasedDrop/
+#     \~English Input file path
+# @param[out] port/file File/PathBasedDrop/
+#     \~English Output file path
+# @par EAGLE_END
 class ScpApp(BarrierAppDROP):
     """
     A BarrierAppDROP that copies the content of its single input onto its
@@ -40,17 +71,27 @@ class ScpApp(BarrierAppDROP):
     TO other host. This application's node must thus coincide with one of the
     two I/O DROPs.
     """
-    compontent_meta = dlg_component('ScpApp', 'A BarrierAppDROP that copies the content of its single '
-                                    'input onto its single output via SSHs scp protocol.',
-                                    [dlg_batch_input('binary/*', [NgasDROP, InMemoryDROP,
-                                                                  NullDROP, RDBMSDrop, ContainerDROP])],
-                                    [dlg_batch_output('binary/*', [NgasDROP, InMemoryDROP,
-                                                                   NullDROP, RDBMSDrop, ContainerDROP])],
-                                    [dlg_streaming_input('binary/*')])
 
-    remoteUser = dlg_string_param('remoteUser', None)
-    pkeyPath = dlg_string_param('pkeyPath', None)
-    timeout = dlg_string_param('timeout', None)
+    component_meta = dlg_component(
+        "ScpApp",
+        "A BarrierAppDROP that copies the content of its single "
+        "input onto its single output via SSHs scp protocol.",
+        [
+            dlg_batch_input(
+                "binary/*", [NgasDROP, InMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
+            )
+        ],
+        [
+            dlg_batch_output(
+                "binary/*", [NgasDROP, InMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
+            )
+        ],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    remoteUser = dlg_string_param("remoteUser", None)
+    pkeyPath = dlg_string_param("pkeyPath", None)
+    timeout = dlg_float_param("timeout", None)
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
@@ -64,14 +105,20 @@ class ScpApp(BarrierAppDROP):
             # attribute. Calling `isinstance(i, (FileDROP, DirectoryContainer))`
             # doesn't work because the input/output might be a proxy object
             # that fails the test
-            if not hasattr(i, 'path'):
+            if not hasattr(i, "path"):
                 raise Exception("%r is not supported by the ScpApp" % (i))
 
         # Only one input and one output are supported
         if len(self.inputs) != 1:
-            raise Exception("Only one input is supported by the ScpApp, %d given" % (len(self.inputs)))
+            raise Exception(
+                "Only one input is supported by the ScpApp, %d given"
+                % (len(self.inputs))
+            )
         if len(self.outputs) != 1:
-            raise Exception("Only one output is supported by the ScpApp, %d given" % (len(self.outputs)))
+            raise Exception(
+                "Only one output is supported by the ScpApp, %d given"
+                % (len(self.outputs))
+            )
 
         inp = self.inputs[0]
         out = self.outputs[0]
@@ -80,20 +127,37 @@ class ScpApp(BarrierAppDROP):
         # See comment above regarding identification of DROP types, and why we
         # can't simply do:
         # if inp.__class__ != out.__class__:
-        if hasattr(inp, 'children') != hasattr(out, 'children'):
+        if hasattr(inp, "children") != hasattr(out, "children"):
             raise Exception("Input and output must be of the same type")
 
         # This app's location must be equal to at least one of the I/O
         if self.node != inp.node and self.node != out.node:
-            raise Exception("%r is deployed in a node different from its input AND its output" % (self,))
+            raise Exception(
+                "%r is deployed in a node different from its input AND its output"
+                % (self,)
+            )
 
         # See comment above regarding identification of File/Directory DROPs and
         # why we can't simply do:
         # recursive = isinstance(inp, DirectoryContainer)
-        recursive = hasattr(inp, 'children')
+        recursive = hasattr(inp, "children")
         if self.node == inp.node:
-            copyTo(out.node, inp.path, remotePath=out.path, recursive=recursive,
-                   username=self.remoteUser, pkeyPath=self.pkeyPath, timeout=self.timeout)
+            copyTo(
+                out.node,
+                inp.path,
+                remotePath=out.path,
+                recursive=recursive,
+                username=self.remoteUser,
+                pkeyPath=self.pkeyPath,
+                timeout=self.timeout,
+            )
         else:
-            copyFrom(inp.node, inp.path, localPath=out.path, recursive=recursive,
-                     username=self.remoteUser, pkeyPath=self.pkeyPath, timeout=self.timeout)
+            copyFrom(
+                inp.node,
+                inp.path,
+                localPath=out.path,
+                recursive=recursive,
+                username=self.remoteUser,
+                pkeyPath=self.pkeyPath,
+                timeout=self.timeout,
+            )
