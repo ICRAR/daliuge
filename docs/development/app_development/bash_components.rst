@@ -2,7 +2,7 @@
 
 Bash Components
 ===============
-These are probably the easiest components to implement and for simple ones it is possible to do all the 'development' in EAGLE.
+This type of components are probably the easiest to implement and for simple ones it is possible to do all the 'development' in EAGLE.
 
 'Hello World' in Bash through EAGLE
 -----------------------------------
@@ -18,6 +18,8 @@ Steps
     echo "Hello World"  
 
 * Now save your new toy graph (Graph --> Local Storage --> Save Graph).
+
+Please note that the *Hello World* example is also described (with videos) as part of the `EAGLE documentation <https://eagle-dlg.readthedocs.io/en/master/helloWorld.html>`_.
 
 That should give you the idea how to use bash commands as |daliuge| components. Seems not a lot? Well, actually this is allowing you to execute whatever can be executed on the command line where the engine is running as part of a |daliuge| graph. That includes all bash commands, but also every other executable available on the PATH of the engine. Now that is a bit more exciting, but the excitement stops as soon as you think about real world (not Hello World) examples: Really useful commands will require inputs and outputs in the form of command line parameters and files or pipes. This is discussed in the :ref:`advanced_bash` chapter. 
 
@@ -37,7 +39,7 @@ The output of the ls command looks like::
     -rw-r--r-- 1 root root 6991 Sep 14 16:46 dlg_172.17.0.3_Diagram-2021-09-14-16-41-284_2021-09-14T08-46-52.618798.log
     -rw-r--r-- 1 root root 6991 Sep 14 16:47 dlg_172.17.03_Diagram-2021-09-14-16-41-284_2021-09-14T08-47-28.890072.log
 
-There could be a lot more lines on top, but the important one os the last line, which is the log-file of the session last executed on the engine. Just dump the content to the screen in a terminal::
+There could be a lot more lines on top, but the important one is the last line, which is the log-file of the session last executed on the engine. Just dump the content to the screen in a terminal::
 
     cat dlg_172.17.03_Diagram-2021-09-14-16-41-284_2021-09-14T08-47-28.890072.log
 

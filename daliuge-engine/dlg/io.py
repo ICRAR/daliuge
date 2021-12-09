@@ -19,21 +19,24 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from abc import abstractmethod, ABCMeta
+from overrides import overrides
 import io
 import logging
 import os
 import sys
 import urllib.parse
 from abc import abstractmethod, ABCMeta
-from typing import Optional
+from typing import Optional, Union
+
+from . import ngaslite
+from .apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow
 import pyarrow.plasma as plasma
 if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
 
-from . import ngaslite
-from .apps.plasmaflight import PlasmaFlightClient
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +83,9 @@ class DataIO(object):
         Writes `data` into the storage
         """
         if self._mode is None:
-            raise ValueError('Writing operation attempted on closed DataIO object')
+            raise ValueError("Writing operation attempted on closed DataIO object")
         if self._mode == OpenMode.OPEN_READ:
-            raise ValueError('Writing operation attempted on write-only DataIO object')
+            raise ValueError("Writing operation attempted on write-only DataIO object")
         return self._write(data, **kwargs)
 
     def read(self, count, **kwargs):
@@ -90,9 +93,9 @@ class DataIO(object):
         Reads `count` bytes from the underlying storage.
         """
         if self._mode is None:
-            raise ValueError('Reading operation attempted on closed DataIO object')
+            raise ValueError("Reading operation attempted on closed DataIO object")
         if self._mode == OpenMode.OPEN_WRITE:
-            raise ValueError('Reading operation attempted on write-only DataIO object')
+            raise ValueError("Reading operation attempted on write-only DataIO object")
         return self._read(count, **kwargs)
 
     def close(self, **kwargs):
@@ -129,6 +132,14 @@ class DataIO(object):
         """
 
     @abstractmethod
+    def buffer(self) -> Union[memoryview, bytes, bytearray, pyarrow.Buffer]:
+        """
+        Gets a buffer protocol compatible object of the drop data.
+        This may be a zero-copy view of the data or a copy depending
+        on whether the drop stores data in cpu memory or not.
+        """
+
+    @abstractmethod
     def _open(self, **kwargs):
         pass
 
@@ -143,7 +154,6 @@ class DataIO(object):
     @abstractmethod
     def _close(self, **kwargs):
         pass
-
 
     @abstractmethod
     def _size(self, **kwargs):
@@ -212,6 +222,7 @@ class MemoryIO(DataIO):
     A DataIO class that reads/write from/into the BytesIO object given at
     construction time
     """
+    _desc: io.BytesIO  # TODO: This might actually be a problem
 
     def __init__(self, buf: io.BytesIO, **kwargs):
         super().__init__()
@@ -247,6 +258,12 @@ class MemoryIO(DataIO):
 
     def delete(self):
         self._buf.close()
+
+    @overrides
+    def buffer(self) -> memoryview:
+        #  TODO: This may also be an issue
+        return self._open().getbuffer()
+
 
 
 class SharedMemoryIO(DataIO):
@@ -309,12 +326,12 @@ class SharedMemoryIO(DataIO):
 
 
 class FileIO(DataIO):
-
+    _desc: io.BufferedReader
     def __init__(self, filename, **kwargs):
         super(FileIO, self).__init__()
         self._fnm = filename
 
-    def _open(self, **kwargs):
+    def _open(self, **kwargs) -> io.BufferedReader:
         flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
         flag += 'b'
         try:
@@ -345,16 +362,28 @@ class FileIO(DataIO):
     def delete(self):
         os.unlink(self._fnm)
 
+    @overrides
+    def buffer(self) -> bytes:
+        return self._desc.read(-1)
+
 
 class NgasIO(DataIO):
-    '''
+    """
     A DROP whose data is finally stored into NGAS. Since NGAS doesn't
     support appending data to existing files, we store all the data temporarily
     in a file on the local filesystem and then move it to the NGAS destination
-    '''
+    """
 
-    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1,
-                 mimeType='application/octet-stream'):
+    def __init__(
+        self,
+        hostname,
+        fileId,
+        port=7777,
+        ngasConnectTimeout=2,
+        ngasTimeout=2,
+        length=-1,
+        mimeType="application/octet-stream",
+    ):
 
         # Check that we actually have the NGAMS client libraries
         try:
@@ -374,7 +403,10 @@ class NgasIO(DataIO):
 
     def _getClient(self):
         from ngamsPClient import ngamsPClient  # @UnresolvedImport
-        return ngamsPClient.ngamsPClient(self._ngasSrv, self._ngasPort, self._ngasTimeout)
+
+        return ngamsPClient.ngamsPClient(
+            self._ngasSrv, self._ngasPort, self._ngasTimeout
+        )
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -382,7 +414,7 @@ class NgasIO(DataIO):
             # request with data. Thus the only way we can currently archive data
             # into NGAS is by accumulating it all on our side and finally
             # sending it over.
-            self._buf = b''
+            self._buf = b""
             self._writtenDataSize = 0
         return self._getClient()
 
@@ -390,10 +422,15 @@ class NgasIO(DataIO):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
             reply, msg, _, _ = client._httpPost(
-                client.getHost(), client.getPort(), 'QARCHIVE',
-                self._mimeType, dataRef=self._buf,
-                pars=[['filename', self._fileId]], dataSource='BUFFER',
-                dataSize=self._writtenDataSize)
+                client.getHost(),
+                client.getPort(),
+                "QARCHIVE",
+                self._mimeType,
+                dataRef=self._buf,
+                pars=[["filename", self._fileId]],
+                dataSource="BUFFER",
+                dataSize=self._writtenDataSize,
+            )
             self._buf = None
             if reply != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
@@ -415,35 +452,49 @@ class NgasIO(DataIO):
 
     def exists(self):
         import ngamsLib  # @UnresolvedImport
-        status = self._getClient().sendCmd('STATUS', pars=[['fileId', self._fileId]])
+
+        status = self._getClient().sendCmd("STATUS", pars=[["fileId", self._fileId]])
         return status.getStatus() == ngamsLib.ngamsCore.NGAMS_SUCCESS
 
     def fileStatus(self):
         import ngamsLib  # @UnresolvedImport
-        #status = self._getClient().sendCmd('STATUS', pars=[['fileId', self._fileId]])
-        status = self._getClient.fileStatus('STATUS?file_id=%s' % self._fileId)
+
+        # status = self._getClient().sendCmd('STATUS', pars=[['fileId', self._fileId]])
+        status = self._getClient.fileStatus("STATUS?file_id=%s" % self._fileId)
         if status.getStatus() != ngamsLib.ngamsCore.NGAMS_SUCCESS:
             raise FileNotFoundError
-        fs = dict(status.getDiskStatusList()[0].getFileObjList()[0].genXml().attributes.items())
+        fs = dict(
+            status.getDiskStatusList()[0]
+            .getFileObjList()[0]
+            .genXml()
+            .attributes.items()
+        )
         return fs
-
 
     def delete(self):
         pass  # We never delete stuff from NGAS
 
 
 class NgasLiteIO(DataIO):
-    '''
+    """
     An IO class whose data is finally stored into NGAS. It uses the ngaslite
     module of DALiuGE instead of the full client-side libraries provided by NGAS
     itself, since they might not be installed everywhere.
 
     The `ngaslite` module doesn't support the STATUS command yet, and because of
     that this class will throw an error if its `exists` method is invoked.
-    '''
+    """
 
-    def __init__(self, hostname, fileId, port=7777, ngasConnectTimeout=2, ngasTimeout=2, length=-1, \
-                 mimeType='application/octet-stream'):
+    def __init__(
+        self,
+        hostname,
+        fileId,
+        port=7777,
+        ngasConnectTimeout=2,
+        ngasTimeout=2,
+        length=-1,
+        mimeType="application/octet-stream",
+    ):
         super(NgasLiteIO, self).__init__()
         self._ngasSrv = hostname
         self._ngasPort = port
@@ -458,8 +509,14 @@ class NgasLiteIO(DataIO):
 
     def _getClient(self):
         return ngaslite.open(
-            self._ngasSrv, self._fileId, port=self._ngasPort, timeout=self._ngasTimeout,\
-                mode=self._mode, mimeType=self._mimeType, length=self._length)
+            self._ngasSrv,
+            self._fileId,
+            port=self._ngasPort,
+            timeout=self._ngasTimeout,
+            mode=self._mode,
+            mimeType=self._mimeType,
+            length=self._length,
+        )
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -468,7 +525,7 @@ class NgasLiteIO(DataIO):
                 # of the whole fileObject to be known and sent up-front as part of the header. Thus
                 # is size is not provided all data will be buffered IN MEMORY and only sent to NGAS
                 # when finishArchive is called.
-                self._buf = b''
+                self._buf = b""
                 self._writtenDataSize = 0
         return self._getClient()
 
@@ -477,13 +534,16 @@ class NgasLiteIO(DataIO):
             conn = self._desc
             if self._is_length_unknown():
                 # If length wasn't known up-front we first send Content-Length and then the buffer here.
-                conn.putheader('Content-Length', len(self._buf))
+                conn.putheader("Content-Length", len(self._buf))
                 conn.endheaders()
                 logger.debug("Sending data for file %s to NGAS" % (self._fileId))
                 conn.send(self._buf)
                 self._buf = None
             else:
-                logger.debug("Length is known, assuming data has been sent (%s, %s)" % (self.fileId, self._length))
+                logger.debug(
+                    "Length is known, assuming data has been sent (%s, %s)"
+                    % (self.fileId, self._length)
+                )
             ngaslite.finishArchive(conn, self._fileId)
             conn.close()
         else:
@@ -519,18 +579,21 @@ def IOForURL(url):
     """
     url = urllib.parse.urlparse(url)
     io = None
-    if url.scheme == 'file':
+    if url.scheme == "file":
         hostname = url.netloc
         filename = url.path
-        if hostname == 'localhost' or hostname == '127.0.0.1' or \
-                hostname == os.uname()[1]:
+        if (
+            hostname == "localhost"
+            or hostname == "127.0.0.1"
+            or hostname == os.uname()[1]
+        ):
             io = FileIO(filename)
-    elif url.scheme == 'null':
+    elif url.scheme == "null":
         io = NullIO()
-    elif url.scheme == 'ngas':
+    elif url.scheme == "ngas":
         networkLocation = url.netloc
-        if ':' in networkLocation:
-            hostname, port = networkLocation.split(':')
+        if ":" in networkLocation:
+            hostname, port = networkLocation.split(":")
             port = int(port)
         else:
             hostname = networkLocation
@@ -539,17 +602,16 @@ def IOForURL(url):
         try:
             io = NgasIO(hostname, fileId, port)
         except:
-            logger.warning('NgasIO not available, using NgasLiteIO instead')
+            logger.warning("NgasIO not available, using NgasLiteIO instead")
             io = NgasLiteIO(hostname, fileId, port)
 
-    logger.debug('I/O chosen for dataURL %s: %r', url, io)
+    logger.debug("I/O chosen for dataURL %s: %r", url, io)
 
     return io
 
 
 class PlasmaIO(DataIO):
-
-    def __init__(self, object_id, plasma_path='/tmp/plasma'):
+    def __init__(self, object_id, plasma_path="/tmp/plasma"):
         super(PlasmaIO, self).__init__()
         self._plasma_path = plasma_path
         self._object_id = object_id
@@ -585,14 +647,20 @@ class PlasmaIO(DataIO):
     def delete(self):
         pass
 
+    @overrides
+    def buffer(self) -> memoryview:
+        [data] = self._desc.get_buffers([self._object_id])
+        return memoryview(data)
+
 
 class PlasmaFlightIO(DataIO):
     def __init__(
-            self,
-            object_id: plasma.ObjectID,
-            plasma_path='/tmp/plasma',
-            flight_path: Optional[str] = None,
-            size: int = -1):
+        self,
+        object_id: plasma.ObjectID,
+        plasma_path="/tmp/plasma",
+        flight_path: Optional[str] = None,
+        size: int = -1,
+    ):
         super(PlasmaFlightIO, self).__init__()
         assert size >= -1
         self._object_id = object_id
@@ -627,7 +695,9 @@ class PlasmaFlightIO(DataIO):
         if not self._writer:
             if self._size == -1:
                 # stream into resizeable buffer
-                logger.warning("Using dynamically sized Plasma buffer. Performance may be reduced.")
+                logger.warning(
+                    "Using dynamically sized Plasma buffer. Performance may be reduced."
+                )
                 self._writer = pyarrow.BufferOutputStream()
             else:
                 # optimally write directly to fixed size plasma buffer
@@ -641,3 +711,7 @@ class PlasmaFlightIO(DataIO):
 
     def delete(self):
         pass
+
+    @overrides
+    def buffer(self) -> memoryview:
+        return self._desc.get(self._object_id, self._flight_path)

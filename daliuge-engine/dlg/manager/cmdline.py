@@ -34,29 +34,36 @@ import daemon
 from lockfile.pidlockfile import PIDLockFile
 
 from .composite_manager import DataIslandManager, MasterManager
-from .constants import NODE_DEFAULT_REST_PORT, \
-    ISLAND_DEFAULT_REST_PORT, MASTER_DEFAULT_REST_PORT, REPLAY_DEFAULT_REST_PORT
+from .constants import (
+    NODE_DEFAULT_REST_PORT,
+    ISLAND_DEFAULT_REST_PORT,
+    MASTER_DEFAULT_REST_PORT,
+    REPLAY_DEFAULT_REST_PORT,
+)
 from .node_manager import NodeManager
 from .replay import ReplayManager, ReplayManagerServer
-from .rest import NMRestServer, CompositeManagerRestServer, \
-    MasterManagerRestServer
+from .rest import NMRestServer, CompositeManagerRestServer, MasterManagerRestServer
 from .. import utils
 from ..runtime import version
 
 
 _terminating = False
+
+
 def launchServer(opts):
 
     # we might be called via __main__, but we want a nice logger name
     logger = logging.getLogger(__name__)
     dmName = opts.dmType.__name__
 
-    logger.info('DALiuGE version %s running at %s', version.full_version, os.getcwd())
-    logger.info('Creating %s' % (dmName))
+    logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
+    logger.info("Creating %s" % (dmName))
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except:
-        logger.exception('Error while creating/starting our %s, exiting in shame :-(', dmName)
+        logger.exception(
+            "Error while creating/starting our %s, exiting in shame :-(", dmName
+        )
         return
 
     server = opts.restType(dm, opts.maxreqsize)
@@ -78,44 +85,113 @@ def launchServer(opts):
 
 
 def addCommonOptions(parser, defaultPort):
-    parser.add_option("-H", "--host", action="store", type="string",
-                      dest="host", help = "The host to bind this instance on", default='localhost')
-    parser.add_option("-P", "--port", action="store", type="int",
-                      dest="port", help = "The port to bind this instance on", default=defaultPort)
-    parser.add_option("-m", "--max-request-size", action="store", type="int",
-                      dest="maxreqsize", help="The maximum allowed HTTP request size, in MB", default=10)
-    parser.add_option("-d", "--daemon", action="store_true",
-                      dest="daemon", help="Run as daemon", default=False)
-    parser.add_option(      "--cwd", action="store_true",
-                      dest="cwd", help="Short for '-w .'", default=False)
-    parser.add_option("-w", "--work-dir",
-                      help="Working directory, defaults to '/' in daemon mode, '.' in interactive mode", default=utils.getDlgWorkDir())
-    parser.add_option("-s", "--stop", action="store_true",
-                      dest="stop", help="Stop an instance running as daemon", default=False)
-    parser.add_option(      "--status", action="store_true",
-                      dest="status", help="Checks if there is daemon process actively running", default=False)
-    parser.add_option("-T", "--timeout", action="store",
-                      dest="timeout", type="float", help="Timeout used when checking for the daemon process", default=10)
-    parser.add_option("-v", "--verbose", action="count",
-                      dest="verbose", help="Become more verbose. The more flags, the more verbose")
-    parser.add_option("-q", "--quiet", action="count",
-                      dest="quiet", help="Be less verbose. The more flags, the quieter")
-    parser.add_option("-l", "--log-dir", action="store", type="string",
-                      dest="logdir", help="The directory where the logging files will be stored", default=utils.getDlgLogsDir())
+    parser.add_option(
+        "-H",
+        "--host",
+        action="store",
+        type="string",
+        dest="host",
+        help="The host to bind this instance on",
+        default="localhost",
+    )
+    parser.add_option(
+        "-P",
+        "--port",
+        action="store",
+        type="int",
+        dest="port",
+        help="The port to bind this instance on",
+        default=defaultPort,
+    )
+    parser.add_option(
+        "-m",
+        "--max-request-size",
+        action="store",
+        type="int",
+        dest="maxreqsize",
+        help="The maximum allowed HTTP request size, in MB",
+        default=10,
+    )
+    parser.add_option(
+        "-d",
+        "--daemon",
+        action="store_true",
+        dest="daemon",
+        help="Run as daemon",
+        default=False,
+    )
+    parser.add_option(
+        "--cwd", action="store_true", dest="cwd", help="Short for '-w .'", default=False
+    )
+    parser.add_option(
+        "-w",
+        "--work-dir",
+        help="Working directory, defaults to '/' in daemon mode, '.' in interactive mode",
+        default=utils.getDlgWorkDir(),
+    )
+    parser.add_option(
+        "-s",
+        "--stop",
+        action="store_true",
+        dest="stop",
+        help="Stop an instance running as daemon",
+        default=False,
+    )
+    parser.add_option(
+        "--status",
+        action="store_true",
+        dest="status",
+        help="Checks if there is daemon process actively running",
+        default=False,
+    )
+    parser.add_option(
+        "-T",
+        "--timeout",
+        action="store",
+        dest="timeout",
+        type="float",
+        help="Timeout used when checking for the daemon process",
+        default=10,
+    )
+    parser.add_option(
+        "-v",
+        "--verbose",
+        action="count",
+        dest="verbose",
+        help="Become more verbose. The more flags, the more verbose",
+    )
+    parser.add_option(
+        "-q",
+        "--quiet",
+        action="count",
+        dest="quiet",
+        help="Be less verbose. The more flags, the quieter",
+    )
+    parser.add_option(
+        "-l",
+        "--log-dir",
+        action="store",
+        type="string",
+        dest="logdir",
+        help="The directory where the logging files will be stored",
+        default=utils.getDlgLogsDir(),
+    )
+
 
 def commonOptionsCheck(options, parser):
     # These are all exclusive
     if options.daemon and options.stop:
-        parser.error('-d and -s cannot be specified together')
+        parser.error("-d and -s cannot be specified together")
     if options.daemon and options.status:
-        parser.error('-d and --status cannot be specified together')
+        parser.error("-d and --status cannot be specified together")
     if options.stop and options.status:
-        parser.error('-s and --status cannot be specified together')
+        parser.error("-s and --status cannot be specified together")
     # -v and -q are exclusive
     if options.verbose and options.quiet:
-        parser.error('-v and -q cannot be specified together')
+        parser.error("-v and -q cannot be specified together")
     if options.cwd and options.work_dir:
         parser.error("--cwd and -w/--work-dir cannot be specified together. Prefer -w")
+
 
 def start(options, parser):
 
@@ -129,45 +205,55 @@ def start(options, parser):
     if options.daemon:
 
         # Make sure the PID file will be created without problems
-        pidDir  = utils.getDlgPidDir()
+        pidDir = utils.getDlgPidDir()
         utils.createDirIfMissing(pidDir)
-        pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
+        pidfile = os.path.join(pidDir, "dlg%s.pid" % (options.dmAcronym))
 
         working_dir = options.work_dir
         if not working_dir:
             if options.cwd:
-                print('The --cwd option is deprecated, prefer -w/--work-dir, continuing anyway')
-                working_dir = '.'
+                print(
+                    "The --cwd option is deprecated, prefer -w/--work-dir, continuing anyway"
+                )
+                working_dir = "."
             else:
-                working_dir = '/'
-        with daemon.DaemonContext(pidfile=PIDLockFile(pidfile, 1), files_preserve=[fileHandler.stream],
-                                  working_directory=working_dir):
+                working_dir = "/"
+        with daemon.DaemonContext(
+            pidfile=PIDLockFile(pidfile, 1),
+            files_preserve=[fileHandler.stream],
+            working_directory=working_dir,
+        ):
             launchServer(options)
 
     # Stop daemon?
     elif options.stop:
         pidDir = utils.getDlgPidDir()
-        pidfile = os.path.join(pidDir,  "dlg%s.pid"    % (options.dmAcronym))
+        pidfile = os.path.join(pidDir, "dlg%s.pid" % (options.dmAcronym))
         pid = PIDLockFile(pidfile).read_pid()
         if pid is None:
-            sys.stderr.write('Cannot read PID file, is there an instance running?\n')
+            sys.stderr.write("Cannot read PID file, is there an instance running?\n")
         else:
             utils.terminate_or_kill(utils.ExistingProcess(pid), 5)
             if os.path.exists(pidfile):
-                sys.stderr.write('Process %d does not exist, removing PID file\n' % (pid,))
+                sys.stderr.write(
+                    "Process %d does not exist, removing PID file\n" % (pid,)
+                )
                 os.unlink(pidfile)
 
     # Check status
     elif options.status:
-        socket_is_listening = utils.check_port(options.host, options.port, options.timeout)
+        socket_is_listening = utils.check_port(
+            options.host, options.port, options.timeout
+        )
         sys.exit(socket_is_listening is False)
 
     # Start directly
     else:
-        working_dir = options.work_dir or '.'
+        working_dir = options.work_dir or "."
         utils.createDirIfMissing(working_dir)
         os.chdir(working_dir)
         launchServer(options)
+
 
 def setupLogging(opts):
     if logging.root.handlers:
@@ -183,7 +269,7 @@ def setupLogging(opts):
         logging.INFO,
         logging.WARNING,
         logging.ERROR,
-        logging.CRITICAL
+        logging.CRITICAL,
     ]
 
     # Default is WARNING
@@ -200,13 +286,11 @@ def setupLogging(opts):
     # 'no_log_ids' option exists (but can be set to True).
     # We also skip logging IDs when stopping a daemon, as the infrastructure
     # won't have been set
-    log_ids = (opts.dmType == NodeManager and
-               not opts.no_log_ids and
-               not opts.stop)
-    fmt = '%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] '
+    log_ids = opts.dmType == NodeManager and not opts.no_log_ids and not opts.stop
+    fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
     if log_ids:
-        fmt += '[%(session_id)10.10s] [%(drop_uid)10.10s] '
-    fmt += '%(name)s#%(funcName)s:%(lineno)s %(message)s'
+        fmt += "[%(session_id)10.10s] [%(drop_uid)10.10s] "
+    fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
     fmt = logging.Formatter(fmt)
     fmt.converter = time.gmtime
 
@@ -240,18 +324,54 @@ def dlgNM(parser, args):
 
     # Parse command-line and check options
     addCommonOptions(parser, NODE_DEFAULT_REST_PORT)
-    parser.add_option("-I", "--no-log-ids", action="store_true",
-                  dest="no_log_ids", help="Do not add associated session IDs and Drop UIDs to log statements", default=False)
-    parser.add_option("--no-dlm", action="store_true",
-                      dest="noDLM", help="Don't start the Data Lifecycle Manager on this NodeManager", default=True)
-    parser.add_option("--dlg-path", action="store", type="string",
-                      dest="dlgPath", help="Path where more DALiuGE-related libraries can be found", default=utils.getDlgPath())
-    parser.add_option("--error-listener", action="store", type="string",
-                      dest="errorListener", help="The error listener class to be used", default=None)
-    parser.add_option("--event-listeners", action="store", type="string",
-                      dest="event_listeners", help="A colon-separated list of event listener classes to be used", default='')
-    parser.add_option("-t", "--max-threads", action="store", type="int",
-                      dest="max_threads", help="Max thread pool size used for executing drops. -1 means use all CPUs. 0 (default) means no threads.", default=0)
+    parser.add_option(
+        "-I",
+        "--no-log-ids",
+        action="store_true",
+        dest="no_log_ids",
+        help="Do not add associated session IDs and Drop UIDs to log statements",
+        default=False,
+    )
+    parser.add_option(
+        "--no-dlm",
+        action="store_true",
+        dest="noDLM",
+        help="Don't start the Data Lifecycle Manager on this NodeManager",
+        default=True,
+    )
+    parser.add_option(
+        "--dlg-path",
+        action="store",
+        type="string",
+        dest="dlgPath",
+        help="Path where more DALiuGE-related libraries can be found",
+        default=utils.getDlgPath(),
+    )
+    parser.add_option(
+        "--error-listener",
+        action="store",
+        type="string",
+        dest="errorListener",
+        help="The error listener class to be used",
+        default=None,
+    )
+    parser.add_option(
+        "--event-listeners",
+        action="store",
+        type="string",
+        dest="event_listeners",
+        help="A colon-separated list of event listener classes to be used",
+        default="",
+    )
+    parser.add_option(
+        "-t",
+        "--max-threads",
+        action="store",
+        type="int",
+        dest="max_threads",
+        help="Max thread pool size used for executing drops. -1 means use all CPUs. 0 (default) means no threads.",
+        default=0,
+    )
     (options, args) = parser.parse_args(args)
 
     # Add DM-specific options
@@ -259,17 +379,20 @@ def dlgNM(parser, args):
     # also used to expose the Sessions it creates
     options.dmType = NodeManager
     options.dmArgs = ()
-    options.dmKwargs = {'useDLM': not options.noDLM,
-                        'dlgPath': options.dlgPath,
-                        'host': options.host,
-                        'error_listener': options.errorListener,
-                        'event_listeners': list(filter(None, options.event_listeners.split(":"))),
-                        'max_threads': options.max_threads,
-                        'logdir': options.logdir}
-    options.dmAcronym = 'NM'
+    options.dmKwargs = {
+        "useDLM": not options.noDLM,
+        "dlgPath": options.dlgPath,
+        "host": options.host,
+        "error_listener": options.errorListener,
+        "event_listeners": list(filter(None, options.event_listeners.split(":"))),
+        "max_threads": options.max_threads,
+        "logdir": options.logdir,
+    }
+    options.dmAcronym = "NM"
     options.restType = NMRestServer
 
     start(options, parser)
+
 
 def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
     """
@@ -280,35 +403,74 @@ def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
 
     # Parse command-line and check options
     addCommonOptions(parser, dmPort)
-    parser.add_option("-N", "--nodes", action="store", type="string",
-                      dest="nodes", help = "Comma-separated list of node names managed by this %s" % (acronym), default="")
-    parser.add_option("-k", "--ssh-pkey-path", action="store", type="string",
-                      dest="pkeyPath", help = "Path to the private SSH key to use when connecting to the nodes", default=None)
-    parser.add_option("--dmCheckTimeout", action="store", type="int",
-                      dest="dmCheckTimeout", help="Maximum timeout used when automatically checking for DM presence", default=10)
+    parser.add_option(
+        "-N",
+        "--nodes",
+        action="store",
+        type="string",
+        dest="nodes",
+        help="Comma-separated list of node names managed by this %s" % (acronym),
+        default="",
+    )
+    parser.add_option(
+        "-k",
+        "--ssh-pkey-path",
+        action="store",
+        type="string",
+        dest="pkeyPath",
+        help="Path to the private SSH key to use when connecting to the nodes",
+        default=None,
+    )
+    parser.add_option(
+        "--dmCheckTimeout",
+        action="store",
+        type="int",
+        dest="dmCheckTimeout",
+        help="Maximum timeout used when automatically checking for DM presence",
+        default=10,
+    )
     (options, args) = parser.parse_args(args)
 
     # Add DIM-specific options
     options.dmType = dmType
-    options.dmArgs = ([s for s in options.nodes.split(',') if s],)
-    options.dmKwargs = {'pkeyPath': options.pkeyPath,
-                        'dmCheckTimeout': options.dmCheckTimeout}
+    options.dmArgs = ([s for s in options.nodes.split(",") if s],)
+    options.dmKwargs = {
+        "pkeyPath": options.pkeyPath,
+        "dmCheckTimeout": options.dmCheckTimeout,
+    }
     options.dmAcronym = acronym
     options.restType = dmRestServer
 
     start(options, parser)
 
+
 def dlgDIM(parser, args):
     """
     Entry point for the dlg dim command
     """
-    dlgCompositeManager(parser, args, DataIslandManager, 'DIM', ISLAND_DEFAULT_REST_PORT, CompositeManagerRestServer)
+    dlgCompositeManager(
+        parser,
+        args,
+        DataIslandManager,
+        "DIM",
+        ISLAND_DEFAULT_REST_PORT,
+        CompositeManagerRestServer,
+    )
+
 
 def dlgMM(parser, args):
     """
     Entry point for the dlg mm command
     """
-    dlgCompositeManager(parser, args, MasterManager, 'MM', MASTER_DEFAULT_REST_PORT, MasterManagerRestServer)
+    dlgCompositeManager(
+        parser,
+        args,
+        MasterManager,
+        "MM",
+        MASTER_DEFAULT_REST_PORT,
+        MasterManagerRestServer,
+    )
+
 
 def dlgReplay(parser, args):
     """
@@ -317,10 +479,23 @@ def dlgReplay(parser, args):
 
     # Parse command-line and check options
     addCommonOptions(parser, REPLAY_DEFAULT_REST_PORT)
-    parser.add_option("-S", "--status-file", action="store",
-                      dest="status_file", help="File containing a continuous graph status dump", default=None)
-    parser.add_option("-g", "--graph-file", action="store", type="string",
-                      dest="graph_file", help="File containing a physical graph dump", default=None)
+    parser.add_option(
+        "-S",
+        "--status-file",
+        action="store",
+        dest="status_file",
+        help="File containing a continuous graph status dump",
+        default=None,
+    )
+    parser.add_option(
+        "-g",
+        "--graph-file",
+        action="store",
+        type="string",
+        dest="graph_file",
+        help="File containing a physical graph dump",
+        default=None,
+    )
     (options, args) = parser.parse_args(args)
 
     if not options.graph_file:
@@ -332,7 +507,7 @@ def dlgReplay(parser, args):
     options.dmType = ReplayManager
     options.dmArgs = (options.graph_file, options.status_file)
     options.dmKwargs = {}
-    options.dmAcronym = 'RP'
+    options.dmAcronym = "RP"
     options.restType = ReplayManagerServer
 
     start(options, parser)
