@@ -31,15 +31,22 @@ from dlg.common import Categories
 
 
 class CommonTestsBase(ManagerStarter):
-
     def _submit(self):
-        pg = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY},
-              {"oid":"B", "type":"app", "app": "dlg.apps.simple.SleepApp", "inputs": ["A"], "outputs":["C"]},
-              {"oid":"C", "type":"plain", "storage": Categories.MEMORY}]
+        pg = [
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepApp",
+                "inputs": ["A"],
+                "outputs": ["C"],
+            },
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+        ]
         for drop in pg:
-            drop['node'] = '127.0.0.1'
-            drop['island'] = '127.0.0.1'
-        return common.submit(pg, '127.0.0.1', self.port)
+            drop["node"] = "127.0.0.1"
+            drop["island"] = "127.0.0.1"
+        return common.submit(pg, "127.0.0.1", self.port)
 
     def assert_sessions_finished(self, status, *session_ids):
         for session_id in session_ids:
@@ -62,11 +69,16 @@ class CommonTestsBase(ManagerStarter):
     def test_monitor_with_dumping(self):
         dump_path = tempfile.mktemp()
         session_id = self._submit()
-        status = common.monitor_sessions(session_id=session_id, poll_interval=0.1,
-                                        port=self.port, status_dump_path=dump_path)
+        status = common.monitor_sessions(
+            session_id=session_id,
+            poll_interval=0.1,
+            port=self.port,
+            status_dump_path=dump_path,
+        )
         self.assert_session_finished(status)
         self.assertTrue(os.path.exists(dump_path))
         os.remove(dump_path)
+
 
 class TestDeployCommonNM(CommonTestsBase, unittest.TestCase):
 
@@ -83,6 +95,7 @@ class TestDeployCommonNM(CommonTestsBase, unittest.TestCase):
         self.nm_info.stop()
         super(TestDeployCommonNM, self).tearDown()
 
+
 class TestDeployCommonDIM(TestDeployCommonNM, unittest.TestCase):
 
     port = constants.ISLAND_DEFAULT_REST_PORT
@@ -97,6 +110,7 @@ class TestDeployCommonDIM(TestDeployCommonNM, unittest.TestCase):
     def tearDown(self):
         self.dim_info.stop()
         super(TestDeployCommonDIM, self).tearDown()
+
 
 class TestDeployCommonMM(TestDeployCommonDIM, unittest.TestCase):
 

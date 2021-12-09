@@ -28,6 +28,7 @@ from .restutils import RestServerWSGIServer
 
 logger = logging.getLogger(__name__)
 
+
 class RestServer(object):
     """
     The base class for our REST servers
@@ -39,7 +40,7 @@ class RestServer(object):
         self.app = bottle.Bottle()
 
     def start(self, host, port):
-        host = host or 'localhost'
+        host = host or "localhost"
         port = port or 8080
 
         logger.info("Starting REST server on %s:%d" % (host, port))

@@ -35,9 +35,9 @@ from setuptools.command.install import install
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 1
+MAJOR = 2
 MINOR = 0
-PATCH = 0
+PATCH = 1
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/runtime/version.py"
@@ -124,9 +124,11 @@ install_requires = [
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
+    "numpy==1.20.3",
     "overrides",
     "paramiko",
     "psutil",
+    "pyarrow",
     "python-daemon",
     "pyzmq",
     "scp",
@@ -134,8 +136,6 @@ install_requires = [
     "zeroconf >= 0.19.1",
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6",
-    "pyarrow",
-    "numpy==1.20.3"
 ]
 # Keep alpha-sorted PLEASE!
 
@@ -156,8 +156,13 @@ extra_requires = {
 setup(
     name="daliuge-engine",
     version=get_version_info()[0],
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Runtime",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
+    description=u"Data Activated \uF9CA (flow) Graph Engine - Execution Engine",
+    long_description="""
+        The element of the DALiuGE system executing the workflows. This replaces
+        the former 'runtime' package (up to version 1.0). For more information 
+        see the [Basics section(https://daliuge.readthedocs.io/en/latest/basics.html)]
+        of the DALiuGE documentation.
+        """,
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
     url="https://github.com/ICRAR/daliuge",
