@@ -13,10 +13,10 @@ with nmc.ApiClient(nm_config) as nm_client, cmc.ApiClient(dim_config) as dim_cli
     nm = DefaultApi(nm_client)
 
     print("sessions: %r" % (dim.get_sessions(),))
-    dim.create_session(inline_object={'sessionId': 'abc'})
+    dim.create_session(inline_object={"sessionId": "abc"})
     print("sessions in NM: %r" % (nm.get_sessions(),))
     print("sessions in DIM: %r" % (dim.get_sessions(),))
     nodes = dim.get_cm_nodes()
     print(nodes)
-    if '127.0.0.1' not in nodes:
+    if "127.0.0.1" not in nodes:
         raise ValueError()

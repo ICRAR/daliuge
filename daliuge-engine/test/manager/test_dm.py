@@ -124,7 +124,7 @@ class NMTestsMixIn(object):
         drops.update(dm2._sessions[sessionId].drops)
 
         leaf_drop = drops[leaf_oid]
-        with droputils.DROPWaiterCtx(self, leaf_drop, 10):
+        with droputils.DROPWaiterCtx(self, leaf_drop, 2):
             for oid in root_oids:
                 drop = drops[oid]
                 drop.write(root_data)
@@ -162,7 +162,12 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "app": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
@@ -204,11 +209,16 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [
             {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = str(crc32c(a_data, 0)).encode('utf8')
+        c_data = str(crc32c(a_data, 0)).encode("utf8")
         node_managers = [self._start_dm() for _ in range(2)]
         ids = [0] * repeats
         for n in range(repeats):
@@ -257,14 +267,29 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = "s1"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
             {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
-            {"oid": "F", "type": "plain", "storage": Categories.MEMORY, "producers": ["E"]},
+            {
+                "oid": "F",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["E"],
+            },
         ]
 
         rels = [
@@ -293,6 +318,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 drop.status,
                 "DROP %s is not COMPLETED" % (drop.uid),
             )
+
         self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
         self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
 
@@ -907,14 +933,24 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {
                 "oid": "C",
                 "type": "app",
                 "app": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {
@@ -985,7 +1021,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -1015,5 +1051,5 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
