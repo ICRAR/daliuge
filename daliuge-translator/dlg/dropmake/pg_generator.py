@@ -25,8 +25,8 @@ the profiling information and turns it into the partitioned physical graph,
 which will then be deployed and monitored by the Physical Graph Manager
 """
 
-if __name__ == '__main__':
-    __package__ = 'dlg.dropmake'
+if __name__ == "__main__":
+    __package__ = "dlg.dropmake"
 
 from collections import defaultdict
 import collections
@@ -304,27 +304,24 @@ class LGNode:
 
     def is_group_start(self):
         result = False
-        if self.has_group() \
-            and "group_start" in self.jd:
+        if self.has_group() and "group_start" in self.jd:
             gs = self.jd["group_start"]
             if type(gs) == type(True):
                 result = gs
-            elif type(gs) in [type(1), type(1.)]:
-                result = (1 == gs)
+            elif type(gs) in [type(1), type(1.0)]:
+                result = 1 == gs
             elif type(gs) == type("s"):
                 result = gs.lower() in ("true", "1")
         return result
 
-
     def is_group_end(self):
         result = False
-        if self.has_group() \
-                and "group_end" in self.jd:
+        if self.has_group() and "group_end" in self.jd:
             ge = self.jd["group_end"]
             if type(ge) == type(True):
                 result = ge
-            elif type(ge) in [type(1), type(1.)]:
-                result = (1 == ge)
+            elif type(ge) in [type(1), type(1.0)]:
+                result = 1 == ge
             elif type(ge) == type("s"):
                 result = ge.lower() in ("true", "1")
         return result
@@ -342,8 +339,10 @@ class LGNode:
         return self.is_group() and self._jd["category"] == Categories.LOOP
 
     def is_service(self):
-        # services nodes are replaced with the input application in the logical graph
-        return ("isService" in self._jd and self._jd["isService"]) or self._jd["category"] == Categories.SERVICE
+        """
+        Determines whether a node the parent service node (not the input application)
+        """
+        return self._jd["category"] == Categories.SERVICE
 
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
@@ -543,11 +542,11 @@ class LGNode:
 
     def _update_key_value_attributes(self, kwargs):
         # get the arguments from new fields dictionary in a backwards compatible way
-        if 'fields' in self.jd:
-            for je in self.jd['fields']:
+        if "fields" in self.jd:
+            for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
-                self.jd[je['name']]=je['value']
-                kwargs[je['name']] = je['value']
+                self.jd[je["name"]] = je["value"]
+                kwargs[je["name"]] = je["value"]
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
@@ -559,11 +558,13 @@ class LGNode:
                     if len(k_v) > 1:
                         # Do substitutions for MKN
                         if "mkn" in self.jd:
-                            kwargs[k_v[0]] = self._mkn_substitution(self.jd["mkn"], k_v[1])
+                            kwargs[k_v[0]] = self._mkn_substitution(
+                                self.jd["mkn"], k_v[1]
+                            )
                         else:
                             kwargs[k_v[0]] = k_v[1]
 
-    def _create_test_drop_spec(self, oid, rank, kwargs):
+    def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
         TODO
         This is a test function only
@@ -579,7 +580,12 @@ class LGNode:
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
-                    {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
+                    {
+                        "oid": oid,
+                        "type": DropType.PLAIN,
+                        "storage": drop_type,
+                        "rank": rank,
+                    }
                 )
                 dropSpec_socket = dropdict(
                     {
@@ -598,7 +604,12 @@ class LGNode:
                 dropSpec_socket.addOutput(drop_spec)
             else:
                 drop_spec = dropdict(
-                    {"oid": oid, "type": DropType.PLAIN, "storage": drop_type, "rank": rank}
+                    {
+                        "oid": oid,
+                        "type": DropType.PLAIN,
+                        "storage": drop_type,
+                        "rank": rank,
+                    }
                 )
             if drop_type == Categories.FILE:
                 dn = self.jd.get("dirname", None)
@@ -640,11 +651,13 @@ class LGNode:
             drop_spec = dropdict(
                 {"oid": oid, "type": DropType.APP, "app": app_class, "rank": rank}
             )
+
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
+
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
             if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
@@ -693,7 +706,12 @@ class LGNode:
                     cmds.append(str(v))
             # add more arguments - this is the new method of adding arguments in EAGLE
             # the method above (Arg**) is retained for compatibility, but eventually should be removed
-            for k in ["command", "input_redirection", "output_redirection", "command_line_arguments"]:
+            for k in [
+                "command",
+                "input_redirection",
+                "output_redirection",
+                "command_line_arguments",
+            ]:
                 if k in self.jd:
                     cmds.append(self.jd[k])
             # kwargs['command'] = ' '.join(cmds)
@@ -714,15 +732,20 @@ class LGNode:
                 raise GraphException("Missing image for Construct '%s'" % self.text)
 
             command = str(self.jd.get("command"))
-            if command == "":
-                raise GraphException("Missing command for Construct '%s'" % self.text)
+            # There ARE containers which don't need/want a command
+            # if command == "":
+            #     raise GraphException("Missing command for Construct '%s'" % self.text)
 
             kwargs["tw"] = int(self.jd.get("execution_time", "5"))
             kwargs["image"] = image
             kwargs["command"] = command
             kwargs["user"] = str(self.jd.get("user", ""))
-            kwargs["ensureUserAndSwitch"] = self.str_to_bool(str(self.jd.get("ensureUserAndSwitch", "0")))
-            kwargs["removeContainer"] = self.str_to_bool(str(self.jd.get("removeContainer", "1")))
+            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
+                str(self.jd.get("ensureUserAndSwitch", "0"))
+            )
+            kwargs["removeContainer"] = self.str_to_bool(
+                str(self.jd.get("removeContainer", "1"))
+            )
             kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             drop_spec.update(kwargs)
@@ -787,12 +810,30 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(drop_spec)
+        elif drop_type == Categories.SERVICE:
+            raise GraphException(f"DROP type: {drop_type} should not appear in physical graph")
+            # drop_spec = dropdict(
+            #     {
+            #         "oid": oid,
+            #         "type": DropType.SERVICE_APP,
+            #         "app": "dlg.apps.simple.SleepApp",
+            #         "rank": rank
+            #     }
+            # )
+            # kwargs["tw"] = 1
+
         # elif drop_type == Categories.BRANCH:
         # Branches are now dealt with like any other application and essentially ignored by the translator.
+
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
-                {"oid": oid, "type": DropType.PLAIN, "storage": Categories.NULL, "rank": rank}
+                {
+                    "oid": oid,
+                    "type": DropType.PLAIN,
+                    "storage": Categories.NULL,
+                    "rank": rank,
+                }
             )
         elif drop_type == Categories.LOOP:
             pass
@@ -813,6 +854,8 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
+        if "isService" in self.jd and self.jd["isService"]:
+            kwargs["type"] = DropType.SERVICE_APP
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -954,15 +997,15 @@ class PGT(object):
                 return None
         if app_drop_only:
             lp = DAGUtil.get_longest_path(G, show_path=True)[0]
-            return sum(G.node[u].get(wk, 0) for u in lp)
+            return sum(G.nodes[u].get(wk, 0) for u in lp)
         else:
             return DAGUtil.get_longest_path(G, show_path=False)[1]
 
     @property
     def json(self):
         """
-            Return the JSON string representation of the PGT
-            for visualisation
+        Return the JSON string representation of the PGT
+        for visualisation
         """
         if self._json_str is None:
             self._json_str = self.to_gojs_json(visual=True)
@@ -1099,9 +1142,9 @@ class PGT(object):
                     link = dict()
                     link["from"] = myk
                     from_dt = 0 if drop["type"] == DropType.PLAIN else 1
-                    to_dt = G.node[oup]["dt"]
+                    to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
-                        to_drop = G.node[oup]["drop_spec"]
+                        to_drop = G.nodes[oup]["drop_spec"]
                         if from_dt == 0:
                             # add an extra app DROP
                             extra_oid = "{0}_TransApp_{1}".format(oid, i)
@@ -1147,7 +1190,7 @@ class PGT(object):
                         # global graph updates
                         # the new drop must have the same gid as the to_drop
                         add_nodes.append(
-                            (lid, 1, mydt, dropSpec, G.node[oup].get("gid", None))
+                            (lid, 1, mydt, dropSpec, G.nodes[oup].get("gid", None))
                         )
                         remove_edges.append((myk, oup))
                         add_edges.append((myk, lid))
@@ -1461,8 +1504,8 @@ class MetisPGTP(PGT):
         GG = self._G
         part_edges = defaultdict(int)  # k: from_gid + to_gid, v: sum_of_weight
         for e in GG.edges(data=True):
-            from_gid = GG.node[e[0]]["gid"]
-            to_gid = GG.node[e[1]]["gid"]
+            from_gid = GG.nodes[e[0]]["gid"]
+            to_gid = GG.nodes[e[1]]["gid"]
             k = "{0}**{1}".format(from_gid, to_gid)
             part_edges[k] += e[2]["weight"]
 
@@ -1687,9 +1730,12 @@ class MySarkarPGTP(PGT):
         # print("gojs_json called within MyKarkarPGTP from {0}".format(inspect.stack()[1][3]))
 
         if self._num_parts_done == 0 and self._partitions is None:
-            self._num_parts_done, _, self._ptime, self._partitions = (
-                self._scheduler.partition_dag()
-            )
+            (
+                self._num_parts_done,
+                _,
+                self._ptime,
+                self._partitions,
+            ) = self._scheduler.partition_dag()
             # print("%s: _num_parts_done = %d" % (self.__class__.__name__, self._num_parts_done))
             # print("len(self._partitions) = %d" % (len(self._partitions)))
             # for part in self._partitions:
@@ -1734,7 +1780,7 @@ class MySarkarPGTP(PGT):
 
             node_list = jsobj["nodeDataArray"]
             for node in node_list:
-                gid = G.node[node["key"]]["gid"]  # gojs group_id
+                gid = G.nodes[node["key"]]["gid"]  # gojs group_id
                 if gid is None:
                     raise GPGTException(
                         "Node {0} does not have a Partition".format(node["key"])
@@ -1880,7 +1926,9 @@ class LG:
             lgk = getNodesKeyDict(lg)
         # This ensures that future schema version mods are catched early
         else:
-            raise GraphException("Logical graph version '{0}' not supported!".format(lgver))
+            raise GraphException(
+                "Logical graph version '{0}' not supported!".format(lgver)
+            )
         self._done_dict = dict()
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
@@ -1888,7 +1936,10 @@ class LG:
         all_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
-            if jd["category"] == Categories.COMMENT or jd["category"] == Categories.DESCRIPTION:
+            if (
+                jd["category"] == Categories.COMMENT
+                or jd["category"] == Categories.DESCRIPTION
+            ):
                 continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             all_list.append(lgn)
@@ -1926,8 +1977,6 @@ class LG:
             #         ak = lgk[lk]['inputApplicationRef']
             #         portId = lgk[ak]['inputPorts']
 
-
-
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
@@ -1943,7 +1992,7 @@ class LG:
         self._lgn_list = all_list
 
     def validate_link(self, src, tgt):
-        #print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
+        # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
         if src.is_scatter() or tgt.is_scatter():
             prompt = "Remember to specify Input App Type for the Scatter construct!"
             raise GInvalidLink(
@@ -2045,7 +2094,8 @@ class LG:
         lpcxt:  Loop context
         """
         if lgn.is_group():
-            extra_links_drops = not lgn.is_scatter() and not lgn.is_service()
+            # services nodes are replaced with the input application in the logical graph
+            extra_links_drops = not lgn.is_scatter()
             if extra_links_drops:
                 non_inputs = []
                 grp_starts = []
@@ -2137,13 +2187,9 @@ class LG:
                 src_drop = lgn.make_single_drop(miid, loop_cxt=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
         elif lgn.is_service():
-            src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
-            src_drop["type"] = DropType.SERVICE_APP
-            self._drop_dict[lgn.id].append(src_drop)
-            if lgn.is_start_listener():
-                self._drop_dict["new_added"].append(src_drop["listener_drop"])
+            # no action required, inputapp node aleady created and marked with "isService"
+            pass
         else:
-            # TODO !!
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
             if lgn.is_start_listener():
@@ -2187,16 +2233,16 @@ class LG:
             Categories.COMPONENT,
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
-            Categories.PYTHON_APP] and t_type in [
-                Categories.COMPONENT,
-                Categories.DYNLIB_APP,
-                Categories.DYNLIB_PROC_APP,
-                Categories.PYTHON_APP
-                ]
+            Categories.PYTHON_APP,
+        ] and t_type in [
+            Categories.COMPONENT,
+            Categories.DYNLIB_APP,
+            Categories.DYNLIB_PROC_APP,
+            Categories.PYTHON_APP,
+        ]
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
-        """
-        """
+        """ """
         sdrop = None
         if slgn.is_gather():
             # sdrop = src_drop['gather-data_drop']
@@ -2497,9 +2543,11 @@ class LG:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn['type'] = DropType.SERVICE_APP
+                    tlgn["type"] = DropType.SERVICE_APP
                 else:
-                    raise GraphException("Unsupported target group {0}".format(tlgn.jd["category"]))
+                    raise GraphException(
+                        "Unsupported target group {0}".format(tlgn.jd["category"])
+                    )
 
         for _, v in self._gather_cache.items():
             input_list = v[1]
@@ -2558,7 +2606,9 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            if drop["type"] == DropType.APP and drop["app"].endswith(Categories.BASH_SHELL_APP):
+            if drop["type"] == DropType.APP and drop["app"].endswith(
+                Categories.BASH_SHELL_APP
+            ):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 

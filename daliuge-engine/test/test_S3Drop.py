@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 from unittest.case import skipIf
+
 """
 Test the S3 Drop
 """
@@ -36,7 +37,7 @@ except ImportError:
     run_tests = False
 
 if run_tests:
-    PROFILE = 'aws-chiles02'
+    PROFILE = "aws-chiles02"
     try:
         boto3.session.Session(profile_name=PROFILE)
     except:
@@ -44,13 +45,20 @@ if run_tests:
 
 
 class TestS3Drop(unittest.TestCase):
-
     @skipIf(not run_tests, "No profile found to run this test")
     def test_bucket_exists(self):
-        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='DoesNotExist', key='Nonsense')
+        drop = S3DROP(
+            "oid:A",
+            "uid:A",
+            profile_name=PROFILE,
+            bucket="DoesNotExist",
+            key="Nonsense",
+        )
         self.assertEqual(drop.exists(), False)
 
-        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='ska-low-sim', key='Nonsense')
+        drop = S3DROP(
+            "oid:A", "uid:A", profile_name=PROFILE, bucket="ska-low-sim", key="Nonsense"
+        )
         self.assertEqual(drop.exists(), False)
 
         # drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='13B-266.sb25386827.eb28551343.56619.33367407408_calibrated_deepfield.ms.tar')
@@ -58,7 +66,13 @@ class TestS3Drop(unittest.TestCase):
 
     @skipIf(not run_tests, "No profile found to run this test")
     def test_size(self):
-        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='DoesNotExist', key='Nonsense')
+        drop = S3DROP(
+            "oid:A",
+            "uid:A",
+            profile_name=PROFILE,
+            bucket="DoesNotExist",
+            key="Nonsense",
+        )
         self.assertEqual(drop.size(), -1)
 
         # drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='13B-266.sb25386827.eb28551343.56619.33367407408_calibrated_deepfield.ms.tar')

@@ -76,7 +76,7 @@ class Schedule(object):
                 lpl_str = []
                 lpl_c = 0
                 for lpn in self.longest_path:
-                    ww = G.node[lpn].get('num_cpus', 0)
+                    ww = G.nodes[lpn].get('num_cpus', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
                 logger.debug("lpl: %s", " -> ".join(lpl_str))
@@ -91,7 +91,7 @@ class Schedule(object):
 
             topo_sort = nx.topological_sort(G)
             for n in topo_sort:
-                node = G.node[n]
+                node = G.nodes[n]
                 try:
                     stt = node['stt']
                     edt = node['edt']
@@ -416,9 +416,9 @@ class KFamilyPartition(Partition):
             self._tmp_max_dop = dict()
         self_global_dag = self._global_dag
         for _w_attr in self._w_attr:
-            u_aw = self_global_dag.node[u].get(_w_attr, 1)
+            u_aw = self_global_dag.nodes[u].get(_w_attr, 1)
             kwargs[_w_attr] = u_aw
-        kwargs['weight'] = self_global_dag.node[u].get('weight', 5)
+        kwargs['weight'] = self_global_dag.nodes[u].get('weight', 5)
         self._dag.add_node(u, **kwargs)
         for k in self._w_attr:
             self._tmp_max_dop[k] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
@@ -516,8 +516,8 @@ class Scheduler(object):
         for e in self._part_edges:
             u = e[0]
             v = e[1]
-            ugid = self._dag.node[u].get('gid', None)
-            vgid = self._dag.node[v].get('gid', None)
+            ugid = self._dag.nodes[u].get('gid', None)
+            vgid = self._dag.nodes[v].get('gid', None)
             G.add_edge(ugid, vgid) # repeating is fine
             ew = self._dag.adj[u][v]['weight']
             try:
@@ -612,7 +612,7 @@ class MySarkarScheduler(Scheduler):
         # Get hold of all gnodes that belong to "part_removed"
         # and re-assign them to the new partitions
         for n in part_removed._dag.nodes():
-            G.node[n]['gid'] = l_gid
+            G.nodes[n]['gid'] = l_gid
 
         index = None
         for i, part in enumerate(parts):
@@ -621,7 +621,7 @@ class MySarkarScheduler(Scheduler):
                 g_dict[p_gid - 1] = part
                 part._gid -= 1
                 for n in part._dag.nodes():
-                    G.node[n]['gid'] = part._gid
+                    G.nodes[n]['gid'] = part._gid
             elif (p_gid == r_gid):
                 #index = len(parts) - i - 1
                 index = i
@@ -690,9 +690,9 @@ class MySarkarScheduler(Scheduler):
 
         for i, e in enumerate(el):
             u = e[0]
-            gu = G.node[u]
+            gu = G.nodes[u]
             v = e[1]
-            gv = G.node[v]
+            gv = G.nodes[v]
             ow = G.adj[u][v]['weight']
             G.adj[u][v]['weight'] = 0 #edge zeroing
             ugid = gu.get('gid', None)
@@ -885,9 +885,9 @@ class PSOScheduler(Scheduler):
                 raise SchedulerException("PSO position out of bound: {0}".format(pos))
 
             u = e[0]
-            gu = G.node[u]
+            gu = G.nodes[u]
             v = e[1]
-            gv = G.node[v]
+            gv = G.nodes[v]
             ow = G.adj[u][v]['weight']
             G.adj[u][v]['weight'] = 0 #edge zeroing
             recover_edge = False
@@ -995,8 +995,8 @@ class DAGUtil(object):
             us = [
             (dist[u][0] + #accumulate
             data.get(weight, default_weight) + #edge weight
-            G.node[u].get(weight, 0) + # u node weight
-            (G.node[v].get(weight, 0) if len(list(G.successors(v))) == 0 else 0), # v node weight if no successor
+            G.nodes[u].get(weight, 0) + # u node weight
+            (G.nodes[v].get(weight, 0) if len(list(G.successors(v))) == 0 else 0), # v node weight if no successor
             u)
                 for u, data in G.pred[v].items()]
             # Use the best predecessor if there is one and its distance is non-negative, otherwise terminate.
@@ -1027,7 +1027,7 @@ class DAGUtil(object):
         for antichain in nx.antichains(G):
             t = 0
             for n in antichain:
-                t += G.node[n].get(weight, default_weight)
+                t += G.nodes[n].get(weight, default_weight)
             if (t > max_width):
                 max_width = t
         return max_width
@@ -1075,7 +1075,7 @@ class DAGUtil(object):
         if (topo_sort is None):
             topo_sort = nx.topological_sort(G)
         for v in topo_sort:
-            gv = G.node[v]
+            gv = G.nodes[v]
             parents = list(G.predecessors(v))
             if (len(parents) == 0):
                 gv['stt'] = 0
@@ -1083,7 +1083,7 @@ class DAGUtil(object):
                 # get the latest end time of one of its parents
                 ledt = -1
                 for parent in parents:
-                    pedt = G.node[parent]['edt'] + G.adj[parent][v].get(weight, 0)
+                    pedt = G.nodes[parent]['edt'] + G.adj[parent][v].get(weight, 0)
                     if (pedt > ledt):
                         ledt = pedt
                 gv['stt'] = ledt
@@ -1102,7 +1102,7 @@ class DAGUtil(object):
         if (topo_sort is None):
             topo_sort = nx.topological_sort(G)
         for i, n in enumerate(topo_sort):
-            node = G.node[n]
+            node = G.nodes[n]
             try:
                 stt = node['stt']
                 edt = node['edt']
@@ -1248,9 +1248,9 @@ if __name__ == "__main__":
     G.add_weighted_edges_from([(4,3,1), (3,2,4), (2,1,2), (5,3,1)])
     G.add_weighted_edges_from([(3,6,5), (6,7,2)])
     G.add_weighted_edges_from([(9,12,2)]) # testing independent nodes
-    G.node[3]['weight'] = 65
+    G.nodes[3]['weight'] = 65
     print(G.pred[12].items())
-    print(G.node[G.predecessors(12)[0]])
+    print(G.nodes[G.predecessors(12)[0]])
 
     # print "prepre"
     # print len(G.pred[7].items())
