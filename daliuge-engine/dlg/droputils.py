@@ -29,14 +29,13 @@ import logging
 import re
 import threading
 import traceback
+import numpy as np
 
-from .ddap_protocol import DROPStates
-from .drop import AppDROP, AbstractDROP
-from .apps.dockerapp import DockerApp
-from .io import IOForURL, OpenMode
-from . import common
-from .common import DropType
-
+from dlg.ddap_protocol import DROPStates
+from dlg.drop import AppDROP, AbstractDROP
+from dlg.io import IOForURL, OpenMode
+from dlg import common
+from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
 
@@ -265,6 +264,24 @@ def listify(o):
         return list(o)
     return [o]
 
+
+def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
+    """
+    Saves a numpy ndarray to a drop
+    """
+    bio = io.BytesIO()
+    np.save(bio, ndarray, allow_pickle=allow_pickle)
+    drop.write(bio.getbuffer())
+
+def load_numpy(drop, allow_pickle=False) -> np.ndarray:
+    """
+    Loads a numpy ndarray from a drop
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    res = np.load(io.BytesIO(dropio.buffer()), allow_pickle=allow_pickle)
+    dropio.close()
+    return res
 
 class DROPFile(object):
     """
