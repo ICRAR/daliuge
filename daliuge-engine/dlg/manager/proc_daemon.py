@@ -41,17 +41,21 @@ from ..restserver import RestServer
 
 logger = logging.getLogger(__name__)
 
+
 def get_tool():
     # This import is performed at runtime to avoid a circular dependency
     # at import time with the tool module, which imports this module
     # to make it available as a 'dlg' command
     from ..common import tool
+
     return tool
 
+
 def _get_address(zeroconf_service_info):
-    if tuple(map(int, zc.__version__.split('.')))[:2] >= (0, 23):
+    if tuple(map(int, zc.__version__.split(".")))[:2] >= (0, 23):
         return zeroconf_service_info.addresses[0]
     return zeroconf_service_info.address
+
 
 class DlgDaemon(RestServer):
     """
@@ -84,18 +88,18 @@ class DlgDaemon(RestServer):
 
         # Starting managers
         app = self.app
-        app.post('/managers/node/start',       callback=self.rest_startNM)
-        app.post('/managers/node/stop',        callback=self.rest_stopNM)
-        app.post('/managers/island/start',     callback=self.rest_startDIM)
-        app.post('/managers/island/stop',      callback=self.rest_stopDIM)
-        app.post('/managers/master/start',     callback=self.rest_startMM)
-        app.post('/managers/master/stop',      callback=self.rest_stopMM)
+        app.post("/managers/node/start", callback=self.rest_startNM)
+        app.post("/managers/node/stop", callback=self.rest_stopNM)
+        app.post("/managers/island/start", callback=self.rest_startDIM)
+        app.post("/managers/island/stop", callback=self.rest_stopDIM)
+        app.post("/managers/master/start", callback=self.rest_startMM)
+        app.post("/managers/master/stop", callback=self.rest_stopMM)
 
         # Querying about managers
-        app.get('/managers',            callback=self.rest_getMgrs)
-        app.get('/managers/master',     callback=self.rest_getMMInfo)
-        app.get('/managers/island',     callback=self.rest_getDIMInfo)
-        app.get('/managers/node',       callback=self.rest_getNMInfo)
+        app.get("/managers", callback=self.rest_getMgrs)
+        app.get("/managers/master", callback=self.rest_getMMInfo)
+        app.get("/managers/island", callback=self.rest_getDIMInfo)
+        app.get("/managers/node", callback=self.rest_getNMInfo)
 
         # Automatically start those that we need
         if master:
@@ -114,7 +118,7 @@ class DlgDaemon(RestServer):
         self.stopDIM(timeout)
         self.stopMM(timeout)
         self._stop_zeroconf()
-        logger.info('DALiuGE Daemon stopped')
+        logger.info("DALiuGE Daemon stopped")
 
     def _stop_zeroconf(self):
 
@@ -126,7 +130,7 @@ class DlgDaemon(RestServer):
             self._mm_browser.cancel()
             self._mm_browser.join()
         self._zeroconf.close()
-        logger.info('Zeroconf stopped')
+        logger.info("Zeroconf stopped")
 
     def _stop_rest_server(self, timeout):
         if self._ioloop:
@@ -137,6 +141,7 @@ class DlgDaemon(RestServer):
             # done with it
             logger.debug("Stopping the web server")
             ioloop_stopped = threading.Event()
+
             def stop_ioloop():
                 self._ioloop.stop()
                 ioloop_stopped.set()
@@ -154,54 +159,63 @@ class DlgDaemon(RestServer):
             utils.terminate_or_kill(proc, timeout)
             pid = proc.pid
             setattr(self, name, None)
-            return {'terminated':pid}
+            return {"terminated": pid}
 
     def stopNM(self, timeout=10):
         if self._nm_info:
             utils.deregister_service(self._zeroconf, self._nm_info)
-        return self._stop_manager('_nm_proc', timeout)
+        return self._stop_manager("_nm_proc", timeout)
 
     def stopDIM(self, timeout=10):
-        self._stop_manager('_dim_proc', timeout)
+        self._stop_manager("_dim_proc", timeout)
 
     def stopMM(self, timeout=10):
-        self._stop_manager('_mm_proc', timeout)
+        self._stop_manager("_mm_proc", timeout)
 
     # Methods to start and stop the individual managers
     def startNM(self):
         tool = get_tool()
-        args = ['--host', '0.0.0.0']
+        args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
-        self._nm_proc = tool.start_process('nm', args)
+        self._nm_proc = tool.start_process("nm", args)
         logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
 
         # Registering the new NodeManager via zeroconf so it gets discovered
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            logger.info('Registering this NM with zeroconf: %s' % addrs)
-            self._nm_info = utils.register_service(self._zeroconf, 'NodeManager', \
-                socket.gethostname(), addrs[0][0], constants.NODE_DEFAULT_REST_PORT)
+            logger.info("Registering this NM with zeroconf: %s" % addrs)
+            self._nm_info = utils.register_service(
+                self._zeroconf,
+                "NodeManager",
+                socket.gethostname(),
+                addrs[0][0],
+                constants.NODE_DEFAULT_REST_PORT,
+            )
         return
 
     def startDIM(self, nodes):
         tool = get_tool()
-        args  = ['--host', '0.0.0.0']
+        args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
         if nodes:
-            args += ['--nodes', ",".join(nodes)]
-        logger.info("Starting Data Island Drop Manager with args: %s" % (" ".join(args)))
-        self._dim_proc = tool.start_process('dim', args)
-        logger.info("Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid))
+            args += ["--nodes", ",".join(nodes)]
+        logger.info(
+            "Starting Data Island Drop Manager with args: %s" % (" ".join(args))
+        )
+        self._dim_proc = tool.start_process("dim", args)
+        logger.info(
+            "Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid)
+        )
         return
 
     def startMM(self):
         tool = get_tool()
-        args  = ['--host', '0.0.0.0']
+        args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
         logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
-        self._mm_proc = tool.start_process('mm', args)
+        self._mm_proc = tool.start_process("mm", args)
         logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
@@ -209,17 +223,24 @@ class DlgDaemon(RestServer):
         if self._zeroconf:
             mm_client = client.MasterManagerClient()
             node_managers = {}
+
             def nm_callback(zeroconf, service_type, name, state_change):
                 info = zeroconf.get_service_info(service_type, name)
                 if state_change is zc.ServiceStateChange.Added:
                     server = socket.inet_ntoa(_get_address(info))
                     port = info.port
                     node_managers[name] = (server, port)
-                    logger.info("Found a new Node Manager on %s:%d, will add it to the MM" % (server, port))
+                    logger.info(
+                        "Found a new Node Manager on %s:%d, will add it to the MM"
+                        % (server, port)
+                    )
                     mm_client.add_node(server)
                 elif state_change is zc.ServiceStateChange.Removed:
-                    server,port = node_managers[name]
-                    logger.info("Node Manager on %s:%d disappeared, removing it from the MM" % (server, port))
+                    server, port = node_managers[name]
+                    logger.info(
+                        "Node Manager on %s:%d disappeared, removing it from the MM"
+                        % (server, port)
+                    )
 
                     # Don't bother to remove it if we're shutting down. This way
                     # we avoid hanging in here if the MM is down already but
@@ -230,46 +251,51 @@ class DlgDaemon(RestServer):
                         finally:
                             del node_managers[name]
 
-            self._mm_browser = utils.browse_service(self._zeroconf, 'NodeManager', 'tcp', nm_callback)
-            logger.info('Zeroconf started')
+            self._mm_browser = utils.browse_service(
+                self._zeroconf, "NodeManager", "tcp", nm_callback
+            )
+            logger.info("Zeroconf started")
             return
 
     def _verbosity_as_cmdline(self):
         if self._verbosity > 0:
-            return ["-" + "v"*self._verbosity]
+            return ["-" + "v" * self._verbosity]
         elif self._verbosity < 0:
-            return ["-" + "q"*(-self._verbosity)]
+            return ["-" + "q" * (-self._verbosity)]
         return ()
 
     # Rest interface
     def _rest_start_manager(self, proc, start_method):
         if proc is not None:
-            bottle.abort(409, 'The Drop Manager is already running') # Conflict
+            bottle.abort(409, "The Drop Manager is already running")  # Conflict
         start_method()
         return
 
     def _rest_stop_manager(self, proc, stop_method):
         if proc is None:
-            bottle.abort(409, 'The Drop Manager is not running') # Conflict
+            bottle.abort(409, "The Drop Manager is not running")  # Conflict
         return json.dumps(stop_method())
 
     def _rest_get_manager_info(self, proc):
         if proc:
-            bottle.response.content_type = 'application/json'
-            logger.info("Sending response: %s" % json.dumps({'pid': proc.pid}))
-            return json.dumps({'pid': proc.pid})
+            bottle.response.content_type = "application/json"
+            logger.info("Sending response: %s" % json.dumps({"pid": proc.pid}))
+            return json.dumps({"pid": proc.pid})
         else:
-            return json.dumps({'pid':None})
+            return json.dumps({"pid": None})
 
     def rest_getMgrs(self):
         mgrs = {
-            'master': self._mm_proc,
-            'island': self._dim_proc,
-            'node':   self._nm_proc
+            "master": self._mm_proc,
+            "island": self._dim_proc,
+            "node": self._nm_proc,
         }
-        if mgrs['master']: mgrs['master'] = self._mm_proc.pid
-        if mgrs['island']: mgrs['island'] = self._dim_proc.pid
-        if mgrs['node']: mgrs['node'] = self._nm_proc.pid
+        if mgrs["master"]:
+            mgrs["master"] = self._mm_proc.pid
+        if mgrs["island"]:
+            mgrs["island"] = self._dim_proc.pid
+        if mgrs["node"]:
+            mgrs["node"] = self._nm_proc.pid
 
         logger.info("Sending response: %s" % json.dumps(mgrs))
         return json.dumps(mgrs)
@@ -283,12 +309,14 @@ class DlgDaemon(RestServer):
 
     def rest_startDIM(self):
         body = bottle.request.json
-        if not body or 'nodes' not in body:
+        if not body or "nodes" not in body:
             # if nothing else is specified we simply add this host
-            nodes = {'localhost'}
+            nodes = {"localhost"}
         else:
-            nodes = body['nodes']
-        self._rest_start_manager(self._dim_proc, functools.partial(self.startDIM, nodes))
+            nodes = body["nodes"]
+        self._rest_start_manager(
+            self._dim_proc, functools.partial(self.startDIM, nodes)
+        )
         return self.rest_getDIMInfo()
 
     def rest_stopDIM(self):
@@ -312,23 +340,53 @@ class DlgDaemon(RestServer):
 
 
 terminating = False
+
+
 def run_with_cmdline(parser, args):
-    parser.add_option('-m', '--master', action='store_true',
-                      dest="master", help="Start this DALiuGE daemon as the master daemon", default=False)
-    parser.add_option("--no-nm", action="store_true",
-                      dest="noNM", help = "Don't start a NodeDropManager by default", default=False)
-    parser.add_option("--no-zeroconf", action="store_true",
-                      dest="noZC", help = "Don't enable zeroconf on this DALiuGE daemon", default=False)
-    parser.add_option("-v", "--verbose", action="count",
-                      dest="verbose", help="Become more verbose. The more flags, the more verbose", default=0)
-    parser.add_option("-q", "--quiet", action="count",
-                      dest="quiet", help="Be less verbose. The more flags, the quieter", default=0)
+    parser.add_option(
+        "-m",
+        "--master",
+        action="store_true",
+        dest="master",
+        help="Start this DALiuGE daemon as the master daemon",
+        default=False,
+    )
+    parser.add_option(
+        "--no-nm",
+        action="store_true",
+        dest="noNM",
+        help="Don't start a NodeDropManager by default",
+        default=False,
+    )
+    parser.add_option(
+        "--no-zeroconf",
+        action="store_true",
+        dest="noZC",
+        help="Don't enable zeroconf on this DALiuGE daemon",
+        default=False,
+    )
+    parser.add_option(
+        "-v",
+        "--verbose",
+        action="count",
+        dest="verbose",
+        help="Become more verbose. The more flags, the more verbose",
+        default=0,
+    )
+    parser.add_option(
+        "-q",
+        "--quiet",
+        action="count",
+        dest="quiet",
+        help="Be less verbose. The more flags, the quieter",
+        default=0,
+    )
 
     (opts, args) = parser.parse_args(args)
 
     # -v and -q are exclusive
     if opts.verbose and opts.quiet:
-        parser.error('-v and -q cannot be specified together')
+        parser.error("-v and -q cannot be specified together")
 
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -342,10 +400,13 @@ def run_with_cmdline(parser, args):
         logger.info("Received signal %d, will stop the daemon now" % (signalNo,))
         terminating = True
         daemon.stop(10)
-    signal.signal(signal.SIGINT,  handle_signal)
+
+    signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
     # Go, go, go!
-    t = threading.Thread(target=daemon.start, args=('0.0.0.0', constants.DAEMON_DEFAULT_REST_PORT))
+    t = threading.Thread(
+        target=daemon.start, args=("0.0.0.0", constants.DAEMON_DEFAULT_REST_PORT)
+    )
     t.start()
     signal.pause()

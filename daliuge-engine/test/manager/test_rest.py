@@ -34,20 +34,26 @@ from dlg.exceptions import InvalidGraphException
 from dlg.common import Categories
 
 
-hostname = 'localhost'
+hostname = "localhost"
+
 
 class TestRest(unittest.TestCase):
-
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.dm = NodeManager(False)
         self._dm_server = NMRestServer(self.dm)
-        self._dm_t = threading.Thread(target=self._dm_server.start, args=(hostname, constants.NODE_DEFAULT_REST_PORT))
+        self._dm_t = threading.Thread(
+            target=self._dm_server.start,
+            args=(hostname, constants.NODE_DEFAULT_REST_PORT),
+        )
         self._dm_t.start()
 
         self.dim = DataIslandManager(dmHosts=[hostname])
         self._dim_server = CompositeManagerRestServer(self.dim)
-        self._dim_t = threading.Thread(target=self._dim_server.start, args=(hostname, constants.ISLAND_DEFAULT_REST_PORT))
+        self._dim_t = threading.Thread(
+            target=self._dim_server.start,
+            args=(hostname, constants.ISLAND_DEFAULT_REST_PORT),
+        )
         self._dim_t.start()
 
     def tearDown(self):
@@ -65,44 +71,70 @@ class TestRest(unittest.TestCase):
     def test_index(self):
         # Just check that the HTML pages load properly
         with RestClient(hostname, constants.NODE_DEFAULT_REST_PORT, timeout=10) as c:
-            c._GET('/')
-            c._GET('/session')
+            c._GET("/")
+            c._GET("/session")
 
     def test_errtype(self):
 
-        sid = 'lala'
+        sid = "lala"
         c = NodeManagerClient(hostname)
         c.createSession(sid)
 
         # already exists
-        self.assertRaises(exceptions.SessionAlreadyExistsException, c.createSession, sid)
+        self.assertRaises(
+            exceptions.SessionAlreadyExistsException, c.createSession, sid
+        )
 
         # different session
-        self.assertRaises(exceptions.NoSessionException, c.addGraphSpec, sid + "x", [{}])
+        self.assertRaises(
+            exceptions.NoSessionException, c.addGraphSpec, sid + "x", [{}]
+        )
 
         # invalid dropspec, it has no oid/type (is completely empty actually)
         self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{}])
 
         # invalid dropspec, app doesn't exist
-        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, [{'oid': 'a', "type": 'app', 'app': 'doesnt.exist'}])
+        self.assertRaises(
+            exceptions.InvalidGraphException,
+            c.addGraphSpec,
+            sid,
+            [{"oid": "a", "type": "app", "app": "doesnt.exist"}],
+        )
 
         # invalid state, the graph status is only queried when the session is running
         self.assertRaises(exceptions.InvalidSessionState, c.getGraphStatus, sid)
 
         # valid dropspec, but the socket listener app doesn't allow inputs
-        c.addGraphSpec(sid, [{"type": 'socket', 'oid': 'a', 'inputs': ['b']}, {'oid': 'b', "type": 'plain', 'storage': Categories.MEMORY}])
+        c.addGraphSpec(
+            sid,
+            [
+                {"type": "socket", "oid": "a", "inputs": ["b"]},
+                {"oid": "b", "type": "plain", "storage": Categories.MEMORY},
+            ],
+        )
         self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
         c.createSession(sid)
         fname = tempfile.mktemp()
-        c.addGraphSpec(sid, [{"type": 'plain', 'storage': Categories.FILE, 'oid': 'a', 'filepath': fname, 'check_filepath_exists': True}])
+        c.addGraphSpec(
+            sid,
+            [
+                {
+                    "type": "plain",
+                    "storage": Categories.FILE,
+                    "oid": "a",
+                    "filepath": fname,
+                    "check_filepath_exists": True,
+                }
+            ],
+        )
         self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
 
     def test_recursive(self):
 
-        sid = 'lala'
+        sid = "lala"
         c = DataIslandManagerClient(hostname)
         c.createSession(sid)
 
@@ -110,7 +142,10 @@ class TestRest(unittest.TestCase):
         # This is not checked at the DIM level but only at the NM level
         # The exception should still pass through though
         with self.assertRaises(exceptions.SubManagerException) as cm:
-            c.addGraphSpec(sid, [{'oid': 'a', "type": 'app', 'app': 'doesnt.exist', 'node': hostname}])
+            c.addGraphSpec(
+                sid,
+                [{"oid": "a", "type": "app", "app": "doesnt.exist", "node": hostname}],
+            )
         ex = cm.exception
         self.assertTrue(hostname in ex.args[0])
         self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))

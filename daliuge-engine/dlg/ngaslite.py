@@ -19,14 +19,14 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 A small, httplib-only dependent flavor of the NGAS "read" and "write" methods.
 Installing the NGAS client libraries is still a not-so-trivial exercise, and
 while not all DALiuGE installations have the NGAS client libraries available we
 still need to access NGAS from time to time.
 
 @author: rtobar
-'''
+"""
 
 import http.client
 import logging
@@ -36,16 +36,29 @@ from xml.dom.minidom import parseString
 logger = logging.getLogger(__name__)
 
 
-def open(host, fileId, port=7777, timeout=5, mode=1, mimeType='application/octet-stream', length=-1):
-    logger.debug("Opening NGAS drop %s with mode %d and length %s" % (fileId, mode, length))
+def open(
+    host,
+    fileId,
+    port=7777,
+    timeout=5,
+    mode=1,
+    mimeType="application/octet-stream",
+    length=-1,
+):
+    logger.debug(
+        "Opening NGAS drop %s with mode %d and length %s" % (fileId, mode, length)
+    )
     if mode == 1:
         return retrieve(host, fileId, port=port, timeout=timeout)
     elif mode == 0:
-        return beginArchive(host, fileId, port=port, timeout=timeout, mimeType=mimeType, length=length)
+        return beginArchive(
+            host, fileId, port=port, timeout=timeout, mimeType=mimeType, length=length
+        )
     else:
         # just return the status for that file_id
         stat = fileStatus(host, port, fileId, timeout=timeout)
         return stat
+
 
 def retrieve(host, fileId, port=7777, timeout=None):
     """
@@ -54,14 +67,20 @@ def retrieve(host, fileId, port=7777, timeout=None):
     This method returns a file-like object that supports the `read` operation,
     and over which `close` must be invoked once no more data is read from it.
     """
-    url = 'http://%s:%d/RETRIEVE?file_id=%s' % (host, port, fileId)
+    url = "http://%s:%d/RETRIEVE?file_id=%s" % (host, port, fileId)
     logger.debug("Issuing RETRIEVE request: %s" % (url))
     conn = urllib.request.urlopen(url)
     if conn.getcode() != http.HTTPStatus.OK:
-        raise Exception("Error while RETRIEVE-ing %s from %s:%d: %d %s" % (fileId, host, port, conn.getcode(), conn.msg))
+        raise Exception(
+            "Error while RETRIEVE-ing %s from %s:%d: %d %s"
+            % (fileId, host, port, conn.getcode(), conn.msg)
+        )
     return conn
 
-def beginArchive(host, fileId, port=7777, timeout=5, length=-1, mimeType='application/octet-stream'):
+
+def beginArchive(
+    host, fileId, port=7777, timeout=5, length=-1, mimeType="application/octet-stream"
+):
     """
     Opens a connecting to the NGAS server located at `host`:`port` and sends out
     the request for archiving the given `fileId`.
@@ -71,17 +90,20 @@ def beginArchive(host, fileId, port=7777, timeout=5, length=-1, mimeType='applic
     Once all the data has been sent, the `finishArchive` method of this module
     should be invoked to check that all went well with the archiving.
     """
-    logger.debug("Issuing ARCHIVE for file %s request to: http://%s:%d" % (fileId, host,port))
+    logger.debug(
+        "Issuing ARCHIVE for file %s request to: http://%s:%d" % (fileId, host, port)
+    )
     conn = http.client.HTTPConnection(host, port, timeout=timeout)
-    conn.putrequest('POST', '/QARCHIVE?filename=' + fileId)
-    conn.putheader('Content-Type', mimeType)
+    conn.putrequest("POST", "/QARCHIVE?filename=" + fileId)
+    conn.putheader("Content-Type", mimeType)
     if length is not None and length >= 0:
-        conn.putheader('Content-Length', length)
+        conn.putheader("Content-Length", length)
         # defer endheaders NGAS requires Content-Length
         conn.endheaders()
     else:
         logger.warning("Data size for %s unkown. Caching it first" % (fileId))
     return conn
+
 
 def finishArchive(conn, fileId):
     """
@@ -89,7 +111,11 @@ def finishArchive(conn, fileId):
     """
     response = conn.getresponse()
     if response.status != http.HTTPStatus.OK:
-        raise Exception("Error while QARCHIVE-ing %s to %s:%d: %d %s" % (fileId, conn.host, conn.port, response.status, response.msg))
+        raise Exception(
+            "Error while QARCHIVE-ing %s to %s:%d: %d %s"
+            % (fileId, conn.host, conn.port, response.status, response.msg)
+        )
+
 
 def fileStatus(host, port, fileId, timeout=10):
     """
@@ -97,15 +123,23 @@ def fileStatus(host, port, fileId, timeout=10):
     TODO: This needs to use file_version as well, else it might
     return a value for a previous version.
     """
-    url = 'http://%s:%d/STATUS?file_id=%s' % (host, port, fileId)
+    url = "http://%s:%d/STATUS?file_id=%s" % (host, port, fileId)
     logger.debug("Issuing STATUS request: %s" % (url))
     try:
         conn = urllib.request.urlopen(url, timeout=timeout)
     except urllib.error.HTTPError:
         raise FileNotFoundError
     if conn.getcode() != http.HTTPStatus.OK:
-        raise Exception("Error while getting STATUS %s from %s:%d: %d %s" % (fileId, host, port, conn.getcode(), conn.msg))
+        raise Exception(
+            "Error while getting STATUS %s from %s:%d: %d %s"
+            % (fileId, host, port, conn.getcode(), conn.msg)
+        )
     dom = parseString(conn.read().decode())
-    stat = dict(dom.getElementsByTagName('NgamsStatus')[0].getElementsByTagName('DiskStatus')[0].getElementsByTagName('FileStatus')[0].attributes.items())
+    stat = dict(
+        dom.getElementsByTagName("NgamsStatus")[0]
+        .getElementsByTagName("DiskStatus")[0]
+        .getElementsByTagName("FileStatus")[0]
+        .attributes.items()
+    )
     logger.debug("Returning status: %s" % (stat))
     return stat
