@@ -45,6 +45,29 @@ from ..meta import (
 logger = logging.getLogger(__name__)
 
 
+##
+# @brief SocketListenerApp
+# @details A BarrierAppDROP that listens on a socket for data. The server-side
+# socket expects only one client, and assumes that the client will close the
+# connection after all its data has been sent.
+# This application expects no input DROPs, and therefore raises an
+# exception whenever one is added. On the output side, one or more outputs
+# can be specified with the restriction that they are not ContainerDROPs
+# so data can be written into them through the framework.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.socket_listener.SocketListener/String/readonly/
+#     \~English Application class
+# @param[in] param/host Host/127.0.0.1/String/readwrite/
+#     \~English Host address
+# @param[in] param/port Port/1111/Integer/readwrite/
+#     \~English Host port
+# @param[in] param/bufsize Buffer Size/4096/String/readwrite/
+#     \~English Receive buffer size
+# @param[in] param/reuseAddr Reuse Address/False/Boolean/readwrite/
+#     \~English
+# @param[out] port/data Data/String/
+# @par EAGLE_END
 class SocketListenerApp(BarrierAppDROP):
     """
     A BarrierAppDROP that listens on a socket for data. The server-side
@@ -59,7 +82,7 @@ class SocketListenerApp(BarrierAppDROP):
 
     _dryRun = False
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "SocketListenerApp",
         "A BarrierAppDROP that listens on a socket for data",
         [dlg_batch_input("binary/*", [])],

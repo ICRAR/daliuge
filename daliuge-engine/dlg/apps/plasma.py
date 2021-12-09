@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 #     \~English MS output file
 # @par EAGLE_END
 class MSStreamingPlasmaConsumer(AppDROP):
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "MSStreamingPlasmaConsumer",
         "MS Plasma Consumer",
         [dlg_batch_input("binary/*", [])],
@@ -145,7 +145,7 @@ class MSStreamingPlasmaConsumer(AppDROP):
 #     \~English Plasma MS output
 # @par EAGLE_END
 class MSStreamingPlasmaProducer(BarrierAppDROP):
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "MSStreamingPlasmaProducer",
         "MS Plasma Producer",
         [dlg_batch_input("binary/*", [])],

@@ -19,8 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from ..remote import copyTo, copyFrom
-from ..drop import (
+from dlg.remote import copyTo, copyFrom
+from dlg.drop import (
     BarrierAppDROP,
     NgasDROP,
     InMemoryDROP,
@@ -28,8 +28,9 @@ from ..drop import (
     RDBMSDrop,
     ContainerDROP,
 )
-from ..meta import (
+from dlg.meta import (
     dlg_string_param,
+    dlg_float_param,
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
@@ -37,6 +38,25 @@ from ..meta import (
 )
 
 
+##
+# @brief ScpApp
+# @details A BarrierAppDROP that copies the content of its single input onto its
+# single output via SSH's scp protocol.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.scp.ScpApp/String/readonly/
+#     \~English Application class
+# @param[in] param/remoteUser Remote User//String/readwrite/
+#     \~English Remote user address
+# @param[in] param/pkeyPath Private Key Path//String/readwrite/
+#     \~English Private key path
+# @param[in] param/timeout Timeout//Float/readwrite/
+#     \~English Connection timeout in seconds
+# @param[in] port/file File/PathBasedDrop/
+#     \~English Input file path
+# @param[out] port/file File/PathBasedDrop/
+#     \~English Output file path
+# @par EAGLE_END
 class ScpApp(BarrierAppDROP):
     """
     A BarrierAppDROP that copies the content of its single input onto its
@@ -52,7 +72,7 @@ class ScpApp(BarrierAppDROP):
     two I/O DROPs.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "ScpApp",
         "A BarrierAppDROP that copies the content of its single "
         "input onto its single output via SSHs scp protocol.",
@@ -71,7 +91,7 @@ class ScpApp(BarrierAppDROP):
 
     remoteUser = dlg_string_param("remoteUser", None)
     pkeyPath = dlg_string_param("pkeyPath", None)
-    timeout = dlg_string_param("timeout", None)
+    timeout = dlg_float_param("timeout", None)
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)

@@ -27,18 +27,18 @@ import urllib.request
 import time
 import numpy as np
 
-from .. import droputils, utils
-from ..drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
-from ..meta import dlg_float_param, dlg_string_param
-from ..meta import dlg_bool_param, dlg_int_param
-from ..meta import dlg_component, dlg_batch_input
-from ..meta import dlg_batch_output, dlg_streaming_input
+from dlg import droputils, utils
+from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
+from dlg.meta import dlg_float_param, dlg_string_param
+from dlg.meta import dlg_bool_param, dlg_int_param
+from dlg.meta import dlg_component, dlg_batch_input
+from dlg.meta import dlg_batch_output, dlg_streaming_input
 
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
 
 class NullBarrierApp(BarrierAppDROP):
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "NullBarrierApp",
         "Null Barrier.",
         [dlg_batch_input("binary/*", [])],
@@ -67,7 +67,7 @@ class NullBarrierApp(BarrierAppDROP):
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "SleepApp",
         "Sleep App.",
         [dlg_batch_input("binary/*", [])],
@@ -102,7 +102,7 @@ class CopyApp(BarrierAppDROP):
     the graph.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "CopyApp",
         "Copy App.",
         [dlg_batch_input("binary/*", [])],
@@ -169,7 +169,7 @@ class RandomArrayApp(BarrierAppDROP):
     size:     int, number of array elements
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "RandomArrayApp",
         "Random Array App.",
         [dlg_batch_input("binary/*", [])],
@@ -245,7 +245,7 @@ class AverageArraysApp(BarrierAppDROP):
 
     from numpy import mean, median
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "RandomArrayApp",
         "Random Array App.",
         [dlg_batch_input("binary/*", [])],
@@ -317,7 +317,7 @@ class HelloWorldApp(BarrierAppDROP):
     greet:   string, [World], whom to greet.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "HelloWorldApp",
         "Hello World App.",
         [dlg_batch_input("binary/*", [])],
@@ -349,7 +349,7 @@ class HelloWorldApp(BarrierAppDROP):
 
 ##
 # @brief UrlRetrieveApp
-# @details A simple APP that retrieves the content of a URL and writes.
+# @details A simple APP that retrieves the content of a URL and writes
 # it to all outputs.
 # @par EAGLE_START
 # @param category PythonApp
@@ -368,7 +368,7 @@ class UrlRetrieveApp(BarrierAppDROP):
     URL:   string, URL to retrieve.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "UrlRetrieveApp",
         "URL Retrieve App",
         [dlg_batch_input("binary/*", [])],
@@ -415,7 +415,7 @@ class GenericScatterApp(BarrierAppDROP):
     returns a numpy array of arrays, where the first axis is of length <numSplit>.
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "GenericScatterApp",
         "Scatter an array like object into numSplit parts",
         [dlg_batch_input("binary/*", [])],

@@ -24,6 +24,7 @@ Module containing the core DROP classes.
 """
 
 from abc import ABCMeta, abstractmethod
+import ast
 import base64
 import collections
 import contextlib
@@ -357,6 +358,8 @@ class AbstractDROP(EventFirer):
                     value = str(value)
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
+                if isinstance(value, str):
+                    value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, list):
                     raise Exception(
                         "dlg_list_param {} is not a list. It is a {}".format(
@@ -365,6 +368,8 @@ class AbstractDROP(EventFirer):
                     )
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)
+                if isinstance(value, str):
+                    value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, dict):
                     raise Exception(
                         "dlg_dict_param {} is not a dict. It is a {}".format(
@@ -2058,7 +2063,7 @@ class PlasmaDROP(AbstractDROP):
         object_id = self.uid
         if len(self.uid) != 20:
             object_id = np.random.bytes(20)
-        if self.object_id is None:
+        if not self.object_id:
             self.object_id = object_id
 
     def getIO(self):
