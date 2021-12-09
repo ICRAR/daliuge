@@ -41,7 +41,7 @@ class CRCApp(BarrierAppDROP):
     not something really intended to be used in a production system
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "CRCApp",
         "A BarrierAppDROP that calculates the " "CRC of the single DROP it consumes",
         [dlg_batch_input("binary/*", [])],
@@ -72,13 +72,23 @@ class CRCApp(BarrierAppDROP):
         outputDrop.write(str(crc).encode("utf8"))
 
 
+##
+# @brief CRCStreamApp
+# @details Calculate CRC in the streaming mode
+# i.e. A "streamingConsumer" of its predecessor in the graph
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.crc.CRCStreamApp/String/readonly/
+#     \~English Application class
+# @param[out] port/data Data/String/
+# @par EAGLE_END
 class CRCStreamApp(AppDROP):
     """
     Calculate CRC in the streaming mode
     i.e. A "streamingConsumer" of its predecessor in the graph
     """
 
-    compontent_meta = dlg_component(
+    component_meta = dlg_component(
         "CRCStreamApp",
         "Calculate CRC in the streaming mode.",
         [dlg_batch_input("binary/*", [])],
