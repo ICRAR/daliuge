@@ -32,7 +32,7 @@ __sub_tpl_str = """#!/bin/bash --login
 
 $MODULES
 
-srun -n 1 -N 1 /home/andreas/git/daliuge-ood/.venv/bin/python -m dlg.deploy.start_dlg_cluster -l /home/andreas/dlg/daliuge_logs/pgt_N1_2021-12-10T17-52-53 -P "/home/andreas/dlg/daliuge_logs/1d9a4e7714/pgt.json"   -v 1  -t 0 --app 0 -s 1
+srun -n 1 -N 1 python -m dlg.deploy.start_dlg_cluster -l $LOG_DIR -P "$LOG_DIR/pgt.json"   -v 1  -t 0 --app 0 -s 1
 """
 init_tpl = string.Template(__sub_tpl_str)
 
@@ -59,8 +59,6 @@ class DefaultConfig(object):
 
 class ICRARoodConfig(DefaultConfig):
     MODULES = """
-module load python/3.8.10
-module load mpi4py
 """
     def __init__(self):
         super(ICRARoodConfig, self).__init__()
