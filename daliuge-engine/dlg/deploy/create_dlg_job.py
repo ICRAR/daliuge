@@ -41,23 +41,6 @@ from dlg import utils
 from dlg.deploy.configs import *   # get all available configurations
 from dlg.runtime import __git_version__ as git_commit
 
-
-# sub_tpl_str = """#!/bin/bash --login
-
-# #SBATCH --nodes=$NUM_NODES
-# #SBATCH --ntasks-per-node=1
-# #SBATCH --job-name=DALiuGE-$PIP_NAME
-# #SBATCH --time=$JOB_DURATION
-# #SBATCH --account=$ACCOUNT
-# #SBATCH --error=err-%j.log
-
-# module swap PrgEnv-cray PrgEnv-gnu
-# module load python/2.7.10
-# module load mpi4py
-
-# aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
-# """
-
 default_aws_mon_host = "sdp-dfms.ddns.net"  # TODO: need to change this
 default_aws_mon_port = 8898
 
