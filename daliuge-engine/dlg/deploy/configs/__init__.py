@@ -32,7 +32,7 @@ __sub_tpl_str = """#!/bin/bash --login
 
 $MODULES
 
-aprun -b -n $NUM_NODES -N 1 $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION
+srun -n 1 -N 1 /home/andreas/git/daliuge-ood/.venv/bin/python -m dlg.deploy.start_dlg_cluster -l /home/andreas/dlg/daliuge_logs/pgt_N1_2021-12-10T17-52-53 -P "/home/andreas/dlg/daliuge_logs/1d9a4e7714/pgt.json"   -v 1  -t 0 --app 0 -s 1
 """
 init_tpl = string.Template(__sub_tpl_str)
 
