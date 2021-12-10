@@ -2822,6 +2822,8 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     else:
         dim_list = nodes[0:num_islands]
         nm_list = nodes[num_islands:]
+    if type(pgt[0]) is str:
+        pgt = pgt[1]  # remove the graph name TODO: we may want to retain that
     for drop_spec in pgt:
         nidx = int(drop_spec["node"][1:])  # skip '#'
         drop_spec["node"] = nm_list[nidx]
