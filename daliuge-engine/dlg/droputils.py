@@ -141,7 +141,8 @@ def copyDropContents(source, target, bufsize=4096):
         target.write(buf)
         logger.debug(f"Wrote {len(buf)} bytes to {repr(target)}")
         buf = source.read(desc, bufsize)
-        logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+        if buf is not None:
+            logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
     source.close(desc)
 
 
