@@ -107,6 +107,13 @@ class ZeroRPCClient(RPCClientBase):
         super(ZeroRPCClient, self).__init__(*args, **kwargs)
         if not hasattr(self, "_context"):
             self._context = zerorpc.Context()
+        self._zrpcclients = {}
+        self._zrpcclientthreads = []
+        logger.debug("RPC Client created")
+
+    def __del__(self):
+        if self._context:
+            self._context.term()
 
     def start(self):
         super(ZeroRPCClient, self).start()
@@ -145,7 +152,8 @@ class ZeroRPCClient(RPCClientBase):
             class QueueingClient(object):
                 def __make_call(self, method, *args):
                     res_queue = queue.Queue()
-                    req_queue.put(ZeroRPCClient.request(method, args, res_queue))
+                    request = ZeroRPCClient.request(method, args, res_queue)
+                    req_queue.put(request)
                     x = res_queue.get()
                     if x.is_exception:
                         raise x.value
@@ -270,12 +278,13 @@ class DropProxy(object):
     """
 
     def __init__(self, rpc_client, hostname, port, sessionId, uid):
-        self.rpc_client = rpc_client
+        self.rpc_client = ZeroRPCClient()
         self.hostname = hostname
         self.port = port
         self.session_id = sessionId
         self.uid = uid
         logger.debug("Created %r", self)
+        self.rpc_client.start()
 
     def handleEvent(self, evt):
         pass
@@ -296,3 +305,6 @@ class DropProxy(object):
             self.hostname,
             self.port,
         )
+
+    def __del__(self):
+        self.rpc_client.shutdown()

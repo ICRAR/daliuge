@@ -27,7 +27,7 @@ import os
 import unittest
 
 from dlg import droputils
-from dlg.apps.crc import CRCApp, crc32c
+from dlg.apps.crc import CRCApp, crc32
 from dlg.apps.dynlib import DynlibApp
 from dlg.drop import FileDROP, InMemoryDROP
 
@@ -74,7 +74,7 @@ class CRCAppTests(unittest.TestCase):
 
         # The crc32 is the same used by the CRCApp, see the imports
         data = os.urandom(1024)
-        crc = str(crc32c(data)).encode("utf8")
+        crc = str(crc32(data)).encode("utf8")
 
         # Execute the graph and check results
         with droputils.DROPWaiterCtx(self, (e, h, j), 5):
