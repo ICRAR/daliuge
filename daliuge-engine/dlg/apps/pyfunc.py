@@ -191,14 +191,6 @@ class PyFuncApp(BarrierAppDROP):
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
-        print(f"Default values for function {self.func_name}: {self.fdefaults}")
-
-        # Mapping between argument name and input drop uids
-        print(f"Input mapping: {self.func_arg_mapping}")
-        logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
-
-        # Mapping between argument name and input drop uids
-        logger.debug(f"Input mapping: {self.func_arg_mapping}")
 
     def run(self):
 
