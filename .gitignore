@@ -26,6 +26,7 @@ daliuge-engine/test/apps/dynlib_example2.o
 daliuge.iml
 *.cwl
 *.xml
+__pycache__
 .DS_Store
 VERSION
 DALIUGE
