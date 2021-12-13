@@ -140,7 +140,7 @@ class SlurmClient(object):
         h, m = divmod(m, 60)
         return "%02d:%02d:%02d" % (h, m, s)
 
-    def create_job_desc(self):
+    def create_job_desc(self, physical_graph_file):
         log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
         pardict = dict()
         pardict["NUM_NODES"] = str(self._num_nodes)
@@ -152,8 +152,8 @@ class SlurmClient(object):
         pardict["GRAPH_PAR"] = (
             '-L "{0}"'.format(self._logical_graph)
             if self._logical_graph
-            else '-P "{0}"'.format(self._physical_graph)
-            if self._physical_graph
+            else '-P "{0}"'.format(physical_graph_file)
+            if physical_graph_file
             else ""
         )
         pardict["PROXY_PAR"] = (
@@ -184,7 +184,7 @@ class SlurmClient(object):
             pf.close()
 
         job_file = "{0}/jobsub.sh".format(log_dir)
-        job_desc = self.create_job_desc()
+        job_desc = self.create_job_desc(physical_graph_file)
         with open(job_file, "w") as jf:
             jf.write(job_desc)
 
