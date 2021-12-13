@@ -100,7 +100,6 @@ class SlurmClient(object):
         self._pip_name = pip_name
         if (self._pip_name == None):
             self._pip_name = "cdj"
-        #self._pip_name = utils.fname_to_pipname(logical_graph or physical_graph) if logical_graph or physical_graph else "None"
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
