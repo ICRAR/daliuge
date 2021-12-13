@@ -66,7 +66,7 @@ class ICRARoodConfig(DefaultConfig):
     def init_list(self):  # TODO please fill in
         HOME_DIR = os.environ['HOME']
         ACCOUNT = os.environ['USER']
-        return [ACCOUNT, f"{HOME_DIR}/dlg/run", self.MODULES]
+        return [ACCOUNT, f"{HOME_DIR}/dlg/runs", self.MODULES]
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
