@@ -112,14 +112,11 @@ def import_using_code(code):
 # @param[in] param/func_name Function Name//String/readwrite/
 #     \~English Python fuction name
 # @param[in] param/func_code Function Code//String/readwrite/
-#     \~English Python fuction code, e.g. 'def fuction_name(args): return args'
-# @param[in] param/pickle Pickle//bool/readwrite/
-#     \~English Whether the python arguments are pickled.
+#     \~English Python fuction code, e.g. 'def fuction_name(args): pass'
 # @param[in] param/func_defaults Function Defaults//String/readwrite/
-#     \~English Mapping from argname to default value. Should match only the last part
-#               of the argnames list
+#     \~English Dictionary of keyword arg names to default values
 # @param[in] param/func_arg_mapping Function Arguments Mapping//String/readwrite/
-#     \~English Mapping between argument name and input drop uids
+#     \~English Dictionary of keyword arg names to input drop uid
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
     """
