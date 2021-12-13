@@ -24,8 +24,9 @@ from overrides import overrides
 import io
 import logging
 import os
+import sys
 import urllib.parse
-
+from abc import abstractmethod, ABCMeta
 from typing import Optional, Union
 
 from . import ngaslite
@@ -33,6 +34,8 @@ from .apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow
 import pyarrow.plasma as plasma
+if sys.version_info >= (3, 8):
+    from dlg.shared_memory import DlgSharedMemory
 
 
 logger = logging.getLogger(__name__)
@@ -219,9 +222,10 @@ class MemoryIO(DataIO):
     A DataIO class that reads/write from/into the BytesIO object given at
     construction time
     """
-    _desc: io.BytesIO
+    _desc: io.BytesIO  # TODO: This might actually be a problem
 
     def __init__(self, buf: io.BytesIO, **kwargs):
+        super().__init__()
         self._buf = buf
 
     def _open(self, **kwargs):
@@ -257,7 +261,68 @@ class MemoryIO(DataIO):
 
     @overrides
     def buffer(self) -> memoryview:
+        #  TODO: This may also be an issue
         return self._open().getbuffer()
+
+
+
+class SharedMemoryIO(DataIO):
+    """
+    A DataIO class that writes to a shared memory buffer
+    """
+
+    def __init__(self, uid, session_id, **kwargs):
+        super().__init__()
+        self._name = f'{session_id}_{uid}'
+        self._written = 0
+        self._pos = 0
+        self._buf = None
+
+    def _open(self, **kwargs):
+        self._pos = 0
+        if self._buf is None:
+            if self._mode == OpenMode.OPEN_WRITE:
+                self._written = 0
+            self._buf = DlgSharedMemory(self._name)
+        return self._buf
+
+    def _write(self, data, **kwargs):
+        total_size = len(data) + self._written
+        if total_size > self._buf.size:
+            self._buf.resize(total_size)
+            self._buf.buf[self._written:total_size] = data
+            self._written = total_size
+        else:
+            self._buf.buf[self._written:total_size] = data
+            self._written = total_size
+            self._buf.resize(total_size)
+            """
+            It may be inefficient to resize many times, but assuming data is written 'once' this is
+            might be tolerable and guarantees that the size of the underlying buffer is tight.
+            """
+        return len(data)
+
+    def _read(self, count=4096, **kwargs):
+        if self._pos == self._buf.size:
+            return None
+        start = self._pos
+        end = self._pos + count
+        end = min(end, self._buf.size)
+        out = self._buf.buf[start:end]
+        self._pos = end
+        return out
+
+    def _close(self, **kwargs):
+        if self._mode == OpenMode.OPEN_WRITE:
+            self._buf.resize(self._written)
+        self._buf.close()
+        self._buf = None
+
+    def exists(self):
+        return self._buf is not None
+
+    def delete(self):
+        self._close()
 
 
 class FileIO(DataIO):
