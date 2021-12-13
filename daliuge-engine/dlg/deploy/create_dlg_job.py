@@ -65,7 +65,7 @@ class SlurmClient(object):
         self,
         log_root=None,
         acc=None,
-        physical_graph=None,
+        physical_graph_template_data=None, # JSON formatted physical graph template
         logical_graph=None,
         job_dur=30,
         num_nodes=5,
@@ -81,6 +81,7 @@ class SlurmClient(object):
         all_nics=False,
         check_with_session=False,
         submit=True,
+        pip_name=None,
     ):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar("acc") if (acc is None) else acc
@@ -91,12 +92,15 @@ class SlurmClient(object):
         self._num_nodes = num_nodes
         self._job_dur = job_dur
         self._logical_graph = logical_graph
-        self._physical_graph = physical_graph
+        self._physical_graph_template_data = physical_graph_template_data
         self._visualise_graph = False
         self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
-        self._pip_name = utils.fname_to_pipname(logical_graph or physical_graph) if logical_graph or physical_graph else "None"
+        self._pip_name = pip_name
+        if (self._pip_name == None):
+            self._pip_name = "cdj"
+        #self._pip_name = utils.fname_to_pipname(logical_graph or physical_graph) if logical_graph or physical_graph else "None"
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
@@ -105,6 +109,7 @@ class SlurmClient(object):
         self._all_nics = all_nics
         self._check_with_session = check_with_session
         self._submit = submit
+        self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
 
     @property
     def num_daliuge_nodes(self):
@@ -122,8 +127,9 @@ class SlurmClient(object):
         """
         (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
         """
-        dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        return "{0}_N{1}_{2}".format(self._pip_name, self.num_daliuge_nodes, dtstr)
+        # Moved setting of dtstr to init to ensure it doesn't change for this instance of SlurmClient()
+        #dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
+        return "{0}_N{1}_{2}".format(self._pip_name, self.num_daliuge_nodes, self._dtstr)
 
     def label_job_dur(self):
         """
@@ -171,6 +177,11 @@ class SlurmClient(object):
         log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
+
+        physical_graph_file = "{0}/pgt.json".format(log_dir)
+        with open(physical_graph_file, 'w') as pf:
+            pf.write(self._physical_graph_template_data)
+            pf.close()
 
         job_file = "{0}/jobsub.sh".format(log_dir)
         job_desc = self.create_job_desc()
