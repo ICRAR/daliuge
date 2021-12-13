@@ -28,7 +28,7 @@ from dlg.ddap_protocol import AppDROPStates
 from ..meta import dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
 try:
-    from crc32c import crc32c  # @UnusedImport
+    from crc32c import crc32c as crc32  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
@@ -63,7 +63,7 @@ class CRCApp(BarrierAppDROP):
         buf = inputDrop.read(desc, bufsize)
         crc = 0
         while buf:
-            crc = crc32c(buf, crc)
+            crc = crc32(buf, crc)
             buf = inputDrop.read(desc, bufsize)
         inputDrop.close(desc)
 
@@ -102,7 +102,7 @@ class CRCStreamApp(AppDROP):
 
     def dataWritten(self, uid, data):
         self.execStatus = AppDROPStates.RUNNING
-        self._crc = crc32c(data, self._crc)
+        self._crc = crc32(data, self._crc)
 
     def dropCompleted(self, uid, status):
         outputDrop = self.outputs[0]

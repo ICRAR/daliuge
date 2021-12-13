@@ -27,6 +27,7 @@ thus represents the bottom of the DROP management hierarchy.
 import abc
 import collections
 import logging
+from psutil import cpu_count
 import multiprocessing.pool
 import os
 import queue
@@ -37,9 +38,11 @@ import time
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
+if sys.version_info >= (3, 8):
+    from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..drop import AppDROP
+from ..drop import AppDROP, InMemoryDROP
 from ..exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
@@ -153,13 +156,17 @@ class NodeManagerBase(DROPManager):
         )
         self._event_listeners = [_load(l, "handleEvent") for l in event_listeners]
 
-        # Start our thread pool
-        if max_threads == 0:
-            self._threadpool = None
-        else:
+        # Start thread pool
+        self._threadpool = None
+        if max_threads == -1: # default use all CPU cores
+            max_threads = cpu_count(logical=False)
+        else:                  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
+        if max_threads > 1 and sys.version_info >= (3, 8):
             logger.info("Initializing thread pool with %d threads", max_threads)
             self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+            self._memoryManager = DlgSharedMemoryManager()
+
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -247,10 +254,15 @@ class NodeManagerBase(DROPManager):
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
+        if hasattr(self, '_memoryManager'):
+            self._memoryManager.register_session(sessionId)
 
         def foreach(drop):
             if self._threadpool is not None:
                 drop._tp = self._threadpool
+                if isinstance(drop, InMemoryDROP):
+                    drop._sessID = sessionId
+                    self._memoryManager.register_drop(drop.uid, sessionId)
             if self._dlm:
                 self._dlm.addDrop(drop)
 
@@ -284,6 +296,8 @@ class NodeManagerBase(DROPManager):
     def destroySession(self, sessionId):
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
+        if hasattr(self, '_memoryManager'):
+            self._memoryManager.shutdown_session(sessionId)
         session.destroy()
 
     def getSessionIds(self):
@@ -331,6 +345,11 @@ class NodeManagerBase(DROPManager):
     def call_drop(self, sessionId, uid, method, *args):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].call_drop(uid, method, *args)
+
+    def shutdown(self):
+        if hasattr(self, '_threadpool') and self._threadpool is not None:
+            self._threadpool.close()
+            self._threadpool.join()
 
 
 class ZMQPubSubMixIn(object):
