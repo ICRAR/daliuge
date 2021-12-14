@@ -19,19 +19,29 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import logging
 import os
 import pickle
-import unittest
+import sys
 import time
+import unittest
+from multiprocessing.pool import ThreadPool
 from numpy import random, mean, array, concatenate
 
 
 from dlg import droputils
-from dlg.droputils import DROPWaiterCtx
-from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp
+from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp, \
+    ListAppendThrashingApp
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
+
+if sys.version_info >= (3, 8):
+    from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
+from numpy import random, mean, array, concatenate
+from psutil import cpu_count
+
+logger = logging.getLogger(__name__)
 
 
 class TestSimpleApps(unittest.TestCase):
@@ -121,11 +131,10 @@ class TestSimpleApps(unittest.TestCase):
         data2 = random.randint(0, 100, size=100)
         i1.write(pickle.dumps(data1))
         i2.write(pickle.dumps(data2))
-        m = mean([array(data1), array(data2)], axis=0)
+        big_mean = mean(mean([array(data1), array(data2)], axis=0))
         self._test_graph_runs((i1, i2, c, o), (i1, i2), o)
         average = pickle.loads(droputils.allDropContents(o))
-        v = m == average
-        self.assertEqual(v.all(), True)
+        self.assertEqual(big_mean, average)
 
     def test_helloworldapp(self):
         h = HelloWorldApp("h", "h")
@@ -197,3 +206,84 @@ class TestSimpleApps(unittest.TestCase):
         data2 = pickle.loads(droputils.allDropContents(o2))
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
+
+    def test_listappendthrashing(self, size=1000):
+        a = InMemoryDROP('a', 'a')
+        b = ListAppendThrashingApp('b', 'b', size=size)
+        self.assertEqual(b.size, size)
+        c = InMemoryDROP('c', 'c')
+        b.addInput(a)
+        b.addOutput(c)
+        self._test_graph_runs((a, b, c), a, c, timeout=4)
+        data_out = pickle.loads(droputils.allDropContents(c))
+        self.assertEqual(b.marray, data_out)
+
+    @unittest.skipIf(sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8")
+    def test_multi_listappendthrashing(self, size=1000, parallel=True):
+        max_threads = cpu_count(logical=False)
+        drop_ids = [chr(97 + x) for x in range(max_threads)]
+        threadpool = ThreadPool(processes=max_threads)
+        memory_manager = DlgSharedMemoryManager()
+        session_id = 1
+        memory_manager.register_session(session_id)
+        S = InMemoryDROP('S', 'S')
+        X = AverageArraysApp('X', 'X')
+        Z = InMemoryDROP('Z', 'Z')
+        drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
+        mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
+        if parallel:
+            # a bit of magic to get the app drops using the processes
+            _ = [drop.__setattr__('_tp', threadpool) for drop in drops]
+            _ = [drop.__setattr__('_tp', threadpool) for drop in mdrops]
+            _ = [drop.__setattr__('_sessID', session_id) for drop in mdrops]
+            _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
+            X.__setattr__('_tp', threadpool)
+            Z.__setattr__('_tp', threadpool)
+            Z.__setattr__('_sessID', session_id)
+            memory_manager.register_drop(Z.uid, session_id)
+
+        _ = [d.addInput(S) for d in drops]
+        _ = [d.addOutput(m) for d, m in zip(drops, mdrops)]
+        _ = [X.addInput(m) for m in mdrops]
+        X.addOutput(Z)
+        print(f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}")
+        self._test_graph_runs([S, X, Z] + drops + mdrops, S, Z, timeout=200)
+        # Need to run our 'copy' of the averaging APP
+        num_array = []
+        for drop in mdrops:
+            buf = droputils.allDropContents(drop)
+            num_array.extend(pickle.loads(buf))
+        X.marray = num_array
+        average = X.averageArray()
+        # Load actual results
+        graph_result = droputils.allDropContents(Z)
+        graph_result = pickle.loads(graph_result)
+        self.assertEqual(graph_result, average)
+        # Must be called to unlink all shared memory
+        memory_manager.shutdown_all()
+
+    @unittest.skipIf(sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8")
+    def test_speedup(self):
+        """
+        Run serial and parallel test and report speedup.
+        NOTE: In order to get the stdout you need to run pyest with
+        --capture=tee-sys
+        """
+        size = 2000
+        print("Starting serial test..")
+        st = time.time()
+        self.test_multi_listappendthrashing(size=size, parallel=False)
+        t1 = time.time() - st
+        print("Starting parallel test..")
+        st = time.time()
+        self.test_multi_listappendthrashing(size=size, parallel=True)
+        t2 = time.time() - st
+        print(f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores")
+        # TODO: This is unpredictable, but maybe we can do something meaningful.
+        # self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
+        # How about this? We only need to see some type of speedup
+        if cpu_count(logical=False) > 1 and size > 500:
+            self.assertGreater(t1 / t2, 1)
+        else:
+            # Ensure that multi-threading overhead doesn't ruin serial performance?
+            self.assertAlmostEqual(t1, t2, delta=0.5)
