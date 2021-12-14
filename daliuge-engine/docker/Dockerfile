@@ -8,8 +8,9 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 RUN sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc python3-pip curl python3-casacore
 
 COPY / /daliuge
-RUN . /home/ray/dlg/bin/activate && cd /daliuge && \
-    pip install . 
+RUN . /home/ray/dlg/bin/activate && \
+    pip install wheel && \
+    cd /daliuge && pip install . 
 
 EXPOSE 9000
 EXPOSE 5555
