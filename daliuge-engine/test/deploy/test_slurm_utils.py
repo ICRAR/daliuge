@@ -22,7 +22,7 @@
 
 import unittest
 
-from dlg.deploy.pawsey import slurm_utils
+from dlg.deploy import slurm_utils
 
 
 class TestSlurmUtils(unittest.TestCase):
