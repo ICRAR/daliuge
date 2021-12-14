@@ -40,6 +40,7 @@ import shutil
 import threading
 import time
 import re
+import sys
 import inspect
 import binascii
 
@@ -67,7 +68,12 @@ from .io import (
     PlasmaIO,
     PlasmaFlightIO,
 )
+if sys.version_info >= (3, 8):
+    from .io import SharedMemoryIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
+from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
+    dlg_string_param, dlg_bool_param, dlg_dict_param
+from dlg.process import DlgProcess
 from .meta import (
     dlg_float_param,
     dlg_int_param,
@@ -634,6 +640,15 @@ class AbstractDROP(EventFirer):
 
         :see: `self.checksumType`
         """
+        if self.status == DROPStates.COMPLETED and self._checksum is None:
+            # Generate on the fly
+            io = self.getIO()
+            io.open(OpenMode.OPEN_READ)
+            data = io.read(4096)
+            while data is not None and len(data) > 0:
+                self._updateChecksum(data)
+                data = io.read(4096)
+            io.close()
         return self._checksum
 
     @checksum.setter
@@ -1416,7 +1431,10 @@ class InMemoryDROP(AbstractDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        return MemoryIO(self._buf)
+        if hasattr(self, '_tp') and hasattr(self, '_sessID') and sys.version_info >= (3, 8):
+            return SharedMemoryIO(self.oid, self._sessID)
+        else:
+            return MemoryIO(self._buf)
 
     @property
     def dataURL(self):
@@ -1986,7 +2004,14 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
-                self.run()
+                if hasattr(self, '_tp'):
+                    proc = DlgProcess(target=self.run, daemon=True)
+                    proc.start()
+                    proc.join()
+                    if proc.exception:
+                        raise proc.exception
+                else:
+                    self.run()
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
