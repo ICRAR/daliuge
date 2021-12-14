@@ -84,7 +84,8 @@ class SumupContainerChecksum(BarrierAppDROP):
         crcSum = 0
         for inputDrop in self.inputs:
             if inputDrop.status == DROPStates.COMPLETED:
-                crcSum += inputDrop.checksum
+                if inputDrop.checksum:
+                    crcSum += inputDrop.checksum
         outputDrop = self.outputs[0]
         outputDrop.write(str(crcSum).encode("utf8"))
 
@@ -572,7 +573,7 @@ class TestDROP(unittest.TestCase):
 
         # Read from the DROP
         self.assertEqual(msg, droputils.allDropContents(a))
-        self.assertIsNone(a.checksum)
+        self.assertIsNotNone(a.checksum)
         self.assertEqual(9, a.size)
 
         # The drop now calculates the size thus we can't set it anymore
