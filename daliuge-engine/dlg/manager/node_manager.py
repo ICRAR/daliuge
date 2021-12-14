@@ -35,6 +35,7 @@ import sys
 import threading
 import time
 
+from glob import glob
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
@@ -139,13 +140,19 @@ class NodeManagerBase(DROPManager):
         self._sessions = {}
         self.logdir = logdir
 
-        # dlgPath contains code added by the user with possible
+        # dlgPath may contain code added by the user with possible
         # DROP applications
         if dlgPath:
             dlgPath = os.path.expanduser(dlgPath)
             if os.path.isdir(dlgPath):
                 logger.info("Adding %s to the system path", dlgPath)
                 sys.path.append(dlgPath)
+                # we also add underlying site-packages dir to support
+                # the --prefix installation of code
+                pyVer = f'{sys.version_info.major}.{sys.version_info.minor}'
+                extraPath = f'{dlgPath}/lib/python{pyVer}/site-packages'
+                logger.info("Adding %s to the system path", extraPath)
+                sys.path.append(extraPath)
 
         # Error listener used by users to deal with errors coming from specific
         # Drops in whatever way they want. This is a specific case of an event
@@ -213,7 +220,7 @@ class NodeManagerBase(DROPManager):
         """
         if not evt.session_id in self._sessions:
             logger.warning(
-                "No session %s found, event will be dropped" % (evt.session_id)
+                "No session %s found, event (%s) will be dropped" % (evt.session_id, evt.type)
             )
             return
         self._sessions[evt.session_id].deliver_event(evt)
@@ -290,10 +297,12 @@ class NodeManagerBase(DROPManager):
         )
 
     def cancelSession(self, sessionId):
+        logger.info("Cancelling session: %s", sessionId)
         self._check_session_id(sessionId)
         self._sessions[sessionId].cancel()
 
     def destroySession(self, sessionId):
+        logger.info("Destroying session: %s", sessionId)
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
         if hasattr(self, '_memoryManager'):

@@ -49,7 +49,7 @@ import sys
 import threading
 import time
 
-from ...utils import b2s
+from ..utils import b2s
 
 
 BUFF_SIZE = 16384
