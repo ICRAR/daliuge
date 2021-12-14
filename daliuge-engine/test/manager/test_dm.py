@@ -23,6 +23,7 @@ import copy
 import os
 import threading
 import unittest
+from time import sleep
 import multiprocessing
 import random
 
@@ -146,6 +147,7 @@ class NMTestsMixIn(object):
                 self.assertEqual(len(leaf_data), len(leaf_drop_data))
                 self.assertEqual(leaf_data, leaf_drop_data)
 
+        sleep(0.1) # just make sure all events have been processed.
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         return leaf_drop_data

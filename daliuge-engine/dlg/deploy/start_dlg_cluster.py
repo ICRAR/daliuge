@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """
-Start the DALiuGE cluster on Magnus / Galaxy at Pawsey
+Start the DALiuGE cluster on various facilities
 
 Current plan (as of 12-April-2016):
     1. Launch a number of Node Managers (NM) using MPI processes
@@ -42,13 +42,14 @@ import threading
 import time
 import uuid
 
-from . import dfms_proxy, remotes
-from .. import common
-from ... import utils, tool
-from ...dropmake import pg_generator
-from ...manager import cmdline
-from ...manager.client import NodeManagerClient
-from ...manager.constants import (
+from dlg.deploy import dlg_proxy, remotes
+from dlg.deploy import common
+from dlg import utils
+from dlg.common import tool
+from dlg.dropmake import pg_generator
+from dlg.manager import cmdline
+from dlg.manager.client import NodeManagerClient
+from dlg.manager.constants import (
     NODE_DEFAULT_REST_PORT,
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
@@ -60,7 +61,7 @@ MM_WAIT_TIME = DIM_WAIT_TIME
 GRAPH_SUBMIT_WAIT_TIME = 10
 GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = "5"
-logger = logging.getLogger("deploy.pawsey.cluster")
+logger = logging.getLogger("deploy.dlg.cluster")
 apps = (
     None,
     "test.graphsRepository.SleepApp",
@@ -153,7 +154,11 @@ def start_node_mgr(
         "--event-listeners",
         event_listeners,
     ]
-    return cmdline.dlgNM(optparse.OptionParser(), args)
+    # return cmdline.dlgNM(optparse.OptionParser(), args)
+    proc = tool.start_process("nm", args)
+    logger.info("Node manager process started with pid %d", proc.pid)
+    return proc
+
 
 
 def start_dim(node_list, log_dir, origin_ip, logv=1):
@@ -249,7 +254,7 @@ def start_proxy(dlg_host, dlg_port, monitor_host, monitor_port):
     Start the DALiuGE proxy server
     """
     proxy_id = socket.gethostname() + "%.3f" % time.time()
-    server = dfms_proxy.ProxyServer(
+    server = dlg_proxy.ProxyServer(
         proxy_id, dlg_host, monitor_host, dlg_port, monitor_port
     )
     try:
@@ -297,9 +302,10 @@ def get_pg(opts, nms, dims):
 
     # modify the PG as necessary
     for modifier in opts.pg_modifiers.split(":"):
-        modify_pg(pgt, modifier)
+        if modifier is not None and modifier != "":
+            modify_pg(pgt, modifier)
 
-    # Check that which NMs are up and use only those form now on
+    # Check which NMs are up and use only those form now on
     nms = check_hosts(
         nms,
         NODE_DEFAULT_REST_PORT,
@@ -307,7 +313,8 @@ def get_pg(opts, nms, dims):
         timeout=MM_WAIT_TIME,
         retry=3,
     )
-    pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims)
+    pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
+        co_host_dim=opts.co_host_dim)
     with open(os.path.join(opts.log_dir, "pg.json"), "wt") as f:
         json.dump(pg, f)
     return pg
@@ -357,7 +364,7 @@ def main():
         type="int",
         dest="monitor_port",
         help="Monitor port",
-        default=dfms_proxy.default_dlg_monitor_port,
+        default=dlg_proxy.default_dlg_monitor_port,
     )
     parser.add_option(
         "-v",
@@ -457,7 +464,7 @@ def main():
     )
 
     parser.add_option(
-        "--ssid", type="string", dest="ssid", help="session id", default="1"
+        "--ssid", type="string", dest="ssid", help="session id", default=""
     )
 
     parser.add_option(
@@ -534,6 +541,14 @@ def main():
         default="mpi",
     )
 
+    parser.add_option(
+        "--co-host-dim",
+        action="store_true",
+        dest="co_host_dim",
+        help="Start DIM on first NM node",
+        default=True,
+    )
+
     (options, _) = parser.parse_args()
 
     if options.check_interfaces:
@@ -566,6 +581,9 @@ def main():
     if options.monitor_host is not None and options.num_islands > 1:
         parser.error("We do not support proxy monitor multiple islands yet")
 
+    # if options.ssid == "":
+    #     options.ssid = time.
+
     remote = get_remote(options)
 
     log_dir = "{0}/{1}".format(options.log_dir, remote.rank)
@@ -592,20 +610,20 @@ def main():
         with open(nodesfile, "wt") as f:
             f.write("\n".join(remote.sorted_peers))
 
+    # start the NM
     if remote.is_nm:
-        start_node_mgr(
+        nm_proc = start_node_mgr(
             log_dir,
             remote.my_ip,
             logv=logv,
             max_threads=options.max_threads,
             host=None if options.all_nics else remote.my_ip,
             event_listeners=options.event_listeners,
-        )
-
-    elif options.num_islands == 1:
+                )
+    if options.num_islands == 1:
         if remote.is_proxy:
             # Wait until the Island Manager is open
-            nm_proc = None
+            dim_proc = None
             if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
                 start_proxy(
                     remote.hl_mgr_ip,
@@ -618,49 +636,48 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         else:
+            dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+
             pg = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
                 pg, options, ISLAND_DEFAULT_REST_PORT
             )
-            nm_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
             monitoring_thread.join()
-            stop_dims(["127.0.0.1"])
+            stop_dims(remote.dim_ips)
             stop_nms(remote.nm_ips)
-        if nm_proc is not None:
+        if dim_proc is not None:
             # Stop DALiuGE.
             logger.info("Stopping DALiuGE application on rank %d", remote.rank)
-            utils.terminate_or_kill(nm_proc, 5)
+            utils.terminate_or_kill(dim_proc, 5)
 
+    elif remote.is_highest_level_manager:
+
+        pg = get_pg(options, remote.nm_ips, remote.dim_ips)
+        remote.send_dim_nodes(pg)
+
+        # 7. make sure all DIMs are up running
+        dim_ips_up = check_hosts(
+            remote.dim_ips, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10
+        )
+        if len(dim_ips_up) < len(remote.dim_ips):
+            logger.warning(
+                "Not all DIMs were up and running: %d/%d",
+                len(dim_ips_up),
+                len(remote.dim_ips),
+            )
+
+        monitoring_thread = submit_and_monitor(
+            pg, options, MASTER_DEFAULT_REST_PORT
+        )
+        start_mm(remote.dim_ips, log_dir, logv=logv)
+        monitoring_thread.join()
+        stop_mm("127.0.0.1")
+        stop_dims(remote.dim_ips)
     else:
-
-        if remote.is_highest_level_manager:
-
-            pg = get_pg(options, remote.nm_ips, remote.dim_ips)
-            remote.send_dim_nodes(pg)
-
-            # 7. make sure all DIMs are up running
-            dim_ips_up = check_hosts(
-                remote.dim_ips, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10
-            )
-            if len(dim_ips_up) < len(remote.dim_ips):
-                logger.warning(
-                    "Not all DIMs were up and running: %d/%d",
-                    len(dim_ips_up),
-                    len(remote.dim_ips),
-                )
-
-            monitoring_thread = submit_and_monitor(
-                pg, options, MASTER_DEFAULT_REST_PORT
-            )
-            start_mm(remote.dim_ips, log_dir, logv=logv)
-            monitoring_thread.join()
-            stop_mm("127.0.0.1")
-            stop_dims(remote.dim_ips)
-        else:
-            nm_ips = remote.recv_dim_nodes()
-            proc = start_dim(nm_ips, log_dir, remote.my_ip, logv=logv)
-            utils.wait_or_kill(proc, 1e8, period=5)
-            stop_nms(remote.nm_ips)
+        nm_ips = remote.recv_dim_nodes()
+        proc = start_dim(nm_ips, log_dir, remote.my_ip, logv=logv)
+        utils.wait_or_kill(proc, 1e8, period=5)
+        stop_nms(remote.nm_ips)
 
 
 if __name__ == "__main__":
