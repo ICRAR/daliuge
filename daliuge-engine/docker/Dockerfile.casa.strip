@@ -21,6 +21,6 @@ EXPOSE 8002
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/root/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV DLG_ROOT="/tmp/.dlg/var/dlg_home"
+ENV DLG_ROOT="/tmp/dlg/var/dlg_home"
 
 CMD ["dlg", "daemon", "-vv"]
