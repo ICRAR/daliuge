@@ -27,12 +27,12 @@ __sub_tpl_str = """#!/bin/bash --login
 #SBATCH --ntasks-per-node=1
 #SBATCH --job-name=DALiuGE-$PIP_NAME
 #SBATCH --time=$JOB_DURATION
-#SBATCH --account=$ACCOUNT
 #SBATCH --error=err-%j.log
-
+#SBATCH --exclude=hyades01
+###SBATCH --nodelist=hyades02,hyades03
 $MODULES
 
-srun -n 1 -N 1 python -m dlg.deploy.start_dlg_cluster -l $LOG_DIR -P "$LOG_DIR/pgt.json"   -v 1  -t 0 --app 0 -s 1
+srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --remote-mechanism slurm
 """
 init_tpl = string.Template(__sub_tpl_str)
 
