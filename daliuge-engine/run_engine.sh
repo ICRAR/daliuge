@@ -24,7 +24,7 @@ case "$1" in
             exit 0
         fi;;
     "dev")
-        DLG_ROOT="/tmp/.dlg"
+        DLG_ROOT="/tmp/dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Running Engine development version in background..."
         mkdir -p ${DLG_ROOT}/workspace
@@ -39,7 +39,7 @@ case "$1" in
         ./start_local_managers.sh
         exit 0;;
     "casa")
-        DLG_ROOT="/tmp/.dlg"
+        DLG_ROOT="/tmp/dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Running Engine development version in background..."
         mkdir -p ${DLG_ROOT}/workspace
