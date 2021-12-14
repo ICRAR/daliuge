@@ -29,6 +29,7 @@ import os
 import signal
 import sys
 import time
+import re
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
@@ -48,6 +49,17 @@ from ..runtime import version
 
 
 _terminating = False
+
+class DlgFormatter(logging.Formatter):
+
+    def format(self, record: logging.LogRecord) -> str:
+        arg_pattern = re.compile(r'%\((\w+)\)')
+        arg_names = [x.group(1) for x in arg_pattern.finditer(self._fmt)]
+        for field in arg_names:
+            if field not in record.__dict__:
+                record.__dict__[field] = None
+
+        return super().format(record)
 
 
 def launchServer(opts):
@@ -291,7 +303,8 @@ def setupLogging(opts):
     if log_ids:
         fmt += "[%(session_id)10.10s] [%(drop_uid)10.10s] "
     fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
-    fmt = logging.Formatter(fmt)
+    fmt = DlgFormatter(fmt)
+    # fmt = logging.Formatter(fmt)
     fmt.converter = time.gmtime
 
     # Let's configure logging now
