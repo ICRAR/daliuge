@@ -179,7 +179,7 @@ def getDlgDir():
     """
     if "DLG_ROOT" in os.environ:
         return os.environ["DLG_ROOT"]
-    return os.path.join(os.path.expanduser("~"), ".dlg")
+    return os.path.join(os.path.expanduser("~"), "dlg")
 
 
 def getDlgPidDir():
