@@ -34,6 +34,7 @@ import socket
 import threading
 import time
 import zlib
+import re
 
 import netifaces
 
@@ -235,12 +236,16 @@ def isabs(path):
 
 def fname_to_pipname(fname):
     """
-    Converts a graph filename (assuming it's a .json file) to its "pipeline"
+    Converts a graph filename (extension .json or .graph) to its "pipeline"
     name (the basename without the extension).
     """
-    fname = fname.split("/")[-1]
-    if fname.endswith(".json"):
-        fname = fname[:-5]
+    fname = os.path.split(fname)[-1]
+    m = re.compile(r'.json$|.graph$')
+    res = m.search(fname)
+    logger.info("regex result %s", res)
+
+    if res:
+        fname = fname[:res.start()]
     return fname
 
 

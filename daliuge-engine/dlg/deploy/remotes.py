@@ -36,7 +36,8 @@ class Remote(object):
         self.options = options
         self.my_ip = my_ip
         self.num_islands = options.num_islands
-        self.run_proxy = options.monitor_host is not None
+        self.run_proxy = options.monitor_host
+        self.co_host_dim = options.co_host_dim
         self.rank = None
         self.size = None
         self.sorted_peers = None
@@ -63,7 +64,10 @@ class Remote(object):
         return first, first + self.num_islands
 
     def _nm_range(self):
-        first = 1
+        if self.co_host_dim:
+            first = 0
+        else:
+            first = 1
         if self.run_proxy:
             first = 2
         if self.num_islands > 1:
