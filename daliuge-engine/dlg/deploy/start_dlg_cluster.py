@@ -622,7 +622,6 @@ def main():
         logger.debug("Dumping list of nodes to %s", nodesfile)
         with open(nodesfile, "wt") as f:
             f.write("\n".join(remote.sorted_peers))
-        start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
 
     dim_proc = None
     # start the NM
