@@ -172,6 +172,7 @@ class SlurmClient(object):
         pardict = dict()
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
+        pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
         pardict["JOB_DURATION"] = self.label_job_dur()
         pardict["ACCOUNT"] = self._acc
         pardict["PY_BIN"] = sys.executable
