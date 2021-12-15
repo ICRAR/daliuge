@@ -143,6 +143,8 @@ def start_node_mgr(
     args = [
         "-l",
         log_dir,
+        "-w",
+        f"{log_dir}/workspace"
         "-%s" % lv,
         "-H",
         host,
@@ -172,6 +174,8 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
     args = [
         "-l",
         log_dir,
+        "-w",
+        f"{log_dir}/workspace"
         "-%s" % lv,
         "-N",
         ",".join(node_list),
@@ -196,6 +200,8 @@ def start_mm(node_list, log_dir, logv=1):
     args = [
         "-l",
         log_dir,
+        "-w",
+        f"{log_dir}/workspace"
         "-N",
         ",".join(node_list),
         "-%s" % lv,
