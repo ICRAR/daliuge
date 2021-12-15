@@ -215,10 +215,14 @@ async function restDeploy(){
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    redirect: 'follow'
   })
   .then(handleFetchErrors)
-  .then(response => response.json())
+  .then(response => {
+    if (response.redirected) {
+      window.location.href = response.url;
+  }})
   .catch(function(error){
     alert(error + "\nSending PGT to backend unsuccessfull!");
   });
