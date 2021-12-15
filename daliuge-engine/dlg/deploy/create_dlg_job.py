@@ -155,7 +155,8 @@ class SlurmClient(object):
         """
         # Moved setting of dtstr to init to ensure it doesn't change for this instance of SlurmClient()
         #dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        return "{0}_{1}".format(self._pip_name, self._dtstr)
+        graph_name = self._pip_name.split('_')[0] # use only the part of the graph name
+        return "{0}_{1}".format(graph_name, self._dtstr)
 
     def label_job_dur(self):
         """
@@ -277,6 +278,8 @@ class LogEntryPair(object):
 
 class LogParser(object):
     """
+    TODO: This needs adjustment to new log directory names!!
+
     Given the log dir, analyse all DIM and NMs logs, and store the resuls
     in CSV, which has the following fields:
     ====================================
