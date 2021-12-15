@@ -623,6 +623,7 @@ def main():
         with open(nodesfile, "wt") as f:
             f.write("\n".join(remote.sorted_peers))
 
+    dim_proc = None
     # start the NM
     if remote.is_nm:
         nm_proc = start_node_mgr(
@@ -636,7 +637,6 @@ def main():
     if options.num_islands == 1:
         if remote.is_proxy:
             # Wait until the Island Manager is open
-            dim_proc = None
             if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
                 start_proxy(
                     remote.hl_mgr_ip,
@@ -649,7 +649,8 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         else:
-            dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+            if remote.my_ip in remote.dim_ips:
+                dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
 
             pg = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
@@ -660,7 +661,7 @@ def main():
             stop_nms(remote.nm_ips)
         if dim_proc is not None:
             # Stop DALiuGE.
-            logger.info("Stopping DALiuGE application on rank %d", remote.rank)
+            logger.info("Stopping DALiuGE island manager on rank %d", remote.rank)
             utils.terminate_or_kill(dim_proc, 5)
 
     elif remote.is_highest_level_manager:
