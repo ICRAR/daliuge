@@ -24,6 +24,8 @@ import logging
 import os
 import pickle
 import time
+import re
+import socket
 
 from . import slurm_utils
 
@@ -42,13 +44,22 @@ class Remote(object):
         self.size = None
         self.sorted_peers = None
 
+    def _get_ip_from_name(self, hostname):
+        rx = re.compile("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+        if re.match(hostname):   # already an IP??
+            return hostname
+        else:
+            return socket.gethostbyname(hostname)
+
     def _set_world(self, rank, size, sorted_peers):
         """Called by subclasses"""
         self.rank = rank
         self.size = size
-        self.sorted_peers = sorted_peers
         if len(set(self.sorted_peers)) != self.size:
             raise RuntimeError("More than one task started per node, cannot continue")
+        # convert nodes to IP addresses if hostnames
+        self.sorted_peers = list(map(lambda x:self.get_ip_from_name, 
+            sorted_peers))
         nm_range = self._nm_range()
         if nm_range[0] == nm_range[1]:
             raise RuntimeError(
