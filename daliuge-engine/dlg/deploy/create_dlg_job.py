@@ -130,7 +130,7 @@ class SlurmClient(object):
         if self._num_islands == None:
             self._num_islands = len(dict(zip(islands,nodes)))
         if self._num_nodes == None:
-            num_nodes = len(list(map(lambda x,y:x+y, islands, nodes)))
+            num_nodes = list(map(lambda x,y:x+y, islands, nodes))
             self._num_nodes = len(dict(zip(num_nodes, nodes))) # uniq comb.
         if (self._pip_name == None): 
             self._pip_name = pgt_name
