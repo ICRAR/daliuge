@@ -132,9 +132,9 @@ def get_ip_via_netifaces(iface_index):
 
 def get_workspace_dir(log_dir):
     """
-    Common workspace dir for all nodes
+    Common workspace dir for all nodes just underneath main session directory
     """
-    return(f"{os.path.split(log_dir)}/workspace")
+    return(f"{os.path.split(log_dir)[0]}/workspace")
 
 def start_node_mgr(
     log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=""
