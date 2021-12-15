@@ -599,7 +599,7 @@ def main():
 
     remote = get_remote(options)
 
-    log_dir = "{0}/{1}".format(options.log_dir, remote.rank)
+    log_dir = "{0}/{1}".format(options.log_dir, remote.my_ip)
     os.makedirs(log_dir)
     logfile = log_dir + "/start_dlg_cluster.log"
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
