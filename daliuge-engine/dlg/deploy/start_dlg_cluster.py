@@ -130,6 +130,11 @@ def get_ip_via_ifconfig(iface_index):
 def get_ip_via_netifaces(iface_index):
     return utils.get_local_ip_addr()[iface_index][0]
 
+def get_workspace_dir(log_dir):
+    """
+    Common workspace dir for all nodes just underneath main session directory
+    """
+    return(f"{os.path.split(log_dir)[0]}/workspace")
 
 def start_node_mgr(
     log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=""
@@ -143,6 +148,8 @@ def start_node_mgr(
     args = [
         "-l",
         log_dir,
+        "-w",
+        get_workspace_dir(log_dir),
         "-%s" % lv,
         "-H",
         host,
@@ -172,6 +179,8 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
     args = [
         "-l",
         log_dir,
+        "-w",
+        get_workspace_dir(log_dir),
         "-%s" % lv,
         "-N",
         ",".join(node_list),
@@ -196,6 +205,8 @@ def start_mm(node_list, log_dir, logv=1):
     args = [
         "-l",
         log_dir,
+        "-w",
+        get_workspace_dir(log_dir),
         "-N",
         ",".join(node_list),
         "-%s" % lv,
@@ -234,7 +245,7 @@ def submit_and_monitor(pg, opts, port):
         dump_path = None
         if opts.dump:
             dump_path = os.path.join(opts.log_dir, "status-monitoring.json")
-        session_id = common.submit(pg, host="127.0.0.1", port=port)
+        session_id = common.submit(pg, host="127.0.0.1", port=port, session_id=opts.ssid)
         while True:
             try:
                 common.monitor_sessions(
@@ -315,7 +326,9 @@ def get_pg(opts, nms, dims):
     )
     pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
         co_host_dim=opts.co_host_dim)
-    with open(os.path.join(opts.log_dir, "pg.json"), "wt") as f:
+    graph_name = os.path.basename(opts.log_dir)
+    graph_name = f"{graph_name.split('_')[0]}.json"  # get just the graph name
+    with open(os.path.join(opts.log_dir, graph_name), "wt") as f:
         json.dump(pg, f)
     return pg
 
@@ -586,7 +599,7 @@ def main():
 
     remote = get_remote(options)
 
-    log_dir = "{0}/{1}".format(options.log_dir, remote.rank)
+    log_dir = "{0}/{1}".format(options.log_dir, remote.my_ip)
     os.makedirs(log_dir)
     logfile = log_dir + "/start_dlg_cluster.log"
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
@@ -610,6 +623,7 @@ def main():
         with open(nodesfile, "wt") as f:
             f.write("\n".join(remote.sorted_peers))
 
+    dim_proc = None
     # start the NM
     if remote.is_nm:
         nm_proc = start_node_mgr(
@@ -623,7 +637,6 @@ def main():
     if options.num_islands == 1:
         if remote.is_proxy:
             # Wait until the Island Manager is open
-            dim_proc = None
             if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
                 start_proxy(
                     remote.hl_mgr_ip,
@@ -636,7 +649,9 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         else:
-            dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+            logger.info(f"Starting island managers on nodes: {remote.dim_ips}")
+            if remote.my_ip in remote.dim_ips:
+                dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
 
             pg = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
@@ -647,7 +662,7 @@ def main():
             stop_nms(remote.nm_ips)
         if dim_proc is not None:
             # Stop DALiuGE.
-            logger.info("Stopping DALiuGE application on rank %d", remote.rank)
+            logger.info("Stopping DALiuGE island manager on rank %d", remote.rank)
             utils.terminate_or_kill(dim_proc, 5)
 
     elif remote.is_highest_level_manager:

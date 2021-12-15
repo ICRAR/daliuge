@@ -36,6 +36,7 @@ import string
 import subprocess
 import sys
 import time
+import json
 
 from dlg import utils
 from dlg.deploy.configs import *   # get all available configurations
@@ -68,7 +69,7 @@ class SlurmClient(object):
         physical_graph_template_data=None, # JSON formatted physical graph template
         logical_graph=None,
         job_dur=30,
-        num_nodes=5,
+        num_nodes=None,
         run_proxy=False,
         mon_host=default_aws_mon_host,
         mon_port=default_aws_mon_port,
@@ -77,7 +78,7 @@ class SlurmClient(object):
         zerorun=False,
         max_threads=0,
         sleepncopy=False,
-        num_islands=1,
+        num_islands=None,
         all_nics=False,
         check_with_session=False,
         submit=True,
@@ -98,8 +99,6 @@ class SlurmClient(object):
         self._mon_host = mon_host
         self._mon_port = mon_port
         self._pip_name = pip_name
-        if (self._pip_name == None):
-            self._pip_name = "cdj"
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
@@ -109,6 +108,34 @@ class SlurmClient(object):
         self._check_with_session = check_with_session
         self._submit = submit
         self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
+        self._set_name_and_nodenumber()
+
+    def _set_name_and_nodenumber(self):
+        """
+        Given the physical graph data extract the graph name and the total number of 
+        nodes. We are not making a decision whether the island managers are running
+        on separate nodes here, thus the number is the sum of all island
+        managers and node managers. The values are only populated if not given on the
+        init already.
+
+        TODO: We will probably need to do the same with job duration and CPU number
+        """
+        pgt_data = json.loads(self._physical_graph_template_data)
+        try:
+            (pgt_name, pgt) = pgt_data
+        except:
+            raise ValueError(type(pgt_data))
+        nodes = list(map(lambda x:x['node'], pgt))
+        islands = list(map(lambda x:x['island'], pgt))
+        if self._num_islands == None:
+            self._num_islands = len(dict(zip(islands,nodes)))
+        if self._num_nodes == None:
+            num_nodes = list(map(lambda x,y:x+y, islands, nodes))
+            self._num_nodes = len(dict(zip(num_nodes, nodes))) # uniq comb.
+        if (self._pip_name == None): 
+            self._pip_name = pgt_name
+        return 
+
 
     @property
     def num_daliuge_nodes(self):
@@ -128,7 +155,8 @@ class SlurmClient(object):
         """
         # Moved setting of dtstr to init to ensure it doesn't change for this instance of SlurmClient()
         #dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        return "{0}_N{1}_{2}".format(self._pip_name, self.num_daliuge_nodes, self._dtstr)
+        graph_name = self._pip_name.split('_')[0] # use only the part of the graph name
+        return "{0}_{1}".format(graph_name, self._dtstr)
 
     def label_job_dur(self):
         """
@@ -144,6 +172,7 @@ class SlurmClient(object):
         pardict = dict()
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
+        pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
         pardict["JOB_DURATION"] = self.label_job_dur()
         pardict["ACCOUNT"] = self._acc
         pardict["PY_BIN"] = sys.executable
@@ -177,7 +206,8 @@ class SlurmClient(object):
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        physical_graph_file = "{0}/pgt.json".format(log_dir)
+        physical_graph_file = "{0}/{1}".format(log_dir, 
+            self._pip_name)
         with open(physical_graph_file, 'w') as pf:
             pf.write(self._physical_graph_template_data)
             pf.close()
@@ -249,6 +279,8 @@ class LogEntryPair(object):
 
 class LogParser(object):
     """
+    TODO: This needs adjustment to new log directory names!!
+
     Given the log dir, analyse all DIM and NMs logs, and store the resuls
     in CSV, which has the following fields:
     ====================================
