@@ -130,6 +130,11 @@ def get_ip_via_ifconfig(iface_index):
 def get_ip_via_netifaces(iface_index):
     return utils.get_local_ip_addr()[iface_index][0]
 
+def get_workspace_dir(log_dir):
+    """
+    Common workspace dir for all nodes
+    """
+    return(f"{os.path.split(log_dir)}/workspace")
 
 def start_node_mgr(
     log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=""
@@ -144,7 +149,7 @@ def start_node_mgr(
         "-l",
         log_dir,
         "-w",
-        f"{log_dir}/workspace"
+        get_workspace_dir(log_dir),
         "-%s" % lv,
         "-H",
         host,
@@ -175,7 +180,7 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
         "-l",
         log_dir,
         "-w",
-        f"{log_dir}/workspace"
+        get_workspace_dir(log_dir),
         "-%s" % lv,
         "-N",
         ",".join(node_list),
@@ -201,7 +206,7 @@ def start_mm(node_list, log_dir, logv=1):
         "-l",
         log_dir,
         "-w",
-        f"{log_dir}/workspace"
+        get_workspace_dir(log_dir),
         "-N",
         ",".join(node_list),
         "-%s" % lv,
