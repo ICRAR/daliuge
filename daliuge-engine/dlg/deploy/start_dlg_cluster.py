@@ -245,7 +245,7 @@ def submit_and_monitor(pg, opts, port):
         dump_path = None
         if opts.dump:
             dump_path = os.path.join(opts.log_dir, "status-monitoring.json")
-        session_id = common.submit(pg, host="127.0.0.1", port=port)
+        session_id = common.submit(pg, host="127.0.0.1", port=port, session_id=opts.ssid)
         while True:
             try:
                 common.monitor_sessions(
