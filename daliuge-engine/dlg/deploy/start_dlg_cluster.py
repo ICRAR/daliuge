@@ -315,7 +315,8 @@ def get_pg(opts, nms, dims):
     )
     pg = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
         co_host_dim=opts.co_host_dim)
-    with open(os.path.join(opts.log_dir, "pg.json"), "wt") as f:
+    graph_name = f"{opts.log_dir.split('_')[0]}.json"\  # get just the graph name
+    with open(os.path.join(opts.log_dir, graph_name), "wt") as f:
         json.dump(pg, f)
     return pg
 
