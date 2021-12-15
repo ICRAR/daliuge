@@ -54,7 +54,7 @@ RUN mkdir -p /code && cd /code &&\
     . ~/dlg/bin/activate && pip3 install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple -e .[plasma]
 
 COPY / /daliuge
-RUN . ~/dlg/bin/activate && cd /daliuge && \
+RUN . ~/dlg/bin/activate && pip install wheel && cd /daliuge && \
     pip install . 
 
 RUN apt-get update &&  apt-get install -y curl
