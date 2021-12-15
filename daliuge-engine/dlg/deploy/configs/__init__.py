@@ -32,7 +32,7 @@ __sub_tpl_str = """#!/bin/bash --login
 ###SBATCH --nodelist=hyades02,hyades03
 $MODULES
 
-srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --remote-mechanism slurm
+srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $PIP_NAME --remote-mechanism slurm
 """
 init_tpl = string.Template(__sub_tpl_str)
 
