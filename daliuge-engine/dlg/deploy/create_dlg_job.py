@@ -36,6 +36,7 @@ import string
 import subprocess
 import sys
 import time
+import json
 
 from dlg import utils
 from dlg.deploy.configs import *   # get all available configurations
@@ -119,13 +120,18 @@ class SlurmClient(object):
 
         TODO: We will probably need to do the same with job duration and CPU number
         """
-        (pgt_name, pgt) = self._physical_graph_template_data
+        pgt_data = json.loads(self._physical_graph_template_data)
+        try:
+            (pgt_name, pgt) = pgt_data
+        except:
+            raise ValueError(type(pgt_data))
         nodes = list(map(lambda x:x['node'], pgt))
         islands = list(map(lambda x:x['island'], pgt))
         if self._num_islands == None:
             self._num_islands = len(dict(zip(islands,nodes)))
         if self._num_nodes == None:
-            self._num_nodes = len(list(map(lambda x,y:x+y, islands, nodes)))
+            num_nodes = len(list(map(lambda x,y:x+y, islands, nodes)))
+            self._num_nodes = len(dict(zip(num_nodes, nodes))) # uniq comb.
         if (self._pip_name == None): 
             self._pip_name = pgt_name
         return 
@@ -149,7 +155,7 @@ class SlurmClient(object):
         """
         # Moved setting of dtstr to init to ensure it doesn't change for this instance of SlurmClient()
         #dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        return "{0}_{2}".format(self._pip_name, self._dtstr)
+        return "{0}_{1}".format(self._pip_name, self._dtstr)
 
     def label_job_dur(self):
         """
@@ -198,7 +204,7 @@ class SlurmClient(object):
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        physical_graph_file = "{0}/{1}_pgt.json".format(log_dir, 
+        physical_graph_file = "{0}/{1}".format(log_dir, 
             self._pip_name)
         with open(physical_graph_file, 'w') as pf:
             pf.write(self._physical_graph_template_data)
