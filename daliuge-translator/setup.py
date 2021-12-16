@@ -33,8 +33,8 @@ from setuptools import setup
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 2
-MINOR = 0
-PATCH = 1
+MINOR = 1
+PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/translator/version.py"
