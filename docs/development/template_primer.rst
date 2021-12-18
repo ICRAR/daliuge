@@ -26,25 +26,25 @@ Once that is all completed the project will be committed again and then it is re
 .. _graphs.figs.prj_clone:
 .. figure:: ../images/prj_clone.png
 
-Once cloned, the first thing you should do is execute ``make virtualenv`` to create a sandboxed environment for your component development. Please make sure to have a daliuge compatible Python version as your default. Compatible versions are the 3.7 and 3.8 series. You should then execute ``source .venv/bin/activate`` to enter the virtualenv. 
+Once cloned, please make sure you have a daliuge compatible Python version as your default. Compatible versions are the 3.7 and 3.8 series. Make also sure that you are not already inside a virtualenv. This would very likely screw things up. You should then execute
+
+.. code-block:: none
+
+  make virtualenv
+  source .venv/bin/activate
+  make install
 
 Component project directory structure
 -------------------------------------
-After using the template and cloning your new project you will have a directory structure like the one in the figure below. The ``project_name`` directory will be different, but else this is what you should see.
-
-**In the following we assume the name** ``dlg_added_cmpts`` **as an example for the project name!**.
+After using the template and cloning your new project you will have a directory structure like the one in the figure below. The ``dlg_added_cmpts`` directory will be different, but else this is what you should see.
 
 .. _graphs.figs.tmpl_struct:
-.. figure:: ../images/tmpl_main_dir.png
+.. figure:: ../images/proj_dir.png
 
 #. The ``.github`` directory contains the standard GitHUB config and history files, but also some GitHUB action definitions, which will be exectuted by GitHUB whenever your project is pushed. There is one action, which is executed only once, when the new project is created and that will peform some global re-naming and other things, so that you don't have to do that yourself.
 #. The ``docs`` directory contains just a stub for your documentation to be provided together with the components.
 #. The project_name directory will be renamed to whatever you called your component project at creation time. It is a Python module and thus contains an ``__init__.py`` file.
-
-.. _graphs.figs.tmpl_project_struct:
-.. figure:: ../images/tmpl_project_dir.png
-
-#. The ``tests`` directory contains the `conftest.py`` file and a ``test_components.py`` file, which contains tests passing with the code stubs in the (renamed!) ``project_name`` directory. 
+#. The ``tests`` directory contains the `conftest.py`` file and a ``test_components.py`` file, which contains tests passing with the code stubs in the (renamed!) ``dlg_added_cmpts`` directory. 
 #. The file ``.gitignore`` contains a whole set of default files to be excluded from a commit.
 #. The ``Contributing.md`` file is just a bit a information on how to contribute to the template development.
 #. The ``Containerfile`` is a stub for a build file for a container (e.g. docker)
@@ -57,3 +57,4 @@ After using the template and cloning your new project you will have a directory 
 #. The ``requirements.txt`` file contains a list of all required packages for testing the components. This will be used when executing ``pip install .``.
 #. The file ``setup.py`` is used when installing the component package using ``pip install .``.
 
+Now you are all set and can start coding. In the following sections we will describe how to develop a simple component in this environment and how to get your new components into the system.
