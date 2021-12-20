@@ -57,6 +57,8 @@ from ..scheduler import SchedulerException
 
 logger = logging.getLogger(__name__)
 
+# Patched to be larger to accomodate large config drops
+bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
