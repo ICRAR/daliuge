@@ -68,6 +68,10 @@ from .io import (
     PlasmaIO,
     PlasmaFlightIO,
 )
+
+DEFAULT_INTERNAL_PARAMETERS = {'storage', 'rank', 'loop_cxt', 'dw', 'iid', 'dt', 'consumers',
+                               'config_data', 'mode'}
+
 if sys.version_info >= (3, 8):
     from .io import SharedMemoryIO
 from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
@@ -96,7 +100,6 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -112,6 +115,7 @@ class ListAsDict(list):
 
 
 track_current_drop = object_tracking("drop")
+
 
 # ===============================================================================
 # DROP classes follow
@@ -181,7 +185,6 @@ class AbstractDROP(EventFirer):
 
         # Copy it since we're going to modify it
         kwargs = dict(kwargs)
-
         # So far only these three are mandatory
         self._oid = str(oid)
         self._uid = str(uid)
@@ -329,6 +332,9 @@ class AbstractDROP(EventFirer):
         # All DROPs are precious unless stated otherwise; used for replication
         self._precious = self._getArg(kwargs, "precious", True)
 
+        # Useful to have access to all EAGLE parameters without a priori knowledge
+        self._parameters = dict(kwargs)
+
         # Sub-class initialization; mark ourselves as INITIALIZED after that
         self.initialize(**kwargs)
         self._status = (
@@ -344,7 +350,7 @@ class AbstractDROP(EventFirer):
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
         for attr_name, obj in getmembers(
-            self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
+                self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
         ):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
@@ -1123,6 +1129,10 @@ class AbstractDROP(EventFirer):
     def dataIsland(self):
         return self._dataIsland
 
+    @property
+    def parameters(self):
+        return self._parameters
+
 
 class PathBasedDrop(object):
     """Base class for data drops that handle paths (i.e., file and directory drops)"""
@@ -1502,7 +1512,6 @@ class RDBMSDrop(AbstractDROP):
         """
         with self._connection() as c:
             with self._cursor(c) as cur:
-
                 # vals is a dictionary, its keys are the column names and its
                 # values are the values to insert
                 sql = "INSERT into %s (%s) VALUES (%s)" % (
@@ -1673,7 +1682,6 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 
 
 class AppDROP(ContainerDROP):
-
     """
     An AppDROP is a DROP representing an application that reads data
     from one or more DROPs (its inputs), and writes data onto one or more
@@ -2137,6 +2145,65 @@ class PlasmaFlightDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
+
+##
+# @brief ParameterSet
+# @details A set of parameters, wholly specified in EAGLE
+# @par EAGLE_START
+# @param category ParameterSet
+# @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
+# @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
+# @param[out] port/Config ConfigFile/File/The output configuration file
+# @par EAGLE_END
+class ParameterSetDROP(AbstractDROP):
+    """
+    A generic configuration file template wrapper
+    This drop opens an (optional) file containing some initial configuration information, then
+    appends any additional specified parameters to it, finally serving it as a data object.
+    """
+
+    config_data = b''
+
+    mode = dlg_string_param('mode', None)
+
+    @abstractmethod
+    def serialize_parameters(self, parameters: dict, mode):
+        """
+        Returns a string representing a serialization of the parameters.
+        """
+        if mode == "YANDA":
+            # TODO: Add more complex value checking
+            return "\n".join(f"{x}={y}" for x, y in parameters.items())
+        # Add more formats (.ini for example)
+        return "\n".join(f"{x}={y}" for x, y in parameters.items())
+
+    @abstractmethod
+    def filter_parameters(self, parameters: dict, mode):
+        """
+        Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
+        """
+        if mode == 'YANDA':
+            forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
+            if parameters['config_data'] == "":
+                forbidden_params.append('configData')
+            return {key: val for key, val in parameters.items() if
+                    key not in DEFAULT_INTERNAL_PARAMETERS}
+        return parameters
+
+    def initialize(self, **kwargs):
+        """
+        TODO: Open input file
+        """
+        self.config_data = self.serialize_parameters(
+            self.filter_parameters(self.parameters, self.mode), self.mode).encode('utf-8')
+
+    def getIO(self):
+        return MemoryIO(io.BytesIO(self.config_data))
+
+    @property
+    def dataURL(self):
+        hostname = os.uname()[1]
+        return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
