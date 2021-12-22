@@ -36,8 +36,8 @@ There will be quite a few lines passing by, but the last bit gives a good summar
 
 All tests are passing and code coverage in 100%! When you scroll up and look what actually had been done, you will discover that the Makefile has executed flake8, black, mypy, pytest and coverage. Those tools pretty much make sure that the code is in a healthy state and well formatted. In particular black is really helpful, since it actually allows to automatically format the code according to the Python coding standards. When executing ``make test`` it is only checking, but there is also a ``make fmt``, which actually performs the re-formatting.
 
-Development workflow
---------------------
+Test Driven Development workflow
+-------------------------------
 
 Let's have a closer look at what is available in the Makefile. Just execute ``make`` without any argument:
 

@@ -4,96 +4,98 @@ require([
 ]);
 
 //initial initialisation of graphs
-$(document).ready(function(){
+$(document).ready(function() {
     var type = "default"
     var initBtn = false
-    if(pgtName.toString() !== 'None'){
+    if (pgtName.toString() !== 'None') {
         graphInit(type)
     }
 });
 
 //event listener for graph buttons
-$(".graphChanger").click(function(){
+$(".graphChanger").click(function() {
     var type = $(this).val()
     $(this).addClass("active")
     var initBtn = true
     graphInit(type)
 })
 
-function graphInit(type){
+function graphInit(type) {
     $.ajax({
         //get data
-        url: "/pgt_jsonbody?pgt_name="+pgtName,
+        url: "/pgt_jsonbody?pgt_name=" + pgtName,
         dataType: "json",
         type: 'get',
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             if (404 == XMLHttpRequest.status) {
-            alert('Server cannot locate physical graph file ' + pgtName.toString())
+                alert('Server cannot locate physical graph file ' + pgtName.toString())
             } else {
-            alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+                alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
             }
         },
-        success: function(data){
+        success: function(data) {
 
             // echarts only displays the name, which is also the key for the edges, thus
             // we need to make sure that the labels are both meaningful and unique.
             //all nodes and edges
-            var graphData = {'nodeDataArray':[], 'linkDataArray':[]};
+            var graphData = { 'nodeDataArray': [], 'linkDataArray': [] };
 
 
             //partitions
-            var graphDataParts = {'nodeDataArray':[], 'linkDataArray':[]};
+            var graphDataParts = { 'nodeDataArray': [], 'linkDataArray': [] };
             var newElement = {};
             let keyIndex = new Map();
             //shapes and colors for different node types
-            var nodeCatgColors = {'Data':'#9ab4d0', 'Component': '#7f9cbb'}
-            var nodeCatgShape = {'Data':'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component':'rect'}
+            var nodeCatgColors = { 'Data': '#9ab4d0', 'Component': '#7f9cbb' }
+            var nodeCatgShape = { 'Data': 'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component': 'rect' }
             var nodeCount = 0
+            var renderer = 'canvas'
             data.nodeDataArray.forEach(element => {
                 nodeCount++
             })
             console.log(nodeCount)
-            //pick initial graph depending on node amount
-            if(type==="default"){
-                if(nodeCount<100){
-                    type="graph"
-                }else{
-                    type="sankey"
+                //pick initial graph depending on node amount
+            if (type === "default") {
+                if (nodeCount < 100) {
+                    type = "graph"
+                } else {
+                    type = "sankey"
                 }
             }
             //hide other graph option when it doesnt make sense
-            if(nodeCount<50){
+            if (nodeCount < 50) {
                 $(".graphChanger").hide();
-            }else if(nodeCount>150){
+                renderer = 'svg'
+            } else if (nodeCount > 150) {
                 $(".graphChanger").hide();
             }
             console.log(type)
             data.nodeDataArray.forEach(element => {
                 newElement = {};
-                if (!element.hasOwnProperty("isGroup")){
+                if (!element.hasOwnProperty("isGroup")) {
                     // helper map to fix the links later
                     keyIndex.set(element.key, element.text + '-' + element.key.toString());
                     //data options
                     newElement.name = element.text + '-' + element.key.toString();
 
-                    if(type==="sankey"){
+                    if (type === "sankey") {
                         newElement.label = {
                             'rotate': 45,
                             'fontSize': 10,
-                            'offset': [-20,-20],
-                            'fontWeight' : 400,
+                            'offset': [-20, -20],
+                            'fontWeight': 400,
                             'color': element.group.toString(),
                             // 'textBorderColor':'black',
                             // 'textBorderWidth' : 2.5,
                             // 'textBorderType' : 'solid'
                         };
-                    }else{
+                    } else {
                         newElement.label = {
                             'fontSize': 10,
-                            'fontWeight' : 900,
-                            'fontStyle' : 'bold',
+                            'fontWeight': 900,
+                            'fontStyle': 'bold',
                             'color': element.group,
-                            "position":"inside",
+                            "position": "inside",
                             // 'textBorderColor':'black',
                             // 'textBorderWidth' : 2.5,
                         };
@@ -104,15 +106,14 @@ function graphInit(type){
                     newElement.symbol = nodeCatgShape[element.category];
                     newElement.symbolSize = [60, 30]
                     graphData.nodeDataArray.push(newElement);
-                }
-                else {
+                } else {
                     newElement.name = element.key.toString();
                     newElement.color = 'black';
                     graphDataParts.nodeDataArray.push(newElement);
                 }
             });
             var numGroups = graphDataParts.nodeDataArray.length;
-            var spread = 255/Math.ceil((numGroups/3));
+            var spread = 255 / Math.ceil((numGroups / 3));
             var ind = 0;
             graphDataParts.nodeDataArray.forEach(element => {
                 var icol =  Math.floor((256**(ind/(numGroups/3)) -1) * spread);
@@ -121,7 +122,7 @@ function graphInit(type){
             })
             graphData.nodeDataArray.forEach(element => {
                 var group = graphDataParts.nodeDataArray.filter(
-                    function (item) {
+                    function(item) {
                         return item.name == element.label.color
                     });
 
@@ -144,55 +145,54 @@ function graphInit(type){
             //remove previous graph and active button, if any
             $("#main").empty();
             $(".graphChanger").removeClass("active")
-            //add new div depending on type
-            $("#main").append("<div id='"+type+"'></div>")
-            $("#"+type+"Button").addClass("active")
+                //add new div depending on type
+            $("#main").append("<div id='" + type + "'></div>")
+            $("#" + type + "Button").addClass("active")
 
             //re-initialise new graph
-            var chart = echarts.init(document.getElementById(type),null, {renderer:'canvas'});
+            var chart = echarts.init(document.getElementById(type), null, { 'renderer': 'svg' });
             graphSetup(type, chart, graphData, graphDataParts)
-
+            console.log(chart.getOption())
         }
     });
 }
 
-function graphSetup(type, chart, graphData,graphDataParts){
 
-            // don't show labels if there are too many nodes.
-            var show_labels = (graphData.nodeDataArray.length > 350) ? false:true;
+function graphSetup(type, chart, graphData, graphDataParts) {
 
-            chart.setOption({
-                layout: "dagre",
-                tooltip: {
-                    trigger: 'item',
-                    triggerOn: 'mousemove'
-                },
-                animation: true,
-                series: [
-                    {
-                        type: type,
-                        symbolSize: 20,
-                        roam: true,
-                        zoom:1.15,
-                        label: {
-                            show:show_labels
-                        },
+    // don't show labels if there are too many nodes.
+    var show_labels = (graphData.nodeDataArray.length > 350) ? false : true;
 
-                        emphasis:{
-                            focus: 'adjacency'
-                        },
-                        nodeAlign: 'right',
+    chart.setOption({
+        tooltip: {
+            trigger: 'item',
+            triggerOn: 'mousemove'
+        },
+        animation: true,
+        series: [{
+            type: type,
+            layout: 'dagre',
+            symbolSize: 20,
+            roam: true,
+            zoom: 1.15,
+            label: {
+                show: show_labels
+            },
 
-                        data: graphData.nodeDataArray,
-                        links: graphData.linkDataArray,
-                        lineStyle: {
-                            color: 'grey',
-                            curveness: 0.5
-                        }
-                    }
-                ]
-            });
-    chart.on('click', function (params) {
-        console.log(params, params.data);
+            emphasis: {
+                focus: 'adjacency'
+            },
+            nodeAlign: 'right',
+
+            data: graphData.nodeDataArray,
+            links: graphData.linkDataArray,
+            lineStyle: {
+                color: 'grey',
+                curveness: 0.5
+            }
+        }]
+    });
+    chart.on('click', function(params) {
+        console.log(params, params.series);
     });
 }
