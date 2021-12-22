@@ -26,7 +26,12 @@ Basic development method
 Since the code already implements a sort of a Hello World example we will simply modify that a bit to see how the development would typically work. In the spirit of test driven development, we will first change the associated test slightly and then adjust the component code accordingly to make the tests pass again. First let's see whether the existing tests pass:
 
 .. _graphs.figs.tmpl_test:
-.. figure:: ../../images/tmpl_pytest.png
+.. figure:: ../../images/proj_test_initial.png
+
+All tests are passing and code coverage in 100%! When you scroll up and look what actually had been done, you will discover that the Makefile has executed flake8, black, mypy, pytest and coverage. Those tools pretty much make sure that the code is in a healthy state and well formatted. In particular black is really helpful, since it actually allows to automatically format the code according to the Python coding standards. When executing ``make test`` it is only checking, but there is also a ``make fmt``, which actually performs the re-formatting.
+
+Test Driven Development workflow
+-------------------------------
 
 All good! Now change to the tests directory and load the file ``test_components.py``:
 
