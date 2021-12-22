@@ -116,7 +116,7 @@ function graphInit(type) {
             var spread = 255 / Math.ceil((numGroups / 3));
             var ind = 0;
             graphDataParts.nodeDataArray.forEach(element => {
-                var icol =  Math.floor((256**(ind/(numGroups/3)) -1) * spread);
+                var icol = Math.floor((256 ** (ind / (numGroups / 3)) - 1) * spread);
                 element.color = "#" + icol.toString(16).padStart(6, '0');
                 ind += 1;
             })
