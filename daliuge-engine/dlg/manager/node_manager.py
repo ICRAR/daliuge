@@ -39,18 +39,18 @@ from glob import glob
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
+
 if sys.version_info >= (3, 8):
     from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..drop import AppDROP, InMemoryDROP
+from ..drop import AppDROP, InMemoryDROP, SharedMemoryDROP
 from ..exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
     DaliugeException,
 )
 from ..lifecycle.dlm import DataLifecycleManager
-
 
 logger = logging.getLogger(__name__)
 
@@ -127,13 +127,13 @@ class NodeManagerBase(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(
-        self,
-        useDLM=False,
-        dlgPath=None,
-        error_listener=None,
-        event_listeners=[],
-        max_threads=0,
-        logdir=utils.getDlgLogsDir(),
+            self,
+            useDLM=False,
+            dlgPath=None,
+            error_listener=None,
+            event_listeners=[],
+            max_threads=0,
+            logdir=utils.getDlgLogsDir(),
     ):
 
         self._dlm = DataLifecycleManager() if useDLM else None
@@ -165,15 +165,15 @@ class NodeManagerBase(DROPManager):
 
         # Start thread pool
         self._threadpool = None
-        if max_threads == -1: # default use all CPU cores
+        if max_threads == -1:  # default use all CPU cores
             max_threads = cpu_count(logical=False)
-        else:                  # never more than 200
+        else:  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
-        if max_threads > 1 and sys.version_info >= (3, 8):
-            logger.info("Initializing thread pool with %d threads", max_threads)
-            self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+        if sys.version_info >= (3, 8):
             self._memoryManager = DlgSharedMemoryManager()
-
+            if max_threads > 1:
+                logger.info("Initializing thread pool with %d threads", max_threads)
+                self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -270,6 +270,12 @@ class NodeManagerBase(DROPManager):
                 if isinstance(drop, InMemoryDROP):
                     drop._sessID = sessionId
                     self._memoryManager.register_drop(drop.uid, sessionId)
+            elif isinstance(drop, SharedMemoryDROP):
+                if sys.version_info < (3, 8):
+                    raise NotImplementedError(
+                        "Shared memory is not implemented when using Python < 3.8")
+                drop._sessID = sessionId
+                self._memoryManager.register_drop(drop.uid, sessionId)
             if self._dlm:
                 self._dlm.addDrop(drop)
 
@@ -541,6 +547,8 @@ class ZMQPubSubMixIn(object):
 
 # So far we currently support ZMQ only for event publishing
 EventMixIn = ZMQPubSubMixIn
+
+
 # Load the corresponding RPC classes and finish the construciton of NodeManager
 class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
     pass
@@ -549,16 +557,16 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
 # Final NodeManager class
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
     def __init__(
-        self,
-        useDLM=True,
-        dlgPath=utils.getDlgPath(),
-        error_listener=None,
-        event_listeners=[],
-        max_threads=0,
-        logdir=utils.getDlgLogsDir(),
-        host=None,
-        rpc_port=constants.NODE_DEFAULT_RPC_PORT,
-        events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+            self,
+            useDLM=True,
+            dlgPath=utils.getDlgPath(),
+            error_listener=None,
+            event_listeners=[],
+            max_threads=0,
+            logdir=utils.getDlgLogsDir(),
+            host=None,
+            rpc_port=constants.NODE_DEFAULT_RPC_PORT,
+            events_port=constants.NODE_DEFAULT_EVENTS_PORT,
     ):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
