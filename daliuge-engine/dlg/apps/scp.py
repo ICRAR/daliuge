@@ -24,6 +24,7 @@ from dlg.drop import (
     BarrierAppDROP,
     NgasDROP,
     InMemoryDROP,
+    SharedMemoryDROP,
     NullDROP,
     RDBMSDrop,
     ContainerDROP,
@@ -78,12 +79,14 @@ class ScpApp(BarrierAppDROP):
         "input onto its single output via SSHs scp protocol.",
         [
             dlg_batch_input(
-                "binary/*", [NgasDROP, InMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
+                "binary/*",
+                [NgasDROP, InMemoryDROP, SharedMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
             )
         ],
         [
             dlg_batch_output(
-                "binary/*", [NgasDROP, InMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
+                "binary/*",
+                [NgasDROP, InMemoryDROP, SharedMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
             )
         ],
         [dlg_streaming_input("binary/*")],
