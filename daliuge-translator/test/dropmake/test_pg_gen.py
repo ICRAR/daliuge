@@ -230,3 +230,14 @@ class TestPGGen(unittest.TestCase):
             fp = get_lg_fname(lg)
             lg = LG(fp)
             lg.unroll_to_tpl()
+
+    def test_shmem_graph(self):
+        # Test loading of shared memory graph
+        lgs = ["SharedMemoryTest.graph"]
+        for lg in lgs:
+            fp = get_lg_fname(lg)
+            lg = LG(fp)
+            out = lg.unroll_to_tpl()
+            for drop in out:
+                if drop['type'] == 'plain':
+                    self.assertEqual("SharedMemory", drop['storage'])
