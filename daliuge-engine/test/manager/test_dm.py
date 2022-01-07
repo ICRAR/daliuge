@@ -21,6 +21,7 @@
 #
 import copy
 import os
+import sys
 import threading
 import unittest
 from time import sleep
@@ -610,6 +611,23 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         a_data = os.urandom(32)
         e_data = str(crc32c(a_data, 0)).encode('utf8')
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
+
+    def test_run_invalid_shmem_graph(self):
+        """
+        Our shared memory implementation does not support Python < 3.7
+        This test asserts that a graph containing shared memory drops will not run if running
+        in python < 3.8, and that it *does* run with python >= 3.8
+        """
+
+        graph = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        dm = self._start_dm()
+        sessionID = "s1"
+        if sys.version_info < (3, 8):
+            self.assertRaises(NotImplementedError, quickDeploy(dm, sessionID, graph))
+        else:
+            quickDeploy(dm, sessionID, graph)
+            self.assertEqual(1, len(dm._sessions[sessionID].drops))
+            dm.destroySession(sessionID)
 
 
 @unittest.skipIf(multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing")
