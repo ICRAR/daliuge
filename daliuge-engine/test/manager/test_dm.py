@@ -623,7 +623,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         dm = self._start_dm()
         sessionID = "s1"
         if sys.version_info < (3, 8):
-            self.assertRaises(NotImplementedError, quickDeploy(dm, sessionID, graph))
+            self.assertRaises(NotImplementedError, quickDeploy, dm, sessionID, graph)
         else:
             quickDeploy(dm, sessionID, graph)
             self.assertEqual(1, len(dm._sessions[sessionID].drops))
