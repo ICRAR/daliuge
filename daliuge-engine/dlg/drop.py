@@ -22,7 +22,7 @@
 """
 Module containing the core DROP classes.
 """
-
+import string
 from abc import ABCMeta, abstractmethod
 import ast
 import base64
@@ -1471,8 +1471,14 @@ class SharedMemoryDROP(AbstractDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        if hasattr(self, '_sessID') and sys.version_info >= (3, 8):
-            return SharedMemoryIO(self.oid, self._sessID)
+        print(sys.version_info)
+        if sys.version_info >= (3, 8):
+            if hasattr(self, '_sessID'):
+                return SharedMemoryIO(self.oid, self._sessID)
+            else:
+                # Using Drop without manager, just generate a random name.
+                sess_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+                return SharedMemoryIO(self.oid, sess_id)
         else:
             raise NotImplementedError("Shared memory is only available with Python >= 3.8")
 
@@ -2175,6 +2181,7 @@ class PlasmaFlightDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
+
 
 ##
 # @brief ParameterSet
