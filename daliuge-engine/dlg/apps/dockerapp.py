@@ -235,6 +235,9 @@ class DockerApp(BarrierAppDROP):
         self._portMappings = self._getArg(kwargs, "portMappings", "")
         logger.info(f"portMappings: {self._portMappings}")
 
+        self._shmSize = self._getArg(kwargs, "shmSize", "")
+        logger.info(f"shmSize: {self._shmSize}")
+
         # Additional volume bindings can be specified for existing files/dirs
         # on the host system. They are given either as a list or as a
         # comma-separated string
@@ -428,6 +431,7 @@ class DockerApp(BarrierAppDROP):
             environment=env,
             working_dir=self.workdir,
             init=True,
+            shm_size=self._shmSize,
             # auto_remove=self._removeContainer,
             detach=True,
         )
