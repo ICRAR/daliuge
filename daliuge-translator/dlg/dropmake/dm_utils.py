@@ -471,6 +471,7 @@ def convert_construct(lgo):
             # inputAppFields are converted to fields to be processed like
             # regular application drops
             app_node["fields"] = list(node[INPUT_APP_FIELDS])
+            app_node["fields"] += node["fields"]
             # TODO: remove, use fields list
             for afd in node[INPUT_APP_FIELDS]:
                     app_node[afd["name"]] = afd["value"]
