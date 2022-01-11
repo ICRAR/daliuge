@@ -36,6 +36,7 @@ from dlg.drop import (
     FileDROP,
     AppDROP,
     InMemoryDROP,
+    SharedMemoryDROP,
     PlasmaDROP,
     PlasmaFlightDROP,
     NullDROP,
@@ -130,6 +131,18 @@ class TestDROP(unittest.TestCase):
         Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
         """
         self._test_dynamic_write_withDropType(InMemoryDROP)
+
+    def test_write_SharedMemoryDROP(self):
+        """
+        Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
+        """
+        self._test_write_withDropType(SharedMemoryDROP)
+
+    def test_dynamic_write_SharedMemoryDROP(self):
+        """
+        Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
+        """
+        self._test_dynamic_write_withDropType(SharedMemoryDROP)
 
     def test_write_plasmaDROP(self):
         """
