@@ -466,11 +466,14 @@ def convert_construct(lgo):
         if "group" in node:
             app_node["group"] = node["group"]
 
-        for app_fd_name in ["appFields", "inputAppFields"]:
-            if app_fd_name in node:
-                for afd in node[app_fd_name]:
+        INPUT_APP_FIELDS = "inputAppFields"
+        if INPUT_APP_FIELDS in node:
+            # inputAppFields are converted to fields to be processed like
+            # regular application drops
+            app_node["fields"] = list(node[INPUT_APP_FIELDS])
+            # TODO: remove, use fields list
+            for afd in node[INPUT_APP_FIELDS]:
                     app_node[afd["name"]] = afd["value"]
-                break
 
         if node["category"] == Categories.GATHER:
             app_node["group_start"] = 1
