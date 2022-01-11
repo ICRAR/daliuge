@@ -435,12 +435,14 @@ class GenericScatterApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
 
     def run(self):
-        # split it as many times as we have outputs
-        numSplit = len(self.outputs)
+        numSplit = self.num_of_copies
         cont = droputils.allDropContents(self.inputs[0])
         # if the data is of type string it is not pickled, but stored as a binary string.
         try:
