@@ -43,6 +43,7 @@ import re
 import sys
 import inspect
 import binascii
+from typing import Union
 
 import numpy as np
 
@@ -58,6 +59,7 @@ from .ddap_protocol import (
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import (
+    DataIO,
     OpenMode,
     FileIO,
     MemoryIO,
@@ -524,7 +526,7 @@ class AbstractDROP(EventFirer):
             return self._refCount > 0
 
     @track_current_drop
-    def write(self, data, **kwargs):
+    def write(self, data: Union[bytes, memoryview], **kwargs):
         """
         Writes the given `data` into this DROP. This method is only meant
         to be called while the DROP is in INITIALIZED or WRITING state;
@@ -595,7 +597,7 @@ class AbstractDROP(EventFirer):
         return nbytes
 
     @abstractmethod
-    def getIO(self):
+    def getIO(self) -> DataIO:
         """
         Returns an instance of one of the `dlg.io.DataIO` instances that
         handles the data contents of this DROP.
@@ -2092,7 +2094,7 @@ class PlasmaDROP(AbstractDROP):
             self.object_id = object_id
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_path)
+        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_path, False)
 
     @property
     def dataURL(self):
