@@ -2170,7 +2170,7 @@ class PlasmaDROP(AbstractDROP):
 
 
 ##
-# @brief PlasmaFilght
+# @brief PlasmaFlight
 # @details An Apache Arrow Flight server providing distributed access
 # to a Plasma in-memory object store
 # @par EAGLE_START
