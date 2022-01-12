@@ -630,7 +630,6 @@ class PlasmaIO(DataIO):
         self._object_id = object_id
         self._reader = None
         self._writer = None
-        # TODO: could support multiple writes without staging if size is known
         self._expected_size = expected_size if expected_size > 0 else None
         self.use_staging = use_staging
 
