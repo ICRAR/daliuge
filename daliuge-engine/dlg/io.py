@@ -618,7 +618,7 @@ class PlasmaIO(DataIO):
     """
     _desc: plasma.PlasmaClient
 
-    def __init__(self, object_id: plasma.ObjectID, plasma_path="/tmp/plasma", use_staging=False):
+    def __init__(self, object_id: plasma.ObjectID, plasma_path="/tmp/plasma", expected_size:int=-1, use_staging=False):
         """Initializer
         Args:
             object_id (plasma.ObjectID): 20 bytes unique object id
@@ -630,6 +630,8 @@ class PlasmaIO(DataIO):
         self._object_id = object_id
         self._reader = None
         self._writer = None
+        # TODO: could support multiple writes without staging if size is known
+        self._expected_size = expected_size if expected_size > 0 else None
         self.use_staging = use_staging
 
     def _open(self, **kwargs):
@@ -654,9 +656,15 @@ class PlasmaIO(DataIO):
         return self._reader.read1(count)
 
     def _write(self, data: Union[memoryview, bytes, bytearray, pyarrow.Buffer], **kwargs):
-        # NOTE: data must be an array of bytes for len to represent the buffer bytesize
+        """
+        Writes data into the PlasmaIO reserved buffer.
+        If staging is False and expected_size is None, only a single write may occur
+        If staging is Flase and expected_size is positive, multiple writes 
+        """
+
+        # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
         assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
-        nbytes = data.nbytes if isinstance(data, memoryview) else len(data)
+        databytes = data.nbytes if isinstance(data, memoryview) else len(data)
 
         if self.use_staging:
             if not self._writer:
@@ -665,10 +673,14 @@ class PlasmaIO(DataIO):
         else:
             if not self._writer:
                 # write directly into fixed size plasma buffer
-                plasma_buffer = self._desc.create(self._object_id, nbytes)
+                self._bufferbytes = self._expected_size if self._expected_size is not None else databytes
+                plasma_buffer = self._desc.create(self._object_id, self._bufferbytes)
                 self._writer = pyarrow.FixedSizeBufferWriter(plasma_buffer)
-            else:
-                raise Exception("plasmaIO supports only a single write when not using staging buffer")
+            if self._writer.tell() + databytes > self._bufferbytes:
+                raise Exception("".join([f"attempted to write {self._writer.tell() + databytes} ",
+                                f"bytes to plasma buffer of size {self._bufferbytes}, ",
+                                "consider using staging or expected_size argument"]))
+
         self._writer.write(data)
         return len(data)
 
