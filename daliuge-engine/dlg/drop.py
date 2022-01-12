@@ -1160,6 +1160,22 @@ class PathBasedDrop(object):
         return self._path
 
 
+##
+# @brief File
+# @details A standard file on a filesystem mounted to the deployment machine
+# @par EAGLE_START
+# @par category File
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/check_filepath_exists Check file path exists/True/Boolean/readwrite/
+#     \~English Perform a check to make sure the file path exists before proceeding with the application
+# @param[in] param/filepath File Path//String/readwrite/
+#     \~English Path to the file for this node
+# @param[in] param/dirname Directory name//String/readwrite/
+#     \~English Path to the file for this node
+# @par EAGLE_END
 class FileDROP(AbstractDROP, PathBasedDrop):
     """
     A DROP that points to data stored in a mounted filesystem.
@@ -1320,6 +1336,28 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         return "file://" + hostname + self._path
 
 
+##
+# @brief NGAS
+# @details An archive on the Next Generation Archive System (NGAS).
+# @par EAGLE_START
+# @par category File
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/ngsSrv NGAS Server/localhost/String/readwrite/
+#     \~English The URL of the NGAS Server
+# @param[in] param/ngasPort NGAS Port/7777/Integer/readwrite/
+#     \~English The port of the NGAS Server
+# @param[in] param/ngasFileId File ID//String/readwrite/
+#     \~English File ID on NGAS (for retrieval only)
+# @param[in] param/ngasConnectTimeout Connection timeout/2/Integer/readwrite/
+#     \~English Timeout for connecting to the NGAS server
+# @param[in] param/ngasMime NGAS mime-type/text\/ascii/String/readwrite/
+#     \~English Mime-type to be used for archiving
+# @param[in] param/ngasTimeout NGAS timeout/2/Integer/readwrite/
+#     \~English Timeout for receiving responses for NGAS
+# @par EAGLE_END
 class NgasDROP(AbstractDROP):
     """
     A DROP that points to data stored in an NGAS server
@@ -1418,6 +1456,16 @@ class NgasDROP(AbstractDROP):
         return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
 
+##
+# @brief Memory
+# @details In-memory storage of intermediate data products
+# @par EAGLE_START
+# @par category Memory
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @par EAGLE_END
 class InMemoryDROP(AbstractDROP):
     """
     A DROP that points data stored in memory.
@@ -2078,13 +2126,29 @@ class BranchAppDrop(BarrierAppDROP):
         self._notifyAppIsFinished()
 
 
+##
+# @brief Plasma
+# @details An object in a Apache Arrow Plasma in-memory object store
+# @par EAGLE_START
+# @par category Plasma
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/plasma_path Plasma Path//String/readwrite/
+#     \~English Path to the local plasma store
+# @param[in] param/object_id Object Id//String/readwrite/
+#     \~English PlasmaId of the object for all compute nodes
+# @param[in] param/use_staging Use Staging/False/Boolean/readwrite/
+#     \~English Enables writing to a dynamically resizeable staging buffer
+# @par EAGLE_END
 class PlasmaDROP(AbstractDROP):
     """
     A DROP that points to data stored in a Plasma Store
     """
 
-    object_id = dlg_string_param("object_id", None)
     plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
+    object_id = dlg_string_param("object_id", None)
     use_staging = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
@@ -2105,6 +2169,23 @@ class PlasmaDROP(AbstractDROP):
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
+##
+# @brief PlasmaFilght
+# @details An Apache Arrow Flight server providing distributed access
+# to a Plasma in-memory object store
+# @par EAGLE_START
+# @par category Plasma
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/plasma_path Plasma Path//String/readwrite/
+#     \~English Path to the local plasma store
+# @param[in] param/object_id Object Id//String/readwrite/
+#     \~English PlasmaId of the object for all compute nodes
+# @param[in] param/flight_path Flight Path//String/readwrite/
+#     \~English IP and flight port of the drop owner
+# @par EAGLE_END
 class PlasmaFlightDROP(AbstractDROP):
     """
     A DROP that points to data stored in a Plasma Store
