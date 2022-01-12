@@ -2085,6 +2085,7 @@ class PlasmaDROP(AbstractDROP):
 
     object_id = dlg_string_param("object_id", None)
     plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
+    use_staging = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
         object_id = self.uid
@@ -2094,7 +2095,10 @@ class PlasmaDROP(AbstractDROP):
             self.object_id = object_id
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_path, False)
+        return PlasmaIO(plasma.ObjectID(self.object_id),
+                                        self.plasma_path,
+                                        expected_size=self._expectedSize,
+                                        use_staging=self.use_staging)
 
     @property
     def dataURL(self):
