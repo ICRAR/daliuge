@@ -613,16 +613,17 @@ def IOForURL(url):
 class PlasmaIO(DataIO):
     """
     A shared-memory IO reader/writer implemented using plasma store
-    memory buffers. Note: not compatible with plasmaClient.put/get
-    which performs data pickling.
+    memory buffers. Note: not compatible with PlasmaClient put()/get()
+    which performs data pickling before writing.
     """
     _desc: plasma.PlasmaClient
 
-    def __init__(self, object_id: plasma.ObjectID, plasma_path="/tmp/plasma", expected_size:int=-1, use_staging=False):
+    def __init__(self, object_id: plasma.ObjectID, plasma_path="/tmp/plasma", expected_size:Optional[int]=None, use_staging=False):
         """Initializer
         Args:
             object_id (plasma.ObjectID): 20 bytes unique object id
             plasma_path (str, optional): The socket file path visible to all shared processes. Defaults to "/tmp/plasma".
+            expected_size (Optional[int], optional) Total size of data to allocate to buffer if known. Defaults to None.
             use_staging (bool, optional): Whether to stream first to a resizable staging buffer. Defaults to False.
         """
         super(PlasmaIO, self).__init__()
@@ -657,8 +658,9 @@ class PlasmaIO(DataIO):
     def _write(self, data: Union[memoryview, bytes, bytearray, pyarrow.Buffer], **kwargs):
         """
         Writes data into the PlasmaIO reserved buffer.
-        If staging is False and expected_size is None, only a single write may occur
-        If staging is Flase and expected_size is positive, multiple writes 
+        If use_staging is False and expected_size is None, only a single write may occur.
+        If use_staging is False and expected_size is > 0, multiple writes up to expected size may occur.
+        If use_staging is True, any number of writes may occur with small performance penalty.
         """
 
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
@@ -696,9 +698,6 @@ class PlasmaIO(DataIO):
 
 
 class PlasmaFlightIO(DataIO):
-    """
-    A plasma 
-    """
     _desc: PlasmaFlightClient
 
     def __init__(
