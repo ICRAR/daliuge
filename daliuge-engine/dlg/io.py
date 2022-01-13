@@ -78,7 +78,7 @@ class DataIO(object):
         self._mode = mode
         self._desc = self._open(**kwargs)
 
-    def write(self, data, **kwargs):
+    def write(self, data, **kwargs) -> int:
         """
         Writes `data` into the storage
         """
@@ -148,8 +148,8 @@ class DataIO(object):
         pass
 
     @abstractmethod
-    def _write(self, data, **kwargs):
-        pass
+    def _write(self, data, **kwargs) -> int:
+        return 0
 
     @abstractmethod
     def _close(self, **kwargs):
@@ -611,20 +611,41 @@ def IOForURL(url):
 
 
 class PlasmaIO(DataIO):
-    def __init__(self, object_id, plasma_path="/tmp/plasma"):
+    """
+    A shared-memory IO reader/writer implemented using plasma store
+    memory buffers. Note: not compatible with PlasmaClient put()/get()
+    which performs data pickling before writing.
+    """
+    _desc: plasma.PlasmaClient
+
+    def __init__(self, object_id: plasma.ObjectID, plasma_path="/tmp/plasma", expected_size:Optional[int]=None, use_staging=False):
+        """Initializer
+        Args:
+            object_id (plasma.ObjectID): 20 bytes unique object id
+            plasma_path (str, optional): The socket file path visible to all shared processes. Defaults to "/tmp/plasma".
+            expected_size (Optional[int], optional) Total size of data to allocate to buffer if known. Defaults to None.
+            use_staging (bool, optional): Whether to stream first to a resizable staging buffer. Defaults to False.
+        """
         super(PlasmaIO, self).__init__()
         self._plasma_path = plasma_path
         self._object_id = object_id
         self._reader = None
         self._writer = None
+        self._expected_size = expected_size if expected_size > 0 else None
+        self.use_staging = use_staging
 
     def _open(self, **kwargs):
         return plasma.connect(self._plasma_path)
 
     def _close(self, **kwargs):
         if self._writer:
-            self._desc.put_raw_buffer(self._writer.getvalue(), self._object_id)
-            self._writer.close()
+            if self.use_staging:
+                self._desc.put_raw_buffer(self._writer.getbuffer(), self._object_id)
+                self._writer.close()
+            else:
+                self._desc.seal(self._object_id)
+                print(self._desc.list())
+                self._writer.close()
         if self._reader:
             self._reader.close()
 
@@ -634,10 +655,33 @@ class PlasmaIO(DataIO):
             self._reader = pyarrow.BufferReader(data)
         return self._reader.read1(count)
 
-    def _write(self, data, **kwargs):
-        if not self._writer:
-            # use client.create and FixedSizeBufferWriter
-            self._writer = pyarrow.BufferOutputStream()
+    def _write(self, data: Union[memoryview, bytes, bytearray, pyarrow.Buffer], **kwargs):
+        """
+        Writes data into the PlasmaIO reserved buffer.
+        If use_staging is False and expected_size is None, only a single write may occur.
+        If use_staging is False and expected_size is > 0, multiple writes up to expected size may occur.
+        If use_staging is True, any number of writes may occur with small performance penalty.
+        """
+
+        # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
+        assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
+        databytes = data.nbytes if isinstance(data, memoryview) else len(data)
+
+        if self.use_staging:
+            if not self._writer:
+                # write into a resizable staging buffer
+                self._writer = io.BytesIO()
+        else:
+            if not self._writer:
+                # write directly into fixed size plasma buffer
+                self._bufferbytes = self._expected_size if self._expected_size is not None else databytes
+                plasma_buffer = self._desc.create(self._object_id, self._bufferbytes)
+                self._writer = pyarrow.FixedSizeBufferWriter(plasma_buffer)
+            if self._writer.tell() + databytes > self._bufferbytes:
+                raise Exception("".join([f"attempted to write {self._writer.tell() + databytes} ",
+                                f"bytes to plasma buffer of size {self._bufferbytes}, ",
+                                "consider using staging or expected_size argument"]))
+
         self._writer.write(data)
         return len(data)
 
@@ -654,6 +698,8 @@ class PlasmaIO(DataIO):
 
 
 class PlasmaFlightIO(DataIO):
+    _desc: PlasmaFlightClient
+
     def __init__(
         self,
         object_id: plasma.ObjectID,
@@ -666,7 +712,7 @@ class PlasmaFlightIO(DataIO):
         self._object_id = object_id
         self._plasma_path = plasma_path
         self._flight_path = flight_path
-        self._size = size
+        self._nbytes = size
         self._reader = None
         self._writer = None
 
@@ -676,11 +722,11 @@ class PlasmaFlightIO(DataIO):
 
     def _close(self, **kwargs):
         if self._writer:
-            if self._size == -1:
+            if self._nbytes == -1:
                 self._desc.put(self._writer.getvalue(), self._object_id)
                 self._writer.close()
             else:
-                assert self._size == self._writer.tell()
+                assert self._nbytes == self._writer.tell()
                 self._desc.seal(self._object_id)
         if self._reader:
             self._reader.close()
@@ -693,7 +739,7 @@ class PlasmaFlightIO(DataIO):
 
     def _write(self, data, **kwargs):
         if not self._writer:
-            if self._size == -1:
+            if self._nbytes == -1:
                 # stream into resizeable buffer
                 logger.warning(
                     "Using dynamically sized Plasma buffer. Performance may be reduced."
@@ -701,7 +747,7 @@ class PlasmaFlightIO(DataIO):
                 self._writer = pyarrow.BufferOutputStream()
             else:
                 # optimally write directly to fixed size plasma buffer
-                self._buffer = self._desc.create(self._object_id, self._size)
+                self._buffer = self._desc.create(self._object_id, self._nbytes)
                 self._writer = pyarrow.FixedSizeBufferWriter(self._buffer)
         self._writer.write(data)
         return len(data)
