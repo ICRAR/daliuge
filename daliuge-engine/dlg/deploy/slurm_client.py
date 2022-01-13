@@ -24,7 +24,6 @@ Contains a slurm client which generates slurm scripts from daliuge graphs.
 """
 
 import datetime
-import json
 import sys
 import os
 import subprocess
@@ -32,6 +31,7 @@ from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl
 from deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
+from deployment_utils import find_numislands, label_job_dur
 
 
 class SlurmClient:
@@ -95,47 +95,8 @@ class SlurmClient:
         self._check_with_session = check_with_session
         self._submit = submit
         self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        self._set_name_and_nodenumber()
-
-    def _set_name_and_nodenumber(self):
-        """
-        Given the physical graph data extract the graph name and the total number of
-        nodes. We are not making a decision whether the island managers are running
-        on separate nodes here, thus the number is the sum of all island
-        managers and node managers. The values are only populated if not given on the
-        init already.
-
-        TODO: We will probably need to do the same with job duration and CPU number
-        """
-        pgt_data = json.loads(self._physical_graph_template_data)
-        try:
-            (pgt_name, pgt) = pgt_data
-        except:
-            raise ValueError(type(pgt_data))
-        nodes = list(map(lambda x: x['node'], pgt))
-        islands = list(map(lambda x: x['island'], pgt))
-        if self._num_islands is None:
-            self._num_islands = len(dict(zip(islands, nodes)))
-        if self._num_nodes is None:
-            num_nodes = list(map(lambda x, y: x + y, islands, nodes))
-            self._num_nodes = len(dict(zip(num_nodes, nodes)))  # uniq comb.
-        if self._pip_name is None:
-            self._pip_name = pgt_name
-
-    @property
-    def num_daliuge_nodes(self):
-        """
-        Returns thse number of daliuge nodes available to run workflow
-        """
-        if self._run_proxy:
-            ret = self._num_nodes - 1  # exclude the proxy node
-        else:
-            ret = self._num_nodes - 0  # exclude the data island node?
-        if ret <= 0:
-            raise Exception(
-                "Not enough nodes {0} to run DALiuGE.".format(self._num_nodes)
-            )
-        return ret
+        self._num_islands, self._num_nodes, self._pip_name = find_numislands(
+            self._physical_graph_template_data)
 
     def get_log_dirname(self):
         """
@@ -147,15 +108,6 @@ class SlurmClient:
         graph_name = self._pip_name.split('_')[0]  # use only the part of the graph name
         return "{0}_{1}".format(graph_name, self._dtstr)
 
-    def label_job_dur(self):
-        """
-        e.g. 135 min --> 02:15:00
-        """
-        seconds = self._job_dur * 60
-        minute, sec = divmod(seconds, 60)
-        hour, minute = divmod(minute, 60)
-        return "%02d:%02d:%02d" % (hour, minute, sec)
-
     def create_job_desc(self, physical_graph_file):
         """
         Creates the slurm script from a physical graph
@@ -165,7 +117,7 @@ class SlurmClient:
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
         pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
-        pardict["JOB_DURATION"] = self.label_job_dur()
+        pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
         pardict["ACCOUNT"] = self._acc
         pardict["PY_BIN"] = sys.executable
         pardict["LOG_DIR"] = log_dir
