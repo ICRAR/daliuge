@@ -224,7 +224,8 @@ class TestDROP(unittest.TestCase):
         without an expected drop size (for app compatibility and not
         recommended in production)
         """
-        a = dropType("oid:A", "uid:A", expectedSize=-1)
+        # NOTE: use_staging required for multiple writes to plasma drops
+        a = dropType("oid:A", "uid:A", expectedSize=-1, use_staging=True)
         b = SumupContainerChecksum("oid:B", "uid:B")
         c = InMemoryDROP("oid:C", "uid:C")
         b.addInput(a)
