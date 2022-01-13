@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2019
+#    (c) UWA - The University of Western Australia, 2016
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -19,21 +19,18 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""
+Contains a module translating physical graphs to kubernetes helm charts.
+"""
 
-import unittest
 
-from dlg.deploy import deployment_utils
+class HelmClient:
+    """
+    TODO: Understanding basic helm charts
+    """
 
+    def create_helm_chart(self, physical_graph_file):
+        pass
 
-class TestSlurmUtils(unittest.TestCase):
-    def assert_list_as_string(self, s, expected_list):
-        slurm_list = deployment_utils.list_as_string(s)
-        self.assertEqual(expected_list, slurm_list)
-
-    def test_list_as_string(self):
-        self.assert_list_as_string(
-            "a008,b[072-073,076]", ["a008", "b072", "b073", "b076"]
-        )
-        self.assert_list_as_string(
-            "pleiades[03-05]", ["pleiades03", "pleiades04", "pleiades05"]
-        )
+    def submit_job(self):
+        pass
