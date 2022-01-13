@@ -22,7 +22,7 @@
 """
 Module containing the core DROP classes.
 """
-
+import string
 from abc import ABCMeta, abstractmethod
 import ast
 import base64
@@ -1452,6 +1452,42 @@ class InMemoryDROP(AbstractDROP):
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
 
+class SharedMemoryDROP(AbstractDROP):
+    """
+    A DROP that points to data stored in shared memory.
+    This drop is functionality equivalent to an InMemory drop running in a concurrent environment.
+    In this case however, the requirement for shared memory is explicit.
+
+    @WARNING Currently implemented as writing to shmem and there is no backup behaviour.
+    """
+
+    def initialize(self, **kwargs):
+        args = []
+        if "pydata" in kwargs:
+            pydata = kwargs.pop("pydata")
+            if isinstance(pydata, str):
+                pydata = pydata.encode("utf8")
+            args.append(base64.b64decode(pydata))
+        self._buf = io.BytesIO(*args)
+
+    def getIO(self):
+        print(sys.version_info)
+        if sys.version_info >= (3, 8):
+            if hasattr(self, '_sessID'):
+                return SharedMemoryIO(self.oid, self._sessID)
+            else:
+                # Using Drop without manager, just generate a random name.
+                sess_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+                return SharedMemoryIO(self.oid, sess_id)
+        else:
+            raise NotImplementedError("Shared memory is only available with Python >= 3.8")
+
+    @property
+    def dataURL(self):
+        hostname = os.uname()[1]
+        return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
+
+
 class NullDROP(AbstractDROP):
     """
     A DROP that doesn't store any data.
@@ -2145,6 +2181,7 @@ class PlasmaFlightDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
+
 
 ##
 # @brief ParameterSet

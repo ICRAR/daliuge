@@ -30,6 +30,7 @@ class Categories:
     END = "End"
 
     MEMORY = "Memory"
+    SHMEM = "SharedMemory"
     FILE = "File"
     NGAS = "NGAS"
     NULL = "null"
@@ -63,6 +64,7 @@ class Categories:
 
 STORAGE_TYPES = {
     Categories.MEMORY,
+    Categories.SHMEM,
     Categories.FILE,
     Categories.NGAS,
     Categories.NULL,
