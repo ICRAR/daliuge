@@ -34,6 +34,7 @@ from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     ContainerDROP,
     InMemoryDROP,
+    SharedMemoryDROP,
     FileDROP,
     NgasDROP,
     LINKTYPE_NTO1_PROPERTY,
@@ -51,6 +52,7 @@ from .common import Categories, DropType
 
 STORAGE_TYPES = {
     Categories.MEMORY: InMemoryDROP,
+    Categories.SHMEM: SharedMemoryDROP,
     Categories.FILE: FileDROP,
     Categories.NGAS: NgasDROP,
     Categories.NULL: NullDROP,
