@@ -23,7 +23,7 @@ import json
 import os
 
 from dlg.drop import dropdict
-from dlag.common import Categories
+from dlg.common import Categories
 
 
 # Directories and paths
