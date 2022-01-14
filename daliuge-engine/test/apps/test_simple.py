@@ -26,20 +26,23 @@ import sys
 import time
 import unittest
 from multiprocessing.pool import ThreadPool
-from numpy import random, mean, array, concatenate
-
+from numpy import random, mean, array, concatenate, random, testing
+from psutil import cpu_count
 
 from dlg import droputils
-from dlg.apps.simple import GenericScatterApp, SleepApp, CopyApp, SleepAndCopyApp, \
+from dlg.apps.simple import (
+    GenericScatterApp,
+    GenericNpyScatterApp,
+    SleepApp,
+    CopyApp,
+    SleepAndCopyApp,
     ListAppendThrashingApp
+)
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
-
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
-from numpy import random, mean, array, concatenate
-from psutil import cpu_count
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +209,52 @@ class TestSimpleApps(unittest.TestCase):
         data2 = pickle.loads(droputils.allDropContents(o2))
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
+
+    def test_genericNpyScatter(self):
+        data_in = random.rand(100, 100)
+        b = InMemoryDROP("b", "b")
+        droputils.save_numpy(b, data_in)
+        s = GenericNpyScatterApp("s", "s", num_of_copies=2)
+        s.addInput(b)
+        o1 = InMemoryDROP("o1", "o1")
+        o2 = InMemoryDROP("o2", "o2")
+        for x in o1, o2:
+            s.addOutput(x)
+        self._test_graph_runs((b, s, o1, o2), b, (o1, o2), timeout=4)
+
+        data1 = droputils.load_numpy(o1)
+        data2 = droputils.load_numpy(o2)
+        data_out = concatenate([data1, data2])
+        self.assertEqual(data_in.all(), data_out.all())
+
+    def test_genericNpyScatter_multi(self):
+        data1_in = random.rand(100, 100)
+        data2_in = random.rand(100, 100)
+        b = InMemoryDROP("b", "b")
+        c = InMemoryDROP("c", "c")
+        droputils.save_numpy(b, data1_in)
+        droputils.save_numpy(c, data2_in)
+        s = GenericNpyScatterApp("s", "s", num_of_copies=2, scatter_axes="[0,0]")
+        s.addInput(b)
+        s.addInput(c)
+        o1 = InMemoryDROP("o1", "o1")
+        o2 = InMemoryDROP("o2", "o2")
+        o3 = InMemoryDROP("o3", "o3")
+        o4 = InMemoryDROP("o4", "o4")
+        for x in o1, o2, o3, o4:
+            s.addOutput(x)
+        self._test_graph_runs((b, s, o1, o2, o3, o4), (b, c), (o1, o2, o3, o4), timeout=4)
+
+        data11 = droputils.load_numpy(o1)
+        data12 = droputils.load_numpy(o2)
+        data1_out = concatenate([data11, data12])
+        self.assertEqual(data1_out.shape, data1_in.shape)
+        testing.assert_array_equal(data1_out, data1_in)
+
+        data21 = droputils.load_numpy(o3)
+        data22 = droputils.load_numpy(o4)
+        data2_out = concatenate([data21, data22])
+        testing.assert_array_equal(data2_out, data2_in)
 
     def test_listappendthrashing(self, size=1000):
         a = InMemoryDROP('a', 'a')
