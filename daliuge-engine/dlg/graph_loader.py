@@ -34,6 +34,7 @@ from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     ContainerDROP,
     InMemoryDROP,
+    SharedMemoryDROP,
     FileDROP,
     NgasDROP,
     LINKTYPE_NTO1_PROPERTY,
@@ -42,6 +43,7 @@ from .drop import (
     EndDROP,
     PlasmaDROP,
     PlasmaFlightDROP,
+    ParameterSetDROP
 )
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
@@ -50,6 +52,7 @@ from .common import Categories, DropType
 
 STORAGE_TYPES = {
     Categories.MEMORY: InMemoryDROP,
+    Categories.SHMEM: SharedMemoryDROP,
     Categories.FILE: FileDROP,
     Categories.NGAS: NgasDROP,
     Categories.NULL: NullDROP,
@@ -57,6 +60,7 @@ STORAGE_TYPES = {
     Categories.JSON: JsonDROP,
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP,
+    Categories.PARSET: ParameterSetDROP
 }
 
 try:

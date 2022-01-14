@@ -27,6 +27,7 @@ import random
 import shutil
 import sqlite3
 import string
+import sys
 import tempfile
 import subprocess
 
@@ -36,6 +37,7 @@ from dlg.drop import (
     FileDROP,
     AppDROP,
     InMemoryDROP,
+    SharedMemoryDROP,
     PlasmaDROP,
     PlasmaFlightDROP,
     NullDROP,
@@ -130,6 +132,20 @@ class TestDROP(unittest.TestCase):
         Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
         """
         self._test_dynamic_write_withDropType(InMemoryDROP)
+
+    @unittest.skipIf(sys.version_info < (3, 8), "Shared memory does nt work < python 3.8")
+    def test_write_SharedMemoryDROP(self):
+        """
+        Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
+        """
+        self._test_write_withDropType(SharedMemoryDROP)
+
+    @unittest.skipIf(sys.version_info < (3, 8), "Shared memory does nt work < python 3.8")
+    def test_dynamic_write_SharedMemoryDROP(self):
+        """
+        Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
+        """
+        self._test_dynamic_write_withDropType(SharedMemoryDROP)
 
     def test_write_plasmaDROP(self):
         """
