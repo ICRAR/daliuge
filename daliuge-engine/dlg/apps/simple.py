@@ -32,10 +32,16 @@ import numpy as np
 
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
-from dlg.meta import dlg_float_param, dlg_string_param
-from dlg.meta import dlg_bool_param, dlg_int_param
-from dlg.meta import dlg_component, dlg_batch_input
-from dlg.meta import dlg_batch_output, dlg_streaming_input
+from dlg.meta import (
+    dlg_float_param, 
+    dlg_string_param,
+    dlg_bool_param, 
+    dlg_int_param,
+    dlg_component, 
+    dlg_batch_input,
+    dlg_batch_output, 
+    dlg_streaming_input
+)
 from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
