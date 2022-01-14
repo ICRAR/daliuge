@@ -146,7 +146,7 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_parallelHelloWorld(self):
         m0 = InMemoryDROP("m0", "m0")
-        s = GenericScatterApp("s", "s")
+        s = GenericScatterApp("s", "s", num_of_copies=4)
         greets = ["World", "Solar system", "Galaxy", "Universe"]
         m0.write(pickle.dumps(greets))
         s.addInput(m0)
@@ -194,7 +194,7 @@ class TestSimpleApps(unittest.TestCase):
         data_in = random.randint(0, 100, size=100)
         b = InMemoryDROP("b", "b")
         b.write(pickle.dumps(data_in))
-        s = GenericScatterApp("s", "s")
+        s = GenericScatterApp("s", "s", num_of_copies=2)
         s.addInput(b)
         o1 = InMemoryDROP("o1", "o1")
         o2 = InMemoryDROP("o2", "o2")
