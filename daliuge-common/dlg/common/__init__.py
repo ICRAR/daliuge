@@ -30,6 +30,7 @@ class Categories:
     END = "End"
 
     MEMORY = "Memory"
+    SHMEM = "SharedMemory"
     FILE = "File"
     NGAS = "NGAS"
     NULL = "null"
@@ -37,6 +38,7 @@ class Categories:
     S3 = "S3"
     PLASMA = "Plasma"
     PLASMAFLIGHT = "PlasmaFlight"
+    PARSET = "ParameterSet"
 
     MKN = "MKN"
     SCATTER = "Scatter"
@@ -62,6 +64,7 @@ class Categories:
 
 STORAGE_TYPES = {
     Categories.MEMORY,
+    Categories.SHMEM,
     Categories.FILE,
     Categories.NGAS,
     Categories.NULL,
@@ -69,6 +72,7 @@ STORAGE_TYPES = {
     Categories.JSON,
     Categories.PLASMA,
     Categories.PLASMAFLIGHT,
+    Categories.PARSET
 }
 APP_DROP_TYPES = [
     Categories.COMPONENT,
