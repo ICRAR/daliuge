@@ -26,6 +26,7 @@ import os
 
 import yaml
 import subprocess
+from dlg.common.version import version as dlg_version
 
 
 def _write_chart(chart_dir, chart_name, name, version, app_version):
@@ -53,17 +54,21 @@ class HelmClient:
     """
 
     def __init__(self, chart_name="dlg-test", deploy_dir="./", deploy_name="daliuge-test",
-                 submit=True,
+                 submit=True, chart_version="0.1.0",
                  value_config=None, physical_graph=None):
         if value_config is None:
             value_config = dict()
         self._chart_name = chart_name
         self._deploy_dir = deploy_dir
         self._chart_dir = os.path.join(self._deploy_dir, self._chart_name)
+        self._chart_version = chart_version
         self._deploy_name = deploy_name
         self._submit = submit
         self._value_data = value_config if value_config is not None else {}
         self._physical_graph = physical_graph if physical_graph is not None else []
+
+        if not os.path.isdir(self._deploy_dir):
+            os.makedirs(self._deploy_dir)
 
     def create_helm_chart(self, physical_graph_file):
         """
@@ -72,9 +77,11 @@ class HelmClient:
         """
         # TODO: Interpret physical graph as helm-chart
         # run helm init
+        os.chdir(self._deploy_dir)
         subprocess.check_output([f'helm create {self._chart_name}'], shell=True)
         # Update chart.yaml
-        _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, "0.1.0", "1.16.0")
+        _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
+                     app_version=dlg_version)
         # Update values.yaml
         _write_values(self._chart_dir, self._value_data)
         # Add charts
