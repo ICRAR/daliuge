@@ -29,6 +29,7 @@ import yaml
 
 from dlg.common.version import version as dlg_version
 from dlg.deploy.helm_client import HelmClient
+from dlg.common import Categories
 
 
 class TestHelmClient(unittest.TestCase):
@@ -37,18 +38,64 @@ class TestHelmClient(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             helm_client = HelmClient(deploy_dir=tmp_dir)
             helm_client.create_helm_chart([])
-            print(helm_client._chart_name)
             chart_file_name = os.path.join(helm_client._chart_dir, "Chart.yaml")
-            print(chart_file_name)
             with open(chart_file_name, 'r', encoding='utf-8') as chart_file:
                 chart_data = yaml.safe_load(chart_file)
                 self.assertEqual(helm_client._chart_name, chart_data['name'])
                 self.assertEqual(dlg_version, chart_data['appVersion'])
 
     def test_create_single_node_helm_chart(self):
+        pg = [
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepApp",
+                "inputs": ["A"],
+                "outputs": ["C"],
+            },
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+        ]
+        for drop in pg:
+            drop["node"] = "127.0.0.1"
+            drop["island"] = "127.0.0.1"
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            helm_client = HelmClient(deploy_dir=tmp_dir)
+            helm_client.create_helm_chart(pg)
+            # TODO: Assert translation works
         self.fail("Test not yet implemented")
 
     def test_create_multi_node_helm_chart(self):
+        pg = [
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.1",
+             "island": "127.0.0.1"},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepApp",
+                "inputs": ["A"],
+                "outputs": ["C"],
+                "node": "127.0.0.1",
+                "island": "127.0.0.1"
+            },
+            {
+                "oid": "D",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepApp",
+                "inputs": ["A"],
+                "outputs": ["E"],
+                "node": "127.0.0.2",
+                "island": "127.0.0.2"
+            },
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.1",
+             "island": "127.0.0.1"},
+            {"oid": "E", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.2",
+             "island": "127.0.0.2"}
+        ]
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            helm_client = HelmClient(deploy_dir=tmp_dir)
+            helm_client.create_helm_chart(pg)
+            # TODO: Assert translation works
         self.fail("Test not yet implemented")
 
     def test_submit_job(self):
