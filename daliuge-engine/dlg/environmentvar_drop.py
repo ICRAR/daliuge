@@ -1,3 +1,24 @@
+#
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2014
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
 import abc
 import io
 import os
@@ -23,6 +44,13 @@ class KeyValueDROP:
         """
 
     # TODO: Implement Set(key, value) operations
+    @abc.abstractmethod
+    def set(self, key, value):
+        """
+        Should update a value in the key-val store or add a new values if not present.
+        """
+        # Will be difficult to handle shared memory considerations.
+        # For such a job, using a REDIS or other distributed key-val store may be more appropriate.
 
 
 def _filter_parameters(parameters: dict):
@@ -42,27 +70,30 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
     Functions effectively like a globally-available Python dictionary
     """
 
-    variables = {}
-
     def initialize(self, **kwargs):
         """
         Runs through all parameters, putting each into this drop's variable dict
         """
-        self.variables.update(_filter_parameters(self.parameters))
+        self._variables = dict()
+        self._variables.update(_filter_parameters(self.parameters))
 
     def getIO(self):
-        return MemoryIO(io.BytesIO(json.dumps(self.variables).encode('utf-8')))
+        return MemoryIO(io.BytesIO(json.dumps(self._variables).encode('utf-8')))
 
     def get(self, key):
-        return self.variables.get(key)
+        return self._variables.get(key)
 
     def get_multiple(self, keys: list):
         return_vars = []
         for key in keys:
-            return_vars.append(self.variables.get(key))
+            return_vars.append(self._variables.get(key))
         return return_vars
+
+    def set(self, key, value):
+        raise NotImplementedError(
+            'Setting EnvironmentVariables mid-execution is not currently implemented')
 
     @property
     def dataURL(self):
         hostname = os.uname()[1]
-        return f"config://{hostname}/{os.getpid()}/{id(self.variables)}"
+        return f"config://{hostname}/{os.getpid()}/{id(self._variables)}"
