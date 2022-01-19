@@ -221,6 +221,9 @@ class AbstractDROP(EventFirer):
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
 
+        # Global environment variable stores. Kept separate since they are perpetually available
+        self._environment_variable_stores = self._getArg(kwargs, "environment_stores", {})
+
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
         # itself to the COMPLETED state
@@ -599,6 +602,32 @@ class AbstractDROP(EventFirer):
             self.status = DROPStates.WRITING
 
         return nbytes
+
+    def get_environment_variable(self, key: str):
+        """
+        Expects keys of the form $store_name.var_name
+        $store_name.var_name.sub_var_name will query store_name for var_name.sub_var_name
+        """
+        if len(key) < 2 or key[0] != '$':
+            # Reject malformed entries
+            return None
+        key_edit = key[1:]
+        env_var_ref, env_var_key = key_edit.split('.')[0], '.'.join(key_edit.split('.')[1:])
+        env_var_drop = self._environment_variable_stores.get(env_var_ref)
+        if env_var_drop is not None:
+            return env_var_drop.get(env_var_key)
+        else:
+            return None
+
+    def get_environment_variables(self, keys: list):
+        """
+        Expects multiple instances of the single key form
+        """
+        return_values = []
+        for key in keys:
+            # TODO: Accumulate calls to the same env_var_store to save communication
+            return_values.append(self.get_environment_variable(key))
+        return return_values
 
     @abstractmethod
     def getIO(self) -> DataIO:
@@ -2202,9 +2231,9 @@ class PlasmaDROP(AbstractDROP):
 
     def getIO(self):
         return PlasmaIO(plasma.ObjectID(self.object_id),
-                                        self.plasma_path,
-                                        expected_size=self._expectedSize,
-                                        use_staging=self.use_staging)
+                        self.plasma_path,
+                        expected_size=self._expectedSize,
+                        use_staging=self.use_staging)
 
     @property
     def dataURL(self):
