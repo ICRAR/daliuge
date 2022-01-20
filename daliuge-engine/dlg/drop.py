@@ -221,9 +221,6 @@ class AbstractDROP(EventFirer):
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
 
-        # Global environment variable stores. Kept separate since they are perpetually available
-        self._environment_variable_stores = self._getArg(kwargs, "environment_stores", {})
-
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
         # itself to the COMPLETED state
@@ -613,8 +610,11 @@ class AbstractDROP(EventFirer):
             return None
         key_edit = key[1:]
         env_var_ref, env_var_key = key_edit.split('.')[0], '.'.join(key_edit.split('.')[1:])
-        env_var_drop = self._environment_variable_stores.get(env_var_ref)
-        if env_var_drop is not None:
+        env_var_drop = None
+        for producer in self.producers:
+            if producer.name == env_var_ref:
+                env_var_drop = producer
+        if env_var_drop is not None:  # TODO: Check for KeyValueDROP interface support
             return env_var_drop.get(env_var_key)
         else:
             return None

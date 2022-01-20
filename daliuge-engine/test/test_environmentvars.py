@@ -82,8 +82,8 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         Tests the AbstractDROP fetch routine functions correctly with a single environment drop
         """
         env_drop = create_std_env_vars()
-        app_drop = AppDROP(uid='b', oid='b', environment_stores={env_drop.name: env_drop})
-        print(app_drop._environment_variable_stores)
+        app_drop = AppDROP(uid='b', oid='b')
+        app_drop.addProducer(env_drop)
         self.assertEqual('/DLG_HOME/', app_drop.get_environment_variable('$env_vars.dlg_root'))
         self.assertEqual(3, app_drop.get_environment_variable('$env_vars.int_var'))
         self.assertEqual(False, app_drop.get_environment_variable('$env_vars.bool_var'))
@@ -101,7 +101,8 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         """
         env_name = 'env_vars'
         env_drop = create_std_env_vars(name=env_name)
-        app_drop = AppDROP(uid='b', oid='b', environment_stores={env_drop.name: env_drop})
+        app_drop = AppDROP(uid='b', oid='b')
+        app_drop.addProducer(env_drop)
         expected_vars = [None, '/DLG_HOME/', 3, False, 0.5, {'first': 1, 'second': 'sec'},
                          [1, 2.0, '3'], None]
         query_keys = ['uid', 'dlg_root', 'int_var', 'bool_var', 'float_var', 'dict_var', 'list_var',
@@ -118,7 +119,8 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         """
         env_name = ''
         env_drop = create_empty_env_vars(name=env_name)
-        app_drop = AppDROP(uid='c', oid='c', environment_stores={env_drop.name: env_drop})
+        app_drop = AppDROP(uid='c', oid='c')
+        app_drop.addProducer(env_drop)
         self.assertEqual(None, app_drop.get_environment_variable(''))
         self.assertEqual(None, app_drop.get_environment_variable('$'))
 
@@ -131,8 +133,9 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         env1_drop = create_std_env_vars(name=env1_name)
         env2_drop = EnvironmentVarDROP(oid='d', uid='d', nm=env2_name, dlg_root='/DIFFERENT/',
                                        int_var=4)
-        app_drop = AppDROP(uid='c', oid='c',
-                           environment_stores={env1_name: env1_drop, env2_name: env2_drop})
+        app_drop = AppDROP(uid='c', oid='c')
+        app_drop.addProducer(env1_drop)
+        app_drop.addProducer(env2_drop)
         self.assertEqual('/DLG_HOME/', app_drop.get_environment_variable(f"${env1_name}.dlg_root"))
         self.assertEqual('/DIFFERENT/', app_drop.get_environment_variable(f"${env2_name}.dlg_root"))
         self.assertEqual(3, app_drop.get_environment_variable(f"${env1_name}.int_var"))
