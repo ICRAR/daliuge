@@ -221,6 +221,9 @@ class AbstractDROP(EventFirer):
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
 
+        # Matcher used to validate environment_variable_syntax
+        self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
+
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
         # itself to the COMPLETED state
@@ -599,6 +602,15 @@ class AbstractDROP(EventFirer):
             self.status = DROPStates.WRITING
 
         return nbytes
+
+    def autofill_environment_variables(self):
+        """
+        Runs through all parameters here, fetching those which match the env-var syntax when
+        discovered.
+        """
+        for param_key, param_val in self.parameters.items():
+            if self._env_var_matcher.fullmatch(str(param_val)):
+                self.parameters[param_key] = self.get_environment_variable(param_val)
 
     def get_environment_variable(self, key: str):
         """
