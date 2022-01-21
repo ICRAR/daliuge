@@ -45,7 +45,6 @@ from dlg.meta import (
 from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
-
 class NullBarrierApp(BarrierAppDROP):
     component_meta = dlg_component(
         "NullBarrierApp",
