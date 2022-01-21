@@ -234,6 +234,27 @@ shared-memory-drops which write to ``/dev/shm``. While relatively robust, one sh
 to ensure safe-access to memory-drops in this case, opting to use scatter/gather or other explicit
 aggregation stages where necessary.
 
+Shared Memory
+^^^^^^^^^^^^^
+
+In order to enable truly parallel Python components, a lightweight method to share data between system processes is needed.
+This approach (with caveats) essentially defeats the GIL and therefore requires an explanation; but first, the caveats.
+
+* SharedMemoryDROPs are not thread-safe - simultaneous access (writing or reading) incurrs undefined behaviour - use other, more heavy-weight data stores if necessary.
+* You must be using Python 3.8 or newer - our implementation relies on features only included from 3.8 onwards.
+* Windows is not supported - but if enough demand was present, it could be implemented back in.
+
+Onto the solution.
+To share memory between processes, we create files in ``/dev/shmem`` for each drop, brokered by an imaginatively named ``SharedMemoryManager``.
+Each DALiuGE Node Manager has an associated SharedMemoryManager which addresses shared memory by ``session/uid`` pairs.
+The need to create *named* blocks of shared memory necessitates the development of our own manager, rather than using the standard implementation.
+Upon session completion (or failure), the SharedMemoryManager destroys all shared memory blocks associated with that session.
+SharedMemoryDROPs can grow or shrink automatically and arbitrarily or be provided a specific size to use. Their default size is 4096 bytes.
+Shrunk memory will be truncated, grown blocks will contain a copy of the old data.
+
+As mentioned previously, if DALiuGE is configured to utilise multiple cores, there is no need to specifically use SharedMemoryDROPs, InMemoryDROPs will be switched automatically.
+However, if the need arises, one can specifically use SharedMemoryDROPs.
+
 .. |lgt| replace:: *logical graph template*
 .. |lg| replace:: *logical graph*
 .. |pgt| replace:: *physical graph template*
