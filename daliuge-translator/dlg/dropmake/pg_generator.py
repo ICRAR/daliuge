@@ -747,8 +747,9 @@ class LGNode:
             kwargs["removeContainer"] = self.str_to_bool(
                 str(self.jd.get("removeContainer", "1"))
             )
-            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
+            kwargs["shmSize"] = str(self.jd.get("shmSize",""))
             drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
