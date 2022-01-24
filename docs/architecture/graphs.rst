@@ -265,7 +265,10 @@ One can include multiple ``EnivronmentVarDROP``s in a single workflow, **but eac
 In a logical graph, reference environment variables as component or application parameters with the following syntax:
 ``${EnvironmentVarDROP_Name}.{Variable_name}``
 The translator and engine handle parsing and filling of these parameters automatically.
-One may also access these variables at runtime using the ``get_environment_variable(key)`` function, which accepts a key in the syntax mentioned above, returning ``None`` if the variable store or key does not exist.
+Variables beginning with ``$DLG_``, such as ``$DLG_ROOT`` are an exception which are handled seperately.
+These variables come from the deployment themselves and are fetched from the deployment environment at runtime.
+
+One may also access these variables individually at runtime using the ``get_environment_variable(key)`` function, which accepts a key in the syntax mentioned above, returning ``None`` if the variable store or key does not exist.
 
 
 .. |lgt| replace:: *logical graph template*
