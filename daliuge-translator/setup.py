@@ -97,6 +97,7 @@ install_requires = [
     "wheel",
     "bottle",
     "daliuge-common==%s" % (VERSION,),
+    "jsonschema",
     "metis>=0.2a3",
     "networkx",
     "numpy",
