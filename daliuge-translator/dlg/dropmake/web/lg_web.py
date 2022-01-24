@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import warnings
+from jsonschema import validate, ValidationError
 
 from bottle import (
     route,
@@ -85,6 +86,7 @@ ALGO_PARAMS = [
     ("max_mem", int),
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
+LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
@@ -454,6 +456,7 @@ def gen_pgt():
 
     query = request.query
     lg_name = query.get("lg_name")
+    print("gen_pgt()::lg_name" + str(lg_name))
     if not lg_exists(lg_name):
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
@@ -500,12 +503,21 @@ def gen_pgt_post():
     # Retrieve the graph name.
     reqform = request.forms
     lg_name = reqform.get("lg_name")
-    # print('lg_name', lg_name)
+    #print('gen_pgt_post()::lg_name' + lg_name + ',' + os.getcwd() + ',' + str(os.listdir()) + ',' + str(os.listdir('/daliuge')))
 
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
+        #print('gen_pgt_post()::logical_graph:' + str(logical_graph))
+
+        # load LG schema
+        with open(LG_SCHEMA_PATH, "r") as schema_file:
+            lg_schema = json.load(schema_file)
+
+        # validate JSON
+        validate(logical_graph, lg_schema)
+
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
@@ -523,6 +535,8 @@ def gen_pgt_post():
                 "" if par_algo == "none" else "Partitioning"
             ),
         )
+    except ValidationError as ve:
+        return "Validation Error {1}: {0}".format(str(ve), lg_name)
     except GraphException as ge:
         trace_msg = traceback.format_exc()
         print(trace_msg)
