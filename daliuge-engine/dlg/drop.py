@@ -76,7 +76,7 @@ DEFAULT_INTERNAL_PARAMETERS = {'storage', 'rank', 'loop_cxt', 'dw', 'iid', 'dt',
 
 if sys.version_info >= (3, 8):
     from .io import SharedMemoryIO
-from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
+from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
 from dlg.process import DlgProcess
 from .meta import (
     dlg_float_param,
@@ -223,6 +223,7 @@ class AbstractDROP(EventFirer):
 
         # Matcher used to validate environment_variable_syntax
         self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
+        self._dlg_var_matcher = re.compile(r"\$DLG_.+")
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -611,12 +612,16 @@ class AbstractDROP(EventFirer):
         for param_key, param_val in self.parameters.items():
             if self._env_var_matcher.fullmatch(str(param_val)):
                 self.parameters[param_key] = self.get_environment_variable(param_val)
+            if self._dlg_var_matcher.fullmatch(str(param_val)):
+                self.parameters[param_key] = getDlgVariable(param_val)
 
     def get_environment_variable(self, key: str):
         """
         Expects keys of the form $store_name.var_name
         $store_name.var_name.sub_var_name will query store_name for var_name.sub_var_name
         """
+        if self._dlg_var_matcher.fullmatch(key):
+            return getDlgVariable(key)
         if len(key) < 2 or key[0] != '$':
             # Reject malformed entries
             return None
