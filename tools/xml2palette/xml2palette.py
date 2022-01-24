@@ -506,7 +506,7 @@ def create_palette_node_from_params(params):
 def write_palette_json(outputfile, nodes, gitrepo, version):
     palette = {
         "modelData": {
-            "fileType": "palette",
+            "fileType": "Palette",
             "repoService": "GitHub",
             "repoBranch": "master",
             "repo": "ICRAR/EAGLE_test_repo",
