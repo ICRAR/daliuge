@@ -1248,7 +1248,8 @@ class AbstractDROP(EventFirer):
         self.status = DROPStates.ERROR
 
         # Signal our subscribers that the show is over
-        self._fire("dropCompleted", status=DROPStates.ERROR)
+        self._fire(eventType="dropCompleted", status=DROPStates.ERROR)
+        self.completedrop()
 
     @track_current_drop
     def setCompleted(self):
@@ -1275,7 +1276,8 @@ class AbstractDROP(EventFirer):
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
         # Signal our subscribers that the show is over
-        self._fire("dropCompleted", status=DROPStates.COMPLETED)
+        self._fire(eventType="dropCompleted", status=DROPStates.COMPLETED)
+        self.completedrop()
 
     def isCompleted(self):
         """
@@ -1517,6 +1519,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
             self._size = 0
         # Signal our subscribers that the show is over
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
+        self.completedrop()
 
     @property
     def dataURL(self):
@@ -1777,6 +1780,9 @@ class RDBMSDrop(AbstractDROP):
 
         # The table this Drop points at
         self._db_table = kwargs.pop("dbtable")
+
+        # Data store for reproducibility
+        self._querylog = []
 
     def getIO(self):
         # This Drop cannot be accessed directly

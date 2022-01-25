@@ -126,7 +126,8 @@ class NMTestsMixIn(object):
         """Utility to run a graph in two Node Managers"""
 
         dm1, dm2 = node_managers or [self._start_dm(threads=threads) for _ in range(2)]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
@@ -232,8 +233,6 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "producers": ["B"],
             },
         ]
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
         c_data = str(crc32c(a_data, 0)).encode("utf8")
@@ -596,8 +595,6 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
         ]
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
         e_data = str(crc32c(a_data, 0)).encode('utf8')
@@ -628,8 +625,6 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
         ]
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
         e_data = str(crc32c(a_data, 0)).encode('utf8')
@@ -643,6 +638,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """
 
         graph = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        graph = add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"
         if sys.version_info < (3, 8):
@@ -667,6 +663,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
+        add_test_reprodata(g)
         dm = self._start_dm(threads=multiprocessing.cpu_count(), **kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -775,6 +772,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("B", DROPLinkType.INPUT, "E"),
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 
@@ -857,6 +856,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
         rels_34 = [DROPRel("K", DROPLinkType.PRODUCER, "M")]
+        for g in [g1, g2, g3, g4]:
+            add_test_reprodata(g)
         quickDeploy(
             dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13}
         )
@@ -914,7 +915,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         =======    ====================
         """
 
-        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = f"s{random.randint(0, 1000)}"
         N = 100
@@ -934,7 +935,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
                 }
             )
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -1014,6 +1016,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("D", DROPLinkType.INPUT, "F"),
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 

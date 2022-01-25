@@ -109,7 +109,7 @@ class ToposortTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("topoGraphs/testSingle.graph")
+        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -122,7 +122,7 @@ class ToposortTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -135,7 +135,7 @@ class ToposortTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -147,7 +147,7 @@ class ToposortTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -157,7 +157,7 @@ class ToposortTests(unittest.TestCase):
         """
         Tests an empty graph. Should fail gracefully.
         """
-        lgt = _init_graph("topoGraphs/testEmpty.graph")
+        lgt = _init_graph("test/reproducibility/topoGraphs/testEmpty.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]

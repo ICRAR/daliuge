@@ -27,9 +27,7 @@ from dlg import exceptions
 from dlg.common import Categories
 from dlg.exceptions import InvalidGraphException
 
-zfrom
-dlg.manager
-import constants
+from dlg.manager import constants
 from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.node_manager import NodeManager

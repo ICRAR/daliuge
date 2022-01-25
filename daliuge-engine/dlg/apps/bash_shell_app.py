@@ -169,7 +169,10 @@ class BashShellBase(object):
                 self, "No command specified, cannot create BashShellApp"
             )
 
-    def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
+        self._recompute_data = {}
+
+    def _run_bash(self, inputs, outputs, stdin=None,
+                  stdout=subprocess.PIPE):
         """
         Runs the given `cmd`. If any `inputs` and/or `outputs` are given
         (dictionaries of uid:drop elements) they are used to replace any placeholder

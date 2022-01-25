@@ -294,6 +294,7 @@ class NodeManagerBase(DROPManager):
             log_evt_listener = self._logging_event_listener
             if log_evt_listener:
                 drop.subscribe(log_evt_listener, "status")
+                drop.subscribe(log_evt_listener, 'reproducibility')
                 if isinstance(drop, AppDROP):
                     drop.subscribe(log_evt_listener, "execStatus")
 
