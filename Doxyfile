@@ -104,6 +104,9 @@ OPTIMIZE_OUTPUT_JAVA   = YES
 
 RECURSIVE              = YES
 
+# Don't process JS files
+EXCLUDE_PATTERNS  = */web/*
+
 #---------------------------------------------------------------------------
 # Configuration options related to the HTML output
 #---------------------------------------------------------------------------

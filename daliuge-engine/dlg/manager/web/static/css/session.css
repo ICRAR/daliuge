@@ -10,7 +10,6 @@ body {
     background: #fff;
 }
 
-
 @-webkit-keyframes flash {
     0%, 50%, 100% {
         opacity: 1;
@@ -53,67 +52,16 @@ svg {
     overflow: hidden;
 }
 
-.node rect, .node polygon {
-    stroke-width: 2.0px;
-    stroke: #bbb;
-}
-
-/* DROP states */
-.node.initialized :first-child, rect.initialized {
-    fill: #ffe;
-}
-
-.node.writing :first-child, rect.writing {
-    fill: #ecde7b;
-}
-
-.node.completed :first-child, rect.completed {
-    fill: #7bdc7b;
-}
-
-.node.expired :first-child, rect.expired {
-    fill: #700000;
-}
-
-.node.cancelled :first-child, rect.cancelled {
-    fill: #cccccc;
-}
-
-.node.deleted :first-child, rect.deleted {
-    color: #700000;
-}
-
-/* AppDROP states */
-.node.not_run :first-child, rect.not_run {
-    fill: #ffe;
-}
-
-.node.running :first-child, rect.running {
-    fill: #ecde7b;
-}
-
-.node.finished :first-child, rect.finished {
-    fill: #7bdc7b;
-}
-
-.node.error :first-child, rect.error {
-    fill: #e44f33;
-}
-
-.node.container polygon {
-    stroke-dasharray: 5;
-}
-
 .node g div {
-    width: 180px;
-    height: 60px;
-    color: #000;
-    overflow: hidden;
+  color: #000;
+  padding: 4px 30px;
+  overflow: hidden;
 }
 
-.node polygon + g div div {
-    padding-left: 20%
+.node polygon+g div div {
+	padding-left: 13%
 }
+
 
 .node rect + g div div {
     padding-left: 2%
@@ -131,9 +79,423 @@ svg {
 }
 
 .notes {
-    font-size: 90%;
+  font-size: 15px;
+}
+
+.notes span {
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .drop-label span {
     display: block;
+}
+
+.bootbox-close-button{
+  display: none;
+}
+
+#graphNameWrapper{
+  position: absolute;
+  top: 56px;
+  display: block;
+  width: 100%;
+  height:auto;
+  background-color: #002349;
+  padding: 0px 20px;
+  position: fixed;
+  z-index: 101;
+}
+
+#graphNameWrapper li{
+  color: rgb(219, 219, 219);
+}
+
+#graphName{
+  margin: 0;
+}
+
+.navbar{
+  background: rgb(0,64,133);
+  background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+  margin-bottom:100px;
+}
+
+.navbar-brand{
+  margin-left: 20px;
+}
+
+.navbar-brand span{
+  margin-left: 10px;
+  text-decoration: underline;
+}
+
+.navbar-nav.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translatex(-50%);
+}
+
+.navbar-nav.navbar-center div {
+  margin-right:10px;
+}
+
+.navbar-nav.navbar-right {
+  position: absolute;
+  right:10px;
+}
+
+.navbar-nav button {
+  background-color: transparent;
+  border:1px white solid;
+}
+
+.navbar-nav .btn.btn-secondary.active{
+  background-color: white;
+  border:1px white solid;
+  color:rgba(0,35,73,1);
+}
+
+.navbar-nav .btn.btn-secondary:hover{
+  background-color: rgb(216, 216, 216);
+  border:1px rgb(216, 216, 216) solid;
+  color:rgba(0,35,73,1);
+}
+
+#session-status-wrapper{
+  border:none;
+  color:white;
+  background-color: transparent;
+  opacity: 100%;
+}
+
+#session-status{
+  color:lime;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  font-size: 16px;
+  opacity: 100%;
+  z-index: 10000 !important;
+}
+
+.tooltipRight:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* move to left */
+  left:100%;
+  margin-left:15px; /* and add a small right margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipRight:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipRight:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  left:100%;
+  margin-left:-4px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent rgba(0,0,0,0.94) transparent transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipRight:hover:before, .tooltipRight:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+
+}
+
+.tooltipTop:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* center */
+  Left:50%;
+  transform:translateX(-50%);
+
+  /* move to top */
+  bottom:100%;
+  margin-bottom:15px; /* and add a small bottom margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipTop:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipTop:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  bottom:100%;
+  margin-bottom:-4px;
+
+  /* vertically center */
+  left: 50%;
+  bottom:100%;
+  transform:translateX(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: rgba(0,0,0,0.94) transparent transparent transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipTop:hover:before, .tooltipTop:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipLeft:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* move to left */
+  right:100%;
+  margin-right:15px; /* and add a small right margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipLeft:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipLeft:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  right:100%;
+  margin-right:-4px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent transparent transparent rgba(0,0,0,0.94);
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipLeft:hover:before, .tooltipLeft:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottom:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* center */
+  Left:50%;
+  transform:translateX(-50%);
+
+  /* move to bottom */
+  top:100%;
+  margin-top:15px; /* and add a small top margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipBottom:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottom:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  top:100%;
+  margin-top:-4px;
+
+  /* vertically center */
+  left: 50%;
+  top:100%;
+  transform:translateX(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent transparent rgba(0,0,0,0.94) transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipBottom:hover:before, .tooltipBottom:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottomLeft:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* center */
+  Left:50%;
+  transform:translateX(-90%);
+
+  /* move to bottom */
+  top:100%;
+  margin-top:15px; /* and add a small top margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipBottomLeft:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottomLeft:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  top:100%;
+  margin-top:-4px;
+
+  /* vertically center */
+  left: 50%;
+  top:100%;
+  transform:translateX(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent transparent rgba(0,0,0,0.94) transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipBottomLeft:hover:before, .tooltipBottomLeft:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+#graphName li{
+  list-style-type: none;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+#graphName{
+  padding:0;
+}
+
+#listContainer{
+  position: absolute;
+  top:80px;
+  bottom:0px;
+  right:0px;
+  left:0px;
+}
+
+#listContainer div{
+  overflow: auto;
+  height: 100%;
+}
+
+#pg-graph{
+  position: absolute;
+  top:80px;
+  bottom:0px;
+  right:0px;
+  left:0px;
+}
+
+#pg-progress-bar{
+  position: absolute;
+  top:80px;
+  bottom:0px;
+  right:0px;
+  left:0px;
+  padding-right:20px;
 }

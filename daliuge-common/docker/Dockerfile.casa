@@ -1,0 +1,41 @@
+# we are doing a two-stage build to keep the size of
+# the final image low.
+
+# First stage build and cleanup
+#FROM python:3.8-slim
+FROM kernsuite/base:7
+ARG BUILD_ID
+LABEL stage=builder
+LABEL build=$BUILD_ID
+RUN apt-get update && apt-get install -y gcc python3-pip python3-venv wget && \
+    pip3 install -U pip
+
+# add_arrow_repo: 
+RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb && \
+    apt install -y -V ./apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb && \
+    sed -i'' -e 's,https://apache.bintray.com/,https://apache.jfrog.io/artifactory/,g' /etc/apt/sources.list.d/apache-arrow.sources && \
+    apt update
+
+# Build and install the latest Plasma Storage Manager (and its dependencies)
+RUN apt install -y casacore-dev cmake g++ git libarrow-dev libplasma-dev python3-casacore && \
+    git clone --recursive https://gitlab.com/ska-telescope/plasma-storage-manager.git && \
+    cd plasma-storage-manager && \
+    cmake -B build . -DCMAKE_BUILD_TYPE=Release -DPlasma_DIR=/usr/lib/x86_64-linux-gnu/cmake/arrow -DArrow_DIR=/usr/lib/x86_64-linux-gnu/cmake/arrow -DBUILD_TESTING=OFF && \
+    cmake --build build/ --target all -j2 && \
+    cmake --build build/ --target install && \
+    ldconfig
+RUN git clone https://gitlab.com/ska-telescope/cbf-sdp-emulator.git && \
+    cd && python3 -m venv dlg && . ~/dlg/bin/activate && \
+    pip3 install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-2.0.0.dev0-cp38-cp38-manylinux2014_x86_64.whl && \
+    pip install pyarrow==3.0.0 wheel python-casacore && \
+    cd cbf-sdp-emulator; pip3 install --extra-index-url=https://nexus.engageska-portugal.pt/repository/pypi/simple .[plasma] && \
+    cd data/; tar xf sim-vis.ms.tar.gz; cd ..
+
+
+COPY / /daliuge
+
+RUN cd /daliuge && \
+    . ~/dlg/bin/activate && \
+    pip3 install numpy && \
+    pip3 install .
+    

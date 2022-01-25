@@ -37,7 +37,7 @@ def terminate_or_kill(proc, timeout):
     if ecode is not None:
         logger.info("Process %d already exited with code %d", proc.pid, ecode)
         return
-    logger.info('Terminating %d', proc.pid)
+    logger.info("Terminating %d", proc.pid)
     proc.terminate()
     wait_or_kill(proc, timeout)
 
@@ -51,6 +51,10 @@ def wait_or_kill(proc, timeout, period=0.1):
 
     kill9 = waitLoops == max_loops
     if kill9:
-        logger.warning('Killing %d by brute force after waiting %.2f [s], BANG! :-(', proc.pid, timeout)
+        logger.warning(
+            "Killing %d by brute force after waiting %.2f [s], BANG! :-(",
+            proc.pid,
+            timeout,
+        )
         proc.kill()
     proc.wait()

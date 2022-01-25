@@ -31,15 +31,14 @@ from dlg.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
 
 try:
-    from crc32c import crc32  # @UnusedImport
+    from crc32c import crc32c  # @UnusedImport
 except:
     from binascii import crc32  # @Reimport
 
 
 class TestSocketListener(unittest.TestCase):
-
     def _test_socket_listener(self, **kwargs):
-        '''
+        """
         A simple test to check that SocketListenerApps are indeed working as
         expected; that is, they write the data they receive into their output,
         and finish when the connection is closed from the client side
@@ -47,16 +46,16 @@ class TestSocketListener(unittest.TestCase):
         The data flow diagram looks like this:
 
         A --> B --> C --> D
-        '''
+        """
 
-        host = 'localhost'
+        host = "localhost"
         port = 9933
         data = os.urandom(1025)
 
-        a = SocketListenerApp('oid:A', 'uid:A', host=host, port=port, **kwargs)
-        b = InMemoryDROP('oid:B', 'uid:B')
-        c = SumupContainerChecksum('oid:C', 'uid:C')
-        d = InMemoryDROP('oid:D', 'uid:D')
+        a = SocketListenerApp("oid:A", "uid:A", host=host, port=port, **kwargs)
+        b = InMemoryDROP("oid:B", "uid:B")
+        c = SumupContainerChecksum("oid:C", "uid:C")
+        d = InMemoryDROP("oid:D", "uid:D")
         a.addOutput(b)
         b.addConsumer(c)
         c.addOutput(d)
@@ -74,22 +73,22 @@ class TestSocketListener(unittest.TestCase):
         bContents = droputils.allDropContents(b)
         dContents = int(droputils.allDropContents(d))
         self.assertEqual(data, bContents)
-        self.assertEqual(crc32(data, 0), dContents)
+        self.assertEqual(crc32c(data, 0), dContents)
 
     def test_socket_listener(self):
         self._test_socket_listener()
 
     def test_socket_listener_integer_with_bufsize(self):
-        for bufsize in (4096, '4096'):
+        for bufsize in (4096, "4096"):
             self._test_socket_listener(bufsize=bufsize)
 
     def test_invalid(self):
 
         # Shouldn't allow inputs
-        a = SocketListenerApp('a', 'a', port=1)
-        a.addOutput(InMemoryDROP('c', 'c'))
-        self.assertRaises(Exception, a.addInput, InMemoryDROP('b', 'b'))
-        self.assertRaises(Exception, a.addStreamingInput, InMemoryDROP('b', 'b'))
+        a = SocketListenerApp("a", "a", port=1)
+        a.addOutput(InMemoryDROP("c", "c"))
+        self.assertRaises(Exception, a.addInput, InMemoryDROP("b", "b"))
+        self.assertRaises(Exception, a.addStreamingInput, InMemoryDROP("b", "b"))
 
         # Shouldn't be able to open ports <= 1024
         a.execute()

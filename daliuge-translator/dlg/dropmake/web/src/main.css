@@ -1,0 +1,489 @@
+.navbar{
+    background: rgb(0,64,133);
+    background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+}
+
+.navbar-brand span{
+    margin-left: 10px;
+}
+
+.navbar-nav.navbar-center {
+    position: absolute;
+    left: 50%;
+    transform: translatex(-50%);
+}
+
+
+.navbar-nav button {
+  background-color: transparent;
+  border:1px white solid;
+  box-shadow: none !important;
+}
+
+.navbar-nav .btn.btn-secondary.active{
+  background-color: white;
+  border:1px white solid;
+  color:rgba(0,35,73,1);
+  box-shadow: none !important;
+}
+
+.navbar-nav .btn.btn-secondary:hover{
+  background-color: rgb(216, 216, 216);
+  border:1px rgb(216, 216, 216) solid;
+  color:rgba(0,35,73,1);
+  box-shadow: none !important;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    font-size: 16px;
+    opacity: 100%;
+}
+
+.inactiveLink {
+    pointer-events: none;
+    cursor: default;
+ }
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  font-size: 16px;
+  opacity: 100%;
+  z-index: 10000 !important;
+}
+
+.tooltipRight:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* move to left */
+  left:100%;
+  margin-left:15px; /* and add a small right margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipRight:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipRight:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  left:100%;
+  margin-left:-4px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent rgba(0,0,0,0.94) transparent transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipRight:hover:before, .tooltipRight:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+
+}
+
+.tooltipTop:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* center */
+  Left:50%;
+  transform:translateX(-50%);
+
+  /* move to top */
+  bottom:100%;
+  margin-bottom:15px; /* and add a small bottom margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipTop:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipTop:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  bottom:100%;
+  margin-bottom:-4px;
+
+  /* vertically center */
+  left: 50%;
+  bottom:100%;
+  transform:translateX(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: rgba(0,0,0,0.94) transparent transparent transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipTop:hover:before, .tooltipTop:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipLeft:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* move to left */
+  right:100%;
+  margin-right:15px; /* and add a small right margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipLeft:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipLeft:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  right:100%;
+  margin-right:-4px;
+
+  /* vertically center */
+  top:50%;
+  transform:translateY(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent transparent transparent rgba(0,0,0,0.94);
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipLeft:hover:before, .tooltipLeft:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottom:before {
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
+
+  /* center */
+  Left:50%;
+  transform:translateX(-50%);
+
+  /* move to bottom */
+  top:100%;
+  margin-top:15px; /* and add a small top margin */
+
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipBottom:hover:before {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottom:after {
+  content: "";
+  position:absolute;
+
+  /* position tooltip correctly */
+  top:100%;
+  margin-top:-4px;
+
+  /* vertically center */
+  left: 50%;
+  top:100%;
+  transform:translateX(-50%);
+
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent transparent rgba(0,0,0,0.94) transparent;
+
+  visibility:hidden;
+  transition: 0s visibility;
+}
+
+.tooltipBottom:hover:before, .tooltipBottom:hover:after {
+  visibility: visible;
+  transition-delay: 1s;
+}
+
+.tooltipBottomLeft:before {
+    content: attr(data-text); /* here's the magic */
+    position:absolute;
+    font-size: 14px;
+
+    /* center */
+    Left:50%;
+    transform:translateX(-90%);
+
+    /* move to bottom */
+    top:100%;
+    margin-top:15px; /* and add a small top margin */
+
+    /* basic styles */
+    width:200px;
+    padding:10px;
+    border-radius:10px;
+    background:rgba(0,0,0,0.94);
+    color: #fff;
+    text-align:center;
+
+    visibility:hidden;
+    transition: 0s visibility;
+}
+
+.tooltipBottomLeft:hover:before {
+    visibility: visible;
+    transition-delay: 1s;
+}
+
+.tooltipBottomLeft:after {
+    content: "";
+    position:absolute;
+
+    /* position tooltip correctly */
+    top:100%;
+    margin-top:-4px;
+
+    /* vertically center */
+    left: 50%;
+    top:100%;
+    transform:translateX(-50%);
+
+    /* the arrow */
+    border:10px solid rgba(0,0,0,0.94);
+    border-color: transparent transparent rgba(0,0,0,0.94) transparent;
+
+    visibility:hidden;
+    transition: 0s visibility;
+}
+
+.tooltipBottomLeft:hover:before, .tooltipBottomLeft:hover:after {
+    visibility: visible;
+    transition-delay: 1s;
+}
+
+#graphNameWrapper{
+    position: absolute;
+    top: 56px;
+    display: block;
+    width: 100%;
+    background-color: #002349;
+    padding: 0px 16px;
+    position: fixed;
+    z-index: 101;
+}
+
+#graphNameWrapper span{
+    color: rgb(219, 219, 219);
+}
+
+#runinfoWrapper{
+    bottom:0px;
+    display: block;
+    width: 100%;
+    background-color: #a7a7a7;
+    border-top:solid 1px black;
+    padding: 0px 16px;
+    position: fixed;
+    z-index: 101;
+}
+
+#main{
+    width:auto;
+    height:auto;
+    position: absolute;
+    top: 80px;
+    bottom: 25px;
+    left:0px;
+    right:0px;
+}
+
+#graph{
+  width:100%;
+  height:100%;
+}
+
+#sankey{
+  width:100%;
+  height:100%;
+}
+
+.dropdown-menu{
+    border:solid 1px #000c1a;
+    border-radius: 6px;
+     position: absolute;
+     z-index: 1;
+     background-color: #0059a5;
+}
+
+.dropdown-item{
+    color: white;
+}
+
+.dropdown-item:hover{
+    background-color: #001d3b;
+    color: white;
+}
+
+.nav-link{
+    color:white;
+}
+
+#exportJsonBtn{
+    display: inline-block;
+}
+
+#exportJsonIcon{
+    position: absolute;
+    right:2px;
+}
+
+.dropDropDown{
+    visibility: hidden;
+    background-color: #0059a5;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border:solid 1px #000c1a;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    width: auto;
+    height:auto;
+    font-size: 12px;
+    top: 0px;
+    transform: translateX(-110%);
+}
+
+.dropDropDownParent:hover .dropDropDown {
+    visibility: visible;
+}
+
+.dropDropDown .dropdown-item{
+    font-weight: 400;
+    font-size: 1rem;
+    text-align: left;
+}
+
+#navbarExportDropdown{
+    color:white;
+}
+
+#deploy_button, #rest_deploy_button{
+    color: white;
+}
+
+#settingsModal .modal-header{
+    background: rgb(0,64,133);
+    background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+}
+
+#settingsModal .modal-header h5,#settingsModal .modal-header span,#settingsModal .modal-header button{
+    color:white;
+}
+
+#settingsModal .modal-body{
+    background-color:#001d3b;
+}
+
+#settingsModal .modal-body span{
+    color: white;
+    display: block;
+}
+
+#settingsModal .modal-footer{
+   background-color:#001d3b;
+}
+
+#settingsModal .modal-footer .btn-primary{
+    background-color: #0059a5;
+    border:solid 1px white;
+}
+
+.settingsSection{
+    padding-bottom:  20px;
+}
+
+#oriantationDropdown .orientationOptionContainer a{
+    display: inline-block;
+    color: white;
+}
+
+.orientationOptionContainer {
+    display: block;
+}
+
+#oriantationDropdown{
+    padding: 2px 10px;
+}

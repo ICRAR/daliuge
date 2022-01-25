@@ -1,7 +1,8 @@
 # We need the base image we build with the other Dockerfile
-FROM rayproject/ray:latest-cpu
+# latest ray image does not work because compilation of netifaces fails
+FROM rayproject/ray:74cbf0-py38
 
-RUN git clone https://github.com/pritchardn/daliuge && \
+RUN git clone https://github.com/ICRAR/daliuge && \
     apt update && \
     apt install -y gcc &&\
     cd daliuge && \
@@ -12,9 +13,7 @@ RUN git clone https://github.com/pritchardn/daliuge && \
     pip install .  && \
     cd ../daliuge-translator  && \
     pip install .  && \
-    pip uninstall -y cwlgen && \
     rm -rf /root/anaconda3/lib/python3.7/site-packages/ruamel_yaml* && \
-    pip install cwlgen && \
     apt remove -y gcc  && \
     apt install -y vim && \
     rm -rf /usr/lib/gcc  && \
@@ -30,4 +29,4 @@ EXPOSE 8084
 EXPOSE 9000
 
 
-CMD ["dlg", "daemon", "-vv", "--no-nm"]
+CMD ["dlg", "daemon", "-vv"]
