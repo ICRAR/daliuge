@@ -28,24 +28,26 @@ import shutil
 import tempfile
 import unittest
 
-import six
 from dlg import droputils
-from dlg.apps.bash_shell_app import BashShellApp, StreamingInputBashApp, \
-    StreamingOutputBashApp, StreamingInputOutputBashApp
+from dlg.apps.bash_shell_app import (
+    BashShellApp,
+    StreamingInputBashApp,
+    StreamingOutputBashApp,
+    StreamingInputOutputBashApp,
+)
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import FileDROP, InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 
 
 class BashAppTests(unittest.TestCase):
-
     def tearDown(self):
         shutil.rmtree("/tmp/daliuge_tfiles", True)
 
     def test_echo(self):
-        a = FileDROP('a', 'a')
-        b = BashShellApp('b', 'b', command='cp %i0 %o0')
-        c = FileDROP('c', 'c')
+        a = FileDROP("a", "a")
+        b = BashShellApp("b", "b", command="cp %i0 %o0")
+        c = FileDROP("c", "c")
 
         b.addInput(a)
         b.addOutput(c)
@@ -70,12 +72,12 @@ class BashAppTests(unittest.TestCase):
         """
 
         def assert_message_is_correct(message, command):
-            a = BashShellApp('a', 'a', command=command)
-            b = FileDROP('b', 'b')
+            a = BashShellApp("a", "a", command=command)
+            b = FileDROP("b", "b")
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.async_execute()
-            self.assertEqual(six.b(message), droputils.allDropContents(b))
+            self.assertEqual(message.encode("utf8"), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -85,11 +87,12 @@ class BashAppTests(unittest.TestCase):
     def test_envvars(self):
         """Checks that the DLG_* environment variables are available to bash programs"""
 
-        app_uid = 'a'
-        session_id = 'session-id'
+        app_uid = "a"
+        session_id = "session-id"
 
         # a fake session that has an ID
-        class dummy(object): pass
+        class dummy(object):
+            pass
 
         session = dummy()
         session.sessionId = session_id
@@ -97,14 +100,15 @@ class BashAppTests(unittest.TestCase):
         def assert_envvar_is_there(varname, value):
             command = "echo -n $%s > %%o0" % (varname)
             a = BashShellApp(app_uid, app_uid, dlg_session=session, command=command)
-            b = FileDROP('b', 'b')
+            b = FileDROP("b", "b")
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.async_execute()
-            self.assertEqual(six.b(value), droputils.allDropContents(b))
+            self.assertEqual(value.encode("utf8"), droputils.allDropContents(b))
 
-        assert_envvar_is_there('DLG_UID', app_uid)
-        assert_envvar_is_there('DLG_SESSION_ID', session_id)
+        assert_envvar_is_there("DLG_UID", app_uid)
+        assert_envvar_is_there("DLG_SESSION_ID", session_id)
+
 
     def test_reproducibility(self):
         from dlg.common.reproducibility.constants import ReproducibilityFlags
@@ -142,7 +146,6 @@ class BashAppTests(unittest.TestCase):
 
 
 class StreamingBashAppTests(unittest.TestCase):
-
     def test_single_pipe(self):
         """
         A simple test where two bash apps are connected to each other in a
@@ -163,10 +166,10 @@ class StreamingBashAppTests(unittest.TestCase):
 
         output_fname = tempfile.mktemp()
 
-        a = StreamingOutputBashApp('a', 'a', command=r"echo -en '5\n4\n3\n2\n1'")
-        b = InMemoryDROP('b', 'b')
-        c = StreamingInputBashApp('c', 'c', command="cat > %o0")
-        d = FileDROP('d', 'd', filepath=output_fname)
+        a = StreamingOutputBashApp("a", "a", command=r"echo -en '5\n4\n3\n2\n1'")
+        b = InMemoryDROP("b", "b")
+        c = StreamingInputBashApp("c", "c", command="cat > %o0")
+        d = FileDROP("d", "d", filepath=output_fname)
 
         a.addOutput(b)
         c.addStreamingInput(b)
@@ -178,8 +181,14 @@ class StreamingBashAppTests(unittest.TestCase):
 
         # The application executed, finished, and its output was recorded
         for drop in (a, b, c, d):
-            self.assertEqual(DROPStates.COMPLETED, drop.status, "Drop %r not COMPLETED: %d" % (drop, drop.status))
-        self.assertEqual([5, 4, 3, 2, 1], [int(x) for x in droputils.allDropContents(d).split(six.b('\n'))])
+            self.assertEqual(
+                DROPStates.COMPLETED,
+                drop.status,
+                "Drop %r not COMPLETED: %d" % (drop, drop.status),
+            )
+        self.assertEqual(
+            [5, 4, 3, 2, 1], [int(x) for x in droputils.allDropContents(d).split(b"\n")]
+        )
 
         # Clean up and go
         os.remove(output_fname)
@@ -205,12 +214,12 @@ class StreamingBashAppTests(unittest.TestCase):
 
         output_fname = tempfile.mktemp()
 
-        a = StreamingOutputBashApp('a', 'a', command=r"echo -en '5\n4\n3\n2\n1'")
-        b = InMemoryDROP('b', 'b')
-        c = StreamingInputOutputBashApp('c', 'c', command="cat")
-        d = InMemoryDROP('d', 'd')
-        e = StreamingInputBashApp('e', 'e', command="sort -n > %o0")
-        f = FileDROP('f', 'f', filepath=output_fname)
+        a = StreamingOutputBashApp("a", "a", command=r"echo -en '5\n4\n3\n2\n1'")
+        b = InMemoryDROP("b", "b")
+        c = StreamingInputOutputBashApp("c", "c", command="cat")
+        d = InMemoryDROP("d", "d")
+        e = StreamingInputBashApp("e", "e", command="sort -n > %o0")
+        f = FileDROP("f", "f", filepath=output_fname)
 
         a.addOutput(b)
         b.addStreamingConsumer(c)
@@ -225,7 +234,10 @@ class StreamingBashAppTests(unittest.TestCase):
         # The application executed, finished, and its output was recorded
         for drop in (a, b, c, d, e, f):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual([1, 2, 3, 4, 5], [int(x) for x in droputils.allDropContents(f).strip().split(six.b('\n'))])
+        self.assertEqual(
+            [1, 2, 3, 4, 5],
+            [int(x) for x in droputils.allDropContents(f).strip().split(b"\n")],
+        )
 
         # Clean up and go
         os.remove(output_fname)

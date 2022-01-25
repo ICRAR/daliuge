@@ -1,0 +1,7 @@
+# specific requirements to build the documentation
+sphinx
+livereload
+sphinx_rtd_theme
+sphinx-autobuild
+myst-parser
+ipython

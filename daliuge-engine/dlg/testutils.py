@@ -29,7 +29,6 @@ from dlg.utils import portIsOpen
 
 
 class ManagerInfo(object):
-
     def __init__(self, manager, server, thread, test):
         self.manager = manager
         self.server = server
@@ -50,24 +49,32 @@ class ManagerInfo(object):
 
 
 class ManagerStarter(object):
-
-    def _start_manager_in_thread(self, port, manager_class, rest_class,
-                                 *manager_args, **manager_kwargs):
+    def _start_manager_in_thread(
+        self, port, manager_class, rest_class, *manager_args, **manager_kwargs
+    ):
         manager = manager_class(*manager_args, **manager_kwargs)
         server = rest_class(manager)
-        thread = threading.Thread(target=server.start, args=('127.0.0.1', port))
+        thread = threading.Thread(target=server.start, args=("127.0.0.1", port))
         thread.start()
-        self.assertTrue(portIsOpen('127.0.0.1', port, 5))
+        self.assertTrue(portIsOpen("127.0.0.1", port, 5))
         return ManagerInfo(manager, server, thread, self)
 
     def start_nm_in_thread(self, port=constants.NODE_DEFAULT_REST_PORT):
-        return self._start_manager_in_thread(
-            port, NodeManager, NMRestServer, False)
+        return self._start_manager_in_thread(port, NodeManager, NMRestServer, False)
 
-    def start_dim_in_thread(self, nm_hosts=['127.0.0.1'],
-                            port=constants.ISLAND_DEFAULT_REST_PORT):
+    def start_dim_in_thread(
+        self, nm_hosts=["127.0.0.1"], port=constants.ISLAND_DEFAULT_REST_PORT
+    ):
         return self._start_manager_in_thread(
-            port, DataIslandManager, CompositeManagerRestServer, nm_hosts)
+            port, DataIslandManager, CompositeManagerRestServer, nm_hosts
+        )
+
+    def start_mm_in_thread(
+        self, nm_hosts=["127.0.0.1"], port=constants.MASTER_DEFAULT_REST_PORT
+    ):
+        return self._start_manager_in_thread(
+            port, MasterManager, CompositeManagerRestServer, nm_hosts
+        )
 
     def start_mm_in_thread(self, nm_hosts=['127.0.0.1'],
                            port=constants.MASTER_DEFAULT_REST_PORT):

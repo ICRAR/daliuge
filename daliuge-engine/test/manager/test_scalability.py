@@ -29,11 +29,21 @@ from dlg.utils import terminate_or_kill
 from test.manager import testutils
 
 logger = logging.getLogger(__name__)
-hostname = 'localhost'
+hostname = "localhost"
+
 
 
 def memory_drop(uid):
-    return dropdict({'node': hostname, 'oid': uid, 'uid': uid, 'type': 'plain', 'storage': Categories.MEMORY})
+    return dropdict(
+        {
+            "node": hostname,
+            "oid": uid,
+            "uid": uid,
+            "type": "plain",
+            "storage": Categories.MEMORY,
+        }
+    )
+
 
 
 def create_graph(branches, drops_per_branch):
@@ -42,11 +52,19 @@ def create_graph(branches, drops_per_branch):
     final_apps = []
     for branch in range(branches):
         for i in range(drops_per_branch):
-            data_uid = 'data_%d_branch_%d' % (i, branch)
-            app_uid = 'app_%d_branch_%d' % (i, branch)
+            data_uid = "data_%d_branch_%d" % (i, branch)
+            app_uid = "app_%d_branch_%d" % (i, branch)
             data_drop = memory_drop(data_uid)
-            app_drop = dropdict({'node': hostname, 'oid': app_uid, 'uid': app_uid, 'type': 'app',
-                                 'app': 'dlg.apps.simple.SleepAndCopyApp', 'sleepTime': 0})
+            app_drop = dropdict(
+                {
+                    "node": hostname,
+                    "oid": app_uid,
+                    "uid": app_uid,
+                    "type": "app",
+                    "app": "dlg.apps.simple.SleepAndCopyApp",
+                    "sleepTime": 0,
+                }
+            )
             data_drop.addConsumer(app_drop)
             graph.append(data_drop)
             graph.append(app_drop)
@@ -58,7 +76,7 @@ def create_graph(branches, drops_per_branch):
             else:
                 data_drop.addProducer(prev_app)
 
-    final_drop = memory_drop('final')
+    final_drop = memory_drop("final")
     for final_app in final_apps:
         final_drop.addProducer(final_app)
 
@@ -75,8 +93,8 @@ class TestBigGraph(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
 
-        args = ['-H', hostname, '-qq']
-        self.dmProcess = tool.start_process('nm', args)
+        args = ["-H", hostname, "-qq"]
+        self.dmProcess = tool.start_process("nm", args)
 
     def tearDown(self):
         terminate_or_kill(self.dmProcess, 5)
@@ -88,19 +106,23 @@ class TestBigGraph(unittest.TestCase):
         drops_per_branch = 5000
         branches = 5
         n_drops = drops_per_branch * branches * 2 + 1
-        graph, completed_uids = create_graph(branches=branches, drops_per_branch=drops_per_branch)
+        graph, completed_uids = create_graph(
+            branches=branches, drops_per_branch=drops_per_branch
+        )
         self.assertEqual(n_drops, len(graph))
-        self._run_graph(graph, completed_uids, 5)
+        self._run_graph(graph, completed_uids, timeout=5)
 
-    def _run_graph(self, graph, completed_uids, timeout):
-        sessionId = 'lala'
-        restPort = 8888
-        args = ['--port', str(restPort), '-N', hostname, '-qq']
+    def _run_graph(self, graph, completed_uids, timeout=5):
 
+        sessionId = "lala"
+        restPort = 8989
+        args = ["--port", str(restPort), "-N", hostname, "-qq"]
+
+        logger.debug("Starting NM on port %d" % restPort)
         c = client.NodeManagerClient(port=restPort)
-        dimProcess = tool.start_process('dim', args)
+        dimProcess = tool.start_process("dim", args)
 
-        with testutils.terminating(dimProcess, timeout):
+        with testutils.terminating(dimProcess, timeout=timeout):
             c.create_session(sessionId)
             logger.info("Appending graph")
             c.append_graph(sessionId, graph)
@@ -112,4 +134,6 @@ class TestBigGraph(unittest.TestCase):
 
             # A minute is more than enough, in my PC it takes around 4 or 5 [s]
             # A minute is also way less than the ~2 [h] we observed in AWS
-            self.assertLessEqual(delta, 60, "It took way too much time to create all drops")
+            self.assertLessEqual(
+                delta, 60, "It took way too much time to create all drops"
+            )

@@ -24,16 +24,17 @@ This package contains the modules implementing the core functionality of
 the system.
 """
 
-
 # It is of utmost importance that this is the *first* thing we do any time
 # we load daliuge up. Most modules in daliuge that have a logger create it at
 # import time, so we need to perform this setup before doing any other imports
 def setup_logger_class():
+
     # Doc building is failing due with "ValueError: Empty module name" in
     # "from . import drop" further below, which I can't easily explain.
     # Just skip this setup in RTD for the time being
     import os
-    if os.environ.get('READTHEDOCS', None) == 'True':
+
+    if os.environ.get("READTHEDOCS", None) == "True":
         return
 
     import logging
@@ -56,14 +57,14 @@ def setup_logger_class():
             except AttributeError:
                 drop = None
             try:
-                drop_uid = drop.uid if drop else ''
+                drop_uid = drop.uid if drop else ""
             except AttributeError:
-                drop_uid = ''
+                drop_uid = ""
 
             # Do the same with the session_id, which can be found via the drop (if any)
             # or checking if there is a session currently executing something
-            session_id = ''
-            if drop and hasattr(drop, '_dlg_session') and drop._dlg_session:
+            session_id = ""
+            if drop and hasattr(drop, "_dlg_session") and drop._dlg_session:
                 session_id = drop._dlg_session.sessionId
             else:
                 try:
@@ -80,3 +81,7 @@ def setup_logger_class():
 setup_logger_class()
 del setup_logger_class
 
+from dlg.common.version import git_version as __git_version__
+from dlg.common.version import version as __version__
+from ..apps import get_include_dir
+from ..dask_emulation import delayed
