@@ -71,7 +71,7 @@ class IntegrationNothingTest(unittest.TestCase):
         No data should be present at any level of abstraction, reflected by a null merkleroot.
         """
         graph_name = 'computationSandwich'
-        graph_loc = 'topoGraphs/'
+        graph_loc = 'test/reproducibility/topoGraphs/'
         rmode = ReproducibilityFlags.NOTHING
         _run_full_workflow(rmode=rmode, workflow=graph_name,
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
@@ -103,7 +103,7 @@ class IntegrationHelloWorldTest(unittest.TestCase):
 
     """
     temp_out = tempfile.TemporaryDirectory('out')
-    graph_loc = 'reproGraphs/'
+    graph_loc = 'test/reproducibility/reproGraphs/'
     graphs = {'HelloWorldBash': {}, 'HelloSBash': {}, 'HelloWorldFile': {}, 'HelloSPython': {},
               'HelloSPython2': {}}
 
@@ -360,7 +360,7 @@ class IntegrationSplitRmode(unittest.TestCase):
         """
         graph_name = 'HelloWorldBashSplit'
         control_graph_name = 'HelloWorldBash'
-        graph_loc = 'reproGraphs/'
+        graph_loc = 'test/reproducibility/reproGraphs/'
         rmode = ReproducibilityFlags.NOTHING
         _run_full_workflow(rmode=rmode, workflow=graph_name, workflow_loc=graph_loc,
                            scratch_loc=self.temp_out.name)
