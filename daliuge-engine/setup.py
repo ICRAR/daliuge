@@ -35,8 +35,8 @@ from setuptools.command.install import install
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 1
-MINOR = 0
+MAJOR = 2
+MINOR = 1
 PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
@@ -116,6 +116,7 @@ class lib64_path(install):
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
+    "wheel",
     "bottle",
     "configobj",
     "crc32c",
@@ -125,31 +126,20 @@ install_requires = [
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
     "netifaces>=0.10.6",
+    "numpy",
+    "overrides",
     "paramiko",
     "psutil",
+    "pyarrow",
     "python-daemon",
     "pyzmq",
     "scp",
-    # 1.10 contains an important race-condition fix on lazy-loaded modules
-    "six>=1.10",
+    # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
+    "zeroconf >= 0.19.1",
     # 0.6 brings python3 support plus other fixes
     "zerorpc >= 0.6",
-    "pyarrow",
-    "numpy"
 ]
 # Keep alpha-sorted PLEASE!
-
-# Python 2 support has been dropped in zeroconf 0.20.
-# Also, 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-# Also, 0.21.0 erroneously tags 3.4 as supported, while in fact it isn't
-# (see https://github.com/jstasiak/python-zeroconf/issues/139 for details).
-# We provided a fix for that, so from 0.21.1 is already good.
-if sys.version_info[:2] == (2, 7):
-    install_requires.append("zeroconf == 0.19.1")
-elif sys.version_info[:2] <= (3, 4):
-    install_requires.append("zeroconf != 0.21.0")
-else:
-    install_requires.append("zeroconf >= 0.19.1")
 
 # Extra requirements that are not needed by your every day daliuge installation
 extra_requires = {
@@ -167,8 +157,13 @@ extra_requires = {
 setup(
     name="daliuge-engine",
     version=get_version_info()[0],
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Runtime",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
+    description=u"Data Activated \uF9CA (flow) Graph Engine - Execution Engine",
+    long_description="""
+        The element of the DALiuGE system executing the workflows. This replaces
+        the former 'runtime' package (up to version 1.0). For more information 
+        see the [Basics section(https://daliuge.readthedocs.io/en/latest/basics.html)]
+        of the DALiuGE documentation.
+        """,
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
     url="https://github.com/ICRAR/daliuge",
@@ -182,6 +177,7 @@ setup(
             "web/static/fonts/*",
             "web/static/js/*.js",
             "web/static/js/d3/*",
+            "web/static/icons/*",
         ],
         "dlg.dropmake": [
             "web/lg_editor.html",
@@ -193,6 +189,7 @@ setup(
             "web/pg_viewer.html",
             "web/matrix_vis.html",
             "lib/libmetis.*",
+            "web/static/icons/*",
         ],
         "test.dropmake": ["logical_graphs/*.json"],
         "test.apps": ["dynlib_example.c", "dynlib_example2.c"],

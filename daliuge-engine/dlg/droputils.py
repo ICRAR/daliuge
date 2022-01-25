@@ -19,22 +19,23 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Utility methods and classes to be used when interacting with DROPs
-'''
+"""
 
 import collections
+import io
 import logging
 import re
 import threading
 import traceback
+import numpy as np
 
-import six
-
-from . import common
-from .ddap_protocol import DROPStates
-from .drop import AppDROP
-from .io import IOForURL, OpenMode
+from dlg.ddap_protocol import DROPStates
+from dlg.drop import AppDROP, AbstractDROP
+from dlg.io import IOForURL, OpenMode
+from dlg import common
+from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
 
@@ -47,15 +48,18 @@ indexed_odataurl_pattern = re.compile(r".*%oDataURL\[.+\].*")
 
 
 class EvtConsumer(object):
-    '''
+    """
     Small utility class that sets the internal flag of the given threading.Event
     object when consuming a DROP. Used throughout the tests as a barrier to wait
     until all DROPs of a given graph have executed.
-    '''
+    """
 
     def __init__(self, evt, expected_states=[]):
         self._evt = evt
-        self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
+        self._expected_states = expected_states or (
+            DROPStates.COMPLETED,
+            DROPStates.ERROR,
+        )
 
     def handleEvent(self, e):
         if e.status in self._expected_states:
@@ -79,37 +83,45 @@ class DROPWaiterCtx(object):
 
     def __init__(self, test, drops, timeout=1, expected_states=[]):
         self._drops = listify(drops)
-        self._expected_states = expected_states or (DROPStates.COMPLETED, DROPStates.ERROR)
-        self._test = test
+        self._expected_states = expected_states or (
+            DROPStates.COMPLETED,
+            DROPStates.ERROR,
+        )
+        self._test = test if hasattr(test, "assertTrue") else None
         self._timeout = timeout
         self._evts = []
 
     def __enter__(self):
         for drop in self._drops:
             evt = threading.Event()
-            drop.subscribe(EvtConsumer(evt, expected_states=self._expected_states), 'status')
+            drop.subscribe(
+                EvtConsumer(evt, expected_states=self._expected_states), "status"
+            )
             self._evts.append(evt)
         return self
 
     def __exit__(self, typ, value, tb):
         if typ is not None:
             traceback.print_tb(tb)
-            self._test.fail('%r' % (value,))
+            if self._test:
+                self._test.fail("%r" % (value,))
         to = self._timeout
-        for evt in self._evts:
-            self._test.assertTrue(evt.wait(to), "Waiting for DROP failed with timeout %d" % to)
+        if self._test:
+            for evt in self._evts:
+                self._test.assertTrue(
+                    evt.wait(to), "Waiting for DROP failed with timeout %d %s" % (to, evt)
+                )
 
 
 def allDropContents(drop, bufsize=4096):
-    '''
+    """
     Returns all the data contained in a given DROP
-    '''
-    buf = six.BytesIO()
+    """
+    buf = io.BytesIO()
     desc = drop.open()
-    read = drop.read
 
     while True:
-        data = read(desc, bufsize)
+        data = drop.read(desc, bufsize)
         if not data:
             break
         buf.write(data)
@@ -118,21 +130,25 @@ def allDropContents(drop, bufsize=4096):
 
 
 def copyDropContents(source, target, bufsize=4096):
-    '''
+    """
     Manually copies data from one DROP into another, in bufsize steps
-    '''
+    """
+    logger.debug(f"Copying from {repr(source)} to {repr(target)}")
     desc = source.open()
-    read = source.read
-    buf = read(desc, bufsize)
+    buf = source.read(desc, bufsize)
+    logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
     while buf:
         target.write(buf)
-        buf = read(desc, bufsize)
+        logger.debug(f"Wrote {len(buf)} bytes to {repr(target)}")
+        buf = source.read(desc, bufsize)
+        if buf is not None:
+            logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
     source.close(desc)
 
 
 def getUpstreamObjects(drop):
     """
-    Returns a list of all direct "upstream" DROPs for the given
+    Returns a list of all direct "upstream" DROPs for the given+
     DROP. An DROP A is "upstream" with respect to DROP B if
     any of the following conditions are true:
 
@@ -154,7 +170,7 @@ def getUpstreamObjects(drop):
 def getDownstreamObjects(drop):
     """
     Returns a list of all direct "downstream" DROPs for the given
-    DROP. An DROP A is "downstream" with respect to DROP B if
+    DROP. A DROP A is "downstream" with respect to DROP B if
     any of the following conditions are true:
     * A is an output of B (therefore B is an AppDROP)
     * A is a normal or streaming consumer of B (and A is therefore an AppDROP)
@@ -171,16 +187,20 @@ def getDownstreamObjects(drop):
     return downObjs
 
 
-def getLeafNodes(nodes):
+def getLeafNodes(drops):
     """
-    Returns a list of all the "leaf nodes" of the graph pointed by `nodes`.
-    `nodes` is either a single DROP, or a list of DROPs.
+    Returns a list of all the "leaf nodes" of the graph pointed by `drops`.
+    `drops` is either a single DROP, or a list of DROPs.
     """
-    nodes = listify(nodes)
-    return [drop for drop, _ in breadFirstTraverse(nodes) if not getDownstreamObjects(drop)]
+    drops = listify(drops)
+    return [
+        drop
+        for drop, _ in breadFirstTraverse(drops)
+        if not getDownstreamObjects(drop) and drop.type != DropType.SERVICE_APP
+    ]
 
 
-def depthFirstTraverse(node, visited=[]):
+def depthFirstTraverse(node: AbstractDROP, visited=[]):
     """
     Depth-first iterator for a DROP graph.
 
@@ -242,6 +262,25 @@ def listify(o):
         return list(o)
     return [o]
 
+
+def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
+    """
+    Saves a numpy ndarray to a drop in npy format
+    """
+    bio = io.BytesIO()
+    np.save(bio, ndarray, allow_pickle=allow_pickle)
+    drop.write(bio.getbuffer())
+
+
+def load_numpy(drop, allow_pickle=False) -> np.ndarray:
+    """
+    Loads a numpy ndarray from a drop in npy format
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    res = np.load(io.BytesIO(dropio.buffer()), allow_pickle=allow_pickle)
+    dropio.close()
+    return res
 
 class DROPFile(object):
     """
@@ -320,7 +359,7 @@ class DROPFile(object):
 def has_path(x):
     """Returns `True` if `x` has a `path` attribute"""
     try:
-        getattr(x, 'path')
+        getattr(x, "path")
         return True
     except:
         return False
@@ -338,8 +377,12 @@ def replace_path_placeholders(cmd, inputs, outputs):
       ``%o[X]``.
     """
 
-    logger.debug('Replacing cmd %s with placeholders with I/O uids: %r, %r',
-                 cmd, inputs.keys(), outputs.keys())
+    logger.debug(
+        "Replacing cmd %s with placeholders with I/O uids: %r, %r",
+        cmd,
+        inputs.keys(),
+        outputs.keys(),
+    )
 
     for x, i in enumerate(inputs.values()):
         pathRef = "%%i%d" % (x,)

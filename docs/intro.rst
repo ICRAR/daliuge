@@ -25,11 +25,12 @@ sources (mostly *Python*!) such as `Luigi <http://luigi.readthedocs.io/>`_,
 Nevertheless, we believe |daliuge| has some unique features well suited
 for data-intensive applications:
 
-* Completely data-activated, by promoting data DROPs to become graph "nodes" (no longer just edges)
-  that has persistent states and can consume and raise events
+* Completely :ref:`data-activated <dataflow.data-activated>`, by promoting data :doc:`architecture/drops` to become graph "nodes" (no longer just edges)
+  that have persistent states and can consume and raise events
 * Integration of data-lifecycle management within the data processing framework
 * Separation of concerns between logical graphs (high level workflows) and physical graphs (execution recipes)
 * Flexible pipeline component interface, including Docker containers.
+* Native multi-core execution out of the box
 
-In :doc:`overview` we give a glimpse to the main concepts present in |daliuge|.
+In :doc:`architecture/index` we give a glimpse to the main concepts present in |daliuge|.
 Later sections of the documentation describe more in detail how |daliuge| works. Enjoy!

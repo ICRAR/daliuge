@@ -30,6 +30,8 @@ paths:
                   type: string
                 algo:
                   type: string
+                test:
+                  type: string
                 num_par:
                   type: integer
                 num_islands:

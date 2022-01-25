@@ -30,8 +30,8 @@ from setuptools import setup
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 1
-MINOR = 0
+MAJOR = 2
+MINOR = 1
 PATCH = 0
 VERSION = (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/common/version.py"
@@ -40,18 +40,12 @@ RELEASE = True
 
 def do_versioning():
     # Avoid importing, the package doesn't exist as such yet
-    with open(os.path.join('dlg', 'version_helper.py')) as f:
+    with open(os.path.join("dlg", "version_helper.py")) as f:
         code = f.read()
     _globals = {}
     exec(code, _globals)
-    return _globals['write_version_info'](VERSION, VERSION_FILE, RELEASE)
+    return _globals["write_version_info"](VERSION, VERSION_FILE, RELEASE)
 
-
-install_requires = [
-    # 1.10 contains an important race-condition fix on lazy-loaded modules
-    "six>=1.10",
-    "merklelib>=1.0",
-]
 
 setup(
     name="daliuge-common",
@@ -63,7 +57,8 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     packages=find_packages(),
-    install_requires=install_requires,
     test_suite="test",
-    entry_points={"console_scripts": ["dlg=dlg.common.tool:run"]},  # One tool to rule them all
+    entry_points={
+        "console_scripts": ["dlg=dlg.common.tool:run"]
+    },  # One tool to rule them all
 )
