@@ -56,6 +56,7 @@ class CommonTestsBase(ManagerStarter):
             },
             {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
         ]
+        pg = add_test_reprodata(pg)
         for drop in pg:
             drop["node"] = "127.0.0.1"
             drop["island"] = "127.0.0.1"
